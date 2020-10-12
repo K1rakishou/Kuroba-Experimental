@@ -94,7 +94,7 @@ open class ArchivesManager(
         for (archive in allArchives) {
           if (descriptor.domain == archive.domain) {
             archive.setArchiveDescriptor(descriptor)
-            archive.setSupportedSites(setOf(Chan4.SITE_NAME))
+            archive.setSupportedSites(setOf(Chan4.SITE_DESCRIPTOR))
             break
           }
         }
@@ -184,6 +184,20 @@ open class ArchivesManager(
     }
   }
 
+  fun getSupportedSites(siteDescriptor: SiteDescriptor): Set<SiteDescriptor> {
+    return lock.read {
+      val archiveData = allArchivesData.firstOrNull { archiveData ->
+        archiveData.domain == siteDescriptor.siteName
+      }
+
+      if (archiveData == null) {
+        return@read emptySet()
+      }
+
+      return@read archiveData.getSupportedSites()
+    }
+  }
+
   fun getSupportedArchiveDescriptors(threadDescriptor: ChanDescriptor.ThreadDescriptor): List<ArchiveDescriptor> {
     return lock.read {
       return@read allArchivesData
@@ -233,18 +247,20 @@ open class ArchivesManager(
     private var archiveDescriptor: ArchiveDescriptor? = null
 
     @Expose(serialize = false, deserialize = false)
-    private var supportedSites: Set<String>? = null
+    private var supportedSites: Set<SiteDescriptor>? = null
 
     val domain: String
       get() = getSanitizedDomain()
 
     fun isEnabled(): Boolean = domain !in disabledArchives
 
-    fun setSupportedSites(sites: Set<String>) {
+    fun setSupportedSites(sites: Set<SiteDescriptor>) {
       require(this.supportedSites == null) { "Double initialization!" }
 
       this.supportedSites = sites
     }
+
+    fun getSupportedSites(): Set<SiteDescriptor> = supportedSites?.toSet() ?: emptySet()
 
     fun setArchiveDescriptor(archiveDescriptor: ArchiveDescriptor) {
       require(this.archiveDescriptor == null) { "Double initialization!" }
@@ -260,7 +276,7 @@ open class ArchivesManager(
 
     fun supports(boardDescriptor: BoardDescriptor): Boolean {
       val isTheSameArchive = boardDescriptor.siteDescriptor.siteName == domain
-      val supportsThisSite = supportedSites?.contains(boardDescriptor.siteDescriptor.siteName) ?: false
+      val supportsThisSite = supportedSites?.contains(boardDescriptor.siteDescriptor) ?: false
 
       return (isTheSameArchive || supportsThisSite) && boardDescriptor.boardCode in supportedBoards
     }

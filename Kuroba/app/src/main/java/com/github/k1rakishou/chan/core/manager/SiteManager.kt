@@ -305,14 +305,21 @@ open class SiteManager(
     }
   }
 
-  fun onSiteMoving(from: Int, to: Int) {
+  fun onSiteMoving(fromSiteDescriptor: SiteDescriptor, toSiteDescriptor: SiteDescriptor) {
     check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
 
-    require(from >= 0) { "Bad from: $from" }
-    require(to >= 0) { "Bad to: $to" }
-
     lock.write {
-      orders.add(to, orders.removeAt(from))
+      val fromIndex = orders.indexOf(fromSiteDescriptor)
+      if (fromIndex < 0) {
+        return@write
+      }
+
+      val toIndex = orders.indexOf(toSiteDescriptor)
+      if (toIndex < 0) {
+        return@write
+      }
+
+      orders.add(toIndex, orders.removeAt(fromIndex))
     }
 
     ensureSitesAndOrdersConsistency()

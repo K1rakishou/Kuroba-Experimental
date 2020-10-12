@@ -829,6 +829,7 @@ Don't have a 4chan Pass?<br>
     <string name="controller_bookmarks_bookmark_of_archived_thread">(Archive)</string>
 
     <string name="controller_sites_setup_no_sites">No sites loaded, this shouldn\'t happen</string>
+    <string name="controller_sites_setup_archives_group">Archives (%1$d/%2$d)</string>
 
     <string name="controller_boards_setup_no_boards">No boards added</string>
     <string name="controller_boards_setup_title">Configure boards of %1$s</string>

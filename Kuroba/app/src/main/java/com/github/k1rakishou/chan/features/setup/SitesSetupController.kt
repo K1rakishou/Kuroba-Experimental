@@ -6,6 +6,7 @@ import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyModel
 import com.airbnb.epoxy.EpoxyModelTouchCallback
@@ -16,6 +17,7 @@ import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
 import com.github.k1rakishou.chan.features.setup.data.SitesSetupControllerState
 import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteView
 import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteViewModel_
+import com.github.k1rakishou.chan.features.setup.epoxy.site.epoxySiteArchivesGroupView
 import com.github.k1rakishou.chan.features.setup.epoxy.site.epoxySiteView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
@@ -43,17 +45,55 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
       return makeMovementFlags(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0)
     }
 
+    override fun canDropOver(
+      recyclerView: RecyclerView?,
+      current: EpoxyViewHolder?,
+      target: EpoxyViewHolder?
+    ): Boolean {
+      val currentView = current?.itemView as? EpoxySiteView
+      val targetView = target?.itemView as? EpoxySiteView
+
+      if (currentView == null || targetView == null) {
+        return false
+      }
+
+      if (targetView.isArchiveSite) {
+        return false
+      }
+
+      return true
+    }
+
     override fun onDragStarted(model: EpoxySiteViewModel_?, itemView: View?, adapterPosition: Int) {
       itemView?.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
     }
 
-    override fun onModelMoved(
-      fromPosition: Int,
-      toPosition: Int,
-      modelBeingMoved: EpoxySiteViewModel_?,
-      itemView: View?
-    ) {
-      sitesPresenter.onSiteMoving(fromPosition, toPosition)
+    override fun onMove(
+      recyclerView: RecyclerView?,
+      viewHolder: EpoxyViewHolder?,
+      target: EpoxyViewHolder?
+    ): Boolean {
+      val fromPosition = viewHolder?.adapterPosition
+        ?: return false
+      val toPosition = target?.adapterPosition
+        ?: return false
+
+      val fromSiteDescriptor = (viewHolder.model as? EpoxySiteViewModel_)?.siteDescriptor()
+      val toSiteDescriptor = (target.model as? EpoxySiteViewModel_)?.siteDescriptor()
+
+      if (fromSiteDescriptor == null || toSiteDescriptor == null) {
+        return false
+      }
+
+      sitesPresenter.onSiteMoving(fromSiteDescriptor, toSiteDescriptor)
+      controller.moveModel(fromPosition, toPosition)
+
+      val model = viewHolder.model
+      check(isTouchableModel(model)) {
+        "A model was dragged that is not a valid target: " + model.javaClass
+      }
+
+      return true
     }
 
     override fun onDragReleased(model: EpoxySiteViewModel_?, itemView: View?) {
@@ -107,12 +147,16 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
         }
         is SitesSetupControllerState.Data -> {
           state.siteCellDataList.forEach { siteCellData ->
+            val siteCellArchiveGroupInfo = siteCellData.siteCellArchiveGroupInfo
+
+            // Render sites
             epoxySiteView {
               id("sites_setup_site_view_${siteCellData.siteDescriptor}")
               bindIcon(Pair(siteCellData.siteIcon, siteCellData.siteEnableState))
               bindSiteName(siteCellData.siteName)
               bindSwitch(siteCellData.siteEnableState)
               siteDescriptor(siteCellData.siteDescriptor)
+              isArchiveSite(false)
 
               val callback = fun(enabled: Boolean) {
                 if (siteCellData.siteEnableState == SiteEnableState.Disabled) {
@@ -131,6 +175,48 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
                     siteCellData.siteDescriptor
                   )
                 )
+              }
+            }
+
+            if (siteCellArchiveGroupInfo != null) {
+              // Render archives for this site
+              epoxySiteArchivesGroupView {
+                id("sites_setup_site_view_archive_toggle_${siteCellData.siteDescriptor}")
+                isExpanded(siteCellArchiveGroupInfo.isGroupExpanded)
+                archiveEnabledAndTotalCount(siteCellArchiveGroupInfo.archiveEnabledTotalCount)
+                clickListener { sitesPresenter.toggleGroupCollapseState(siteCellData.siteDescriptor) }
+              }
+
+              if (siteCellArchiveGroupInfo.isGroupExpanded) {
+                siteCellArchiveGroupInfo.archives.forEach { siteArchiveCellData ->
+                  epoxySiteView {
+                    id("sites_setup_site_view_${siteArchiveCellData.siteDescriptor}")
+                    bindIcon(
+                      Pair(
+                        siteArchiveCellData.siteIcon,
+                        siteArchiveCellData.siteEnableState
+                      )
+                    )
+                    bindSiteName(siteArchiveCellData.siteName)
+                    bindSwitch(siteArchiveCellData.siteEnableState)
+                    siteDescriptor(siteArchiveCellData.siteDescriptor)
+                    isArchiveSite(true)
+
+                    val callback = fun(enabled: Boolean) {
+                      if (siteArchiveCellData.siteEnableState == SiteEnableState.Disabled) {
+                        showToast("Site is temporary or permanently disabled. It cannot be used.")
+                        return
+                      }
+
+                      sitesPresenter.onSiteEnableStateChanged(
+                        siteArchiveCellData.siteDescriptor,
+                        enabled
+                      )
+                    }
+
+                    bindRowClickCallback(Pair(callback, siteArchiveCellData.siteEnableState))
+                  }
+                }
               }
             }
           }

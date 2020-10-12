@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.setup.epoxy.site
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.View
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.view.doOnPreDraw
@@ -18,6 +19,9 @@ import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableSwitchMaterial
 import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AndroidUtils.dp
+import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.google.android.material.textview.MaterialTextView
 import java.lang.ref.WeakReference
@@ -40,6 +44,9 @@ class EpoxySiteView @JvmOverloads constructor(
   private val siteSwitch: ColorizableSwitchMaterial
   private val siteSettings: AppCompatImageView
   val siteReorder: AppCompatImageView
+
+  var isArchiveSite: Boolean = false
+    private set
 
   private var descriptor: SiteDescriptor? = null
   private var requestDisposable: Disposable? = null
@@ -90,6 +97,21 @@ class EpoxySiteView @JvmOverloads constructor(
     updateSiteNameTextColor()
     updateSettingsTint()
     updateReorderTint()
+  }
+
+  @ModelProp
+  fun isArchiveSite(isArchive: Boolean) {
+    this.isArchiveSite = isArchive
+
+    if (this.isArchiveSite) {
+      siteSettings.setVisibilityFast(View.GONE)
+      siteReorder.setVisibilityFast(View.GONE)
+      siteIcon.updateMargins(left = ARCHIVE_SITE_ICON_LEFT_MARGIN)
+    } else {
+      siteSettings.setVisibilityFast(View.VISIBLE)
+      siteReorder.setVisibilityFast(View.VISIBLE)
+      siteIcon.updateMargins(left = 0)
+    }
   }
 
   @ModelProp
@@ -241,5 +263,6 @@ class EpoxySiteView @JvmOverloads constructor(
 
   companion object {
     private val GRAYSCALE = GrayscaleTransformation()
+    private val ARCHIVE_SITE_ICON_LEFT_MARGIN = dp(32f)
   }
 }

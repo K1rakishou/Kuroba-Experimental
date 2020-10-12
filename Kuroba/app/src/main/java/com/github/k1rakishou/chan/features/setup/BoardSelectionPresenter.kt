@@ -76,7 +76,8 @@ class BoardSelectionPresenter : BasePresenter<BoardSelectionView>() {
         chanSiteData.siteDescriptor,
         site.icon().url.toString(),
         site.name(),
-        SiteEnableState.Active
+        SiteEnableState.Active,
+        null
       )
 
       resultMap[siteCellData] = collectBoards(query, chanSiteData)

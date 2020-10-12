@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="48dp"
+    android:background="?attr/selectableItemBackground"
+    android:paddingStart="8dp"
+    android:paddingTop="4dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="4dp">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/toggle_indicator_view"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="8dp"
+        android:rotation="180"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="#fff"
+        tools:rotation="180" />
+
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+        android:id="@+id/archives_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        app:layout_constraintBottom_toBottomOf="@+id/toggle_indicator_view"
+        app:layout_constraintStart_toEndOf="@+id/toggle_indicator_view"
+        app:layout_constraintTop_toTopOf="@+id/toggle_indicator_view"
+        tools:text="Archives (5/10)"/>
+
+    <View
+        android:id="@+id/divider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintBottom_toBottomOf="@+id/archives_label"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/archives_label"
+        app:layout_constraintTop_toTopOf="@+id/archives_label"
+        tools:background="#fff" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
