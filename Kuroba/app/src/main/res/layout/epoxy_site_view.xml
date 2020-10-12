@@ -43,6 +43,18 @@
         android:clickable="true"
         android:focusable="true"
         android:gravity="center_vertical"
+        android:padding="6dp"
         tools:src="@drawable/ic_settings_white_24dp" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/site_reorder"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:padding="6dp"
+        tools:src="@drawable/ic_reorder_black_24dp" />
 
 </LinearLayout>

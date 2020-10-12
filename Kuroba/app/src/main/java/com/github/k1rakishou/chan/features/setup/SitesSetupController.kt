@@ -1,14 +1,20 @@
 package com.github.k1rakishou.chan.features.setup
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.view.HapticFeedbackConstants
+import android.view.MotionEvent
 import android.view.View
+import androidx.recyclerview.widget.ItemTouchHelper
 import com.airbnb.epoxy.EpoxyController
-import com.airbnb.epoxy.EpoxyTouchHelper
+import com.airbnb.epoxy.EpoxyModel
+import com.airbnb.epoxy.EpoxyModelTouchCallback
+import com.airbnb.epoxy.EpoxyViewHolder
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
 import com.github.k1rakishou.chan.features.setup.data.SitesSetupControllerState
+import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteView
 import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteViewModel_
 import com.github.k1rakishou.chan.features.setup.epoxy.site.epoxySiteView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
@@ -24,6 +30,36 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
 
   private val controller = SitesEpoxyController()
   private val sitesPresenter = SitesSetupPresenter()
+  private lateinit var itemTouchHelper: ItemTouchHelper
+
+  private val touchHelperCallback = object : EpoxyModelTouchCallback<EpoxySiteViewModel_>(
+    controller,
+    EpoxySiteViewModel_::class.java
+  ) {
+    override fun isLongPressDragEnabled(): Boolean = false
+    override fun isItemViewSwipeEnabled(): Boolean = false
+
+    override fun getMovementFlagsForModel(model: EpoxySiteViewModel_?, adapterPosition: Int): Int {
+      return makeMovementFlags(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0)
+    }
+
+    override fun onDragStarted(model: EpoxySiteViewModel_?, itemView: View?, adapterPosition: Int) {
+      itemView?.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+    }
+
+    override fun onModelMoved(
+      fromPosition: Int,
+      toPosition: Int,
+      modelBeingMoved: EpoxySiteViewModel_?,
+      itemView: View?
+    ) {
+      sitesPresenter.onSiteMoving(fromPosition, toPosition)
+    }
+
+    override fun onDragReleased(model: EpoxySiteViewModel_?, itemView: View?) {
+      sitesPresenter.onSiteMoved()
+    }
+  }
 
   override fun onCreate() {
     super.onCreate()
@@ -34,32 +70,8 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
     epoxyRecyclerView.setController(controller)
 
-    EpoxyTouchHelper
-      .initDragging(controller)
-      .withRecyclerView(epoxyRecyclerView)
-      .forVerticalList()
-      .withTarget(EpoxySiteViewModel_::class.java)
-      .andCallbacks(object : EpoxyTouchHelper.DragCallbacks<EpoxySiteViewModel_>() {
-        override fun onDragStarted(model: EpoxySiteViewModel_?, itemView: View?, adapterPosition: Int) {
-          itemView?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-        }
-
-        override fun onModelMoved(
-          fromPosition: Int,
-          toPosition: Int,
-          modelBeingMoved: EpoxySiteViewModel_,
-          itemView: View?
-        ) {
-          modelBeingMoved.siteDescriptor()?.let { siteDescriptor ->
-            sitesPresenter.onSiteMoving(siteDescriptor, fromPosition, toPosition)
-          }
-        }
-
-        override fun onDragReleased(model: EpoxySiteViewModel_, itemView: View?) {
-          sitesPresenter.onSiteMoved()
-        }
-
-      })
+    itemTouchHelper = ItemTouchHelper(touchHelperCallback)
+    itemTouchHelper.attachToRecyclerView(epoxyRecyclerView)
 
     compositeDisposable += sitesPresenter.listenForStateChanges()
       .subscribe { state -> onStateChanged(state) }
@@ -102,7 +114,7 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
               bindSwitch(siteCellData.siteEnableState)
               siteDescriptor(siteCellData.siteDescriptor)
 
-              val callback = fun (enabled: Boolean) {
+              val callback = fun(enabled: Boolean) {
                 if (siteCellData.siteEnableState == SiteEnableState.Disabled) {
                   showToast("Site is temporary or permanently disabled. It cannot be used.")
                   return
@@ -113,7 +125,12 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
 
               bindRowClickCallback(Pair(callback, siteCellData.siteEnableState))
               bindSettingClickCallback {
-                navigationController!!.pushController(SiteSettingsController(context, siteCellData.siteDescriptor))
+                navigationController!!.pushController(
+                  SiteSettingsController(
+                    context,
+                    siteCellData.siteDescriptor
+                  )
+                )
               }
             }
           }
@@ -124,11 +141,27 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
     controller.requestModelBuild()
   }
 
-  private class SitesEpoxyController : EpoxyController() {
+  private inner class SitesEpoxyController : EpoxyController() {
     var callback: EpoxyController.() -> Unit = {}
 
     override fun buildModels() {
       callback(this)
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onViewAttachedToWindow(holder: EpoxyViewHolder, model: EpoxyModel<*>) {
+      val itemView = holder.itemView
+
+      if (itemView is EpoxySiteView) {
+        itemView.siteReorder.setOnTouchListener { v, event ->
+          if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+            itemView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            itemTouchHelper.startDrag(holder)
+          }
+
+          return@setOnTouchListener false
+        }
+      }
     }
   }
 

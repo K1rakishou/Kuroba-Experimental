@@ -56,10 +56,12 @@ class SitesSetupPresenter : BasePresenter<SitesSetupView>() {
     }
   }
 
-  fun onSiteMoving(siteDescriptor: SiteDescriptor, fromPosition: Int, toPosition: Int) {
-    if (siteManager.onSiteMoving(siteDescriptor, fromPosition, toPosition)) {
-      showSites()
-    }
+  fun onSiteMoving(
+    fromPosition: Int,
+    toPosition: Int
+  ) {
+    siteManager.onSiteMoving(fromPosition, toPosition)
+    showSites()
   }
 
   fun onSiteMoved() {

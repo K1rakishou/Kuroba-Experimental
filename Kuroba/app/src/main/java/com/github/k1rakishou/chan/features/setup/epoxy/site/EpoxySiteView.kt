@@ -39,6 +39,7 @@ class EpoxySiteView @JvmOverloads constructor(
   private val siteName: MaterialTextView
   private val siteSwitch: ColorizableSwitchMaterial
   private val siteSettings: AppCompatImageView
+  val siteReorder: AppCompatImageView
 
   private var descriptor: SiteDescriptor? = null
   private var requestDisposable: Disposable? = null
@@ -51,19 +52,28 @@ class EpoxySiteView @JvmOverloads constructor(
     siteName = findViewById(R.id.site_name)
     siteSwitch = findViewById(R.id.site_switch)
     siteSettings = findViewById(R.id.site_settings)
+    siteReorder = findViewById(R.id.site_reorder)
 
     siteSwitch.isClickable = false
     siteSwitch.isFocusable = false
 
     siteIcon.setImageBitmap(null)
 
-    val tintedDrawable = themeEngine.getDrawableTinted(
-      context,
-      R.drawable.ic_settings_white_24dp,
-      AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+    siteSettings.setImageDrawable(
+      themeEngine.getDrawableTinted(
+        context,
+        R.drawable.ic_settings_white_24dp,
+        AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+      )
     )
 
-    siteSettings.setImageDrawable(tintedDrawable)
+    siteReorder.setImageDrawable(
+      themeEngine.getDrawableTinted(
+        context,
+        R.drawable.ic_reorder_black_24dp,
+        AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+      )
+    )
   }
 
   override fun onAttachedToWindow() {
@@ -79,6 +89,7 @@ class EpoxySiteView @JvmOverloads constructor(
   override fun onThemeChanged() {
     updateSiteNameTextColor()
     updateSettingsTint()
+    updateReorderTint()
   }
 
   @ModelProp
@@ -122,7 +133,11 @@ class EpoxySiteView @JvmOverloads constructor(
     if (siteEnableState == null) {
       siteSwitch.isEnabled = true
       siteSwitch.isChecked = false
+
       siteSettings.alpha = themeEngine.chanTheme.defaultColors.disabledControlAlphaFloat
+
+      siteReorder.isEnabled = false
+      siteReorder.alpha = themeEngine.chanTheme.defaultColors.disabledControlAlphaFloat
       return
     }
 
@@ -132,6 +147,9 @@ class EpoxySiteView @JvmOverloads constructor(
 
       siteSettings.isEnabled = false
       siteSettings.alpha = themeEngine.chanTheme.defaultColors.disabledControlAlphaFloat
+
+      siteReorder.isEnabled = false
+      siteReorder.alpha = themeEngine.chanTheme.defaultColors.disabledControlAlphaFloat
       return
     }
 
@@ -139,11 +157,16 @@ class EpoxySiteView @JvmOverloads constructor(
     siteSwitch.isChecked = siteEnableState == SiteEnableState.Active
 
     siteSettings.isEnabled = siteEnableState == SiteEnableState.Active
-    siteSettings.alpha = if (siteEnableState == SiteEnableState.Active) {
+    siteReorder.isEnabled = siteEnableState == SiteEnableState.Active
+
+    val alpha = if (siteEnableState == SiteEnableState.Active) {
       1f
     } else {
       themeEngine.chanTheme.defaultColors.disabledControlAlphaFloat
     }
+
+    siteSettings.alpha = alpha
+    siteReorder.alpha = alpha
 
     updateSettingsTint()
   }
@@ -192,6 +215,15 @@ class EpoxySiteView @JvmOverloads constructor(
   fun unbind() {
     this.requestDisposable?.dispose()
     this.requestDisposable = null
+  }
+
+  private fun updateReorderTint() {
+    if (siteReorder.drawable == null) {
+      return
+    }
+
+    val isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+    siteReorder.setImageDrawable(themeEngine.tintDrawable(siteReorder.drawable, isDarkColor))
   }
 
   private fun updateSettingsTint() {
