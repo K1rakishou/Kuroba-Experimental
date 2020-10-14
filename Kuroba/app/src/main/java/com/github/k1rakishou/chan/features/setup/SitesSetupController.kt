@@ -88,11 +88,6 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
       sitesPresenter.onSiteMoving(fromSiteDescriptor, toSiteDescriptor)
       controller.moveModel(fromPosition, toPosition)
 
-      val model = viewHolder.model
-      check(isTouchableModel(model)) {
-        "A model was dragged that is not a valid target: " + model.javaClass
-      }
-
       return true
     }
 

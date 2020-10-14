@@ -34,6 +34,7 @@ interface ModelMainComponent {
   fun getChanSavedReplyRepository(): ChanSavedReplyRepository
   fun getChanPostHideRepository(): ChanPostHideRepository
   fun getChanFilterRepository(): ChanFilterRepository
+  fun getThreadBookmarkGroupRepository(): ThreadBookmarkGroupRepository
 
   @Component.Builder
   interface Builder {

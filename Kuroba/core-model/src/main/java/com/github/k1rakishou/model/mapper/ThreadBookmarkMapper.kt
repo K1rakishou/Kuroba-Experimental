@@ -13,6 +13,7 @@ object ThreadBookmarkMapper {
 
     return ThreadBookmarkEntity(
       ownerThreadId = ownerThreadId,
+      ownerGroupId = threadBookmark.groupId,
       seenPostsCount = threadBookmark.seenPostsCount,
       totalPostsCount = threadBookmark.totalPostsCount,
       lastViewedPostNo = threadBookmark.lastViewedPostNo,
@@ -30,7 +31,8 @@ object ThreadBookmarkMapper {
         boardCode = threadBookmarkFull.boardCode,
         threadNo = threadBookmarkFull.threadNo,
       ),
-      createdOn = threadBookmarkFull.threadBookmarkEntity.createdOn
+      createdOn = threadBookmarkFull.threadBookmarkEntity.createdOn,
+      groupId = threadBookmarkFull.threadBookmarkEntity.ownerGroupId
     ).apply {
       this.seenPostsCount = threadBookmarkFull.threadBookmarkEntity.seenPostsCount
       this.totalPostsCount = threadBookmarkFull.threadBookmarkEntity.totalPostsCount

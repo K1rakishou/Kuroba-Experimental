@@ -279,6 +279,22 @@ class ModelMainModule {
     )
   }
 
+  @Singleton
+  @Provides
+  fun provideThreadBookmarkGroupLocalSource(
+    database: KurobaDatabase,
+    @LoggerTagPrefix loggerTag: String,
+    @IsDevFlavor isDevFlavor: Boolean,
+    logger: Logger
+  ): ThreadBookmarkGroupLocalSource {
+    return ThreadBookmarkGroupLocalSource(
+      database,
+      loggerTag,
+      isDevFlavor,
+      logger
+    )
+  }
+
   /**
    * Remote sources
    * */
@@ -542,6 +558,24 @@ class ModelMainModule {
       logger,
       scope,
       chanFilterLocalSource
+    )
+  }
+
+  @Singleton
+  @Provides
+  fun provideThreadBookmarkGroupRepository(
+    logger: Logger,
+    database: KurobaDatabase,
+    @AppCoroutineScope scope: CoroutineScope,
+    @LoggerTagPrefix loggerTag: String,
+    localSource: ThreadBookmarkGroupLocalSource
+  ): ThreadBookmarkGroupRepository {
+    return ThreadBookmarkGroupRepository(
+      database,
+      loggerTag,
+      logger,
+      scope,
+      localSource
     )
   }
 

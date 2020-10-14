@@ -1,5 +1,6 @@
 package com.github.k1rakishou.model.migrations
 
+import android.database.Cursor
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 internal fun SupportSQLiteDatabase.changeTableName(fromName: String, toName: String) {
@@ -21,4 +22,11 @@ internal fun SupportSQLiteDatabase.doWithoutForeignKeys(func: () -> Unit) {
   } finally {
     execSQL("PRAGMA foreign_keys = ON")
   }
+}
+
+internal fun getColumnIndexOrThrow(c: Cursor, name: String): Int {
+  val index = c.getColumnIndex(name)
+  return if (index >= 0) {
+    index
+  } else c.getColumnIndexOrThrow("`$name`")
 }

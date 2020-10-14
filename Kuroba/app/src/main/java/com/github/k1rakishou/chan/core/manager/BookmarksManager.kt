@@ -553,7 +553,6 @@ class BookmarksManager(
   }
 
   private suspend fun persistBookmarksInternal() {
-
     try {
       bookmarksRepository.persist(getAllBookmarks()).safeUnwrap { error ->
         Logger.e(TAG, "Failed to persist bookmarks", error)

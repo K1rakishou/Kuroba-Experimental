@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
+import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkItemView
@@ -37,6 +38,8 @@ class BookmarksPresenter(
 
   @Inject
   lateinit var bookmarksManager: BookmarksManager
+  @Inject
+  lateinit var threadBookmarkGroupManager: ThreadBookmarkGroupManager
   @Inject
   lateinit var pageRequestManager: PageRequestManager
   @Inject
@@ -194,13 +197,15 @@ class BookmarksPresenter(
     ) { threadBookmark -> threadBookmark.toggleWatching() }
   }
 
-  private suspend fun showBookmarks(searchQuery: String?) {
+  suspend fun showBookmarks(searchQuery: String?) {
     BackgroundUtils.ensureBackgroundThread()
+
     bookmarksManager.awaitUntilInitialized()
+    threadBookmarkGroupManager.awaitUntilInitialized()
 
     val isWatcherEnabled = ChanSettings.watchEnabled.get()
 
-    val bookmarks = bookmarksManager.mapNotNullAllBookmarks<ThreadBookmarkItemView> { threadBookmarkView ->
+    val threadBookmarkItemViewList = bookmarksManager.mapNotNullAllBookmarks<ThreadBookmarkItemView> { threadBookmarkView ->
       val title = threadBookmarkView.title
         ?: "No title"
 
@@ -215,6 +220,7 @@ class BookmarksPresenter(
 
         return@mapNotNullAllBookmarks ThreadBookmarkItemView(
           threadDescriptor = threadBookmarkView.threadDescriptor,
+          groupId = threadBookmarkView.groupId,
           title = title,
           highlight = threadBookmarkView.threadDescriptor in bookmarksToHighlight,
           thumbnailUrl = threadBookmarkView.thumbnailUrl,
@@ -227,7 +233,7 @@ class BookmarksPresenter(
       return@mapNotNullAllBookmarks null
     }
 
-    val sortedBookmarks = sortBookmarks(bookmarks)
+    val sortedBookmarks = sortBookmarks(threadBookmarkItemViewList)
     if (sortedBookmarks.isEmpty()) {
       if (isSearchMode.get()) {
         setState(BookmarksControllerState.NothingFound(searchQuery ?: ""))

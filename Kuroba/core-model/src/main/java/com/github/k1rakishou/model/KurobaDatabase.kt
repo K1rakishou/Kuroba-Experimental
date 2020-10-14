@@ -13,6 +13,8 @@ import com.github.k1rakishou.model.entity.InlinedFileInfoEntity
 import com.github.k1rakishou.model.entity.MediaServiceLinkExtraContentEntity
 import com.github.k1rakishou.model.entity.SeenPostEntity
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkEntity
+import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkGroupEntity
+import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkGroupEntryEntity
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkReplyEntity
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardEntity
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardIdEntity
@@ -31,6 +33,7 @@ import com.github.k1rakishou.model.entity.view.OldChanPostThread
 import com.github.k1rakishou.model.migrations.Migration_v1_to_v2
 import com.github.k1rakishou.model.migrations.Migration_v2_to_v3
 import com.github.k1rakishou.model.migrations.Migration_v3_to_v4
+import com.github.k1rakishou.model.migrations.Migration_v4_to_v5
 
 @DoNotStrip
 @Database(
@@ -58,13 +61,15 @@ import com.github.k1rakishou.model.migrations.Migration_v3_to_v4
     NavHistoryElementIdEntity::class,
     NavHistoryElementInfoEntity::class,
     ThreadBookmarkEntity::class,
-    ThreadBookmarkReplyEntity::class
+    ThreadBookmarkReplyEntity::class,
+    ThreadBookmarkGroupEntity::class,
+    ThreadBookmarkGroupEntryEntity::class
   ],
   views = [
     ChanThreadsWithPosts::class,
     OldChanPostThread::class
   ],
-  version = 4,
+  version = 5,
   exportSchema = true
 )
 @TypeConverters(
@@ -94,6 +99,7 @@ abstract class KurobaDatabase : RoomDatabase() {
   abstract fun navHistoryDao(): NavHistoryDao
   abstract fun threadBookmarkDao(): ThreadBookmarkDao
   abstract fun threadBookmarkReplyDao(): ThreadBookmarkReplyDao
+  abstract fun threadBookmarkGroupDao(): ThreadBookmarkGroupDao
   abstract fun chanThreadViewableInfoDao(): ChanThreadViewableInfoDao
   abstract fun chanSiteDao(): ChanSiteDao
   abstract fun chanSavedReplyDao(): ChanSavedReplyDao
@@ -129,7 +135,8 @@ abstract class KurobaDatabase : RoomDatabase() {
         .addMigrations(
           Migration_v1_to_v2(),
           Migration_v2_to_v3(),
-          Migration_v3_to_v4()
+          Migration_v3_to_v4(),
+          Migration_v4_to_v5()
         )
         .fallbackToDestructiveMigrationIfBetaOrDev(betaOrDev, loggerTag, logger)
         .fallbackToDestructiveMigrationOnDowngrade()

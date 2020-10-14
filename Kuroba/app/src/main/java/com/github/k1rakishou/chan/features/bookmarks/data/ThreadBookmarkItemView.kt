@@ -6,6 +6,7 @@ import org.joda.time.DateTime
 
 data class ThreadBookmarkItemView(
   val threadDescriptor: ChanDescriptor.ThreadDescriptor,
+  val groupId: String,
   val title: String,
   val thumbnailUrl: HttpUrl?,
   val highlight: Boolean,

@@ -14,6 +14,7 @@ import com.github.k1rakishou.model.repository.InlinedFileInfoRepository;
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository;
 import com.github.k1rakishou.model.repository.SeenPostRepository;
 import com.github.k1rakishou.model.repository.SiteRepository;
+import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository;
 
 import javax.inject.Singleton;
 
@@ -94,6 +95,12 @@ public class RoomDatabaseModule {
     @Singleton
     public ChanFilterRepository provideChanFilterRepository() {
         return modelMainComponent.getChanFilterRepository();
+    }
+
+    @Provides
+    @Singleton
+    public ThreadBookmarkGroupRepository provideThreadBookmarkGroupRepository() {
+        return modelMainComponent.getThreadBookmarkGroupRepository();
     }
 
 }

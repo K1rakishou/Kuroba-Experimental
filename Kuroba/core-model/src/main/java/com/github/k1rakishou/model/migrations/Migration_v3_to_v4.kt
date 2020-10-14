@@ -49,7 +49,6 @@ class Migration_v3_to_v4 : Migration(3, 4) {
       database.execSQL("CREATE INDEX IF NOT EXISTS `index_thread_bookmark_created_on` ON `thread_bookmark` (`created_on`)")
       database.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_thread_bookmark_owner_thread_id` ON `thread_bookmark` (`owner_thread_id`)")
     }
-
   }
 
 }

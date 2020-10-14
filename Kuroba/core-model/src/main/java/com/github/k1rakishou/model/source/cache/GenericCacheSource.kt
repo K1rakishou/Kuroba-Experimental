@@ -12,7 +12,7 @@ import kotlinx.coroutines.channels.consumeEach
 import kotlin.coroutines.CoroutineContext
 
 /**
- * Locks-free auto trimmable poor man's cache implementation
+ * Lock-free auto trimmable poor man's cache implementation
  * */
 @Suppress("EXPERIMENTAL_API_USAGE")
 open class GenericCacheSource<Key, Value>(

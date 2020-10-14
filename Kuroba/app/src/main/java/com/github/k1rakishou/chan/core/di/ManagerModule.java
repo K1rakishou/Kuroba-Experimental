@@ -54,6 +54,7 @@ import com.github.k1rakishou.chan.core.manager.SeenPostsManager;
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.manager.ThemeParser;
+import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.SiteRegistry;
@@ -83,6 +84,7 @@ import com.github.k1rakishou.model.repository.ChanThreadViewableInfoRepository;
 import com.github.k1rakishou.model.repository.HistoryNavigationRepository;
 import com.github.k1rakishou.model.repository.SeenPostRepository;
 import com.github.k1rakishou.model.repository.SiteRepository;
+import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -601,6 +603,20 @@ public class ManagerModule {
         return new ThemeParser(
                 appContext,
                 fileManager
+        );
+    }
+
+    @Singleton
+    @Provides
+    public ThreadBookmarkGroupManager provideThreadBookmarkGroupEntryManager(
+            CoroutineScope appScope,
+            ThreadBookmarkGroupRepository threadBookmarkGroupEntryRepository
+    ) {
+        Logger.d(AppModule.DI_TAG, "ThreadBookmarkGroupEntryManager");
+
+        return new ThreadBookmarkGroupManager(
+                appScope,
+                threadBookmarkGroupEntryRepository
         );
     }
 

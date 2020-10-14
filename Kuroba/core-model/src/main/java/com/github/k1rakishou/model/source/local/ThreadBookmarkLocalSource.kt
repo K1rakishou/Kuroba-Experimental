@@ -27,7 +27,8 @@ class ThreadBookmarkLocalSource(
   suspend fun selectAll(): List<ThreadBookmark> {
     ensureInTransaction()
 
-    val bookmarks = threadBookmarkDao.selectAllBookmarks()
+    val bookmarkEntities = threadBookmarkDao.selectAllBookmarks()
+    val bookmarks = bookmarkEntities
       .map { threadBookmarkFull -> ThreadBookmarkMapper.toThreadBookmark(threadBookmarkFull) }
 
     val mapOfBookmarks = associateBookmarks(bookmarks)

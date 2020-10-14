@@ -10,6 +10,7 @@ import kotlin.math.max
 
 class ThreadBookmark private constructor(
   val threadDescriptor: ChanDescriptor.ThreadDescriptor,
+  val groupId: String,
   var seenPostsCount: Int = 0,
   var totalPostsCount: Int = 0,
   var lastViewedPostNo: Long = 0,
@@ -39,6 +40,7 @@ class ThreadBookmark private constructor(
 
     return ThreadBookmark(
       threadDescriptor = threadDescriptor,
+      groupId = groupId,
       seenPostsCount = seenPostsCount,
       totalPostsCount = totalPostsCount,
       lastViewedPostNo = lastViewedPostNo,
@@ -212,6 +214,7 @@ class ThreadBookmark private constructor(
     other as ThreadBookmark
 
     if (threadDescriptor != other.threadDescriptor) return false
+    if (groupId != other.groupId) return false
     if (seenPostsCount != other.seenPostsCount) return false
     if (totalPostsCount != other.totalPostsCount) return false
     if (lastViewedPostNo != other.lastViewedPostNo) return false
@@ -227,6 +230,7 @@ class ThreadBookmark private constructor(
 
   override fun hashCode(): Int {
     var result = threadDescriptor.hashCode()
+    result = 31 * result + groupId.hashCode()
     result = 31 * result + seenPostsCount
     result = 31 * result + totalPostsCount
     result = 31 * result + lastViewedPostNo.hashCode()
@@ -240,7 +244,7 @@ class ThreadBookmark private constructor(
   }
 
   override fun toString(): String {
-    return "ThreadBookmark(threadDescriptor=$threadDescriptor, seenPostsCount=$seenPostsCount, " +
+    return "ThreadBookmark(threadDescriptor=$threadDescriptor, groupId=$groupId, seenPostsCount=$seenPostsCount, " +
       "totalPostsCount=$totalPostsCount, lastViewedPostNo=$lastViewedPostNo, " +
       "threadBookmarkReplies=$threadBookmarkReplies, title=${title?.take(20)}, thumbnailUrl=$thumbnailUrl, " +
       "stickyThread=$stickyThread, state=${stateToString()}, createdOn=${createdOn})"
@@ -345,7 +349,11 @@ class ThreadBookmark private constructor(
      * */
     const val BOOKMARK_STATE_STICKY_NO_CAP = 1 shl 8
 
-    fun create(threadDescriptor: ChanDescriptor.ThreadDescriptor, createdOn: DateTime): ThreadBookmark {
+    fun create(
+      threadDescriptor: ChanDescriptor.ThreadDescriptor,
+      createdOn: DateTime,
+      groupId: String? = null
+    ): ThreadBookmark {
       val bookmarkInitialState = BitSet()
       bookmarkInitialState.set(BOOKMARK_STATE_WATCHING)
       bookmarkInitialState.set(BOOKMARK_STATE_FIRST_FETCH)
@@ -353,7 +361,9 @@ class ThreadBookmark private constructor(
       return ThreadBookmark(
         threadDescriptor = threadDescriptor,
         state = bookmarkInitialState,
-        createdOn = createdOn
+        createdOn = createdOn,
+        // Bookmark's siteName is the default group when creating a new bookmark
+        groupId = groupId ?: threadDescriptor.siteName()
       )
     }
   }

@@ -67,6 +67,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   @Inject
   lateinit var chanFilterManager: ChanFilterManager
   @Inject
+  lateinit var threadBookmarkGroupManager: ThreadBookmarkGroupManager
+  @Inject
   lateinit var settingsNotificationManager: SettingsNotificationManager
   @Inject
   lateinit var applicationVisibilityManager: ApplicationVisibilityManager
@@ -188,6 +190,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     bookmarkWatcherCoordinator.initialize()
     archivesManager.initialize()
     chanFilterManager.initialize()
+    threadBookmarkGroupManager.initialize()
 
     setupErrorHandlers()
 

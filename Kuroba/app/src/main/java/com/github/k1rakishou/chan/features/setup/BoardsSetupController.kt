@@ -75,11 +75,6 @@ class BoardsSetupController(
       presenter.onBoardMoving(fromBoardDescriptor, fromPosition, toPosition)
       controller.moveModel(fromPosition, toPosition)
 
-      val model = viewHolder.model
-      check(isTouchableModel(model)) {
-        "A model was dragged that is not a valid target: " + model.javaClass
-      }
-
       return true
     }
 
