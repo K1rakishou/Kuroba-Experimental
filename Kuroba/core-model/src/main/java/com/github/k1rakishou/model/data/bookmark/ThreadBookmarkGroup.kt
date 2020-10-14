@@ -5,6 +5,9 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 data class ThreadBookmarkGroup(
   val groupId: String,
   val groupName: String,
+  @get:Synchronized
+  @set:Synchronized
+  var isExpanded: Boolean,
   val order: Int,
   // Map<BookmarkDatabaseId, ThreadBookmarkGroupEntry>
   val entries: Map<Long, ThreadBookmarkGroupEntry>

@@ -122,6 +122,31 @@ class BookmarksPresenter(
     }
   }
 
+  fun listenForStateChanges(): Flowable<BookmarksControllerState> {
+    return bookmarksControllerStateSubject
+      .onBackpressureLatest()
+      .observeOn(AndroidSchedulers.mainThread())
+      .doOnError { error ->
+        Logger.e(TAG, "Unknown error subscribed to bookmarksPresenter.listenForStateChanges()", error)
+      }
+      .onErrorReturn { error -> BookmarksControllerState.Error(error.errorMessageOrClassName()) }
+      .hide()
+  }
+
+  fun toggleBookmarkExpandState(groupId: String) {
+    scope.launch(Dispatchers.Default) {
+      threadBookmarkGroupManager.toggleBookmarkExpandState(groupId)
+
+      // TODO(KurobaEx): do something with query
+      ModularResult.Try { showBookmarks(null) }.safeUnwrap { error ->
+        Logger.e(TAG, "showBookmarks() error", error)
+        setState(BookmarksControllerState.Error(error.errorMessageOrClassName()))
+
+        return@launch
+      }
+    }
+  }
+
   fun reloadBookmarks() {
     scope.launch(Dispatchers.Default) {
       bookmarksManager.awaitUntilInitialized()
@@ -140,17 +165,6 @@ class BookmarksPresenter(
         return@launch
       }
     }
-  }
-
-  fun listenForStateChanges(): Flowable<BookmarksControllerState> {
-    return bookmarksControllerStateSubject
-      .onBackpressureLatest()
-      .observeOn(AndroidSchedulers.mainThread())
-      .doOnError { error ->
-        Logger.e(TAG, "Unknown error subscribed to bookmarksPresenter.listenForStateChanges()", error)
-      }
-      .onErrorReturn { error -> BookmarksControllerState.Error(error.errorMessageOrClassName()) }
-      .hide()
   }
 
   fun deleteBookmarks(selectedItems: List<ChanDescriptor.ThreadDescriptor>): Boolean {
@@ -205,36 +219,40 @@ class BookmarksPresenter(
 
     val isWatcherEnabled = ChanSettings.watchEnabled.get()
 
-    val threadBookmarkItemViewList = bookmarksManager.mapNotNullAllBookmarks<ThreadBookmarkItemView> { threadBookmarkView ->
-      val title = threadBookmarkView.title
-        ?: "No title"
+    val threadBookmarkItemViewList = bookmarksManager
+      .mapNotNullAllBookmarks<ThreadBookmarkItemView> { threadBookmarkView ->
+        val title = threadBookmarkView.title
+          ?: "No title"
 
-      if (searchQuery == null || title.contains(searchQuery, ignoreCase = true)) {
-        val threadBookmarkStats = getThreadBookmarkStatsOrNull(isWatcherEnabled, threadBookmarkView)
+        if (searchQuery == null || title.contains(searchQuery, ignoreCase = true)) {
+          val threadBookmarkStats = getThreadBookmarkStatsOrNull(isWatcherEnabled, threadBookmarkView)
 
-        val selection = if (bookmarksSelectionHelper.isInSelectionMode()) {
-          ThreadBookmarkSelection(bookmarksSelectionHelper.isSelected(threadBookmarkView.threadDescriptor))
-        } else {
-          null
-        }
+          val selection = if (bookmarksSelectionHelper.isInSelectionMode()) {
+            ThreadBookmarkSelection(bookmarksSelectionHelper.isSelected(threadBookmarkView.threadDescriptor))
+          } else {
+            null
+          }
 
-        return@mapNotNullAllBookmarks ThreadBookmarkItemView(
-          threadDescriptor = threadBookmarkView.threadDescriptor,
-          groupId = threadBookmarkView.groupId,
-          title = title,
-          highlight = threadBookmarkView.threadDescriptor in bookmarksToHighlight,
-          thumbnailUrl = threadBookmarkView.thumbnailUrl,
-          threadBookmarkStats = threadBookmarkStats,
-          selection = selection,
-          createdOn = threadBookmarkView.createdOn
-        )
+          return@mapNotNullAllBookmarks ThreadBookmarkItemView(
+            threadDescriptor = threadBookmarkView.threadDescriptor,
+            groupId = threadBookmarkView.groupId,
+            title = title,
+            highlight = threadBookmarkView.threadDescriptor in bookmarksToHighlight,
+            thumbnailUrl = threadBookmarkView.thumbnailUrl,
+            threadBookmarkStats = threadBookmarkStats,
+            selection = selection,
+            createdOn = threadBookmarkView.createdOn
+          )
       }
 
       return@mapNotNullAllBookmarks null
     }
 
-    val sortedBookmarks = sortBookmarks(threadBookmarkItemViewList)
-    if (sortedBookmarks.isEmpty()) {
+    val groupedBookmarks = threadBookmarkGroupManager.groupBookmarks(threadBookmarkItemViewList)
+
+    // TODO(KurobaEx): sorting!
+//    val sortedBookmarks = sortBookmarks(threadBookmarkItemViewList)
+    if (groupedBookmarks.isEmpty()) {
       if (isSearchMode.get()) {
         setState(BookmarksControllerState.NothingFound(searchQuery ?: ""))
       } else {
@@ -244,18 +262,30 @@ class BookmarksPresenter(
       return
     }
 
-    setState(BookmarksControllerState.Data(sortedBookmarks))
+    setState(BookmarksControllerState.Data(groupedBookmarks))
   }
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   private fun sortBookmarks(bookmarks: List<ThreadBookmarkItemView>): List<ThreadBookmarkItemView> {
-    return when (ChanSettings.bookmarksSortOrder.get()) {
-      ChanSettings.BookmarksSortOrder.CreatedOnAscending -> bookmarks.sortedWith(BOOKMARK_CREATED_ON_ASC_COMPARATOR)
-      ChanSettings.BookmarksSortOrder.CreatedOnDescending -> bookmarks.sortedWith(BOOKMARK_CREATED_ON_DESC_COMPARATOR)
-      ChanSettings.BookmarksSortOrder.UnreadRepliesAscending -> bookmarks.sortedWith(UNREAD_REPLIES_ASC_COMPARATOR)
-      ChanSettings.BookmarksSortOrder.UnreadRepliesDescending -> bookmarks.sortedWith(UNREAD_REPLIES_DESC_COMPARATOR)
-      ChanSettings.BookmarksSortOrder.UnreadPostsAscending -> bookmarks.sortedWith(UNREAD_POSTS_ASC_COMPARATOR)
-      ChanSettings.BookmarksSortOrder.UnreadPostsDescending -> bookmarks.sortedWith(UNREAD_POSTS_DESC_COMPARATOR)
+    when (ChanSettings.bookmarksSortOrder.get()) {
+      ChanSettings.BookmarksSortOrder.CreatedOnAscending -> {
+        return bookmarks.sortedWith(BOOKMARK_CREATED_ON_ASC_COMPARATOR)
+      }
+      ChanSettings.BookmarksSortOrder.CreatedOnDescending -> {
+        return bookmarks.sortedWith(BOOKMARK_CREATED_ON_DESC_COMPARATOR)
+      }
+      ChanSettings.BookmarksSortOrder.UnreadRepliesAscending -> {
+        return bookmarks.sortedWith(UNREAD_REPLIES_ASC_COMPARATOR)
+      }
+      ChanSettings.BookmarksSortOrder.UnreadRepliesDescending -> {
+        return bookmarks.sortedWith(UNREAD_REPLIES_DESC_COMPARATOR)
+      }
+      ChanSettings.BookmarksSortOrder.UnreadPostsAscending -> {
+        return bookmarks.sortedWith(UNREAD_POSTS_ASC_COMPARATOR)
+      }
+      ChanSettings.BookmarksSortOrder.UnreadPostsDescending -> {
+        return bookmarks.sortedWith(UNREAD_POSTS_DESC_COMPARATOR)
+      }
     }
   }
 

@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
+import com.github.k1rakishou.chan.ui.epoxy.epoxyExpandableGroupView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
@@ -353,37 +354,56 @@ class BookmarksController(
 
           updateTitleWithStats(state)
 
-          state.bookmarks.forEach { bookmark ->
-            val requestData =
-              BaseThreadBookmarkViewHolder.ImageLoaderRequestData(bookmark.thumbnailUrl)
+          state.groupedBookmarks.forEach { bookmarkGroup ->
+            val hasBookmarksInGroup = bookmarkGroup.threadBookmarkViews.isNotEmpty()
 
-            if (isGridMode) {
-              epoxyGridThreadBookmarkViewHolder {
-                id("thread_grid_bookmark_view_${bookmark.hashCode()}")
-                context(context)
-                imageLoaderRequestData(requestData)
-                threadDescriptor(bookmark.threadDescriptor)
-                titleString(bookmark.title)
-                threadBookmarkStats(bookmark.threadBookmarkStats)
-                threadBookmarkSelection(bookmark.selection)
-                highlightBookmark(bookmark.highlight)
-                bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
-                bookmarkLongClickListener { onBookmarkLongClicked(bookmark) }
-                bookmarkStatsClickListener { onBookmarkStatsClicked(bookmark) }
-              }
-            } else {
-              epoxyListThreadBookmarkViewHolder {
-                id("thread_list_bookmark_view_${bookmark.hashCode()}")
-                context(context)
-                imageLoaderRequestData(requestData)
-                threadDescriptor(bookmark.threadDescriptor)
-                titleString(bookmark.title)
-                threadBookmarkStats(bookmark.threadBookmarkStats)
-                threadBookmarkSelection(bookmark.selection)
-                highlightBookmark(bookmark.highlight)
-                bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
-                bookmarkLongClickListener { onBookmarkLongClicked(bookmark) }
-                bookmarkStatsClickListener { onBookmarkStatsClicked(bookmark) }
+            if (!hasBookmarksInGroup) {
+              return@forEach
+            }
+
+            epoxyExpandableGroupView {
+              id("bookmark_group_toggle_${bookmarkGroup.groupId}")
+              isExpanded(bookmarkGroup.isExpanded)
+              groupTitle(bookmarkGroup.groupInfoText)
+              clickListener { bookmarksPresenter.toggleBookmarkExpandState(bookmarkGroup.groupId) }
+            }
+
+            if (!bookmarkGroup.isExpanded) {
+              return@forEach
+            }
+
+            bookmarkGroup.threadBookmarkViews.forEach { bookmark ->
+              val requestData =
+                BaseThreadBookmarkViewHolder.ImageLoaderRequestData(bookmark.thumbnailUrl)
+
+              if (isGridMode) {
+                epoxyGridThreadBookmarkViewHolder {
+                  id("thread_grid_bookmark_view_${bookmark.hashCode()}")
+                  context(context)
+                  imageLoaderRequestData(requestData)
+                  threadDescriptor(bookmark.threadDescriptor)
+                  titleString(bookmark.title)
+                  threadBookmarkStats(bookmark.threadBookmarkStats)
+                  threadBookmarkSelection(bookmark.selection)
+                  highlightBookmark(bookmark.highlight)
+                  bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
+                  bookmarkLongClickListener { onBookmarkLongClicked(bookmark) }
+                  bookmarkStatsClickListener { onBookmarkStatsClicked(bookmark) }
+                }
+              } else {
+                epoxyListThreadBookmarkViewHolder {
+                  id("thread_list_bookmark_view_${bookmark.hashCode()}")
+                  context(context)
+                  imageLoaderRequestData(requestData)
+                  threadDescriptor(bookmark.threadDescriptor)
+                  titleString(bookmark.title)
+                  threadBookmarkStats(bookmark.threadBookmarkStats)
+                  threadBookmarkSelection(bookmark.selection)
+                  highlightBookmark(bookmark.highlight)
+                  bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
+                  bookmarkLongClickListener { onBookmarkLongClicked(bookmark) }
+                  bookmarkStatsClickListener { onBookmarkStatsClicked(bookmark) }
+                }
               }
             }
           }
@@ -475,13 +495,17 @@ class BookmarksController(
   }
 
   private fun formatTitleWithStats(state: BookmarksControllerState.Data): String {
-    val totalBookmarksCount = state.bookmarks.size
+    val groupedBookmarks = state.groupedBookmarks
+
+    val totalBookmarksCount = groupedBookmarks.sumBy { group -> group.threadBookmarkViews.size }
     if (totalBookmarksCount <= 0) {
       return context.getString(R.string.controller_bookmarks)
     }
 
-    val watchingBookmarksCount = state.bookmarks.count { threadBookmarkItemView ->
-      threadBookmarkItemView.threadBookmarkStats.watching
+    val watchingBookmarksCount = groupedBookmarks.sumBy { group ->
+      group.threadBookmarkViews.count { threadBookmarkItemView ->
+        threadBookmarkItemView.threadBookmarkStats.watching
+      }
     }
 
     return context.getString(

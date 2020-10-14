@@ -17,9 +17,9 @@ import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
 import com.github.k1rakishou.chan.features.setup.data.SitesSetupControllerState
 import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteView
 import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteViewModel_
-import com.github.k1rakishou.chan.features.setup.epoxy.site.epoxySiteArchivesGroupView
 import com.github.k1rakishou.chan.features.setup.epoxy.site.epoxySiteView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
+import com.github.k1rakishou.chan.ui.epoxy.epoxyExpandableGroupView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
@@ -174,11 +174,17 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
             }
 
             if (siteCellArchiveGroupInfo != null) {
+              val archivesInfoText = context.getString(
+                R.string.controller_sites_setup_archives_group,
+                siteCellArchiveGroupInfo.archiveEnabledTotalCount.enabledCount,
+                siteCellArchiveGroupInfo.archiveEnabledTotalCount.totalCount,
+              )
+
               // Render archives for this site
-              epoxySiteArchivesGroupView {
+              epoxyExpandableGroupView {
                 id("sites_setup_site_view_archive_toggle_${siteCellData.siteDescriptor}")
                 isExpanded(siteCellArchiveGroupInfo.isGroupExpanded)
-                archiveEnabledAndTotalCount(siteCellArchiveGroupInfo.archiveEnabledTotalCount)
+                groupTitle(archivesInfoText)
                 clickListener { sitesPresenter.toggleGroupCollapseState(siteCellData.siteDescriptor) }
               }
 

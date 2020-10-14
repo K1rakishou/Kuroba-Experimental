@@ -33,4 +33,11 @@ abstract class ThreadBookmarkGroupDao {
     WHERE bookmarks.${ThreadBookmarkEntity.THREAD_BOOKMARK_ID_COLUMN_NAME} IN (:bookmarkIds)
   """)
   abstract suspend fun selectBookmarkThreadDescriptors(bookmarkIds: List<Long>): List<BookmarkThreadDescriptor>
+
+  @Query("""
+    UPDATE ${ThreadBookmarkGroupEntity.TABLE_NAME}
+    SET ${ThreadBookmarkGroupEntity.IS_EXPANDED_COLUMN_NAME} = :expanded
+    WHERE ${ThreadBookmarkGroupEntity.GROUP_ID_COLUMN_NAME} = :groupId
+  """)
+  abstract suspend fun updateBookmarkGroupExpanded(groupId: String, expanded: Boolean)
 }

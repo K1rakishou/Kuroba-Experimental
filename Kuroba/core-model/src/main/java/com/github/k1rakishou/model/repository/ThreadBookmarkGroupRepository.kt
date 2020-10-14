@@ -37,4 +37,14 @@ class ThreadBookmarkGroupRepository(
     }
   }
 
+  suspend fun updateBookmarkGroupExpanded(groupId: String, isExpanded: Boolean): ModularResult<Unit> {
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        ensureBackgroundThread()
+
+        localSource.updateBookmarkGroupExpanded(groupId, isExpanded)
+      }
+    }
+  }
+
 }

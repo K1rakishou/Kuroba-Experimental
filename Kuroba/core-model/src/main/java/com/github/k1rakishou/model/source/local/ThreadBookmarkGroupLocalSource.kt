@@ -36,4 +36,10 @@ class ThreadBookmarkGroupLocalSource(
       }
   }
 
+  suspend fun updateBookmarkGroupExpanded(groupId: String, isExpanded: Boolean) {
+    ensureInTransaction()
+
+    threadBookmarkGroupDao.updateBookmarkGroupExpanded(groupId, isExpanded)
+  }
+
 }

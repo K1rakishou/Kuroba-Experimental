@@ -22,25 +22,26 @@ object ThreadBookmarkGroupMapper {
           ?: return@mapNotNull null
 
         val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
-          bookmarkThreadDescriptor.siteName,
-          bookmarkThreadDescriptor.boardCode,
-          bookmarkThreadDescriptor.threadNo
+          siteName = bookmarkThreadDescriptor.siteName,
+          boardCode = bookmarkThreadDescriptor.boardCode,
+          threadNo = bookmarkThreadDescriptor.threadNo
         )
 
         return@mapNotNull ThreadBookmarkGroupEntry(
-          threadBookmarkGroupEntryEntity.id,
-          threadBookmarkGroupEntryEntity.ownerGroupId,
-          ownerBookmarkId,
-          threadDescriptor,
-          threadBookmarkGroupEntryEntity.orderInGroup
+          databaseId = threadBookmarkGroupEntryEntity.id,
+          ownerGroupId = threadBookmarkGroupEntryEntity.ownerGroupId,
+          ownerBookmarkId = ownerBookmarkId,
+          threadDescriptor = threadDescriptor,
+          orderInGroup = threadBookmarkGroupEntryEntity.orderInGroup
         )
       }.associateBy { threadBookmarkGroupEntry -> threadBookmarkGroupEntry.databaseId }
 
     return ThreadBookmarkGroup(
-      threadBookmarkGroupWithEntries.threadBookmarkGroupEntity.groupId,
-      threadBookmarkGroupWithEntries.threadBookmarkGroupEntity.groupName,
-      threadBookmarkGroupWithEntries.threadBookmarkGroupEntity.groupOrder,
-      threadBookmarkGroupEntries
+      groupId = threadBookmarkGroupWithEntries.threadBookmarkGroupEntity.groupId,
+      groupName = threadBookmarkGroupWithEntries.threadBookmarkGroupEntity.groupName,
+      isExpanded = threadBookmarkGroupWithEntries.threadBookmarkGroupEntity.isExpanded,
+      order = threadBookmarkGroupWithEntries.threadBookmarkGroupEntity.groupOrder,
+      entries = threadBookmarkGroupEntries
     )
   }
 

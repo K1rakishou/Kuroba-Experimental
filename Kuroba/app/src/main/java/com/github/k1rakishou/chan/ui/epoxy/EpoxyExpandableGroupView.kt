@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.features.setup.epoxy.site
+package com.github.k1rakishou.chan.ui.epoxy
 
 import android.content.Context
 import android.util.AttributeSet
@@ -10,7 +10,6 @@ import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.features.setup.data.ArchiveEnabledTotalCount
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.utils.AndroidUtils
@@ -18,7 +17,7 @@ import javax.inject.Inject
 
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
-class EpoxySiteArchivesGroupView @JvmOverloads constructor(
+class EpoxyExpandableGroupView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
@@ -28,31 +27,25 @@ class EpoxySiteArchivesGroupView @JvmOverloads constructor(
   lateinit var themeEngine: ThemeEngine
 
   private val toggleIndicator: AppCompatImageView
-  private val archivesLabel: ColorizableTextView
+  private val groupTitle: ColorizableTextView
   private val divider: View
 
   private var isExpanded = false
 
   init {
-    inflate(context, R.layout.epoxy_site_archives_group_view, this)
+    inflate(context, R.layout.epoxy_expandable_group_view, this)
     Chan.inject(this)
 
     toggleIndicator = findViewById(R.id.toggle_indicator_view)
-    archivesLabel = findViewById(R.id.archives_label)
+    groupTitle = findViewById(R.id.group_title)
     divider = findViewById(R.id.divider)
 
     updateDividerColor()
   }
 
   @ModelProp
-  fun setArchiveEnabledAndTotalCount(archiveEnabledTotalCount: ArchiveEnabledTotalCount) {
-    val archivesInfoText = context.getString(
-      R.string.controller_sites_setup_archives_group,
-      archiveEnabledTotalCount.enabledCount,
-      archiveEnabledTotalCount.totalCount,
-    )
-
-    archivesLabel.setText(archivesInfoText)
+  fun setGroupTitle(title: String) {
+    groupTitle.setText(title)
   }
 
   @ModelProp

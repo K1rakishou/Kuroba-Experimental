@@ -30,10 +30,7 @@ import com.github.k1rakishou.model.entity.navigation.NavHistoryElementIdEntity
 import com.github.k1rakishou.model.entity.navigation.NavHistoryElementInfoEntity
 import com.github.k1rakishou.model.entity.view.ChanThreadsWithPosts
 import com.github.k1rakishou.model.entity.view.OldChanPostThread
-import com.github.k1rakishou.model.migrations.Migration_v1_to_v2
-import com.github.k1rakishou.model.migrations.Migration_v2_to_v3
-import com.github.k1rakishou.model.migrations.Migration_v3_to_v4
-import com.github.k1rakishou.model.migrations.Migration_v4_to_v5
+import com.github.k1rakishou.model.migrations.*
 
 @DoNotStrip
 @Database(
@@ -69,7 +66,7 @@ import com.github.k1rakishou.model.migrations.Migration_v4_to_v5
     ChanThreadsWithPosts::class,
     OldChanPostThread::class
   ],
-  version = 5,
+  version = 6,
   exportSchema = true
 )
 @TypeConverters(
@@ -136,7 +133,8 @@ abstract class KurobaDatabase : RoomDatabase() {
           Migration_v1_to_v2(),
           Migration_v2_to_v3(),
           Migration_v3_to_v4(),
-          Migration_v4_to_v5()
+          Migration_v4_to_v5(),
+          Migration_v5_to_v6(),
         )
         .fallbackToDestructiveMigrationIfBetaOrDev(betaOrDev, loggerTag, logger)
         .fallbackToDestructiveMigrationOnDowngrade()
