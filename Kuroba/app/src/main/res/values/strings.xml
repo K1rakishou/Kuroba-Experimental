@@ -339,6 +339,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="controller_bookmarks_sorting_by_creation_time">Sort by creation time</string>
     <string name="controller_bookmarks_sorting_by_unread_replies">Sort by unread replies</string>
     <string name="controller_bookmarks_sorting_by_unread_posts">Sort by unread posts</string>
+    <string name="controller_bookmarks_sorting_custom">Custom sort order</string>
 
     <string name="board_select_all">Select all</string>
     <string name="board_select_none">Select none</string>

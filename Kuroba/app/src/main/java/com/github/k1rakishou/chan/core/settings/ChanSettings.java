@@ -65,7 +65,9 @@ public class ChanSettings {
         UnreadRepliesAscending("replies_ascending", true),
         UnreadRepliesDescending("replies_descending", false),
         UnreadPostsAscending("unread_posts_ascending", true),
-        UnreadPostsDescending("unread_posts_descending", false);
+        UnreadPostsDescending("unread_posts_descending", false),
+        CustomAscending("custom_ascending", true),
+        CustomDescending("custom_descending", false);
 
         String key;
         boolean isAscending;
@@ -85,7 +87,7 @@ public class ChanSettings {
         }
 
         public static BookmarksSortOrder defaultOrder() {
-            return BookmarksSortOrder.CreatedOnDescending;
+            return BookmarksSortOrder.CustomAscending;
         }
     }
 

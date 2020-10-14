@@ -59,6 +59,10 @@ class ThreadBookmarkGroupManager(
   ): List<GroupOfThreadBookmarkItemViews> {
     check(isReady()) { "ThreadBookmarkGroupEntryManager is not ready yet! Use awaitUntilInitialized()" }
 
+    if (threadBookmarkViewList.isEmpty()) {
+      return emptyList()
+    }
+
     return lock.read {
       val bookmarksByGroupIdMap = threadBookmarkViewList
         .groupBy { threadBookmarkItemView -> threadBookmarkItemView.groupId }

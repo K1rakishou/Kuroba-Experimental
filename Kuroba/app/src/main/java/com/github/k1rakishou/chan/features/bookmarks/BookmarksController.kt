@@ -98,7 +98,7 @@ class BookmarksController(
         onChangeViewModeClicked()
       }
       .withItem(ACTION_OPEN_SORT_SETTINGS, R.drawable.ic_baseline_sort_24) {
-        navigationController!!.presentController(BookmarksSortingController(context, this))
+        requireNavController().presentController(BookmarksSortingController(context, this))
       }
       .withOverflow(navigationController)
       .withSubItem(
@@ -154,6 +154,7 @@ class BookmarksController(
 
     cleanupFastScroller()
 
+    requireNavController().requireToolbar().exitSelectionMode()
     drawerCallbacks?.hideBottomPanel()
     drawerCallbacks = null
 
@@ -165,6 +166,7 @@ class BookmarksController(
     val result = drawerCallbacks?.passOnBackToBottomPanel() ?: false
     if (result) {
       bookmarksSelectionHelper.clearSelection()
+      requireNavController().requireToolbar().exitSelectionMode()
     }
 
     return result
@@ -207,7 +209,7 @@ class BookmarksController(
     cleanupFastScroller()
 
     val scroller = FastScrollerHelper.create(
-      navigationController!!.requireToolbar().toolbarHeight,
+      requireNavController().requireToolbar().toolbarHeight,
       globalWindowInsetsManager,
       epoxyRecyclerView,
       null,
@@ -428,8 +430,10 @@ class BookmarksController(
 
     if (bookmarksSelectionHelper.isInSelectionMode()) {
       drawerCallbacks?.showBottomPanel(bookmarksSelectionHelper.getBottomPanelMenus())
+      enterSelectionModeOrUpdate()
     } else {
       drawerCallbacks?.hideBottomPanel()
+      requireNavController().requireToolbar().exitSelectionMode()
     }
   }
 
@@ -440,8 +444,10 @@ class BookmarksController(
       if (bookmarksSelectionHelper.isInSelectionMode()) {
         // If still in selection mode after toggling this one item, update the bottom panel
         drawerCallbacks?.showBottomPanel(bookmarksSelectionHelper.getBottomPanelMenus())
+        enterSelectionModeOrUpdate()
       } else {
         drawerCallbacks?.hideBottomPanel()
+        requireNavController().requireToolbar().exitSelectionMode()
       }
 
       return
@@ -526,6 +532,25 @@ class BookmarksController(
     }
 
     menuItem.setImage(drawableId)
+  }
+
+  private fun enterSelectionModeOrUpdate() {
+    val navController = requireNavController()
+    val toolbar = navController.requireToolbar()
+
+    if (!toolbar.isInSelectionMode) {
+      toolbar.enterSelectionMode(formatSelectionText())
+      return
+    }
+
+    navigation.selectionStateText = formatSelectionText()
+    toolbar.updateSelectionTitle(navController.navigation)
+  }
+
+  private fun formatSelectionText(): String {
+    require(bookmarksSelectionHelper.isInSelectionMode()) { "Not in selection mode" }
+
+    return "Selected ${bookmarksSelectionHelper.selectedItemsCount()} bookmarks"
   }
 
   private class BookmarksEpoxyController : EpoxyController() {

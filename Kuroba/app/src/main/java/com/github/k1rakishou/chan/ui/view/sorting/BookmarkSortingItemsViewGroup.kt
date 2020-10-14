@@ -98,11 +98,18 @@ class BookmarkSortingItemsViewGroup @JvmOverloads constructor(
           ChanSettings.BookmarksSortOrder.UnreadPostsAscending
         }
       }
+      BookmarkSortingItemView.CUSTOM_SORT_ITEM_VIEW_TAG -> {
+        if (sortDirectionDesc) {
+          ChanSettings.BookmarksSortOrder.CustomDescending
+        } else {
+          ChanSettings.BookmarksSortOrder.CustomAscending
+        }
+      }
       else -> throw IllegalStateException("Unknown tag: ${sortingItemView.tag}")
     }
   }
 
   companion object {
-    private const val SORT_SETTINGS_COUNT = 3
+    private const val SORT_SETTINGS_COUNT = 4
   }
 }

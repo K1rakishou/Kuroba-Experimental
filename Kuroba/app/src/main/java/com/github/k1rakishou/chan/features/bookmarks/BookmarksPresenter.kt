@@ -7,10 +7,7 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
-import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkItemView
-import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkSelection
-import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkStats
+import com.github.k1rakishou.chan.features.bookmarks.data.*
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
@@ -213,6 +210,7 @@ class BookmarksPresenter(
 
   suspend fun showBookmarks(searchQuery: String?) {
     BackgroundUtils.ensureBackgroundThread()
+    Logger.d(TAG, "showBookmarks($searchQuery)")
 
     bookmarksManager.awaitUntilInitialized()
     threadBookmarkGroupManager.awaitUntilInitialized()
@@ -248,11 +246,8 @@ class BookmarksPresenter(
       return@mapNotNullAllBookmarks null
     }
 
-    val groupedBookmarks = threadBookmarkGroupManager.groupBookmarks(threadBookmarkItemViewList)
-
-    // TODO(KurobaEx): sorting!
-//    val sortedBookmarks = sortBookmarks(threadBookmarkItemViewList)
-    if (groupedBookmarks.isEmpty()) {
+    val sortedBookmarks = sortBookmarks(threadBookmarkGroupManager.groupBookmarks(threadBookmarkItemViewList))
+    if (sortedBookmarks.isEmpty()) {
       if (isSearchMode.get()) {
         setState(BookmarksControllerState.NothingFound(searchQuery ?: ""))
       } else {
@@ -262,30 +257,49 @@ class BookmarksPresenter(
       return
     }
 
-    setState(BookmarksControllerState.Data(groupedBookmarks))
+    setState(BookmarksControllerState.Data(sortedBookmarks))
   }
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
-  private fun sortBookmarks(bookmarks: List<ThreadBookmarkItemView>): List<ThreadBookmarkItemView> {
-    when (ChanSettings.bookmarksSortOrder.get()) {
-      ChanSettings.BookmarksSortOrder.CreatedOnAscending -> {
-        return bookmarks.sortedWith(BOOKMARK_CREATED_ON_ASC_COMPARATOR)
+  private fun sortBookmarks(bookmarks: List<GroupOfThreadBookmarkItemViews>): List<GroupOfThreadBookmarkItemViews> {
+    if (bookmarks.isEmpty()) {
+      return emptyList()
+    }
+
+    val comparator = when (val sortOrder = ChanSettings.bookmarksSortOrder.get()) {
+      ChanSettings.BookmarksSortOrder.CreatedOnAscending -> BOOKMARK_CREATED_ON_ASC_COMPARATOR
+      ChanSettings.BookmarksSortOrder.CreatedOnDescending -> BOOKMARK_CREATED_ON_DESC_COMPARATOR
+      ChanSettings.BookmarksSortOrder.UnreadRepliesAscending -> UNREAD_REPLIES_ASC_COMPARATOR
+      ChanSettings.BookmarksSortOrder.UnreadRepliesDescending -> UNREAD_REPLIES_DESC_COMPARATOR
+      ChanSettings.BookmarksSortOrder.UnreadPostsAscending -> UNREAD_POSTS_ASC_COMPARATOR
+      ChanSettings.BookmarksSortOrder.UnreadPostsDescending -> UNREAD_POSTS_DESC_COMPARATOR
+      ChanSettings.BookmarksSortOrder.CustomAscending,
+      ChanSettings.BookmarksSortOrder.CustomDescending -> {
+        return handleCustomOrder(sortOrder, bookmarks)
       }
-      ChanSettings.BookmarksSortOrder.CreatedOnDescending -> {
-        return bookmarks.sortedWith(BOOKMARK_CREATED_ON_DESC_COMPARATOR)
-      }
-      ChanSettings.BookmarksSortOrder.UnreadRepliesAscending -> {
-        return bookmarks.sortedWith(UNREAD_REPLIES_ASC_COMPARATOR)
-      }
-      ChanSettings.BookmarksSortOrder.UnreadRepliesDescending -> {
-        return bookmarks.sortedWith(UNREAD_REPLIES_DESC_COMPARATOR)
-      }
-      ChanSettings.BookmarksSortOrder.UnreadPostsAscending -> {
-        return bookmarks.sortedWith(UNREAD_POSTS_ASC_COMPARATOR)
-      }
-      ChanSettings.BookmarksSortOrder.UnreadPostsDescending -> {
-        return bookmarks.sortedWith(UNREAD_POSTS_DESC_COMPARATOR)
-      }
+    }
+
+    return bookmarks.map { groupOfThreadBookmarkItemViews ->
+      val sortedThreadBookmarkViews = groupOfThreadBookmarkItemViews.threadBookmarkViews.sortedWith(comparator)
+
+      return@map groupOfThreadBookmarkItemViews
+        .copy(threadBookmarkViews = sortedThreadBookmarkViews)
+    }
+  }
+
+  private fun handleCustomOrder(
+    sortOrder: ChanSettings.BookmarksSortOrder?,
+    bookmarks: List<GroupOfThreadBookmarkItemViews>
+  ): List<GroupOfThreadBookmarkItemViews> {
+    if (sortOrder == ChanSettings.BookmarksSortOrder.CustomAscending) {
+      return bookmarks
+    }
+
+    return bookmarks.map { groupOfThreadBookmarkItemViews ->
+      val sortedThreadBookmarkViews = groupOfThreadBookmarkItemViews.threadBookmarkViews.reversed()
+
+      return@map groupOfThreadBookmarkItemViews
+        .copy(threadBookmarkViews = sortedThreadBookmarkViews)
     }
   }
 

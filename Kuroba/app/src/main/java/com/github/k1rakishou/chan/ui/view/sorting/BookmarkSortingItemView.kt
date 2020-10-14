@@ -142,6 +142,7 @@ class BookmarkSortingItemView @JvmOverloads constructor(
       0 -> CREATION_TIME_SORT_ITEM_VIEW_TAG
       1 -> UNREAD_REPLIES_SORT_ITEM_VIEW_TAG
       2 -> UNREAD_POSTS_SORT_ITEM_VIEW_TAG
+      3 -> CUSTOM_SORT_ITEM_VIEW_TAG
       else -> throw IllegalAccessException("Unknown index: $index")
     }
   }
@@ -151,6 +152,7 @@ class BookmarkSortingItemView @JvmOverloads constructor(
       0 -> R.string.controller_bookmarks_sorting_by_creation_time
       1 -> R.string.controller_bookmarks_sorting_by_unread_replies
       2 -> R.string.controller_bookmarks_sorting_by_unread_posts
+      3 -> R.string.controller_bookmarks_sorting_custom
       else -> throw IllegalAccessException("Unknown index: $index")
     }
   }
@@ -163,6 +165,8 @@ class BookmarkSortingItemView @JvmOverloads constructor(
       ChanSettings.BookmarksSortOrder.UnreadRepliesDescending -> 1
       ChanSettings.BookmarksSortOrder.UnreadPostsAscending,
       ChanSettings.BookmarksSortOrder.UnreadPostsDescending -> 2
+      ChanSettings.BookmarksSortOrder.CustomAscending,
+      ChanSettings.BookmarksSortOrder.CustomDescending -> 3
     }
   }
 
@@ -170,6 +174,8 @@ class BookmarkSortingItemView @JvmOverloads constructor(
     const val CREATION_TIME_SORT_ITEM_VIEW_TAG = "sort_by_creation_time"
     const val UNREAD_REPLIES_SORT_ITEM_VIEW_TAG = "sort_by_unread_replies"
     const val UNREAD_POSTS_SORT_ITEM_VIEW_TAG = "sort_by_unread_posts"
+    const val CUSTOM_SORT_ITEM_VIEW_TAG = "sort_custom"
+
     const val IMAGE_VIEW_TAG = "sort_direction_image_view"
 
     private const val TEXT_SIZE_SP = 16f

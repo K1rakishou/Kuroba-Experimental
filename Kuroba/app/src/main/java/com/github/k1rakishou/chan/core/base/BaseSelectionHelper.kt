@@ -26,6 +26,8 @@ abstract class BaseSelectionHelper<T> {
 
   open fun isSelected(item: T): Boolean = selectedItems.contains(item)
 
+  open fun selectedItemsCount(): Int = selectedItems.size
+
   open fun clearSelection(notifyListeners: Boolean = true) {
     selectedItems.clear()
 

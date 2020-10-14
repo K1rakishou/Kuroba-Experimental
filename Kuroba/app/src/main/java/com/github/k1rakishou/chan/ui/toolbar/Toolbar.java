@@ -413,6 +413,18 @@ public class Toolbar
         presenter.closeSearchPhoneMode();
     }
 
+    public void enterSelectionMode(String text) {
+        presenter.enterSelectionMode(text);
+    }
+
+    public boolean isInSelectionMode() {
+        return presenter.isInSelectionMode();
+    }
+
+    public void exitSelectionMode() {
+        presenter.exitSelectionMode();
+    }
+
     public boolean isTransitioning() {
         return navigationItemContainer.isTransitioning();
     }
@@ -479,6 +491,10 @@ public class Toolbar
     }
 
     public void updateTitle(NavigationItem navigationItem) {
+        presenter.update(navigationItem);
+    }
+
+    public void updateSelectionTitle(NavigationItem navigationItem) {
         presenter.update(navigationItem);
     }
 

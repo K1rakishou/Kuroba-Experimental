@@ -153,6 +153,34 @@ public class ToolbarPresenter {
         return true;
     }
 
+    void enterSelectionMode(String text) {
+        if (item == null || item.selectionMode) {
+            return;
+        }
+
+        cancelTransitionIfNeeded();
+
+        item.selectionMode = true;
+        item.selectionStateText = text;
+
+        callback.showForNavigationItem(item, themeEngine.getChanTheme(), AnimationStyle.NONE);
+    }
+
+    boolean isInSelectionMode() {
+        return item.selectionMode;
+    }
+
+    void exitSelectionMode() {
+        if (item == null || !item.selectionMode) {
+            return;
+        }
+
+        cancelTransitionIfNeeded();
+
+        item.selectionMode = false;
+        callback.showForNavigationItem(item, themeEngine.getChanTheme(), AnimationStyle.NONE);
+    }
+
     private void cancelTransitionIfNeeded() {
         if (transition != null) {
             callback.containerStopTransition(false);

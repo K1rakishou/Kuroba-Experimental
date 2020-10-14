@@ -50,6 +50,9 @@ public class NavigationItem {
     public String searchText;
     public boolean search;
 
+    public boolean selectionMode;
+    public String selectionStateText;
+
     protected ToolbarMenu menu;
     protected ToolbarMiddleMenu middleMenu;
     protected View rightView;

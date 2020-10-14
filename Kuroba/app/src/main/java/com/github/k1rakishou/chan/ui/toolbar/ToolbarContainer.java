@@ -188,17 +188,28 @@ public class ToolbarContainer extends FrameLayout {
 
     public void update(NavigationItem item) {
         View view = viewForItem(item);
-        if (view != null) {
-            TextView titleView = view.findViewById(R.id.title);
-            if (titleView != null) {
-                titleView.setText(item.title);
+        if (view == null) {
+            return;
+        }
+
+        if (item.selectionMode) {
+            TextView textView = view.findViewById(R.id.toolbar_selection_text_view);
+            if (textView != null) {
+                textView.setText(item.selectionStateText);
             }
 
-            if (!isEmpty(item.subtitle)) {
-                TextView subtitleView = view.findViewById(R.id.subtitle);
-                if (subtitleView != null) {
-                    subtitleView.setText(item.subtitle);
-                }
+            return;
+        }
+
+        TextView titleView = view.findViewById(R.id.title);
+        if (titleView != null) {
+            titleView.setText(item.title);
+        }
+
+        if (!isEmpty(item.subtitle)) {
+            TextView subtitleView = view.findViewById(R.id.subtitle);
+            if (subtitleView != null) {
+                subtitleView.setText(item.subtitle);
             }
         }
     }
@@ -591,6 +602,8 @@ public class ToolbarContainer extends FrameLayout {
         private LinearLayout createNavigationItemView(final NavigationItem item, ChanTheme theme) {
             if (item.search) {
                 return createSearchLayout(item);
+            } else if (item.selectionMode) {
+                return createSelectionLayout(item);
             } else {
                 return createNavigationLayout(item, theme);
             }
@@ -671,7 +684,6 @@ public class ToolbarContainer extends FrameLayout {
         @NonNull
         private LinearLayout createSearchLayout(NavigationItem item) {
             SearchLayout searchLayout = new SearchLayout(getContext());
-
             searchLayout.setCallback(input -> callback.searchInput(input));
 
             if (item.searchText != null) {
@@ -683,6 +695,24 @@ public class ToolbarContainer extends FrameLayout {
 
             return searchLayout;
         }
+
+        private LinearLayout createSelectionLayout(NavigationItem item) {
+            LinearLayout linearLayout = new LinearLayout(getContext());
+            linearLayout.setOrientation(LinearLayout.HORIZONTAL);
+            linearLayout.setLayoutParams(new LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+
+            TextView textView = new TextView(getContext());
+            textView.setId(R.id.toolbar_selection_text_view);
+            textView.setLayoutParams(new LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+            textView.setGravity(Gravity.CENTER_VERTICAL);
+            textView.setTextColor(Color.WHITE);
+            textView.setTextSize(20f);
+            textView.setText(item.selectionStateText);
+
+            linearLayout.addView(textView);
+            return linearLayout;
+        }
+
     }
 
     public interface ToolbarTransitionAnimationListener {
