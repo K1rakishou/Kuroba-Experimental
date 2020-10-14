@@ -33,8 +33,6 @@ Screenshots can be found [here](https://github.com/K1rakishou/Kuroba-Experimenta
 
 #### - New theme engine has been added which now allows you to create any theme you want, see [this wiki page](https://github.com/K1rakishou/Kuroba-Experimental/wiki/Dynamic-themes) for more info
 
-### Beta versions are now available!
-
 [Latest beta version](https://kuroba.io:8443/latest_apk)
 
 [All beta versions](https://kuroba.io:8443/apks/0) (or [here](https://github.com/K1rakishou/Kuroba-Experimental/releases) look for "Pre-release" versions)
@@ -61,6 +59,7 @@ Screenshots can be found [here](https://github.com/K1rakishou/Kuroba-Experimenta
 - 4Plebs 
 - Nyafuu 
 - RebeccaBlackTech
+- TokyoChronos
 
 ## License
 [Kuroba is GPLv3](https://github.com/K1rakishou/Kuroba-Experimental/blob/develop/COPYING.txt), [licenses of the used libraries.](https://github.com/K1rakishou/Kuroba-Experimental/blob/develop/Kuroba/app/src/main/assets/html/licenses.html)
