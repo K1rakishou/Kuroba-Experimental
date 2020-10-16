@@ -17,12 +17,47 @@ class ChanDescriptorCache(
   private val boardIdCache = mutableMapWithCap<BoardDescriptor, Long>(512)
   @GuardedBy("mutex")
   private val threadIdCache = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, Long>(512)
+  @GuardedBy("mutex")
+  private val bookmarkIdCache = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, Long>(512)
 
   private val chanBoardDao = database.chanBoardDao()
   private val chanThreadDao = database.chanThreadDao()
 
   // TODO(KurobaEx): handle deletion of boards and threads when deleting (deactivating)
   //  sites/boards/threads
+
+  suspend fun putManyBookmarkIds(bookmarkIdMap: Map<ChanDescriptor.ThreadDescriptor, Long>) {
+    mutex.withLock {
+      bookmarkIdMap.forEach { (threadDescriptor, bookmarkId) ->
+        bookmarkIdCache[threadDescriptor] = bookmarkId
+      }
+    }
+  }
+
+  suspend fun getManyBookmarkIds(
+    threadDescriptors: List<ChanDescriptor.ThreadDescriptor>
+  ): Map<ChanDescriptor.ThreadDescriptor, Long> {
+    return mutex.withLock {
+      val resultMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, Long>(threadDescriptors.size)
+
+      threadDescriptors.forEach { threadDescriptor ->
+        resultMap[threadDescriptor] = bookmarkIdCache[threadDescriptor]
+          ?: return@forEach
+      }
+
+      return@withLock resultMap
+    }
+  }
+
+  suspend fun deleteManyBookmarkIds(
+    threadDescriptors: List<ChanDescriptor.ThreadDescriptor>
+  ) {
+    mutex.withLock {
+      threadDescriptors.forEach { threadDescriptor ->
+        bookmarkIdCache.remove(threadDescriptor)
+      }
+    }
+  }
 
   suspend fun putBoardDescriptor(boardId: Long, boardDescriptor: BoardDescriptor) {
     mutex.withLock { boardIdCache.put(boardDescriptor, boardId) }

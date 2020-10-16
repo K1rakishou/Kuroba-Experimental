@@ -105,9 +105,14 @@ open class BaseThreadBookmarkViewHolder(
     this.threadDescriptor = threadDescriptor
   }
 
-  fun setTitle(titleText: String?) {
+  fun setTitle(titleText: String?, isWatching: Boolean) {
     bookmarkTitle.text = titleText
-    bookmarkTitle.setTextColor(themeEngine.chanTheme.textColorPrimary)
+
+    if (isWatching) {
+      bookmarkTitle.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    } else {
+      bookmarkTitle.setTextColor(themeEngine.chanTheme.bookmarkCounterNotWatchingColor)
+    }
   }
 
   fun setThreadBookmarkStats(isGridMode: Boolean, threadBookmarkStats: ThreadBookmarkStats?) {

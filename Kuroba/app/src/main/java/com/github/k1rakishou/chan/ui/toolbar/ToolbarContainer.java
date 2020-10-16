@@ -720,6 +720,6 @@ public class ToolbarContainer extends FrameLayout {
     }
 
     public interface Callback {
-        void searchInput(String input);
+        void searchInput(@NonNull String input);
     }
 }

@@ -1,7 +1,6 @@
 package com.github.k1rakishou.model.dao
 
-import androidx.room.Dao
-import androidx.room.Query
+import androidx.room.*
 import com.github.k1rakishou.model.entity.bookmark.*
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardIdEntity
 import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
@@ -9,12 +8,18 @@ import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
 @Dao
 abstract class ThreadBookmarkGroupDao {
 
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  abstract suspend fun createGroups(groupsToCreate: List<ThreadBookmarkGroupEntity>)
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  abstract suspend fun insertMany(threadBookmarkGroupEntryEntities: List<ThreadBookmarkGroupEntryEntity>): List<Long>
+
   @Query("""
     SELECT *
     FROM ${ThreadBookmarkGroupEntity.TABLE_NAME} groups
     INNER JOIN ${ThreadBookmarkGroupEntryEntity.TABLE_NAME} entries
         ON groups.${ThreadBookmarkGroupEntity.GROUP_ID_COLUMN_NAME} = entries.${ThreadBookmarkGroupEntryEntity.OWNER_GROUP_ID_COLUMN_NAME}
-    WHERE entries.${ThreadBookmarkGroupEntryEntity.OWNER_BOOKMARK_ID_COLUMN_NAME} IS NOT NULL
+    WHERE entries.${ThreadBookmarkGroupEntryEntity.OWNER_BOOKMARK_ID_COLUMN_NAME}
     ORDER BY groups.${ThreadBookmarkGroupEntity.GROUP_ORDER_COLUMN_NAME} ASC
   """)
   abstract suspend fun selectAll(): List<ThreadBookmarkGroupWithEntries>
@@ -40,4 +45,14 @@ abstract class ThreadBookmarkGroupDao {
     WHERE ${ThreadBookmarkGroupEntity.GROUP_ID_COLUMN_NAME} = :groupId
   """)
   abstract suspend fun updateBookmarkGroupExpanded(groupId: String, expanded: Boolean)
+
+  @Update(onConflict = OnConflictStrategy.REPLACE)
+  abstract suspend fun updateMany(threadBookmarkGroupEntryEntityList: List<ThreadBookmarkGroupEntryEntity>)
+
+  @Query("""
+    DELETE
+    FROM ${ThreadBookmarkGroupEntryEntity.TABLE_NAME}
+    WHERE ${ThreadBookmarkGroupEntryEntity.ID_COLUMN_NAME} IN (:databaseIdsToDelete)
+  """)
+  abstract suspend fun deleteBookmarkEntries(databaseIdsToDelete: Collection<Long>)
 }

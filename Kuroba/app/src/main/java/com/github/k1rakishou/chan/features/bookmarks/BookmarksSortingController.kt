@@ -10,7 +10,7 @@ import com.github.k1rakishou.chan.ui.view.sorting.BookmarkSortingItemsViewGroup
 
 class BookmarksSortingController(
   context: Context,
-  private var reloadBookmarksListener: ReloadBookmarksListener? = null
+  private var sortingOrderChangeListener: SortingOrderChangeListener? = null
 ) : BaseFloatingController(context) {
 
   private lateinit var outsideArea: ConstraintLayout
@@ -40,7 +40,7 @@ class BookmarksSortingController(
 
       if (prevOrder != newOrder) {
         ChanSettings.bookmarksSortOrder.set(newOrder)
-        reloadBookmarksListener?.reloadBookmarks()
+        sortingOrderChangeListener?.onSortingOrderChanged()
       }
 
       pop()
@@ -67,11 +67,11 @@ class BookmarksSortingController(
 
   override fun onDestroy() {
     super.onDestroy()
-    reloadBookmarksListener = null
+    sortingOrderChangeListener = null
   }
 
-  interface ReloadBookmarksListener {
-    fun reloadBookmarks()
+  interface SortingOrderChangeListener {
+    fun onSortingOrderChanged()
   }
 
 }

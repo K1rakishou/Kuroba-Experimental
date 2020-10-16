@@ -10,6 +10,7 @@ import com.github.k1rakishou.model.parser.ArchivesJsonParser
 import com.github.k1rakishou.model.repository.*
 import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
 import com.github.k1rakishou.model.source.cache.GenericCacheSource
+import com.github.k1rakishou.model.source.cache.ThreadBookmarkCache
 import com.github.k1rakishou.model.source.local.*
 import com.github.k1rakishou.model.source.remote.ArchivesRemoteSource
 import com.github.k1rakishou.model.source.remote.InlinedFileInfoRemoteSource
@@ -68,6 +69,12 @@ class ModelMainModule {
   @Provides
   fun provideChanDescriptorCache(database: KurobaDatabase): ChanDescriptorCache {
     return ChanDescriptorCache(database)
+  }
+
+  @Singleton
+  @Provides
+  fun provideThreadBookmarkCache(): ThreadBookmarkCache {
+    return ThreadBookmarkCache()
   }
 
   /**
@@ -166,14 +173,16 @@ class ModelMainModule {
     @LoggerTagPrefix loggerTag: String,
     @IsDevFlavor isDevFlavor: Boolean,
     logger: Logger,
-    chanDescriptorCache: ChanDescriptorCache
+    chanDescriptorCache: ChanDescriptorCache,
+    threadBookmarkCache: ThreadBookmarkCache
   ): ThreadBookmarkLocalSource {
     return ThreadBookmarkLocalSource(
       database,
       loggerTag,
       isDevFlavor,
       logger,
-      chanDescriptorCache
+      chanDescriptorCache,
+      threadBookmarkCache
     )
   }
 
@@ -285,13 +294,15 @@ class ModelMainModule {
     database: KurobaDatabase,
     @LoggerTagPrefix loggerTag: String,
     @IsDevFlavor isDevFlavor: Boolean,
-    logger: Logger
+    logger: Logger,
+    chanDescriptorCache: ChanDescriptorCache
   ): ThreadBookmarkGroupLocalSource {
     return ThreadBookmarkGroupLocalSource(
       database,
       loggerTag,
       isDevFlavor,
-      logger
+      logger,
+      chanDescriptorCache
     )
   }
 

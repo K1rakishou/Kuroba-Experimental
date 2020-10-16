@@ -19,6 +19,8 @@ package com.github.k1rakishou.chan.ui.controller.navigation;
 import android.content.Context;
 import android.widget.FrameLayout;
 
+import androidx.annotation.NonNull;
+
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.controller.transition.ControllerTransition;
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem;
@@ -133,6 +135,6 @@ public abstract class ToolbarNavigationController extends NavigationController i
     public interface ToolbarSearchCallback {
         void onSearchVisibilityChanged(boolean visible);
 
-        void onSearchEntered(String entered);
+        void onSearchEntered(@NonNull String entered);
     }
 }

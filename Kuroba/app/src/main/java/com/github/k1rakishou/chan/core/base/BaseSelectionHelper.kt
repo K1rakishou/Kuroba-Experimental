@@ -1,17 +1,17 @@
 package com.github.k1rakishou.chan.core.base
 
-import io.reactivex.Flowable
-import io.reactivex.processors.PublishProcessor
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 
 abstract class BaseSelectionHelper<T> {
   protected val selectedItems = mutableListOf<T>()
 
-  val selectionUpdatesSubject = PublishProcessor.create<Unit>()
+  private val selectionUpdatesChannel = ConflatedBroadcastChannel<Unit>()
 
-  fun listenForSelectionChanges(): Flowable<Unit> {
-    return selectionUpdatesSubject
-      .onBackpressureLatest()
-      .hide()
+  fun listenForSelectionChanges(): Flow<Unit> {
+    return selectionUpdatesChannel
+      .asFlow()
   }
 
   open fun toggleSelection(item: T) {
@@ -37,7 +37,7 @@ abstract class BaseSelectionHelper<T> {
   }
 
   private fun onSelectionChanged() {
-    selectionUpdatesSubject.onNext(Unit)
+    selectionUpdatesChannel.offer(Unit)
   }
 
 }

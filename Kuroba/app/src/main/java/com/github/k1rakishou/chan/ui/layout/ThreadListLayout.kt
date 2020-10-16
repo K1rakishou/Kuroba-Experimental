@@ -434,7 +434,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         setBackgroundColor(themeEngine.chanTheme.backColor)
       }
       PostViewMode.CARD -> {
-        val gridLayoutManager: GridLayoutManager = object : GridLayoutManager(null, spanCount, VERTICAL, false) {
+        val gridLayoutManager: GridLayoutManager = object : GridLayoutManager(
+          null,
+          spanCount,
+          VERTICAL,
+          false
+        ) {
           override fun requestChildRectangleOnScreen(
             parent: RecyclerView,
             child: View,
@@ -490,7 +495,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
   }
 
-  private fun restorePrevScrollPosition(chanDescriptor: ChanDescriptor, thread: ChanThread, initial: Boolean) {
+  private fun restorePrevScrollPosition(
+    chanDescriptor: ChanDescriptor,
+    thread: ChanThread,
+    initial: Boolean
+  ) {
     val markedPostNo = chanThreadViewableInfoManager.getMarkedPostNo(chanDescriptor)
     val markedPost = if (markedPostNo != null) {
       PostUtils.findPostById(markedPostNo, thread)
@@ -501,8 +510,14 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     if (markedPost == null && initial) {
       chanThreadViewableInfoManager.view(chanDescriptor) { (_, index, top) ->
         when (postViewMode) {
-          PostViewMode.LIST -> (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(index, top)
-          PostViewMode.CARD -> (layoutManager as GridLayoutManager).scrollToPositionWithOffset(index, top)
+          PostViewMode.LIST -> (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
+            index,
+            top
+          )
+          PostViewMode.CARD -> (layoutManager as GridLayoutManager).scrollToPositionWithOffset(
+            index,
+            top
+          )
         }
       }
 
@@ -516,8 +531,14 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
           highlightPost(markedPost)
 
           when (postViewMode) {
-            PostViewMode.LIST -> (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(position, 0)
-            PostViewMode.CARD -> (layoutManager as GridLayoutManager).scrollToPositionWithOffset(position, 0)
+            PostViewMode.LIST -> (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
+              position,
+              0
+            )
+            PostViewMode.CARD -> (layoutManager as GridLayoutManager).scrollToPositionWithOffset(
+              position,
+              0
+            )
           }
         }
       }
@@ -598,7 +619,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     fun notifyBottomNavBarVisibilityStateManager() {
       if (chanDescriptor != null) {
-        bottomNavBarVisibilityStateManager.replyViewStateChanged(chanDescriptor.isCatalogDescriptor(), open)
+        bottomNavBarVisibilityStateManager.replyViewStateChanged(
+          chanDescriptor.isCatalogDescriptor(),
+          open
+        )
       }
     }
 
@@ -713,7 +737,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     if (query != null) {
       val size = displayingPosts.size
-      searchStatus.text = AndroidUtils.getString(R.string.search_results,
+      searchStatus.text = AndroidUtils.getString(
+        R.string.search_results,
         AndroidUtils.getQuantityString(R.plurals.posts, size, size),
         query
       )
@@ -949,11 +974,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
       if (fastScroller == null) {
         val scroller = FastScrollerHelper.create(
-          toolbarPaddingTop(),
-          globalWindowInsetsManager,
           recyclerView,
           postInfoMapItemDecoration,
-          themeEngine.chanTheme
+          themeEngine.chanTheme,
+          toolbarPaddingTop()
         )
         scroller.setThumbDragListener(this)
 

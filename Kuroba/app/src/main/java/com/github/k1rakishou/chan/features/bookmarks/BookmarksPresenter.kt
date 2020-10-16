@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.features.bookmarks
 
-import com.github.k1rakishou.chan.Chan.Companion.inject
+import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
@@ -18,6 +18,8 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -42,18 +44,18 @@ class BookmarksPresenter(
   @Inject
   lateinit var archivesManager: ArchivesManager
 
-  private val isSearchMode = AtomicBoolean(false)
   private val bookmarksRefreshed = AtomicBoolean(false)
 
   private val bookmarksControllerStateSubject = PublishProcessor.create<BookmarksControllerState>()
     .toSerialized()
-  private val searchSubject = PublishProcessor.create<String>()
-    .toSerialized()
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val searchFlow = MutableStateFlow<SearchQuery>(SearchQuery.Closed)
 
   @OptIn(ExperimentalTime::class)
   override fun onCreate(view: BookmarksView) {
     super.onCreate(view)
-    inject(this)
+    Chan.inject(this)
 
     scope.launch {
       scope.launch {
@@ -62,7 +64,9 @@ class BookmarksPresenter(
           .debounce(100.milliseconds)
           .collect {
             withContext(Dispatchers.Default) {
-              ModularResult.Try { showBookmarks(null) }.safeUnwrap { error ->
+              Logger.d(TAG, "calling showBookmarks() because bookmarks have changed")
+
+              ModularResult.Try { showBookmarks() }.safeUnwrap { error ->
                 Logger.e(TAG, "showBookmarks() listenForBookmarksChanges error", error)
                 setState(BookmarksControllerState.Error(error.errorMessageOrClassName()))
 
@@ -74,11 +78,12 @@ class BookmarksPresenter(
 
       scope.launch {
         bookmarksSelectionHelper.listenForSelectionChanges()
-          .asFlow()
           .debounce(100.milliseconds)
           .collect {
             withContext(Dispatchers.Default) {
-              ModularResult.Try { showBookmarks(null) }.safeUnwrap { error ->
+              Logger.d(TAG, "calling showBookmarks() because bookmark selection has changed")
+
+              ModularResult.Try { showBookmarks() }.safeUnwrap { error ->
                 Logger.e(TAG, "showBookmarks() listenForSelectionChanges error", error)
                 setState(BookmarksControllerState.Error(error.errorMessageOrClassName()))
 
@@ -89,19 +94,17 @@ class BookmarksPresenter(
       }
 
       scope.launch {
-        searchSubject.asFlow()
+        searchFlow
           .debounce(250.milliseconds)
-          .collect { query ->
-            setState(BookmarksControllerState.Loading)
+          .collect { searchQuery ->
+            if (searchQuery !is SearchQuery.Searching) {
+              return@collect
+            }
 
             withContext(Dispatchers.Default) {
-              val searchQuery = if (isSearchMode.get() && query.length >= 3) {
-                query
-              } else {
-                null
-              }
+              Logger.d(TAG, "calling showBookmarks() because search query was entered")
 
-              ModularResult.Try { showBookmarks(searchQuery) }.safeUnwrap { error ->
+              ModularResult.Try { showBookmarks() }.safeUnwrap { error ->
                 Logger.e(TAG, "showBookmarks() searchSubject error", error)
                 setState(BookmarksControllerState.Error(error.errorMessageOrClassName()))
 
@@ -115,6 +118,7 @@ class BookmarksPresenter(
         bookmarksManager.refreshBookmarks()
       }
 
+      Logger.d(TAG, "calling reloadBookmarks() first time")
       reloadBookmarks()
     }
   }
@@ -133,9 +137,9 @@ class BookmarksPresenter(
   fun toggleBookmarkExpandState(groupId: String) {
     scope.launch(Dispatchers.Default) {
       threadBookmarkGroupManager.toggleBookmarkExpandState(groupId)
+      Logger.d(TAG, "calling showBookmarks() because bookmark selection was toggled")
 
-      // TODO(KurobaEx): do something with query
-      ModularResult.Try { showBookmarks(null) }.safeUnwrap { error ->
+      ModularResult.Try { showBookmarks() }.safeUnwrap { error ->
         Logger.e(TAG, "showBookmarks() error", error)
         setState(BookmarksControllerState.Error(error.errorMessageOrClassName()))
 
@@ -154,8 +158,9 @@ class BookmarksPresenter(
       }
 
       setState(BookmarksControllerState.Loading)
+      Logger.d(TAG, "calling showBookmarks() because reloadBookmarks() was called")
 
-      ModularResult.Try { showBookmarks(null) }.safeUnwrap { error ->
+      ModularResult.Try { showBookmarks() }.safeUnwrap { error ->
         Logger.e(TAG, "showBookmarks() error", error)
         setState(BookmarksControllerState.Error(error.errorMessageOrClassName()))
 
@@ -164,8 +169,13 @@ class BookmarksPresenter(
     }
   }
 
-  fun deleteBookmarks(selectedItems: List<ChanDescriptor.ThreadDescriptor>): Boolean {
-    return bookmarksManager.deleteBookmarks(selectedItems)
+  suspend fun deleteBookmarks(selectedItems: List<ChanDescriptor.ThreadDescriptor>): Boolean {
+    val deleted = bookmarksManager.deleteBookmarks(selectedItems)
+    if (!deleted) {
+      return false
+    }
+
+    return threadBookmarkGroupManager.deleteGroupEntries(selectedItems)
   }
 
   fun hasBookmarks(): Boolean {
@@ -185,19 +195,23 @@ class BookmarksPresenter(
   }
 
   fun onSearchModeChanged(visible: Boolean) {
-    isSearchMode.set(visible)
-
-    if (!visible) {
+    if (visible) {
+      searchFlow.value = SearchQuery.Opened
+    } else {
       // Reset back to normal state when pressing hardware back button
-      searchSubject.onNext("")
+      searchFlow.value = SearchQuery.Closed
     }
   }
 
   fun onSearchEntered(query: String) {
-    searchSubject.onNext(query)
+    searchFlow.value = SearchQuery.Searching(query)
   }
 
+  fun isInSearchMode(): Boolean = searchFlow.value !is SearchQuery.Closed
+
   fun onViewBookmarksModeChanged() {
+    Logger.d(TAG, "calling reloadBookmarks() because view bookmarks mode changed")
+
     reloadBookmarks()
   }
 
@@ -208,25 +222,35 @@ class BookmarksPresenter(
     ) { threadBookmark -> threadBookmark.toggleWatching() }
   }
 
-  suspend fun showBookmarks(searchQuery: String?) {
+  private suspend fun showBookmarks() {
     BackgroundUtils.ensureBackgroundThread()
-    Logger.d(TAG, "showBookmarks($searchQuery)")
 
     bookmarksManager.awaitUntilInitialized()
     threadBookmarkGroupManager.awaitUntilInitialized()
 
     val isWatcherEnabled = ChanSettings.watchEnabled.get()
 
+    val searchQuery = searchFlow.value as? SearchQuery.Searching
+
+    val query = if (searchQuery?.query?.length ?: 0 >= MIN_QUERY_LENGTH) {
+      searchQuery?.query
+    } else {
+      null
+    }
+
+    Logger.d(TAG, "showBookmarks($query)")
+
     val threadBookmarkItemViewList = bookmarksManager
       .mapNotNullAllBookmarks<ThreadBookmarkItemView> { threadBookmarkView ->
         val title = threadBookmarkView.title
           ?: "No title"
 
-        if (searchQuery == null || title.contains(searchQuery, ignoreCase = true)) {
+        if (query == null || title.contains(query, ignoreCase = true)) {
           val threadBookmarkStats = getThreadBookmarkStatsOrNull(isWatcherEnabled, threadBookmarkView)
 
           val selection = if (bookmarksSelectionHelper.isInSelectionMode()) {
-            ThreadBookmarkSelection(bookmarksSelectionHelper.isSelected(threadBookmarkView.threadDescriptor))
+            val isSelected = bookmarksSelectionHelper.isSelected(threadBookmarkView.threadDescriptor)
+            ThreadBookmarkSelection(isSelected)
           } else {
             null
           }
@@ -246,10 +270,12 @@ class BookmarksPresenter(
       return@mapNotNullAllBookmarks null
     }
 
-    val sortedBookmarks = sortBookmarks(threadBookmarkGroupManager.groupBookmarks(threadBookmarkItemViewList))
+    val sortedBookmarks =
+      sortBookmarks(threadBookmarkGroupManager.groupBookmarks(threadBookmarkItemViewList))
+
     if (sortedBookmarks.isEmpty()) {
-      if (isSearchMode.get()) {
-        setState(BookmarksControllerState.NothingFound(searchQuery ?: ""))
+      if (query != null) {
+        setState(BookmarksControllerState.NothingFound(query))
       } else {
         setState(BookmarksControllerState.Empty)
       }
@@ -261,7 +287,9 @@ class BookmarksPresenter(
   }
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
-  private fun sortBookmarks(bookmarks: List<GroupOfThreadBookmarkItemViews>): List<GroupOfThreadBookmarkItemViews> {
+  private fun sortBookmarks(
+    bookmarks: List<GroupOfThreadBookmarkItemViews>
+  ): List<GroupOfThreadBookmarkItemViews> {
     if (bookmarks.isEmpty()) {
       return emptyList()
     }
@@ -280,7 +308,8 @@ class BookmarksPresenter(
     }
 
     return bookmarks.map { groupOfThreadBookmarkItemViews ->
-      val sortedThreadBookmarkViews = groupOfThreadBookmarkItemViews.threadBookmarkViews.sortedWith(comparator)
+      val sortedThreadBookmarkViews =
+        groupOfThreadBookmarkItemViews.threadBookmarkViews.sortedWith(comparator)
 
       return@map groupOfThreadBookmarkItemViews
         .copy(threadBookmarkViews = sortedThreadBookmarkViews)
@@ -293,6 +322,10 @@ class BookmarksPresenter(
   ): List<GroupOfThreadBookmarkItemViews> {
     if (sortOrder == ChanSettings.BookmarksSortOrder.CustomAscending) {
       return bookmarks
+    }
+
+    check(sortOrder == ChanSettings.BookmarksSortOrder.CustomDescending) {
+      "Unexpected sortOrder! sortOrder: $sortOrder"
     }
 
     return bookmarks.map { groupOfThreadBookmarkItemViews ->
@@ -338,8 +371,15 @@ class BookmarksPresenter(
     bookmarksControllerStateSubject.onNext(state)
   }
 
+  sealed class SearchQuery {
+    object Closed : SearchQuery()
+    object Opened : SearchQuery()
+    class Searching(val query: String) : SearchQuery()
+  }
+
   companion object {
     private const val TAG = "BookmarksPresenter"
+    private const val MIN_QUERY_LENGTH = 3
 
     private val BOOKMARK_CREATED_ON_ASC_COMPARATOR = compareBy<ThreadBookmarkItemView> { bookmarkItemView -> bookmarkItemView.createdOn }
     private val BOOKMARK_CREATED_ON_DESC_COMPARATOR = compareByDescending<ThreadBookmarkItemView> { bookmarkItemView -> bookmarkItemView.createdOn }

@@ -12,7 +12,6 @@ import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.DialogFactory
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkItemView
@@ -32,6 +31,7 @@ import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
 import com.github.k1rakishou.chan.utils.AndroidUtils.*
+import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.common.exhaustive
@@ -50,12 +50,10 @@ class BookmarksController(
   BookmarksView,
   ToolbarNavigationController.ToolbarSearchCallback,
   BookmarksSelectionHelper.OnBookmarkMenuItemClicked,
-  BookmarksSortingController.ReloadBookmarksListener {
+  BookmarksSortingController.SortingOrderChangeListener {
 
   @Inject
   lateinit var dialogFactory: DialogFactory
-  @Inject
-  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
   lateinit var themeEngine: ThemeEngine
 
@@ -178,18 +176,23 @@ class BookmarksController(
   ) {
     when (bookmarksMenuItemType) {
       BookmarksSelectionHelper.BookmarksMenuItemType.Delete -> {
-        val deleted = bookmarksPresenter.deleteBookmarks(selectedItems)
+        mainScope.launch {
+          val deleted = bookmarksPresenter.deleteBookmarks(selectedItems)
 
-        // If deleted == true that means we will use the BookmarkManager's notification mechanisms
-        // to redraw bookmarks, otherwise if we couldn't delete bookmarks for some reason we need
-        // to cleat the selection checkboxes so we need to use BookmarksSelectionHelper's notification
-        // mechanisms
-        bookmarksSelectionHelper.clearSelection(!deleted)
+          // If deleted == true that means we will use the BookmarkManager's notification mechanisms
+          // to redraw bookmarks, otherwise if we couldn't delete bookmarks for some reason we need
+          // to cleat the selection checkboxes so we need to use BookmarksSelectionHelper's notification
+          // mechanisms
+          bookmarksSelectionHelper.clearSelection(!deleted)
+          requireNavController().requireToolbar().exitSelectionMode()
+        }
       }
     }
   }
 
-  override fun reloadBookmarks() {
+  override fun onSortingOrderChanged() {
+    Logger.d(TAG, "calling reloadBookmarks() because bookmark sorting order was changed")
+
     bookmarksPresenter.reloadBookmarks()
   }
 
@@ -209,11 +212,10 @@ class BookmarksController(
     cleanupFastScroller()
 
     val scroller = FastScrollerHelper.create(
-      requireNavController().requireToolbar().toolbarHeight,
-      globalWindowInsetsManager,
       epoxyRecyclerView,
       null,
-      themeEngine.chanTheme
+      themeEngine.chanTheme,
+      0,
     )
 
     scroller.setThumbDragListener(object : FastScroller.ThumbDragListener {
@@ -290,8 +292,8 @@ class BookmarksController(
     }
   }
 
-  override fun onSearchEntered(entered: String?) {
-    bookmarksPresenter.onSearchEntered(entered ?: "")
+  override fun onSearchEntered(entered: String) {
+    bookmarksPresenter.onSearchEntered(entered)
   }
 
   override fun onConfigurationChanged(newConfig: Configuration) {
@@ -426,6 +428,10 @@ class BookmarksController(
   }
 
   private fun onBookmarkLongClicked(bookmark: ThreadBookmarkItemView) {
+    if (bookmarksPresenter.isInSearchMode()) {
+      return
+    }
+
     bookmarksSelectionHelper.toggleSelection(bookmark.threadDescriptor)
 
     if (bookmarksSelectionHelper.isInSelectionMode()) {
@@ -439,6 +445,10 @@ class BookmarksController(
 
   private fun onBookmarkClicked(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     if (bookmarksSelectionHelper.isInSelectionMode()) {
+      if (bookmarksPresenter.isInSearchMode()) {
+        return
+      }
+
       bookmarksSelectionHelper.toggleSelection(threadDescriptor)
 
       if (bookmarksSelectionHelper.isInSelectionMode()) {

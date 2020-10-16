@@ -16,6 +16,7 @@
  */
 package com.github.k1rakishou.chan.ui.toolbar;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager;
@@ -209,7 +210,7 @@ public class ToolbarPresenter {
         }
     }
 
-    void searchInput(String input) {
+    void searchInput(@NonNull String input) {
         if (!item.search) {
             return;
         }

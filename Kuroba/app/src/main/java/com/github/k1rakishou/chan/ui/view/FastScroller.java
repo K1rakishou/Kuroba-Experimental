@@ -37,8 +37,6 @@ import androidx.recyclerview.widget.RecyclerView.ItemDecoration;
 import androidx.recyclerview.widget.RecyclerView.OnItemTouchListener;
 import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
 
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
-
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
@@ -91,14 +89,10 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
 
     @Nullable
     private final PostInfoMapItemDecoration postInfoMapItemDecoration;
-    private final GlobalWindowInsetsManager globalWindowInsetsManager;
     private final int mScrollbarMinimumRange;
     private final int mMargin;
     private final int mThumbMinLength;
     private final int mTargetWidth;
-
-    private final int bottomNavBarHeight;
-    private final int toolbarHeight;
     private final int toolbarPaddingTop;
 
     // Final values for the vertical scroll bar
@@ -163,7 +157,6 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
     };
 
     public FastScroller(
-            GlobalWindowInsetsManager globalWindowInsetsManager,
             RecyclerView recyclerView,
             @Nullable
             PostInfoMapItemDecoration postInfoMapItemDecoration,
@@ -176,8 +169,6 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
             int margin,
             int thumbMinLength,
             int targetWidth,
-            int bottomNavBarHeight,
-            int toolbarHeight,
             int toolbarPaddingTop
     ) {
         mVerticalThumbDrawable = verticalThumbDrawable;
@@ -194,10 +185,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
         mThumbMinLength = thumbMinLength;
         mTargetWidth = targetWidth;
 
-        this.globalWindowInsetsManager = globalWindowInsetsManager;
         this.postInfoMapItemDecoration = postInfoMapItemDecoration;
-        this.bottomNavBarHeight = bottomNavBarHeight;
-        this.toolbarHeight = toolbarHeight;
         this.toolbarPaddingTop = toolbarPaddingTop;
 
         mVerticalThumbDrawable.setAlpha(SCROLLBAR_ALPHA);
@@ -209,7 +197,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
         attachToRecyclerView(recyclerView);
     }
 
-    public void setThumbDragListener(ThumbDragListener listener) {
+    public void setThumbDragListener(@Nullable ThumbDragListener listener) {
         this.thumbDragListener = listener;
     }
 

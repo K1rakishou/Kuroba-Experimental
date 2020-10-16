@@ -56,7 +56,7 @@ abstract class EpoxyListThreadBookmarkViewHolder
     holder.bookmarkLongClickListener(bookmarkLongClickListener)
     holder.bookmarkStatsClickListener(false, bookmarkStatsClickListener)
     holder.setThreadBookmarkStats(false, threadBookmarkStats)
-    holder.setTitle(titleString)
+    holder.setTitle(titleString, threadBookmarkStats?.watching ?: false)
     holder.highlightBookmark(highlightBookmark || threadBookmarkSelection?.isSelected == true)
 
     val watching = threadBookmarkStats?.watching ?: true
@@ -77,7 +77,7 @@ abstract class EpoxyListThreadBookmarkViewHolder
   override fun onThemeChanged() {
     holder?.apply {
       setThreadBookmarkStats(true, threadBookmarkStats)
-      setTitle(titleString)
+      setTitle(titleString, threadBookmarkStats?.watching ?: false)
       highlightBookmark(highlightBookmark)
     }
   }

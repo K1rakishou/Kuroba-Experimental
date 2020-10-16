@@ -610,13 +610,16 @@ public class ManagerModule {
     @Provides
     public ThreadBookmarkGroupManager provideThreadBookmarkGroupEntryManager(
             CoroutineScope appScope,
-            ThreadBookmarkGroupRepository threadBookmarkGroupEntryRepository
+            ThreadBookmarkGroupRepository threadBookmarkGroupEntryRepository,
+            BookmarksManager bookmarksManager
     ) {
         Logger.d(AppModule.DI_TAG, "ThreadBookmarkGroupEntryManager");
 
         return new ThreadBookmarkGroupManager(
                 appScope,
-                threadBookmarkGroupEntryRepository
+                ChanSettings.verboseLogs.get(),
+                threadBookmarkGroupEntryRepository,
+                bookmarksManager
         );
     }
 

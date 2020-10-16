@@ -91,8 +91,8 @@ class MainSettingsControllerV2(context: Context)
     }
   }
 
-  override fun onSearchEntered(entered: String?) {
-    settingsCoordinator.onSearchEntered(entered ?: "")
+  override fun onSearchEntered(entered: String) {
+    settingsCoordinator.onSearchEntered(entered)
   }
 
   override fun onBack(): Boolean {

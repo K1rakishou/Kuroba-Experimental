@@ -21,6 +21,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
@@ -295,7 +297,7 @@ public class ThreadSlideController
     }
 
     @Override
-    public void onSearchEntered(String entered) {
+    public void onSearchEntered(@NonNull String entered) {
         if (leftOpen() && leftController != null
                 && leftController instanceof ToolbarNavigationController.ToolbarSearchCallback) {
             ((ToolbarNavigationController.ToolbarSearchCallback) leftController).onSearchEntered(entered);

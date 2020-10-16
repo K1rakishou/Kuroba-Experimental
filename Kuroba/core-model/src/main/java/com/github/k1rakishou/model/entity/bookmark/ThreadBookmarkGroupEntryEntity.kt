@@ -37,7 +37,7 @@ data class ThreadBookmarkGroupEntryEntity(
   @ColumnInfo(name = ID_COLUMN_NAME)
   val id: Long,
   @ColumnInfo(name = OWNER_BOOKMARK_ID_COLUMN_NAME)
-  val ownerBookmarkId: Long?,
+  val ownerBookmarkId: Long,
   @ColumnInfo(name = OWNER_GROUP_ID_COLUMN_NAME)
   val ownerGroupId: String,
   @ColumnInfo(name = ORDER_IN_GROUP_COLUMN_NAME)

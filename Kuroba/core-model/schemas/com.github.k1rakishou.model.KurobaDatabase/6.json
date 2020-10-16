@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 6,
-    "identityHash": "a7b45c62989a7ef82d13f034f27e61a7",
+    "identityHash": "7a663493587ad9d3c885200429a098d4",
     "entities": [
       {
         "tableName": "chan_site_id",
@@ -1886,7 +1886,7 @@
       },
       {
         "tableName": "thread_bookmark_group_entry",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `owner_bookmark_id` INTEGER, `owner_group_id` TEXT NOT NULL, `order_in_group` INTEGER NOT NULL, FOREIGN KEY(`owner_bookmark_id`) REFERENCES `thread_bookmark`(`thread_bookmark_id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`owner_group_id`) REFERENCES `thread_bookmark_group`(`group_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `owner_bookmark_id` INTEGER NOT NULL, `owner_group_id` TEXT NOT NULL, `order_in_group` INTEGER NOT NULL, FOREIGN KEY(`owner_bookmark_id`) REFERENCES `thread_bookmark`(`thread_bookmark_id`) ON UPDATE CASCADE ON DELETE CASCADE , FOREIGN KEY(`owner_group_id`) REFERENCES `thread_bookmark_group`(`group_id`) ON UPDATE CASCADE ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -1898,7 +1898,7 @@
             "fieldPath": "ownerBookmarkId",
             "columnName": "owner_bookmark_id",
             "affinity": "INTEGER",
-            "notNull": false
+            "notNull": true
           },
           {
             "fieldPath": "ownerGroupId",
@@ -1984,7 +1984,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a7b45c62989a7ef82d13f034f27e61a7')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7a663493587ad9d3c885200429a098d4')"
     ]
   }
 }

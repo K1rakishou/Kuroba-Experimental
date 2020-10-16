@@ -4,6 +4,8 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.common.Logger
+import com.github.k1rakishou.model.data.bookmark.CreateBookmarkGroupEntriesTransaction
+import com.github.k1rakishou.model.data.bookmark.DeleteBookmarkGroupEntriesTransaction
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroup
 import com.github.k1rakishou.model.source.local.ThreadBookmarkGroupLocalSource
 import com.github.k1rakishou.model.util.ensureBackgroundThread
@@ -26,8 +28,9 @@ class ThreadBookmarkGroupRepository(
       return@myAsync tryWithTransaction {
         ensureBackgroundThread()
 
-        // TODO(KurobaEx): delete empty groups
         val (bookmarks, duration) = measureTimedValue {
+          localSource.deleteEmptyGroups()
+
           return@measureTimedValue localSource.selectAll()
         }
 
@@ -40,9 +43,23 @@ class ThreadBookmarkGroupRepository(
   suspend fun updateBookmarkGroupExpanded(groupId: String, isExpanded: Boolean): ModularResult<Unit> {
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
-        ensureBackgroundThread()
-
         localSource.updateBookmarkGroupExpanded(groupId, isExpanded)
+      }
+    }
+  }
+
+  suspend fun executeCreateTransaction(createTransaction: CreateBookmarkGroupEntriesTransaction): ModularResult<Unit> {
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        localSource.executeCreateTransaction(createTransaction)
+      }
+    }
+  }
+
+  suspend fun executeDeleteTransaction(deleteTransaction: DeleteBookmarkGroupEntriesTransaction): ModularResult<Unit> {
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        localSource.executeDeleteTransaction(deleteTransaction)
       }
     }
   }

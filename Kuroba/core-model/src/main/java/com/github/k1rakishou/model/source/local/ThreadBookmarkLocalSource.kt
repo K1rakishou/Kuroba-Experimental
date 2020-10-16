@@ -3,36 +3,43 @@ package com.github.k1rakishou.model.source.local
 import com.github.k1rakishou.common.flatMapIndexed
 import com.github.k1rakishou.common.mapReverseIndexedNotNull
 import com.github.k1rakishou.common.mutableListWithCap
+import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmark
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkEntity
+import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkFull
 import com.github.k1rakishou.model.mapper.ThreadBookmarkMapper
 import com.github.k1rakishou.model.mapper.ThreadBookmarkReplyMapper
 import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
-import com.github.k1rakishou.model.source.cache.GenericCacheSource
+import com.github.k1rakishou.model.source.cache.ThreadBookmarkCache
 
 class ThreadBookmarkLocalSource(
   database: KurobaDatabase,
   loggerTag: String,
   private val isDevFlavor: Boolean,
   private val logger: Logger,
-  private val chanDescriptorCache: ChanDescriptorCache
+  private val chanDescriptorCache: ChanDescriptorCache,
+  private val threadBookmarkCache: ThreadBookmarkCache
 ) : AbstractLocalSource(database) {
   private val TAG = "$loggerTag ThreadBookmarkLocalSource"
   private val threadBookmarkDao = database.threadBookmarkDao()
   private val threadBookmarkReplyDao = database.threadBookmarkReplyDao()
-  private val bookmarksCache = GenericCacheSource<ChanDescriptor.ThreadDescriptor, ThreadBookmark>()
 
   suspend fun selectAll(): List<ThreadBookmark> {
     ensureInTransaction()
 
+    // TODO(KurobaEx): probably we shouldn't load replies that the user have already read since there
+    //  is just no point in having them
     val bookmarkEntities = threadBookmarkDao.selectAllBookmarks()
+    cacheBookmarkDatabaseIds(bookmarkEntities)
+
     val bookmarks = bookmarkEntities
       .map { threadBookmarkFull -> ThreadBookmarkMapper.toThreadBookmark(threadBookmarkFull) }
 
     val mapOfBookmarks = associateBookmarks(bookmarks)
-    bookmarksCache.storeMany(mapOfBookmarks)
+    threadBookmarkCache.storeMany(mapOfBookmarks)
 
     return bookmarks
   }
@@ -42,11 +49,11 @@ class ThreadBookmarkLocalSource(
     logger.log(TAG, "persist(${bookmarks.size})")
 
     val threadDescriptors = bookmarks.map { bookmark -> bookmark.threadDescriptor }
-    val cachedBookmarks = bookmarksCache.getMany(threadDescriptors)
+    val cachedBookmarks = threadBookmarkCache.getMany(threadDescriptors)
 
     val toDelete = retainDeletedBookmarks(
       bookmarks.map { it.threadDescriptor }.toHashSet(),
-      bookmarksCache.getAll()
+      threadBookmarkCache.getAll()
     )
 
     if (toDelete.isNotEmpty()) {
@@ -68,7 +75,8 @@ class ThreadBookmarkLocalSource(
     ).map { (_, threadId) -> threadId }.toSet()
 
     threadBookmarkDao.deleteMany(threadIdSet)
-    bookmarksCache.deleteMany(toDelete)
+    threadBookmarkCache.deleteMany(toDelete)
+    chanDescriptorCache.deleteManyBookmarkIds(toDelete)
   }
 
   private suspend fun insertOrUpdateBookmarks(toInsertOrUpdateInDatabase: List<ThreadBookmark>) {
@@ -102,6 +110,7 @@ class ThreadBookmarkLocalSource(
 
     val toInsertOrUpdateBookmarkReplyEntities = toInsertOrUpdateInDatabase.flatMapIndexed { index, threadBookmark ->
       val threadBookmarkId = toInsertOrUpdateThreadBookmarkEntities[index].threadBookmarkId
+      check(threadBookmarkId > 0L) { "Bad threadBookmarkId: $threadBookmarkId" }
 
       return@flatMapIndexed threadBookmark.threadBookmarkReplies.values.map { threadBookmarkReply ->
         ThreadBookmarkReplyMapper.toThreadBookmarkReplyEntity(
@@ -113,11 +122,13 @@ class ThreadBookmarkLocalSource(
 
     threadBookmarkReplyDao.insertOrUpdateMany(toInsertOrUpdateBookmarkReplyEntities)
 
-    bookmarksCache.storeMany(
+    threadBookmarkCache.storeMany(
       toInsertOrUpdateInDatabase.associateBy { threadBookmark ->
         return@associateBy threadBookmark.threadDescriptor
       }
     )
+
+    cacheNewBookmarkDatabaseIds(toInsertOrUpdateInDatabase, toInsertOrUpdateThreadBookmarkEntities)
 
     logger.log(TAG, "persist() inserted/updated ${toInsertOrUpdateBookmarkReplyEntities.size} replies")
   }
@@ -173,6 +184,47 @@ class ThreadBookmarkLocalSource(
     }
 
     return map
+  }
+
+  private suspend fun cacheNewBookmarkDatabaseIds(
+    threadBookmarks: List<ThreadBookmark>,
+    bookmarkEntities: List<ThreadBookmarkEntity>
+  ) {
+    require(threadBookmarks.size == bookmarkEntities.size) {
+      "Bad sizes: threadBookmarks.size=${threadBookmarks.size}, " +
+        "bookmarkEntities.size=${bookmarkEntities.size}"
+    }
+
+    val resultMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, Long>(bookmarkEntities.size)
+
+    bookmarkEntities.forEachIndexed { index, threadBookmarkEntity ->
+      val threadDescriptor = threadBookmarks[index].threadDescriptor
+      val threadBookmarkId = threadBookmarkEntity.threadBookmarkId
+      check(threadBookmarkId > 0L) { "Bad threadBookmarkId: $threadBookmarkId" }
+
+      resultMap[threadDescriptor] = threadBookmarkId
+    }
+
+    chanDescriptorCache.putManyBookmarkIds(resultMap)
+  }
+
+  private suspend fun cacheBookmarkDatabaseIds(bookmarkEntities: List<ThreadBookmarkFull>) {
+    val resultMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, Long>(bookmarkEntities.size)
+
+    bookmarkEntities.forEach { threadBookmarkFull ->
+      val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+        siteName = threadBookmarkFull.siteName,
+        boardCode = threadBookmarkFull.boardCode,
+        threadNo = threadBookmarkFull.threadNo,
+      )
+
+      val threadBookmarkId = threadBookmarkFull.threadBookmarkEntity.threadBookmarkId
+      check(threadBookmarkId > 0L) { "Bad threadBookmarkId: $threadBookmarkId" }
+
+      resultMap[threadDescriptor] = threadBookmarkId
+    }
+
+    chanDescriptorCache.putManyBookmarkIds(resultMap)
   }
 
 }

@@ -1,6 +1,8 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
+import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
+import com.github.k1rakishou.chan.core.base.SuspendDebouncer
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.*
@@ -14,11 +16,9 @@ import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.collect
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl
 import org.joda.time.DateTime
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -36,10 +36,11 @@ class BookmarksManager(
   private val bookmarksRepository: BookmarksRepository
 ) {
   private val lock = ReentrantReadWriteLock()
-  private val persistTaskSubject = PublishProcessor.create<Unit>()
   private val bookmarksChangedSubject = PublishProcessor.create<BookmarkChange>()
-  private val delayedBookmarksChangedSubject = PublishProcessor.create<BookmarkChange>()
   private val threadIsFetchingEventsSubject = PublishProcessor.create<ChanDescriptor.ThreadDescriptor>()
+
+  private val persistBookmarksExecutor = RendezvousCoroutineExecutor(appScope)
+  private val delayedBookmarksChangedExecutor = SuspendDebouncer(appScope)
 
   private val suspendableInitializer = SuspendableInitializer<Unit>("BookmarksManager")
   private val persistRunning = AtomicBoolean(false)
@@ -62,25 +63,6 @@ class BookmarksManager(
         }
 
         persistBookmarks(true)
-      }
-
-      appScope.launch {
-        persistTaskSubject
-          .onBackpressureLatest()
-          .debounce(1, TimeUnit.SECONDS)
-          .collect { persistBookmarks() }
-      }
-
-      appScope.launch {
-        delayedBookmarksChangedSubject
-          .onBackpressureLatest()
-          .debounce(1, TimeUnit.SECONDS)
-          .doOnNext { bookmarkChange ->
-            if (verboseLogsEnabled) {
-              Logger.d(TAG, "delayedBookmarksChanged(${bookmarkChange::class.java.simpleName})")
-            }
-          }
-          .collect { bookmarkChange -> bookmarksChanged(bookmarkChange) }
       }
 
       appScope.launch(Dispatchers.Default) {
@@ -114,7 +96,7 @@ class BookmarksManager(
 
   fun listenForBookmarksChanges(): Flowable<BookmarkChange> {
     return bookmarksChangedSubject
-      .onBackpressureLatest()
+      .onBackpressureBuffer()
       .observeOn(AndroidSchedulers.mainThread())
       .doOnError { error -> Logger.e(TAG, "listenForBookmarksChanges error", error) }
       .hide()
@@ -185,8 +167,8 @@ class BookmarksManager(
       }
 
       bookmarksChangedSubject.onNext(BookmarkChange.BookmarksCreated(listOf(threadDescriptor)))
-
       Logger.d(TAG, "Bookmark created ($threadDescriptor)")
+
       return@write true
     }
   }
@@ -235,7 +217,6 @@ class BookmarksManager(
         }
 
         bookmarks.remove(threadDescriptor)
-
         updated = true
       }
 
@@ -266,6 +247,7 @@ class BookmarksManager(
     mutator: (ThreadBookmark) -> Unit
   ) {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+    require(threadDescriptors.isNotEmpty()) { "threadDescriptors is empty!" }
 
     if (threadDescriptors.isEmpty()) {
       return
@@ -291,12 +273,9 @@ class BookmarksManager(
         return@write
       }
 
-      if (notifyListenersOption != NotifyListenersOption.DoNotNotify) {
-        if (notifyListenersOption == NotifyListenersOption.NotifyEager) {
-          bookmarksChanged(BookmarkChange.BookmarksUpdated(threadDescriptors))
-        } else {
-          delayedBookmarksChanged(BookmarkChange.BookmarksUpdated(threadDescriptors))
-        }
+      when (notifyListenersOption) {
+        NotifyListenersOption.DoNotNotify -> return@write
+        NotifyListenersOption.NotifyEager -> bookmarksChanged(BookmarkChange.BookmarksUpdated(threadDescriptors))
       }
     }
   }
@@ -360,17 +339,27 @@ class BookmarksManager(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     viewer: (ThreadBookmarkView) -> Unit
   ) {
+    viewBookmarks(listOf(threadDescriptor), viewer)
+  }
+
+  fun viewBookmarks(
+    threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>,
+    viewer: (ThreadBookmarkView) -> Unit
+  ) {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+    require(threadDescriptors.isNotEmpty()) { "threadDescriptors is empty!" }
 
     lock.read {
-      if (!bookmarks.containsKey(threadDescriptor)) {
-        return@read
+      threadDescriptors.forEach { threadDescriptor ->
+        if (!bookmarks.containsKey(threadDescriptor)) {
+          return@forEach
+        }
+
+        val threadBookmark = bookmarks[threadDescriptor]
+          ?: return@forEach
+
+        viewer(ThreadBookmarkView.fromThreadBookmark(threadBookmark))
       }
-
-      val threadBookmark = bookmarks[threadDescriptor]
-        ?: return@read
-
-      viewer(ThreadBookmarkView.fromThreadBookmark(threadBookmark))
     }
   }
 
@@ -394,6 +383,7 @@ class BookmarksManager(
     mapper: (ThreadBookmarkView) -> T
   ): List<T> {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+    require(threadDescriptors.isNotEmpty()) { "threadDescriptors is empty!" }
 
     return lock.read {
       return@read threadDescriptors.map { threadDescriptor ->
@@ -506,11 +496,13 @@ class BookmarksManager(
       return
     }
 
-    updateBookmark(threadDescriptor, NotifyListenersOption.NotifyDelayed) { threadBookmark ->
+    updateBookmark(threadDescriptor, NotifyListenersOption.DoNotNotify) { threadBookmark ->
       threadBookmark.updateSeenPostCount(realPostIndex)
       threadBookmark.updateLastViewedPostNo(postNo)
       threadBookmark.readRepliesUpTo(postNo)
     }
+
+    delayedBookmarksChangedExecutor.post(250L, { persistBookmarks(blocking = false) })
   }
 
   fun refreshBookmarks() {
@@ -518,15 +510,19 @@ class BookmarksManager(
   }
 
   private fun bookmarksChanged(bookmarkChange: BookmarkChange) {
-    persistTaskSubject.onNext(Unit)
-    bookmarksChangedSubject.onNext(bookmarkChange)
+    persistBookmarks(
+      blocking = false,
+      onBookmarksPersisted = {
+        // Only notify the listeners about bookmark updates AFTER we have persisted them
+        bookmarksChangedSubject.onNext(bookmarkChange)
+      }
+    )
   }
 
-  private fun delayedBookmarksChanged(bookmarkChange: BookmarkChange) {
-    delayedBookmarksChangedSubject.onNext(bookmarkChange)
-  }
-
-  private fun persistBookmarks(blocking: Boolean = false) {
+  private fun persistBookmarks(
+    blocking: Boolean = false,
+    onBookmarksPersisted: (() -> Unit)? = null
+  ) {
     BackgroundUtils.ensureMainThread()
 
     if (!isReady()) {
@@ -538,15 +534,17 @@ class BookmarksManager(
     }
 
     if (blocking) {
-      runBlocking {
+      runBlocking(Dispatchers.Default) {
         Logger.d(TAG, "persistBookmarks blocking called")
         persistBookmarksInternal()
+        onBookmarksPersisted?.invoke()
         Logger.d(TAG, "persistBookmarks blocking finished")
       }
     } else {
-      appScope.launch {
+      persistBookmarksExecutor.post {
         Logger.d(TAG, "persistBookmarks async called")
         persistBookmarksInternal()
+        onBookmarksPersisted?.invoke()
         Logger.d(TAG, "persistBookmarks async finished")
       }
     }
@@ -569,11 +567,7 @@ class BookmarksManager(
 
   enum class NotifyListenersOption {
     DoNotNotify,
-    NotifyEager,
-    // Be very careful when using this option since it's using a debouncer with 1 second delay.
-    // So you may end up with a race condition. Always prefer NotifyEager. Right this options is only
-    // used in one place where it's really useful.
-    NotifyDelayed
+    NotifyEager;
   }
 
   @DoNotStrip
@@ -581,6 +575,9 @@ class BookmarksManager(
     object BookmarksInitialized : BookmarkChange()
     class BookmarksCreated(val threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) : BookmarkChange()
     class BookmarksDeleted(val threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) : BookmarkChange()
+
+    // When threadDescriptors is null that means that we want to update ALL bookmarks. For now we
+    // only use it in one place - when opening BookmarksController to refresh all bookmarks.
     class BookmarksUpdated(val threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>?) : BookmarkChange()
 
     fun threadDescriptors(): Collection<ChanDescriptor.ThreadDescriptor> {

@@ -27,6 +27,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
@@ -300,7 +301,7 @@ public class FiltersController
     }
 
     @Override
-    public void onSearchEntered(String entered) {
+    public void onSearchEntered(@NonNull String entered) {
         adapter.searchQuery = entered;
         adapter.filter();
     }

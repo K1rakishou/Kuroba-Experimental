@@ -28,6 +28,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -529,7 +530,7 @@ public class Toolbar
     }
 
     @Override
-    public void searchInput(String input) {
+    public void searchInput(@NonNull String input) {
         presenter.searchInput(input);
     }
 

@@ -1,14 +1,10 @@
 package com.github.k1rakishou.chan.ui.view;
 
-import android.content.Context;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.StateListDrawable;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 
 import org.jetbrains.annotations.Nullable;
@@ -22,14 +18,12 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 public class FastScrollerHelper {
 
     public static FastScroller create(
-            int toolbarPaddingTop,
-            GlobalWindowInsetsManager globalWindowInsetsManager,
             RecyclerView recyclerView,
             @Nullable
             PostInfoMapItemDecoration postInfoMapItemDecoration,
-            ChanTheme currentTheme
+            ChanTheme currentTheme,
+            int toolbarPaddingTop
     ) {
-        Context context = recyclerView.getContext();
         StateListDrawable thumb = getThumb(currentTheme);
         StateListDrawable track = getTrack(currentTheme);
 
@@ -39,17 +33,7 @@ public class FastScrollerHelper {
         final int margin = 0;
         final int thumbMinLength = dp(32);
 
-        int bottomNavBarHeight = 0;
-        int toolbarHeight = 0;
-
-        // The toolbar and bottom nav bar are not hideable when using SPLIT mode
-        if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
-            bottomNavBarHeight = (int) context.getResources().getDimension(R.dimen.bottom_nav_view_height);
-            toolbarHeight = (int) context.getResources().getDimension(R.dimen.toolbar_height);
-        }
-
         return new FastScroller(
-                globalWindowInsetsManager,
                 recyclerView,
                 postInfoMapItemDecoration,
                 thumb,
@@ -61,8 +45,6 @@ public class FastScrollerHelper {
                 margin,
                 thumbMinLength,
                 targetWidth,
-                bottomNavBarHeight,
-                toolbarHeight,
                 toolbarPaddingTop
         );
     }
