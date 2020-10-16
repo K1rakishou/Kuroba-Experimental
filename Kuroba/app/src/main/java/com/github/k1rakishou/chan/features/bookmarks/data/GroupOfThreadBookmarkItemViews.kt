@@ -4,5 +4,5 @@ data class GroupOfThreadBookmarkItemViews(
   val groupId: String,
   val groupInfoText: String,
   val isExpanded: Boolean,
-  val threadBookmarkViews: List<ThreadBookmarkItemView>
+  val threadBookmarkItemViews: List<ThreadBookmarkItemView>
 )

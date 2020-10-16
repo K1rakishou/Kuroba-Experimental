@@ -115,6 +115,8 @@ class BrowsePresenter @Inject constructor(
       return
     }
 
+    val simpleThreadBookmarkList = mutableListOf<BookmarksManager.SimpleThreadBookmark>()
+
     for (post in chanThread.getPosts()) {
       if (!post.isOP) {
         Logger.e(TAG, "bookmarkEveryThread() post is not OP")
@@ -130,11 +132,15 @@ class BrowsePresenter @Inject constructor(
       }
 
       val thumbnailUrl = post.firstImage()?.thumbnailUrl
-      bookmarksManager.createBookmark(threadDescriptor, title, thumbnailUrl)
 
-      Logger.d(TAG, "bookmarkEveryThread() created bookmark for post ${title.take(50)}")
+      simpleThreadBookmarkList += BookmarksManager.SimpleThreadBookmark(
+        threadDescriptor = threadDescriptor,
+        title = title,
+        thumbnailUrl = thumbnailUrl
+      )
     }
 
+    bookmarksManager.createBookmarks(simpleThreadBookmarkList)
     Logger.d(TAG, "bookmarkEveryThread() done")
   }
 

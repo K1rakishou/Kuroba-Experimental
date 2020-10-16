@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.manager
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SuspendDebouncer
-import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.*
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmark
@@ -142,35 +141,37 @@ class BookmarksManager(
     }
   }
 
-  suspend fun createBookmark(
-    threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    title: String? = null,
-    thumbnailUrl: HttpUrl? = null,
-    persist: Boolean = false
-  ): Boolean {
+  fun createBookmarks(simpleThreadBookmarkList: List<SimpleThreadBookmark>) {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
-    return lock.write {
-      if (bookmarks.containsKey(threadDescriptor)) {
-        return@write false
+    val actuallyCreated = mutableListOf<ChanDescriptor.ThreadDescriptor>()
+
+    lock.write {
+      simpleThreadBookmarkList.forEach { simpleThreadBookmark ->
+        val threadDescriptor = simpleThreadBookmark.threadDescriptor
+        val title = simpleThreadBookmark.title
+        val thumbnailUrl = simpleThreadBookmark.thumbnailUrl
+
+        if (bookmarks.containsKey(threadDescriptor)) {
+          return@forEach
+        }
+
+        val threadBookmark = ThreadBookmark.create(threadDescriptor, DateTime.now()).apply {
+          this.title = title
+          this.thumbnailUrl = thumbnailUrl
+        }
+
+        actuallyCreated += threadDescriptor
+        bookmarks[threadDescriptor] = threadBookmark
       }
-
-      val threadBookmark = ThreadBookmark.create(threadDescriptor, DateTime.now()).apply {
-        this.title = title
-        this.thumbnailUrl = thumbnailUrl
-      }
-
-      bookmarks[threadDescriptor] = threadBookmark
-
-      if (persist) {
-        persistBookmarksInternal()
-      }
-
-      bookmarksChangedSubject.onNext(BookmarkChange.BookmarksCreated(listOf(threadDescriptor)))
-      Logger.d(TAG, "Bookmark created ($threadDescriptor)")
-
-      return@write true
     }
+
+    if (actuallyCreated.isEmpty()) {
+      return
+    }
+
+    bookmarksChanged(BookmarkChange.BookmarksCreated(actuallyCreated))
+    Logger.d(TAG, "Bookmarks created (${actuallyCreated.size})")
   }
 
   @JvmOverloads
@@ -283,9 +284,9 @@ class BookmarksManager(
   fun pruneNonActive() {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
-    lock.write {
-      val toDelete = mutableListWithCap<ChanDescriptor.ThreadDescriptor>(bookmarks.size / 2)
+    val toDelete = mutableListWithCap<ChanDescriptor.ThreadDescriptor>(bookmarks.size / 2)
 
+    lock.write {
       bookmarks.entries.forEach { (threadDescriptor, threadBookmark) ->
         if (!threadBookmark.isActive()) {
           toDelete += threadDescriptor
@@ -297,7 +298,9 @@ class BookmarksManager(
           bookmarks.remove(threadDescriptor)
         }
       }
+    }
 
+    if (toDelete.isNotEmpty()) {
       bookmarksChanged(BookmarkChange.BookmarksDeleted(toDelete))
     }
   }
@@ -305,11 +308,14 @@ class BookmarksManager(
   fun deleteAllBookmarks() {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
+    val allBookmarksDescriptors = mutableListOf<ChanDescriptor.ThreadDescriptor>()
+
     lock.write {
-      val allBookmarksDescriptors = bookmarks.keys.toList()
-
+      allBookmarksDescriptors.addAll(bookmarks.keys.toList())
       bookmarks.clear()
+    }
 
+    if (allBookmarksDescriptors.isNotEmpty()) {
       bookmarksChanged(BookmarkChange.BookmarksDeleted(allBookmarksDescriptors))
     }
   }
@@ -510,6 +516,19 @@ class BookmarksManager(
   }
 
   private fun bookmarksChanged(bookmarkChange: BookmarkChange) {
+    when (bookmarkChange) {
+      BookmarkChange.BookmarksInitialized,
+      is BookmarkChange.BookmarksUpdated -> {
+        // no-op
+      }
+      is BookmarkChange.BookmarksCreated -> {
+        check(bookmarkChange.threadDescriptors.isNotEmpty()) { "threadDescriptors is empty!" }
+      }
+      is BookmarkChange.BookmarksDeleted -> {
+        check(bookmarkChange.threadDescriptors.isNotEmpty()) { "threadDescriptors is empty!" }
+      }
+    }
+
     persistBookmarks(
       blocking = false,
       onBookmarksPersisted = {
@@ -523,8 +542,6 @@ class BookmarksManager(
     blocking: Boolean = false,
     onBookmarksPersisted: (() -> Unit)? = null
   ) {
-    BackgroundUtils.ensureMainThread()
-
     if (!isReady()) {
       return
     }
@@ -569,6 +586,12 @@ class BookmarksManager(
     DoNotNotify,
     NotifyEager;
   }
+
+  data class SimpleThreadBookmark(
+    val threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    val title: String? = null,
+    val thumbnailUrl: HttpUrl? = null
+  )
 
   @DoNotStrip
   sealed class BookmarkChange {

@@ -23,7 +23,7 @@ class BookmarksSelectionHelper(
       BookmarksMenuItemId(BookmarksMenuItemType.Delete),
       R.drawable.ic_baseline_delete_outline_24,
       R.string.bottom_menu_item_delete,
-      { bookmarkMenuItemClickListener.onMenuItemClicked(BookmarksMenuItemType.Delete, selectedItems) }
+      { bookmarkMenuItemClickListener.onMenuItemClicked(BookmarksMenuItemType.Delete, selectedItems.toList()) }
     )
 
     return itemsList

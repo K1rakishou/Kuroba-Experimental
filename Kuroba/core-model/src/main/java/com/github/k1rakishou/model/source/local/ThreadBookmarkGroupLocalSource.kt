@@ -58,12 +58,18 @@ class ThreadBookmarkGroupLocalSource(
   ) {
     ensureInTransaction()
 
-    val groupsToCreate = createTransaction.toCreate.entries.map { (_, group) ->
-      return@map ThreadBookmarkGroupEntity(
+    val groupsToCreate = createTransaction.toCreate.entries.mapNotNull { (_, group) ->
+      if (!group.needCreate) {
+        return@mapNotNull null
+      }
+
+      check(group.groupOrder >= 0) { "Bad order, group=${group}" }
+
+      return@mapNotNull ThreadBookmarkGroupEntity(
         groupId = group.groupId,
         groupName = group.groupName,
         isExpanded = group.isExpanded,
-        groupOrder = group.order
+        groupOrder = group.groupOrder
       )
     }
 

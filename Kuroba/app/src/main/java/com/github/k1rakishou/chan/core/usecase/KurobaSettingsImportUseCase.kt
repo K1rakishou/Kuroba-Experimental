@@ -83,7 +83,7 @@ class KurobaSettingsImportUseCase(
     val boardsToActivate = linkedSetOf<BoardDescriptor>()
     val filters = mutableSetOf<ChanFilter>()
     val postHides = mutableSetOf<ChanPostHide>()
-    val bookmarks = mutableSetOf<SimpleBookmark>()
+    val bookmarks = mutableSetOf<BookmarksManager.SimpleThreadBookmark>()
 
     jsonReader.jsonObject {
       while (hasNext()) {
@@ -175,21 +175,13 @@ class KurobaSettingsImportUseCase(
     }
   }
 
-  private suspend fun createBookmarks(bookmarks: MutableSet<SimpleBookmark>) {
-    bookmarks.forEachIndexed { index, simpleBookmark ->
+  private suspend fun createBookmarks(bookmarks: MutableSet<BookmarksManager.SimpleThreadBookmark>) {
+    bookmarks.forEach { simpleBookmark ->
       Logger.d(TAG, "Creating empty thread entity in the database for bookmark ${simpleBookmark}")
       chanPostRepository.createEmptyThreadIfNotExists(simpleBookmark.threadDescriptor)
-
-      val persist = index == bookmarks.size - 1
-      Logger.d(TAG, "Creating bookmark ${simpleBookmark}, persist=$persist")
-
-      bookmarksManager.createBookmark(
-        simpleBookmark.threadDescriptor,
-        simpleBookmark.title,
-        simpleBookmark.thumbnailUrl,
-        persist
-      )
     }
+
+    bookmarksManager.createBookmarks(bookmarks.toList())
   }
 
   private suspend fun createPostHides(postHides: MutableSet<ChanPostHide>) {
@@ -260,7 +252,7 @@ class KurobaSettingsImportUseCase(
     }.toSet()
   }
 
-  private fun JsonReader.readBookmarks(siteIdMap: Map<Int, Int>, func: (SimpleBookmark) -> Unit) {
+  private fun JsonReader.readBookmarks(siteIdMap: Map<Int, Int>, func: (BookmarksManager.SimpleThreadBookmark) -> Unit) {
     jsonArray {
       while (hasNext()) {
         jsonObject {
@@ -277,7 +269,7 @@ class KurobaSettingsImportUseCase(
 
   private fun JsonReader.readSimpleBookmarks(
     siteIdMap: Map<Int, Int>,
-    func: (SimpleBookmark) -> Unit
+    func: (BookmarksManager.SimpleThreadBookmark) -> Unit
   ) {
     var boardCode: String? = null
     var threadNo: Int? = null
@@ -338,7 +330,7 @@ class KurobaSettingsImportUseCase(
       threadNo!!.toLong()
     )
 
-    func(SimpleBookmark(threadDescriptor, title, thumbnailUrl))
+    func(BookmarksManager.SimpleThreadBookmark(threadDescriptor, title, thumbnailUrl))
   }
 
   private fun JsonReader.readPostHides(siteIdMap: Map<Int, Int>, func: (ChanPostHide) -> Unit) {
@@ -667,12 +659,6 @@ class KurobaSettingsImportUseCase(
     }
   }
 }
-
-data class SimpleBookmark(
-  val threadDescriptor: ChanDescriptor.ThreadDescriptor,
-  val title: String?,
-  val thumbnailUrl: HttpUrl?
-)
 
 sealed class KurobaSettingsImportException(message: String) : Exception(message) {
   class DatabaseIsNotEmpty(tableName: String) : KurobaSettingsImportException(

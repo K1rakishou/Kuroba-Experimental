@@ -17,10 +17,8 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -30,10 +28,10 @@ class ThreadBookmarkGroupManager(
   private val threadBookmarkGroupEntryRepository: ThreadBookmarkGroupRepository,
   private val bookmarksManager: BookmarksManager
 ) {
-  private val lock = ReentrantReadWriteLock()
+  private val mutex = Mutex()
   private val suspendableInitializer = SuspendableInitializer<Unit>("ThreadBookmarkGroupManager")
 
-  @GuardedBy("lock")
+  @GuardedBy("mutex")
   // Map<GroupId, ThreadBookmarkGroupEntry>
   private val groupsByGroupIdMap = mutableMapOf<String, ThreadBookmarkGroup>()
 
@@ -50,7 +48,7 @@ class ThreadBookmarkGroupManager(
     appScope.launch(Dispatchers.Default) {
       when (val groupsResult = threadBookmarkGroupEntryRepository.initialize()) {
         is ModularResult.Value -> {
-          lock.write {
+          mutex.withLock {
             groupsByGroupIdMap.clear()
 
             groupsResult.value.forEach { threadBookmarkGroup ->
@@ -80,68 +78,53 @@ class ThreadBookmarkGroupManager(
       return emptyList()
     }
 
-    return lock.read {
-      val bookmarksByGroupIdMap = threadBookmarkViewList
-        .groupBy { threadBookmarkItemView -> threadBookmarkItemView.groupId }
-      val bookmarksByThreadDescriptorMap = threadBookmarkViewList
-        .associateBy { threadBookmarkItemView -> threadBookmarkItemView.threadDescriptor }
+    return mutex.withLock {
+      val groups = threadBookmarkViewList
+        .map { threadBookmarkItemView -> threadBookmarkItemView.groupId }
+        .toSet()
+      val threadBookmarkViewMapByDescriptor = threadBookmarkViewList
+        .associateBy { threadBookmarkView -> threadBookmarkView.threadDescriptor }
 
-      val listOfGroups =
-        mutableListWithCap<GroupOfThreadBookmarkItemViews>(bookmarksByGroupIdMap.keys.size)
+      val sortedGroups = groups
+        .mapNotNull { groupId -> groupsByGroupIdMap[groupId] }
+        .sortedBy { threadBookmarkGroup -> threadBookmarkGroup.groupOrder }
 
-      // TODO(KurobaEx): this may crash
-      val sortedGroupIds = arrayOfNulls<String>(bookmarksByGroupIdMap.keys.size)
+      val listOfGroups = mutableListWithCap<GroupOfThreadBookmarkItemViews>(sortedGroups.size)
 
-      bookmarksByGroupIdMap.keys.forEach { groupId ->
-        val threadBookmarkGroup = groupsByGroupIdMap[groupId]
-          ?: return@forEach
+      sortedGroups.forEach { threadBookmarkGroup ->
+        val threadBookmarkItemViews =
+          mutableListWithCap<ThreadBookmarkItemView>(threadBookmarkGroup.getEntriesCount())
 
-        sortedGroupIds[threadBookmarkGroup.order] = threadBookmarkGroup.groupId
-      }
+        threadBookmarkGroup.iterateEntriesOrderedWhile { _, threadBookmarkGroupEntry ->
+          val orderedThreadBookmarkItemView =
+            threadBookmarkViewMapByDescriptor[threadBookmarkGroupEntry.threadDescriptor]
 
-      sortedGroupIds.forEach { groupId ->
-        val threadBookmarkGroup = groupsByGroupIdMap[groupId]
-          ?: return@forEach
-
-        // TODO(KurobaEx): this may crash
-        val threadBookmarkViews = arrayOfNulls<ThreadBookmarkItemView>(threadBookmarkGroup.entries.size)
-
-        threadBookmarkGroup.entries.forEach { (_, bookmarkGroupEntry) ->
-          val orderInGroup = bookmarkGroupEntry.orderInGroup
-          val threadDescriptor = bookmarkGroupEntry.threadDescriptor
-
-          val tbView = bookmarksByThreadDescriptorMap[threadDescriptor]
-          if (tbView == null) {
-            Logger.e(TAG, "bookmarksByThreadDescriptorMap does not contain " +
-              "threadBookmarkView with descriptor: ${threadDescriptor}")
-            return@forEach
+          threadBookmarkItemViews += requireNotNull(orderedThreadBookmarkItemView) {
+            "Couldn't find ThreadBookmarkItemView by thread " +
+              "descriptor ${threadBookmarkGroupEntry.threadDescriptor}"
           }
 
-          threadBookmarkViews[orderInGroup] = tbView
+          return@iterateEntriesOrderedWhile true
         }
-
-        val resultThreadBookmarkViews = threadBookmarkViews
-          .mapNotNull { threadBookmarkView -> threadBookmarkView }
-          .toList()
 
         listOfGroups += GroupOfThreadBookmarkItemViews(
           groupId = threadBookmarkGroup.groupId,
           groupInfoText = threadBookmarkGroup.groupName,
           isExpanded = threadBookmarkGroup.isExpanded,
-          threadBookmarkViews = resultThreadBookmarkViews
+          threadBookmarkItemViews = threadBookmarkItemViews
         )
       }
 
-      return@read listOfGroups
+      return@withLock listOfGroups
     }
   }
 
   suspend fun toggleBookmarkExpandState(groupId: String): Boolean {
     check(isReady()) { "ThreadBookmarkGroupEntryManager is not ready yet! Use awaitUntilInitialized()" }
 
-    return lock.write {
+    return mutex.withLock {
       val group = groupsByGroupIdMap[groupId]
-        ?: return@write false
+        ?: return@withLock false
 
       val newIsExpanded = !group.isExpanded
       group.isExpanded = newIsExpanded
@@ -151,10 +134,10 @@ class ThreadBookmarkGroupManager(
           groupsByGroupIdMap[groupId]?.isExpanded = !newIsExpanded
 
           Logger.e(TAG, "updateBookmarkGroupExpanded error", error)
-          return@write false
+          return@withLock false
         }
 
-      return@write true
+      return@withLock true
     }
   }
 
@@ -165,48 +148,56 @@ class ThreadBookmarkGroupManager(
     // Yes, we are locking the database access here, because we need to calculate the new order for
     // groups and and regular entries and we don't want anyone modifying groupsByGroupIdMap while
     // we are persisting the changes.
-    return lock.write {
+    return mutex.withLock {
       val createTransaction = CreateBookmarkGroupEntriesTransaction()
 
       bookmarksManager.viewBookmarks(bookmarkThreadDescriptors) { threadBookmarkView ->
         val groupId = threadBookmarkView.groupId
 
-        val groupExists = groupsByGroupIdMap.containsKey(groupId)
-          || createTransaction.toCreate.containsKey(groupId)
-
-        if (!groupExists) {
-          val newGroupOrder = groupsByGroupIdMap.values
-            .maxOfOrNull { threadBookmarkGroup -> threadBookmarkGroup.order }
+        val groupOrder = if (groupsByGroupIdMap.containsKey(groupId)) {
+          groupsByGroupIdMap[groupId]!!.groupOrder
+        } else {
+          groupsByGroupIdMap.values
+            .maxOfOrNull { threadBookmarkGroup -> threadBookmarkGroup.groupOrder }
             ?.plus(1) ?: 0
+        }
 
-          createTransaction.toCreate.put(
-            groupId,
-            ThreadBookmarkGroupToCreate(
-              groupId = groupId,
-              groupName = groupId,
-              isExpanded = false,
-              order = newGroupOrder,
-              entries = mutableListOf()
-            )
+        val needCreateGroup = groupsByGroupIdMap[groupId] == null
+
+        if (!groupsByGroupIdMap.containsKey(groupId)) {
+          groupsByGroupIdMap[groupId] = ThreadBookmarkGroup(
+            groupId = groupId,
+            groupName = groupId,
+            isExpanded = false,
+            groupOrder = groupOrder,
+            entries = mutableMapOf(),
+            orders = mutableListOf()
           )
         }
 
-        val containsBookmarkEntry = groupsByGroupIdMap[groupId]
-          ?.entries
-          ?.values
-          ?.any { threadBookmarkGroupEntry ->
-            return@any threadBookmarkGroupEntry.threadDescriptor == threadBookmarkView.threadDescriptor
-          } ?: false
+        if (!createTransaction.toCreate.containsKey(groupId)) {
+          createTransaction.toCreate[groupId] = ThreadBookmarkGroupToCreate(
+            groupId = groupId,
+            groupName = groupId,
+            isExpanded = false,
+            needCreate = needCreateGroup,
+            groupOrder = groupOrder,
+            entries = mutableListOf()
+          )
+        }
+
+        val containsBookmarkEntry = groupsByGroupIdMap[groupId]!!.containsEntryWithThreadDescriptor(
+          threadBookmarkView.threadDescriptor
+        )
 
         if (containsBookmarkEntry) {
           return@viewBookmarks
         }
 
-        val newBookmarkOrder = groupsByGroupIdMap[groupId]?.entries?.values
-          ?.maxOfOrNull { threadBookmarkGroupEntry -> threadBookmarkGroupEntry.orderInGroup }
-          ?.plus(1) ?: 0
+        val newBookmarkOrder = groupsByGroupIdMap[groupId]!!.reserveSpaceForBookmarkOrder()
+        val threadBookmarkGroupToCreate = createTransaction.toCreate[groupId]!!
 
-        createTransaction.toCreate[groupId]!!.entries.add(
+        threadBookmarkGroupToCreate.entries.add(
           ThreadBookmarkGroupEntryToCreate(
             ownerGroupId = groupId,
             threadDescriptor = threadBookmarkView.threadDescriptor,
@@ -216,19 +207,24 @@ class ThreadBookmarkGroupManager(
       }
 
       if (createTransaction.isEmpty()) {
-        return@write true
+        return@withLock true
       }
 
       threadBookmarkGroupEntryRepository.executeCreateTransaction(createTransaction)
         .safeUnwrap { error ->
           Logger.e(TAG, "Error trying to insert new bookmark group entries into the database", error)
 
-          // Nothing to rollback, just exit
-          return@write false
+          // Remove all databaseIds that == -1L from orders.
+          createTransaction.toCreate.keys.forEach { groupId ->
+            groupsByGroupIdMap[groupId]?.removeTemporaryOrders()
+          }
+
+          return@withLock false
         }
 
       createTransaction.toCreate.forEach { (groupId, threadBookmarkGroupToCreate) ->
-        val threadBookmarkGroupEntries = ConcurrentHashMap<Long, ThreadBookmarkGroupEntry>()
+        val threadBookmarkGroupEntries = mutableMapOf<Long, ThreadBookmarkGroupEntry>()
+        val orders = mutableMapOf<Long, Int>()
 
         threadBookmarkGroupToCreate.entries.forEach { threadBookmarkGroupEntryToCreate ->
           val databaseId = threadBookmarkGroupEntryToCreate.databaseId
@@ -241,32 +237,38 @@ class ThreadBookmarkGroupManager(
             databaseId = databaseId,
             ownerGroupId = groupId,
             ownerBookmarkId = ownerBookmarkId,
-            threadDescriptor = threadBookmarkGroupEntryToCreate.threadDescriptor,
-            orderInGroup = threadBookmarkGroupEntryToCreate.orderInGroup
+            threadDescriptor = threadBookmarkGroupEntryToCreate.threadDescriptor
           )
+
+          orders[databaseId] = threadBookmarkGroupEntryToCreate.orderInGroup
         }
 
         if (!groupsByGroupIdMap.containsKey(groupId)) {
           groupsByGroupIdMap[groupId] = ThreadBookmarkGroup(
-            groupId,
-            threadBookmarkGroupToCreate.groupName,
-            threadBookmarkGroupToCreate.isExpanded,
-            threadBookmarkGroupToCreate.order,
-            threadBookmarkGroupEntries
+            groupId = groupId,
+            groupName = threadBookmarkGroupToCreate.groupName,
+            isExpanded = threadBookmarkGroupToCreate.isExpanded,
+            groupOrder = threadBookmarkGroupToCreate.groupOrder,
+            entries = threadBookmarkGroupEntries,
+            orders = threadBookmarkGroupToCreate.getEntryDatabaseIdsSorted().toMutableList()
           )
+        } else {
+          threadBookmarkGroupEntries.values.forEach { threadBookmarkGroupEntry ->
+            val order = requireNotNull(orders[threadBookmarkGroupEntry.databaseId]) {
+              "order not found by databaseId=${threadBookmarkGroupEntry.databaseId}"
+            }
 
-          return@forEach
-        }
+            groupsByGroupIdMap[groupId]?.addThreadBookmarkGroupEntry(
+              threadBookmarkGroupEntry,
+              order
+            )
+          }
 
-        threadBookmarkGroupEntries.values.forEach { threadBookmarkGroupEntry ->
-          groupsByGroupIdMap[groupId]?.entries?.put(
-            threadBookmarkGroupEntry.databaseId,
-            threadBookmarkGroupEntry
-          )
+          groupsByGroupIdMap[groupId]?.checkConsistency()
         }
       }
 
-      return@write true
+      return@withLock true
     }
   }
 
@@ -275,38 +277,51 @@ class ThreadBookmarkGroupManager(
     require(bookmarkThreadDescriptors.isNotEmpty()) { "bookmarkThreadDescriptors is empty!" }
 
     // Yes, we are locking the database access here, because we want this method to be atomic
-    return lock.write {
+    return mutex.withLock {
       val grouped = mutableMapOf<String, MutableList<ThreadBookmarkGroupEntry>>()
       val deleteTransaction = DeleteBookmarkGroupEntriesTransaction()
 
       for (bookmarkThreadDescriptor in bookmarkThreadDescriptors) {
-        outer@ for ((groupId, threadBookmarkGroup) in groupsByGroupIdMap) {
-          for ((_, threadBookmarkGroupEntry) in threadBookmarkGroup.entries) {
+        outer@
+        for ((groupId, threadBookmarkGroup) in groupsByGroupIdMap) {
+          var shouldBreak = false
+
+          threadBookmarkGroup.iterateEntriesOrderedWhile { _, threadBookmarkGroupEntry ->
             if (threadBookmarkGroupEntry.threadDescriptor == bookmarkThreadDescriptor) {
               grouped.putIfNotContains(groupId, mutableListOf())
               grouped[groupId]!!.add(threadBookmarkGroupEntry)
 
-              break@outer
+              shouldBreak = true
+              return@iterateEntriesOrderedWhile false
             }
+
+            return@iterateEntriesOrderedWhile true
+          }
+
+          if (shouldBreak) {
+            break@outer
           }
         }
       }
 
       grouped.forEach { (groupId, threadBookmarkGroupEntryList) ->
         threadBookmarkGroupEntryList.forEach { threadBookmarkGroupEntry ->
-          groupsByGroupIdMap[groupId]?.entries?.remove(threadBookmarkGroupEntry.databaseId)
+          groupsByGroupIdMap[groupId]?.removeThreadBookmarkGroupEntry(threadBookmarkGroupEntry)
         }
 
-        reorder(groupId)
         deleteTransaction.toDelete.addAll(threadBookmarkGroupEntryList)
 
-        groupsByGroupIdMap[groupId]?.entries?.values?.let { threadBookmarkGroupEntries ->
-          deleteTransaction.toUpdate.put(groupId, threadBookmarkGroupEntries.toList())
+        val orderedList = mutableListOf<ThreadBookmarkGroupEntry>()
+        groupsByGroupIdMap[groupId]?.iterateEntriesOrderedWhile { _, threadBookmarkGroupEntry ->
+          orderedList += threadBookmarkGroupEntry
+          return@iterateEntriesOrderedWhile true
         }
+
+        deleteTransaction.toUpdate[groupId] = orderedList
       }
 
       if (deleteTransaction.isEmpty()) {
-        return@write true
+        return@withLock true
       }
 
       threadBookmarkGroupEntryRepository.executeDeleteTransaction(deleteTransaction)
@@ -316,19 +331,16 @@ class ThreadBookmarkGroupManager(
           // Rollback the changes we did
           grouped.forEach { (groupId, threadBookmarkGroupEntryList) ->
             threadBookmarkGroupEntryList.forEach { threadBookmarkGroupEntry ->
-              groupsByGroupIdMap[groupId]?.entries?.put(
-                threadBookmarkGroupEntry.databaseId,
-                threadBookmarkGroupEntry
-              )
+              groupsByGroupIdMap[groupId]?.addThreadBookmarkGroupEntry(threadBookmarkGroupEntry)
             }
 
-            reorder(groupId)
+            groupsByGroupIdMap[groupId]?.checkConsistency()
           }
 
-          return@write false
+          return@withLock false
         }
 
-      return@write true
+      return@withLock true
     }
   }
 
@@ -344,14 +356,6 @@ class ThreadBookmarkGroupManager(
   }
 
   fun isReady() = suspendableInitializer.isInitialized()
-
-  private fun reorder(groupId: String) {
-    require(lock.isWriteLocked) { "lock is not write locked!" }
-
-    groupsByGroupIdMap[groupId]?.entries?.values?.forEachIndexed { index, threadBookmarkGroupEntry ->
-      threadBookmarkGroupEntry.orderInGroup = index
-    }
-  }
 
   private suspend fun handleBookmarkChange(bookmarkChange: BookmarksManager.BookmarkChange) {
     if (bookmarkChange is BookmarksManager.BookmarkChange.BookmarksInitialized ||

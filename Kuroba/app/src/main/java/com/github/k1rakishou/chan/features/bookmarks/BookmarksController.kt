@@ -359,7 +359,7 @@ class BookmarksController(
           updateTitleWithStats(state)
 
           state.groupedBookmarks.forEach { bookmarkGroup ->
-            val hasBookmarksInGroup = bookmarkGroup.threadBookmarkViews.isNotEmpty()
+            val hasBookmarksInGroup = bookmarkGroup.threadBookmarkItemViews.isNotEmpty()
 
             if (!hasBookmarksInGroup) {
               return@forEach
@@ -376,7 +376,7 @@ class BookmarksController(
               return@forEach
             }
 
-            bookmarkGroup.threadBookmarkViews.forEach { bookmark ->
+            bookmarkGroup.threadBookmarkItemViews.forEach { bookmark ->
               val requestData =
                 BaseThreadBookmarkViewHolder.ImageLoaderRequestData(bookmark.thumbnailUrl)
 
@@ -513,13 +513,13 @@ class BookmarksController(
   private fun formatTitleWithStats(state: BookmarksControllerState.Data): String {
     val groupedBookmarks = state.groupedBookmarks
 
-    val totalBookmarksCount = groupedBookmarks.sumBy { group -> group.threadBookmarkViews.size }
+    val totalBookmarksCount = groupedBookmarks.sumBy { group -> group.threadBookmarkItemViews.size }
     if (totalBookmarksCount <= 0) {
       return context.getString(R.string.controller_bookmarks)
     }
 
     val watchingBookmarksCount = groupedBookmarks.sumBy { group ->
-      group.threadBookmarkViews.count { threadBookmarkItemView ->
+      group.threadBookmarkItemViews.count { threadBookmarkItemView ->
         threadBookmarkItemView.threadBookmarkStats.watching
       }
     }

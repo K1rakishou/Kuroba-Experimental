@@ -108,7 +108,7 @@ class Migration_v4_to_v5 : Migration(4, 5) {
           CREATE TABLE IF NOT EXISTS `thread_bookmark_group_entry` 
           (
             `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
-            `owner_bookmark_id` INTEGER, 
+            `owner_bookmark_id` INTEGER NOT NULL, 
             `owner_group_id` TEXT NOT NULL, 
             `order_in_group` INTEGER NOT NULL, 
             FOREIGN KEY(`owner_bookmark_id`) REFERENCES `thread_bookmark`(`thread_bookmark_id`) ON UPDATE CASCADE ON DELETE CASCADE , 

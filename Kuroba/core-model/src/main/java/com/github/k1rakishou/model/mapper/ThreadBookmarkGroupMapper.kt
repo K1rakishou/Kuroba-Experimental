@@ -34,8 +34,7 @@ object ThreadBookmarkGroupMapper {
           databaseId = threadBookmarkGroupEntryEntity.id,
           ownerGroupId = threadBookmarkGroupEntryEntity.ownerGroupId,
           ownerBookmarkId = ownerBookmarkId,
-          threadDescriptor = threadDescriptor,
-          orderInGroup = threadBookmarkGroupEntryEntity.orderInGroup
+          threadDescriptor = threadDescriptor
         )
       }.associateBy { threadBookmarkGroupEntry -> threadBookmarkGroupEntry.databaseId }
 
@@ -43,34 +42,53 @@ object ThreadBookmarkGroupMapper {
       return null
     }
 
+    val orders = threadBookmarkGroupWithEntries.threadBookmarkGroupEntryEntities
+      .sortedBy { threadBookmarkGroupEntryEntity -> threadBookmarkGroupEntryEntity.orderInGroup }
+      .map { threadBookmarkGroupEntryEntity -> threadBookmarkGroupEntryEntity.id }
+
     return ThreadBookmarkGroup(
       groupId = threadBookmarkGroupWithEntries.threadBookmarkGroupEntity.groupId,
       groupName = threadBookmarkGroupWithEntries.threadBookmarkGroupEntity.groupName,
       isExpanded = threadBookmarkGroupWithEntries.threadBookmarkGroupEntity.isExpanded,
-      order = threadBookmarkGroupWithEntries.threadBookmarkGroupEntity.groupOrder,
-      entries = ConcurrentHashMap(threadBookmarkGroupEntries)
+      groupOrder = threadBookmarkGroupWithEntries.threadBookmarkGroupEntity.groupOrder,
+      entries = ConcurrentHashMap(threadBookmarkGroupEntries),
+      orders = orders.toMutableList()
     )
   }
 
-  fun toEntityList(threadBookmarkGroupEntryList: List<ThreadBookmarkGroupEntry>): List<ThreadBookmarkGroupEntryEntity> {
-    return threadBookmarkGroupEntryList.map { toEntity(it) }
+  fun toEntityList(
+    threadBookmarkGroupEntryList: List<ThreadBookmarkGroupEntry>
+  ): List<ThreadBookmarkGroupEntryEntity> {
+    return threadBookmarkGroupEntryList.mapIndexed { index, threadBookmarkGroupEntry ->
+      return@mapIndexed toEntity(index, threadBookmarkGroupEntry)
+    }
   }
 
-  fun toEntity(threadBookmarkGroupEntry: ThreadBookmarkGroupEntry): ThreadBookmarkGroupEntryEntity {
+  fun toEntity(
+    order: Int,
+    threadBookmarkGroupEntry: ThreadBookmarkGroupEntry
+  ): ThreadBookmarkGroupEntryEntity {
     return ThreadBookmarkGroupEntryEntity(
       id = threadBookmarkGroupEntry.databaseId,
       ownerBookmarkId = threadBookmarkGroupEntry.ownerBookmarkId,
       ownerGroupId = threadBookmarkGroupEntry.ownerGroupId,
-      orderInGroup = threadBookmarkGroupEntry.orderInGroup
+      orderInGroup = order
     )
   }
 
-  fun toEntityList2(threadBookmarkGroupEntryToCreateList: List<ThreadBookmarkGroupEntryToCreate>): List<ThreadBookmarkGroupEntryEntity> {
-    return threadBookmarkGroupEntryToCreateList.map { toEntity2(it) }
+  fun toEntityList2(
+    threadBookmarkGroupEntryToCreateList: List<ThreadBookmarkGroupEntryToCreate>
+  ): List<ThreadBookmarkGroupEntryEntity> {
+    return threadBookmarkGroupEntryToCreateList.mapIndexed { index, threadBookmarkGroupEntryToCreate ->
+      toEntity2(index, threadBookmarkGroupEntryToCreate)
+    }
   }
 
-  fun toEntity2(threadBookmarkGroupEntryToCreate: ThreadBookmarkGroupEntryToCreate): ThreadBookmarkGroupEntryEntity {
-    val ownerBookmarkId =threadBookmarkGroupEntryToCreate.ownerBookmarkId
+  fun toEntity2(
+    order: Int,
+    threadBookmarkGroupEntryToCreate: ThreadBookmarkGroupEntryToCreate
+  ): ThreadBookmarkGroupEntryEntity {
+    val ownerBookmarkId = threadBookmarkGroupEntryToCreate.ownerBookmarkId
 
     require(threadBookmarkGroupEntryToCreate.ownerBookmarkId > 0L) {
       "Bad ownerBookmarkId: ${threadBookmarkGroupEntryToCreate.ownerBookmarkId}"
@@ -80,7 +98,7 @@ object ThreadBookmarkGroupMapper {
       id = 0L,
       ownerBookmarkId = ownerBookmarkId,
       ownerGroupId = threadBookmarkGroupEntryToCreate.ownerGroupId,
-      orderInGroup = threadBookmarkGroupEntryToCreate.orderInGroup
+      orderInGroup = order
     )
   }
 

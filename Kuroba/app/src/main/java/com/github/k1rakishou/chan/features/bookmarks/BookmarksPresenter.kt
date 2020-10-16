@@ -170,12 +170,7 @@ class BookmarksPresenter(
   }
 
   suspend fun deleteBookmarks(selectedItems: List<ChanDescriptor.ThreadDescriptor>): Boolean {
-    val deleted = bookmarksManager.deleteBookmarks(selectedItems)
-    if (!deleted) {
-      return false
-    }
-
-    return threadBookmarkGroupManager.deleteGroupEntries(selectedItems)
+    return bookmarksManager.deleteBookmarks(selectedItems)
   }
 
   fun hasBookmarks(): Boolean {
@@ -309,10 +304,10 @@ class BookmarksPresenter(
 
     return bookmarks.map { groupOfThreadBookmarkItemViews ->
       val sortedThreadBookmarkViews =
-        groupOfThreadBookmarkItemViews.threadBookmarkViews.sortedWith(comparator)
+        groupOfThreadBookmarkItemViews.threadBookmarkItemViews.sortedWith(comparator)
 
       return@map groupOfThreadBookmarkItemViews
-        .copy(threadBookmarkViews = sortedThreadBookmarkViews)
+        .copy(threadBookmarkItemViews = sortedThreadBookmarkViews)
     }
   }
 
@@ -329,10 +324,11 @@ class BookmarksPresenter(
     }
 
     return bookmarks.map { groupOfThreadBookmarkItemViews ->
-      val sortedThreadBookmarkViews = groupOfThreadBookmarkItemViews.threadBookmarkViews.reversed()
+      val sortedThreadBookmarkViews =
+        groupOfThreadBookmarkItemViews.threadBookmarkItemViews.reversed()
 
       return@map groupOfThreadBookmarkItemViews
-        .copy(threadBookmarkViews = sortedThreadBookmarkViews)
+        .copy(threadBookmarkItemViews = sortedThreadBookmarkViews)
     }
   }
 
