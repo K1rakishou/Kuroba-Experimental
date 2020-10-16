@@ -154,9 +154,11 @@ public class Toolbar
 
         //initView
         FrameLayout leftButtonContainer = new FrameLayout(getContext());
+        leftButtonContainer.setId(R.id.toolbar_arrow_menu_view_container);
         addView(leftButtonContainer, WRAP_CONTENT, MATCH_PARENT);
 
         arrowMenuView = new ImageView(getContext());
+        arrowMenuView.setId(R.id.toolbar_arrow_menu_view);
         arrowMenuView.setOnClickListener(this);
         arrowMenuView.setFocusable(true);
         arrowMenuView.setScaleType(ImageView.ScaleType.CENTER);
@@ -472,6 +474,20 @@ public class Toolbar
 
     public void setCallback(ToolbarCallback callback) {
         this.callback = callback;
+    }
+
+    public void hideArrowMenu() {
+        View arrowMenuContainer = KotlinExtensionsKt.findChild(
+                this,
+                view -> view.getId() == R.id.toolbar_arrow_menu_view_container
+        );
+
+        if (arrowMenuContainer == null || arrowMenuContainer.getVisibility() == View.GONE) {
+            return;
+        }
+
+        arrowMenuContainer.setVisibility(View.GONE);
+        KotlinExtensionsKt.updatePaddings(navigationItemContainer, dp(8f), null, null, null);
     }
 
     public void removeCallback() {

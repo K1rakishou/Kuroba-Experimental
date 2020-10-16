@@ -37,7 +37,9 @@ class BottomNavBarAwareNavigationController(
 
     val toolbar = view.findViewById<Toolbar>(R.id.toolbar)
     setToolbar(toolbar)
+
     requireToolbar().setCallback(this)
+    requireToolbar().hideArrowMenu()
 
     // Wait a little bit so that GlobalWindowInsetsManager have time to get initialized so we can
     // use the insets

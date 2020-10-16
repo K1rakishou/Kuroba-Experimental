@@ -99,9 +99,8 @@ class ThreadBookmarkGroupManager(
           val orderedThreadBookmarkItemView =
             threadBookmarkViewMapByDescriptor[threadBookmarkGroupEntry.threadDescriptor]
 
-          threadBookmarkItemViews += requireNotNull(orderedThreadBookmarkItemView) {
-            "Couldn't find ThreadBookmarkItemView by thread " +
-              "descriptor ${threadBookmarkGroupEntry.threadDescriptor}"
+          if (orderedThreadBookmarkItemView != null) {
+            threadBookmarkItemViews += orderedThreadBookmarkItemView
           }
 
           return@iterateEntriesOrderedWhile true

@@ -29,4 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <item name="post_replies_data_view_id" type="id"/>
 
     <item name="toolbar_selection_text_view" type="id"/>
+    <item name="toolbar_arrow_menu_view" type="id"/>
+    <item name="toolbar_arrow_menu_view_container" type="id"/>
 </resources>
