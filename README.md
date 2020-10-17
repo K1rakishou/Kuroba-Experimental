@@ -21,7 +21,7 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan
 
 - 4chan global search support.
 
-- Fully dynamic themes with Android Q Day/Night switch support.
+- Fully dynamic themes with Android Q Day/Night mode support.
 
 - Lots of other tiny improvements.
 
