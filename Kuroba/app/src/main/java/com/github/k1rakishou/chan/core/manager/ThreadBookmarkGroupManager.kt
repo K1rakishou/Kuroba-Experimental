@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.util.*
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -111,7 +112,7 @@ class ThreadBookmarkGroupManager(
 
         listOfGroups += GroupOfThreadBookmarkItemViews(
           groupId = threadBookmarkGroup.groupId,
-          groupInfoText = threadBookmarkGroup.groupName,
+          groupInfoText = createGroupInfoText(threadBookmarkGroup, threadBookmarkItemViews),
           isExpanded = threadBookmarkGroup.isExpanded,
           threadBookmarkItemViews = threadBookmarkItemViews
         )
@@ -119,6 +120,20 @@ class ThreadBookmarkGroupManager(
 
       return@withLock listOfGroups
     }
+  }
+
+  private fun createGroupInfoText(
+    threadBookmarkGroup: ThreadBookmarkGroup,
+    threadBookmarkItemViews: MutableList<ThreadBookmarkItemView>
+  ): String {
+    val totalBookmarksInGroupCount = threadBookmarkItemViews.size
+    val watchingBookmarkInGroupCount = threadBookmarkItemViews
+      .count { threadBookmarkItemView -> threadBookmarkItemView.threadBookmarkStats.watching }
+
+    return String.format(
+      Locale.ENGLISH,
+      "${threadBookmarkGroup.groupName} (${watchingBookmarkInGroupCount}/${totalBookmarksInGroupCount})"
+    )
   }
 
   /**

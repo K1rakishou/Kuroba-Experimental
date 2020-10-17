@@ -224,7 +224,6 @@ class BookmarksPresenter(
     threadBookmarkGroupManager.awaitUntilInitialized()
 
     val isWatcherEnabled = ChanSettings.watchEnabled.get()
-
     val searchQuery = searchFlow.value as? SearchQuery.Searching
 
     val query = if (searchQuery?.query?.length ?: 0 >= MIN_QUERY_LENGTH) {

@@ -19,7 +19,9 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:rotation="180" />
+        tools:rotation="180"
+        tools:src="@drawable/ic_chevron_left_black_24dp"
+        tools:tint="#fff" />
 
     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
         android:id="@+id/group_title"
@@ -29,7 +31,7 @@
         app:layout_constraintBottom_toBottomOf="@+id/toggle_indicator_view"
         app:layout_constraintStart_toEndOf="@+id/toggle_indicator_view"
         app:layout_constraintTop_toTopOf="@+id/toggle_indicator_view"
-        tools:text="Archives (5/10)"/>
+        tools:text="Archives (5/10)" />
 
     <View
         android:id="@+id/divider"
