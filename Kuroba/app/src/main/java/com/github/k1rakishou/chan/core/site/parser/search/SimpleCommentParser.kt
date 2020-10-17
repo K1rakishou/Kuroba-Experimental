@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.site.parser.search
 
 import android.text.SpannableString
 import android.text.TextUtils
+import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParamsBuilder
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable
@@ -15,9 +16,15 @@ import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
 import java.util.*
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
 @DoNotStrip
-open class Chan4SimpleCommentParser {
+open class SimpleCommentParser {
+  private val lock = ReentrantReadWriteLock()
+
+  @GuardedBy("lock")
   private val rules: MutableMap<String, MutableList<StyleRule>> = HashMap()
 
   init {
@@ -116,7 +123,7 @@ open class Chan4SimpleCommentParser {
     text: CharSequence,
     element: Element
   ): CharSequence? {
-    val rules = rules[tag]
+    val rules = lock.read { rules[tag] }
       ?: return text
 
     for (i in 0..1) {
@@ -140,13 +147,15 @@ open class Chan4SimpleCommentParser {
   }
 
   private fun rule(rule: StyleRule) {
-    var list = rules[rule.tag()]
-    if (list == null) {
-      list = ArrayList(3)
-      rules[rule.tag()] = list
-    }
+    lock.write {
+      var list = rules[rule.tag()]
+      if (list == null) {
+        list = ArrayList(3)
+        rules[rule.tag()] = list
+      }
 
-    list.add(rule)
+      list.add(rule)
+    }
   }
 
   companion object {

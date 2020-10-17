@@ -22,7 +22,7 @@ import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.base.SuspendDebouncer
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.core.site.parser.search.Chan4SimpleCommentParser
+import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.getApplicationLabel
@@ -61,7 +61,7 @@ class ReplyNotificationsHelper(
   private val chanPostRepository: ChanPostRepository,
   private val imageLoaderV2: ImageLoaderV2,
   private val themeEngine: ThemeEngine,
-  private val chan4SimpleCommentParser: Chan4SimpleCommentParser
+  private val simpleCommentParser: SimpleCommentParser
 ) {
   private val debouncer = SuspendDebouncer(appScope)
   private val working = AtomicBoolean(false)
@@ -691,7 +691,7 @@ class ReplyNotificationsHelper(
       return@withContext repliesSorted.map { threadBookmarkReplyView ->
         val commentRaw = threadBookmarkReplyView.commentRaw
         if (commentRaw != null) {
-          val parsedComment = chan4SimpleCommentParser.parseComment(
+          val parsedComment = simpleCommentParser.parseComment(
             themeEngine.chanTheme,
             commentRaw
           )

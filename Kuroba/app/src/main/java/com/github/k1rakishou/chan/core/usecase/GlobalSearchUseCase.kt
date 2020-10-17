@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.core.usecase
 import android.text.SpannableString
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
-import com.github.k1rakishou.chan.core.site.parser.search.Chan4SimpleCommentParser
+import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
@@ -21,7 +21,7 @@ import java.util.regex.Pattern
 class GlobalSearchUseCase(
   private val siteManager: SiteManager,
   private val themeEngine: ThemeEngine,
-  private val chan4SimpleCommentParser: Chan4SimpleCommentParser
+  private val simpleCommentParser: SimpleCommentParser
 ) : ISuspendUseCase<SearchParams, SearchResult> {
   override suspend fun execute(parameter: SearchParams): SearchResult {
     return try {
@@ -83,7 +83,7 @@ class GlobalSearchUseCase(
     searchResult.searchEntries.forEach { searchEntry ->
       searchEntry.thread.posts.forEach { searchEntryPost ->
         searchEntryPost.commentRaw?.let { commentRaw ->
-          val parsedComment = chan4SimpleCommentParser.parseComment(theme, commentRaw.toString()) ?: ""
+          val parsedComment = simpleCommentParser.parseComment(theme, commentRaw.toString()) ?: ""
           val spannedComment = SpannableString(parsedComment)
 
           findAllQueryEntriesInsideCommentAndMarkThem(searchResult.query, spannedComment, theme)

@@ -60,7 +60,7 @@ import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.SiteRegistry;
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager;
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
-import com.github.k1rakishou.chan.core.site.parser.search.Chan4SimpleCommentParser;
+import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
 import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkForegroundWatcher;
@@ -465,7 +465,7 @@ public class ManagerModule {
             ChanPostRepository chanPostRepository,
             ImageLoaderV2 imageLoaderV2,
             ThemeEngine themeEngine,
-            Chan4SimpleCommentParser chan4SimpleCommentParser
+            SimpleCommentParser simpleCommentParser
     ) {
         Logger.d(AppModule.DI_TAG, "ReplyNotificationsHelper");
 
@@ -480,7 +480,7 @@ public class ManagerModule {
                 chanPostRepository,
                 imageLoaderV2,
                 themeEngine,
-                chan4SimpleCommentParser
+                simpleCommentParser
         );
     }
 

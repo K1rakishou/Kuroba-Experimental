@@ -9,7 +9,7 @@ import com.github.k1rakishou.chan.core.manager.SavedReplyManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
-import com.github.k1rakishou.chan.core.site.parser.search.Chan4SimpleCommentParser;
+import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase;
@@ -114,14 +114,14 @@ public class UseCaseModule {
     public GlobalSearchUseCase provideGlobalSearchUseCase(
             SiteManager siteManager,
             ThemeEngine themeEngine,
-            Chan4SimpleCommentParser chan4SimpleCommentParser
+            SimpleCommentParser simpleCommentParser
     ) {
         Logger.d(AppModule.DI_TAG, "GlobalSearchUseCase");
 
         return new GlobalSearchUseCase(
                 siteManager,
                 themeEngine,
-                chan4SimpleCommentParser
+                simpleCommentParser
         );
     }
 
