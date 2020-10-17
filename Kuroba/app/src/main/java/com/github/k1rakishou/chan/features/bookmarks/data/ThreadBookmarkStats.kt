@@ -12,8 +12,13 @@ data class ThreadBookmarkStats(
   val isBumpLimit: Boolean = false,
   val isImageLimit: Boolean = false,
   val isFirstFetch: Boolean = false,
+  val isDeleted: Boolean = false,
   val isError: Boolean = false
 ) {
+
   @Suppress("ConvertTwoComparisonsToRangeCheck")
   fun isLastPage() = totalPages > 0 && currentPage >= totalPages
+
+  fun isDead(): Boolean = isArchive || isDeleted
+
 }

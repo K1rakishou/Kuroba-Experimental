@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
 import com.github.k1rakishou.chan.ui.view.sorting.BookmarkSortingItemsViewGroup
 
 class BookmarksSortingController(
@@ -15,6 +16,7 @@ class BookmarksSortingController(
 
   private lateinit var outsideArea: ConstraintLayout
   private lateinit var bookmarkSortingItemsViewGroup: BookmarkSortingItemsViewGroup
+  private lateinit var moveNotActiveBookmarksToBottom: ColorizableCheckBox
 
   private lateinit var cancel: ColorizableBarButton
   private lateinit var apply: ColorizableBarButton
@@ -28,23 +30,51 @@ class BookmarksSortingController(
 
     outsideArea = view.findViewById(R.id.outside_area)
     bookmarkSortingItemsViewGroup = view.findViewById(R.id.sorting_items_view_group)
+    moveNotActiveBookmarksToBottom = view.findViewById(R.id.move_not_active_bookmark_to_bottom)
     cancel = view.findViewById(R.id.cancel_button)
     apply = view.findViewById(R.id.apply_button)
 
     cancel.setOnClickListener { pop() }
     outsideArea.setOnClickListener { pop() }
 
-    apply.setOnClickListener {
-      val prevOrder = ChanSettings.bookmarksSortOrder.get()
-      val newOrder = bookmarkSortingItemsViewGroup.getCurrentSortingOrder()
+    moveNotActiveBookmarksToBottom.isChecked = ChanSettings.moveNotActiveBookmarksToBottom.get()
 
-      if (prevOrder != newOrder) {
-        ChanSettings.bookmarksSortOrder.set(newOrder)
+    apply.setOnClickListener {
+      var shouldReloadBookmarks = false
+
+      shouldReloadBookmarks = shouldReloadBookmarks or updateBookmarkSortingSetting()
+      shouldReloadBookmarks = shouldReloadBookmarks or updateMoveDeadBookmarksToBottomSetting()
+
+      if (shouldReloadBookmarks) {
         sortingOrderChangeListener?.onSortingOrderChanged()
       }
 
       pop()
     }
+  }
+
+  private fun updateMoveDeadBookmarksToBottomSetting(): Boolean {
+    val prevSettingValue = ChanSettings.moveNotActiveBookmarksToBottom.get()
+    val newSettingValue = moveNotActiveBookmarksToBottom.isChecked
+
+    if (prevSettingValue == newSettingValue) {
+      return false
+    }
+
+    ChanSettings.moveNotActiveBookmarksToBottom.set(newSettingValue)
+    return true
+  }
+
+  private fun updateBookmarkSortingSetting(): Boolean {
+    val prevOrder = ChanSettings.bookmarksSortOrder.get()
+    val newOrder = bookmarkSortingItemsViewGroup.getCurrentSortingOrder()
+
+    if (prevOrder == newOrder) {
+      return false
+    }
+
+    ChanSettings.bookmarksSortOrder.set(newOrder)
+    return true
   }
 
   override fun onBack(): Boolean {

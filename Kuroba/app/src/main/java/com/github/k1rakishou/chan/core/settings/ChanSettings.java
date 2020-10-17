@@ -346,6 +346,7 @@ public class ChanSettings {
     public static final CounterSetting replyOpenCounter;
     public static final BooleanSetting scrollingTextForThreadTitles;
     public static final OptionsSetting<BookmarksSortOrder> bookmarksSortOrder;
+    public static final BooleanSetting moveNotActiveBookmarksToBottom;
     public static final BooleanSetting ignoreDarkNightMode;
     //endregion
     //endregion
@@ -526,6 +527,8 @@ public class ChanSettings {
                     BookmarksSortOrder.class,
                     BookmarksSortOrder.defaultOrder()
             );
+
+            moveNotActiveBookmarksToBottom = new BooleanSetting(p, "move_not_active_bookmarks_to_bottom", false);
             //endregion
 
             scrollingTextForThreadTitles = new BooleanSetting(p, "scrolling_text_for_thread_titles", true);
