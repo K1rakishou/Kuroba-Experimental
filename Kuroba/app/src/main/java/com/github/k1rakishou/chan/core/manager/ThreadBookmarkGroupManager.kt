@@ -69,6 +69,9 @@ class ThreadBookmarkGroupManager(
     }
   }
 
+  /**
+   * Transforms an unordered list of bookmarks into an ordered list of groups of ordered bookmarks
+   * */
   suspend fun groupBookmarks(
     threadBookmarkViewList: List<ThreadBookmarkItemView>
   ): List<GroupOfThreadBookmarkItemViews> {
@@ -118,6 +121,9 @@ class ThreadBookmarkGroupManager(
     }
   }
 
+  /**
+   * Toggles the bookmark's group expanded/collapsed state
+   * */
   suspend fun toggleBookmarkExpandState(groupId: String): Boolean {
     check(isReady()) { "ThreadBookmarkGroupEntryManager is not ready yet! Use awaitUntilInitialized()" }
 
@@ -140,16 +146,18 @@ class ThreadBookmarkGroupManager(
     }
   }
 
+  /**
+   * Creates new ThreadBookmarkGroupEntry for newly created ThreadBookmarks.
+   * */
   suspend fun createGroupEntries(bookmarkThreadDescriptors: List<ChanDescriptor.ThreadDescriptor>): Boolean {
     check(isReady()) { "ThreadBookmarkGroupEntryManager is not ready yet! Use awaitUntilInitialized()" }
     require(bookmarkThreadDescriptors.isNotEmpty()) { "bookmarkThreadDescriptors is empty!" }
 
-    // Yes, we are locking the database access here, because we need to calculate the new order for
-    // groups and and regular entries and we don't want anyone modifying groupsByGroupIdMap while
-    // we are persisting the changes.
+    // Yes, there is a database call inside of the locked block, but we need atomicity
     return mutex.withLock {
       val createTransaction = CreateBookmarkGroupEntriesTransaction()
 
+      // 1. Create ThreadBookmarkGroup with ThreadBookmarkGroupToCreate and fill in createTransaction
       bookmarksManager.viewBookmarks(bookmarkThreadDescriptors) { threadBookmarkView ->
         val groupId = threadBookmarkView.groupId
 
@@ -209,6 +217,7 @@ class ThreadBookmarkGroupManager(
         return@withLock true
       }
 
+      // 2. Try inserting everything into the database
       threadBookmarkGroupEntryRepository.executeCreateTransaction(createTransaction)
         .safeUnwrap { error ->
           Logger.e(TAG, "Error trying to insert new bookmark group entries into the database", error)
@@ -221,6 +230,7 @@ class ThreadBookmarkGroupManager(
           return@withLock false
         }
 
+      // 3. Apply changes to the caches as well.
       createTransaction.toCreate.forEach { (groupId, threadBookmarkGroupToCreate) ->
         val threadBookmarkGroupEntries = mutableMapOf<Long, ThreadBookmarkGroupEntry>()
         val orders = mutableMapOf<Long, Int>()
@@ -271,15 +281,20 @@ class ThreadBookmarkGroupManager(
     }
   }
 
+  /**
+   * Deletes ThreadBookmarkGroupEntry from groupsByGroupIdMap and deletes them from the database
+   * as well.
+   * */
   suspend fun deleteGroupEntries(bookmarkThreadDescriptors: List<ChanDescriptor.ThreadDescriptor>): Boolean {
     check(isReady()) { "ThreadBookmarkGroupEntryManager is not ready yet! Use awaitUntilInitialized()" }
     require(bookmarkThreadDescriptors.isNotEmpty()) { "bookmarkThreadDescriptors is empty!" }
 
-    // Yes, we are locking the database access here, because we want this method to be atomic
+    // Yes, there is a database call inside of the locked block, but we need atomicity
     return mutex.withLock {
       val grouped = mutableMapOf<String, MutableList<ThreadBookmarkGroupEntry>>()
       val deleteTransaction = DeleteBookmarkGroupEntriesTransaction()
 
+      // 1. Find ThreadBookmarkGroupEntry that we want to delete by their ThreadDescriptors
       for (bookmarkThreadDescriptor in bookmarkThreadDescriptors) {
         outer@
         for ((groupId, threadBookmarkGroup) in groupsByGroupIdMap) {
@@ -303,14 +318,15 @@ class ThreadBookmarkGroupManager(
         }
       }
 
+      // 2. Remove the from the groupsByGroupIdMap + fill in the deleteTransaction
       grouped.forEach { (groupId, threadBookmarkGroupEntryList) ->
         threadBookmarkGroupEntryList.forEach { threadBookmarkGroupEntry ->
           groupsByGroupIdMap[groupId]?.removeThreadBookmarkGroupEntry(threadBookmarkGroupEntry)
         }
 
         deleteTransaction.toDelete.addAll(threadBookmarkGroupEntryList)
-
         val orderedList = mutableListOf<ThreadBookmarkGroupEntry>()
+
         groupsByGroupIdMap[groupId]?.iterateEntriesOrderedWhile { _, threadBookmarkGroupEntry ->
           orderedList += threadBookmarkGroupEntry
           return@iterateEntriesOrderedWhile true
@@ -323,13 +339,17 @@ class ThreadBookmarkGroupManager(
         return@withLock true
       }
 
+      // 3. Remove them from the database as well or roll everything back when we couldn't remove
+      // something from the database
       threadBookmarkGroupEntryRepository.executeDeleteTransaction(deleteTransaction)
         .safeUnwrap { error ->
           Logger.e(TAG, "Error trying to delete bookmark group entries from the database", error)
 
-          // Rollback the changes we did
+          // Rollback the changes we did upon errors
           grouped.forEach { (groupId, threadBookmarkGroupEntryList) ->
             threadBookmarkGroupEntryList.forEach { threadBookmarkGroupEntry ->
+              // This is kinda bad, because it will ignore the original ordering and just insert
+              // everything at the end of the "orders" list.
               groupsByGroupIdMap[groupId]?.addThreadBookmarkGroupEntry(threadBookmarkGroupEntry)
             }
 

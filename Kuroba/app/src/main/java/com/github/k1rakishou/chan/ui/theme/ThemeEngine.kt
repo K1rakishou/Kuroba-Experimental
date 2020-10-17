@@ -117,7 +117,7 @@ open class ThemeEngine(
   }
 
   fun getDrawableTinted(context: Context, @DrawableRes drawableId: Int, isCurrentColorDark: Boolean): Drawable {
-    val drawable = ContextCompat.getDrawable(context, drawableId)
+    val drawable = ContextCompat.getDrawable(context, drawableId)?.mutate()
       ?: throw IllegalStateException("Couldn't find drawable ${drawableId}")
 
     DrawableCompat.setTint(drawable, resolveTintColor(isCurrentColorDark))

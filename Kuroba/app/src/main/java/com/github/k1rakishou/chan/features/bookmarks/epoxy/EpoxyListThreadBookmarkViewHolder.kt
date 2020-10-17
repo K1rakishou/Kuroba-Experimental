@@ -40,6 +40,8 @@ abstract class EpoxyListThreadBookmarkViewHolder
   var titleString: String? = null
   @EpoxyAttribute
   var highlightBookmark: Boolean = false
+  @EpoxyAttribute
+  open var isTablet: Boolean = false
 
   private var holder: BaseThreadBookmarkViewHolder? = null
 
@@ -58,6 +60,7 @@ abstract class EpoxyListThreadBookmarkViewHolder
     holder.setThreadBookmarkStats(false, threadBookmarkStats)
     holder.setTitle(titleString, threadBookmarkStats?.watching ?: false)
     holder.highlightBookmark(highlightBookmark || threadBookmarkSelection?.isSelected == true)
+    holder.updateListViewSizesForTablet(isTablet)
 
     val watching = threadBookmarkStats?.watching ?: true
     context?.let { holder.bindImage(false, watching, it) }

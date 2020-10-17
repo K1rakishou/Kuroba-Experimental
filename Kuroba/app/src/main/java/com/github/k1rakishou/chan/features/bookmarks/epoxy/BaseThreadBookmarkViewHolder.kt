@@ -28,6 +28,7 @@ import com.github.k1rakishou.chan.utils.AndroidUtils.waitForLayout
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.resetClickListener
 import com.github.k1rakishou.common.resetLongClickListener
+import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import java.lang.ref.WeakReference
@@ -309,6 +310,44 @@ open class BaseThreadBookmarkViewHolder(
     }
   }
 
+  fun updateGridViewSizesForTablet(isTablet: Boolean) {
+    if (isTablet) {
+      bookmarkStats.textSize = 18f
+      bookmarkAdditionalStats?.textSize = 18f
+      bookmarkTitle.textSize = 18f
+      bookmarkTitle.maxLines = 6
+    } else {
+      bookmarkStats.textSize = 14f
+      bookmarkAdditionalStats?.textSize = 14f
+      bookmarkTitle.textSize = 14f
+      bookmarkTitle.maxLines = 3
+    }
+  }
+
+  fun updateListViewSizesForTablet(isTablet: Boolean) {
+    if (isTablet) {
+      viewHolder.updatePaddings(
+        BOOKMARK_HOLDER_TABLET_PADDING,
+        BOOKMARK_HOLDER_TABLET_PADDING,
+        BOOKMARK_HOLDER_TABLET_PADDING,
+        BOOKMARK_HOLDER_TABLET_PADDING
+      )
+
+      bookmarkTitle.textSize = 18f
+      bookmarkStats.textSize = 18f
+    } else {
+      viewHolder.updatePaddings(
+        BOOKMARK_HOLDER_NON_TABLET_PADDING,
+        BOOKMARK_HOLDER_NON_TABLET_PADDING,
+        BOOKMARK_HOLDER_NON_TABLET_PADDING,
+        BOOKMARK_HOLDER_NON_TABLET_PADDING
+      )
+
+      bookmarkTitle.textSize = 16f
+      bookmarkStats.textSize = 16f
+    }
+  }
+
   private fun bindImageInternal(isGridMode: Boolean, watching: Boolean, context: Context) {
     val url = imageLoaderRequestData?.url
     val thumbnailImageRef = WeakReference(bookmarkImage)
@@ -347,6 +386,9 @@ open class BaseThreadBookmarkViewHolder(
 
     private const val DEFAULT_ROOT_VIEW_COLOR = Color.TRANSPARENT
     private const val HIGHLIGHT_COLOR_ALPHA = 50
+
+    private val BOOKMARK_HOLDER_TABLET_PADDING = dp(4f)
+    private val BOOKMARK_HOLDER_NON_TABLET_PADDING = dp(2f)
   }
 
 }

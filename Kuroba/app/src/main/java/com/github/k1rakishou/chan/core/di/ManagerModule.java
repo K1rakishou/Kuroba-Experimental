@@ -356,7 +356,8 @@ public class ManagerModule {
                 appScope,
                 applicationVisibilityManager,
                 archivesManager,
-                bookmarksRepository
+                bookmarksRepository,
+                SiteRegistry.INSTANCE
         );
     }
 

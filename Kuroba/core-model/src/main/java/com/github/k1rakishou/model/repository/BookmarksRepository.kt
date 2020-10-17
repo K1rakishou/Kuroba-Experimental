@@ -21,12 +21,14 @@ class BookmarksRepository(
   private val TAG = "$loggerTag BookmarksRepository"
 
   @OptIn(ExperimentalTime::class)
-  suspend fun initialize(): ModularResult<List<ThreadBookmark>> {
+  suspend fun initialize(allSiteNames: Set<String>): ModularResult<List<ThreadBookmark>> {
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         ensureBackgroundThread()
 
         val (bookmarks, duration) = measureTimedValue {
+          localSource.createDefaultBookmarkGroups(allSiteNames)
+
           return@measureTimedValue localSource.selectAll()
         }
 

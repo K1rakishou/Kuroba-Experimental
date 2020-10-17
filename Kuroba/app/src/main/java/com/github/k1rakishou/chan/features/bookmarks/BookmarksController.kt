@@ -30,6 +30,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.*
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.RecyclerUtils
@@ -356,6 +357,7 @@ class BookmarksController(
             }
           }
 
+          val isTablet = AndroidUtils.isTablet()
           updateTitleWithStats(state)
 
           state.groupedBookmarks.forEach { bookmarkGroup ->
@@ -390,6 +392,7 @@ class BookmarksController(
                   threadBookmarkStats(bookmark.threadBookmarkStats)
                   threadBookmarkSelection(bookmark.selection)
                   highlightBookmark(bookmark.highlight)
+                  isTablet(isTablet)
                   bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
                   bookmarkLongClickListener { onBookmarkLongClicked(bookmark) }
                   bookmarkStatsClickListener { onBookmarkStatsClicked(bookmark) }
@@ -404,6 +407,7 @@ class BookmarksController(
                   threadBookmarkStats(bookmark.threadBookmarkStats)
                   threadBookmarkSelection(bookmark.selection)
                   highlightBookmark(bookmark.highlight)
+                  isTablet(isTablet)
                   bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
                   bookmarkLongClickListener { onBookmarkLongClicked(bookmark) }
                   bookmarkStatsClickListener { onBookmarkStatsClicked(bookmark) }

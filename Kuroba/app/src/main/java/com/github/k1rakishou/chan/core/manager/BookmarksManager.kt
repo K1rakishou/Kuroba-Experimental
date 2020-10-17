@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.core.manager
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SuspendDebouncer
+import com.github.k1rakishou.chan.core.site.SiteRegistry
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.*
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmark
@@ -32,7 +33,8 @@ class BookmarksManager(
   private val appScope: CoroutineScope,
   private val applicationVisibilityManager: ApplicationVisibilityManager,
   private val archivesManager: ArchivesManager,
-  private val bookmarksRepository: BookmarksRepository
+  private val bookmarksRepository: BookmarksRepository,
+  private val siteRegistry: SiteRegistry
 ) {
   private val lock = ReentrantReadWriteLock()
   private val bookmarksChangedSubject = PublishProcessor.create<BookmarkChange>()
@@ -65,8 +67,12 @@ class BookmarksManager(
       }
 
       appScope.launch(Dispatchers.Default) {
+        val allSiteNames = siteRegistry.SITE_CLASSES_MAP.keys
+          .map { siteDescriptor -> siteDescriptor.siteName }
+          .toSet()
+
         @Suppress("MoveVariableDeclarationIntoWhen")
-        val bookmarksResult = bookmarksRepository.initialize()
+        val bookmarksResult = bookmarksRepository.initialize(allSiteNames)
         when (bookmarksResult) {
           is ModularResult.Value -> {
             lock.write {
