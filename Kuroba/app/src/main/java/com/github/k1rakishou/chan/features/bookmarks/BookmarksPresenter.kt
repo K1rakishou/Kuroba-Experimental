@@ -264,10 +264,11 @@ class BookmarksPresenter(
       return@mapNotNullAllBookmarks null
     }
 
-    val sortedBookmarks =
-      sortBookmarks(threadBookmarkGroupManager.groupBookmarks(threadBookmarkItemViewList))
+    val groupedBookmarks = threadBookmarkGroupManager.groupBookmarks(threadBookmarkItemViewList.toList())
+    sortBookmarks(groupedBookmarks)
+    moveDeadBookmarksToEnd(groupedBookmarks)
 
-    if (sortedBookmarks.isEmpty()) {
+    if (groupedBookmarks.isEmpty()) {
       if (query != null) {
         setState(BookmarksControllerState.NothingFound(query))
       } else {
@@ -277,17 +278,27 @@ class BookmarksPresenter(
       return
     }
 
-    setState(BookmarksControllerState.Data(sortedBookmarks))
+    setState(BookmarksControllerState.Data(groupedBookmarks))
+  }
+
+  private fun moveDeadBookmarksToEnd(
+    bookmarks: List<GroupOfThreadBookmarkItemViews>
+  ) {
+    if (!ChanSettings.moveNotActiveBookmarksToBottom.get()) {
+      return
+    }
+
+    bookmarks.forEach { groupOfThreadBookmarkItemViews ->
+      groupOfThreadBookmarkItemViews.threadBookmarkItemViews.sortWith(
+        MOVE_DEAD_BOOKMARKS_TO_END_COMPARATOR
+      )
+    }
   }
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   private fun sortBookmarks(
     bookmarks: List<GroupOfThreadBookmarkItemViews>
-  ): List<GroupOfThreadBookmarkItemViews> {
-    if (bookmarks.isEmpty()) {
-      return emptyList()
-    }
-
+  ) {
     val comparator = when (val sortOrder = ChanSettings.bookmarksSortOrder.get()) {
       ChanSettings.BookmarksSortOrder.CreatedOnAscending -> BOOKMARK_CREATED_ON_ASC_COMPARATOR
       ChanSettings.BookmarksSortOrder.CreatedOnDescending -> BOOKMARK_CREATED_ON_DESC_COMPARATOR
@@ -297,38 +308,33 @@ class BookmarksPresenter(
       ChanSettings.BookmarksSortOrder.UnreadPostsDescending -> UNREAD_POSTS_DESC_COMPARATOR
       ChanSettings.BookmarksSortOrder.CustomAscending,
       ChanSettings.BookmarksSortOrder.CustomDescending -> {
-        return handleCustomOrder(sortOrder, bookmarks)
+        handleCustomOrder(sortOrder, bookmarks)
+        return
       }
     }
 
-    return bookmarks.map { groupOfThreadBookmarkItemViews ->
-      val sortedThreadBookmarkViews =
-        groupOfThreadBookmarkItemViews.threadBookmarkItemViews.sortedWith(comparator)
-
-      return@map groupOfThreadBookmarkItemViews
-        .copy(threadBookmarkItemViews = sortedThreadBookmarkViews)
+    bookmarks.forEach { groupOfThreadBookmarkItemViews ->
+      groupOfThreadBookmarkItemViews.threadBookmarkItemViews.sortWith(comparator)
     }
   }
 
   private fun handleCustomOrder(
     sortOrder: ChanSettings.BookmarksSortOrder?,
     bookmarks: List<GroupOfThreadBookmarkItemViews>
-  ): List<GroupOfThreadBookmarkItemViews> {
+  ) {
     if (sortOrder == ChanSettings.BookmarksSortOrder.CustomAscending) {
-      return bookmarks
+      return
     }
 
     check(sortOrder == ChanSettings.BookmarksSortOrder.CustomDescending) {
       "Unexpected sortOrder! sortOrder: $sortOrder"
     }
 
-    return bookmarks.map { groupOfThreadBookmarkItemViews ->
-      val sortedThreadBookmarkViews =
-        groupOfThreadBookmarkItemViews.threadBookmarkItemViews.reversed()
-
-      return@map groupOfThreadBookmarkItemViews
-        .copy(threadBookmarkItemViews = sortedThreadBookmarkViews)
+    bookmarks.forEach { groupOfThreadBookmarkItemViews ->
+      groupOfThreadBookmarkItemViews.threadBookmarkItemViews.reverse()
     }
+
+    return
   }
 
   private fun getThreadBookmarkStatsOrNull(
@@ -358,6 +364,7 @@ class BookmarksPresenter(
       isBumpLimit = threadBookmarkView.isBumpLimit(),
       isImageLimit = threadBookmarkView.isImageLimit(),
       isFirstFetch = threadBookmarkView.isFirstFetch(),
+      isDeleted = threadBookmarkView.isThreadDeleted(),
       isError = threadBookmarkView.isError()
     )
   }
@@ -382,5 +389,9 @@ class BookmarksPresenter(
     private val UNREAD_REPLIES_DESC_COMPARATOR = compareByDescending<ThreadBookmarkItemView> { bookmarkItemView -> bookmarkItemView.threadBookmarkStats.newQuotes }
     private val UNREAD_POSTS_ASC_COMPARATOR = compareBy<ThreadBookmarkItemView> { bookmarkItemView -> bookmarkItemView.threadBookmarkStats.newPosts }
     private val UNREAD_POSTS_DESC_COMPARATOR = compareByDescending<ThreadBookmarkItemView> { bookmarkItemView -> bookmarkItemView.threadBookmarkStats.newPosts }
+
+    private val MOVE_DEAD_BOOKMARKS_TO_END_COMPARATOR = compareBy<ThreadBookmarkItemView> { bookmarkItemView ->
+      bookmarkItemView.threadBookmarkStats.isDead() || !bookmarkItemView.threadBookmarkStats.watching
+    }
   }
 }

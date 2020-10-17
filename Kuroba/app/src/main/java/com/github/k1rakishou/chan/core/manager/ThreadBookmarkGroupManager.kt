@@ -71,7 +71,7 @@ class ThreadBookmarkGroupManager(
   }
 
   /**
-   * Transforms an unordered list of bookmarks into an ordered list of groups of ordered bookmarks
+   * Transforms an unordered list of bookmarks into an ordered list of groups of ordered bookmarks.
    * */
   suspend fun groupBookmarks(
     threadBookmarkViewList: List<ThreadBookmarkItemView>
@@ -232,7 +232,7 @@ class ThreadBookmarkGroupManager(
         return@withLock true
       }
 
-      // 2. Try inserting everything into the database
+      // 2. Try to insert everything into the database
       threadBookmarkGroupEntryRepository.executeCreateTransaction(createTransaction)
         .safeUnwrap { error ->
           Logger.e(TAG, "Error trying to insert new bookmark group entries into the database", error)
@@ -313,21 +313,21 @@ class ThreadBookmarkGroupManager(
       for (bookmarkThreadDescriptor in bookmarkThreadDescriptors) {
         outer@
         for ((groupId, threadBookmarkGroup) in groupsByGroupIdMap) {
-          var shouldBreak = false
+          var found = false
 
           threadBookmarkGroup.iterateEntriesOrderedWhile { _, threadBookmarkGroupEntry ->
             if (threadBookmarkGroupEntry.threadDescriptor == bookmarkThreadDescriptor) {
               grouped.putIfNotContains(groupId, mutableListOf())
               grouped[groupId]!!.add(threadBookmarkGroupEntry)
 
-              shouldBreak = true
+              found = true
               return@iterateEntriesOrderedWhile false
             }
 
             return@iterateEntriesOrderedWhile true
           }
 
-          if (shouldBreak) {
+          if (found) {
             break@outer
           }
         }
