@@ -194,6 +194,7 @@ class BookmarksController(
   override fun onSortingOrderChanged() {
     Logger.d(TAG, "calling reloadBookmarks() because bookmark sorting order was changed")
 
+    needRestoreScrollPosition.set(true)
     bookmarksPresenter.reloadBookmarks()
   }
 

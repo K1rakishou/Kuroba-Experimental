@@ -347,6 +347,7 @@ public class ChanSettings {
     public static final BooleanSetting scrollingTextForThreadTitles;
     public static final OptionsSetting<BookmarksSortOrder> bookmarksSortOrder;
     public static final BooleanSetting moveNotActiveBookmarksToBottom;
+    public static final BooleanSetting moveBookmarksWithUnreadRepliesToTop;
     public static final BooleanSetting ignoreDarkNightMode;
     //endregion
     //endregion
@@ -529,6 +530,7 @@ public class ChanSettings {
             );
 
             moveNotActiveBookmarksToBottom = new BooleanSetting(p, "move_not_active_bookmarks_to_bottom", false);
+            moveBookmarksWithUnreadRepliesToTop = new BooleanSetting(p, "move_bookmarks_with_unread_replies_to_top", false);
             //endregion
 
             scrollingTextForThreadTitles = new BooleanSetting(p, "scrolling_text_for_thread_titles", true);

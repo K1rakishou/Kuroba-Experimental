@@ -267,6 +267,7 @@ class BookmarksPresenter(
     val groupedBookmarks = threadBookmarkGroupManager.groupBookmarks(threadBookmarkItemViewList.toList())
     sortBookmarks(groupedBookmarks)
     moveDeadBookmarksToEnd(groupedBookmarks)
+    moveBookmarksWithUnreadRepliesToTop(groupedBookmarks)
 
     if (groupedBookmarks.isEmpty()) {
       if (query != null) {
@@ -279,6 +280,27 @@ class BookmarksPresenter(
     }
 
     setState(BookmarksControllerState.Data(groupedBookmarks))
+  }
+
+  private fun moveBookmarksWithUnreadRepliesToTop(
+    bookmarks: List<GroupOfThreadBookmarkItemViews>
+  ) {
+    if (!ChanSettings.moveBookmarksWithUnreadRepliesToTop.get()) {
+      return
+    }
+
+    val bookmarksSortOrder = ChanSettings.bookmarksSortOrder.get()
+
+    if (bookmarksSortOrder == ChanSettings.BookmarksSortOrder.UnreadRepliesAscending
+      || bookmarksSortOrder == ChanSettings.BookmarksSortOrder.UnreadRepliesDescending) {
+      return
+    }
+
+    bookmarks.forEach { groupOfThreadBookmarkItemViews ->
+      groupOfThreadBookmarkItemViews.threadBookmarkItemViews.sortWith(
+        MOVE_BOOKMARKS_WITH_UNREAD_REPLIES_TO_TOP_COMPARATOR
+      )
+    }
   }
 
   private fun moveDeadBookmarksToEnd(
@@ -392,6 +414,9 @@ class BookmarksPresenter(
 
     private val MOVE_DEAD_BOOKMARKS_TO_END_COMPARATOR = compareBy<ThreadBookmarkItemView> { bookmarkItemView ->
       bookmarkItemView.threadBookmarkStats.isDead() || !bookmarkItemView.threadBookmarkStats.watching
+    }
+    private val MOVE_BOOKMARKS_WITH_UNREAD_REPLIES_TO_TOP_COMPARATOR = compareByDescending<ThreadBookmarkItemView> { bookmarkItemView ->
+      bookmarkItemView.threadBookmarkStats.newQuotes
     }
   }
 }

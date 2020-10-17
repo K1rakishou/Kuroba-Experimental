@@ -41,8 +41,16 @@
                 <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
                     android:id="@+id/move_not_active_bookmark_to_bottom"
                     android:layout_width="match_parent"
+                    android:layout_marginTop="12dp"
                     android:layout_height="wrap_content"
                     android:text="@string/controller_bookmarks_move_not_active_bookmarks_to_bottom"/>
+
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
+                    android:id="@+id/move_bookmarks_with_unread_replies_to_top"
+                    android:layout_width="match_parent"
+                    android:layout_marginTop="12dp"
+                    android:layout_height="wrap_content"
+                    android:text="@string/controller_bookmarks_move_bookmarks_with_unread_replies_to_top"/>
 
             </LinearLayout>
 

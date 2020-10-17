@@ -17,6 +17,7 @@ class BookmarksSortingController(
   private lateinit var outsideArea: ConstraintLayout
   private lateinit var bookmarkSortingItemsViewGroup: BookmarkSortingItemsViewGroup
   private lateinit var moveNotActiveBookmarksToBottom: ColorizableCheckBox
+  private lateinit var moveBookmarksWithUnreadRepliesToTop: ColorizableCheckBox
 
   private lateinit var cancel: ColorizableBarButton
   private lateinit var apply: ColorizableBarButton
@@ -31,6 +32,7 @@ class BookmarksSortingController(
     outsideArea = view.findViewById(R.id.outside_area)
     bookmarkSortingItemsViewGroup = view.findViewById(R.id.sorting_items_view_group)
     moveNotActiveBookmarksToBottom = view.findViewById(R.id.move_not_active_bookmark_to_bottom)
+    moveBookmarksWithUnreadRepliesToTop = view.findViewById(R.id.move_bookmarks_with_unread_replies_to_top)
     cancel = view.findViewById(R.id.cancel_button)
     apply = view.findViewById(R.id.apply_button)
 
@@ -38,12 +40,14 @@ class BookmarksSortingController(
     outsideArea.setOnClickListener { pop() }
 
     moveNotActiveBookmarksToBottom.isChecked = ChanSettings.moveNotActiveBookmarksToBottom.get()
+    moveBookmarksWithUnreadRepliesToTop.isChecked = ChanSettings.moveBookmarksWithUnreadRepliesToTop.get()
 
     apply.setOnClickListener {
       var shouldReloadBookmarks = false
 
       shouldReloadBookmarks = shouldReloadBookmarks or updateBookmarkSortingSetting()
       shouldReloadBookmarks = shouldReloadBookmarks or updateMoveDeadBookmarksToBottomSetting()
+      shouldReloadBookmarks = shouldReloadBookmarks or updateMoveBookmarksWithUnreadRepliesToTopSetting()
 
       if (shouldReloadBookmarks) {
         sortingOrderChangeListener?.onSortingOrderChanged()
@@ -51,6 +55,18 @@ class BookmarksSortingController(
 
       pop()
     }
+  }
+
+  private fun updateMoveBookmarksWithUnreadRepliesToTopSetting(): Boolean {
+    val prevSettingValue = ChanSettings.moveBookmarksWithUnreadRepliesToTop.get()
+    val newSettingValue = moveBookmarksWithUnreadRepliesToTop.isChecked
+
+    if (prevSettingValue == newSettingValue) {
+      return false
+    }
+
+    ChanSettings.moveBookmarksWithUnreadRepliesToTop.set(newSettingValue)
+    return true
   }
 
   private fun updateMoveDeadBookmarksToBottomSetting(): Boolean {
