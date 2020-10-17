@@ -12,7 +12,7 @@ import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.Reply
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
-import com.github.k1rakishou.chan.core.site.parser.search.Chan4SearchPostParser
+import com.github.k1rakishou.chan.core.site.parser.search.Chan4SimpleCommentParser
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
@@ -52,7 +52,7 @@ class Chan4SearchRequestTest {
   private lateinit var globalSearchUseCase: GlobalSearchUseCase
   private lateinit var siteManager: SiteManager
   private lateinit var themeEngine: ThemeEngine
-  private lateinit var chan4SearchPostParser: Chan4SearchPostParser
+  private lateinit var chan4SimpleCommentParser: Chan4SimpleCommentParser
 
   @Before
   fun setup() {
@@ -61,8 +61,8 @@ class Chan4SearchRequestTest {
 
     siteManager = Mockito.mock(SiteManager::class.java)
     themeEngine = Mockito.mock(ThemeEngine::class.java)
-    chan4SearchPostParser = Mockito.mock(Chan4SearchPostParser::class.java)
-    globalSearchUseCase = GlobalSearchUseCase(siteManager, themeEngine, chan4SearchPostParser)
+    chan4SimpleCommentParser = Mockito.mock(Chan4SimpleCommentParser::class.java)
+    globalSearchUseCase = GlobalSearchUseCase(siteManager, themeEngine, chan4SimpleCommentParser)
   }
 
   @Test
@@ -84,7 +84,7 @@ class Chan4SearchRequestTest {
     whenever(siteManager.awaitUntilInitialized()).thenReturn(Unit)
     whenever(chan4.actions()).thenReturn(testSiteActions)
     whenever(themeEngine.chanTheme).thenReturn(theme)
-    whenever(chan4SearchPostParser.parseComment(eq(theme), any()))
+    whenever(chan4SimpleCommentParser.parseComment(eq(theme), any()))
       .then { answer -> answer.getArgument(1, CharSequence::class.java) }
 
     val searchResult = globalSearchUseCase.execute(SearchParams(siteDescriptor, "test", null))

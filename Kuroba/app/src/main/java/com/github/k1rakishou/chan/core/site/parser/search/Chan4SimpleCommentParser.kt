@@ -17,7 +17,7 @@ import org.jsoup.nodes.TextNode
 import java.util.*
 
 @DoNotStrip
-open class Chan4SearchPostParser {
+open class Chan4SimpleCommentParser {
   private val rules: MutableMap<String, MutableList<StyleRule>> = HashMap()
 
   init {
@@ -54,7 +54,7 @@ open class Chan4SearchPostParser {
     theme: ChanTheme,
     commentRaw: CharSequence
   ): CharSequence? {
-    var total: CharSequence? = SpannableString("")
+    var total: CharSequence? = null
 
     try {
       val comment = commentRaw.toString()
@@ -67,6 +67,7 @@ open class Chan4SearchPostParser {
       total = TextUtils.concat(*texts.toTypedArray())
     } catch (e: Exception) {
       Logger.e(TAG, "Error parsing comment html", e)
+      return null
     }
 
     return total

@@ -20,7 +20,8 @@ object ThreadBookmarkReplyMapper {
       alreadyNotified = threadBookmarkReply.alreadyNotified,
       alreadySeen = threadBookmarkReply.alreadySeen,
       alreadyRead = threadBookmarkReply.alreadyRead,
-      time = threadBookmarkReply.time
+      time = threadBookmarkReply.time,
+      commentRaw = threadBookmarkReply.commentRaw
     )
   }
 
@@ -51,7 +52,8 @@ object ThreadBookmarkReplyMapper {
         alreadyNotified = threadBookmarkReplyEntity.alreadyNotified,
         alreadySeen = threadBookmarkReplyEntity.alreadySeen,
         alreadyRead = threadBookmarkReplyEntity.alreadyRead,
-        time = threadBookmarkReplyEntity.time
+        time = threadBookmarkReplyEntity.time,
+        commentRaw = threadBookmarkReplyEntity.commentRaw
       )
     }
 

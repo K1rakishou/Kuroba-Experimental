@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.model.Post
+import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
@@ -130,10 +131,10 @@ class SavedReplyManager(
   }
 
   fun retainSavedPostNoMap(
-    quoteOwnerPostsMap: Map<Long, Set<Long>>,
+    quoteOwnerPostsMap: Map<Long, Set<ParsePostRepliesUseCase.TempReplyToMyPost>>,
     threadDescriptor: ChanDescriptor.ThreadDescriptor
-  ): Map<Long, MutableSet<Long>> {
-    val resultMap: MutableMap<Long, MutableSet<Long>> = HashMap(16)
+  ): Map<Long, MutableSet<ParsePostRepliesUseCase.TempReplyToMyPost>> {
+    val resultMap: MutableMap<Long, MutableSet<ParsePostRepliesUseCase.TempReplyToMyPost>> = HashMap(16)
 
     lock.read {
       val savedRepliesNoSet = savedReplyMap[threadDescriptor]
@@ -141,14 +142,14 @@ class SavedReplyManager(
         ?.toSet()
         ?: return@read
 
-      for ((quotePostNo, quotedPostNos) in quoteOwnerPostsMap) {
-        for (quotedPostNo in quotedPostNos) {
+      for ((quotePostNo, tempReplies) in quoteOwnerPostsMap) {
+        for (tempReply in tempReplies) {
           if (!savedRepliesNoSet.contains(quotePostNo)) {
             continue
           }
 
           resultMap.putIfNotContains(quotePostNo, mutableSetOf())
-          resultMap[quotePostNo]!!.add(quotedPostNo)
+          resultMap[quotePostNo]!!.add(tempReply)
         }
       }
     }

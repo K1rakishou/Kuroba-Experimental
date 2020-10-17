@@ -9,5 +9,6 @@ data class ThreadBookmarkReplyView(
   val alreadyNotified: Boolean,
   val alreadySeen: Boolean,
   val alreadyRead: Boolean,
-  val time: DateTime
+  val time: DateTime,
+  val commentRaw: String?
 )

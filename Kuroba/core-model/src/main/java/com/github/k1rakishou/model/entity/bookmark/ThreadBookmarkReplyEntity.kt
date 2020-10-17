@@ -42,7 +42,9 @@ data class ThreadBookmarkReplyEntity(
   @ColumnInfo(name = ALREADY_READ_COLUMN_NAME)
   val alreadyRead: Boolean = false,
   @ColumnInfo(name = TIME_COLUMN_NAME)
-  val time: DateTime
+  val time: DateTime,
+  @ColumnInfo(name = COMMENT_RAW_COLUMN_NAME)
+  val commentRaw: String?
 ) {
 
   companion object {
@@ -56,5 +58,6 @@ data class ThreadBookmarkReplyEntity(
     const val ALREADY_NOTIFIED_COLUMN_NAME = "already_notified"
     const val ALREADY_READ_COLUMN_NAME = "already_read"
     const val TIME_COLUMN_NAME = "time"
+    const val COMMENT_RAW_COLUMN_NAME = "comment_raw"
   }
 }

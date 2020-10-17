@@ -4,6 +4,7 @@ import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase
+import com.github.k1rakishou.chan.core.usecase.ReplyToMyPost
 import com.github.k1rakishou.chan.core.usecase.ThreadBookmarkFetchResult
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
@@ -287,11 +288,11 @@ class BookmarkWatcherDelegate(
           threadBookmark.seenPostsCount = threadBookmarkInfoObject.countAmountOfSeenPosts(lastViewedPostNo)
         }
 
-        quotesToMeMap.forEach { (myPostNo, replyDescriptors) ->
-          replyDescriptors.forEach { postReplyDescriptor ->
+        quotesToMeMap.forEach { (myPostNo, replyToMyPostList) ->
+          replyToMyPostList.forEach { replyToMyPost ->
             createOrUpdateReplyToMyPosts(
               threadBookmark,
-              postReplyDescriptor,
+              replyToMyPost,
               threadDescriptor,
               myPostNo,
               lastViewedPostNo
@@ -342,11 +343,12 @@ class BookmarkWatcherDelegate(
 
   private fun createOrUpdateReplyToMyPosts(
     threadBookmark: ThreadBookmark,
-    postReplyDescriptor: PostDescriptor,
+    replyToMyPost: ReplyToMyPost,
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     myPostNo: Long,
     lastViewedPostNo: Long
   ) {
+    val postReplyDescriptor = replyToMyPost.postDescriptor
     val alreadyRead = lastViewedPostNo >= postReplyDescriptor.postNo
 
     if (!threadBookmark.threadBookmarkReplies.containsKey(postReplyDescriptor)) {
@@ -361,7 +363,8 @@ class BookmarkWatcherDelegate(
         alreadySeen = alreadyRead,
         alreadyNotified = alreadyRead,
         alreadyRead = alreadyRead,
-        time = DateTime.now()
+        time = DateTime.now(),
+        commentRaw = replyToMyPost.commentRaw
       )
     } else {
       val existingReply = checkNotNull(threadBookmark.threadBookmarkReplies[postReplyDescriptor])

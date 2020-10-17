@@ -39,7 +39,8 @@ data class ThreadBookmarkReply(
    * The time when this reply was inserted into the database. Used as the "when" parameter of a
    * notification, meaning the time when somebody replied to you.
    * */
-  var time: DateTime
+  var time: DateTime,
+  var commentRaw: String?
 ) {
 
   fun toThreadBookmarkReplyView(): ThreadBookmarkReplyView {
@@ -49,7 +50,8 @@ data class ThreadBookmarkReply(
       alreadyNotified = alreadyNotified,
       alreadySeen = alreadySeen,
       alreadyRead = alreadyRead,
-      time = time
+      time = time,
+      commentRaw = commentRaw
     )
   }
 

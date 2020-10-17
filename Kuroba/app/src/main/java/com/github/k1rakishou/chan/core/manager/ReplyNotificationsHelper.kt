@@ -14,12 +14,15 @@ import android.provider.Settings
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import coil.transform.CircleCropTransformation
+import coil.transform.Transformation
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.base.SuspendDebouncer
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.settings.ChanSettings
+import com.github.k1rakishou.chan.core.site.parser.search.Chan4SimpleCommentParser
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.getApplicationLabel
@@ -42,6 +45,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.reactive.asFlow
+import okhttp3.HttpUrl
 import org.joda.time.DateTime
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.resume
@@ -56,7 +60,8 @@ class ReplyNotificationsHelper(
   private val bookmarksManager: BookmarksManager,
   private val chanPostRepository: ChanPostRepository,
   private val imageLoaderV2: ImageLoaderV2,
-  private val themeEngine: ThemeEngine
+  private val themeEngine: ThemeEngine,
+  private val chan4SimpleCommentParser: Chan4SimpleCommentParser
 ) {
   private val debouncer = SuspendDebouncer(appScope)
   private val working = AtomicBoolean(false)
@@ -208,7 +213,7 @@ class ReplyNotificationsHelper(
     return sortedNotifications
   }
 
-  private fun showNotificationsForAndroidNougatAndBelow(
+  private suspend fun showNotificationsForAndroidNougatAndBelow(
     unreadNotificationsGrouped: MutableMap<ChanDescriptor.ThreadDescriptor, MutableSet<ThreadBookmarkReplyView>>
   ): Map<ChanDescriptor.ThreadDescriptor, Set<ThreadBookmarkReplyView>> {
     val threadsWithUnseenRepliesCount = unreadNotificationsGrouped.size
@@ -487,32 +492,8 @@ class ReplyNotificationsHelper(
             val thumbnailUrl = originalPost.postImages.firstOrNull()?.thumbnailUrl
               ?: return@mapNotNull null
 
-            return@mapNotNull appScope.async {
-              return@async suspendCancellableCoroutine<Pair<ChanDescriptor.ThreadDescriptor, BitmapDrawable>?> { cancellableContinuation ->
-                imageLoaderV2.loadFromNetwork(
-                  appContext,
-                  thumbnailUrl.toString(),
-                  NOTIFICATION_THUMBNAIL_SIZE,
-                  NOTIFICATION_THUMBNAIL_SIZE,
-                  object : ImageLoaderV2.ImageListener {
-                    override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
-                      cancellableContinuation.resume(threadDescriptor to drawable)
-                    }
-
-                    override fun onNotFound() {
-                      cancellableContinuation.resume(null)
-                    }
-
-                    override fun onResponseError(error: Throwable) {
-                      Logger.e(TAG, "Error while trying to load thumbnail for notification image, " +
-                        "error: ${error.errorMessageOrClassName()}")
-
-                      cancellableContinuation.resume(null)
-                    }
-                  }
-                )
-              }
-            }
+            return@mapNotNull appScope
+              .async { downloadThumbnailForNotification(thumbnailUrl, threadDescriptor) }
           }
             .awaitAll()
             .filterNotNull()
@@ -524,6 +505,39 @@ class ReplyNotificationsHelper(
     }
 
     return resultMap
+  }
+
+  private suspend fun downloadThumbnailForNotification(
+    thumbnailUrl: HttpUrl,
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): Pair<ChanDescriptor.ThreadDescriptor, BitmapDrawable>? {
+    return suspendCancellableCoroutine { cancellableContinuation ->
+      imageLoaderV2.loadFromNetwork(
+        appContext,
+        thumbnailUrl.toString(),
+        NOTIFICATION_THUMBNAIL_SIZE,
+        NOTIFICATION_THUMBNAIL_SIZE,
+        object : ImageLoaderV2.ImageListener {
+          override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
+            cancellableContinuation.resume(threadDescriptor to drawable)
+          }
+
+          override fun onNotFound() {
+            cancellableContinuation.resume(null)
+          }
+
+          override fun onResponseError(error: Throwable) {
+            Logger.e(
+              TAG, "Error while trying to load thumbnail for notification image, " +
+                "error: ${error.errorMessageOrClassName()}"
+            )
+
+            cancellableContinuation.resume(null)
+          }
+        },
+        CIRCLE_CROP
+      )
+    }
   }
 
   private fun getThreadTitle(
@@ -661,7 +675,7 @@ class ReplyNotificationsHelper(
     return this
   }
 
-  private fun NotificationCompat.Builder.setupReplyNotificationsStyle(
+  private suspend fun NotificationCompat.Builder.setupReplyNotificationsStyle(
     titleText: String,
     threadBookmarkReplyViewSet: Collection<ThreadBookmarkReplyView>
   ): NotificationCompat.Builder {
@@ -669,17 +683,36 @@ class ReplyNotificationsHelper(
       .setSummaryText(titleText)
 
     val repliesSorted = threadBookmarkReplyViewSet
+      .filter { threadBookmarkReplyView -> !threadBookmarkReplyView.alreadySeen }
       .sortedWith(REPLIES_COMPARATOR)
       .takeLast(MAX_LINES_IN_NOTIFICATION)
 
-    repliesSorted.forEach { reply ->
-      val formattedReply = appContext.resources.getString(
-        R.string.reply_notifications_reply_format,
-        reply.postDescriptor.postNo,
-        reply.repliesTo.postNo
-      )
+    val parsedReplyComments = withContext(Dispatchers.Default) {
+      return@withContext repliesSorted.map { threadBookmarkReplyView ->
+        val commentRaw = threadBookmarkReplyView.commentRaw
+        if (commentRaw != null) {
+          val parsedComment = chan4SimpleCommentParser.parseComment(
+            themeEngine.chanTheme,
+            commentRaw
+          )
 
-      notificationStyle.addLine(formattedReply)
+          if (!parsedComment.isNullOrEmpty()) {
+            return@map parsedComment
+          }
+
+          // fallthrough
+        }
+
+        return@map appContext.resources.getString(
+          R.string.reply_notifications_reply_format,
+          threadBookmarkReplyView.postDescriptor.postNo,
+          threadBookmarkReplyView.repliesTo.postNo
+        )
+      }
+    }
+
+    parsedReplyComments.forEach { replyComment ->
+      notificationStyle.addLine(replyComment.take(MAX_NOTIFICATION_LINE_LENGTH))
     }
 
     setStyle(notificationStyle)
@@ -827,6 +860,7 @@ class ReplyNotificationsHelper(
     private const val NOTIFICATIONS_UPDATE_DEBOUNCE_TIME = 1000L
     private const val MAX_THREAD_TITLE_LENGTH = 50
     private const val MAX_THUMBNAIL_REQUESTS_PER_BATCH = 8
+    private const val MAX_NOTIFICATION_LINE_LENGTH = 128
 
     // For Android O and above
     private val notificationsGroup = "${BuildConfig.APPLICATION_ID}_${getFlavorType().name}"
@@ -834,5 +868,7 @@ class ReplyNotificationsHelper(
     private val REPLIES_COMPARATOR = Comparator<ThreadBookmarkReplyView> { o1, o2 ->
       o1.postDescriptor.postNo.compareTo(o2.postDescriptor.postNo)
     }
+
+    private val CIRCLE_CROP = listOf<Transformation>(CircleCropTransformation())
   }
 }

@@ -173,6 +173,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       // TODO: change to a normal dagger implementation when we get rid of Feather
       RoomDatabaseModule(modelMainComponent),
       NetModule(),
+      ParserModule(),
       GsonModule(),
       RepositoryModule(),
       SiteModule(),

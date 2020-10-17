@@ -129,12 +129,14 @@ class ImageLoaderV2(
     return imageLoader.enqueue(request)
   }
 
+  @JvmOverloads
   fun loadFromNetwork(
     context: Context,
     url: String?,
     width: Int?,
     height: Int?,
-    listener: ImageListener
+    listener: ImageListener,
+    transformations: List<Transformation> = emptyList()
   ): Disposable {
     val localListener = AtomicReference(listener)
     val lifecycle = context.getLifecycleFromContext()
@@ -149,6 +151,7 @@ class ImageLoaderV2(
       lifecycle(lifecycle)
       scale(Scale.FIT)
       allowHardware(true)
+      transformations(transformations)
 
       if ((width != null && width > 0) && (height != null && height > 0)) {
         size(width, height)

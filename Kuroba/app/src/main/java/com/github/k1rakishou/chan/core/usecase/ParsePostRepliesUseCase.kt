@@ -14,8 +14,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
-typealias YousPerThreadMap = Map<ChanDescriptor.ThreadDescriptor, Map<Long, List<PostDescriptor>>>
+typealias YousPerThreadMap = Map<ChanDescriptor.ThreadDescriptor, Map<Long, List<ReplyToMyPost>>>
 
 class ParsePostRepliesUseCase(
   private val appScope: CoroutineScope,
@@ -32,9 +34,10 @@ class ParsePostRepliesUseCase(
 
   private suspend fun parsePostReplies(
     successThreadBookmarkFetchResults: List<ThreadBookmarkFetchResult.Success>
-  ): Map<ChanDescriptor.ThreadDescriptor, Map<Long, List<PostDescriptor>>> {
+  ): Map<ChanDescriptor.ThreadDescriptor, Map<Long, List<ReplyToMyPost>>> {
     val cap = successThreadBookmarkFetchResults.size
-    val quotesToMePerThreadMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, Map<Long, List<PostDescriptor>>>(cap)
+    val quotesToMePerThreadMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, Map<Long, List<ReplyToMyPost>>>(cap)
+    val mutex = Mutex()
 
     successThreadBookmarkFetchResults
       .chunked(BATCH_SIZE)
@@ -45,7 +48,9 @@ class ParsePostRepliesUseCase(
               val threadDescriptor = successFetchResult.threadDescriptor
               val quotesToMeInThreadMap = parsePostRepliesWorker(successFetchResult)
 
-              quotesToMePerThreadMap[threadDescriptor] = quotesToMeInThreadMap
+              mutex.withLock {
+                quotesToMePerThreadMap[threadDescriptor] = quotesToMeInThreadMap
+              }
             }.safeUnwrap { error ->
               Logger.e(TAG, "Error parsing post replies", error)
               return@async
@@ -59,12 +64,12 @@ class ParsePostRepliesUseCase(
 
   private suspend fun parsePostRepliesWorker(
     successFetchResult: ThreadBookmarkFetchResult.Success
-  ): Map<Long, List<PostDescriptor>> {
+  ): Map<Long, List<ReplyToMyPost>> {
     val threadDescriptor = successFetchResult.threadDescriptor
 
     // Key - postNo of a post that quotes other posts.
     // Value - set of postNo that the "Key" quotes.
-    val quoteOwnerPostsMap = mutableMapWithCap<Long, MutableSet<Long>>(32)
+    val quoteOwnerPostsMap = mutableMapWithCap<Long, MutableSet<TempReplyToMyPost>>(32)
 
     successFetchResult.threadBookmarkInfoObject.simplePostObjects.forEach { simplePostObject ->
       val extractedQuotes = replyParser.extractCommentReplies(
@@ -75,17 +80,31 @@ class ParsePostRepliesUseCase(
       extractedQuotes.forEach { extractedQuote ->
         when (extractedQuote) {
           is ReplyParser.ExtractedQuote.FullQuote -> {
-            val isQuotedPostInTheSameThread = extractedQuote.boardCode == threadDescriptor.boardCode()
-              && extractedQuote.threadId == threadDescriptor.threadNo
+            val isQuotedPostInTheSameThread = (extractedQuote.boardCode == threadDescriptor.boardCode()
+              && extractedQuote.threadId == threadDescriptor.threadNo)
 
-            if (isQuotedPostInTheSameThread) {
-              quoteOwnerPostsMap.putIfNotContains(extractedQuote.postId, hashSetWithCap(16))
-              quoteOwnerPostsMap[extractedQuote.postId]!!.add(simplePostObject.postNo())
+            if (!isQuotedPostInTheSameThread) {
+              // Cross-thread reply or something like that, we don't support that since it shouldn't
+              // be used much.
+              return@forEach
             }
+
+            quoteOwnerPostsMap.putIfNotContains(extractedQuote.postId, hashSetWithCap(16))
+
+            val tempReplyToMyPost = TempReplyToMyPost(
+              simplePostObject.postNo(),
+              simplePostObject.comment()
+            )
+            quoteOwnerPostsMap[extractedQuote.postId]!!.add(tempReplyToMyPost)
           }
           is ReplyParser.ExtractedQuote.Quote -> {
             quoteOwnerPostsMap.putIfNotContains(extractedQuote.postId, hashSetWithCap(16))
-            quoteOwnerPostsMap[extractedQuote.postId]!!.add(simplePostObject.postNo())
+
+            val tempReplyToMyPost = TempReplyToMyPost(
+              simplePostObject.postNo(),
+              simplePostObject.comment()
+            )
+            quoteOwnerPostsMap[extractedQuote.postId]!!.add(tempReplyToMyPost)
           }
         }
       }
@@ -111,21 +130,78 @@ class ParsePostRepliesUseCase(
       return emptyMap()
     }
 
-    val quotePostDescriptorsMap = HashMap<Long, MutableList<PostDescriptor>>(quotesToMeInThreadMap.size)
+    val quotePostDescriptorsMap = HashMap<Long, MutableList<ReplyToMyPost>>(quotesToMeInThreadMap.size)
 
     quotesToMeInThreadMap.forEach { (myPostNo, repliesToMeSet) ->
       quotePostDescriptorsMap.putIfNotContains(myPostNo, ArrayList(repliesToMeSet.size))
 
-      repliesToMeSet.forEach { replyNo ->
-        quotePostDescriptorsMap[myPostNo]!!.add(PostDescriptor.create(threadDescriptor, replyNo))
+      repliesToMeSet.forEach { tempReplyToMyPost ->
+        val replyToMyPost = ReplyToMyPost(
+          PostDescriptor.create(threadDescriptor, tempReplyToMyPost.postNo),
+          tempReplyToMyPost.commentRaw
+        )
+
+        quotePostDescriptorsMap[myPostNo]!!.add(replyToMyPost)
       }
     }
 
     return quotePostDescriptorsMap
   }
 
+  class TempReplyToMyPost(
+    val postNo: Long,
+    val commentRaw: String
+  ) {
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (javaClass != other?.javaClass) return false
+
+      other as TempReplyToMyPost
+
+      if (postNo != other.postNo) return false
+
+      return true
+    }
+
+    override fun hashCode(): Int {
+      return postNo.hashCode()
+    }
+
+    override fun toString(): String {
+      return "TempReplyToMyPost(postNo=$postNo, commentRaw='${commentRaw.take(50)}')"
+    }
+
+  }
+
   companion object {
     private const val TAG = "ParsePostRepliesUseCase"
     private const val BATCH_SIZE = 8
   }
+}
+
+class ReplyToMyPost(
+  val postDescriptor: PostDescriptor,
+  val commentRaw: String
+) {
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as ReplyToMyPost
+
+    if (postDescriptor != other.postDescriptor) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return postDescriptor.hashCode()
+  }
+
+  override fun toString(): String {
+    return "ReplyToMyPost(postDescriptor=$postDescriptor, commentRaw='${commentRaw.take(50)}')"
+  }
+
 }
