@@ -94,6 +94,7 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
     override fun onDragReleased(model: EpoxySiteViewModel_?, itemView: View?) {
       sitesPresenter.onSiteMoved()
     }
+
   }
 
   override fun onCreate() {

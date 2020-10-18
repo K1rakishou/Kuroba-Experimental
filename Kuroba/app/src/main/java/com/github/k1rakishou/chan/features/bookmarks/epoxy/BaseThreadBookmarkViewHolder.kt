@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkSelectio
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkStats
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.view.SelectionCheckView
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AndroidUtils.waitForLayout
 import com.github.k1rakishou.chan.utils.setVisibilityFast
@@ -55,6 +56,7 @@ open class BaseThreadBookmarkViewHolder(
   private lateinit var bookmarkTitle: AppCompatTextView
   private lateinit var bookmarkStats: AppCompatTextView
   private lateinit var selectionCheckView: SelectionCheckView
+  var dragIndicator: AppCompatImageView? = null
 
   private var bookmarkAdditionalStats: AppCompatTextView? = null
   private var bookmarkStatsHolder: LinearLayout? = null
@@ -72,12 +74,14 @@ open class BaseThreadBookmarkViewHolder(
     bookmarkAdditionalStats = itemView.findViewById(R.id.thread_bookmark_additional_stats)
     bookmarkStatsHolder = itemView.findViewById(R.id.thread_bookmark_stats_holder)
     selectionCheckView = itemView.findViewById(R.id.selection_check_view)
+    dragIndicator = itemView.findViewById(R.id.bookmark_drag_indicator)
   }
 
   fun unbind() {
     this.viewRoot.resetClickListener()
     this.bookmarkStatsHolder?.resetClickListener()
     this.bookmarkStats.resetClickListener()
+    this.dragIndicator = null
 
     this.imageLoaderRequestData = null
     this.threadDescriptor = null
@@ -310,41 +314,55 @@ open class BaseThreadBookmarkViewHolder(
     }
   }
 
-  fun updateGridViewSizesForTablet(isTablet: Boolean) {
+  fun updateGridViewSizes(isTablet: Boolean) {
     if (isTablet) {
-      bookmarkStats.textSize = 18f
-      bookmarkAdditionalStats?.textSize = 18f
-      bookmarkTitle.textSize = 18f
-      bookmarkTitle.maxLines = 6
+      bookmarkStats.textSize = 16f
+      bookmarkAdditionalStats?.textSize = 16f
+      bookmarkTitle.textSize = 16f
+      bookmarkTitle.maxLines = 4
     } else {
       bookmarkStats.textSize = 14f
       bookmarkAdditionalStats?.textSize = 14f
-      bookmarkTitle.textSize = 14f
-      bookmarkTitle.maxLines = 3
+      bookmarkTitle.textSize = 13f
+      bookmarkTitle.maxLines = 2
     }
   }
 
-  fun updateListViewSizesForTablet(isTablet: Boolean) {
+  fun updateListViewSizes(isTablet: Boolean) {
     if (isTablet) {
       viewHolder.updatePaddings(
         BOOKMARK_HOLDER_TABLET_PADDING,
-        BOOKMARK_HOLDER_TABLET_PADDING,
+        BOOKMARK_HOLDER_END_PADDING,
         BOOKMARK_HOLDER_TABLET_PADDING,
         BOOKMARK_HOLDER_TABLET_PADDING
       )
 
-      bookmarkTitle.textSize = 18f
-      bookmarkStats.textSize = 18f
+      bookmarkTitle.textSize = 16f
+      bookmarkStats.textSize = 16f
     } else {
       viewHolder.updatePaddings(
         BOOKMARK_HOLDER_NON_TABLET_PADDING,
-        BOOKMARK_HOLDER_NON_TABLET_PADDING,
+        BOOKMARK_HOLDER_END_PADDING,
         BOOKMARK_HOLDER_NON_TABLET_PADDING,
         BOOKMARK_HOLDER_NON_TABLET_PADDING
       )
 
-      bookmarkTitle.textSize = 16f
-      bookmarkStats.textSize = 16f
+      bookmarkTitle.textSize = 13f
+      bookmarkStats.textSize = 14f
+    }
+  }
+
+  fun updateDragIndicatorColors(isGridMode: Boolean) {
+    dragIndicator?.let { indicator ->
+      if (isGridMode) {
+        indicator.imageTintList = ColorStateList.valueOf(ThemeEngine.LIGHT_DRAWABLE_TINT)
+      } else {
+        val color = themeEngine.resolveTintColor(
+          AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+        )
+
+        indicator.imageTintList = ColorStateList.valueOf(color)
+      }
     }
   }
 
@@ -389,6 +407,7 @@ open class BaseThreadBookmarkViewHolder(
 
     private val BOOKMARK_HOLDER_TABLET_PADDING = dp(4f)
     private val BOOKMARK_HOLDER_NON_TABLET_PADDING = dp(2f)
+    private val BOOKMARK_HOLDER_END_PADDING = dp(10f)
   }
 
 }

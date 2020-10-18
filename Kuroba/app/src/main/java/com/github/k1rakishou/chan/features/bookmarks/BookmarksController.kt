@@ -1,11 +1,19 @@
 package com.github.k1rakishou.chan.features.bookmarks
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Configuration
+import android.view.HapticFeedbackConstants
+import android.view.MotionEvent
+import android.view.View
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
+import com.airbnb.epoxy.EpoxyModel
+import com.airbnb.epoxy.EpoxyModelTouchCallback
+import com.airbnb.epoxy.EpoxyViewHolder
 import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
@@ -17,9 +25,7 @@ import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
 import com.github.k1rakishou.chan.features.bookmarks.data.GroupOfThreadBookmarkItemViews
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkItemView
-import com.github.k1rakishou.chan.features.bookmarks.epoxy.BaseThreadBookmarkViewHolder
-import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyGridThreadBookmarkViewHolder
-import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyListThreadBookmarkViewHolder
+import com.github.k1rakishou.chan.features.bookmarks.epoxy.*
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
@@ -62,6 +68,7 @@ class BookmarksController(
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
+  private lateinit var itemTouchHelper: ItemTouchHelper
 
   private val bookmarksSelectionHelper = BookmarksSelectionHelper(this)
   private val bookmarksPresenter = BookmarksPresenter(bookmarksToHighlight.toSet(), bookmarksSelectionHelper)
@@ -70,6 +77,53 @@ class BookmarksController(
   private val needRestoreScrollPosition = AtomicBoolean(true)
   private var isInSearchMode = false
   private var fastScroller: FastScroller? = null
+
+  private val touchHelperCallback = object : EpoxyModelTouchCallback<EpoxyModel<*>>(controller, EpoxyModel::class.java) {
+
+    override fun isLongPressDragEnabled(): Boolean = false
+    override fun isItemViewSwipeEnabled(): Boolean = false
+
+    override fun getMovementFlagsForModel(model: EpoxyModel<*>?, adapterPosition: Int): Int {
+      if (model !is EpoxyGridThreadBookmarkViewHolder_ && model !is EpoxyListThreadBookmarkViewHolder_) {
+        return makeMovementFlags(0, 0)
+      }
+
+      val moveFlags = if (PersistableChanState.viewThreadBookmarksGridMode.get()) {
+        ItemTouchHelper.UP or ItemTouchHelper.DOWN or ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
+      } else {
+        ItemTouchHelper.UP or ItemTouchHelper.DOWN
+      }
+
+      return makeMovementFlags(moveFlags, 0)
+    }
+
+    override fun onDragStarted(model: EpoxyModel<*>?, itemView: View?, adapterPosition: Int) {
+      println("TTTAAA onDragStarted model=${model?.javaClass?.simpleName}")
+      itemView?.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+    }
+
+    override fun onMove(
+      recyclerView: RecyclerView?,
+      viewHolder: EpoxyViewHolder?,
+      target: EpoxyViewHolder?
+    ): Boolean {
+      val fromPosition = viewHolder?.adapterPosition
+        ?: return false
+      val toPosition = target?.adapterPosition
+        ?: return false
+
+      println("TTTAAA onMove viewHolder.model=${viewHolder.model.javaClass.simpleName}, " +
+        "target.model=${target.model.javaClass.simpleName}, " +
+        "fromPosition=$fromPosition, toPosition=$toPosition")
+
+      return true
+    }
+
+    override fun onDragReleased(model: EpoxyModel<*>?, itemView: View?) {
+      println("TTTAAA onDragReleased model=${model?.javaClass?.simpleName}")
+    }
+
+  }
 
   private val onScrollListener = object : RecyclerView.OnScrollListener() {
     override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
@@ -122,6 +176,9 @@ class BookmarksController(
 
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
     epoxyRecyclerView.setController(controller)
+
+    itemTouchHelper = ItemTouchHelper(touchHelperCallback)
+    itemTouchHelper.attachToRecyclerView(epoxyRecyclerView)
 
     mainScope.launch {
       bookmarksPresenter.listenForStateChanges()
@@ -596,12 +653,34 @@ class BookmarksController(
     return "Selected ${bookmarksSelectionHelper.selectedItemsCount()} bookmarks"
   }
 
-  private class BookmarksEpoxyController : EpoxyController() {
+  private inner class BookmarksEpoxyController : EpoxyController() {
     var callback: EpoxyController.() -> Unit = {}
 
     override fun buildModels() {
       callback(this)
     }
+
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onViewAttachedToWindow(holder: EpoxyViewHolder, model: EpoxyModel<*>) {
+      val dragIndicator = when (model) {
+        is EpoxyGridThreadBookmarkViewHolder_ -> model.dragIndicator
+        is EpoxyListThreadBookmarkViewHolder_ -> model.dragIndicator
+        else -> null
+      }
+
+      if (dragIndicator == null) {
+        return
+      }
+
+      dragIndicator.setOnTouchListener { _, event ->
+        if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+          itemTouchHelper.startDrag(holder)
+        }
+
+        return@setOnTouchListener false
+      }
+    }
+
   }
 
   companion object {

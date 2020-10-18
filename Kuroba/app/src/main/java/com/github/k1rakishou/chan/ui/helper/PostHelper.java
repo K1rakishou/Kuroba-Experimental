@@ -53,7 +53,7 @@ public class PostHelper {
     public static String getTitle(@Nullable Post post, @Nullable ChanDescriptor chanDescriptor) {
         if (post != null) {
             if (!TextUtils.isEmpty(post.subject)) {
-                return post.subject.toString();
+                return "/" + post.boardDescriptor.getBoardCode() + "/ - " + post.subject.toString();
             } else if (!TextUtils.isEmpty(post.getComment())) {
                 int length = Math.min(post.getComment().length(), 200);
                 return "/" + post.boardDescriptor.getBoardCode() + "/ - " + post.getComment().subSequence(0, length);

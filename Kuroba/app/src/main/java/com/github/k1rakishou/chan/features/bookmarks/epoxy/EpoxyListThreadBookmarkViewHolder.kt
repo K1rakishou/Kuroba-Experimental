@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.bookmarks.epoxy
 
 import android.content.Context
+import androidx.appcompat.widget.AppCompatImageView
 import com.airbnb.epoxy.EpoxyAttribute
 import com.airbnb.epoxy.EpoxyModelClass
 import com.airbnb.epoxy.EpoxyModelWithHolder
@@ -44,12 +45,14 @@ abstract class EpoxyListThreadBookmarkViewHolder
   open var isTablet: Boolean = false
 
   private var holder: BaseThreadBookmarkViewHolder? = null
+  var dragIndicator: AppCompatImageView? = null
 
   override fun bind(holder: BaseThreadBookmarkViewHolder) {
     super.bind(holder)
     Chan.inject(this)
 
     this.holder = holder
+    this.dragIndicator = holder.dragIndicator
 
     holder.setImageLoaderRequestData(imageLoaderRequestData)
     holder.setDescriptor(threadDescriptor)
@@ -60,7 +63,8 @@ abstract class EpoxyListThreadBookmarkViewHolder
     holder.setThreadBookmarkStats(false, threadBookmarkStats)
     holder.setTitle(titleString, threadBookmarkStats?.watching ?: false)
     holder.highlightBookmark(highlightBookmark || threadBookmarkSelection?.isSelected == true)
-    holder.updateListViewSizesForTablet(isTablet)
+    holder.updateListViewSizes(isTablet)
+    holder.updateDragIndicatorColors(false)
 
     val watching = threadBookmarkStats?.watching ?: true
     context?.let { holder.bindImage(false, watching, it) }
@@ -82,6 +86,7 @@ abstract class EpoxyListThreadBookmarkViewHolder
       setThreadBookmarkStats(true, threadBookmarkStats)
       setTitle(titleString, threadBookmarkStats?.watching ?: false)
       highlightBookmark(highlightBookmark)
+      updateDragIndicatorColors(false)
     }
   }
 

@@ -235,7 +235,7 @@ open class ThemeEngine(
   }
 
   companion object {
-    private val LIGHT_DRAWABLE_TINT = Color.parseColor("#EEEEEE")
-    private val DARK_DRAWABLE_TINT = Color.parseColor("#7E7E7E")
+    val LIGHT_DRAWABLE_TINT = Color.parseColor("#EEEEEE")
+    val DARK_DRAWABLE_TINT = Color.parseColor("#7E7E7E")
   }
 }
