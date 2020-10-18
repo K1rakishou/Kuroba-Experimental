@@ -169,7 +169,7 @@ class BookmarksPresenter(
     }
   }
 
-  suspend fun deleteBookmarks(selectedItems: List<ChanDescriptor.ThreadDescriptor>): Boolean {
+  fun deleteBookmarks(selectedItems: List<ChanDescriptor.ThreadDescriptor>): Boolean {
     return bookmarksManager.deleteBookmarks(selectedItems)
   }
 

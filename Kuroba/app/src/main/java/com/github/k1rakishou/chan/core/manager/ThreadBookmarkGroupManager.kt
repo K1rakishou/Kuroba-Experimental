@@ -83,13 +83,13 @@ class ThreadBookmarkGroupManager(
     }
 
     return mutex.withLock {
-      val groups = threadBookmarkViewList
+      val groupIdSet = threadBookmarkViewList
         .map { threadBookmarkItemView -> threadBookmarkItemView.groupId }
         .toSet()
       val threadBookmarkViewMapByDescriptor = threadBookmarkViewList
         .associateBy { threadBookmarkView -> threadBookmarkView.threadDescriptor }
 
-      val sortedGroups = groups
+      val sortedGroups = groupIdSet
         .mapNotNull { groupId -> groupsByGroupIdMap[groupId] }
         .sortedBy { threadBookmarkGroup -> threadBookmarkGroup.groupOrder }
 
@@ -146,12 +146,12 @@ class ThreadBookmarkGroupManager(
       val group = groupsByGroupIdMap[groupId]
         ?: return@withLock false
 
-      val newIsExpanded = !group.isExpanded
-      group.isExpanded = newIsExpanded
+      val oldIsExpanded = group.isExpanded
+      group.isExpanded = oldIsExpanded.not()
 
-      threadBookmarkGroupEntryRepository.updateBookmarkGroupExpanded(groupId, newIsExpanded)
+      threadBookmarkGroupEntryRepository.updateBookmarkGroupExpanded(groupId, group.isExpanded)
         .safeUnwrap { error ->
-          groupsByGroupIdMap[groupId]?.isExpanded = !newIsExpanded
+          groupsByGroupIdMap[groupId]?.isExpanded = oldIsExpanded
 
           Logger.e(TAG, "updateBookmarkGroupExpanded error", error)
           return@withLock false

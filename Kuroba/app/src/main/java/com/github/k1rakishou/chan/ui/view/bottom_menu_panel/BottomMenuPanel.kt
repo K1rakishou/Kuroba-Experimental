@@ -215,7 +215,6 @@ class BottomMenuPanel @JvmOverloads constructor(
 
     linearLayout.setOnClickListener {
       postDelayed({
-        hide()
         item.onClickListener.invoke(item.menuItemId)
       }, HIDE_DELAY)
     }

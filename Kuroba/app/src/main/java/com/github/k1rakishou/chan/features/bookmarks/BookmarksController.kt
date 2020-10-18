@@ -10,10 +10,12 @@ import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
+import com.github.k1rakishou.chan.features.bookmarks.data.GroupOfThreadBookmarkItemViews
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkItemView
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.BaseThreadBookmarkViewHolder
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyGridThreadBookmarkViewHolder
@@ -127,12 +129,34 @@ class BookmarksController(
         .collect { state -> onStateChanged(state) }
     }
 
+    mainScope.launch {
+      bookmarksSelectionHelper.listenForSelectionChanges()
+        .collect { selectionEvent -> onNewSelectionEvent(selectionEvent) }
+    }
+
     onViewBookmarksModeChanged()
     updateLayoutManager()
 
     bookmarksPresenter.onCreate(this)
 
     setupRecycler()
+  }
+
+  private fun onNewSelectionEvent(selectionEvent: BaseSelectionHelper.SelectionEvent) {
+    when (selectionEvent) {
+      BaseSelectionHelper.SelectionEvent.EnteredSelectionMode,
+      BaseSelectionHelper.SelectionEvent.ItemSelectionToggled -> {
+        if (selectionEvent is BaseSelectionHelper.SelectionEvent.EnteredSelectionMode) {
+          drawerCallbacks?.showBottomPanel(bookmarksSelectionHelper.getBottomPanelMenus())
+        }
+
+        enterSelectionModeOrUpdate()
+      }
+      BaseSelectionHelper.SelectionEvent.ExitedSelectionMode -> {
+        drawerCallbacks?.hideBottomPanel()
+        requireNavController().requireToolbar().exitSelectionMode()
+      }
+    }
   }
 
   private fun onChangeViewModeClicked() {
@@ -165,7 +189,6 @@ class BookmarksController(
     val result = drawerCallbacks?.passOnBackToBottomPanel() ?: false
     if (result) {
       bookmarksSelectionHelper.clearSelection()
-      requireNavController().requireToolbar().exitSelectionMode()
     }
 
     return result
@@ -177,16 +200,18 @@ class BookmarksController(
   ) {
     when (bookmarksMenuItemType) {
       BookmarksSelectionHelper.BookmarksMenuItemType.Delete -> {
-        mainScope.launch {
-          val deleted = bookmarksPresenter.deleteBookmarks(selectedItems)
+        val bookmarksCount = selectedItems.size
 
-          // If deleted == true that means we will use the BookmarkManager's notification mechanisms
-          // to redraw bookmarks, otherwise if we couldn't delete bookmarks for some reason we need
-          // to cleat the selection checkboxes so we need to use BookmarksSelectionHelper's notification
-          // mechanisms
-          bookmarksSelectionHelper.clearSelection(!deleted)
-          requireNavController().requireToolbar().exitSelectionMode()
-        }
+        dialogFactory.createSimpleConfirmationDialog(
+          context = context,
+          titleText = getString(R.string.controller_bookmarks_delete_selected_bookmarks_title, bookmarksCount),
+          negativeButtonText = getString(R.string.do_not),
+          positiveButtonText = getString(R.string.delete),
+          onPositiveButtonClickListener = {
+            bookmarksPresenter.deleteBookmarks(selectedItems)
+            bookmarksSelectionHelper.clearSelection()
+          }
+        )
       }
     }
   }
@@ -372,7 +397,7 @@ class BookmarksController(
               id("bookmark_group_toggle_${bookmarkGroup.groupId}")
               isExpanded(bookmarkGroup.isExpanded)
               groupTitle(bookmarkGroup.groupInfoText)
-              clickListener { bookmarksPresenter.toggleBookmarkExpandState(bookmarkGroup.groupId) }
+              clickListener { onGroupViewClicked(bookmarkGroup) }
             }
 
             if (!bookmarkGroup.isExpanded) {
@@ -385,7 +410,7 @@ class BookmarksController(
 
               if (isGridMode) {
                 epoxyGridThreadBookmarkViewHolder {
-                  id("thread_grid_bookmark_view_${bookmark.hashCode()}")
+                  id("thread_grid_bookmark_view_${bookmark.threadDescriptor.serializeToString()}")
                   context(context)
                   imageLoaderRequestData(requestData)
                   threadDescriptor(bookmark.threadDescriptor)
@@ -400,7 +425,7 @@ class BookmarksController(
                 }
               } else {
                 epoxyListThreadBookmarkViewHolder {
-                  id("thread_list_bookmark_view_${bookmark.hashCode()}")
+                  id("thread_list_bookmark_view_${bookmark.threadDescriptor.serializeToString()}")
                   context(context)
                   imageLoaderRequestData(requestData)
                   threadDescriptor(bookmark.threadDescriptor)
@@ -432,20 +457,33 @@ class BookmarksController(
     bookmarksPresenter.onBookmarkStatsClicked(bookmark.threadDescriptor)
   }
 
+  private fun onGroupViewClicked(bookmarkGroup: GroupOfThreadBookmarkItemViews) {
+    if (!bookmarksSelectionHelper.isInSelectionMode()) {
+      bookmarksPresenter.toggleBookmarkExpandState(bookmarkGroup.groupId)
+      return
+    }
+
+    if (bookmarksPresenter.isInSearchMode()) {
+      return
+    }
+
+    if (!bookmarkGroup.isExpanded) {
+      bookmarksPresenter.toggleBookmarkExpandState(bookmarkGroup.groupId)
+      return
+    }
+
+    val bookmarkDescriptors = bookmarkGroup.threadBookmarkItemViews
+      .map { threadBookmarkItemView -> threadBookmarkItemView.threadDescriptor }
+
+    bookmarksSelectionHelper.toggleSelection(bookmarkDescriptors)
+  }
+
   private fun onBookmarkLongClicked(bookmark: ThreadBookmarkItemView) {
     if (bookmarksPresenter.isInSearchMode()) {
       return
     }
 
     bookmarksSelectionHelper.toggleSelection(bookmark.threadDescriptor)
-
-    if (bookmarksSelectionHelper.isInSelectionMode()) {
-      drawerCallbacks?.showBottomPanel(bookmarksSelectionHelper.getBottomPanelMenus())
-      enterSelectionModeOrUpdate()
-    } else {
-      drawerCallbacks?.hideBottomPanel()
-      requireNavController().requireToolbar().exitSelectionMode()
-    }
   }
 
   private fun onBookmarkClicked(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
@@ -455,16 +493,6 @@ class BookmarksController(
       }
 
       bookmarksSelectionHelper.toggleSelection(threadDescriptor)
-
-      if (bookmarksSelectionHelper.isInSelectionMode()) {
-        // If still in selection mode after toggling this one item, update the bottom panel
-        drawerCallbacks?.showBottomPanel(bookmarksSelectionHelper.getBottomPanelMenus())
-        enterSelectionModeOrUpdate()
-      } else {
-        drawerCallbacks?.hideBottomPanel()
-        requireNavController().requireToolbar().exitSelectionMode()
-      }
-
       return
     }
 

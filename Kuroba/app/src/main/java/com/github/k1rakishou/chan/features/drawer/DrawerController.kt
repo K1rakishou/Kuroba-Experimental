@@ -514,12 +514,12 @@ class DrawerController(
   }
 
   override fun showBottomPanel(items: List<BottomMenuPanelItem>) {
-    // TODO(KurobaEx): disable bottomnavview
+    bottomNavView.isEnabled = false
     bottomMenuPanel.show(items)
   }
 
   override fun hideBottomPanel() {
-    // TODO(KurobaEx): enable bottomnavview
+    bottomNavView.isEnabled = true
     bottomMenuPanel.hide()
   }
 

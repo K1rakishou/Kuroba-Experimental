@@ -830,6 +830,7 @@ Don't have a 4chan Pass?<br>
     <string name="controller_bookmarks_prune">Prune</string>
     <string name="controller_bookmarks_clear">Clear</string>
     <string name="controller_bookmarks_bookmark_of_archived_thread">(Archive)</string>
+    <string name="controller_bookmarks_delete_selected_bookmarks_title">Are you sure you want to delete %1$d bookmarks?</string>
 
     <string name="controller_sites_setup_no_sites">No sites loaded, this shouldn\'t happen</string>
     <string name="controller_sites_setup_archives_group">Archives (%1$d/%2$d)</string>

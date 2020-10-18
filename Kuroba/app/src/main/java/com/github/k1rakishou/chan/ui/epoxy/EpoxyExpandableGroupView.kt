@@ -5,7 +5,6 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
-import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.Chan
@@ -55,7 +54,7 @@ class EpoxyExpandableGroupView @JvmOverloads constructor(
     updateToggleIndicator()
   }
 
-  @CallbackProp
+  @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.DoNotHash])
   fun clickListener(listener: (() -> Unit)?) {
     if (listener == null) {
       setOnClickListener(null)
@@ -64,6 +63,20 @@ class EpoxyExpandableGroupView @JvmOverloads constructor(
 
     setOnClickListener { listener.invoke() }
   }
+
+  @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.DoNotHash])
+  fun longClickListener(listener: (() -> Unit)?) {
+    if (listener == null) {
+      setOnLongClickListener(null)
+      return
+    }
+
+    setOnLongClickListener {
+      listener.invoke()
+      return@setOnLongClickListener true
+    }
+  }
+
 
   override fun onThemeChanged() {
     updateToggleIndicator()
