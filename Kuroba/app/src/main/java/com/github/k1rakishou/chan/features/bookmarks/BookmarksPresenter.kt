@@ -94,7 +94,8 @@ class BookmarksPresenter(
         searchFlow
           .debounce(250.milliseconds)
           .collect { searchQuery ->
-            if (searchQuery !is SearchQuery.Searching) {
+            if (searchQuery is SearchQuery.Opened) {
+              // To avoid refreshing bookmarks list twice
               return@collect
             }
 
