@@ -76,6 +76,9 @@ class GlobalSearchController(context: Context) : Controller(context), GlobalSear
   private fun onStateChanged(state: GlobalSearchControllerState) {
     epoxyRecyclerView.withModels {
       when (state) {
+        GlobalSearchControllerState.Uninitialized -> {
+          // no-op
+        }
         GlobalSearchControllerState.Loading -> {
           epoxyLoadingView {
             id("global_search_loading_view")

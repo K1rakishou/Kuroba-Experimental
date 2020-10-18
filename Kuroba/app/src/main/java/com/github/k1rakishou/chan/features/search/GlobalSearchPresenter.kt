@@ -15,9 +15,7 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import javax.inject.Inject
 
 internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
@@ -26,7 +24,7 @@ internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
   lateinit var siteManager: SiteManager
 
   private val globalSearchControllerStateSubject =
-    BehaviorProcessor.createDefault<GlobalSearchControllerState>(GlobalSearchControllerState.Loading)
+    BehaviorProcessor.createDefault<GlobalSearchControllerState>(GlobalSearchControllerState.Uninitialized)
   private val searchResultsStateStorage = SearchResultsStateStorage
 
   private val queryEnterDebouncer = SuspendDebouncer(scope)
@@ -45,8 +43,13 @@ internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
         // fallthrough
       }
 
+      val loadingStateCancellationJob = launch {
+        delay(150)
+        setState(GlobalSearchControllerState.Loading)
+      }
+
       siteManager.awaitUntilInitialized()
-      loadDefaultSearchState()
+      loadDefaultSearchState(loadingStateCancellationJob)
     }
   }
 
@@ -136,7 +139,7 @@ internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
     }
   }
 
-  private fun loadDefaultSearchState() {
+  private fun loadDefaultSearchState(loadingStateCancellationJob: Job) {
     val sitesSupportingSearch = mutableListOf<SiteDescriptor>()
 
     siteManager.viewActiveSitesOrderedWhile { chanSiteData, site ->
@@ -145,6 +148,10 @@ internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
       }
 
       return@viewActiveSitesOrderedWhile true
+    }
+
+    if (!loadingStateCancellationJob.isCancelled) {
+      loadingStateCancellationJob.cancel()
     }
 
     if (sitesSupportingSearch.isEmpty()) {

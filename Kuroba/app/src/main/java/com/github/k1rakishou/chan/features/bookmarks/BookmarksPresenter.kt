@@ -17,14 +17,11 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
-import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
@@ -157,11 +154,21 @@ class BookmarksPresenter(
         return@launch
       }
 
-      setState(BookmarksControllerState.Loading)
+      val loadingStateCancellationJob = launch {
+        delay(150)
+        setState(BookmarksControllerState.Loading)
+      }
+
       Logger.d(TAG, "calling showBookmarks() because reloadBookmarks() was called")
 
-      ModularResult.Try { showBookmarks() }.safeUnwrap { error ->
+      ModularResult.Try { showBookmarks(loadingStateCancellationJob) }.safeUnwrap { error ->
         Logger.e(TAG, "showBookmarks() error", error)
+
+        // Cancel the setState(Loading) event
+        if (!loadingStateCancellationJob.isCancelled) {
+          loadingStateCancellationJob.cancel()
+        }
+
         setState(BookmarksControllerState.Error(error.errorMessageOrClassName()))
 
         return@launch
@@ -217,7 +224,7 @@ class BookmarksPresenter(
     ) { threadBookmark -> threadBookmark.toggleWatching() }
   }
 
-  private suspend fun showBookmarks() {
+  private suspend fun showBookmarks(loadingStateCancellationJob: Job? = null) {
     BackgroundUtils.ensureBackgroundThread()
 
     bookmarksManager.awaitUntilInitialized()
@@ -268,6 +275,13 @@ class BookmarksPresenter(
     sortBookmarks(groupedBookmarks)
     moveDeadBookmarksToEnd(groupedBookmarks)
     moveBookmarksWithUnreadRepliesToTop(groupedBookmarks)
+
+    // Cancel the setState(Loading) event
+    loadingStateCancellationJob?.let { job ->
+      if (!job.isCancelled) {
+        job.cancel()
+      }
+    }
 
     if (groupedBookmarks.isEmpty()) {
       if (query != null) {

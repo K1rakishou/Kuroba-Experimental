@@ -4,6 +4,7 @@ import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 
 internal sealed class GlobalSearchControllerState {
+  object Uninitialized : GlobalSearchControllerState()
   object Loading : GlobalSearchControllerState()
   object Empty : GlobalSearchControllerState()
   data class Error(val errorText: String) : GlobalSearchControllerState()
