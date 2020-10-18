@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 @EpoxyModelClass(layout = R.layout.epoxy_grid_thread_bookmark_view)
 abstract class EpoxyGridThreadBookmarkViewHolder
-  : EpoxyModelWithHolder<BaseThreadBookmarkViewHolder>(), ThemeEngine.ThemeChangesListener {
+  : EpoxyModelWithHolder<BaseThreadBookmarkViewHolder>(), ThemeEngine.ThemeChangesListener, BookmarkInfoGetters {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -54,6 +54,10 @@ abstract class EpoxyGridThreadBookmarkViewHolder
 
   private var holder: BaseThreadBookmarkViewHolder? = null
   var dragIndicator: AppCompatImageView? = null
+
+  override fun getBookmarkGroupId(): String? = groupId
+  override fun getBookmarkStats(): ThreadBookmarkStats? = threadBookmarkStats
+  override fun getBookmarkDescriptor(): ChanDescriptor.ThreadDescriptor? = threadDescriptor
 
   override fun bind(holder: BaseThreadBookmarkViewHolder) {
     super.bind(holder)

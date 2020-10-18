@@ -103,21 +103,33 @@ class BookmarksController(
       current: EpoxyViewHolder?,
       target: EpoxyViewHolder?
     ): Boolean {
-      if (PersistableChanState.viewThreadBookmarksGridMode.get()) {
-        val currentGroupId = (current?.model as? EpoxyGridThreadBookmarkViewHolder_)?.groupId()
-          ?: return false
-        val targetGroupId = (target?.model as? EpoxyGridThreadBookmarkViewHolder_)?.groupId()
-          ?: return false
+      val currentBookmarkInfoGetters = (current?.model as? BookmarkInfoGetters)
+        ?: return false
+      val targetBookmarkInfoGetters = (target?.model as? BookmarkInfoGetters)
+        ?: return false
 
-        return currentGroupId == targetGroupId
-      } else {
-        val currentGroupId = (current?.model as? EpoxyListThreadBookmarkViewHolder_)?.groupId()
-          ?: return false
-        val targetGroupId = (target?.model as? EpoxyListThreadBookmarkViewHolder_)?.groupId()
-          ?: return false
-
-        return currentGroupId == targetGroupId
+      if (currentBookmarkInfoGetters.getBookmarkGroupId() != targetBookmarkInfoGetters.getBookmarkGroupId()) {
+        return false
       }
+
+      if (ChanSettings.moveNotActiveBookmarksToBottom.get()) {
+        val isDeadOrNotWatching = targetBookmarkInfoGetters.getBookmarkStats()?.isDeadOrNotWatching()
+          ?: false
+
+        if (isDeadOrNotWatching) {
+          return false
+        }
+      }
+
+      if (ChanSettings.moveBookmarksWithUnreadRepliesToTop.get()) {
+        val newQuotes = targetBookmarkInfoGetters.getBookmarkStats()?.newQuotes ?: 0
+
+        if (newQuotes > 0) {
+          return false
+        }
+      }
+
+      return true
     }
 
     override fun onDragStarted(model: EpoxyModel<*>?, itemView: View?, adapterPosition: Int) {
@@ -134,27 +146,15 @@ class BookmarksController(
       val toPosition = target?.adapterPosition
         ?: return false
 
-      val fromGroupId = when (PersistableChanState.viewThreadBookmarksGridMode.get()) {
-        true -> (viewHolder.model as? EpoxyGridThreadBookmarkViewHolder_)?.groupId()
-        false -> (viewHolder.model as? EpoxyListThreadBookmarkViewHolder_)?.groupId()
-      }
-      val toGroupId = when (PersistableChanState.viewThreadBookmarksGridMode.get()) {
-        true -> (target.model as? EpoxyGridThreadBookmarkViewHolder_)?.groupId()
-        false -> (target.model as? EpoxyListThreadBookmarkViewHolder_)?.groupId()
-      }
+      val fromGroupId = (viewHolder.model as? BookmarkInfoGetters)?.getBookmarkGroupId()
+      val toGroupId = (target.model as? BookmarkInfoGetters)?.getBookmarkGroupId()
 
       if (fromGroupId == null || toGroupId == null || fromGroupId != toGroupId) {
         return false
       }
 
-      val fromBookmarkDescriptor = when (PersistableChanState.viewThreadBookmarksGridMode.get()) {
-        true -> (viewHolder.model as? EpoxyGridThreadBookmarkViewHolder_)?.threadDescriptor()
-        false -> (viewHolder.model as? EpoxyListThreadBookmarkViewHolder_)?.threadDescriptor()
-      }
-      val toBookmarkDescriptor = when (PersistableChanState.viewThreadBookmarksGridMode.get()) {
-        true -> (target.model as? EpoxyGridThreadBookmarkViewHolder_)?.threadDescriptor()
-        false -> (target.model as? EpoxyListThreadBookmarkViewHolder_)?.threadDescriptor()
-      }
+      val fromBookmarkDescriptor = (viewHolder.model as? BookmarkInfoGetters)?.getBookmarkDescriptor()
+      val toBookmarkDescriptor = (target.model as? BookmarkInfoGetters)?.getBookmarkDescriptor()
 
       if (fromBookmarkDescriptor == null || toBookmarkDescriptor == null) {
         return false

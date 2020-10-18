@@ -299,8 +299,14 @@ class BookmarksPresenter(
     }
 
     val groupedBookmarks = threadBookmarkGroupManager.groupBookmarks(threadBookmarkItemViewList.toList())
+    // The function call order matters!
+    // First we need to do the general sorting.
     sortBookmarks(groupedBookmarks)
+
+    // Then we need to move dead bookmarks to bottom.
     moveDeadBookmarksToEnd(groupedBookmarks)
+
+    // Bookmarks with replies have the highest priority, so we are moving them at the latest step.
     moveBookmarksWithUnreadRepliesToTop(groupedBookmarks)
 
     // Cancel the setState(Loading) event
