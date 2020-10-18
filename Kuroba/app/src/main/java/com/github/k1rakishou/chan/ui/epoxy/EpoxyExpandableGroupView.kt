@@ -54,7 +54,7 @@ class EpoxyExpandableGroupView @JvmOverloads constructor(
     updateToggleIndicator()
   }
 
-  @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.DoNotHash])
+  @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.IgnoreRequireHashCode])
   fun clickListener(listener: (() -> Unit)?) {
     if (listener == null) {
       setOnClickListener(null)
@@ -64,7 +64,7 @@ class EpoxyExpandableGroupView @JvmOverloads constructor(
     setOnClickListener { listener.invoke() }
   }
 
-  @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.DoNotHash])
+  @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.IgnoreRequireHashCode])
   fun longClickListener(listener: (() -> Unit)?) {
     if (listener == null) {
       setOnLongClickListener(null)
@@ -76,7 +76,6 @@ class EpoxyExpandableGroupView @JvmOverloads constructor(
       return@setOnLongClickListener true
     }
   }
-
 
   override fun onThemeChanged() {
     updateToggleIndicator()
