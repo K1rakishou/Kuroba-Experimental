@@ -23,6 +23,8 @@ class EpoxySearchPostGapView @JvmOverloads constructor(
   init {
     Chan.inject(this)
     inflate(context, R.layout.epoxy_search_post_gap_view, this)
+
+    onThemeChanged()
   }
 
   override fun onAttachedToWindow() {

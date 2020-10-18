@@ -6,7 +6,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import okhttp3.HttpUrl
 
 internal sealed class SearchResultsControllerState {
-  object InitialLoading : SearchResultsControllerState()
+  object Uninitialized : SearchResultsControllerState()
   class NothingFound(val query: String) : SearchResultsControllerState()
   data class Data(val data: SearchResultsControllerStateData) : SearchResultsControllerState()
 }

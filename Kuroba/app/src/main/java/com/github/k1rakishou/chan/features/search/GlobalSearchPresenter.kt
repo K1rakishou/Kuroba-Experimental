@@ -94,29 +94,10 @@ internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
   fun resetSavedState() {
     searchResultsStateStorage.resetSearchInputState()
   }
+
   fun resetSearchResultsSavedState() {
     searchResultsStateStorage.resetSearchResultState()
   }
-
-  // TODO(KurobaEx):
-//  fun reloadWithSelection(siteDescriptor: SiteDescriptor, sitesWithSearch: SitesWithSearch) {
-//    val selectedSiteDescriptor = sitesWithSearch.selectedSite.siteDescriptor
-//    if (selectedSiteDescriptor == siteDescriptor) {
-//      return
-//    }
-//
-//    val site = siteManager.bySiteDescriptor(selectedSiteDescriptor)
-//      ?: return
-//
-//    val siteIcon = site.icon().url.toString()
-//    val searchType = site.siteGlobalSearchType()
-//
-//    val dataState = GlobalSearchControllerStateData.SitesSupportingSearchLoaded(
-//      sitesWithSearch.copy(selectedSite = SelectedSite(selectedSiteDescriptor, siteIcon, searchType))
-//    )
-//
-//    setState(GlobalSearchControllerState.Data(dataState))
-//  }
 
   fun reloadWithSearchQuery(query: String, sitesWithSearch: SitesWithSearch) {
     val prevDataState = (globalSearchControllerStateSubject.value as? GlobalSearchControllerState.Data)?.data

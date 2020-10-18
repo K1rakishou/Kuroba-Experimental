@@ -138,7 +138,7 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
     }
 
     val searchPostThumbnailRef = WeakReference(searchPostThumbnail)
-    val searchPostImagesContainerRef = WeakReference(searchPostImagesContainer)
+    searchPostImagesContainer.setVisibilityFast(View.VISIBLE)
 
     imageDisposable = imageLoaderV2.loadFromNetwork(
       context,
@@ -147,7 +147,6 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
       searchPostThumbnailSize,
       listOf(),
       { drawable ->
-        searchPostImagesContainerRef.get()?.setVisibilityFast(View.VISIBLE)
         searchPostThumbnailRef.get()?.setImageBitmap(drawable.bitmap)
       }
     )

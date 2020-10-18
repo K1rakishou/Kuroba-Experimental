@@ -10,7 +10,6 @@ import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerState
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerStateData
 import com.github.k1rakishou.chan.features.search.epoxy.*
-import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AndroidUtils
@@ -61,10 +60,8 @@ class SearchResultsController(
   private fun onStateChanged(state: SearchResultsControllerState) {
     epoxyRecyclerView.withModels {
       when (state) {
-        SearchResultsControllerState.InitialLoading -> {
-          epoxyLoadingView {
-            id("search_result_controller_loading_view")
-          }
+        SearchResultsControllerState.Uninitialized -> {
+          // no-op
         }
         is SearchResultsControllerState.NothingFound -> {
           epoxyTextView {
@@ -83,12 +80,12 @@ class SearchResultsController(
     data.searchPostInfoList.forEachIndexed { index, searchPostInfo ->
       if (index != 0 && searchPostInfo.opInfo != null) {
         epoxySearchPostGapView {
-          id("epoxy_search_post_gap_view_${searchPostInfo.opInfo.hashString()}")
+          id("epoxy_search_post_gap_view_${searchPostInfo.postDescriptor.serializeToString()}")
         }
       }
 
       epoxySearchPostView {
-        id("epoxy_search_post_view_${searchPostInfo.combinedHash()}")
+        id("epoxy_search_post_view_${searchPostInfo.postDescriptor.serializeToString()}}")
         postDescriptor(searchPostInfo.postDescriptor)
         postOpInfo(searchPostInfo.opInfo?.spannedText)
         postInfo(searchPostInfo.postInfo.spannedText)
@@ -122,9 +119,17 @@ class SearchResultsController(
       return
     }
 
-    if (data.nextPageCursor !is PageCursor.End) {
+    val nextPageCursor = data.nextPageCursor
+    if (nextPageCursor !is PageCursor.End) {
+      val searchLoadingViewId = if (nextPageCursor is PageCursor.Empty) {
+        "epoxy_search_loading_view_initial"
+      } else {
+        val page = nextPageCursor as PageCursor.Page
+        "epoxy_search_loading_view_${page.value}"
+      }
+
       epoxySearchLoadingView {
-        id("epoxy_search_loading_view")
+        id(searchLoadingViewId)
         onBind { _, _, _ -> presenter.loadNewPage(data) }
       }
     } else {

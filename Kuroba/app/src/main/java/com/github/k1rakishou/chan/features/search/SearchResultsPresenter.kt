@@ -41,7 +41,7 @@ internal class SearchResultsPresenter(
   lateinit var themeEngine: ThemeEngine
 
   private val searchResultsControllerStateSubject =
-    BehaviorProcessor.createDefault<SearchResultsControllerState>(SearchResultsControllerState.InitialLoading)
+    BehaviorProcessor.createDefault<SearchResultsControllerState>(SearchResultsControllerState.Uninitialized)
   private val searchResultsStateStorage = SearchResultsStateStorage
 
   @get:Synchronized
