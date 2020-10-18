@@ -64,4 +64,12 @@ class ThreadBookmarkGroupRepository(
     }
   }
 
+  suspend fun updateGroup(group: ThreadBookmarkGroup): ModularResult<Unit> {
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        localSource.updateGroup(group)
+      }
+    }
+  }
+
 }

@@ -21,4 +21,6 @@ data class ThreadBookmarkStats(
 
   fun isDead(): Boolean = isArchive || isDeleted
 
+  fun isDeadOrNotWatching(): Boolean = isDead() || !watching
+
 }

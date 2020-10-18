@@ -9,6 +9,7 @@ import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroup
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroupEntryToCreate
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkGroupEntity
+import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkGroupEntryEntity
 import com.github.k1rakishou.model.mapper.ThreadBookmarkGroupMapper
 import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
 
@@ -141,6 +142,19 @@ class ThreadBookmarkGroupLocalSource(
     deleteTransaction.toUpdate.forEach { (_, groupEntries) ->
       threadBookmarkGroupDao.updateMany(ThreadBookmarkGroupMapper.toEntityList(groupEntries))
     }
+  }
+
+  suspend fun updateGroup(group: ThreadBookmarkGroup) {
+    ensureInTransaction()
+
+    val entitiesList = mutableListOf<ThreadBookmarkGroupEntryEntity>()
+
+    group.iterateEntriesOrderedWhile { order, threadBookmarkGroupEntry ->
+      entitiesList += ThreadBookmarkGroupMapper.toEntity(order, threadBookmarkGroupEntry)
+      return@iterateEntriesOrderedWhile true
+    }
+
+    threadBookmarkGroupDao.updateMany(entitiesList)
   }
 
   suspend fun deleteEmptyGroups() {

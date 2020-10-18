@@ -131,6 +131,33 @@ class BookmarksPresenter(
       .hide()
   }
 
+  fun onBookmarkMoving(
+    groupId: String,
+    fromBookmarkDescriptor: ChanDescriptor.ThreadDescriptor,
+    toBookmarkDescriptor: ChanDescriptor.ThreadDescriptor
+  ): Boolean {
+    return runBlocking(Dispatchers.Default) {
+      val result = threadBookmarkGroupManager.onBookmarkMoving(
+        groupId,
+        fromBookmarkDescriptor,
+        toBookmarkDescriptor
+      )
+
+      if (!result) {
+        return@runBlocking false
+      }
+
+      showBookmarks(null)
+      return@runBlocking true
+    }
+  }
+
+  fun onBookmarkMoved(groupId: String) {
+    scope.launch(Dispatchers.Default) {
+      threadBookmarkGroupManager.persistGroup(groupId)
+    }
+  }
+
   fun toggleBookmarkExpandState(groupId: String) {
     scope.launch(Dispatchers.Default) {
       threadBookmarkGroupManager.toggleBookmarkExpandState(groupId)
@@ -427,7 +454,7 @@ class BookmarksPresenter(
     private val UNREAD_POSTS_DESC_COMPARATOR = compareByDescending<ThreadBookmarkItemView> { bookmarkItemView -> bookmarkItemView.threadBookmarkStats.newPosts }
 
     private val MOVE_DEAD_BOOKMARKS_TO_END_COMPARATOR = compareBy<ThreadBookmarkItemView> { bookmarkItemView ->
-      bookmarkItemView.threadBookmarkStats.isDead() || !bookmarkItemView.threadBookmarkStats.watching
+      bookmarkItemView.threadBookmarkStats.isDeadOrNotWatching()
     }
     private val MOVE_BOOKMARKS_WITH_UNREAD_REPLIES_TO_TOP_COMPARATOR = compareByDescending<ThreadBookmarkItemView> { bookmarkItemView ->
       bookmarkItemView.threadBookmarkStats.newQuotes

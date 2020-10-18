@@ -70,6 +70,30 @@ class ThreadBookmarkGroupManager(
     }
   }
 
+  suspend fun onBookmarkMoving(
+    groupId: String,
+    fromBookmarkDescriptor: ChanDescriptor.ThreadDescriptor,
+    toBookmarkDescriptor: ChanDescriptor.ThreadDescriptor
+  ): Boolean {
+    return mutex.withLock {
+      val group = groupsByGroupIdMap[groupId]
+        ?: return@withLock false
+
+      return@withLock group.moveBookmark(fromBookmarkDescriptor, toBookmarkDescriptor)
+    }
+  }
+
+  suspend fun persistGroup(groupId: String) {
+    mutex.withLock {
+      val group = groupsByGroupIdMap[groupId]
+        ?: return@withLock
+
+      threadBookmarkGroupEntryRepository.updateGroup(group)
+        .peekError { error -> Logger.e(TAG, "updateGroup(${groupId}) error", error) }
+        .ignore()
+    }
+  }
+
   /**
    * Transforms an unordered list of bookmarks into an ordered list of groups of ordered bookmarks.
    * */

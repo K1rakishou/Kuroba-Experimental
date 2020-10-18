@@ -14,6 +14,9 @@ abstract class ThreadBookmarkGroupDao {
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   abstract suspend fun insertMany(threadBookmarkGroupEntryEntities: List<ThreadBookmarkGroupEntryEntity>): List<Long>
 
+  @Update(onConflict = OnConflictStrategy.REPLACE)
+  abstract suspend fun updateMany(threadBookmarkGroupEntryEntityList: List<ThreadBookmarkGroupEntryEntity>)
+
   @Query("""
     SELECT *
     FROM ${ThreadBookmarkGroupEntity.TABLE_NAME} groups
@@ -48,9 +51,6 @@ abstract class ThreadBookmarkGroupDao {
     WHERE ${ThreadBookmarkGroupEntity.GROUP_ID_COLUMN_NAME} = :groupId
   """)
   abstract suspend fun updateBookmarkGroupExpanded(groupId: String, expanded: Boolean)
-
-  @Update(onConflict = OnConflictStrategy.REPLACE)
-  abstract suspend fun updateMany(threadBookmarkGroupEntryEntityList: List<ThreadBookmarkGroupEntryEntity>)
 
   @Query("""
     DELETE

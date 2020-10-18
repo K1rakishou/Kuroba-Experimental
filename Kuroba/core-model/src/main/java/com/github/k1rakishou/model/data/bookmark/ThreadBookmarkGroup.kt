@@ -100,6 +100,35 @@ class ThreadBookmarkGroup(
     }
   }
 
+  @Synchronized
+  fun moveBookmark(
+    fromBookmarkDescriptor: ChanDescriptor.ThreadDescriptor,
+    toBookmarkDescriptor: ChanDescriptor.ThreadDescriptor
+  ): Boolean {
+    val fromDatabaseId = entries.values
+      .firstOrNull { threadBookmarkGroupEntry -> threadBookmarkGroupEntry.threadDescriptor == fromBookmarkDescriptor }
+      ?.databaseId
+      ?: return false
+
+    val toDatabaseId = entries.values
+      .firstOrNull { threadBookmarkGroupEntry -> threadBookmarkGroupEntry.threadDescriptor == toBookmarkDescriptor }
+      ?.databaseId
+      ?: return false
+
+    val fromIndex = orders.indexOfFirst { databaseId -> databaseId == fromDatabaseId }
+    if (fromIndex < 0 || fromIndex > orders.lastIndex) {
+      return false
+    }
+
+    val toIndex = orders.indexOfFirst { databaseId -> databaseId == toDatabaseId }
+    if (toIndex < 0 || toIndex > orders.lastIndex) {
+      return false
+    }
+
+    orders.add(toIndex, orders.removeAt(fromIndex))
+    return true
+  }
+
   companion object {
     const val RESERVE_DB_ID = -1L
   }

@@ -43,6 +43,14 @@ abstract class EpoxyListThreadBookmarkViewHolder
   var highlightBookmark: Boolean = false
   @EpoxyAttribute
   open var isTablet: Boolean = false
+  @EpoxyAttribute
+  var groupId: String? = null
+  @EpoxyAttribute
+  var moveBookmarksWithUnreadRepliesToTop: Boolean = false
+  @EpoxyAttribute
+  var moveNotActiveBookmarksToBottom: Boolean = false
+  @EpoxyAttribute
+  var viewThreadBookmarksGridMode: Boolean = false
 
   private var holder: BaseThreadBookmarkViewHolder? = null
   var dragIndicator: AppCompatImageView? = null
@@ -65,6 +73,7 @@ abstract class EpoxyListThreadBookmarkViewHolder
     holder.highlightBookmark(highlightBookmark || threadBookmarkSelection?.isSelected == true)
     holder.updateListViewSizes(isTablet)
     holder.updateDragIndicatorColors(false)
+    holder.updateDragIndicatorState(threadBookmarkStats)
 
     val watching = threadBookmarkStats?.watching ?: true
     context?.let { holder.bindImage(false, watching, it) }

@@ -21,6 +21,7 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.DialogFactory
+import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
 import com.github.k1rakishou.chan.features.bookmarks.data.GroupOfThreadBookmarkItemViews
@@ -97,8 +98,29 @@ class BookmarksController(
       return makeMovementFlags(moveFlags, 0)
     }
 
+    override fun canDropOver(
+      recyclerView: RecyclerView?,
+      current: EpoxyViewHolder?,
+      target: EpoxyViewHolder?
+    ): Boolean {
+      if (PersistableChanState.viewThreadBookmarksGridMode.get()) {
+        val currentGroupId = (current?.model as? EpoxyGridThreadBookmarkViewHolder_)?.groupId()
+          ?: return false
+        val targetGroupId = (target?.model as? EpoxyGridThreadBookmarkViewHolder_)?.groupId()
+          ?: return false
+
+        return currentGroupId == targetGroupId
+      } else {
+        val currentGroupId = (current?.model as? EpoxyListThreadBookmarkViewHolder_)?.groupId()
+          ?: return false
+        val targetGroupId = (target?.model as? EpoxyListThreadBookmarkViewHolder_)?.groupId()
+          ?: return false
+
+        return currentGroupId == targetGroupId
+      }
+    }
+
     override fun onDragStarted(model: EpoxyModel<*>?, itemView: View?, adapterPosition: Int) {
-      println("TTTAAA onDragStarted model=${model?.javaClass?.simpleName}")
       itemView?.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
     }
 
@@ -112,15 +134,58 @@ class BookmarksController(
       val toPosition = target?.adapterPosition
         ?: return false
 
-      println("TTTAAA onMove viewHolder.model=${viewHolder.model.javaClass.simpleName}, " +
-        "target.model=${target.model.javaClass.simpleName}, " +
-        "fromPosition=$fromPosition, toPosition=$toPosition")
+      val fromGroupId = when (PersistableChanState.viewThreadBookmarksGridMode.get()) {
+        true -> (viewHolder.model as? EpoxyGridThreadBookmarkViewHolder_)?.groupId()
+        false -> (viewHolder.model as? EpoxyListThreadBookmarkViewHolder_)?.groupId()
+      }
+      val toGroupId = when (PersistableChanState.viewThreadBookmarksGridMode.get()) {
+        true -> (target.model as? EpoxyGridThreadBookmarkViewHolder_)?.groupId()
+        false -> (target.model as? EpoxyListThreadBookmarkViewHolder_)?.groupId()
+      }
+
+      if (fromGroupId == null || toGroupId == null || fromGroupId != toGroupId) {
+        return false
+      }
+
+      val fromBookmarkDescriptor = when (PersistableChanState.viewThreadBookmarksGridMode.get()) {
+        true -> (viewHolder.model as? EpoxyGridThreadBookmarkViewHolder_)?.threadDescriptor()
+        false -> (viewHolder.model as? EpoxyListThreadBookmarkViewHolder_)?.threadDescriptor()
+      }
+      val toBookmarkDescriptor = when (PersistableChanState.viewThreadBookmarksGridMode.get()) {
+        true -> (target.model as? EpoxyGridThreadBookmarkViewHolder_)?.threadDescriptor()
+        false -> (target.model as? EpoxyListThreadBookmarkViewHolder_)?.threadDescriptor()
+      }
+
+      if (fromBookmarkDescriptor == null || toBookmarkDescriptor == null) {
+        return false
+      }
+
+      val result = bookmarksPresenter.onBookmarkMoving(
+        fromGroupId,
+        fromBookmarkDescriptor,
+        toBookmarkDescriptor
+      )
+
+      if (!result) {
+        return false
+      }
+
+      controller.moveModel(fromPosition, toPosition)
 
       return true
     }
 
     override fun onDragReleased(model: EpoxyModel<*>?, itemView: View?) {
-      println("TTTAAA onDragReleased model=${model?.javaClass?.simpleName}")
+      val groupId = when (PersistableChanState.viewThreadBookmarksGridMode.get()) {
+        true -> (model as? EpoxyGridThreadBookmarkViewHolder_)?.groupId()
+        false -> (model as? EpoxyListThreadBookmarkViewHolder_)?.groupId()
+      }
+
+      if (groupId == null) {
+        return
+      }
+
+      bookmarksPresenter.onBookmarkMoved(groupId)
     }
 
   }
@@ -441,6 +506,10 @@ class BookmarksController(
           }
 
           val isTablet = AndroidUtils.isTablet()
+          val moveBookmarksWithUnreadRepliesToTop = ChanSettings.moveBookmarksWithUnreadRepliesToTop.get()
+          val moveNotActiveBookmarksToBottom = ChanSettings.moveNotActiveBookmarksToBottom.get()
+          val viewThreadBookmarksGridMode = PersistableChanState.viewThreadBookmarksGridMode.get()
+
           updateTitleWithStats(state)
 
           state.groupedBookmarks.forEach { bookmarkGroup ->
@@ -476,6 +545,10 @@ class BookmarksController(
                   threadBookmarkSelection(bookmark.selection)
                   highlightBookmark(bookmark.highlight)
                   isTablet(isTablet)
+                  groupId(bookmark.groupId)
+                  moveBookmarksWithUnreadRepliesToTop(moveBookmarksWithUnreadRepliesToTop)
+                  moveNotActiveBookmarksToBottom(moveNotActiveBookmarksToBottom)
+                  viewThreadBookmarksGridMode(viewThreadBookmarksGridMode)
                   bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
                   bookmarkLongClickListener { onBookmarkLongClicked(bookmark) }
                   bookmarkStatsClickListener { onBookmarkStatsClicked(bookmark) }
@@ -491,6 +564,10 @@ class BookmarksController(
                   threadBookmarkSelection(bookmark.selection)
                   highlightBookmark(bookmark.highlight)
                   isTablet(isTablet)
+                  groupId(bookmark.groupId)
+                  moveBookmarksWithUnreadRepliesToTop(moveBookmarksWithUnreadRepliesToTop)
+                  moveNotActiveBookmarksToBottom(moveNotActiveBookmarksToBottom)
+                  viewThreadBookmarksGridMode(viewThreadBookmarksGridMode)
                   bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
                   bookmarkLongClickListener { onBookmarkLongClicked(bookmark) }
                   bookmarkStatsClickListener { onBookmarkStatsClicked(bookmark) }

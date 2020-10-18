@@ -19,6 +19,7 @@ import com.airbnb.epoxy.EpoxyHolder
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkSelection
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkStats
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
@@ -74,14 +75,15 @@ open class BaseThreadBookmarkViewHolder(
     bookmarkAdditionalStats = itemView.findViewById(R.id.thread_bookmark_additional_stats)
     bookmarkStatsHolder = itemView.findViewById(R.id.thread_bookmark_stats_holder)
     selectionCheckView = itemView.findViewById(R.id.selection_check_view)
+
     dragIndicator = itemView.findViewById(R.id.bookmark_drag_indicator)
+    dragIndicator!!.setVisibilityFast(View.VISIBLE)
   }
 
   fun unbind() {
     this.viewRoot.resetClickListener()
     this.bookmarkStatsHolder?.resetClickListener()
     this.bookmarkStats.resetClickListener()
-    this.dragIndicator = null
 
     this.imageLoaderRequestData = null
     this.threadDescriptor = null
@@ -352,8 +354,33 @@ open class BaseThreadBookmarkViewHolder(
     }
   }
 
+  fun updateDragIndicatorState(
+    threadBookmarkStats: ThreadBookmarkStats?
+  ) {
+    if (threadBookmarkStats == null) {
+      dragIndicator?.setVisibilityFast(View.VISIBLE)
+      return
+    }
+
+    if (ChanSettings.moveNotActiveBookmarksToBottom.get() && threadBookmarkStats.isDeadOrNotWatching()) {
+      dragIndicator?.setVisibilityFast(View.GONE)
+      return
+    }
+
+    if (ChanSettings.moveBookmarksWithUnreadRepliesToTop.get() && threadBookmarkStats.newQuotes > 0) {
+      dragIndicator?.setVisibilityFast(View.GONE)
+      return
+    }
+
+    dragIndicator?.setVisibilityFast(View.VISIBLE)
+  }
+
   fun updateDragIndicatorColors(isGridMode: Boolean) {
     dragIndicator?.let { indicator ->
+      if (indicator.visibility != View.VISIBLE) {
+        return@let
+      }
+
       if (isGridMode) {
         indicator.imageTintList = ColorStateList.valueOf(ThemeEngine.LIGHT_DRAWABLE_TINT)
       } else {

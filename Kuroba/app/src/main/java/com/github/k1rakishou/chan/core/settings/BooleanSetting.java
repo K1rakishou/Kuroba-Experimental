@@ -34,7 +34,7 @@ public class BooleanSetting
     }
 
     @Override
-    public Boolean get() {
+    public synchronized Boolean get() {
         if (hasCached) {
             return settingState.getValue();
         } else {
@@ -46,7 +46,7 @@ public class BooleanSetting
     }
 
     @Override
-    public void set(Boolean value) {
+    public synchronized void set(Boolean value) {
         if (!value.equals(get())) {
             settingProvider.putBoolean(key, value);
             settingState.onNext(value);
@@ -54,7 +54,7 @@ public class BooleanSetting
         }
     }
 
-    public void setSync(Boolean value) {
+    public synchronized void setSync(Boolean value) {
         if (!value.equals(get())) {
             settingProvider.putBooleanSync(key, value);
             settingState.onNext(value);
@@ -62,7 +62,7 @@ public class BooleanSetting
         }
     }
 
-    public boolean toggle() {
+    public synchronized boolean toggle() {
         boolean newValue = !get();
 
         set(newValue);
