@@ -50,12 +50,15 @@ class ThreadBookmarkView private constructor(
     if (seenPostsCount != other.seenPostsCount) return false
     if (totalPostsCount != other.totalPostsCount) return false
     if (lastViewedPostNo != other.lastViewedPostNo) return false
-    if (threadBookmarkReplyViews != other.threadBookmarkReplyViews) return false
     if (title != other.title) return false
     if (thumbnailUrl != other.thumbnailUrl) return false
-    if (stickyThread != other.stickyThread) return false
     if (state != other.state) return false
+    if (stickyThread != other.stickyThread) return false
     if (createdOn != other.createdOn) return false
+
+    if (!compareThreadBookmarkReplyViews(threadBookmarkReplyViews, other.threadBookmarkReplyViews)) {
+      return false
+    }
 
     return true
   }
@@ -69,8 +72,8 @@ class ThreadBookmarkView private constructor(
     result = 31 * result + threadBookmarkReplyViews.hashCode()
     result = 31 * result + (title?.hashCode() ?: 0)
     result = 31 * result + (thumbnailUrl?.hashCode() ?: 0)
-    result = 31 * result + stickyThread.hashCode()
     result = 31 * result + state.hashCode()
+    result = 31 * result + stickyThread.hashCode()
     result = 31 * result + createdOn.hashCode()
     return result
   }
@@ -80,6 +83,26 @@ class ThreadBookmarkView private constructor(
       "totalPostsCount=$totalPostsCount, lastViewedPostNo=$lastViewedPostNo, " +
       "threadBookmarkReplyViews=$threadBookmarkReplyViews, title=${title?.take(20)}, " +
       "thumbnailUrl=$thumbnailUrl, stickyThread=$stickyThread, state=$state, createdOn=$createdOn)"
+  }
+
+  private fun compareThreadBookmarkReplyViews(
+    tbrv1: MutableMap<PostDescriptor, ThreadBookmarkReplyView>,
+    tbrv2: MutableMap<PostDescriptor, ThreadBookmarkReplyView>
+  ): Boolean {
+    if (tbrv1.size != tbrv2.size) {
+      return false
+    }
+
+    for ((postDescriptor, threadBookmarkReplyView1) in tbrv1.entries) {
+      val threadBookmarkReplyView2 = tbrv2[postDescriptor]
+        ?: return false
+
+      if (threadBookmarkReplyView1 != threadBookmarkReplyView2) {
+        return false
+      }
+    }
+
+    return true
   }
 
   companion object {

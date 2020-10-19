@@ -15,7 +15,7 @@ import javax.inject.Inject
 
 @EpoxyModelClass(layout = R.layout.epoxy_list_thread_bookmark_view)
 abstract class EpoxyListThreadBookmarkViewHolder
-  : EpoxyModelWithHolder<BaseThreadBookmarkViewHolder>(), ThemeEngine.ThemeChangesListener, BookmarkInfoGetters {
+  : EpoxyModelWithHolder<BaseThreadBookmarkViewHolder>(), ThemeEngine.ThemeChangesListener, UnifiedBookmarkInfoAccessor {
 
   @Inject
   lateinit var themeEngine: ThemeEngine

@@ -27,7 +27,8 @@ class BookmarkWatcherCoordinator(
   private val bookmarkForegroundWatcher: BookmarkForegroundWatcher,
   private val applicationVisibilityManager: ApplicationVisibilityManager
 ) {
-  private val bookmarkChangeSubject = PublishProcessor.create<Boolean>()
+  // We need this subject for events buffering
+  private val bookmarkChangeSubject = PublishProcessor.create<SimpleBookmarkChangeInfo>()
   private val running = AtomicBoolean(false)
   private var currentWatcherType = WatcherType.None
 
@@ -54,26 +55,33 @@ class BookmarkWatcherCoordinator(
         .onBackpressureLatest()
         .filter { events -> events.isNotEmpty() }
         .asFlow()
-        .collect {
-          if (!bookmarksManager.isReady()) {
-            return@collect
-          }
+        .collect { groupOfChangeInfos ->
+          bookmarksManager.awaitUntilInitialized()
 
-          onBookmarksChanged()
+          val hasCreateBookmarkChange = groupOfChangeInfos
+            .any { simpleBookmarkChangeInfo -> simpleBookmarkChangeInfo.hasNewlyCreatedBookmarkChange }
+
+          onBookmarksChanged(hasCreateBookmarkChange = hasCreateBookmarkChange)
         }
     }
 
     appScope.launch {
       bookmarksManager.listenForBookmarksChanges()
-        .debounce(1, TimeUnit.SECONDS)
+        .buffer(1, TimeUnit.SECONDS)
+        .filter { groupOfChanges -> groupOfChanges.isNotEmpty() }
         .asFlow()
-        .filter { bookmarkChange -> isExpectedBookmarkChange(bookmarkChange) }
-        .collect {
+        // Pass the filter if we have at least one bookmark change that we actually want
+        .filter { groupOfChanges -> groupOfChanges.any { change -> isWantedBookmarkChange(change) } }
+        .collect { groupOfChanges ->
           if (verboseLogsEnabled) {
             Logger.d(TAG, "Calling onBookmarksChanged() because bookmarks have actually changed")
           }
 
-          bookmarkChangeSubject.onNext(false)
+          val hasCreateBookmarkChange = groupOfChanges
+            .any { change -> change is BookmarksManager.BookmarkChange.BookmarksCreated }
+
+          val simpleBookmarkChangeInfo = SimpleBookmarkChangeInfo(hasCreateBookmarkChange)
+          bookmarkChangeSubject.onNext(simpleBookmarkChangeInfo)
         }
     }
 
@@ -105,20 +113,19 @@ class BookmarkWatcherCoordinator(
             }
           }
 
-          val replaceCurrent = when (watchSettingChange) {
-            is WatchSettingChange.WatcherSettingChanged,
-            is WatchSettingChange.BackgroundWatcherSettingChanged -> false
-            is WatchSettingChange.BackgroundWatcherIntervalSettingChanged -> true
-          }
+          val simpleBookmarkChangeInfo = SimpleBookmarkChangeInfo(
+            hasNewlyCreatedBookmarkChange = false
+          )
 
-          bookmarkChangeSubject.onNext(replaceCurrent)
+          bookmarkChangeSubject.onNext(simpleBookmarkChangeInfo)
         }
     }
   }
 
   @Synchronized
   private fun onBookmarksChanged(
-    applicationVisibility: ApplicationVisibility = applicationVisibilityManager.getCurrentAppVisibility()
+    applicationVisibility: ApplicationVisibility = applicationVisibilityManager.getCurrentAppVisibility(),
+    hasCreateBookmarkChange: Boolean = false
   ) {
     if (!running.compareAndSet(false, true)) {
       return
@@ -142,7 +149,13 @@ class BookmarkWatcherCoordinator(
 
         if (ChanSettings.watchEnabled.get()) {
           if (currentWatcherType == WatcherType.Foreground) {
-            Logger.d(TAG, "Already using foreground watcher, do nothing")
+            if (hasCreateBookmarkChange) {
+              Logger.d(TAG, "hasCreateBookmarkChange==true, restarting the foreground watcher")
+              bookmarkForegroundWatcher.restartWatching()
+            } else {
+              Logger.d(TAG, "Already using foreground watcher, do nothing")
+            }
+
             return
           }
 
@@ -225,7 +238,7 @@ class BookmarkWatcherCoordinator(
     return "${TAG}_${AndroidUtils.getFlavorType().name}"
   }
 
-  private fun isExpectedBookmarkChange(bookmarkChange: BookmarksManager.BookmarkChange): Boolean {
+  private fun isWantedBookmarkChange(bookmarkChange: BookmarksManager.BookmarkChange): Boolean {
     return when (bookmarkChange) {
       BookmarksManager.BookmarkChange.BookmarksInitialized,
       is BookmarksManager.BookmarkChange.BookmarksCreated,
@@ -234,7 +247,11 @@ class BookmarkWatcherCoordinator(
     }
   }
 
-  sealed class WatchSettingChange {
+  private data class SimpleBookmarkChangeInfo(
+    val hasNewlyCreatedBookmarkChange: Boolean
+  )
+
+  private sealed class WatchSettingChange {
     data class WatcherSettingChanged(val enabled: Boolean) : WatchSettingChange()
     data class BackgroundWatcherSettingChanged(val enabled: Boolean) : WatchSettingChange()
     data class BackgroundWatcherIntervalSettingChanged(val interval: Int) : WatchSettingChange()

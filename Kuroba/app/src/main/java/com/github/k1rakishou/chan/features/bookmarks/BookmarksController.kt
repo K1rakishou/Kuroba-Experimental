@@ -103,28 +103,33 @@ class BookmarksController(
       current: EpoxyViewHolder?,
       target: EpoxyViewHolder?
     ): Boolean {
-      val currentBookmarkInfoGetters = (current?.model as? BookmarkInfoGetters)
+      val currentUnifiedBookmarkInfoAccessor = (current?.model as? UnifiedBookmarkInfoAccessor)
         ?: return false
-      val targetBookmarkInfoGetters = (target?.model as? BookmarkInfoGetters)
+      val targetUnifiedBookmarkInfoAccessor = (target?.model as? UnifiedBookmarkInfoAccessor)
         ?: return false
 
-      if (currentBookmarkInfoGetters.getBookmarkGroupId() != targetBookmarkInfoGetters.getBookmarkGroupId()) {
+      if (currentUnifiedBookmarkInfoAccessor.getBookmarkGroupId() !=
+        targetUnifiedBookmarkInfoAccessor.getBookmarkGroupId()) {
         return false
       }
 
       if (ChanSettings.moveNotActiveBookmarksToBottom.get()) {
-        val isDeadOrNotWatching = targetBookmarkInfoGetters.getBookmarkStats()?.isDeadOrNotWatching()
+        val isDeadOrNotWatching = targetUnifiedBookmarkInfoAccessor.getBookmarkStats()?.isDeadOrNotWatching()
           ?: false
 
         if (isDeadOrNotWatching) {
+          // If moveNotActiveBookmarksToBottom setting is active and the target bookmark is
+          // "isDeadOrNotWatching" don't allow dropping the current bookmark over the target.
           return false
         }
       }
 
       if (ChanSettings.moveBookmarksWithUnreadRepliesToTop.get()) {
-        val newQuotes = targetBookmarkInfoGetters.getBookmarkStats()?.newQuotes ?: 0
+        val newQuotes = targetUnifiedBookmarkInfoAccessor.getBookmarkStats()?.newQuotes ?: 0
 
         if (newQuotes > 0) {
+          // If moveBookmarksWithUnreadRepliesToTop setting is active and the target bookmark has
+          // unread quotes don't allow dropping the current bookmark over the target.
           return false
         }
       }
@@ -146,15 +151,15 @@ class BookmarksController(
       val toPosition = target?.adapterPosition
         ?: return false
 
-      val fromGroupId = (viewHolder.model as? BookmarkInfoGetters)?.getBookmarkGroupId()
-      val toGroupId = (target.model as? BookmarkInfoGetters)?.getBookmarkGroupId()
+      val fromGroupId = (viewHolder.model as? UnifiedBookmarkInfoAccessor)?.getBookmarkGroupId()
+      val toGroupId = (target.model as? UnifiedBookmarkInfoAccessor)?.getBookmarkGroupId()
 
       if (fromGroupId == null || toGroupId == null || fromGroupId != toGroupId) {
         return false
       }
 
-      val fromBookmarkDescriptor = (viewHolder.model as? BookmarkInfoGetters)?.getBookmarkDescriptor()
-      val toBookmarkDescriptor = (target.model as? BookmarkInfoGetters)?.getBookmarkDescriptor()
+      val fromBookmarkDescriptor = (viewHolder.model as? UnifiedBookmarkInfoAccessor)?.getBookmarkDescriptor()
+      val toBookmarkDescriptor = (target.model as? UnifiedBookmarkInfoAccessor)?.getBookmarkDescriptor()
 
       if (fromBookmarkDescriptor == null || toBookmarkDescriptor == null) {
         return false

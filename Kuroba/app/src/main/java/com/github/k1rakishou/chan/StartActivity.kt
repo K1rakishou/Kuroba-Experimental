@@ -639,10 +639,10 @@ class StartActivity : AppCompatActivity(),
     Logger.d(TAG, "onNewIntent() reply notification swiped away, " +
       "marking as seen ${threadDescriptors.size} bookmarks")
 
-    bookmarksManager.updateBookmarks(
-      threadDescriptors,
-      BookmarksManager.NotifyListenersOption.NotifyEager
-    ) { threadBookmark -> threadBookmark.markAsSeenAllReplies() }
+    val updatedBookmarkDescriptors = bookmarksManager.updateBookmarks(threadDescriptors) { threadBookmark ->
+      threadBookmark.markAsSeenAllReplies()
+    }
+    bookmarksManager.persistBookmarksManually(updatedBookmarkDescriptors)
   }
 
   private suspend fun replyNotificationClicked(extras: Bundle) {
@@ -663,10 +663,10 @@ class StartActivity : AppCompatActivity(),
       drawerController.openBookmarksController(threadDescriptors)
     }
 
-    bookmarksManager.updateBookmarks(
-      threadDescriptors,
-      BookmarksManager.NotifyListenersOption.NotifyEager
-    ) { threadBookmark -> threadBookmark.markAsSeenAllReplies() }
+    val updatedBookmarkDescriptors = bookmarksManager.updateBookmarks(threadDescriptors) { threadBookmark ->
+      threadBookmark.markAsSeenAllReplies()
+    }
+    bookmarksManager.persistBookmarksManually(updatedBookmarkDescriptors)
   }
 
   override fun dispatchKeyEvent(event: KeyEvent): Boolean {

@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
+import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SuspendDebouncer
 import com.github.k1rakishou.chan.core.site.SiteRegistry
 import com.github.k1rakishou.chan.utils.Logger
@@ -19,7 +19,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl
 import org.joda.time.DateTime
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -40,11 +39,10 @@ class BookmarksManager(
   private val bookmarksChangedSubject = PublishProcessor.create<BookmarkChange>()
   private val threadIsFetchingEventsSubject = PublishProcessor.create<ChanDescriptor.ThreadDescriptor>()
 
-  private val persistBookmarksExecutor = RendezvousCoroutineExecutor(appScope)
+  private val persistBookmarksExecutor = SerializedCoroutineExecutor(appScope)
   private val delayedBookmarksChangedExecutor = SuspendDebouncer(appScope)
 
   private val suspendableInitializer = SuspendableInitializer<Unit>("BookmarksManager")
-  private val persistRunning = AtomicBoolean(false)
   private val currentOpenThread = AtomicReference<ChanDescriptor.ThreadDescriptor>(null)
 
   @GuardedBy("lock")
@@ -240,29 +238,37 @@ class BookmarksManager(
     return true
   }
 
+  /**
+   * @return either a [ChanDescriptor.ThreadDescriptor] of this bookmark if this bookmark
+   * was actually updated (something was changed) or null if [mutator] returned the same bookmark.
+   * Don't forget to call [persistBookmarkManually] after this method!
+   * */
   fun updateBookmark(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    notifyListenersOption: NotifyListenersOption,
     mutator: (ThreadBookmark) -> Unit
-  ) {
-    updateBookmarks(listOf(threadDescriptor), notifyListenersOption, mutator)
+  ): ChanDescriptor.ThreadDescriptor? {
+    return updateBookmarks(listOf(threadDescriptor), mutator).firstOrNull()
   }
 
+  /**
+   * @return either a list of [ChanDescriptor.ThreadDescriptor] of bookmarks that ware actually changed
+   * by [mutator] or empty list if no bookmarks were changed.
+   * Don't forget to call [persistBookmarksManually] after this method!
+   * */
   fun updateBookmarks(
     threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>,
-    notifyListenersOption: NotifyListenersOption,
     mutator: (ThreadBookmark) -> Unit
-  ) {
+  ): Set<ChanDescriptor.ThreadDescriptor> {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
     require(threadDescriptors.isNotEmpty()) { "threadDescriptors is empty!" }
 
     if (threadDescriptors.isEmpty()) {
-      return
+      return emptySet()
     }
 
-    return lock.write {
-      var updated = false
+    val updatedBookmarks = mutableSetOf<ChanDescriptor.ThreadDescriptor>()
 
+    lock.write {
       threadDescriptors.forEach { threadDescriptor ->
         val oldThreadBookmark = bookmarks[threadDescriptor]
           ?: return@forEach
@@ -272,19 +278,14 @@ class BookmarksManager(
 
         if (oldThreadBookmark != mutatedBookmark) {
           bookmarks[threadDescriptor] = mutatedBookmark
-          updated = true
+          updatedBookmarks += threadDescriptor
         }
       }
 
-      if (!updated) {
-        return@write
-      }
-
-      when (notifyListenersOption) {
-        NotifyListenersOption.DoNotNotify -> return@write
-        NotifyListenersOption.NotifyEager -> bookmarksChanged(BookmarkChange.BookmarksUpdated(threadDescriptors))
-      }
+      return@write
     }
+
+    return updatedBookmarks
   }
 
   fun pruneNonActive() {
@@ -508,17 +509,43 @@ class BookmarksManager(
       return
     }
 
-    updateBookmark(threadDescriptor, NotifyListenersOption.DoNotNotify) { threadBookmark ->
+    updateBookmark(threadDescriptor) { threadBookmark ->
       threadBookmark.updateSeenPostCount(realPostIndex)
       threadBookmark.updateLastViewedPostNo(postNo)
       threadBookmark.readRepliesUpTo(postNo)
     }
 
-    delayedBookmarksChangedExecutor.post(250L, { persistBookmarks(blocking = false) })
+    delayedBookmarksChangedExecutor.post(
+      250L, {
+        persistBookmarks(
+          blocking = false,
+          onBookmarksPersisted = {
+            val bookmarkChange = BookmarkChange.BookmarksUpdated(listOf(threadDescriptor))
+            bookmarksChangedSubject.onNext(bookmarkChange)
+          })
+      }
+    )
   }
 
   fun refreshBookmarks() {
     bookmarksChanged(BookmarkChange.BookmarksUpdated(null))
+  }
+
+  fun persistBookmarkManually(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    persistBookmarksManually(listOf(threadDescriptor))
+  }
+
+  fun persistBookmarksManually(threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) {
+    if (threadDescriptors.isEmpty()) {
+      return
+    }
+
+    persistBookmarks(
+      blocking = false,
+      onBookmarksPersisted = {
+        val bookmarkChange = BookmarkChange.BookmarksUpdated(threadDescriptors)
+        bookmarksChangedSubject.onNext(bookmarkChange)
+      })
   }
 
   private fun bookmarksChanged(bookmarkChange: BookmarkChange) {
@@ -552,10 +579,6 @@ class BookmarksManager(
       return
     }
 
-    if (!persistRunning.compareAndSet(false, true)) {
-      return
-    }
-
     if (blocking) {
       runBlocking(Dispatchers.Default) {
         Logger.d(TAG, "persistBookmarks blocking called")
@@ -574,23 +597,14 @@ class BookmarksManager(
   }
 
   private suspend fun persistBookmarksInternal() {
-    try {
-      bookmarksRepository.persist(getAllBookmarks()).safeUnwrap { error ->
-        Logger.e(TAG, "Failed to persist bookmarks", error)
-        return
-      }
-    } finally {
-      persistRunning.set(false)
+    bookmarksRepository.persist(getAllBookmarks()).safeUnwrap { error ->
+      Logger.e(TAG, "Failed to persist bookmarks", error)
+      return
     }
   }
 
   private fun getAllBookmarks(): List<ThreadBookmark> {
     return lock.read { bookmarks.values.map { bookmark -> bookmark.deepCopy() } }
-  }
-
-  enum class NotifyListenersOption {
-    DoNotNotify,
-    NotifyEager;
   }
 
   data class SimpleThreadBookmark(

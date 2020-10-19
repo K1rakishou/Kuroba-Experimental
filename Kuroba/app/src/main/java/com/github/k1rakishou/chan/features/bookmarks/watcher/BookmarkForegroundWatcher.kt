@@ -32,14 +32,16 @@ class BookmarkForegroundWatcher(
     appScope.launch {
       channel.consumeEach {
         if (working.compareAndSet(false, true)) {
-          if (verboseLogsEnabled) {
-            Logger.d(TAG, "working == true, calling doWorkAndWaitUntilNext()")
-          }
+          Logger.d(TAG, "working == true, calling updateBookmarksWorkerLoop()")
 
           workJob = appScope.launch(Dispatchers.Default) {
             try {
               updateBookmarksWorkerLoop()
             } catch (error: Throwable) {
+              if (error is CancellationException) {
+                Logger.d(TAG, "updateBookmarksWorkerLoop() canceled, exiting")
+              }
+
               logErrorIfNeeded(error)
             } finally {
               working.set(false)
@@ -60,13 +62,21 @@ class BookmarkForegroundWatcher(
     }
   }
 
+  @Synchronized
   fun startWatching() {
     channel.offer(Unit)
   }
 
+  @Synchronized
   fun stopWatching() {
     workJob?.cancel()
     workJob = null
+  }
+
+  @Synchronized
+  fun restartWatching() {
+    stopWatching()
+    startWatching()
   }
 
   private suspend fun updateBookmarkForOpenedThread(
@@ -118,7 +128,7 @@ class BookmarkForegroundWatcher(
       bookmarksManager.awaitUntilInitialized()
 
       if (!ChanSettings.watchEnabled.get()) {
-        Logger.d(TAG, "updateBookmarks() ChanSettings.watchEnabled() is false")
+        Logger.d(TAG, "updateBookmarksWorkerLoop() ChanSettings.watchEnabled() is false")
         return
       }
 
@@ -138,12 +148,14 @@ class BookmarkForegroundWatcher(
       }
 
       if (!isActive) {
+        Logger.d(TAG, "updateBookmarksWorkerLoop() not active anymore (before delay), exiting")
         return
       }
 
       delay(FOREGROUND_INITIAL_INTERVAL_MS + calculateAndLogAdditionalInterval())
 
       if (!isActive) {
+        Logger.d(TAG, "updateBookmarksWorkerLoop() not active anymore (after delay), exiting")
         return
       }
     }

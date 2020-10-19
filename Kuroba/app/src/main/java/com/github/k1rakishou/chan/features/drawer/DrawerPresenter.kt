@@ -64,6 +64,8 @@ class DrawerPresenter(
         .debounce(1, TimeUnit.SECONDS)
         .asFlow()
         .collect { bookmarkChange ->
+          bookmarksManager.awaitUntilInitialized()
+
           updateBadge()
           reloadNavigationHistory(bookmarkChange)
         }

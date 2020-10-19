@@ -218,12 +218,15 @@ class ThreadBookmark private constructor(
     if (seenPostsCount != other.seenPostsCount) return false
     if (totalPostsCount != other.totalPostsCount) return false
     if (lastViewedPostNo != other.lastViewedPostNo) return false
-    if (threadBookmarkReplies != other.threadBookmarkReplies) return false
     if (title != other.title) return false
     if (thumbnailUrl != other.thumbnailUrl) return false
     if (state != other.state) return false
     if (stickyThread != other.stickyThread) return false
     if (createdOn != other.createdOn) return false
+
+    if (!compareThreadBookmarkReplies(threadBookmarkReplies, other.threadBookmarkReplies)) {
+      return false
+    }
 
     return true
   }
@@ -237,8 +240,8 @@ class ThreadBookmark private constructor(
     result = 31 * result + threadBookmarkReplies.hashCode()
     result = 31 * result + (title?.hashCode() ?: 0)
     result = 31 * result + (thumbnailUrl?.hashCode() ?: 0)
-    result = 31 * result + stickyThread.hashCode()
     result = 31 * result + state.hashCode()
+    result = 31 * result + stickyThread.hashCode()
     result = 31 * result + createdOn.hashCode()
     return result
   }
@@ -248,6 +251,27 @@ class ThreadBookmark private constructor(
       "totalPostsCount=$totalPostsCount, lastViewedPostNo=$lastViewedPostNo, " +
       "threadBookmarkReplies=$threadBookmarkReplies, title=${title?.take(20)}, thumbnailUrl=$thumbnailUrl, " +
       "stickyThread=$stickyThread, state=${stateToString()}, createdOn=${createdOn})"
+  }
+
+
+  private fun compareThreadBookmarkReplies(
+    tbr1: MutableMap<PostDescriptor, ThreadBookmarkReply>,
+    tbr2: MutableMap<PostDescriptor, ThreadBookmarkReply>
+  ): Boolean {
+    if (tbr1.size != tbr2.size) {
+      return false
+    }
+
+    for ((postDescriptor, threadBookmarkReply1) in tbr1.entries) {
+      val threadBookmarkReply2 = tbr2[postDescriptor]
+        ?: return false
+
+      if (threadBookmarkReply1 != threadBookmarkReply2) {
+        return false
+      }
+    }
+
+    return true
   }
 
   private fun stateToString(): String {

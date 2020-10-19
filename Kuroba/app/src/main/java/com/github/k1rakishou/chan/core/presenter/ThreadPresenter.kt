@@ -630,10 +630,7 @@ class ThreadPresenter @Inject constructor(
     val opThumbnailUrl = chanLoader?.thread?.op?.firstImage()?.thumbnailUrl
     val title = PostHelper.getTitle(chanThread.op, threadDescriptor)
 
-    bookmarksManager.updateBookmark(
-      threadDescriptor,
-      BookmarksManager.NotifyListenersOption.NotifyEager
-    ) { threadBookmark ->
+    val updatedBookmarkDescriptor = bookmarksManager.updateBookmark(threadDescriptor) { threadBookmark ->
       if (threadBookmark.title.isNullOrEmpty()) {
         threadBookmark.title = title
       }
@@ -641,6 +638,10 @@ class ThreadPresenter @Inject constructor(
       if (threadBookmark.thumbnailUrl == null && opThumbnailUrl != null) {
         threadBookmark.thumbnailUrl = opThumbnailUrl
       }
+    }
+
+    if (updatedBookmarkDescriptor != null) {
+      bookmarksManager.persistBookmarkManually(updatedBookmarkDescriptor)
     }
   }
 

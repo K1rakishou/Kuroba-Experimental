@@ -246,10 +246,13 @@ class BookmarksPresenter(
   }
 
   fun onBookmarkStatsClicked(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    bookmarksManager.updateBookmark(
-      threadDescriptor,
-      BookmarksManager.NotifyListenersOption.NotifyEager
-    ) { threadBookmark -> threadBookmark.toggleWatching() }
+    val updatedBookmarkDescriptor = bookmarksManager.updateBookmark(threadDescriptor) { threadBookmark ->
+      threadBookmark.toggleWatching()
+    }
+
+    if (updatedBookmarkDescriptor != null) {
+      bookmarksManager.persistBookmarkManually(threadDescriptor)
+    }
   }
 
   private suspend fun showBookmarks(loadingStateCancellationJob: Job? = null) {
