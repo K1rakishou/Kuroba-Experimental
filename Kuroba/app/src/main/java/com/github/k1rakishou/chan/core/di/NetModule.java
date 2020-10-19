@@ -38,8 +38,11 @@ import java.io.File;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import kotlin.Lazy;
+import kotlin.LazyKt;
 import okhttp3.Dns;
 import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 
 import static com.github.k1rakishou.chan.core.di.AppModule.getCacheDir;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -48,6 +51,13 @@ public class NetModule {
     public static final String DOWNLOADER_OKHTTP_CLIENT_NAME = "downloader_okhttp_client";
     private static final String FILE_CACHE_DIR = "filecache";
     private static final String FILE_CHUNKS_CACHE_DIR = "file_chunks_cache";
+
+    private final Lazy<HttpLoggingInterceptor> loggingInterceptorLazyKt = LazyKt.lazy(() -> {
+        HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+
+        return logging;
+    });
 
     @Provides
     @Singleton
@@ -119,7 +129,7 @@ public class NetModule {
     @Singleton
     public ProxiedOkHttpClient provideProxiedOkHttpClient(Dns okHttpDns, Chan.OkHttpProtocols okHttpProtocols) {
         Logger.d(AppModule.DI_TAG, "ProxiedOkHTTP client");
-        return new RealProxiedOkHttpClient(okHttpDns, okHttpProtocols);
+        return new RealProxiedOkHttpClient(okHttpDns, okHttpProtocols, loggingInterceptorLazyKt);
     }
 
     /**
@@ -131,11 +141,13 @@ public class NetModule {
     public OkHttpClient provideOkHttpClient(Dns okHttpDns, Chan.OkHttpProtocols okHttpProtocols) {
         Logger.d(AppModule.DI_TAG, "DownloaderOkHttp client");
 
-        return new OkHttpClient.Builder()
+        OkHttpClient.Builder builder = new OkHttpClient.Builder()
                 .readTimeout(5, SECONDS)
                 .writeTimeout(5, SECONDS)
                 .protocols(okHttpProtocols.getProtocols())
-                .dns(okHttpDns)
-                .build();
+                .dns(okHttpDns);
+
+        HttpLoggingInterceptorInstaller.install(builder, loggingInterceptorLazyKt);
+        return builder.build();
     }
 }

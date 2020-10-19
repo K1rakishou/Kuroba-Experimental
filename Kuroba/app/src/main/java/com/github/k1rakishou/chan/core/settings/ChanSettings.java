@@ -572,8 +572,7 @@ public class ChanSettings {
      * Reads setting from the shared preferences file to a string.
      * Called on the Database thread.
      */
-    public static String serializeToString()
-            throws IOException {
+    public synchronized static String serializeToString() throws IOException {
         String prevSaveLocationUri = null;
 
         /*

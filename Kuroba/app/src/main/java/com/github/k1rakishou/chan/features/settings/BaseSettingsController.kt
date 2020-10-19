@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
+import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.exhaustive
 import javax.inject.Inject
 
@@ -52,9 +53,16 @@ abstract class BaseSettingsController(
     inputSettingV2: InputSettingV2<*>,
     rebuildScreenFunc: (Any?) -> Unit
   ) {
+    val inputType = inputSettingV2.inputType
+    if (inputType == null) {
+      Logger.e(TAG, "Bad input type: ${inputType}")
+      return
+    }
+
     dialogFactory.createSimpleDialogWithInput(
       context = context,
       defaultValue = inputSettingV2.getCurrent().toString(),
+      inputType = inputType,
       titleText = inputSettingV2.topDescription,
       onValueEntered = { input ->
         onInputValueEntered(inputSettingV2, input, rebuildScreenFunc)
@@ -99,6 +107,10 @@ abstract class BaseSettingsController(
     }.exhaustive
 
     rebuildScreenFunc(inputSettingV2.getCurrent())
+  }
+
+  companion object {
+    private const val TAG = "BaseSettingsController"
   }
 
 }
