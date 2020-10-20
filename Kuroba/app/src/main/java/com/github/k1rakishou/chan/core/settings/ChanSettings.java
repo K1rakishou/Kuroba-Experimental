@@ -35,8 +35,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getAppDir;
@@ -203,7 +201,6 @@ public class ChanSettings {
         }
     }
 
-    private static Proxy proxy;
     private static final String sharedPrefsFile = "shared_prefs/" + BuildConfig.APPLICATION_ID + "_preferences.xml";
 
     //region Declarations
@@ -285,11 +282,6 @@ public class ChanSettings {
     public static final BooleanSetting fullUserRotationEnable;
     public static final BooleanSetting allowFilePickChooser;
     public static final BooleanSetting showCopyApkUpdateDialog;
-
-    // Proxy
-    public static final BooleanSetting proxyEnabled;
-    public static final StringSetting proxyAddress;
-    public static final IntegerSetting proxyPort;
     //endregion
 
     //region MEDIA
@@ -441,15 +433,6 @@ public class ChanSettings {
             fullUserRotationEnable = new BooleanSetting(p, "full_user_rotation_enable", true);
             allowFilePickChooser = new BooleanSetting(p, "allow_file_picker_chooser", false);
             showCopyApkUpdateDialog = new BooleanSetting(p, "show_copy_apk_update_dialog", true);
-
-            // Proxy
-            proxyEnabled = new BooleanSetting(p, "preference_proxy_enabled", false);
-            proxyAddress = new StringSetting(p, "preference_proxy_address", "");
-            proxyPort = new IntegerSetting(p, "preference_proxy_port", 80);
-            proxyEnabled.addCallback((setting, value) -> loadProxy());
-            proxyAddress.addCallback((setting, value) -> loadProxy());
-            proxyPort.addCallback((setting, value) -> loadProxy());
-            loadProxy();
             //endregion
 
             //region MEDIA
@@ -548,23 +531,6 @@ public class ChanSettings {
         } catch (Throwable error) {
             Logger.e(TAG, "Error while trying to deserialize JsCaptchaCookiesJar", error);
             return JsCaptchaCookiesJar.empty();
-        }
-    }
-
-    /**
-     * Returns a {@link Proxy} if a proxy is enabled, <tt>null</tt> otherwise.
-     *
-     * @return a proxy or null
-     */
-    public static Proxy getProxy() {
-        return proxy;
-    }
-
-    private static void loadProxy() {
-        if (proxyEnabled.get()) {
-            proxy = new Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved(proxyAddress.get(), proxyPort.get()));
-        } else {
-            proxy = null;
         }
     }
 

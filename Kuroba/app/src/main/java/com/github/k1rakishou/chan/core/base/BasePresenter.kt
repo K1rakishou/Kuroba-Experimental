@@ -58,7 +58,7 @@ abstract class BasePresenter<V> {
     }
 
     view?.let { v ->
-      withContext(scope.coroutineContext) {
+      withContext(scope.coroutineContext + Dispatchers.Main) {
         val result = ModularResult.Try { func(v) }
         handleResult(result)
       }

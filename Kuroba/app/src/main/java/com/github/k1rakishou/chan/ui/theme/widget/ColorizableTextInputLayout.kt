@@ -7,6 +7,7 @@ import android.util.AttributeSet
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.google.android.material.textfield.TextInputLayout
 import javax.inject.Inject
 
@@ -60,7 +61,7 @@ class ColorizableTextInputLayout @JvmOverloads constructor(
       )
     )
 
-    val colorStateList = ColorStateList(
+    val normalTextColorStateList = ColorStateList(
       arrayOf(
         intArrayOf(-android.R.attr.state_enabled),
         intArrayOf(android.R.attr.state_focused, android.R.attr.state_enabled),
@@ -73,9 +74,25 @@ class ColorizableTextInputLayout @JvmOverloads constructor(
       )
     )
 
-    hintTextColor = colorStateList
-    defaultHintTextColor = colorStateList
-    counterTextColor = colorStateList
+    hintTextColor = normalTextColorStateList
+    defaultHintTextColor = normalTextColorStateList
+    counterTextColor = normalTextColorStateList
+
+    val errorColorStateList = ColorStateList(
+      arrayOf(
+        intArrayOf(-android.R.attr.state_enabled),
+        intArrayOf(android.R.attr.state_focused, android.R.attr.state_enabled),
+        intArrayOf()
+      ),
+      intArrayOf(
+        themeEngine.chanTheme.textColorHint,
+        themeEngine.chanTheme.errorColor,
+        AndroidUtils.manipulateColor(themeEngine.chanTheme.errorColor, .6f),
+      )
+    )
+
+    setErrorTextColor(errorColorStateList)
+    setErrorIconTintList(errorColorStateList)
 
     setBoxStrokeColorStateList(
       ColorStateList(

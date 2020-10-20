@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.cache
 
 import android.annotation.SuppressLint
 import android.net.ConnectivityManager
+import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.cache.downloader.*
 import com.github.k1rakishou.chan.core.model.PostImage
 import com.github.k1rakishou.chan.core.settings.ChanSettings
@@ -19,7 +20,6 @@ import com.github.k1rakishou.fsaf.file.RawFile
 import io.reactivex.Flowable
 import io.reactivex.processors.PublishProcessor
 import io.reactivex.schedulers.Schedulers
-import okhttp3.OkHttpClient
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.Executors
@@ -30,7 +30,7 @@ class FileCacheV2(
   private val fileManager: FileManager,
   private val cacheHandler: CacheHandler,
   private val siteResolver: SiteResolver,
-  private val okHttpClient: OkHttpClient,
+  private val downloaderOkHttpClient: DownloaderOkHttpClient,
   private val connectivityManager: ConnectivityManager,
   private val appConstants: AppConstants
 ) {
@@ -57,7 +57,7 @@ class FileCacheV2(
   )
 
   private val partialContentSupportChecker = PartialContentSupportChecker(
-    okHttpClient,
+    downloaderOkHttpClient,
     activeDownloads,
     siteResolver,
     MAX_TIMEOUT_MS,
@@ -65,7 +65,7 @@ class FileCacheV2(
   )
 
   private val chunkDownloader = ChunkDownloader(
-    okHttpClient,
+    downloaderOkHttpClient,
     activeDownloads,
     verboseLogs,
     appConstants

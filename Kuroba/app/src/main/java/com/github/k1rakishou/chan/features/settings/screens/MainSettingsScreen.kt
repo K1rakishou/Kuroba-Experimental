@@ -222,8 +222,16 @@ class MainSettingsScreen(
 
         group += LinkSettingV2.createBuilder(
           context = context,
+          identifier = MainScreen.MainGroup.Security,
+          topDescriptionIdFunc = { R.string.settings_security },
+          bottomDescriptionIdFunc = { R.string.settings_security_description },
+          callbackWithClickAction = { SettingClickAction.OpenScreen(SecurityScreen) }
+        )
+
+        group += LinkSettingV2.createBuilder(
+          context = context,
           identifier = MainScreen.MainGroup.Experimental,
-          topDescriptionIdFunc = { R.string.settings_experimental_settings_title },
+          topDescriptionIdFunc = { R.string.settings_experimental_settings },
           bottomDescriptionIdFunc = { R.string.settings_experimental_settings_description },
           callbackWithClickAction = { SettingClickAction.OpenScreen(ExperimentalScreen) }
         )

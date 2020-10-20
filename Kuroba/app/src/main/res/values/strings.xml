@@ -336,6 +336,12 @@ Note that for country code filtering, troll country codes should be prepended wi
     </string>
     <string name="filters_controller_open_regex101">Open regex101</string>
 
+    <string name="epoxy_proxy_view_address">Address: %1$s</string>
+    <string name="epoxy_proxy_view_port">Port: %1$s</string>
+    <string name="epoxy_proxy_view_type">Type: %1$s</string>
+    <string name="epoxy_proxy_view_supported_site">Supported sites: %1$s</string>
+    <string name="epoxy_proxy_view_supported_actions">Supported actions: %1$s</string>
+
     <string name="controller_bookmarks_sorting_by_creation_time">Sort by creation time</string>
     <string name="controller_bookmarks_sorting_by_unread_replies">Sort by unread replies</string>
     <string name="controller_bookmarks_sorting_by_unread_posts">Sort by unread posts</string>
@@ -459,7 +465,9 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_filters">Filters</string>
     <string name="settings_import_export">Import/Export</string>
     <string name="settings_import_export_description">Import/export settings/pins, etc.</string>
-    <string name="settings_experimental_settings_title">⚠ EXPERIMENTAL ⚠</string>
+    <string name="settings_security">Security</string>
+    <string name="settings_security_description">Proxy settings, etc.</string>
+    <string name="settings_experimental_settings">⚠ EXPERIMENTAL ⚠</string>
     <string name="settings_experimental_settings_description">These settings may be in an unstable state. They are for testing. They may break the app and you may have to reset the app data. Use them at your own risk if you are really interested in some feature. Backup everything beforehand.</string>
 
     <!-- Thread watcher -->
@@ -590,7 +598,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_load_last_opened_thread_upon_app_start_title">Restore last opened thread upon app start</string>
     <string name="setting_load_last_opened_thread_upon_app_start_description">When turned on, upon app start the last visited thread will be automatically opened (New KurobaEx behavior). When turned off no thread will be automatically opened upon app start (Default Clover/Kuroba behavior)</string>
 
-
     <!-- Behavior post group -->
     <string name="settings_group_post">Post</string>
     <string name="setting_volume_key_scrolling">Volume keys scroll content</string>
@@ -607,14 +614,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_show_copy_apk_dialog_title">Show copy apk dialog when downloading an update</string>
     <string name="settings_show_copy_apk_dialog_message">Every time you download a new update a dialog with suggestion to copy that apk to some other directory will be shown</string>
 
-    <!-- Behavior proxy group -->
-    <string name="setting_proxy_port">Proxy server port</string>
-    <string name="settings_group_proxy">HTTP Proxy</string>
-    <string name="setting_proxy_enabled">Enable proxy</string>
-    <string name="setting_proxy_address">Proxy server address</string>
-    <string name="settings_screen_media">Media</string>
-
     <!-- Media general group -->
+    <string name="settings_screen_media">Media</string>
     <string name="settings_group_saving">Media saving</string>
 
     <string name="setting_save_board_folder">Save images in board folders</string>
@@ -693,6 +694,14 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="settings_simulate_app_updated_bottom">Makes the app think it\'s updated to the latest version. This will be reset the next time you manually check for updates</string>
     <string name="settings_simulate_app_not_updated">Simulate app not updated</string>
     <string name="settings_simulate_app_not_updated_bottom">Makes the app think it\'s NOT updated to the latest version. This will be reset the next time you manually check for updates</string>
+    <string name="settings_auto_theme_switcher">Auto theme switcher</string>
+    <string name="settings_auto_theme_switcher_bottom">Toggles light/dark theme with a slight delay (5 seconds) ad infinitum (Or until app restart). Is used for dynamic themes testing. \n\nCurrent status: %1$s</string>
+
+    <!-- Security settings -->
+    <string name="settings_screen_security">Security</string>
+    <string name="settings_screen_security_proxy_group">Proxy</string>
+    <string name="settings_screen_security_proxy">Proxy settings</string>
+    <string name="settings_screen_security_proxy_description">%1$d proxies enabled</string>
 
     <!-- Experimental settings -->
     <string name="experimental_settings_group">Experimental settings</string>
@@ -848,6 +857,32 @@ Don't have a 4chan Pass?<br>
     <string name="controller_sites_title">Sites</string>
 
     <string name="controller_site_settings_title">Configure %1$s</string>
+
+    <string name="controller_proxy_setup_title">Proxy setup</string>
+    <string name="controller_proxy_setup_no_proxies">No proxies loaded or all proxies are disabled</string>
+    <string name="controller_proxy_setup_failed_to_enable_disable_proxy">Failed to enable/disable proxy, error = %1$s</string>
+
+    <string name="controller_proxy_editor_title">Proxy editor</string>
+    <string name="controller_proxy_editor_proxy_address">Proxy address</string>
+    <string name="controller_proxy_editor_proxy_port">Proxy port</string>
+    <string name="controller_proxy_editor_proxy_type">Proxy type</string>
+    <string name="controller_proxy_editor_proxy_type_http">HTTP</string>
+    <string name="controller_proxy_editor_proxy_type_socks">SOCKS</string>
+    <string name="controller_proxy_editor_enable_on_sites">Enable on sites</string>
+    <string name="controller_proxy_editor_actions">Actions</string>
+    <string name="controller_proxy_editor_enable_for">Enable for</string>
+    <string name="controller_proxy_editor_cannot_add_new_proxy">Cannot add new proxy</string>
+    <string name="controller_proxy_editor_proxy_added">New proxy added</string>
+    <string name="controller_proxy_editor_proxy_address_is_not_valid">Proxy address is not valid</string>
+    <string name="controller_proxy_editor_proxy_port_is_not_valid">Proxy port is not valid</string>
+    <string name="controller_proxy_editor_proxy_type_is_not_valid">Proxy type is not valid</string>
+    <string name="controller_proxy_editor_proxy_no_sites_selected">No sites selected</string>
+    <string name="controller_proxy_editor_proxy_no_actions_selected">No actions selected</string>
+    <string name="controller_proxy_editor_enable_for_site_requests">Enable for site requests (Posting/Captcha/Json fetching etc)</string>
+    <string name="controller_proxy_editor_enable_for_media_previews">Enable for media preview loading (Post thumbnails/bookmarks/tabs/etc thumbnails/site icons etc)</string>
+    <string name="controller_proxy_editor_enable_for_full_media">Enable for full media loading</string>
+    <string name="controller_proxy_editor_failed_to_persist_new_proxy_error">Failed to persist new proxy, error = %1$s</string>
+    <string name="controller_proxy_editor_failed_to_persist_new_proxy_unknown_error">Failed to persist new proxy, unknown error see logs</string>
 
     <string name="controller_search">Global search</string>
     <string name="controller_search_empty_sites">No sites supporting search found</string>

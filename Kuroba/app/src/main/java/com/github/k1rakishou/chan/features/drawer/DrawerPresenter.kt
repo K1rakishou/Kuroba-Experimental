@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.features.drawer
 
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.BasePresenter
-import com.github.k1rakishou.chan.core.base.SuspendDebouncer
+import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.features.drawer.data.HistoryControllerState
@@ -45,7 +45,7 @@ class DrawerPresenter(
     .toSerialized()
   private val bookmarksBadgeStateSubject = BehaviorProcessor.createDefault(BookmarksBadgeState(0, false))
 
-  private val reloadNavHistoryDebouncer = SuspendDebouncer(scope)
+  private val reloadNavHistoryDebouncer = DebouncingCoroutineExecutor(scope)
 
   override fun onCreate(view: DrawerView) {
     super.onCreate(view)

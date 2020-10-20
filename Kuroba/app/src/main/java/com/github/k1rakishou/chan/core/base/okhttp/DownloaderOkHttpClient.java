@@ -1,7 +1,5 @@
 package com.github.k1rakishou.chan.core.base.okhttp;
 
-import androidx.annotation.NonNull;
-
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.core.di.HttpLoggingInterceptorInstaller;
 import com.github.k1rakishou.chan.core.manager.ProxyStorage;
@@ -14,16 +12,15 @@ import okhttp3.logging.HttpLoggingInterceptor;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-// this is basically the same as OkHttpClient, but with a singleton for a proxy instance
-public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
-    private OkHttpClient proxiedClient;
-
+public class DownloaderOkHttpClient {
     private final Dns okHttpDns;
     private final Chan.OkHttpProtocols okHttpProtocols;
-    private final ProxyStorage proxyStorage;
     private final Lazy<HttpLoggingInterceptor> loggingInterceptorLazyKt;
+    private final ProxyStorage proxyStorage;
 
-    public RealProxiedOkHttpClient(
+    private OkHttpClient downloaderClient;
+
+    public DownloaderOkHttpClient(
             Dns okHttpDns,
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
@@ -35,32 +32,30 @@ public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
         this.loggingInterceptorLazyKt = loggingInterceptorLazyKt;
     }
 
-    @NonNull
-    @Override
-    public OkHttpClient getProxiedClient() {
-        if (proxiedClient == null) {
+    public OkHttpClient getDownloaderClient() {
+        if (downloaderClient == null) {
             synchronized (this) {
-                if (proxiedClient == null) {
+                if (downloaderClient == null) {
                     KurobaProxySelector kurobaProxySelector = new KurobaProxySelector(
                             proxyStorage,
-                            ProxyStorage.ProxyActionType.SiteRequests
+                            ProxyStorage.ProxyActionType.SiteMediaFull
                     );
 
-                    // Proxies are usually slow, so they have increased timeouts
                     OkHttpClient.Builder builder = new OkHttpClient.Builder()
-                            .connectTimeout(30, SECONDS)
-                            .readTimeout(30, SECONDS)
-                            .writeTimeout(30, SECONDS)
-                            .protocols(okHttpProtocols.getProtocols())
+                            .readTimeout(5, SECONDS)
+                            .writeTimeout(5, SECONDS)
                             .proxySelector(kurobaProxySelector)
+                            .protocols(okHttpProtocols.getProtocols())
                             .dns(okHttpDns);
 
                     HttpLoggingInterceptorInstaller.install(builder, loggingInterceptorLazyKt);
-                    proxiedClient = builder.build();
+
+                    downloaderClient = builder.build();
                 }
             }
         }
 
-        return proxiedClient;
+        return downloaderClient;
     }
+
 }

@@ -7,12 +7,12 @@ import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class SuspendDebouncerTest {
+class DebouncingCoroutineExecutorTest {
 
   @Test
   fun `test call the callback once after time out`() {
     runBlockingTest {
-      val suspendDebouncer = SuspendDebouncer(this)
+      val suspendDebouncer = DebouncingCoroutineExecutor(this)
       val counter = AtomicInteger(0)
 
       suspendDebouncer.post(500L) { counter.getAndIncrement() }
@@ -27,7 +27,7 @@ class SuspendDebouncerTest {
   @Test
   fun `test debouncing`() {
     runBlockingTest {
-      val suspendDebouncer = SuspendDebouncer(this)
+      val suspendDebouncer = DebouncingCoroutineExecutor(this)
       val counter = AtomicInteger(0)
 
       repeat(100) { suspendDebouncer.post(500L) { counter.getAndIncrement() } }
@@ -42,7 +42,7 @@ class SuspendDebouncerTest {
   @Test
   fun `test debouncing should not call the callback`() {
     runBlockingTest {
-      val suspendDebouncer = SuspendDebouncer(this)
+      val suspendDebouncer = DebouncingCoroutineExecutor(this)
       val counter = AtomicInteger(0)
 
       suspendDebouncer.post(500L) { counter.getAndIncrement() }
@@ -60,7 +60,7 @@ class SuspendDebouncerTest {
   @Test
   fun `test multiple post updates`() {
     runBlockingTest {
-      val suspendDebouncer = SuspendDebouncer(this)
+      val suspendDebouncer = DebouncingCoroutineExecutor(this)
       val counter = AtomicInteger(0)
 
       repeat(10) {

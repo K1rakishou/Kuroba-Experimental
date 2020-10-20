@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.chan.core.base.SuspendDebouncer
+import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.*
 import com.github.k1rakishou.model.data.board.ChanBoard
@@ -30,7 +30,7 @@ class BoardManager(
   private val boardRepository: BoardRepository
 ) {
   private val suspendableInitializer = SuspendableInitializer<Unit>("BoardManager")
-  private val persistBoardsDebouncer = SuspendDebouncer(appScope)
+  private val persistBoardsDebouncer = DebouncingCoroutineExecutor(appScope)
 
   private val currentBoardSubject = BehaviorProcessor.create<CurrentBoard>()
   private val boardsChangedSubject = PublishProcessor.create<Unit>()

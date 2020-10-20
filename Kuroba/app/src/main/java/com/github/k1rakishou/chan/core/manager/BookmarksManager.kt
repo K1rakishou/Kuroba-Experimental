@@ -1,8 +1,8 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
+import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
-import com.github.k1rakishou.chan.core.base.SuspendDebouncer
 import com.github.k1rakishou.chan.core.site.SiteRegistry
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.*
@@ -40,7 +40,7 @@ class BookmarksManager(
   private val threadIsFetchingEventsSubject = PublishProcessor.create<ChanDescriptor.ThreadDescriptor>()
 
   private val persistBookmarksExecutor = SerializedCoroutineExecutor(appScope)
-  private val delayedBookmarksChangedExecutor = SuspendDebouncer(appScope)
+  private val delayedBookmarksChangedExecutor = DebouncingCoroutineExecutor(appScope)
 
   private val suspendableInitializer = SuspendableInitializer<Unit>("BookmarksManager")
   private val currentOpenThread = AtomicReference<ChanDescriptor.ThreadDescriptor>(null)

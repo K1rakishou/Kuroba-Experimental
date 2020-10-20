@@ -74,6 +74,8 @@ class SettingsCoordinator(
   lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var dialogFactory: DialogFactory
+  @Inject
+  lateinit var proxyStorage: ProxyStorage
 
   private val mainSettingsScreen by lazy {
     MainSettingsScreen(
@@ -126,7 +128,8 @@ class SettingsCoordinator(
       context,
       navigationController,
       cacheHandler,
-      fileCacheV2
+      fileCacheV2,
+      themeEngine
     )
   }
 
@@ -162,6 +165,14 @@ class SettingsCoordinator(
       fileChooser,
       runtimePermissionsHelper,
       dialogFactory
+    )
+  }
+
+  private val securitySettingsScreen by lazy {
+    SecuritySettingsScreen(
+      context,
+      navigationController,
+      proxyStorage
     )
   }
 
@@ -215,6 +226,7 @@ class SettingsCoordinator(
     experimentalSettingsScreen.onCreate()
     importExportSettingsScreen.onCreate()
     mediaSettingsScreen.onCreate()
+    securitySettingsScreen.onCreate()
   }
 
   fun onDestroy() {
@@ -227,6 +239,7 @@ class SettingsCoordinator(
     experimentalSettingsScreen.onDestroy()
     importExportSettingsScreen.onDestroy()
     mediaSettingsScreen.onDestroy()
+    securitySettingsScreen.onDestroy()
 
     screenStack.clear()
 
@@ -365,6 +378,7 @@ class SettingsCoordinator(
     graph += experimentalSettingsScreen.build()
     graph += importExportSettingsScreen.build()
     graph += mediaSettingsScreen.build()
+    graph += securitySettingsScreen.build()
 
     return graph
   }

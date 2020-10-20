@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.chan.core.base.SuspendDebouncer
+import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
@@ -21,7 +21,7 @@ class ChanThreadViewableInfoManager(
   private val appScope: CoroutineScope,
   private val chanThreadViewableInfoRepository: ChanThreadViewableInfoRepository
 ) {
-  private val suspendDebouncer = SuspendDebouncer(appScope)
+  private val suspendDebouncer = DebouncingCoroutineExecutor(appScope)
 
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")

@@ -23,6 +23,7 @@ import android.net.ConnectivityManager;
 import android.os.Environment;
 
 import com.github.k1rakishou.chan.Chan;
+import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.ThemeParser;
 import com.github.k1rakishou.chan.core.saver.ImageSaver;
@@ -46,9 +47,7 @@ import javax.inject.Singleton;
 import coil.ImageLoader;
 import coil.request.CachePolicy;
 import kotlinx.coroutines.CoroutineScope;
-import okhttp3.Cache;
 import okhttp3.Dns;
-import okhttp3.OkHttpClient;
 
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getAppContext;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getMaxScreenSize;
@@ -56,9 +55,6 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.getMinScreenSize;
 
 public class AppModule {
     public static final String DI_TAG = "Dependency Injection";
-    private static final String IMAGE_CACHE_DIR = "coil_image_cache_dir";
-    private static final long ONE_MB = 1024  * 1024;
-    private static final long IMAGE_CACHE_MAX_SIZE = 160 * ONE_MB;
 
     private final Context applicationContext;
     private final CoroutineScope applicationCoroutineScope;
@@ -154,24 +150,18 @@ public class AppModule {
 
     @Provides
     @Singleton
-    public ImageLoader provideCoilImageLoader(Context applicationContext) {
+    public ImageLoader provideCoilImageLoader(
+            Context applicationContext,
+            CoilOkHttpClient coilOkHttpClient
+    ) {
         Logger.d(DI_TAG, "Coil Image loader");
-
-        File imageCacheDir = new File(applicationContext.getCacheDir(), IMAGE_CACHE_DIR);
-        if (!imageCacheDir.exists() && !imageCacheDir.mkdirs()) {
-            throw new IllegalStateException("mkdirs failed to create " + imageCacheDir.getAbsolutePath());
-        }
-
-        OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                .cache(new Cache(imageCacheDir, IMAGE_CACHE_MAX_SIZE))
-                .build();
 
         return new ImageLoader.Builder(applicationContext)
                 .allowHardware(true)
                 .memoryCachePolicy(CachePolicy.ENABLED)
                 .diskCachePolicy(CachePolicy.ENABLED)
                 .networkCachePolicy(CachePolicy.ENABLED)
-                .callFactory(okHttpClient)
+                .callFactory(coilOkHttpClient.getCoilClient())
                 .build();
     }
 
@@ -188,10 +178,10 @@ public class AppModule {
 
     @Provides
     @Singleton
-    public ThemeEngine provideThemeEngine(ThemeParser themeParser) {
+    public ThemeEngine provideThemeEngine(CoroutineScope appScope, ThemeParser themeParser) {
         Logger.d(DI_TAG, "ThemeEngine");
 
-        return new ThemeEngine(themeParser);
+        return new ThemeEngine(appScope, themeParser);
     }
 
     @Provides

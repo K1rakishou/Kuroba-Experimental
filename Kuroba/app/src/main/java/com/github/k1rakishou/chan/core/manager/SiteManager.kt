@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.chan.core.base.SuspendDebouncer
+import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteRegistry
 import com.github.k1rakishou.chan.utils.Logger
@@ -31,7 +31,7 @@ open class SiteManager(
   private val siteRegistry: SiteRegistry
 ) {
   private val suspendableInitializer = SuspendableInitializer<Unit>("SiteManager")
-  private val debouncer = SuspendDebouncer(appScope)
+  private val debouncer = DebouncingCoroutineExecutor(appScope)
 
   private val sitesChangedSubject = PublishProcessor.create<Unit>()
 

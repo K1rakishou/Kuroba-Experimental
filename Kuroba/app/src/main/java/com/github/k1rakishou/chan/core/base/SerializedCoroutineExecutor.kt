@@ -9,7 +9,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Executes all callbacks sequentially using an unlimited channel. This means that there won't
- * be two callbacks running at the same time posted on this executor.
+ * be two callbacks running at the same, they will be queued and executed sequentially instead.
  * */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SerializedCoroutineExecutor(private val scope: CoroutineScope) {

@@ -18,8 +18,10 @@ import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.ui.theme.widget.IColorizableWidget
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.fsaf.file.ExternalFile
+import kotlinx.coroutines.*
 
 open class ThemeEngine(
+  private val appScope: CoroutineScope,
   private val themeParser: ThemeParser
 ) {
   private val listeners = hashSetOf<ThemeChangesListener>()
@@ -32,6 +34,8 @@ open class ThemeEngine(
 
   private var actualDarkTheme: ChanTheme? = null
   private var actualLightTheme: ChanTheme? = null
+
+  private var autoThemeSwitcherJob: Job? = null
 
   open lateinit var chanTheme: ChanTheme
 
@@ -228,6 +232,30 @@ open class ThemeEngine(
     refreshViews()
 
     return true
+  }
+
+  @Synchronized
+  fun startAutoThemeSwitcher() {
+    stopAutoThemeSwitcher()
+
+    autoThemeSwitcherJob = appScope.launch {
+      while (isActive) {
+        switchTheme(true)
+        delay(5000)
+
+        switchTheme(false)
+        delay(5000)
+      }
+    }
+  }
+
+  @Synchronized
+  fun isAutoThemeSwitcherRunning(): Boolean = autoThemeSwitcherJob != null
+
+  @Synchronized
+  fun stopAutoThemeSwitcher() {
+    autoThemeSwitcherJob?.cancel()
+    autoThemeSwitcherJob = null
   }
 
   interface ThemeChangesListener {

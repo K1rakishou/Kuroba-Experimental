@@ -9,7 +9,9 @@ import kotlinx.coroutines.launch
 
 /**
  * Executes all callbacks sequentially using an rendezvous channel. This means that if a callback
- * is currently running all other callbacks are ignored
+ * is currently running all other callbacks are ignored. This executor is really helpful when you
+ * need to run a function only once at a time and the function can be executed from multiple places
+ * asynchronously.
  * */
 @OptIn(ExperimentalCoroutinesApi::class)
 class RendezvousCoroutineExecutor(private val scope: CoroutineScope) {

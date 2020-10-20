@@ -21,6 +21,8 @@ import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.suspendCall
 import com.google.gson.stream.JsonReader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.Request
 import java.io.IOException
 import java.io.InputStreamReader
@@ -36,38 +38,40 @@ abstract class JsonReaderRequest<T>(
 
   @OptIn(ExperimentalTime::class)
   open suspend fun execute(): JsonReaderResponse<T> {
-    val response = Try {
-      val timedValue = measureTimedValue {
-        proxiedOkHttpClient.proxiedClient.suspendCall(request)
+    return withContext(Dispatchers.IO) {
+      val response = Try {
+        val timedValue = measureTimedValue {
+          proxiedOkHttpClient.proxiedClient.suspendCall(request)
+        }
+
+        Logger.d(TAG, "Request \"${jsonRequestType.requestTag}\" to \"${request.url}\" " +
+          "took ${timedValue.duration.inMilliseconds}ms")
+
+        return@Try timedValue.value
+      }.safeUnwrap { error ->
+        Logger.e(TAG, "Network request error", error)
+        return@withContext JsonReaderResponse.UnknownServerError(error)
       }
 
-      Logger.d(TAG, "Request \"${jsonRequestType.requestTag}\" to \"${request.url}\" " +
-        "took ${timedValue.duration.inMilliseconds}ms")
+      if (!response.isSuccessful) {
+        return@withContext JsonReaderResponse.ServerError(response.code)
+      }
 
-      return@Try timedValue.value
-    }.safeUnwrap { error ->
-      Logger.e(TAG, "Network request error", error)
-      return JsonReaderResponse.UnknownServerError(error)
-    }
+      if (response.body == null) {
+        return@withContext JsonReaderResponse.UnknownServerError(IOException("Response has no body"))
+      }
 
-    if (!response.isSuccessful) {
-      return JsonReaderResponse.ServerError(response.code)
-    }
-
-    if (response.body == null) {
-      return JsonReaderResponse.UnknownServerError(IOException("Response has no body"))
-    }
-
-    try {
-      return response.body!!.use { body ->
-        return@use body.byteStream().use { inputStream ->
-          return@use JsonReader(InputStreamReader(inputStream, StandardCharsets.UTF_8)).use { jsonReader ->
-            return@use JsonReaderResponse.Success(readJson(jsonReader))
+      try {
+        return@withContext response.body!!.use { body ->
+          return@use body.byteStream().use { inputStream ->
+            return@use JsonReader(InputStreamReader(inputStream, StandardCharsets.UTF_8)).use { jsonReader ->
+              return@use JsonReaderResponse.Success(readJson(jsonReader))
+            }
           }
         }
+      } catch (error: Throwable) {
+        return@withContext JsonReaderResponse.ParsingError(error)
       }
-    } catch (error: Throwable) {
-      return JsonReaderResponse.ParsingError(error)
     }
   }
 

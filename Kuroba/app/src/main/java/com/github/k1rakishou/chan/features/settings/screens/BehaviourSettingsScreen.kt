@@ -33,54 +33,7 @@ class BehaviourSettingsScreen(
       buildMainSettingsGroup(),
       buildReplySettingsGroup(),
       buildPostSettingsGroup(),
-      buildOtherSettingsGroup(),
-      buildProxySettingsGroup()
-    )
-  }
-
-  private fun buildProxySettingsGroup(): SettingsGroup.SettingsGroupBuilder {
-    val identifier = BehaviorScreen.ProxySettingsGroup
-
-    return SettingsGroup.SettingsGroupBuilder(
-      groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
-        val group = SettingsGroup(
-          groupTitle = context.getString(R.string.settings_group_proxy),
-          groupIdentifier = identifier
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = BehaviorScreen.ProxySettingsGroup.ProxyEnabled,
-          topDescriptionIdFunc = { R.string.setting_proxy_enabled },
-          setting = ChanSettings.proxyEnabled,
-          requiresRestart = true
-        )
-
-        group += InputSettingV2.createBuilder<String>(
-          context = context,
-          identifier = BehaviorScreen.ProxySettingsGroup.ProxyAddress,
-          topDescriptionIdFunc = { R.string.setting_proxy_address },
-          bottomDescriptionStringFunc = { ChanSettings.proxyAddress.get() },
-          setting = ChanSettings.proxyAddress,
-          dependsOnSetting = ChanSettings.proxyEnabled,
-          requiresRestart = true,
-          inputType = DialogFactory.DialogInputType.String
-        )
-
-        group += InputSettingV2.createBuilder<Int>(
-          context = context,
-          identifier = BehaviorScreen.ProxySettingsGroup.ProxyPort,
-          topDescriptionIdFunc = { R.string.setting_proxy_port },
-          bottomDescriptionStringFunc = { ChanSettings.proxyPort.get().toString() },
-          setting = ChanSettings.proxyPort,
-          dependsOnSetting = ChanSettings.proxyEnabled,
-          requiresRestart = true,
-          inputType = DialogFactory.DialogInputType.Integer
-        )
-
-        return group
-      }
+      buildOtherSettingsGroup()
     )
   }
 

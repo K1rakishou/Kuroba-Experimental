@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.features.setup
 
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.BasePresenter
-import com.github.k1rakishou.chan.core.base.SuspendDebouncer
+import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
@@ -28,7 +28,7 @@ import kotlin.coroutines.resume
 class BoardsSetupPresenter(
   private val siteDescriptor: SiteDescriptor
 ) : BasePresenter<BoardsSetupView>() {
-  private val suspendDebouncer = SuspendDebouncer(scope)
+  private val suspendDebouncer = DebouncingCoroutineExecutor(scope)
   private val stateSubject = PublishProcessor.create<BoardsSetupControllerState>()
     .toSerialized()
 

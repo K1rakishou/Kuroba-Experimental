@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.features.search
 
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.BasePresenter
-import com.github.k1rakishou.chan.core.base.SuspendDebouncer
+import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerState
@@ -27,7 +27,7 @@ internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
     BehaviorProcessor.createDefault<GlobalSearchControllerState>(GlobalSearchControllerState.Uninitialized)
   private val searchResultsStateStorage = SearchResultsStateStorage
 
-  private val queryEnterDebouncer = SuspendDebouncer(scope)
+  private val queryEnterDebouncer = DebouncingCoroutineExecutor(scope)
 
   override fun onCreate(view: GlobalSearchView) {
     super.onCreate(view)

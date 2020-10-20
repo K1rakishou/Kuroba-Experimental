@@ -189,7 +189,7 @@ class ChanThreadLoaderCoordinator(
 
     val isThreadDeleted = error is ServerException && error.statusCode == 404
 
-    Logger.d(TAG, "Successfully recovered from network error (${error.errorMessageOrClassName()})")
+    Logger.e(TAG, "Successfully recovered from network error (${error.errorMessageOrClassName()})")
     return ThreadLoadResult.LoadedFromDatabaseCopy(chanLoaderResponse, isThreadDeleted)
   }
 

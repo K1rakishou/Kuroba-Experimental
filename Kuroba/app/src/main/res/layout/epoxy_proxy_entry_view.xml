@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    tools:parentTag="android.widget.FrameLayout">
+
+    <LinearLayout
+        android:id="@+id/proxy_entry_view_holder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:orientation="vertical"
+        android:padding="4dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+                android:id="@+id/proxy_address"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:textSize="18sp"
+                tools:text="Address: 127.0.0.1" />
+
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+                android:id="@+id/proxy_port"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="16dp"
+                android:textSize="18sp"
+                tools:text="Port: 65535" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableSwitchMaterial
+                android:id="@+id/proxy_enable_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginEnd="8dp"
+                android:clickable="false"
+                android:focusable="false" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/proxy_settings"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginEnd="8dp"
+                android:src="@drawable/ic_settings_white_24dp" />
+
+        </LinearLayout>
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/proxy_type"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            tools:text="Type: HTTP" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/proxy_supported_sites"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            tools:text="Supported sites: 4chan, 2ch.hk" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/proxy_supported_actions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            tools:text="Supported actions: site requests, media preview loading, full media loading" />
+
+    </LinearLayout>
+
+</merge>

@@ -14,6 +14,8 @@ open class AppConstants(
   val userAgent: String
   val processorsCount: Int
 
+  val proxiesFileName = PROXIES_FILE_NAME
+
   init {
     val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
 
@@ -62,5 +64,7 @@ open class AppConstants(
 
     private const val USER_AGENT_FORMAT =
       "Mozilla/5.0 (Linux; Android %s; %s) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.127 Mobile Safari/537.36"
+
+    private const val PROXIES_FILE_NAME = "kuroba_proxies.json"
   }
 }

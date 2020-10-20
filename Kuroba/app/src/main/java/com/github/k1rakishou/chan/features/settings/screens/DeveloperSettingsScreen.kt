@@ -15,14 +15,17 @@ import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.ui.controller.LogsController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.Logger
 
 class DeveloperSettingsScreen(
   context: Context,
   private val navigationController: NavigationController,
   private val cacheHandler: CacheHandler,
-  private val fileCacheV2: FileCacheV2
+  private val fileCacheV2: FileCacheV2,
+  private val themeEngine: ThemeEngine
 ) : BaseSettingsScreen(
   context,
   DeveloperScreen,
@@ -157,9 +160,7 @@ class DeveloperSettingsScreen(
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.SimulateAppNotUpdated,
-          topDescriptionIdFunc = {
-            R.string.settings_simulate_app_not_updated
-          },
+          topDescriptionIdFunc = { R.string.settings_simulate_app_not_updated },
           bottomDescriptionIdFunc = {
             R.string.settings_simulate_app_not_updated_bottom
           },
@@ -168,6 +169,30 @@ class DeveloperSettingsScreen(
             PersistableChanState.updateCheckTime.setSync(0L)
             PersistableChanState.hasNewApkUpdate.setSync(true)
             (context as StartActivity).restartApp()
+          }
+        )
+
+        group += LinkSettingV2.createBuilder(
+          context = context,
+          identifier = DeveloperScreen.MainGroup.AutoThemeSwitcher,
+          topDescriptionIdFunc = { R.string.settings_auto_theme_switcher },
+          bottomDescriptionStringFunc = {
+            val status = if (themeEngine.isAutoThemeSwitcherRunning()) {
+              "Running"
+            } else {
+              "Stopped"
+            }
+
+            return@createBuilder getString(R.string.settings_auto_theme_switcher_bottom, status)
+          },
+          callbackWithClickAction = {
+            if (themeEngine.isAutoThemeSwitcherRunning()) {
+              themeEngine.stopAutoThemeSwitcher()
+            } else {
+              themeEngine.startAutoThemeSwitcher()
+            }
+
+            return@createBuilder SettingClickAction.RefreshClickedSetting
           }
         )
 

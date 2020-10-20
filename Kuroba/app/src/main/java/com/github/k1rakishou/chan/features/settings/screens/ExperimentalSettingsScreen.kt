@@ -23,7 +23,7 @@ class ExperimentalSettingsScreen(
 ) : BaseSettingsScreen(
   context,
   ExperimentalScreen,
-  R.string.settings_experimental_settings_title
+  R.string.settings_experimental_settings
 ) {
   private val exclusionZoneSettingsDelegate by lazy {
     ExclusionZoneSettingsDelegate(

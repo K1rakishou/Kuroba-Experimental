@@ -19,7 +19,7 @@ import coil.transform.Transformation
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
-import com.github.k1rakishou.chan.core.base.SuspendDebouncer
+import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
@@ -63,7 +63,7 @@ class ReplyNotificationsHelper(
   private val themeEngine: ThemeEngine,
   private val simpleCommentParser: SimpleCommentParser
 ) {
-  private val debouncer = SuspendDebouncer(appScope)
+  private val debouncer = DebouncingCoroutineExecutor(appScope)
   private val working = AtomicBoolean(false)
 
   init {

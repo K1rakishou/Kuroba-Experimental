@@ -16,14 +16,18 @@
  */
 package com.github.k1rakishou.chan.core.di;
 
+import android.content.Context;
 import android.net.ConnectivityManager;
 
 import com.github.k1rakishou.chan.Chan;
+import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient;
+import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.cache.stream.WebmStreamingSource;
+import com.github.k1rakishou.chan.core.manager.ProxyStorage;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager;
@@ -32,32 +36,50 @@ import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.fsaf.file.RawFile;
+import com.google.gson.Gson;
 
 import java.io.File;
 
-import javax.inject.Named;
 import javax.inject.Singleton;
 
 import kotlin.Lazy;
 import kotlin.LazyKt;
+import kotlinx.coroutines.CoroutineScope;
 import okhttp3.Dns;
-import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 
 import static com.github.k1rakishou.chan.core.di.AppModule.getCacheDir;
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class NetModule {
-    public static final String DOWNLOADER_OKHTTP_CLIENT_NAME = "downloader_okhttp_client";
     private static final String FILE_CACHE_DIR = "filecache";
     private static final String FILE_CHUNKS_CACHE_DIR = "file_chunks_cache";
 
     private final Lazy<HttpLoggingInterceptor> loggingInterceptorLazyKt = LazyKt.lazy(() -> {
         HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-        logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+        logging.setLevel(HttpLoggingInterceptor.Level.HEADERS);
 
         return logging;
     });
+
+    @Provides
+    @Singleton
+    public ProxyStorage provideProxyStorage(
+            CoroutineScope appScope,
+            Context appContext,
+            AppConstants appConstants,
+            SiteResolver siteResolver,
+            Gson gson
+    ) {
+        Logger.d(AppModule.DI_TAG, "ProxyStorage");
+        return new ProxyStorage(
+                appScope,
+                appContext,
+                appConstants,
+                ChanSettings.verboseLogs.get(),
+                siteResolver,
+                gson
+        );
+    }
 
     @Provides
     @Singleton
@@ -80,7 +102,7 @@ public class NetModule {
             FileManager fileManager,
             CacheHandler cacheHandler,
             SiteResolver siteResolver,
-            @Named(DOWNLOADER_OKHTTP_CLIENT_NAME) OkHttpClient okHttpClient,
+            DownloaderOkHttpClient downloaderOkHttpClient,
             AppConstants appConstants
     ) {
         Logger.d(AppModule.DI_TAG, "File cache V2");
@@ -88,7 +110,7 @@ public class NetModule {
                 fileManager,
                 cacheHandler,
                 siteResolver,
-                okHttpClient,
+                downloaderOkHttpClient,
                 connectivityManager,
                 appConstants
         );
@@ -124,12 +146,43 @@ public class NetModule {
     /**
      * This okHttpClient is for posting.
      */
-    // TODO(FileCacheV2): make this @Named as well instead of using hacks
     @Provides
     @Singleton
-    public ProxiedOkHttpClient provideProxiedOkHttpClient(Dns okHttpDns, Chan.OkHttpProtocols okHttpProtocols) {
-        Logger.d(AppModule.DI_TAG, "ProxiedOkHTTP client");
-        return new RealProxiedOkHttpClient(okHttpDns, okHttpProtocols, loggingInterceptorLazyKt);
+    public ProxiedOkHttpClient provideProxiedOkHttpClient(
+            Dns okHttpDns,
+            Chan.OkHttpProtocols okHttpProtocols,
+            ProxyStorage proxyStorage
+    ) {
+        Logger.d(AppModule.DI_TAG, "RealProxiedOkHttpClient");
+
+        return new RealProxiedOkHttpClient(
+                okHttpDns,
+                okHttpProtocols,
+                proxyStorage,
+                loggingInterceptorLazyKt
+        );
+    }
+
+    /**
+     * This okHttpClient is for Coil image loading library
+     */
+    @Provides
+    @Singleton
+    public CoilOkHttpClient provideCoilOkHttpClient(
+            Context applicationContext,
+            Dns okHttpDns,
+            Chan.OkHttpProtocols okHttpProtocols,
+            ProxyStorage proxyStorage
+    ) {
+        Logger.d(AppModule.DI_TAG, "CoilOkHttpClient");
+
+        return new CoilOkHttpClient(
+                applicationContext,
+                okHttpDns,
+                okHttpProtocols,
+                proxyStorage,
+                loggingInterceptorLazyKt
+        );
     }
 
     /**
@@ -137,17 +190,18 @@ public class NetModule {
      */
     @Provides
     @Singleton
-    @Named(DOWNLOADER_OKHTTP_CLIENT_NAME)
-    public OkHttpClient provideOkHttpClient(Dns okHttpDns, Chan.OkHttpProtocols okHttpProtocols) {
+    public DownloaderOkHttpClient provideDownloaderOkHttpClient(
+            Dns okHttpDns,
+            Chan.OkHttpProtocols okHttpProtocols,
+            ProxyStorage proxyStorage
+    ) {
         Logger.d(AppModule.DI_TAG, "DownloaderOkHttp client");
 
-        OkHttpClient.Builder builder = new OkHttpClient.Builder()
-                .readTimeout(5, SECONDS)
-                .writeTimeout(5, SECONDS)
-                .protocols(okHttpProtocols.getProtocols())
-                .dns(okHttpDns);
-
-        HttpLoggingInterceptorInstaller.install(builder, loggingInterceptorLazyKt);
-        return builder.build();
+        return new DownloaderOkHttpClient(
+                okHttpDns,
+                okHttpProtocols,
+                proxyStorage,
+                loggingInterceptorLazyKt
+        );
     }
 }

@@ -4,6 +4,8 @@ import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.suspendCall
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.Request
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -21,38 +23,40 @@ abstract class HtmlReaderRequest<T>(
   @Suppress("BlockingMethodInNonBlockingContext")
   @OptIn(ExperimentalTime::class)
   open suspend fun execute(): HtmlReaderResponse<T> {
-    val response = Try {
-      val timedValue = measureTimedValue {
-        proxiedOkHttpClient.proxiedClient.suspendCall(request)
-      }
-
-      Logger.d(TAG, "Request \"${htmlRequestType.requestTag}\" to \"${request.url}\" " +
-        "took ${timedValue.duration.inMilliseconds}ms")
-
-      return@Try timedValue.value
-    }.safeUnwrap { error ->
-      Logger.e(TAG, "Network request error", error)
-      return HtmlReaderResponse.UnknownServerError(error)
-    }
-
-    if (!response.isSuccessful) {
-      return HtmlReaderResponse.ServerError(response.code)
-    }
-
-    if (response.body == null) {
-      return HtmlReaderResponse.UnknownServerError(IOException("Response has no body"))
-    }
-
-    try {
-      return response.body!!.use { body ->
-        return@use body.byteStream().use { inputStream ->
-          val htmlDocument = Jsoup.parse(inputStream, StandardCharsets.UTF_8.name(), request.url.toString())
-
-          return@use HtmlReaderResponse.Success(readHtml(htmlDocument))
+    return withContext(Dispatchers.IO) {
+      val response = Try {
+        val timedValue = measureTimedValue {
+          proxiedOkHttpClient.proxiedClient.suspendCall(request)
         }
+
+        Logger.d(TAG, "Request \"${htmlRequestType.requestTag}\" to \"${request.url}\" " +
+          "took ${timedValue.duration.inMilliseconds}ms")
+
+        return@Try timedValue.value
+      }.safeUnwrap { error ->
+        Logger.e(TAG, "Network request error", error)
+        return@withContext HtmlReaderResponse.UnknownServerError(error)
       }
-    } catch (error: Throwable) {
-      return HtmlReaderResponse.ParsingError(error)
+
+      if (!response.isSuccessful) {
+        return@withContext HtmlReaderResponse.ServerError(response.code)
+      }
+
+      if (response.body == null) {
+        return@withContext HtmlReaderResponse.UnknownServerError(IOException("Response has no body"))
+      }
+
+      try {
+        return@withContext response.body!!.use { body ->
+          return@use body.byteStream().use { inputStream ->
+            val htmlDocument = Jsoup.parse(inputStream, StandardCharsets.UTF_8.name(), request.url.toString())
+
+            return@use HtmlReaderResponse.Success(readHtml(htmlDocument))
+          }
+        }
+      } catch (error: Throwable) {
+        return@withContext HtmlReaderResponse.ParsingError(error)
+      }
     }
   }
 

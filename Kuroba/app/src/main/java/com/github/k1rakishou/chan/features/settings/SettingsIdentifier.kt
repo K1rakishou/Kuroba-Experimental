@@ -100,6 +100,7 @@ sealed class MainScreen(
     object Media : MainGroup("media")
     object ImportExport : MainGroup("import_export")
     object Filters : MainGroup("filters")
+    object Security : MainGroup("security")
     object Experimental : MainGroup("experimental")
 
     companion object : IGroupIdentifier() {
@@ -161,6 +162,7 @@ sealed class DeveloperScreen(
     object CrashOnSafeThrow : MainGroup("crash_on_safe_throw")
     object SimulateAppUpdated : MainGroup("simulate_app_updated")
     object SimulateAppNotUpdated : MainGroup("simulate_app_not_updated")
+    object AutoThemeSwitcher : MainGroup("auto_theme_switcher")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
@@ -424,22 +426,6 @@ sealed class BehaviorScreen(
     }
   }
 
-  sealed class ProxySettingsGroup(
-    settingsId: String,
-    groupIdentifier: GroupIdentifier = GeneralGroup.getGroupIdentifier()
-  ) : IGroup,
-    BehaviorScreen(groupIdentifier, SettingIdentifier(settingsId)) {
-
-    object ProxyEnabled : ProxySettingsGroup("proxy_enabled")
-    object ProxyAddress : ProxySettingsGroup("proxy_address")
-    object ProxyPort : ProxySettingsGroup("proxy_port")
-
-    companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = BehaviorScreen.getScreenIdentifier()
-      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("proxy_settings_group")
-    }
-  }
-
   companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("behavior_screen")
   }
@@ -560,6 +546,37 @@ sealed class ImportExportScreen(
 
   companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("import_export_screen")
+  }
+}
+
+// ================================================================
+// ================= SecuritySettingsScreen ===================
+// ================================================================
+
+sealed class SecurityScreen(
+  groupIdentifier: GroupIdentifier,
+  settingIdentifier: SettingIdentifier,
+  screenIdentifier: ScreenIdentifier = SecurityScreen.getScreenIdentifier()
+) :
+  IScreen,
+  SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
+
+  sealed class MainSettingsGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = MainSettingsGroup.getGroupIdentifier()
+  ) : IGroup,
+    SecurityScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object Proxy : MainSettingsGroup("proxy")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = SecurityScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("main_settings_group")
+    }
+  }
+
+  companion object : IScreenIdentifier() {
+    override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("security_screen")
   }
 }
 
