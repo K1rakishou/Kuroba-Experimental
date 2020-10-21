@@ -57,7 +57,6 @@ import okhttp3.Request
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
-import java.util.regex.Pattern
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
@@ -208,7 +207,10 @@ class UpdateManager(
             onSuccessfullyGotLatestApkUuid(response.result, manual)
           }
           is JsonReaderRequest.JsonReaderResponse.ServerError -> {
-            Logger.e(TAG, "Error while trying to get new beta apk, status code: ${response.statusCode}")
+            Logger.e(
+              TAG,
+              "Error while trying to get new beta apk, status code: ${response.statusCode}"
+            )
             failedUpdate(manual)
           }
           is JsonReaderRequest.JsonReaderResponse.UnknownServerError -> {
@@ -288,7 +290,10 @@ class UpdateManager(
             }
           }
           is JsonReaderRequest.JsonReaderResponse.ServerError -> {
-            Logger.e(TAG, "Error while trying to get new release apk, status code: ${response.statusCode}")
+            Logger.e(
+              TAG,
+              "Error while trying to get new release apk, status code: ${response.statusCode}"
+            )
             failedUpdate(manual)
           }
           is JsonReaderRequest.JsonReaderResponse.UnknownServerError -> {
@@ -471,7 +476,10 @@ class UpdateManager(
           }
 
           BackgroundUtils.ensureMainThread()
-          val description = getString(R.string.update_install_download_failed_description, exception.message)
+          val description = getString(
+            R.string.update_install_download_failed_description,
+            exception.message
+          )
 
           if (updateDownloadDialog != null) {
             updateDownloadDialog!!.setOnDismissListener(null)
@@ -572,7 +580,8 @@ class UpdateManager(
     }
 
     if (!fileManager.copyFileContents(downloadedFile, newApkFile)) {
-      val message = getString(R.string.update_manager_could_not_copy_apk,
+      val message = getString(
+        R.string.update_manager_could_not_copy_apk,
         downloadedFile.getFullPath(),
         newApkFile.getFullPath()
       )
@@ -634,12 +643,12 @@ class UpdateManager(
             updateDownloadDialog = null
           }
 
-          setTitle(R.string.update_install_downloading)
           max = 10000
           setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
           setProgressNumberFormat("")
 
           show()
+          dialogFactory.applyColorsOld(this)
         }
 
         doUpdate(responseRelease)
@@ -658,8 +667,6 @@ class UpdateManager(
 
   companion object {
     private const val TAG = "UpdateManager"
-
-    private val VERSION_CODE_PATTERN = Pattern.compile("(\\d+)(\\d{2})(\\d{2})")
   }
 
 }

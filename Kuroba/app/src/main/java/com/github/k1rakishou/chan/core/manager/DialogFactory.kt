@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.manager
 
+import android.app.ProgressDialog
 import android.content.Context
 import android.content.DialogInterface
 import android.graphics.drawable.ColorDrawable
@@ -17,6 +18,7 @@ import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
+import com.github.k1rakishou.chan.utils.ViewUtils.changeProgressColor
 import com.github.k1rakishou.common.exhaustive
 
 
@@ -271,6 +273,42 @@ class DialogFactory(
     }
 
     return this
+  }
+
+  fun applyColorsOld(dialog: android.app.AlertDialog): android.app.AlertDialog {
+    val view = dialog.window
+      ?: return dialog
+
+    view.setBackgroundDrawable(ColorDrawable(themeEngine.chanTheme.backColor))
+
+    dialog.getButton(DialogInterface.BUTTON_POSITIVE)?.let { button ->
+      button.setTextColor(themeEngine.chanTheme.textColorPrimary)
+      button.invalidate()
+    }
+
+    dialog.getButton(DialogInterface.BUTTON_NEGATIVE)?.let { button ->
+      button.setTextColor(themeEngine.chanTheme.textColorPrimary)
+      button.invalidate()
+    }
+
+    dialog.getButton(DialogInterface.BUTTON_NEUTRAL)?.let { button ->
+      button.setTextColor(themeEngine.chanTheme.textColorPrimary)
+      button.invalidate()
+    }
+
+    dialog.findViewById<TextView>(R.id.alertTitle)?.let { title ->
+      title.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    }
+
+    dialog.findViewById<TextView>(android.R.id.message)?.let { title ->
+      title.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    }
+
+    if (dialog is ProgressDialog) {
+      dialog.changeProgressColor(themeEngine.chanTheme)
+    }
+
+    return dialog
   }
 
   private fun DialogInterface.applyColors(): AlertDialog {

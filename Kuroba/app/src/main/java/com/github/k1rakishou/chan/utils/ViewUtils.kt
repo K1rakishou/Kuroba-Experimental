@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.utils
 
 import android.annotation.SuppressLint
+import android.app.ProgressDialog
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.widget.AbsListView
@@ -178,6 +179,20 @@ object ViewUtils {
       f2.set(this, rightEdge)
     } catch (error: Exception) {
       Logger.e(TAG, "ViewPager.changeEdgeEffect() failure, error=${error.errorMessageOrClassName()}")
+    }
+  }
+
+  fun ProgressDialog.changeProgressColor(theme: ChanTheme) {
+    try {
+      val f1: Field = ProgressDialog::class.java.getDeclaredField("mProgressNumber")
+      f1.isAccessible = true
+      (f1.get(this) as? TextView)?.let { progressNumber -> progressNumber.setTextColor(theme.textColorSecondary) }
+
+      val f2: Field = ProgressDialog::class.java.getDeclaredField("mProgressPercent")
+      f2.isAccessible = true
+      (f2.get(this) as? TextView)?.let { progressPercent -> progressPercent.setTextColor(theme.textColorSecondary) }
+    } catch (error: Exception) {
+      Logger.e(TAG, "ProgressDialog.changeProgressColor() failure, error=${error.errorMessageOrClassName()}")
     }
   }
 
