@@ -12,6 +12,7 @@ import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.features.proxies.data.ProxyEntryView
 import com.github.k1rakishou.chan.features.proxies.data.ProxySetupState
 import com.github.k1rakishou.chan.features.proxies.epoxy.epoxyProxyView
+import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
@@ -120,6 +121,7 @@ class ProxySetupController(
           onPositiveButtonClickListener = {
             presenter.deleteProxies(selectedItems)
             proxySelectionHelper.clearSelection()
+            showToast(R.string.controller_proxy_editor_proxy_deleted)
           }
         )
       }
@@ -139,7 +141,7 @@ class ProxySetupController(
           }
         }
         is ProxySetupState.Data -> {
-          state.proxyEntryViewList.forEach { proxyEntryView ->
+          state.proxyEntryViewList.forEachIndexed { index, proxyEntryView ->
             epoxyProxyView {
               id("epoxy_proxy_view_${proxyEntryView.proxyKeyString()}")
               proxySelectionHelper(proxySelectionHelper)
@@ -153,6 +155,12 @@ class ProxySetupController(
               proxyHolderClickListener { onProxyItemViewClick(proxyEntryView) }
               proxyHolderLongClickListener { onProxyViewItemLongClick(proxyEntryView) }
               proxySettingsClickListener { onProxySettingsClick(proxyEntryView) }
+            }
+
+            if (index != state.proxyEntryViewList.lastIndex) {
+              epoxyDividerView {
+                id("epoxy_proxy_view_divider_${proxyEntryView.proxyKeyString()}")
+              }
             }
           }
         }
