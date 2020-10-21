@@ -34,7 +34,7 @@ class ArchivedMoe : BaseFoolFuukaSite() {
     val ROOT: String = "https://archived.moe/"
     val ROOT_URL: HttpUrl = ROOT.toHttpUrl()
     val SITE_NAME: String = ArchiveType.ArchivedMoe.domain
-    val MEDIA_HOSTS: Array<String> = arrayOf(ROOT_URL.toString())
+    val MEDIA_HOSTS: Array<HttpUrl> = arrayOf(ROOT_URL)
     val NAMES: Array<String> = arrayOf("archived")
     val CLASS: Class<out Site> = ArchivedMoe::class.java
 

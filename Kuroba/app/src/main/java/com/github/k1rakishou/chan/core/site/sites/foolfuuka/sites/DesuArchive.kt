@@ -34,9 +34,14 @@ class DesuArchive : BaseFoolFuukaSite() {
     val ROOT: String = "https://desuarchive.org/"
     val ROOT_URL: HttpUrl =  ROOT.toHttpUrl()
     val SITE_NAME: String = ArchiveType.DesuArchive.domain
-    val MEDIA_HOSTS: Array<String> = arrayOf(ROOT_URL.toString())
     val NAMES: Array<String> = arrayOf("desuarchive")
     val CLASS: Class<out Site> = DesuArchive::class.java
+
+    val MEDIA_HOSTS: Array<HttpUrl> = arrayOf(
+      ROOT_URL,
+      "https://s1.desu-usergeneratedcontent.xyz/".toHttpUrl(),
+      "https://s2.desu-usergeneratedcontent.xyz/".toHttpUrl(),
+    )
 
     val URL_HANDLER = BaseFoolFuukaUrlHandler(ROOT_URL, MEDIA_HOSTS, NAMES, CLASS)
   }

@@ -20,9 +20,9 @@ abstract class BaseFoolFuukaSite : CommonSite() {
 
   final override fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties = chunkDownloaderSiteProperties
 
-  class BaseFoolFuukaUrlHandler(
+  open class BaseFoolFuukaUrlHandler(
     override val url: HttpUrl,
-    override val mediaHosts: Array<String>,
+    override val mediaHosts: Array<HttpUrl>,
     override val names: Array<String>,
     private val siteClass: Class<out Site>
   ) : CommonSiteUrlHandler() {

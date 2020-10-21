@@ -34,9 +34,13 @@ class Nyafuu : BaseFoolFuukaSite() {
     val ROOT: String = "https://archive.nyafuu.org/"
     val ROOT_URL: HttpUrl =  ROOT.toHttpUrl()
     val SITE_NAME: String = ArchiveType.Nyafuu.domain
-    val MEDIA_HOSTS: Array<String> = arrayOf(ROOT_URL.toString())
     val NAMES: Array<String> = arrayOf("nyafuu")
     val CLASS: Class<out Site> = Nyafuu::class.java
+
+    val MEDIA_HOSTS: Array<HttpUrl> = arrayOf(
+      ROOT_URL,
+      "https://archive-media-0.nyafuu.org/".toHttpUrl()
+    )
 
     val URL_HANDLER = BaseFoolFuukaUrlHandler(ROOT_URL, MEDIA_HOSTS, NAMES, CLASS)
   }

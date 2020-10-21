@@ -34,7 +34,7 @@ class TokyoChronos : BaseFoolFuukaSite() {
     val ROOT: String = "https://tokyochronos.net/"
     val ROOT_URL: HttpUrl =  ROOT.toHttpUrl()
     val SITE_NAME: String = ArchiveType.TokyoChronos.domain
-    val MEDIA_HOSTS: Array<String> = arrayOf(ROOT_URL.toString())
+    val MEDIA_HOSTS: Array<HttpUrl> = arrayOf(ROOT_URL)
     val NAMES: Array<String> = arrayOf("tokyochronos")
     val CLASS: Class<out Site> = TokyoChronos::class.java
 

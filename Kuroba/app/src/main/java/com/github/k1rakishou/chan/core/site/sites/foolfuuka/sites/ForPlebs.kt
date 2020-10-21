@@ -34,9 +34,13 @@ class ForPlebs : BaseFoolFuukaSite() {
     val ROOT: String = "https://archive.4plebs.org/"
     val ROOT_URL: HttpUrl =  ROOT.toHttpUrl()
     val SITE_NAME: String = ArchiveType.ForPlebs.domain
-    val MEDIA_HOSTS: Array<String> = arrayOf(ROOT_URL.toString())
     val NAMES: Array<String> = arrayOf("4plebs")
     val CLASS: Class<out Site> = ForPlebs::class.java
+
+    val MEDIA_HOSTS: Array<HttpUrl> = arrayOf(
+      ROOT_URL,
+      "https://i.4pcdn.org/".toHttpUrl()
+    )
 
     val URL_HANDLER = BaseFoolFuukaUrlHandler(ROOT_URL, MEDIA_HOSTS, NAMES, CLASS)
   }

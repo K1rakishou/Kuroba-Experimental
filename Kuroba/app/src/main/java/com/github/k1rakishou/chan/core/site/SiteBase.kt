@@ -164,14 +164,17 @@ abstract class SiteBase : Site, CoroutineScope {
     val secureRandom: Random = SecureRandom()
 
     @JvmStatic
-    fun containsMediaHostUrl(desiredSiteUrl: HttpUrl, mediaHosts: Array<String>): Boolean {
-      val host = desiredSiteUrl.host
-      for (mediaHost in mediaHosts) {
-        if (host == mediaHost) {
+    fun containsMediaHostUrl(desiredSiteUrl: HttpUrl, siteMediaUrls: Array<HttpUrl>): Boolean {
+      val desiredHost = desiredSiteUrl.host
+
+      for (siteMediaUrl in siteMediaUrls) {
+        val siteMediaHost = siteMediaUrl.host
+
+        if (desiredHost == siteMediaHost) {
           return true
         }
 
-        if (host == "www.$mediaHost") {
+        if (desiredHost == "www.$siteMediaHost") {
           return true
         }
       }

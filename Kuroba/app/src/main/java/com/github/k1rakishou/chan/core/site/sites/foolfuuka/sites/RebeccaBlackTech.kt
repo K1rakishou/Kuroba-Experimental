@@ -34,7 +34,7 @@ class RebeccaBlackTech : BaseFoolFuukaSite() {
     val ROOT: String = "https://archive.rebeccablacktech.com/"
     val ROOT_URL: HttpUrl =  ROOT.toHttpUrl()
     val SITE_NAME: String = ArchiveType.RebeccaBlackTech.domain
-    val MEDIA_HOSTS: Array<String> = arrayOf(ROOT_URL.toString())
+    val MEDIA_HOSTS: Array<HttpUrl> = arrayOf(ROOT_URL)
     val NAMES: Array<String> = arrayOf("rebeccablacktech")
     val CLASS: Class<out Site> = RebeccaBlackTech::class.java
 

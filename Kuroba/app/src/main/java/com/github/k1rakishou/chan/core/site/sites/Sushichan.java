@@ -57,8 +57,8 @@ public class Sushichan
         }
 
         @Override
-        public String[] getMediaHosts() {
-            return new String[]{ROOT};
+        public HttpUrl[] getMediaHosts() {
+            return new HttpUrl[]{getUrl()};
         }
 
         @Override

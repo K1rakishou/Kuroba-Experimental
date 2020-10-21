@@ -220,12 +220,11 @@ abstract class CommonSite : SiteBase() {
   }
   
   abstract class CommonSiteUrlHandler : SiteUrlHandler {
-    abstract val url: HttpUrl?
-    abstract val mediaHosts: Array<String>
-    abstract val names: Array<String>
+    open val url: HttpUrl? = null
+    open val mediaHosts: Array<HttpUrl> = emptyArray()
+    open val names: Array<String> = emptyArray()
     
     override fun matchesName(value: String): Boolean {
-
       return names.contains(value)
     }
     

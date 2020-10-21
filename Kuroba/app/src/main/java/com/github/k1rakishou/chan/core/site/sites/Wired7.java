@@ -72,8 +72,8 @@ public class Wired7
         }
 
         @Override
-        public String[] getMediaHosts() {
-            return new String[]{ROOT};
+        public HttpUrl[] getMediaHosts() {
+            return new HttpUrl[]{getUrl()};
         }
 
         @Override

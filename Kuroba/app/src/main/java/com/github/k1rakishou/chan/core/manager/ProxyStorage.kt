@@ -44,6 +44,10 @@ class ProxyStorage(
   private val gson by lazy { initGson() }
   private val proxiesLoaded = AtomicBoolean(false)
 
+  // ProxyStorage is dirty when the user has added/update or removed a proxy(ies) and haven't
+  // restarted the phone yet
+  private val isProxyStorageDirty = AtomicBoolean(false)
+
   @GuardedBy("this")
   private val proxiesMap = mutableMapOf<SiteDescriptor, MutableSet<ProxyKey>>()
   @GuardedBy("this")
@@ -54,6 +58,8 @@ class ProxyStorage(
   fun listenForProxyUpdates(): Flow<Unit> {
     return proxyStorageUpdates.asFlow()
   }
+
+  fun isDirty(): Boolean = isProxyStorageDirty.get()
 
   fun getCount(): Int = synchronized(this) { allProxiesMap.size }
 
@@ -274,6 +280,7 @@ class ProxyStorage(
   }
 
   private fun proxiesUpdated() {
+    isProxyStorageDirty.set(true)
     proxyStorageUpdates.offer(Unit)
   }
 

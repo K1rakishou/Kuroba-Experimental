@@ -513,7 +513,10 @@ open class Chan4 : SiteBase() {
 
     @JvmStatic
     val URL_HANDLER: SiteUrlHandler = object : SiteUrlHandler {
-      private val mediaHosts = arrayOf("i.4cdn.org")
+      private val mediaHosts = arrayOf(
+        "https://i.4cdn.org/".toHttpUrl(),
+        "https://is2.4chan.org/".toHttpUrl(),
+      )
 
       override fun getSiteClass(): Class<out Site> {
         return Chan4::class.java

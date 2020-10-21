@@ -34,9 +34,13 @@ class Fireden : BaseFoolFuukaSite() {
     val ROOT: String = "https://boards.fireden.net/"
     val ROOT_URL: HttpUrl =  ROOT.toHttpUrl()
     val SITE_NAME: String = ArchiveType.Fireden.domain
-    val MEDIA_HOSTS: Array<String> = arrayOf(ROOT_URL.toString())
     val NAMES: Array<String> = arrayOf("fireden")
     val CLASS: Class<out Site> = Fireden::class.java
+
+    val MEDIA_HOSTS: Array<HttpUrl> = arrayOf(
+      ROOT_URL,
+      "https://img.fireden.net/".toHttpUrl()
+    )
 
     val URL_HANDLER = BaseFoolFuukaUrlHandler(ROOT_URL, MEDIA_HOSTS, NAMES, CLASS)
   }
