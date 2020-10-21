@@ -34,11 +34,9 @@ import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.model.ChanThread;
 import com.github.k1rakishou.chan.core.model.Post;
-import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.model.data.board.ChanBoard;
-import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor;
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
 
 import javax.inject.Inject;
@@ -155,37 +153,8 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
             }
         }
 
-        appendArchiveStatisticsPart(chanThread, builder);
-
         text.setText(builder);
         return update;
-    }
-
-    private void appendArchiveStatisticsPart(ChanThread chanThread, SpannableStringBuilder builder) {
-        int archivePosts = 0;
-        int archiveImages = 0;
-
-        for (Post post : chanThread.getPosts()) {
-            if (post.getArchiveDescriptor() != null) {
-                ++archivePosts;
-            }
-
-            for (PostImage postImage : post.getPostImages()) {
-                if (ArchiveDescriptor.isActualArchive(postImage.archiveId)) {
-                    ++archiveImages;
-                }
-            }
-        }
-
-        if (archivePosts == 0 && archiveImages == 0) {
-            return;
-        }
-
-        builder.append("\n")
-                .append("Restored posts: ").append(String.valueOf(archivePosts))
-                .append(", ")
-                .append("Restored images: ").append(String.valueOf(archiveImages));
-
     }
 
     private void appendThreadStatisticsPart(ChanThread chanThread, SpannableStringBuilder builder, Post op, ChanBoard board) {

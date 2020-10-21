@@ -45,6 +45,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import kotlin.Lazy;
 import kotlin.LazyKt;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 
 /**
  * Contains all data needed to represent a single post.<br>
@@ -211,6 +213,12 @@ public class Post implements Comparable<Post> {
 
     public synchronized List<Long> getRepliesFrom() {
         return repliesFrom;
+    }
+
+    public synchronized void iterateRepliesFrom(Function1<Long, Unit> iterator) {
+        for (Long replyNo : repliesFrom) {
+            iterator.invoke(replyNo);
+        }
     }
 
     @NonNull

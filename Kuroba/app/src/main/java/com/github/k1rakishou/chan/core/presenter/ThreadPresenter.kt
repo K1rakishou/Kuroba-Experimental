@@ -1329,7 +1329,7 @@ class ThreadPresenter @Inject constructor(
 
     val posts: MutableList<Post> = ArrayList()
 
-    for (no in post.repliesFrom) {
+    post.iterateRepliesFrom { no ->
       val replyPost = findPostById(no, chanLoader!!.thread)
       if (replyPost != null) {
         posts.add(replyPost)
