@@ -107,7 +107,12 @@ class ProxyEditorController(
         }
 
         if (success) {
-          showToast(R.string.controller_proxy_editor_proxy_added)
+          if (proxyKey == null) {
+            showToast(R.string.controller_proxy_editor_proxy_added)
+          } else {
+            showToast(R.string.controller_proxy_editor_proxy_updated)
+          }
+
           applyClickListener.invoke()
           pop()
         }

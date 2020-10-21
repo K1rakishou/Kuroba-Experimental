@@ -345,7 +345,7 @@ class DrawerController(
 
   fun openSettingsController() {
     closeAllNonMainControllers()
-    openControllerWrappedIntoBottomNavAwareController(MainSettingsControllerV2(context))
+    openControllerWrappedIntoBottomNavAwareController(MainSettingsControllerV2(context, this))
     setSettingsMenuItemSelected()
 
     setDrawerEnabled(false)

@@ -732,7 +732,10 @@ class BookmarksController(
   private fun formatSelectionText(): String {
     require(bookmarksSelectionHelper.isInSelectionMode()) { "Not in selection mode" }
 
-    return "Selected ${bookmarksSelectionHelper.selectedItemsCount()} bookmarks"
+    return getString(
+      R.string.controller_selected_n_bookmarks,
+      bookmarksSelectionHelper.selectedItemsCount()
+    )
   }
 
   private inner class BookmarksEpoxyController : EpoxyController() {

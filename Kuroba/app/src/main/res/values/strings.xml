@@ -829,6 +829,7 @@ Don't have a 4chan Pass?<br>
 
     <string name="controller_bookmarks">Bookmarks</string>
     <string name="controller_bookmarks_with_stats">Bookmarks (%1$d/%2$d)</string>
+    <string name="controller_selected_n_bookmarks">Selected %1$d bookmarks</string>
     <string name="controller_bookmarks_bookmarks_are_empty">You haven\'t bookmarked any threads yet</string>
     <string name="controller_bookmarks_nothing_found_by_search_query">Nothing found by search query \"%1$s\"</string>
     <string name="controller_bookmarks_prune_inactive_bookmarks">Prune inactive bookmarks</string>
@@ -859,8 +860,12 @@ Don't have a 4chan Pass?<br>
     <string name="controller_site_settings_title">Configure %1$s</string>
 
     <string name="controller_proxy_setup_title">Proxy setup</string>
-    <string name="controller_proxy_setup_no_proxies">No proxies loaded or all proxies are disabled</string>
+    <string name="controller_proxy_setup_no_proxies">You haven\'t added any proxies yet</string>
     <string name="controller_proxy_setup_failed_to_enable_disable_proxy">Failed to enable/disable proxy, error = %1$s</string>
+    <string name="controller_proxy_setup_failed_to_delete_proxies">Failed to delete proxies, error = %1$s</string>
+    <string name="controller_proxy_setup_proxy_editing_notification">Adding/Removing or updating proxies requires application restart</string>
+    <string name="controller_proxy_setup_selected_n_proxies">Selected %1$d proxies</string>
+    <string name="controller_proxy_setup_delete_selected_proxies_title">Are you sure you want to delete %1$d proxies?</string>
 
     <string name="controller_proxy_editor_title">Proxy editor</string>
     <string name="controller_proxy_editor_proxy_address">Proxy address</string>
@@ -872,7 +877,8 @@ Don't have a 4chan Pass?<br>
     <string name="controller_proxy_editor_actions">Actions</string>
     <string name="controller_proxy_editor_enable_for">Enable for</string>
     <string name="controller_proxy_editor_cannot_add_new_proxy">Cannot add new proxy</string>
-    <string name="controller_proxy_editor_proxy_added">New proxy added</string>
+    <string name="controller_proxy_editor_proxy_added">New proxy added. Restart the app</string>
+    <string name="controller_proxy_editor_proxy_updated">Proxy updated. Restart the app</string>
     <string name="controller_proxy_editor_proxy_address_is_not_valid">Proxy address is not valid</string>
     <string name="controller_proxy_editor_proxy_port_is_not_valid">Proxy port is not valid</string>
     <string name="controller_proxy_editor_proxy_type_is_not_valid">Proxy type is not valid</string>

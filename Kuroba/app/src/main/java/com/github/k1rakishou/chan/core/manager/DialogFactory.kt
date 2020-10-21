@@ -30,7 +30,7 @@ class DialogFactory(
     context: Context,
     titleTextId: Int,
     descriptionTextId: Int? = null,
-    onPositiveButtonClickListener: (() -> Unit),
+    onPositiveButtonClickListener: (() -> Unit) = { },
     positiveButtonTextId: Int = R.string.ok
   ) {
     if (!applicationVisibilityManager.isAppInForeground()) {

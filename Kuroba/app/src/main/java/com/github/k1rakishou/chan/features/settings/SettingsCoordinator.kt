@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.manager.*
+import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.settings.screens.*
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
@@ -35,7 +36,8 @@ import kotlin.coroutines.CoroutineContext
 
 class SettingsCoordinator(
   private val context: Context,
-  private val navigationController: NavigationController
+  private val navigationController: NavigationController,
+  private val drawerCallbacks: DrawerCallbacks?
 ) : CoroutineScope, SettingsCoordinatorCallbacks {
 
   @Inject
@@ -172,7 +174,8 @@ class SettingsCoordinator(
     SecuritySettingsScreen(
       context,
       navigationController,
-      proxyStorage
+      proxyStorage,
+      drawerCallbacks
     )
   }
 

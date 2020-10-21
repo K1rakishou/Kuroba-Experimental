@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.manager.ProxyStorage
 import com.github.k1rakishou.chan.features.proxies.data.ProxyEntryView
+import com.github.k1rakishou.chan.features.proxies.data.ProxyEntryViewSelection
 import com.github.k1rakishou.chan.features.proxies.data.ProxySetupState
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.Logger
@@ -13,19 +14,32 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.time.ExperimentalTime
+import kotlin.time.milliseconds
 
-class ProxySetupPresenter : BasePresenter<ProxySetupView>() {
+class ProxySetupPresenter(
+  private val proxySelectionHelper: ProxySelectionHelper
+) : BasePresenter<ProxySetupView>() {
   @Inject
   lateinit var proxyStorage: ProxyStorage
 
   @ExperimentalCoroutinesApi
   private val proxySetupState = MutableStateFlow<ProxySetupState>(ProxySetupState.Uninitialized)
 
+  @OptIn(ExperimentalTime::class)
   override fun onCreate(view: ProxySetupView) {
     super.onCreate(view)
     Chan.inject(this)
+
+    scope.launch {
+      proxySelectionHelper.listenForSelectionChanges()
+        .debounce(100.milliseconds)
+        .collect { reloadProxies() }
+    }
 
     reloadProxies()
   }
@@ -51,6 +65,30 @@ class ProxySetupPresenter : BasePresenter<ProxySetupView>() {
 
           return@launch
         }
+
+      reloadProxies()
+    }
+  }
+
+  fun deleteProxies(selectedItems: List<ProxyStorage.ProxyKey>) {
+    scope.launch(Dispatchers.Default) {
+      proxyStorage.deleteProxies(selectedItems)
+        .safeUnwrap { error ->
+          Logger.e(TAG, "Failed to delete proxies: ${selectedItems}", error)
+
+          withView {
+            val message = getString(
+              R.string.controller_proxy_setup_failed_to_delete_proxies,
+              error.errorMessageOrClassName()
+            )
+
+            showMessage(message)
+          }
+
+          return@launch
+        }
+
+      reloadProxies()
     }
   }
 
@@ -67,13 +105,25 @@ class ProxySetupPresenter : BasePresenter<ProxySetupView>() {
       val proxyEntryViewList = allProxies
         .sortedBy { kurobaProxy -> kurobaProxy.order }
         .map { kurobaProxy ->
+          val proxySelection = if (proxySelectionHelper.isInSelectionMode()) {
+            val isSelected = proxySelectionHelper.isSelected(kurobaProxy.proxyKey)
+            ProxyEntryViewSelection(isSelected)
+          } else {
+            null
+          }
+
           return@map ProxyEntryView(
-            kurobaProxy.address,
-            kurobaProxy.port,
-            kurobaProxy.enabled,
-            kurobaProxy.supportedSites.joinToString { siteDescriptor -> siteDescriptor.siteName },
-            kurobaProxy.supportedActions.joinToString { proxyActionType -> proxyActionTypeToString(proxyActionType) },
-            proxyTypeToString(kurobaProxy.proxyType)
+            address = kurobaProxy.address,
+            port = kurobaProxy.port,
+            enabled = kurobaProxy.enabled,
+            selection = proxySelection,
+            supportedSites = kurobaProxy.supportedSites.joinToString { siteDescriptor ->
+              siteDescriptor.siteName
+            },
+            supportedActions = kurobaProxy.supportedActions.joinToString { proxyActionType ->
+              proxyActionTypeToString(proxyActionType)
+            },
+            proxyType = proxyTypeToString(kurobaProxy.proxyType)
           )
         }
 

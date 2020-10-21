@@ -1,7 +1,10 @@
 package com.github.k1rakishou.chan.features.proxies.epoxy
 
 import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.util.AttributeSet
+import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
@@ -9,9 +12,14 @@ import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.features.proxies.ProxySelectionHelper
+import com.github.k1rakishou.chan.features.proxies.data.ProxyEntryViewSelection
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableSwitchMaterial
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+import com.github.k1rakishou.chan.ui.view.SelectionCheckView
+import com.github.k1rakishou.chan.utils.setBackgroundColorFast
+import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.google.android.material.textview.MaterialTextView
 import javax.inject.Inject
 
@@ -25,6 +33,8 @@ class EpoxyProxyView @JvmOverloads constructor(
   @Inject
   lateinit var themeEngine: ThemeEngine
 
+  private var proxySelectionHelper: ProxySelectionHelper? = null
+
   private val proxyEntryViewHolder: LinearLayout
   private val proxyAddress: ColorizableTextView
   private val proxyPort: ColorizableTextView
@@ -33,6 +43,7 @@ class EpoxyProxyView @JvmOverloads constructor(
   private val proxyType: MaterialTextView
   private val proxySupportedSites: MaterialTextView
   private val proxySupportedActions: MaterialTextView
+  private val proxySelectionCheckView: SelectionCheckView
 
   init {
     Chan.inject(this)
@@ -46,6 +57,7 @@ class EpoxyProxyView @JvmOverloads constructor(
     proxyType = findViewById(R.id.proxy_type)
     proxySupportedSites = findViewById(R.id.proxy_supported_sites)
     proxySupportedActions = findViewById(R.id.proxy_supported_actions)
+    proxySelectionCheckView = findViewById(R.id.proxy_selection_check_view)
 
     onThemeChanged()
   }
@@ -54,6 +66,11 @@ class EpoxyProxyView @JvmOverloads constructor(
     updateProxyTypeTextColor()
     updateProxySupportedSitesTextColor()
     updateProxySupportedActionsTextColor()
+  }
+
+  @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.DoNotHash])
+  fun setProxySelectionHelper(proxySelectionHelper: ProxySelectionHelper?) {
+    this.proxySelectionHelper = proxySelectionHelper
   }
 
   @ModelProp
@@ -89,6 +106,34 @@ class EpoxyProxyView @JvmOverloads constructor(
     updateProxyTypeTextColor()
   }
 
+  @ModelProp
+  fun proxySelection(proxyEntryViewSelection: ProxyEntryViewSelection?) {
+    if (proxyEntryViewSelection == null) {
+      proxySelectionCheckView.setVisibilityFast(View.GONE)
+      proxyEntryViewHolder.setBackgroundColorFast(Color.TRANSPARENT)
+      return
+    }
+
+    val isSelected = proxyEntryViewSelection.selected
+    proxySelectionCheckView.setVisibilityFast(View.VISIBLE)
+    proxySelectionCheckView.setChecked(isSelected)
+
+    if (isSelected) {
+      proxySettings.isFocusable = false
+      proxySettings.isFocusable = false
+
+      val accent = ColorStateList.valueOf(themeEngine.chanTheme.accentColor)
+        .withAlpha(HIGHLIGHT_COLOR_ALPHA)
+
+      proxyEntryViewHolder.setBackgroundColorFast(accent.defaultColor)
+    } else {
+      proxySettings.isFocusable = true
+      proxySettings.isFocusable = true
+
+      proxyEntryViewHolder.setBackgroundColorFast(Color.TRANSPARENT)
+    }
+  }
+
   @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.IgnoreRequireHashCode])
   fun proxyHolderClickListener(listener: (() -> Unit)?) {
     if (listener == null) {
@@ -97,8 +142,27 @@ class EpoxyProxyView @JvmOverloads constructor(
     }
 
     proxyEntryViewHolder.setOnClickListener {
-      proxyEnableSwitch.isChecked = !proxyEnableSwitch.isChecked
+      val isInSelectionMode = proxySelectionHelper?.isInSelectionMode()
+        ?: return@setOnClickListener
+
+      if (!isInSelectionMode) {
+        proxyEnableSwitch.isChecked = !proxyEnableSwitch.isChecked
+      }
+
       listener.invoke()
+    }
+  }
+
+  @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.IgnoreRequireHashCode])
+  fun proxyHolderLongClickListener(listener: (() -> Unit)?) {
+    if (listener == null) {
+      proxyEntryViewHolder.setOnLongClickListener(null)
+      return
+    }
+
+    proxyEntryViewHolder.setOnLongClickListener {
+      listener.invoke()
+      return@setOnLongClickListener true
     }
   }
 
@@ -126,4 +190,7 @@ class EpoxyProxyView @JvmOverloads constructor(
     proxyType.setTextColor(themeEngine.chanTheme.textColorSecondary)
   }
 
+  companion object {
+    private const val HIGHLIGHT_COLOR_ALPHA = 50
+  }
 }

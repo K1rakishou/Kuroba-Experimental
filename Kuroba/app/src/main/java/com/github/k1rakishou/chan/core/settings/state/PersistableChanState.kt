@@ -18,23 +18,25 @@ object PersistableChanState {
   private val gson = Gson().newBuilder().create()
 
   @JvmField
-  var watchLastCount: IntegerSetting
+  val watchLastCount: IntegerSetting
   @JvmField
-  var hasNewApkUpdate: BooleanSetting
+  val hasNewApkUpdate: BooleanSetting
   @JvmField
-  var previousVersion: IntegerSetting
+  val previousVersion: IntegerSetting
   @JvmField
-  var updateCheckTime: LongSetting
+  val updateCheckTime: LongSetting
   @JvmField
-  var previousDevHash: StringSetting
+  val previousDevHash: StringSetting
   @JvmField
-  var viewThreadBookmarksGridMode: BooleanSetting
+  val viewThreadBookmarksGridMode: BooleanSetting
   @JvmField
-  var shittyPhonesBackgroundLimitationsExplanationDialogShown: BooleanSetting
+  val shittyPhonesBackgroundLimitationsExplanationDialogShown: BooleanSetting
   @JvmField
-  var cloudflarePreloadingExplanationShown: BooleanSetting
+  val cloudflarePreloadingExplanationShown: BooleanSetting
   @JvmField
-  var bookmarksRecyclerIndexAndTop: StringSetting
+  val bookmarksRecyclerIndexAndTop: StringSetting
+  @JvmField
+  val proxyEditingNotificationShown: BooleanSetting
 
   init {
     try {
@@ -62,6 +64,12 @@ object PersistableChanState {
         p,
         "bookmarks_recycler_index_and_top",
         BookmarksRecyclerIndexAndTopInfo.defaultJson(viewThreadBookmarksGridMode)
+      )
+
+      proxyEditingNotificationShown = BooleanSetting(
+        p,
+        "proxy_editing_notification_shown",
+        false
       )
     } catch (e: Exception) {
       Logger.e(TAG, "Error while initializing the state", e)

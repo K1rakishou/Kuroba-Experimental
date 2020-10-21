@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
+import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyBooleanSetting
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyLinkSetting
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyNoSettingsFoundView
@@ -27,7 +28,10 @@ import com.github.k1rakishou.common.exhaustive
 import kotlinx.coroutines.FlowPreview
 import javax.inject.Inject
 
-class MainSettingsControllerV2(context: Context)
+class MainSettingsControllerV2(
+  context: Context,
+  private var drawerCallbacks: DrawerCallbacks?
+)
   : BaseSettingsController(context), ToolbarSearchCallback {
 
   @Inject
@@ -67,7 +71,7 @@ class MainSettingsControllerV2(context: Context)
 
     navigation.swipeable = false
 
-    settingsCoordinator = SettingsCoordinator(context, navigationController!!)
+    settingsCoordinator = SettingsCoordinator(context, requireNavController(), drawerCallbacks)
     settingsCoordinator.onCreate()
     settingsCoordinator.rebuildScreen(defaultScreen, BuildOptions.Default)
 
@@ -79,6 +83,9 @@ class MainSettingsControllerV2(context: Context)
 
   override fun onDestroy() {
     super.onDestroy()
+
+    drawerCallbacks?.hideBottomPanel()
+    drawerCallbacks = null
 
     recyclerView.removeOnScrollListener(scrollListener)
     settingsCoordinator.onDestroy()

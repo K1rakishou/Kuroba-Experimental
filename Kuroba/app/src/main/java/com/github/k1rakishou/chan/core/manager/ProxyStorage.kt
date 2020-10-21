@@ -21,6 +21,9 @@ import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.InetSocketAddress
@@ -46,6 +49,12 @@ class ProxyStorage(
   @GuardedBy("this")
   private val allProxiesMap = mutableMapOf<ProxyKey, KurobaProxy>()
 
+  private val proxyStorageUpdates = ConflatedBroadcastChannel<Unit>()
+
+  fun listenForProxyUpdates(): Flow<Unit> {
+    return proxyStorageUpdates.asFlow()
+  }
+
   fun getCount(): Int = synchronized(this) { allProxiesMap.size }
 
   fun getNewProxyOrder(): Int = synchronized(this) {
@@ -69,7 +78,7 @@ class ProxyStorage(
       return@synchronized proxiesMap[siteDescriptor]
         ?.toList()
         ?.mapNotNull { proxyKey -> allProxiesMap[proxyKey] }
-        ?.filter { kurobaProxy -> proxyActionType in kurobaProxy.supportedActions }
+        ?.filter { kurobaProxy -> proxyActionType in kurobaProxy.supportedActions && kurobaProxy.enabled }
         ?.map { it.asJavaProxy }
         ?: emptyList()
     }
@@ -88,9 +97,52 @@ class ProxyStorage(
     val result = saveProxiesInternal()
     if (result is ModularResult.Error) {
       proxy.enabled = prevEnabledState
+    } else {
+      proxiesUpdated()
     }
 
     return result
+  }
+
+  suspend fun deleteProxies(proxyKeys: List<ProxyKey>): ModularResult<Boolean> {
+    if (proxyKeys.isEmpty()) {
+      return value(false)
+    }
+
+    val oldProxyCopyList = mutableListOf<KurobaProxy>()
+
+    synchronized(this) {
+      proxyKeys.forEach { proxyKey ->
+        val kurobaProxy = allProxiesMap.remove(proxyKey)
+
+        if (kurobaProxy == null) {
+          return@forEach
+        }
+
+        oldProxyCopyList += kurobaProxy.deepCopy()
+
+        kurobaProxy.supportedSites.forEach { siteDescriptor ->
+          proxiesMap.remove(siteDescriptor)
+        }
+      }
+    }
+
+    val saveResult = saveProxiesInternal()
+    if (saveResult is ModularResult.Error) {
+      synchronized(this) {
+        oldProxyCopyList.forEach { kurobaProxy ->
+          allProxiesMap[kurobaProxy.proxyKey] = kurobaProxy
+
+          kurobaProxy.supportedSites.forEach { siteDescriptor ->
+            proxiesMap[siteDescriptor]?.add(kurobaProxy.proxyKey)
+          }
+        }
+      }
+    } else {
+      proxiesUpdated()
+    }
+
+    return saveResult
   }
 
   suspend fun addNewProxy(newProxy: KurobaProxy): ModularResult<Boolean> {
@@ -121,6 +173,8 @@ class ProxyStorage(
           }
         }
       }
+    } else {
+      proxiesUpdated()
     }
 
     return saveResult
@@ -136,6 +190,7 @@ class ProxyStorage(
     try {
       synchronized(this) {
         if (!proxiesFile.exists()) {
+          Logger.d(TAG, "proxiesFile does not exist, nothing to load")
           return@synchronized
         }
 
@@ -163,6 +218,8 @@ class ProxyStorage(
             }
           }
         }
+
+        proxiesUpdated()
       }
     } catch (error: Throwable) {
       Logger.e(TAG, "loadProxies() error", error)
@@ -214,6 +271,10 @@ class ProxyStorage(
   @Synchronized
   fun getProxyByProxyKey(proxyKey: ProxyKey): KurobaProxy? {
     return allProxiesMap[proxyKey]
+  }
+
+  private fun proxiesUpdated() {
+    proxyStorageUpdates.offer(Unit)
   }
 
   private fun initGson(): Gson {
