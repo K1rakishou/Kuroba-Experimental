@@ -27,11 +27,12 @@ import com.github.k1rakishou.chan.controller.transition.PopControllerTransition;
 import com.github.k1rakishou.chan.controller.transition.PushControllerTransition;
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager;
 import com.github.k1rakishou.chan.core.navigation.HasNavigation;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.Logger;
 
 import javax.inject.Inject;
 
 public abstract class NavigationController extends Controller implements HasNavigation {
+    private static final String TAG = "NavigationController";
 
     @Inject
     ControllerNavigationManager controllerNavigationManager;
@@ -57,12 +58,7 @@ public abstract class NavigationController extends Controller implements HasNavi
         final Controller from = getTop();
 
         if (blockingInput) {
-            // Crash on beta and dev builds 
-            if (!AndroidUtils.isStableBuild()) {
-                throwDebugInfo("pushController", to, from, controllerTransition);
-                return false;
-            }
-
+            Logger.e(TAG, "Can't push new controller because blockingInput == true");
             return false;
         }
 
@@ -90,37 +86,12 @@ public abstract class NavigationController extends Controller implements HasNavi
                 : null;
 
         if (blockingInput) {
-            // Crash on beta and dev builds
-            if (!AndroidUtils.isStableBuild()) {
-                throwDebugInfo("popController", to, from, controllerTransition);
-                return false;
-            }
-
+            Logger.e(TAG, "Can't pop controller because blockingInput == true");
             return false;
         }
 
         transition(from, to, false, controllerTransition);
         return true;
-    }
-
-    private void throwDebugInfo(
-            String tag,
-            Controller to,
-            Controller from,
-            ControllerTransition newControllerTransition
-    ) {
-        String toDebugInfo = to != null ? to.getClass().getSimpleName() : null;
-        String fromDebugInfo = from != null ? from.getClass().getSimpleName() : null;
-        String newControllerTransitionDebugInfo = newControllerTransition != null ? newControllerTransition.debugInfo() : null;
-        String currentControllerTransitionDebugInfo = controllerTransition != null ? controllerTransition.debugInfo() : null;
-
-        String debugInfo = tag + ": " +
-                "to=" + toDebugInfo + ", " +
-                "from=" + fromDebugInfo + ", " +
-                "newControllerTransitionDebugInfo=" + newControllerTransitionDebugInfo + ", " +
-                "currentControllerTransitionDebugInfo=" + currentControllerTransitionDebugInfo;
-
-        throw new IllegalStateException(debugInfo);
     }
 
     public boolean isBlockingInput() {
