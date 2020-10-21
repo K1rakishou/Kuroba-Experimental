@@ -50,6 +50,7 @@ import com.github.k1rakishou.chan.StartActivity;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.KeyboardStateListener;
+import com.github.k1rakishou.chan.core.manager.ProxyStorage;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.model.ChanThread;
 import com.github.k1rakishou.chan.core.presenter.ReplyPresenter;
@@ -125,6 +126,8 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
     BoardManager boardManager;
     @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
+    @Inject
+    ProxyStorage proxyStorage;
 
     private ReplyLayoutCallback callback;
     private AuthenticationLayoutInterface authenticationLayout;
@@ -390,6 +393,10 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
             showUrlImagePasteHint();
         } else {
             dismissHint();
+        }
+
+        if (open && proxyStorage.isDirty()) {
+            openMessage(getString(R.string.reply_proxy_list_is_dirty_message), 10000);
         }
     }
 
@@ -748,6 +755,15 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
 
     @Override
     public void openMessage(String text) {
+        openMessage(text, 5000);
+    }
+
+    @Override
+    public void openMessage(String text, int hideDelayMs) {
+        if (hideDelayMs <= 0) {
+            throw new IllegalArgumentException("Bad hideDelayMs: " + hideDelayMs);
+        }
+
         if (text == null) {
             text = "";
         }
@@ -757,7 +773,7 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
         message.setVisibility(TextUtils.isEmpty(text) ? GONE : VISIBLE);
 
         if (!TextUtils.isEmpty(text)) {
-            postDelayed(closeMessageRunnable, 5000);
+            postDelayed(closeMessageRunnable, hideDelayMs);
         }
     }
 

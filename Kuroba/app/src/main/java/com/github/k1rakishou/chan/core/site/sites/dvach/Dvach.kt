@@ -303,7 +303,7 @@ class Dvach : CommonSite() {
 
     @JvmField
     val URL_HANDLER: CommonSiteUrlHandler = object : CommonSiteUrlHandler() {
-      val ROOT = "https://2ch.hk"
+      val ROOT = "https://2ch.hk/"
 
       override fun getSiteClass(): Class<out Site?> {
         return Dvach::class.java
@@ -312,8 +312,8 @@ class Dvach : CommonSite() {
       override val url: HttpUrl
         get() = ROOT.toHttpUrl()
 
-      override val mediaHosts: Array<String>
-        get() = arrayOf(ROOT)
+      override val mediaHosts: Array<HttpUrl>
+        get() = arrayOf(url)
 
       override val names: Array<String>
         get() = arrayOf("dvach", "2ch")

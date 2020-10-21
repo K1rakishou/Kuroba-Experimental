@@ -781,6 +781,7 @@ class ReplyPresenter @Inject constructor(
 
     fun resetAuthentication()
     fun openMessage(message: String?)
+    fun openMessage(message: String?, hideDelayMs: Int)
     fun onPosted()
     fun setCommentHint(hint: String?)
     fun showCommentCounter(show: Boolean)

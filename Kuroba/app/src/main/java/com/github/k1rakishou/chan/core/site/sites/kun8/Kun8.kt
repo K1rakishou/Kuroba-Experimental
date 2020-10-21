@@ -136,7 +136,8 @@ class Kun8 : CommonSite() {
     const val SITE_NAME = "8kun"
 
     val URL_HANDLER: CommonSiteUrlHandler = object : CommonSiteUrlHandler() {
-      override val mediaHosts = arrayOf("media.8kun.top")
+      override val mediaHosts = arrayOf("https://media.8kun.top/".toHttpUrl())
+
       override fun getSiteClass(): Class<out Site?> {
         return Kun8::class.java
       }

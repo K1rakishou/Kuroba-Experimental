@@ -413,7 +413,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="reply_comment_button_math_tag">[math]</string>
     <string name="reply_comment_button_sjis_tag">[sjis]</string>
     <string name="reply_attach_long_click_hint">Long tap to attach image by it\'s URL from the clipboard</string>
-
+    <string name="reply_proxy_list_is_dirty_message">You recently changed your proxy list and didn\'t restart the app. There is a possibility that the next post you make will use a wrong proxy or no proxy at all (that depends on what you\'ve changed). Restart the app to make sure everything works as expected.</string>
 
 
     <string name="delete_confirm">Delete your post?</string>

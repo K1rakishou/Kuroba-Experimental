@@ -105,7 +105,7 @@ class Chan420 : CommonSite() {
     @JvmStatic
     val URL_HANDLER: CommonSiteUrlHandler = object : CommonSiteUrlHandler() {
       
-      override val mediaHosts = arrayOf("boards.420chan.org")
+      override val mediaHosts = arrayOf("https://boards.420chan.org/".toHttpUrl())
       
       override fun getSiteClass(): Class<out Site?> {
         return Chan420::class.java

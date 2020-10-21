@@ -53,9 +53,9 @@ class ProxyStorage(
   @GuardedBy("this")
   private val allProxiesMap = mutableMapOf<ProxyKey, KurobaProxy>()
 
-  private val proxyStorageUpdates = ConflatedBroadcastChannel<Unit>()
+  private val proxyStorageUpdates = ConflatedBroadcastChannel<ProxyStorageUpdate>()
 
-  fun listenForProxyUpdates(): Flow<Unit> {
+  fun listenForProxyUpdates(): Flow<ProxyStorageUpdate> {
     return proxyStorageUpdates.asFlow()
   }
 
@@ -104,7 +104,7 @@ class ProxyStorage(
     if (result is ModularResult.Error) {
       proxy.enabled = prevEnabledState
     } else {
-      proxiesUpdated()
+      proxiesUpdated(ProxyStorageUpdate.ProxyUpdated(proxyKey))
     }
 
     return result
@@ -145,7 +145,7 @@ class ProxyStorage(
         }
       }
     } else {
-      proxiesUpdated()
+      proxiesUpdated(ProxyStorageUpdate.ProxiesDeleted(proxyKeys))
     }
 
     return saveResult
@@ -180,7 +180,7 @@ class ProxyStorage(
         }
       }
     } else {
-      proxiesUpdated()
+      proxiesUpdated(ProxyStorageUpdate.ProxyCreated(newProxy.proxyKey))
     }
 
     return saveResult
@@ -225,7 +225,7 @@ class ProxyStorage(
           }
         }
 
-        proxiesUpdated()
+        proxiesUpdated(ProxyStorageUpdate.ProxiesInitialized)
       }
     } catch (error: Throwable) {
       Logger.e(TAG, "loadProxies() error", error)
@@ -279,9 +279,12 @@ class ProxyStorage(
     return allProxiesMap[proxyKey]
   }
 
-  private fun proxiesUpdated() {
-    isProxyStorageDirty.set(true)
-    proxyStorageUpdates.offer(Unit)
+  private fun proxiesUpdated(proxyStorageUpdate: ProxyStorageUpdate) {
+    if (proxyStorageUpdate !is ProxyStorageUpdate.ProxiesInitialized) {
+      isProxyStorageDirty.set(true)
+    }
+
+    proxyStorageUpdates.offer(proxyStorageUpdate)
   }
 
   private fun initGson(): Gson {
@@ -503,6 +506,13 @@ class ProxyStorage(
         }
       }
     }
+  }
+
+  sealed class ProxyStorageUpdate {
+    object ProxiesInitialized : ProxyStorageUpdate()
+    class ProxyCreated(val proxyKey: ProxyKey) : ProxyStorageUpdate()
+    class ProxyUpdated(val proxyKey: ProxyKey) : ProxyStorageUpdate()
+    class ProxiesDeleted(val proxyKeyList: List<ProxyKey>) : ProxyStorageUpdate()
   }
 
   companion object {
