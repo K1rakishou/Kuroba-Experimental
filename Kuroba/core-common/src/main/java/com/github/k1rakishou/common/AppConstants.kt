@@ -34,6 +34,7 @@ open class AppConstants(
     maxPostsCountInPostsCache = calculatePostsCountForPostsCacheDependingOnDeviceRam(activityManager)
     userAgent = String.format(USER_AGENT_FORMAT, Build.VERSION.RELEASE, Build.MODEL)
     processorsCount = Runtime.getRuntime().availableProcessors()
+      .coerceAtLeast(2)
   }
 
   private fun calculatePostsCountForPostsCacheDependingOnDeviceRam(activityManager: ActivityManager?): Int {
