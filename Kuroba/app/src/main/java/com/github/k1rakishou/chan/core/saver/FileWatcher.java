@@ -72,12 +72,6 @@ public class FileWatcher {
             fileObserver = null;
         }
 
-        // TODO: fileobserver is broken
-        //  int mask = FileObserver.CREATE | FileObserver.DELETE;
-        //  fileObserver = new AFileObserver(to.getAbsolutePath(), mask);
-        //  fileObserver = new AFileObserver("/sdcard/");
-        //  fileObserver.startWatching();
-
         currentPath = to;
 
         File[] files = currentPath.listFiles();

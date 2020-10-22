@@ -1224,7 +1224,7 @@ class ThreadPresenter @Inject constructor(
 
         showToast(context, R.string.board_search_links_are_disabled)
 
-        // TODO(KurobaEx):
+        // TODO(KurobaEx): search links are broken
 //        localSearchManager.onSearchEntered(LocalSearchType.CatalogSearch, searchLink.search)
 //        threadPresenterCallback?.setBoard(boardDescriptor, true)
         return@post

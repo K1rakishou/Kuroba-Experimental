@@ -23,9 +23,6 @@ class ChanDescriptorCache(
   private val chanBoardDao = database.chanBoardDao()
   private val chanThreadDao = database.chanThreadDao()
 
-  // TODO(KurobaEx): handle deletion of boards and threads when deleting (deactivating)
-  //  sites/boards/threads
-
   suspend fun putManyBookmarkIds(bookmarkIdMap: Map<ChanDescriptor.ThreadDescriptor, Long>) {
     mutex.withLock {
       bookmarkIdMap.forEach { (threadDescriptor, bookmarkId) ->
