@@ -113,6 +113,20 @@ sealed class KurobaHtmlElement {
     }
   }
 
+  class Span<T : KurobaHtmlParserCollector>(
+    val attr: KurobaAttribute,
+    val extractor: ((Node, ExtractAttributeValues, T) -> Unit)? = null
+  ) : KurobaHtmlElement() {
+    override fun toString(): String = "span"
+  }
+
+  class Script<T : KurobaHtmlParserCollector>(
+    val attr: KurobaAttribute,
+    val extractor: ((Node, ExtractAttributeValues, T) -> Unit)? = null
+  ) : KurobaHtmlElement() {
+    override fun toString(): String = "script"
+  }
+
   class A<T : KurobaHtmlParserCollector>(
     val attr: KurobaAttribute,
     val extractor: ((Node, ExtractAttributeValues, T) -> Unit)?

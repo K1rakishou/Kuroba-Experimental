@@ -75,10 +75,34 @@ class KurobaParserStepCommand<T : KurobaHtmlParserCollector>(
         element as KurobaHtmlElement.Meta<T>
 
         if (matchMetaInternal(element, childNode)) {
-          val extractedAttrValues = element.attr?.extractAttributeValues(childNode as Element)
-            ?: ExtractAttributeValues()
+          element.extractor?.let { extractor ->
+            val extractedAttrValues = element.attr?.extractAttributeValues(childNode as Element)
+              ?: ExtractAttributeValues()
 
-          element.extractor?.invoke(childNode, extractedAttrValues, collector)
+            extractor.invoke(childNode, extractedAttrValues, collector)
+          }
+          return true
+        }
+      }
+      is KurobaHtmlElement.Span<*> -> {
+        element as KurobaHtmlElement.Span<T>
+
+        if (matchSpanInternal(element, childNode)) {
+          element.extractor?.let { extractor ->
+            val extractedAttrValues = element.attr.extractAttributeValues(childNode as Element)
+            extractor.invoke(childNode, extractedAttrValues, collector)
+          }
+          return true
+        }
+      }
+      is KurobaHtmlElement.Script<*> -> {
+        element as KurobaHtmlElement.Script<T>
+
+        if (matchScriptInternal(element, childNode)) {
+          element.extractor?.let { extractor ->
+            val extractedAttrValues = element.attr.extractAttributeValues(childNode as Element)
+            extractor.invoke(childNode, extractedAttrValues, collector)
+          }
           return true
         }
       }
@@ -86,10 +110,12 @@ class KurobaParserStepCommand<T : KurobaHtmlParserCollector>(
         element as KurobaHtmlElement.Heading<T>
 
         if (matchHeadingInternal(element, childNode)) {
-          val extractedAttrValues = element.attr?.extractAttributeValues(childNode as Element)
-            ?: ExtractAttributeValues()
+          element.extractor?.let { extractor ->
+            val extractedAttrValues = element.attr?.extractAttributeValues(childNode as Element)
+              ?: ExtractAttributeValues()
 
-          element.extractor?.invoke(childNode, extractedAttrValues, collector)
+            extractor.invoke(childNode, extractedAttrValues, collector)
+          }
           return true
         }
       }
@@ -97,9 +123,10 @@ class KurobaParserStepCommand<T : KurobaHtmlParserCollector>(
         element as KurobaHtmlElement.A<T>
 
         if (matchATagInternal(element, childNode)) {
-          val extractedAttrValues = element.attr.extractAttributeValues(childNode)
-
-          element.extractor?.invoke(childNode, extractedAttrValues, collector)
+          element.extractor?.let { extractor ->
+            val extractedAttrValues = element.attr.extractAttributeValues(childNode)
+            extractor.invoke(childNode, extractedAttrValues, collector)
+          }
           return true
         }
       }
@@ -146,6 +173,32 @@ class KurobaParserStepCommand<T : KurobaHtmlParserCollector>(
       if (!matches) {
         return false
       }
+    }
+
+    return matches
+  }
+
+  private fun matchSpanInternal(span: KurobaHtmlElement.Span<T>, childNode: Node): Boolean {
+    if (childNode !is Element || childNode.tagName() != KurobaHtmlParserCommandExecutor.SPAN_TAG) {
+      return false
+    }
+
+    val matches = span.attr.matches(childNode)
+    if (!matches) {
+      return false
+    }
+
+    return matches
+  }
+
+  private fun matchScriptInternal(script: KurobaHtmlElement.Script<T>, childNode: Node): Boolean {
+    if (childNode !is Element || childNode.tagName() != KurobaHtmlParserCommandExecutor.SCRIPT_TAG) {
+      return false
+    }
+
+    val matches = script.attr.matches(childNode)
+    if (!matches) {
+      return false
     }
 
     return matches

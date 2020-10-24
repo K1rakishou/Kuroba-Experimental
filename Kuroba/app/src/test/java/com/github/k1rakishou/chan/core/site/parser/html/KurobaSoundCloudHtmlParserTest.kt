@@ -8,17 +8,14 @@ import org.jsoup.nodes.Element
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.ArgumentMatchers.anyString
-import org.mockito.Mockito
-import org.powermock.api.mockito.PowerMockito
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
 
 @RunWith(PowerMockRunner::class)
 @PrepareForTest(value = [Logger::class, AndroidUtils::class])
-class KurobaSoundCloudHtmlParserTest {
+class KurobaSoundCloudHtmlParserTest : BaseHtmlParserTest() {
 
-  private val kurobaHtmlParserCommandBuffer = KurobaHtmlParserCommandBufferBuilder<TestKurobaParserCollector>()
+  private val kurobaHtmlParserCommandBuffer = KurobaHtmlParserCommandBufferBuilder<TestSoundCloudCollector>()
     .group(groupName = "Main group") {
       htmlElement { html() }
       htmlElement { body() }
@@ -103,33 +100,18 @@ class KurobaSoundCloudHtmlParserTest {
 
   @Before
   fun setup() {
-    PowerMockito.mockStatic(AndroidUtils::class.java)
-    Mockito.`when`(AndroidUtils.getApplicationLabel())
-      .thenReturn("KurobaSoundCloudHtmlParserTest")
-
-    PowerMockito.mockStatic(Logger::class.java)
-
-    Mockito.`when`(Logger.d(anyString(), anyString()))
-      .then { answer ->
-        val fullString = buildString {
-          answer.arguments.forEach { argument ->
-            append(argument as String)
-          }
-        }
-
-        println(fullString)
-      }
+    setupLogging("KurobaSoundCloudHtmlParserTest")
   }
 
   @Test
-  fun `test parse test page1 title, media name and media duration`() {
+  fun `parse test page1 title, media name and media duration`() {
     val fileBytes = javaClass.classLoader!!.getResourceAsStream("parsing/soundcloud_test_html_page1.html")
         .readBytes()
     val fileString = String(fileBytes)
 
-    val testKurobaParserCollector = TestKurobaParserCollector()
+    val testKurobaParserCollector = TestSoundCloudCollector()
     val parserCommandExecutor =
-      KurobaHtmlParserCommandExecutor<TestKurobaParserCollector>(debugMode = true)
+      KurobaHtmlParserCommandExecutor<TestSoundCloudCollector>(debugMode = true)
 
     parserCommandExecutor.executeCommands(
       Jsoup.parse(fileString),
@@ -144,14 +126,14 @@ class KurobaSoundCloudHtmlParserTest {
   }
 
   @Test
-  fun `test parse test page2 title, media name and media duration`() {
+  fun `parse test page2 title, media name and media duration`() {
     val fileBytes = javaClass.classLoader!!.getResourceAsStream("parsing/soundcloud_test_html_page2.html")
       .readBytes()
     val fileString = String(fileBytes)
 
-    val testKurobaParserCollector = TestKurobaParserCollector()
+    val testKurobaParserCollector = TestSoundCloudCollector()
     val parserCommandExecutor =
-      KurobaHtmlParserCommandExecutor<TestKurobaParserCollector>(debugMode = true)
+      KurobaHtmlParserCommandExecutor<TestSoundCloudCollector>(debugMode = true)
 
     parserCommandExecutor.executeCommands(
       Jsoup.parse(fileString),
@@ -165,7 +147,7 @@ class KurobaSoundCloudHtmlParserTest {
     assertEquals("PT00H52M57S", testKurobaParserCollector.duration)
   }
 
-  class TestKurobaParserCollector(
+  class TestSoundCloudCollector(
     var headerLogoText: String? = null,
     var titleArtistPart: String? = null,
     var titleTrackNamePart: String? = null,

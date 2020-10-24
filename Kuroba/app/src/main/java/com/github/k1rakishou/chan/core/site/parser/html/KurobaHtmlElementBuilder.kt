@@ -96,4 +96,24 @@ class KurobaHtmlElementBuilder<T : KurobaHtmlParserCollector> {
     }
   }
 
+  fun span(
+    attr: (KurobaAttributeBuilder.() -> KurobaAttributeBuilder),
+    extractor: ((Node, ExtractAttributeValues, T) -> Unit)? = null
+  ): KurobaHtmlElement.Span<T> {
+    return KurobaHtmlElement.Span<T>(
+      attr(KurobaAttributeBuilder()).build(),
+      extractor
+    )
+  }
+
+  fun script(
+    attr: (KurobaAttributeBuilder.() -> KurobaAttributeBuilder),
+    extractor: ((Node, ExtractAttributeValues, T) -> Unit)? = null
+  ): KurobaHtmlElement.Script<T> {
+    return KurobaHtmlElement.Script<T>(
+      attr(KurobaAttributeBuilder()).build(),
+      extractor
+    )
+  }
+
 }

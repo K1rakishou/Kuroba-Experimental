@@ -206,10 +206,12 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
     const val HEAD_TAG = "head"
     const val A_TAG = "a"
     const val NOSCRIPT_TAG = "noscript"
+    const val SCRIPT_TAG = "script"
     const val ARTICLE_TAG = "article"
     const val HEADER_TAG = "header"
     const val HEADING_TAG = "h"
     const val META_TAG = "meta"
+    const val SPAN_TAG = "span"
 
     const val CLASS_ATTR = "class"
     const val STYLE_ATTR = "style"
