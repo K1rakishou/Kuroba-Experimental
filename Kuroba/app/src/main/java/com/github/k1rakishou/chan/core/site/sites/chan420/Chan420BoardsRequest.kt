@@ -33,8 +33,8 @@ class Chan420BoardsRequest(
   private val siteDescriptor: SiteDescriptor,
   private val boardManager: BoardManager,
   request: Request,
-  okHttpClient: ProxiedOkHttpClient
-) : JsonReaderRequest<List<ChanBoard>>(JsonRequestType.Chan420BoardsJsonRequest, request, okHttpClient) {
+  proxiedOkHttpClient: ProxiedOkHttpClient
+) : JsonReaderRequest<List<ChanBoard>>(JsonRequestType.Chan420BoardsJsonRequest, request, proxiedOkHttpClient) {
 
   override suspend fun readJson(reader: JsonReader): List<ChanBoard> {
     val list: MutableList<ChanBoard> = ArrayList()

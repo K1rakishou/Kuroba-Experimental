@@ -208,7 +208,7 @@ public class ManagerModule {
         File cacheDir = getCacheDir();
 
         return new ReportManager(
-                okHttpClient.getProxiedClient(),
+                okHttpClient.okHttpClient(),
                 settingsNotificationManager,
                 gson,
                 new File(cacheDir, CRASH_LOGS_DIR_NAME)

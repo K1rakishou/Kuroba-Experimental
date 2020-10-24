@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.core.site
 import com.github.k1rakishou.SettingProvider
 import com.github.k1rakishou.chan.Chan.Companion.instance
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -44,7 +45,7 @@ abstract class SiteBase : Site, CoroutineScope {
   private val job = SupervisorJob()
 
   protected val httpCallManager: HttpCallManager by lazy { instance(HttpCallManager::class.java) }
-  protected val okHttpClient: ProxiedOkHttpClient by lazy { instance(ProxiedOkHttpClient::class.java) }
+  protected val proxiedOkHttpClient: ProxiedOkHttpClient by lazy { instance(RealProxiedOkHttpClient::class.java) }
   protected val siteManager: SiteManager by lazy { instance(SiteManager::class.java) }
   protected val imageLoaderV2: ImageLoaderV2 by lazy { instance(ImageLoaderV2::class.java) }
   protected val archivesManager: ArchivesManager by lazy { instance(ArchivesManager::class.java) }

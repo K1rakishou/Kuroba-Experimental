@@ -37,8 +37,8 @@ import java.util.regex.Pattern
 
 class ReleaseUpdateApiRequest(
   request: Request,
-  okHttpClient: ProxiedOkHttpClient
-) : JsonReaderRequest<ReleaseUpdateApiResponse>(JsonRequestType.ReleaseUpdateApiJsonRequest, request, okHttpClient) {
+  proxiedOkHttpClient: ProxiedOkHttpClient
+) : JsonReaderRequest<ReleaseUpdateApiResponse>(JsonRequestType.ReleaseUpdateApiJsonRequest, request, proxiedOkHttpClient) {
   
   override suspend fun readJson(reader: JsonReader): ReleaseUpdateApiResponse {
     val response = ReleaseUpdateApiResponse()

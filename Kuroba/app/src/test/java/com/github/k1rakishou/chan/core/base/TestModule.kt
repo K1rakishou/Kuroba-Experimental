@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.base
 
+import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.downloader.*
@@ -19,7 +20,7 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 
 class TestModule {
-  private var okHttpClient: OkHttpClient? = null
+  private var downloaderOkHttpClient: DownloaderOkHttpClient? = null
   private var proxiedOkHttpClient: ProxiedOkHttpClient? = null
   private var fileManager: FileManager? = null
   private var cacheHandler: CacheHandler? = null
@@ -84,7 +85,7 @@ class TestModule {
   internal fun providePartialContentSupportChecker(): PartialContentSupportChecker {
     if (partialContentSupportChecker == null) {
       partialContentSupportChecker = PartialContentSupportChecker(
-        provideOkHttpClient(),
+        provideDownloaderOkHttpClient(),
         provideActiveDownloads(),
         provideSiteResolver(),
         250L,
@@ -123,7 +124,7 @@ class TestModule {
   internal fun provideChunkDownloader(): ChunkDownloader {
     if (chunkDownloader == null) {
       chunkDownloader = ChunkDownloader(
-        provideOkHttpClient(),
+        provideDownloaderOkHttpClient(),
         provideActiveDownloads(),
         false,
         provideAppConstants()
@@ -182,16 +183,12 @@ class TestModule {
     return chunksCacheDirFile!!
   }
 
-  fun provideOkHttpClient(): OkHttpClient {
-    if (okHttpClient == null) {
-      okHttpClient = OkHttpClient.Builder()
-        .connectTimeout(5, TimeUnit.SECONDS)
-        .readTimeout(5, TimeUnit.SECONDS)
-        .writeTimeout(5, TimeUnit.SECONDS)
-        .build()
+  fun provideDownloaderOkHttpClient(): DownloaderOkHttpClient {
+    if (downloaderOkHttpClient == null) {
+      downloaderOkHttpClient = TextDownloaderOkHttpClient()
     }
 
-    return okHttpClient!!
+    return downloaderOkHttpClient!!
   }
 
   fun provideProxiedOkHttpClient(): ProxiedOkHttpClient {
@@ -202,10 +199,10 @@ class TestModule {
     return proxiedOkHttpClient!!
   }
 
-  class TestProxiedOkHttpClient : ProxiedOkHttpClient {
+  class TextDownloaderOkHttpClient : DownloaderOkHttpClient {
     private var okHttpClient: OkHttpClient? = null
 
-    override fun getProxiedClient(): OkHttpClient {
+    override fun okHttpClient(): OkHttpClient {
       if (okHttpClient == null) {
         okHttpClient = OkHttpClient.Builder()
           .connectTimeout(5, TimeUnit.SECONDS)
@@ -216,6 +213,23 @@ class TestModule {
 
       return okHttpClient!!
     }
+  }
+
+  class TestProxiedOkHttpClient : ProxiedOkHttpClient {
+    private var okHttpClient: OkHttpClient? = null
+
+    override fun okHttpClient(): OkHttpClient {
+      if (okHttpClient == null) {
+        okHttpClient = OkHttpClient.Builder()
+          .connectTimeout(5, TimeUnit.SECONDS)
+          .readTimeout(5, TimeUnit.SECONDS)
+          .writeTimeout(5, TimeUnit.SECONDS)
+          .build()
+      }
+
+      return okHttpClient!!
+    }
+
   }
 
 }

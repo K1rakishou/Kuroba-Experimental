@@ -86,7 +86,7 @@ class Chan4SearchRequest(
           }
 
           if (bodyTagChild is Element) {
-            if (bodyTagChild.tagName() == DIV_TAG &&  bodyTagChild.attr(CLASS_ATTR) == BOARD_BANNER_ATTR_VAL) {
+            if (bodyTagChild.tagName() == DIV_TAG && bodyTagChild.attr(CLASS_ATTR) == BOARD_BANNER_ATTR_VAL) {
               parseTotalFoundEntries(bodyTagChild, totalEntriesFound)
               continue
             }

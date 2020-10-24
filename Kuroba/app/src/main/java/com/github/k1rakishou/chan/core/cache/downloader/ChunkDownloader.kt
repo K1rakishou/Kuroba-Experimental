@@ -58,7 +58,7 @@ internal class ChunkDownloader(
       BackgroundUtils.ensureBackgroundThread()
 
       val serializedEmitter = emitter.serialize()
-      val call = downloaderOkHttpClient.downloaderClient.newCall(httpRequest)
+      val call = downloaderOkHttpClient.okHttpClient().newCall(httpRequest)
 
       // This function will be used to cancel a CHUNK (not the whole file) download upon
       // cancellation

@@ -242,7 +242,7 @@ open class Chan4 : SiteBase() {
         siteDescriptor(),
         boardManager,
         request,
-        okHttpClient
+        proxiedOkHttpClient
       ).execute()
     }
 
@@ -256,7 +256,7 @@ open class Chan4 : SiteBase() {
         board.boardDescriptor,
         board.pages,
         request,
-        okHttpClient
+        proxiedOkHttpClient
       ).execute()
     }
 
@@ -381,7 +381,7 @@ open class Chan4 : SiteBase() {
 
       return Chan4SearchRequest(
         request,
-        okHttpClient,
+        proxiedOkHttpClient,
         searchParams.query,
         searchParams.page
       ).execute()

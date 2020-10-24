@@ -60,7 +60,7 @@ public class CaptchaNoJsPresenterV2 {
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final CaptchaNoJsHtmlParser parser;
-    private final ProxiedOkHttpClient okHttpClient;
+    private final ProxiedOkHttpClient proxiedOkHttpClient;
     private final AppConstants appConstants;
 
     @Nullable
@@ -76,14 +76,14 @@ public class CaptchaNoJsPresenterV2 {
 
     public CaptchaNoJsPresenterV2(
             @Nullable AuthenticationCallbacks callbacks,
-            ProxiedOkHttpClient okHttpClient,
+            ProxiedOkHttpClient proxiedOkHttpClient,
             AppConstants appConstants,
             Context context
     ) {
         this.callbacks = callbacks;
-        this.okHttpClient = okHttpClient;
+        this.proxiedOkHttpClient = proxiedOkHttpClient;
         this.appConstants = appConstants;
-        this.parser = new CaptchaNoJsHtmlParser(context, okHttpClient);
+        this.parser = new CaptchaNoJsHtmlParser(context, proxiedOkHttpClient);
     }
 
     public void init(String siteKey, String baseUrl) {
@@ -138,7 +138,7 @@ public class CaptchaNoJsPresenterV2 {
                             .header("Cookie", defaultGoogleCookies)
                             .build();
 
-                    try (Response response = okHttpClient.getProxiedClient().newCall(request).execute()) {
+                    try (Response response = proxiedOkHttpClient.okHttpClient().newCall(request).execute()) {
                         prevCaptchaInfo = handleGetRecaptchaResponse(response);
                     } finally {
                         verificationInProgress.set(false);
@@ -236,7 +236,7 @@ public class CaptchaNoJsPresenterV2 {
                 .header("Cookie", defaultGoogleCookies)
                 .build();
 
-        try (Response response = okHttpClient.getProxiedClient().newCall(request).execute()) {
+        try (Response response = proxiedOkHttpClient.okHttpClient().newCall(request).execute()) {
             return handleGetRecaptchaResponse(response);
         }
     }

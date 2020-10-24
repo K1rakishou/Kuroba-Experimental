@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.core.cache
 
 import android.annotation.SuppressLint
 import android.net.ConnectivityManager
-import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.cache.downloader.*
 import com.github.k1rakishou.chan.core.model.PostImage
 import com.github.k1rakishou.chan.core.settings.ChanSettings
@@ -30,7 +30,7 @@ class FileCacheV2(
   private val fileManager: FileManager,
   private val cacheHandler: CacheHandler,
   private val siteResolver: SiteResolver,
-  private val downloaderOkHttpClient: DownloaderOkHttpClient,
+  private val downloaderOkHttpClient: RealDownloaderOkHttpClient,
   private val connectivityManager: ConnectivityManager,
   private val appConstants: AppConstants
 ) {

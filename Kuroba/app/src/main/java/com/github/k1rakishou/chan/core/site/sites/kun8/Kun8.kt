@@ -77,7 +77,7 @@ class Kun8 : CommonSite() {
       }
     })
 
-    setActions(object : VichanActions(this@Kun8, okHttpClient, siteManager) {
+    setActions(object : VichanActions(this@Kun8, proxiedOkHttpClient, siteManager) {
 
       override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards> {
         val request = Request.Builder()
@@ -89,7 +89,7 @@ class Kun8 : CommonSite() {
           siteDescriptor(),
           boardManager,
           request,
-          okHttpClient
+          proxiedOkHttpClient
         ).execute()
       }
 

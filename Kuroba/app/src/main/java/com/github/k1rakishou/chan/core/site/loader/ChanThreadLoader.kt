@@ -55,7 +55,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
   @Inject
   lateinit var gson: Gson
   @Inject
-  lateinit var okHttpClient: ProxiedOkHttpClient
+  lateinit var proxiedOkHttpClient: ProxiedOkHttpClient
   @Inject
   lateinit var appConstants: AppConstants
   @Inject
@@ -91,7 +91,7 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
   private val chanThreadLoaderCoordinator by lazy {
     return@lazy ChanThreadLoaderCoordinator(
       gson,
-      okHttpClient,
+      proxiedOkHttpClient,
       savedReplyManager,
       filterEngine,
       chanPostRepository,

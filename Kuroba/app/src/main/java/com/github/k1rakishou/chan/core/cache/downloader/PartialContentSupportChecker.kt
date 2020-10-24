@@ -119,7 +119,7 @@ internal class PartialContentSupportChecker(
     val startTime = System.currentTimeMillis()
 
     return Single.create<PartialContentCheckResult> { emitter ->
-      val call = downloaderOkHttpClient.downloaderClient.newCall(headRequest)
+      val call = downloaderOkHttpClient.okHttpClient().newCall(headRequest)
 
       val disposeFunc = {
         if (!call.isCanceled()) {

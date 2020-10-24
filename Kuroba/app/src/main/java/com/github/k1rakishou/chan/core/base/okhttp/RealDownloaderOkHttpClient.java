@@ -5,6 +5,8 @@ import com.github.k1rakishou.chan.core.di.HttpLoggingInterceptorInstaller;
 import com.github.k1rakishou.chan.core.manager.ProxyStorage;
 import com.github.k1rakishou.chan.core.net.KurobaProxySelector;
 
+import org.jetbrains.annotations.NotNull;
+
 import kotlin.Lazy;
 import okhttp3.Dns;
 import okhttp3.OkHttpClient;
@@ -12,7 +14,7 @@ import okhttp3.logging.HttpLoggingInterceptor;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-public class DownloaderOkHttpClient {
+public class RealDownloaderOkHttpClient implements DownloaderOkHttpClient {
     private final Dns okHttpDns;
     private final Chan.OkHttpProtocols okHttpProtocols;
     private final Lazy<HttpLoggingInterceptor> loggingInterceptorLazyKt;
@@ -20,7 +22,7 @@ public class DownloaderOkHttpClient {
 
     private OkHttpClient downloaderClient;
 
-    public DownloaderOkHttpClient(
+    public RealDownloaderOkHttpClient(
             Dns okHttpDns,
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
@@ -32,7 +34,9 @@ public class DownloaderOkHttpClient {
         this.loggingInterceptorLazyKt = loggingInterceptorLazyKt;
     }
 
-    public OkHttpClient getDownloaderClient() {
+    @NotNull
+    @Override
+    public OkHttpClient okHttpClient() {
         if (downloaderClient == null) {
             synchronized (this) {
                 if (downloaderClient == null) {
@@ -57,5 +61,4 @@ public class DownloaderOkHttpClient {
 
         return downloaderClient;
     }
-
 }

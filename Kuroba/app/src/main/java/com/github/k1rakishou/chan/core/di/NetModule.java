@@ -21,8 +21,8 @@ import android.net.ConnectivityManager;
 
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient;
-import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
+import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
@@ -102,7 +102,7 @@ public class NetModule {
             FileManager fileManager,
             CacheHandler cacheHandler,
             SiteResolver siteResolver,
-            DownloaderOkHttpClient downloaderOkHttpClient,
+            RealDownloaderOkHttpClient realDownloaderOkHttpClient,
             AppConstants appConstants
     ) {
         Logger.d(AppModule.DI_TAG, "File cache V2");
@@ -110,7 +110,7 @@ public class NetModule {
                 fileManager,
                 cacheHandler,
                 siteResolver,
-                downloaderOkHttpClient,
+                realDownloaderOkHttpClient,
                 connectivityManager,
                 appConstants
         );
@@ -190,14 +190,14 @@ public class NetModule {
      */
     @Provides
     @Singleton
-    public DownloaderOkHttpClient provideDownloaderOkHttpClient(
+    public RealDownloaderOkHttpClient provideDownloaderOkHttpClient(
             Dns okHttpDns,
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage
     ) {
         Logger.d(AppModule.DI_TAG, "DownloaderOkHttp client");
 
-        return new DownloaderOkHttpClient(
+        return new RealDownloaderOkHttpClient(
                 okHttpDns,
                 okHttpProtocols,
                 proxyStorage,

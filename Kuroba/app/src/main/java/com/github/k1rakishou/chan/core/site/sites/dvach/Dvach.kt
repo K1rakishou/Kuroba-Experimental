@@ -139,7 +139,7 @@ class Dvach : CommonSite() {
       }
     })
 
-    setActions(object : VichanActions(this@Dvach, okHttpClient, siteManager) {
+    setActions(object : VichanActions(this@Dvach, proxiedOkHttpClient, siteManager) {
       override fun setupPost(reply: Reply, call: MultipartHttpCall): ModularResult<Unit> {
         return super.setupPost(reply, call)
           .mapValue {
@@ -194,7 +194,7 @@ class Dvach : CommonSite() {
               siteDescriptor(),
               boardManager,
               request,
-              okHttpClient
+              proxiedOkHttpClient
             )
           },
           defaultBoardsProvider = {

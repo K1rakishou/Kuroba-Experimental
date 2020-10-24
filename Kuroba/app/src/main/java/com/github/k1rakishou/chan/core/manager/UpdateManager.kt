@@ -79,7 +79,7 @@ class UpdateManager(
   @Inject
   lateinit var fileChooser: FileChooser
   @Inject
-  lateinit var okHttpClient: ProxiedOkHttpClient
+  lateinit var proxiedOkHttpClient: ProxiedOkHttpClient
   @Inject
   lateinit var dialogFactory: DialogFactory
 
@@ -197,7 +197,7 @@ class UpdateManager(
       .get()
       .build()
 
-    val response = BetaUpdateApiRequest(request, okHttpClient).execute()
+    val response = BetaUpdateApiRequest(request, proxiedOkHttpClient).execute()
 
     coroutineScope {
       withContext(Dispatchers.Main) {
@@ -273,7 +273,7 @@ class UpdateManager(
 
     val response = ReleaseUpdateApiRequest(
       request,
-      okHttpClient
+      proxiedOkHttpClient
     ).execute()
 
     coroutineScope {

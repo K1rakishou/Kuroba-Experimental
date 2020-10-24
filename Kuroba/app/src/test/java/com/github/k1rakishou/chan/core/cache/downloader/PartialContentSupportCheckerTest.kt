@@ -42,7 +42,7 @@ class PartialContentSupportCheckerTest {
     AndroidUtils.init(testModule.provideApplication())
     ShadowLog.stream = System.out
 
-    okHttpClient = testModule.provideOkHttpClient()
+    okHttpClient = testModule.provideDownloaderOkHttpClient().okHttpClient()
     siteResolver = testModule.provideSiteResolver()
     activeDownloads = testModule.provideActiveDownloads()
     partialContentSupportChecker = testModule.providePartialContentSupportChecker()

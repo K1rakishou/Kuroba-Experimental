@@ -30,9 +30,9 @@ class Chan4PagesRequest(
   private val boardDescriptor: BoardDescriptor,
   private val boardTotalPagesCount: Int,
   request: Request,
-  okHttpClient: ProxiedOkHttpClient
+  proxiedOkHttpClient: ProxiedOkHttpClient
 ) : JsonReaderRequest<Chan4PagesRequest.BoardPages>(
-  JsonRequestType.Chan4PagesJsonRequest, request, okHttpClient
+  JsonRequestType.Chan4PagesJsonRequest, request, proxiedOkHttpClient
 ) {
   
   override suspend fun readJson(reader: JsonReader): BoardPages {

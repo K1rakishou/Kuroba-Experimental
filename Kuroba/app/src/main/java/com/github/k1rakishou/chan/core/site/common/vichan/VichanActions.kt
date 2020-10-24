@@ -38,7 +38,7 @@ import java.util.regex.Pattern
 
 open class VichanActions(
   commonSite: CommonSite,
-  private val okHttpClient: ProxiedOkHttpClient,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val siteManager: SiteManager
 ) : CommonActions(commonSite) {
 
@@ -87,7 +87,7 @@ open class VichanActions(
       ?: return ModularResult.error(CommonClientException("Site ${siteDescriptor} is disabled or not active"))
 
     val antispam = VichanAntispam(
-      okHttpClient,
+      proxiedOkHttpClient,
       site.resolvable().desktopUrl(reply.chanDescriptor!!, null).toHttpUrl()
     )
 

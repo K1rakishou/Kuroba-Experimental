@@ -26,7 +26,7 @@ abstract class HtmlReaderRequest<T>(
     return withContext(Dispatchers.IO) {
       val response = Try {
         val timedValue = measureTimedValue {
-          proxiedOkHttpClient.proxiedClient.suspendCall(request)
+          proxiedOkHttpClient.okHttpClient().suspendCall(request)
         }
 
         Logger.d(TAG, "Request \"${htmlRequestType.requestTag}\" to \"${request.url}\" " +

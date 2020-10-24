@@ -36,7 +36,7 @@ class ChunkDownloaderTest {
     AndroidUtils.init(testModule.provideApplication())
     ShadowLog.stream = System.out
 
-    okHttpClient = testModule.provideOkHttpClient()
+    okHttpClient = testModule.provideDownloaderOkHttpClient().okHttpClient()
     activeDownloads = testModule.provideActiveDownloads()
     chunkDownloader = testModule.provideChunkDownloader()
     cacheHandler = testModule.provideCacheHandler()

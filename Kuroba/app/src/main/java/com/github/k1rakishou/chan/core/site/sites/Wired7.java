@@ -141,7 +141,7 @@ public class Wired7
         });
 
         setEndpoints(new VichanEndpoints(this, "https://wired-7.org", "https://wired-7.org"));
-        setActions(new Wired7Actions(this, getOkHttpClient(), getSiteManager()));
+        setActions(new Wired7Actions(this, getProxiedOkHttpClient(), getSiteManager()));
         setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
         setParser(new VichanCommentParser(getMockReplyManager()));
     }
@@ -150,10 +150,10 @@ public class Wired7
 
         Wired7Actions(
                 CommonSite commonSite,
-                ProxiedOkHttpClient okHttpClient,
+                ProxiedOkHttpClient proxiedOkHttpClient,
                 SiteManager siteManager
         ) {
-            super(commonSite, okHttpClient, siteManager);
+            super(commonSite, proxiedOkHttpClient, siteManager);
         }
 
         @Override

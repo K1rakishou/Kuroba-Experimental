@@ -24,11 +24,11 @@ import okhttp3.Request
 
 class BetaUpdateApiRequest(
   request: Request,
-  okHttpClient: ProxiedOkHttpClient
+  proxiedOkHttpClient: ProxiedOkHttpClient
 ) : JsonReaderRequest<BetaUpdateApiRequest.DevUpdateApiResponse>(
   JsonRequestType.BetaUpdateApiJsonRequest,
   request,
-  okHttpClient
+  proxiedOkHttpClient
 ) {
   
   override suspend fun readJson(reader: JsonReader): DevUpdateApiResponse {

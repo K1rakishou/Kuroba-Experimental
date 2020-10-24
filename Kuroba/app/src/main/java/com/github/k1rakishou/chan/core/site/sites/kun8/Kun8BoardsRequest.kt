@@ -17,8 +17,8 @@ class Kun8BoardsRequest(
   private val siteDescriptor: SiteDescriptor,
   private val boardManager: BoardManager,
   request: Request,
-  okHttpClient: ProxiedOkHttpClient
-) : JsonReaderRequest<SiteBoards>(JsonRequestType.Kun8BoardsJsonRequest, request, okHttpClient) {
+  proxiedOkHttpClient: ProxiedOkHttpClient
+) : JsonReaderRequest<SiteBoards>(JsonRequestType.Kun8BoardsJsonRequest, request, proxiedOkHttpClient) {
 
   override suspend fun readJson(reader: JsonReader): SiteBoards {
     val list: MutableList<ChanBoard> = ArrayList()

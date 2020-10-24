@@ -122,7 +122,7 @@ public class Lainchan extends CommonSite {
         });
 
         setEndpoints(new VichanEndpoints(this, "https://lainchan.org", "https://lainchan.org"));
-        setActions(new VichanActions(this, getOkHttpClient(), getSiteManager()));
+        setActions(new VichanActions(this, getProxiedOkHttpClient(), getSiteManager()));
         setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
         setParser(new VichanCommentParser(getMockReplyManager()));
     }

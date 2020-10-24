@@ -44,7 +44,7 @@ class ConcurrentChunkedFileDownloaderTest {
 
     activeDownloads = testModule.provideActiveDownloads()
     fileManager = testModule.provideFileManager()
-    okHttpClient = testModule.provideOkHttpClient()
+    okHttpClient = testModule.provideDownloaderOkHttpClient().okHttpClient()
     cacheHandler = testModule.provideCacheHandler()
     cacheDirFile = testModule.provideCacheDirFile()
     chunksCacheDirFile = testModule.provideChunksCacheDirFile()

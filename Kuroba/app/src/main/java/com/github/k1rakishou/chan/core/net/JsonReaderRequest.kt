@@ -41,7 +41,7 @@ abstract class JsonReaderRequest<T>(
     return withContext(Dispatchers.IO) {
       val response = Try {
         val timedValue = measureTimedValue {
-          proxiedOkHttpClient.proxiedClient.suspendCall(request)
+          proxiedOkHttpClient.okHttpClient().suspendCall(request)
         }
 
         Logger.d(TAG, "Request \"${jsonRequestType.requestTag}\" to \"${request.url}\" " +

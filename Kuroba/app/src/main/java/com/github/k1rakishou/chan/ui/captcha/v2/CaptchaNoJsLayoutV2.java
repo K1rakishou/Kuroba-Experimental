@@ -83,7 +83,7 @@ public class CaptchaNoJsLayoutV2
     @Inject
     CaptchaHolder captchaHolder;
     @Inject
-    ProxiedOkHttpClient okHttpClient;
+    ProxiedOkHttpClient proxiedOkHttpClient;
     @Inject
     ThemeEngine themeEngine;
     @Inject
@@ -101,7 +101,7 @@ public class CaptchaNoJsLayoutV2
         super(context, attrs, defStyleAttr);
         inject(this);
 
-        this.presenter = new CaptchaNoJsPresenterV2(this, okHttpClient, appConstants, context);
+        this.presenter = new CaptchaNoJsPresenterV2(this, proxiedOkHttpClient, appConstants, context);
         this.adapter = new CaptchaNoJsV2Adapter();
 
         View view = inflate(context, R.layout.layout_captcha_nojs_v2, this);

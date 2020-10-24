@@ -66,7 +66,7 @@ public class CaptchaNojsLayoutV1
     @Inject
     CaptchaHolder captchaHolder;
     @Inject
-    ProxiedOkHttpClient okHttpClient;
+    ProxiedOkHttpClient proxiedOkHttpClient;
 
     private AuthenticationLayoutCallback callback;
     private String baseUrl;
@@ -176,7 +176,7 @@ public class CaptchaNojsLayoutV1
                 .header("Referer", baseUrl)
                 .build();
 
-        okHttpClient.getProxiedClient().newCall(request).enqueue(new Callback() {
+        proxiedOkHttpClient.okHttpClient().newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
             }

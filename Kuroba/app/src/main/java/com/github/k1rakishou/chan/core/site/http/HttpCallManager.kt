@@ -36,7 +36,7 @@ import javax.inject.Inject
  */
 @DoNotStrip
 class HttpCallManager @Inject constructor(
-  private val okHttpClient: ProxiedOkHttpClient,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val appConstants: AppConstants
 ) {
   
@@ -88,7 +88,7 @@ class HttpCallManager @Inject constructor(
         .header("User-Agent", appConstants.userAgent)
         .build()
 
-      val response = Try { okHttpClient.proxiedClient.suspendCall(request) }
+      val response = Try { proxiedOkHttpClient.okHttpClient().suspendCall(request) }
         .safeUnwrap { error ->
           Logger.e(TAG, "Error while trying to execute request", error)
           return@withContext HttpCall.HttpCallResult.Fail(httpCall, error)

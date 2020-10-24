@@ -63,12 +63,12 @@ public class CaptchaNoJsHtmlParser {
     private static final String CHALLENGE_IMAGE_FILE_NAME = "challenge_image_file";
     private static final int SUCCESS_STATUS_CODE = 200;
 
-    private ProxiedOkHttpClient okHttpClient;
+    private ProxiedOkHttpClient proxiedOkHttpClient;
     private Context context;
 
-    public CaptchaNoJsHtmlParser(Context context, ProxiedOkHttpClient okHttpClient) {
+    public CaptchaNoJsHtmlParser(Context context, ProxiedOkHttpClient proxiedOkHttpClient) {
         this.context = context;
-        this.okHttpClient = okHttpClient;
+        this.proxiedOkHttpClient = proxiedOkHttpClient;
     }
 
     @NonNull
@@ -292,7 +292,7 @@ public class CaptchaNoJsHtmlParser {
             throws IOException, CaptchaNoJsV2ParsingError {
         Request request = new Request.Builder().url(fullUrl).build();
 
-        try (Response response = okHttpClient.getProxiedClient().newCall(request).execute()) {
+        try (Response response = proxiedOkHttpClient.okHttpClient().newCall(request).execute()) {
             if (response.code() != SUCCESS_STATUS_CODE) {
                 throw new CaptchaNoJsV2ParsingError(
                         "Could not download challenge image, status code = " + response.code());

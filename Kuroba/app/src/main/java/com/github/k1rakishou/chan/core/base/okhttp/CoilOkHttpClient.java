@@ -7,6 +7,8 @@ import com.github.k1rakishou.chan.core.di.HttpLoggingInterceptorInstaller;
 import com.github.k1rakishou.chan.core.manager.ProxyStorage;
 import com.github.k1rakishou.chan.core.net.KurobaProxySelector;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 
 import kotlin.Lazy;
@@ -16,7 +18,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 
 
-public class CoilOkHttpClient {
+public class CoilOkHttpClient implements CustomOkHttpClient {
     private static final String IMAGE_CACHE_DIR = "coil_image_cache_dir";
     private static final long ONE_MB = 1024 * 1024;
     private static final long IMAGE_CACHE_MAX_SIZE = 100 * ONE_MB;
@@ -43,7 +45,9 @@ public class CoilOkHttpClient {
         this.loggingInterceptorLazyKt = loggingInterceptorLazyKt;
     }
 
-    public OkHttpClient getCoilClient() {
+    @NotNull
+    @Override
+    public OkHttpClient okHttpClient() {
         if (coilClient == null) {
             synchronized (this) {
                 if (coilClient == null) {
@@ -73,5 +77,4 @@ public class CoilOkHttpClient {
 
         return coilClient;
     }
-
 }

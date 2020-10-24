@@ -72,7 +72,7 @@ class Chan420 : CommonSite() {
               siteDescriptor(),
               boardManager,
               request,
-              okHttpClient
+              proxiedOkHttpClient
             )
           },
           defaultBoardsProvider = {

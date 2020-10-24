@@ -34,8 +34,8 @@ class Chan4BoardsRequest(
   private val siteDescriptor: SiteDescriptor,
   private val boardManager: BoardManager,
   request: Request,
-  okHttpClient: ProxiedOkHttpClient
-) : JsonReaderRequest<SiteBoards>(JsonRequestType.Chan4BoardsJsonRequest, request, okHttpClient) {
+  proxiedOkHttpClient: ProxiedOkHttpClient
+) : JsonReaderRequest<SiteBoards>(JsonRequestType.Chan4BoardsJsonRequest, request, proxiedOkHttpClient) {
   
   override suspend fun readJson(reader: JsonReader): SiteBoards {
     val list: MutableList<ChanBoard> = ArrayList()

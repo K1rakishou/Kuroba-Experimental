@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class PreloadAllImagesInThreadUseCase(
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
-  private val okHttpClient: ProxiedOkHttpClient
+  private val proxiedOkHttpClient: ProxiedOkHttpClient
 ) : ISuspendUseCase<PreloadAllImagesInThreadUseCase.PreloadAllImagesParams, Unit> {
   private val mutex = Mutex()
 
@@ -134,7 +134,7 @@ class PreloadAllImagesInThreadUseCase(
       .head()
       .build()
 
-    val responseResult = Try { okHttpClient.proxiedClient.suspendCall(request) }
+    val responseResult = Try { proxiedOkHttpClient.okHttpClient().suspendCall(request) }
     if (responseResult is ModularResult.Error) {
       if (verboseLogsEnabled) {
         Logger.e(TAG, "preloadImage() Failed to execute HEAD " +

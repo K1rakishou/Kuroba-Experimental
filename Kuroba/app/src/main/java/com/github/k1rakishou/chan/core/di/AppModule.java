@@ -161,7 +161,7 @@ public class AppModule {
                 .memoryCachePolicy(CachePolicy.ENABLED)
                 .diskCachePolicy(CachePolicy.ENABLED)
                 .networkCachePolicy(CachePolicy.ENABLED)
-                .callFactory(coilOkHttpClient.getCoilClient())
+                .callFactory(coilOkHttpClient.okHttpClient())
                 .build();
     }
 

@@ -64,7 +64,7 @@ import kotlin.time.measureTimedValue
  * */
 class ChanThreadLoaderCoordinator(
   private val gson: Gson,
-  private val okHttpClient: ProxiedOkHttpClient,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val savedReplyManager: SavedReplyManager,
   private val filterEngine: FilterEngine,
   private val chanPostRepository: ChanPostRepository,
@@ -139,7 +139,7 @@ class ChanThreadLoaderCoordinator(
           .build()
 
         val (response, time) = try {
-          measureTimedValue { okHttpClient.proxiedClient.suspendCall(request) }
+          measureTimedValue { proxiedOkHttpClient.okHttpClient().suspendCall(request) }
         } catch (error: IOException) {
           return@Try fallbackPostLoadOnNetworkError(requestParams, error)
         }

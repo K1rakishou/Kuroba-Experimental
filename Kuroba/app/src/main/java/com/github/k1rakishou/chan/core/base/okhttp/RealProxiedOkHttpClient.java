@@ -1,11 +1,11 @@
 package com.github.k1rakishou.chan.core.base.okhttp;
 
-import androidx.annotation.NonNull;
-
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.core.di.HttpLoggingInterceptorInstaller;
 import com.github.k1rakishou.chan.core.manager.ProxyStorage;
 import com.github.k1rakishou.chan.core.net.KurobaProxySelector;
+
+import org.jetbrains.annotations.NotNull;
 
 import kotlin.Lazy;
 import okhttp3.Dns;
@@ -35,9 +35,9 @@ public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
         this.loggingInterceptorLazyKt = loggingInterceptorLazyKt;
     }
 
-    @NonNull
+    @NotNull
     @Override
-    public OkHttpClient getProxiedClient() {
+    public OkHttpClient okHttpClient() {
         if (proxiedClient == null) {
             synchronized (this) {
                 if (proxiedClient == null) {

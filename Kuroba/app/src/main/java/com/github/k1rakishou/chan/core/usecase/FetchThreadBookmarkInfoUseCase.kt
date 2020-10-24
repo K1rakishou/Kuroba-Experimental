@@ -26,7 +26,7 @@ class FetchThreadBookmarkInfoUseCase(
   private val isDevFlavor: Boolean,
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
-  private val okHttpClient: ProxiedOkHttpClient,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val siteManager: SiteManager,
   private val bookmarksManager: BookmarksManager,
   private val appConstants: AppConstants
@@ -86,7 +86,7 @@ class FetchThreadBookmarkInfoUseCase(
       .build()
 
     val response = try {
-      okHttpClient.proxiedClient.suspendCall(request)
+      proxiedOkHttpClient.okHttpClient().suspendCall(request)
     } catch (error: IOException) {
       return ThreadBookmarkFetchResult.Error(error, threadDescriptor)
     }
