@@ -4,14 +4,18 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.model.common.Logger
-import com.github.k1rakishou.model.data.MediaServiceLinkExtraInfo
+import com.github.k1rakishou.model.data.media.GenericVideoId
+import com.github.k1rakishou.model.data.media.MediaServiceLinkExtraInfo
+import com.github.k1rakishou.model.data.video_service.ApiType
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
+import com.github.k1rakishou.model.source.parser.SoundCloudLinkExtractContentParser
+import com.github.k1rakishou.model.source.parser.StreamableLinkExtractContentParser
+import com.github.k1rakishou.model.source.parser.YoutubeLinkExtractContentParser
 import com.github.k1rakishou.model.util.ensureBackgroundThread
-import com.github.k1rakishou.model.util.errorMessageOrClassName
-import com.google.gson.JsonParser
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ResponseBody
 
 open class MediaServiceLinkExtraContentRemoteSource(
   okHttpClient: OkHttpClient,
@@ -22,6 +26,7 @@ open class MediaServiceLinkExtraContentRemoteSource(
 
   open suspend fun fetchFromNetwork(
     requestUrl: String,
+    videoId: GenericVideoId,
     mediaServiceType: MediaServiceType
   ): ModularResult<MediaServiceLinkExtraInfo> {
     logger.log(TAG, "fetchFromNetwork($requestUrl, $mediaServiceType)")
@@ -40,6 +45,7 @@ open class MediaServiceLinkExtraContentRemoteSource(
 
       return@Try extractMediaServiceLinkExtraInfo(
         mediaServiceType,
+        videoId,
         response
       )
     }
@@ -47,6 +53,7 @@ open class MediaServiceLinkExtraContentRemoteSource(
 
   private fun extractMediaServiceLinkExtraInfo(
     mediaServiceType: MediaServiceType,
+    videoId: GenericVideoId,
     response: Response
   ): MediaServiceLinkExtraInfo {
     ensureBackgroundThread()
@@ -57,27 +64,30 @@ open class MediaServiceLinkExtraContentRemoteSource(
           return MediaServiceLinkExtraInfo.empty()
         }
 
-        val parser = JsonParser.parseString(body.string())
-
-        val title = MediaServiceLinkExtraContentRemoteSourceHelper
-          .tryExtractVideoTitle(mediaServiceType, parser)
-          .peekError { error ->
-            logger.logError(TAG, "Error while trying to extract video " +
-              "title for service ($mediaServiceType), " +
-              "error = ${error.errorMessageOrClassName()}")
-          }
-          .valueOrNull()
-        val duration = MediaServiceLinkExtraContentRemoteSourceHelper
-          .tryExtractVideoDuration(mediaServiceType, parser)
-          .peekError { error ->
-            logger.logError(TAG, "Error while trying to extract video " +
-              "duration for service ($mediaServiceType), " +
-              "error = ${error.errorMessageOrClassName()}")
-          }
-          .valueOrNull()
-
-        return@use MediaServiceLinkExtraInfo(title, duration)
+        return@use when (mediaServiceType.apiType) {
+          ApiType.Html -> useHtmlParser(mediaServiceType, videoId, body)
+          ApiType.Json -> throw NotImplementedError("Not implemented because all current fetchers use HTML")
+        }
       }
     }
   }
+
+  private fun useHtmlParser(
+    mediaServiceType: MediaServiceType,
+    videoId: GenericVideoId,
+    body: ResponseBody
+  ): MediaServiceLinkExtraInfo {
+    return when (mediaServiceType) {
+      MediaServiceType.SoundCloud -> {
+        SoundCloudLinkExtractContentParser.parse(mediaServiceType, videoId, body)
+      }
+      MediaServiceType.Streamable -> {
+        StreamableLinkExtractContentParser.parse(mediaServiceType, videoId, body)
+      }
+      MediaServiceType.Youtube -> {
+        YoutubeLinkExtractContentParser.parse(mediaServiceType, videoId, body)
+      }
+    }
+  }
+
 }

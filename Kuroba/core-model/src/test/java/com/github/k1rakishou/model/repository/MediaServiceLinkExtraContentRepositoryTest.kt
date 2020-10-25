@@ -2,7 +2,8 @@ package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.TestDatabaseModuleComponent
-import com.github.k1rakishou.model.data.MediaServiceLinkExtraInfo
+import com.github.k1rakishou.model.data.media.GenericVideoId
+import com.github.k1rakishou.model.data.media.MediaServiceLinkExtraInfo
 import com.github.k1rakishou.model.data.video_service.MediaServiceLinkExtraContent
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
 import com.github.k1rakishou.model.source.cache.GenericCacheSource
@@ -18,7 +19,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.ArgumentMatchers.anyString
 import org.robolectric.RobolectricTestRunner
 
 @ExperimentalCoroutinesApi
@@ -26,7 +26,7 @@ import org.robolectric.RobolectricTestRunner
 class MediaServiceLinkExtraContentRepositoryTest {
   private val coroutineScope = TestCoroutineScope()
 
-  lateinit var cache: GenericCacheSource<String, MediaServiceLinkExtraContent>
+  lateinit var cache: GenericCacheSource<MediaServiceLinkExtraContentRepository.MediaServiceKey, MediaServiceLinkExtraContent>
   lateinit var repository: MediaServiceLinkExtraContentRepository
   lateinit var localSource: MediaServiceLinkExtraContentLocalSource
   lateinit var remoteSource: MediaServiceLinkExtraContentRemoteSource
@@ -53,13 +53,13 @@ class MediaServiceLinkExtraContentRepositoryTest {
   fun `test repository when cache hit should not get data from neither local source nor remote source`() {
     runBlocking(Dispatchers.Default) {
       val requestUrl = "youtube.com/test_url"
-      val videoId = "testVideoId234234234"
+      val videoId = GenericVideoId("testVideoId234234234")
       val serviceType = MediaServiceType.Youtube
       val duration = Period.parse("P1M")
       val title = null
       val content = MediaServiceLinkExtraContent(videoId, serviceType, title, duration)
 
-      whenever(cache.get(anyString())).thenReturn(content)
+      whenever(cache.get(any())).thenReturn(content)
       whenever(localSource.deleteOlderThan(any())).thenReturn(1)
 
       val linkExtraContent = repository.getLinkExtraContent(serviceType, requestUrl, videoId).unwrap()
@@ -77,15 +77,16 @@ class MediaServiceLinkExtraContentRepositoryTest {
   fun `test repository when cache miss but local source hit should not get data from remote source`() {
     runBlocking(Dispatchers.Default) {
       val requestUrl = "youtube.com/test_url"
-      val videoId = "testVideoId234234234"
+      val videoId = GenericVideoId("testVideoId234234234")
       val serviceType = MediaServiceType.Youtube
+      val mediaServiceKey = MediaServiceLinkExtraContentRepository.MediaServiceKey(videoId, serviceType)
       val duration = Period.parse("P1M")
       val title = null
       val content = MediaServiceLinkExtraContent(videoId, serviceType, title, duration)
 
-      whenever(cache.get(anyString())).thenReturn(null)
+      whenever(cache.get(any())).thenReturn(null)
       whenever(localSource.deleteOlderThan(any())).thenReturn(1)
-      whenever(localSource.selectByVideoId(videoId)).thenReturn(content)
+      whenever(localSource.selectByMediaServiceKey(videoId, mediaServiceKey)).thenReturn(content)
 
       val linkExtraContent = repository.getLinkExtraContent(serviceType, requestUrl, videoId).unwrap()
       assertEquals(videoId, linkExtraContent.videoId)
@@ -94,7 +95,7 @@ class MediaServiceLinkExtraContentRepositoryTest {
       assertEquals(duration, linkExtraContent.videoDuration)
 
       verify(localSource, times(1)).deleteOlderThan(any())
-      verify(localSource, times(1)).selectByVideoId(videoId)
+      verify(localSource, times(1)).selectByMediaServiceKey(videoId, mediaServiceKey)
       verifyZeroInteractions(remoteSource)
     }
   }
@@ -103,17 +104,18 @@ class MediaServiceLinkExtraContentRepositoryTest {
   fun `test when both are empty get data from the remote source`() {
     runBlocking(Dispatchers.Default) {
       val requestUrl = "youtube.com/test_url"
-      val videoId = "testVideoId234234234"
+      val videoId = GenericVideoId("testVideoId234234234")
       val serviceType = MediaServiceType.Youtube
+      val mediaServiceKey = MediaServiceLinkExtraContentRepository.MediaServiceKey(videoId, serviceType)
       val duration = Period.parse("P1M")
       val title = null
       val content = MediaServiceLinkExtraContent(videoId, serviceType, title, duration)
       val info = MediaServiceLinkExtraInfo(title, duration)
 
-      whenever(cache.get(anyString())).thenReturn(null)
+      whenever(cache.get(any())).thenReturn(null)
       whenever(localSource.deleteOlderThan(any())).thenReturn(1)
-      whenever(localSource.selectByVideoId(videoId)).thenReturn(null)
-      whenever(remoteSource.fetchFromNetwork(requestUrl, serviceType)).thenReturn(ModularResult.value(info))
+      whenever(localSource.selectByMediaServiceKey(videoId, mediaServiceKey)).thenReturn(null)
+      whenever(remoteSource.fetchFromNetwork(requestUrl, videoId, serviceType)).thenReturn(ModularResult.value(info))
       whenever(localSource.insert(content)).thenReturn(Unit)
 
       val linkExtraContent = repository.getLinkExtraContent(serviceType, requestUrl, videoId).unwrap()
@@ -123,9 +125,9 @@ class MediaServiceLinkExtraContentRepositoryTest {
       assertEquals(duration, linkExtraContent.videoDuration)
 
       verify(localSource, times(1)).deleteOlderThan(any())
-      verify(localSource, times(1)).selectByVideoId(videoId)
+      verify(localSource, times(1)).selectByMediaServiceKey(videoId, mediaServiceKey)
       verify(localSource, times(1)).insert(content)
-      verify(remoteSource, times(1)).fetchFromNetwork(requestUrl, serviceType)
+      verify(remoteSource, times(1)).fetchFromNetwork(requestUrl, videoId, serviceType)
     }
   }
 }

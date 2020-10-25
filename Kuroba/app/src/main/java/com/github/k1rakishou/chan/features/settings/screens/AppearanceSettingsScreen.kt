@@ -27,6 +27,7 @@ class AppearanceSettingsScreen(
       buildAppearanceSettingsGroup(),
       buildLayoutSettingsGroup(),
       buildPostSettingsGroup(),
+      buildPostLinksSettingsGroup(),
       buildImageSettingsGroup()
     )
   }
@@ -204,9 +205,25 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
+        return group
+      }
+    )
+  }
+
+  private fun buildPostLinksSettingsGroup(): SettingsGroup.SettingsGroupBuilder {
+    val identifier = AppearanceScreen.PostLinksGroup
+
+    return SettingsGroup.SettingsGroupBuilder(
+      groupIdentifier = identifier,
+      buildFunction = fun(): SettingsGroup {
+        val group = SettingsGroup(
+          groupTitle = context.getString(R.string.setting_group_post_links),
+          groupIdentifier = identifier
+        )
+
         group += BooleanSettingV2.createBuilder(
           context = context,
-          identifier = AppearanceScreen.PostGroup.ParseYoutubeTitlesAndDuration,
+          identifier = AppearanceScreen.PostLinksGroup.ParseYoutubeTitlesAndDuration,
           topDescriptionIdFunc = { R.string.setting_youtube_title_and_durations },
           bottomDescriptionIdFunc = { R.string.setting_youtube_title_and_durations_description },
           setting = ChanSettings.parseYoutubeTitlesAndDuration,
@@ -215,17 +232,33 @@ class AppearanceSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
-          identifier = AppearanceScreen.PostGroup.ShowYoutubeLinkAlongWithTitleAndDuration,
+          identifier = AppearanceScreen.PostLinksGroup.ParseSoundCloudTitlesAndDuration,
+          topDescriptionIdFunc = { R.string.setting_soundcloud_title_and_durations },
+          bottomDescriptionIdFunc = { R.string.setting_soundcloud_title_and_durations_description },
+          setting = ChanSettings.parseSoundCloudTitlesAndDuration,
+          requiresUiRefresh = true
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = AppearanceScreen.PostLinksGroup.ParseStreamableTitlesAndDuration,
+          topDescriptionIdFunc = { R.string.setting_streamable_title_and_durations },
+          bottomDescriptionIdFunc = { R.string.setting_streamable_title_and_durations_description },
+          setting = ChanSettings.parseStreamableTitlesAndDuration,
+          requiresUiRefresh = true
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = AppearanceScreen.PostLinksGroup.ShowLinkAlongWithTitleAndDuration,
           topDescriptionIdFunc = { R.string.setting_show_link_along_with_title_and_duration_title },
           bottomDescriptionIdFunc = { R.string.setting_show_link_along_with_title_and_duration_description },
-          setting = ChanSettings.showYoutubeLinkAlongWithTitleAndDuration,
-          dependsOnSetting = ChanSettings.parseYoutubeTitlesAndDuration,
+          setting = ChanSettings.showLinkAlongWithTitleAndDuration,
           requiresUiRefresh = true
         )
 
         return group
-      }
-    )
+      })
   }
 
   private fun buildLayoutSettingsGroup(): SettingsGroup.SettingsGroupBuilder {

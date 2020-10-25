@@ -16,6 +16,12 @@ import org.joda.time.Period
       value = [
         MediaServiceLinkExtraContentEntity.INSERTED_AT_COLUMN_NAME
       ]
+    ),
+    Index(
+      value = [
+        MediaServiceLinkExtraContentEntity.VIDEO_ID_COLUMN_NAME,
+        MediaServiceLinkExtraContentEntity.MEDIA_SERVICE_TYPE
+      ]
     )
   ]
 )

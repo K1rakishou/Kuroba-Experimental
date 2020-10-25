@@ -237,11 +237,15 @@ public class ChanSettings {
     public static final BooleanSetting anonymize;
     public static final BooleanSetting showAnonymousName;
     public static final BooleanSetting anonymizeIds;
-    public static final BooleanSetting parseYoutubeTitlesAndDuration;
-    public static final BooleanSetting showYoutubeLinkAlongWithTitleAndDuration;
     public static final BooleanSetting markYourPostsOnScrollbar;
     public static final BooleanSetting markRepliesToYourPostOnScrollbar;
     public static final BooleanSetting markCrossThreadQuotesOnScrollbar;
+
+    // Post links parsing
+    public static final BooleanSetting parseYoutubeTitlesAndDuration;
+    public static final BooleanSetting parseSoundCloudTitlesAndDuration;
+    public static final BooleanSetting parseStreamableTitlesAndDuration;
+    public static final BooleanSetting showLinkAlongWithTitleAndDuration;
 
     // Images
     public static final BooleanSetting hideImages;
@@ -278,7 +282,6 @@ public class ChanSettings {
     public static final BooleanSetting markUnseenPosts;
 
     // Other options
-    public static final StringSetting parseYoutubeAPIKey;
     public static final BooleanSetting fullUserRotationEnable;
     public static final BooleanSetting allowFilePickChooser;
     public static final BooleanSetting showCopyApkUpdateDialog;
@@ -385,11 +388,15 @@ public class ChanSettings {
             anonymize = new BooleanSetting(p, "preference_anonymize", false);
             showAnonymousName = new BooleanSetting(p, "preference_show_anonymous_name", false);
             anonymizeIds = new BooleanSetting(p, "preference_anonymize_ids", false);
-            parseYoutubeTitlesAndDuration = new BooleanSetting(p, "parse_youtube_titles_and_duration", true);
-            showYoutubeLinkAlongWithTitleAndDuration = new BooleanSetting(p, "show_youtube_link_along_with_title_and_duration", true);
             markYourPostsOnScrollbar = new BooleanSetting(p, "mark_your_posts_on_scrollbar", true);
             markRepliesToYourPostOnScrollbar = new BooleanSetting(p, "mark_replies_to_your_posts_on_scrollbar", true);
             markCrossThreadQuotesOnScrollbar = new BooleanSetting(p, "mark_cross_thread_quotes_on_scrollbar", false);
+
+            // Post links parsing
+            parseYoutubeTitlesAndDuration = new BooleanSetting(p, "parse_youtube_titles_and_duration", true);
+            parseSoundCloudTitlesAndDuration = new BooleanSetting(p, "parse_soundcloud_titles_and_duration", true);
+            parseStreamableTitlesAndDuration = new BooleanSetting(p, "parse_streamable_titles_and_duration", true);
+            showLinkAlongWithTitleAndDuration = new BooleanSetting(p, "show_link_along_with_title_and_duration", true);
 
             // Images
             hideImages = new BooleanSetting(p, "preference_hide_images", false);
@@ -427,9 +434,6 @@ public class ChanSettings {
             markUnseenPosts = new BooleanSetting(p, "preference_mark_unseen_posts", true);
 
             // Other options
-            // this is 4chanX's key, but it is recommended that you use your own
-            parseYoutubeAPIKey =
-                    new StringSetting(p, "parse_youtube_API_key", "AIzaSyB5_zaen_-46Uhz1xGR-lz1YoUMHqCD6CE");
             fullUserRotationEnable = new BooleanSetting(p, "full_user_rotation_enable", true);
             allowFilePickChooser = new BooleanSetting(p, "allow_file_picker_chooser", false);
             showCopyApkUpdateDialog = new BooleanSetting(p, "show_copy_apk_update_dialog", true);

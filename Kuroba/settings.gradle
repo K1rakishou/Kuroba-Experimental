@@ -1,3 +1,4 @@
+include ':core-parser'
 include ':core-settings'
 include ':core-common'
 include ':core-model'

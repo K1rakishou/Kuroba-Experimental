@@ -21,6 +21,7 @@ import android.net.ConnectivityManager;
 
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient;
+import com.github.k1rakishou.chan.core.base.okhttp.HttpLoggingInterceptorLazy;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
@@ -42,11 +43,8 @@ import java.io.File;
 
 import javax.inject.Singleton;
 
-import kotlin.Lazy;
-import kotlin.LazyKt;
 import kotlinx.coroutines.CoroutineScope;
 import okhttp3.Dns;
-import okhttp3.logging.HttpLoggingInterceptor;
 
 import static com.github.k1rakishou.chan.core.di.AppModule.getCacheDir;
 
@@ -54,12 +52,7 @@ public class NetModule {
     private static final String FILE_CACHE_DIR = "filecache";
     private static final String FILE_CHUNKS_CACHE_DIR = "file_chunks_cache";
 
-    private final Lazy<HttpLoggingInterceptor> loggingInterceptorLazyKt = LazyKt.lazy(() -> {
-        HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
-        logging.setLevel(HttpLoggingInterceptor.Level.HEADERS);
-
-        return logging;
-    });
+    private final HttpLoggingInterceptorLazy httpLoggingInterceptorLazy = new HttpLoggingInterceptorLazy();
 
     @Provides
     @Singleton
@@ -159,7 +152,7 @@ public class NetModule {
                 okHttpDns,
                 okHttpProtocols,
                 proxyStorage,
-                loggingInterceptorLazyKt
+                httpLoggingInterceptorLazy
         );
     }
 
@@ -181,7 +174,7 @@ public class NetModule {
                 okHttpDns,
                 okHttpProtocols,
                 proxyStorage,
-                loggingInterceptorLazyKt
+                httpLoggingInterceptorLazy
         );
     }
 
@@ -201,7 +194,7 @@ public class NetModule {
                 okHttpDns,
                 okHttpProtocols,
                 proxyStorage,
-                loggingInterceptorLazyKt
+                httpLoggingInterceptorLazy
         );
     }
 }

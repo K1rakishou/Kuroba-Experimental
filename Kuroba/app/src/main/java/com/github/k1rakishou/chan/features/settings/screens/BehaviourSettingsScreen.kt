@@ -48,15 +48,6 @@ class BehaviourSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += InputSettingV2.createBuilder<String>(
-          context = context,
-          identifier = BehaviorScreen.OtherSettingsGroup.ParseYoutubeAPIKey,
-          topDescriptionIdFunc = { R.string.setting_youtube_api_key },
-          bottomDescriptionStringFunc = { ChanSettings.parseYoutubeAPIKey.get() },
-          setting = ChanSettings.parseYoutubeAPIKey,
-          inputType = DialogFactory.DialogInputType.String
-        )
-
         group += BooleanSettingV2.createBuilder(
           context = context,
           identifier = BehaviorScreen.OtherSettingsGroup.FullUserRotationEnable,

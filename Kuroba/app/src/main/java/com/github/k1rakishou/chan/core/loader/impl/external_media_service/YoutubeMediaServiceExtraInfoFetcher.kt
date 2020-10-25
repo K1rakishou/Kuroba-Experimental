@@ -2,17 +2,15 @@ package com.github.k1rakishou.chan.core.loader.impl.external_media_service
 
 import android.graphics.BitmapFactory
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.loader.impl.post_comment.CommentPostLinkableSpan
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.ExtraLinkInfo
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.LinkInfoRequest
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.SpanUpdateBatch
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.groupOrNull
-import com.github.k1rakishou.model.data.video_service.MediaServiceLinkExtraContent
+import com.github.k1rakishou.model.data.media.GenericVideoId
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository
 import io.reactivex.Single
@@ -21,7 +19,7 @@ import java.util.regex.Pattern
 
 internal class YoutubeMediaServiceExtraInfoFetcher(
   private val mediaServiceLinkExtraContentRepository: MediaServiceLinkExtraContentRepository
-) : ExternalMediaServiceExtraInfoFetcher {
+) : ExternalMediaServiceExtraInfoFetcher() {
 
   override val mediaServiceType: MediaServiceType
     get() = MediaServiceType.Youtube
@@ -30,9 +28,11 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
     return ChanSettings.parseYoutubeTitlesAndDuration.get()
   }
 
-  override fun isCached(videoId: String): Single<Boolean> {
+  override fun isCached(videoId: GenericVideoId): Single<Boolean> {
+    BackgroundUtils.ensureBackgroundThread()
+
     return rxSingle {
-      return@rxSingle mediaServiceLinkExtraContentRepository.isCached(videoId)
+      return@rxSingle mediaServiceLinkExtraContentRepository.isCached(videoId, mediaServiceType)
         .unwrap()
     }
   }
@@ -44,62 +44,24 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
     BackgroundUtils.ensureBackgroundThread()
 
     return rxSingle {
-      if (!ChanSettings.parseYoutubeTitlesAndDuration.get()) {
+      if (!isEnabled()) {
         return@rxSingle ModularResult.value(
           SpanUpdateBatch(
             requestUrl,
-            ExtraLinkInfo.Success(null, null),
+            ExtraLinkInfo.Success(mediaServiceType, null, null),
             linkInfoRequest.oldPostLinkableSpans,
             youtubeIcon
           )
         )
       }
 
-      val getLinkExtraContentResult = mediaServiceLinkExtraContentRepository.getLinkExtraContent(
-        mediaServiceType,
+      return@rxSingle genericFetch(
+        TAG,
+        youtubeIcon,
         requestUrl,
-        linkInfoRequest.videoId
+        linkInfoRequest,
+        mediaServiceLinkExtraContentRepository
       )
-
-      return@rxSingle processResponse(
-        requestUrl,
-        getLinkExtraContentResult,
-        linkInfoRequest.oldPostLinkableSpans
-      )
-    }
-  }
-
-  private fun processResponse(
-    url: String,
-    mediaServiceLinkExtraContentResult: ModularResult<MediaServiceLinkExtraContent>,
-    oldPostLinkableSpans: List<CommentPostLinkableSpan>
-  ): ModularResult<SpanUpdateBatch> {
-    BackgroundUtils.ensureBackgroundThread()
-
-    return ModularResult.Try {
-      val extraLinkInfo = when (mediaServiceLinkExtraContentResult) {
-        is ModularResult.Error -> ExtraLinkInfo.Error
-        is ModularResult.Value -> {
-          if (mediaServiceLinkExtraContentResult.value.videoDuration == null
-            && mediaServiceLinkExtraContentResult.value.videoDuration == null) {
-            ExtraLinkInfo.NotAvailable
-          } else {
-            ExtraLinkInfo.Success(
-              mediaServiceLinkExtraContentResult.value.videoTitle,
-              mediaServiceLinkExtraContentResult.value.videoDuration
-            )
-          }
-        }
-      }
-
-      return@Try SpanUpdateBatch(
-        url,
-        extraLinkInfo,
-        oldPostLinkableSpans,
-        youtubeIcon
-      )
-    }.peekError { error ->
-      Logger.e(TAG, "Error while processing response", error)
     }
   }
 
@@ -107,34 +69,23 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
     return youtubeLinkPattern.matcher(link).matches()
   }
 
-  override fun extractLinkUniqueIdentifier(link: String): String {
-    return extractVideoId(link)
+  override fun extractLinkVideoId(link: String): GenericVideoId {
+    return GenericVideoId(extractVideoId(link))
   }
 
   override fun formatRequestUrl(link: String): String {
-    return formatGetYoutubeLinkInfoUrl(extractVideoId(link))
+    return link
   }
 
   private fun extractVideoId(link: String): String {
     val matcher = youtubeLinkPattern.matcher(link)
-    if (!matcher.find()) {
-      throw IllegalStateException("Couldn't match link ($link) with the current service." +
-        " Did you forget to call linkMatchesToService() first?")
+    if (!matcher.matches()) {
+      throw IllegalStateException("Couldn't match link ($link) with the current service. " +
+        "Did you forget to call linkMatchesToService() first?")
     }
 
     return checkNotNull(matcher.groupOrNull(1)) {
       "Couldn't extract videoId out of the input link ($link)"
-    }
-  }
-
-  private fun formatGetYoutubeLinkInfoUrl(videoId: String): String {
-    return buildString {
-      append("https://www.googleapis.com/youtube/v3/videos?part=snippet%2CcontentDetails&id=")
-
-      append(videoId)
-      append("&fields=items%28id%2Csnippet%28title%29%2CcontentDetails%28duration%29%29&key=")
-
-      append(ChanSettings.parseYoutubeAPIKey.get())
     }
   }
 

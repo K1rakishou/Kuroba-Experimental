@@ -4,6 +4,7 @@ import androidx.room.withTransaction
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.TestDatabaseModuleComponent
 import com.github.k1rakishou.model.dao.MediaServiceLinkExtraContentDao
+import com.github.k1rakishou.model.data.media.GenericVideoId
 import com.github.k1rakishou.model.data.video_service.MediaServiceLinkExtraContent
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
 import com.github.k1rakishou.model.entity.MediaServiceLinkExtraContentEntity
@@ -38,7 +39,7 @@ class MediaServiceLinkExtraContentLocalSourceTest {
   fun `test shouldn't update old entity with the new one if they are the same`() {
     runBlocking(Dispatchers.Default) {
       val linkExtraContent = MediaServiceLinkExtraContent(
-        "test.com/123",
+        GenericVideoId("test.com/123"),
         MediaServiceType.Youtube,
         "tet title",
         Period.seconds(90)

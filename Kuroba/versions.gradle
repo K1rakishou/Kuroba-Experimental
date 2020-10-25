@@ -16,4 +16,5 @@ versions.mockito_core = "3.4.6"
 versions.mockito_kotlin = "2.2.0"
 versions.powermock = "2.0.7"
 versions.epoxy = "4.1.0"
+versions.jsoup = "1.13.1"
 ext.versions = versions

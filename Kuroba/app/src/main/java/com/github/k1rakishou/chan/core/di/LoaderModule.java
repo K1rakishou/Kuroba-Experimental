@@ -6,6 +6,8 @@ import com.github.k1rakishou.chan.core.loader.impl.InlinedFileInfoLoader;
 import com.github.k1rakishou.chan.core.loader.impl.PostExtraContentLoader;
 import com.github.k1rakishou.chan.core.loader.impl.PrefetchLoader;
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.ExternalMediaServiceExtraInfoFetcher;
+import com.github.k1rakishou.chan.core.loader.impl.external_media_service.SoundCloudMediaServiceExtraInfoFetcher;
+import com.github.k1rakishou.chan.core.loader.impl.external_media_service.StreamableMediaServiceExtraInfoFetcher;
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.YoutubeMediaServiceExtraInfoFetcher;
 import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.k1rakishou.chan.utils.Logger;
@@ -68,14 +70,38 @@ public class LoaderModule {
 
     @Provides
     @Singleton
+    public SoundCloudMediaServiceExtraInfoFetcher provideSoundCloudMediaServiceExtraInfoFetcher(
+            MediaServiceLinkExtraContentRepository mediaServiceLinkExtraContentRepository
+    ) {
+        Logger.d(AppModule.DI_TAG, "SoundCloudMediaServiceExtraInfoFetcher");
+
+        return new SoundCloudMediaServiceExtraInfoFetcher(mediaServiceLinkExtraContentRepository);
+    }
+
+    @Provides
+    @Singleton
+    public StreamableMediaServiceExtraInfoFetcher provideStreamableMediaServiceExtraInfoFetcher(
+            MediaServiceLinkExtraContentRepository mediaServiceLinkExtraContentRepository
+    ) {
+        Logger.d(AppModule.DI_TAG, "StreamableMediaServiceExtraInfoFetcher");
+
+        return new StreamableMediaServiceExtraInfoFetcher(mediaServiceLinkExtraContentRepository);
+    }
+
+    @Provides
+    @Singleton
     public PostExtraContentLoader providePostExtraContentLoader(
             YoutubeMediaServiceExtraInfoFetcher youtubeMediaServiceExtraInfoFetcher,
+            SoundCloudMediaServiceExtraInfoFetcher soundCloudMediaServiceExtraInfoFetcher,
+            StreamableMediaServiceExtraInfoFetcher streamableMediaServiceExtraInfoFetcher,
             @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
         Logger.d(AppModule.DI_TAG, "PostExtraContentLoader");
 
         List<ExternalMediaServiceExtraInfoFetcher> fetchers = new ArrayList<>();
         fetchers.add(youtubeMediaServiceExtraInfoFetcher);
+        fetchers.add(soundCloudMediaServiceExtraInfoFetcher);
+        fetchers.add(streamableMediaServiceExtraInfoFetcher);
 
         return new PostExtraContentLoader(
                 Schedulers.from(onDemandContentLoaderExecutor),

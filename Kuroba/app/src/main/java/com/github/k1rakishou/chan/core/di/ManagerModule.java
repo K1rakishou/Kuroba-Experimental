@@ -110,7 +110,10 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public SiteManager provideSiteManager(CoroutineScope appScope, SiteRepository siteRepository) {
+    public SiteManager provideSiteManager(
+            CoroutineScope appScope,
+            SiteRepository siteRepository
+    ) {
         Logger.d(AppModule.DI_TAG, "Site manager");
 
         return new SiteManager(

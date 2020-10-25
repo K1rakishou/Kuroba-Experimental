@@ -66,7 +66,7 @@ import com.github.k1rakishou.model.migrations.*
     ChanThreadsWithPosts::class,
     OldChanPostThread::class
   ],
-  version = 7,
+  version = 8,
   exportSchema = true
 )
 @TypeConverters(
@@ -135,7 +135,8 @@ abstract class KurobaDatabase : RoomDatabase() {
           Migration_v3_to_v4(),
           Migration_v4_to_v5(),
           Migration_v5_to_v6(),
-          Migration_v6_to_v7()
+          Migration_v6_to_v7(),
+          Migration_v7_to_v8()
         )
         .fallbackToDestructiveMigrationIfBetaOrDev(betaOrDev, loggerTag, logger)
         .fallbackToDestructiveMigrationOnDowngrade()

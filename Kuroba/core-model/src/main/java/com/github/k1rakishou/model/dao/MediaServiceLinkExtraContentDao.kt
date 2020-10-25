@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.github.k1rakishou.model.data.video_service.MediaServiceType
 import com.github.k1rakishou.model.entity.MediaServiceLinkExtraContentEntity
 import org.joda.time.DateTime
 
@@ -13,15 +14,18 @@ abstract class MediaServiceLinkExtraContentDao {
   @Insert(onConflict = OnConflictStrategy.IGNORE)
   abstract suspend fun insert(mediaServiceLinkExtraContentEntity: MediaServiceLinkExtraContentEntity)
 
-  // TODO(KurobaEx): This is incorrect, it should have two parameters: videoId and mediaServiceType
-  //  so that we are 100% sure there are no possible collisions between services.
-  //  MediaServiceLinkExtraContentEntity also needs a new Index for videoId + mediaServiceType
   @Query("""
         SELECT * 
         FROM ${MediaServiceLinkExtraContentEntity.TABLE_NAME} 
-        WHERE ${MediaServiceLinkExtraContentEntity.VIDEO_ID_COLUMN_NAME} = :videoId
+        WHERE 
+            ${MediaServiceLinkExtraContentEntity.VIDEO_ID_COLUMN_NAME} = :videoId
+        AND
+            ${MediaServiceLinkExtraContentEntity.MEDIA_SERVICE_TYPE} = :mediaServiceType
     """)
-  abstract suspend fun selectByVideoId(videoId: String): MediaServiceLinkExtraContentEntity?
+  abstract suspend fun select(
+    videoId: String,
+    mediaServiceType: MediaServiceType
+  ): MediaServiceLinkExtraContentEntity?
 
   @Query("""
         DELETE 

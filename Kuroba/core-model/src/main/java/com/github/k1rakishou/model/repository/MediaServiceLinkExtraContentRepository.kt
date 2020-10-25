@@ -4,11 +4,13 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.common.Logger
+import com.github.k1rakishou.model.data.media.GenericVideoId
 import com.github.k1rakishou.model.data.video_service.MediaServiceLinkExtraContent
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
 import com.github.k1rakishou.model.source.cache.GenericCacheSource
 import com.github.k1rakishou.model.source.local.MediaServiceLinkExtraContentLocalSource
 import com.github.k1rakishou.model.source.remote.MediaServiceLinkExtraContentRemoteSource
+import com.github.k1rakishou.model.util.ensureBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -17,7 +19,7 @@ class MediaServiceLinkExtraContentRepository(
   loggerTag: String,
   logger: Logger,
   private val applicationScope: CoroutineScope,
-  private val cache: GenericCacheSource<String, MediaServiceLinkExtraContent>,
+  private val cache: GenericCacheSource<MediaServiceKey, MediaServiceLinkExtraContent>,
   private val mediaServiceLinkExtraContentLocalSource: MediaServiceLinkExtraContentLocalSource,
   private val mediaServiceLinkExtraContentRemoteSource: MediaServiceLinkExtraContentRemoteSource
 ) : AbstractRepository(database, logger) {
@@ -27,23 +29,30 @@ class MediaServiceLinkExtraContentRepository(
   suspend fun getLinkExtraContent(
     mediaServiceType: MediaServiceType,
     requestUrl: String,
-    videoId: String
+    videoId: GenericVideoId
   ): ModularResult<MediaServiceLinkExtraContent> {
+    ensureBackgroundThread()
+    val mediaServiceKey = MediaServiceKey(videoId, mediaServiceType)
+
     return applicationScope.myAsync {
       return@myAsync repoGenericGetAction(
         cleanupFunc = { mediaServiceLinkExtraContentRepositoryCleanup().ignore() },
-        getFromCacheFunc = { cache.get(videoId) },
+        getFromCacheFunc = { cache.get(mediaServiceKey) },
         getFromLocalSourceFunc = {
           tryWithTransaction {
-            mediaServiceLinkExtraContentLocalSource.selectByVideoId(videoId)
+            mediaServiceLinkExtraContentLocalSource.selectByMediaServiceKey(
+              videoId,
+              mediaServiceKey
+            )
           }
         },
         getFromRemoteSourceFunc = {
           mediaServiceLinkExtraContentRemoteSource.fetchFromNetwork(
             requestUrl,
+            videoId,
             mediaServiceType
           ).mapValue {
-            MediaServiceLinkExtraContent(
+            return@mapValue MediaServiceLinkExtraContent(
               videoId,
               mediaServiceType,
               it.videoTitle,
@@ -52,7 +61,7 @@ class MediaServiceLinkExtraContentRepository(
           }
         },
         storeIntoCacheFunc = { mediaServiceLinkExtraContent ->
-          cache.store(requestUrl, mediaServiceLinkExtraContent)
+          cache.store(mediaServiceKey, mediaServiceLinkExtraContent)
         },
         storeIntoLocalSourceFunc = { mediaServiceLinkExtraContent ->
           if (mediaServiceLinkExtraContent.isValid()) {
@@ -68,15 +77,22 @@ class MediaServiceLinkExtraContentRepository(
     }
   }
 
-  suspend fun isCached(videoId: String): ModularResult<Boolean> {
+  suspend fun isCached(videoId: GenericVideoId, mediaServiceType: MediaServiceType): ModularResult<Boolean> {
+    ensureBackgroundThread()
+    val mediaServiceKey = MediaServiceKey(videoId, mediaServiceType)
+
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
-        val hasInCache = cache.contains(videoId)
+        val hasInCache = cache.contains(mediaServiceKey)
         if (hasInCache) {
           return@tryWithTransaction true
         }
 
-        val linkContent = mediaServiceLinkExtraContentLocalSource.selectByVideoId(videoId)
+        val linkContent = mediaServiceLinkExtraContentLocalSource.selectByMediaServiceKey(
+          videoId,
+          mediaServiceKey
+        )
+
         return@tryWithTransaction linkContent != null
       }
     }
@@ -111,5 +127,10 @@ class MediaServiceLinkExtraContentRepository(
       }
     }
   }
+
+  data class MediaServiceKey(
+    val videoId: GenericVideoId,
+    val mediaServiceType: MediaServiceType
+  )
 
 }

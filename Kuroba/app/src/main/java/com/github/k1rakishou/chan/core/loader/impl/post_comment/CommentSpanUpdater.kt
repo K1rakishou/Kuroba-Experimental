@@ -11,6 +11,8 @@ import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.sp
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.putIfNotContains
+import com.github.k1rakishou.model.data.video_service.MediaServiceType
+import org.joda.time.Period
 import org.joda.time.format.PeriodFormatterBuilder
 import java.util.*
 
@@ -157,7 +159,7 @@ internal object CommentSpanUpdater {
 
   private fun formatLinkUrl(originalLinkUrl: String, extraLinkInfo: ExtraLinkInfo): String {
     BackgroundUtils.ensureBackgroundThread()
-    val showLink = ChanSettings.showYoutubeLinkAlongWithTitleAndDuration.get()
+    val showLink = ChanSettings.showLinkAlongWithTitleAndDuration.get()
 
     return buildString {
       // Two spaces for the icon
@@ -170,33 +172,8 @@ internal object CommentSpanUpdater {
 
       when (extraLinkInfo) {
         is ExtraLinkInfo.Success -> {
-          // Append the title (if we have it)
-          if (extraLinkInfo.title != null) {
-            append(" ")
-
-            if (showLink) {
-              append("(")
-            }
-
-            append(extraLinkInfo.title)
-
-            if (showLink) {
-              append(")")
-            }
-          }
-
-          // Append the duration (if we have it)
-          if (extraLinkInfo.duration != null) {
-            append(" ")
-
-            val formattedDuration = if (extraLinkInfo.duration.hours > 0) {
-              formatterWithHours.print(extraLinkInfo.duration)
-            } else {
-              formatterWithoutHours.print(extraLinkInfo.duration)
-            }
-
-            append(formattedDuration)
-          }
+          tryAppendTitle(extraLinkInfo, showLink)
+          tryAppendDuration(extraLinkInfo)
         }
         ExtraLinkInfo.Error -> {
           append(" ")
@@ -208,6 +185,81 @@ internal object CommentSpanUpdater {
         }
       }
     }
+  }
+
+  private fun StringBuilder.tryAppendDuration(
+    extraLinkInfo: ExtraLinkInfo.Success
+  ) {
+    val duration = extraLinkInfo.duration
+      ?: return
+
+    if (tryHandleYoutubeLiveStreamLink(this, extraLinkInfo)) {
+      return
+    }
+
+    append(" ")
+
+    val formattedDuration = if (duration.hours > 0) {
+      formatterWithHours.print(extraLinkInfo.duration)
+    } else {
+      formatterWithoutHours.print(extraLinkInfo.duration)
+    }
+
+    append(formattedDuration)
+  }
+
+  private fun StringBuilder.tryAppendTitle(
+    extraLinkInfo: ExtraLinkInfo.Success,
+    showLink: Boolean
+  ) {
+    if (extraLinkInfo.title == null) {
+      return
+    }
+
+    append(" ")
+
+    if (showLink) {
+      append("(")
+    }
+
+    append(extraLinkInfo.title)
+    tryAppendSoundCloudAlbumTag(extraLinkInfo)
+
+    if (showLink) {
+      append(")")
+    }
+  }
+
+  private fun StringBuilder.tryAppendSoundCloudAlbumTag(extraLinkInfo: ExtraLinkInfo.Success) {
+    if (extraLinkInfo.mediaServiceType != MediaServiceType.SoundCloud) {
+      return
+    }
+
+    if (extraLinkInfo.duration != null) {
+      return
+    }
+
+    append(" ")
+    append("[SoundCloud Album]")
+  }
+
+  private fun tryHandleYoutubeLiveStreamLink(
+    stringBuilder: StringBuilder,
+    extraLinkInfo: ExtraLinkInfo.Success
+  ): Boolean {
+    if (extraLinkInfo.mediaServiceType != MediaServiceType.Youtube) {
+      return false
+    }
+
+    if (extraLinkInfo.duration == null || extraLinkInfo.duration != Period.ZERO) {
+      return false
+    }
+
+    stringBuilder
+      .append(" ")
+      .append("[LIVE]")
+
+    return true
   }
 
   private class GroupedSpanUpdatesMapComparator : Comparator<CommentPostLinkableSpan> {

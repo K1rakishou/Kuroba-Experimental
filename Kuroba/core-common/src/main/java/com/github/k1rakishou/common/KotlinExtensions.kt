@@ -13,6 +13,8 @@ import java.util.regex.Matcher
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.collections.LinkedHashMap
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -340,6 +342,16 @@ fun String.ellipsizeEnd(maxLength: Int): String {
   }
 
   return this.take(maxLength - threeDotsLength) + "..."
+}
+
+@Suppress("ReplaceSizeCheckWithIsNotEmpty", "NOTHING_TO_INLINE")
+@OptIn(ExperimentalContracts::class)
+inline fun CharSequence?.isNotNullNorEmpty(): Boolean {
+  contract {
+    returns(true) implies (this@isNotNullNorEmpty != null)
+  }
+
+  return this != null && this.length > 0
 }
 
 suspend fun <T> CompletableDeferred<T>.awaitSilently(defaultValue: T): T {

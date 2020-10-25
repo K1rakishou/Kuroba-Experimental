@@ -17,8 +17,7 @@
 package com.github.k1rakishou.chan.core.site
 
 import com.github.k1rakishou.SettingProvider
-import com.github.k1rakishou.chan.Chan.Companion.instance
-import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
@@ -39,19 +38,28 @@ import kotlinx.coroutines.*
 import okhttp3.HttpUrl
 import java.security.SecureRandom
 import java.util.*
+import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
 abstract class SiteBase : Site, CoroutineScope {
   private val job = SupervisorJob()
 
-  protected val httpCallManager: HttpCallManager by lazy { instance(HttpCallManager::class.java) }
-  protected val proxiedOkHttpClient: ProxiedOkHttpClient by lazy { instance(RealProxiedOkHttpClient::class.java) }
-  protected val siteManager: SiteManager by lazy { instance(SiteManager::class.java) }
-  protected val imageLoaderV2: ImageLoaderV2 by lazy { instance(ImageLoaderV2::class.java) }
-  protected val archivesManager: ArchivesManager by lazy { instance(ArchivesManager::class.java) }
-  protected val boardManager: BoardManager by lazy { instance(BoardManager::class.java) }
-  protected val postFilterManager: PostFilterManager by lazy { instance(PostFilterManager::class.java) }
-  protected val mockReplyManager: MockReplyManager by lazy { instance(MockReplyManager::class.java) }
+  @Inject
+  protected lateinit var proxiedOkHttpClient: RealProxiedOkHttpClient
+  @Inject
+  protected lateinit var httpCallManager: HttpCallManager
+  @Inject
+  protected lateinit var siteManager: SiteManager
+  @Inject
+  protected lateinit var imageLoaderV2: ImageLoaderV2
+  @Inject
+  protected lateinit var archivesManager: ArchivesManager
+  @Inject
+  protected lateinit var boardManager: BoardManager
+  @Inject
+  protected lateinit var postFilterManager: PostFilterManager
+  @Inject
+  protected lateinit var mockReplyManager: MockReplyManager
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("SiteBase")
@@ -60,6 +68,10 @@ abstract class SiteBase : Site, CoroutineScope {
   protected var settingsProvider: SettingProvider? = null
   private var userSettings: JsonSettings? = null
   private var initialized = false
+
+  init {
+    Chan.inject(this)
+  }
 
   override fun initialize(userSettings: JsonSettings) {
     if (initialized) {

@@ -277,7 +277,7 @@ sealed class AppearanceScreen(
 
   sealed class LayoutGroup(
     settingsId: String,
-    groupIdentifier: GroupIdentifier = MainGroup.getGroupIdentifier()
+    groupIdentifier: GroupIdentifier = LayoutGroup.getGroupIdentifier()
   ) : IGroup,
     AppearanceScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
@@ -296,7 +296,7 @@ sealed class AppearanceScreen(
 
   sealed class PostGroup(
     settingsId: String,
-    groupIdentifier: GroupIdentifier = MainGroup.getGroupIdentifier()
+    groupIdentifier: GroupIdentifier = PostGroup.getGroupIdentifier()
   ) : IGroup,
     AppearanceScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
@@ -309,8 +309,6 @@ sealed class AppearanceScreen(
     object Anonymize : PostGroup("anonymize")
     object ShowAnonymousName : PostGroup("show_anonymous_name")
     object AnonymizeIds : PostGroup("anonymize_ids")
-    object ParseYoutubeTitlesAndDuration : PostGroup("parse_youtube_titles_and_duration")
-    object ShowYoutubeLinkAlongWithTitleAndDuration : PostGroup("show_youtube_links_along_with_title_and_duration")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = AppearanceScreen.getScreenIdentifier()
@@ -318,9 +316,26 @@ sealed class AppearanceScreen(
     }
   }
 
+  sealed class PostLinksGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = PostLinksGroup.getGroupIdentifier()
+  ) : IGroup,
+    AppearanceScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object ParseYoutubeTitlesAndDuration : PostLinksGroup("parse_youtube_titles_and_duration")
+    object ParseSoundCloudTitlesAndDuration : PostLinksGroup("parse_soundcloud_titles_and_duration")
+    object ParseStreamableTitlesAndDuration : PostLinksGroup("parse_streamable_titles_and_duration")
+    object ShowLinkAlongWithTitleAndDuration : PostLinksGroup("show_link_along_with_title_and_duration")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = AppearanceScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("post_links_group")
+    }
+  }
+
   sealed class ImagesGroup(
     settingsId: String,
-    groupIdentifier: GroupIdentifier = MainGroup.getGroupIdentifier()
+    groupIdentifier: GroupIdentifier = ImagesGroup.getGroupIdentifier()
   ) : IGroup,
     AppearanceScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
@@ -415,7 +430,6 @@ sealed class BehaviorScreen(
   ) : IGroup,
     BehaviorScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
-    object ParseYoutubeAPIKey : OtherSettingsGroup("parse_youtube_api_key")
     object FullUserRotationEnable : OtherSettingsGroup("full_user_rotation")
     object AllowFilePickChooser : OtherSettingsGroup("allow_file_pick_chooser")
     object ShowCopyApkUpdateDialog : OtherSettingsGroup("show_copy_apk_update_dialog")

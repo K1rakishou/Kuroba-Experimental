@@ -11,11 +11,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
-import kotlin.Lazy;
+import javax.inject.Inject;
+
 import okhttp3.Cache;
 import okhttp3.Dns;
 import okhttp3.OkHttpClient;
-import okhttp3.logging.HttpLoggingInterceptor;
 
 
 public class CoilOkHttpClient implements CustomOkHttpClient {
@@ -26,23 +26,24 @@ public class CoilOkHttpClient implements CustomOkHttpClient {
     private final Context applicationContext;
     private final Dns okHttpDns;
     private final Chan.OkHttpProtocols okHttpProtocols;
-    private final Lazy<HttpLoggingInterceptor> loggingInterceptorLazyKt;
+    private final HttpLoggingInterceptorLazy httpLoggingInterceptorLazy;
     private final ProxyStorage proxyStorage;
 
     private OkHttpClient coilClient;
 
+    @Inject
     public CoilOkHttpClient(
             Context applicationContext,
             Dns okHttpDns,
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
-            Lazy<HttpLoggingInterceptor> loggingInterceptorLazyKt
+            HttpLoggingInterceptorLazy httpLoggingInterceptorLazy
     ) {
         this.applicationContext = applicationContext;
         this.okHttpDns = okHttpDns;
         this.okHttpProtocols = okHttpProtocols;
         this.proxyStorage = proxyStorage;
-        this.loggingInterceptorLazyKt = loggingInterceptorLazyKt;
+        this.httpLoggingInterceptorLazy = httpLoggingInterceptorLazy;
     }
 
     @NotNull
@@ -69,7 +70,7 @@ public class CoilOkHttpClient implements CustomOkHttpClient {
                             .cache(cache)
                             .dns(okHttpDns);
 
-                    HttpLoggingInterceptorInstaller.install(builder, loggingInterceptorLazyKt);
+                    HttpLoggingInterceptorInstaller.install(builder, httpLoggingInterceptorLazy);
                     coilClient = builder.build();
                 }
             }

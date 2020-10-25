@@ -39,6 +39,7 @@ android {
 dependencies {
     implementation project(':core-common')
     implementation project(':core-settings')
+    implementation project(':core-parser')
 
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin_version}"
@@ -50,6 +51,7 @@ dependencies {
     implementation "com.squareup.okhttp3:okhttp:${versions.okhttp}"
     implementation "com.google.code.gson:gson:${versions.gson}"
     implementation "joda-time:joda-time:${versions.joda_time}"
+    implementation "org.jsoup:jsoup:${versions.jsoup}"
 
     implementation "androidx.room:room-runtime:${versions.room_version}"
     implementation "androidx.room:room-ktx:${versions.room_version}"

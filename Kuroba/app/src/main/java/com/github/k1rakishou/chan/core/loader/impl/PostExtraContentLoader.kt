@@ -15,6 +15,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.putIfNotContains
+import com.github.k1rakishou.model.data.media.GenericVideoId
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
 import io.reactivex.Single
@@ -47,7 +48,7 @@ internal class PostExtraContentLoader(
     }.subscribeOn(scheduler)
   }
 
-  private fun extractVideoIds(postLoaderData: PostLoaderData): List<String> {
+  private fun extractVideoIds(postLoaderData: PostLoaderData): List<GenericVideoId> {
     val comment = postLoaderData.post.comment
     if (comment.isEmpty() || comment !is Spanned) {
       return emptyList()
@@ -179,8 +180,12 @@ internal class PostExtraContentLoader(
         val originalUrl = postLinkable.key.toString()
         val fetcher = linkExtraInfoFetchers.firstOrNull { fetcher ->
           fetcher.linkMatchesToService(originalUrl)
-        } ?: // No fetcher found for this link type
+        }
+
+        if (fetcher == null) {
+          // No fetcher found for this link type
           return@forEach
+        }
 
         if (!fetcher.isEnabled()) {
           // Fetcher may be disabled by some settings or some other conditions
@@ -189,7 +194,7 @@ internal class PostExtraContentLoader(
 
         val requestUrl = fetcher.formatRequestUrl(originalUrl)
         val linkInfoRequest = LinkInfoRequest(
-          fetcher.extractLinkUniqueIdentifier(originalUrl),
+          fetcher.extractLinkVideoId(originalUrl),
           fetcher.mediaServiceType,
           mutableListOf()
         )

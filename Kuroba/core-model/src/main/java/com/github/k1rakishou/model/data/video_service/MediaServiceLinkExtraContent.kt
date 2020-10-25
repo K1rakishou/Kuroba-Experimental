@@ -1,5 +1,7 @@
 package com.github.k1rakishou.model.data.video_service
 
+import com.github.k1rakishou.common.isNotNullNorEmpty
+import com.github.k1rakishou.model.data.media.GenericVideoId
 import org.joda.time.Period
 
 /**
@@ -11,11 +13,15 @@ import org.joda.time.Period
 open class MediaServiceLinkExtraContent(
   // May be anything. For youtube it's the youtube's videoId but for different services it
   // may as well be the whole URL if the service doesn't have a unique id
-  val videoId: String,
+  val videoId: GenericVideoId,
   val mediaServiceType: MediaServiceType,
   val videoTitle: String?,
   val videoDuration: Period?
 ) {
+
+  fun isValid(): Boolean {
+    return videoDuration != null || videoTitle.isNotNullNorEmpty()
+  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -40,10 +46,6 @@ open class MediaServiceLinkExtraContent(
   override fun toString(): String {
     return "MediaServiceLinkExtraContent(videoId='$videoId', mediaServiceType=$mediaServiceType, " +
       "videoTitle=$videoTitle, videoDuration=$videoDuration)"
-  }
-
-  fun isValid(): Boolean {
-    return videoDuration != null || videoTitle != null
   }
 
 }

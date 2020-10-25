@@ -553,8 +553,15 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_show_anonymous_name">Always show \"Anonymous\" name</string>
     <string name="setting_show_anonymous_name_description">Displays \"Anonymous\" rather than an empty field</string>
     <string name="setting_anonymize_ids">Hide IDs</string>
+
+    <!-- Appearance post links group -->
+    <string name="setting_group_post_links">Post links</string>
     <string name="setting_youtube_title_and_durations">Enable Youtube titles and durations</string>
     <string name="setting_youtube_title_and_durations_description">Replaces Youtube links with their titles and appends video duration</string>
+    <string name="setting_soundcloud_title_and_durations">Enable SoundCloud titles and durations</string>
+    <string name="setting_soundcloud_title_and_durations_description">Replaces SoundCloud links with their titles and appends video duration</string>
+    <string name="setting_streamable_title_and_durations">Enable Streamable titles and durations</string>
+    <string name="setting_streamable_title_and_durations_description">Replaces Streamable links with their titles and appends video duration</string>
     <string name="setting_show_link_along_with_title_and_duration_title">Show the link along with video title and duration</string>
     <string name="setting_show_link_along_with_title_and_duration_description">When disabled only the video title and duration will be shown</string>
 
@@ -606,7 +613,6 @@ Note that for country code filtering, troll country codes should be prepended wi
 
     <!-- Other settings group -->
     <string name="setting_other_settings_group">Other Options</string>
-    <string name="setting_youtube_api_key">Youtube API Key</string>
     <string name="setting_full_screen_rotation">Allow full sensor rotation</string>
     <string name="setting_allow_alternate_file_pickers">Allow alternate file pickers</string>
     <string name="setting_allow_alternate_file_pickers_description">If you\'d prefer to use a different file chooser, turn this on</string>

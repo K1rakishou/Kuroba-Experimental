@@ -361,15 +361,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     private const val TAG = "Chan"
     private lateinit var feather: Feather
 
-    /**
-     * Only ever use this method in cases when there is no other way around it (like when normal
-     * injection will create a circular dependency)
-     * TODO(dependency-cycles): get rid of this method once all dependency cycles are resolved
-     */
-    fun <T> instance(tClass: Class<T>?): T {
-      return feather.instance(tClass)
-    }
-
     @JvmStatic
     fun <T> inject(instance: T): T {
       feather.injectFields(instance)

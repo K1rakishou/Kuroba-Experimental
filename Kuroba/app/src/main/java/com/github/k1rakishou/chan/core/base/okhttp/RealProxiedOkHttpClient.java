@@ -7,10 +7,10 @@ import com.github.k1rakishou.chan.core.net.KurobaProxySelector;
 
 import org.jetbrains.annotations.NotNull;
 
-import kotlin.Lazy;
+import javax.inject.Inject;
+
 import okhttp3.Dns;
 import okhttp3.OkHttpClient;
-import okhttp3.logging.HttpLoggingInterceptor;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -21,18 +21,19 @@ public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
     private final Dns okHttpDns;
     private final Chan.OkHttpProtocols okHttpProtocols;
     private final ProxyStorage proxyStorage;
-    private final Lazy<HttpLoggingInterceptor> loggingInterceptorLazyKt;
+    private final HttpLoggingInterceptorLazy httpLoggingInterceptorLazy;
 
+    @Inject
     public RealProxiedOkHttpClient(
             Dns okHttpDns,
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
-            Lazy<HttpLoggingInterceptor> loggingInterceptorLazyKt
+            HttpLoggingInterceptorLazy httpLoggingInterceptorLazy
     ) {
         this.okHttpDns = okHttpDns;
         this.okHttpProtocols = okHttpProtocols;
         this.proxyStorage = proxyStorage;
-        this.loggingInterceptorLazyKt = loggingInterceptorLazyKt;
+        this.httpLoggingInterceptorLazy = httpLoggingInterceptorLazy;
     }
 
     @NotNull
@@ -55,7 +56,7 @@ public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
                             .proxySelector(kurobaProxySelector)
                             .dns(okHttpDns);
 
-                    HttpLoggingInterceptorInstaller.install(builder, loggingInterceptorLazyKt);
+                    HttpLoggingInterceptorInstaller.install(builder, httpLoggingInterceptorLazy);
                     proxiedClient = builder.build();
                 }
             }
