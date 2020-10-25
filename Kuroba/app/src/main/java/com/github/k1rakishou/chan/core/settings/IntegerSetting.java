@@ -22,8 +22,7 @@ import io.reactivex.Flowable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.processors.BehaviorProcessor;
 
-public class IntegerSetting
-        extends Setting<Integer> {
+public class IntegerSetting extends Setting<Integer> {
     private BehaviorProcessor<Integer> settingState = BehaviorProcessor.create();
 
     private boolean hasCached = false;
