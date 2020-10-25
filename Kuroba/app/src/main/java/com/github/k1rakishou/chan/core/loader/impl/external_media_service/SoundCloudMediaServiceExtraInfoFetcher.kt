@@ -83,10 +83,12 @@ internal class SoundCloudMediaServiceExtraInfoFetcher(
   }
 
   override fun extractLinkVideoId(link: String): GenericVideoId {
-    var matcher = soundCloudTrackLinkPattern.matcher(link)
+    val normalizedLink = normalizeLink(link)
+
+    var matcher = soundCloudTrackLinkPattern.matcher(normalizedLink)
     if (matcher.matches()) {
       val videoId = requireNotNull(matcher.group(1)) {
-        "Couldn't extract videoId out of the input link ($link)"
+        "Couldn't extract videoId out of the input link ($normalizedLink)"
       }
 
       return SoundCloudVideoId(
@@ -95,10 +97,10 @@ internal class SoundCloudMediaServiceExtraInfoFetcher(
       )
     }
 
-    matcher = soundCloudAlbumLinkPattern.matcher(link)
+    matcher = soundCloudAlbumLinkPattern.matcher(normalizedLink)
     if (matcher.matches()) {
       val videoId = requireNotNull(matcher.group(1)) {
-        "Couldn't extract videoId out of the input link ($link)"
+        "Couldn't extract videoId out of the input link ($normalizedLink)"
       }
 
       return SoundCloudVideoId(
@@ -107,19 +109,30 @@ internal class SoundCloudMediaServiceExtraInfoFetcher(
       )
     }
 
-    throw IllegalStateException("Couldn't match link ($link) with the current service. " +
+    throw IllegalStateException("Couldn't match link ($normalizedLink) with the current service. " +
       "Did you forget to call linkMatchesToService() first?")
   }
 
-  override fun formatRequestUrl(link: String): String {
+  private fun normalizeLink(link: String): String {
+    if (link.contains(soundCloudMobileLink)) {
+      return link.replace(soundCloudMobileLink, soundCloudNormalLink)
+    }
+
     return link
+  }
+
+  override fun formatRequestUrl(link: String): String {
+    return normalizeLink(link)
   }
 
   companion object {
     private const val TAG = "SoundCloudMediaServiceExtraInfoFetcher"
 
-    private val soundCloudAlbumLinkPattern = Pattern.compile("https:\\/\\/soundcloud\\.com\\/([a-zA-Z\\-\\_0-9]+\\/sets\\/[a-zA-Z\\-\\_0-9]+)")
-    private val soundCloudTrackLinkPattern = Pattern.compile("https:\\/\\/soundcloud\\.com\\/([a-zA-Z\\-\\_0-9]+\\/[a-zA-Z\\-\\_0-9]+)")
+    private const val soundCloudMobileLink = "://m.soundcloud.com"
+    private const val soundCloudNormalLink = "://soundcloud.com"
+
+    private val soundCloudAlbumLinkPattern = Pattern.compile("https:\\/\\/(?:m\\.)?soundcloud\\.com\\/([a-zA-Z\\-\\_0-9]+\\/sets\\/[a-zA-Z\\-\\_0-9]+)")
+    private val soundCloudTrackLinkPattern = Pattern.compile("https:\\/\\/(?:m\\.)?soundcloud\\.com\\/([a-zA-Z\\-\\_0-9]+\\/[a-zA-Z\\-\\_0-9]+)")
 
     private val soundCloudIcon = BitmapFactory.decodeResource(AndroidUtils.getRes(), R.drawable.soundcloud_icon)
   }
