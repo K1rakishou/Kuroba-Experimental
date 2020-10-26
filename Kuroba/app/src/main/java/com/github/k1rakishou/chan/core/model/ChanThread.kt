@@ -91,6 +91,32 @@ class ChanThread(
     }
   }
 
+  @Synchronized
+  fun iteratePostsAround(postDescriptor: PostDescriptor, count: Int, iterator: (Post) -> Unit) {
+    require(count > 0) { "Bad count: $count" }
+
+    val indexOfPost = threadPosts.indexOfFirst { post -> post.postDescriptor == postDescriptor }
+    if (indexOfPost < 0) {
+      return
+    }
+
+    val from = (indexOfPost - count).coerceIn(0, threadPosts.size)
+    val to = (indexOfPost + count).coerceIn(0, threadPosts.size)
+
+    for (index in from until to) {
+      threadPosts.getOrNull(index)?.let { post -> iterator(post) }
+    }
+  }
+
+  @Synchronized
+  fun iteratePostImages(postDescriptor: PostDescriptor, iterator: (PostImage) -> Unit): Boolean {
+    val post = threadPosts.firstOrNull { post -> post.postDescriptor == postDescriptor }
+      ?: return false
+
+    post.iteratePostImages { postImage -> iterator(postImage) }
+    return true
+  }
+
   override fun toString(): String {
     return "ChanThread{" +
       "chanDescriptor=" + chanDescriptor +

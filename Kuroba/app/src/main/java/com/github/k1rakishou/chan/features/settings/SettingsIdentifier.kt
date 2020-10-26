@@ -505,6 +505,7 @@ sealed class MediaScreen(
     object ImageClickPreloadStrategy : LoadingGroup("image_click_preloading_strategy")
     object AutoLoadThreadImages : LoadingGroup("auto_load_thread_images")
     object ShowPrefetchLoadingIndicator : LoadingGroup("show_prefetch_loading_indicator")
+    object CloudflareForcePreleoad : LoadingGroup("cloudflare_force_preload")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = MediaScreen.getScreenIdentifier()

@@ -15,7 +15,6 @@ import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
-import com.github.k1rakishou.chan.core.usecase.PreloadAllImagesInThreadUseCase;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.Logger;
@@ -122,21 +121,6 @@ public class UseCaseModule {
                 siteManager,
                 themeEngine,
                 simpleCommentParser
-        );
-    }
-
-    @Singleton
-    @Provides
-    public PreloadAllImagesInThreadUseCase providePreloadAllImagesInThreadUseCase(
-            CoroutineScope appScope,
-            ProxiedOkHttpClient okHttpClient
-    ) {
-        Logger.d(AppModule.DI_TAG, "PreloadAllImagesInThreadUseCase");
-
-        return new PreloadAllImagesInThreadUseCase(
-                ChanSettings.verboseLogs.get(),
-                appScope,
-                okHttpClient
         );
     }
 

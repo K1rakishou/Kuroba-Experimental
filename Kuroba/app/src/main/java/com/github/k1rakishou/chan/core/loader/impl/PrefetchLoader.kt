@@ -49,7 +49,7 @@ class PrefetchLoader(
 
     val prefetchList = tryGetPrefetchBatch(chanDescriptor, post)
     if (prefetchList.isEmpty()) {
-      postLoaderData.post.postImages.forEach { postImage -> onPrefetchCompleted(postImage, true) }
+      postLoaderData.post.postImages.forEach { postImage -> onPrefetchCompleted(postImage, false) }
       return rejected()
     }
 

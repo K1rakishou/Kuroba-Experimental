@@ -13,6 +13,10 @@ class PostLoaderData(
 ) {
   private val disposed = AtomicBoolean(false)
 
+  fun is4chanPost(): Boolean {
+    return post.postDescriptor.descriptor.siteDescriptor().is4chan()
+  }
+
   @Synchronized
   fun addDisposeFunc(disposeFunc: () -> Unit) {
     if (disposed.get()) {

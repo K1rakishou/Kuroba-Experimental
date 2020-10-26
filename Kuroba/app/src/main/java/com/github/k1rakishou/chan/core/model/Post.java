@@ -226,6 +226,12 @@ public class Post implements Comparable<Post> {
         return postImages;
     }
 
+    public synchronized void iteratePostImages(Function1<PostImage, Unit> iterator) {
+        for (PostImage postImage : postImages) {
+            iterator.invoke(postImage);
+        }
+    }
+
     public synchronized int getPostImagesCount() {
         return postImages.size();
     }

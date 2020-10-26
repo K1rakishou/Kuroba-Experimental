@@ -27,7 +27,6 @@ import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.*
 import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController
@@ -184,10 +183,6 @@ open class ViewThreadController(
         AndroidUtils.isDevBuild()
       ) { item -> forceReloadClicked(item) }
       .withSubItem(
-        ACTION_CLOUDFLARE_PRELOAD,
-        R.string.action_cloudflare_preload,
-      ) { item -> cloudflareForcePreload(item) }
-      .withSubItem(
         ACTION_VIEW_REMOVED_POSTS,
         R.string.action_view_removed_posts
       ) { item -> showRemovedPostsDialog(item) }
@@ -302,23 +297,6 @@ open class ViewThreadController(
 
   private fun forceReloadClicked(item: ToolbarMenuSubItem) {
     threadLayout.presenter.forceRequestData()
-  }
-
-  private fun cloudflareForcePreload(item: ToolbarMenuSubItem) {
-    if (!PersistableChanState.cloudflarePreloadingExplanationShown.get()) {
-      PersistableChanState.cloudflarePreloadingExplanationShown.set(true)
-
-      dialogFactory.createSimpleInformationDialog(
-        context = context,
-        titleTextId = R.string.thread_presenter_cloudflare_preloading_dialog_title,
-        descriptionTextId = R.string.thread_presenter_cloudflare_preloading_dialog_description,
-        onPositiveButtonClickListener = { threadLayout.presenter.cloudFlareForcePreload() }
-      )
-
-      return
-    }
-
-    threadLayout.presenter.cloudFlareForcePreload()
   }
 
   private fun showAvailableArchives(descriptor: ThreadDescriptor) {
@@ -612,10 +590,6 @@ open class ViewThreadController(
     navigation.findSubItem(ACTION_OPEN_THREAD_IN_ARCHIVE)?.let { retrieveDeletedPostsItem ->
       retrieveDeletedPostsItem.visible = threadDescriptor.siteDescriptor().is4chan()
     }
-
-    navigation.findSubItem(ACTION_CLOUDFLARE_PRELOAD)?.let { cloudflarePreload ->
-      cloudflarePreload.visible = threadDescriptor.siteDescriptor().is4chan()
-    }
   }
 
   private fun showHints() {
@@ -765,7 +739,6 @@ open class ViewThreadController(
     private const val ACTION_THREAD_VIEW_OPTIONS = 9010
     private const val ACTION_SCROLL_TO_TOP = 9011
     private const val ACTION_SCROLL_TO_BOTTOM = 9012
-    private const val ACTION_CLOUDFLARE_PRELOAD = 9013
 
     private const val ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR = 9100
     private const val ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR = 9101

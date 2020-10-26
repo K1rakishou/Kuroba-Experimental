@@ -21,6 +21,7 @@ import android.content.Context;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader;
+import com.github.k1rakishou.chan.core.loader.impl.Chan4CloudFlareImagePreloader;
 import com.github.k1rakishou.chan.core.loader.impl.InlinedFileInfoLoader;
 import com.github.k1rakishou.chan.core.loader.impl.PostExtraContentLoader;
 import com.github.k1rakishou.chan.core.loader.impl.PrefetchLoader;
@@ -230,11 +231,13 @@ public class ManagerModule {
             PrefetchLoader prefetchLoader,
             PostExtraContentLoader postExtraContentLoader,
             InlinedFileInfoLoader inlinedFileInfoLoader,
+            Chan4CloudFlareImagePreloader сhan4CloudFlareImagePreloader,
             @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
         Logger.d(AppModule.DI_TAG, "OnDemandContentLoaderManager");
 
         HashSet<OnDemandContentLoader> loaders = new HashSet<>();
+        loaders.add(сhan4CloudFlareImagePreloader);
         loaders.add(prefetchLoader);
         loaders.add(postExtraContentLoader);
         loaders.add(inlinedFileInfoLoader);

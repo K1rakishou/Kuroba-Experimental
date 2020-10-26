@@ -1,7 +1,9 @@
 package com.github.k1rakishou.chan.core.di;
 
+import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
+import com.github.k1rakishou.chan.core.loader.impl.Chan4CloudFlareImagePreloader;
 import com.github.k1rakishou.chan.core.loader.impl.InlinedFileInfoLoader;
 import com.github.k1rakishou.chan.core.loader.impl.PostExtraContentLoader;
 import com.github.k1rakishou.chan.core.loader.impl.PrefetchLoader;
@@ -9,7 +11,9 @@ import com.github.k1rakishou.chan.core.loader.impl.external_media_service.Extern
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.SoundCloudMediaServiceExtraInfoFetcher;
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.StreamableMediaServiceExtraInfoFetcher;
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.YoutubeMediaServiceExtraInfoFetcher;
+import com.github.k1rakishou.chan.core.manager.ChanLoaderManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager;
+import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.model.repository.InlinedFileInfoRepository;
@@ -23,6 +27,7 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import io.reactivex.schedulers.Schedulers;
+import kotlinx.coroutines.CoroutineScope;
 
 public class LoaderModule {
 
@@ -55,6 +60,23 @@ public class LoaderModule {
         return new InlinedFileInfoLoader(
                 Schedulers.from(onDemandContentLoaderExecutor),
                 inlinedFileInfoRepository
+        );
+    }
+
+    @Provides
+    @Singleton
+    public Chan4CloudFlareImagePreloader provideChan4CloudFlareImagePreloader(
+            CoroutineScope appScope,
+            RealProxiedOkHttpClient realProxiedOkHttpClient,
+            ChanLoaderManager chanLoaderManager
+    ) {
+        Logger.d(AppModule.DI_TAG, "Chan4CloudFlareImagePreloader");
+
+        return new Chan4CloudFlareImagePreloader(
+                appScope,
+                ChanSettings.verboseLogs.get(),
+                realProxiedOkHttpClient,
+                chanLoaderManager
         );
     }
 

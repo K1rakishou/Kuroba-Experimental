@@ -91,7 +91,7 @@ public class ChanSettings {
 
     @DoNotStrip
     public enum MediaAutoLoadMode implements OptionSettingItem {
-        // ALways auto load, either wifi or mobile
+        // Always auto load, either wifi or mobile
         ALL("all"),
         // Only auto load if on wifi
         WIFI("wifi"),
@@ -309,6 +309,7 @@ public class ChanSettings {
     public static final OptionsSetting<ImageClickPreloadStrategy> imageClickPreloadStrategy;
     public static final BooleanSetting autoLoadThreadImages;
     public static final BooleanSetting showPrefetchLoadingIndicator;
+    public static final BooleanSetting cloudflareForcePreload;
     //endregion
 
     //region EXPERIMENTAL
@@ -473,6 +474,7 @@ public class ChanSettings {
             );
             autoLoadThreadImages = new BooleanSetting(p, "preference_auto_load_thread", false);
             showPrefetchLoadingIndicator = new BooleanSetting(p, "show_prefetch_loading_indicator", false);
+            cloudflareForcePreload = new BooleanSetting(p, "cloudflare_force_preload", true);
             //endregion
 
             //region EXPERIMENTAL

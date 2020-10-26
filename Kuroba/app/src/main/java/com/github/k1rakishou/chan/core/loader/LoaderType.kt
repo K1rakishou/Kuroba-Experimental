@@ -3,5 +3,6 @@ package com.github.k1rakishou.chan.core.loader
 enum class LoaderType {
   PrefetchLoader,
   PostExtraContentLoader,
-  InlinedFileInfoLoader
+  InlinedFileInfoLoader,
+  Chan4CloudFlareImagePreLoader
 }

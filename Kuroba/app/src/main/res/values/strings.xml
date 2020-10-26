@@ -150,7 +150,6 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="card_stats">%1$dR %2$dI</string>
     <string name="action_reload">Reload</string>
     <string name="action_force_reload">Force reload</string>
-    <string name="action_cloudflare_preload">Force Cloudflare to preload all images</string>
     <string name="action_pin">Bookmark</string>
     <string name="action_view_removed_posts">View removed posts</string>
     <string name="action_open_thread_in_archive">Open thread in archive</string>
@@ -665,6 +664,9 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="setting_video_auto_loop_description">Automatically loop video content</string>
     <string name="setting_auto_load_thread_images">Enable media prefetching</string>
     <string name="setting_auto_load_thread_images_description">Loads all images or videos in a thread immediately (subject to the settings above). Increases the filecache size to 1GB.</string>
+    <string name="setting_cloudflare_preloading_dialog_title">Cloudflare image preloading (4chan only)</string>
+    <string name="setting_cloudflare_preloading_dialog_description">This option will be forcing Cloudflare to preload all currently visible images in a thread. No images will be downloaded on your phone and no additional traffic will be used. Only HEAD requests will be sent for every image in the thread which will force Cloudflare to cache those images. This SHOULD make subsequent image downloads way faster because you will be loading them from Cloudflare servers, not 4chan\'s. This feature works similar to how media prefetching works (you don\'t need to click anything, just scroll through the thread like you always do).</string>
+
 
     <!-- Save location settings -->
     <string name="setting_folder_pick_ok">Choose</string>
@@ -807,8 +809,6 @@ Don't have a 4chan Pass?<br>
     <string name="thread_presenter_error_while_trying_to_get_archive_descriptor">Error while trying get archive descriptor by thread descriptor</string>
     <string name="thread_presenter_no_archives_for_thread">No archives were found for the current thread. This means that all archives supporting current board are disabled (In this case you can enable them in site settings) or all archives supporting current board are not working (See archives settings in site settings)</string>
     <string name="thread_presenter_no_available_archives">No archives are currently available to use. You can only use an archive once in %1$d minutes per thread. Time until any of archives are available again: %2$s</string>
-    <string name="thread_presenter_cloudflare_preloading_dialog_title">Cloudflare image preloading</string>
-    <string name="thread_presenter_cloudflare_preloading_dialog_description">This option will force Cloudflare to preload all images in this thread. No images will be downloaded on your phone and no additional traffic will be used. Only HEAD requests will be sent for every image in the thread which will force Cloudflare to cache those images. This SHOULD make all subsequent image downloads in this thread way faster because you will be loading them from Cloudflare servers, not 4chan\'s. You can start viewing images right away but some of them might not get preloaded by the time you some of them, so it\'s better to wait until all of them are preloaded (you will be notified).</string>
     <string name="thread_presenter_no_archives_found_to_open_thread">No archives found to open %1$s. Check that you have enabled archives to open this thread. It is also possible that no archives support this site/board.</string>
 
     <string name="thread_presenter_started_preloading_images">Started preloading %1$d images</string>

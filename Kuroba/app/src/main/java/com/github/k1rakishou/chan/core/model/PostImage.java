@@ -136,6 +136,10 @@ public class PostImage {
             return false;
         }
 
+        if (isPrefetched) {
+            return false;
+        }
+
         return imageUrl != null;
     }
 

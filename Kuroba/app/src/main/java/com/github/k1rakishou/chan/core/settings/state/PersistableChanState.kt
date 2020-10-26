@@ -32,8 +32,6 @@ object PersistableChanState {
   @JvmField
   val shittyPhonesBackgroundLimitationsExplanationDialogShown: BooleanSetting
   @JvmField
-  val cloudflarePreloadingExplanationShown: BooleanSetting
-  @JvmField
   val bookmarksRecyclerIndexAndTop: StringSetting
   @JvmField
   val proxyEditingNotificationShown: BooleanSetting
@@ -51,12 +49,6 @@ object PersistableChanState {
       shittyPhonesBackgroundLimitationsExplanationDialogShown = BooleanSetting(
         p,
         "shitty_phones_background_limitations_explanation_dialog_shown",
-        false
-      )
-
-      cloudflarePreloadingExplanationShown = BooleanSetting(
-        p,
-        "cloudflare_preloading_explanation_shown",
         false
       )
 
