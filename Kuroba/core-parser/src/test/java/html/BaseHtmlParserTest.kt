@@ -1,7 +1,6 @@
-package com.github.k1rakishou.core_parser.html
+package html
 
 import android.util.Log
-import com.github.k1rakishou.chan.utils.AndroidUtils
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
 import org.powermock.api.mockito.PowerMockito
@@ -10,10 +9,6 @@ import org.powermock.api.mockito.PowerMockito
 abstract class BaseHtmlParserTest {
 
   fun setupLogging(tag: String) {
-    PowerMockito.mockStatic(AndroidUtils::class.java)
-    Mockito.`when`(AndroidUtils.getApplicationLabel())
-      .thenReturn(tag)
-
     PowerMockito.mockStatic(Log::class.java)
 
     Mockito.`when`(Log.d(ArgumentMatchers.anyString(), ArgumentMatchers.anyString()))

@@ -1,7 +1,10 @@
-package com.github.k1rakishou.core_parser.html
+package html
 
 import android.util.Log
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCollector
+import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCommandBufferBuilder
+import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCommandExecutor
+import com.github.k1rakishou.core_parser.html.KurobaMatcher
 import junit.framework.Assert.assertEquals
 import org.joda.time.Period
 import org.jsoup.Jsoup
@@ -12,7 +15,7 @@ import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
 
 @RunWith(PowerMockRunner::class)
-@PrepareForTest(value = [Log::class, AndroidUtils::class])
+@PrepareForTest(value = [Log::class])
 class KurobaYoutubeHtmlParserTest : BaseHtmlParserTest() {
 
   private val kurobaHtmlParserCommandBuffer =
