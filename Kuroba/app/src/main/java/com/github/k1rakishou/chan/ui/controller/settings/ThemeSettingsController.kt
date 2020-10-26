@@ -81,6 +81,7 @@ import com.github.k1rakishou.fsaf.callback.FileChooserCallback
 import com.github.k1rakishou.fsaf.callback.FileCreateCallback
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -450,6 +451,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
     val post1 = postParser.parse(theme, builder1, parserCallback)
     post1.repliesFrom.add(234567890L)
 
+    val pd2 = PostDescriptor.create(dummyBoardDescriptor, 234567890L, 123456789L)
     val builder2 = Post.Builder()
       .boardDescriptor(dummyBoardDescriptor)
       .id(234567890)
@@ -471,6 +473,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
             .thumbnailUrl((BuildConfig.RESOURCES_ENDPOINT + "release_icon_512.png").toHttpUrl())
             .filename("icon")
             .extension("png")
+            .postDescriptor(pd2)
             .build()
         )
       )

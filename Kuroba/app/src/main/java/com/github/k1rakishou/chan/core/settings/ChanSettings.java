@@ -474,7 +474,7 @@ public class ChanSettings {
             );
             autoLoadThreadImages = new BooleanSetting(p, "preference_auto_load_thread", false);
             showPrefetchLoadingIndicator = new BooleanSetting(p, "show_prefetch_loading_indicator", false);
-            cloudflareForcePreload = new BooleanSetting(p, "cloudflare_force_preload", true);
+            cloudflareForcePreload = new BooleanSetting(p, "cloudflare_force_preload", false);
             //endregion
 
             //region EXPERIMENTAL

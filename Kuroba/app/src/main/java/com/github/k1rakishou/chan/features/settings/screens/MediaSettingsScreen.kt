@@ -146,14 +146,6 @@ class MediaSettingsScreen(
           dependsOnSetting = ChanSettings.autoLoadThreadImages
         )
 
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = MediaScreen.LoadingGroup.CloudflareForcePreleoad,
-          topDescriptionIdFunc = { R.string.setting_cloudflare_preloading_dialog_title },
-          bottomDescriptionIdFunc = { R.string.setting_cloudflare_preloading_dialog_description },
-          setting = ChanSettings.cloudflareForcePreload
-        )
-
         return group
       }
     )

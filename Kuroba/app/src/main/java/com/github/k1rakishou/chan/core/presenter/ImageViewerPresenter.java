@@ -30,6 +30,7 @@ import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload;
 import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
+import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager;
 import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.ImageSearch;
@@ -60,6 +61,8 @@ import kotlin.Unit;
 import okhttp3.HttpUrl;
 
 import static com.github.k1rakishou.chan.Chan.inject;
+import static com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager.NEXT_N_POSTS_RELATIVE;
+import static com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager.PREV_N_POSTS_RELATIVE;
 import static com.github.k1rakishou.chan.core.settings.ChanSettings.MediaAutoLoadMode.shouldLoadForNetworkType;
 import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.BIGIMAGE;
 import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.GIFIMAGE;
@@ -92,6 +95,8 @@ public class ImageViewerPresenter
     ThemeEngine themeEngine;
     @Inject
     BoardManager boardManager;
+    @Inject
+    Chan4CloudFlareImagePreloaderManager chan4CloudFlareImagePreloaderManager;
 
     private boolean entering = true;
     private boolean exiting = false;
@@ -246,34 +251,41 @@ public class ImageViewerPresenter
     public void onModeLoaded(MultiImageView multiImageView, MultiImageView.Mode mode) {
         if (exiting) return;
 
-        if (mode == LOWRES) {
-            // lowres is requested at the beginning of the transition,
-            // the lowres is loaded before the in transition or after
-            if (!viewPagerVisible) {
-                viewPagerVisible = true;
-                if (!entering) {
-                    // Entering transition was already ended, switch now
-                    callback.setPreviewVisibility(false);
-                    callback.setPagerVisibility(true);
-                } else {
-                    // Wait for enter animation to finish before changing views
-                    changeViewsOnInTransitionEnd = true;
-                }
-                // Transition ended or not, request loading the other side views to lowres
-                for (PostImage other : getOther(selectedPosition)) {
-                    callback.setImageMode(other, LOWRES, false);
-                }
-                onLowResInCenter();
-            } else {
-                if (multiImageView.getPostImage() == images.get(selectedPosition)) {
-                    onLowResInCenter();
-                }
-            }
-        } else {
+        if (mode != LOWRES) {
             if (multiImageView.getPostImage() == images.get(selectedPosition)) {
                 setTitle(images.get(selectedPosition), selectedPosition);
             }
+
+            return;
         }
+
+        // lowres is requested at the beginning of the transition,
+        // the lowres is loaded before the in transition or after
+        if (viewPagerVisible) {
+            if (multiImageView.getPostImage() == images.get(selectedPosition)) {
+                onLowResInCenter();
+            }
+
+            return;
+        }
+
+        viewPagerVisible = true;
+
+        if (!entering) {
+            // Entering transition was already ended, switch now
+            callback.setPreviewVisibility(false);
+            callback.setPagerVisibility(true);
+        } else {
+            // Wait for enter animation to finish before changing views
+            changeViewsOnInTransitionEnd = true;
+        }
+
+        // Transition ended or not, request loading the other side views to lowres
+        for (PostImage other : getOther(selectedPosition)) {
+            callback.setImageMode(other, LOWRES, false);
+        }
+
+        onLowResInCenter();
     }
 
     private void onPageSwipedTo(int position) {
@@ -297,8 +309,10 @@ public class ImageViewerPresenter
         nonCancelableImages.addAll(getNonCancelableImages(position));
 
         if (swipeDirection == SwipeDirection.Forward) {
+            chan4CloudFlareImagePreloaderManager.cancelLoading(postImage, true);
             cancelPreviousFromStartImageDownload(position);
         } else if (swipeDirection == SwipeDirection.Backward) {
+            chan4CloudFlareImagePreloaderManager.cancelLoading(postImage, false);
             cancelPreviousFromEndImageDownload(position);
         }
 
@@ -326,11 +340,36 @@ public class ImageViewerPresenter
         }
 
         if (swipeDirection == SwipeDirection.Forward) {
+            // Force cloudflare to preload N next posts with images
+            chan4CloudFlareImagePreloaderManager.startLoading(
+                    chanDescriptor,
+                    postImage,
+                    0,
+                    NEXT_N_POSTS_RELATIVE
+            );
+
             preloadNext();
             return;
         } else if (swipeDirection == SwipeDirection.Backward) {
+            // Force cloudflare to preload N previous posts with images
+            chan4CloudFlareImagePreloaderManager.startLoading(
+                    chanDescriptor,
+                    postImage,
+                    PREV_N_POSTS_RELATIVE,
+                    0
+            );
+
             preloadPrevious();
             return;
+        } else {
+            // Preload in both sides since we don't know where the user will swipe next
+            chan4CloudFlareImagePreloaderManager.startLoading(
+                    chanDescriptor,
+                    postImage,
+                    PREV_N_POSTS_RELATIVE / 2,
+                    NEXT_N_POSTS_RELATIVE / 2
+            );
+
         }
 
         ChanSettings.ImageClickPreloadStrategy strategy = ChanSettings.imageClickPreloadStrategy.get();
@@ -510,35 +549,37 @@ public class ImageViewerPresenter
     @Override
     public void onTap() {
         // Don't mistake a swipe when the pager is disabled as a tap
-        if (viewPagerVisible) {
-            PostImage postImage = images.get(selectedPosition);
-            if (imageAutoLoad(postImage) && !postImage.spoiler()) {
-                if (postImage.type == ChanPostImageType.MOVIE && callback.getImageMode(postImage) != VIDEO) {
-                    callback.setImageMode(postImage, VIDEO, true);
-                } else {
-                    if (callback.isImmersive()) {
-                        callback.showSystemUI(true);
-                    } else {
-                        onExit();
-                    }
-                }
+        if (!viewPagerVisible) {
+            return;
+        }
+
+        PostImage postImage = images.get(selectedPosition);
+        if (imageAutoLoad(postImage) && !postImage.spoiler()) {
+            if (postImage.type == ChanPostImageType.MOVIE && callback.getImageMode(postImage) != VIDEO) {
+                callback.setImageMode(postImage, VIDEO, true);
             } else {
-                MultiImageView.Mode currentMode = callback.getImageMode(postImage);
-                if (postImage.type == ChanPostImageType.STATIC && currentMode != BIGIMAGE) {
-                    callback.setImageMode(postImage, BIGIMAGE, true);
-                } else if (postImage.type == ChanPostImageType.GIF && currentMode != GIFIMAGE) {
-                    callback.setImageMode(postImage, GIFIMAGE, true);
-                } else if (postImage.type == ChanPostImageType.MOVIE && currentMode != VIDEO) {
-                    callback.setImageMode(postImage, VIDEO, true);
-                } else if ((postImage.type == ChanPostImageType.PDF || postImage.type == ChanPostImageType.SWF)
-                        && currentMode != OTHER) {
-                    callback.setImageMode(postImage, OTHER, true);
+                if (callback.isImmersive()) {
+                    callback.showSystemUI(true);
                 } else {
-                    if (callback.isImmersive()) {
-                        callback.showSystemUI(true);
-                    } else {
-                        onExit();
-                    }
+                    onExit();
+                }
+            }
+        } else {
+            MultiImageView.Mode currentMode = callback.getImageMode(postImage);
+            if (postImage.type == ChanPostImageType.STATIC && currentMode != BIGIMAGE) {
+                callback.setImageMode(postImage, BIGIMAGE, true);
+            } else if (postImage.type == ChanPostImageType.GIF && currentMode != GIFIMAGE) {
+                callback.setImageMode(postImage, GIFIMAGE, true);
+            } else if (postImage.type == ChanPostImageType.MOVIE && currentMode != VIDEO) {
+                callback.setImageMode(postImage, VIDEO, true);
+            } else if ((postImage.type == ChanPostImageType.PDF || postImage.type == ChanPostImageType.SWF)
+                    && currentMode != OTHER) {
+                callback.setImageMode(postImage, OTHER, true);
+            } else {
+                if (callback.isImmersive()) {
+                    callback.showSystemUI(true);
+                } else {
+                    onExit();
                 }
             }
         }

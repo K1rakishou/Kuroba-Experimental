@@ -499,6 +499,22 @@ public class Post implements Comparable<Post> {
             return commentHash.getValue();
         }
 
+        public synchronized boolean hasPostDescriptor() {
+            if (boardDescriptor == null) {
+                return false;
+            }
+
+            if (getOpId() < 0L) {
+                return false;
+            }
+
+            if (id < 0L) {
+                return false;
+            }
+
+            return true;
+        }
+
         public synchronized PostDescriptor getPostDescriptor() {
             if (postDescriptor != null) {
                 return postDescriptor;
@@ -623,6 +639,10 @@ public class Post implements Comparable<Post> {
         public Builder postImages(List<PostImage> images) {
             synchronized (this) {
                 this.postImages.addAll(images);
+
+                for (PostImage postImage : this.postImages) {
+                    postImage.setOwnerPostDescriptor(getPostDescriptor());
+                }
             }
 
             return this;

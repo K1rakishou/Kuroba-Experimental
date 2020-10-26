@@ -17,6 +17,8 @@
 package com.github.k1rakishou.chan.core.model
 
 import com.github.k1rakishou.chan.core.manager.PostPreloadedInfoHolder
+import com.github.k1rakishou.common.mutableListWithCap
+import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 
@@ -24,12 +26,8 @@ class ChanThread(
   val chanDescriptor: ChanDescriptor,
   newPosts: List<Post>
 ) {
-  private val threadPosts: MutableList<Post> = ArrayList(128)
-
-  init {
-    threadPosts.clear()
-    threadPosts.addAll(newPosts)
-  }
+  private val threadPosts = ArrayList<Post>(128)
+  private val postsByPostDescriptorMap = mutableMapWithCap<PostDescriptor, Post>(128)
 
   @get:Synchronized
   val postsCount: Int
@@ -67,10 +65,20 @@ class ChanThread(
     return !isClosed && !isDeleted && !isArchived
   }
 
+  init {
+    setNewPosts(newPosts)
+  }
+
   @Synchronized
   fun setNewPosts(newPosts: List<Post>) {
     threadPosts.clear()
+    postsByPostDescriptorMap.clear()
+
     threadPosts.addAll(newPosts)
+
+    newPosts.forEach { post ->
+      postsByPostDescriptorMap[post.postDescriptor] = post
+    }
   }
 
   @Synchronized
@@ -81,6 +89,7 @@ class ChanThread(
   @Synchronized
   fun clearPosts() {
     threadPosts.clear()
+    postsByPostDescriptorMap.clear()
   }
 
   @Synchronized
@@ -89,32 +98,59 @@ class ChanThread(
     if (index >= 0) {
       threadPosts.removeAt(index)
     }
+
+    postsByPostDescriptorMap.remove(postDescriptor)
   }
 
   @Synchronized
-  fun iteratePostsAround(postDescriptor: PostDescriptor, count: Int, iterator: (Post) -> Unit) {
-    require(count > 0) { "Bad count: $count" }
+  fun mapPostsAround(postDescriptor: PostDescriptor, leftCount: Int, rightCount: Int): List<PostDescriptor> {
+    if (leftCount == 0 && rightCount == 0) {
+      return emptyList()
+    }
+
+    check(leftCount >= 0) { "Bad left count: $leftCount" }
+    check(rightCount >= 0) { "Bad right count: $rightCount" }
 
     val indexOfPost = threadPosts.indexOfFirst { post -> post.postDescriptor == postDescriptor }
     if (indexOfPost < 0) {
-      return
+      return emptyList()
     }
 
-    val from = (indexOfPost - count).coerceIn(0, threadPosts.size)
-    val to = (indexOfPost + count).coerceIn(0, threadPosts.size)
+    val from = (indexOfPost - leftCount).coerceIn(0, threadPosts.size)
+    val to = (indexOfPost + rightCount).coerceIn(0, threadPosts.size)
+
+    val postDescriptors = mutableListWithCap<PostDescriptor>(to - from)
 
     for (index in from until to) {
-      threadPosts.getOrNull(index)?.let { post -> iterator(post) }
+      threadPosts.getOrNull(index)?.let { post -> postDescriptors += post.postDescriptor }
     }
+
+    return postDescriptors
+  }
+
+  @Synchronized
+  fun getPostDescriptorRelativeTo(postDescriptor: PostDescriptor, offset: Int): PostDescriptor? {
+    val currentPostIndex = threadPosts.indexOfFirst { post -> post.postDescriptor == postDescriptor }
+    if (currentPostIndex < 0) {
+      return null
+    }
+
+    val postIndex = (currentPostIndex + offset).coerceIn(0, threadPosts.size)
+    return threadPosts.getOrNull(postIndex)?.postDescriptor
   }
 
   @Synchronized
   fun iteratePostImages(postDescriptor: PostDescriptor, iterator: (PostImage) -> Unit): Boolean {
-    val post = threadPosts.firstOrNull { post -> post.postDescriptor == postDescriptor }
+    val post = postsByPostDescriptorMap[postDescriptor]
       ?: return false
 
     post.iteratePostImages { postImage -> iterator(postImage) }
     return true
+  }
+
+  @Synchronized
+  fun postHasImages(postDescriptor: PostDescriptor): Boolean {
+    return postsByPostDescriptorMap[postDescriptor]?.postImages?.isNotEmpty() ?: false
   }
 
   override fun toString(): String {

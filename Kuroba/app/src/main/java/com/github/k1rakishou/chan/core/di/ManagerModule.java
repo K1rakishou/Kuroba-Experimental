@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.core.di;
 import android.content.Context;
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
+import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader;
 import com.github.k1rakishou.chan.core.loader.impl.Chan4CloudFlareImagePreloader;
@@ -30,6 +31,7 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.BookmarksManager;
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager;
+import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager;
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.chan.core.manager.ChanLoaderManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager;
@@ -630,6 +632,23 @@ public class ManagerModule {
                 ChanSettings.verboseLogs.get(),
                 threadBookmarkGroupEntryRepository,
                 bookmarksManager
+        );
+    }
+
+    @Singleton
+    @Provides
+    public Chan4CloudFlareImagePreloaderManager provideChan4CloudFlareImagePreloaderManager(
+            CoroutineScope appScope,
+            RealProxiedOkHttpClient realProxiedOkHttpClient,
+            ChanLoaderManager chanLoaderManager
+    ) {
+        Logger.d(AppModule.DI_TAG, "Chan4CloudFlareImagePreloaderManager");
+
+        return new Chan4CloudFlareImagePreloaderManager(
+                appScope,
+                ChanSettings.verboseLogs.get(),
+                realProxiedOkHttpClient,
+                chanLoaderManager
         );
     }
 

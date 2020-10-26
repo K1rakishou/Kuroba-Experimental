@@ -247,6 +247,7 @@ object CommentParserHelper {
         .spoiler(true)
         .isInlined(true)
         .size(-1)
+        .postDescriptor(post.postDescriptor)
         .build()
 
       post.postImages(listOf(postImage))

@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.CommonSite.CommonApi
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
+import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
@@ -123,6 +124,11 @@ class VichanApi(
     }
 
     reader.endObject()
+
+    if (!builder.hasPostDescriptor()) {
+      Logger.e(TAG, "readPostObject() Post has no PostDescriptor!")
+      return
+    }
 
     // The file from between the other values.
     if (!fileId.isNullOrEmpty() && !fileExt.isNullOrEmpty()) {
@@ -266,6 +272,10 @@ class VichanApi(
 
       return@Try ThreadBookmarkInfoObject(threadDescriptor, postObjects)
     }
+  }
+
+  companion object {
+    private const val TAG = "VichanApi"
   }
 
 }

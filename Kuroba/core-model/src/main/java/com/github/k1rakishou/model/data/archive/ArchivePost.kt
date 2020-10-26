@@ -1,6 +1,10 @@
 package com.github.k1rakishou.model.data.archive
 
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+
 class ArchivePost(
+  private val boardDescriptor: BoardDescriptor,
   var postNo: Long = -1L,
   var postSubNo: Long = 0L,
   var threadNo: Long = -1L,
@@ -15,6 +19,13 @@ class ArchivePost(
   var tripcode: String = "",
   val archivePostMediaList: MutableList<ArchivePostMedia> = mutableListOf()
 ) {
+
+  val postDescriptor by lazy {
+    check(postNo >= 0L) { "Bad postNo" }
+    check(threadNo >= 0L) { "Bad threadNo" }
+
+    PostDescriptor.create(boardDescriptor, threadNo, postNo, postSubNo)
+  }
 
   var moderatorCapcode: String = ""
     set(value) {

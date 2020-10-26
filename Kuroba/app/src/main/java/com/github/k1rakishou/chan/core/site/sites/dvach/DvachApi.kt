@@ -105,6 +105,7 @@ class DvachApi internal constructor(
     }
 
     builder.postImages(files)
+
     if (builder.op) {
       // Update OP fields later on the main thread
       val op = Post.Builder()

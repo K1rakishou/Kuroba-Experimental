@@ -6,13 +6,11 @@ import com.github.k1rakishou.json.*
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.di.annotation.*
-import com.github.k1rakishou.model.parser.ArchivesJsonParser
 import com.github.k1rakishou.model.repository.*
 import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
 import com.github.k1rakishou.model.source.cache.GenericCacheSource
 import com.github.k1rakishou.model.source.cache.ThreadBookmarkCache
 import com.github.k1rakishou.model.source.local.*
-import com.github.k1rakishou.model.source.remote.ArchivesRemoteSource
 import com.github.k1rakishou.model.source.remote.InlinedFileInfoRemoteSource
 import com.github.k1rakishou.model.source.remote.MediaServiceLinkExtraContentRemoteSource
 import com.google.gson.Gson
@@ -75,19 +73,6 @@ class ModelMainModule {
   @Provides
   fun provideThreadBookmarkCache(): ThreadBookmarkCache {
     return ThreadBookmarkCache()
-  }
-
-  /**
-   * Parsers
-   * */
-
-  @Singleton
-  @Provides
-  fun provideArchivesJsonParser(
-    @LoggerTagPrefix loggerTag: String,
-    logger: Logger
-  ): ArchivesJsonParser {
-    return ArchivesJsonParser(loggerTag, logger)
   }
 
   /**
@@ -328,18 +313,6 @@ class ModelMainModule {
     @LoggerTagPrefix loggerTag: String
   ): InlinedFileInfoRemoteSource {
     return InlinedFileInfoRemoteSource(okHttpClient, loggerTag, logger)
-  }
-
-  @Singleton
-  @Provides
-  fun provideArchivesRemoteSource(
-    logger: Logger,
-    okHttpClient: OkHttpClient,
-    @LoggerTagPrefix loggerTag: String,
-    archivesJsonParser: ArchivesJsonParser,
-    appConstants: AppConstants
-  ): ArchivesRemoteSource {
-    return ArchivesRemoteSource(okHttpClient, loggerTag, logger, archivesJsonParser, appConstants)
   }
 
   /**

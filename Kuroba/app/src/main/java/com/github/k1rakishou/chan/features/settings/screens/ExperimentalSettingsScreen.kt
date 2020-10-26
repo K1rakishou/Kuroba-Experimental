@@ -105,6 +105,14 @@ class ExperimentalSettingsScreen(
           requiresRestart = true
         )
 
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = ExperimentalScreen.MainSettingsGroup.CloudflareForcePreload,
+          topDescriptionIdFunc = { R.string.setting_cloudflare_preloading_dialog_title },
+          bottomDescriptionIdFunc = { R.string.setting_cloudflare_preloading_dialog_description },
+          setting = ChanSettings.cloudflareForcePreload
+        )
+
         return group
       }
     )

@@ -11,8 +11,8 @@ import com.github.k1rakishou.common.nextStringOrNull
 import com.github.k1rakishou.model.data.archive.ArchivePost
 import com.github.k1rakishou.model.data.archive.ArchivePostMedia
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.model.source.remote.ArchivesRemoteSource
 import com.github.k1rakishou.model.util.extractFileNameExtension
 import com.github.k1rakishou.model.util.removeExtensionIfPresent
 import com.google.gson.stream.JsonReader
@@ -37,7 +37,7 @@ class FoolFuukaApi(
       if (jsonKey == "error") {
         val errorMessage = nextStringOrNull()
           ?: "No error message"
-        throw ArchivesRemoteSource.ArchivesApiException(errorMessage)
+        throw ArchivesApiException(errorMessage)
       }
 
       val parsedThreadNo = jsonKey.toLongOrNull()
@@ -93,7 +93,7 @@ class FoolFuukaApi(
     val chanDescriptor = chanReaderProcessor.chanDescriptor
     val boardDescriptor = chanDescriptor.boardDescriptor()
 
-    val archivePost = reader.readPost()
+    val archivePost = reader.readPost(boardDescriptor)
     if (expectedOp != archivePost.isOP) {
       Logger.e(TAG, "Invalid archive post OP flag (expected: ${expectedOp}, actual: ${archivePost.isOP})")
       return
@@ -116,8 +116,8 @@ class FoolFuukaApi(
     }
   }
 
-  private fun JsonReader.readPost(): ArchivePost {
-    val archivePost = ArchivePost()
+  private fun JsonReader.readPost(boardDescriptor: BoardDescriptor): ArchivePost {
+    val archivePost = ArchivePost(boardDescriptor)
 
     while (hasNext()) {
       when (nextName()) {
@@ -247,6 +247,8 @@ class FoolFuukaApi(
 
     return ModularResult.error(error)
   }
+
+  class ArchivesApiException(message: String) : Exception(message)
 
   companion object {
     private const val TAG = "FoolFuukaApi"

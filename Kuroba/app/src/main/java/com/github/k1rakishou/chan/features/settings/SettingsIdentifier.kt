@@ -505,7 +505,6 @@ sealed class MediaScreen(
     object ImageClickPreloadStrategy : LoadingGroup("image_click_preloading_strategy")
     object AutoLoadThreadImages : LoadingGroup("auto_load_thread_images")
     object ShowPrefetchLoadingIndicator : LoadingGroup("show_prefetch_loading_indicator")
-    object CloudflareForcePreleoad : LoadingGroup("cloudflare_force_preload")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = MediaScreen.getScreenIdentifier()
@@ -619,6 +618,7 @@ sealed class ExperimentalScreen(
     object ResetExclusionZones : MainSettingsGroup("reset_exclusion_zones")
     object OkHttpAllowHttp2 : MainSettingsGroup("ok_http_allow_http_2")
     object OkHttpAllowIpv6 : MainSettingsGroup("ok_http_allow_ipv6")
+    object CloudflareForcePreload : MainSettingsGroup("cloudflare_force_preload")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = ExperimentalScreen.getScreenIdentifier()

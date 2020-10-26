@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.CommonSite.CommonApi
 import com.github.k1rakishou.chan.core.site.parser.ChanReader.Companion.DEFAULT_POST_LIST_CAPACITY
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
+import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
@@ -121,7 +122,13 @@ class TaimabaApi(
         }
       }
     }
+
     reader.endObject()
+
+    if (!builder.hasPostDescriptor()) {
+      Logger.e(TAG, "readPostObject() Post has no PostDescriptor!")
+      return
+    }
 
     // The file from between the other values.
     if (fileName != null && fileExt != null) {
@@ -136,6 +143,7 @@ class TaimabaApi(
         .spoiler(fileSpoiler)
         .size(fileSize)
         .build()
+
       // Insert it at the beginning.
       files.add(0, image)
     }

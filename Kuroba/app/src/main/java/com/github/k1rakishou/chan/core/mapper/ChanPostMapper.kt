@@ -97,7 +97,7 @@ object ChanPostMapper {
         // (because it's a pain in the ass to tell them apart), so we need to filter out duplicates
         // during the mapping
         val postImages = getPostImagesWithoutDuplicates(chanPost).map { chanPostImage ->
-            ChanPostImageMapper.toPostImage(chanPostImage)
+            ChanPostImageMapper.toPostImage(chanPost.postDescriptor, chanPostImage)
         }
 
         val postIcons = chanPost.postIcons.map { chanPostHttpIcon ->
@@ -153,7 +153,7 @@ object ChanPostMapper {
         }
 
         chanPost.postImages.map { chanPostImage ->
-            ChanPostImageMapper.toPostImage(chanPostImage)
+            ChanPostImageMapper.toPostImage(chanPost.postDescriptor, chanPostImage)
         }
 
         return filtered

@@ -121,7 +121,6 @@ class ChanReaderProcessor(
     return false
   }
 
-
   private fun addForParse(postBuilder: Post.Builder) {
     toParse.add(postBuilder)
   }

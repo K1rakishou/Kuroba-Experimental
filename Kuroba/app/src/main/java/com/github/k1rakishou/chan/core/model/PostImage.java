@@ -23,6 +23,7 @@ import androidx.annotation.Nullable;
 import com.github.k1rakishou.chan.BuildConfig;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.utils.StringUtils;
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPostImageType;
 
 import okhttp3.HttpUrl;
@@ -51,6 +52,7 @@ public class PostImage {
     public final String fileHash;
     public final ChanPostImageType type;
     private long size;
+    private PostDescriptor ownerPostDescriptor;
 
     public synchronized boolean isPrefetched() {
         return isPrefetched;
@@ -58,6 +60,14 @@ public class PostImage {
 
     public synchronized void setPrefetched() {
         isPrefetched = true;
+    }
+
+    public synchronized void setOwnerPostDescriptor(PostDescriptor ownerPostDescriptor) {
+        this.ownerPostDescriptor = ownerPostDescriptor;
+    }
+
+    public synchronized PostDescriptor getOwnerPostDescriptor() {
+        return ownerPostDescriptor;
     }
 
     private PostImage(Builder builder) {
@@ -74,6 +84,10 @@ public class PostImage {
         this.archiveId = builder.archiveId;
         this.size = builder.size;
         this.fileHash = builder.fileHash;
+
+        if (this.ownerPostDescriptor == null && builder.ownerPostDescriptor != null) {
+            this.ownerPostDescriptor = builder.ownerPostDescriptor;
+        }
 
         switch (extension) {
             case "gif":
@@ -186,6 +200,7 @@ public class PostImage {
         private long size;
         @Nullable
         private String fileHash;
+        private PostDescriptor ownerPostDescriptor;
 
         public Builder() {
         }
@@ -265,6 +280,11 @@ public class PostImage {
                 }
             }
 
+            return this;
+        }
+
+        public Builder postDescriptor(PostDescriptor postDescriptor) {
+            this.ownerPostDescriptor = postDescriptor;
             return this;
         }
 

@@ -411,6 +411,14 @@ suspend fun <T> CompletableDeferred<T>.awaitSilently(defaultValue: T): T {
   }
 }
 
+suspend fun Deferred<*>.awaitSilently() {
+  try {
+    await()
+  } catch (ignored: CancellationException) {
+    // no-op
+  }
+}
+
 suspend fun CompletableDeferred<*>.awaitSilently() {
   try {
     await()

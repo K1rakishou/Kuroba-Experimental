@@ -141,12 +141,14 @@ class FutabaChanReader(
         "since4pass" -> since4pass = reader.nextInt()
         "extra_files" -> {
           reader.beginArray()
+
           while (reader.hasNext()) {
             val postImage = readPostImage(reader, builder, board, endpoints)
             if (postImage != null) {
               files.add(postImage)
             }
           }
+
           reader.endArray()
         }
         "md5" -> fileHash = reader.nextString()
@@ -159,6 +161,11 @@ class FutabaChanReader(
     }
 
     reader.endObject()
+
+    if (!builder.hasPostDescriptor()) {
+      Logger.e(TAG, "readPostObject() Post has no PostDescriptor!")
+      return
+    }
 
     // The file from between the other values.
     if (fileId != null && fileName != null && fileExt != null && !fileDeleted) {
@@ -176,6 +183,7 @@ class FutabaChanReader(
         .size(fileSize)
         .fileHash(fileHash, true)
         .build()
+
       // Insert it at the beginning.
       files.add(0, image)
     }
@@ -192,9 +200,11 @@ class FutabaChanReader(
       op.threadImagesCount(builder.threadImagesCount)
       op.uniqueIps(builder.uniqueIps)
       op.lastModified(builder.lastModified)
+
       if (builder.sticky) {
         op.stickyCap(stickyCap)
       }
+
       chanReaderProcessor.setOp(op)
     }
 
