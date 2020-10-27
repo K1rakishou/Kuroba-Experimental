@@ -90,7 +90,7 @@ public class ChanSettings {
     }
 
     @DoNotStrip
-    public enum MediaAutoLoadMode implements OptionSettingItem {
+    public enum NetworkContentAutoLoadMode implements OptionSettingItem {
         // Always auto load, either wifi or mobile
         ALL("all"),
         // Only auto load if on wifi
@@ -100,7 +100,7 @@ public class ChanSettings {
 
         String name;
 
-        MediaAutoLoadMode(String name) {
+        NetworkContentAutoLoadMode(String name) {
             this.name = name;
         }
 
@@ -109,13 +109,13 @@ public class ChanSettings {
             return name;
         }
 
-        public static boolean shouldLoadForNetworkType(ChanSettings.MediaAutoLoadMode networkType) {
-            if (networkType == ChanSettings.MediaAutoLoadMode.NONE) {
+        public static boolean shouldLoadForNetworkType(NetworkContentAutoLoadMode networkType) {
+            if (networkType == NetworkContentAutoLoadMode.NONE) {
                 return false;
-            } else if (networkType == ChanSettings.MediaAutoLoadMode.WIFI) {
+            } else if (networkType == NetworkContentAutoLoadMode.WIFI) {
                 return isConnected(ConnectivityManager.TYPE_WIFI);
             } else {
-                return networkType == ChanSettings.MediaAutoLoadMode.ALL;
+                return networkType == NetworkContentAutoLoadMode.ALL;
             }
         }
     }
@@ -242,9 +242,9 @@ public class ChanSettings {
     public static final BooleanSetting markCrossThreadQuotesOnScrollbar;
 
     // Post links parsing
-    public static final BooleanSetting parseYoutubeTitlesAndDuration;
-    public static final BooleanSetting parseSoundCloudTitlesAndDuration;
-    public static final BooleanSetting parseStreamableTitlesAndDuration;
+    public static final OptionsSetting<NetworkContentAutoLoadMode> parseYoutubeTitlesAndDuration;
+    public static final OptionsSetting<NetworkContentAutoLoadMode> parseSoundCloudTitlesAndDuration;
+    public static final OptionsSetting<NetworkContentAutoLoadMode> parseStreamableTitlesAndDuration;
     public static final BooleanSetting showLinkAlongWithTitleAndDuration;
 
     // Images
@@ -304,12 +304,11 @@ public class ChanSettings {
     public static final BooleanSetting videoStream;
 
     // Media loading
-    public static final OptionsSetting<MediaAutoLoadMode> imageAutoLoadNetwork;
-    public static final OptionsSetting<MediaAutoLoadMode> videoAutoLoadNetwork;
+    public static final OptionsSetting<NetworkContentAutoLoadMode> imageAutoLoadNetwork;
+    public static final OptionsSetting<NetworkContentAutoLoadMode> videoAutoLoadNetwork;
     public static final OptionsSetting<ImageClickPreloadStrategy> imageClickPreloadStrategy;
     public static final BooleanSetting autoLoadThreadImages;
     public static final BooleanSetting showPrefetchLoadingIndicator;
-    public static final BooleanSetting cloudflareForcePreload;
     //endregion
 
     //region EXPERIMENTAL
@@ -317,6 +316,7 @@ public class ChanSettings {
     public static final StringSetting androidTenGestureZones;
     public static final BooleanSetting okHttpAllowHttp2;
     public static final BooleanSetting okHttpAllowIpv6;
+    public static final BooleanSetting cloudflareForcePreload;
     //endregion
 
     //region OTHER
@@ -394,9 +394,24 @@ public class ChanSettings {
             markCrossThreadQuotesOnScrollbar = new BooleanSetting(p, "mark_cross_thread_quotes_on_scrollbar", false);
 
             // Post links parsing
-            parseYoutubeTitlesAndDuration = new BooleanSetting(p, "parse_youtube_titles_and_duration", true);
-            parseSoundCloudTitlesAndDuration = new BooleanSetting(p, "parse_soundcloud_titles_and_duration", true);
-            parseStreamableTitlesAndDuration = new BooleanSetting(p, "parse_streamable_titles_and_duration", true);
+            parseYoutubeTitlesAndDuration = new OptionsSetting<>(
+                    p,
+                    "parse_youtube_titles_and_duration_v2",
+                    NetworkContentAutoLoadMode.class,
+                    NetworkContentAutoLoadMode.WIFI
+            );
+            parseSoundCloudTitlesAndDuration = new OptionsSetting<>(
+                    p,
+                    "parse_soundcloud_titles_and_duration",
+                    NetworkContentAutoLoadMode.class,
+                    NetworkContentAutoLoadMode.WIFI
+            );
+            parseStreamableTitlesAndDuration = new OptionsSetting<>(
+                    p,
+                    "parse_streamable_titles_and_duration",
+                    NetworkContentAutoLoadMode.class,
+                    NetworkContentAutoLoadMode.WIFI
+            );
             showLinkAlongWithTitleAndDuration = new BooleanSetting(p, "show_link_along_with_title_and_duration", true);
 
             // Images
@@ -459,13 +474,13 @@ public class ChanSettings {
             // Media loading
             imageAutoLoadNetwork = new OptionsSetting<>(p,
                     "preference_image_auto_load_network",
-                    MediaAutoLoadMode.class,
-                    MediaAutoLoadMode.WIFI
+                    NetworkContentAutoLoadMode.class,
+                    NetworkContentAutoLoadMode.WIFI
             );
             videoAutoLoadNetwork = new OptionsSetting<>(p,
                     "preference_video_auto_load_network",
-                    MediaAutoLoadMode.class,
-                    MediaAutoLoadMode.WIFI
+                    NetworkContentAutoLoadMode.class,
+                    NetworkContentAutoLoadMode.WIFI
             );
             imageClickPreloadStrategy = new OptionsSetting<>(p,
                     "image_click_preload_strategy",

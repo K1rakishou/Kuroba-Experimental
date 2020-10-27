@@ -25,7 +25,9 @@ internal class StreamableMediaServiceExtraInfoFetcher(
     get() = MediaServiceType.Streamable
 
   override fun isEnabled(): Boolean {
-    return ChanSettings.parseStreamableTitlesAndDuration.get()
+    return ChanSettings.NetworkContentAutoLoadMode.shouldLoadForNetworkType(
+      ChanSettings.parseStreamableTitlesAndDuration.get()
+    )
   }
 
   override fun isCached(videoId: GenericVideoId): Single<Boolean> {

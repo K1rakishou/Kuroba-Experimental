@@ -25,7 +25,9 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
     get() = MediaServiceType.Youtube
 
   override fun isEnabled(): Boolean {
-    return ChanSettings.parseYoutubeTitlesAndDuration.get()
+    return ChanSettings.NetworkContentAutoLoadMode.shouldLoadForNetworkType(
+      ChanSettings.parseYoutubeTitlesAndDuration.get()
+    )
   }
 
   override fun isCached(videoId: GenericVideoId): Single<Boolean> {

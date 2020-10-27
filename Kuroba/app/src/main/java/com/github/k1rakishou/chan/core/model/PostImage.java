@@ -28,7 +28,7 @@ import com.github.k1rakishou.model.data.post.ChanPostImageType;
 
 import okhttp3.HttpUrl;
 
-import static com.github.k1rakishou.chan.core.settings.ChanSettings.MediaAutoLoadMode.shouldLoadForNetworkType;
+import static com.github.k1rakishou.chan.core.settings.ChanSettings.NetworkContentAutoLoadMode.shouldLoadForNetworkType;
 
 public class PostImage {
     private static final long MAX_PREFETCH_FILE_SIZE = 10 * (1024 * 1024); // 10 MB

@@ -72,44 +72,44 @@ class MediaSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += ListSettingV2.createBuilder<ChanSettings.MediaAutoLoadMode>(
+        group += ListSettingV2.createBuilder<ChanSettings.NetworkContentAutoLoadMode>(
           context = context,
           identifier = MediaScreen.LoadingGroup.ImageAutoLoadNetwork,
           setting = ChanSettings.imageAutoLoadNetwork,
           topDescriptionIdFunc = { R.string.setting_image_auto_load },
           bottomDescriptionStringFunc = { itemName -> itemName },
-          items = ChanSettings.MediaAutoLoadMode.values().toList(),
+          items = ChanSettings.NetworkContentAutoLoadMode.values().toList(),
           itemNameMapper = { item ->
             when (item) {
-              ChanSettings.MediaAutoLoadMode.ALL -> {
+              ChanSettings.NetworkContentAutoLoadMode.ALL -> {
                 context.getString(R.string.setting_image_auto_load_all)
               }
-              ChanSettings.MediaAutoLoadMode.WIFI -> {
+              ChanSettings.NetworkContentAutoLoadMode.WIFI -> {
                 context.getString(R.string.setting_image_auto_load_wifi)
               }
-              ChanSettings.MediaAutoLoadMode.NONE -> {
+              ChanSettings.NetworkContentAutoLoadMode.NONE -> {
                 context.getString(R.string.setting_image_auto_load_none)
               }
             }
           }
         )
 
-        group += ListSettingV2.createBuilder<ChanSettings.MediaAutoLoadMode>(
+        group += ListSettingV2.createBuilder<ChanSettings.NetworkContentAutoLoadMode>(
           context = context,
           identifier = MediaScreen.LoadingGroup.VideoAutoLoadNetwork,
           setting = ChanSettings.videoAutoLoadNetwork,
           topDescriptionIdFunc = { R.string.setting_video_auto_load },
           bottomDescriptionStringFunc = { itemName -> itemName },
-          items = ChanSettings.MediaAutoLoadMode.values().toList(),
+          items = ChanSettings.NetworkContentAutoLoadMode.values().toList(),
           itemNameMapper = { item ->
             when (item) {
-              ChanSettings.MediaAutoLoadMode.ALL -> {
+              ChanSettings.NetworkContentAutoLoadMode.ALL -> {
                 context.getString(R.string.setting_image_auto_load_all)
               }
-              ChanSettings.MediaAutoLoadMode.WIFI -> {
+              ChanSettings.NetworkContentAutoLoadMode.WIFI -> {
                 context.getString(R.string.setting_image_auto_load_wifi)
               }
-              ChanSettings.MediaAutoLoadMode.NONE -> {
+              ChanSettings.NetworkContentAutoLoadMode.NONE -> {
                 context.getString(R.string.setting_image_auto_load_none)
               }
             }

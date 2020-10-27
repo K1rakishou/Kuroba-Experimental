@@ -555,12 +555,12 @@ Note that for country code filtering, troll country codes should be prepended wi
 
     <!-- Appearance post links group -->
     <string name="setting_group_post_links">Post links</string>
-    <string name="setting_youtube_title_and_durations">Enable Youtube titles and durations</string>
-    <string name="setting_youtube_title_and_durations_description">Replaces Youtube links with their titles and appends video duration</string>
-    <string name="setting_soundcloud_title_and_durations">Enable SoundCloud titles and durations</string>
-    <string name="setting_soundcloud_title_and_durations_description">Replaces SoundCloud links with their titles and appends video duration</string>
-    <string name="setting_streamable_title_and_durations">Enable Streamable titles and durations</string>
-    <string name="setting_streamable_title_and_durations_description">Replaces Streamable links with their titles and appends video duration</string>
+    <string name="setting_youtube_title_and_durations">Parse Youtube titles and durations</string>
+    <string name="setting_youtube_title_and_durations_description">Replaces Youtube links with their titles and appends video duration\n\n%1$s</string>
+    <string name="setting_soundcloud_title_and_durations">Parse SoundCloud titles and durations</string>
+    <string name="setting_soundcloud_title_and_durations_description">Replaces SoundCloud links with their titles and appends video duration\n\n%1$s</string>
+    <string name="setting_streamable_title_and_durations">Parse Streamable titles and durations</string>
+    <string name="setting_streamable_title_and_durations_description">Replaces Streamable links with their titles and appends video duration\n\n%1$s</string>
     <string name="setting_show_link_along_with_title_and_duration_title">Show the link along with video title and duration</string>
     <string name="setting_show_link_along_with_title_and_duration_description">When disabled only the video title and duration will be shown</string>
 

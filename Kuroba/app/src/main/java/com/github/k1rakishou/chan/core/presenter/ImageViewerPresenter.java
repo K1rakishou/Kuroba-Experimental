@@ -63,7 +63,7 @@ import okhttp3.HttpUrl;
 import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager.NEXT_N_POSTS_RELATIVE;
 import static com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager.PREV_N_POSTS_RELATIVE;
-import static com.github.k1rakishou.chan.core.settings.ChanSettings.MediaAutoLoadMode.shouldLoadForNetworkType;
+import static com.github.k1rakishou.chan.core.settings.ChanSettings.NetworkContentAutoLoadMode.shouldLoadForNetworkType;
 import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.BIGIMAGE;
 import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.GIFIMAGE;
 import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.LOWRES;

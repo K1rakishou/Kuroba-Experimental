@@ -25,7 +25,9 @@ internal class SoundCloudMediaServiceExtraInfoFetcher(
     get() = MediaServiceType.SoundCloud
 
   override fun isEnabled(): Boolean {
-    return ChanSettings.parseSoundCloudTitlesAndDuration.get()
+    return ChanSettings.NetworkContentAutoLoadMode.shouldLoadForNetworkType(
+      ChanSettings.parseSoundCloudTitlesAndDuration.get()
+    )
   }
 
   override fun isCached(videoId: GenericVideoId): Single<Boolean> {

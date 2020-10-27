@@ -221,30 +221,87 @@ class AppearanceSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += ListSettingV2.createBuilder<ChanSettings.NetworkContentAutoLoadMode>(
           context = context,
           identifier = AppearanceScreen.PostLinksGroup.ParseYoutubeTitlesAndDuration,
           topDescriptionIdFunc = { R.string.setting_youtube_title_and_durations },
-          bottomDescriptionIdFunc = { R.string.setting_youtube_title_and_durations_description },
+          bottomDescriptionStringFunc = {
+            context.getString(
+              R.string.setting_youtube_title_and_durations_description,
+              ChanSettings.parseYoutubeTitlesAndDuration.get().name
+            )
+          },
           setting = ChanSettings.parseYoutubeTitlesAndDuration,
+          items = ChanSettings.NetworkContentAutoLoadMode.values().toList(),
+          itemNameMapper = { item ->
+            when (item) {
+              ChanSettings.NetworkContentAutoLoadMode.ALL -> {
+                context.getString(R.string.setting_image_auto_load_all)
+              }
+              ChanSettings.NetworkContentAutoLoadMode.WIFI -> {
+                context.getString(R.string.setting_image_auto_load_wifi)
+              }
+              ChanSettings.NetworkContentAutoLoadMode.NONE -> {
+                context.getString(R.string.setting_image_auto_load_none)
+              }
+            }
+          },
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += ListSettingV2.createBuilder<ChanSettings.NetworkContentAutoLoadMode>(
           context = context,
           identifier = AppearanceScreen.PostLinksGroup.ParseSoundCloudTitlesAndDuration,
           topDescriptionIdFunc = { R.string.setting_soundcloud_title_and_durations },
-          bottomDescriptionIdFunc = { R.string.setting_soundcloud_title_and_durations_description },
+          bottomDescriptionStringFunc = {
+            context.getString(
+              R.string.setting_soundcloud_title_and_durations_description,
+              ChanSettings.parseSoundCloudTitlesAndDuration.get().name
+            )
+          },
           setting = ChanSettings.parseSoundCloudTitlesAndDuration,
+          items = ChanSettings.NetworkContentAutoLoadMode.values().toList(),
+          itemNameMapper = { item ->
+            when (item) {
+              ChanSettings.NetworkContentAutoLoadMode.ALL -> {
+                context.getString(R.string.setting_image_auto_load_all)
+              }
+              ChanSettings.NetworkContentAutoLoadMode.WIFI -> {
+                context.getString(R.string.setting_image_auto_load_wifi)
+              }
+              ChanSettings.NetworkContentAutoLoadMode.NONE -> {
+                context.getString(R.string.setting_image_auto_load_none)
+              }
+            }
+          },
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += ListSettingV2.createBuilder<ChanSettings.NetworkContentAutoLoadMode>(
           context = context,
           identifier = AppearanceScreen.PostLinksGroup.ParseStreamableTitlesAndDuration,
           topDescriptionIdFunc = { R.string.setting_streamable_title_and_durations },
-          bottomDescriptionIdFunc = { R.string.setting_streamable_title_and_durations_description },
+          bottomDescriptionStringFunc = {
+            context.getString(
+              R.string.setting_streamable_title_and_durations_description,
+              ChanSettings.parseStreamableTitlesAndDuration.get().name
+            )
+          },
           setting = ChanSettings.parseStreamableTitlesAndDuration,
+          items = ChanSettings.NetworkContentAutoLoadMode.values().toList(),
+          itemNameMapper = { item ->
+            when (item) {
+              ChanSettings.NetworkContentAutoLoadMode.ALL -> {
+                context.getString(R.string.setting_image_auto_load_all)
+              }
+              ChanSettings.NetworkContentAutoLoadMode.WIFI -> {
+                context.getString(R.string.setting_image_auto_load_wifi)
+              }
+              ChanSettings.NetworkContentAutoLoadMode.NONE -> {
+                context.getString(R.string.setting_image_auto_load_none)
+              }
+            }
+          },
           requiresUiRefresh = true
         )
 
