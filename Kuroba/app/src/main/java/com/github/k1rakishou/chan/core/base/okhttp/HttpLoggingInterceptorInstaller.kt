@@ -1,6 +1,5 @@
-package com.github.k1rakishou.chan.core.di
+package com.github.k1rakishou.chan.core.base.okhttp
 
-import com.github.k1rakishou.chan.core.base.okhttp.HttpLoggingInterceptorLazy
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.Logger
 import okhttp3.OkHttpClient

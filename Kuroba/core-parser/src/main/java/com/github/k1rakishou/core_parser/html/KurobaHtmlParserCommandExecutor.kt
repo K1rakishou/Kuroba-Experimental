@@ -23,7 +23,12 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
     kurobaParserCommands: List<KurobaParserCommand<T>>,
     collector: T
   ): Boolean {
+    if (kurobaParserCommands.isEmpty()) {
+      return true
+    }
+
     resetParserState()
+
     var childNodes = document.childNodes()
 
     for ((parsingStep, kurobaParserCommand) in kurobaParserCommands.withIndex()) {
@@ -31,6 +36,7 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
 
       childNodes = executeKurobaParserCommand(
         childNodes,
+        null,
         kurobaParserCommand,
         parsingStep,
         kurobaParserCommands.lastIndex,
@@ -51,6 +57,7 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
   @SuppressLint("LongLogTag")
   private fun executeKurobaParserCommand(
     childNodes: List<Node>,
+    groupName: String?,
     kurobaParserCommand: KurobaParserCommand<T>,
     currentParsingStepIndex: Int,
     lastParsingStepIndex: Int,
@@ -61,7 +68,7 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
     if (debugMode) {
       val depthIndicator = " ".repeat(depth)
       Log.d(
-        TAG, "${depthIndicator}(${currentParsingStepIndex}/${lastParsingStepIndex}, " +
+        TAG, "${depthIndicator}{$groupName} (${currentParsingStepIndex}/${lastParsingStepIndex}, " +
           "nodes=${childNodes.size}) command=${kurobaParserCommand}"
       )
     }
@@ -70,8 +77,13 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
       is KurobaParserCommandGroup<*> -> {
         kurobaParserCommand as KurobaParserCommandGroup<T>
 
+        check(kurobaParserCommand.commands.isNotEmpty()) {
+          "Commands in KurobaParserCommandGroup is empty!"
+        }
+
         var innerNodes = childNodes
         val innerNodeIndex = AtomicInteger(0)
+        val innerGroupName = kurobaParserCommand.groupName
 
         if (getOrCreateCurrentParserContext().preserveIndex) {
           innerNodeIndex.set(nodeIndex.get())
@@ -80,6 +92,7 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
         for ((innerStep, kurobaParserNestedCommand) in kurobaParserCommand.commands.withIndex()) {
           innerNodes = executeKurobaParserCommand(
             innerNodes,
+            innerGroupName,
             kurobaParserNestedCommand,
             innerStep,
             kurobaParserCommand.commands.lastIndex,
@@ -157,7 +170,7 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
           nodeIndex.set(0)
         }
 
-        if (childNodes.isEmpty() && currentParsingStepIndex != lastParsingStepIndex) {
+        if (nextChildNodes.isEmpty() && currentParsingStepIndex != lastParsingStepIndex) {
           Log.e(
             TAG, "Parser possible failure at step ${currentParsingStepIndex}, " +
               "kurobaParserCommand ($kurobaParserCommand) returned empty child node list"
