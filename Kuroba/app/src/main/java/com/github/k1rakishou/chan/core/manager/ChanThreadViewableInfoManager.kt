@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.core.manager
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -61,6 +62,18 @@ class ChanThreadViewableInfoManager(
       )
 
       alreadyPreloadedSet.add(threadDescriptor)
+    }
+  }
+
+  fun getIndexAndTop(threadDescriptor: ChanDescriptor.ThreadDescriptor): RecyclerUtils.IndexAndTop? {
+    return lock.read {
+      val chanThreadViewableInfo = chanThreadViewableMap[threadDescriptor]
+        ?: return@read null
+
+      val listViewIndex = chanThreadViewableInfo.listViewIndex
+      val listViewTop = chanThreadViewableInfo.listViewTop
+
+      return@read RecyclerUtils.IndexAndTop(listViewIndex, listViewTop)
     }
   }
 
@@ -146,10 +159,22 @@ class ChanThreadViewableInfoManager(
       return current
     }
 
+    val listViewIndex = if (prev.listViewIndex > 0 && current.listViewIndex <= 0) {
+      prev.listViewIndex
+    } else {
+      current.listViewIndex
+    }
+
+    val listViewTop = if (prev.listViewTop > 0 && current.listViewTop <= 0) {
+      prev.listViewTop
+    } else {
+      current.listViewTop
+    }
+
     return ChanThreadViewableInfo(
       threadDescriptor = current.threadDescriptor,
-      listViewIndex = current.listViewIndex,
-      listViewTop = current.listViewTop,
+      listViewIndex = listViewIndex,
+      listViewTop = listViewTop,
       lastViewedPostNo = current.lastViewedPostNo,
       lastLoadedPostNo = current.lastLoadedPostNo,
       markedPostNo = prev.markedPostNo,

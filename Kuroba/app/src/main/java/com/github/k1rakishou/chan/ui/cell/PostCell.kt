@@ -386,6 +386,7 @@ class PostCell : LinearLayout, PostCellInterface {
 
   private fun threadBookmarkViewPost(post: Post) {
     val threadDescriptor = chanDescriptor.threadDescriptorOrNull()
+
     if (threadDescriptor != null && currentPostIndex >= 0 && realPostIndex >= 0) {
       bookmarksManager.onPostViewed(threadDescriptor, post.no, currentPostIndex, realPostIndex)
       lastViewedPostNoInfoHolder.setLastViewedPostNo(threadDescriptor, post.no)
