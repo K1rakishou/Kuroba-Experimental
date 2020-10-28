@@ -11,7 +11,7 @@ import com.github.k1rakishou.chan.ui.view.sorting.BookmarkSortingItemsViewGroup
 
 class BookmarksSortingController(
   context: Context,
-  private var sortingOrderChangeListener: SortingOrderChangeListener? = null
+  private var bookmarksView: BookmarksView? = null
 ) : BaseFloatingController(context) {
 
   private lateinit var outsideArea: ConstraintLayout
@@ -50,7 +50,7 @@ class BookmarksSortingController(
       shouldReloadBookmarks = shouldReloadBookmarks or updateMoveBookmarksWithUnreadRepliesToTopSetting()
 
       if (shouldReloadBookmarks) {
-        sortingOrderChangeListener?.onSortingOrderChanged()
+        bookmarksView?.reloadBookmarks()
       }
 
       pop()
@@ -113,11 +113,7 @@ class BookmarksSortingController(
 
   override fun onDestroy() {
     super.onDestroy()
-    sortingOrderChangeListener = null
-  }
-
-  interface SortingOrderChangeListener {
-    fun onSortingOrderChanged()
+    bookmarksView = null
   }
 
 }

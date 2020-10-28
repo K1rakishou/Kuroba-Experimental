@@ -16,6 +16,10 @@ class RangeSetting(
     require(def <= max) { "Bad default value, must be <= max" }
   }
 
+  override fun get(): Int {
+    return super.get().coerceIn(min, max)
+  }
+
   override fun set(value: Int) {
     super.set(value.coerceIn(min, max))
   }

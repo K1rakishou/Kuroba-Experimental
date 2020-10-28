@@ -46,11 +46,7 @@ abstract class EpoxyListThreadBookmarkViewHolder
   @EpoxyAttribute
   var groupId: String? = null
   @EpoxyAttribute
-  var moveBookmarksWithUnreadRepliesToTop: Boolean = false
-  @EpoxyAttribute
-  var moveNotActiveBookmarksToBottom: Boolean = false
-  @EpoxyAttribute
-  var viewThreadBookmarksGridMode: Boolean = false
+  var reloadBookmarkFlag: Int = 0
 
   private var holder: BaseThreadBookmarkViewHolder? = null
   var dragIndicator: AppCompatImageView? = null
@@ -104,9 +100,7 @@ abstract class EpoxyListThreadBookmarkViewHolder
   }
 
   override fun createNewHolder(): BaseThreadBookmarkViewHolder {
-    return BaseThreadBookmarkViewHolder(
-      context!!.resources.getDimension(R.dimen.thread_list_bookmark_view_image_size).toInt()
-    )
+    return BaseThreadBookmarkViewHolder()
   }
 
 }

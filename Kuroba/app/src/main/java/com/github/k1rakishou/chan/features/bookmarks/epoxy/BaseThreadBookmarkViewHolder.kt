@@ -37,9 +37,7 @@ import java.lang.ref.WeakReference
 import javax.inject.Inject
 
 @Suppress("LeakingThis")
-open class BaseThreadBookmarkViewHolder(
-  private val imageSize: Int
-) : EpoxyHolder() {
+open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
 
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
@@ -411,7 +409,7 @@ open class BaseThreadBookmarkViewHolder(
       context,
       url.toString(),
       bookmarkImage.width,
-      imageSize,
+      bookmarkImage.height,
       transformations,
       { drawable -> thumbnailImageRef.get()?.setImageBitmap(drawable.bitmap) }
     )

@@ -12,7 +12,8 @@ data class ThreadBookmarkItemView(
   val highlight: Boolean,
   val threadBookmarkStats: ThreadBookmarkStats,
   val selection: ThreadBookmarkSelection?,
-  val createdOn: DateTime
+  val createdOn: DateTime,
+  val reloadBookmarkFlag: Int
 )
 
 data class ThreadBookmarkSelection(

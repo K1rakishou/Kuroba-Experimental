@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.reactive.asFlow
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
@@ -42,6 +43,7 @@ class BookmarksPresenter(
   lateinit var archivesManager: ArchivesManager
 
   private val bookmarksRefreshed = AtomicBoolean(false)
+  private val reloadBookmarkFlagCounter = AtomicInteger(0)
 
   private val bookmarksControllerStateSubject = PublishProcessor.create<BookmarksControllerState>()
     .toSerialized()
@@ -187,6 +189,7 @@ class BookmarksPresenter(
         setState(BookmarksControllerState.Loading)
       }
 
+      reloadBookmarkFlagCounter.incrementAndGet()
       Logger.d(TAG, "calling showBookmarks() because reloadBookmarks() was called")
 
       ModularResult.Try { showBookmarks(loadingStateCancellationJob) }.safeUnwrap { error ->
@@ -295,7 +298,9 @@ class BookmarksPresenter(
             thumbnailUrl = threadBookmarkView.thumbnailUrl,
             threadBookmarkStats = threadBookmarkStats,
             selection = selection,
-            createdOn = threadBookmarkView.createdOn
+            createdOn = threadBookmarkView.createdOn,
+            // To force all the views to get reloaded
+            reloadBookmarkFlag = reloadBookmarkFlagCounter.get()
           )
       }
 

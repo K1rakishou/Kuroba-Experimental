@@ -347,6 +347,9 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="controller_bookmarks_move_not_active_bookmarks_to_bottom">Move not active bookmarks to bottom</string>
     <string name="controller_bookmarks_move_bookmarks_with_unread_replies_to_top">Move bookmarks with unread replies to top</string>
 
+    <string name="controller_bookmarks_set_grid_view_width_text">Bookmark views width when in grid mode (pixels).</string>
+    <string name="controller_bookmarks_reopen_bookmarks_screen">Done. Re-open the bookmarks screen for changes to get applied.</string>
+
     <string name="board_select_all">Select all</string>
     <string name="board_select_none">Select none</string>
 
@@ -566,7 +569,7 @@ Note that for country code filtering, troll country codes should be prepended wi
 
     <!-- Appearance gallery group -->
     <string name="setting_hide_images">Hide images</string>
-    <string name="setting_hide_images_description">Hides images when with a special spoiler image. If you want to save on data, turn this on.</string>
+    <string name="setting_hide_images_description">Hides images with a special spoiler image. If you want to save on data, turn this on.</string>
     <string name="settings_remove_image_spoilers">Remove image spoilers</string>
     <string name="settings_remove_image_spoilers_description">Always reveal spoiler thumbnails and images</string>
     <string name="settings_reveal_image_spoilers">Reveal image spoilers</string>
@@ -839,6 +842,7 @@ Don't have a 4chan Pass?<br>
     <string name="controller_bookmarks_prune_inactive_bookmarks">Prune inactive bookmarks</string>
     <string name="controller_bookmarks_prune_confirmation_message">Are you sure you want to prune all inactive bookmarks?</string>
     <string name="controller_bookmarks_clear_all_bookmarks">Clear all bookmarks</string>
+    <string name="controller_bookmarks_set_grid_bookmark_view_width">Set grid bookmark view width</string>
     <string name="controller_bookmarks_clear_all_bookmarks_confirmation_message">Are you sure you want to clear ALL bookmarks?</string>
     <string name="controller_bookmarks_mark_all_bookmarks_as_seen">Mark all bookmarks as seen and clear all notifications</string>
     <string name="controller_bookmarks_prune">Prune</string>

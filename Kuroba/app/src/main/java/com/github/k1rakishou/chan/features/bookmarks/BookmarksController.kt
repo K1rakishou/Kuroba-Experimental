@@ -59,8 +59,7 @@ class BookmarksController(
 ) : Controller(context),
   BookmarksView,
   ToolbarNavigationController.ToolbarSearchCallback,
-  BookmarksSelectionHelper.OnBookmarkMenuItemClicked,
-  BookmarksSortingController.SortingOrderChangeListener {
+  BookmarksSelectionHelper.OnBookmarkMenuItemClicked {
 
   @Inject
   lateinit var dialogFactory: DialogFactory
@@ -239,6 +238,13 @@ class BookmarksController(
         R.string.controller_bookmarks_clear_all_bookmarks,
         ToolbarMenuSubItem.ClickCallback { subItem -> onClearAllBookmarksClicked(subItem) }
       )
+      .withSubItem(
+        ACTION_SET_GRID_BOOKMARK_VIEW_WIDTH,
+        R.string.controller_bookmarks_set_grid_bookmark_view_width,
+        PersistableChanState.viewThreadBookmarksGridMode.get(), {
+          requireNavController().presentController(BookmarksSetGridModeViewWidthController(context))
+        }
+      )
       .build()
       .build()
 
@@ -343,7 +349,7 @@ class BookmarksController(
     }
   }
 
-  override fun onSortingOrderChanged() {
+  override fun reloadBookmarks() {
     Logger.d(TAG, "calling reloadBookmarks() because bookmark sorting order was changed")
 
     needRestoreScrollPosition.set(true)
@@ -417,12 +423,9 @@ class BookmarksController(
         return
       }
 
-      val gridModeBookmarkWidth =
-        context.resources.getDimension(R.dimen.thread_grid_bookmark_view_size).toInt()
-
+      val bookmarkWidth = ChanSettings.bookmarkGridViewWidth.get()
       val screenWidth = getDisplaySize().x
-      val spanCount = (screenWidth / gridModeBookmarkWidth)
-        .coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
+      val spanCount = (screenWidth / bookmarkWidth).coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
 
       epoxyRecyclerView.layoutManager = GridLayoutManager(context, spanCount).apply {
         spanSizeLookup = controller.spanSizeLookup
@@ -511,10 +514,6 @@ class BookmarksController(
           }
 
           val isTablet = AndroidUtils.isTablet()
-          val moveBookmarksWithUnreadRepliesToTop = ChanSettings.moveBookmarksWithUnreadRepliesToTop.get()
-          val moveNotActiveBookmarksToBottom = ChanSettings.moveNotActiveBookmarksToBottom.get()
-          val viewThreadBookmarksGridMode = PersistableChanState.viewThreadBookmarksGridMode.get()
-
           updateTitleWithStats(state)
 
           state.groupedBookmarks.forEach { bookmarkGroup ->
@@ -551,9 +550,7 @@ class BookmarksController(
                   highlightBookmark(bookmark.highlight)
                   isTablet(isTablet)
                   groupId(bookmark.groupId)
-                  moveBookmarksWithUnreadRepliesToTop(moveBookmarksWithUnreadRepliesToTop)
-                  moveNotActiveBookmarksToBottom(moveNotActiveBookmarksToBottom)
-                  viewThreadBookmarksGridMode(viewThreadBookmarksGridMode)
+                  reloadBookmarkFlag(bookmark.reloadBookmarkFlag)
                   bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
                   bookmarkLongClickListener { onBookmarkLongClicked(bookmark) }
                   bookmarkStatsClickListener { onBookmarkStatsClicked(bookmark) }
@@ -570,9 +567,7 @@ class BookmarksController(
                   highlightBookmark(bookmark.highlight)
                   isTablet(isTablet)
                   groupId(bookmark.groupId)
-                  moveBookmarksWithUnreadRepliesToTop(moveBookmarksWithUnreadRepliesToTop)
-                  moveNotActiveBookmarksToBottom(moveNotActiveBookmarksToBottom)
-                  viewThreadBookmarksGridMode(viewThreadBookmarksGridMode)
+                  reloadBookmarkFlag(bookmark.reloadBookmarkFlag)
                   bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
                   bookmarkLongClickListener { onBookmarkLongClicked(bookmark) }
                   bookmarkStatsClickListener { onBookmarkStatsClicked(bookmark) }
@@ -703,17 +698,20 @@ class BookmarksController(
   }
 
   private fun onViewBookmarksModeChanged() {
-    val menuItem = navigation.findItem(ACTION_CHANGE_VIEW_BOOKMARK_MODE)
-      ?: return
+    navigation.findItem(ACTION_CHANGE_VIEW_BOOKMARK_MODE)?.let { menuItem ->
+      val drawableId = when (PersistableChanState.viewThreadBookmarksGridMode.get()) {
+        // Should be a reverse of whatever viewThreadBookmarksGridMode currently is because the
+        // button's meaning is to switch into that mode, not show the current mode
+        false -> R.drawable.ic_baseline_view_comfy_24
+        true -> R.drawable.ic_baseline_view_list_24
+      }
 
-    val drawableId = when (PersistableChanState.viewThreadBookmarksGridMode.get()) {
-      // Should be a reverse of whatever viewThreadBookmarksGridMode currently is because the
-      // button's meaning is to switch into that mode, not show the current mode
-      false -> R.drawable.ic_baseline_view_comfy_24
-      true -> R.drawable.ic_baseline_view_list_24
+      menuItem.setImage(drawableId)
     }
 
-    menuItem.setImage(drawableId)
+    navigation.findSubItem(ACTION_SET_GRID_BOOKMARK_VIEW_WIDTH)?.let { menuSubItem ->
+      menuSubItem.visible = PersistableChanState.viewThreadBookmarksGridMode.get()
+    }
   }
 
   private fun enterSelectionModeOrUpdate() {
@@ -758,6 +756,10 @@ class BookmarksController(
       }
 
       dragIndicator.setOnTouchListener { _, event ->
+        if (bookmarksSelectionHelper.isInSelectionMode()) {
+          return@setOnTouchListener false
+        }
+
         if (event.actionMasked == MotionEvent.ACTION_DOWN) {
           itemTouchHelper.startDrag(holder)
         }
@@ -771,8 +773,8 @@ class BookmarksController(
   companion object {
     private const val TAG = "BookmarksController"
 
-    private const val MIN_SPAN_COUNT = 1
-    private const val MAX_SPAN_COUNT = 6
+    private const val MIN_SPAN_COUNT = 2
+    private const val MAX_SPAN_COUNT = 20
 
     private const val ACTION_CHANGE_VIEW_BOOKMARK_MODE = 1000
     private const val ACTION_OPEN_SORT_SETTINGS = 1001
@@ -780,5 +782,6 @@ class BookmarksController(
     private const val ACTION_PRUNE_NON_ACTIVE_BOOKMARKS = 2000
     private const val ACTION_MARK_ALL_BOOKMARKS_AS_SEEN = 2001
     private const val ACTION_CLEAR_ALL_BOOKMARKS = 2002
+    private const val ACTION_SET_GRID_BOOKMARK_VIEW_WIDTH = 2003
   }
 }

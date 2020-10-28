@@ -37,6 +37,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AndroidUtils.getAppContext;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getAppDir;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getPreferences;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getRes;
@@ -345,6 +346,7 @@ public class ChanSettings {
     public static final BooleanSetting moveNotActiveBookmarksToBottom;
     public static final BooleanSetting moveBookmarksWithUnreadRepliesToTop;
     public static final BooleanSetting ignoreDarkNightMode;
+    public static final RangeSetting bookmarkGridViewWidth;
     //endregion
     //endregion
 
@@ -538,6 +540,14 @@ public class ChanSettings {
             //endregion
 
             scrollingTextForThreadTitles = new BooleanSetting(p, "scrolling_text_for_thread_titles", true);
+
+            bookmarkGridViewWidth = new RangeSetting(
+                    p,
+                    "bookmark_grid_view_width",
+                    (int) getAppContext().getResources().getDimension(R.dimen.thread_grid_bookmark_view_default_width),
+                    (int) getAppContext().getResources().getDimension(R.dimen.thread_grid_bookmark_view_min_width),
+                    (int) getAppContext().getResources().getDimension(R.dimen.thread_grid_bookmark_view_max_width)
+            );
         } catch (Throwable error) {
             // If something crashes while the settings are initializing we at least will have the
             // stacktrace. Otherwise we won't because of Feather.

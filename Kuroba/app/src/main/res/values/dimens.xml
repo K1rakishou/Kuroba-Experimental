@@ -30,7 +30,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <dimen name="history_entry_thread_image_size">48dp</dimen>
     <dimen name="history_entry_site_image_size">20dp</dimen>
     <dimen name="thread_list_bookmark_view_image_size">48dp</dimen>
-    <dimen name="thread_grid_bookmark_view_image_size">72dp</dimen>
-    <dimen name="thread_grid_bookmark_view_size">128dp</dimen>
+    <dimen name="thread_grid_bookmark_view_min_width">80dp</dimen>
+    <dimen name="thread_grid_bookmark_view_default_width">112dp</dimen>
+    <dimen name="thread_grid_bookmark_view_max_width">256dp</dimen>
     <dimen name="search_post_thumbnail_size">100dp</dimen>
 </resources>

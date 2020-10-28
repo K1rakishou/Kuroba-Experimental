@@ -21,6 +21,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <dimen name="history_entry_thread_image_size">54dp</dimen>
     <dimen name="history_entry_site_image_size">24dp</dimen>
     <dimen name="thread_list_bookmark_view_image_size">54dp</dimen>
-    <dimen name="thread_grid_bookmark_view_image_size">128dp</dimen>
-    <dimen name="thread_grid_bookmark_view_size">192dp</dimen>
 </resources>
