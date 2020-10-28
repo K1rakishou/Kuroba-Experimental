@@ -10,7 +10,8 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableSlider
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 
 class BookmarksSetGridModeViewWidthController(
-  context: Context
+  context: Context,
+  private var bookmarksView: BookmarksView? = null
 ) : BaseFloatingController(context) {
   private lateinit var outsideArea: ConstraintLayout
   private lateinit var bookmarkViewWidthSlider: ColorizableSlider
@@ -53,7 +54,7 @@ class BookmarksSetGridModeViewWidthController(
 
       if (currentValue != newValue) {
         ChanSettings.bookmarkGridViewWidth.set(newValue)
-        showToast(R.string.controller_bookmarks_reopen_bookmarks_screen)
+        bookmarksView?.reloadBookmarksAndUpdateViewMode()
       }
 
       pop()
@@ -80,6 +81,7 @@ class BookmarksSetGridModeViewWidthController(
 
   override fun onDestroy() {
     super.onDestroy()
+    bookmarksView = null
   }
 
 }

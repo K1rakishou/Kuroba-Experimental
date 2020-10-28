@@ -348,7 +348,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="controller_bookmarks_move_bookmarks_with_unread_replies_to_top">Move bookmarks with unread replies to top</string>
 
     <string name="controller_bookmarks_set_grid_view_width_text">Bookmark views width when in grid mode (pixels).</string>
-    <string name="controller_bookmarks_reopen_bookmarks_screen">Done. Re-open the bookmarks screen for changes to get applied.</string>
 
     <string name="board_select_all">Select all</string>
     <string name="board_select_none">Select none</string>

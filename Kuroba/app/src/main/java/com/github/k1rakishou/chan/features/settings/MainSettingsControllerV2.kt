@@ -18,6 +18,7 @@ import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGr
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController.ToolbarSearchCallback
 import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
+import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
@@ -73,7 +74,12 @@ class MainSettingsControllerV2(
 
     settingsCoordinator = SettingsCoordinator(context, requireNavController(), drawerCallbacks)
     settingsCoordinator.onCreate()
-    settingsCoordinator.rebuildScreen(defaultScreen, BuildOptions.Default)
+
+    settingsCoordinator.rebuildScreen(
+      screenIdentifier = defaultScreen,
+      buildOptions = BuildOptions.Default,
+      isFirstRebuild = true
+    )
 
     recyclerView.addOnScrollListener(scrollListener)
 
@@ -123,6 +129,11 @@ class MainSettingsControllerV2(
       }
 
       when (renderAction) {
+        is SettingsCoordinator.RenderAction.Loading -> {
+          epoxyLoadingView {
+            id("epoxy_settings_loading_view")
+          }
+        }
         is SettingsCoordinator.RenderAction.RenderScreen -> {
           navigation.title = renderAction.settingsScreen.title
           (navigationController as ToolbarNavigationController).toolbar!!.updateTitle(navigation)

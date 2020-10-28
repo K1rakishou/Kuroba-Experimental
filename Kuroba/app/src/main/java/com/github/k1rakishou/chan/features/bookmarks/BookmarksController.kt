@@ -242,7 +242,7 @@ class BookmarksController(
         ACTION_SET_GRID_BOOKMARK_VIEW_WIDTH,
         R.string.controller_bookmarks_set_grid_bookmark_view_width,
         PersistableChanState.viewThreadBookmarksGridMode.get(), {
-          requireNavController().presentController(BookmarksSetGridModeViewWidthController(context))
+          requireNavController().presentController(BookmarksSetGridModeViewWidthController(context, this))
         }
       )
       .build()
@@ -273,36 +273,6 @@ class BookmarksController(
     bookmarksPresenter.onCreate(this)
 
     setupRecycler()
-  }
-
-  private fun onNewSelectionEvent(selectionEvent: BaseSelectionHelper.SelectionEvent) {
-    when (selectionEvent) {
-      BaseSelectionHelper.SelectionEvent.EnteredSelectionMode,
-      BaseSelectionHelper.SelectionEvent.ItemSelectionToggled -> {
-        if (selectionEvent is BaseSelectionHelper.SelectionEvent.EnteredSelectionMode) {
-          drawerCallbacks?.showBottomPanel(bookmarksSelectionHelper.getBottomPanelMenus())
-        }
-
-        enterSelectionModeOrUpdate()
-      }
-      BaseSelectionHelper.SelectionEvent.ExitedSelectionMode -> {
-        drawerCallbacks?.hideBottomPanel()
-        requireNavController().requireToolbar().exitSelectionMode()
-      }
-    }
-  }
-
-  private fun onChangeViewModeClicked() {
-    PersistableChanState.viewThreadBookmarksGridMode.set(
-      PersistableChanState.viewThreadBookmarksGridMode.get().not()
-    )
-
-    onViewBookmarksModeChanged()
-
-    viewModeChanged.set(true)
-    needRestoreScrollPosition.set(true)
-
-    bookmarksPresenter.onViewBookmarksModeChanged()
   }
 
   override fun onDestroy() {
@@ -350,10 +320,68 @@ class BookmarksController(
   }
 
   override fun reloadBookmarks() {
-    Logger.d(TAG, "calling reloadBookmarks() because bookmark sorting order was changed")
+    Logger.d(TAG, "Calling reloadBookmarks() because bookmark sorting order was changed")
 
     needRestoreScrollPosition.set(true)
     bookmarksPresenter.reloadBookmarks()
+  }
+
+  override fun reloadBookmarksAndUpdateViewMode() {
+    Logger.d(TAG, "Calling reloadBookmarks() because grid bookmark view width was changed")
+
+    updateLayoutManager(forced = true)
+    needRestoreScrollPosition.set(true)
+
+    bookmarksPresenter.reloadBookmarks()
+  }
+
+  override fun onSearchVisibilityChanged(visible: Boolean) {
+    isInSearchMode = visible
+    bookmarksPresenter.onSearchModeChanged(visible)
+
+    if (!visible) {
+      needRestoreScrollPosition.set(true)
+    }
+  }
+
+  override fun onSearchEntered(entered: String) {
+    bookmarksPresenter.onSearchEntered(entered)
+  }
+
+  override fun onConfigurationChanged(newConfig: Configuration) {
+    super.onConfigurationChanged(newConfig)
+
+    updateLayoutManager(forced = true)
+  }
+
+  private fun onNewSelectionEvent(selectionEvent: BaseSelectionHelper.SelectionEvent) {
+    when (selectionEvent) {
+      BaseSelectionHelper.SelectionEvent.EnteredSelectionMode,
+      BaseSelectionHelper.SelectionEvent.ItemSelectionToggled -> {
+        if (selectionEvent is BaseSelectionHelper.SelectionEvent.EnteredSelectionMode) {
+          drawerCallbacks?.showBottomPanel(bookmarksSelectionHelper.getBottomPanelMenus())
+        }
+
+        enterSelectionModeOrUpdate()
+      }
+      BaseSelectionHelper.SelectionEvent.ExitedSelectionMode -> {
+        drawerCallbacks?.hideBottomPanel()
+        requireNavController().requireToolbar().exitSelectionMode()
+      }
+    }
+  }
+
+  private fun onChangeViewModeClicked() {
+    PersistableChanState.viewThreadBookmarksGridMode.set(
+      PersistableChanState.viewThreadBookmarksGridMode.get().not()
+    )
+
+    onViewBookmarksModeChanged()
+
+    viewModeChanged.set(true)
+    needRestoreScrollPosition.set(true)
+
+    bookmarksPresenter.onViewBookmarksModeChanged()
   }
 
   private fun cleanupFastScroller() {
@@ -438,25 +466,6 @@ class BookmarksController(
 
       epoxyRecyclerView.layoutManager = LinearLayoutManager(context)
     }
-  }
-
-  override fun onSearchVisibilityChanged(visible: Boolean) {
-    isInSearchMode = visible
-    bookmarksPresenter.onSearchModeChanged(visible)
-
-    if (!visible) {
-      needRestoreScrollPosition.set(true)
-    }
-  }
-
-  override fun onSearchEntered(entered: String) {
-    bookmarksPresenter.onSearchEntered(entered)
-  }
-
-  override fun onConfigurationChanged(newConfig: Configuration) {
-    super.onConfigurationChanged(newConfig)
-
-    updateLayoutManager(forced = true)
   }
 
   private fun onStateChanged(state: BookmarksControllerState) {

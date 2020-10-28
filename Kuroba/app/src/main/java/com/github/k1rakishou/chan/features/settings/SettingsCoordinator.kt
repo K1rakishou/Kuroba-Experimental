@@ -67,6 +67,8 @@ class SettingsCoordinator(
   @Inject
   lateinit var siteManager: SiteManager
   @Inject
+  lateinit var boardManager: BoardManager
+  @Inject
   lateinit var postHideManager: PostHideManager
   @Inject
   lateinit var chanFilterManager: ChanFilterManager
@@ -302,9 +304,22 @@ class SettingsCoordinator(
     scrollPositionsPerScreen[currentScreen] = RecyclerUtils.getIndexAndTop(recyclerView)
   }
 
-  fun rebuildScreen(screenIdentifier: IScreenIdentifier, buildOptions: BuildOptions) {
-    pushScreen(screenIdentifier)
-    rebuildScreenInternal(screenIdentifier, buildOptions)
+  fun rebuildScreen(
+    screenIdentifier: IScreenIdentifier,
+    buildOptions: BuildOptions,
+    isFirstRebuild: Boolean = false
+  ) {
+    launch(Dispatchers.Main.immediate) {
+      if (isFirstRebuild) {
+        renderSettingsSubject.onNext(RenderAction.Loading)
+
+        siteManager.awaitUntilInitialized()
+        boardManager.awaitUntilInitialized()
+      }
+
+      pushScreen(screenIdentifier)
+      rebuildScreenInternal(screenIdentifier, buildOptions)
+    }
   }
 
   fun onSearchEntered(query: String) {
@@ -385,6 +400,8 @@ class SettingsCoordinator(
   }
 
   sealed class RenderAction {
+    object Loading : RenderAction()
+
     class RenderScreen(val settingsScreen: SettingsScreen) : RenderAction()
 
     class RenderSearchScreen(
