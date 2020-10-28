@@ -87,7 +87,7 @@ class ThreadPresenter @Inject constructor(
   private val historyNavigationManager: HistoryNavigationManager,
   private val postFilterManager: PostFilterManager,
   private val chanFilterManager: ChanFilterManager,
-  private val pastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder,
+  private val lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder,
   private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
   private val localSearchManager: LocalSearchManager
 ) : ChanLoaderCallback,
@@ -324,7 +324,18 @@ class ThreadPresenter @Inject constructor(
       threadNo = threadDescriptor.threadNo,
     )
 
-    launch { threadPresenterCallback?.showThread(archiveThreadDescriptor) }
+    launch {
+      // Take the current thread's scroll position and set it for the thread we are about to open
+      val currentThreadIndexAndTop = chanThreadViewableInfoManager.getIndexAndTop(threadDescriptor)
+      if (currentThreadIndexAndTop != null) {
+        chanThreadViewableInfoManager.update(archiveThreadDescriptor, true) { chanThreadViewableInfo ->
+          chanThreadViewableInfo.listViewIndex = currentThreadIndexAndTop.index
+          chanThreadViewableInfo.listViewTop = currentThreadIndexAndTop.top
+        }
+      }
+
+      threadPresenterCallback?.showThread(archiveThreadDescriptor)
+    }
   }
 
   suspend fun onForegroundChanged(foreground: Boolean) {
@@ -691,7 +702,7 @@ class ThreadPresenter @Inject constructor(
         chanThreadViewableInfo.lastViewedPostNo = lastPostNo
       }
 
-      pastViewedPostNoInfoHolder.setLastViewedPostNo(descriptor, lastPostNo)
+      lastViewedPostNoInfoHolder.setLastViewedPostNo(descriptor, lastPostNo)
     }
 
     threadPresenterCallback?.showNewPostsNotification(false, -1)
@@ -870,6 +881,7 @@ class ThreadPresenter @Inject constructor(
           // Deleted posts always have 404'd images, but let it through if the file exists
           // in cache or the image is from a third-party archive
           images.add(image)
+
           if (image.equalUrl(postImage)) {
             index = images.size - 1
           }
@@ -1007,8 +1019,11 @@ class ThreadPresenter @Inject constructor(
       menu.add(createMenuItem(POST_OPTION_SAVE, stringId))
     }
 
-    if (AndroidUtils.isDevBuild() && chanDescriptor.threadNoOrNull() ?: -1L > 0) {
-      menu.add(createMenuItem(POST_OPTION_MOCK_REPLY, R.string.mock_reply))
+    if (AndroidUtils.isDevBuild()) {
+      val threadNo = chanDescriptor.threadNoOrNull() ?: -1L
+      if (threadNo > 0) {
+        menu.add(createMenuItem(POST_OPTION_MOCK_REPLY, R.string.mock_reply))
+      }
     }
   }
 
