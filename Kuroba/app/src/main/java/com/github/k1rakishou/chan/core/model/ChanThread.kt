@@ -103,7 +103,7 @@ class ChanThread(
   }
 
   @Synchronized
-  fun mapPostsAround(postDescriptor: PostDescriptor, leftCount: Int, rightCount: Int): List<PostDescriptor> {
+  fun mapPostsWithImagesAround(postDescriptor: PostDescriptor, leftCount: Int, rightCount: Int): List<PostDescriptor> {
     if (leftCount == 0 && rightCount == 0) {
       return emptyList()
     }
@@ -116,13 +116,46 @@ class ChanThread(
       return emptyList()
     }
 
-    val from = (indexOfPost - leftCount).coerceIn(0, threadPosts.size)
-    val to = (indexOfPost + rightCount).coerceIn(0, threadPosts.size)
+    val totalCount = leftCount + rightCount
+    val postDescriptors = mutableListWithCap<PostDescriptor>(totalCount)
 
-    val postDescriptors = mutableListWithCap<PostDescriptor>(to - from)
+    // Check current post and add it to the list if it has images
+    threadPosts.getOrNull(indexOfPost)?.let { currentPost ->
+      if (currentPost.postImages.isNotEmpty()) {
+        postDescriptors += currentPost.postDescriptor
+      }
+    }
 
-    for (index in from until to) {
-      threadPosts.getOrNull(index)?.let { post -> postDescriptors += post.postDescriptor }
+    var currentPostIndex = indexOfPost - 1
+    var takeFromLeft = leftCount
+
+    // Check posts to the left of the current post and add to the list those that have images
+    while (takeFromLeft > 0 && currentPostIndex in threadPosts.indices) {
+      val post = threadPosts.getOrNull(currentPostIndex--)
+        ?: break
+
+      if (post.postImages.isEmpty()) {
+        continue
+      }
+
+      --takeFromLeft
+      postDescriptors += post.postDescriptor
+    }
+
+    currentPostIndex = indexOfPost + 1
+    var takeFromRight = rightCount
+
+    // Check posts to the right of the current post and add to the list those that have images
+    while (takeFromRight > 0 && currentPostIndex in threadPosts.indices) {
+      val post = threadPosts.getOrNull(currentPostIndex++)
+        ?: break
+
+      if (post.postImages.isEmpty()) {
+        continue
+      }
+
+      --takeFromRight
+      postDescriptors += post.postDescriptor
     }
 
     return postDescriptors

@@ -133,7 +133,7 @@ class Chan4CloudFlareImagePreloaderManager(
     val chanThread = chanLoaderManager.getLoader(postDescriptor.descriptor)?.thread
       ?: return false
 
-    val postDescriptors = chanThread.mapPostsAround(
+    val postDescriptors = chanThread.mapPostsWithImagesAround(
       postDescriptor,
       POSTS_AROUND_COUNT,
       POSTS_AROUND_COUNT
@@ -170,7 +170,12 @@ class Chan4CloudFlareImagePreloaderManager(
     val chanThread = chanLoaderManager.getLoader(chanDescriptor)?.thread
       ?: return
 
-    val possibleToPreload = chanThread.mapPostsAround(postImage.ownerPostDescriptor, leftCount, rightCount)
+    val possibleToPreload = chanThread.mapPostsWithImagesAround(
+      postImage.ownerPostDescriptor,
+      leftCount,
+      rightCount
+    )
+
     if (possibleToPreload.isEmpty()) {
       return
     }
@@ -202,7 +207,7 @@ class Chan4CloudFlareImagePreloaderManager(
     val chanThread = chanLoaderManager.getLoader(postDescriptor.descriptor)?.thread
       ?: return false
 
-    val possibleToPreload = chanThread.mapPostsAround(
+    val possibleToPreload = chanThread.mapPostsWithImagesAround(
       postDescriptor,
       POSTS_AROUND_COUNT,
       POSTS_AROUND_COUNT
