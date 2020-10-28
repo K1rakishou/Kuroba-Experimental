@@ -19,10 +19,12 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlin.time.ExperimentalTime
+import kotlin.time.seconds
 
 class DrawerPresenter(
   private val isDevFlavor: Boolean
@@ -47,6 +49,7 @@ class DrawerPresenter(
 
   private val reloadNavHistoryDebouncer = DebouncingCoroutineExecutor(scope)
 
+  @OptIn(ExperimentalTime::class)
   override fun onCreate(view: DrawerView) {
     super.onCreate(view)
     Chan.inject(this)
@@ -61,8 +64,8 @@ class DrawerPresenter(
 
     scope.launch {
       bookmarksManager.listenForBookmarksChanges()
-        .debounce(1, TimeUnit.SECONDS)
         .asFlow()
+        .debounce(1.seconds)
         .collect { bookmarkChange ->
           bookmarksManager.awaitUntilInitialized()
 

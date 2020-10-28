@@ -198,9 +198,7 @@ class SettingsCoordinator(
     launch {
       onSearchEnteredSubject
         .asFlow()
-        .catch { error ->
-          Logger.e(TAG, "Unknown error received from onSearchEnteredSubject", error)
-        }
+        .catch { error -> Logger.e(TAG, "Unknown error received from onSearchEnteredSubject", error) }
         .debounce(DEBOUNCE_TIME_MS)
         .collect { query ->
           if (query.length < MIN_QUERY_LENGTH) {
