@@ -441,6 +441,7 @@ class BoardManager(
     return lock.read { boardsMap[siteDescriptor]?.keys ?: emptySet() }
   }
 
+  fun isReady() = suspendableInitializer.isInitialized()
 
   @OptIn(ExperimentalTime::class)
   suspend fun awaitUntilInitialized() {
@@ -544,8 +545,6 @@ class BoardManager(
 
     boardsChangedSubject.onNext(Unit)
   }
-
-  private fun isReady() = suspendableInitializer.isInitialized()
 
   private fun mergePrevAndNewBoards(prevBoard: ChanBoard, newBoard: ChanBoard): ChanBoard {
     return ChanBoard(
