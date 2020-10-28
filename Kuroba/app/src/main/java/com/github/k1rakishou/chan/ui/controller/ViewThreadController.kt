@@ -95,9 +95,9 @@ open class ViewThreadController(
     buildMenu()
 
     compositeDisposable += bookmarksManager.listenForBookmarksChanges()
-      .onBackpressureLatest()
       .filter { bookmarkChange: BookmarkChange? -> bookmarkChange !is BookmarksInitialized }
       .debounce(350, TimeUnit.MILLISECONDS)
+      .onBackpressureLatest()
       .subscribe(
         { bookmarkChange -> updatePinIconStateIfNeeded(bookmarkChange) },
         { error -> Logger.e(TAG, "Error while listening for bookmarks changes", error) }

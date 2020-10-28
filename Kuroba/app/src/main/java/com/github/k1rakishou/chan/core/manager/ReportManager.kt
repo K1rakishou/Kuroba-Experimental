@@ -77,6 +77,7 @@ class ReportManager(
           }
       }
       .debounce(1, TimeUnit.SECONDS)
+      .onBackpressureLatest()
       .doOnNext {
         // If no more crash logs left, remove the notification
         if (!hasCrashLogs()) {

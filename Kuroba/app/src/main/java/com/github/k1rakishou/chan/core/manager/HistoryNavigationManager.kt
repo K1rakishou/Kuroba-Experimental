@@ -17,15 +17,18 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.collect
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.time.ExperimentalTime
+import kotlin.time.seconds
 
 class HistoryNavigationManager(
   private val appScope: CoroutineScope,
@@ -43,6 +46,7 @@ class HistoryNavigationManager(
   @GuardedBy("lock")
   private val navigationStack = mutableListWithCap<NavHistoryElement>(64)
 
+  @OptIn(ExperimentalTime::class)
   fun initialize() {
     Logger.d(TAG, "HistoryNavigationManager.initialize()")
     serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
@@ -62,7 +66,8 @@ class HistoryNavigationManager(
 
       appScope.launch {
         persistTaskSubject
-          .debounce(1, TimeUnit.SECONDS)
+          .asFlow()
+          .debounce(1.seconds)
           .collect {
             persisNavigationStack()
           }
