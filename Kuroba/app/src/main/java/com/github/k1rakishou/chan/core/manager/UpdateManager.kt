@@ -82,6 +82,10 @@ class UpdateManager(
   lateinit var proxiedOkHttpClient: ProxiedOkHttpClient
   @Inject
   lateinit var dialogFactory: DialogFactory
+  @Inject
+  lateinit var siteManager: SiteManager
+  @Inject
+  lateinit var boardManager: BoardManager
 
   private var updateDownloadDialog: ProgressDialog? = null
   private var cancelableDownload: CancelableDownload? = null
@@ -152,6 +156,21 @@ class UpdateManager(
   @Suppress("ConstantConditionIf", "WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   private suspend fun runUpdateApi(manual: Boolean) {
     BackgroundUtils.ensureBackgroundThread()
+
+    if (manual) {
+      if (!siteManager.isReady()) {
+        Logger.d(TAG, "runUpdateApi() siteManager is not ready, exiting")
+        return
+      }
+
+      if (!boardManager.isReady()) {
+        Logger.d(TAG, "runUpdateApi() boardManager is not ready, exiting")
+        return
+      }
+    } else {
+      siteManager.awaitUntilInitialized()
+      boardManager.awaitUntilInitialized()
+    }
 
     if (PersistableChanState.hasNewApkUpdate.get()) {
       // If we noticed that there was an apk update on the previous check - show the
