@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/outside_area"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#88000000"
+    android:clickable="true"
+    android:focusable="true">
+
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
+        android:layout_width="256dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="24dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_goneMarginEnd="8dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+                android:id="@+id/image_viewer_gestures_settings_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:gravity="center_horizontal"
+                android:text="@string/controller_image_viewer_title"
+                android:textSize="18sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <LinearLayout
+                android:id="@+id/image_viewer_gestures_settings_holder"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="vertical"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/image_viewer_gestures_settings_text">
+
+                <RadioGroup
+                    android:id="@+id/image_viewer_gestures_swipe_up_group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        android:text="@string/controller_image_viewer_swipe_up_gesture_action"/>
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
+                        android:id="@+id/image_viewer_gestures_swipe_up_close_image"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:text="@string/controller_image_viewer_close_image"/>
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
+                        android:id="@+id/image_viewer_gestures_swipe_up_save_image"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:text="@string/controller_image_viewer_save_image"/>
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
+                        android:id="@+id/image_viewer_gestures_swipe_up_disabled"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:text="@string/controller_image_viewer_disabled"/>
+
+                </RadioGroup>
+
+                <View
+                    android:layout_width="wrap_content"
+                    android:layout_height="16dp"/>
+
+                <RadioGroup
+                    android:id="@+id/image_viewer_gestures_swipe_down_group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        android:text="@string/controller_image_viewer_swipe_down_action"/>
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
+                        android:id="@+id/image_viewer_gestures_swipe_down_close_image"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:text="@string/controller_image_viewer_close_image"/>
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
+                        android:id="@+id/image_viewer_gestures_swipe_down_save_image"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:text="@string/controller_image_viewer_save_image"/>
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
+                        android:id="@+id/image_viewer_gestures_swipe_down_disabled"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:text="@string/controller_image_viewer_disabled"/>
+
+                </RadioGroup>
+
+            </LinearLayout>
+
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+                android:id="@+id/cancel_button"
+                android:layout_width="96dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/cancel"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/apply_button"
+                app:layout_constraintTop_toBottomOf="@+id/image_viewer_gestures_settings_holder" />
+
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+                android:id="@+id/apply_button"
+                android:layout_width="96dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:text="@string/apply"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

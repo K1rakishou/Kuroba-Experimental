@@ -188,14 +188,6 @@ class BehaviourSettingsScreen(
           setting = ChanSettings.openLinkBrowser
         )
 
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = BehaviorScreen.GeneralGroup.ImageViewerGestures,
-          topDescriptionIdFunc = { R.string.setting_image_viewer_gestures },
-          bottomDescriptionIdFunc = { R.string.setting_image_viewer_gestures_description },
-          setting = ChanSettings.imageViewerGestures
-        )
-
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = BehaviorScreen.GeneralGroup.CaptchaSetup,

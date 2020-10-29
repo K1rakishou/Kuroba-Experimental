@@ -58,6 +58,24 @@ public class ChanSettings {
     public static final int HI_RES_THUMBNAIL_SIZE = dp(160);
 
     @DoNotStrip
+    public enum ImageGestureActionType implements OptionSettingItem {
+        SaveImage("save_image"),
+        CloseImage("close_image"),
+        Disabled("disabled");
+
+        String key;
+
+        ImageGestureActionType(String key) {
+            this.key = key;
+        }
+
+        @Override
+        public String getKey() {
+            return key;
+        }
+    }
+
+    @DoNotStrip
     public enum BookmarksSortOrder implements OptionSettingItem {
         CreatedOnAscending("creation_time_asc", true),
         CreatedOnDescending("creation_time_desc", false),
@@ -268,7 +286,6 @@ public class ChanSettings {
     public static final BooleanSetting controllerSwipeable;
     public static final BooleanSetting openLinkConfirmation;
     public static final BooleanSetting openLinkBrowser;
-    public static final BooleanSetting imageViewerGestures;
     public static final StringSetting jsCaptchaCookies;
     public static final BooleanSetting loadLastOpenedBoardUponAppStart;
     public static final BooleanSetting loadLastOpenedThreadUponAppStart;
@@ -347,6 +364,8 @@ public class ChanSettings {
     public static final BooleanSetting moveBookmarksWithUnreadRepliesToTop;
     public static final BooleanSetting ignoreDarkNightMode;
     public static final RangeSetting bookmarkGridViewWidth;
+    public static final OptionsSetting<ImageGestureActionType> imageSwipeUpGesture;
+    public static final OptionsSetting<ImageGestureActionType> imageSwipeDownGesture;
     //endregion
     //endregion
 
@@ -437,7 +456,6 @@ public class ChanSettings {
             controllerSwipeable = new BooleanSetting(p, "preference_controller_swipeable", true);
             openLinkConfirmation = new BooleanSetting(p, "preference_open_link_confirmation", false);
             openLinkBrowser = new BooleanSetting(p, "preference_open_link_browser", false);
-            imageViewerGestures = new BooleanSetting(p, "image_viewer_gestures", true);
             jsCaptchaCookies = new StringSetting(p, "js_captcha_cookies", EMPTY_JSON);
             loadLastOpenedBoardUponAppStart = new BooleanSetting(p, "load_last_opened_board_upon_app_start", true);
             loadLastOpenedThreadUponAppStart = new BooleanSetting(p, "load_last_opened_thread_upon_app_start", true);
@@ -547,6 +565,19 @@ public class ChanSettings {
                     (int) getAppContext().getResources().getDimension(R.dimen.thread_grid_bookmark_view_default_width),
                     (int) getAppContext().getResources().getDimension(R.dimen.thread_grid_bookmark_view_min_width),
                     (int) getAppContext().getResources().getDimension(R.dimen.thread_grid_bookmark_view_max_width)
+            );
+
+            imageSwipeUpGesture = new OptionsSetting<>(
+                    p,
+                    "image_swipe_up_gesture",
+                    ImageGestureActionType.class,
+                    ImageGestureActionType.CloseImage
+            );
+            imageSwipeDownGesture = new OptionsSetting<>(
+                    p,
+                    "image_swipe_down_gesture",
+                    ImageGestureActionType.class,
+                    ImageGestureActionType.SaveImage
             );
         } catch (Throwable error) {
             // If something crashes while the settings are initializing we at least will have the

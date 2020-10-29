@@ -116,6 +116,7 @@ public class ImageViewerController
     private static final int ACTION_TRANSPARENCY_TOGGLE = 7;
     private static final int ACTION_IMAGE_ROTATE = 8;
     private static final int ACTION_RELOAD = 9;
+    private static final int ACTION_CHANGE_GESTURES = 10;
 
     @Inject
     ImageLoaderV2 imageLoaderV2;
@@ -245,6 +246,16 @@ public class ImageViewerController
                 this
         );
 
+        overflowBuilder.withSubItem(
+                ACTION_CHANGE_GESTURES,
+                R.string.action_change_gestures,
+                subItem -> {
+                    ImageViewerGesturesSettingsController controller =
+                            new ImageViewerGesturesSettingsController(context);
+
+                    requireNavController().presentController(controller);
+                }
+        );
         overflowBuilder.withSubItem(
                 ACTION_OPEN_BROWSER,
                 R.string.action_open_browser,
