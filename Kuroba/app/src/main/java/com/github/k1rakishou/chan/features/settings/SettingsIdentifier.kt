@@ -380,7 +380,6 @@ sealed class BehaviorScreen(
     object ControllerSwipeable : GeneralGroup("controller_swipeable")
     object OpenLinkConfirmation : GeneralGroup("open_link_confirmation")
     object OpenLinkBrowser : GeneralGroup("open_link_browser")
-    object ImageViewerGestures : GeneralGroup("image_viewer_gestures")
     object CaptchaSetup : GeneralGroup("catpcha_setup")
     object JsCaptchaCookiesEditor : GeneralGroup("js_captcha_cookies_editor")
     object LoadLastOpenedBoardUponAppStart : GeneralGroup("load_last_opened_board_upon_app_start")
