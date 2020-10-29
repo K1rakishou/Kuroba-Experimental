@@ -121,7 +121,8 @@ android {
             manifestPlaceholders = [
                     appName              : "KurobaEx",
                     iconLoc              : "@mipmap/ic_launcher_release",
-                    fileProviderAuthority: "${defaultConfig.applicationId}${applicationIdSuffix}.fileprovider"
+                    fileProviderAuthority: "${defaultConfig.applicationId}${applicationIdSuffix}.fileprovider",
+                    appTheme             : "@style/Chan.DefaultTheme"
             ]
         }
         beta {
@@ -138,7 +139,8 @@ android {
             manifestPlaceholders = [
                     appName              : "KurobaEx-beta",
                     iconLoc              : "@mipmap/ic_launcher_beta",
-                    fileProviderAuthority: "${defaultConfig.applicationId}${applicationIdSuffix}.fileprovider"
+                    fileProviderAuthority: "${defaultConfig.applicationId}${applicationIdSuffix}.fileprovider",
+                    appTheme             : "@style/Chan.DefaultTheme"
             ]
         }
         dev {
@@ -156,7 +158,8 @@ android {
             manifestPlaceholders = [
                     appName              : "KurobaEx-dev",
                     iconLoc              : "@mipmap/ic_launcher_dev",
-                    fileProviderAuthority: "${defaultConfig.applicationId}${applicationIdSuffix}.fileprovider"
+                    fileProviderAuthority: "${defaultConfig.applicationId}${applicationIdSuffix}.fileprovider",
+                    appTheme             : "@style/Chan.DebugTheme"
             ]
         }
         fdroid {
@@ -173,7 +176,8 @@ android {
             manifestPlaceholders = [
                     appName              : "KurobaEx-fdroid",
                     iconLoc              : "@mipmap/ic_launcher_release_fdroid",
-                    fileProviderAuthority: "${defaultConfig.applicationId}${applicationIdSuffix}.fileprovider"
+                    fileProviderAuthority: "${defaultConfig.applicationId}${applicationIdSuffix}.fileprovider",
+                    appTheme             : "@style/Chan.DefaultTheme"
             ]
         }
     }
