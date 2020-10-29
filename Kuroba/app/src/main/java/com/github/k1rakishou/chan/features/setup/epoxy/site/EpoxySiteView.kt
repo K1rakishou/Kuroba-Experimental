@@ -63,6 +63,11 @@ class EpoxySiteView @JvmOverloads constructor(
 
     siteSwitch.isClickable = false
     siteSwitch.isFocusable = false
+  }
+
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    themeEngine.addListener(this)
 
     siteIcon.setImageBitmap(null)
 
@@ -81,11 +86,8 @@ class EpoxySiteView @JvmOverloads constructor(
         AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
       )
     )
-  }
 
-  override fun onAttachedToWindow() {
-    super.onAttachedToWindow()
-    themeEngine.addListener(this)
+    updateReorderTint()
   }
 
   override fun onDetachedFromWindow() {

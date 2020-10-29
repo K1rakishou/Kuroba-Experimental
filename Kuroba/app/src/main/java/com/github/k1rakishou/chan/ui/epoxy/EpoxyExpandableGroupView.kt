@@ -38,8 +38,18 @@ class EpoxyExpandableGroupView @JvmOverloads constructor(
     toggleIndicator = findViewById(R.id.toggle_indicator_view)
     groupTitle = findViewById(R.id.group_title)
     divider = findViewById(R.id.divider)
+  }
+
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    themeEngine.addListener(this)
 
     updateDividerColor()
+  }
+
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+    themeEngine.removeListener(this)
   }
 
   @ModelProp
