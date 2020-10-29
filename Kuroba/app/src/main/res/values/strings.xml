@@ -736,7 +736,7 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="import_settings_from_a_file">Import settings from a file</string>
 
     <string name="import_from_kuroba">Import from Kuroba</string>
-    <string name="import_settings_from_kuroba">Import Bookmarks/Filters/Filters/Hidden posts and threads/Added sites and boards and some other stuff from Kuroba. Settings are not imported since they differ too much. This can only be done on fresh install.</string>
+    <string name="import_settings_from_kuroba">Import Bookmarks/Filters/Filters/Hidden posts and threads/Added sites and boards and some other stuff from Kuroba (the settings file must be exported on 4.13.X-release version of Kuroba, other versions probably won\'t work). Settings are not imported since they differ too much. You need to clear the app data beforehand.</string>
 
     <string name="settings_logs_copied_to_clipboard">Copied to clipboard</string>
     <string name="settings_screen_pass">4chan pass</string>

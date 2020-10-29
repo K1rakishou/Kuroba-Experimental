@@ -763,6 +763,10 @@ class StartActivity : AppCompatActivity(),
       return
     }
 
+    if (!::themeEngine.isInitialized) {
+      return
+    }
+
     when (nightModeFlags) {
       Configuration.UI_MODE_NIGHT_YES -> themeEngine.switchTheme(switchToDarkTheme = true)
       Configuration.UI_MODE_NIGHT_NO -> themeEngine.switchTheme(switchToDarkTheme = false)
