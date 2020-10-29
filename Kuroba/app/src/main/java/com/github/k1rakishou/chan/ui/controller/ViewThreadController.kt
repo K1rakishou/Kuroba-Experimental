@@ -17,7 +17,6 @@
 package com.github.k1rakishou.chan.ui.controller
 
 import android.content.Context
-import android.view.View
 import android.widget.Toast
 import androidx.core.util.Pair
 import com.github.k1rakishou.chan.Chan
@@ -96,6 +95,7 @@ open class ViewThreadController(
 
     compositeDisposable += bookmarksManager.listenForBookmarksChanges()
       .filter { bookmarkChange: BookmarkChange? -> bookmarkChange !is BookmarksInitialized }
+      .onBackpressureLatest()
       .debounce(350, TimeUnit.MILLISECONDS)
       .onBackpressureLatest()
       .subscribe(
@@ -596,7 +596,7 @@ open class ViewThreadController(
     val counter = ChanSettings.threadOpenCounter.increase()
     if (counter == 2) {
       view.postDelayed({
-        val view: View? = navigation.findItem(ToolbarMenu.OVERFLOW_ID).view
+        val view = navigation.findItem(ToolbarMenu.OVERFLOW_ID)?.view
         if (view != null) {
           dismissHintPopup()
           hintPopup = HintPopup.show(context, view, getString(R.string.thread_up_down_hint), -AndroidUtils.dp(1f), 0)
@@ -604,7 +604,7 @@ open class ViewThreadController(
       }, 600)
     } else if (counter == 3) {
       view.postDelayed({
-        val view: View? = navigation.findItem(ACTION_PIN).view
+        val view = navigation.findItem(ACTION_PIN)?.view
         if (view != null) {
           dismissHintPopup()
           hintPopup = HintPopup.show(context, view, getString(R.string.thread_pin_hint), -AndroidUtils.dp(1f), 0)

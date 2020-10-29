@@ -296,7 +296,7 @@ class BrowseController(
       .withItem(R.drawable.ic_search_white_24dp) { item -> searchClicked(item) }
       .withItem(R.drawable.ic_refresh_white_24dp) { item -> reloadClicked(item) }
 
-    val overflowBuilder = menuBuilder.withOverflow(navigationController)
+    val overflowBuilder = menuBuilder.withOverflow(requireNavController())
     if (!ChanSettings.enableReplyFab.get()) {
       overflowBuilder.withSubItem(ACTION_REPLY, R.string.action_reply) { item -> replyClicked(item) }
     }
@@ -441,8 +441,9 @@ class BrowseController(
       ChanSettings.boardOrder.set(order.orderName)
       this@BrowseController.order = order
 
-      val sortSubItem = navigation.findSubItem(ACTION_SORT)
-      resetSelectedSortOrderItem(sortSubItem)
+      navigation.findSubItem(ACTION_SORT)?.let { sortSubItem ->
+        resetSelectedSortOrderItem(sortSubItem)
+      }
 
       subItem as CheckableToolbarMenuSubItem
       subItem.isChecked = true
@@ -682,7 +683,7 @@ class BrowseController(
       boardManager.updateCurrentBoard(boardDescriptor)
 
       navigation.title = "/" + boardDescriptor.boardCode + "/"
-      navigation.subtitle = board.name
+      navigation.subtitle = board.name ?: ""
 
       buildMenu()
 

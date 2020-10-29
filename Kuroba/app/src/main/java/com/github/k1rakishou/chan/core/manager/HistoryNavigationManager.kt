@@ -66,6 +66,7 @@ class HistoryNavigationManager(
 
       appScope.launch {
         persistTaskSubject
+          .onBackpressureLatest()
           .asFlow()
           .debounce(1.seconds)
           .collect {

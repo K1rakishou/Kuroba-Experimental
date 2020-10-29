@@ -59,6 +59,7 @@ class BookmarksPresenter(
     scope.launch {
       scope.launch {
         bookmarksManager.listenForBookmarksChanges()
+          .onBackpressureLatest()
           .asFlow()
           .debounce(100.milliseconds)
           .collect {

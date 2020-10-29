@@ -547,7 +547,6 @@ class ThreadPresenter @Inject constructor(
   }
 
   private fun needUpdatePost(batchResult: LoaderBatchResult): Boolean {
-
     return batchResult.results.any { it is Succeeded && it.needUpdateView }
   }
 

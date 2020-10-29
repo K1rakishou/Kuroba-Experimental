@@ -224,7 +224,7 @@ class BookmarksController(
       .withItem(ACTION_OPEN_SORT_SETTINGS, R.drawable.ic_baseline_sort_24) {
         requireNavController().presentController(BookmarksSortingController(context, this))
       }
-      .withOverflow(navigationController)
+      .withOverflow(requireNavController())
       .withSubItem(
         ACTION_MARK_ALL_BOOKMARKS_AS_SEEN,
         R.string.controller_bookmarks_mark_all_bookmarks_as_seen,
