@@ -25,6 +25,7 @@ import android.widget.TextView;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.StartActivity;
 import com.github.k1rakishou.chan.controller.Controller;
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage;
 import com.github.k1rakishou.chan.ui.settings.IntegerSettingView;
 import com.github.k1rakishou.chan.ui.settings.LinkSettingView;
@@ -34,6 +35,8 @@ import com.github.k1rakishou.chan.ui.settings.SettingsGroup;
 import com.github.k1rakishou.chan.ui.settings.StringSettingView;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,7 +44,6 @@ import io.reactivex.disposables.CompositeDisposable;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.findViewsById;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.isTablet;
@@ -64,8 +66,11 @@ public class SettingsController
 
     public SettingsController(Context context) {
         super(context);
+    }
 
-        inject(this);
+    @Override
+    protected void injectDependencies(@NotNull StartActivityComponent component) {
+        component.inject(this);
     }
 
     @Override

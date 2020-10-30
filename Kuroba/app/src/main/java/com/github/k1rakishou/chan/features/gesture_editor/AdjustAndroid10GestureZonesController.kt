@@ -11,6 +11,7 @@ import android.widget.RelativeLayout
 import androidx.annotation.RequiresApi
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
 import com.github.k1rakishou.chan.utils.AndroidUtils.*
 
@@ -31,6 +32,10 @@ class AdjustAndroid10GestureZonesController(context: Context) : Controller(conte
 
       onViewLaidOut()
     }
+  }
+
+  override fun injectDependencies(component: StartActivityComponent) {
+    component.inject(this)
   }
 
   override fun onCreate() {

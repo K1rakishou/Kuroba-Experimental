@@ -12,7 +12,6 @@ import androidx.appcompat.widget.AppCompatImageView
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
@@ -36,8 +35,10 @@ class EpoxyLinkSetting @JvmOverloads constructor(
   private val notificationIcon: AppCompatImageView
 
   init {
-    Chan.inject(this)
     inflate(context, R.layout.epoxy_setting_link, this)
+
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     topDescriptor = findViewById(R.id.top)
     bottomDescription = findViewById(R.id.bottom)

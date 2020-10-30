@@ -16,7 +16,6 @@ import coil.transform.GrayscaleTransformation
 import coil.transform.RoundedCornersTransformation
 import coil.transform.Transformation
 import com.airbnb.epoxy.EpoxyHolder
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.settings.ChanSettings
@@ -60,11 +59,10 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
   private var bookmarkAdditionalStats: AppCompatTextView? = null
   private var bookmarkStatsHolder: LinearLayout? = null
 
-  init {
-    Chan.inject(this)
-  }
-
   override fun bindView(itemView: View) {
+    AndroidUtils.extractStartActivityComponent(itemView.context)
+      .inject(this)
+
     viewRoot = itemView.findViewById(R.id.thread_bookmark_view_root)
     viewHolder = itemView.findViewById(R.id.thread_bookmark_view_holder)
     bookmarkImage = itemView.findViewById(R.id.thread_bookmark_image)

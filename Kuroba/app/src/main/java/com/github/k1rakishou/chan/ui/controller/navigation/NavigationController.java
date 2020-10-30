@@ -20,7 +20,6 @@ import android.content.Context;
 import android.view.KeyEvent;
 import android.view.ViewGroup;
 
-import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.controller.transition.ControllerTransition;
 import com.github.k1rakishou.chan.controller.transition.PopControllerTransition;
@@ -43,7 +42,6 @@ public abstract class NavigationController extends Controller implements HasNavi
 
     public NavigationController(Context context) {
         super(context);
-        Chan.inject(this);
     }
 
     public boolean pushController(final Controller to) {

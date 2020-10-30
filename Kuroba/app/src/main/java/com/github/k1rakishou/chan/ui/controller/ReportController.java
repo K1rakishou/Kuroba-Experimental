@@ -25,11 +25,14 @@ import android.widget.TextView;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier;
 import com.github.k1rakishou.chan.ui.helper.PostHelper;
+
+import org.jetbrains.annotations.NotNull;
 
 import okhttp3.HttpUrl;
 
@@ -39,6 +42,11 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 public class ReportController extends Controller implements RequiresNoBottomNavBar {
     private Post post;
     private Site site;
+
+    @Override
+    protected void injectDependencies(@NotNull StartActivityComponent component) {
+        component.inject(this);
+    }
 
     public ReportController(Context context, Post post, Site site) {
         super(context);

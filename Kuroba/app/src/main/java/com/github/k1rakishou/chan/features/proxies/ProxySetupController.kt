@@ -1,10 +1,10 @@
 package com.github.k1rakishou.chan.features.proxies
 
 import android.content.Context
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
 import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ProxyStorage
 import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
@@ -29,18 +29,29 @@ class ProxySetupController(
 
   @Inject
   lateinit var dialogFactory: DialogFactory
+  @Inject
+  lateinit var proxyStorage: ProxyStorage
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var addProxyButton: ColorizableFloatingActionButton
 
   private val proxySelectionHelper = ProxySelectionHelper(this)
-  private val presenter = ProxySetupPresenter(proxySelectionHelper)
+
+  private val presenter by lazy {
+    ProxySetupPresenter(
+      proxySelectionHelper = proxySelectionHelper,
+      proxyStorage = proxyStorage
+    )
+  }
+
   private val onApplyClickListener = { presenter.reloadProxies() }
+
+  override fun injectDependencies(component: StartActivityComponent) {
+    component.inject(this)
+  }
 
   override fun onCreate() {
     super.onCreate()
-    Chan.inject(this)
-
     navigation.title = getString(R.string.controller_proxy_setup_title)
 
     view = AndroidUtils.inflate(context, R.layout.controller_proxy_setup)

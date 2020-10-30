@@ -6,6 +6,7 @@ import android.text.style.StrikethroughSpan
 import android.text.style.StyleSpan
 import android.text.style.TypefaceSpan
 import com.github.k1rakishou.chan.ui.text.span.*
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.model.data.archive.ArchiveType
@@ -315,6 +316,7 @@ object SpannableStringMapper {
   @JvmStatic
   fun deserializeSpannableString(
     gson: Gson,
+    themeEngine: ThemeEngine,
     serializableSpannableString: SerializableSpannableString?
   ): CharSequence {
     if (serializableSpannableString == null || serializableSpannableString.text.isEmpty()) {
@@ -343,7 +345,7 @@ object SpannableStringMapper {
           )
 
           spannableString.setSpan(
-            ColorizableForegroundColorSpan(colorizableForegroundColorSpan.colorId),
+            ColorizableForegroundColorSpan(themeEngine, colorizableForegroundColorSpan.colorId),
             spanInfo.spanStart,
             spanInfo.spanEnd,
             spanInfo.flags
@@ -368,7 +370,7 @@ object SpannableStringMapper {
           )
 
           spannableString.setSpan(
-            ColorizableBackgroundColorSpan(colorizableBackgroundColorSpan.colorId),
+            ColorizableBackgroundColorSpan(themeEngine, colorizableBackgroundColorSpan.colorId),
             spanInfo.spanStart,
             spanInfo.spanEnd,
             spanInfo.flags
@@ -416,6 +418,7 @@ object SpannableStringMapper {
           )
         }
         SpanType.PostLinkable -> deserializeAndApplyPostLinkableSpan(
+          themeEngine,
           gson,
           spannableString,
           spanInfo
@@ -426,6 +429,7 @@ object SpannableStringMapper {
   }
 
   private fun deserializeAndApplyPostLinkableSpan(
+    themeEngine: ThemeEngine,
     gson: Gson,
     spannableString: SpannableString,
     spanInfo: SpanInfo
@@ -435,7 +439,7 @@ object SpannableStringMapper {
       SerializablePostLinkableSpan::class.java
     )
 
-    val postLinkable = extractPostLinkable(gson, serializablePostLinkableSpan)
+    val postLinkable = extractPostLinkable(themeEngine, gson, serializablePostLinkableSpan)
       ?: return
 
     spannableString.setSpan(
@@ -446,7 +450,11 @@ object SpannableStringMapper {
     )
   }
 
-  private fun extractPostLinkable(gson: Gson, serializablePostLinkableSpan: SerializablePostLinkableSpan): PostLinkable? {
+  private fun extractPostLinkable(
+    themeEngine: ThemeEngine,
+    gson: Gson,
+    serializablePostLinkableSpan: SerializablePostLinkableSpan
+  ): PostLinkable? {
     when (serializablePostLinkableSpan.postLinkableType) {
       PostLinkableType.Dead -> {
         val postLinkableQuoteValue = gson.fromJson(
@@ -455,6 +463,7 @@ object SpannableStringMapper {
         )
 
         return PostLinkable(
+          themeEngine,
           serializablePostLinkableSpan.key,
           PostLinkable.Value.LongValue(postLinkableQuoteValue.postId),
           PostLinkable.Type.DEAD
@@ -467,6 +476,7 @@ object SpannableStringMapper {
         )
 
         return PostLinkable(
+          themeEngine,
           serializablePostLinkableSpan.key,
           PostLinkable.Value.LongValue(postLinkableQuoteValue.postId),
           PostLinkable.Type.QUOTE
@@ -479,6 +489,7 @@ object SpannableStringMapper {
         )
 
         return PostLinkable(
+          themeEngine,
           serializablePostLinkableSpan.key,
           PostLinkable.Value.StringValue(postLinkableLinkValue.link),
           PostLinkable.Type.LINK
@@ -486,6 +497,7 @@ object SpannableStringMapper {
       }
       PostLinkableType.Spoiler -> {
         return PostLinkable(
+          themeEngine,
           serializablePostLinkableSpan.key,
           PostLinkable.Value.NoValue,
           PostLinkable.Type.SPOILER
@@ -498,6 +510,7 @@ object SpannableStringMapper {
         )
 
         return PostLinkable(
+          themeEngine,
           serializablePostLinkableSpan.key,
           PostLinkable.Value.ThreadLink(
             postLinkThreadLinkValue.board,
@@ -514,6 +527,7 @@ object SpannableStringMapper {
         )
 
         return PostLinkable(
+          themeEngine,
           serializablePostLinkableSpan.key,
           PostLinkable.Value.StringValue(postLinkableBoardLinkValue.boardLink),
           PostLinkable.Type.BOARD
@@ -526,6 +540,7 @@ object SpannableStringMapper {
         )
 
         return PostLinkable(
+          themeEngine,
           serializablePostLinkableSpan.key,
           PostLinkable.Value.SearchLink(
             postLinkableSearchLinkValue.board,
@@ -553,6 +568,7 @@ object SpannableStringMapper {
         )
 
         return PostLinkable(
+          themeEngine,
           archiveThreadLink.urlText(),
           archiveThreadLink,
           PostLinkable.Type.ARCHIVE

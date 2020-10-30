@@ -24,11 +24,11 @@ import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AlertDialog;
 
-import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.core.manager.DialogFactory;
 import com.github.k1rakishou.chan.core.settings.Setting;
 import com.github.k1rakishou.chan.ui.controller.settings.SettingsController;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 
 import javax.inject.Inject;
 
@@ -63,7 +63,9 @@ public class IntegerSettingView
             String dialogTitle
     ) {
         super(settingsController, name);
-        Chan.inject(this);
+
+        AndroidUtils.extractStartActivityComponent(settingsController.context)
+                .inject(this);
 
         this.setting = setting;
         this.dialogTitle = dialogTitle;

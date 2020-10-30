@@ -14,13 +14,13 @@ import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyModel
 import com.airbnb.epoxy.EpoxyModelTouchCallback
 import com.airbnb.epoxy.EpoxyViewHolder
-import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
-import com.github.k1rakishou.chan.core.manager.DialogFactory
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
+import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
@@ -65,13 +65,32 @@ class BookmarksController(
   lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var bookmarksManager: BookmarksManager
+  @Inject
+  lateinit var threadBookmarkGroupManager: ThreadBookmarkGroupManager
+  @Inject
+  lateinit var pageRequestManager: PageRequestManager
+  @Inject
+  lateinit var archivesManager: ArchivesManager
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
   private lateinit var itemTouchHelper: ItemTouchHelper
 
   private val bookmarksSelectionHelper = BookmarksSelectionHelper(this)
-  private val bookmarksPresenter = BookmarksPresenter(bookmarksToHighlight.toSet(), bookmarksSelectionHelper)
+
+  private val bookmarksPresenter by lazy {
+    BookmarksPresenter(
+      bookmarksToHighlight.toSet(),
+      bookmarksManager,
+      threadBookmarkGroupManager,
+      pageRequestManager,
+      archivesManager,
+      bookmarksSelectionHelper
+    )
+  }
+
   private val controller = BookmarksEpoxyController()
   private val viewModeChanged = AtomicBoolean(false)
   private val needRestoreScrollPosition = AtomicBoolean(true)
@@ -204,10 +223,12 @@ class BookmarksController(
     }
   }
 
+  override fun injectDependencies(component: StartActivityComponent) {
+    component.inject(this)
+  }
+
   override fun onCreate() {
     super.onCreate()
-
-    inject(this)
 
     navigation.title = getString(R.string.controller_bookmarks)
     navigation.swipeable = false

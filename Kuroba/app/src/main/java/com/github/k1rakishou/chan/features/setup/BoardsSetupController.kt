@@ -11,9 +11,11 @@ import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyModel
 import com.airbnb.epoxy.EpoxyModelTouchCallback
 import com.airbnb.epoxy.EpoxyViewHolder
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
+import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.setup.data.BoardsSetupControllerState
 import com.github.k1rakishou.chan.features.setup.epoxy.EpoxyBoardView
 import com.github.k1rakishou.chan.features.setup.epoxy.EpoxyBoardViewModel_
@@ -28,17 +30,31 @@ import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 class BoardsSetupController(
   context: Context,
   private val siteDescriptor: SiteDescriptor
 ) : Controller(context), BoardsSetupView {
-  private val presenter = BoardsSetupPresenter(siteDescriptor)
+
+  @Inject
+  lateinit var siteManager: SiteManager
+  @Inject
+  lateinit var boardManager: BoardManager
+
   private val controller = BoardsEpoxyController()
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var fabAddBoards: ColorizableFloatingActionButton
   private lateinit var itemTouchHelper: ItemTouchHelper
+
+  private val presenter by lazy {
+    BoardsSetupPresenter(
+      siteDescriptor = siteDescriptor,
+      siteManager = siteManager,
+      boardManager = boardManager
+    )
+  }
 
   private val touchHelperCallback = object : EpoxyModelTouchCallback<EpoxyBoardViewModel_>(
     controller,
@@ -90,10 +106,12 @@ class BoardsSetupController(
     }
   }
 
+  override fun injectDependencies(component: StartActivityComponent) {
+    component.inject(this)
+  }
+
   override fun onCreate() {
     super.onCreate()
-    Chan.inject(this)
-
     navigation.title = context.getString(R.string.controller_boards_setup_title, siteDescriptor.siteName)
 
     view = AndroidUtils.inflate(context, R.layout.controller_boards_setup)

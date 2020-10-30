@@ -45,6 +45,7 @@ import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.base.Debouncer;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +55,6 @@ import javax.inject.Inject;
 
 import coil.request.Disposable;
 
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.sp;
 
@@ -109,7 +109,8 @@ public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
     }
 
     private void init() {
-        inject(this);
+        AndroidUtils.extractStartActivityComponent(getContext())
+                .inject(this);
 
         textPaint.setColor(themeEngine.getChanTheme().getTextColorPrimary());
         textPaint.setTextSize(sp(14));

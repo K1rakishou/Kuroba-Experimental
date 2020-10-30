@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.di;
+package com.github.k1rakishou.chan.core.di.module.application;
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
@@ -19,18 +19,20 @@ import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.common.AppConstants;
-import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.repository.ChanPostRepository;
 
 import javax.inject.Singleton;
 
+import dagger.Module;
+import dagger.Provides;
 import kotlinx.coroutines.CoroutineScope;
 
+@Module
 public class UseCaseModule {
 
-    @Singleton
     @Provides
+    @Singleton
     public ExtractPostMapInfoHolderUseCase provideExtractReplyPostsPositionsFromPostsListUseCase(
             SavedReplyManager savedReplyManager,
             SiteManager siteManager
@@ -43,8 +45,8 @@ public class UseCaseModule {
         );
     }
 
-    @Singleton
     @Provides
+    @Singleton
     public FetchThreadBookmarkInfoUseCase provideFetchThreadBookmarkInfoUseCase(
             CoroutineScope appScope,
             ProxiedOkHttpClient okHttpClient,
@@ -66,8 +68,8 @@ public class UseCaseModule {
         );
     }
 
-    @Singleton
     @Provides
+    @Singleton
     public ParsePostRepliesUseCase provideParsePostRepliesUseCase(
             CoroutineScope appScope,
             ReplyParser replyParser,
@@ -84,8 +86,8 @@ public class UseCaseModule {
         );
     }
 
-    @Singleton
     @Provides
+    @Singleton
     public KurobaSettingsImportUseCase provideKurobaSettingsImportUseCase(
             FileManager fileManager,
             SiteManager siteManager,
@@ -108,8 +110,8 @@ public class UseCaseModule {
         );
     }
 
-    @Singleton
     @Provides
+    @Singleton
     public GlobalSearchUseCase provideGlobalSearchUseCase(
             SiteManager siteManager,
             ThemeEngine themeEngine,

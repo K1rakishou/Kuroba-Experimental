@@ -32,10 +32,10 @@ import android.widget.PopupWindow;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.StartActivity;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.google.android.material.textview.MaterialTextView;
 
@@ -75,7 +75,8 @@ public class HintPopup {
             final int offsetY,
             final boolean top
     ) {
-        Chan.inject(this);
+        AndroidUtils.extractStartActivityComponent(context)
+                .inject(this);
 
         this.context = context;
         this.anchor = anchor;

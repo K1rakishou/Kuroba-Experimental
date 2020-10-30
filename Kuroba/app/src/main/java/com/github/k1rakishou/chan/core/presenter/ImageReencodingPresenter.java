@@ -27,6 +27,7 @@ import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.http.Reply;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.BitmapUtils;
 import com.github.k1rakishou.chan.utils.ImageDecoder;
@@ -41,7 +42,6 @@ import java.util.concurrent.Executors;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter.ReencodeType.AS_IS;
 import static com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter.ReencodeType.AS_JPEG;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
@@ -70,7 +70,8 @@ public class ImageReencodingPresenter {
             ChanDescriptor chanDescriptor,
             ImageOptions lastOptions
     ) {
-        inject(this);
+        AndroidUtils.extractStartActivityComponent(context)
+                .inject(this);
 
         this.context = context;
         this.chanDescriptor = chanDescriptor;

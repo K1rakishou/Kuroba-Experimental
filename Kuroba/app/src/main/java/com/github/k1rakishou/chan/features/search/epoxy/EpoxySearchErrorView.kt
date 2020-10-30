@@ -6,10 +6,10 @@ import android.widget.FrameLayout
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.google.android.material.textview.MaterialTextView
 import javax.inject.Inject
 
@@ -28,8 +28,10 @@ class EpoxySearchErrorView @JvmOverloads constructor(
   private val retryButton: ColorizableButton
 
   init {
-    Chan.inject(this)
     inflate(context, R.layout.epoxy_search_error_view, this)
+
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     errorTitle = findViewById(R.id.search_post_error_title)
     errorText = findViewById(R.id.search_post_error_text)

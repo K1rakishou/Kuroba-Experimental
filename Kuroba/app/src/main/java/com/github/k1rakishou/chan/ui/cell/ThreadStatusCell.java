@@ -36,12 +36,12 @@ import com.github.k1rakishou.chan.core.model.ChanThread;
 import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 
 public class ThreadStatusCell extends LinearLayout implements View.OnClickListener {
@@ -73,13 +73,15 @@ public class ThreadStatusCell extends LinearLayout implements View.OnClickListen
     public ThreadStatusCell(Context context, AttributeSet attrs) {
         super(context, attrs);
 
+        AndroidUtils.extractStartActivityComponent(context)
+                .inject(this);
+
         setBackgroundResource(R.drawable.item_background);
     }
 
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        inject(this);
 
         text = findViewById(R.id.text);
         text.setTypeface(themeEngine.getChanTheme().getMainFont());

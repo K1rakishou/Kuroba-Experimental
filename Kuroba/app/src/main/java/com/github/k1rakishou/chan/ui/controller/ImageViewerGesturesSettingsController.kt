@@ -4,6 +4,7 @@ import android.content.Context
 import android.widget.RadioGroup
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 
@@ -17,6 +18,10 @@ class ImageViewerGesturesSettingsController(context: Context) : BaseFloatingCont
   private var presenting = true
 
   override fun getLayoutId(): Int = R.layout.controller_image_viewer_gestures_settings
+
+  override fun injectDependencies(component: StartActivityComponent) {
+    component.inject(this)
+  }
 
   override fun onCreate() {
     super.onCreate()

@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.features.settings
 
 import android.content.Context
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
@@ -19,10 +18,6 @@ abstract class BaseSettingsController(
 
   @Inject
   lateinit var dialogFactory: DialogFactory
-
-  init {
-    Chan.inject(this)
-  }
 
   protected fun showListDialog(settingV2: ListSettingV2<*>, onItemClicked: (Any?) -> Unit) {
     val items = settingV2.items.mapIndexed { index, item ->

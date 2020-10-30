@@ -26,13 +26,12 @@ import android.webkit.WebView;
 
 import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.SiteAuthentication;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
-
-import static com.github.k1rakishou.chan.Chan.inject;
 
 public class GenericWebViewAuthenticationLayout
         extends WebView
@@ -66,7 +65,8 @@ public class GenericWebViewAuthenticationLayout
     }
 
     private void init() {
-        inject(this);
+        AndroidUtils.extractStartActivityComponent(getContext())
+                .inject(this);
     }
 
     @Override

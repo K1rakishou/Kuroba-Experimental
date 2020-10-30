@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import com.airbnb.epoxy.ModelView
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.AndroidUtils
@@ -21,8 +20,10 @@ class EpoxySearchPostGapView @JvmOverloads constructor(
   lateinit var themeEngine: ThemeEngine
 
   init {
-    Chan.inject(this)
     inflate(context, R.layout.epoxy_search_post_gap_view, this)
+
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     onThemeChanged()
   }

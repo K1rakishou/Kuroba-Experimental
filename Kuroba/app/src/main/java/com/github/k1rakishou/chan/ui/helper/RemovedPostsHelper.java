@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.core.manager.PostHideManager;
 import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter;
 import com.github.k1rakishou.chan.ui.controller.RemovedPostsController;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPostHide;
@@ -23,7 +24,6 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.showToast;
 
 public class RemovedPostsHelper {
@@ -43,7 +43,8 @@ public class RemovedPostsHelper {
         this.presenter = presenter;
         this.callbacks = callbacks;
 
-        inject(this);
+        AndroidUtils.extractStartActivityComponent(context)
+                .inject(this);
     }
 
     public void showPosts(List<Post> threadPosts, ChanDescriptor.ThreadDescriptor threadDescriptor) {

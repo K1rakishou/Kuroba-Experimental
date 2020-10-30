@@ -4,6 +4,9 @@ import android.content.Context
 import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
+import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.settings.BaseSettingsController
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyLinkSetting
@@ -20,18 +23,33 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 class SiteSettingsController(
   context: Context,
   private val siteDescriptor: SiteDescriptor
 ) : BaseSettingsController(context), SiteSettingsView {
-  private val presenter = SiteSettingsPresenter()
+
+  @Inject
+  lateinit var siteManager: SiteManager
+  @Inject
+  lateinit var boardManager: BoardManager
+
+  private val presenter by lazy {
+    SiteSettingsPresenter(
+      siteManager = siteManager,
+      boardManager = boardManager
+    )
+  }
 
   private lateinit var recyclerView: ColorizableEpoxyRecyclerView
 
+  override fun injectDependencies(component: StartActivityComponent) {
+    component.inject(this)
+  }
+
   override fun onCreate() {
     super.onCreate()
-
     navigation.title = context.getString(R.string.controller_site_settings_title, siteDescriptor.siteName)
 
     view = AndroidUtils.inflate(context, R.layout.controller_site_settings)

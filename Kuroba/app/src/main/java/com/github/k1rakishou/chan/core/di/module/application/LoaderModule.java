@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.di;
+package com.github.k1rakishou.chan.core.di.module.application;
 
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
@@ -13,7 +13,6 @@ import com.github.k1rakishou.chan.core.loader.impl.external_media_service.Youtub
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.k1rakishou.chan.utils.Logger;
-import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.model.repository.InlinedFileInfoRepository;
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository;
 
@@ -24,8 +23,11 @@ import java.util.concurrent.Executor;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import dagger.Module;
+import dagger.Provides;
 import io.reactivex.schedulers.Schedulers;
 
+@Module
 public class LoaderModule {
 
     @Provides

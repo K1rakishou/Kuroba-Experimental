@@ -9,7 +9,6 @@ import androidx.core.view.marginBottom
 import androidx.core.view.marginEnd
 import androidx.core.view.marginStart
 import androidx.core.view.marginTop
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import javax.inject.Inject
@@ -26,7 +25,8 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
   var maxHeight: Int = 0
 
   init {
-    Chan.inject(this)
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
   }
 
   override fun onAttachedToWindow() {

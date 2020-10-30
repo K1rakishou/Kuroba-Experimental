@@ -15,6 +15,7 @@ import androidx.appcompat.widget.AppCompatTextView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.model.PostImage;
@@ -39,7 +40,6 @@ import javax.inject.Inject;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 
 public class RemovedPostsController
@@ -67,11 +67,14 @@ public class RemovedPostsController
     @Nullable
     private RemovedPostAdapter adapter;
 
+    @Override
+    protected void injectDependencies(@NotNull StartActivityComponent component) {
+        component.inject(this);
+    }
+
     public RemovedPostsController(Context context, RemovedPostsHelper removedPostsHelper) {
         super(context);
         this.removedPostsHelper = removedPostsHelper;
-
-        inject(this);
     }
 
     @Override

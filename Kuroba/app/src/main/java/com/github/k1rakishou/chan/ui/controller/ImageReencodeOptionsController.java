@@ -11,6 +11,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.util.Pair;
 
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter;
 import com.github.k1rakishou.chan.ui.helper.ImageOptionsHelper;
@@ -20,9 +21,10 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableSlider;
 import com.google.android.material.slider.Slider;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 
 public class ImageReencodeOptionsController
@@ -78,6 +80,11 @@ public class ImageReencodeOptionsController
         }
     };
 
+    @Override
+    protected void injectDependencies(@NotNull StartActivityComponent component) {
+        component.inject(this);
+    }
+
     public ImageReencodeOptionsController(
             Context context,
             ImageOptionsHelper imageReencodingHelper,
@@ -87,7 +94,6 @@ public class ImageReencodeOptionsController
             ImageReencodingPresenter.ReencodeSettings lastOptions
     ) {
         super(context);
-        inject(this);
 
         this.imageReencodingHelper = imageReencodingHelper;
         this.callbacks = callbacks;

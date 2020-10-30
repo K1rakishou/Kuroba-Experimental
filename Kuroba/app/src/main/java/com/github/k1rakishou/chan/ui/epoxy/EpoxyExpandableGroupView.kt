@@ -7,7 +7,6 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
@@ -33,7 +32,9 @@ class EpoxyExpandableGroupView @JvmOverloads constructor(
 
   init {
     inflate(context, R.layout.epoxy_expandable_group_view, this)
-    Chan.inject(this)
+
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     toggleIndicator = findViewById(R.id.toggle_indicator_view)
     groupTitle = findViewById(R.id.group_title)

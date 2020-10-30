@@ -3,13 +3,13 @@ package com.github.k1rakishou.chan.ui.controller.settings.captcha
 import android.content.Context
 import android.widget.FrameLayout
 import android.widget.TextView
-import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.settings.ChanSettings.EMPTY_JSON
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
 import com.google.gson.Gson
@@ -34,7 +34,8 @@ class JsCaptchaCookiesEditorLayout(context: Context) : FrameLayout(context) {
   private val resetButton: ColorizableBarButton
 
   init {
-    inject(this)
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     inflate(context, R.layout.js_captcha_cookies_editor, this).apply {
       cookiesEditorWarning = findViewById(R.id.js_captcha_cookies_editor_warning)

@@ -153,7 +153,7 @@ abstract class CommonSite : SiteBase() {
   }
   
   open fun setParser(commentParser: CommentParser) {
-    postParser = DefaultPostParser(commentParser, postFilterManager, archivesManager)
+    postParser = DefaultPostParser(themeEngine, commentParser, postFilterManager, archivesManager)
   }
 
   override fun enabled(): Boolean {

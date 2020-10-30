@@ -25,12 +25,12 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.controller.transition.ControllerTransition;
 import com.github.k1rakishou.chan.controller.transition.PopControllerTransition;
 import com.github.k1rakishou.chan.controller.transition.PushControllerTransition;
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks;
 import com.github.k1rakishou.chan.ui.controller.PopupController;
 import com.github.k1rakishou.chan.ui.layout.SplitNavigationControllerLayout;
@@ -63,9 +63,13 @@ public class SplitNavigationController
     private PopupController popup;
     private StyledToolbarNavigationController popupChild;
 
+    @Override
+    protected void injectDependencies(@NotNull StartActivityComponent component) {
+        component.inject(this);
+    }
+
     public SplitNavigationController(Context context, ViewGroup emptyView, @NotNull DrawerCallbacks drawerCallbacks) {
         super(context);
-        Chan.inject(this);
 
         this.emptyView = emptyView;
         this.drawerCallbacks = drawerCallbacks;

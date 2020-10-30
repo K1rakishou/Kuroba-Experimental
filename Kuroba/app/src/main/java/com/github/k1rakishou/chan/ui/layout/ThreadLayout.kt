@@ -32,7 +32,6 @@ import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.Debouncer
@@ -176,7 +175,8 @@ class ThreadLayout @JvmOverloads constructor(
 
   init {
     if (!isInEditMode) {
-      Chan.inject(this)
+      AndroidUtils.extractStartActivityComponent(context)
+        .inject(this)
     }
   }
 

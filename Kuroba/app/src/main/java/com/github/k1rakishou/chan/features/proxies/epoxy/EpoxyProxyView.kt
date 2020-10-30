@@ -10,7 +10,6 @@ import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.proxies.ProxySelectionHelper
 import com.github.k1rakishou.chan.features.proxies.data.ProxyEntryViewSelection
@@ -18,6 +17,7 @@ import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableSwitchMaterial
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.ui.view.SelectionCheckView
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.google.android.material.textview.MaterialTextView
@@ -46,8 +46,10 @@ class EpoxyProxyView @JvmOverloads constructor(
   private val proxySelectionCheckView: SelectionCheckView
 
   init {
-    Chan.inject(this)
     inflate(context, R.layout.epoxy_proxy_entry_view, this)
+
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     proxyEntryViewHolder = findViewById(R.id.proxy_entry_view_holder)
     proxyAddress = findViewById(R.id.proxy_address)

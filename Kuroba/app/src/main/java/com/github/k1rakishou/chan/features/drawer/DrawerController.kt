@@ -28,12 +28,10 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.epoxy.EpoxyTouchHelper
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
-import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
-import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
+import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.navigation.HasNavigation
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController
@@ -86,6 +84,18 @@ class DrawerController(
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
   lateinit var settingsNotificationManager: SettingsNotificationManager
+  @Inject
+  lateinit var historyNavigationManager: HistoryNavigationManager
+  @Inject
+  lateinit var siteManager: SiteManager
+  @Inject
+  lateinit var boardManager: BoardManager
+  @Inject
+  lateinit var bookmarksManager: BookmarksManager
+  @Inject
+  lateinit var pageRequestManager: PageRequestManager
+  @Inject
+  lateinit var archivesManager: ArchivesManager
 
   private lateinit var rootLayout: TouchBlockingFrameLayout
   private lateinit var container: FrameLayout
@@ -96,7 +106,17 @@ class DrawerController(
   private lateinit var divider: ColorizableDivider
   private lateinit var bottomMenuPanel: BottomMenuPanel
 
-  private val drawerPresenter = DrawerPresenter(isDevBuild())
+  private val drawerPresenter by lazy {
+    DrawerPresenter(
+      isDevFlavor = isDevBuild(),
+      historyNavigationManager = historyNavigationManager,
+      siteManager = siteManager,
+      bookmarksManager = bookmarksManager,
+      pageRequestManager = pageRequestManager,
+      archivesManager = archivesManager
+    )
+  }
+
   private val childControllersStack = Stack<Controller>()
 
   private val topThreadController: ThreadController?
@@ -142,9 +162,12 @@ class DrawerController(
       return navigationController
     }
 
+  override fun injectDependencies(component: StartActivityComponent) {
+    component.inject(this)
+  }
+
   override fun onCreate() {
     super.onCreate()
-    Chan.inject(this)
 
     view = inflate(context, R.layout.controller_navigation_drawer)
     rootLayout = view.findViewById(R.id.main_root_layout)

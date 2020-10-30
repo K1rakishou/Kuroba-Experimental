@@ -19,9 +19,9 @@ package com.github.k1rakishou.chan.ui.controller
 import android.content.Context
 import android.widget.Toast
 import androidx.core.util.Pair
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.R.string.action_reload
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
 import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.*
@@ -82,9 +82,12 @@ open class ViewThreadController(
   private val threadFollowerpool: Deque<Pair<ThreadDescriptor, ThreadDescriptor>> = ArrayDeque()
   private var hintPopup: HintPopup? = null
 
+  override fun injectDependencies(component: StartActivityComponent) {
+    component.inject(this)
+  }
+
   override fun onCreate() {
     super.onCreate()
-    Chan.inject(this)
 
     threadLayout.setPostViewMode(ChanSettings.PostViewMode.LIST)
     view.setBackgroundColor(themeEngine.chanTheme.backColor)

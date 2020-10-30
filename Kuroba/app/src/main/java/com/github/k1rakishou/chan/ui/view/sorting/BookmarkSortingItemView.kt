@@ -6,7 +6,6 @@ import android.view.Gravity
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.content.ContextCompat
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
@@ -32,7 +31,8 @@ class BookmarkSortingItemView @JvmOverloads constructor(
 
   init {
     if (!isInEditMode) {
-      Chan.inject(this)
+      AndroidUtils.extractStartActivityComponent(context)
+        .inject(this)
     }
 
     orientation = LinearLayout.HORIZONTAL

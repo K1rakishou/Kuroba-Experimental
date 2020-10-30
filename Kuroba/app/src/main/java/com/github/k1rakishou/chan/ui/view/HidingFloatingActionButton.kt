@@ -23,7 +23,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
@@ -78,7 +77,8 @@ class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarColla
 
   private fun init() {
     if (!isInEditMode) {
-      Chan.inject(this)
+      AndroidUtils.extractStartActivityComponent(context)
+        .inject(this)
 
       // We apply the bottom paddings directly in SplitNavigationController when we are in SPLIT
       // mode, so we don't need to do that twice and that's why we set bottomNavViewHeight to 0

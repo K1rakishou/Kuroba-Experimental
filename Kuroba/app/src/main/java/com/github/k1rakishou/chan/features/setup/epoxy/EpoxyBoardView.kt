@@ -6,7 +6,6 @@ import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.AndroidUtils
@@ -30,8 +29,10 @@ class EpoxyBoardView @JvmOverloads constructor(
   val boardReorder: AppCompatImageView
 
   init {
-    Chan.inject(this)
     inflate(context, R.layout.epoxy_board_view, this)
+
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     boardName = findViewById(R.id.board_name)
     boardDescription = findViewById(R.id.board_description)

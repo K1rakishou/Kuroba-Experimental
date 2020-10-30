@@ -25,13 +25,10 @@ import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.saver.FileWatcher;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
-
-import javax.inject.Inject;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
@@ -41,15 +38,14 @@ public class FilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
     private static final int ITEM_TYPE_FOLDER = 0;
     private static final int ITEM_TYPE_FILE = 1;
 
-    @Inject
-    ThemeEngine themeEngine;
+    private final ThemeEngine themeEngine;
 
     private FileWatcher.FileItem highlightedItem;
     private FileWatcher.FileItems fileItems;
     private Callback callback;
 
-    public FilesAdapter(Callback callback) {
-        Chan.inject(this);
+    public FilesAdapter(ThemeEngine themeEngine, Callback callback) {
+        this.themeEngine = themeEngine;
         this.callback = callback;
     }
 

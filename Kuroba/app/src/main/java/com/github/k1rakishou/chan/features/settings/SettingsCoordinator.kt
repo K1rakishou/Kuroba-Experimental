@@ -2,16 +2,17 @@ package com.github.k1rakishou.chan.features.settings
 
 import android.content.Context
 import com.airbnb.epoxy.EpoxyRecyclerView
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.manager.*
+import com.github.k1rakishou.chan.core.repository.ImportExportRepository
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.settings.screens.*
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.common.AppConstants
@@ -80,6 +81,8 @@ class SettingsCoordinator(
   lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var proxyStorage: ProxyStorage
+  @Inject
+  lateinit var importExportRepository: ImportExportRepository
 
   private val mainSettingsScreen by lazy {
     MainSettingsScreen(
@@ -154,7 +157,8 @@ class SettingsCoordinator(
       navigationController,
       fileChooser,
       fileManager,
-      dialogFactory
+      dialogFactory,
+      importExportRepository
     )
   }
 
@@ -195,7 +199,8 @@ class SettingsCoordinator(
     get() = job + Dispatchers.Main + CoroutineName("SettingsCoordinator")
 
   fun onCreate() {
-    Chan.inject(this)
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     launch {
       onSearchEnteredSubject

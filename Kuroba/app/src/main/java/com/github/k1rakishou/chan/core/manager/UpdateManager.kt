@@ -28,7 +28,6 @@ import android.text.TextUtils
 import androidx.core.content.FileProvider
 import androidx.core.text.parseAsHtml
 import com.github.k1rakishou.chan.BuildConfig
-import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
@@ -57,7 +56,6 @@ import okhttp3.Request
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
 /**
@@ -67,25 +65,16 @@ import kotlin.coroutines.CoroutineContext
  * screen is launched after downloading.
  */ 
 class UpdateManager(
-  private val context: Context
+  private val context: Context,
+  private val fileCacheV2: FileCacheV2,
+  private val fileManager: FileManager,
+  private val settingsNotificationManager: SettingsNotificationManager,
+  private val fileChooser: FileChooser,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
+  private val dialogFactory: DialogFactory,
+  private val siteManager: SiteManager,
+  private val boardManager: BoardManager
 ) : CoroutineScope {
-
-  @Inject
-  lateinit var fileCacheV2: FileCacheV2
-  @Inject
-  lateinit var fileManager: FileManager
-  @Inject
-  lateinit var settingsNotificationManager: SettingsNotificationManager
-  @Inject
-  lateinit var fileChooser: FileChooser
-  @Inject
-  lateinit var proxiedOkHttpClient: ProxiedOkHttpClient
-  @Inject
-  lateinit var dialogFactory: DialogFactory
-  @Inject
-  lateinit var siteManager: SiteManager
-  @Inject
-  lateinit var boardManager: BoardManager
 
   private var updateDownloadDialog: ProgressDialog? = null
   private var cancelableDownload: CancelableDownload? = null
@@ -94,10 +83,6 @@ class UpdateManager(
 
   override val coroutineContext: CoroutineContext
     get() = Dispatchers.Default + job + CoroutineName("UpdateManager")
-
-  init {
-    inject(this)
-  }
 
   fun onDestroy() {
     job.cancelChildren()

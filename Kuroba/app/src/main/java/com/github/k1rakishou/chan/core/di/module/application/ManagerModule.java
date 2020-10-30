@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.core.di;
+package com.github.k1rakishou.chan.core.di.module.application;
 
 import android.content.Context;
 
@@ -74,7 +74,6 @@ import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.common.AppConstants;
-import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.fsaf.manager.base_directory.DirectoryManager;
@@ -98,16 +97,19 @@ import java.util.concurrent.Executor;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import dagger.Module;
+import dagger.Provides;
 import io.reactivex.schedulers.Schedulers;
 import kotlinx.coroutines.CoroutineScope;
 
-import static com.github.k1rakishou.chan.core.di.AppModule.getCacheDir;
+import static com.github.k1rakishou.chan.core.di.module.application.AppModule.getCacheDir;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getFlavorType;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getNotificationManager;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getNotificationManagerCompat;
 import static com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy.ReplaceBadSymbols;
 import static com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy.ThrowAnException;
 
+@Module
 public class ManagerModule {
     private static final String CRASH_LOGS_DIR_NAME = "crashlogs";
 
@@ -160,9 +162,35 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public ChanLoaderManager provideChanLoaderFactory() {
+    public ChanLoaderManager provideChanLoaderFactory(
+            Gson gson,
+            ProxiedOkHttpClient proxiedOkHttpClient,
+            AppConstants appConstants,
+            FilterEngine filterEngine,
+            ChanPostRepository chanPostRepository,
+            ArchivesManager archivesManager,
+            ThemeEngine themeEngine,
+            PostFilterManager postFilterManager,
+            BookmarksManager bookmarksManager,
+            SiteManager siteManager,
+            BoardManager boardManager,
+            SavedReplyManager savedReplyManager
+    ) {
         Logger.d(AppModule.DI_TAG, "Chan loader factory");
-        return new ChanLoaderManager();
+        return new ChanLoaderManager(
+                gson,
+                proxiedOkHttpClient,
+                appConstants,
+                filterEngine,
+                chanPostRepository,
+                archivesManager,
+                themeEngine,
+                postFilterManager,
+                bookmarksManager,
+                siteManager,
+                boardManager,
+                savedReplyManager
+        );
     }
 
     @Provides

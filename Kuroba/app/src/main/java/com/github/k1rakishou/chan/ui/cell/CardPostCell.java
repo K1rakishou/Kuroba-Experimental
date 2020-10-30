@@ -46,7 +46,6 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.ui.adapter.PostsFilter.Order.isNotBumpOrder;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
@@ -92,7 +91,8 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
     }
 
     private void init() {
-        inject(this);
+        AndroidUtils.extractStartActivityComponent(getContext())
+                .inject(this);
     }
 
     @Override

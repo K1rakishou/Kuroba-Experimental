@@ -83,7 +83,8 @@ class ChanThreadLoaderCoordinator(
     ReloadPostsFromDatabaseUseCase(
       gson,
       chanPostRepository,
-      boardManager
+      boardManager,
+      themeEngine
     )
   }
 

@@ -1,7 +1,6 @@
-package com.github.k1rakishou.chan.core.di;
+package com.github.k1rakishou.chan.core.di.module.application;
 
 import com.github.k1rakishou.chan.utils.Logger;
-import com.github.k1rakishou.feather2.Provides;
 
 import java.util.Locale;
 import java.util.concurrent.Executor;
@@ -11,6 +10,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import dagger.Module;
+import dagger.Provides;
+
+@Module
 public class ExecutorsModule {
     public static final String onDemandContentLoaderExecutorName = "OnDemandContentLoaderExecutor";
     private static final AtomicInteger onDemandContentLoaderExecutorThreadIndex = new AtomicInteger(0);

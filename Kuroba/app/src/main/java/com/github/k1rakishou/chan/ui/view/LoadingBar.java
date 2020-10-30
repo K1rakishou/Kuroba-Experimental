@@ -22,8 +22,8 @@ import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
 
-import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 
 import java.util.ArrayList;
@@ -56,7 +56,8 @@ public class LoadingBar extends View implements ThemeEngine.ThemeChangesListener
     }
 
     private void init() {
-        Chan.inject(this);
+        AndroidUtils.extractStartActivityComponent(getContext())
+                .inject(this);
 
         paint = new Paint(Paint.ANTI_ALIAS_FLAG);
         onThemeChanged();

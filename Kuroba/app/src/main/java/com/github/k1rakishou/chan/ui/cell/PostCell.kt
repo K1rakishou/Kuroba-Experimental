@@ -36,7 +36,6 @@ import android.widget.LinearLayout
 import android.widget.RelativeLayout
 import android.widget.TextView
 import coil.request.Disposable
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
@@ -134,7 +133,9 @@ class PostCell : LinearLayout, PostCellInterface {
 
   override fun onFinishInflate() {
     super.onFinishInflate()
-    Chan.inject(this)
+
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     val textSizeSp = ChanSettings.fontSize.get().toInt()
 
@@ -205,8 +206,8 @@ class PostCell : LinearLayout, PostCellInterface {
 
     gestureDetector = GestureDetector(context, DoubleTapGestureListener())
 
-    linkClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostLinkColor, 1.3f)
-    quoteClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostQuoteColor, 1.3f)
+    linkClickSpan = ColorizableBackgroundColorSpan(themeEngine, ChanThemeColorId.PostLinkColor, 1.3f)
+    quoteClickSpan = ColorizableBackgroundColorSpan(themeEngine, ChanThemeColorId.PostQuoteColor, 1.3f)
   }
 
   override fun onPostRecycled(isActuallyRecycling: Boolean) {

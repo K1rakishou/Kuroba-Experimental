@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.features.setup
 
 import android.content.Context
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -19,20 +18,11 @@ import com.github.k1rakishou.chan.ui.controller.LoginController
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
-class SiteSettingsPresenter : BasePresenter<SiteSettingsView>() {
-
-  @Inject
-  lateinit var siteManager: SiteManager
-  @Inject
-  lateinit var boardManager: BoardManager
-
-  override fun onCreate(view: SiteSettingsView) {
-    super.onCreate(view)
-
-    Chan.inject(this)
-  }
+class SiteSettingsPresenter(
+  private val siteManager: SiteManager,
+  private val boardManager: BoardManager
+) : BasePresenter<SiteSettingsView>() {
 
   suspend fun showSiteSettings(context: Context, siteDescriptor: SiteDescriptor): List<SettingsGroup> {
     return withContext(Dispatchers.Default) {

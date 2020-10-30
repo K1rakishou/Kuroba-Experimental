@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.core.di;
+package com.github.k1rakishou.chan.core.di.module.application;
 
 import com.github.k1rakishou.chan.core.manager.ArchivesManager;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
@@ -24,13 +24,17 @@ import com.github.k1rakishou.chan.core.repository.LastReplyRepository;
 import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.Logger;
-import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.google.gson.Gson;
 
 import javax.inject.Singleton;
 
+import dagger.Module;
+import dagger.Provides;
+
+@Module
 public class RepositoryModule {
 
     @Provides
@@ -51,11 +55,12 @@ public class RepositoryModule {
     @Provides
     @Singleton
     public ParserRepository provideParserRepository(
+            ThemeEngine themeEngine,
             MockReplyManager mockReplyManager,
             ArchivesManager archivesManager
     ) {
         Logger.d(AppModule.DI_TAG, "ParserRepository");
-        return new ParserRepository(mockReplyManager, archivesManager);
+        return new ParserRepository(themeEngine, mockReplyManager, archivesManager);
     }
 
     @Provides

@@ -87,7 +87,7 @@ class Chan420 : CommonSite() {
       }
     })
     setApi(TaimabaApi(siteManager, boardManager, this))
-    setParser(TaimabaCommentParser(mockReplyManager))
+    setParser(TaimabaCommentParser(themeEngine, mockReplyManager))
   }
 
   override fun commentParserType(): CommentParserType {

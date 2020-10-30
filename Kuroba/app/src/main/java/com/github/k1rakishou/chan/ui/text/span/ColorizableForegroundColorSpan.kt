@@ -3,21 +3,13 @@ package com.github.k1rakishou.chan.ui.text.span
 import android.graphics.Color
 import android.text.TextPaint
 import android.text.style.ForegroundColorSpan
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.model.data.theme.ChanThemeColorId
-import javax.inject.Inject
 
 data class ColorizableForegroundColorSpan(
+  private val themeEngine: ThemeEngine,
   val chanThemeColorId: ChanThemeColorId
 ) : ForegroundColorSpan(Color.MAGENTA) {
-
-  @Inject
-  lateinit var themeEngine: ThemeEngine
-
-  init {
-    Chan.inject(this)
-  }
 
   override fun updateDrawState(textPaint: TextPaint) {
     textPaint.color = themeEngine.chanTheme.getColorByColorId(chanThemeColorId)

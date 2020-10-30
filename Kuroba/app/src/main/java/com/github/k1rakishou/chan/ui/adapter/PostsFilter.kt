@@ -17,25 +17,17 @@
 package com.github.k1rakishou.chan.ui.adapter
 
 import android.text.TextUtils
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.manager.PostHideHelper
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.model.PostIndexed
 import com.github.k1rakishou.chan.utils.Logger
 import java.util.*
-import javax.inject.Inject
 
 class PostsFilter(
+  private val postHideHelper: PostHideHelper,
   private val order: Order,
   private val query: String?
 ) {
-
-  @Inject
-  lateinit var postHideHelper: PostHideHelper
-
-  init {
-    Chan.inject(this)
-  }
 
   suspend fun apply(original: List<Post>): List<PostIndexed> {
     val posts: MutableList<Post> = ArrayList(original)

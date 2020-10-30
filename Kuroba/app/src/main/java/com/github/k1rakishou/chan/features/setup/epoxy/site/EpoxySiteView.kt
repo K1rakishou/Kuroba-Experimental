@@ -12,7 +12,6 @@ import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
@@ -53,7 +52,9 @@ class EpoxySiteView @JvmOverloads constructor(
 
   init {
     inflate(context, R.layout.epoxy_site_view, this)
-    Chan.inject(this)
+
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     siteIcon = findViewById(R.id.site_icon)
     siteName = findViewById(R.id.site_name)

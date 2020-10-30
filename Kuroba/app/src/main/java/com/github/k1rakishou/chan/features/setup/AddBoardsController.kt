@@ -3,9 +3,11 @@ package com.github.k1rakishou.chan.features.setup
 import android.content.Context
 import android.widget.FrameLayout
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
+import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.setup.data.AddBoardsControllerState
 import com.github.k1rakishou.chan.features.setup.epoxy.epoxySelectableBoardView
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
@@ -35,10 +37,21 @@ class AddBoardsController(
   private val siteDescriptor: SiteDescriptor,
   private val callback: RefreshBoardsCallback
 ) : BaseFloatingController(context), AddBoardsView {
-  private val presenter = AddBoardsPresenter(siteDescriptor)
 
   @Inject
   lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var siteManager: SiteManager
+  @Inject
+  lateinit var boardManager: BoardManager
+
+  private val presenter by lazy {
+    AddBoardsPresenter(
+      siteDescriptor = siteDescriptor,
+      siteManager = siteManager,
+      boardManager = boardManager
+    )
+  }
 
   private lateinit var outsideArea: FrameLayout
   private lateinit var searchView: SearchLayout
@@ -52,10 +65,13 @@ class AddBoardsController(
 
   override fun getLayoutId(): Int = R.layout.controller_add_boards
 
+  override fun injectDependencies(component: StartActivityComponent) {
+    component.inject(this)
+  }
+
   @OptIn(ExperimentalTime::class)
   override fun onCreate() {
     super.onCreate()
-    Chan.inject(this)
 
     searchView = view.findViewById(R.id.search_view)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)

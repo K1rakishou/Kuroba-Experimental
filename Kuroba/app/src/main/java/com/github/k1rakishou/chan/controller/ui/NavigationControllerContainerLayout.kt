@@ -26,7 +26,6 @@ import android.view.MotionEvent
 import android.widget.FrameLayout
 import androidx.annotation.RequiresApi
 import androidx.core.view.ViewCompat
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.gesture_editor.ExclusionZone
 import com.github.k1rakishou.chan.ui.controller.BrowseController
@@ -49,15 +48,23 @@ class NavigationControllerContainerLayout : FrameLayout {
     preInit()
   }
 
-  constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+  constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(
+    context,
+    attrs,
+    defStyleAttr
+  ) {
     preInit()
   }
 
   private fun preInit() {
-    Chan.inject(this)
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
   }
 
-  fun initThreadControllerTracking(swipeEnabled: Boolean, navigationController: NavigationController) {
+  fun initThreadControllerTracking(
+    swipeEnabled: Boolean,
+    navigationController: NavigationController
+  ) {
     controllerTracker = ThreadControllerTracker(
       swipeEnabled,
       { this.width },

@@ -324,15 +324,14 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-rx2:${versions.kotlin_coroutines_version}"
     implementation 'io.coil-kt:coil-base:0.12.0'
 
-    implementation 'com.github.K1rakishou:Feather2:ec21592613'
     // noinspection GradleDependency wants to upgrade to older version
     implementation 'com.github.K1rakishou:Fuck-Storage-Access-Framework:v1.0-alpha42'
 
     implementation "androidx.room:room-runtime:${versions.room_version}"
     kapt "androidx.room:room-compiler:${versions.room_version}"
 
-    implementation "com.google.dagger:dagger-android:${versions.dagger_version}"
-    kapt "com.google.dagger:dagger-android-processor:${versions.dagger_version}"
+    implementation "com.google.dagger:dagger:${versions.dagger_version}"
+    kapt "com.google.dagger:dagger-compiler:${versions.dagger_version}"
 
     implementation "com.airbnb.android:epoxy:${versions.epoxy}"
     kapt "com.airbnb.android:epoxy-processor:${versions.epoxy}"

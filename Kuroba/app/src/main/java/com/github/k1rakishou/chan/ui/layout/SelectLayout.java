@@ -39,16 +39,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import javax.inject.Inject;
-
-import static com.github.k1rakishou.chan.Chan.inject;
-
 public class SelectLayout<T>
         extends LinearLayout
         implements SearchLayout.SearchLayoutCallback, View.OnClickListener {
 
-    @Inject
-    ThemeEngine themeEngine;
+    private ThemeEngine themeEngine;
 
     private ColorizableRecyclerView recyclerView;
     private ColorizableBarButton checkAllButton;
@@ -59,21 +54,18 @@ public class SelectLayout<T>
 
     public SelectLayout(Context context) {
         super(context);
-        init();
     }
 
     public SelectLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init();
     }
 
     public SelectLayout(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        init();
     }
 
-    private void init() {
-        inject(this);
+    public void init(ThemeEngine themeEngine) {
+        this.themeEngine = themeEngine;
     }
 
     @Override

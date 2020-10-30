@@ -17,14 +17,32 @@
 package com.github.k1rakishou.chan.core.manager
 
 import android.util.LruCache
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoader
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoader.ChanLoaderCallback
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import com.github.k1rakishou.model.repository.ChanPostRepository
+import com.google.gson.Gson
 
-class ChanLoaderManager {
+class ChanLoaderManager(
+  private val gson: Gson,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
+  private val appConstants: AppConstants,
+  private val filterEngine: FilterEngine,
+  private val chanPostRepository: ChanPostRepository,
+  private val archivesManager: ArchivesManager,
+  private val themeEngine: ThemeEngine,
+  private val postFilterManager: PostFilterManager,
+  private val bookmarksManager: BookmarksManager,
+  private val siteManager: SiteManager,
+  private val boardManager: BoardManager,
+  private val savedReplyManager: SavedReplyManager,
+) {
   private val threadLoadersCache = LruCache<ChanDescriptor, ChanThreadLoader>(THREAD_LOADERS_CACHE_SIZE)
 
   @get:Synchronized
@@ -45,15 +63,14 @@ class ChanLoaderManager {
     val chanLoader = if (chanDescriptor.isThreadDescriptor()) {
       var loader = threadLoadersCache[chanDescriptor]
       if (loader == null) {
-        loader = ChanThreadLoader(chanDescriptor)
+        loader = createChanThreadLoader(chanDescriptor)
         threadLoadersCache.put(chanDescriptor, loader)
       }
 
       currentThreadDescriptor = chanDescriptor as ThreadDescriptor
       loader
     } else {
-      val loader = ChanThreadLoader(chanDescriptor)
-
+      val loader = createChanThreadLoader(chanDescriptor)
       currentCatalogDescriptor = chanDescriptor as CatalogDescriptor
       loader
     }
@@ -86,6 +103,24 @@ class ChanLoaderManager {
   @Synchronized
   fun getLoader(chanDescriptor: ChanDescriptor): ChanThreadLoader? {
     return threadLoadersCache[chanDescriptor]
+  }
+
+  private fun createChanThreadLoader(chanDescriptor: ChanDescriptor): ChanThreadLoader {
+    return ChanThreadLoader(
+      chanDescriptor = chanDescriptor,
+      gson = gson,
+      proxiedOkHttpClient = proxiedOkHttpClient,
+      appConstants = appConstants,
+      filterEngine = filterEngine,
+      chanPostRepository = chanPostRepository,
+      archivesManager = archivesManager,
+      themeEngine = themeEngine,
+      postFilterManager = postFilterManager,
+      bookmarksManager = bookmarksManager,
+      siteManager = siteManager,
+      boardManager = boardManager,
+      savedReplyManager = savedReplyManager
+    )
   }
 
   companion object {

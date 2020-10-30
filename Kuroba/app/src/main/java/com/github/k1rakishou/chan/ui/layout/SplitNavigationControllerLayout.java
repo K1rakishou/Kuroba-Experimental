@@ -22,8 +22,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
-import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 
 import javax.inject.Inject;
 
@@ -53,7 +53,9 @@ public class SplitNavigationControllerLayout extends LinearLayout implements The
 
     public SplitNavigationControllerLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        Chan.inject(this);
+
+        AndroidUtils.extractStartActivityComponent(getContext())
+                .inject(this);
 
         setOrientation(LinearLayout.HORIZONTAL);
 

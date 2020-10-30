@@ -6,10 +6,10 @@ import android.view.View
 import android.widget.FrameLayout
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.common.updateMargins
 import javax.inject.Inject
 
@@ -26,8 +26,10 @@ class EpoxySearchPostDividerView @JvmOverloads constructor(
   private val divider: ColorizableDivider
 
   init {
-    Chan.inject(this)
     View.inflate(context, R.layout.epoxy_divider_view, this)
+
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     divider = findViewById(R.id.divider)
   }

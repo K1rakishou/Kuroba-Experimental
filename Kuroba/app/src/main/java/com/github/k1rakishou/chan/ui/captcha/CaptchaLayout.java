@@ -39,6 +39,7 @@ import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.SiteAuthentication;
 import com.github.k1rakishou.chan.ui.controller.settings.captcha.JsCaptchaCookiesJar;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.IOUtils;
 import com.github.k1rakishou.chan.utils.Logger;
@@ -49,7 +50,6 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import static android.view.View.MeasureSpec.AT_MOST;
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.core.settings.ChanSettings.LayoutMode.AUTO;
 import static com.github.k1rakishou.chan.core.settings.ChanSettings.LayoutMode.SPLIT;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getDisplaySize;
@@ -83,17 +83,22 @@ public class CaptchaLayout
 
     public CaptchaLayout(Context context) {
         super(context);
-        inject(this);
+        init();
     }
 
     public CaptchaLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
-        inject(this);
+        init();
     }
 
     public CaptchaLayout(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        inject(this);
+        init();
+    }
+
+    private void init() {
+        AndroidUtils.extractStartActivityComponent(getContext())
+                .inject(this);
     }
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})

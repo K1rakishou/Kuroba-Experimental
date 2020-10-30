@@ -20,10 +20,10 @@ import android.content.Context
 import android.text.method.LinkMovementMethod
 import android.view.View
 import android.widget.TextView
-import com.github.k1rakishou.chan.Chan
 import androidx.core.text.parseAsHtml
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
@@ -56,10 +56,12 @@ class LoginController(
   private lateinit var authenticated: TextView
   private lateinit var bottomDescription: TextView
 
+  override fun injectDependencies(component: StartActivityComponent) {
+    component.inject(this)
+  }
+
   override fun onCreate() {
     super.onCreate()
-    Chan.inject(this)
-
     navigation.setTitle(R.string.settings_screen_pass)
     
     view = AndroidUtils.inflate(context, R.layout.controller_pass).also { view ->

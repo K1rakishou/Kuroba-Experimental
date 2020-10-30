@@ -3,11 +3,11 @@ package com.github.k1rakishou.chan.ui.layout.crashlogs
 import android.annotation.SuppressLint
 import android.content.Context
 import android.widget.FrameLayout
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import javax.inject.Inject
 
 @SuppressLint("ViewConstructor")
@@ -22,7 +22,8 @@ class ViewFullCrashLogLayout(context: Context, private val crashLog: CrashLog) :
   private val save: ColorizableBarButton
 
   init {
-    Chan.inject(this)
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     inflate(context, R.layout.layout_view_full_crashlog, this).apply {
       crashLogText = findViewById(R.id.view_full_crashlog_text)

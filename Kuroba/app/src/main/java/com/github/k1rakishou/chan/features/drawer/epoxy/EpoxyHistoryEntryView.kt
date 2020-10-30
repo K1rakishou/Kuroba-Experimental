@@ -12,11 +12,11 @@ import androidx.appcompat.widget.AppCompatTextView
 import coil.request.Disposable
 import coil.transform.CircleCropTransformation
 import com.airbnb.epoxy.*
-import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.drawer.data.NavHistoryBookmarkAdditionalInfo
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import java.lang.ref.WeakReference
@@ -27,7 +27,8 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : FrameLayout(context, attrs, defStyleAttr), ThemeEngine.ThemeChangesListener {
+) : FrameLayout(context, attrs, defStyleAttr),
+  ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
@@ -50,7 +51,9 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
 
   init {
     inflate(context, R.layout.epoxy_history_entry_view, this)
-    inject(this)
+
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     viewHolder = findViewById(R.id.history_entry_view_holder)
     threadThumbnailImage = findViewById(R.id.history_entry_thread_image)

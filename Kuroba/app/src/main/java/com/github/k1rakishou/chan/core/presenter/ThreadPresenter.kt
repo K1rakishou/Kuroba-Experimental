@@ -89,7 +89,8 @@ class ThreadPresenter @Inject constructor(
   private val chanFilterManager: ChanFilterManager,
   private val lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder,
   private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
-  private val localSearchManager: LocalSearchManager
+  private val localSearchManager: LocalSearchManager,
+  private val postHideHelper: PostHideHelper
 ) : ChanLoaderCallback,
   PostAdapterCallback,
   PostCellCallback,
@@ -1591,7 +1592,7 @@ class ThreadPresenter @Inject constructor(
 
     threadPresenterCallback?.showPosts(
       chanLoader!!.thread,
-      PostsFilter(order, searchQuery)
+      PostsFilter(postHideHelper, order, searchQuery)
     )
   }
 

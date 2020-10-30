@@ -6,9 +6,9 @@ import android.widget.LinearLayout
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.google.android.material.textview.MaterialTextView
 import javax.inject.Inject
 
@@ -25,8 +25,10 @@ class EpoxyBoardSelectionView @JvmOverloads constructor(
   private val boardName: MaterialTextView
 
   init {
-    Chan.inject(this)
     inflate(context, R.layout.epoxy_board_selection_view, this)
+
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     boardName = findViewById(R.id.board_name)
   }

@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.model.PostImage
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.StringUtils
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -48,6 +49,7 @@ object CommentParserHelper {
    * */
   @JvmStatic
   fun detectLinks(
+    themeEngine: ThemeEngine,
     post: Post.Builder,
     text: String,
     linkHandler: Function1<String, PostLinkable?>?
@@ -86,6 +88,7 @@ object CommentParserHelper {
         }
 
         val postLinkable = PostLinkable(
+          themeEngine,
           linkText,
           PostLinkable.Value.StringValue(linkText),
           PostLinkable.Type.LINK
@@ -164,6 +167,7 @@ object CommentParserHelper {
 
   @JvmStatic
   fun detectLinks(
+    themeEngine: ThemeEngine,
     post: Post.Builder,
     text: String,
     spannable: SpannableString
@@ -173,6 +177,7 @@ object CommentParserHelper {
     for (link in links) {
       val linkText = text.substring(link.beginIndex, link.endIndex)
       val pl = PostLinkable(
+        themeEngine,
         linkText,
         PostLinkable.Value.StringValue(linkText),
         PostLinkable.Type.LINK

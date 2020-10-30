@@ -65,7 +65,6 @@ import javax.inject.Inject;
 
 import kotlin.Unit;
 
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 
@@ -114,7 +113,8 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
         super.onFinishInflate();
 
         if (!isInEditMode()) {
-            inject(this);
+            AndroidUtils.extractStartActivityComponent(getContext())
+                    .inject(this);
         }
 
         typeText = findViewById(R.id.type);
@@ -334,6 +334,7 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
         @SuppressWarnings("unchecked")
         final SelectLayout<ChanBoard> selectLayout =
                 (SelectLayout<ChanBoard>) AndroidUtils.inflate(getContext(), R.layout.layout_select, null);
+        selectLayout.init(themeEngine);
 
         List<SelectLayout.SelectItem<ChanBoard>> items = new ArrayList<>();
 
@@ -381,6 +382,7 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
         @SuppressWarnings("unchecked")
         final SelectLayout<FilterType> selectLayout =
                 (SelectLayout<FilterType>) AndroidUtils.inflate(getContext(), R.layout.layout_select, null);
+        selectLayout.init(themeEngine);
 
         List<SelectLayout.SelectItem<FilterType>> items = new ArrayList<>();
         for (FilterType filterType : FilterType.values()) {

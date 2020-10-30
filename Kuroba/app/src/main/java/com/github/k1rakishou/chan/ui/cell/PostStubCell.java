@@ -27,7 +27,6 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.k1rakishou.chan.core.model.Post;
@@ -84,7 +83,8 @@ public class PostStubCell
     }
 
     private void init() {
-        Chan.inject(this);
+        AndroidUtils.extractStartActivityComponent(getContext())
+                .inject(this);
     }
 
     @Override

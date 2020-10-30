@@ -20,9 +20,12 @@ import android.content.Context;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout;
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -30,6 +33,11 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 
 public class ImageViewerNavigationController
         extends ToolbarNavigationController {
+
+    @Override
+    protected void injectDependencies(@NotNull StartActivityComponent component) {
+        component.inject(this);
+    }
 
     public ImageViewerNavigationController(Context context) {
         super(context);

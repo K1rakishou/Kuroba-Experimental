@@ -23,10 +23,10 @@ import android.content.DialogInterface;
 import android.os.Environment;
 import android.view.View;
 
-import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.StartActivity;
 import com.github.k1rakishou.chan.controller.Controller;
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.core.manager.DialogFactory;
 import com.github.k1rakishou.chan.core.saver.FileWatcher;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
@@ -35,6 +35,8 @@ import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper;
 import com.github.k1rakishou.chan.ui.layout.FilesLayout;
 import com.github.k1rakishou.chan.ui.layout.NewFolderLayout;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -63,13 +65,17 @@ public class SaveLocationController
     private SaveLocationControllerMode mode;
     private SaveLocationControllerCallback callback;
 
+    @Override
+    protected void injectDependencies(@NotNull StartActivityComponent component) {
+        component.inject(this);
+    }
+
     public SaveLocationController(
             Context context,
             SaveLocationControllerMode mode,
             SaveLocationControllerCallback callback
     ) {
         super(context);
-        Chan.inject(this);
 
         this.callback = callback;
         this.mode = mode;

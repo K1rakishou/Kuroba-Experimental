@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.ui.layout
 
 import android.content.Context
 import android.widget.FrameLayout
-import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.ui.controller.LogsController
@@ -11,6 +10,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.view.ReportProblemView
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.Logger
@@ -36,7 +36,8 @@ class ReportProblemLayout(context: Context) : FrameLayout(context), ReportProble
   private val reportActivitySendReport: ColorizableBarButton
 
   init {
-    inject(this)
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     inflate(context, R.layout.layout_report, this).apply {
       reportActivityProblemTitle = findViewById(R.id.report_controller_problem_title)

@@ -35,6 +35,7 @@ import com.github.k1rakishou.chan.ui.cell.PostCellInterface;
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell;
 import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
@@ -50,7 +51,6 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 
 public class PostAdapter
@@ -102,7 +102,8 @@ public class PostAdapter
             PostCellInterface.PostCellCallback postCellCallback,
             ThreadStatusCell.Callback statusCellCallback
     ) {
-        inject(this);
+        AndroidUtils.extractStartActivityComponent(recyclerView.getContext())
+                .inject(this);
 
         this.postFilterManager = postFilterManager;
         this.recyclerView = recyclerView;

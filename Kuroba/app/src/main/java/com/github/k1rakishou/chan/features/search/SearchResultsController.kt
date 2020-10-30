@@ -6,11 +6,14 @@ import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
+import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerState
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerStateData
 import com.github.k1rakishou.chan.features.search.epoxy.*
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.dp
@@ -20,6 +23,7 @@ import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import javax.inject.Inject
 
 class SearchResultsController(
   context: Context,
@@ -27,8 +31,25 @@ class SearchResultsController(
   private val query: String
 ) : Controller(context), SearchResultsView {
 
+  @Inject
+  lateinit var globalSearchUseCase: GlobalSearchUseCase
+  @Inject
+  lateinit var themeEngine: ThemeEngine
+
+  private val presenter by lazy {
+    SearchResultsPresenter(
+      siteDescriptor = siteDescriptor,
+      query = query,
+      globalSearchUseCase = globalSearchUseCase,
+      themeEngine = themeEngine
+    )
+  }
+
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
-  private val presenter = SearchResultsPresenter(siteDescriptor, query)
+
+  override fun injectDependencies(component: StartActivityComponent) {
+    component.inject(this)
+  }
 
   override fun onCreate() {
     super.onCreate()

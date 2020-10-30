@@ -20,11 +20,10 @@ class BookmarkBackgroundWatcherWorker(
   @Inject
   lateinit var bookmarkWatcherDelegate: BookmarkWatcherDelegate
 
-  init {
-    Chan.inject(this)
-  }
-
   override suspend fun doWork(): Result {
+    Chan.getComponent()
+      .inject(this)
+
     if (!ChanSettings.watchBackground.get()) {
       Logger.e(TAG, "BookmarkBackgroundWatcherWorker.doWork() ChanSettings.watchBackground is false")
       return Result.success()

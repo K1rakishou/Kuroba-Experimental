@@ -36,6 +36,7 @@ import com.github.k1rakishou.chan.ui.text.span.ColorizableForegroundColorSpan;
 import com.github.k1rakishou.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable;
 import com.github.k1rakishou.chan.ui.theme.ChanTheme;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
 import com.github.k1rakishou.model.data.theme.ChanThemeColorId;
@@ -65,19 +66,22 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     public static final String DEAD_REPLY_SUFFIX = " (DEAD)";
     public static final String EXTERNAL_THREAD_LINK_SUFFIX = " \u2192"; // arrow to the right
 
-    private MockReplyManager mockReplyManager;
-    private Map<String, List<StyleRule>> rules = new HashMap<>();
+    private final MockReplyManager mockReplyManager;
+    private final ThemeEngine themeEngine;
 
-    private String defaultQuoteRegex = "//boards\\.4chan.*?\\.org/(.*?)/thread/(\\d*?)#p(\\d*)";
-    private Pattern deadQuotePattern = Pattern.compile(">>(\\d+)");
-    private Pattern fullQuotePattern = Pattern.compile("/(\\w+)/\\w+/(\\d+)#p(\\d+)");
-    private Pattern quotePattern = Pattern.compile("#p(\\d+)");
-    private Pattern boardLinkPattern = Pattern.compile("//boards\\.4chan.*?\\.org/(.*?)/");
-    private Pattern boardLinkPattern8Chan = Pattern.compile("/(.*?)/index.html");
-    private Pattern boardSearchPattern = Pattern.compile("//boards\\.4chan.*?\\.org/(.*?)/catalog#s=(.*)");
-    private Pattern colorPattern = Pattern.compile("color:#([0-9a-fA-F]+)");
+    private final Map<String, List<StyleRule>> rules = new HashMap<>();
 
-    public CommentParser(MockReplyManager mockReplyManager) {
+    private final String defaultQuoteRegex = "//boards\\.4chan.*?\\.org/(.*?)/thread/(\\d*?)#p(\\d*)";
+    private final Pattern deadQuotePattern = Pattern.compile(">>(\\d+)");
+    private final Pattern fullQuotePattern = Pattern.compile("/(\\w+)/\\w+/(\\d+)#p(\\d+)");
+    private final Pattern quotePattern = Pattern.compile("#p(\\d+)");
+    private final Pattern boardLinkPattern = Pattern.compile("//boards\\.4chan.*?\\.org/(.*?)/");
+    private final Pattern boardLinkPattern8Chan = Pattern.compile("/(.*?)/index.html");
+    private final Pattern boardSearchPattern = Pattern.compile("//boards\\.4chan.*?\\.org/(.*?)/catalog#s=(.*)");
+    private final Pattern colorPattern = Pattern.compile("color:#([0-9a-fA-F]+)");
+
+    public CommentParser(ThemeEngine themeEngine, MockReplyManager mockReplyManager) {
+        this.themeEngine = themeEngine;
         this.mockReplyManager = mockReplyManager;
 
         // Required tags.
@@ -203,6 +207,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
 
         SpannableString res = new SpannableString(link.getKey());
         PostLinkable pl = new PostLinkable(
+                themeEngine,
                 link.getKey(),
                 link.getLinkValue(),
                 link.getType()
@@ -284,6 +289,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         SpannableString res = new SpannableString(handlerLink.getKey());
 
         PostLinkable pl = new PostLinkable(
+                themeEngine,
                 handlerLink.getKey(),
                 handlerLink.getLinkValue(),
                 handlerLink.getType()
@@ -356,6 +362,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         SpannableString res = new SpannableString(replyText);
 
         PostLinkable pl = new PostLinkable(
+                themeEngine,
                 replyText,
                 new PostLinkable.Value.LongValue(mockReplyPostNo),
                 PostLinkable.Type.QUOTE
@@ -454,7 +461,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         // Overrides the text (possibly) parsed by child nodes.
         return span(
                 TextUtils.concat(parts.toArray(new CharSequence[0])),
-                new ColorizableForegroundColorSpan(ChanThemeColorId.PostInlineQuoteColor),
+                new ColorizableForegroundColorSpan(themeEngine, ChanThemeColorId.PostInlineQuoteColor),
                 new AbsoluteSizeSpanHashed(sp(12f))
         );
     }
