@@ -20,6 +20,7 @@ open class PostDescriptor protected constructor(
   }
 
   fun boardDescriptor(): BoardDescriptor = descriptor.boardDescriptor()
+  fun siteDescriptor(): SiteDescriptor = descriptor.siteDescriptor()
 
   fun getThreadNo(): Long {
     return when (descriptor) {

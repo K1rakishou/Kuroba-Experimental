@@ -204,7 +204,9 @@ public class WebmStreamingDataSource extends BaseDataSource {
         }
 
         public void clearListeners() {
-            listeners.clear();
+            if (listeners != null) {
+                listeners.clear();
+            }
         }
 
         boolean isCacheComplete() {
@@ -240,6 +242,7 @@ public class WebmStreamingDataSource extends BaseDataSource {
     public WebmStreamingDataSource(
             @Nullable Uri uri,
             RawFile file,
+            long fileLength,
             FileManager fileManager,
             boolean verboseLogs,
             AppConstants appConstants
@@ -252,26 +255,45 @@ public class WebmStreamingDataSource extends BaseDataSource {
 
         this.verboseLogs = verboseLogs;
         this.fileManager = fileManager;
+        this.fileLength = fileLength;
         this.file = file;
         this.uri = uri;
     }
 
-    private void detectLength() throws HttpDataSource.HttpDataSourceException {
-        this.fileLength = dataSource.open(new DataSpec.Builder()
+    private void detectLength() throws IOException {
+        DataSpec dataSpec = new DataSpec.Builder()
                 .setUri(uri)
                 .setPosition(0)
                 .setLength(C.LENGTH_UNSET)
                 .setKey(null)
-                .build());
+                .build();
 
-        if (verboseLogs) {
-            Logger.i(TAG, "detectLength: " + this.fileLength);
+        long detectedFileLength = dataSource.open(dataSpec);
+
+        if (this.fileLength == C.LENGTH_UNSET) {
+            if (detectedFileLength == C.LENGTH_UNSET) {
+                IOException exception = new IOException("Failed to detect file length, most likely webm " +
+                        "streaming is not possible on this site");
+
+                cacheError(exception);
+                throw exception;
+            }
+
+            this.fileLength = detectedFileLength;
+
+            if (verboseLogs) {
+                Logger.i(TAG, "detectLength(): " + this.fileLength);
+            }
+        } else {
+            if (verboseLogs) {
+                Logger.i(TAG, "detectLength() length already known: " + this.fileLength);
+            }
         }
     }
 
-    private void prepare()
-            throws HttpDataSource.HttpDataSourceException {
+    private void prepare() throws IOException {
         detectLength();
+
         this.partialFileCache = new PartialFileCache(this.fileLength);
         partialFileCache.addListener(this::cacheComplete);
 
@@ -288,6 +310,7 @@ public class WebmStreamingDataSource extends BaseDataSource {
     public void fillCache(long length, InputStream inputStream) throws IOException {
         dataToFillCache = new byte[(int) length];
         dataToFillCacheLength = inputStream.read(dataToFillCache);
+
         // If it's null, this means we're not prepared yet (i.e. we don't know the real size
         // of the video, which is required by partialFileCache). Just leave it here and wait
         // until we're prepared.
@@ -299,8 +322,7 @@ public class WebmStreamingDataSource extends BaseDataSource {
     }
 
     @Override
-    public long open(DataSpec dataSpec)
-            throws IOException {
+    public long open(DataSpec dataSpec) throws IOException {
         if (!prepared) {
             prepare();
         }
@@ -362,8 +384,7 @@ public class WebmStreamingDataSource extends BaseDataSource {
     }
 
     @Override
-    public int read(byte[] buffer, int offset, int readLength)
-            throws IOException {
+    public int read(byte[] buffer, int offset, int readLength) throws IOException {
         if (readLength == 0) {
             return 0;
         } else if (bytesRemaining() == 0) {
@@ -403,6 +424,7 @@ public class WebmStreamingDataSource extends BaseDataSource {
 
         try (FileOutputStream fos = new FileOutputStream(innerFile)) {
             fos.write(partialFileCache.getCacheBytes());
+            fos.flush();
         } catch (Exception e) {
             Logger.e(TAG, "cacheComplete: caught exception", e);
             return;
@@ -417,9 +439,20 @@ public class WebmStreamingDataSource extends BaseDataSource {
         });
     }
 
+    public void cacheError(Exception exception) {
+        BackgroundUtils.runOnMainThread(() -> {
+            for (Callback c : listeners) {
+                c.onLoadFailed(exception);
+            }
+
+            clearListeners();
+        });
+    }
+
     public void addListener(Callback c) {
         if (c != null) {
             listeners.add(c);
+
             if (partialFileCache != null && partialFileCache.firedCacheComplete) {
                 cacheComplete();
             }
@@ -427,8 +460,13 @@ public class WebmStreamingDataSource extends BaseDataSource {
     }
 
     public void clearListeners() {
-        listeners.clear();
-        partialFileCache.clearListeners();
+        if (listeners != null) {
+            listeners.clear();
+        }
+
+        if (partialFileCache != null) {
+            partialFileCache.clearListeners();
+        }
     }
 
     @Nullable
@@ -457,5 +495,6 @@ public class WebmStreamingDataSource extends BaseDataSource {
 
     interface Callback {
         void dataSourceAddedFile(File file);
+        void onLoadFailed(Exception exception);
     }
 }
