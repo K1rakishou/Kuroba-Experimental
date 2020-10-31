@@ -24,7 +24,9 @@ import android.os.Build
 import android.os.Bundle
 import com.github.k1rakishou.chan.core.cache.downloader.FileCacheException
 import com.github.k1rakishou.chan.core.cache.downloader.FileCacheException.FileNotFoundOnTheServerException
-import com.github.k1rakishou.chan.core.di.*
+import com.github.k1rakishou.chan.core.di.component.application.ApplicationComponent
+import com.github.k1rakishou.chan.core.di.component.application.DaggerApplicationComponent
+import com.github.k1rakishou.chan.core.di.module.application.*
 import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.net.DnsSelector
 import com.github.k1rakishou.chan.core.settings.ChanSettings
@@ -35,7 +37,6 @@ import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.AppConstants
-import com.github.k1rakishou.feather2.Feather
 import com.github.k1rakishou.model.DatabaseModuleInjector.build
 import io.reactivex.exceptions.UndeliverableException
 import io.reactivex.plugins.RxJavaPlugins
@@ -166,22 +167,27 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       applicationScope!!
     )
 
-    feather = Feather.with(
-      AppModule(this, applicationScope, okHttpDns, okHttpProtocols, appConstants),
-      UseCaseModule(),
-      ExecutorsModule(),
-      // TODO: change to a normal dagger implementation when we get rid of Feather
-      RoomDatabaseModule(modelMainComponent),
-      NetModule(),
-      ParserModule(),
-      GsonModule(),
-      RepositoryModule(),
-      SiteModule(),
-      LoaderModule(),
-      ManagerModule()
-    )
-
-    feather.injectFields(this)
+    applicationComponent = DaggerApplicationComponent.builder()
+      .application(this)
+      .appContext(this)
+      .applicationCoroutineScope(applicationScope)
+      .okHttpDns(okHttpDns)
+      .okHttpProtocols(okHttpProtocols)
+      .appConstants(appConstants)
+      .modelMainComponent(modelMainComponent)
+      .appModule(AppModule())
+      .executorsModule(ExecutorsModule())
+      .roomDatabaseModule(RoomDatabaseModule())
+      .gsonModule(GsonModule())
+      .loaderModule(LoaderModule())
+      .managerModule(ManagerModule())
+      .netModule(NetModule())
+      .repositoryModule(RepositoryModule())
+      .siteModule(SiteModule())
+      .parserModule(ParserModule())
+      .useCaseModule(UseCaseModule())
+      .build()
+      .also { component -> component.inject(this) }
 
     themeEngine.initialize(this)
     siteManager.initialize()
@@ -239,13 +245,19 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
       if (error is NullPointerException || error is IllegalArgumentException) {
         // that's likely a bug in the application
-        Thread.currentThread().uncaughtExceptionHandler!!.uncaughtException(Thread.currentThread(), error)
+        Thread.currentThread().uncaughtExceptionHandler!!.uncaughtException(
+          Thread.currentThread(),
+          error
+        )
         return@setErrorHandler
       }
 
       if (error is IllegalStateException) {
         // that's a bug in RxJava or in a custom operator
-        Thread.currentThread().uncaughtExceptionHandler!!.uncaughtException(Thread.currentThread(), error)
+        Thread.currentThread().uncaughtExceptionHandler!!.uncaughtException(
+          Thread.currentThread(),
+          error
+        )
         return@setErrorHandler
       }
 
@@ -293,7 +305,10 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     Logger.e("UNCAUGHT", "END OF CURRENT RUNTIME MESSAGES")
     Logger.e("UNCAUGHT", "------------------------------")
     Logger.e("UNCAUGHT", "Android API Level: " + Build.VERSION.SDK_INT)
-    Logger.e("UNCAUGHT", "App Version: " + BuildConfig.VERSION_NAME + "." + BuildConfig.BUILD_NUMBER)
+    Logger.e(
+      "UNCAUGHT",
+      "App Version: " + BuildConfig.VERSION_NAME + "." + BuildConfig.BUILD_NUMBER
+    )
     Logger.e("UNCAUGHT", "Development Build: " + AndroidUtils.getVerifiedBuildType().name)
     Logger.e("UNCAUGHT", "Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL)
 
@@ -359,12 +374,11 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
   companion object {
     private const val TAG = "Chan"
-    private lateinit var feather: Feather
+    private lateinit var applicationComponent: ApplicationComponent
 
     @JvmStatic
-    fun <T> inject(instance: T): T {
-      feather.injectFields(instance)
-      return instance
+    fun getComponent(): ApplicationComponent {
+      return applicationComponent
     }
   }
 }

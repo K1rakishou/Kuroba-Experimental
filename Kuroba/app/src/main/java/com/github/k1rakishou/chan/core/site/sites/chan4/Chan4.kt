@@ -458,7 +458,8 @@ open class Chan4 : SiteBase() {
       postFilterManager,
       mockReplyManager,
       siteManager,
-      boardManager
+      boardManager,
+      themeEngine
     )
   }
 

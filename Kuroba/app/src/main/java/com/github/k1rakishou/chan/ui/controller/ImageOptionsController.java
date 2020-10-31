@@ -29,6 +29,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.util.Pair;
 
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter;
 import com.github.k1rakishou.chan.core.site.http.Reply;
@@ -38,6 +39,8 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+
+import org.jetbrains.annotations.NotNull;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
@@ -74,6 +77,11 @@ public class ImageOptionsController
     private ImageReencodingPresenter.ImageOptions lastSettings;
     private boolean ignoreSetup;
     private boolean reencodeEnabled;
+
+    @Override
+    protected void injectDependencies(@NotNull StartActivityComponent component) {
+        component.inject(this);
+    }
 
     public ImageOptionsController(
             Context context,

@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.setup
 
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -22,27 +21,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.inject.Inject
 import kotlin.coroutines.resume
 
 class BoardsSetupPresenter(
-  private val siteDescriptor: SiteDescriptor
+  private val siteDescriptor: SiteDescriptor,
+  private val siteManager: SiteManager,
+  private val boardManager: BoardManager
 ) : BasePresenter<BoardsSetupView>() {
   private val suspendDebouncer = DebouncingCoroutineExecutor(scope)
   private val stateSubject = PublishProcessor.create<BoardsSetupControllerState>()
     .toSerialized()
 
-  @Inject
-  lateinit var siteManager: SiteManager
-  @Inject
-  lateinit var boardManager: BoardManager
-
   private val boardInfoLoaded = AtomicBoolean(false)
-
-  override fun onCreate(view: BoardsSetupView) {
-    super.onCreate(view)
-    Chan.inject(this)
-  }
 
   fun listenForStateChanges(): Flowable<BoardsSetupControllerState> {
     return stateSubject

@@ -4,8 +4,11 @@ import android.content.Context
 import android.widget.FrameLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.setup.data.BoardSelectionControllerState
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.epoxyBoardSelectionView
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.epoxySiteSelectionView
@@ -40,8 +43,20 @@ class BoardSelectionController(
 
   @Inject
   lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var siteManager: SiteManager
+  @Inject
+  lateinit var boardManager: BoardManager
+  @Inject
+  lateinit var archivesManager: ArchivesManager
 
-  private val presenter = BoardSelectionPresenter()
+  private val presenter by lazy {
+    BoardSelectionPresenter(
+      siteManager = siteManager,
+      boardManager = boardManager,
+      archivesManager = archivesManager,
+    )
+  }
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var searchView: SearchLayout
@@ -52,10 +67,13 @@ class BoardSelectionController(
 
   override fun getLayoutId(): Int = R.layout.controller_board_selection
 
+  override fun injectDependencies(component: StartActivityComponent) {
+    component.inject(this)
+  }
+
   @OptIn(ExperimentalTime::class)
   override fun onCreate() {
     super.onCreate()
-    Chan.inject(this)
 
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
     epoxyRecyclerView.layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)

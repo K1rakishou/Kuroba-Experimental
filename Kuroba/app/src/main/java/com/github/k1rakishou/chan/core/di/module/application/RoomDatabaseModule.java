@@ -1,6 +1,5 @@
-package com.github.k1rakishou.chan.core.di;
+package com.github.k1rakishou.chan.core.di.module.application;
 
-import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.model.di.ModelMainComponent;
 import com.github.k1rakishou.model.repository.BoardRepository;
 import com.github.k1rakishou.model.repository.BookmarksRepository;
@@ -18,88 +17,112 @@ import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository;
 
 import javax.inject.Singleton;
 
+import dagger.Module;
+import dagger.Provides;
+
+@Module
 public class RoomDatabaseModule {
-    private ModelMainComponent modelMainComponent;
-
-    public RoomDatabaseModule(ModelMainComponent modelMainComponent) {
-        this.modelMainComponent = modelMainComponent;
-    }
-
     @Provides
     @Singleton
-    public MediaServiceLinkExtraContentRepository provideMediaServiceLinkExtraContentRepository() {
+    public MediaServiceLinkExtraContentRepository provideMediaServiceLinkExtraContentRepository(
+            ModelMainComponent modelMainComponent
+    ) {
         return modelMainComponent.getMediaServiceLinkExtraContentRepository();
     }
 
     @Provides
     @Singleton
-    public SeenPostRepository provideSeenPostRepository() {
+    public SeenPostRepository provideSeenPostRepository(
+            ModelMainComponent modelMainComponent
+    ) {
         return modelMainComponent.getSeenPostRepository();
     }
 
     @Provides
     @Singleton
-    public InlinedFileInfoRepository provideInlinedFileInfoRepository() {
+    public InlinedFileInfoRepository provideInlinedFileInfoRepository(
+            ModelMainComponent modelMainComponent
+    ) {
         return modelMainComponent.getInlinedFileInfoRepository();
     }
 
     @Provides
     @Singleton
-    public ChanPostRepository provideChanPostRepository() {
+    public ChanPostRepository provideChanPostRepository(
+            ModelMainComponent modelMainComponent
+    ) {
         return modelMainComponent.getChanPostRepository();
     }
 
     @Provides
     @Singleton
-    public HistoryNavigationRepository provideHistoryNavigationRepository() {
+    public HistoryNavigationRepository provideHistoryNavigationRepository(
+            ModelMainComponent modelMainComponent
+    ) {
         return modelMainComponent.getHistoryNavigationRepository();
     }
 
     @Provides
     @Singleton
-    public BookmarksRepository provideBookmarksRepository() {
+    public BookmarksRepository provideBookmarksRepository(
+            ModelMainComponent modelMainComponent
+    ) {
         return modelMainComponent.getBookmarksRepository();
     }
 
     @Provides
     @Singleton
-    public ChanThreadViewableInfoRepository provideChanThreadViewableInfoRepository() {
+    public ChanThreadViewableInfoRepository provideChanThreadViewableInfoRepository(
+            ModelMainComponent modelMainComponent
+    ) {
         return modelMainComponent.getChanThreadViewableInfoRepository();
     }
 
     @Provides
     @Singleton
-    public SiteRepository provideSiteRepository() {
+    public SiteRepository provideSiteRepository(
+            ModelMainComponent modelMainComponent
+    ) {
         return modelMainComponent.getSiteRepository();
     }
 
     @Provides
     @Singleton
-    public BoardRepository provideBoardRepository() {
+    public BoardRepository provideBoardRepository(
+            ModelMainComponent modelMainComponent
+    ) {
         return modelMainComponent.getBoardRepository();
     }
 
     @Provides
     @Singleton
-    public ChanSavedReplyRepository provideChanSavedReplyRepository() {
+    public ChanSavedReplyRepository provideChanSavedReplyRepository(
+            ModelMainComponent modelMainComponent
+    ) {
         return modelMainComponent.getChanSavedReplyRepository();
     }
 
     @Provides
     @Singleton
-    public ChanPostHideRepository provideChanPostHideRepository() {
+    public ChanPostHideRepository provideChanPostHideRepository(
+            ModelMainComponent modelMainComponent
+    ) {
         return modelMainComponent.getChanPostHideRepository();
     }
 
     @Provides
     @Singleton
-    public ChanFilterRepository provideChanFilterRepository() {
+    public ChanFilterRepository provideChanFilterRepository(
+            ModelMainComponent modelMainComponent
+    ) {
         return modelMainComponent.getChanFilterRepository();
     }
 
     @Provides
     @Singleton
-    public ThreadBookmarkGroupRepository provideThreadBookmarkGroupRepository() {
+    public ThreadBookmarkGroupRepository provideThreadBookmarkGroupRepository(
+            ModelMainComponent modelMainComponent
+    ) {
         return modelMainComponent.getThreadBookmarkGroupRepository();
     }
 

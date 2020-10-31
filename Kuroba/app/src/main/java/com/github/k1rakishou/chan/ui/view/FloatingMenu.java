@@ -32,6 +32,7 @@ import androidx.appcompat.widget.ListPopupWindow;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 
 import java.util.ArrayList;
@@ -39,7 +40,6 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 
@@ -86,7 +86,8 @@ public class FloatingMenu {
     }
 
     private void init() {
-        inject(this);
+        AndroidUtils.extractStartActivityComponent(context)
+                .inject(this);
     }
 
     public void setAnchor(View anchor, int anchorGravity, int anchorOffsetX, int anchorOffsetY) {

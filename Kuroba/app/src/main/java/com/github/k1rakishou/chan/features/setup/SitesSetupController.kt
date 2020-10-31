@@ -13,6 +13,9 @@ import com.airbnb.epoxy.EpoxyModelTouchCallback
 import com.airbnb.epoxy.EpoxyViewHolder
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
 import com.github.k1rakishou.chan.features.setup.data.SitesSetupControllerState
 import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteView
@@ -25,13 +28,24 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.plusAssign
+import javax.inject.Inject
 
 class SitesSetupController(context: Context) : Controller(context), SitesSetupView {
 
-  private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
+  @Inject
+  lateinit var siteManager: SiteManager
+  @Inject
+  lateinit var archivesManager: ArchivesManager
+
+  private val sitesPresenter by lazy {
+    SitesSetupPresenter(
+      siteManager = siteManager,
+      archivesManager = archivesManager
+    )
+  }
 
   private val controller = SitesEpoxyController()
-  private val sitesPresenter = SitesSetupPresenter()
+  private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var itemTouchHelper: ItemTouchHelper
 
   private val touchHelperCallback = object : EpoxyModelTouchCallback<EpoxySiteViewModel_>(
@@ -95,6 +109,10 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
       sitesPresenter.onSiteMoved()
     }
 
+  }
+
+  override fun injectDependencies(component: StartActivityComponent) {
+    component.inject(this)
   }
 
   override fun onCreate() {

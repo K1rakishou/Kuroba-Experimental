@@ -46,7 +46,6 @@ import androidx.lifecycle.OnLifecycleEvent
 import coil.request.Disposable
 import com.davemorrissey.labs.subscaleview.ImageSource
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
@@ -172,7 +171,8 @@ class MultiImageView @JvmOverloads constructor(
     private set
 
   init {
-    Chan.inject(this)
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     cancellableToast = CancellableToast()
     gestureDetector = GestureDetector(context, MultiImageViewGestureDetector(this))

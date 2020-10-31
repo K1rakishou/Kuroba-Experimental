@@ -19,14 +19,12 @@ package com.github.k1rakishou.chan.ui.text.span
 import android.text.TextPaint
 import android.text.style.ClickableSpan
 import android.view.View
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.ui.theme.ChanTheme
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.model.data.archive.ArchiveType
-import javax.inject.Inject
 
 /**
  * A Clickable span that handles post clicks. These are created in PostParser for post quotes,
@@ -35,17 +33,11 @@ import javax.inject.Inject
  */
 @DoNotStrip
 open class PostLinkable(
+  private val themeEngine: ThemeEngine,
   val key: CharSequence,
   val linkableValue: Value,
   val type: Type
 ) : ClickableSpan() {
-
-  @Inject
-  lateinit var themeEngine: ThemeEngine
-
-  init {
-    Chan.inject(this)
-  }
 
   var isSpoilerVisible: Boolean = ChanSettings.revealTextSpoilers.get()
     private set

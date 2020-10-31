@@ -29,7 +29,6 @@ import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.saver.FileWatcher;
 import com.github.k1rakishou.chan.ui.adapter.FilesAdapter;
@@ -81,7 +80,8 @@ public class FilesLayout
 
     private void init() {
         if (!isInEditMode()) {
-            Chan.inject(this);
+            AndroidUtils.extractStartActivityComponent(getContext())
+                    .inject(this);
         }
     }
 
@@ -125,7 +125,7 @@ public class FilesLayout
         layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
 
-        filesAdapter = new FilesAdapter(this);
+        filesAdapter = new FilesAdapter(themeEngine, this);
         recyclerView.setAdapter(filesAdapter);
     }
 

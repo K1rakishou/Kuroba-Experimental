@@ -27,10 +27,10 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 
 import javax.inject.Inject;
 
@@ -66,7 +66,8 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
 
     private void init() {
         if (!isInEditMode()) {
-            Chan.inject(this);
+            AndroidUtils.extractStartActivityComponent(getContext())
+                    .inject(this);
         }
     }
 

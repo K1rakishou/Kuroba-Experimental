@@ -16,34 +16,27 @@
  */
 package com.github.k1rakishou.chan.ui.toolbar;
 
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 
-import javax.inject.Inject;
-
-import static com.github.k1rakishou.chan.Chan.inject;
-
 public class ToolbarPresenter {
-
-    @Inject
-    BottomNavBarVisibilityStateManager bottomNavBarVisibilityStateManager;
-
     private Callback callback;
     private ThemeEngine themeEngine;
 
     private NavigationItem item;
     private NavigationItem transition;
 
-    public ToolbarPresenter(Callback callback, ThemeEngine themeEngine) {
+    public ToolbarPresenter(
+            Callback callback,
+            ThemeEngine themeEngine
+    ) {
         this.callback = callback;
         this.themeEngine = themeEngine;
-
-        inject(this);
     }
 
     public void onAttached() {

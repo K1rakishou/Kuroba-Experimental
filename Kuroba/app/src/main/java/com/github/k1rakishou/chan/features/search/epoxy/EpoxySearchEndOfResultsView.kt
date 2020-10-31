@@ -5,9 +5,9 @@ import android.util.AttributeSet
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.google.android.material.textview.MaterialTextView
 import javax.inject.Inject
 
@@ -24,8 +24,10 @@ class EpoxySearchEndOfResultsView @JvmOverloads constructor(
   private val textView: MaterialTextView
 
   init {
-    Chan.inject(this)
     inflate(context, R.layout.epoxy_search_end_of_results_view, this)
+
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     textView = findViewById(R.id.text_view)
   }

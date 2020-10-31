@@ -22,14 +22,16 @@ import android.widget.ScrollView;
 
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem;
 import com.github.k1rakishou.chan.utils.IOUtils;
 import com.github.k1rakishou.chan.utils.Logger;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,6 +53,11 @@ public class LogsController extends Controller {
     private ColorizableTextView logTextView;
     private String logText;
 
+    @Override
+    protected void injectDependencies(@NotNull StartActivityComponent component) {
+        component.inject(this);
+    }
+
     public LogsController(Context context) {
         super(context);
     }
@@ -58,7 +65,6 @@ public class LogsController extends Controller {
     @Override
     public void onCreate() {
         super.onCreate();
-        Chan.inject(this);
 
         navigation.setTitle(R.string.settings_logs_screen);
 

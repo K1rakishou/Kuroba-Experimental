@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.core.di;
+package com.github.k1rakishou.chan.core.di.module.application;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -35,7 +35,6 @@ import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.common.AppConstants;
-import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.fsaf.file.RawFile;
 import com.google.gson.Gson;
@@ -44,16 +43,23 @@ import java.io.File;
 
 import javax.inject.Singleton;
 
+import dagger.Module;
+import dagger.Provides;
 import kotlinx.coroutines.CoroutineScope;
 import okhttp3.Dns;
 
-import static com.github.k1rakishou.chan.core.di.AppModule.getCacheDir;
+import static com.github.k1rakishou.chan.core.di.module.application.AppModule.getCacheDir;
 
+@Module
 public class NetModule {
     private static final String FILE_CACHE_DIR = "filecache";
     private static final String FILE_CHUNKS_CACHE_DIR = "file_chunks_cache";
 
-    private final HttpLoggingInterceptorLazy httpLoggingInterceptorLazy = new HttpLoggingInterceptorLazy();
+    @Provides
+    @Singleton
+    public HttpLoggingInterceptorLazy provideHttpLoggingInterceptorLazy() {
+        return new HttpLoggingInterceptorLazy();
+    }
 
     @Provides
     @Singleton
@@ -147,7 +153,8 @@ public class NetModule {
     public ProxiedOkHttpClient provideProxiedOkHttpClient(
             Dns okHttpDns,
             Chan.OkHttpProtocols okHttpProtocols,
-            ProxyStorage proxyStorage
+            ProxyStorage proxyStorage,
+            HttpLoggingInterceptorLazy httpLoggingInterceptorLazy
     ) {
         Logger.d(AppModule.DI_TAG, "RealProxiedOkHttpClient");
 
@@ -168,7 +175,8 @@ public class NetModule {
             Context applicationContext,
             Dns okHttpDns,
             Chan.OkHttpProtocols okHttpProtocols,
-            ProxyStorage proxyStorage
+            ProxyStorage proxyStorage,
+            HttpLoggingInterceptorLazy httpLoggingInterceptorLazy
     ) {
         Logger.d(AppModule.DI_TAG, "CoilOkHttpClient");
 
@@ -189,7 +197,8 @@ public class NetModule {
     public RealDownloaderOkHttpClient provideDownloaderOkHttpClient(
             Dns okHttpDns,
             Chan.OkHttpProtocols okHttpProtocols,
-            ProxyStorage proxyStorage
+            ProxyStorage proxyStorage,
+            HttpLoggingInterceptorLazy httpLoggingInterceptorLazy
     ) {
         Logger.d(AppModule.DI_TAG, "DownloaderOkHttp client");
 

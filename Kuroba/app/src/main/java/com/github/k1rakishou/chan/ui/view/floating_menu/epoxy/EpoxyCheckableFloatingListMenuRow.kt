@@ -10,10 +10,10 @@ import android.widget.TextView
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
@@ -31,8 +31,10 @@ class EpoxyCheckableFloatingListMenuRow @JvmOverloads constructor(
   private val checkbox: ColorizableCheckBox
 
   init {
-    Chan.inject(this)
     View.inflate(context, R.layout.epoxy_checkable_floating_list_menu_row, this)
+
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     holder = findViewById(R.id.holder)
     title = findViewById(R.id.title)

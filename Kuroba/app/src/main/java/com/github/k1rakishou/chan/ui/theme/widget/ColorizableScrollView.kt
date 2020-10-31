@@ -3,8 +3,8 @@ package com.github.k1rakishou.chan.ui.theme.widget
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.ScrollView
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import javax.inject.Inject
 
 class ColorizableScrollView @JvmOverloads constructor(
@@ -18,7 +18,8 @@ class ColorizableScrollView @JvmOverloads constructor(
 
   init {
     if (!isInEditMode) {
-      Chan.inject(this)
+      AndroidUtils.extractStartActivityComponent(context)
+        .inject(this)
     }
   }
 

@@ -4,9 +4,9 @@ import android.content.Context
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyBooleanSetting
@@ -32,8 +32,7 @@ import javax.inject.Inject
 class MainSettingsControllerV2(
   context: Context,
   private var drawerCallbacks: DrawerCallbacks?
-)
-  : BaseSettingsController(context), ToolbarSearchCallback {
+) : BaseSettingsController(context), ToolbarSearchCallback {
 
   @Inject
   lateinit var settingsNotificationManager: SettingsNotificationManager
@@ -56,10 +55,13 @@ class MainSettingsControllerV2(
     }
   }
 
+  override fun injectDependencies(component: StartActivityComponent) {
+    component.inject(this)
+  }
+
   @OptIn(FlowPreview::class)
   override fun onCreate() {
     super.onCreate()
-    Chan.inject(this)
 
     view = inflate(context, R.layout.controller_settings_main)
     recyclerView = view.findViewById(R.id.settings_recycler_view)

@@ -85,7 +85,7 @@ class Dvach : CommonSite() {
   }
 
   override fun setParser(commentParser: CommentParser) {
-    postParser = DvachPostParser(commentParser, postFilterManager, archivesManager)
+    postParser = DvachPostParser(themeEngine, commentParser, postFilterManager, archivesManager)
   }
 
   override fun setup() {
@@ -273,7 +273,7 @@ class Dvach : CommonSite() {
 
     setRequestModifier(siteRequestModifier)
     setApi(DvachApi(siteManager, boardManager, this))
-    setParser(DvachCommentParser(mockReplyManager))
+    setParser(DvachCommentParser(themeEngine, mockReplyManager))
   }
 
   override fun commentParserType(): CommentParserType {

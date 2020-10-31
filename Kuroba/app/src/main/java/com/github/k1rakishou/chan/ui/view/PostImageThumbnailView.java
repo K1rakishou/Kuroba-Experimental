@@ -39,7 +39,6 @@ import javax.inject.Inject;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 
 public class PostImageThumbnailView extends ThumbnailView {
@@ -74,7 +73,9 @@ public class PostImageThumbnailView extends ThumbnailView {
 
     public PostImageThumbnailView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        inject(this);
+
+        AndroidUtils.extractStartActivityComponent(getContext())
+                .inject(this);
 
         this.playIcon = AndroidUtils.getDrawable(R.drawable.ic_play_circle_outline_white_24dp);
         this.showPrefetchLoadingIndicator = ChanSettings.autoLoadThreadImages.get()

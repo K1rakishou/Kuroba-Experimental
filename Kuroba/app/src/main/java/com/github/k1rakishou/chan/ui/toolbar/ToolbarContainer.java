@@ -46,6 +46,7 @@ import com.github.k1rakishou.chan.ui.theme.ArrowMenuDrawable;
 import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowDrawable;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
 
 import java.util.HashMap;
@@ -58,7 +59,6 @@ import javax.inject.Inject;
 import static android.text.TextUtils.isEmpty;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.removeFromParentView;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.updatePaddings;
@@ -115,7 +115,8 @@ public class ToolbarContainer extends FrameLayout {
     }
 
     private void init() {
-        inject(this);
+        AndroidUtils.extractStartActivityComponent(getContext())
+                .inject(this);
     }
 
     public void setCallback(Callback callback) {

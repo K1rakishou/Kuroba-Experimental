@@ -9,7 +9,6 @@ import com.github.k1rakishou.chan.utils.AndroidUtils;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 
@@ -22,8 +21,6 @@ public abstract class BaseFloatingController extends Controller implements Windo
 
     public BaseFloatingController(Context context) {
         super(context);
-
-        inject(this);
     }
 
     @Override

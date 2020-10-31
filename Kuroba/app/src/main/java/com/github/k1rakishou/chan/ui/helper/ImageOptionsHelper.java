@@ -14,12 +14,12 @@ import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.http.Reply;
 import com.github.k1rakishou.chan.ui.controller.ImageOptionsController;
 import com.github.k1rakishou.chan.ui.controller.ImageReencodeOptionsController;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.google.gson.Gson;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.showToast;
 
 public class ImageOptionsHelper
@@ -39,7 +39,8 @@ public class ImageOptionsHelper
         this.context = context;
         this.callbacks = callbacks;
 
-        inject(this);
+        AndroidUtils.extractStartActivityComponent(context)
+                .inject(this);
     }
 
     public void showController(ChanDescriptor chanDescriptor, boolean supportsReencode) {

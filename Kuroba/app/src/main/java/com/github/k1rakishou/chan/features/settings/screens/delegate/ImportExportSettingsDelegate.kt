@@ -26,10 +26,14 @@ class ImportExportSettingsDelegate(
   private val navigationController: NavigationController,
   private val fileChooser: FileChooser,
   private val fileManager: FileManager,
-  private val dialogFactory: DialogFactory
+  private val dialogFactory: DialogFactory,
+  private val importExportRepository: ImportExportRepository
 ) : ImportExportSettingsPresenter.ImportExportSettingsCallbacks {
   private val loadingViewController = LoadingViewController(context, true)
-  private val presenter: ImportExportSettingsPresenter = ImportExportSettingsPresenter(this)
+
+  private val presenter by lazy {
+    ImportExportSettingsPresenter(importExportRepository, this)
+  }
 
   fun onDestroy() {
     presenter.onDestroy()

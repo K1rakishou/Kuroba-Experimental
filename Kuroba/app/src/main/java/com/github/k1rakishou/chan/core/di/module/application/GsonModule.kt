@@ -14,12 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.core.di
+package com.github.k1rakishou.chan.core.di.module.application
 
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.jsonObject
 import com.github.k1rakishou.common.nextStringOrNull
-import com.github.k1rakishou.feather2.Provides
 import com.github.k1rakishou.json.*
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.google.gson.Gson
@@ -27,8 +26,11 @@ import com.google.gson.GsonBuilder
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
+import dagger.Module
+import dagger.Provides
 import javax.inject.Singleton
 
+@Module
 class GsonModule {
 
   @Provides

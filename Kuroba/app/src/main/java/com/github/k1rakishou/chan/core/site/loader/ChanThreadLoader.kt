@@ -16,7 +16,6 @@
  */
 package com.github.k1rakishou.chan.core.site.loader
 
-import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.model.ChanThread
@@ -47,35 +46,24 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
-import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.min
 
-class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
-  @Inject
-  lateinit var gson: Gson
-  @Inject
-  lateinit var proxiedOkHttpClient: ProxiedOkHttpClient
-  @Inject
-  lateinit var appConstants: AppConstants
-  @Inject
-  lateinit var filterEngine: FilterEngine
-  @Inject
-  lateinit var chanPostRepository: ChanPostRepository
-  @Inject
-  lateinit var archivesManager: ArchivesManager
-  @Inject
-  lateinit var themeEngine: ThemeEngine
-  @Inject
-  lateinit var postFilterManager: PostFilterManager
-  @Inject
-  lateinit var bookmarksManager: BookmarksManager
-  @Inject
-  lateinit var siteManager: SiteManager
-  @Inject
-  lateinit var boardManager: BoardManager
-  @Inject
-  lateinit var savedReplyManager: SavedReplyManager
+class ChanThreadLoader(
+  val chanDescriptor: ChanDescriptor,
+  private val gson: Gson,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
+  private val appConstants: AppConstants,
+  private val filterEngine: FilterEngine,
+  private val chanPostRepository: ChanPostRepository,
+  private val archivesManager: ArchivesManager,
+  private val themeEngine: ThemeEngine,
+  private val postFilterManager: PostFilterManager,
+  private val bookmarksManager: BookmarksManager,
+  private val siteManager: SiteManager,
+  private val boardManager: BoardManager,
+  private val savedReplyManager: SavedReplyManager
+) : CoroutineScope {
 
   var thread: ChanThread? = null
     @Synchronized
@@ -127,10 +115,6 @@ class ChanThreadLoader(val chanDescriptor: ChanDescriptor) : CoroutineScope {
         lastLoadTime + (waitTime * 1000L) - System.currentTimeMillis()
       }
     }
-
-  init {
-    inject(this)
-  }
 
   /**
    * Add a LoaderListener

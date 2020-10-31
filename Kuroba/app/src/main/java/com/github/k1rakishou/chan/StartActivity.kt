@@ -31,6 +31,8 @@ import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.lifecycleScope
 import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
+import com.github.k1rakishou.chan.core.di.module.activity.StartActivityModule
 import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.k1rakishou.chan.core.settings.ChanSettings
@@ -102,6 +104,13 @@ class StartActivity : AppCompatActivity(),
   @Inject
   lateinit var dialogFactory: DialogFactory
 
+  @Inject
+  lateinit var imagePickDelegate: ImagePickDelegate
+  @Inject
+  lateinit var runtimePermissionsHelper: RuntimePermissionsHelper
+  @Inject
+  lateinit var updateManager: UpdateManager
+
   private val stack = Stack<Controller>()
   private val job = SupervisorJob()
   private val compositeDisposable = CompositeDisposable()
@@ -111,17 +120,15 @@ class StartActivity : AppCompatActivity(),
   private var browseController: BrowseController? = null
 
   lateinit var contentView: ViewGroup
-    private set
-  lateinit var imagePickDelegate: ImagePickDelegate
-    private set
-  lateinit var runtimePermissionsHelper: RuntimePermissionsHelper
-    private set
-  lateinit var updateManager: UpdateManager
-    private set
 
+  private lateinit var startActivityComponent: StartActivityComponent
   private lateinit var mainRootLayoutMargins: TouchBlockingFrameLayout
   private lateinit var mainNavigationController: NavigationController
   private lateinit var drawerController: DrawerController
+
+  fun getComponent(): StartActivityComponent {
+    return startActivityComponent
+  }
 
   @OptIn(ExperimentalTime::class)
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -129,9 +136,19 @@ class StartActivity : AppCompatActivity(),
     Logger.d(TAG, "onCreate() start savedInstanceState==null: ${savedInstanceState == null}")
 
     if (intentMismatchWorkaround()) {
-      Logger.d(TAG, "onCreate() intentMismatchWorkaround()==true, savedInstanceState==null: ${savedInstanceState == null}")
+      Logger.d(
+        TAG,
+        "onCreate() intentMismatchWorkaround()==true, savedInstanceState==null: ${savedInstanceState == null}"
+      )
       return
     }
+
+    startActivityComponent = Chan.getComponent()
+      .activityComponentBuilder()
+      .startActivity(this)
+      .startActivityModule(StartActivityModule())
+      .build()
+      .also { component -> component.inject(this) }
 
     val createUiTime = measureTime { createUi() }
     Logger.d(TAG, "createUi took $createUiTime")
@@ -184,18 +201,12 @@ class StartActivity : AppCompatActivity(),
 
   @OptIn(ExperimentalTime::class)
   private fun createUi() {
-    val injectTime = measureTime { Chan.inject(this) }
-    Logger.d(TAG, "inject took $injectTime")
-
     if (AndroidUtils.isDevBuild()) {
       EpoxyController.setGlobalDebugLoggingEnabled(true)
     }
 
     themeEngine.setupContext(this)
     fileChooser.setCallbacks(this)
-    imagePickDelegate = ImagePickDelegate(this)
-    runtimePermissionsHelper = RuntimePermissionsHelper(this, dialogFactory)
-    updateManager = UpdateManager(this)
 
     contentView = findViewById(android.R.id.content)
 
@@ -232,7 +243,10 @@ class StartActivity : AppCompatActivity(),
     browseController?.showLoading()
   }
 
-  private suspend fun initializeDependencies(coroutineScope: CoroutineScope, savedInstanceState: Bundle?) {
+  private suspend fun initializeDependencies(
+    coroutineScope: CoroutineScope,
+    savedInstanceState: Bundle?
+  ) {
     updateManager.autoUpdateCheck()
 
     coroutineScope.launch {
@@ -420,7 +434,10 @@ class StartActivity : AppCompatActivity(),
 
   private fun getThreadToOpen(): ChanDescriptor.ThreadDescriptor? {
     val loadLastOpenedThreadUponAppStart = ChanSettings.loadLastOpenedThreadUponAppStart.get()
-    Logger.d(TAG, "getThreadToOpen, loadLastOpenedThreadUponAppStart=$loadLastOpenedThreadUponAppStart")
+    Logger.d(
+      TAG,
+      "getThreadToOpen, loadLastOpenedThreadUponAppStart=$loadLastOpenedThreadUponAppStart"
+    )
 
     if (loadLastOpenedThreadUponAppStart) {
       return historyNavigationManager.getNavElementAtTop()?.descriptor()?.threadDescriptorOrNull()
@@ -431,7 +448,10 @@ class StartActivity : AppCompatActivity(),
 
   private fun getBoardToOpen(): BoardDescriptor? {
     val loadLastOpenedBoardUponAppStart = ChanSettings.loadLastOpenedBoardUponAppStart.get()
-    Logger.d(TAG, "getBoardToOpen, loadLastOpenedBoardUponAppStart=$loadLastOpenedBoardUponAppStart")
+    Logger.d(
+      TAG,
+      "getBoardToOpen, loadLastOpenedBoardUponAppStart=$loadLastOpenedBoardUponAppStart"
+    )
 
     if (loadLastOpenedBoardUponAppStart) {
       return historyNavigationManager.getFirstCatalogNavElement()?.descriptor()?.boardDescriptor()
@@ -494,8 +514,10 @@ class StartActivity : AppCompatActivity(),
       return false
     }
 
-    Logger.d(TAG, "chanDescriptorResult.descriptor = ${chanDescriptorResult.chanDescriptor}, " +
-      "markedPostNo = ${chanDescriptorResult.markedPostNo}")
+    Logger.d(
+      TAG, "chanDescriptorResult.descriptor = ${chanDescriptorResult.chanDescriptor}, " +
+        "markedPostNo = ${chanDescriptorResult.markedPostNo}"
+    )
 
     val chanDescriptor = chanDescriptorResult.chanDescriptor
     browseController?.setBoard(chanDescriptor.boardDescriptor())
@@ -618,10 +640,17 @@ class StartActivity : AppCompatActivity(),
       return
     }
 
-    Logger.d(TAG, "onNewIntent() last page notification clicked, threads count = ${threadDescriptors.size}")
+    Logger.d(
+      TAG,
+      "onNewIntent() last page notification clicked, threads count = ${threadDescriptors.size}"
+    )
 
     if (threadDescriptors.size == 1) {
-      drawerController.loadThread(threadDescriptors.first(), closeAllNonMainControllers = true, animated = false)
+      drawerController.loadThread(
+        threadDescriptors.first(),
+        closeAllNonMainControllers = true,
+        animated = false
+      )
     } else {
       drawerController.openBookmarksController(threadDescriptors)
     }
@@ -636,8 +665,10 @@ class StartActivity : AppCompatActivity(),
       return
     }
 
-    Logger.d(TAG, "onNewIntent() reply notification swiped away, " +
-      "marking as seen ${threadDescriptors.size} bookmarks")
+    Logger.d(
+      TAG, "onNewIntent() reply notification swiped away, " +
+        "marking as seen ${threadDescriptors.size} bookmarks"
+    )
 
     val updatedBookmarkDescriptors = bookmarksManager.updateBookmarks(threadDescriptors) { threadBookmark ->
       threadBookmark.markAsSeenAllReplies()
@@ -654,11 +685,17 @@ class StartActivity : AppCompatActivity(),
       return
     }
 
-    Logger.d(TAG, "onNewIntent() reply notification clicked, " +
-      "marking as seen ${threadDescriptors.size} bookmarks")
+    Logger.d(
+      TAG, "onNewIntent() reply notification clicked, " +
+        "marking as seen ${threadDescriptors.size} bookmarks"
+    )
 
     if (threadDescriptors.size == 1) {
-      drawerController.loadThread(threadDescriptors.first(), closeAllNonMainControllers = true, animated = false)
+      drawerController.loadThread(
+        threadDescriptors.first(),
+        closeAllNonMainControllers = true,
+        animated = false
+      )
     } else {
       drawerController.openBookmarksController(threadDescriptors)
     }

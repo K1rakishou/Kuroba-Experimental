@@ -36,14 +36,11 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
 import java.io.IOException;
 
-import javax.inject.Inject;
-
 import io.reactivex.Single;
 import io.reactivex.functions.Action;
 import io.reactivex.subjects.SingleSubject;
 import kotlin.NotImplementedError;
 
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledDownloadResult.Failure;
 import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledDownloadResult.Success;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getAppContext;
@@ -53,10 +50,8 @@ public class ImageSaveTask
         extends FileCacheListener {
     private static final String TAG = "ImageSaveTask";
 
-    @Inject
-    FileCacheV2 fileCacheV2;
-    @Inject
-    FileManager fileManager;
+    private final FileCacheV2 fileCacheV2;
+    private final FileManager fileManager;
 
     private PostImage postImage;
     private ChanDescriptor chanDescriptor;
@@ -67,8 +62,15 @@ public class ImageSaveTask
     private boolean success = false;
     private SingleSubject<ImageSaver.BundledDownloadResult> imageSaveTaskAsyncResult;
 
-    public ImageSaveTask(ChanDescriptor chanDescriptor, PostImage postImage, boolean isBatchDownload) {
-        inject(this);
+    public ImageSaveTask(
+            FileCacheV2 fileCacheV2,
+            FileManager fileManager,
+            ChanDescriptor chanDescriptor,
+            PostImage postImage,
+            boolean isBatchDownload
+    ) {
+        this.fileCacheV2 = fileCacheV2;
+        this.fileManager = fileManager;
 
         this.chanDescriptor = chanDescriptor;
         this.postImage = postImage;

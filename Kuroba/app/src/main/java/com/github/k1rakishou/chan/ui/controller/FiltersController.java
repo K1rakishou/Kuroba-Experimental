@@ -37,6 +37,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.core.manager.DialogFactory;
 import com.github.k1rakishou.chan.core.manager.FilterEngine;
 import com.github.k1rakishou.chan.core.manager.FilterEngine.FilterAction;
@@ -52,6 +53,8 @@ import com.github.k1rakishou.model.data.filter.ChanFilter;
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
 import com.github.k1rakishou.model.data.filter.FilterType;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -62,7 +65,6 @@ import kotlin.Unit;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getQuantityString;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
@@ -123,6 +125,11 @@ public class FiltersController
                 }
             };
 
+    @Override
+    protected void injectDependencies(@NotNull StartActivityComponent component) {
+        component.inject(this);
+    }
+
     public FiltersController(Context context) {
         super(context);
     }
@@ -130,7 +137,6 @@ public class FiltersController
     @Override
     public void onCreate() {
         super.onCreate();
-        inject(this);
 
         view = inflate(context, R.layout.controller_filters);
 

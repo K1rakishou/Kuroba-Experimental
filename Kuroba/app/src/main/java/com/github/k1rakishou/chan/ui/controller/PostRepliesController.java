@@ -28,6 +28,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.core.manager.PostPreloadedInfoHolder;
 import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.model.PostImage;
@@ -42,12 +43,13 @@ import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 
 public class PostRepliesController
@@ -72,9 +74,13 @@ public class PostRepliesController
         return R.layout.layout_post_replies_container;
     }
 
+    @Override
+    protected void injectDependencies(@NotNull StartActivityComponent component) {
+        component.inject(this);
+    }
+
     public PostRepliesController(Context context, PostPopupHelper postPopupHelper, ThreadPresenter presenter) {
         super(context);
-        inject(this);
 
         this.postPopupHelper = postPopupHelper;
         this.presenter = presenter;

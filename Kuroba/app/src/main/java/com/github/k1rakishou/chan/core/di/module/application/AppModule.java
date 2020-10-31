@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.core.di;
+package com.github.k1rakishou.chan.core.di.module.application;
 
 import android.Manifest;
 import android.content.Context;
@@ -22,7 +22,6 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.os.Environment;
 
-import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.ThemeParser;
@@ -33,54 +32,27 @@ import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.Logger;
-import com.github.k1rakishou.common.AppConstants;
-import com.github.k1rakishou.feather2.Provides;
 import com.github.k1rakishou.fsaf.FileChooser;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.google.gson.Gson;
 
 import java.io.File;
-import java.util.Objects;
 
 import javax.inject.Singleton;
 
 import coil.ImageLoader;
 import coil.request.CachePolicy;
+import dagger.Module;
+import dagger.Provides;
 import kotlinx.coroutines.CoroutineScope;
-import okhttp3.Dns;
 
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getAppContext;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getMaxScreenSize;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getMinScreenSize;
 
+@Module
 public class AppModule {
     public static final String DI_TAG = "Dependency Injection";
-
-    private final Context applicationContext;
-    private final CoroutineScope applicationCoroutineScope;
-    private final Dns okHttpDns;
-    private final Chan.OkHttpProtocols okHttpProtocols;
-    private final AppConstants appConstants;
-
-    public AppModule(
-            Context applicationContext,
-            CoroutineScope applicationCoroutineScope,
-            Dns dns,
-            Chan.OkHttpProtocols protocols,
-            AppConstants appConstants
-    ) {
-        Objects.requireNonNull(applicationContext);
-        Objects.requireNonNull(applicationCoroutineScope);
-        Objects.requireNonNull(dns);
-        Objects.requireNonNull(protocols);
-        Objects.requireNonNull(appConstants);
-
-        this.applicationContext = applicationContext;
-        this.applicationCoroutineScope = applicationCoroutineScope;
-        this.okHttpDns = dns;
-        this.okHttpProtocols = protocols;
-        this.appConstants = appConstants;
-    }
 
     public static File getCacheDir() {
         File cacheDir;
@@ -102,43 +74,11 @@ public class AppModule {
 
     @Provides
     @Singleton
-    public Context provideApplicationContext() {
-        Logger.d(DI_TAG, "App Context");
-        return applicationContext;
-    }
-
-    @Provides
-    @Singleton
-    public CoroutineScope proviceApplicationCoroutineScope() {
-        Logger.d(DI_TAG, "App CoroutineScope");
-        return applicationCoroutineScope;
-    }
-
-    @Provides
-    @Singleton
-    public Dns provideOkHttpDns() {
-        return okHttpDns;
-    }
-
-    @Provides
-    @Singleton
-    public Chan.OkHttpProtocols provideOkHttpProtocols() {
-        return okHttpProtocols;
-    }
-
-    @Provides
-    @Singleton
-    public AppConstants provideAppConstants() {
-        return appConstants;
-    }
-
-    @Provides
-    @Singleton
-    public ConnectivityManager provideConnectivityManager() {
+    public ConnectivityManager provideConnectivityManager(Context appContext) {
         Logger.d(DI_TAG, "Connectivity Manager");
 
         ConnectivityManager connectivityManager =
-                (ConnectivityManager) applicationContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+                (ConnectivityManager) appContext.getSystemService(Context.CONNECTIVITY_SERVICE);
 
         if (connectivityManager == null) {
             throw new NullPointerException("What's working in this ROM: You tell me ;) "
@@ -200,8 +140,8 @@ public class AppModule {
 
     @Provides
     @Singleton
-    public FileChooser provideFileChooser() {
-        return new FileChooser(applicationContext);
+    public FileChooser provideFileChooser(Context appContext) {
+        return new FileChooser(appContext);
     }
 
     @Provides

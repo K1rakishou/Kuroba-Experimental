@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.ui.text.span
 
 import com.github.k1rakishou.chan.ui.theme.ChanTheme
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.common.DoNotStrip
 
 /**
@@ -9,14 +10,15 @@ import com.github.k1rakishou.common.DoNotStrip
  * */
 @DoNotStrip
 class ThemeEditorPostLinkable(
-  private val chanTheme: ChanTheme,
+  private val themeEngine: ThemeEngine,
+  private val theme: ChanTheme,
   key: CharSequence,
   linkableValue: Value,
   type: Type
-) : PostLinkable(key, linkableValue, type) {
+) : PostLinkable(themeEngine, key, linkableValue, type) {
 
   override fun getTheme(): ChanTheme {
-    return chanTheme
+    return theme
   }
 
 }

@@ -3,10 +3,10 @@ package com.github.k1rakishou.chan.features.proxies
 import android.content.Context
 import android.widget.LinearLayout
 import android.widget.RadioGroup
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
 import com.github.k1rakishou.chan.core.manager.ProxyStorage
 import com.github.k1rakishou.chan.core.site.SiteRegistry
 import com.github.k1rakishou.chan.ui.theme.widget.*
@@ -49,9 +49,12 @@ class ProxyEditorController(
   private var isControllerVisible = true
   private val saveProxyExecutor = RendezvousCoroutineExecutor(mainScope)
 
+  override fun injectDependencies(component: StartActivityComponent) {
+    component.inject(this)
+  }
+
   override fun onCreate() {
     super.onCreate()
-    Chan.inject(this)
 
     navigation.title = getString(R.string.controller_proxy_editor_title)
     view = AndroidUtils.inflate(context, R.layout.controller_proxy_editor)

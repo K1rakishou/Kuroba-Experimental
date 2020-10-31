@@ -2,12 +2,12 @@ package com.github.k1rakishou.chan.ui.layout.crashlogs
 
 import android.content.Context
 import android.widget.FrameLayout
-import com.github.k1rakishou.chan.Chan.Companion.inject
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.Logger
@@ -31,7 +31,8 @@ internal class ReviewCrashLogsLayout(context: Context) : FrameLayout(context), C
   private val sendCrashLogsButton: ColorizableBarButton
 
   init {
-    inject(this)
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     inflate(context, R.layout.controller_review_crashlogs, this).apply {
       crashLogsList = findViewById(R.id.review_crashlogs_controller_crashlogs_list)

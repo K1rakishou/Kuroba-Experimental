@@ -22,9 +22,12 @@ import android.widget.FrameLayout;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController;
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController;
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController;
+
+import org.jetbrains.annotations.NotNull;
 
 import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 
@@ -32,6 +35,11 @@ public class PopupController
         extends Controller
         implements View.OnClickListener {
     private FrameLayout container;
+
+    @Override
+    protected void injectDependencies(@NotNull StartActivityComponent component) {
+        component.inject(this);
+    }
 
     public PopupController(Context context) {
         super(context);

@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.setup
 
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -14,22 +13,17 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-class SitesSetupPresenter : BasePresenter<SitesSetupView>() {
-
-  @Inject
-  lateinit var siteManager: SiteManager
-  @Inject
-  lateinit var archivesManager: ArchivesManager
+class SitesSetupPresenter(
+  private val siteManager: SiteManager,
+  private val archivesManager: ArchivesManager
+) : BasePresenter<SitesSetupView>() {
 
   private val stateSubject = BehaviorProcessor.create<SitesSetupControllerState>()
   private val expandedGroups = mutableSetOf<SiteDescriptor>()
 
   override fun onCreate(view: SitesSetupView) {
     super.onCreate(view)
-    Chan.inject(this)
-
     setState(SitesSetupControllerState.Loading)
 
     scope.launch(Dispatchers.Default) {

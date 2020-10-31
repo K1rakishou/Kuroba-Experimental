@@ -52,11 +52,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.inject.Inject;
-
 import okhttp3.HttpUrl;
 
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getAppContext;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getClipboardContent;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
@@ -69,12 +66,9 @@ public class ImagePickDelegate {
     private static final long MAX_FILE_SIZE = 50 * 1024 * 1024;
     private static final String DEFAULT_FILE_NAME = "file";
 
-    @Inject
-    ReplyManager replyManager;
-    @Inject
-    FileManager fileManager;
-    @Inject
-    FileCacheV2 fileCacheV2;
+    private final ReplyManager replyManager;
+    private final FileManager fileManager;
+    private final FileCacheV2 fileCacheV2;
 
     private CancellableToast toast = new CancellableToast();
     private Activity activity;
@@ -87,9 +81,16 @@ public class ImagePickDelegate {
     @Nullable
     private CancelableDownload cancelableDownload;
 
-    public ImagePickDelegate(Activity activity) {
+    public ImagePickDelegate(
+            Activity activity,
+            ReplyManager replyManager,
+            FileManager fileManager,
+            FileCacheV2 fileCacheV2
+    ) {
         this.activity = activity;
-        inject(this);
+        this.replyManager = replyManager;
+        this.fileManager = fileManager;
+        this.fileCacheV2 = fileCacheV2;
     }
 
     public void pick(ImagePickCallback callback, boolean longPressed) {

@@ -36,7 +36,6 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
@@ -262,7 +261,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   override fun onFinishInflate() {
     super.onFinishInflate()
-    Chan.inject(this)
+
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     // View binding
     replyLayout = findViewById(R.id.reply)

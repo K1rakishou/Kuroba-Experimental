@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.drawer
 
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.*
@@ -22,26 +21,17 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
-import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 import kotlin.time.seconds
 
 class DrawerPresenter(
-  private val isDevFlavor: Boolean
+  private val isDevFlavor: Boolean,
+  private val historyNavigationManager: HistoryNavigationManager,
+  private val siteManager: SiteManager,
+  private val bookmarksManager: BookmarksManager,
+  private val pageRequestManager: PageRequestManager,
+  private val archivesManager: ArchivesManager
 ) : BasePresenter<DrawerView>() {
-
-  @Inject
-  lateinit var historyNavigationManager: HistoryNavigationManager
-  @Inject
-  lateinit var siteManager: SiteManager
-  @Inject
-  lateinit var boardManager: BoardManager
-  @Inject
-  lateinit var bookmarksManager: BookmarksManager
-  @Inject
-  lateinit var pageRequestManager: PageRequestManager
-  @Inject
-  lateinit var archivesManager: ArchivesManager
 
   private val historyControllerStateSubject = PublishProcessor.create<HistoryControllerState>()
     .toSerialized()
@@ -52,7 +42,6 @@ class DrawerPresenter(
   @OptIn(ExperimentalTime::class)
   override fun onCreate(view: DrawerView) {
     super.onCreate(view)
-    Chan.inject(this)
 
     scope.launch {
       setState(HistoryControllerState.Loading)

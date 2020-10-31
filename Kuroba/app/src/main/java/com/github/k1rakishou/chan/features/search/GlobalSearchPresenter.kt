@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.search
 
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -16,12 +15,10 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
 import kotlinx.coroutines.*
-import javax.inject.Inject
 
-internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
-
-  @Inject
-  lateinit var siteManager: SiteManager
+internal class GlobalSearchPresenter(
+  private val siteManager: SiteManager
+) : BasePresenter<GlobalSearchView>() {
 
   private val globalSearchControllerStateSubject =
     BehaviorProcessor.createDefault<GlobalSearchControllerState>(GlobalSearchControllerState.Uninitialized)
@@ -31,8 +28,6 @@ internal class GlobalSearchPresenter : BasePresenter<GlobalSearchView>() {
 
   override fun onCreate(view: GlobalSearchView) {
     super.onCreate(view)
-
-    Chan.inject(this)
 
     scope.launch {
       if (searchResultsStateStorage.searchInputState != null) {

@@ -27,6 +27,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -65,6 +66,8 @@ import androidx.preference.PreferenceManager;
 
 import com.github.k1rakishou.chan.BuildConfig;
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.StartActivity;
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 
 import org.greenrobot.eventbus.EventBus;
@@ -765,6 +768,19 @@ public class AndroidUtils {
 
     public static boolean isDarkColor(int color) {
         return ColorUtils.calculateLuminance(color) < 0.5f;
+    }
+
+    public static StartActivityComponent extractStartActivityComponent(Context context) {
+        if (context instanceof StartActivity) {
+            return ((StartActivity) context).getComponent();
+        } else if (context instanceof ContextWrapper) {
+            return ((StartActivity) ((ContextWrapper) context)
+                    .getBaseContext())
+                    .getComponent();
+        } else {
+            throw new IllegalStateException(
+                    "Unknown context wrapper " + context.getClass().getName());
+        }
     }
 
     public enum FlavorType {

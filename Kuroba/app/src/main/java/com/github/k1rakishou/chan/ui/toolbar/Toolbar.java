@@ -50,7 +50,6 @@ import javax.inject.Inject;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getDimen;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.hideKeyboard;
@@ -149,7 +148,9 @@ public class Toolbar
             return;
         }
 
-        inject(this);
+        AndroidUtils.extractStartActivityComponent(context)
+                .inject(this);
+
         presenter = new ToolbarPresenter(this, themeEngine);
 
         //initView

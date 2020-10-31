@@ -43,7 +43,6 @@ import com.github.k1rakishou.chan.utils.IOUtils;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.hideKeyboard;
 
 public class LegacyCaptchaLayout
@@ -79,7 +78,8 @@ public class LegacyCaptchaLayout
     }
 
     private void init() {
-        inject(this);
+        AndroidUtils.extractStartActivityComponent(getContext())
+                .inject(this);
     }
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})

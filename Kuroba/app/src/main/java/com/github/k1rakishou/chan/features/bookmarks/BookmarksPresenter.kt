@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.bookmarks
 
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
@@ -24,23 +23,17 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.reactive.asFlow
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
 
 class BookmarksPresenter(
   private val bookmarksToHighlight: Set<ChanDescriptor.ThreadDescriptor>,
+  private val bookmarksManager: BookmarksManager,
+  private val threadBookmarkGroupManager: ThreadBookmarkGroupManager,
+  private val pageRequestManager: PageRequestManager,
+  private val archivesManager: ArchivesManager,
   private val bookmarksSelectionHelper: BookmarksSelectionHelper
 ) : BasePresenter<BookmarksView>() {
-
-  @Inject
-  lateinit var bookmarksManager: BookmarksManager
-  @Inject
-  lateinit var threadBookmarkGroupManager: ThreadBookmarkGroupManager
-  @Inject
-  lateinit var pageRequestManager: PageRequestManager
-  @Inject
-  lateinit var archivesManager: ArchivesManager
 
   private val bookmarksRefreshed = AtomicBoolean(false)
   private val reloadBookmarkFlagCounter = AtomicInteger(0)
@@ -54,7 +47,6 @@ class BookmarksPresenter(
   @OptIn(ExperimentalTime::class)
   override fun onCreate(view: BookmarksView) {
     super.onCreate(view)
-    Chan.inject(this)
 
     scope.launch {
       scope.launch {

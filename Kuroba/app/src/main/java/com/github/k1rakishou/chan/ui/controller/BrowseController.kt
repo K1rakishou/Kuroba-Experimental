@@ -24,10 +24,10 @@ import android.view.View
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.Animation
 import android.view.animation.RotateAnimation
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
@@ -93,9 +93,12 @@ class BrowseController(
   private var initialized = false
   private var menuBuiltOnce = false
 
+  override fun injectDependencies(component: StartActivityComponent) {
+    component.inject(this)
+  }
+
   override fun onCreate() {
     super.onCreate()
-    Chan.inject(this)
 
     val navControllerContainerLayout = AndroidUtils.inflate(context, R.layout.controller_browse)
     val container = navControllerContainerLayout.findViewById<View>(R.id.container) as NavigationControllerContainerLayout

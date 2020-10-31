@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.setup
 
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -19,25 +18,19 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class AddBoardsPresenter(
-  private val siteDescriptor: SiteDescriptor
+  private val siteDescriptor: SiteDescriptor,
+  private val siteManager: SiteManager,
+  private val boardManager: BoardManager,
 ) : BasePresenter<AddBoardsView>() {
   private val stateSubject = PublishProcessor.create<AddBoardsControllerState>()
     .toSerialized()
-
-  @Inject
-  lateinit var siteManager: SiteManager
-  @Inject
-  lateinit var boardManager: BoardManager
 
   private val selectedBoards = LinkedHashSet<BoardDescriptor>()
 
   override fun onCreate(view: AddBoardsView) {
     super.onCreate(view)
-
-    Chan.inject(this)
 
     selectedBoards.clear()
     showInactiveBoards()

@@ -32,6 +32,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
+import com.github.k1rakishou.chan.core.cache.FileCacheV2;
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.core.manager.DialogFactory;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
@@ -47,7 +49,10 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.RecyclerUtils;
 import com.github.k1rakishou.chan.utils.StringUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
+import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -60,7 +65,6 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import kotlin.Unit;
 
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getQuantityString;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
@@ -84,13 +88,20 @@ public class AlbumDownloadController
     GlobalWindowInsetsManager globalWindowInsetsManager;
     @Inject
     DialogFactory dialogFactory;
+    @Inject
+    FileCacheV2 fileCacheV2;
+    @Inject
+    FileManager fileManager;
 
     private boolean allChecked = true;
 
+    @Override
+    protected void injectDependencies(@NotNull StartActivityComponent component) {
+        component.inject(this);
+    }
+
     public AlbumDownloadController(Context context) {
         super(context);
-
-        inject(this);
     }
 
     @Override
@@ -177,10 +188,18 @@ public class AlbumDownloadController
             }
 
             if (item.checked) {
-                ImageSaveTask imageTask = new ImageSaveTask(chanDescriptor, item.postImage, true);
+                ImageSaveTask imageTask = new ImageSaveTask(
+                        fileCacheV2,
+                        fileManager,
+                        chanDescriptor,
+                        item.postImage,
+                        true
+                );
+
                 if (subFolder != null) {
                     imageTask.setSubFolder(subFolder);
                 }
+
                 tasks.add(imageTask);
             }
         }

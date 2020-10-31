@@ -9,13 +9,17 @@ import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable.Value.*
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import org.jsoup.nodes.Element
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-class DvachCommentParser(mockReplyManager: MockReplyManager) : VichanCommentParser(mockReplyManager), ICommentParser {
+class DvachCommentParser(
+  themeEngine: ThemeEngine,
+  mockReplyManager: MockReplyManager
+) : VichanCommentParser(themeEngine, mockReplyManager), ICommentParser {
 
   override fun addDefaultRules(): DvachCommentParser {
     super.addDefaultRules()

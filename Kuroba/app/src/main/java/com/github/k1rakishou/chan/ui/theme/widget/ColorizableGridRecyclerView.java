@@ -21,8 +21,8 @@ import android.util.AttributeSet;
 
 import androidx.recyclerview.widget.GridLayoutManager;
 
-import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 
 import javax.inject.Inject;
 
@@ -56,7 +56,8 @@ public class ColorizableGridRecyclerView extends ColorizableRecyclerView {
 
     private void init() {
         if (!isInEditMode()) {
-            Chan.inject(this);
+            AndroidUtils.extractStartActivityComponent(getContext())
+                    .inject(this);
         }
     }
 

@@ -56,7 +56,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2_NOJS;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.showToast;
@@ -99,7 +98,9 @@ public class CaptchaNoJsLayoutV2
 
     public CaptchaNoJsLayoutV2(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        inject(this);
+
+        AndroidUtils.extractStartActivityComponent(getContext())
+                .inject(this);
 
         this.presenter = new CaptchaNoJsPresenterV2(this, proxiedOkHttpClient, appConstants, context);
         this.adapter = new CaptchaNoJsV2Adapter();

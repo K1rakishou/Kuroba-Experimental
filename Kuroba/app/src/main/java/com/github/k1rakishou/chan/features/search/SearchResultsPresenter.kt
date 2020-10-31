@@ -4,7 +4,6 @@ import android.graphics.Typeface
 import android.text.SpannableString
 import android.text.style.StyleSpan
 import androidx.core.text.buildSpannedString
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.site.sites.search.*
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
@@ -27,18 +26,13 @@ import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.ISODateTimeFormat
 import java.util.*
-import javax.inject.Inject
 
 internal class SearchResultsPresenter(
   private val siteDescriptor: SiteDescriptor,
-  private val query: String
+  private val query: String,
+  private val globalSearchUseCase: GlobalSearchUseCase,
+  private val themeEngine: ThemeEngine
 ) : BasePresenter<SearchResultsView>(), ThemeEngine.ThemeChangesListener {
-
-  @Inject
-  lateinit var globalSearchUseCase: GlobalSearchUseCase
-
-  @Inject
-  lateinit var themeEngine: ThemeEngine
 
   private val searchResultsControllerStateSubject =
     BehaviorProcessor.createDefault<SearchResultsControllerState>(SearchResultsControllerState.Uninitialized)
@@ -50,8 +44,6 @@ internal class SearchResultsPresenter(
 
   override fun onCreate(view: SearchResultsView) {
     super.onCreate(view)
-
-    Chan.inject(this)
     require(query.length >= GlobalSearchPresenter.MIN_SEARCH_QUERY_LENGTH) { "Bad query length: \"$query\"" }
 
     scope.launch {
@@ -277,7 +269,14 @@ internal class SearchResultsPresenter(
 
   private fun subjectSpanned(text: CharSequence): SpannableString {
     val spannedSubject = SpannableString(text)
-    spannedSubject.setSpan(ColorizableForegroundColorSpan(ChanThemeColorId.PostSubjectColor), 0, spannedSubject.length, 0)
+
+    spannedSubject.setSpan(
+      ColorizableForegroundColorSpan(themeEngine, ChanThemeColorId.PostSubjectColor),
+      0,
+      spannedSubject.length,
+      0
+    )
+
     return spannedSubject
   }
 

@@ -38,6 +38,7 @@ import com.github.k1rakishou.chan.ui.text.span.ColorizableForegroundColorSpan;
 import com.github.k1rakishou.chan.ui.text.span.ForegroundColorSpanHashed;
 import com.github.k1rakishou.chan.ui.text.span.PostLinkable;
 import com.github.k1rakishou.chan.ui.theme.ChanTheme;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
@@ -66,6 +67,7 @@ import static com.github.k1rakishou.chan.utils.AndroidUtils.sp;
 public class DefaultPostParser implements PostParser {
     private static final String TAG = "DefaultPostParser";
 
+    private final ThemeEngine themeEngine;
     private final CommentParser commentParser;
     private final PostFilterManager postFilterManager;
     private final ArchivesManager archivesManager;
@@ -74,10 +76,12 @@ public class DefaultPostParser implements PostParser {
     private Map<ArchiveDescriptor, CommentParser> archiveCommentParsers = new HashMap<>();
 
     public DefaultPostParser(
+            ThemeEngine themeEngine,
             CommentParser commentParser,
             PostFilterManager postFilterManager,
             ArchivesManager archivesManager
     ) {
+        this.themeEngine = themeEngine;
         this.commentParser = commentParser;
         this.postFilterManager = postFilterManager;
         this.archivesManager = archivesManager;
@@ -161,7 +165,7 @@ public class DefaultPostParser implements PostParser {
             // Do not set another color when the post is in stub mode, it sets text_color_secondary
             if (!postFilterManager.getFilterStub(builder.getPostDescriptor())) {
                 subjectSpan.setSpan(
-                        new ColorizableForegroundColorSpan(ChanThemeColorId.PostSubjectColor),
+                        new ColorizableForegroundColorSpan(themeEngine, ChanThemeColorId.PostSubjectColor),
                         0,
                         subjectSpan.length(),
                         0
@@ -174,7 +178,7 @@ public class DefaultPostParser implements PostParser {
         if (!TextUtils.isEmpty(builder.name) && (!builder.name.equals(defaultName) || ChanSettings.showAnonymousName.get())) {
             nameSpan = new SpannableString(builder.name);
             nameSpan.setSpan(
-                    new ColorizableForegroundColorSpan(ChanThemeColorId.PostNameColor),
+                    new ColorizableForegroundColorSpan(themeEngine, ChanThemeColorId.PostNameColor),
                     0,
                     nameSpan.length(),
                     0
@@ -184,7 +188,7 @@ public class DefaultPostParser implements PostParser {
         if (!TextUtils.isEmpty(builder.tripcode)) {
             tripcodeSpan = new SpannableString(builder.tripcode);
             tripcodeSpan.setSpan(
-                    new ColorizableForegroundColorSpan(ChanThemeColorId.PostNameColor),
+                    new ColorizableForegroundColorSpan(themeEngine, ChanThemeColorId.PostNameColor),
                     0,
                     tripcodeSpan.length(),
                     0
@@ -209,7 +213,7 @@ public class DefaultPostParser implements PostParser {
         if (!TextUtils.isEmpty(builder.moderatorCapcode)) {
             capcodeSpan = new SpannableString("Capcode: " + builder.moderatorCapcode);
             capcodeSpan.setSpan(
-                    new ColorizableForegroundColorSpan(ChanThemeColorId.AccentColor),
+                    new ColorizableForegroundColorSpan(themeEngine, ChanThemeColorId.AccentColor),
                     0,
                     capcodeSpan.length(),
                     0
@@ -298,6 +302,7 @@ public class DefaultPostParser implements PostParser {
             String text = ((TextNode) node).text();
 
             return CommentParserHelper.detectLinks(
+                    themeEngine,
                     post,
                     text,
                     this::handleLink
@@ -386,6 +391,7 @@ public class DefaultPostParser implements PostParser {
         );
 
         return new PostLinkable(
+                themeEngine,
                 archiveThreadLink.urlText(),
                 archiveThreadLink,
                 PostLinkable.Type.ARCHIVE

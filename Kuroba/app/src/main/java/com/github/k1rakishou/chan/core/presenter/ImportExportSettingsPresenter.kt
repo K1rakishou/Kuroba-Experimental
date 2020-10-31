@@ -16,29 +16,21 @@
  */
 package com.github.k1rakishou.chan.core.presenter
 
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository.ImportExportCallbacks
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.fsaf.file.ExternalFile
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.inject.Inject
 
 class ImportExportSettingsPresenter(
+  private val importExportRepository: ImportExportRepository,
   private var callbacks: ImportExportSettingsCallbacks?
 ) {
   private val job = SupervisorJob()
   private val mainScope = CoroutineScope(job + Dispatchers.Main + CoroutineName("ImportExportSettingsPresenter"))
 
   private val kurobaImportRunning = AtomicBoolean(false)
-
-  @Inject
-  lateinit var importExportRepository: ImportExportRepository
-
-  init {
-    Chan.inject(this)
-  }
 
   fun onDestroy() {
     kurobaImportRunning.set(false)

@@ -46,6 +46,8 @@ import androidx.appcompat.app.AlertDialog;
 import com.davemorrissey.labs.subscaleview.ImageViewState;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
+import com.github.k1rakishou.chan.core.cache.FileCacheV2;
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.DialogFactory;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
@@ -72,6 +74,7 @@ import com.github.k1rakishou.chan.utils.FullScreenUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.chan.utils.StringUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
+import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +89,6 @@ import javax.inject.Inject;
 import static android.view.View.GONE;
 import static android.view.View.INVISIBLE;
 import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getDimen;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
@@ -128,6 +130,10 @@ public class ImageViewerController
     GlobalWindowInsetsManager globalWindowInsetsManager;
     @Inject
     DialogFactory dialogFactory;
+    @Inject
+    FileCacheV2 fileCacheV2;
+    @Inject
+    FileManager fileManager;
 
     private AnimatorSet startAnimation;
     private AnimatorSet endAnimation;
@@ -146,9 +152,13 @@ public class ImageViewerController
     private Handler mainHandler = new Handler(Looper.getMainLooper());
     private Runnable uiHideCall = this::hideSystemUI;
 
+    @Override
+    protected void injectDependencies(@NotNull StartActivityComponent component) {
+        component.inject(this);
+    }
+
     public ImageViewerController(ChanDescriptor chanDescriptor, Context context, Toolbar toolbar) {
         super(context);
-        inject(this);
 
         this.toolbar = toolbar;
         this.chanDescriptor = chanDescriptor;
@@ -400,7 +410,14 @@ public class ImageViewerController
     }
 
     private void saveShare(boolean share, PostImage postImage) {
-        ImageSaveTask task = new ImageSaveTask(chanDescriptor, postImage, false);
+        ImageSaveTask task = new ImageSaveTask(
+                fileCacheV2,
+                fileManager,
+                chanDescriptor,
+                postImage,
+                false
+        );
+
         task.setShare(share);
         if (ChanSettings.saveBoardFolder.get()) {
             String subFolderName;

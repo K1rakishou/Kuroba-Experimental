@@ -38,9 +38,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager.widget.ViewPager
 import com.github.k1rakishou.chan.BuildConfig
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostPreloadedInfoHolder
@@ -156,10 +156,13 @@ class ThemeSettingsController(context: Context) : Controller(context),
   private lateinit var currentThemeIndicator: TextView
   private var currentItemIndex = 0
 
+  override fun injectDependencies(component: StartActivityComponent) {
+    component.inject(this)
+  }
+
   @Suppress("DEPRECATION")
   override fun onCreate() {
     super.onCreate()
-    Chan.inject(this)
 
     navigation.setTitle(R.string.settings_screen_theme)
     navigation.swipeable = false
@@ -427,10 +430,10 @@ class ThemeSettingsController(context: Context) : Controller(context),
   private fun createSimpleThreadView(
     theme: ChanTheme
   ): CoordinatorLayout {
-    val parser = CommentParser(mockReplyManager)
+    val parser = CommentParser(themeEngine, mockReplyManager)
       .addDefaultRules()
 
-    val postParser = DefaultPostParser(parser, postFilterManager, archivesManager)
+    val postParser = DefaultPostParser(themeEngine, parser, postFilterManager, archivesManager)
     val builder1 = Post.Builder()
       .boardDescriptor(dummyBoardDescriptor)
       .id(123456789)
@@ -681,7 +684,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
 
         input.removeSpan(span)
         input.setSpan(
-          ThemeEditorPostLinkable(theme, span.key, span.linkableValue, span.type),
+          ThemeEditorPostLinkable(themeEngine, theme, span.key, span.linkableValue, span.type),
           start,
           end,
           flags,

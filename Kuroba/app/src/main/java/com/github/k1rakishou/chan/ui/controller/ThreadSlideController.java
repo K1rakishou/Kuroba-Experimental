@@ -23,10 +23,10 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
-import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.controller.transition.ControllerTransition;
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks;
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController;
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController;
@@ -64,9 +64,13 @@ public class ThreadSlideController
     private ViewGroup emptyView;
     private ThreadSlidingPaneLayout slidingPaneLayout;
 
+    @Override
+    protected void injectDependencies(@NotNull StartActivityComponent component) {
+        component.inject(this);
+    }
+
     public ThreadSlideController(Context context, ViewGroup emptyView, @NotNull DrawerCallbacks drawerCallbacks) {
         super(context);
-        Chan.inject(this);
 
         this.emptyView = emptyView;
         this.drawerCallbacks = drawerCallbacks;

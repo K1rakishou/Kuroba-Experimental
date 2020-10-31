@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.proxies
 
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.manager.ProxyStorage
@@ -17,15 +16,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
 
 class ProxySetupPresenter(
-  private val proxySelectionHelper: ProxySelectionHelper
+  private val proxySelectionHelper: ProxySelectionHelper,
+  private val proxyStorage: ProxyStorage
 ) : BasePresenter<ProxySetupView>() {
-  @Inject
-  lateinit var proxyStorage: ProxyStorage
 
   @ExperimentalCoroutinesApi
   private val proxySetupState = MutableStateFlow<ProxySetupState>(ProxySetupState.Uninitialized)
@@ -33,7 +30,6 @@ class ProxySetupPresenter(
   @OptIn(ExperimentalTime::class)
   override fun onCreate(view: ProxySetupView) {
     super.onCreate(view)
-    Chan.inject(this)
 
     scope.launch {
       proxySelectionHelper.listenForSelectionChanges()

@@ -24,11 +24,11 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.annotation.CallSuper
 import androidx.annotation.StringRes
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.StartActivityCallbacks
 import com.github.k1rakishou.chan.controller.transition.FadeInTransition
 import com.github.k1rakishou.chan.controller.transition.FadeOutTransition
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
@@ -43,6 +43,7 @@ import kotlinx.coroutines.*
 import java.util.*
 import javax.inject.Inject
 
+@Suppress("LeakingThis")
 @DoNotStrip
 abstract class Controller(@JvmField var context: Context) {
 
@@ -118,9 +119,14 @@ abstract class Controller(@JvmField var context: Context) {
       ?: throw IllegalStateException("Wrong context! Must be StartActivity")
   }
 
+  init {
+    injectDependencies(AndroidUtils.extractStartActivityComponent(context))
+  }
+
+  protected abstract fun injectDependencies(component: StartActivityComponent)
+
   @CallSuper
   open fun onCreate() {
-    Chan.inject(this)
     alive = true
 
     if (LOG_STATES) {

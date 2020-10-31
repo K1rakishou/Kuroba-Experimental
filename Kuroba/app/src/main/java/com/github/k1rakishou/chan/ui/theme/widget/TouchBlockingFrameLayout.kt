@@ -20,8 +20,8 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.widget.FrameLayout
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import javax.inject.Inject
 
 open class TouchBlockingFrameLayout @JvmOverloads constructor(
@@ -35,7 +35,8 @@ open class TouchBlockingFrameLayout @JvmOverloads constructor(
 
   init {
     if (!isInEditMode) {
-      Chan.inject(this)
+      AndroidUtils.extractStartActivityComponent(context)
+        .inject(this)
     }
   }
 

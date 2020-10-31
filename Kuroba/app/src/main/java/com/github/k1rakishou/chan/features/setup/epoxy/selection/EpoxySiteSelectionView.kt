@@ -10,10 +10,10 @@ import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.google.android.material.textview.MaterialTextView
 import java.lang.ref.WeakReference
 import javax.inject.Inject
@@ -37,7 +37,9 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
 
   init {
     inflate(context, R.layout.epoxy_site_selection_view, this)
-    Chan.inject(this)
+
+    AndroidUtils.extractStartActivityComponent(context)
+      .inject(this)
 
     siteIcon = findViewById(R.id.site_icon)
     siteName = findViewById(R.id.site_name)

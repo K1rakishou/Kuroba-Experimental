@@ -94,7 +94,6 @@ import javax.inject.Inject;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.AndroidUtils.hideKeyboard;
@@ -263,7 +262,8 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
         super.onFinishInflate();
 
         if (!isInEditMode()) {
-            inject(this);
+            AndroidUtils.extractStartActivityComponent(getContext())
+                    .inject(this);
         }
 
         // Inflate reply input

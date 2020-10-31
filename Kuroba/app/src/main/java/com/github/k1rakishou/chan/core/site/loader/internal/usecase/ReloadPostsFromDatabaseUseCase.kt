@@ -4,6 +4,7 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.mapper.ChanPostMapper
 import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.mutableListWithCap
@@ -14,7 +15,8 @@ import com.google.gson.Gson
 class ReloadPostsFromDatabaseUseCase(
   private val gson: Gson,
   private val chanPostRepository: ChanPostRepository,
-  private val boardManager: BoardManager
+  private val boardManager: BoardManager,
+  private val themeEngine: ThemeEngine
 ) {
 
   suspend fun reloadPosts(
@@ -48,6 +50,7 @@ class ReloadPostsFromDatabaseUseCase(
     }.map { post ->
       return@map ChanPostMapper.toPost(
         gson,
+        themeEngine,
         post,
         null
       )
@@ -85,6 +88,7 @@ class ReloadPostsFromDatabaseUseCase(
     }.map { post ->
       return@map ChanPostMapper.toPost(
         gson,
+        themeEngine,
         post,
         null
       )

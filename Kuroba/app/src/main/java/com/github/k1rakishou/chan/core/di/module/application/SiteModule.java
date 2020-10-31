@@ -14,15 +14,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.core.di;
+package com.github.k1rakishou.chan.core.di.module.application;
 
 import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.utils.Logger;
-import com.github.k1rakishou.feather2.Provides;
 
 import javax.inject.Singleton;
 
+import dagger.Module;
+import dagger.Provides;
+
+@Module
 public class SiteModule {
 
     @Provides

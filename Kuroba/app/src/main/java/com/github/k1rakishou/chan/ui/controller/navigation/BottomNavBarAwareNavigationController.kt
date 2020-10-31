@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import android.view.View
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController
@@ -26,6 +27,10 @@ class BottomNavBarAwareNavigationController(
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private var bottomNavBarHeight: Int = 0
+
+  override fun injectDependencies(component: StartActivityComponent) {
+    component.inject(this)
+  }
 
   override fun onCreate() {
     super.onCreate()

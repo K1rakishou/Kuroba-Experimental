@@ -39,6 +39,7 @@ import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGr
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.view.MultiImageView;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
+import com.github.k1rakishou.chan.utils.AndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.model.data.board.ChanBoard;
@@ -60,7 +61,6 @@ import javax.inject.Inject;
 import kotlin.Unit;
 import okhttp3.HttpUrl;
 
-import static com.github.k1rakishou.chan.Chan.inject;
 import static com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager.NEXT_N_POSTS_RELATIVE;
 import static com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager.PREV_N_POSTS_RELATIVE;
 import static com.github.k1rakishou.chan.core.settings.ChanSettings.NetworkContentAutoLoadMode.shouldLoadForNetworkType;
@@ -119,7 +119,9 @@ public class ImageViewerPresenter
     public ImageViewerPresenter(Context context, Callback callback) {
         this.context = context;
         this.callback = callback;
-        inject(this);
+
+        AndroidUtils.extractStartActivityComponent(context)
+                .inject(this);
     }
 
     @SuppressLint("UseSparseArrays")

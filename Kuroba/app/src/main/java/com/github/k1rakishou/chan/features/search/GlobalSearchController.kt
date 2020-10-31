@@ -5,6 +5,8 @@ import android.view.View
 import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
+import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerState
 import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerStateData
@@ -20,13 +22,25 @@ import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import java.util.concurrent.atomic.AtomicReference
+import javax.inject.Inject
 
 class GlobalSearchController(context: Context) : Controller(context), GlobalSearchView {
 
+  @Inject
+  lateinit var siteManager: SiteManager
+
+  private val presenter by lazy {
+    GlobalSearchPresenter(siteManager)
+  }
+
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
-  private val presenter = GlobalSearchPresenter()
+
   private val inputViewRef = AtomicReference<View>(null)
   private var needSetInitialQuery = true
+
+  override fun injectDependencies(component: StartActivityComponent) {
+    component.inject(this)
+  }
 
   override fun onCreate() {
     super.onCreate()
@@ -63,7 +77,10 @@ class GlobalSearchController(context: Context) : Controller(context), GlobalSear
 
   override fun restoreSearchResultsController(siteDescriptor: SiteDescriptor, query: String) {
     inputViewRef.get()?.let { inputView -> AndroidUtils.hideKeyboard(inputView) }
-    requireNavController().pushController(SearchResultsController(context, siteDescriptor, query), false)
+    requireNavController().pushController(
+      SearchResultsController(context, siteDescriptor, query),
+      false
+    )
   }
 
   override fun openSearchResultsController(siteDescriptor: SiteDescriptor, query: String) {

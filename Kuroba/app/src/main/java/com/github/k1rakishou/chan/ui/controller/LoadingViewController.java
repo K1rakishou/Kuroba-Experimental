@@ -5,6 +5,9 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
+
+import org.jetbrains.annotations.NotNull;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
@@ -14,6 +17,11 @@ public class LoadingViewController extends BaseFloatingController {
     private ProgressBar progressBar;
     private boolean indeterminate;
     private boolean backNotAllowed = true;
+
+    @Override
+    protected void injectDependencies(@NotNull StartActivityComponent component) {
+        component.inject(this);
+    }
 
     public LoadingViewController(Context context, boolean indeterminate) {
         super(context);

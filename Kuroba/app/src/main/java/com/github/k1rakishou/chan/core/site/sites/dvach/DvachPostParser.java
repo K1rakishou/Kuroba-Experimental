@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.site.common.DefaultPostParser;
 import com.github.k1rakishou.chan.core.site.parser.CommentParser;
 import com.github.k1rakishou.chan.ui.theme.ChanTheme;
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.utils.Logger;
 
 import org.jsoup.Jsoup;
@@ -27,11 +28,12 @@ public class DvachPostParser extends DefaultPostParser {
     private static final String TAG = "DvachPostParser";
 
     public DvachPostParser(
+            ThemeEngine themeEngine,
             CommentParser commentParser,
             PostFilterManager postFilterManager,
             ArchivesManager archivesManager
     ) {
-        super(commentParser, postFilterManager, archivesManager);
+        super(themeEngine, commentParser, postFilterManager, archivesManager);
     }
 
     @Override

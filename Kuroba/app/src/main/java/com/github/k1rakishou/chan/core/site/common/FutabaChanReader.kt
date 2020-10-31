@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.core.model.PostImage
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.parser.*
 import com.github.k1rakishou.chan.core.site.parser.ChanReader.Companion.DEFAULT_POST_LIST_CAPACITY
+import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.board.ChanBoard
@@ -30,7 +31,8 @@ class FutabaChanReader(
   private val postFilterManager: PostFilterManager,
   private val mockReplyManager: MockReplyManager,
   private val siteManager: SiteManager,
-  private val boardManager: BoardManager
+  private val boardManager: BoardManager,
+  private val themeEngine: ThemeEngine
 ) : ChanReader {
   private val mutex = Mutex()
   private var parser: PostParser? = null
@@ -38,9 +40,9 @@ class FutabaChanReader(
   override suspend fun getParser(): PostParser {
     return mutex.withLock {
       if (parser == null) {
-        val commentParser = CommentParser(mockReplyManager).addDefaultRules()
-        val foolFuukaCommentParser = FoolFuukaCommentParser(mockReplyManager, archivesManager)
-        val defaultPostParser = DefaultPostParser(commentParser, postFilterManager, archivesManager)
+        val commentParser = CommentParser(themeEngine, mockReplyManager).addDefaultRules()
+        val foolFuukaCommentParser = FoolFuukaCommentParser(themeEngine, mockReplyManager, archivesManager)
+        val defaultPostParser = DefaultPostParser(themeEngine, commentParser, postFilterManager, archivesManager)
 
         for (archiveDescriptor in archivesManager.getAllArchivesDescriptors()) {
           defaultPostParser.addArchiveCommentParser(archiveDescriptor, foolFuukaCommentParser)

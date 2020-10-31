@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.setup
 
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -19,23 +18,17 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-class BoardSelectionPresenter : BasePresenter<BoardSelectionView>() {
+class BoardSelectionPresenter(
+  private val siteManager: SiteManager,
+  private val boardManager: BoardManager,
+  private val archivesManager: ArchivesManager,
+) : BasePresenter<BoardSelectionView>() {
   private val stateSubject = PublishProcessor.create<BoardSelectionControllerState>()
     .toSerialized()
 
-  @Inject
-  lateinit var siteManager: SiteManager
-  @Inject
-  lateinit var boardManager: BoardManager
-  @Inject
-  lateinit var archivesManager: ArchivesManager
-
   override fun onCreate(view: BoardSelectionView) {
     super.onCreate(view)
-    Chan.inject(this)
-
     setState(BoardSelectionControllerState.Loading)
 
     scope.launch {
