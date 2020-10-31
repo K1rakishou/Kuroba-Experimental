@@ -167,8 +167,8 @@ abstract class ThreadController(
     }
   }
 
-  fun selectPostImage(postImage: PostImage?) {
-    threadLayout.presenter.selectPostImage(postImage!!)
+  fun selectPostImage(postImage: PostImage) {
+    threadLayout.presenter.selectPostImage(postImage)
   }
 
   override fun showImages(

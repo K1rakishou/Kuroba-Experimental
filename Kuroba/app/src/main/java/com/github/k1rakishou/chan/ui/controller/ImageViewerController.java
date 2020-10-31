@@ -307,6 +307,10 @@ public class ImageViewerController
 
     private void goPostClicked(ToolbarMenuItem item) {
         PostImage postImage = presenter.getCurrentPostImage();
+        if (postImage == null) {
+            return;
+        }
+
         ImageViewerCallback imageViewerCallback = goPostCallback.goToPost(postImage);
         if (imageViewerCallback != null) {
             // hax: we need to wait for the recyclerview to do a layout before we know

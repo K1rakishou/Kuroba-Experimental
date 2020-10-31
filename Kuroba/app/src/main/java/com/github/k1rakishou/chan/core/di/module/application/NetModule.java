@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.cache.stream.WebmStreamingSource;
 import com.github.k1rakishou.chan.core.manager.ProxyStorage;
+import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager;
@@ -118,6 +119,7 @@ public class NetModule {
     @Provides
     @Singleton
     public WebmStreamingSource provideWebmStreamingSource(
+            SiteManager siteManager,
             FileManager fileManager,
             FileCacheV2 fileCacheV2,
             CacheHandler cacheHandler,
@@ -125,6 +127,7 @@ public class NetModule {
     ) {
         Logger.d(AppModule.DI_TAG, "WebmStreamingSource");
         return new WebmStreamingSource(
+                siteManager,
                 fileManager,
                 fileCacheV2,
                 cacheHandler,

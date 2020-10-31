@@ -257,7 +257,7 @@ class HistoryNavigationManager(
     }
 
     if (blocking) {
-      runBlocking {
+      runBlocking(Dispatchers.Default) {
         Logger.d(TAG, "persistNavigationStack blocking called")
 
         try {

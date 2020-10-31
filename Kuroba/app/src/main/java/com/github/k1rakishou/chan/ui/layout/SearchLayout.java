@@ -102,7 +102,9 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
         searchView.setSingleLine(true);
         searchView.setBackgroundResource(0);
         searchView.setPadding(0, 0, 0, 0);
+
         clearButton = new ImageView(getContext());
+
         searchView.addTextChangedListener(new TextWatcher() {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -133,6 +135,7 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
                 view.postDelayed(() -> requestKeyboardFocus(view), 100);
             }
         });
+
         LinearLayout.LayoutParams searchViewParams = new LinearLayout.LayoutParams(0, dp(36), 1);
         searchViewParams.gravity = Gravity.CENTER_VERTICAL;
         addView(searchView, searchViewParams);
