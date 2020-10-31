@@ -806,7 +806,7 @@ class ThreadPresenter @Inject constructor(
 
     for (post in posts) {
       for (image in post.postImages) {
-        if (image === postImage) {
+        if (image.equalUrl(postImage)) {
           scrollToPost(post, false)
           highlightPost(post)
           return

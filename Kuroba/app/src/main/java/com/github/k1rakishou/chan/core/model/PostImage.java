@@ -114,6 +114,10 @@ public class PostImage {
     }
 
     public boolean equalUrl(PostImage other) {
+        if (other == null) {
+            return false;
+        }
+
         if (imageUrl == null || other.imageUrl == null) {
             return serverFilename.equals(other.serverFilename);
         }
