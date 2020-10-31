@@ -110,10 +110,8 @@ public class PostImageThumbnailView extends ThumbnailView {
 
         this.postImage = postImage;
 
-        if (!postImage.isInlined) {
-            String url = getUrl(postImage);
-            setUrl(url, width, height);
-        }
+        String url = getUrl(postImage);
+        setUrl(url, width, height);
     }
 
     public void unbindPostImage() {
