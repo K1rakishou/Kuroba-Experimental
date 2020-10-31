@@ -36,7 +36,7 @@ class SerializedCoroutineExecutor(private val scope: CoroutineScope) {
     channel.offer(serializedAction)
   }
 
-  data class SerializedAction(
+  class SerializedAction(
     val action: suspend () -> Unit
   )
 

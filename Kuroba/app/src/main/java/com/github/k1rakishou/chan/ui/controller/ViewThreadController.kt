@@ -50,6 +50,7 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import io.reactivex.android.schedulers.AndroidSchedulers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
@@ -98,6 +99,7 @@ open class ViewThreadController(
       .onBackpressureLatest()
       .debounce(350, TimeUnit.MILLISECONDS)
       .onBackpressureLatest()
+      .observeOn(AndroidSchedulers.mainThread())
       .subscribe(
         { bookmarkChange -> updatePinIconStateIfNeeded(bookmarkChange) },
         { error -> Logger.e(TAG, "Error while listening for bookmarks changes", error) }
