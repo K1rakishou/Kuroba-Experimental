@@ -11,6 +11,7 @@ import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.repository.InlinedFileInfoRepository
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository
 import com.github.k1rakishou.model.repository.SeenPostRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import java.util.*
 
@@ -48,12 +49,12 @@ class DatabaseSettingsSummaryScreen(
           identifier = DatabaseSummaryScreen.MainGroup.ClearInlinedFilesTable,
           topDescriptionIdFunc = { R.string.settings_clear_inlined_files_table },
           bottomDescriptionStringFunc = {
-            val count = runBlocking { inlinedFileInfoRepository.count().unwrap() }
+            val count = runBlocking(Dispatchers.Default) { inlinedFileInfoRepository.count().unwrap() }
             String.format(Locale.ENGLISH, "This table stores file size info for inlined files.\n\n" +
               "Inlined files info table rows count: $count")
           },
           callback = {
-            val deleted = runBlocking { inlinedFileInfoRepository.deleteAll().unwrap() }
+            val deleted = runBlocking(Dispatchers.Default) { inlinedFileInfoRepository.deleteAll().unwrap() }
             AndroidUtils.showToast(context, "Done, deleted $deleted inlined file info rows")
           }
         )
@@ -63,12 +64,12 @@ class DatabaseSettingsSummaryScreen(
           identifier = DatabaseSummaryScreen.MainGroup.ClearLinkExtraInfoTable,
           topDescriptionIdFunc = { R.string.settings_clear_link_info_table },
           bottomDescriptionStringFunc = {
-            val count = runBlocking { mediaServiceLinkExtraContentRepository.count().unwrap() }
+            val count = runBlocking(Dispatchers.Default) { mediaServiceLinkExtraContentRepository.count().unwrap() }
             String.format(Locale.ENGLISH, "This table stores title and durations for youtube (and not only) like.\n\n" +
               "Link extra info table rows count: $count")
           },
           callback = {
-            val deleted = runBlocking { mediaServiceLinkExtraContentRepository.deleteAll().unwrap() }
+            val deleted = runBlocking(Dispatchers.Default) { mediaServiceLinkExtraContentRepository.deleteAll().unwrap() }
             AndroidUtils.showToast(context, "Done, deleted $deleted extra link info rows")
           }
         )
@@ -78,12 +79,12 @@ class DatabaseSettingsSummaryScreen(
           identifier = DatabaseSummaryScreen.MainGroup.ClearSeenPostsTable,
           topDescriptionIdFunc = { R.string.settings_clear_seen_posts_table },
           bottomDescriptionStringFunc = {
-            val count = runBlocking { seenPostRepository.count().unwrap() }
+            val count = runBlocking(Dispatchers.Default) { seenPostRepository.count().unwrap() }
             String.format(Locale.ENGLISH, "This table stores ids of already seen posts.\n\n" +
               "Seen posts table rows count: $count")
           },
           callback = {
-            val deleted = runBlocking { seenPostRepository.deleteAll().unwrap() }
+            val deleted = runBlocking(Dispatchers.Default) { seenPostRepository.deleteAll().unwrap() }
             AndroidUtils.showToast(context, "Done, deleted $deleted seen posts rows")
           }
         )
@@ -93,7 +94,7 @@ class DatabaseSettingsSummaryScreen(
           identifier = DatabaseSummaryScreen.MainGroup.ThreadsTable,
           topDescriptionIdFunc = { R.string.settings_trigger_thread_cleanup },
           bottomDescriptionStringFunc = {
-            val count = runBlocking { chanPostRepository.totalThreadsCount().unwrap() }
+            val count = runBlocking(Dispatchers.Default) { chanPostRepository.totalThreadsCount().unwrap() }
             val maxCount = appConstants.maxAmountOfThreadsInDatabase
 
             return@createBuilder String.format(
@@ -102,7 +103,7 @@ class DatabaseSettingsSummaryScreen(
             )
           },
           callback = {
-            val deleted = runBlocking {
+            val deleted = runBlocking(Dispatchers.Default) {
               chanPostRepository.deleteOldThreadsIfNeeded(forced = true).unwrap()
             }
 
@@ -116,7 +117,7 @@ class DatabaseSettingsSummaryScreen(
           identifier = DatabaseSummaryScreen.MainGroup.PostsTable,
           topDescriptionIdFunc = { R.string.settings_trigger_post_cleanup },
           bottomDescriptionStringFunc = {
-            val count = runBlocking { chanPostRepository.totalPostsCount().unwrap() }
+            val count = runBlocking(Dispatchers.Default) { chanPostRepository.totalPostsCount().unwrap() }
             val maxCount = appConstants.maxAmountOfPostsInDatabase
 
             return@createBuilder String.format(
@@ -125,7 +126,7 @@ class DatabaseSettingsSummaryScreen(
             )
           },
           callback = {
-            val deleted = runBlocking {
+            val deleted = runBlocking(Dispatchers.Default) {
               chanPostRepository.deleteOldPostsIfNeeded(forced = true).unwrap()
             }
 

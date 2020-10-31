@@ -16,10 +16,12 @@
  */
 package com.github.k1rakishou.chan.core.settings;
 
+import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 
 import com.github.k1rakishou.SettingProvider;
 
+@SuppressLint("ApplySharedPref")
 public class SharedPreferencesSettingProvider implements SettingProvider {
     private SharedPreferences prefs;
 
