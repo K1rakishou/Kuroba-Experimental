@@ -26,6 +26,7 @@ import com.github.k1rakishou.chan.ui.text.span.PostLinkable
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.StringUtils
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.nibor.autolink.LinkExtractor
 import org.nibor.autolink.LinkSpan
@@ -199,6 +200,8 @@ object CommentParserHelper {
 
   @JvmStatic
   fun addPostImages(post: Post.Builder) {
+    val duplicateCheckerSet = mutableSetOf<HttpUrl>()
+
     for (linkable in post.linkables) {
       if (post.postImages.size >= 5) {
         // max 5 images hotlinked
@@ -229,6 +232,11 @@ object CommentParserHelper {
       val imageUrl = linkStr.toHttpUrlOrNull()
       if (imageUrl == null) {
         Logger.e(TAG, "addPostImages() couldn't parse linkable.value ($linkStr)")
+        continue
+      }
+
+      if (!duplicateCheckerSet.add(imageUrl)) {
+        // This link has already been inlined, do not inline the same link more than once
         continue
       }
 
