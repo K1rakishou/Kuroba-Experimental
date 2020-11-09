@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.core.loader
 
+import com.github.k1rakishou.model.data.post.LoaderType
+
 sealed class LoaderResult(val loaderType: LoaderType) {
   /**
    * Loader has successfully loaded new content for current post and we now need to update the

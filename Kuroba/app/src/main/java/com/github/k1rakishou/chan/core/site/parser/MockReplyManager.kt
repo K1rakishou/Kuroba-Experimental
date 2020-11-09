@@ -1,8 +1,8 @@
 package com.github.k1rakishou.chan.core.site.parser
 
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.DoNotStrip
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import java.util.*

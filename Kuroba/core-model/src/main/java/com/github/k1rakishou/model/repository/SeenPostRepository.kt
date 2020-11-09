@@ -3,7 +3,6 @@ package com.github.k1rakishou.model.repository
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.SeenPost
 import com.github.k1rakishou.model.source.local.SeenPostLocalSource
@@ -12,12 +11,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class SeenPostRepository(
   database: KurobaDatabase,
-  loggerTag: String,
-  logger: Logger,
   private val applicationScope: CoroutineScope,
   private val seenPostLocalSource: SeenPostLocalSource
-) : AbstractRepository(database, logger) {
-  private val TAG = "$loggerTag SeenPostRepository"
+) : AbstractRepository(database) {
+  private val TAG = "SeenPostRepository"
   private val alreadyExecuted = AtomicBoolean(false)
 
   suspend fun insert(seenPost: SeenPost): ModularResult<Unit> {

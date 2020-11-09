@@ -7,7 +7,7 @@ import android.widget.LinearLayout;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getApplicationLabel;
+import static com.github.k1rakishou.common.AndroidUtils.getApplicationLabel;
 
 public class NewFolderLayout extends LinearLayout {
     private ColorizableEditText folderName;

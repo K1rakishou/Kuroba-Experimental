@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.site.common.vichan
 
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.bookmark.StickyThread
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.google.gson.stream.JsonReader

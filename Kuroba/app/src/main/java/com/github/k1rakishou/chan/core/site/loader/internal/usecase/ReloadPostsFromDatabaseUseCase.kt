@@ -1,40 +1,34 @@
 package com.github.k1rakishou.chan.core.site.loader.internal.usecase
 
 import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.mapper.ChanPostMapper
-import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.mutableListWithCap
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.repository.ChanPostRepository
-import com.google.gson.Gson
 
 class ReloadPostsFromDatabaseUseCase(
-  private val gson: Gson,
   private val chanPostRepository: ChanPostRepository,
-  private val boardManager: BoardManager,
-  private val themeEngine: ThemeEngine
+  private val boardManager: BoardManager
 ) {
 
-  suspend fun reloadPosts(
+  suspend fun reloadPostsOrdered(
     chanReaderProcessor: ChanReaderProcessor,
     chanDescriptor: ChanDescriptor
-  ): List<Post> {
+  ): List<ChanPost> {
     BackgroundUtils.ensureBackgroundThread()
 
     chanPostRepository.awaitUntilInitialized()
 
     val posts = when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
-        val maxCount = chanReaderProcessor.getThreadCap()
-
         // When in the mode, we can just select every post we have for this thread
         // descriptor and then just sort the in the correct order. We should also use
         // the stickyCap parameter if present.
-        chanPostRepository.getThreadPosts(chanDescriptor, maxCount)
+        chanPostRepository.getThreadPosts(chanDescriptor)
       }
       is ChanDescriptor.CatalogDescriptor -> {
         val postsToGet = chanReaderProcessor.getPostNoListOrdered()
@@ -47,13 +41,6 @@ class ReloadPostsFromDatabaseUseCase(
         // them.
         chanPostRepository.getCatalogOriginalPosts(chanDescriptor, postsToGet).unwrap()
       }
-    }.map { post ->
-      return@map ChanPostMapper.toPost(
-        gson,
-        themeEngine,
-        post,
-        null
-      )
     }
 
     return when (chanDescriptor) {
@@ -62,7 +49,7 @@ class ReloadPostsFromDatabaseUseCase(
     }
   }
 
-  suspend fun reloadPosts(chanDescriptor: ChanDescriptor): List<Post> {
+  suspend fun reloadPosts(chanDescriptor: ChanDescriptor): List<ChanPost> {
     BackgroundUtils.ensureBackgroundThread()
 
     chanPostRepository.awaitUntilInitialized()
@@ -74,28 +61,24 @@ class ReloadPostsFromDatabaseUseCase(
           return emptyList()
         }
 
-        chanPostRepository.getThreadPosts(chanDescriptor, Int.MAX_VALUE)
+        chanPostRepository.getThreadPosts(chanDescriptor)
       }
       is ChanDescriptor.CatalogDescriptor -> {
         boardManager.awaitUntilInitialized()
 
         val board = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor)
-          ?: return emptyList()
+        val postsToLoadCount = if (board != null) {
+          board.pages * board.perPage
+        } else {
+          ChanBoard.DEFAULT_CATALOG_SIZE
+        }
 
-        val postsToLoadCount = board.pages * board.perPage
         chanPostRepository.getCatalogOriginalPosts(chanDescriptor, postsToLoadCount).unwrap()
       }
-    }.map { post ->
-      return@map ChanPostMapper.toPost(
-        gson,
-        themeEngine,
-        post,
-        null
-      )
     }
   }
 
-  suspend fun reloadCatalogThreads(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>): List<Post> {
+  suspend fun reloadCatalogThreads(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>): List<ChanPost> {
     BackgroundUtils.ensureBackgroundThread()
     chanPostRepository.awaitUntilInitialized()
 

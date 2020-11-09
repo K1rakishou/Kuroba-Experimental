@@ -4,6 +4,9 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.entity.chan.post.ChanPostEntity
+import com.github.k1rakishou.model.entity.chan.post.ChanPostIdEntity
 import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
 import com.github.k1rakishou.model.entity.view.ChanThreadsWithPosts
 import com.github.k1rakishou.model.entity.view.OldChanPostThread
@@ -20,15 +23,15 @@ abstract class ChanThreadDao {
             ${ChanThreadEntity.CLOSED_COLUMN_NAME} = :closed,
             ${ChanThreadEntity.ARCHIVED_COLUMN_NAME} = :archived,
             
-            ${ChanThreadEntity.THREAD_IMAGES_COUNT_COLUMN_NAME} = CASE 
-            WHEN ${ChanThreadEntity.THREAD_IMAGES_COUNT_COLUMN_NAME} IS NULL THEN :threadImagesCount
-            WHEN ${ChanThreadEntity.THREAD_IMAGES_COUNT_COLUMN_NAME} > :threadImagesCount THEN ${ChanThreadEntity.THREAD_IMAGES_COUNT_COLUMN_NAME}
+            ${ChanThreadEntity.CATALOG_IMAGES_COUNT_COLUMN_NAME} = CASE 
+            WHEN ${ChanThreadEntity.CATALOG_IMAGES_COUNT_COLUMN_NAME} IS NULL THEN :threadImagesCount
+            WHEN ${ChanThreadEntity.CATALOG_IMAGES_COUNT_COLUMN_NAME} > :threadImagesCount THEN ${ChanThreadEntity.CATALOG_IMAGES_COUNT_COLUMN_NAME}
             ELSE :threadImagesCount
             END,
             
-            ${ChanThreadEntity.REPLIES_COLUMN_NAME} = CASE 
-            WHEN ${ChanThreadEntity.REPLIES_COLUMN_NAME} IS NULL THEN :replies
-            WHEN ${ChanThreadEntity.REPLIES_COLUMN_NAME} > :replies THEN ${ChanThreadEntity.REPLIES_COLUMN_NAME}
+            ${ChanThreadEntity.CATALOG_REPLIES_COUNT_COLUMN_NAME} = CASE 
+            WHEN ${ChanThreadEntity.CATALOG_REPLIES_COUNT_COLUMN_NAME} IS NULL THEN :replies
+            WHEN ${ChanThreadEntity.CATALOG_REPLIES_COUNT_COLUMN_NAME} > :replies THEN ${ChanThreadEntity.CATALOG_REPLIES_COUNT_COLUMN_NAME}
             ELSE :replies
             END,
             
@@ -96,8 +99,8 @@ abstract class ChanThreadDao {
 
       update(
         chanThreadEntity.threadId,
-        chanThreadEntity.replies,
-        chanThreadEntity.threadImagesCount,
+        chanThreadEntity.catalogRepliesCount,
+        chanThreadEntity.catalogImagesCount,
         chanThreadEntity.uniqueIps,
         chanThreadEntity.sticky,
         chanThreadEntity.closed,
@@ -171,19 +174,27 @@ abstract class ChanThreadDao {
   abstract fun totalThreadsCount(): Int
 
   @Query("""
-        DELETE FROM ${ChanThreadEntity.TABLE_NAME}
-        WHERE 
-            ${ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME} = :ownerBoardId
-        AND
-            ${ChanThreadEntity.THREAD_NO_COLUMN_NAME} = :threadNo
-    """)
-  abstract suspend fun deleteThread(ownerBoardId: Long, threadNo: Long)
-
-  @Query("""
     DELETE 
     FROM ${ChanThreadEntity.TABLE_NAME} 
     WHERE ${ChanThreadEntity.THREAD_ID_COLUMN_NAME} = :threadId
     """)
   abstract suspend fun deleteThread(threadId: Long): Int
+
+  @Query("""
+    DELETE 
+    FROM ${ChanPostIdEntity.TABLE_NAME} 
+    WHERE ${ChanPostIdEntity.POST_ID_COLUMN_NAME} IN 
+    (
+        SELECT ${ChanPostIdEntity.POST_ID_COLUMN_NAME}
+        FROM ${ChanPostIdEntity.TABLE_NAME} cpid
+        INNER JOIN ${ChanPostEntity.TABLE_NAME} cpe
+            ON cpid.${ChanPostIdEntity.POST_ID_COLUMN_NAME} = cpe.${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME}
+        WHERE
+            cpid.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = :threadId
+        AND
+            cpe.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_FALSE}
+    )
+  """)
+  abstract suspend fun deleteAllPostsInThreadExceptOriginalPost(threadId: Long)
 
 }

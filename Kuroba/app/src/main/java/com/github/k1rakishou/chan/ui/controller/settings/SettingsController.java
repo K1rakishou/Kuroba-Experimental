@@ -33,7 +33,7 @@ import com.github.k1rakishou.chan.ui.settings.ListSettingView;
 import com.github.k1rakishou.chan.ui.settings.SettingView;
 import com.github.k1rakishou.chan.ui.settings.SettingsGroup;
 import com.github.k1rakishou.chan.ui.settings.StringSettingView;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -44,16 +44,16 @@ import io.reactivex.disposables.CompositeDisposable;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.findViewsById;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.isTablet;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.postToEventBus;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.updatePaddings;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.waitForLayout;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.postToEventBus;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.findViewsById;
+import static com.github.k1rakishou.common.AndroidUtils.updatePaddings;
 
 public class SettingsController
         extends Controller
-        implements AndroidUtils.OnMeasuredCallback {
+        implements AppModuleAndroidUtils.OnMeasuredCallback {
     private final String TAG = "SettingsController";
 
     protected LinearLayout content;

@@ -2,7 +2,9 @@ package com.github.k1rakishou.chan.core.manager
 
 import com.github.k1rakishou.chan.core.model.PostFilter
 import com.github.k1rakishou.common.DoNotStrip
+import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -25,9 +27,25 @@ class PostFilterManager {
     lock.write { filterStorage.remove(postDescriptor) }
   }
 
-  fun removeMany(postDescriptorList: List<PostDescriptor>) {
+  fun removeMany(postDescriptorList: Collection<PostDescriptor>) {
     lock.write {
       postDescriptorList.forEach { postDescriptor ->
+        filterStorage.remove(postDescriptor)
+      }
+    }
+  }
+
+  fun removeAllForDescriptor(chanDescriptor: ChanDescriptor) {
+    lock.write {
+      val toDelete = hashSetWithCap<PostDescriptor>(128)
+
+      filterStorage.keys.forEach { postDescriptor ->
+        if (postDescriptor.descriptor == chanDescriptor) {
+          toDelete += postDescriptor
+        }
+      }
+
+      toDelete.forEach { postDescriptor ->
         filterStorage.remove(postDescriptor)
       }
     }

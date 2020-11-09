@@ -143,7 +143,7 @@ public class Wired7
         setEndpoints(new VichanEndpoints(this, "https://wired-7.org", "https://wired-7.org"));
         setActions(new Wired7Actions(this, getProxiedOkHttpClient(), getSiteManager()));
         setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
-        setParser(new VichanCommentParser(themeEngine, getMockReplyManager()));
+        setParser(new VichanCommentParser(getMockReplyManager()));
     }
 
     private static class Wired7Actions extends VichanActions {

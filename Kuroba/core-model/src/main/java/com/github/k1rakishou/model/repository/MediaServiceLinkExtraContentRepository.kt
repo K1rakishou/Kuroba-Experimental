@@ -3,7 +3,6 @@ package com.github.k1rakishou.model.repository
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.media.GenericVideoId
 import com.github.k1rakishou.model.data.video_service.MediaServiceLinkExtraContent
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
@@ -16,14 +15,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class MediaServiceLinkExtraContentRepository(
   database: KurobaDatabase,
-  loggerTag: String,
-  logger: Logger,
   private val applicationScope: CoroutineScope,
   private val cache: GenericCacheSource<MediaServiceKey, MediaServiceLinkExtraContent>,
   private val mediaServiceLinkExtraContentLocalSource: MediaServiceLinkExtraContentLocalSource,
   private val mediaServiceLinkExtraContentRemoteSource: MediaServiceLinkExtraContentRemoteSource
-) : AbstractRepository(database, logger) {
-  private val TAG = "$loggerTag MediaServiceLinkExtraContentRepository"
+) : AbstractRepository(database) {
+  private val TAG = "MediaServiceLinkExtraContentRepository"
   private val alreadyExecuted = AtomicBoolean(false)
 
   suspend fun getLinkExtraContent(

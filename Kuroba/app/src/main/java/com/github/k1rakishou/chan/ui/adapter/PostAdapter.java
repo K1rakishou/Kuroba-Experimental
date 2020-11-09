@@ -23,22 +23,22 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
-import com.github.k1rakishou.chan.core.manager.PostPreloadedInfoHolder;
-import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.model.PostIndexed;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.cell.PostCell;
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface;
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell;
-import com.github.k1rakishou.chan.ui.theme.ChanTheme;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.core_themes.ChanTheme;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
+import com.github.k1rakishou.model.data.post.ChanPost;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +51,7 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
+import static com.github.k1rakishou.common.AndroidUtils.inflate;
 
 public class PostAdapter
         extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
@@ -75,17 +75,16 @@ public class PostAdapter
     private ChanTheme chanTheme;
 
     private final ThreadStatusCell.Callback statusCellCallback;
-    private final List<Post> displayList = new ArrayList<>();
+    private final List<ChanPost> displayList = new ArrayList<>();
     private final List<PostIndexed> indexedDisplayList = new ArrayList<>();
     /**
      * A hack for OnDemandContentLoader see comments in {@link #onViewRecycled}
      */
     private final Set<Long> updatingPosts = new HashSet<>(64);
-    private PostPreloadedInfoHolder postPreloadedInfoHolder;
 
     private ChanDescriptor chanDescriptor = null;
     private String error = null;
-    private Post highlightedPost;
+    private PostDescriptor highlightedPostDescriptor;
     private String highlightedPostId;
     private Set<Long> highlightedPostNo = new HashSet<>();
     private CharSequence highlightedPostTripcode;
@@ -102,7 +101,7 @@ public class PostAdapter
             PostCellInterface.PostCellCallback postCellCallback,
             ThreadStatusCell.Callback statusCellCallback
     ) {
-        AndroidUtils.extractStartActivityComponent(recyclerView.getContext())
+        AppModuleAndroidUtils.extractStartActivityComponent(recyclerView.getContext())
                 .inject(this);
 
         this.postFilterManager = postFilterManager;
@@ -185,7 +184,7 @@ public class PostAdapter
 
                 PostViewHolder postViewHolder = (PostViewHolder) holder;
                 int postPosition = getPostPosition(position);
-                Post post = displayList.get(postPosition);
+                ChanPost post = displayList.get(postPosition);
                 PostIndexed postIndexed = indexedDisplayList.get(postPosition);
                 boolean highlight = shouldHighlightPost(post);
 
@@ -197,10 +196,9 @@ public class PostAdapter
                         postIndexed.getCurrentPostIndex(),
                         postIndexed.getRealPostIndex(),
                         postCellCallback,
-                        postPreloadedInfoHolder,
                         false,
                         highlight,
-                        post.no == selectedPost,
+                        post.postNo() == selectedPost,
                         -1,
                         true,
                         postViewMode,
@@ -221,11 +219,11 @@ public class PostAdapter
         }
     }
 
-    private boolean shouldHighlightPost(Post post) {
-        return post == highlightedPost
-                || post.posterId.equals(highlightedPostId)
-                || highlightedPostNo.contains(post.no)
-                || (post.tripcode != null && post.tripcode.equals(highlightedPostTripcode));
+    private boolean shouldHighlightPost(ChanPost post) {
+        return post.getPostDescriptor().equals(highlightedPostDescriptor)
+                || post.getPosterId().equals(highlightedPostId)
+                || highlightedPostNo.contains(post.postNo())
+                || (post.getTripcode() != null && post.getTripcode().equals(highlightedPostTripcode));
     }
 
     @Override
@@ -250,7 +248,7 @@ public class PostAdapter
         } else if (showStatusView() && position == getItemCount() - 1) {
             return TYPE_STATUS;
         } else {
-            Post post = displayList.get(getPostPosition(position));
+            ChanPost post = displayList.get(getPostPosition(position));
             if (postFilterManager.getFilterStub(post.getPostDescriptor())) {
                 return TYPE_POST_STUB;
             } else {
@@ -267,9 +265,9 @@ public class PostAdapter
         } else if (itemViewType == TYPE_LAST_SEEN) {
             return -2;
         } else {
-            Post post = displayList.get(getPostPosition(position));
-            int repliesFromSize = post.getRepliesFromCount();
-            return ((long) repliesFromSize << 32L) + post.no + (compact ? 1L : 0L);
+            ChanPost post = displayList.get(getPostPosition(position));
+            int repliesFromCount = post.getRepliesFromCount();
+            return ((long) repliesFromCount << 32L) + post.postNo() + (compact ? 1L : 0L);
         }
     }
 
@@ -298,10 +296,10 @@ public class PostAdapter
     @Override
     public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
         if (holder.itemView instanceof PostCellInterface) {
-            Post post = ((PostCellInterface) holder.itemView).getPost();
+            ChanPost post = ((PostCellInterface) holder.itemView).getPost();
             Objects.requireNonNull(post);
 
-            long postNo = post.no;
+            long postNo = post.postNo();
             boolean isActuallyRecycling = !updatingPosts.remove(postNo);
 
             /**
@@ -323,19 +321,16 @@ public class PostAdapter
 
     public void setThread(
             ChanDescriptor chanDescriptor,
-            PostPreloadedInfoHolder postPreloadedInfoHolder,
             List<PostIndexed> indexedPosts,
             ChanTheme chanTheme
     ) {
         BackgroundUtils.ensureMainThread();
 
         this.chanDescriptor = chanDescriptor;
-        this.postPreloadedInfoHolder = postPreloadedInfoHolder;
         this.chanTheme = chanTheme;
-
         showError(null);
 
-        List<Post> posts = extractPosts(indexedPosts);
+        List<ChanPost> posts = extractPosts(indexedPosts);
 
         updatingPosts.clear();
         displayList.clear();
@@ -348,12 +343,12 @@ public class PostAdapter
         Logger.d(TAG, "setThread() notifyDataSetChanged called, displayList.size=" + displayList.size());
     }
 
-    private List<Post> extractPosts(List<PostIndexed> indexedPosts) {
+    private List<ChanPost> extractPosts(List<PostIndexed> indexedPosts) {
         if (indexedPosts.isEmpty()) {
             return Collections.emptyList();
         }
 
-        List<Post> posts = new ArrayList<>(indexedPosts.size());
+        List<ChanPost> posts = new ArrayList<>(indexedPosts.size());
 
         for (PostIndexed indexedPost : indexedPosts) {
             posts.add(indexedPost.getPost());
@@ -367,8 +362,8 @@ public class PostAdapter
             if (chanThreadViewableInfoView.getLastViewedPostNo() >= 0) {
                 // Do not process the last post, the indicator does not have to appear at the bottom
                 for (int i = 0, displayListSize = displayList.size() - 1; i < displayListSize; i++) {
-                    Post post = displayList.get(i);
-                    if (post.no == chanThreadViewableInfoView.getLastViewedPostNo()) {
+                    ChanPost post = displayList.get(i);
+                    if (post.postNo() == chanThreadViewableInfoView.getLastViewedPostNo()) {
                         return i + 1;
                     }
                 }
@@ -384,12 +379,23 @@ public class PostAdapter
         return index;
     }
 
-    public List<Post> getDisplayList() {
-        return displayList;
+    public List<PostDescriptor> getDisplayList() {
+        if (displayList.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        int size = Math.min(16, displayList.size());
+        List<PostDescriptor> postDescriptors = new ArrayList<>(size);
+
+        for (ChanPost chanPost : displayList) {
+            postDescriptors.add(chanPost.getPostDescriptor());
+        }
+
+        return postDescriptors;
     }
 
     public void cleanup() {
-        highlightedPost = null;
+        highlightedPostDescriptor = null;
         highlightedPostId = null;
         highlightedPostNo.clear();
         highlightedPostTripcode = null;
@@ -420,8 +426,8 @@ public class PostAdapter
         }
     }
 
-    public void highlightPost(Post post) {
-        highlightedPost = post;
+    public void highlightPost(PostDescriptor postDescriptor) {
+        highlightedPostDescriptor = postDescriptor;
         highlightedPostId = null;
         highlightedPostNo.clear();
         highlightedPostTripcode = null;
@@ -429,7 +435,7 @@ public class PostAdapter
     }
 
     public void highlightPostId(String id) {
-        highlightedPost = null;
+        highlightedPostDescriptor = null;
         highlightedPostId = id;
         highlightedPostNo.clear();
         highlightedPostTripcode = null;
@@ -437,7 +443,7 @@ public class PostAdapter
     }
 
     public void highlightPostTripcode(CharSequence tripcode) {
-        highlightedPost = null;
+        highlightedPostDescriptor = null;
         highlightedPostId = null;
         highlightedPostNo.clear();
         highlightedPostTripcode = tripcode;
@@ -445,7 +451,7 @@ public class PostAdapter
     }
 
     public void highlightPostNos(Set<Long> postNos) {
-        highlightedPost = null;
+        highlightedPostDescriptor = null;
         highlightedPostId = null;
         highlightedPostNo.clear();
         highlightedPostNo.addAll(postNos);
@@ -486,13 +492,13 @@ public class PostAdapter
     }
 
     private boolean showStatusView() {
-        ChanDescriptor chanDescriptor = postAdapterCallback.getChanDescriptor();
+        ChanDescriptor chanDescriptor = postAdapterCallback.getCurrentChanDescriptor();
         // the chanDescriptor can be null while this adapter is used between cleanup and the removal
         // of the recyclerview from the view hierarchy, although it's rare.
         return chanDescriptor != null;
     }
 
-    public void updatePost(Post post) {
+    public void updatePost(ChanPost post) {
         BackgroundUtils.ensureMainThread();
 
         int postIndex = displayList.indexOf(post);
@@ -509,7 +515,7 @@ public class PostAdapter
             return;
         }
 
-        updatingPosts.add(post.no);
+        updatingPosts.add(post.postNo());
         notifyItemChanged(postIndex);
     }
 
@@ -530,8 +536,8 @@ public class PostAdapter
             return -1L;
         }
 
-        Post post = displayList.get(correctedPosition);
-        return post.no;
+        ChanPost post = displayList.get(correctedPosition);
+        return post.postNo();
     }
 
     public static class PostViewHolder extends RecyclerView.ViewHolder {
@@ -562,7 +568,7 @@ public class PostAdapter
     }
 
     public interface PostAdapterCallback {
-        @Nullable ChanDescriptor getChanDescriptor();
-        void onUnhidePostClick(Post post);
+        @Nullable ChanDescriptor getCurrentChanDescriptor();
+        void onUnhidePostClick(ChanPost post);
     }
 }

@@ -36,9 +36,9 @@ import com.github.k1rakishou.chan.core.site.SiteAuthentication;
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback;
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -51,7 +51,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.openLink;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink;
 
 /**
  * It directly loads the captcha2 fallback url into a webview, and on each requests it executes
@@ -91,7 +91,7 @@ public class CaptchaNojsLayoutV1
     }
 
     private void init() {
-        AndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
                 .inject(this);
     }
 

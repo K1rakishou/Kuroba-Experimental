@@ -18,13 +18,13 @@ package com.github.k1rakishou.chan.core.presenter
 
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.model.ChanThread
-import com.github.k1rakishou.chan.ui.helper.PostHelper
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.util.ChanPostUtils
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
@@ -36,7 +36,8 @@ class BrowsePresenter @Inject constructor(
   private val historyNavigationManager: HistoryNavigationManager,
   private val bookmarksManager: BookmarksManager,
   private val siteManager: SiteManager,
-  private val boardManager: BoardManager
+  private val boardManager: BoardManager,
+  private val chanThreadManager: ChanThreadManager
 ) {
   private var callback: Callback? = null
   private val compositeDisposable = CompositeDisposable()
@@ -98,13 +99,7 @@ class BrowsePresenter @Inject constructor(
     callback?.loadBoard(boardDescriptor)
   }
 
-  fun bookmarkEveryThread(chanThread: ChanThread?) {
-    if (chanThread == null) {
-      Logger.e(TAG, "bookmarkEveryThread() chanThread == null")
-      return
-    }
-
-    val chanDescriptor = chanThread.chanDescriptor
+  fun bookmarkEveryThread(chanDescriptor: ChanDescriptor?) {
     if (chanDescriptor == null) {
       Logger.e(TAG, "bookmarkEveryThread() chanDescriptor == null")
       return
@@ -115,23 +110,25 @@ class BrowsePresenter @Inject constructor(
       return
     }
 
+    chanDescriptor as ChanDescriptor.CatalogDescriptor
     val simpleThreadBookmarkList = mutableListOf<BookmarksManager.SimpleThreadBookmark>()
 
-    for (post in chanThread.getPosts()) {
-      if (!post.isOP) {
-        Logger.e(TAG, "bookmarkEveryThread() post is not OP")
-        continue
-      }
+    val catalog = chanThreadManager.getChanCatalog(chanDescriptor)
+    if (catalog == null) {
+      Logger.e(TAG, "bookmarkEveryThread() Couldn't find catalog by descriptor: $chanDescriptor")
+      return
+    }
 
-      val threadDescriptor = chanDescriptor.toThreadDescriptor(post.no)
-      val title = PostHelper.getTitle(post, threadDescriptor)
+    catalog.iteratePostsOrdered { chanOriginalPost ->
+      val threadDescriptor = chanDescriptor.toThreadDescriptor(chanOriginalPost.postNo())
+      val title = ChanPostUtils.getTitle(chanOriginalPost, threadDescriptor)
 
       if (bookmarksManager.exists(threadDescriptor)) {
         Logger.d(TAG, "bookmarkEveryThread() bookmark for post ${title.take(50)} already exist")
-        continue
+        return@iteratePostsOrdered
       }
 
-      val thumbnailUrl = post.firstImage()?.thumbnailUrl
+      val thumbnailUrl = chanOriginalPost.firstImage()?.actualThumbnailUrl
 
       simpleThreadBookmarkList += BookmarksManager.SimpleThreadBookmark(
         threadDescriptor = threadDescriptor,

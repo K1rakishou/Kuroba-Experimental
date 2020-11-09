@@ -17,13 +17,12 @@ import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
-import com.github.k1rakishou.chan.ui.theme.DefaultDarkTheme
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.core_themes.DefaultDarkTheme
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.nhaarman.mockitokotlin2.any
-import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.whenever
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -34,7 +33,9 @@ import okhttp3.Request
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.hamcrest.CoreMatchers.instanceOf
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThat
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -84,7 +85,7 @@ class Chan4SearchRequestTest {
     whenever(siteManager.awaitUntilInitialized()).thenReturn(Unit)
     whenever(chan4.actions()).thenReturn(testSiteActions)
     whenever(themeEngine.chanTheme).thenReturn(theme)
-    whenever(simpleCommentParser.parseComment(eq(theme), any()))
+    whenever(simpleCommentParser.parseComment(any()))
       .then { answer -> answer.getArgument(1, CharSequence::class.java) }
 
     val searchResult = globalSearchUseCase.execute(SearchParams(siteDescriptor, "test", null))

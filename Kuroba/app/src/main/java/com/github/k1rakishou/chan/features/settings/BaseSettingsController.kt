@@ -2,14 +2,14 @@ package com.github.k1rakishou.chan.features.settings
 
 import android.content.Context
 import com.github.k1rakishou.chan.controller.Controller
-import com.github.k1rakishou.chan.core.manager.DialogFactory
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.exhaustive
+import com.github.k1rakishou.core_logger.Logger
 import javax.inject.Inject
 
 abstract class BaseSettingsController(

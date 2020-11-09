@@ -4,7 +4,8 @@ import android.os.Build
 import android.view.View
 import android.view.Window
 import android.view.WindowManager
-import com.github.k1rakishou.chan.ui.theme.ChanTheme
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.core_themes.ChanTheme
 
 
 object FullScreenUtils {
@@ -14,7 +15,8 @@ object FullScreenUtils {
     clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-      attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+      attributes.layoutInDisplayCutoutMode =
+        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
     }
   }
 

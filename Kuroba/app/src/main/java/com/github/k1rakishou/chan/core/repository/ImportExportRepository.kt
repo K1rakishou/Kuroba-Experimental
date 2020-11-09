@@ -16,14 +16,14 @@
  */
 package com.github.k1rakishou.chan.core.repository
 
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.model.export.ExportedAppSettings
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository.ImportExport.Export
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository.ImportExport.Import
-import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.ExternalFile
@@ -167,12 +167,12 @@ constructor(
       )
     }
 
-    // TODO(KurobaEx):
+    // TODO(KurobaEx): settings backup
     ChanSettings.deserializeFromString(appSettingsParam.settings)
   }
 
   private fun onUpgrade(version: Int, appSettings: ExportedAppSettings): ExportedAppSettings {
-    // TODO(KurobaEx):
+    // TODO(KurobaEx): settings backup
     return appSettings
   }
 

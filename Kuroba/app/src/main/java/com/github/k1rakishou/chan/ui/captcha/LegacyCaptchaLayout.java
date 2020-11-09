@@ -34,16 +34,17 @@ import androidx.core.content.ContextCompat;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.SiteAuthentication;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
 import com.github.k1rakishou.chan.ui.view.FixedRatioThumbnailView;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.IOUtils;
+import com.github.k1rakishou.common.AndroidUtils;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.hideKeyboard;
+import static com.github.k1rakishou.common.AndroidUtils.hideKeyboard;
 
 public class LegacyCaptchaLayout
         extends LinearLayout
@@ -78,7 +79,7 @@ public class LegacyCaptchaLayout
     }
 
     private void init() {
-        AndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
                 .inject(this);
     }
 

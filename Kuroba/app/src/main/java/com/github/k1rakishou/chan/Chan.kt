@@ -22,25 +22,61 @@ import android.app.Application.ActivityLifecycleCallbacks
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import com.github.k1rakishou.BookmarkGridViewInfo
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.ChanSettingsInfo
+import com.github.k1rakishou.PersistableChanState
+import com.github.k1rakishou.PersistableChanStateInfo
 import com.github.k1rakishou.chan.core.cache.downloader.FileCacheException
 import com.github.k1rakishou.chan.core.cache.downloader.FileCacheException.FileNotFoundOnTheServerException
 import com.github.k1rakishou.chan.core.di.component.application.ApplicationComponent
 import com.github.k1rakishou.chan.core.di.component.application.DaggerApplicationComponent
-import com.github.k1rakishou.chan.core.di.module.application.*
-import com.github.k1rakishou.chan.core.manager.*
+import com.github.k1rakishou.chan.core.di.module.application.AppModule
+import com.github.k1rakishou.chan.core.di.module.application.ExecutorsModule
+import com.github.k1rakishou.chan.core.di.module.application.GsonModule
+import com.github.k1rakishou.chan.core.di.module.application.LoaderModule
+import com.github.k1rakishou.chan.core.di.module.application.ManagerModule
+import com.github.k1rakishou.chan.core.di.module.application.NetModule
+import com.github.k1rakishou.chan.core.di.module.application.ParserModule
+import com.github.k1rakishou.chan.core.di.module.application.RepositoryModule
+import com.github.k1rakishou.chan.core.di.module.application.RoomDatabaseModule
+import com.github.k1rakishou.chan.core.di.module.application.SiteModule
+import com.github.k1rakishou.chan.core.di.module.application.UseCaseModule
+import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.ChanFilterManager
+import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
+import com.github.k1rakishou.chan.core.manager.ReportManager
+import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.chan.core.net.DnsSelector
-import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkWatcherCoordinator
+import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.service.SavingNotification
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.ui.settings.base_directory.SavedFilesBaseDirectory
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
-import com.github.k1rakishou.model.DatabaseModuleInjector.build
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemesModuleInjector
+import com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy
+import com.github.k1rakishou.fsaf.FileManager
+import com.github.k1rakishou.fsaf.manager.base_directory.DirectoryManager
+import com.github.k1rakishou.model.ModelModuleInjector
+import com.github.k1rakishou.model.di.NetworkModule
 import io.reactivex.exceptions.UndeliverableException
 import io.reactivex.plugins.RxJavaPlugins
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelChildren
 import okhttp3.Dns
 import okhttp3.Protocol
 import org.greenrobot.eventbus.EventBus
@@ -52,8 +88,11 @@ import kotlin.system.exitProcess
 
 class Chan : Application(), ActivityLifecycleCallbacks {
   private var activityForegroundCounter = 0
+
   private val job = SupervisorJob(null)
   private var applicationScope: CoroutineScope? = null
+
+  private val tagPrefix by lazy { AndroidUtils.getApplicationLabel().toString() + " | " }
 
   @Inject
   lateinit var siteManager: SiteManager
@@ -77,8 +116,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   lateinit var historyNavigationManager: HistoryNavigationManager
   @Inject
   lateinit var bookmarksManager: BookmarksManager
-  @Inject
-  lateinit var themeEngine: ThemeEngine
 
   private val okHttpDns: Dns
     get() {
@@ -114,9 +151,13 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   override fun attachBaseContext(base: Context) {
     super.attachBaseContext(base)
     AndroidUtils.init(this)
+    AppModuleAndroidUtils.init(this)
+    Logger.init(BuildConfig.DEBUG, tagPrefix)
 
-    // spit out the build hash to the log
-    AndroidUtils.getVerifiedBuildType()
+    ChanSettings.init(createChanSettingsInfo())
+    PersistableChanState.init(createPersistableChanStateInfo())
+
+    AppModuleAndroidUtils.printApplicationSignatureHash()
 
     // remove this if you need to debug some sort of event bus issue
     EventBus.builder()
@@ -137,16 +178,11 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   private fun onCreateInternal() {
     registerActivityLifecycleCallbacks(this)
 
-    val isDev = AndroidUtils.isDevBuild()
-    val isBeta = AndroidUtils.isBetaBuild()
-
-    System.setProperty(
-      "kotlinx.coroutines.debug",
-      if (isDev) "on" else "off"
-    )
-
     job.cancelChildren()
     applicationScope = CoroutineScope(job + Dispatchers.Main + CoroutineName("Chan"))
+
+    val isDev = AppModuleAndroidUtils.isDevBuild()
+    System.setProperty("kotlinx.coroutines.debug", if (isDev) "on" else "off")
 
     val appConstants = AppConstants(applicationContext, isDev)
     logAppConstants(appConstants)
@@ -154,27 +190,36 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
     val okHttpDns = okHttpDns
     val okHttpProtocols = okHttpProtocols
+    val fileManager = provideFileManager()
 
-    val modelMainComponent = build(
+    val themeEngine = ThemesModuleInjector.build(
       this,
+      applicationScope!!,
+      fileManager
+    ).getThemeEngine()
+
+    themeEngine.initialize(this)
+
+    val modelComponent = ModelModuleInjector.build(
+      this,
+      applicationScope!!,
       okHttpDns,
-      okHttpProtocols.protocols,
-      Logger.TAG_PREFIX,
-      isDev,
-      isDev || isBeta,
+      NetworkModule.OkHttpProtocolList(okHttpProtocols.protocols),
       ChanSettings.verboseLogs.get(),
-      appConstants,
-      applicationScope!!
+      isDev,
+      appConstants
     )
 
     applicationComponent = DaggerApplicationComponent.builder()
       .application(this)
       .appContext(this)
+      .themeEngine(themeEngine)
+      .fileManager(fileManager)
       .applicationCoroutineScope(applicationScope)
       .okHttpDns(okHttpDns)
       .okHttpProtocols(okHttpProtocols)
       .appConstants(appConstants)
-      .modelMainComponent(modelMainComponent)
+      .modelMainComponent(modelComponent)
       .appModule(AppModule())
       .executorsModule(ExecutorsModule())
       .roomDatabaseModule(RoomDatabaseModule())
@@ -189,7 +234,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       .build()
       .also { component -> component.inject(this) }
 
-    themeEngine.initialize(this)
     siteManager.initialize()
     boardManager.initialize()
     bookmarksManager.initialize()
@@ -238,7 +282,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       }
 
       if (error is FileCacheException.CancellationException
-        || error is FileNotFoundOnTheServerException) {
+        || error is FileNotFoundOnTheServerException
+      ) {
         // fine, sometimes they get through all the checks but it doesn't really matter
         return@setErrorHandler
       }
@@ -309,7 +354,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       "UNCAUGHT",
       "App Version: " + BuildConfig.VERSION_NAME + "." + BuildConfig.BUILD_NUMBER
     )
-    Logger.e("UNCAUGHT", "Development Build: " + AndroidUtils.getVerifiedBuildType().name)
+    Logger.e("UNCAUGHT", "Development Build: " + AppModuleAndroidUtils.getVerifiedBuildType().name)
     Logger.e("UNCAUGHT", "Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL)
 
     // don't upload debug crashes
@@ -334,7 +379,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       Logger.d(TAG, "^^^ App went foreground ^^^")
 
       applicationVisibilityManager.onEnteredForeground()
-      AndroidUtils.postToEventBus(ForegroundChangedMessage(applicationInForeground))
     }
   }
 
@@ -350,11 +394,49 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       Logger.d(TAG, "vvv App went background vvv")
 
       applicationVisibilityManager.onEnteredBackground()
-      AndroidUtils.postToEventBus(ForegroundChangedMessage(applicationInForeground))
     }
   }
 
-  class ForegroundChangedMessage(var inForeground: Boolean)
+  private fun createPersistableChanStateInfo(): PersistableChanStateInfo {
+    return PersistableChanStateInfo(
+      versionCode = BuildConfig.VERSION_CODE,
+      commitHash = BuildConfig.COMMIT_HASH
+    )
+  }
+
+  private fun createChanSettingsInfo(): ChanSettingsInfo {
+    return ChanSettingsInfo(
+      applicationId = BuildConfig.APPLICATION_ID,
+      isTablet = isTablet(),
+      defaultFilterOrderName = PostsFilter.Order.BUMP.orderName,
+      isDevBuild = AppModuleAndroidUtils.isDevBuild(),
+      bookmarkGridViewInfo = BookmarkGridViewInfo(
+        getDimen(R.dimen.thread_grid_bookmark_view_default_width),
+        getDimen(R.dimen.thread_grid_bookmark_view_min_width),
+        getDimen(R.dimen.thread_grid_bookmark_view_max_width)
+      )
+    )
+  }
+
+  private fun provideFileManager(): FileManager {
+    val directoryManager = DirectoryManager(this)
+
+    // Add new base directories here
+    val savedFilesBaseDirectory = SavedFilesBaseDirectory()
+    var resolutionStrategy = BadPathSymbolResolutionStrategy.ReplaceBadSymbols
+
+    if (AppModuleAndroidUtils.getFlavorType() != AndroidUtils.FlavorType.Stable) {
+      resolutionStrategy = BadPathSymbolResolutionStrategy.ThrowAnException
+    }
+
+    val fileManager = FileManager(
+      this,
+      resolutionStrategy, directoryManager
+    )
+
+    fileManager.registerBaseDir(SavedFilesBaseDirectory::class.java, savedFilesBaseDirectory)
+    return fileManager
+  }
 
   override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
   override fun onActivityStarted(activity: Activity) {

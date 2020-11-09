@@ -22,6 +22,7 @@ import android.content.Context;
 import androidx.annotation.Nullable;
 import androidx.viewpager.widget.ViewPager;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.base.Debouncer;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
@@ -31,19 +32,18 @@ import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload;
 import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager;
-import com.github.k1rakishou.chan.core.model.PostImage;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.ImageSearch;
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController;
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.view.MultiImageView;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+import com.github.k1rakishou.model.data.post.ChanPostImage;
 import com.github.k1rakishou.model.data.post.ChanPostImageType;
 
 import org.jetbrains.annotations.NotNull;
@@ -63,15 +63,15 @@ import okhttp3.HttpUrl;
 
 import static com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager.NEXT_N_POSTS_RELATIVE;
 import static com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager.PREV_N_POSTS_RELATIVE;
-import static com.github.k1rakishou.chan.core.settings.ChanSettings.NetworkContentAutoLoadMode.shouldLoadForNetworkType;
 import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.BIGIMAGE;
 import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.GIFIMAGE;
 import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.LOWRES;
 import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.OTHER;
 import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.VIDEO;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAudioManager;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.openLinkInBrowser;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.showToast;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLinkInBrowser;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
+import static com.github.k1rakishou.common.AndroidUtils.getAudioManager;
 
 public class ImageViewerPresenter
         implements MultiImageView.Callback, ViewPager.OnPageChangeListener {
@@ -100,7 +100,7 @@ public class ImageViewerPresenter
 
     private boolean entering = true;
     private boolean exiting = false;
-    private List<PostImage> images;
+    private List<ChanPostImage> images;
     private Map<Integer, List<Float>> progress;
     private int selectedPosition = 0;
     private SwipeDirection swipeDirection = SwipeDirection.Default;
@@ -120,12 +120,12 @@ public class ImageViewerPresenter
         this.context = context;
         this.callback = callback;
 
-        AndroidUtils.extractStartActivityComponent(context)
+        AppModuleAndroidUtils.extractStartActivityComponent(context)
                 .inject(this);
     }
 
     @SuppressLint("UseSparseArrays")
-    public void showImages(List<PostImage> images, int position, ChanDescriptor chanDescriptor) {
+    public void showImages(List<ChanPostImage> images, int position, ChanDescriptor chanDescriptor) {
         this.images = images;
         this.chanDescriptor = chanDescriptor;
         this.selectedPosition = Math.max(0, Math.min(images.size() - 1, position));
@@ -153,8 +153,8 @@ public class ImageViewerPresenter
     public void onViewMeasured() {
         // Pager is measured, but still invisible
         callback.startPreviewInTransition(chanDescriptor, images.get(selectedPosition));
-        PostImage postImage = images.get(selectedPosition);
-        callback.setTitle(postImage, selectedPosition, images.size(), postImage.spoiler());
+        ChanPostImage postImage = images.get(selectedPosition);
+        callback.setTitle(postImage, selectedPosition, images.size(), postImage.getSpoiler());
     }
 
     public boolean isTransitioning() {
@@ -174,8 +174,8 @@ public class ImageViewerPresenter
         if (entering || exiting) return;
         exiting = true;
 
-        PostImage postImage = images.get(selectedPosition);
-        if (postImage.type == ChanPostImageType.MOVIE) {
+        ChanPostImage postImage = images.get(selectedPosition);
+        if (postImage.getType() == ChanPostImageType.MOVIE) {
             callback.setImageMode(postImage, LOWRES, true);
         }
 
@@ -199,11 +199,11 @@ public class ImageViewerPresenter
         callback.setVolume(getCurrentPostImage(), muted);
     }
 
-    public List<PostImage> getAllPostImages() {
+    public List<ChanPostImage> getAllPostImages() {
         return images;
     }
 
-    public PostImage getCurrentPostImage() {
+    public ChanPostImage getCurrentPostImage() {
         return images.get(selectedPosition);
     }
 
@@ -283,7 +283,7 @@ public class ImageViewerPresenter
         }
 
         // Transition ended or not, request loading the other side views to lowres
-        for (PostImage other : getOther(selectedPosition)) {
+        for (ChanPostImage other : getOther(selectedPosition)) {
             callback.setImageMode(other, LOWRES, false);
         }
 
@@ -298,12 +298,12 @@ public class ImageViewerPresenter
         //Reset the save icon
         callback.showDownloadMenuItem(false);
 
-        PostImage postImage = images.get(selectedPosition);
+        ChanPostImage postImage = images.get(selectedPosition);
         setTitle(postImage, position);
         callback.scrollToImage(postImage);
         callback.updatePreviewImage(postImage);
 
-        for (PostImage other : getOther(position)) {
+        for (ChanPostImage other : getOther(position)) {
             callback.setImageMode(other, LOWRES, false);
         }
 
@@ -327,16 +327,16 @@ public class ImageViewerPresenter
     // Called from either a page swipe caused a lowres image to be in the center or an
     // onModeLoaded when a unloaded image was swiped to the center earlier
     private void onLowResInCenter() {
-        PostImage postImage = images.get(selectedPosition);
+        ChanPostImage postImage = images.get(selectedPosition);
 
-        if (imageAutoLoad(postImage) && (!postImage.spoiler() || ChanSettings.revealImageSpoilers.get())) {
-            if (postImage.type == ChanPostImageType.STATIC) {
+        if (imageAutoLoad(postImage) && (!postImage.getSpoiler() || ChanSettings.revealImageSpoilers.get())) {
+            if (postImage.getType() == ChanPostImageType.STATIC) {
                 callback.setImageMode(postImage, BIGIMAGE, true);
-            } else if (postImage.type == ChanPostImageType.GIF) {
+            } else if (postImage.getType() == ChanPostImageType.GIF) {
                 callback.setImageMode(postImage, GIFIMAGE, true);
-            } else if (postImage.type == ChanPostImageType.MOVIE && videoAutoLoad(postImage)) {
+            } else if (postImage.getType() == ChanPostImageType.MOVIE && videoAutoLoad(postImage)) {
                 callback.setImageMode(postImage, VIDEO, true);
-            } else if (postImage.type == ChanPostImageType.PDF || postImage.type == ChanPostImageType.SWF) {
+            } else if (postImage.getType() == ChanPostImageType.PDF || postImage.getType() == ChanPostImageType.SWF) {
                 callback.setImageMode(postImage, OTHER, true);
             }
         }
@@ -419,21 +419,21 @@ public class ImageViewerPresenter
         List<String> nonCancelableImages = new ArrayList<>(3);
 
         if (index - 1 >= 0) {
-            HttpUrl imageUrl = images.get(index - 1).imageUrl;
+            HttpUrl imageUrl = images.get(index - 1).getImageUrl();
             if (imageUrl != null) {
                 nonCancelableImages.add(imageUrl.toString());
             }
         }
 
         if (index >= 0 && index < images.size()) {
-            HttpUrl imageUrl = images.get(index).imageUrl;
+            HttpUrl imageUrl = images.get(index).getImageUrl();
             if (imageUrl != null) {
                 nonCancelableImages.add(imageUrl.toString());
             }
         }
 
         if (index + 1 < images.size()) {
-            HttpUrl imageUrl = images.get(index + 1).imageUrl;
+            HttpUrl imageUrl = images.get(index + 1).getImageUrl();
             if (imageUrl != null) {
                 nonCancelableImages.add(imageUrl.toString());
             }
@@ -442,13 +442,13 @@ public class ImageViewerPresenter
         return nonCancelableImages;
     }
 
-    private void doPreloading(PostImage postImage) {
+    private void doPreloading(ChanPostImage postImage) {
         boolean allowedToPreload = false;
 
         // Do not auto preload PDF/SWF files
-        if (postImage.type == ChanPostImageType.MOVIE) {
+        if (postImage.getType() == ChanPostImageType.MOVIE) {
             allowedToPreload = videoAutoLoad(postImage);
-        } else if (postImage.type == ChanPostImageType.STATIC || postImage.type == ChanPostImageType.GIF) {
+        } else if (postImage.getType() == ChanPostImageType.STATIC || postImage.getType() == ChanPostImageType.GIF) {
             allowedToPreload = imageAutoLoad(postImage);
         }
 
@@ -461,7 +461,7 @@ public class ImageViewerPresenter
         // If the file is a webm file and webm streaming is turned on we don't want to download the
         // webm chunked because it will most likely corrupt the file since we will forcefully stop
         // it.
-        if (postImage.type == ChanPostImageType.MOVIE && ChanSettings.videoStream.get()) {
+        if (postImage.getType() == ChanPostImageType.MOVIE && ChanSettings.videoStream.get()) {
             loadChunked = false;
         }
 
@@ -484,7 +484,7 @@ public class ImageViewerPresenter
         if (loadChunked) {
             DownloadRequestExtraInfo extraInfo = new DownloadRequestExtraInfo(
                     postImage.getSize(),
-                    postImage.fileHash
+                    postImage.getFileHash()
             );
 
             preloadDownload[0] = fileCacheV2.enqueueChunkedDownloadFileRequest(
@@ -533,13 +533,13 @@ public class ImageViewerPresenter
             return false;
         }
 
-        PostImage previousImage = images.get(position);
+        ChanPostImage previousImage = images.get(position);
 
-        if (previousImage.imageUrl == null) {
+        if (previousImage.getImageUrl() == null) {
             throw new NullPointerException("PostImage has no imageUrl!");
         }
 
-        if (downloader.getUrl().equals(previousImage.imageUrl.toString())) {
+        if (downloader.getUrl().equals(previousImage.getImageUrl().toString())) {
             downloader.cancel();
             preloadingImages.remove(downloader);
             return true;
@@ -555,9 +555,9 @@ public class ImageViewerPresenter
             return;
         }
 
-        PostImage postImage = images.get(selectedPosition);
-        if (imageAutoLoad(postImage) && !postImage.spoiler()) {
-            if (postImage.type == ChanPostImageType.MOVIE && callback.getImageMode(postImage) != VIDEO) {
+        ChanPostImage postImage = images.get(selectedPosition);
+        if (imageAutoLoad(postImage) && !postImage.getSpoiler()) {
+            if (postImage.getType() == ChanPostImageType.MOVIE && callback.getImageMode(postImage) != VIDEO) {
                 callback.setImageMode(postImage, VIDEO, true);
             } else {
                 if (callback.isImmersive()) {
@@ -568,13 +568,13 @@ public class ImageViewerPresenter
             }
         } else {
             MultiImageView.Mode currentMode = callback.getImageMode(postImage);
-            if (postImage.type == ChanPostImageType.STATIC && currentMode != BIGIMAGE) {
+            if (postImage.getType() == ChanPostImageType.STATIC && currentMode != BIGIMAGE) {
                 callback.setImageMode(postImage, BIGIMAGE, true);
-            } else if (postImage.type == ChanPostImageType.GIF && currentMode != GIFIMAGE) {
+            } else if (postImage.getType() == ChanPostImageType.GIF && currentMode != GIFIMAGE) {
                 callback.setImageMode(postImage, GIFIMAGE, true);
-            } else if (postImage.type == ChanPostImageType.MOVIE && currentMode != VIDEO) {
+            } else if (postImage.getType() == ChanPostImageType.MOVIE && currentMode != VIDEO) {
                 callback.setImageMode(postImage, VIDEO, true);
-            } else if ((postImage.type == ChanPostImageType.PDF || postImage.type == ChanPostImageType.SWF)
+            } else if ((postImage.getType() == ChanPostImageType.PDF || postImage.getType() == ChanPostImageType.SWF)
                     && currentMode != OTHER) {
                 callback.setImageMode(postImage, OTHER, true);
             } else {
@@ -627,8 +627,8 @@ public class ImageViewerPresenter
         }
 
         for (int i = 0; i < images.size(); i++) {
-            PostImage postImage = images.get(i);
-            if (postImage == multiImageView.getPostImage()) {
+            ChanPostImage postImage = images.get(i);
+            if (postImage.equals(multiImageView.getPostImage())) {
                 progress.put(i, initialProgress);
                 break;
             }
@@ -641,7 +641,7 @@ public class ImageViewerPresenter
     }
 
     @Override
-    public void onDownloaded(PostImage postImage) {
+    public void onDownloaded(ChanPostImage postImage) {
         BackgroundUtils.ensureMainThread();
 
         if (getCurrentPostImage().equalUrl(postImage)) {
@@ -661,8 +661,8 @@ public class ImageViewerPresenter
         BackgroundUtils.ensureMainThread();
 
         for (int i = 0; i < images.size(); i++) {
-            PostImage postImage = images.get(i);
-            if (postImage == multiImageView.getPostImage()) {
+            ChanPostImage postImage = images.get(i);
+            if (postImage.equals(multiImageView.getPostImage())) {
                 List<Float> chunksProgress = progress.get(i);
 
                 if (chunksProgress != null) {
@@ -688,19 +688,19 @@ public class ImageViewerPresenter
 
     @Override
     public void onAudioLoaded(MultiImageView multiImageView) {
-        PostImage currentPostImage = getCurrentPostImage();
+        ChanPostImage currentPostImage = getCurrentPostImage();
         if (multiImageView.getPostImage() == currentPostImage) {
             callback.showVolumeMenuItem(true, muted);
             callback.setVolume(currentPostImage, muted);
         }
     }
 
-    private boolean imageAutoLoad(PostImage postImage) {
-        if (postImage.isInlined) {
+    private boolean imageAutoLoad(ChanPostImage postImage) {
+        if (postImage.isInlined()) {
             return false;
         }
 
-        HttpUrl imageUrl = postImage.imageUrl;
+        HttpUrl imageUrl = postImage.getImageUrl();
         if (imageUrl == null) {
             return false;
         }
@@ -710,8 +710,8 @@ public class ImageViewerPresenter
                 || shouldLoadForNetworkType(ChanSettings.imageAutoLoadNetwork.get());
     }
 
-    private boolean videoAutoLoad(PostImage postImage) {
-        if (postImage.isInlined) {
+    private boolean videoAutoLoad(ChanPostImage postImage) {
+        if (postImage.isInlined()) {
             return false;
         }
 
@@ -719,29 +719,30 @@ public class ImageViewerPresenter
                 && shouldLoadForNetworkType(ChanSettings.videoAutoLoadNetwork.get());
     }
 
-    private void setTitle(PostImage postImage, int position) {
+    private void setTitle(ChanPostImage postImage, int position) {
         callback.setTitle(postImage,
                 position,
                 images.size(),
-                postImage.spoiler() && callback.getImageMode(postImage) == LOWRES
+                postImage.getSpoiler() && callback.getImageMode(postImage) == LOWRES
         );
     }
 
-    private List<PostImage> getOther(int position) {
-        List<PostImage> other = new ArrayList<>(3);
+    private List<ChanPostImage> getOther(int position) {
+        List<ChanPostImage> other = new ArrayList<>(3);
         if (position - 1 >= 0) {
             other.add(images.get(position - 1));
         }
         if (position + 1 < images.size()) {
             other.add(images.get(position + 1));
         }
+
         return other;
     }
 
     public boolean forceReload() {
-        PostImage currentImage = getCurrentPostImage();
+        ChanPostImage currentImage = getCurrentPostImage();
 
-        HttpUrl imageUrl = currentImage.imageUrl;
+        HttpUrl imageUrl = currentImage.getImageUrl();
         if (imageUrl == null) {
             showToast(context, "Image has no imageUrl!");
             return false;
@@ -812,10 +813,10 @@ public class ImageViewerPresenter
      * @return url of an image to be searched
      */
     @Nullable
-    private HttpUrl getSearchImageUrl(final PostImage postImage) {
-        return postImage.type == ChanPostImageType.MOVIE
-                ? postImage.thumbnailUrl
-                : postImage.imageUrl;
+    private HttpUrl getSearchImageUrl(final ChanPostImage postImage) {
+        return postImage.getType() == ChanPostImageType.MOVIE
+                ? postImage.getThumbnailUrl()
+                : postImage.getImageUrl();
     }
 
     private enum SwipeDirection {
@@ -825,18 +826,18 @@ public class ImageViewerPresenter
     }
 
     public interface Callback {
-        void startPreviewInTransition(ChanDescriptor chanDescriptor, PostImage postImage);
-        void startPreviewOutTransition(ChanDescriptor chanDescriptor, PostImage postImage);
+        void startPreviewInTransition(ChanDescriptor chanDescriptor, ChanPostImage postImage);
+        void startPreviewOutTransition(ChanDescriptor chanDescriptor, ChanPostImage postImage);
         void setPreviewVisibility(boolean visible);
         void setPagerVisibility(boolean visible);
-        void setPagerItems(ChanDescriptor chanDescriptor, List<PostImage> images, int initialIndex);
-        void setImageMode(PostImage postImage, MultiImageView.Mode mode, boolean center);
-        void setVolume(PostImage postImage, boolean muted);
-        void setTitle(PostImage postImage, int index, int count, boolean spoiler);
-        void scrollToImage(PostImage postImage);
-        void updatePreviewImage(PostImage postImage);
+        void setPagerItems(ChanDescriptor chanDescriptor, List<ChanPostImage> images, int initialIndex);
+        void setImageMode(ChanPostImage postImage, MultiImageView.Mode mode, boolean center);
+        void setVolume(ChanPostImage postImage, boolean muted);
+        void setTitle(ChanPostImage postImage, int index, int count, boolean spoiler);
+        void scrollToImage(ChanPostImage postImage);
+        void updatePreviewImage(ChanPostImage postImage);
         void saveImage();
-        MultiImageView.Mode getImageMode(PostImage postImage);
+        MultiImageView.Mode getImageMode(ChanPostImage postImage);
         void showProgress(boolean show);
         void onLoadProgress(List<Float> progress);
         void showVolumeMenuItem(boolean show, boolean muted);

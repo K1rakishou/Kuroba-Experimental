@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.ui.settings.base_directory
 
 import android.net.Uri
-import com.github.k1rakishou.chan.core.settings.ChanSettings
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.fsaf.manager.base_directory.BaseDirectory
 import java.io.File

@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.cache
 
 import com.github.k1rakishou.chan.core.base.TestModule
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.RawFile
 import org.junit.After

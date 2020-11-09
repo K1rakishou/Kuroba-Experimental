@@ -1,7 +1,10 @@
 package com.github.k1rakishou.model.entity.chan.post
 
-import androidx.room.*
-import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
 import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
 
 @Entity(
@@ -19,7 +22,6 @@ import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
     Index(
       name = ChanPostIdEntity.POST_ID_FULL_INDEX,
       value = [
-        ChanPostIdEntity.OWNER_ARCHIVE_ID_COLUMN_NAME,
         ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME,
         ChanPostIdEntity.POST_NO_COLUMN_NAME,
         ChanPostIdEntity.POST_SUB_NO_COLUMN_NAME
@@ -44,8 +46,6 @@ data class ChanPostIdEntity(
   @PrimaryKey(autoGenerate = true)
   @ColumnInfo(name = POST_ID_COLUMN_NAME)
   var postId: Long = 0L,
-  @ColumnInfo(name = OWNER_ARCHIVE_ID_COLUMN_NAME)
-  var ownerArchiveId: Long = ArchiveDescriptor.NO_ARCHIVE_ID,
   @ColumnInfo(name = OWNER_THREAD_ID_COLUMN_NAME)
   val ownerThreadId: Long = 0L,
   @ColumnInfo(name = POST_NO_COLUMN_NAME)
@@ -58,7 +58,6 @@ data class ChanPostIdEntity(
     const val TABLE_NAME = "chan_post_id"
 
     const val POST_ID_COLUMN_NAME = "post_id"
-    const val OWNER_ARCHIVE_ID_COLUMN_NAME = "owner_archive_id"
     const val OWNER_THREAD_ID_COLUMN_NAME = "owner_thread_id"
     const val POST_NO_COLUMN_NAME = "post_no"
     const val POST_SUB_NO_COLUMN_NAME = "post_sub_no"

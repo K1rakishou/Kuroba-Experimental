@@ -8,10 +8,10 @@ import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.features.setup.data.BoardCellData
 import com.github.k1rakishou.chan.features.setup.data.BoardsSetupControllerState
 import com.github.k1rakishou.chan.ui.helper.BoardHelper
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.mutableListWithCap
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import io.reactivex.Flowable

@@ -28,18 +28,17 @@ import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.chan.core.model.Post;
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParams;
-import com.github.k1rakishou.chan.ui.text.span.AbsoluteSizeSpanHashed;
-import com.github.k1rakishou.chan.ui.text.span.ColorizableForegroundColorSpan;
-import com.github.k1rakishou.chan.ui.text.span.ForegroundColorSpanHashed;
-import com.github.k1rakishou.chan.ui.text.span.PostLinkable;
-import com.github.k1rakishou.chan.ui.theme.ChanTheme;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.common.CommentParserConstants;
+import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed;
+import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan;
+import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed;
+import com.github.k1rakishou.core_spannable.PostLinkable;
+import com.github.k1rakishou.core_themes.ChanThemeColorId;
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
-import com.github.k1rakishou.model.data.theme.ChanThemeColorId;
 
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -54,21 +53,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.github.k1rakishou.chan.core.site.parser.style.StyleRule.tagRule;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.sp;
+import static com.github.k1rakishou.common.AndroidUtils.sp;
 
 @AnyThread
 public class CommentParser implements ICommentParser, HasQuotePatterns {
     private static final String TAG = "CommentParser";
 
-    public static final String SAVED_REPLY_SELF_SUFFIX = " (Me)";
-    public static final String SAVED_REPLY_OTHER_SUFFIX = " (You)";
-    public static final String OP_REPLY_SUFFIX = " (OP)";
-    public static final String DEAD_REPLY_SUFFIX = " (DEAD)";
-    public static final String EXTERNAL_THREAD_LINK_SUFFIX = " \u2192"; // arrow to the right
-
     private final MockReplyManager mockReplyManager;
-    private final ThemeEngine themeEngine;
-
     private final Map<String, List<StyleRule>> rules = new HashMap<>();
 
     private final String defaultQuoteRegex = "//boards\\.4chan.*?\\.org/(.*?)/thread/(\\d*?)#p(\\d*)";
@@ -80,8 +71,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     private final Pattern boardSearchPattern = Pattern.compile("//boards\\.4chan.*?\\.org/(.*?)/catalog#s=(.*)");
     private final Pattern colorPattern = Pattern.compile("color:#([0-9a-fA-F]+)");
 
-    public CommentParser(ThemeEngine themeEngine, MockReplyManager mockReplyManager) {
-        this.themeEngine = themeEngine;
+    public CommentParser(MockReplyManager mockReplyManager) {
         this.mockReplyManager = mockReplyManager;
 
         // Required tags.
@@ -148,8 +138,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     @Nullable
     public CharSequence handleTag(
             PostParser.Callback callback,
-            ChanTheme theme,
-            Post.Builder post,
+            ChanPostBuilder post,
             String tag,
             CharSequence text,
             Element element
@@ -162,7 +151,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
 
                 for (StyleRule rule : rules) {
                     if (rule.highPriority() == highPriority && rule.applies(element)) {
-                        return rule.apply(new StyleRulesParams(theme, text, element, callback, post));
+                        return rule.apply(new StyleRulesParams(text, element, callback, post));
                     }
                 }
             }
@@ -173,9 +162,8 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     }
 
     private CharSequence handleDeadlink(
-            ChanTheme theme,
             PostParser.Callback callback,
-            Post.Builder post,
+            ChanPostBuilder post,
             CharSequence text,
             Element anchor
     ) {
@@ -202,12 +190,16 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             type = PostLinkable.Type.DEAD;
         }
 
-        PostLinkable.Link link = new PostLinkable.Link(type, TextUtils.concat(text, DEAD_REPLY_SUFFIX), value);
+        PostLinkable.Link link = new PostLinkable.Link(
+                type,
+                TextUtils.concat(text, CommentParserConstants.DEAD_REPLY_SUFFIX),
+                value
+        );
+
         appendSuffixes(callback, post, link, postId, postSubNo);
 
         SpannableString res = new SpannableString(link.getKey());
         PostLinkable pl = new PostLinkable(
-                themeEngine,
                 link.getKey(),
                 link.getLinkValue(),
                 link.getType()
@@ -226,9 +218,8 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     }
 
     private CharSequence handleAnchor(
-            ChanTheme theme,
             PostParser.Callback callback,
-            Post.Builder post,
+            ChanPostBuilder post,
             CharSequence text,
             Element anchor
     ) {
@@ -244,21 +235,20 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             );
 
             if (mockReplyPostNo >= 0) {
-                addMockReply(theme, post, spannableStringBuilder, mockReplyPostNo);
+                addMockReply(post, spannableStringBuilder, mockReplyPostNo);
             }
         }
 
         if (handlerLink != null) {
-            addReply(theme, callback, post, handlerLink, spannableStringBuilder);
+            addReply(callback, post, handlerLink, spannableStringBuilder);
         }
 
         return spannableStringBuilder.length() > 0 ? spannableStringBuilder : null;
     }
 
     private void addReply(
-            ChanTheme theme,
             PostParser.Callback callback,
-            Post.Builder post,
+            ChanPostBuilder post,
             PostLinkable.Link handlerLink,
             SpannableStringBuilder spannableStringBuilder
     ) {
@@ -270,7 +260,12 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         }
 
         if (handlerLink.getType() == PostLinkable.Type.THREAD) {
-            handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), EXTERNAL_THREAD_LINK_SUFFIX));
+            handlerLink.setKey(
+                    TextUtils.concat(
+                            handlerLink.getKey(),
+                            CommentParserConstants.EXTERNAL_THREAD_LINK_SUFFIX
+                    )
+            );
         }
 
         if (handlerLink.getType() == PostLinkable.Type.QUOTE
@@ -289,7 +284,6 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         SpannableString res = new SpannableString(handlerLink.getKey());
 
         PostLinkable pl = new PostLinkable(
-                themeEngine,
                 handlerLink.getKey(),
                 handlerLink.getLinkValue(),
                 handlerLink.getType()
@@ -309,22 +303,37 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
 
     protected void appendSuffixes(
             PostParser.Callback callback,
-            @NonNull Post.Builder post,
+            @NonNull ChanPostBuilder post,
             PostLinkable.Link handlerLink,
             Long postNo,
             Long postSubNo
     ) {
         // Append (OP) when it's a reply to OP
         if (postNo == post.opId) {
-            handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), OP_REPLY_SUFFIX));
+            handlerLink.setKey(
+                    TextUtils.concat(
+                            handlerLink.getKey(),
+                            CommentParserConstants.OP_REPLY_SUFFIX
+                    )
+            );
         }
 
         // Append (You) when it's a reply to a saved reply, (Me) if it's a self reply
         if (callback.isSaved(postNo, postSubNo)) {
             if (post.isSavedReply) {
-                handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), SAVED_REPLY_SELF_SUFFIX));
+                handlerLink.setKey(
+                        TextUtils.concat(
+                                handlerLink.getKey(),
+                                CommentParserConstants.SAVED_REPLY_SELF_SUFFIX
+                        )
+                );
             } else {
-                handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), SAVED_REPLY_OTHER_SUFFIX));
+                handlerLink.setKey(
+                        TextUtils.concat(
+                                handlerLink.getKey(),
+                                CommentParserConstants.SAVED_REPLY_OTHER_SUFFIX
+                        )
+                );
             }
         }
     }
@@ -350,8 +359,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     }
 
     private void addMockReply(
-            ChanTheme theme,
-            Post.Builder post,
+            ChanPostBuilder post,
             SpannableStringBuilder spannableStringBuilder,
             long mockReplyPostNo
     ) {
@@ -362,7 +370,6 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         SpannableString res = new SpannableString(replyText);
 
         PostLinkable pl = new PostLinkable(
-                themeEngine,
                 replyText,
                 new PostLinkable.Value.LongValue(mockReplyPostNo),
                 PostLinkable.Type.QUOTE
@@ -381,9 +388,8 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     }
 
     private CharSequence handleFortune(
-            ChanTheme theme,
             PostParser.Callback callback,
-            Post.Builder builder,
+            ChanPostBuilder builder,
             CharSequence text,
             Element span
     ) {
@@ -409,9 +415,8 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     }
 
     public CharSequence handleTable(
-            ChanTheme theme,
             PostParser.Callback callback,
-            Post.Builder builder,
+            ChanPostBuilder builder,
             CharSequence text,
             Element table
     ) {
@@ -461,13 +466,13 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         // Overrides the text (possibly) parsed by child nodes.
         return span(
                 TextUtils.concat(parts.toArray(new CharSequence[0])),
-                new ColorizableForegroundColorSpan(themeEngine, ChanThemeColorId.PostInlineQuoteColor),
+                new ColorizableForegroundColorSpan(ChanThemeColorId.PostInlineQuoteColor),
                 new AbsoluteSizeSpanHashed(sp(12f))
         );
     }
 
     public PostLinkable.Link matchAnchor(
-            Post.Builder post,
+            ChanPostBuilder post,
             CharSequence text,
             Element anchor,
             PostParser.Callback callback
@@ -534,11 +539,11 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         );
     }
 
-    protected Matcher matchBoardSearch(String href, Post.Builder post) {
+    protected Matcher matchBoardSearch(String href, ChanPostBuilder post) {
         return boardSearchPattern.matcher(href);
     }
 
-    protected Matcher matchBoardLink(String href, Post.Builder post) {
+    protected Matcher matchBoardLink(String href, ChanPostBuilder post) {
         Matcher chan4BoardLinkMatcher = boardLinkPattern.matcher(href);
         if (chan4BoardLinkMatcher.matches()) {
             return chan4BoardLinkMatcher;
@@ -547,15 +552,15 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         return boardLinkPattern8Chan.matcher(href);
     }
 
-    private Matcher matchInternalQuote(String href, Post.Builder post) {
+    private Matcher matchInternalQuote(String href, ChanPostBuilder post) {
         return getQuotePattern().matcher(href);
     }
 
-    private Matcher matchExternalQuote(String href, Post.Builder post) {
+    private Matcher matchExternalQuote(String href, ChanPostBuilder post) {
         return getFullQuotePattern().matcher(href);
     }
 
-    protected String extractQuote(String href, Post.Builder post) {
+    protected String extractQuote(String href, ChanPostBuilder post) {
         if (href.matches(defaultQuoteRegex)) {
             // gets us something like /board/ or /thread/postno#quoteno
             // hacky fix for 4chan having two domains but the same API

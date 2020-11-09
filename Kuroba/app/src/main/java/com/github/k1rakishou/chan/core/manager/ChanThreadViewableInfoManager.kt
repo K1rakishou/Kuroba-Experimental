@@ -1,11 +1,11 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
+import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
-import com.github.k1rakishou.chan.utils.Logger
-import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.thread.ChanThreadViewableInfo
 import com.github.k1rakishou.model.data.thread.ChanThreadViewableInfoView
@@ -65,7 +65,7 @@ class ChanThreadViewableInfoManager(
     }
   }
 
-  fun getIndexAndTop(threadDescriptor: ChanDescriptor.ThreadDescriptor): RecyclerUtils.IndexAndTop? {
+  fun getIndexAndTop(threadDescriptor: ChanDescriptor.ThreadDescriptor): PersistableChanState.IndexAndTop? {
     return lock.read {
       val chanThreadViewableInfo = chanThreadViewableMap[threadDescriptor]
         ?: return@read null
@@ -73,7 +73,7 @@ class ChanThreadViewableInfoManager(
       val listViewIndex = chanThreadViewableInfo.listViewIndex
       val listViewTop = chanThreadViewableInfo.listViewTop
 
-      return@read RecyclerUtils.IndexAndTop(listViewIndex, listViewTop)
+      return@read PersistableChanState.IndexAndTop(listViewIndex, listViewTop)
     }
   }
 

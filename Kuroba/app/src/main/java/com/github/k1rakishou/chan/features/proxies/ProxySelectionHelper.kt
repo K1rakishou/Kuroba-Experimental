@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.features.proxies
 
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
-import com.github.k1rakishou.chan.core.manager.ProxyStorage
+import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItem
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItemId
 

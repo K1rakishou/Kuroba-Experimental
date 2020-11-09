@@ -1,6 +1,8 @@
 package com.github.k1rakishou.chan.utils
 
 import com.github.k1rakishou.chan.BuildConfig
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getFlavorType
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -36,8 +38,8 @@ object NotificationConstants {
     const val REPLY_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_replies_notifications_channel"
     const val REPLY_NOTIFICATION_CHANNEL_NAME = "Notification channel for replies (Yous)"
 
-    val SUMMARY_NOTIFICATION_TAG = "REPLIES_SUMMARY_NOTIFICATION_TAG_${AndroidUtils.getFlavorType().name}"
-    val REPLIES_PRE_OREO_NOTIFICATION_TAG = "REPLIES_PRE_OREO_NOTIFICATION_TAG_${AndroidUtils.getFlavorType().name}"
+    val SUMMARY_NOTIFICATION_TAG = "REPLIES_SUMMARY_NOTIFICATION_TAG_${getFlavorType().name}"
+    val REPLIES_PRE_OREO_NOTIFICATION_TAG = "REPLIES_PRE_OREO_NOTIFICATION_TAG_${getFlavorType().name}"
 
     const val R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY = "reply_notification_click_thread_descriptors"
     const val R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY = "reply_notification_swipe_thread_descriptors"
@@ -49,7 +51,7 @@ object NotificationConstants {
     const val LAST_PAGE_SILENT_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_last_page_silent_notifications_channel"
     const val LAST_PAGE_SILENT_NOTIFICATION_NAME = "Notification channel for threads last pages alerts (silent)"
 
-    val LAST_PAGE_NOTIFICATION_TAG = "LAST_PAGE_NOTIFICATION_TAG_${AndroidUtils.getFlavorType().name}"
+    val LAST_PAGE_NOTIFICATION_TAG = "LAST_PAGE_NOTIFICATION_TAG_${getFlavorType().name}"
 
     const val LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY = "last_page_notification_click_thread_descriptors"
   }

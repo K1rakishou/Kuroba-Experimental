@@ -30,17 +30,16 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
-import com.github.k1rakishou.chan.core.manager.DialogFactory;
+import com.github.k1rakishou.chan.core.helper.DialogFactory;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
-import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.saver.ImageSaveTask;
 import com.github.k1rakishou.chan.core.saver.ImageSaver;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
@@ -51,6 +50,7 @@ import com.github.k1rakishou.chan.utils.StringUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+import com.github.k1rakishou.model.data.post.ChanPostImage;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -65,10 +65,10 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import kotlin.Unit;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getQuantityString;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.getQuantityString;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
+import static com.github.k1rakishou.common.AndroidUtils.inflate;
 
 public class AlbumDownloadController
         extends Controller
@@ -180,7 +180,7 @@ public class AlbumDownloadController
         //generate tasks before prompting
         List<ImageSaveTask> tasks = new ArrayList<>(items.size());
         for (AlbumDownloadItem item : items) {
-            if (item.postImage.isInlined || item.postImage.hidden) {
+            if (item.postImage.isInlined() || item.postImage.getHidden()) {
                 // Do not download inlined files via the Album downloads (because they often
                 // fail with SSL exceptions) and we can't really trust those files.
                 // Also don't download filter hidden items
@@ -321,12 +321,12 @@ public class AlbumDownloadController
         updateTitle();
     }
 
-    public void setPostImages(ChanDescriptor chanDescriptor, List<PostImage> postImages) {
+    public void setPostImages(ChanDescriptor chanDescriptor, List<ChanPostImage> postImages) {
         this.chanDescriptor = chanDescriptor;
 
         for (int i = 0, postImagesSize = postImages.size(); i < postImagesSize; i++) {
-            PostImage postImage = postImages.get(i);
-            if (postImage == null || postImage.isInlined || postImage.hidden) {
+            ChanPostImage postImage = postImages.get(i);
+            if (postImage == null || postImage.isInlined() || postImage.getHidden()) {
                 // Do not allow downloading inlined files via the Album downloads (because they often
                 // fail with SSL exceptions) and we can't really trust those files.
                 // Also don't allow filter hidden items
@@ -399,11 +399,11 @@ public class AlbumDownloadController
 
     private static class AlbumDownloadItem {
         @NonNull
-        public PostImage postImage;
+        public ChanPostImage postImage;
         public boolean checked;
         public int id;
 
-        public AlbumDownloadItem(@NonNull PostImage postImage, boolean checked, int id) {
+        public AlbumDownloadItem(@NonNull ChanPostImage postImage, boolean checked, int id) {
             this.postImage = postImage;
             this.checked = checked;
             this.id = id;

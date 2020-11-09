@@ -31,18 +31,18 @@ import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks;
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController;
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.k1rakishou.chan.ui.layout.ThreadSlidingPaneLayout;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.ui.widget.SlidingPaneLayoutEx;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.inflate;
 
 public class ThreadSlideController
         extends Controller

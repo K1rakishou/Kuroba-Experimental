@@ -2,13 +2,13 @@ package com.github.k1rakishou.chan.features.proxies
 
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BasePresenter
-import com.github.k1rakishou.chan.core.manager.ProxyStorage
+import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.features.proxies.data.ProxyEntryView
 import com.github.k1rakishou.chan.features.proxies.data.ProxyEntryViewSelection
 import com.github.k1rakishou.chan.features.proxies.data.ProxySetupState
-import com.github.k1rakishou.chan.utils.AndroidUtils.getString
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.common.AndroidUtils.getString
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow

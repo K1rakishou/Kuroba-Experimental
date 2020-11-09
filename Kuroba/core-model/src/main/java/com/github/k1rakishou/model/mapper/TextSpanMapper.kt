@@ -1,7 +1,7 @@
 package com.github.k1rakishou.model.mapper
 
-import com.github.k1rakishou.model.data.serializable.spans.SerializableSpanInfoList
-import com.github.k1rakishou.model.data.serializable.spans.SerializableSpannableString
+import com.github.k1rakishou.core_spannable.serializable.SerializableSpanInfoList
+import com.github.k1rakishou.core_spannable.serializable.SerializableSpannableString
 import com.github.k1rakishou.model.entity.chan.post.ChanTextSpanEntity
 import com.google.gson.Gson
 

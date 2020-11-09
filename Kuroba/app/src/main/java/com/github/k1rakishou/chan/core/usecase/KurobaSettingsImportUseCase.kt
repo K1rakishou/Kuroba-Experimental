@@ -1,6 +1,11 @@
 package com.github.k1rakishou.chan.core.usecase
 
-import com.github.k1rakishou.chan.core.manager.*
+import com.github.k1rakishou.chan.core.helper.FilterEngine
+import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.ChanFilterManager
+import com.github.k1rakishou.chan.core.manager.PostHideManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.sites.Lainchan
 import com.github.k1rakishou.chan.core.site.sites.Sushichan
@@ -9,10 +14,16 @@ import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan420.Chan420
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.chan.core.site.sites.kun8.Kun8
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.Logger
-import com.github.k1rakishou.common.*
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
+import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.common.jsonArray
+import com.github.k1rakishou.common.jsonObject
+import com.github.k1rakishou.common.nextBooleanOrNull
+import com.github.k1rakishou.common.nextIntOrNull
+import com.github.k1rakishou.common.nextStringOrNull
+import com.github.k1rakishou.common.putIfNotContains
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.ExternalFile
 import com.github.k1rakishou.fsaf.file.FileDescriptorMode
@@ -72,7 +83,7 @@ class KurobaSettingsImportUseCase(
   private suspend fun importFromKuroba(siteIdMap: Map<Int, Int>, jsonReader: JsonReader) {
     Logger.d(TAG, "importFromKuroba() called")
 
-    if (AndroidUtils.isDevBuild()) {
+    if (isDevBuild()) {
       siteIdMap.forEach { (databaseId, classId) ->
         Logger.d(TAG, "Mapped site databaseId=$databaseId to site classId=$classId")
       }
@@ -185,7 +196,7 @@ class KurobaSettingsImportUseCase(
   }
 
   private suspend fun createPostHides(postHides: MutableSet<ChanPostHide>) {
-    if (AndroidUtils.isDevBuild()) {
+    if (isDevBuild()) {
       postHides.forEach { chanPostHide ->
         Logger.d(TAG, "Creating post hide $chanPostHide")
       }
@@ -210,7 +221,7 @@ class KurobaSettingsImportUseCase(
     }
 
     boardsToActivateMap.forEach { (siteDescriptor, boardDescriptors) ->
-      if (AndroidUtils.isDevBuild()) {
+      if (isDevBuild()) {
         Logger.d(TAG, "Activating boards ${boardDescriptors}")
       }
 
@@ -221,7 +232,7 @@ class KurobaSettingsImportUseCase(
   private suspend fun activateSitesAndLoadBoardInfo(
     siteDescriptorsToActivate: Set<SiteDescriptor>
   ): Set<SiteDescriptor> {
-    if (AndroidUtils.isDevBuild()) {
+    if (isDevBuild()) {
       siteDescriptorsToActivate.forEach { siteDescriptor ->
         Logger.d(TAG, "activateSitesAndLoadBoardInfo() siteDescriptor=$siteDescriptor")
       }
@@ -628,7 +639,7 @@ class KurobaSettingsImportUseCase(
   private suspend fun createNewFilter(chanFilter: ChanFilter) {
     suspendCoroutine<Unit> { continuation ->
       filterManager.createOrUpdateFilter(chanFilter) {
-        if (AndroidUtils.isDevBuild()) {
+        if (isDevBuild()) {
           Logger.d(TAG, "Creating filter $chanFilter")
         }
 

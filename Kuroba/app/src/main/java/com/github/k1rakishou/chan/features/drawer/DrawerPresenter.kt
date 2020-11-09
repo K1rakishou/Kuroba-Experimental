@@ -1,16 +1,20 @@
 package com.github.k1rakishou.chan.features.drawer
 
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
-import com.github.k1rakishou.chan.core.manager.*
-import com.github.k1rakishou.chan.core.settings.ChanSettings
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
+import com.github.k1rakishou.chan.core.manager.PageRequestManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.drawer.data.HistoryControllerState
 import com.github.k1rakishou.chan.features.drawer.data.NavHistoryBookmarkAdditionalInfo
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.navigation.NavHistoryElement
 import io.reactivex.Flowable

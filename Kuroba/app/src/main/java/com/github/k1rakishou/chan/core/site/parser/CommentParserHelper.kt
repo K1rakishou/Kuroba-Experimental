@@ -19,13 +19,12 @@ package com.github.k1rakishou.chan.core.site.parser
 import android.text.SpannableString
 import android.text.Spanned
 import androidx.core.text.buildSpannedString
-import com.github.k1rakishou.chan.BuildConfig
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.model.PostImage
-import com.github.k1rakishou.chan.ui.text.span.PostLinkable
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder
+import com.github.k1rakishou.chan.core.model.ChanPostImageBuilder
 import com.github.k1rakishou.chan.utils.StringUtils
+import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_spannable.PostLinkable
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.nibor.autolink.LinkExtractor
@@ -50,8 +49,7 @@ object CommentParserHelper {
    * */
   @JvmStatic
   fun detectLinks(
-    themeEngine: ThemeEngine,
-    post: Post.Builder,
+    post: ChanPostBuilder,
     text: String,
     linkHandler: Function1<String, PostLinkable?>?
   ): SpannableString {
@@ -89,7 +87,6 @@ object CommentParserHelper {
         }
 
         val postLinkable = PostLinkable(
-          themeEngine,
           linkText,
           PostLinkable.Value.StringValue(linkText),
           PostLinkable.Type.LINK
@@ -168,8 +165,7 @@ object CommentParserHelper {
 
   @JvmStatic
   fun detectLinks(
-    themeEngine: ThemeEngine,
-    post: Post.Builder,
+    post: ChanPostBuilder,
     text: String,
     spannable: SpannableString
   ) {
@@ -178,7 +174,6 @@ object CommentParserHelper {
     for (link in links) {
       val linkText = text.substring(link.beginIndex, link.endIndex)
       val pl = PostLinkable(
-        themeEngine,
         linkText,
         PostLinkable.Value.StringValue(linkText),
         PostLinkable.Type.LINK
@@ -199,11 +194,11 @@ object CommentParserHelper {
   }
 
   @JvmStatic
-  fun addPostImages(post: Post.Builder) {
+  fun addPostImages(chanPost: ChanPostBuilder) {
     val duplicateCheckerSet = mutableSetOf<HttpUrl>()
 
-    for (linkable in post.linkables) {
-      if (post.postImages.size >= 5) {
+    for (linkable in chanPost.linkables) {
+      if (chanPost.postImages.size >= 5) {
         // max 5 images hotlinked
         return
       }
@@ -227,7 +222,7 @@ object CommentParserHelper {
 
       val linkStr = link.toString()
       val noThumbnail = StringUtils.endsWithAny(linkStr, noThumbLinkSuffixes)
-      val spoilerThumbnail = BuildConfig.RESOURCES_ENDPOINT + "internal_spoiler.png"
+      val spoilerThumbnail = AppConstants.RESOURCES_ENDPOINT + "internal_spoiler.png"
 
       val imageUrl = linkStr.toHttpUrlOrNull()
       if (imageUrl == null) {
@@ -250,7 +245,7 @@ object CommentParserHelper {
 
       val spoilerThumbnailUrl = spoilerThumbnail.toHttpUrlOrNull()
 
-      val postImage = PostImage.Builder()
+      val postImage = ChanPostImageBuilder()
         .serverFilename(matcher.group(1))
         .thumbnailUrl(thumbnailUrl)
         .spoilerThumbnailUrl(spoilerThumbnailUrl)
@@ -260,10 +255,10 @@ object CommentParserHelper {
         .spoiler(true)
         .isInlined(true)
         .size(-1)
-        .postDescriptor(post.postDescriptor)
+        .postDescriptor(chanPost.postDescriptor)
         .build()
 
-      post.postImages(listOf(postImage))
+      chanPost.postImages(listOf(postImage))
     }
   }
 

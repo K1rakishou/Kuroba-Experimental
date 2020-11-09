@@ -28,12 +28,20 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.epoxy.EpoxyTouchHelper
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
-import com.github.k1rakishou.chan.core.manager.*
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
+import com.github.k1rakishou.chan.core.manager.PageRequestManager
+import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.navigation.HasNavigation
-import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController
 import com.github.k1rakishou.chan.features.drawer.data.HistoryControllerState
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
@@ -46,11 +54,15 @@ import com.github.k1rakishou.chan.ui.controller.BrowseController
 import com.github.k1rakishou.chan.ui.controller.ThreadController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.controller.ViewThreadController
-import com.github.k1rakishou.chan.ui.controller.navigation.*
+import com.github.k1rakishou.chan.ui.controller.navigation.BottomNavBarAwareNavigationController
+import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController
+import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
+import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
+import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
+import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
@@ -58,12 +70,18 @@ import com.github.k1rakishou.chan.ui.view.HidingBottomNavigationView
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanel
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItem
 import com.github.k1rakishou.chan.ui.widget.SimpleEpoxySwipeCallbacks
-import com.github.k1rakishou.chan.utils.AndroidUtils.*
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.chan.utils.plusAssign
+import com.github.k1rakishou.common.AndroidUtils.dp
+import com.github.k1rakishou.common.AndroidUtils.inflate
 import com.github.k1rakishou.common.updatePaddings
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.manipulateColor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.launch
 import java.util.*
@@ -156,7 +174,8 @@ class DrawerController(
       }
 
       if (navigationController == null) {
-        Logger.e(TAG, "topController is an unexpected controller type: ${topController::class.java.simpleName}")
+        Logger.e(TAG, "topController is an unexpected controller " +
+          "type: ${topController::class.java.simpleName}")
       }
 
       return navigationController

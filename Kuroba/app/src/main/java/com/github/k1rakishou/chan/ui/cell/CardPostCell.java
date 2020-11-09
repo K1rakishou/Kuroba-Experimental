@@ -24,22 +24,23 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
-import com.github.k1rakishou.chan.core.manager.PostPreloadedInfoHolder;
-import com.github.k1rakishou.chan.core.model.Post;
-import com.github.k1rakishou.chan.core.model.PostImage;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout;
-import com.github.k1rakishou.chan.ui.theme.ChanTheme;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
+import com.github.k1rakishou.common.AndroidUtils;
+import com.github.k1rakishou.core_themes.ChanTheme;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+import com.github.k1rakishou.model.data.post.ChanPost;
+import com.github.k1rakishou.model.data.post.ChanPostImage;
+import com.github.k1rakishou.model.util.ChanPostUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,8 +48,8 @@ import java.util.List;
 import javax.inject.Inject;
 
 import static com.github.k1rakishou.chan.ui.adapter.PostsFilter.Order.isNotBumpOrder;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
 
 public class CardPostCell extends ColorizableCardView implements PostCellInterface,
         View.OnClickListener, View.OnLongClickListener {
@@ -61,10 +62,9 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
     PostFilterManager postFilterManager;
 
     private ChanTheme theme;
-    private Post post;
+    private ChanPost post;
     private ChanDescriptor chanDescriptor;
     private PostCellInterface.PostCellCallback callback;
-    private PostPreloadedInfoHolder postPreloadedInfoHolder;
     private boolean compact = false;
     private boolean inPopup = false;
 
@@ -91,7 +91,7 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
     }
 
     private void init() {
-        AndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
                 .inject(this);
     }
 
@@ -150,11 +150,10 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
 
     public void setPost(
             ChanDescriptor chanDescriptor,
-            final Post post,
+            final ChanPost post,
             final int currentPostIndex,
             final int realPostIndex,
             PostCellInterface.PostCellCallback callback,
-            PostPreloadedInfoHolder postPreloadedInfoHolder,
             boolean inPopup,
             boolean highlighted,
             boolean selected,
@@ -173,7 +172,6 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
         this.post = post;
         this.theme = theme;
         this.callback = callback;
-        this.postPreloadedInfoHolder = postPreloadedInfoHolder;
 
         bindPost(post);
 
@@ -183,11 +181,11 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
         }
     }
 
-    public Post getPost() {
+    public ChanPost getPost() {
         return post;
     }
 
-    public ThumbnailView getThumbnailView(PostImage postImage) {
+    public ThumbnailView getThumbnailView(ChanPostImage postImage) {
         return thumbView;
     }
 
@@ -216,12 +214,12 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
         this.callback = null;
     }
 
-    private void bindPost(Post post) {
+    private void bindPost(ChanPost post) {
         if (callback == null) {
             throw new NullPointerException("Callback is null during bindPost()");
         }
 
-        PostImage firstPostImage = post.firstImage();
+        ChanPostImage firstPostImage = post.firstImage();
         if (firstPostImage != null && !ChanSettings.textOnly.get()) {
             thumbView.setVisibility(VISIBLE);
 
@@ -254,27 +252,34 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
             filterMatchColor.setVisibility(GONE);
         }
 
-        if (!TextUtils.isEmpty(post.subject)) {
+        if (!TextUtils.isEmpty(post.getSubject())) {
+            CharSequence subject = post.getSubject();
+            ChanPostUtils.postCommentSpansSetThemeEngine(subject, themeEngine);
+
             title.setVisibility(VISIBLE);
-            title.setText(post.subject);
+            title.setText(subject);
         } else {
             title.setVisibility(GONE);
             title.setText(null);
         }
 
-        CharSequence commentText;
-        if (post.getComment().length() > COMMENT_MAX_LENGTH) {
-            commentText = post.getComment().subSequence(0, COMMENT_MAX_LENGTH);
-        } else {
-            commentText = post.getComment();
+        CharSequence commentText = post.getPostComment().getComment();
+        if (commentText.length() > COMMENT_MAX_LENGTH) {
+            commentText = commentText.subSequence(0, COMMENT_MAX_LENGTH);
         }
 
+        ChanPostUtils.postCommentSpansSetThemeEngine(commentText, themeEngine);
         comment.setText(commentText);
         comment.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
 
-        String status = getString(R.string.card_stats, post.getTotalRepliesCount(), post.getThreadImagesCount());
+        String status = getString(
+                R.string.card_stats,
+                post.getCatalogRepliesCount(),
+                post.getCatalogImagesCount()
+        );
+
         if (!ChanSettings.neverShowPages.get()) {
-            Chan4PagesRequest.BoardPage boardPage = callback.getPage(post);
+            Chan4PagesRequest.BoardPage boardPage = callback.getPage(post.getPostDescriptor());
             if (boardPage != null && isNotBumpOrder(ChanSettings.boardOrder.get())) {
                 status += " Pg " + boardPage.getCurrentPage();
             }

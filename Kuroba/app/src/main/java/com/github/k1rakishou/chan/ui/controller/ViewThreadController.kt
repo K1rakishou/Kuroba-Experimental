@@ -19,13 +19,20 @@ package com.github.k1rakishou.chan.ui.controller
 import android.content.Context
 import android.widget.Toast
 import androidx.core.util.Pair
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.R.string.action_reload
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
-import com.github.k1rakishou.chan.core.manager.*
+import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange
-import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.*
-import com.github.k1rakishou.chan.core.settings.ChanSettings
+import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.BookmarksCreated
+import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.BookmarksDeleted
+import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.BookmarksInitialized
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
+import com.github.k1rakishou.chan.core.manager.LocalSearchType
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController
@@ -34,22 +41,29 @@ import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.helper.HintPopup
-import com.github.k1rakishou.chan.ui.helper.PostHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.ui.toolbar.*
+import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem
+import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
+import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenu
+import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem.ToobarThreedotMenuCallback
+import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.getString
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLinkInBrowser
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink
 import com.github.k1rakishou.chan.utils.SharingUtils.getUrlForSharing
 import com.github.k1rakishou.chan.utils.plusAssign
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils.getString
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import com.github.k1rakishou.model.util.ChanPostUtils
 import io.reactivex.android.schedulers.AndroidSchedulers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -76,6 +90,8 @@ open class ViewThreadController(
   lateinit var archivesManager: ArchivesManager
   @Inject
   lateinit var dialogFactory: DialogFactory
+  @Inject
+  lateinit var chanThreadManager: ChanThreadManager
 
   private var pinItemPinned = false
 
@@ -185,7 +201,7 @@ open class ViewThreadController(
       .withSubItem(
         ACTION_FORCE_RELOAD,
         R.string.action_force_reload,
-        AndroidUtils.isDevBuild()
+        isDevBuild()
       ) { item -> forceReloadClicked(item) }
       .withSubItem(
         ACTION_VIEW_REMOVED_POSTS,
@@ -207,7 +223,7 @@ open class ViewThreadController(
       .withSubItem(
         ACTION_GO_TO_POST,
         R.string.action_go_to_post,
-        AndroidUtils.isDevBuild()
+        isDevBuild()
       ) { item -> onGoToPostClicked(item) }
       .withScrollBarLabelsOptions()
       .withThreadViewOptions()
@@ -297,11 +313,11 @@ open class ViewThreadController(
   }
 
   private fun reloadClicked(item: ToolbarMenuSubItem) {
-    threadLayout.presenter.requestData()
+    threadLayout.presenter.normalLoad()
   }
 
   private fun forceReloadClicked(item: ToolbarMenuSubItem) {
-    threadLayout.presenter.forceRequestData()
+    threadLayout.presenter.clearMemoryCacheAndReload()
   }
 
   private fun showAvailableArchives(descriptor: ThreadDescriptor) {
@@ -359,33 +375,33 @@ open class ViewThreadController(
   }
 
   private fun openBrowserClicked(item: ToolbarMenuSubItem) {
-    if (threadLayout.presenter.chanThread == null) {
-      AndroidUtils.showToast(context, R.string.cannot_open_in_browser_already_deleted)
+    if (threadLayout.presenter.currentChanDescriptor == null) {
+      showToast(R.string.cannot_open_in_browser_already_deleted)
       return
     }
 
     val url = getUrlForSharing(siteManager, threadDescriptor)
     if (url == null) {
-      AndroidUtils.showToast(context, R.string.cannot_open_in_browser_already_deleted)
+      showToast(R.string.cannot_open_in_browser_already_deleted)
       return
     }
 
-    AndroidUtils.openLinkInBrowser(context, url, themeEngine.chanTheme)
+    openLinkInBrowser(context, url, themeEngine.chanTheme)
   }
 
   private fun shareClicked(item: ToolbarMenuSubItem) {
-    if (threadLayout.presenter.chanThread == null) {
-      AndroidUtils.showToast(context, R.string.cannot_shared_thread_already_deleted)
+    if (threadLayout.presenter.currentChanDescriptor == null) {
+      showToast(R.string.cannot_shared_thread_already_deleted)
       return
     }
 
     val url = getUrlForSharing(siteManager, threadDescriptor)
     if (url == null) {
-      AndroidUtils.showToast(context, R.string.cannot_shared_thread_already_deleted)
+      showToast(R.string.cannot_shared_thread_already_deleted)
       return
     }
 
-    AndroidUtils.shareLink(url)
+    shareLink(url)
   }
 
   private fun onGoToPostClicked(item: ToolbarMenuSubItem) {
@@ -412,7 +428,7 @@ open class ViewThreadController(
       item as CheckableToolbarMenuSubItem
       item.isChecked = ChanSettings.scrollingTextForThreadTitles.toggle()
 
-      AndroidUtils.showToast(context, R.string.restart_the_app)
+      showToast(R.string.restart_the_app)
     } else {
       throw IllegalStateException("Unknown clickedItemId $clickedItemId")
     }
@@ -559,7 +575,7 @@ open class ViewThreadController(
     historyNavigationManager.moveNavElementToTop(threadDescriptor)
 
     val presenter = threadLayout.presenter
-    if (threadDescriptor != presenter.chanDescriptor) {
+    if (threadDescriptor != presenter.currentChanDescriptor) {
       loadThreadInternal(threadDescriptor)
     }
   }
@@ -576,16 +592,16 @@ open class ViewThreadController(
 
     setPinIconState(false)
     updateLeftPaneHighlighting(threadDescriptor)
-
-    presenter.requestThreadInitialData(threadDescriptor)
     showHints()
   }
 
   private fun updateNavigationTitle(threadDescriptor: ThreadDescriptor?) {
-    val chanThread = threadLayout.presenter.chanThread
+    val chanDescriptor = threadLayout.presenter.currentChanDescriptor as? ThreadDescriptor
+      ?: return
 
-    if (chanThread != null && chanThread.chanDescriptor == threadDescriptor) {
-      navigation.title = PostHelper.getTitle(chanThread.op, threadDescriptor)
+    if (chanDescriptor == threadDescriptor) {
+      val originalPost = chanThreadManager.getChanThread(chanDescriptor)?.getOriginalPost()
+      navigation.title = ChanPostUtils.getTitle(originalPost, threadDescriptor)
     } else {
       navigation.title = getString(R.string.loading)
     }

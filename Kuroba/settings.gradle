@@ -1,3 +1,6 @@
+include ':core-spannable'
+include ':core-themes'
+include ':core-logger'
 include ':core-parser'
 include ':core-settings'
 include ':core-common'

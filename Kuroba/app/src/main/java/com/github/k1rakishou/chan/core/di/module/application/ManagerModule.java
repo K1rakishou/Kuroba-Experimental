@@ -18,8 +18,15 @@ package com.github.k1rakishou.chan.core.di.module.application;
 
 import android.content.Context;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
+import com.github.k1rakishou.chan.core.helper.DialogFactory;
+import com.github.k1rakishou.chan.core.helper.FilterEngine;
+import com.github.k1rakishou.chan.core.helper.LastPageNotificationsHelper;
+import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder;
+import com.github.k1rakishou.chan.core.helper.PostHideHelper;
+import com.github.k1rakishou.chan.core.helper.ReplyNotificationsHelper;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader;
 import com.github.k1rakishou.chan.core.loader.impl.Chan4CloudFlareImagePreloader;
@@ -33,34 +40,27 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager;
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager;
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager;
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
-import com.github.k1rakishou.chan.core.manager.ChanLoaderManager;
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager;
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager;
-import com.github.k1rakishou.chan.core.manager.DialogFactory;
-import com.github.k1rakishou.chan.core.manager.FilterEngine;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
-import com.github.k1rakishou.chan.core.manager.LastPageNotificationsHelper;
-import com.github.k1rakishou.chan.core.manager.LastViewedPostNoInfoHolder;
 import com.github.k1rakishou.chan.core.manager.LocalSearchManager;
 import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.k1rakishou.chan.core.manager.PageRequestManager;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
-import com.github.k1rakishou.chan.core.manager.PostHideHelper;
 import com.github.k1rakishou.chan.core.manager.PostHideManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
-import com.github.k1rakishou.chan.core.manager.ReplyNotificationsHelper;
 import com.github.k1rakishou.chan.core.manager.ReportManager;
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager;
 import com.github.k1rakishou.chan.core.manager.SeenPostsManager;
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
-import com.github.k1rakishou.chan.core.manager.ThemeParser;
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.SiteRegistry;
+import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator;
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager;
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
@@ -69,14 +69,10 @@ import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
 import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkForegroundWatcher;
 import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkWatcherCoordinator;
 import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkWatcherDelegate;
-import com.github.k1rakishou.chan.ui.settings.base_directory.SavedFilesBaseDirectory;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.common.AppConstants;
-import com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy;
-import com.github.k1rakishou.fsaf.FileManager;
-import com.github.k1rakishou.fsaf.manager.base_directory.DirectoryManager;
+import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.repository.BoardRepository;
 import com.github.k1rakishou.model.repository.BookmarksRepository;
 import com.github.k1rakishou.model.repository.ChanFilterRepository;
@@ -88,6 +84,7 @@ import com.github.k1rakishou.model.repository.HistoryNavigationRepository;
 import com.github.k1rakishou.model.repository.SeenPostRepository;
 import com.github.k1rakishou.model.repository.SiteRepository;
 import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository;
+import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -103,11 +100,8 @@ import io.reactivex.schedulers.Schedulers;
 import kotlinx.coroutines.CoroutineScope;
 
 import static com.github.k1rakishou.chan.core.di.module.application.AppModule.getCacheDir;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getFlavorType;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getNotificationManager;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getNotificationManagerCompat;
-import static com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy.ReplaceBadSymbols;
-import static com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy.ThrowAnException;
+import static com.github.k1rakishou.common.AndroidUtils.getNotificationManager;
+import static com.github.k1rakishou.common.AndroidUtils.getNotificationManagerCompat;
 
 @Module
 public class ManagerModule {
@@ -123,7 +117,7 @@ public class ManagerModule {
 
         return new SiteManager(
                 appScope,
-                AndroidUtils.isDevBuild(),
+                AppModuleAndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
                 siteRepository,
                 SiteRegistry.INSTANCE
@@ -140,7 +134,7 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "Board manager");
         return new BoardManager(
                 appScope,
-                AndroidUtils.isDevBuild(),
+                AppModuleAndroidUtils.isDevBuild(),
                 siteRepository,
                 boardRepository
         );
@@ -158,39 +152,6 @@ public class ManagerModule {
     public ReplyManager provideReplyManager(Context applicationContext) {
         Logger.d(AppModule.DI_TAG, "Reply manager");
         return new ReplyManager(applicationContext);
-    }
-
-    @Provides
-    @Singleton
-    public ChanLoaderManager provideChanLoaderFactory(
-            Gson gson,
-            ProxiedOkHttpClient proxiedOkHttpClient,
-            AppConstants appConstants,
-            FilterEngine filterEngine,
-            ChanPostRepository chanPostRepository,
-            ArchivesManager archivesManager,
-            ThemeEngine themeEngine,
-            PostFilterManager postFilterManager,
-            BookmarksManager bookmarksManager,
-            SiteManager siteManager,
-            BoardManager boardManager,
-            SavedReplyManager savedReplyManager
-    ) {
-        Logger.d(AppModule.DI_TAG, "Chan loader factory");
-        return new ChanLoaderManager(
-                gson,
-                proxiedOkHttpClient,
-                appConstants,
-                filterEngine,
-                chanPostRepository,
-                archivesManager,
-                themeEngine,
-                postFilterManager,
-                bookmarksManager,
-                siteManager,
-                boardManager,
-                savedReplyManager
-        );
     }
 
     @Provides
@@ -303,26 +264,6 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public FileManager provideFileManager(Context applicationContext) {
-        DirectoryManager directoryManager = new DirectoryManager(applicationContext);
-
-        // Add new base directories here
-        SavedFilesBaseDirectory savedFilesBaseDirectory = new SavedFilesBaseDirectory();
-
-        BadPathSymbolResolutionStrategy resolutionStrategy = ReplaceBadSymbols;
-        if (getFlavorType() != AndroidUtils.FlavorType.Stable) {
-            resolutionStrategy = ThrowAnException;
-        }
-
-        FileManager fileManager = new FileManager(applicationContext, resolutionStrategy, directoryManager);
-        fileManager.registerBaseDir(SavedFilesBaseDirectory.class, savedFilesBaseDirectory);
-
-        return fileManager;
-    }
-
-
-    @Provides
-    @Singleton
     public GlobalWindowInsetsManager provideGlobalWindowInsetsManager() {
         Logger.d(AppModule.DI_TAG, "GlobalWindowInsetsManager");
 
@@ -388,7 +329,7 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "BookmarksManager");
 
         return new BookmarksManager(
-                AndroidUtils.isDevBuild(),
+                AppModuleAndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
                 appScope,
                 applicationVisibilityManager,
@@ -428,7 +369,7 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "BookmarkWatcherDelegate");
 
         return new BookmarkWatcherDelegate(
-                AndroidUtils.isDevBuild(),
+                AppModuleAndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
                 appScope,
                 bookmarksManager,
@@ -453,7 +394,7 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "BookmarkForegroundWatcher");
 
         return new BookmarkForegroundWatcher(
-                AndroidUtils.isDevBuild(),
+                AppModuleAndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
                 appScope,
                 bookmarksManager,
@@ -474,7 +415,7 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "BookmarkWatcherController");
 
         return new BookmarkWatcherCoordinator(
-                AndroidUtils.isDevBuild(),
+                AppModuleAndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
                 appContext,
                 appScope,
@@ -506,7 +447,7 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "ReplyNotificationsHelper");
 
         return new ReplyNotificationsHelper(
-                AndroidUtils.isDevBuild(),
+                AppModuleAndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
                 appContext,
                 appScope,
@@ -531,7 +472,7 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "LastPageNotificationsHelper");
 
         return new LastPageNotificationsHelper(
-                AndroidUtils.isDevBuild(),
+                AppModuleAndroidUtils.isDevBuild(),
                 appContext,
                 getNotificationManagerCompat(),
                 pageRequestManager,
@@ -637,17 +578,6 @@ public class ManagerModule {
 
     @Singleton
     @Provides
-    public ThemeParser provideThemeParser(Context appContext, FileManager fileManager) {
-        Logger.d(AppModule.DI_TAG, "ThemeParser");
-
-        return new ThemeParser(
-                appContext,
-                fileManager
-        );
-    }
-
-    @Singleton
-    @Provides
     public ThreadBookmarkGroupManager provideThreadBookmarkGroupEntryManager(
             CoroutineScope appScope,
             ThreadBookmarkGroupRepository threadBookmarkGroupEntryRepository,
@@ -668,7 +598,7 @@ public class ManagerModule {
     public Chan4CloudFlareImagePreloaderManager provideChan4CloudFlareImagePreloaderManager(
             CoroutineScope appScope,
             RealProxiedOkHttpClient realProxiedOkHttpClient,
-            ChanLoaderManager chanLoaderManager
+            ChanThreadManager chanThreadManager
     ) {
         Logger.d(AppModule.DI_TAG, "Chan4CloudFlareImagePreloaderManager");
 
@@ -676,7 +606,31 @@ public class ManagerModule {
                 appScope,
                 ChanSettings.verboseLogs.get(),
                 realProxiedOkHttpClient,
-                chanLoaderManager
+                chanThreadManager
+        );
+    }
+
+    @Singleton
+    @Provides
+    public ChanThreadManager provideChanThreadManager(
+            SiteManager siteManager,
+            BookmarksManager bookmarksManager,
+            PostFilterManager postFilterManager,
+            SavedReplyManager savedReplyManager,
+            ChanThreadsCache chanThreadsCache,
+            ChanPostRepository chanPostRepository,
+            ChanThreadLoaderCoordinator chanThreadLoaderCoordinator
+    ) {
+        Logger.d(AppModule.DI_TAG, "ChanThreadManager");
+
+        return new ChanThreadManager(
+                siteManager,
+                bookmarksManager,
+                postFilterManager,
+                savedReplyManager,
+                chanThreadsCache,
+                chanPostRepository,
+                chanThreadLoaderCoordinator
         );
     }
 

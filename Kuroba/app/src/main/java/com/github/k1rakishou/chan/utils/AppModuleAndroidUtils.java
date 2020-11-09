@@ -1,0 +1,504 @@
+package com.github.k1rakishou.chan.utils;
+
+import android.annotation.SuppressLint;
+import android.app.Application;
+import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.ContextWrapper;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.content.pm.Signature;
+import android.content.res.TypedArray;
+import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.Uri;
+import android.os.StatFs;
+import android.telephony.TelephonyManager;
+import android.text.TextUtils;
+import android.view.View;
+import android.view.ViewTreeObserver;
+import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.browser.customtabs.CustomTabsIntent;
+
+import com.github.k1rakishou.ChanSettings;
+import com.github.k1rakishou.chan.BuildConfig;
+import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.StartActivity;
+import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
+import com.github.k1rakishou.common.AndroidUtils;
+import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.core_themes.ChanTheme;
+
+import org.greenrobot.eventbus.EventBus;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
+import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Debug;
+import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Release;
+import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Unknown;
+import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
+import static com.github.k1rakishou.common.AndroidUtils.getRes;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
+import static com.github.k1rakishou.common.AndroidUtils.isAndroidP;
+
+public class AppModuleAndroidUtils {
+    private static final String TAG = "AppModuleAndroidUtils";
+
+    @SuppressLint("StaticFieldLeak")
+    private static Application application;
+
+    public static void init(Application application) {
+        if (AppModuleAndroidUtils.application == null) {
+            AppModuleAndroidUtils.application = application;
+        }
+    }
+
+    public static AndroidUtils.VerifiedBuildType getVerifiedBuildType() {
+        try {
+            @SuppressLint("PackageManagerGetSignatures")
+            Signature sig = getApplicationSignature();
+
+            String signatureHexString =
+                    HashingUtil.byteArrayHashSha256HexString(sig.toByteArray()).toUpperCase();
+
+            boolean isOfficialRelease = BuildConfig.RELEASE_SIGNATURE.equals(signatureHexString);
+            if (isOfficialRelease) {
+                return Release;
+            }
+
+            boolean isOfficialBeta = BuildConfig.DEBUG_SIGNATURE.equals(signatureHexString);
+            if (isOfficialBeta) {
+                return Debug;
+            }
+
+            return Unknown;
+        } catch (Exception ignored) {
+            return Unknown;
+        }
+    }
+
+    private static Signature getApplicationSignature() throws PackageManager.NameNotFoundException {
+        @SuppressLint("PackageManagerGetSignatures")
+        Signature sig;
+
+        if (isAndroidP()) {
+            sig = application.getPackageManager().getPackageInfo(
+                    application.getPackageName(),
+                    PackageManager.GET_SIGNING_CERTIFICATES
+            ).signingInfo.getApkContentsSigners()[0];
+        } else {
+            sig = application.getPackageManager().getPackageInfo(
+                    application.getPackageName(),
+                    PackageManager.GET_SIGNATURES
+            ).signatures[0];
+        }
+        return sig;
+    }
+
+    public static void printApplicationSignatureHash() throws PackageManager.NameNotFoundException {
+        @SuppressLint("PackageManagerGetSignatures")
+        Signature sig = getApplicationSignature();
+
+        String signatureHexString =
+                HashingUtil.byteArrayHashSha256HexString(sig.toByteArray()).toUpperCase();
+
+        Logger.d(TAG, "Signature hash: " + signatureHexString);
+    }
+
+    public static boolean isStableBuild() {
+        return getFlavorType() == AndroidUtils.FlavorType.Stable;
+    }
+
+    public static boolean isDevBuild() {
+        return getFlavorType() == AndroidUtils.FlavorType.Dev;
+    }
+
+    public static boolean isBetaBuild() {
+        return getFlavorType() == AndroidUtils.FlavorType.Beta;
+    }
+
+    public static boolean isFdroidBuild() {
+        return getFlavorType() == AndroidUtils.FlavorType.Fdroid;
+    }
+
+    public static AndroidUtils.FlavorType getFlavorType() {
+        switch (BuildConfig.FLAVOR_TYPE) {
+            case 0:
+                return AndroidUtils.FlavorType.Stable;
+            case 1:
+                return AndroidUtils.FlavorType.Beta;
+            case 2:
+                return AndroidUtils.FlavorType.Dev;
+            case 3:
+                return AndroidUtils.FlavorType.Fdroid;
+            default:
+                throw new RuntimeException("Unknown flavor type " + BuildConfig.FLAVOR_TYPE);
+        }
+    }
+
+    /**
+     * Tries to open an app that can open the specified URL.<br>
+     * If this app will open the link then show a chooser to the user without this app.<br>
+     * Else allow the default logic to run with startActivity.
+     *
+     * @param link url to open
+     */
+    public static void openLink(String link) {
+        if (TextUtils.isEmpty(link)) {
+            showToast(application, R.string.open_link_failed, Toast.LENGTH_LONG);
+            return;
+        }
+        PackageManager pm = application.getPackageManager();
+
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
+
+        ComponentName resolvedActivity = intent.resolveActivity(pm);
+        if (resolvedActivity == null) {
+            showToast(application, R.string.open_link_failed, Toast.LENGTH_LONG);
+        } else {
+            boolean thisAppIsDefault = resolvedActivity.getPackageName().equals(application.getPackageName());
+            if (!thisAppIsDefault) {
+                openIntent(intent);
+            } else {
+                // Get all intents that match, and filter out this app
+                List<ResolveInfo> resolveInfos = pm.queryIntentActivities(intent, 0);
+                List<Intent> filteredIntents = new ArrayList<>(resolveInfos.size());
+                for (ResolveInfo info : resolveInfos) {
+                    if (!info.activityInfo.packageName.equals(application.getPackageName())) {
+                        Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
+                        i.setPackage(info.activityInfo.packageName);
+                        filteredIntents.add(i);
+                    }
+                }
+
+                if (filteredIntents.size() > 0) {
+                    // Create a chooser for the last app in the list, and add the rest with EXTRA_INITIAL_INTENTS that get placed above
+                    Intent chooser = Intent.createChooser(filteredIntents.remove(filteredIntents.size() - 1), null);
+                    chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, filteredIntents.toArray(new Intent[0]));
+                    openIntent(chooser);
+                } else {
+                    showToast(application, R.string.open_link_failed, Toast.LENGTH_LONG);
+                }
+            }
+        }
+    }
+
+    public static void openLinkInBrowser(Context context, String link, ChanTheme theme) {
+        if (TextUtils.isEmpty(link)) {
+            showToast(context, R.string.open_link_failed);
+            return;
+        }
+
+        // Hack that's sort of the same as openLink
+        // The link won't be opened in a custom tab if this app is the default handler for that link.
+        // Manually check if this app opens it instead of a custom tab, and use the logic of
+        // openLink to avoid that and show a chooser instead.
+        boolean openWithCustomTabs = true;
+        Intent urlIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
+        PackageManager pm = application.getPackageManager();
+        ComponentName resolvedActivity = urlIntent.resolveActivity(pm);
+
+        if (resolvedActivity != null) {
+            openWithCustomTabs = !resolvedActivity.getPackageName().equals(application.getPackageName());
+        }
+
+        if (!openWithCustomTabs) {
+            openLink(link);
+            return;
+        }
+
+        CustomTabsIntent tabsIntent = new CustomTabsIntent.Builder()
+                .setToolbarColor(theme.getBackColor())
+                .build();
+
+        try {
+            tabsIntent.launchUrl(context, Uri.parse(link));
+        } catch (ActivityNotFoundException e) {
+            // Can't check it beforehand so catch the exception
+            showToast(context, R.string.open_link_failed, Toast.LENGTH_LONG);
+        }
+    }
+
+    public static void shareLink(String link) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(Intent.EXTRA_TEXT, link);
+        Intent chooser = Intent.createChooser(intent, getString(R.string.action_share));
+        openIntent(chooser);
+    }
+
+    public static void openIntent(Intent intent) {
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (intent.resolveActivity(application.getPackageManager()) != null) {
+            application.startActivity(intent);
+        } else {
+            showToast(application, R.string.open_link_failed, Toast.LENGTH_LONG);
+        }
+    }
+
+    public static int getAttrColor(Context context, int attr) {
+        TypedArray typedArray = context.getTheme().obtainStyledAttributes(new int[]{attr});
+        int color = typedArray.getColor(0, 0);
+        typedArray.recycle();
+        return color;
+    }
+
+    public static Drawable getAttrDrawable(Context context, int attr) {
+        TypedArray typedArray = context.obtainStyledAttributes(new int[]{attr});
+        Drawable drawable = typedArray.getDrawable(0);
+        typedArray.recycle();
+        return drawable;
+    }
+
+    public static boolean isTablet() {
+        return getRes().getBoolean(R.bool.is_tablet);
+    }
+
+    public static int getDimen(int dimen) {
+        return getRes().getDimensionPixelSize(dimen);
+    }
+
+    public static boolean shouldLoadForNetworkType(ChanSettings.NetworkContentAutoLoadMode networkType) {
+        if (networkType == ChanSettings.NetworkContentAutoLoadMode.NONE) {
+            return false;
+        } else if (networkType == ChanSettings.NetworkContentAutoLoadMode.WIFI) {
+            return isConnected(ConnectivityManager.TYPE_WIFI);
+        } else {
+            return networkType == ChanSettings.NetworkContentAutoLoadMode.ALL;
+        }
+    }
+
+    public static boolean isConnected(int type) {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) application.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = connectivityManager.getNetworkInfo(type);
+        return networkInfo != null && networkInfo.isConnected();
+    }
+
+    public static void postToEventBus(Object message) {
+        EventBus.getDefault().post(message);
+    }
+
+    public static int getScreenOrientation() {
+        int screenOrientation = getAppContext().getResources().getConfiguration().orientation;
+        if (screenOrientation != ORIENTATION_LANDSCAPE && screenOrientation != ORIENTATION_PORTRAIT) {
+            throw new IllegalStateException("Illegal screen orientation value! value = " + screenOrientation);
+        }
+
+        return screenOrientation;
+    }
+
+    /**
+     * Change to ConnectivityManager#registerDefaultNetworkCallback when minSdk == 24, basically never
+     */
+    public static String getNetworkClass(@NonNull ConnectivityManager connectivityManager) {
+        NetworkInfo info = connectivityManager.getActiveNetworkInfo();
+        if (info == null || !info.isConnected()) {
+            return "No connected"; // not connected
+        }
+
+        if (info.getType() == ConnectivityManager.TYPE_WIFI) {
+            return "WIFI";
+        }
+
+        if (info.getType() == ConnectivityManager.TYPE_MOBILE) {
+            int networkType = info.getSubtype();
+            switch (networkType) {
+                case TelephonyManager.NETWORK_TYPE_GPRS:
+                case TelephonyManager.NETWORK_TYPE_EDGE:
+                case TelephonyManager.NETWORK_TYPE_CDMA:
+                case TelephonyManager.NETWORK_TYPE_1xRTT:
+                case TelephonyManager.NETWORK_TYPE_IDEN:     // api< 8: replace by 11
+                case TelephonyManager.NETWORK_TYPE_GSM:      // api<25: replace by 16
+                    return "2G";
+                case TelephonyManager.NETWORK_TYPE_UMTS:
+                case TelephonyManager.NETWORK_TYPE_EVDO_0:
+                case TelephonyManager.NETWORK_TYPE_EVDO_A:
+                case TelephonyManager.NETWORK_TYPE_HSDPA:
+                case TelephonyManager.NETWORK_TYPE_HSUPA:
+                case TelephonyManager.NETWORK_TYPE_HSPA:
+                case TelephonyManager.NETWORK_TYPE_EVDO_B:   // api< 9: replace by 12
+                case TelephonyManager.NETWORK_TYPE_EHRPD:    // api<11: replace by 14
+                case TelephonyManager.NETWORK_TYPE_HSPAP:    // api<13: replace by 15
+                case TelephonyManager.NETWORK_TYPE_TD_SCDMA: // api<25: replace by 17
+                    return "3G";
+                case TelephonyManager.NETWORK_TYPE_LTE:      // api<11: replace by 13
+                case TelephonyManager.NETWORK_TYPE_IWLAN:    // api<25: replace by 18
+                case 19: // LTE_CA
+                    return "4G";
+                case TelephonyManager.NETWORK_TYPE_NR:       // api<29: replace by 20
+                    return "5G";
+            }
+        }
+
+        return "Unknown";
+    }
+
+    public static long getAvailableSpaceInBytes(File file) {
+        StatFs stat = new StatFs(file.getPath());
+
+        return stat.getAvailableBlocksLong() * stat.getBlockSizeLong();
+    }
+
+    /**
+     * Waits for a measure. Calls callback immediately if the view width and height are more than 0.
+     * Otherwise it registers an onpredrawlistener.
+     * <b>Warning: the view you give must be attached to the view root!</b>
+     */
+    public static void waitForMeasure(final View view, final OnMeasuredCallback callback) {
+        if (view.getWindowToken() == null) {
+            // If you call getViewTreeObserver on a view when it's not attached to a window will
+            // result in the creation of a temporarily viewtreeobserver.
+            view.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+                @Override
+                public void onViewAttachedToWindow(View v) {
+                    waitForLayoutInternal(true, view.getViewTreeObserver(), view, callback);
+                    view.removeOnAttachStateChangeListener(this);
+                }
+
+                @Override
+                public void onViewDetachedFromWindow(View v) {
+                    view.removeOnAttachStateChangeListener(this);
+                }
+            });
+            return;
+        }
+
+        waitForLayoutInternal(true, view.getViewTreeObserver(), view, callback);
+    }
+
+    /**
+     * Always registers an onpredrawlistener.
+     * <b>Warning: the view you give must be attached to the view root!</b>
+     */
+    public static void waitForLayout(final View view, final OnMeasuredCallback callback) {
+        if (view.getWindowToken() == null) {
+            // See comment above
+            view.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+                @Override
+                public void onViewAttachedToWindow(View v) {
+                    waitForLayoutInternal(true, view.getViewTreeObserver(), view, callback);
+                    view.removeOnAttachStateChangeListener(this);
+                }
+
+                @Override
+                public void onViewDetachedFromWindow(View v) {
+                    view.removeOnAttachStateChangeListener(this);
+                }
+            });
+            return;
+        }
+
+        waitForLayoutInternal(false, view.getViewTreeObserver(), view, callback);
+    }
+
+    /**
+     * Always registers an onpredrawlistener. The given ViewTreeObserver will be used.
+     */
+    public static void waitForLayout(
+            final ViewTreeObserver viewTreeObserver,
+            final View view,
+            final OnMeasuredCallback callback
+    ) {
+        waitForLayoutInternal(false, viewTreeObserver, view, callback);
+    }
+
+    private static void waitForLayoutInternal(
+            boolean returnIfNotZero,
+            final ViewTreeObserver viewTreeObserver,
+            final View view,
+            final OnMeasuredCallback callback
+    ) {
+        int width = view.getWidth();
+        int height = view.getHeight();
+
+        if (returnIfNotZero && width > 0 && height > 0) {
+            callback.onMeasured(view);
+            return;
+        }
+
+        viewTreeObserver.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            private ViewTreeObserver usingViewTreeObserver = viewTreeObserver;
+
+            @Override
+            public boolean onPreDraw() {
+                if (usingViewTreeObserver != view.getViewTreeObserver()) {
+                    Logger.e(TAG, "view.getViewTreeObserver() is another viewtreeobserver! " +
+                            "replacing with the new one");
+
+                    usingViewTreeObserver = view.getViewTreeObserver();
+                }
+
+                if (usingViewTreeObserver.isAlive()) {
+                    usingViewTreeObserver.removeOnPreDrawListener(this);
+                } else {
+                    Logger.e(TAG, "ViewTreeObserver not alive, could not remove onPreDrawListener! " +
+                            "This will probably not end well");
+                }
+
+                boolean ret;
+                try {
+                    ret = callback.onMeasured(view);
+                } catch (Exception e) {
+                    Logger.e(TAG, "Exception in onMeasured", e);
+                    throw e;
+                }
+
+                if (!ret) {
+                    Logger.d(TAG, "waitForLayout requested a re-layout by returning false");
+                }
+
+                return ret;
+            }
+        });
+    }
+
+    public static void showToast(Context context, String message, int duration) {
+        BackgroundUtils.runOnMainThread(() -> Toast.makeText(context, message, duration).show());
+    }
+
+    public static void showToast(Context context, String message) {
+        showToast(context, message, Toast.LENGTH_SHORT);
+    }
+
+    public static void showToast(Context context, int resId, int duration) {
+        showToast(context, getString(resId), duration);
+    }
+
+    public static void showToast(Context context, int resId) {
+        showToast(context, getString(resId));
+    }
+
+    public static StartActivityComponent extractStartActivityComponent(Context context) {
+        if (context instanceof StartActivity) {
+            return ((StartActivity) context).getComponent();
+        } else if (context instanceof ContextWrapper) {
+            return ((StartActivity) ((ContextWrapper) context)
+                    .getBaseContext())
+                    .getComponent();
+        } else {
+            throw new IllegalStateException(
+                    "Unknown context wrapper " + context.getClass().getName());
+        }
+    }
+
+    public interface OnMeasuredCallback {
+        /**
+         * Called when the layout is done.
+         *
+         * @param view same view as the argument.
+         * @return true to continue with rendering, false to cancel and redo the layout.
+         */
+        boolean onMeasured(View view);
+    }
+
+}

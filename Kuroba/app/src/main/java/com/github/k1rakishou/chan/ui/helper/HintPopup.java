@@ -34,18 +34,18 @@ import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.StartActivity;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.google.android.material.textview.MaterialTextView;
 
 import javax.inject.Inject;
 
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 import static com.github.k1rakishou.chan.utils.BackgroundUtils.runOnMainThread;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
+import static com.github.k1rakishou.common.AndroidUtils.inflate;
 
 public class HintPopup {
     private static final TimeInterpolator WIGGLER
@@ -75,7 +75,7 @@ public class HintPopup {
             final int offsetY,
             final boolean top
     ) {
-        AndroidUtils.extractStartActivityComponent(context)
+        AppModuleAndroidUtils.extractStartActivityComponent(context)
                 .inject(this);
 
         this.context = context;

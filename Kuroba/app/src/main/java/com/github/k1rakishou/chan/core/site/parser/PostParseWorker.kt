@@ -16,16 +16,16 @@
  */
 package com.github.k1rakishou.chan.core.site.parser
 
-import com.github.k1rakishou.chan.core.manager.FilterEngine
+import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
-import com.github.k1rakishou.chan.core.model.Post
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder
 import com.github.k1rakishou.chan.core.model.PostFilter
-import com.github.k1rakishou.chan.ui.theme.ChanTheme
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilter
+import com.github.k1rakishou.model.data.post.ChanPost
 import java.util.*
 
 // Called concurrently to parse the post html and the filters on it
@@ -34,15 +34,14 @@ internal class PostParseWorker(
   private val filterEngine: FilterEngine,
   private val postFilterManager: PostFilterManager,
   private val savedReplyManager: SavedReplyManager,
-  private val currentTheme: ChanTheme,
   private val filters: List<ChanFilter>,
-  private val postBuilder: Post.Builder,
+  private val postBuilder: ChanPostBuilder,
   private val reader: ChanReader,
   private val internalIds: Set<Long>,
   private val boardDescriptors: Set<BoardDescriptor>
 ) {
 
-  suspend fun parse(): Post? {
+  suspend fun parse(): ChanPost? {
     return Try {
       // needed for "Apply to own posts" to work correctly
       postBuilder.isSavedReply(savedReplyManager.isSaved(postBuilder.postDescriptor))
@@ -53,7 +52,7 @@ internal class PostParseWorker(
       val parser = reader.getParser()
         ?: throw NullPointerException("PostParser cannot be null!")
 
-      return@Try parser.parse(currentTheme, postBuilder, object : PostParser.Callback {
+      return@Try parser.parse(postBuilder, object : PostParser.Callback {
         override fun isSaved(postNo: Long, postSubNo: Long): Boolean {
           return savedReplyManager.isSaved(postBuilder.postDescriptor.descriptor, postNo, postSubNo)
         }
@@ -73,7 +72,7 @@ internal class PostParseWorker(
   }
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
-  private fun processPostFilter(post: Post.Builder) {
+  private fun processPostFilter(post: ChanPostBuilder) {
     val postDescriptor = post.postDescriptor
 
     if (postFilterManager.contains(postDescriptor)) {
@@ -137,7 +136,7 @@ internal class PostParseWorker(
     }
   }
 
-  private fun postBuilderToString(postBuilder: Post.Builder): String {
+  private fun postBuilderToString(postBuilder: ChanPostBuilder): String {
     return String.format(
       Locale.ENGLISH,
       "{postNo=%d, comment=%s}",

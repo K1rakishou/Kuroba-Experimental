@@ -5,11 +5,11 @@ import android.graphics.drawable.StateListDrawable;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.github.k1rakishou.chan.ui.theme.ChanTheme;
+import com.github.k1rakishou.core_themes.ChanTheme;
 
 import org.jetbrains.annotations.Nullable;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
 
 /**
  * Helper for attaching a FastScroller with the correct theme colors and default values that

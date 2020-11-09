@@ -1,25 +1,23 @@
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import android.text.TextUtils
-import com.github.k1rakishou.chan.core.model.Post
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
 import com.github.k1rakishou.chan.core.site.parser.ICommentParser
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule
-import com.github.k1rakishou.chan.ui.text.span.PostLinkable
-import com.github.k1rakishou.chan.ui.text.span.PostLinkable.Value.*
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.common.CommentParserConstants
 import com.github.k1rakishou.common.groupOrNull
+import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import org.jsoup.nodes.Element
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 class DvachCommentParser(
-  themeEngine: ThemeEngine,
   mockReplyManager: MockReplyManager
-) : VichanCommentParser(themeEngine, mockReplyManager), ICommentParser {
+) : VichanCommentParser(mockReplyManager), ICommentParser {
 
   override fun addDefaultRules(): DvachCommentParser {
     super.addDefaultRules()
@@ -29,7 +27,7 @@ class DvachCommentParser(
   }
 
   override fun matchAnchor(
-    post: Post.Builder,
+    post: ChanPostBuilder,
     text: CharSequence,
     anchor: Element,
     callback: PostParser.Callback
@@ -59,7 +57,7 @@ class DvachCommentParser(
   }
 
   private fun handleNotQuote(
-    post: Post.Builder,
+    post: ChanPostBuilder,
     href: String,
     text: CharSequence,
     callback: PostParser.Callback
@@ -73,7 +71,9 @@ class DvachCommentParser(
         val boardDescriptor = BoardDescriptor.create(siteDescriptor, boardCode)
         if (callback.isValidBoard(boardDescriptor)) {
           // board link
-          return PostLinkable.Link(PostLinkable.Type.BOARD, text, StringValue(boardCode))
+          return PostLinkable.Link(PostLinkable.Type.BOARD, text,
+            PostLinkable.Value.StringValue(boardCode)
+          )
         }
       }
     }
@@ -82,13 +82,13 @@ class DvachCommentParser(
     return PostLinkable.Link(
       PostLinkable.Type.LINK,
       text,
-      StringValue(href)
+      PostLinkable.Value.StringValue(href)
     )
   }
 
   override fun appendSuffixes(
     callback: PostParser.Callback,
-    post: Post.Builder,
+    post: ChanPostBuilder,
     handlerLink: PostLinkable.Link,
     postNo: Long,
     postSubNo: Long
@@ -97,27 +97,27 @@ class DvachCommentParser(
     if (postNo == post.opId) {
       // 2ch.hk automatically appends (OP) at the end of quotes that quote OPs so we don't really
       // need to do it by ourselves, but we still do just in case.
-      if (!handlerLink.key.endsWith(OP_REPLY_SUFFIX)) {
-        handlerLink.key = TextUtils.concat(handlerLink.key, OP_REPLY_SUFFIX)
+      if (!handlerLink.key.endsWith(CommentParserConstants.OP_REPLY_SUFFIX)) {
+        handlerLink.key = TextUtils.concat(handlerLink.key, CommentParserConstants.OP_REPLY_SUFFIX)
       }
     }
 
     if (handlerLink.type == PostLinkable.Type.DEAD) {
-      handlerLink.key = TextUtils.concat(handlerLink.key, DEAD_REPLY_SUFFIX)
+      handlerLink.key = TextUtils.concat(handlerLink.key, CommentParserConstants.DEAD_REPLY_SUFFIX)
     }
 
     // Append (You) when it's a reply to a saved reply, (Me) if it's a self reply
     if (callback.isSaved(postNo, postSubNo)) {
       if (post.isSavedReply) {
-        handlerLink.key = TextUtils.concat(handlerLink.key, SAVED_REPLY_SELF_SUFFIX)
+        handlerLink.key = TextUtils.concat(handlerLink.key, CommentParserConstants.SAVED_REPLY_SELF_SUFFIX)
       } else {
-        handlerLink.key = TextUtils.concat(handlerLink.key, SAVED_REPLY_OTHER_SUFFIX)
+        handlerLink.key = TextUtils.concat(handlerLink.key, CommentParserConstants.SAVED_REPLY_OTHER_SUFFIX)
       }
     }
   }
 
   private fun handleExternalLink(
-    post: Post.Builder,
+    post: ChanPostBuilder,
     callback: PostParser.Callback,
     text: CharSequence,
     boardCode: String,
@@ -126,11 +126,13 @@ class DvachCommentParser(
   ): PostLinkable.Link {
     if (boardCode == post.boardDescriptor!!.boardCode && callback.isInternal(postNo)) {
       // link to post in same thread with post number (>>post)
-      return PostLinkable.Link(PostLinkable.Type.QUOTE, text, LongValue(postNo))
+      return PostLinkable.Link(PostLinkable.Type.QUOTE, text, PostLinkable.Value.LongValue(postNo))
     }
 
     // link to post not in same thread with post number (>>post or >>>/board/post)
-    return PostLinkable.Link(PostLinkable.Type.THREAD, text, ThreadLink(boardCode, threadNo, postNo))
+    return PostLinkable.Link(PostLinkable.Type.THREAD, text,
+      PostLinkable.Value.ThreadLink(boardCode, threadNo, postNo)
+    )
   }
 
   private fun handleInternalLink(
@@ -139,10 +141,10 @@ class DvachCommentParser(
     postNo: Long
   ): PostLinkable.Link {
     if (callback.isInternal(postNo)) {
-      return PostLinkable.Link(PostLinkable.Type.QUOTE, text, LongValue(postNo))
+      return PostLinkable.Link(PostLinkable.Type.QUOTE, text, PostLinkable.Value.LongValue(postNo))
     }
 
-    return PostLinkable.Link(PostLinkable.Type.DEAD, text, LongValue(postNo))
+    return PostLinkable.Link(PostLinkable.Type.DEAD, text, PostLinkable.Value.LongValue(postNo))
   }
 
   @Suppress("SameParameterValue")

@@ -11,8 +11,8 @@ import android.view.MotionEvent
 import android.widget.FrameLayout
 import androidx.annotation.RequiresApi
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.getRes
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.common.AndroidUtils.getRes
 import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.Q)
@@ -51,7 +51,7 @@ class AdjustAndroid10GestureZonesView @JvmOverloads constructor(
   init {
     setWillNotDraw(false)
 
-    AndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractStartActivityComponent(context)
       .inject(this)
 
     gestureZoneEditorTouchHandler = GestureZoneEditorTouchHandler(this)

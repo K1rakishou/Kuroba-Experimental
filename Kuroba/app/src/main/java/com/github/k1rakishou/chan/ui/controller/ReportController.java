@@ -26,21 +26,21 @@ import android.widget.TextView;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
-import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier;
-import com.github.k1rakishou.chan.ui.helper.PostHelper;
+import com.github.k1rakishou.model.data.post.ChanPost;
+import com.github.k1rakishou.model.util.ChanPostUtils;
 
 import org.jetbrains.annotations.NotNull;
 
 import okhttp3.HttpUrl;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
+import static com.github.k1rakishou.common.AndroidUtils.inflate;
 
 public class ReportController extends Controller implements RequiresNoBottomNavBar {
-    private Post post;
+    private ChanPost post;
     private Site site;
 
     @Override
@@ -48,7 +48,7 @@ public class ReportController extends Controller implements RequiresNoBottomNavB
         component.inject(this);
     }
 
-    public ReportController(Context context, Post post, Site site) {
+    public ReportController(Context context, ChanPost post, Site site) {
         super(context);
         this.post = post;
         this.site = site;
@@ -58,7 +58,7 @@ public class ReportController extends Controller implements RequiresNoBottomNavB
     @Override
     public void onCreate() {
         super.onCreate();
-        navigation.title = getString(R.string.report_screen, PostHelper.getTitle(post, null));
+        navigation.title = getString(R.string.report_screen, ChanPostUtils.getTitle(post, null));
 
         HttpUrl url = site.endpoints().report(post);
 

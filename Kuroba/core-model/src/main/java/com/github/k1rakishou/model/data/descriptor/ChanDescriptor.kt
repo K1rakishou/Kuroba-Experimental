@@ -7,6 +7,7 @@ sealed class ChanDescriptor {
   abstract fun siteName(): String
   abstract fun boardCode(): String
   abstract fun threadDescriptorOrNull(): ThreadDescriptor?
+  abstract fun catalogDescriptor(): CatalogDescriptor
   abstract fun threadNoOrNull(): Long?
 
   abstract fun boardDescriptor(): BoardDescriptor
@@ -41,6 +42,7 @@ sealed class ChanDescriptor {
     override fun siteName(): String = boardDescriptor.siteDescriptor.siteName
     override fun boardCode(): String = boardDescriptor.boardCode
     override fun threadDescriptorOrNull(): ThreadDescriptor? = this
+    override fun catalogDescriptor(): CatalogDescriptor = CatalogDescriptor(boardDescriptor)
     override fun threadNoOrNull(): Long? = threadNo
     override fun siteDescriptor(): SiteDescriptor = boardDescriptor.siteDescriptor
     override fun boardDescriptor(): BoardDescriptor = boardDescriptor
@@ -105,6 +107,7 @@ sealed class ChanDescriptor {
     override fun siteName(): String = boardDescriptor.siteDescriptor.siteName
     override fun boardCode(): String = boardDescriptor.boardCode
     override fun threadDescriptorOrNull(): ThreadDescriptor? = null
+    override fun catalogDescriptor(): CatalogDescriptor = this
     override fun threadNoOrNull(): Long? = null
     override fun siteDescriptor(): SiteDescriptor = boardDescriptor.siteDescriptor
     override fun boardDescriptor(): BoardDescriptor = boardDescriptor

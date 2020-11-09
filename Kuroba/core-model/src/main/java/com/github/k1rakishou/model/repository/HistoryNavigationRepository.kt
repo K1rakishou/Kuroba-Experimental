@@ -2,8 +2,8 @@ package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.myAsync
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.model.source.local.NavHistoryLocalSource
 import com.github.k1rakishou.model.util.ensureBackgroundThread
@@ -13,12 +13,10 @@ import kotlin.time.measureTimedValue
 
 class HistoryNavigationRepository(
   database: KurobaDatabase,
-  loggerTag: String,
-  logger: Logger,
   private val applicationScope: CoroutineScope,
   private val localSource: NavHistoryLocalSource
-) : AbstractRepository(database, logger) {
-  private val TAG = "$loggerTag HistoryNavigationRepository"
+) : AbstractRepository(database) {
+  private val TAG = "HistoryNavigationRepository"
 
   @OptIn(ExperimentalTime::class)
   suspend fun initialize(maxCount: Int): ModularResult<List<NavHistoryElement>> {
@@ -30,7 +28,7 @@ class HistoryNavigationRepository(
           return@measureTimedValue localSource.selectAll(maxCount)
         }
 
-        logger.log(TAG, "initialize() -> ${navHistoryStack.size} took $duration")
+        Logger.d(TAG, "initialize() -> ${navHistoryStack.size} took $duration")
         return@tryWithTransaction navHistoryStack
       }
     }
@@ -44,7 +42,7 @@ class HistoryNavigationRepository(
           return@measureTimedValue localSource.persist(navHistoryStack)
         }
 
-        logger.log(TAG, "persist(${navHistoryStack.size}) took $duration")
+        Logger.d(TAG, "persist(${navHistoryStack.size}) took $duration")
         return@tryWithTransaction result
       }
     }

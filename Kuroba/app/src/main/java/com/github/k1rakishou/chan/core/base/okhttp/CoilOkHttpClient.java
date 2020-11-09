@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.core.base.okhttp;
 import android.content.Context;
 
 import com.github.k1rakishou.chan.Chan;
-import com.github.k1rakishou.chan.core.manager.ProxyStorage;
+import com.github.k1rakishou.chan.core.helper.ProxyStorage;
 import com.github.k1rakishou.chan.core.net.KurobaProxySelector;
 
 import org.jetbrains.annotations.NotNull;

@@ -28,17 +28,17 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import javax.inject.Inject;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.hideKeyboard;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.requestKeyboardFocus;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
+import static com.github.k1rakishou.common.AndroidUtils.hideKeyboard;
+import static com.github.k1rakishou.common.AndroidUtils.requestKeyboardFocus;
 
 public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChangesListener {
 
@@ -66,7 +66,7 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
 
     private void init() {
         if (!isInEditMode()) {
-            AndroidUtils.extractStartActivityComponent(getContext())
+            AppModuleAndroidUtils.extractStartActivityComponent(getContext())
                     .inject(this);
         }
     }

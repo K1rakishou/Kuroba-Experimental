@@ -2,9 +2,9 @@ package com.github.k1rakishou.chan.features.bookmarks
 
 import android.content.Context
 import androidx.constraintlayout.widget.ConstraintLayout
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
-import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox

@@ -3,7 +3,6 @@ package com.github.k1rakishou.model.repository
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostHide
@@ -12,11 +11,9 @@ import kotlinx.coroutines.CoroutineScope
 
 class ChanPostHideRepository(
   database: KurobaDatabase,
-  loggerTag: String,
-  logger: Logger,
   private val applicationScope: CoroutineScope,
   private val localSource: ChanPostHideLocalSource
-) : AbstractRepository(database, logger) {
+) : AbstractRepository(database) {
 
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): ModularResult<List<ChanPostHide>> {
     return applicationScope.myAsync {

@@ -1,18 +1,20 @@
 package com.github.k1rakishou.chan.core.usecase
 
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.ui.text.span.PostLinkable
+import com.github.k1rakishou.core_spannable.PostLinkable
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import java.util.*
 
 class ExtractPostMapInfoHolderUseCase(
   private val savedReplyManager: SavedReplyManager,
-  private val siteManager: SiteManager
-) : IUseCase<List<Post>, PostMapInfoHolder> {
+  private val siteManager: SiteManager,
+  private val chanThreadManager: ChanThreadManager
+) : IUseCase<List<PostDescriptor>, PostMapInfoHolder> {
 
-  override fun execute(parameter: List<Post>): PostMapInfoHolder {
+  override fun execute(parameter: List<PostDescriptor>): PostMapInfoHolder {
     return PostMapInfoHolder(
       extractMyPostsPositionsFromPostList(parameter),
       extractReplyPositionsFromPostList(parameter),
@@ -20,22 +22,24 @@ class ExtractPostMapInfoHolderUseCase(
     )
   }
 
-  private fun extractMyPostsPositionsFromPostList(posts: List<Post>): List<IntRange> {
+  private fun extractMyPostsPositionsFromPostList(postDescriptors: List<PostDescriptor>): List<IntRange> {
     if (!ChanSettings.markYourPostsOnScrollbar.get()) {
       return emptyList()
     }
 
-    if (posts.isEmpty()) {
+    if (postDescriptors.isEmpty()) {
       return emptyList()
     }
 
-    val siteDescriptor = posts.first().boardDescriptor.siteDescriptor
+    val siteDescriptor = postDescriptors.first().siteDescriptor()
     if (siteManager.bySiteDescriptor(siteDescriptor) == null) {
       return emptyList()
     }
 
-    val threadDescriptor = posts.first().postDescriptor.threadDescriptor()
-    val savedPostNoSet: Set<Long> = HashSet(savedReplyManager.retainSavedPostNoMap(posts, threadDescriptor))
+    val threadDescriptor = postDescriptors.first().threadDescriptor()
+    val savedPostNoSet = HashSet(
+      savedReplyManager.retainSavedPostNoMap2(postDescriptors, threadDescriptor)
+    )
 
     if (savedPostNoSet.isEmpty()) {
       return emptyList()
@@ -45,8 +49,8 @@ class ExtractPostMapInfoHolderUseCase(
     val duplicateChecker: MutableSet<Int> = HashSet(savedPostNoSet.size)
     var prevIndex = 0
 
-    for ((index, post) in posts.withIndex()) {
-      if (!savedPostNoSet.contains(post.no) || !duplicateChecker.add(index)) {
+    for ((index, post) in postDescriptors.withIndex()) {
+      if (!savedPostNoSet.contains(post.postNo) || !duplicateChecker.add(index)) {
         continue
       }
 
@@ -57,22 +61,24 @@ class ExtractPostMapInfoHolderUseCase(
     return replyRanges
   }
 
-  private fun extractReplyPositionsFromPostList(posts: List<Post>): List<IntRange> {
+  private fun extractReplyPositionsFromPostList(postDescriptors: List<PostDescriptor>): List<IntRange> {
     if (!ChanSettings.markRepliesToYourPostOnScrollbar.get()) {
       return emptyList()
     }
 
-    if (posts.isEmpty()) {
+    if (postDescriptors.isEmpty()) {
       return emptyList()
     }
 
-    val siteDescriptor = posts.first().boardDescriptor.siteDescriptor
+    val siteDescriptor = postDescriptors.first().siteDescriptor()
     if (siteManager.bySiteDescriptor(siteDescriptor) == null) {
       return emptyList()
     }
 
-    val threadDescriptor = posts.first().postDescriptor.threadDescriptor()
-    val savedPostNoSet: Set<Long> = HashSet(savedReplyManager.retainSavedPostNoMap(posts, threadDescriptor))
+    val threadDescriptor = postDescriptors.first().threadDescriptor()
+    val savedPostNoSet = HashSet(
+      savedReplyManager.retainSavedPostNoMap2(postDescriptors, threadDescriptor)
+    )
 
     if (savedPostNoSet.isEmpty()) {
       return emptyList()
@@ -82,7 +88,10 @@ class ExtractPostMapInfoHolderUseCase(
     val duplicateChecker: MutableSet<Int> = HashSet(savedPostNoSet.size)
     var prevIndex = 0
 
-    for ((index, post) in posts.withIndex()) {
+    for ((index, postDescriptor) in postDescriptors.withIndex()) {
+      val post = chanThreadManager.getPost(postDescriptor)
+        ?: continue
+
       for (replyTo in post.repliesTo) {
         if (!savedPostNoSet.contains(replyTo) || !duplicateChecker.add(index)) {
           continue
@@ -97,7 +106,7 @@ class ExtractPostMapInfoHolderUseCase(
     return replyRanges
   }
 
-  private fun extractCrossThreadReplyPositionsFromPostList(posts: List<Post>): List<IntRange> {
+  private fun extractCrossThreadReplyPositionsFromPostList(postDescriptors: List<PostDescriptor>): List<IntRange> {
     if (!ChanSettings.markCrossThreadQuotesOnScrollbar.get()) {
       return emptyList()
     }
@@ -106,8 +115,11 @@ class ExtractPostMapInfoHolderUseCase(
     val duplicateChecker: MutableSet<Int> = HashSet(16)
     var prevIndex = 0
 
-    for ((index, post) in posts.withIndex()) {
-      for (postLinkable in post.linkables) {
+    for ((index, postDescriptor) in postDescriptors.withIndex()) {
+      val post = chanThreadManager.getPost(postDescriptor)
+        ?: continue
+
+      for (postLinkable in post.postComment.linkables) {
         if (postLinkable.type != PostLinkable.Type.THREAD || !duplicateChecker.add(index)) {
           continue
         }

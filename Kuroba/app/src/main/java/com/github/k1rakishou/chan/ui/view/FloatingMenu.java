@@ -31,17 +31,17 @@ import android.widget.TextView;
 import androidx.appcompat.widget.ListPopupWindow;
 
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
+import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.inflate;
 
 public class FloatingMenu {
 
@@ -86,7 +86,7 @@ public class FloatingMenu {
     }
 
     private void init() {
-        AndroidUtils.extractStartActivityComponent(context)
+        AppModuleAndroidUtils.extractStartActivityComponent(context)
                 .inject(this);
     }
 

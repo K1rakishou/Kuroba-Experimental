@@ -18,7 +18,7 @@ import com.github.k1rakishou.chan.features.settings.setting.SettingV2
 import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

@@ -15,12 +15,13 @@ import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableSwitchMaterial
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.common.AndroidUtils.dp
 import com.github.k1rakishou.common.updateMargins
+import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.google.android.material.textview.MaterialTextView
 import java.lang.ref.WeakReference
@@ -53,7 +54,7 @@ class EpoxySiteView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_site_view, this)
 
-    AndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractStartActivityComponent(context)
       .inject(this)
 
     siteIcon = findViewById(R.id.site_icon)
@@ -76,7 +77,7 @@ class EpoxySiteView @JvmOverloads constructor(
       themeEngine.getDrawableTinted(
         context,
         R.drawable.ic_settings_white_24dp,
-        AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+        isDarkColor(themeEngine.chanTheme.backColor)
       )
     )
 
@@ -84,7 +85,7 @@ class EpoxySiteView @JvmOverloads constructor(
       themeEngine.getDrawableTinted(
         context,
         R.drawable.ic_reorder_white_24dp,
-        AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+        isDarkColor(themeEngine.chanTheme.backColor)
       )
     )
 
@@ -247,7 +248,7 @@ class EpoxySiteView @JvmOverloads constructor(
       return
     }
 
-    val isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+    val isDarkColor = isDarkColor(themeEngine.chanTheme.backColor)
     siteReorder.setImageDrawable(themeEngine.tintDrawable(siteReorder.drawable, isDarkColor))
   }
 
@@ -256,7 +257,7 @@ class EpoxySiteView @JvmOverloads constructor(
       return
     }
 
-    val isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+    val isDarkColor = isDarkColor(themeEngine.chanTheme.backColor)
     siteSettings.setImageDrawable(themeEngine.tintDrawable(siteSettings.drawable, isDarkColor))
   }
 

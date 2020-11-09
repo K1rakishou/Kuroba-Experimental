@@ -1,15 +1,19 @@
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import android.webkit.WebView
-import com.github.k1rakishou.chan.core.model.Post
+import com.github.k1rakishou.SharedPreferencesSettingProvider
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder
 import com.github.k1rakishou.chan.core.model.SiteBoards
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
-import com.github.k1rakishou.chan.core.settings.OptionsSetting
-import com.github.k1rakishou.chan.core.settings.SharedPreferencesSettingProvider
-import com.github.k1rakishou.chan.core.settings.StringSetting
-import com.github.k1rakishou.chan.core.site.*
+import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
+import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.Site.BoardsType
 import com.github.k1rakishou.chan.core.site.Site.SiteFeature
+import com.github.k1rakishou.chan.core.site.SiteActions
+import com.github.k1rakishou.chan.core.site.SiteAuthentication
+import com.github.k1rakishou.chan.core.site.SiteIcon
+import com.github.k1rakishou.chan.core.site.SiteRequestModifier
+import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.SiteSetting.SiteOptionsSetting
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.MultipartHttpCall
@@ -24,13 +28,15 @@ import com.github.k1rakishou.chan.core.site.http.login.DvachLoginResponse
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.prefs.OptionsSetting
+import com.github.k1rakishou.prefs.StringSetting
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl
@@ -50,7 +56,8 @@ class Dvach : CommonSite() {
   private var passCookie: StringSetting
 
   init {
-    val prefs = SharedPreferencesSettingProvider(AndroidUtils.getPreferences())
+    val prefs =
+      SharedPreferencesSettingProvider(AndroidUtils.getPreferences())
 
     passCode = StringSetting(prefs, "preference_pass_code", "")
     passCookie = StringSetting(prefs, "preference_pass_cookie", "")
@@ -85,7 +92,7 @@ class Dvach : CommonSite() {
   }
 
   override fun setParser(commentParser: CommentParser) {
-    postParser = DvachPostParser(themeEngine, commentParser, postFilterManager, archivesManager)
+    postParser = DvachPostParser(commentParser, postFilterManager, archivesManager)
   }
 
   override fun setup() {
@@ -103,13 +110,13 @@ class Dvach : CommonSite() {
       }
     })
     setEndpoints(object : VichanEndpoints(this, "https://2ch.hk", "https://2ch.hk") {
-      override fun imageUrl(post: Post.Builder, arg: Map<String, String>): HttpUrl {
+      override fun imageUrl(post: ChanPostBuilder, arg: Map<String, String>): HttpUrl {
         val path = requireNotNull(arg["path"]) { "\"path\" parameter not found" }
 
         return root.builder().s(path).url()
       }
 
-      override fun thumbnailUrl(post: Post.Builder, spoiler: Boolean, customSpoilers: Int, arg: Map<String, String>): HttpUrl {
+      override fun thumbnailUrl(post: ChanPostBuilder, spoiler: Boolean, customSpoilers: Int, arg: Map<String, String>): HttpUrl {
         val thumbnail = requireNotNull(arg["thumbnail"]) { "\"thumbnail\" parameter not found" }
 
         return root.builder().s(thumbnail).url()
@@ -273,7 +280,7 @@ class Dvach : CommonSite() {
 
     setRequestModifier(siteRequestModifier)
     setApi(DvachApi(siteManager, boardManager, this))
-    setParser(DvachCommentParser(themeEngine, mockReplyManager))
+    setParser(DvachCommentParser(mockReplyManager))
   }
 
   override fun commentParserType(): CommentParserType {

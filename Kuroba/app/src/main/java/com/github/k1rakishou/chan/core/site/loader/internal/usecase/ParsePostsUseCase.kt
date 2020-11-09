@@ -1,19 +1,19 @@
 package com.github.k1rakishou.chan.core.site.loader.internal.usecase
 
+import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.manager.FilterEngine
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
-import com.github.k1rakishou.chan.core.model.Post
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.PostParseWorker
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilter
+import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.async
@@ -27,16 +27,14 @@ class ParsePostsUseCase(
   private val filterEngine: FilterEngine,
   private val postFilterManager: PostFilterManager,
   private val savedReplyManager: SavedReplyManager,
-  private val themeEngine: ThemeEngine,
   private val boardManager: BoardManager
 ) {
 
   suspend fun parseNewPostsPosts(
     chanDescriptor: ChanDescriptor,
     chanReader: ChanReader,
-    postBuildersToParse: List<Post.Builder>,
-    maxCount: Int
-  ): List<Post> {
+    postBuildersToParse: List<ChanPostBuilder>
+  ): List<ChanPost> {
     BackgroundUtils.ensureBackgroundThread()
 
     chanPostRepository.awaitUntilInitialized()
@@ -44,8 +42,7 @@ class ParsePostsUseCase(
 
     if (verboseLogsEnabled) {
       Logger.d(TAG, "parseNewPostsPosts(chanDescriptor=$chanDescriptor, " +
-        "postsToParseSize=${postBuildersToParse.size}, " +
-        "maxCount=$maxCount)")
+        "postsToParseSize=${postBuildersToParse.size})")
     }
 
     if (postBuildersToParse.isEmpty()) {
@@ -66,7 +63,6 @@ class ParsePostsUseCase(
                 filterEngine,
                 postFilterManager,
                 savedReplyManager,
-                themeEngine.chanTheme,
                 filters,
                 postToParse,
                 chanReader,
@@ -91,9 +87,9 @@ class ParsePostsUseCase(
     return boardDescriptors
   }
 
-  private suspend fun getInternalIds(
+  private fun getInternalIds(
     chanDescriptor: ChanDescriptor,
-    postBuildersToParse: List<Post.Builder>
+    postBuildersToParse: List<ChanPostBuilder>
   ): Set<Long> {
     val postsToParseNoSet = postBuildersToParse.map { postBuilder -> postBuilder.id }.toSet()
 

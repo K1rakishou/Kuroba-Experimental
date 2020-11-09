@@ -22,16 +22,14 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.os.Environment;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
-import com.github.k1rakishou.chan.core.manager.ThemeParser;
 import com.github.k1rakishou.chan.core.saver.ImageSaver;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileChooser;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.google.gson.Gson;
@@ -44,11 +42,11 @@ import coil.ImageLoader;
 import coil.request.CachePolicy;
 import dagger.Module;
 import dagger.Provides;
-import kotlinx.coroutines.CoroutineScope;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAppContext;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getMaxScreenSize;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getMinScreenSize;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getAvailableSpaceInBytes;
+import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
+import static com.github.k1rakishou.common.AndroidUtils.getMaxScreenSize;
+import static com.github.k1rakishou.common.AndroidUtils.getMinScreenSize;
 
 @Module
 public class AppModule {
@@ -65,7 +63,7 @@ public class AppModule {
             cacheDir = getAppContext().getCacheDir();
         }
 
-        long spaceInBytes = AndroidUtils.getAvailableSpaceInBytes(cacheDir);
+        long spaceInBytes = getAvailableSpaceInBytes(cacheDir);
         Logger.d(DI_TAG, "Available space for cache dir: " + spaceInBytes +
                 " bytes, cacheDirPath = " + cacheDir.getAbsolutePath());
 
@@ -114,14 +112,6 @@ public class AppModule {
                 ChanSettings.verboseLogs.get(),
                 themeEngine
         );
-    }
-
-    @Provides
-    @Singleton
-    public ThemeEngine provideThemeEngine(CoroutineScope appScope, ThemeParser themeParser) {
-        Logger.d(DI_TAG, "ThemeEngine");
-
-        return new ThemeEngine(appScope, themeParser);
     }
 
     @Provides

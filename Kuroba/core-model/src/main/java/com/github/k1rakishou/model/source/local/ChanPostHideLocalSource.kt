@@ -1,7 +1,6 @@
 package com.github.k1rakishou.model.source.local
 
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostHide
@@ -9,9 +8,7 @@ import com.github.k1rakishou.model.mapper.ChanPostHideMapper
 
 class ChanPostHideLocalSource(
   database: KurobaDatabase,
-  loggerTag: String,
   private val isDevFlavor: Boolean,
-  private val logger: Logger
 ) : AbstractLocalSource(database) {
   private val chanPostHideDao = database.chanPostHideDao()
 

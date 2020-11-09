@@ -16,20 +16,21 @@ import coil.transform.GrayscaleTransformation
 import coil.transform.RoundedCornersTransformation
 import coil.transform.Transformation
 import com.airbnb.epoxy.EpoxyHolder
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
-import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkSelection
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkStats
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.view.SelectionCheckView
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.dp
-import com.github.k1rakishou.chan.utils.AndroidUtils.waitForLayout
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.common.AndroidUtils.dp
 import com.github.k1rakishou.common.resetClickListener
 import com.github.k1rakishou.common.resetLongClickListener
 import com.github.k1rakishou.common.updatePaddings
+import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import java.lang.ref.WeakReference
@@ -60,7 +61,7 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
   private var bookmarkStatsHolder: LinearLayout? = null
 
   override fun bindView(itemView: View) {
-    AndroidUtils.extractStartActivityComponent(itemView.context)
+    AppModuleAndroidUtils.extractStartActivityComponent(itemView.context)
       .inject(this)
 
     viewRoot = itemView.findViewById(R.id.thread_bookmark_view_root)
@@ -381,7 +382,7 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
         indicator.imageTintList = ColorStateList.valueOf(ThemeEngine.LIGHT_DRAWABLE_TINT)
       } else {
         val color = themeEngine.resolveTintColor(
-          AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+          isDarkColor(themeEngine.chanTheme.backColor)
         )
 
         indicator.imageTintList = ColorStateList.valueOf(color)

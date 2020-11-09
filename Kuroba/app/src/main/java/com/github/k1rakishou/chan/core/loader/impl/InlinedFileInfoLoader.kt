@@ -1,14 +1,14 @@
 package com.github.k1rakishou.chan.core.loader.impl
 
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.loader.LoaderResult
-import com.github.k1rakishou.chan.core.loader.LoaderType
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader
 import com.github.k1rakishou.chan.core.loader.PostLoaderData
-import com.github.k1rakishou.chan.core.model.PostImage
-import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.InlinedFileInfo
+import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.data.post.LoaderType
 import com.github.k1rakishou.model.repository.InlinedFileInfoRepository
 import io.reactivex.Scheduler
 import io.reactivex.Single
@@ -68,7 +68,7 @@ class InlinedFileInfoLoader(
   }
 
   private suspend fun updateInlinedImagesFileSizes(
-    inlinedImages: List<PostImage>,
+    inlinedImages: List<ChanPostImage>,
     postLoaderData: PostLoaderData
   ): LoaderResult {
     BackgroundUtils.ensureBackgroundThread()
@@ -100,7 +100,7 @@ class InlinedFileInfoLoader(
   }
 
   private suspend fun getInlinedFilesBatched(
-    inlinedImages: List<PostImage>
+    inlinedImages: List<ChanPostImage>
   ): List<ModularResult<InlinedFileInfo>> {
     BackgroundUtils.ensureBackgroundThread()
 

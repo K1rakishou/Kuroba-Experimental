@@ -23,7 +23,7 @@ import com.github.k1rakishou.chan.core.site.http.HttpCall;
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody;
 import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginRequest;
 import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginResponse;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
 
 import java.net.HttpCookie;
 import java.util.List;

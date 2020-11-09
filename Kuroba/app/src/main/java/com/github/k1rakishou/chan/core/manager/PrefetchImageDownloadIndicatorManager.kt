@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.manager
 
-import com.github.k1rakishou.chan.core.model.PostImage
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
@@ -9,7 +9,7 @@ import io.reactivex.processors.PublishProcessor
 class PrefetchImageDownloadIndicatorManager {
   private val prefetchStateProcessor = PublishProcessor.create<PrefetchState>().toSerialized()
 
-  fun onPrefetchStarted(postImage: PostImage) {
+  fun onPrefetchStarted(postImage: ChanPostImage) {
     if (postImage.isPrefetched) {
       return
     }
@@ -17,7 +17,7 @@ class PrefetchImageDownloadIndicatorManager {
     prefetchStateProcessor.onNext(PrefetchState.PrefetchStarted(postImage))
   }
 
-  fun onPrefetchProgress(postImage: PostImage, progress: Float) {
+  fun onPrefetchProgress(postImage: ChanPostImage, progress: Float) {
     if (postImage.isPrefetched) {
       return
     }
@@ -25,7 +25,7 @@ class PrefetchImageDownloadIndicatorManager {
     prefetchStateProcessor.onNext(PrefetchState.PrefetchProgress(postImage, progress))
   }
 
-  fun onPrefetchCompleted(postImage: PostImage) {
+  fun onPrefetchCompleted(postImage: ChanPostImage) {
     if (!postImage.isPrefetched) {
       return
     }
@@ -46,8 +46,8 @@ class PrefetchImageDownloadIndicatorManager {
   }
 }
 
-sealed class PrefetchState(val postImage: PostImage) {
-  class PrefetchStarted(postImage: PostImage) : PrefetchState(postImage)
-  class PrefetchProgress(postImage: PostImage, val progress: Float) : PrefetchState(postImage)
-  class PrefetchCompleted(postImage: PostImage) : PrefetchState(postImage)
+sealed class PrefetchState(val postImage: ChanPostImage) {
+  class PrefetchStarted(postImage: ChanPostImage) : PrefetchState(postImage)
+  class PrefetchProgress(postImage: ChanPostImage, val progress: Float) : PrefetchState(postImage)
+  class PrefetchCompleted(postImage: ChanPostImage) : PrefetchState(postImage)
 }

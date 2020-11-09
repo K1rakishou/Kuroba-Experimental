@@ -1,17 +1,14 @@
 package com.github.k1rakishou.model.source.local
 
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.filter.ChanFilter
 import com.github.k1rakishou.model.mapper.ChanFilterMapper
 
 class ChanFilterLocalSource(
   database: KurobaDatabase,
-  loggerTag: String,
   private val isDevFlavor: Boolean,
-  private val logger: Logger
 ) : AbstractLocalSource(database) {
-  private val TAG = "$loggerTag ChanFilterLocalSource"
+  private val TAG = "ChanFilterLocalSource"
   private val chanFilterDao = database.chanFilterDao()
 
   suspend fun selectAll(): List<ChanFilter> {

@@ -38,17 +38,17 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
-import com.github.k1rakishou.chan.core.manager.DialogFactory;
-import com.github.k1rakishou.chan.core.manager.FilterEngine;
-import com.github.k1rakishou.chan.core.manager.FilterEngine.FilterAction;
+import com.github.k1rakishou.chan.core.helper.DialogFactory;
+import com.github.k1rakishou.chan.core.helper.FilterEngine;
+import com.github.k1rakishou.chan.core.helper.FilterEngine.FilterAction;
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage;
 import com.github.k1rakishou.chan.ui.layout.FilterLayout;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.filter.ChanFilter;
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
 import com.github.k1rakishou.model.data.filter.FilterType;
@@ -65,11 +65,11 @@ import kotlin.Unit;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getQuantityString;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.openLink;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.postToEventBus;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.postToEventBus;
+import static com.github.k1rakishou.common.AndroidUtils.getQuantityString;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
+import static com.github.k1rakishou.common.AndroidUtils.inflate;
 
 public class FiltersController
         extends Controller

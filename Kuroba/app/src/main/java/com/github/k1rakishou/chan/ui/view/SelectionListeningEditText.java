@@ -23,8 +23,8 @@ import android.util.AttributeSet;
 
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getClipboardManager;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.isAndroid10;
+import static com.github.k1rakishou.common.AndroidUtils.getClipboardManager;
+import static com.github.k1rakishou.common.AndroidUtils.isAndroid10;
 
 public class SelectionListeningEditText extends ColorizableEditText {
     private SelectionChangedListener listener;

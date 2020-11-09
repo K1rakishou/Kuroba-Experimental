@@ -29,11 +29,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.common.AndroidUtils;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -2,15 +2,15 @@ package com.github.k1rakishou.chan.core.manager
 
 import android.annotation.SuppressLint
 import android.os.Build
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
-import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.ui.controller.LogsController
 import com.github.k1rakishou.chan.ui.layout.crashlogs.CrashLog
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.TimeUtils.getCurrentDateAndTimeUTC
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.core_logger.Logger
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import io.reactivex.Completable
@@ -18,9 +18,13 @@ import io.reactivex.Flowable
 import io.reactivex.Single
 import io.reactivex.processors.PublishProcessor
 import io.reactivex.schedulers.Schedulers
-import okhttp3.*
+import okhttp3.Call
+import okhttp3.Callback
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import java.io.File
 import java.io.IOException
 import java.util.*

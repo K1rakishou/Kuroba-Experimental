@@ -1,14 +1,15 @@
 package com.github.k1rakishou.chan.core.mapper
 
 import android.text.SpannableString
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.model.PostImage
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder
+import com.github.k1rakishou.chan.core.model.ChanPostImageBuilder
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.archive.ArchivePost
 import com.github.k1rakishou.model.data.archive.ArchivePostMedia
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 object ArchiveThreadMapper {
@@ -17,7 +18,7 @@ object ArchiveThreadMapper {
   fun fromPost(
     boardDescriptor: BoardDescriptor,
     archivePost: ArchivePost
-  ): Post.Builder {
+  ): ChanPostBuilder {
     val images = archivePost.archivePostMediaList.mapNotNull { archivePostMedia ->
       return@mapNotNull Try {
         return@Try fromPostMedia(archivePost.postDescriptor, archivePostMedia)
@@ -27,7 +28,7 @@ object ArchiveThreadMapper {
       }
     }
 
-    val postBuilder = Post.Builder()
+    val postBuilder = ChanPostBuilder()
       .boardDescriptor(boardDescriptor)
       .id(archivePost.postNo)
       .opId(archivePost.threadNo)
@@ -53,17 +54,16 @@ object ArchiveThreadMapper {
   private fun fromPostMedia(
     postDescriptor: PostDescriptor,
     archivePostMedia: ArchivePostMedia
-  ): PostImage? {
+  ): ChanPostImage? {
     val imageUrl = archivePostMedia.imageUrl?.toHttpUrl()
 
-    return PostImage.Builder()
+    return ChanPostImageBuilder()
       .serverFilename(archivePostMedia.serverFilename)
       .thumbnailUrl(archivePostMedia.thumbnailUrl!!.toHttpUrl())
       .filename(archivePostMedia.filename)
       .extension(archivePostMedia.extension)
       .imageWidth(archivePostMedia.imageWidth)
       .imageHeight(archivePostMedia.imageHeight)
-      .archiveId(0)
       .size(archivePostMedia.size)
       .fileHash(archivePostMedia.fileHashBase64, true)
       .imageUrl(imageUrl)

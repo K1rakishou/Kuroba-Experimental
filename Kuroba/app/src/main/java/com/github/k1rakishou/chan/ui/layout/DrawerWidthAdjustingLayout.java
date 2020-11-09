@@ -24,7 +24,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.github.k1rakishou.chan.R;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
 
 public class DrawerWidthAdjustingLayout extends DrawerLayout {
     public DrawerWidthAdjustingLayout(Context context) {

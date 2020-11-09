@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.base.okhttp
 
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
+import com.github.k1rakishou.core_logger.Logger
 import okhttp3.OkHttpClient
 
 object HttpLoggingInterceptorInstaller {
@@ -11,7 +11,7 @@ object HttpLoggingInterceptorInstaller {
     okHttpClientBuilder: OkHttpClient.Builder,
     httpLoggingInterceptorLazy: HttpLoggingInterceptorLazy
   ) {
-    if (!AndroidUtils.isDevBuild()) {
+    if (!isDevBuild()) {
       return
     }
 

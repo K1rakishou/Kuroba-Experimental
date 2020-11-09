@@ -19,24 +19,37 @@ package com.github.k1rakishou.chan.core.site.common
 import android.text.TextUtils
 import android.webkit.WebView
 import androidx.annotation.CallSuper
-import com.github.k1rakishou.chan.core.model.Post
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder
 import com.github.k1rakishou.chan.core.model.SiteBoards
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
-import com.github.k1rakishou.chan.core.site.*
+import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
+import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteActions
+import com.github.k1rakishou.chan.core.site.SiteAuthentication
+import com.github.k1rakishou.chan.core.site.SiteBase
+import com.github.k1rakishou.chan.core.site.SiteEndpoints
+import com.github.k1rakishou.chan.core.site.SiteIcon
+import com.github.k1rakishou.chan.core.site.SiteRequestModifier
+import com.github.k1rakishou.chan.core.site.SiteUrlHandler
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanReaderExtensions
-import com.github.k1rakishou.chan.core.site.http.*
+import com.github.k1rakishou.chan.core.site.http.DeleteRequest
+import com.github.k1rakishou.chan.core.site.http.DeleteResponse
+import com.github.k1rakishou.chan.core.site.http.HttpCall
+import com.github.k1rakishou.chan.core.site.http.Reply
+import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.json.JsonSettings
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -153,7 +166,7 @@ abstract class CommonSite : SiteBase() {
   }
   
   open fun setParser(commentParser: CommentParser) {
-    postParser = DefaultPostParser(themeEngine, commentParser, postFilterManager, archivesManager)
+    postParser = DefaultPostParser(commentParser, postFilterManager, archivesManager)
   }
 
   override fun enabled(): Boolean {
@@ -322,11 +335,11 @@ abstract class CommonSite : SiteBase() {
       throw IllegalStateException("Attempt to call abstract method")
     }
     
-    override fun imageUrl(post: Post.Builder, arg: Map<String, String>): HttpUrl {
+    override fun imageUrl(post: ChanPostBuilder, arg: Map<String, String>): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
     
-    override fun thumbnailUrl(post: Post.Builder, spoiler: Boolean, customSpoilers: Int, arg: Map<String, String>): HttpUrl {
+    override fun thumbnailUrl(post: ChanPostBuilder, spoiler: Boolean, customSpoilers: Int, arg: Map<String, String>): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
     
@@ -350,11 +363,11 @@ abstract class CommonSite : SiteBase() {
       throw IllegalStateException("Attempt to call abstract method")
     }
     
-    override fun delete(post: Post): HttpUrl {
+    override fun delete(post: ChanPost): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
     
-    override fun report(post: Post): HttpUrl {
+    override fun report(post: ChanPost): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
     

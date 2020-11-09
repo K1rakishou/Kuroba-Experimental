@@ -4,7 +4,7 @@ import com.github.k1rakishou.chan.core.base.TestModule
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheV2.Companion.MIN_CHUNK_SIZE
 import com.github.k1rakishou.chan.core.cache.createFileDownloadRequest
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.RawFile
 import com.nhaarman.mockitokotlin2.doAnswer
@@ -19,11 +19,16 @@ import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 import okhttp3.internal.closeQuietly
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertArrayEquals
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.ArgumentMatchers.*
+import org.mockito.ArgumentMatchers.anyInt
+import org.mockito.ArgumentMatchers.anyLong
+import org.mockito.ArgumentMatchers.anyString
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.shadows.ShadowLog
 import java.io.IOException

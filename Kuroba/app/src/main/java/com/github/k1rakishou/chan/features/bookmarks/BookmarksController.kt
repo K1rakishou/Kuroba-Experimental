@@ -14,19 +14,28 @@ import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyModel
 import com.airbnb.epoxy.EpoxyModelTouchCallback
 import com.airbnb.epoxy.EpoxyViewHolder
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
-import com.github.k1rakishou.chan.core.manager.*
-import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
+import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.PageRequestManager
+import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
 import com.github.k1rakishou.chan.features.bookmarks.data.GroupOfThreadBookmarkItemViews
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkItemView
-import com.github.k1rakishou.chan.features.bookmarks.epoxy.*
+import com.github.k1rakishou.chan.features.bookmarks.epoxy.BaseThreadBookmarkViewHolder
+import com.github.k1rakishou.chan.features.bookmarks.epoxy.EpoxyGridThreadBookmarkViewHolder_
+import com.github.k1rakishou.chan.features.bookmarks.epoxy.EpoxyListThreadBookmarkViewHolder_
+import com.github.k1rakishou.chan.features.bookmarks.epoxy.UnifiedBookmarkInfoAccessor
+import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyGridThreadBookmarkViewHolder
+import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyListThreadBookmarkViewHolder
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
@@ -34,17 +43,19 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyExpandableGroupView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.*
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
+import com.github.k1rakishou.common.AndroidUtils.getDisplaySize
+import com.github.k1rakishou.common.AndroidUtils.getString
+import com.github.k1rakishou.common.AndroidUtils.inflate
 import com.github.k1rakishou.common.exhaustive
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -543,7 +554,7 @@ class BookmarksController(
             }
           }
 
-          val isTablet = AndroidUtils.isTablet()
+          val isTablet = isTablet()
           updateTitleWithStats(state)
 
           state.groupedBookmarks.forEach { bookmarkGroup ->

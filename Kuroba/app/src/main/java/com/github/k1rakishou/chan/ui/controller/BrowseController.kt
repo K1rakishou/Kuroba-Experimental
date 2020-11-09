@@ -24,17 +24,17 @@ import android.view.View
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.Animation
 import android.view.animation.RotateAnimation
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.manager.DialogFactory
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.LocalSearchType
 import com.github.k1rakishou.chan.core.presenter.BrowsePresenter
-import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.core.settings.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.features.setup.BoardSelectionController
 import com.github.k1rakishou.chan.features.setup.SiteSettingsController
@@ -48,15 +48,18 @@ import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigati
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.helper.HintPopup
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.getString
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLinkInBrowser
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink
 import com.github.k1rakishou.chan.utils.plusAssign
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils.getString
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
@@ -342,7 +345,7 @@ class BrowseController(
     withNestedOverflow(
       ACTION_DEV_MENU,
       R.string.action_browse_dev_menu,
-      AndroidUtils.isDevBuild()
+      isDevBuild()
     )
       .addNestedItem(
         DEV_BOOKMARK_EVERY_THREAD,
@@ -431,7 +434,7 @@ class BrowseController(
 
     when (id) {
       DEV_BOOKMARK_EVERY_THREAD -> {
-        presenter.bookmarkEveryThread(threadLayout.presenter.chanThread)
+        presenter.bookmarkEveryThread(threadLayout.presenter.currentChanDescriptor)
       }
     }
   }
@@ -496,7 +499,7 @@ class BrowseController(
       return
     }
 
-    presenter.requestData()
+    presenter.normalLoad()
 
     // Give the rotation menu item view a spin.
     val refreshView: View = item.view
@@ -615,10 +618,7 @@ class BrowseController(
 
         showExternalThread(threadDescriptor)
       } catch (e: NumberFormatException) {
-        AndroidUtils.showToast(
-          context,
-          context.getString(R.string.browse_controller_error_parsing_thread_id)
-        )
+        showToast(context.getString(R.string.browse_controller_error_parsing_thread_id))
       }
     }
   }
@@ -645,16 +645,16 @@ class BrowseController(
       return
     }
 
-    if (presenter.chanThread == null) {
+    if (presenter.currentChanDescriptor == null) {
       Logger.e(TAG, "handleShareAndOpenInBrowser() chanThread == null")
-      AndroidUtils.showToast(context, R.string.cannot_open_in_browser_already_deleted)
+      showToast(R.string.cannot_open_in_browser_already_deleted)
       return
     }
 
-    val chanDescriptor = presenter.chanDescriptor
+    val chanDescriptor = presenter.currentChanDescriptor
     if (chanDescriptor == null) {
       Logger.e(TAG, "handleShareAndOpenInBrowser() chanDescriptor == null")
-      AndroidUtils.showToast(context, R.string.cannot_open_in_browser_already_deleted)
+      showToast(R.string.cannot_open_in_browser_already_deleted)
       return
     }
 
@@ -662,15 +662,15 @@ class BrowseController(
     if (site == null) {
       Logger.e(TAG, "handleShareAndOpenInBrowser() site == null " +
         "(siteDescriptor = ${chanDescriptor.siteDescriptor()})")
-      AndroidUtils.showToast(context, R.string.cannot_open_in_browser_already_deleted)
+      showToast(R.string.cannot_open_in_browser_already_deleted)
       return
     }
 
     val link = site.resolvable().desktopUrl(chanDescriptor, null)
     if (share) {
-      AndroidUtils.shareLink(link)
+      shareLink(link)
     } else {
-      AndroidUtils.openLinkInBrowser(context, link, themeEngine.chanTheme)
+      openLinkInBrowser(context, link, themeEngine.chanTheme)
     }
   }
 
@@ -696,8 +696,6 @@ class BrowseController(
       )
 
       threadLayout.presenter.bindChanDescriptor(catalogDescriptor)
-      threadLayout.presenter.requestCatalogInitialData(catalogDescriptor)
-
       requireNavController().requireToolbar().updateTitle(navigation)
     }
   }

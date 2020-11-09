@@ -16,25 +16,24 @@
  */
 package com.github.k1rakishou.chan.ui.cell
 
-import com.github.k1rakishou.chan.core.manager.PostPreloadedInfoHolder
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.model.PostImage
-import com.github.k1rakishou.chan.core.settings.ChanSettings.PostViewMode
+import com.github.k1rakishou.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest.BoardPage
-import com.github.k1rakishou.chan.ui.text.span.PostLinkable
-import com.github.k1rakishou.chan.ui.theme.ChanTheme
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
+import com.github.k1rakishou.core_spannable.PostLinkable
+import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostImage
 
 interface PostCellInterface {
   fun setPost(
     chanDescriptor: ChanDescriptor,
-    post: Post,
+    post: ChanPost,
     currentPostIndex: Int,
     realPostIndex: Int,
     callback: PostCellCallback,
-    postPreloadedInfoHolder: PostPreloadedInfoHolder,
     inPopup: Boolean,
     highlighted: Boolean,
     selected: Boolean,
@@ -51,30 +50,30 @@ interface PostCellInterface {
    * offscreen and not because we called notifyItemChanged.
    */
   fun onPostRecycled(isActuallyRecycling: Boolean)
-  fun getPost(): Post?
-  fun getThumbnailView(postImage: PostImage): ThumbnailView?
+  fun getPost(): ChanPost?
+  fun getThumbnailView(postImage: ChanPostImage): ThumbnailView?
 
   interface PostCellCallback {
-    fun getChanDescriptor(): ChanDescriptor?
+    fun getCurrentChanDescriptor(): ChanDescriptor?
 
     // Only used in PostCell and CardPostCell
-    fun onPostBind(post: Post)
+    fun onPostBind(post: ChanPost)
 
     // Only used in PostCell and CardPostCell
-    fun onPostUnbind(post: Post, isActuallyRecycling: Boolean)
+    fun onPostUnbind(post: ChanPost, isActuallyRecycling: Boolean)
 
-    fun onPostClicked(post: Post)
-    fun onPostDoubleClicked(post: Post)
-    fun onThumbnailClicked(postImage: PostImage, thumbnail: ThumbnailView)
-    fun onThumbnailLongClicked(postImage: PostImage, thumbnail: ThumbnailView)
-    fun onShowPostReplies(post: Post)
-    fun onPopulatePostOptions(post: Post, menu: MutableList<FloatingListMenuItem>)
-    fun onPostOptionClicked(post: Post, id: Any, inPopup: Boolean)
-    fun onPostLinkableClicked(post: Post, linkable: PostLinkable)
-    fun onPostNoClicked(post: Post)
-    fun onPostSelectionQuoted(post: Post, quoted: CharSequence)
-    fun getPage(op: Post): BoardPage?
-    fun hasAlreadySeenPost(post: Post): Boolean
-    fun showPostOptions(post: Post, inPopup: Boolean, items: List<FloatingListMenuItem>)
+    fun onPostClicked(post: ChanPost)
+    fun onPostDoubleClicked(post: ChanPost)
+    fun onThumbnailClicked(postImage: ChanPostImage, thumbnail: ThumbnailView)
+    fun onThumbnailLongClicked(postImage: ChanPostImage, thumbnail: ThumbnailView)
+    fun onShowPostReplies(post: ChanPost)
+    fun onPopulatePostOptions(post: ChanPost, menu: MutableList<FloatingListMenuItem>)
+    fun onPostOptionClicked(post: ChanPost, id: Any, inPopup: Boolean)
+    fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable)
+    fun onPostNoClicked(post: ChanPost)
+    fun onPostSelectionQuoted(post: ChanPost, quoted: CharSequence)
+    fun getPage(originalPostDescriptor: PostDescriptor): BoardPage?
+    fun hasAlreadySeenPost(post: ChanPost): Boolean
+    fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>)
   }
 }

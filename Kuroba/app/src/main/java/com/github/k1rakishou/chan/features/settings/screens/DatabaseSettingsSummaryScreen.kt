@@ -5,7 +5,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.settings.DatabaseSummaryScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.repository.InlinedFileInfoRepository
@@ -55,7 +55,7 @@ class DatabaseSettingsSummaryScreen(
           },
           callback = {
             val deleted = runBlocking(Dispatchers.Default) { inlinedFileInfoRepository.deleteAll().unwrap() }
-            AndroidUtils.showToast(context, "Done, deleted $deleted inlined file info rows")
+            showToast(context, "Done, deleted $deleted inlined file info rows")
           }
         )
 
@@ -70,7 +70,7 @@ class DatabaseSettingsSummaryScreen(
           },
           callback = {
             val deleted = runBlocking(Dispatchers.Default) { mediaServiceLinkExtraContentRepository.deleteAll().unwrap() }
-            AndroidUtils.showToast(context, "Done, deleted $deleted extra link info rows")
+            showToast(context, "Done, deleted $deleted extra link info rows")
           }
         )
 
@@ -85,7 +85,7 @@ class DatabaseSettingsSummaryScreen(
           },
           callback = {
             val deleted = runBlocking(Dispatchers.Default) { seenPostRepository.deleteAll().unwrap() }
-            AndroidUtils.showToast(context, "Done, deleted $deleted seen posts rows")
+            showToast(context, "Done, deleted $deleted seen posts rows")
           }
         )
 
@@ -107,7 +107,7 @@ class DatabaseSettingsSummaryScreen(
               chanPostRepository.deleteOldThreadsIfNeeded(forced = true).unwrap()
             }
 
-            AndroidUtils.showToast(context, "Done, deleted ${deleted.deletedTotal} thread rows, " +
+            showToast(context, "Done, deleted ${deleted.deletedTotal} thread rows, " +
               "skipped ${deleted.skippedTotal} thread rows")
           }
         )
@@ -130,7 +130,7 @@ class DatabaseSettingsSummaryScreen(
               chanPostRepository.deleteOldPostsIfNeeded(forced = true).unwrap()
             }
 
-            AndroidUtils.showToast(context, "Done, deleted ${deleted.deletedTotal} post rows, " +
+            showToast(context, "Done, deleted ${deleted.deletedTotal} post rows, " +
               "skipped ${deleted.skippedTotal} post rows")
           }
         )

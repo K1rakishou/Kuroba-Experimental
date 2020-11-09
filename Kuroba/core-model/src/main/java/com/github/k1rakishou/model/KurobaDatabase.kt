@@ -6,9 +6,34 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.github.k1rakishou.common.DoNotStrip
-import com.github.k1rakishou.model.common.Logger
-import com.github.k1rakishou.model.converter.*
-import com.github.k1rakishou.model.dao.*
+import com.github.k1rakishou.model.converter.BitSetTypeConverter
+import com.github.k1rakishou.model.converter.ChanPostImageTypeTypeConverter
+import com.github.k1rakishou.model.converter.DateTimeTypeConverter
+import com.github.k1rakishou.model.converter.HttpUrlTypeConverter
+import com.github.k1rakishou.model.converter.JsonSettingsTypeConverter
+import com.github.k1rakishou.model.converter.PeriodTypeConverter
+import com.github.k1rakishou.model.converter.ReplyTypeTypeConverter
+import com.github.k1rakishou.model.converter.TextTypeTypeConverter
+import com.github.k1rakishou.model.converter.VideoServiceTypeConverter
+import com.github.k1rakishou.model.dao.ChanBoardDao
+import com.github.k1rakishou.model.dao.ChanFilterDao
+import com.github.k1rakishou.model.dao.ChanPostDao
+import com.github.k1rakishou.model.dao.ChanPostHideDao
+import com.github.k1rakishou.model.dao.ChanPostHttpIconDao
+import com.github.k1rakishou.model.dao.ChanPostImageDao
+import com.github.k1rakishou.model.dao.ChanPostReplyDao
+import com.github.k1rakishou.model.dao.ChanSavedReplyDao
+import com.github.k1rakishou.model.dao.ChanSiteDao
+import com.github.k1rakishou.model.dao.ChanTextSpanDao
+import com.github.k1rakishou.model.dao.ChanThreadDao
+import com.github.k1rakishou.model.dao.ChanThreadViewableInfoDao
+import com.github.k1rakishou.model.dao.InlinedFileInfoDao
+import com.github.k1rakishou.model.dao.MediaServiceLinkExtraContentDao
+import com.github.k1rakishou.model.dao.NavHistoryDao
+import com.github.k1rakishou.model.dao.SeenPostDao
+import com.github.k1rakishou.model.dao.ThreadBookmarkDao
+import com.github.k1rakishou.model.dao.ThreadBookmarkGroupDao
+import com.github.k1rakishou.model.dao.ThreadBookmarkReplyDao
 import com.github.k1rakishou.model.entity.InlinedFileInfoEntity
 import com.github.k1rakishou.model.entity.MediaServiceLinkExtraContentEntity
 import com.github.k1rakishou.model.entity.SeenPostEntity
@@ -20,7 +45,14 @@ import com.github.k1rakishou.model.entity.chan.board.ChanBoardEntity
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardIdEntity
 import com.github.k1rakishou.model.entity.chan.filter.ChanFilterBoardConstraintEntity
 import com.github.k1rakishou.model.entity.chan.filter.ChanFilterEntity
-import com.github.k1rakishou.model.entity.chan.post.*
+import com.github.k1rakishou.model.entity.chan.post.ChanPostEntity
+import com.github.k1rakishou.model.entity.chan.post.ChanPostHideEntity
+import com.github.k1rakishou.model.entity.chan.post.ChanPostHttpIconEntity
+import com.github.k1rakishou.model.entity.chan.post.ChanPostIdEntity
+import com.github.k1rakishou.model.entity.chan.post.ChanPostImageEntity
+import com.github.k1rakishou.model.entity.chan.post.ChanPostReplyEntity
+import com.github.k1rakishou.model.entity.chan.post.ChanSavedReplyEntity
+import com.github.k1rakishou.model.entity.chan.post.ChanTextSpanEntity
 import com.github.k1rakishou.model.entity.chan.site.ChanSiteEntity
 import com.github.k1rakishou.model.entity.chan.site.ChanSiteIdEntity
 import com.github.k1rakishou.model.entity.chan.site.ChanSiteSettingsEntity
@@ -30,7 +62,14 @@ import com.github.k1rakishou.model.entity.navigation.NavHistoryElementIdEntity
 import com.github.k1rakishou.model.entity.navigation.NavHistoryElementInfoEntity
 import com.github.k1rakishou.model.entity.view.ChanThreadsWithPosts
 import com.github.k1rakishou.model.entity.view.OldChanPostThread
-import com.github.k1rakishou.model.migrations.*
+import com.github.k1rakishou.model.migrations.Migration_v1_to_v2
+import com.github.k1rakishou.model.migrations.Migration_v2_to_v3
+import com.github.k1rakishou.model.migrations.Migration_v3_to_v4
+import com.github.k1rakishou.model.migrations.Migration_v4_to_v5
+import com.github.k1rakishou.model.migrations.Migration_v5_to_v6
+import com.github.k1rakishou.model.migrations.Migration_v6_to_v7
+import com.github.k1rakishou.model.migrations.Migration_v7_to_v8
+import com.github.k1rakishou.model.migrations.Migration_v8_to_v9
 
 @DoNotStrip
 @Database(
@@ -66,7 +105,7 @@ import com.github.k1rakishou.model.migrations.*
     ChanThreadsWithPosts::class,
     OldChanPostThread::class
   ],
-  version = 8,
+  version = 9,
   exportSchema = true
 )
 @TypeConverters(
@@ -118,12 +157,7 @@ abstract class KurobaDatabase : RoomDatabase() {
     const val SQLITE_TRUE = 1
     const val SQLITE_FALSE = 0
 
-    fun buildDatabase(
-      application: Application,
-      betaOrDev: Boolean,
-      loggerTag: String,
-      logger: Logger
-    ): KurobaDatabase {
+    fun buildDatabase(application: Application): KurobaDatabase {
       return Room.databaseBuilder(
         application.applicationContext,
         KurobaDatabase::class.java,
@@ -136,32 +170,12 @@ abstract class KurobaDatabase : RoomDatabase() {
           Migration_v4_to_v5(),
           Migration_v5_to_v6(),
           Migration_v6_to_v7(),
-          Migration_v7_to_v8()
+          Migration_v7_to_v8(),
+          Migration_v8_to_v9()
         )
-        .fallbackToDestructiveMigrationIfBetaOrDev(betaOrDev, loggerTag, logger)
         .fallbackToDestructiveMigrationOnDowngrade()
         .build()
     }
 
-    private fun <T : RoomDatabase> Builder<T>.fallbackToDestructiveMigrationIfBetaOrDev(
-      betaOrDev: Boolean,
-      loggerTag: String,
-      logger: Logger
-    ): Builder<T> {
-      val migrationType = if (betaOrDev) {
-        "destructive"
-      } else {
-        "non-destructive"
-      }
-
-      logger.log(loggerTag, "Using \"$migrationType\" migration")
-
-      if (!betaOrDev) {
-        return this
-      }
-
-      fallbackToDestructiveMigration()
-      return this
-    }
   }
 }

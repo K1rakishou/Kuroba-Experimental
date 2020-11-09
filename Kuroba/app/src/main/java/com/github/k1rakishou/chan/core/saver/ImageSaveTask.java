@@ -25,14 +25,14 @@ import androidx.annotation.Nullable;
 import com.github.k1rakishou.chan.core.cache.FileCacheListener;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload;
-import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.fsaf.file.AbstractFile;
 import com.github.k1rakishou.fsaf.file.ExternalFile;
 import com.github.k1rakishou.fsaf.file.RawFile;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+import com.github.k1rakishou.model.data.post.ChanPostImage;
 
 import java.io.IOException;
 
@@ -43,8 +43,8 @@ import kotlin.NotImplementedError;
 
 import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledDownloadResult.Failure;
 import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledDownloadResult.Success;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAppContext;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.openIntent;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent;
+import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
 
 public class ImageSaveTask
         extends FileCacheListener {
@@ -53,7 +53,7 @@ public class ImageSaveTask
     private final FileCacheV2 fileCacheV2;
     private final FileManager fileManager;
 
-    private PostImage postImage;
+    private ChanPostImage postImage;
     private ChanDescriptor chanDescriptor;
     private boolean isBatchDownload;
     private AbstractFile destination;
@@ -66,7 +66,7 @@ public class ImageSaveTask
             FileCacheV2 fileCacheV2,
             FileManager fileManager,
             ChanDescriptor chanDescriptor,
-            PostImage postImage,
+            ChanPostImage postImage,
             boolean isBatchDownload
     ) {
         this.fileCacheV2 = fileCacheV2;
@@ -86,16 +86,16 @@ public class ImageSaveTask
         return subFolder;
     }
 
-    public PostImage getPostImage() {
+    public ChanPostImage getPostImage() {
         return postImage;
     }
 
     public String getPostImageUrl() {
-        if (postImage.imageUrl == null) {
+        if (postImage.getImageUrl() == null) {
             throw new NullPointerException("imageUrl is null! loadable = " + chanDescriptor.toString());
         }
 
-        return postImage.imageUrl.toString();
+        return postImage.getImageUrl().toString();
     }
 
     public void setDestination(AbstractFile destination) {

@@ -2,7 +2,7 @@ package com.github.k1rakishou.model.data.serializable;
 
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.model.data.serializable.spans.SerializableSpannableString;
+import com.github.k1rakishou.core_spannable.serializable.SerializableSpannableString;
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;

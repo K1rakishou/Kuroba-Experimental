@@ -5,12 +5,12 @@ import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.CharacterStyle
 import android.text.style.ImageSpan
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.sp
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils.sp
 import com.github.k1rakishou.common.putIfNotContains
+import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
 import org.joda.time.Period
 import org.joda.time.format.PeriodFormatterBuilder
@@ -50,12 +50,12 @@ internal object CommentSpanUpdater {
 
   @Synchronized
   fun updateSpansForPostComment(
-    post: Post,
+    post: ChanPost,
     spanUpdateBatchList: List<SpanUpdateBatch>
   ): Boolean {
     BackgroundUtils.ensureBackgroundThread()
 
-    val ssb = SpannableStringBuilder(post.comment)
+    val ssb = SpannableStringBuilder(post.postComment.comment)
     val groupedSpanUpdates = groupSpanUpdatesByOldSpans(spanUpdateBatchList)
 
     // Since we are inserting new text, old spans will become incorrect right after the first
@@ -116,7 +116,7 @@ internal object CommentSpanUpdater {
       }
     }
 
-    post.comment = ssb
+    post.postComment.comment = ssb
     return updated
   }
 

@@ -1,13 +1,13 @@
 package com.github.k1rakishou.chan.features.settings.screens.delegate.base_directory
 
 import android.content.Context
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.manager.DialogFactory
-import com.github.k1rakishou.chan.core.settings.ChanSettings
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.SaveLocationController
-import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.AndroidUtils.getString
 import java.io.File
 
 class SaveLocationSetupDelegate(

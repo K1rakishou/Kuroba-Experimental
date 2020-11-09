@@ -1,10 +1,11 @@
 package com.github.k1rakishou.chan.core.site.sites.foolfuuka
 
-import com.github.k1rakishou.chan.core.model.Post
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
 import okhttp3.HttpUrl
 import java.util.regex.Pattern
 
@@ -26,12 +27,12 @@ class FoolFuukaEndpoints(
       .build()
   }
 
-  override fun imageUrl(post: Post.Builder, arg: Map<String, String>): HttpUrl {
+  override fun imageUrl(post: ChanPostBuilder, arg: Map<String, String>): HttpUrl {
     throw NotImplementedError("imageUrl")
   }
 
   // https://archived.moe/files/a/thumb/1599/43/1599433446565s.jpg
-  override fun thumbnailUrl(post: Post.Builder, spoiler: Boolean, customSpoilers: Int, arg: Map<String, String>): HttpUrl {
+  override fun thumbnailUrl(post: ChanPostBuilder, spoiler: Boolean, customSpoilers: Int, arg: Map<String, String>): HttpUrl {
     val param1 = requireNotNull(arg[THUMBNAIL_PARAM_1]) { "THUMBNAIL_PARAM_1_NAME not provided" }
     val param2 = requireNotNull(arg[THUMBNAIL_PARAM_2]) { "THUMBNAIL_PARAM_2_NAME not provided" }
     val fileId = requireNotNull(arg[THUMBNAIL_FILE_ID]) { "THUMBNAIL_FILE_ID not provided" }
@@ -62,11 +63,11 @@ class FoolFuukaEndpoints(
     throw NotImplementedError("reply")
   }
 
-  override fun delete(post: Post): HttpUrl {
+  override fun delete(post: ChanPost): HttpUrl {
     throw NotImplementedError("delete")
   }
 
-  override fun report(post: Post): HttpUrl {
+  override fun report(post: ChanPost): HttpUrl {
     throw NotImplementedError("report")
   }
 

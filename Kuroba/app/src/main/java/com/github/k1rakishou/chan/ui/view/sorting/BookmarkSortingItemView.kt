@@ -6,13 +6,15 @@ import android.view.Gravity
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.content.ContextCompat
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.common.updatePaddings
+import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
 import javax.inject.Inject
 
 class BookmarkSortingItemView @JvmOverloads constructor(
@@ -31,7 +33,7 @@ class BookmarkSortingItemView @JvmOverloads constructor(
 
   init {
     if (!isInEditMode) {
-      AndroidUtils.extractStartActivityComponent(context)
+      AppModuleAndroidUtils.extractStartActivityComponent(context)
         .inject(this)
     }
 
@@ -58,7 +60,7 @@ class BookmarkSortingItemView @JvmOverloads constructor(
 
   override fun onThemeChanged() {
     imageView.drawable?.let { prevDrawable ->
-      val isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+      val isDarkColor = isDarkColor(themeEngine.chanTheme.backColor)
       imageView.setImageDrawable(themeEngine.tintDrawable(prevDrawable, isDarkColor))
     }
   }
@@ -132,7 +134,7 @@ class BookmarkSortingItemView @JvmOverloads constructor(
 
   private fun updateImageTint() {
     imageView.drawable?.let { prevDrawable ->
-      val isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+      val isDarkColor = isDarkColor(themeEngine.chanTheme.backColor)
       imageView.setImageDrawable(themeEngine.tintDrawable(prevDrawable, isDarkColor))
     }
   }

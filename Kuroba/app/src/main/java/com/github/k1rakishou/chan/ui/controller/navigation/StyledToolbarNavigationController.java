@@ -18,18 +18,18 @@ package com.github.k1rakishou.chan.ui.controller.navigation;
 
 import android.content.Context;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.controller.transition.ControllerTransition;
 import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout;
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.features.drawer.DrawerController;
 import com.github.k1rakishou.chan.ui.controller.PopupController;
 
 import org.jetbrains.annotations.NotNull;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
+import static com.github.k1rakishou.common.AndroidUtils.inflate;
 
 public class StyledToolbarNavigationController extends ToolbarNavigationController {
 

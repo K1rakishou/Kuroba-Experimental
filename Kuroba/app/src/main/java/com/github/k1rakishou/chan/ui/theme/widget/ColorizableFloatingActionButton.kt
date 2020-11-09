@@ -5,8 +5,10 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.util.AttributeSet
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.core_themes.IColorizableWidget
+import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import javax.inject.Inject
 
@@ -22,7 +24,7 @@ open class ColorizableFloatingActionButton @JvmOverloads constructor(
 
   init {
     if (!isInEditMode) {
-      AndroidUtils.extractStartActivityComponent(context)
+      AppModuleAndroidUtils.extractStartActivityComponent(context)
         .inject(this)
     }
   }
@@ -40,7 +42,7 @@ open class ColorizableFloatingActionButton @JvmOverloads constructor(
 
     backgroundTintList = ColorStateList.valueOf(themeEngine.chanTheme.accentColor)
 
-    val isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.accentColor)
+    val isDarkColor = isDarkColor(themeEngine.chanTheme.accentColor)
     if (isDarkColor) {
       drawable.setTint(Color.WHITE)
     } else {

@@ -2,18 +2,25 @@ package com.github.k1rakishou.chan.core.site.sites.chan4
 
 import android.webkit.CookieManager
 import android.webkit.WebView
-import com.github.k1rakishou.chan.BuildConfig
-import com.github.k1rakishou.chan.core.model.Post
+import com.github.k1rakishou.OptionSettingItem
+import com.github.k1rakishou.SharedPreferencesSettingProvider
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder
 import com.github.k1rakishou.chan.core.model.SiteBoards
 import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
-import com.github.k1rakishou.chan.core.settings.OptionSettingItem
-import com.github.k1rakishou.chan.core.settings.OptionsSetting
-import com.github.k1rakishou.chan.core.settings.SharedPreferencesSettingProvider
-import com.github.k1rakishou.chan.core.settings.StringSetting
-import com.github.k1rakishou.chan.core.site.*
+import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
+import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
+import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteActions
+import com.github.k1rakishou.chan.core.site.SiteAuthentication
+import com.github.k1rakishou.chan.core.site.SiteBase
+import com.github.k1rakishou.chan.core.site.SiteEndpoints
+import com.github.k1rakishou.chan.core.site.SiteIcon
+import com.github.k1rakishou.chan.core.site.SiteRequestModifier
+import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.SiteSetting.SiteOptionsSetting
 import com.github.k1rakishou.chan.core.site.SiteSetting.SiteStringSetting
+import com.github.k1rakishou.chan.core.site.SiteUrlHandler
 import com.github.k1rakishou.chan.core.site.common.FutabaChanReader
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.HttpCall
@@ -26,13 +33,17 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.prefs.OptionsSetting
+import com.github.k1rakishou.prefs.StringSetting
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -57,7 +68,8 @@ open class Chan4 : SiteBase() {
   var flagType: StringSetting? = null
 
   init {
-    val prefs = SharedPreferencesSettingProvider(AndroidUtils.getPreferences())
+    val prefs =
+      SharedPreferencesSettingProvider(AndroidUtils.getPreferences())
 
     passUser = StringSetting(prefs, "preference_pass_token", "")
     passPass = StringSetting(prefs, "preference_pass_pin", "")
@@ -93,7 +105,7 @@ open class Chan4 : SiteBase() {
         .build()
     }
 
-    override fun imageUrl(post: Post.Builder, arg: Map<String, String>): HttpUrl {
+    override fun imageUrl(post: ChanPostBuilder, arg: Map<String, String>): HttpUrl {
       val imageFile = arg["tim"].toString() + "." + arg["ext"]
 
       return i.newBuilder()
@@ -103,7 +115,7 @@ open class Chan4 : SiteBase() {
     }
 
     override fun thumbnailUrl(
-      post: Post.Builder,
+      post: ChanPostBuilder,
       spoiler: Boolean,
       customSpoilers: Int,
       arg: Map<String, String>
@@ -122,7 +134,7 @@ open class Chan4 : SiteBase() {
         image.build()
       } else {
         when (arg["ext"]) {
-          "swf" -> (BuildConfig.RESOURCES_ENDPOINT + "swf_thumb.png").toHttpUrl()
+          "swf" -> (AppConstants.RESOURCES_ENDPOINT + "swf_thumb.png").toHttpUrl()
           else -> t.newBuilder()
             .addPathSegment(boardCode)
             .addPathSegment(arg["tim"].toString() + "s.jpg")
@@ -170,7 +182,7 @@ open class Chan4 : SiteBase() {
       return sys.newBuilder().addPathSegment(chanDescriptor.boardCode()).addPathSegment("post").build()
     }
 
-    override fun delete(post: Post): HttpUrl {
+    override fun delete(post: ChanPost): HttpUrl {
       val boardCode = post.boardDescriptor.boardCode
 
       return sys.newBuilder()
@@ -179,14 +191,14 @@ open class Chan4 : SiteBase() {
         .build()
     }
 
-    override fun report(post: Post): HttpUrl {
+    override fun report(post: ChanPost): HttpUrl {
       val boardCode = post.boardDescriptor.boardCode
 
       return sys.newBuilder()
         .addPathSegment(boardCode)
         .addPathSegment("imgboard.php")
         .addQueryParameter("mode", "report")
-        .addQueryParameter("no", post.no.toString())
+        .addQueryParameter("no", post.postNo().toString())
         .build()
     }
 
@@ -458,8 +470,7 @@ open class Chan4 : SiteBase() {
       postFilterManager,
       mockReplyManager,
       siteManager,
-      boardManager,
-      themeEngine
+      boardManager
     )
   }
 

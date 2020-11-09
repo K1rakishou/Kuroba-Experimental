@@ -21,15 +21,15 @@ import android.content.Context;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout;
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
-import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+import com.github.k1rakishou.model.data.post.ChanPostImage;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
+import static com.github.k1rakishou.common.AndroidUtils.inflate;
 
 public class ImageViewerNavigationController
         extends ToolbarNavigationController {
@@ -62,7 +62,7 @@ public class ImageViewerNavigationController
     }
 
     public void showImages(
-            final List<PostImage> images,
+            final List<ChanPostImage> images,
             final int index,
             final ChanDescriptor chanDescriptor,
             ImageViewerController.ImageViewerCallback imageViewerCallback
@@ -71,7 +71,7 @@ public class ImageViewerNavigationController
     }
 
     public void showImages(
-            final List<PostImage> images,
+            final List<ChanPostImage> images,
             final int index,
             final ChanDescriptor chanDescriptor,
             ImageViewerController.ImageViewerCallback imageViewerCallback,

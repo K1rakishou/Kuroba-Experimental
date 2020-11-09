@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.core.loader.impl
 
 import android.text.Spanned
 import com.github.k1rakishou.chan.core.loader.LoaderResult
-import com.github.k1rakishou.chan.core.loader.LoaderType
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader
 import com.github.k1rakishou.chan.core.loader.PostLoaderData
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.ExternalMediaServiceExtraInfoFetcher
@@ -10,12 +9,13 @@ import com.github.k1rakishou.chan.core.loader.impl.post_comment.CommentPostLinka
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.CommentSpanUpdater
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.LinkInfoRequest
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.SpanUpdateBatch
-import com.github.k1rakishou.chan.ui.text.span.PostLinkable
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.putIfNotContains
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.media.GenericVideoId
+import com.github.k1rakishou.model.data.post.LoaderType
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
 import io.reactivex.Single
@@ -49,7 +49,7 @@ internal class PostExtraContentLoader(
   }
 
   private fun extractVideoIds(postLoaderData: PostLoaderData): List<GenericVideoId> {
-    val comment = postLoaderData.post.comment
+    val comment = postLoaderData.post.postComment.comment
     if (comment.isEmpty() || comment !is Spanned) {
       return emptyList()
     }
@@ -70,7 +70,7 @@ internal class PostExtraContentLoader(
       return rejected()
     }
 
-    val comment = postLoaderData.post.comment
+    val comment = postLoaderData.post.postComment.comment
     if (comment.isEmpty() || comment !is Spanned) {
       return rejected()
     }

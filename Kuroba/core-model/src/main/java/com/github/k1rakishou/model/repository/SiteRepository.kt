@@ -3,8 +3,8 @@ package com.github.k1rakishou.model.repository
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.SuspendableInitializer
 import com.github.k1rakishou.common.myAsync
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.ChanSiteData
 import com.github.k1rakishou.model.source.local.SiteLocalSource
@@ -16,12 +16,10 @@ import kotlin.time.measureTimedValue
 
 class SiteRepository(
   database: KurobaDatabase,
-  loggerTag: String,
-  logger: Logger,
   private val applicationScope: CoroutineScope,
   private val localSource: SiteLocalSource
-) : AbstractRepository(database, logger) {
-  private val TAG = "$loggerTag SiteRepository"
+) : AbstractRepository(database) {
+  private val TAG = "SiteRepository"
   private val allSitesLoadedInitializer = SuspendableInitializer<Unit>("allSitesLoadedInitializer")
 
   suspend fun awaitUntilSitesLoaded() = allSitesLoadedInitializer.awaitUntilInitialized()
@@ -38,12 +36,12 @@ class SiteRepository(
           return@measureTimedValue localSource.selectAllOrderedDesc()
         }
 
-        logger.log(TAG, "initializeSites() -> ${sites.size} took $duration")
+        Logger.d(TAG, "initializeSites() -> ${sites.size} took $duration")
         return@tryWithTransaction sites
       }
 
       allSitesLoadedInitializer.initWithModularResult(result.mapValue { Unit })
-      logger.log(TAG, "allSitesLoadedInitializer initialized")
+      Logger.d(TAG, "allSitesLoadedInitializer initialized")
       return@myAsync result
     }
   }
@@ -61,12 +59,12 @@ class SiteRepository(
   @OptIn(ExperimentalTime::class)
   suspend fun persist(chanSiteDataList: Collection<ChanSiteData>): ModularResult<Unit> {
     check(allSitesLoadedInitializer.isInitialized()) { "SiteRepository is not initialized" }
-    logger.log(TAG, "persist(chanSiteDataListCount=${chanSiteDataList.size})")
+    Logger.d(TAG, "persist(chanSiteDataListCount=${chanSiteDataList.size})")
 
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         val time = measureTime { localSource.persist(chanSiteDataList) }
-        logger.log(TAG, "persist(${chanSiteDataList.size}) took $time")
+        Logger.d(TAG, "persist(${chanSiteDataList.size}) took $time")
 
         return@tryWithTransaction
       }

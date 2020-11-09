@@ -1,34 +1,120 @@
 package com.github.k1rakishou.model.data.post
 
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import com.github.k1rakishou.model.data.serializable.spans.SerializableSpannableString
+import java.util.*
 
-data class ChanPost(
+open class ChanPost(
   val chanPostId: Long,
   val postDescriptor: PostDescriptor,
-  val postImages: MutableList<ChanPostImage> = mutableListOf(),
-  val postIcons: MutableList<ChanPostHttpIcon> = mutableListOf(),
-  val repliesTo: MutableSet<Long> = mutableSetOf(),
-  val replies: Int = -1,
-  val threadImagesCount: Int = -1,
-  val uniqueIps: Int = -1,
-  val lastModified: Long = -1L,
-  val sticky: Boolean = false,
-  val closed: Boolean = false,
-  val archived: Boolean = false,
-  val deleted: Boolean = false,
-  val archiveId: Long = 0L,
+  val postImages: List<ChanPostImage>,
+  val postIcons: List<ChanPostHttpIcon>,
+  val repliesTo: Set<Long>,
   val timestamp: Long = -1L,
-  val postComment: SerializableSpannableString = SerializableSpannableString(),
-  val subject: SerializableSpannableString = SerializableSpannableString(),
-  val tripcode: SerializableSpannableString = SerializableSpannableString(),
+  val postComment: PostComment,
+  val subject: CharSequence?,
+  val tripcode: CharSequence?,
   val name: String? = null,
   val posterId: String? = null,
   val moderatorCapcode: String? = null,
-  val isOp: Boolean = false,
-  val isSavedReply: Boolean = false,
-  var isFromCache: Boolean = false
+  val isSavedReply: Boolean = false
 ) {
+  /**
+   * We use this map to avoid infinite loops when binding posts since after all post content
+   * loaders have done their jobs we update the post via notifyItemChange, which triggers
+   * onPostBind() again.
+   */
+  private val onDemandContentLoadedMap = HashMap<LoaderType, Boolean>()
+
+  @get:Synchronized
+  var deleted: Boolean = false
+    private set
+
+  @get:Synchronized
+  val repliesFrom = mutableSetOf<Long>()
+
+  @Synchronized
+  fun postNo(): Long = postDescriptor.postNo
+  @Synchronized
+  fun firstImage(): ChanPostImage? = postImages.firstOrNull()
+
+  @Synchronized
+  fun setPostDeleted(isDeleted: Boolean = true) {
+    deleted = isDeleted
+  }
+
+  @Synchronized
+  fun isOP(): Boolean = postDescriptor.isOP()
+
+  @get:Synchronized
+  val repliesFromCount: Int
+    get() = repliesFrom.size
+  @get:Synchronized
+  val postImagesCount: Int
+    get() = postImages.size
+
+  @get:Synchronized
+  open val catalogRepliesCount: Int
+    get() = 0
+  @get:Synchronized
+  open val catalogImagesCount: Int
+    get() = 0
+
+  val boardDescriptor: BoardDescriptor
+    get() = postDescriptor.boardDescriptor()
+
+  init {
+    onDemandContentLoadedMap.clear()
+
+    for (loaderType in LoaderType.values()) {
+      onDemandContentLoadedMap[loaderType] = false
+    }
+  }
+
+  @Synchronized
+  open fun isContentLoadedForLoader(loaderType: LoaderType?): Boolean {
+    return onDemandContentLoadedMap[loaderType] ?: return false
+  }
+
+  @Synchronized
+  open fun setContentLoadedForLoader(loaderType: LoaderType?) {
+    onDemandContentLoadedMap[loaderType!!] = true
+  }
+
+  @Synchronized
+  open fun allLoadersCompletedLoading(): Boolean {
+    for (loaderCompletedLoading in onDemandContentLoadedMap.values) {
+      if (!loaderCompletedLoading) {
+        return false
+      }
+    }
+
+    return true
+  }
+
+  @Synchronized
+  open fun updatePostImageSize(fileUrl: String, fileSize: Long) {
+    for (postImage in postImages) {
+      if (postImage.imageUrl != null && postImage.imageUrl.toString() == fileUrl) {
+        postImage.setSize(fileSize)
+        return
+      }
+    }
+  }
+
+  @Synchronized
+  open fun iterateRepliesFrom(iterator: (Long) -> Unit) {
+    for (replyNo in repliesFrom) {
+      iterator.invoke(replyNo)
+    }
+  }
+
+  @Synchronized
+  fun iteratePostImages(iterator: (ChanPostImage) -> Unit) {
+    for (postImage in postImages) {
+      iterator.invoke(postImage)
+    }
+  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -40,37 +126,6 @@ data class ChanPost(
     if (postDescriptor != other.postDescriptor) {
       return false
     }
-    if (archiveId != other.archiveId) {
-      return false
-    }
-
-    if (isOp) {
-      if (lastModified != other.lastModified) {
-        return false
-      }
-      if (threadImagesCount != other.threadImagesCount) {
-        return false
-      }
-      if (uniqueIps != other.uniqueIps) {
-        return false
-      }
-      if (sticky != other.sticky) {
-        return false
-      }
-      if (closed != other.closed) {
-        return false
-      }
-      if (archived != other.archived) {
-        return false
-      }
-      if (deleted != other.deleted) {
-        return false
-      }
-      if (replies != other.replies) {
-        return false
-      }
-    }
-
     if (!areRepliesToTheSame(other)) {
       return false
     }
@@ -104,7 +159,11 @@ data class ChanPost(
       return false
     }
 
-    return repliesTo == other.repliesTo
+    if (repliesFrom.size != other.repliesFrom.size) {
+      return false
+    }
+
+    return repliesTo == other.repliesTo && repliesFrom == other.repliesFrom
   }
 
   private fun arePostImagesTheSame(other: ChanPost): Boolean {
@@ -118,15 +177,8 @@ data class ChanPost(
   override fun hashCode(): Int {
     var result = chanPostId.hashCode()
     result = 31 * result + postDescriptor.hashCode()
-    result = 31 * result + archiveId.hashCode()
-    result = 31 * result + sticky.hashCode()
-    result = 31 * result + closed.hashCode()
-    result = 31 * result + archived.hashCode()
-    result = 31 * result + deleted.hashCode()
-    result = 31 * result + replies.hashCode()
-    result = 31 * result + threadImagesCount.hashCode()
-    result = 31 * result + uniqueIps.hashCode()
     result = 31 * result + repliesTo.hashCode()
+    result = 31 * result + repliesFrom.hashCode()
     result = 31 * result + postImages.hashCode()
     result = 31 * result + postComment.hashCode()
     result = 31 * result + subject.hashCode()
@@ -134,19 +186,17 @@ data class ChanPost(
     result = 31 * result + tripcode.hashCode()
     result = 31 * result + (posterId?.hashCode() ?: 0)
     result = 31 * result + (moderatorCapcode?.hashCode() ?: 0)
+    result = 31 * result + isSavedReply.hashCode()
     return result
   }
 
   override fun toString(): String {
     return "ChanPost{" +
       "chanPostId=" + chanPostId +
-      ", archiveId=" + archiveId +
       ", postDescriptor=" + postDescriptor +
       ", postImages=" + postImages.size +
-      ", archived=" + archived +
-      ", isOp=" + isOp +
       ", subject='" + subject + '\'' +
-      ", postComment=" + postComment.text.take(64) +
+      ", postComment=" + postComment.comment.take(64) +
       '}'
   }
 

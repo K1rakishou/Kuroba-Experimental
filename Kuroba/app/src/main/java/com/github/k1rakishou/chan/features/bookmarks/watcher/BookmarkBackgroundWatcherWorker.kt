@@ -3,10 +3,10 @@ package com.github.k1rakishou.chan.features.bookmarks.watcher
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
-import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.core_logger.Logger
 import javax.inject.Inject
 
 

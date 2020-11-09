@@ -3,19 +3,16 @@ package com.github.k1rakishou.model.repository
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.filter.ChanFilter
 import com.github.k1rakishou.model.source.local.ChanFilterLocalSource
 import kotlinx.coroutines.CoroutineScope
 
 class ChanFilterRepository(
   database: KurobaDatabase,
-  loggerTag: String,
-  logger: Logger,
   private val applicationScope: CoroutineScope,
   private val localSource: ChanFilterLocalSource
-) : AbstractRepository(database, logger) {
-  private val TAG = "$loggerTag ChanFilterRepository"
+) : AbstractRepository(database) {
+  private val TAG = "ChanFilterRepository"
 
   suspend fun loadAllFilters(): ModularResult<List<ChanFilter>> {
     return applicationScope.myAsync {

@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.StartActivityCompon
 import com.github.k1rakishou.chan.core.di.module.application.AppModule;
 import com.github.k1rakishou.chan.core.di.module.application.ExecutorsModule;
 import com.github.k1rakishou.chan.core.di.module.application.GsonModule;
+import com.github.k1rakishou.chan.core.di.module.application.HelperModule;
 import com.github.k1rakishou.chan.core.di.module.application.LoaderModule;
 import com.github.k1rakishou.chan.core.di.module.application.ManagerModule;
 import com.github.k1rakishou.chan.core.di.module.application.NetModule;
@@ -17,10 +18,11 @@ import com.github.k1rakishou.chan.core.di.module.application.SiteModule;
 import com.github.k1rakishou.chan.core.di.module.application.UseCaseModule;
 import com.github.k1rakishou.chan.core.site.SiteBase;
 import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkBackgroundWatcherWorker;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.widget.SnackbarWrapper;
 import com.github.k1rakishou.common.AppConstants;
-import com.github.k1rakishou.model.di.ModelMainComponent;
+import com.github.k1rakishou.core_themes.ThemeEngine;
+import com.github.k1rakishou.fsaf.FileManager;
+import com.github.k1rakishou.model.di.ModelComponent;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -36,6 +38,7 @@ import okhttp3.Dns;
         AppModule.class,
         ExecutorsModule.class,
         GsonModule.class,
+        HelperModule.class,
         LoaderModule.class,
         ManagerModule.class,
         NetModule.class,
@@ -47,7 +50,6 @@ import okhttp3.Dns;
 })
 public interface ApplicationComponent {
     Chan getApplication();
-    ThemeEngine getThemeEngine();
     StartActivityComponent.Builder activityComponentBuilder();
 
     void inject(@NotNull Chan application);
@@ -62,6 +64,10 @@ public interface ApplicationComponent {
         @BindsInstance
         Builder application(Chan application);
         @BindsInstance
+        Builder themeEngine(ThemeEngine themeEngine);
+        @BindsInstance
+        Builder fileManager(FileManager fileManager);
+        @BindsInstance
         Builder applicationCoroutineScope(CoroutineScope applicationCoroutineScope);
         @BindsInstance
         Builder okHttpDns(Dns okHttpDns);
@@ -70,7 +76,7 @@ public interface ApplicationComponent {
         @BindsInstance
         Builder appConstants(AppConstants appConstants);
         @BindsInstance
-        Builder modelMainComponent(ModelMainComponent modelMainComponent);
+        Builder modelMainComponent(ModelComponent modelComponent);
         @BindsInstance
         Builder appModule(AppModule appModule);
         @BindsInstance

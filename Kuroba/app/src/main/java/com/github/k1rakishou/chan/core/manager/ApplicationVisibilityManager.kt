@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.manager
 
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.core_logger.Logger
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -31,7 +31,8 @@ class ApplicationVisibilityManager {
       }
     }
 
-    Logger.d(TAG, "onEnteredForeground() callback execution took ${time}, callbacks count: ${listeners.size}")
+    Logger.d(TAG, "onEnteredForeground() callback execution took ${time}, " +
+      "callbacks count: ${listeners.size}")
   }
 
   @OptIn(ExperimentalTime::class)
@@ -46,7 +47,8 @@ class ApplicationVisibilityManager {
       }
     }
 
-    Logger.d(TAG, "onEnteredBackground() callback execution took ${time}, callbacks count: ${listeners.size}")
+    Logger.d(TAG, "onEnteredBackground() callback execution took ${time}, " +
+      "callbacks count: ${listeners.size}")
   }
 
   fun getCurrentAppVisibility(): ApplicationVisibility = currentApplicationVisibility
@@ -62,6 +64,10 @@ fun interface ApplicationVisibilityListener {
 }
 
 sealed class ApplicationVisibility {
+
+  fun isInForeground(): Boolean = this is Foreground
+  fun isInBackground(): Boolean = this is Background
+
   object Foreground : ApplicationVisibility() {
     override fun toString(): String {
       return "Foreground"

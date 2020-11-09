@@ -1,5 +1,6 @@
 package com.github.k1rakishou.model.mapper
 
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.entity.chan.post.ChanPostImageEntity
 
@@ -9,9 +10,8 @@ object ChanPostImageMapper {
     return ChanPostImageEntity(
       postImageId = 0L,
       ownerPostId = ownerPostId,
-      ownerArchiveId = chanPostImage.archiveId,
       serverFilename = chanPostImage.serverFilename,
-      thumbnailUrl = chanPostImage.thumbnailUrl,
+      thumbnailUrl = chanPostImage.actualThumbnailUrl,
       spoilerThumbnailUrl = chanPostImage.spoilerThumbnailUrl,
       imageUrl = chanPostImage.imageUrl,
       filename = chanPostImage.filename,
@@ -26,11 +26,13 @@ object ChanPostImageMapper {
     )
   }
 
-  fun fromEntity(chanPostImageEntity: ChanPostImageEntity): ChanPostImage {
+  fun fromEntity(
+    chanPostImageEntity: ChanPostImageEntity,
+    ownerPostDescriptor: PostDescriptor
+  ): ChanPostImage {
     return ChanPostImage(
-      archiveId = chanPostImageEntity.ownerArchiveId,
       serverFilename = chanPostImageEntity.serverFilename,
-      thumbnailUrl = chanPostImageEntity.thumbnailUrl,
+      actualThumbnailUrl = chanPostImageEntity.thumbnailUrl,
       spoilerThumbnailUrl = chanPostImageEntity.spoilerThumbnailUrl,
       imageUrl = chanPostImageEntity.imageUrl,
       filename = chanPostImageEntity.filename,
@@ -39,9 +41,10 @@ object ChanPostImageMapper {
       imageHeight = chanPostImageEntity.imageHeight,
       spoiler = chanPostImageEntity.spoiler,
       isInlined = chanPostImageEntity.isInlined,
-      size = chanPostImageEntity.fileSize,
+      fileSize = chanPostImageEntity.fileSize,
       fileHash = chanPostImageEntity.fileHash,
-      type = chanPostImageEntity.type
+      type = chanPostImageEntity.type,
+      ownerPostDescriptor = ownerPostDescriptor
     )
   }
 

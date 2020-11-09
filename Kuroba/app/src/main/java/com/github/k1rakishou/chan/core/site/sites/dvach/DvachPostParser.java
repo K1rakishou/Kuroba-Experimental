@@ -3,16 +3,13 @@ package com.github.k1rakishou.chan.core.site.sites.dvach;
 import android.graphics.Color;
 import android.text.TextUtils;
 
-import androidx.annotation.NonNull;
-
 import com.github.k1rakishou.chan.core.manager.ArchivesManager;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
-import com.github.k1rakishou.chan.core.model.Post;
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder;
 import com.github.k1rakishou.chan.core.site.common.DefaultPostParser;
 import com.github.k1rakishou.chan.core.site.parser.CommentParser;
-import com.github.k1rakishou.chan.ui.theme.ChanTheme;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.model.data.post.ChanPost;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -28,22 +25,21 @@ public class DvachPostParser extends DefaultPostParser {
     private static final String TAG = "DvachPostParser";
 
     public DvachPostParser(
-            ThemeEngine themeEngine,
             CommentParser commentParser,
             PostFilterManager postFilterManager,
             ArchivesManager archivesManager
     ) {
-        super(themeEngine, commentParser, postFilterManager, archivesManager);
+        super(commentParser, postFilterManager, archivesManager);
     }
 
     @Override
-    public Post parse(@NonNull ChanTheme theme, Post.Builder builder, Callback callback) {
+    public ChanPost parse(ChanPostBuilder builder, Callback callback) {
         builder.name = Parser.unescapeEntities(builder.name, false);
         parseNameForColor(builder);
-        return super.parse(theme, builder, callback);
+        return super.parse(builder, callback);
     }
 
-    private void parseNameForColor(Post.Builder builder) {
+    private void parseNameForColor(ChanPostBuilder builder) {
         CharSequence nameRaw = builder.name;
 
         try {

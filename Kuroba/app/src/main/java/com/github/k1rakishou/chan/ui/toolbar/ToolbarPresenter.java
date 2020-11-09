@@ -20,9 +20,9 @@ package com.github.k1rakishou.chan.ui.toolbar;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
-import com.github.k1rakishou.chan.ui.theme.ChanTheme;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
+import com.github.k1rakishou.ChanSettings;
+import com.github.k1rakishou.core_themes.ChanTheme;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 
 public class ToolbarPresenter {
     private Callback callback;

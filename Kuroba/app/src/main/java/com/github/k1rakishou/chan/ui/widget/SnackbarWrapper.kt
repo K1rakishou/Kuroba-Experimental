@@ -5,14 +5,14 @@ import android.view.View
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.ui.layout.DrawerWidthAdjustingLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
-import com.github.k1rakishou.chan.ui.theme.ChanTheme
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.view.HidingBottomNavigationView
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.dp
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.common.AndroidUtils.dp
 import com.github.k1rakishou.common.findChild
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ChanTheme
+import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 import javax.inject.Inject
@@ -167,7 +167,7 @@ class SnackbarWrapper private constructor(
     }
 
     private fun fixSnackbarColors(theme: ChanTheme, snackbar: Snackbar) {
-      val isDarkColor = AndroidUtils.isDarkColor(theme.primaryColor)
+      val isDarkColor = isDarkColor(theme.primaryColor)
       if (isDarkColor) {
         snackbar.setTextColor(Color.WHITE)
         snackbar.setActionTextColor(Color.WHITE)

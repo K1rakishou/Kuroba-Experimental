@@ -2,17 +2,26 @@ package com.github.k1rakishou.chan.core.site.sites.chan4
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
-import com.github.k1rakishou.chan.core.site.sites.search.*
+import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
+import com.github.k1rakishou.chan.core.site.sites.search.SearchEntry
+import com.github.k1rakishou.chan.core.site.sites.search.SearchEntryPostBuilder
+import com.github.k1rakishou.chan.core.site.sites.search.SearchEntryThread
+import com.github.k1rakishou.chan.core.site.sites.search.SearchError
+import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.flatMapNotNull
 import com.github.k1rakishou.common.groupOrNull
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import org.joda.time.DateTime
-import org.jsoup.nodes.*
+import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
+import org.jsoup.nodes.FormElement
+import org.jsoup.nodes.Node
+import org.jsoup.nodes.TextNode
 import java.util.regex.Pattern
 
 class Chan4SearchRequest(

@@ -32,11 +32,12 @@ import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginRequest
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.view.CrossfadeView
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.core_themes.ThemeEngine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -92,7 +93,7 @@ class LoginController(
     // Sanity check
     requireNotNull(parentController?.view?.windowToken) { "parentController.view not attached" }
 
-    AndroidUtils.waitForLayout(view.viewTreeObserver, view) {
+    waitForLayout(view.viewTreeObserver, view) {
       crossfadeView.layoutParams.height = crossfadeView.height
       crossfadeView.requestLayout()
       crossfadeView.toggle(!loggedIn, false)

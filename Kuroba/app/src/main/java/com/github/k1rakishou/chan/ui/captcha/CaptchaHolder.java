@@ -8,7 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
 import java.text.SimpleDateFormat;

@@ -8,7 +8,7 @@ import androidx.core.graphics.withTranslation
 import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.usecase.PostMapInfoHolder
-import com.github.k1rakishou.chan.utils.AndroidUtils.dp
+import com.github.k1rakishou.common.AndroidUtils.dp
 
 class PostInfoMapItemDecoration(
   private val context: Context,

@@ -20,13 +20,16 @@ import android.content.Context
 import android.text.TextUtils
 import android.widget.Toast
 import androidx.exifinterface.media.ExifInterface
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.Debouncer
-import com.github.k1rakishou.chan.core.manager.*
-import com.github.k1rakishou.chan.core.model.ChanThread
-import com.github.k1rakishou.chan.core.model.Post
+import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.ReplyManager
+import com.github.k1rakishou.chan.core.manager.SavedReplyManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.repository.LastReplyRepository
-import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
@@ -36,15 +39,28 @@ import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
 import com.github.k1rakishou.chan.ui.helper.ImagePickDelegate
 import com.github.k1rakishou.chan.ui.helper.ImagePickDelegate.ImagePickCallback
 import com.github.k1rakishou.chan.ui.helper.PostHelper
-import com.github.k1rakishou.chan.utils.*
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
+import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.BitmapUtils
 import com.github.k1rakishou.chan.utils.PostUtils.getReadableFileSize
+import com.github.k1rakishou.chan.utils.StringUtils
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanSavedReply
-import kotlinx.coroutines.*
+import com.github.k1rakishou.model.util.ChanPostUtils
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern
@@ -58,7 +74,8 @@ class ReplyPresenter @Inject constructor(
   private val lastReplyRepository: LastReplyRepository,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
-  private val bookmarksManager: BookmarksManager
+  private val bookmarksManager: BookmarksManager,
+  private val chanThreadManager: ChanThreadManager
 ) : AuthenticationLayoutCallback, ImagePickCallback, CoroutineScope {
 
   enum class Page {
@@ -397,15 +414,21 @@ class ReplyPresenter @Inject constructor(
     return true
   }
 
-  fun quote(post: Post, withText: Boolean) {
-    handleQuote(post, if (withText) post.comment.toString() else null)
+  fun quote(post: ChanPost, withText: Boolean) {
+    val comment = if (withText) {
+      post.postComment.comment.toString()
+    } else {
+      null
+    }
+
+    handleQuote(post, comment)
   }
 
-  fun quote(post: Post?, text: CharSequence) {
+  fun quote(post: ChanPost?, text: CharSequence) {
     handleQuote(post, text.toString())
   }
 
-  private fun handleQuote(post: Post?, textQuote: String?) {
+  private fun handleQuote(post: ChanPost?, textQuote: String?) {
     callback.loadViewsIntoDraft(draft)
 
     val insert = StringBuilder()
@@ -418,10 +441,10 @@ class ReplyPresenter @Inject constructor(
       insert
         .append('\n')
     }
-    if (post != null && !draft.comment.contains(">>" + post.no)) {
+    if (post != null && !draft.comment.contains(">>" + post.postNo())) {
       insert
         .append(">>")
-        .append(post.no)
+        .append(post.postNo())
         .append("\n")
     }
 
@@ -470,7 +493,7 @@ class ReplyPresenter @Inject constructor(
     pickingFile = false
 
     if (!canceled) {
-      AndroidUtils.showToast(context, R.string.reply_file_open_failed, Toast.LENGTH_LONG)
+      showToast(context, R.string.reply_file_open_failed, Toast.LENGTH_LONG)
     }
   }
 
@@ -615,26 +638,28 @@ class ReplyPresenter @Inject constructor(
     }
   }
 
-  private fun bookmarkThread(chanDescriptor: ChanDescriptor, threadNo: Long) {
-    if (callback.thread?.chanDescriptor?.isThreadDescriptor() == true) {
-      // reply
-      val thread = callback.thread
-      if (thread != null) {
-        val op = thread.op
-        val title = PostHelper.getTitle(op, chanDescriptor)
-        val thumbnail = op.firstImage()?.thumbnailUrl
+  private fun bookmarkThread(newThreadDescriptor: ChanDescriptor, threadNo: Long) {
+    val currentChanDescriptor = callback.chanDescriptor
+    if (currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      val thread = chanThreadManager.getChanThread(currentChanDescriptor)
 
-        bookmarksManager.createBookmark(chanDescriptor.toThreadDescriptor(threadNo), title, thumbnail)
+      // reply
+      if (thread != null) {
+        val originalPost = thread.getOriginalPost()
+        val title = ChanPostUtils.getTitle(originalPost, chanDescriptor)
+        val thumbnail = originalPost.firstImage()?.actualThumbnailUrl
+
+        bookmarksManager.createBookmark(newThreadDescriptor.toThreadDescriptor(threadNo), title, thumbnail)
       } else {
-        bookmarksManager.createBookmark(chanDescriptor.toThreadDescriptor(threadNo))
+        bookmarksManager.createBookmark(newThreadDescriptor.toThreadDescriptor(threadNo))
       }
     } else {
       // new thread, use the new loadable
-      draft.chanDescriptor = chanDescriptor
+      draft.chanDescriptor = newThreadDescriptor
       val title = PostHelper.getTitle(draft)
 
       bookmarksManager.createBookmark(
-        ChanDescriptor.ThreadDescriptor(chanDescriptor.boardDescriptor(), threadNo),
+        ChanDescriptor.ThreadDescriptor(newThreadDescriptor.boardDescriptor(), threadNo),
         title
       )
     }
@@ -764,7 +789,7 @@ class ReplyPresenter @Inject constructor(
 
   interface ReplyPresenterCallback {
     val imagePickDelegate: ImagePickDelegate
-    val thread: ChanThread?
+    val chanDescriptor: ChanDescriptor?
     val selectionStart: Int
 
     fun loadViewsIntoDraft(draft: Reply?)

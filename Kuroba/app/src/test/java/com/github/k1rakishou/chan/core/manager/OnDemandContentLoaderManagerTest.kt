@@ -1,12 +1,21 @@
 package com.github.k1rakishou.chan.core.manager
 
 import android.os.Looper
-import com.github.k1rakishou.chan.core.loader.*
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.core.loader.LoaderBatchResult
+import com.github.k1rakishou.chan.core.loader.LoaderResult
+import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader
+import com.github.k1rakishou.chan.core.loader.PostLoaderData
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.nhaarman.mockitokotlin2.*
+import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.LoaderType
+import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.never
+import com.nhaarman.mockitokotlin2.spy
+import com.nhaarman.mockitokotlin2.times
+import com.nhaarman.mockitokotlin2.verify
 import io.reactivex.Single
 import io.reactivex.schedulers.TestScheduler
 import io.reactivex.subscribers.TestSubscriber
@@ -197,7 +206,8 @@ class OnDemandContentLoaderManagerTest {
       when (event.loaderType) {
         LoaderType.PrefetchLoader -> assertTrue(event is LoaderResult.Succeeded)
         LoaderType.PostExtraContentLoader -> assertTrue(event is LoaderResult.Failed)
-        LoaderType.InlinedFileInfoLoader -> throw RuntimeException("Shouldn't happen")
+        LoaderType.InlinedFileInfoLoader,
+        LoaderType.Chan4CloudFlareImagePreLoader -> throw RuntimeException("Shouldn't happen")
       }.exhaustive
     }
 
@@ -314,7 +324,7 @@ class OnDemandContentLoaderManagerTest {
   private fun createTestData(postNo: Long = 1): TestData {
     val threadDescriptor = ChanDescriptor.ThreadDescriptor.create("4chan", "test", 1234)
 
-    val post = Post.Builder()
+    val post = ChanPostBuilder()
       .boardDescriptor(threadDescriptor.boardDescriptor)
       .id(postNo)
       .opId(postNo)
@@ -325,7 +335,7 @@ class OnDemandContentLoaderManagerTest {
     return TestData(threadDescriptor, post)
   }
 
-  data class TestData(val threadDescriptor: ChanDescriptor.ThreadDescriptor, val post: Post)
+  data class TestData(val threadDescriptor: ChanDescriptor.ThreadDescriptor, val post: ChanPost)
 
   open class DummyLoader(
     loaderType: LoaderType,

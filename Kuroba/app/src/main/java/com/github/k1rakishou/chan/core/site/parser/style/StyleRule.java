@@ -28,18 +28,15 @@ import android.text.style.UnderlineSpan;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.chan.Chan;
-import com.github.k1rakishou.chan.core.model.Post;
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder;
 import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper;
 import com.github.k1rakishou.chan.core.site.parser.PostParser;
-import com.github.k1rakishou.chan.ui.text.span.AbsoluteSizeSpanHashed;
-import com.github.k1rakishou.chan.ui.text.span.ColorizableBackgroundColorSpan;
-import com.github.k1rakishou.chan.ui.text.span.ColorizableForegroundColorSpan;
-import com.github.k1rakishou.chan.ui.text.span.CustomTypefaceSpan;
-import com.github.k1rakishou.chan.ui.text.span.PostLinkable;
-import com.github.k1rakishou.chan.ui.theme.ChanTheme;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.model.data.theme.ChanThemeColorId;
+import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed;
+import com.github.k1rakishou.core_spannable.ColorizableBackgroundColorSpan;
+import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan;
+import com.github.k1rakishou.core_spannable.CustomTypefaceSpan;
+import com.github.k1rakishou.core_spannable.PostLinkable;
+import com.github.k1rakishou.core_themes.ChanThemeColorId;
 
 import org.jsoup.nodes.Element;
 
@@ -47,13 +44,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import kotlin.Lazy;
-import kotlin.LazyKt;
-
 public class StyleRule {
     private final List<String> blockElements = Arrays.asList("p", "div");
-
-    private Lazy<ThemeEngine> themeEngine = LazyKt.lazy(() -> Chan.getComponent().getThemeEngine());
 
     private String tag;
     private List<String> classes;
@@ -197,27 +189,26 @@ public class StyleRule {
             return justText;
         }
 
-        @NonNull ChanTheme theme = styleRulesParams.getTheme();
         @NonNull CharSequence resultText = styleRulesParams.getText();
         @NonNull Element element = styleRulesParams.getElement();
 
-        @Nullable Post.Builder post = styleRulesParams.getPost();
+        @Nullable ChanPostBuilder post = styleRulesParams.getPost();
         @Nullable PostParser.Callback callback = styleRulesParams.getCallback();
 
         if (callback != null && post != null) {
             for (Action action : actions) {
-                resultText = action.execute(theme, callback, post, resultText, element);
+                resultText = action.execute(callback, post, resultText, element);
             }
         }
 
         List<Object> spansToApply = new ArrayList<>(2);
 
         if (backgroundChanThemeColorId != null) {
-            spansToApply.add(new ColorizableBackgroundColorSpan(themeEngine.getValue(), backgroundChanThemeColorId));
+            spansToApply.add(new ColorizableBackgroundColorSpan(backgroundChanThemeColorId));
         }
 
         if (foregroundChanThemeColorId != null) {
-            spansToApply.add(new ColorizableForegroundColorSpan(themeEngine.getValue(), foregroundChanThemeColorId));
+            spansToApply.add(new ColorizableForegroundColorSpan(foregroundChanThemeColorId));
         }
 
         if (strikeThrough) {
@@ -250,7 +241,6 @@ public class StyleRule {
 
         if (link != null && post != null) {
             PostLinkable pl = new PostLinkable(
-                    themeEngine.getValue(),
                     resultText,
                     new PostLinkable.Value.StringValue(resultText),
                     link
@@ -271,7 +261,6 @@ public class StyleRule {
 
         if (linkify && post != null) {
             CommentParserHelper.detectLinks(
-                    themeEngine.getValue(),
                     post,
                     resultText.toString(),
                     new SpannableString(resultText)
@@ -302,9 +291,8 @@ public class StyleRule {
 
     public interface Action {
         CharSequence execute(
-                ChanTheme theme,
                 PostParser.Callback callback,
-                Post.Builder post,
+                ChanPostBuilder post,
                 CharSequence text,
                 Element element
         );

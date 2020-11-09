@@ -1,17 +1,25 @@
 package com.github.k1rakishou.chan.features.bookmarks.watcher
 
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
-import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -26,6 +34,7 @@ class BookmarkForegroundWatcher(
   private val channel = Channel<Unit>(Channel.RENDEZVOUS)
   private val working = AtomicBoolean(false)
 
+  @Volatile
   private var workJob: Job? = null
 
   init {

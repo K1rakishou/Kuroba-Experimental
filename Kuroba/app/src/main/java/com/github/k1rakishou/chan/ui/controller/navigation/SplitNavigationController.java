@@ -34,8 +34,8 @@ import com.github.k1rakishou.chan.core.di.component.activity.StartActivityCompon
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks;
 import com.github.k1rakishou.chan.ui.controller.PopupController;
 import com.github.k1rakishou.chan.ui.layout.SplitNavigationControllerLayout;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import org.jetbrains.annotations.NotNull;
 

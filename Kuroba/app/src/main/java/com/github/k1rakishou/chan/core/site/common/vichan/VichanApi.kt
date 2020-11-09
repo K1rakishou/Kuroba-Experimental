@@ -2,20 +2,21 @@ package com.github.k1rakishou.chan.core.site.common.vichan
 
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.model.PostHttpIcon
-import com.github.k1rakishou.chan.core.model.PostImage
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder
+import com.github.k1rakishou.chan.core.model.ChanPostImageBuilder
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.CommonSite.CommonApi
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.google.gson.stream.JsonReader
 import org.jsoup.parser.Parser
 import java.io.IOException
@@ -45,7 +46,7 @@ class VichanApi(
 
   @Throws(Exception::class)
   private suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
-    val builder = Post.Builder()
+    val builder = ChanPostBuilder()
     builder.boardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
 
     val site = siteManager.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
@@ -64,7 +65,7 @@ class VichanApi(
     var fileSpoiler = false
     var fileName: String? = null
     var fileHash: String? = null
-    val files: MutableList<PostImage> = ArrayList()
+    val files: MutableList<ChanPostImage> = ArrayList()
 
     // Country flag
     var countryCode: String? = null
@@ -133,7 +134,7 @@ class VichanApi(
     // The file from between the other values.
     if (!fileId.isNullOrEmpty() && !fileExt.isNullOrEmpty()) {
       val args = SiteEndpoints.makeArgument("tim", fileId, "ext", fileExt)
-      val image = PostImage.Builder()
+      val image = ChanPostImageBuilder()
         .serverFilename(fileId)
         .thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
         .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, board.customSpoilers, args))
@@ -145,6 +146,7 @@ class VichanApi(
         .spoiler(fileSpoiler)
         .size(fileSize)
         .fileHash(fileHash, true)
+        .postDescriptor(builder.postDescriptor)
         .build()
 
       // Insert it at the beginning.
@@ -155,7 +157,7 @@ class VichanApi(
 
     if (builder.op) {
       // Update OP fields later on the main thread
-      val op = Post.Builder()
+      val op = ChanPostBuilder()
       op.closed(builder.closed)
       op.archived(builder.archived)
       op.sticky(builder.sticky)
@@ -168,12 +170,12 @@ class VichanApi(
 
     if (countryCode != null && countryName != null) {
       val countryUrl = endpoints.icon("country", SiteEndpoints.makeArgument("country_code", countryCode))
-      builder.addHttpIcon(PostHttpIcon(countryUrl, "$countryName/$countryCode"))
+      builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/$countryCode"))
     }
 
     if (trollCountryCode != null && countryName != null) {
       val countryUrl = endpoints.icon("troll_country", SiteEndpoints.makeArgument("troll_country_code", trollCountryCode))
-      builder.addHttpIcon(PostHttpIcon(countryUrl, "$countryName/t_$trollCountryCode"))
+      builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/t_$trollCountryCode"))
     }
 
     chanReaderProcessor.addPost(builder)
@@ -182,10 +184,10 @@ class VichanApi(
   @Throws(IOException::class)
   private fun readPostImage(
     reader: JsonReader,
-    builder: Post.Builder,
+    builder: ChanPostBuilder,
     board: ChanBoard,
     endpoints: SiteEndpoints
-  ): PostImage? {
+  ): ChanPostImage? {
     try {
       reader.beginObject()
     } catch (e: Exception) {
@@ -226,7 +228,8 @@ class VichanApi(
 
     if (fileId != null && fileName != null && fileExt != null) {
       val args = SiteEndpoints.makeArgument("tim", fileId, "ext", fileExt)
-      return PostImage.Builder().serverFilename(fileId)
+      return ChanPostImageBuilder()
+        .serverFilename(fileId)
         .thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
         .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, board.customSpoilers, args))
         .imageUrl(endpoints.imageUrl(builder, args))
@@ -237,6 +240,7 @@ class VichanApi(
         .spoiler(fileSpoiler)
         .size(fileSize)
         .fileHash(fileHash, true)
+        .postDescriptor(builder.postDescriptor)
         .build()
     }
 

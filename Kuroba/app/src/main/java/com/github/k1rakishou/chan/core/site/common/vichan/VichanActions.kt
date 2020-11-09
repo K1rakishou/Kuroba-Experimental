@@ -28,8 +28,8 @@ import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.DeleteResponse
 import com.github.k1rakishou.chan.core.site.http.Reply
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Response
@@ -145,7 +145,7 @@ open class VichanActions(
   override fun setupDelete(deleteRequest: DeleteRequest, call: MultipartHttpCall) {
     call.parameter("board", deleteRequest.post.boardDescriptor.boardCode)
     call.parameter("delete", "Delete")
-    call.parameter("delete_" + deleteRequest.post.no, "on")
+    call.parameter("delete_" + deleteRequest.post.postNo(), "on")
     call.parameter("password", deleteRequest.savedReply.passwordOrEmptyString())
 
     if (deleteRequest.imageOnly) {

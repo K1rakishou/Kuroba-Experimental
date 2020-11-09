@@ -1,23 +1,22 @@
 package com.github.k1rakishou.chan.core.site.loader.internal
 
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.site.loader.ChanLoaderRequestParams
-import com.github.k1rakishou.chan.core.site.loader.ChanLoaderResponse
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsUseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ReloadPostsFromDatabaseUseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
+import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.repository.ChanPostRepository
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.set
+import com.github.k1rakishou.model.source.cache.ChanCacheOptions
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 internal class NormalPostLoader(
@@ -32,36 +31,45 @@ internal class NormalPostLoader(
   suspend fun loadPosts(
     url: String,
     chanReaderProcessor: ChanReaderProcessor,
-    requestParams: ChanLoaderRequestParams
+    cacheOptions: ChanCacheOptions,
+    chanDescriptor: ChanDescriptor,
+    chanReader: ChanReader
   ): ThreadLoadResult {
     chanPostRepository.awaitUntilInitialized()
 
+    val cleanupDuration = runRollingStickyThreadCleanupRoutineIfNeeded(
+      chanDescriptor,
+      chanReaderProcessor
+    )
+
     val (parsedPosts, parsingDuration) = measureTimedValue {
       return@measureTimedValue parsePostsUseCase.parseNewPostsPosts(
-        requestParams.chanDescriptor,
-        requestParams.chanReader,
-        chanReaderProcessor.getToParse(),
-        chanReaderProcessor.getThreadCap()
+        chanDescriptor,
+        chanReader,
+        chanReaderProcessor.getToParse()
       )
     }
 
     val (storedPostNoList, storeDuration) = measureTimedValue {
       storePostsInRepositoryUseCase.storePosts(
         parsedPosts,
-        requestParams.chanDescriptor.isCatalogDescriptor()
+        cacheOptions,
+        chanDescriptor.isCatalogDescriptor()
       )
     }
 
+    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      chanPostRepository.markThreadAsDeleted(chanDescriptor, true)
+    }
+
     val (reloadedPosts, reloadingDuration) = measureTimedValue {
-      return@measureTimedValue reloadPostsFromDatabaseUseCase.reloadPosts(
+      return@measureTimedValue reloadPostsFromDatabaseUseCase.reloadPostsOrdered(
         chanReaderProcessor,
-        requestParams.chanDescriptor
+        chanDescriptor
       )
     }
 
     val cachedPostsCount = chanPostRepository.getTotalCachedPostsCount()
-    val postsFromCache = reloadedPosts.count { post -> post.isFromCache }
-    val fromDatabase = reloadedPosts.count { post -> !post.isFromCache }
 
     val logStr = createLogString(
       url,
@@ -69,79 +77,49 @@ internal class NormalPostLoader(
       storedPostNoList,
       reloadingDuration,
       reloadedPosts,
-      postsFromCache,
-      fromDatabase,
       parsingDuration,
       parsedPosts,
       cachedPostsCount,
-      chanReaderProcessor.getTotalPostsCount()
+      chanReaderProcessor.getTotalPostsCount(),
+      cleanupDuration
     )
 
     Logger.d(TAG, logStr)
+    checkNotNull(chanReaderProcessor.getOp()) { "OP is null" }
 
-    val op = checkNotNull(chanReaderProcessor.getOp()) { "OP is null" }
-    return ThreadLoadResult.LoadedNormally(processPosts(op, reloadedPosts, requestParams))
+    return ThreadLoadResult.Loaded(chanDescriptor)
   }
 
-  private fun processPosts(
-    op: Post.Builder,
-    allPosts: List<Post>,
-    requestParams: ChanLoaderRequestParams
-  ): ChanLoaderResponse {
-    BackgroundUtils.ensureBackgroundThread()
+  @OptIn(ExperimentalTime::class)
+  private suspend fun runRollingStickyThreadCleanupRoutineIfNeeded(
+    chanDescriptor: ChanDescriptor,
+    chanReaderProcessor: ChanReaderProcessor
+  ): Duration? {
+    val threadCap = chanReaderProcessor.getThreadCap()
 
-    val cachedPosts = ArrayList<Post>()
-    val newPosts = ArrayList<Post>()
-    val chanDescriptor = requestParams.chanDescriptor
-    val cachedPostsMap = requestParams.cached.associateBy { post -> post.no }.toMutableMap()
+    val needCleanupThread = (threadCap != null && threadCap > 0)
+      && chanDescriptor is ChanDescriptor.ThreadDescriptor
 
-    if (cachedPostsMap.isNotEmpty()) {
-      // Add all posts that were parsed before
-      cachedPosts.addAll(cachedPostsMap.values)
-      val cachedPostsByNo: MutableMap<Long, Post> = HashMap()
+    return if (needCleanupThread) {
+      measureTime {
+        val deleteResult = chanPostRepository.cleanupPostsInRollingStickyThread(
+          chanDescriptor as ChanDescriptor.ThreadDescriptor,
+          threadCap!!
+        )
 
-      for (post in cachedPosts) {
-        cachedPostsByNo[post.no] = post
-      }
-
-      val serverPostsByNo: MutableMap<Long, Post> = HashMap()
-      for (post in allPosts) {
-        serverPostsByNo[post.no] = post
-      }
-
-      // If there's a cached post but it's not in the list received from the server,
-      // mark it as deleted
-      if (chanDescriptor.isThreadDescriptor()) {
-        for (cachedPost in cachedPosts) {
-          if (cachedPost.deleted.get()) {
-            // We already updated this post as deleted (most likely we got this info from
-            // a third-party archive)
-            continue
-          }
-
-          cachedPost.deleted.set(!serverPostsByNo.containsKey(cachedPost.no))
+        if (deleteResult is ModularResult.Error) {
+          Logger.e(
+            TAG,
+            "cleanupPostsInRollingStickyThread(${chanDescriptor}, $threadCap) error",
+            deleteResult.error
+          )
         }
       }
-
-      // If there's a post in the list from the server, that's not in the cached list, add it.
-      allPosts.filterNotTo(newPosts) { cachedPostsByNo.containsKey(it.no) }
     } else {
-      newPosts.addAll(allPosts)
+      null
     }
-
-    val totalPosts = ArrayList<Post>(cachedPosts.size + newPosts.size)
-    totalPosts.addAll(cachedPosts)
-    totalPosts.addAll(newPosts)
-
-    if (chanDescriptor.isThreadDescriptor()) {
-      fillInReplies(totalPosts)
-    }
-
-    val response = ChanLoaderResponse(op, totalPosts.toList())
-    response.preloadPostsInfo()
-
-    return response
   }
+
 
   @OptIn(ExperimentalTime::class)
   private fun createLogString(
@@ -149,15 +127,14 @@ internal class NormalPostLoader(
     storeDuration: Duration,
     storedPostNoList: List<Long>,
     reloadingDuration: Duration,
-    reloadedPosts: List<Post>,
-    postsFromCache: Int,
-    postsFromDatabase: Int,
+    reloadedPosts: List<ChanPost>,
     parsingDuration: Duration,
-    parsedPosts: List<Post>,
+    parsedPosts: List<ChanPost>,
     cachedPostsCount: Int,
-    totalPostsCount: Int
+    totalPostsCount: Int,
+    cleanupDuration: Duration?
   ): String {
-    val urlToLog = if (AndroidUtils.isDevBuild()) {
+    val urlToLog = if (isDevBuild()) {
       url
     } else {
       "<url hidden>"
@@ -166,9 +143,13 @@ internal class NormalPostLoader(
     return buildString {
       appendLine("ChanReaderRequest.readJson() stats: url = $urlToLog.")
       appendLine("Store new posts took $storeDuration (stored ${storedPostNoList.size} posts).")
-      appendLine("Reload posts took $reloadingDuration, (reloaded ${reloadedPosts.size} posts, from cache: $postsFromCache, from database: $postsFromDatabase).")
+      appendLine("Reload posts took $reloadingDuration, (reloaded ${reloadedPosts.size} posts).")
       appendLine("Parse posts took = $parsingDuration, (parsed ${parsedPosts.size} out of $totalPostsCount posts).")
       appendLine("Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsCountInPostsCache}).")
+
+      if (cleanupDuration != null) {
+        appendLine("Sticky thread old post clean up routine took ${cleanupDuration}")
+      }
     }
   }
 

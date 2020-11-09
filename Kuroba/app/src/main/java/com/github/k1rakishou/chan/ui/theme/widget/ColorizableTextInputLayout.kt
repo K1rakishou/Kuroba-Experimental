@@ -5,8 +5,10 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.util.AttributeSet
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.core_themes.IColorizableWidget
+import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.manipulateColor
 import com.google.android.material.textfield.TextInputLayout
 import javax.inject.Inject
 
@@ -21,7 +23,7 @@ class ColorizableTextInputLayout @JvmOverloads constructor(
 
   init {
     if (!isInEditMode) {
-      AndroidUtils.extractStartActivityComponent(context)
+      AppModuleAndroidUtils.extractStartActivityComponent(context)
         .inject(this)
     }
 
@@ -87,7 +89,7 @@ class ColorizableTextInputLayout @JvmOverloads constructor(
       intArrayOf(
         themeEngine.chanTheme.textColorHint,
         themeEngine.chanTheme.errorColor,
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.errorColor, .6f),
+        manipulateColor(themeEngine.chanTheme.errorColor, .6f),
       )
     )
 

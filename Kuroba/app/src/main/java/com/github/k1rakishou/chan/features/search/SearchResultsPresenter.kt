@@ -4,18 +4,28 @@ import android.graphics.Typeface
 import android.text.SpannableString
 import android.text.style.StyleSpan
 import androidx.core.text.buildSpannedString
+import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.core.base.BasePresenter
-import com.github.k1rakishou.chan.core.site.sites.search.*
+import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
+import com.github.k1rakishou.chan.core.site.sites.search.SearchEntryPost
+import com.github.k1rakishou.chan.core.site.sites.search.SearchError
+import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
+import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
-import com.github.k1rakishou.chan.features.search.data.*
-import com.github.k1rakishou.chan.ui.text.span.ColorizableForegroundColorSpan
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
+import com.github.k1rakishou.chan.features.search.data.CharSequenceMurMur
+import com.github.k1rakishou.chan.features.search.data.CurrentQueryInfo
+import com.github.k1rakishou.chan.features.search.data.ErrorInfo
+import com.github.k1rakishou.chan.features.search.data.SearchPostInfo
+import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerState
+import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerStateData
+import com.github.k1rakishou.chan.features.search.data.ThumbnailInfo
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.Logger
-import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan
+import com.github.k1rakishou.core_themes.ChanThemeColorId
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.github.k1rakishou.model.data.theme.ChanThemeColorId
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
@@ -101,11 +111,11 @@ internal class SearchResultsPresenter(
     searchResultsStateStorage.resetLastRecyclerViewScrollState()
   }
 
-  fun updateLastRecyclerViewScrollState(indexAndTop: RecyclerUtils.IndexAndTop) {
+  fun updateLastRecyclerViewScrollState(indexAndTop: PersistableChanState.IndexAndTop) {
     searchResultsStateStorage.updateLastRecyclerViewScrollState(indexAndTop)
   }
 
-  fun lastRecyclerViewScrollStateOrNull(): RecyclerUtils.IndexAndTop? {
+  fun lastRecyclerViewScrollStateOrNull(): PersistableChanState.IndexAndTop? {
     return searchResultsStateStorage.lastRecyclerViewScrollState
   }
 
@@ -271,7 +281,7 @@ internal class SearchResultsPresenter(
     val spannedSubject = SpannableString(text)
 
     spannedSubject.setSpan(
-      ColorizableForegroundColorSpan(themeEngine, ChanThemeColorId.PostSubjectColor),
+      ColorizableForegroundColorSpan(ChanThemeColorId.PostSubjectColor),
       0,
       spannedSubject.length,
       0

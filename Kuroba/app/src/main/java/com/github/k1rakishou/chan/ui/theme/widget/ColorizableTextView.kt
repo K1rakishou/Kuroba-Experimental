@@ -3,9 +3,10 @@ package com.github.k1rakishou.chan.ui.theme.widget
 import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.ViewUtils.setHandlesColors
+import com.github.k1rakishou.core_themes.IColorizableWidget
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.android.material.textview.MaterialTextView
 import javax.inject.Inject
 
@@ -20,7 +21,7 @@ class ColorizableTextView @JvmOverloads constructor(
 
   init {
     if (!isInEditMode) {
-      AndroidUtils.extractStartActivityComponent(context)
+      AppModuleAndroidUtils.extractStartActivityComponent(context)
         .inject(this)
     }
   }

@@ -4,20 +4,24 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.model.PostHttpIcon
-import com.github.k1rakishou.chan.core.model.PostImage
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder
+import com.github.k1rakishou.chan.core.model.ChanPostImageBuilder
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
-import com.github.k1rakishou.chan.core.site.parser.*
+import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.ChanReader.Companion.DEFAULT_POST_LIST_CAPACITY
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
+import com.github.k1rakishou.chan.core.site.parser.CommentParser
+import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
+import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.bookmark.StickyThread
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.google.gson.stream.JsonReader
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -31,8 +35,7 @@ class FutabaChanReader(
   private val postFilterManager: PostFilterManager,
   private val mockReplyManager: MockReplyManager,
   private val siteManager: SiteManager,
-  private val boardManager: BoardManager,
-  private val themeEngine: ThemeEngine
+  private val boardManager: BoardManager
 ) : ChanReader {
   private val mutex = Mutex()
   private var parser: PostParser? = null
@@ -40,13 +43,14 @@ class FutabaChanReader(
   override suspend fun getParser(): PostParser {
     return mutex.withLock {
       if (parser == null) {
-        val commentParser = CommentParser(themeEngine, mockReplyManager).addDefaultRules()
-        val foolFuukaCommentParser = FoolFuukaCommentParser(themeEngine, mockReplyManager, archivesManager)
-        val defaultPostParser = DefaultPostParser(themeEngine, commentParser, postFilterManager, archivesManager)
+        val commentParser = CommentParser(mockReplyManager)
+          .addDefaultRules()
 
-        for (archiveDescriptor in archivesManager.getAllArchivesDescriptors()) {
-          defaultPostParser.addArchiveCommentParser(archiveDescriptor, foolFuukaCommentParser)
-        }
+        val defaultPostParser = DefaultPostParser(
+          commentParser,
+          postFilterManager,
+          archivesManager
+        )
 
         parser = defaultPostParser
       }
@@ -71,7 +75,7 @@ class FutabaChanReader(
 
   @Throws(Exception::class)
   private suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
-    val builder = Post.Builder()
+    val builder = ChanPostBuilder()
     builder.boardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
 
     val site = siteManager.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
@@ -91,7 +95,7 @@ class FutabaChanReader(
     var fileName: String? = null
     var fileHash: String? = null
     var fileDeleted = false
-    val files: MutableList<PostImage> = ArrayList()
+    val files: MutableList<ChanPostImage> = ArrayList()
 
     // Country flag
     var countryCode: String? = null
@@ -172,7 +176,7 @@ class FutabaChanReader(
     // The file from between the other values.
     if (fileId != null && fileName != null && fileExt != null && !fileDeleted) {
       val args = SiteEndpoints.makeArgument("tim", fileId, "ext", fileExt)
-      val image = PostImage.Builder()
+      val image = ChanPostImageBuilder()
         .serverFilename(fileId)
         .thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
         .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, board.customSpoilers, args))
@@ -184,6 +188,7 @@ class FutabaChanReader(
         .spoiler(fileSpoiler)
         .size(fileSize)
         .fileHash(fileHash, true)
+        .postDescriptor(builder.postDescriptor)
         .build()
 
       // Insert it at the beginning.
@@ -194,7 +199,7 @@ class FutabaChanReader(
 
     if (builder.op) {
       // Update OP fields later on the main thread
-      val op = Post.Builder()
+      val op = ChanPostBuilder()
       op.closed(builder.closed)
       op.archived(builder.archived)
       op.sticky(builder.sticky)
@@ -212,17 +217,17 @@ class FutabaChanReader(
 
     if (countryCode != null && countryName != null) {
       val countryUrl = endpoints.icon("country", SiteEndpoints.makeArgument("country_code", countryCode))
-      builder.addHttpIcon(PostHttpIcon(countryUrl, "$countryName/$countryCode"))
+      builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/$countryCode"))
     }
 
     if (trollCountryCode != null && countryName != null) {
       val countryUrl = endpoints.icon("troll_country", SiteEndpoints.makeArgument("troll_country_code", trollCountryCode))
-      builder.addHttpIcon(PostHttpIcon(countryUrl, "$countryName/t_$trollCountryCode"))
+      builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/t_$trollCountryCode"))
     }
 
     if (since4pass != 0) {
       val iconUrl = endpoints.icon("since4pass", null)
-      builder.addHttpIcon(PostHttpIcon(iconUrl, since4pass.toString()))
+      builder.addHttpIcon(ChanPostHttpIcon(iconUrl, since4pass.toString()))
     }
 
     chanReaderProcessor.addPost(builder)
@@ -231,10 +236,10 @@ class FutabaChanReader(
   @Throws(IOException::class)
   private fun readPostImage(
     reader: JsonReader,
-    builder: Post.Builder,
+    builder: ChanPostBuilder,
     board: ChanBoard,
     endpoints: SiteEndpoints
-  ): PostImage? {
+  ): ChanPostImage? {
     reader.beginObject()
 
     var fileId: String? = null
@@ -264,7 +269,8 @@ class FutabaChanReader(
 
     if (fileId != null && fileName != null && fileExt != null) {
       val args = SiteEndpoints.makeArgument("tim", fileId, "ext", fileExt)
-      return PostImage.Builder().serverFilename(fileId)
+      return ChanPostImageBuilder()
+        .serverFilename(fileId)
         .thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
         .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, board.customSpoilers, args))
         .imageUrl(endpoints.imageUrl(builder, args))
@@ -275,6 +281,7 @@ class FutabaChanReader(
         .spoiler(fileSpoiler)
         .size(fileSize)
         .fileHash(fileHash, true)
+        .postDescriptor(builder.postDescriptor)
         .build()
     }
 

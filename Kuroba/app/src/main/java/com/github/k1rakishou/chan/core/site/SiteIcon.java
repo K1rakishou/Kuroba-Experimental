@@ -21,7 +21,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

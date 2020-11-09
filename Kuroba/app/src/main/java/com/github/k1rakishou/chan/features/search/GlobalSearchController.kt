@@ -18,8 +18,8 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
-import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.plusAssign
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject

@@ -11,18 +11,17 @@ import coil.request.ImageRequest
 import coil.size.Scale
 import coil.transform.Transformation
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.model.PostImage
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.getLifecycleFromContext
 import com.github.k1rakishou.common.DoNotStrip
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import java.util.concurrent.atomic.AtomicReference
 
 @DoNotStrip
 class ImageLoaderV2(
   private val imageLoader: ImageLoader,
   private val verboseLogsEnabled: Boolean,
-  private val themeEngine: ThemeEngine
+  private val themeEngine: com.github.k1rakishou.core_themes.ThemeEngine
 ) {
   private var imageNotFoundDrawable: BitmapDrawable? = null
   private var imageErrorLoadingDrawable: BitmapDrawable? = null
@@ -30,7 +29,7 @@ class ImageLoaderV2(
   @Suppress("UnnecessaryVariable")
   fun load(
     context: Context,
-    postImage: PostImage,
+    postImage: ChanPostImage,
     width: Int,
     height: Int,
     listener: ImageListener
@@ -259,7 +258,6 @@ class ImageLoaderV2(
     } else {
       BitmapDrawable(context.resources, drawable.toBitmap())
     }
-
 
     return imageNotFoundDrawable!!
   }

@@ -3,11 +3,11 @@ package com.github.k1rakishou.chan.core.manager
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.SuspendableInitializer
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableListWithCap
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.model.data.navigation.NavHistoryElementInfo

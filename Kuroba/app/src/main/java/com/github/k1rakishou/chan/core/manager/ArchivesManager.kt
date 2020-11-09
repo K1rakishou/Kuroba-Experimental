@@ -3,12 +3,12 @@ package com.github.k1rakishou.chan.core.manager
 import android.content.Context
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.SuspendableInitializer
-import com.github.k1rakishou.model.data.archive.ArchiveType
+import com.github.k1rakishou.common.data.ArchiveType
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor

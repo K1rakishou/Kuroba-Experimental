@@ -1,7 +1,6 @@
 package com.github.k1rakishou.model.source.local
 
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.ChanSiteData
 import com.github.k1rakishou.model.entity.chan.site.ChanSiteSettingsEntity
@@ -10,12 +9,10 @@ import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
 
 class SiteLocalSource(
   database: KurobaDatabase,
-  loggerTag: String,
   private val isDevFlavor: Boolean,
-  private val logger: Logger,
   private val chanDescriptorCache: ChanDescriptorCache
 ) : AbstractLocalSource(database) {
-  private val TAG = "$loggerTag SiteLocalSource"
+  private val TAG = "SiteLocalSource"
   private val chanSiteDao = database.chanSiteDao()
 
   suspend fun createDefaults(allSiteDescriptors: Collection<SiteDescriptor>) {

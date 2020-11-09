@@ -6,9 +6,9 @@ import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.cache.downloader.DownloaderUtils.isCancellationError
 import com.github.k1rakishou.chan.core.site.SiteResolver
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.StringUtils.maskImageUrl
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.core_logger.Logger
 import io.reactivex.Single
 import io.reactivex.SingleEmitter
 import okhttp3.Call

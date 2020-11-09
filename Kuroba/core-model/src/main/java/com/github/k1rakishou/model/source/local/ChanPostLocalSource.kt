@@ -2,25 +2,34 @@ package com.github.k1rakishou.model.source.local
 
 import com.github.k1rakishou.common.flatMapIndexed
 import com.github.k1rakishou.common.mutableMapWithCap
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_spannable.SpannableStringMapper
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.entity.chan.post.ChanPostFull
+import com.github.k1rakishou.model.entity.chan.post.ChanPostHttpIconEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostIdEntity
+import com.github.k1rakishou.model.entity.chan.post.ChanPostImageEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostReplyEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanTextSpanEntity
 import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
-import com.github.k1rakishou.model.mapper.*
+import com.github.k1rakishou.model.mapper.ChanPostEntityMapper
+import com.github.k1rakishou.model.mapper.ChanPostHttpIconMapper
+import com.github.k1rakishou.model.mapper.ChanPostImageMapper
+import com.github.k1rakishou.model.mapper.ChanThreadMapper
+import com.github.k1rakishou.model.mapper.TextSpanMapper
+import com.github.k1rakishou.model.source.cache.ChanCacheOptions
 import com.google.gson.Gson
 
 class ChanPostLocalSource(
   database: KurobaDatabase,
-  loggerTag: String,
-  private val logger: Logger,
   private val gson: Gson
 ) : AbstractLocalSource(database) {
-  private val TAG = "$loggerTag ChanPostLocalSource"
+  private val TAG = "ChanPostLocalSource"
   private val chanBoardDao = database.chanBoardDao()
   private val chanThreadDao = database.chanThreadDao()
   private val chanPostDao = database.chanPostDao()
@@ -38,7 +47,7 @@ class ChanPostLocalSource(
     )
 
     if (chanBoardEntity == null) {
-      logger.logError(TAG, "Cannot insert empty thread (site ${threadDescriptor.siteName()} or " +
+      Logger.e(TAG, "Cannot insert empty thread (site ${threadDescriptor.siteName()} or " +
         "board ${threadDescriptor.boardCode()} does not exist)")
       return null
     }
@@ -49,13 +58,10 @@ class ChanPostLocalSource(
     )
   }
 
-  suspend fun insertOriginalPost(chanPost: ChanPost): Long {
-    ensureInTransaction()
-
-    return insertManyOriginalPosts(listOf(chanPost)).first()
-  }
-
-  suspend fun insertManyOriginalPosts(chanOriginalPostList: List<ChanPost>): List<Long> {
+  suspend fun insertManyOriginalPosts(
+    chanOriginalPostList: List<ChanOriginalPost>,
+    cacheOptions: ChanCacheOptions
+  ): List<Long> {
     ensureInTransaction()
 
     if (chanOriginalPostList.isEmpty()) {
@@ -79,52 +85,57 @@ class ChanPostLocalSource(
       )
     }
 
-    val chanPostIdEntities = chanThreadIds.mapIndexed { index, chanThreadId ->
-      val chanOriginalPost = chanOriginalPostList[index]
+    if (cacheOptions.canStoreInDatabase()) {
+      val chanPostIdEntities = chanThreadIds.mapIndexed { index, chanThreadId ->
+        val chanOriginalPost = chanOriginalPostList[index]
 
-      return@mapIndexed ChanPostIdEntity(
-        postId = 0L,
-        ownerArchiveId = chanOriginalPost.archiveId,
-        ownerThreadId = chanThreadId,
-        postNo = chanOriginalPost.postDescriptor.postNo,
-        postSubNo = chanOriginalPost.postDescriptor.postSubNo
-      )
+        return@mapIndexed ChanPostIdEntity(
+          postId = 0L,
+          ownerThreadId = chanThreadId,
+          postNo = chanOriginalPost.postDescriptor.postNo,
+          postSubNo = chanOriginalPost.postDescriptor.postSubNo
+        )
+      }
+
+      insertPostsInternal(chanPostIdEntities, chanOriginalPostList)
     }
 
-    insertPostsInternal(chanPostIdEntities, chanOriginalPostList)
     return chanThreadIds
   }
 
-  suspend fun insertPosts(chanThreadId: Long, chanPostList: List<ChanPost>) {
+  suspend fun insertPosts(chanPostList: List<ChanPost>, cacheOptions: ChanCacheOptions) {
     ensureInTransaction()
 
-    val originalPost = chanPostList.firstOrNull { chanPost -> chanPost.isOp }
-    if (originalPost != null) {
-      val chanBoardEntity = chanBoardDao.insertBoardId(
-        originalPost.postDescriptor.descriptor.siteName(),
-        originalPost.postDescriptor.descriptor.boardCode()
-      )
-
-      val threadNo = originalPost.postDescriptor.getThreadNo()
-
-      chanThreadDao.insertOrUpdate(
-        chanBoardEntity.boardId,
-        threadNo,
-        ChanThreadMapper.toEntity(threadNo, chanBoardEntity.boardId, originalPost)
-      )
+    if (chanPostList.isEmpty()) {
+      return
     }
 
-    val chanPostIdEntities = chanPostList.map { chanPost ->
-      ChanPostIdEntity(
-        postId = 0L,
-        ownerArchiveId = chanPost.archiveId,
-        ownerThreadId = chanThreadId,
-        postNo = chanPost.postDescriptor.postNo,
-        postSubNo = chanPost.postDescriptor.postSubNo
-      )
-    }
+    val originalPost = chanPostList.first() as ChanOriginalPost
+    val threadNo = originalPost.postDescriptor.getThreadNo()
 
-    insertPostsInternal(chanPostIdEntities, chanPostList)
+    val chanBoardEntity = chanBoardDao.insertBoardId(
+      originalPost.postDescriptor.descriptor.siteName(),
+      originalPost.postDescriptor.descriptor.boardCode()
+    )
+
+    val chanThreadId = chanThreadDao.insertOrUpdate(
+      chanBoardEntity.boardId,
+      threadNo,
+      ChanThreadMapper.toEntity(threadNo, chanBoardEntity.boardId, originalPost)
+    )
+
+    if (cacheOptions.canStoreInDatabase()) {
+      val chanPostIdEntities = chanPostList.map { chanPost ->
+        ChanPostIdEntity(
+          postId = 0L,
+          ownerThreadId = chanThreadId,
+          postNo = chanPost.postDescriptor.postNo,
+          postSubNo = chanPost.postDescriptor.postSubNo
+        )
+      }
+
+      insertPostsInternal(chanPostIdEntities, chanPostList)
+    }
   }
 
   private suspend fun insertPostsInternal(
@@ -137,7 +148,7 @@ class ChanPostLocalSource(
 
     chanPostDao.insertOrReplaceManyPosts(
       chanPostIdEntities.mapIndexed { index, chanPostIdEntity ->
-        ChanPostMapper.toEntity(chanPostIdEntity.postId, chanPostList[index])
+        ChanPostEntityMapper.toEntity(chanPostIdEntity.postId, chanPostList[index])
       }
     )
 
@@ -188,10 +199,15 @@ class ChanPostLocalSource(
     val postCommentWithSpansJsonList = chanPostEntityIdList.mapIndexedNotNull { index, chanPostEntityId ->
       val chanPost = chanPostList[index]
 
+      val serializeSpannableString = SpannableStringMapper.serializeSpannableString(
+        gson,
+        chanPost.postComment.comment
+      ) ?: return@mapIndexedNotNull null
+
       return@mapIndexedNotNull TextSpanMapper.toEntity(
         gson,
         chanPostEntityId.postId,
-        chanPost.postComment,
+        serializeSpannableString,
         ChanTextSpanEntity.TextType.PostComment
       )
     }
@@ -203,10 +219,15 @@ class ChanPostLocalSource(
     val subjectWithSpansJsonList = chanPostEntityIdList.mapIndexedNotNull { index, chanPostEntityId ->
       val chanPost = chanPostList[index]
 
+      val serializeSpannableString = SpannableStringMapper.serializeSpannableString(
+        gson,
+        chanPost.subject
+      ) ?: return@mapIndexedNotNull null
+
       return@mapIndexedNotNull TextSpanMapper.toEntity(
         gson,
         chanPostEntityId.postId,
-        chanPost.subject,
+        serializeSpannableString,
         ChanTextSpanEntity.TextType.Subject
       )
     }
@@ -218,10 +239,15 @@ class ChanPostLocalSource(
     val tripcodeWithSpansJsonList = chanPostEntityIdList.mapIndexedNotNull { index, chanPostEntityId ->
       val chanPost = chanPostList[index]
 
+      val serializeSpannableString = SpannableStringMapper.serializeSpannableString(
+        gson,
+        chanPost.tripcode
+      ) ?: return@mapIndexedNotNull null
+
       return@mapIndexedNotNull TextSpanMapper.toEntity(
         gson,
         chanPostEntityId.postId,
-        chanPost.tripcode,
+        serializeSpannableString,
         ChanTextSpanEntity.TextType.Tripcode
       )
     }
@@ -233,7 +259,7 @@ class ChanPostLocalSource(
 
   suspend fun getCatalogOriginalPosts(
     threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
-  ): Map<ChanDescriptor.ThreadDescriptor, ChanPost> {
+  ): Map<ChanDescriptor.ThreadDescriptor, ChanOriginalPost> {
     ensureInTransaction()
 
     val catalogDescriptors = mutableMapWithCap<ChanDescriptor.CatalogDescriptor, MutableSet<Long>>(threadDescriptors)
@@ -251,12 +277,15 @@ class ChanPostLocalSource(
       catalogDescriptors[catalogDescriptor]!!.add(threadDescriptor.threadNo)
     }
 
-    val resultMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanPost>(catalogDescriptors.size / 2)
+    val resultMap =
+      mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanOriginalPost>(catalogDescriptors.size / 2)
 
     catalogDescriptors.forEach { (catalogDescriptor, postNoSet) ->
       // Load catalog descriptor's board
-      val chanBoardEntity = chanBoardDao.selectBoardId(catalogDescriptor.siteName(), catalogDescriptor.boardCode())
-        ?: return@forEach
+      val chanBoardEntity = chanBoardDao.selectBoardId(
+        catalogDescriptor.siteName(),
+        catalogDescriptor.boardCode()
+      ) ?: return@forEach
 
       // Load catalog descriptor's latest threads
       val chanThreadEntityList = chanThreadDao.selectManyByThreadNos(
@@ -283,7 +312,7 @@ class ChanPostLocalSource(
   suspend fun getCatalogOriginalPosts(
     descriptor: ChanDescriptor.CatalogDescriptor,
     count: Int
-  ): List<ChanPost> {
+  ): List<ChanOriginalPost> {
     ensureInTransaction()
     require(count > 0) { "Bad count param: $count" }
 
@@ -307,7 +336,7 @@ class ChanPostLocalSource(
   suspend fun getCatalogOriginalPosts(
     descriptor: ChanDescriptor.CatalogDescriptor,
     originalPostNoList: List<Long>
-  ): List<ChanPost> {
+  ): List<ChanOriginalPost> {
     ensureInTransaction()
 
     if (originalPostNoList.isEmpty()) {
@@ -335,7 +364,7 @@ class ChanPostLocalSource(
   private suspend fun loadOriginalPostsInternal(
     chanThreadEntityList: List<ChanThreadEntity>,
     descriptor: ChanDescriptor.CatalogDescriptor
-  ): List<ChanPost> {
+  ): List<ChanOriginalPost> {
     // Load threads' original posts
     val chanPostFullMap = chanThreadEntityList
       .map { chanThreadEntity -> chanThreadEntity.threadId }
@@ -357,7 +386,9 @@ class ChanPostLocalSource(
       .flatMap { chunk -> chanTextSpanDao.selectManyByOwnerPostIdList(chunk) }
       .groupBy { chanTextSpanEntity -> chanTextSpanEntity.ownerPostId }
 
-    val posts = chanThreadEntityList.map { chanThreadEntity ->
+    val postAdditionalData = getPostsAdditionalData(postIdList)
+
+    return chanThreadEntityList.map { chanThreadEntity ->
       val chanPostEntity = checkNotNull(chanPostFullMap[chanThreadEntity.threadId]) {
         "Couldn't find post info for original post with id (${chanThreadEntity.threadId})"
       }
@@ -369,20 +400,14 @@ class ChanPostLocalSource(
         descriptor,
         chanThreadEntity,
         chanPostEntity,
-        postTextSnapEntityList
+        postTextSnapEntityList,
+        postAdditionalData
       )
     }
-
-    return getPostsAdditionalData(postIdList, posts)
   }
 
-  suspend fun getThreadPosts(
-    descriptor: ChanDescriptor.ThreadDescriptor,
-    postsNoToIgnore: Set<Long>,
-    maxCount: Int
-  ): List<ChanPost> {
+  suspend fun getThreadPosts(descriptor: ChanDescriptor.ThreadDescriptor): List<ChanPost> {
     ensureInTransaction()
-    require(maxCount > 0) { "Bad maxCount: $maxCount" }
 
     // Load descriptor's thread
     val chanThreadEntity = getThreadByThreadDescriptor(descriptor)
@@ -391,31 +416,15 @@ class ChanPostLocalSource(
     val originalPost = chanPostDao.selectOriginalPost(chanThreadEntity.threadId)
       ?: return emptyList()
 
+    val threadPosts = chanPostDao.selectAllByThreadId(chanThreadEntity.threadId)
+
     // Load thread's posts. We need to sort them because we sort them right in the SQL query in
     // order to trim everything after [maxCount]
-    val chanPostFullList = if (postsNoToIgnore.isNotEmpty()) {
-      postsNoToIgnore
-        .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-        .flatMap { chunk ->
-          return@flatMap chanPostDao.selectAllByThreadId(
-            chanThreadEntity.threadId,
-            chunk,
-            maxCount
-          )
-        }.toMutableList()
-    } else {
-      chanPostDao.selectAllByThreadId(
-        chanThreadEntity.threadId,
-        emptyList(),
-        maxCount
-      ).toMutableList()
-    }
+    val chanPostFullList = mutableListOf<ChanPostFull>()
 
-    if (!postsNoToIgnore.contains(originalPost.chanPostIdEntity.postNo)) {
-      // Insert the original post at the beginning of the list but only if we don't already
-      // have it in the postsNoToIgnore
-      chanPostFullList.add(0, originalPost)
-    }
+    // Insert the original post at the beginning of the list
+    chanPostFullList.add(originalPost)
+    chanPostFullList.addAll(threadPosts)
 
     if (chanPostFullList.isEmpty()) {
       return emptyList()
@@ -429,28 +438,29 @@ class ChanPostLocalSource(
       .flatMap { chunk -> chanTextSpanDao.selectManyByOwnerPostIdList(chunk) }
       .groupBy { chanTextSpanEntity -> chanTextSpanEntity.ownerPostId }
 
-    val posts = chanPostFullList
+    val postAdditionalData = getPostsAdditionalData(postIdList)
+
+    val chanPosts = chanPostFullList
       .mapNotNull { chanPostFull ->
         val postTextSnapEntityList =
           textSpansGroupedByPostId[chanPostFull.chanPostIdEntity.postId]
 
-        return@mapNotNull ChanPostMapper.fromEntity(
+        return@mapNotNull ChanPostEntityMapper.fromEntity(
           gson,
           descriptor,
           chanThreadEntity,
           chanPostFull.chanPostIdEntity,
           chanPostFull.chanPostEntity,
-          postTextSnapEntityList
+          postTextSnapEntityList,
+          postAdditionalData
         )
       }
 
-    return getPostsAdditionalData(postIdList, posts)
+    ChanPostEntityMapper.fillInReplies(chanPosts)
+    return chanPosts
   }
 
-  private suspend fun getPostsAdditionalData(
-    postIdList: List<Long>,
-    posts: List<ChanPost>
-  ): List<ChanPost> {
+  private suspend fun getPostsAdditionalData(postIdList: List<Long>): PostAdditionalData {
     ensureInTransaction()
 
     // Load posts' images
@@ -476,28 +486,11 @@ class ChanPostLocalSource(
       }
       .groupBy { chanPostReplyEntity -> chanPostReplyEntity.ownerPostId }
 
-    posts.forEach { post ->
-      val postImages = postImageByPostIdMap[post.chanPostId]
-      if (postImages != null && postImages.isNotEmpty()) {
-        postImages.forEach { postImage ->
-          post.postImages.add(ChanPostImageMapper.fromEntity(postImage))
-        }
-      }
-
-      val postIcons = postIconsByPostIdMap[post.chanPostId]
-      if (postIcons != null && postIcons.isNotEmpty()) {
-        postIcons.forEach { postIcon ->
-          post.postIcons.add(ChanPostHttpIconMapper.fromEntity(postIcon))
-        }
-      }
-
-      val replyToList = postReplyToByPostIdMap[post.chanPostId]
-      if (replyToList != null && replyToList.isNotEmpty()) {
-        post.repliesTo.addAll(replyToList.map { it.replyNo })
-      }
-    }
-
-    return posts
+    return PostAdditionalData(
+      postImageByPostIdMap = postImageByPostIdMap,
+      postIconsByPostIdMap = postIconsByPostIdMap,
+      postReplyToByPostIdMap = postReplyToByPostIdMap
+    )
   }
 
   suspend fun getThreadIdByPostDescriptor(postDescriptor: PostDescriptor): Long? {
@@ -553,7 +546,46 @@ class ChanPostLocalSource(
       threadDescriptor.boardCode()
     ) ?: return
 
-    chanThreadDao.deleteThread(chanBoardEntity.boardId, threadDescriptor.threadNo)
+    val threadId = chanThreadDao.select(chanBoardEntity.boardId, threadDescriptor.threadNo)?.threadId
+      ?: return
+
+    chanThreadDao.deleteAllPostsInThreadExceptOriginalPost(threadId)
+  }
+
+  // TODO(KurobaEx): this is slow because we are deleting threads one by one
+  suspend fun deleteCatalog(catalogThreadDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
+    ensureInTransaction()
+
+    val boardDescriptors = catalogThreadDescriptors
+      .map { threadDescriptor -> threadDescriptor.boardDescriptor }
+      .toSet()
+
+    val boardIdMap = mutableMapOf<BoardDescriptor, Long>()
+
+    boardDescriptors.forEach { boardDescriptor ->
+      if (boardIdMap.containsKey(boardDescriptor)) {
+        return@forEach
+      }
+
+      val chanBoardEntity = chanBoardDao.selectBoardId(
+        boardDescriptor.siteName(),
+        boardDescriptor.boardCode
+      )
+
+      if (chanBoardEntity != null) {
+        boardIdMap[boardDescriptor] = chanBoardEntity.boardId
+      }
+    }
+
+    catalogThreadDescriptors.forEach { threadDescriptor ->
+      val boardId = boardIdMap[threadDescriptor.boardDescriptor]
+        ?: return@forEach
+
+      val threadId = chanThreadDao.select(boardId, threadDescriptor.threadNo)?.threadId
+        ?: return
+
+      chanThreadDao.deleteAllPostsInThreadExceptOriginalPost(threadId)
+    }
   }
 
   suspend fun deletePost(postDescriptor: PostDescriptor) {
@@ -572,6 +604,41 @@ class ChanPostLocalSource(
     chanPostDao.deletePost(chanThreadEntity.threadId, postDescriptor.postNo, postDescriptor.postSubNo)
   }
 
+  suspend fun deletePosts(postDescriptors: Collection<PostDescriptor>) {
+    ensureInTransaction()
+
+    if (postDescriptors.isEmpty()) {
+      return
+    }
+
+    val postsGroupedByThreads = postDescriptors
+      .groupBy { postDescriptor -> postDescriptor.threadDescriptor() }
+
+    if (postsGroupedByThreads.isEmpty()) {
+      return
+    }
+
+    postsGroupedByThreads.forEach { (threadDescriptor, postDescriptors) ->
+      val chanBoardEntity = chanBoardDao.selectBoardId(
+        threadDescriptor.siteName(),
+        threadDescriptor.boardCode()
+      ) ?: return
+
+      val chanThreadEntity = chanThreadDao.select(chanBoardEntity.boardId, threadDescriptor.threadNo)
+        ?: return
+
+      // TODO(KurobaEx): this may be kinda slow since we are deleting posts one by one instead of
+      //  by batches
+      postDescriptors.forEach { postDescriptor ->
+        chanPostDao.deletePost(
+          chanThreadEntity.threadId,
+          postDescriptor.postNo,
+          postDescriptor.postSubNo
+        )
+      }
+    }
+  }
+
   suspend fun deleteOldPosts(toDeleteCount: Int): DeleteResult {
     ensureInTransaction()
     require(toDeleteCount > 0) { "Bad toDeleteCount: $toDeleteCount" }
@@ -583,7 +650,7 @@ class ChanPostLocalSource(
     do {
       val threadBatch = chanThreadDao.selectThreadsWithPostsOtherThanOp(offset, THREADS_IN_BATCH)
       if (threadBatch.isEmpty()) {
-        logger.log(TAG, "deleteOldPosts() selectThreadsWithPostsOtherThanOp returned empty list")
+        Logger.d(TAG, "deleteOldPosts() selectThreadsWithPostsOtherThanOp returned empty list")
         return DeleteResult(deletedTotal, skippedTotal)
       }
 
@@ -591,13 +658,13 @@ class ChanPostLocalSource(
         if (thread.threadBookmarkId != null) {
           skippedTotal += thread.postsCount
 
-          logger.log(TAG, "deleteOldPosts() skipping bookmarked thread (threadNo = ${thread.threadNo}, " +
+          Logger.d(TAG, "deleteOldPosts() skipping bookmarked thread (threadNo = ${thread.threadNo}, " +
             "deletedTotal = $deletedTotal, toDeleteCount = $toDeleteCount, posts count = ${thread.postsCount})")
           continue
         }
 
         if (deletedTotal >= toDeleteCount) {
-          logger.log(TAG, "deleteOldPosts() Deleted enough posts (deletedTotal = $deletedTotal, " +
+          Logger.d(TAG, "deleteOldPosts() Deleted enough posts (deletedTotal = $deletedTotal, " +
             "toDeleteCount = $toDeleteCount, posts count = ${thread.postsCount}), exiting early")
           break
         }
@@ -605,7 +672,7 @@ class ChanPostLocalSource(
         val deletedPosts = chanPostDao.deletePostsByThreadId(thread.threadId)
         deletedTotal += deletedPosts
 
-        logger.log(TAG, "deleteOldPosts() Deleting posts in \"${thread}\" thread, " +
+        Logger.d(TAG, "deleteOldPosts() Deleting posts in \"${thread}\" thread, " +
           "deleted $deletedPosts posts, deletedTotal = $deletedTotal")
       }
 
@@ -626,26 +693,26 @@ class ChanPostLocalSource(
     do {
       val threadBatch = chanThreadDao.selectOldThreads(offset, THREADS_IN_BATCH)
       if (threadBatch.isEmpty()) {
-        logger.log(TAG, "deleteOldThreads() selectOldThreads returned empty list")
+        Logger.d(TAG, "deleteOldThreads() selectOldThreads returned empty list")
         return DeleteResult(deletedTotal, skippedTotal)
       }
 
       for (thread in threadBatch) {
         if (thread.threadBookmarkId != null) {
           ++skippedTotal
-          logger.log(TAG, "deleteOldThreads() skipping bookmarked thread (threadNo = ${thread.threadNo}, " +
+          Logger.d(TAG, "deleteOldThreads() skipping bookmarked thread (threadNo = ${thread.threadNo}, " +
             "deletedTotal = $deletedTotal, toDeleteCount = $toDeleteCount)")
           continue
         }
 
         if (deletedTotal >= toDeleteCount) {
-          logger.log(TAG, "deleteOldThreads() Deleted enough threads (deletedTotal = $deletedTotal, " +
+          Logger.d(TAG, "deleteOldThreads() Deleted enough threads (deletedTotal = $deletedTotal, " +
             "toDeleteCount = $toDeleteCount), exiting early")
           break
         }
 
         deletedTotal += chanThreadDao.deleteThread(thread.threadId)
-        logger.log(TAG, "deleteOldThreads() Deleting thread \"${thread}\", deletedTotal = $deletedTotal")
+        Logger.d(TAG, "deleteOldThreads() Deleting thread \"${thread}\", deletedTotal = $deletedTotal")
       }
 
       offset += threadBatch.size
@@ -653,6 +720,12 @@ class ChanPostLocalSource(
 
     return DeleteResult(deletedTotal, skippedTotal)
   }
+
+  class PostAdditionalData(
+    val postImageByPostIdMap: Map<Long, List<ChanPostImageEntity>>,
+    val postIconsByPostIdMap: Map<Long, List<ChanPostHttpIconEntity>>,
+    val postReplyToByPostIdMap: Map<Long, List<ChanPostReplyEntity>>
+  )
 
   data class DeleteResult(val deletedTotal: Int = 0, val skippedTotal: Int = 0)
 

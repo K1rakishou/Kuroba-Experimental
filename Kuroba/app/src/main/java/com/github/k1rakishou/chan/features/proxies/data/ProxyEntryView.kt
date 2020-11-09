@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.features.proxies.data
 
-import com.github.k1rakishou.chan.core.manager.ProxyStorage
+import com.github.k1rakishou.chan.core.helper.ProxyStorage
 
 data class ProxyEntryView(
   val address: String,

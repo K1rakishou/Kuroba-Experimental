@@ -19,15 +19,17 @@ package com.github.k1rakishou.chan.utils;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.Chan;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
+import com.github.k1rakishou.common.AndroidUtils;
+import com.github.k1rakishou.core_logger.Logger;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAppContext;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getFlavorType;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getFlavorType;
+import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
 
 public class BackgroundUtils {
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());

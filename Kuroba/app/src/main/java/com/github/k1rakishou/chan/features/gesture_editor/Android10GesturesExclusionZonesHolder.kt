@@ -1,10 +1,10 @@
 package com.github.k1rakishou.chan.features.gesture_editor
 
 import android.graphics.Rect
-import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.core.settings.ChanSettings.EMPTY_JSON
-import com.github.k1rakishou.chan.utils.AndroidUtils.isAndroid10
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.ChanSettings.EMPTY_JSON
+import com.github.k1rakishou.common.AndroidUtils.isAndroid10
+import com.github.k1rakishou.core_logger.Logger
 import com.google.gson.Gson
 
 class Android10GesturesExclusionZonesHolder(

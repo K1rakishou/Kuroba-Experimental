@@ -25,11 +25,11 @@ import androidx.annotation.Nullable;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem;
 import com.github.k1rakishou.chan.utils.IOUtils;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -39,8 +39,8 @@ import java.io.InputStream;
 import javax.inject.Inject;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getApplicationLabel;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.setClipboardContent;
+import static com.github.k1rakishou.common.AndroidUtils.getApplicationLabel;
+import static com.github.k1rakishou.common.AndroidUtils.setClipboardContent;
 
 public class LogsController extends Controller {
     private static final String TAG = "LogsController";
@@ -119,7 +119,9 @@ public class LogsController extends Controller {
         }
 
         InputStream outputStream = process.getInputStream();
-        //This filters our log output to just stuff we care about in-app (and if a crash happens, the uncaught handler gets it and this will still allow it through)
+
+        //This filters our log output to just stuff we care about in-app
+        // (and if a crash happens, the uncaught handler gets it and this will still allow it through)
         String filtered = "";
         for (String line : IOUtils.readString(outputStream).split("\n")) {
             if (line.contains(getApplicationLabel())) filtered = filtered.concat(line).concat("\n");

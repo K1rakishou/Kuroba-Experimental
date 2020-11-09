@@ -22,8 +22,8 @@ import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
-import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.common.AppConstants;
+import com.github.k1rakishou.core_logger.Logger;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;

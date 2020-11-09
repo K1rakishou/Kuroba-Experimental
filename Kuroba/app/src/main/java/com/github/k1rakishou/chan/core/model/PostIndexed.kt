@@ -1,7 +1,9 @@
 package com.github.k1rakishou.chan.core.model
 
+import com.github.k1rakishou.model.data.post.ChanPost
+
 data class PostIndexed(
-  val post: Post,
+  val post: ChanPost,
   // All indexes are zero-based.
   // The index of this post among other posts in a thread (not including posts removed by filters)
   val currentPostIndex: Int,

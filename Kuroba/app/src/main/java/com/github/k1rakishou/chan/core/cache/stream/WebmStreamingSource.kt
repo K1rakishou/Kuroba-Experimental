@@ -1,20 +1,20 @@
 package com.github.k1rakishou.chan.core.cache.stream
 
 import android.net.Uri
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.cache.MediaSourceCallback
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.model.PostImage
-import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils.runOnMainThread
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.RawFile
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
@@ -30,7 +30,7 @@ class WebmStreamingSource(
   private val appConstants: AppConstants
 ) {
 
-  fun createMediaSource(postImage: PostImage, callback: MediaSourceCallback) {
+  fun createMediaSource(postImage: ChanPostImage, callback: MediaSourceCallback) {
     BackgroundUtils.ensureBackgroundThread()
 
     val imageUrl = postImage.imageUrl
@@ -68,7 +68,6 @@ class WebmStreamingSource(
 
     if (alreadyExists && rawFile != null && cacheHandler.isAlreadyDownloaded(rawFile)) {
       Logger.d(TAG, "Loaded from file cache")
-
       runOnMainThread { loadFromCacheFile(rawFile, callback) }
       return
     }
@@ -116,7 +115,7 @@ class WebmStreamingSource(
     cancelableDownload.stop()
   }
 
-  private fun getFileLengthIfPossible(postImage: PostImage): Number {
+  private fun getFileLengthIfPossible(postImage: ChanPostImage): Number {
     return siteManager.bySiteDescriptor(postImage.ownerPostDescriptor.siteDescriptor())
       ?.getChunkDownloaderSiteProperties()
       ?.siteSendsCorrectFileSizeInBytes

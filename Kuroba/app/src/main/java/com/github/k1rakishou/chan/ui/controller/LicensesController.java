@@ -28,8 +28,8 @@ import com.github.k1rakishou.chan.core.di.component.activity.StartActivityCompon
 
 import org.jetbrains.annotations.NotNull;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
+import static com.github.k1rakishou.common.AndroidUtils.inflate;
 
 public class LicensesController extends Controller {
     private String title;

@@ -43,11 +43,11 @@ import androidx.annotation.Nullable;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.ui.layout.SearchLayout;
 import com.github.k1rakishou.chan.ui.theme.ArrowMenuDrawable;
-import com.github.k1rakishou.chan.ui.theme.ChanTheme;
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowDrawable;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
+import com.github.k1rakishou.core_themes.ChanTheme;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -59,9 +59,9 @@ import javax.inject.Inject;
 import static android.text.TextUtils.isEmpty;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.removeFromParentView;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.updatePaddings;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.removeFromParentView;
+import static com.github.k1rakishou.common.AndroidUtils.updatePaddings;
 
 /**
  * The container for the views created by the toolbar for the navigation items.
@@ -115,7 +115,7 @@ public class ToolbarContainer extends FrameLayout {
     }
 
     private void init() {
-        AndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
                 .inject(this);
     }
 

@@ -46,6 +46,7 @@ import androidx.lifecycle.OnLifecycleEvent
 import coil.request.Disposable
 import com.davemorrissey.labs.subscaleview.ImageSource
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
@@ -59,19 +60,26 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2.ImageListener
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
-import com.github.k1rakishou.chan.core.model.PostImage
-import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.ui.controller.ImageViewerController
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.view.MultiImageViewGestureDetector.MultiImageViewGestureDetectorCallbacks
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForMeasure
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.PostUtils.getReadableFileSize
-import com.github.k1rakishou.common.*
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.exhaustive
+import com.github.k1rakishou.common.findChild
+import com.github.k1rakishou.common.findChildren
+import com.github.k1rakishou.common.updateHeight
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageType
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
@@ -82,7 +90,12 @@ import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import pl.droidsonroids.gif.GifDrawable
 import pl.droidsonroids.gif.GifImageView
 import java.io.File
@@ -165,13 +178,13 @@ class MultiImageView @JvmOverloads constructor(
     private get() = (ChanSettings.videoDefaultMuted.get() &&
       (ChanSettings.headsetDefaultMuted.get() || !AndroidUtils.getAudioManager().isWiredHeadsetOn))
 
-  var postImage: PostImage? = null
+  var postImage: ChanPostImage? = null
     private set
   var mode = Mode.UNLOADED
     private set
 
   init {
-    AndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractStartActivityComponent(context)
       .inject(this)
 
     cancellableToast = CancellableToast()
@@ -189,7 +202,7 @@ class MultiImageView @JvmOverloads constructor(
     exoPlayer?.playWhenReady = false
   }
 
-  fun bindPostImage(postImage: PostImage?, callback: Callback, op: Boolean) {
+  fun bindPostImage(postImage: ChanPostImage?, callback: Callback, op: Boolean) {
     this.postImage = postImage
     this.callback = callback
     this.op = op
@@ -264,27 +277,30 @@ class MultiImageView @JvmOverloads constructor(
     mode = newMode
     hasContent = false
 
-    AndroidUtils.waitForMeasure(this) {
+    waitForMeasure(this) {
       if (width == 0 || height == 0 || !isLaidOut) {
         Logger.e(TAG, "getWidth() or getHeight() returned 0, or view not laid out, not loading")
         return@waitForMeasure false
       }
 
+      val image = postImage
+        ?: return@waitForMeasure true
+
       when (newMode) {
         Mode.LOWRES -> {
-          setThumbnail(postImage, center)
+          setThumbnail(image, center)
           transparentBackground = ChanSettings.transparencyOn.get()
         }
-        Mode.BIGIMAGE -> setBigImage(postImage)
-        Mode.GIFIMAGE -> setGif(postImage)
-        Mode.VIDEO -> setVideo(postImage)
-        Mode.OTHER -> setOther(postImage)
+        Mode.BIGIMAGE -> setBigImage(image)
+        Mode.GIFIMAGE -> setGif(image)
+        Mode.VIDEO -> setVideo(image)
+        Mode.OTHER -> setOther(image)
         Mode.UNLOADED -> {
           // no-op
         }
       }.exhaustive
 
-      true
+      return@waitForMeasure true
     }
   }
 
@@ -371,12 +387,12 @@ class MultiImageView @JvmOverloads constructor(
     }
   }
 
-  private fun setThumbnail(postImage: PostImage?, center: Boolean) {
+  private fun setThumbnail(postImage: ChanPostImage, center: Boolean) {
     BackgroundUtils.ensureMainThread()
 
     thumbnailRequestDisposable = imageLoaderV2.load(
       context,
-      postImage!!,
+      postImage,
       width,
       height,
       object : ImageListener {
@@ -408,7 +424,7 @@ class MultiImageView @JvmOverloads constructor(
       })
   }
 
-  private fun setBigImage(postImage: PostImage?) {
+  private fun setBigImage(postImage: ChanPostImage) {
     BackgroundUtils.ensureMainThread()
 
     if (bigImageRequest.get() != null) {
@@ -443,7 +459,7 @@ class MultiImageView @JvmOverloads constructor(
             setBigImageFromFile(
               file = File(file.getFullPath()),
               tiling = true,
-              isSpoiler = postImage.spoiler()
+              isSpoiler = postImage.spoiler
             )
 
             callback?.onDownloaded(postImage)
@@ -477,7 +493,7 @@ class MultiImageView @JvmOverloads constructor(
     }
   }
 
-  private fun setGif(postImage: PostImage?) {
+  private fun setGif(postImage: ChanPostImage) {
     BackgroundUtils.ensureMainThread()
 
     if (gifRequest.get() != null) {
@@ -510,7 +526,7 @@ class MultiImageView @JvmOverloads constructor(
             BackgroundUtils.ensureMainThread()
 
             if (!hasContent || mode == Mode.GIFIMAGE) {
-              setGifFile(File(file.getFullPath()), postImage.spoiler())
+              setGifFile(File(file.getFullPath()), postImage.spoiler)
             }
 
             callback?.onDownloaded(postImage)
@@ -599,7 +615,7 @@ class MultiImageView @JvmOverloads constructor(
     gifImageView.setOnTouchListener { _, motionEvent -> gestureDetector.onTouchEvent(motionEvent) }
   }
 
-  private fun setVideo(postImage: PostImage?) {
+  private fun setVideo(postImage: ChanPostImage) {
     BackgroundUtils.ensureMainThread()
 
     if (ChanSettings.videoStream.get()) {
@@ -609,7 +625,7 @@ class MultiImageView @JvmOverloads constructor(
     }
   }
 
-  private fun openVideoExternal(postImage: PostImage?) {
+  private fun openVideoExternal(postImage: ChanPostImage) {
     BackgroundUtils.ensureMainThread()
 
     if (videoRequest.get() != null) {
@@ -687,7 +703,7 @@ class MultiImageView @JvmOverloads constructor(
 
       intent.setDataAndType(uriForFile, "video/*")
       intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-      AndroidUtils.openIntent(intent)
+      openIntent(intent)
       onModeLoaded(Mode.VIDEO, null)
     } else {
       val dataSourceFactory: DataSource.Factory = DefaultDataSourceFactory(context, appConstants.userAgent)
@@ -726,11 +742,7 @@ class MultiImageView @JvmOverloads constructor(
   }
 
   @SuppressLint("ClickableViewAccessibility")
-  private fun openVideoInternalStream(postImage: PostImage?) {
-    if (postImage == null) {
-      return
-    }
-
+  private fun openVideoInternalStream(postImage: ChanPostImage) {
     if (webmStreamSourceInitJob != null) {
       return
     }
@@ -789,7 +801,7 @@ class MultiImageView @JvmOverloads constructor(
 
           webmStreamSourceInitJob = null
 
-          AndroidUtils.showToast(
+          showToast(
             context,
             "Couldn't open webm in streaming mode, error = " + error.message
           )
@@ -860,7 +872,7 @@ class MultiImageView @JvmOverloads constructor(
     }
   }
 
-  private fun setOther(image: PostImage?) {
+  private fun setOther(image: ChanPostImage) {
     if (image == null) {
       return
     }
@@ -1237,7 +1249,7 @@ class MultiImageView @JvmOverloads constructor(
     fun onSwipeToSaveImage()
     fun onStartDownload(multiImageView: MultiImageView?, chunksCount: Int)
     fun onProgress(multiImageView: MultiImageView?, chunkIndex: Int, current: Long, total: Long)
-    fun onDownloaded(postImage: PostImage?)
+    fun onDownloaded(postImage: ChanPostImage?)
     fun onVideoLoaded(multiImageView: MultiImageView?)
     fun onModeLoaded(multiImageView: MultiImageView?, mode: Mode?)
     fun onAudioLoaded(multiImageView: MultiImageView?)

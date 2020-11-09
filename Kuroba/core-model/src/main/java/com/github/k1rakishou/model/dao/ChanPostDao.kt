@@ -5,7 +5,6 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
 import com.github.k1rakishou.model.entity.chan.post.ChanPostEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostFull
 import com.github.k1rakishou.model.entity.chan.post.ChanPostIdEntity
@@ -14,17 +13,9 @@ import com.github.k1rakishou.model.entity.chan.post.ChanPostIdEntity
 abstract class ChanPostDao {
 
   suspend fun selectAllByThreadId(
-    ownerThreadId: Long,
-    postsToIgnore: Collection<Long>,
-    maxCount: Int
+    ownerThreadId: Long
   ): List<ChanPostFull> {
-    return if (postsToIgnore.isNotEmpty()) {
-      postsToIgnore
-        .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-        .flatMap { postsToIgnoreChunk -> selectAllByThreadIdGrouped(ownerThreadId, postsToIgnoreChunk, maxCount) }
-    } else {
-      selectAllByThreadIdGrouped(ownerThreadId, emptyList(), maxCount)
-    }
+    return selectAllByThreadIdGrouped(ownerThreadId)
   }
 
   suspend fun selectOriginalPost(
@@ -60,22 +51,13 @@ abstract class ChanPostDao {
             ON cpe.${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
         WHERE 
             cp_id.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
-        AND
-            cp_id.${ChanPostIdEntity.OWNER_ARCHIVE_ID_COLUMN_NAME} = ${ArchiveDescriptor.NO_ARCHIVE_ID}
-        AND 
-            cp_id.${ChanPostIdEntity.POST_NO_COLUMN_NAME} NOT IN (:postsToIgnore)
         AND 
             cp_id.${ChanPostIdEntity.POST_SUB_NO_COLUMN_NAME} = 0
         AND 
             cpe.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_FALSE}
         ORDER BY cp_id.${ChanPostIdEntity.POST_NO_COLUMN_NAME} DESC
-        LIMIT :maxCount
     """)
-  protected abstract suspend fun selectAllByThreadIdGrouped(
-    ownerThreadId: Long,
-    postsToIgnore: Collection<Long>,
-    maxCount: Int
-  ): List<ChanPostFull>
+  protected abstract suspend fun selectAllByThreadIdGrouped(ownerThreadId: Long): List<ChanPostFull>
 
   @Query("""
         SELECT *
@@ -84,8 +66,6 @@ abstract class ChanPostDao {
             ON cpe.${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
         WHERE 
             cp_id.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
-        AND
-            cp_id.${ChanPostIdEntity.OWNER_ARCHIVE_ID_COLUMN_NAME} = ${ArchiveDescriptor.NO_ARCHIVE_ID}
         AND 
             cpe.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_TRUE}
     """)

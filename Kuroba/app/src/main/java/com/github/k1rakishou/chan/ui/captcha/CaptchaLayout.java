@@ -33,16 +33,15 @@ import android.webkit.WebViewClient;
 
 import androidx.annotation.NonNull;
 
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.SiteAuthentication;
 import com.github.k1rakishou.chan.ui.controller.settings.captcha.JsCaptchaCookiesJar;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.IOUtils;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.google.gson.Gson;
 
 import java.util.concurrent.TimeUnit;
@@ -50,12 +49,12 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import static android.view.View.MeasureSpec.AT_MOST;
-import static com.github.k1rakishou.chan.core.settings.ChanSettings.LayoutMode.AUTO;
-import static com.github.k1rakishou.chan.core.settings.ChanSettings.LayoutMode.SPLIT;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getDisplaySize;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.hideKeyboard;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.isTablet;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.openLink;
+import static com.github.k1rakishou.ChanSettings.LayoutMode.AUTO;
+import static com.github.k1rakishou.ChanSettings.LayoutMode.SPLIT;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink;
+import static com.github.k1rakishou.common.AndroidUtils.getDisplaySize;
+import static com.github.k1rakishou.common.AndroidUtils.hideKeyboard;
 
 public class CaptchaLayout
         extends WebView
@@ -78,8 +77,6 @@ public class CaptchaLayout
     Gson gson;
     @Inject
     ThemeEngine themeEngine;
-    @Inject
-    GlobalWindowInsetsManager globalWindowInsetsManager;
 
     public CaptchaLayout(Context context) {
         super(context);
@@ -97,7 +94,7 @@ public class CaptchaLayout
     }
 
     private void init() {
-        AndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
                 .inject(this);
     }
 
@@ -116,7 +113,7 @@ public class CaptchaLayout
         hideKeyboard(this);
         getSettings().setJavaScriptEnabled(true);
 
-        JsCaptchaCookiesJar jsCaptchaCookiesJar = ChanSettings.getJsCaptchaCookieJar(gson);
+        JsCaptchaCookiesJar jsCaptchaCookiesJar = getJsCaptchaCookieJar(gson);
         if (jsCaptchaCookiesJar.isValid()) {
             setUpJsCaptchaCookies(jsCaptchaCookiesJar);
         }
@@ -149,6 +146,15 @@ public class CaptchaLayout
 
     @Override
     public void onDestroy() {
+    }
+
+    private JsCaptchaCookiesJar getJsCaptchaCookieJar(Gson gson) {
+        try {
+            return gson.fromJson(ChanSettings.jsCaptchaCookies.get(), JsCaptchaCookiesJar.class);
+        } catch (Throwable error) {
+            Logger.e(TAG, "Error while trying to deserialize JsCaptchaCookiesJar", error);
+            return JsCaptchaCookiesJar.empty();
+        }
     }
 
     private void setUpJsCaptchaCookies(JsCaptchaCookiesJar jsCaptchaCookiesJar) {

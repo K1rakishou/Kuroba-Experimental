@@ -35,11 +35,16 @@ import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.DoNotStrip
+import com.github.k1rakishou.core_logger.Logger
 import io.reactivex.disposables.CompositeDisposable
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelChildren
 import java.util.*
 import javax.inject.Inject
 
@@ -120,7 +125,7 @@ abstract class Controller(@JvmField var context: Context) {
   }
 
   init {
-    injectDependencies(AndroidUtils.extractStartActivityComponent(context))
+    injectDependencies(AppModuleAndroidUtils.extractStartActivityComponent(context))
   }
 
   protected abstract fun injectDependencies(component: StartActivityComponent)

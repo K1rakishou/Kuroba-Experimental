@@ -1,14 +1,11 @@
 package com.github.k1rakishou.chan.utils
 
 import android.annotation.SuppressLint
-import android.text.TextUtils
-import com.github.k1rakishou.chan.core.model.ChanThread
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.model.PostImage
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder
 import com.github.k1rakishou.common.MurmurHashUtils
+import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
-import java.util.*
 import kotlin.math.abs
 
 object PostUtils {
@@ -41,87 +38,56 @@ object PostUtils {
     }
   }
 
-  @JvmStatic
-  fun findPostById(id: Long, thread: ChanThread?): Post? {
-    if (thread != null) {
-      for (post in thread.getPosts()) {
-        if (post.no == id) {
-          return post
-        }
-      }
-    }
-
-    return null
-  }
-
-  @JvmStatic
-  fun findPostWithReplies(id: Long, posts: List<Post>): HashSet<Post> {
-    val postsSet = HashSet<Post>()
-    findPostWithRepliesRecursive(id, posts, postsSet)
-    return postsSet
-  }
-
-  /**
-   * Finds a post by it's id and then finds all posts that has replied to this post recursively
-   */
-  private fun findPostWithRepliesRecursive(id: Long, posts: List<Post>, postsSet: MutableSet<Post>) {
-    for (post in posts) {
-      if (post.no == id && !postsSet.contains(post)) {
-        postsSet.add(post)
-
-        for (replyId in post.repliesFrom) {
-          findPostWithRepliesRecursive(replyId, posts, postsSet)
-        }
-      }
-    }
-  }
-
-  fun postsDiffer(postBuilder: Post.Builder, chanPost: ChanPost): Boolean {
-    if (postBuilder.boardDescriptor!! != chanPost.postDescriptor.descriptor.boardDescriptor()) {
+  fun postsDiffer(chanPostBuilder: ChanPostBuilder, chanPost: ChanPost): Boolean {
+    if (chanPostBuilder.boardDescriptor!! != chanPost.postDescriptor.descriptor.boardDescriptor()) {
       return true
     }
-    if (postBuilder.op != chanPost.isOp) {
+    if (chanPostBuilder.op != (chanPost is ChanOriginalPost)) {
       return true
     }
 
-    if (postBuilder.op) {
-      if (postBuilder.lastModified != chanPost.lastModified) {
+    if (chanPostBuilder.op) {
+      chanPost as ChanOriginalPost
+
+      if (chanPostBuilder.lastModified != chanPost.lastModified) {
         return true
       }
-      if (postBuilder.sticky != chanPost.sticky) {
+      if (chanPostBuilder.sticky != chanPost.sticky) {
         return true
       }
-      if (postBuilder.uniqueIps != chanPost.uniqueIps) {
+      if (chanPostBuilder.uniqueIps != chanPost.uniqueIps) {
         return true
       }
-      if (postBuilder.threadImagesCount != chanPost.threadImagesCount) {
+      if (chanPostBuilder.threadImagesCount != chanPost.catalogImagesCount) {
         return true
       }
-      if (postBuilder.closed != chanPost.closed) {
+      if (chanPostBuilder.closed != chanPost.closed) {
         return true
       }
-      if (postBuilder.archived != chanPost.archived) {
+      if (chanPostBuilder.archived != chanPost.archived) {
         return true
       }
-      if (postBuilder.deleted != chanPost.deleted) {
+      if (chanPostBuilder.deleted != chanPost.deleted) {
         return true
       }
-      if (postBuilder.totalRepliesCount != chanPost.replies) {
+      if (chanPostBuilder.totalRepliesCount != chanPost.catalogRepliesCount) {
         return true
       }
     }
 
     // We do not compare comments, subject, name, tripcode, posterId, capcode and repliesTo here
     // because they may differ from the ones of a parsed post.
-
-    if (postImagesDiffer2(postBuilder.postImages, chanPost.postImages)) {
+    if (postImagesDiffer2(chanPostBuilder.postImages, chanPost.postImages)) {
       return true
     }
 
     return false
   }
 
-  private fun postImagesDiffer2(postImages: List<PostImage>, chanPostImages: List<ChanPostImage>): Boolean {
+  private fun postImagesDiffer2(
+    postImages: List<ChanPostImage>,
+    chanPostImages: List<ChanPostImage>
+  ): Boolean {
     if (postImages.size != chanPostImages.size) {
       return true
     }
@@ -130,16 +96,13 @@ object PostUtils {
       val postImage = postImages[i]
       val chanPostImage = chanPostImages[i]
 
-      if (postImage.archiveId != chanPostImage.archiveId) {
-        return true
-      }
       if (postImage.type != chanPostImage.type) {
         return true
       }
       if (postImage.imageUrl != chanPostImage.imageUrl) {
         return true
       }
-      if (postImage.thumbnailUrl != chanPostImage.thumbnailUrl) {
+      if (postImage.actualThumbnailUrl != chanPostImage.actualThumbnailUrl) {
         return true
       }
     }
@@ -148,118 +111,13 @@ object PostUtils {
   }
 
   @JvmStatic
-  fun postsDiffer(displayedPost: Post, newPost: Post): Boolean {
-    if (displayedPost.no != newPost.no) {
-      return true
-    }
-    if (displayedPost.isOP && newPost.isOP) {
-      if (displayedPost.lastModified != newPost.lastModified) {
-        return true
-      }
-      if (displayedPost.isSticky != newPost.isSticky) {
-        return true
-      }
-      if (displayedPost.uniqueIps != newPost.uniqueIps) {
-        return true
-      }
-      if (displayedPost.threadImagesCount != newPost.threadImagesCount) {
-        return true
-      }
-      if (displayedPost.isClosed != newPost.isClosed) {
-        return true
-      }
-      if (displayedPost.isArchived != newPost.isArchived) {
-        return true
-      }
-      if (displayedPost.deleted.get() != newPost.deleted.get()) {
-        return true
-      }
-      if (displayedPost.totalRepliesCount != newPost.totalRepliesCount) {
-        return true
-      }
-    }
-    if (postImagesDiffer(displayedPost.postImages, newPost.postImages)) {
-      return true
-    }
-    if (postRepliesDiffer(displayedPost.repliesTo, newPost.repliesTo)) {
-      return true
-    }
-    if (!TextUtils.equals(displayedPost.comment, newPost.comment)) {
-      return true
-    }
-    if (!TextUtils.equals(displayedPost.subject, newPost.subject)) {
-      return true
-    }
-    if (!TextUtils.equals(displayedPost.name, newPost.name)) {
-      return true
-    }
-    if (!TextUtils.equals(displayedPost.tripcode, newPost.tripcode)) {
-      return true
-    }
-    if (!TextUtils.equals(displayedPost.posterId, newPost.posterId)) {
-      return true
-    }
-    if (!TextUtils.equals(displayedPost.capcode, newPost.capcode)) {
-      return true
-    }
-
-    return false
-  }
-
-  private fun postRepliesDiffer(
-    displayedPostRepliesTo: Set<Long>,
-    newPostRepliesTo: Set<Long>
-  ): Boolean {
-    if (displayedPostRepliesTo.size != newPostRepliesTo.size) {
-      return true
-    }
-
-    if (displayedPostRepliesTo != newPostRepliesTo) {
-      return true
-    }
-
-    return false
-  }
-
-  private fun postImagesDiffer(
-    displayedPostImages: List<PostImage>,
-    newPostImages: List<PostImage>
-  ): Boolean {
-    if (displayedPostImages.size != newPostImages.size) {
-      return true
-    }
-
-    val size = displayedPostImages.size
-
-    for (i in 0 until size) {
-      val displayedPostImage = displayedPostImages[i]
-      val newPostImage = newPostImages[i]
-
-      if (displayedPostImage.archiveId != newPostImage.archiveId) {
-        return true
-      }
-      if (displayedPostImage.type != newPostImage.type) {
-        return true
-      }
-      if (displayedPostImage.imageUrl != newPostImage.imageUrl) {
-        return true
-      }
-      if (displayedPostImage.thumbnailUrl != newPostImage.thumbnailUrl) {
-        return true
-      }
-    }
-
-    return false
-  }
-
-  @JvmStatic
-  fun getPostHash(postBuilder: Post.Builder): MurmurHashUtils.Murmur3Hash {
-    val inputString = postBuilder.postCommentBuilder.getComment().toString() +
-      (postBuilder.subject ?: "") +
-      (postBuilder.name ?: "") +
-      (postBuilder.tripcode ?: "") +
-      (postBuilder.posterId ?: "") +
-      (postBuilder.moderatorCapcode ?: "")
+  fun getPostHash(chanPostBuilder: ChanPostBuilder): MurmurHashUtils.Murmur3Hash {
+    val inputString = chanPostBuilder.postCommentBuilder.getComment().toString() +
+      (chanPostBuilder.subject ?: "") +
+      (chanPostBuilder.name ?: "") +
+      (chanPostBuilder.tripcode ?: "") +
+      (chanPostBuilder.posterId ?: "") +
+      (chanPostBuilder.moderatorCapcode ?: "")
 
     return MurmurHashUtils.murmurhash3_x64_128(inputString)
   }

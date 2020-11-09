@@ -1,14 +1,14 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.common.putIfNotContains
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanSavedReply
 import com.github.k1rakishou.model.repository.ChanSavedReplyRepository
 import java.util.*
@@ -158,7 +158,17 @@ class SavedReplyManager(
   }
 
   fun retainSavedPostNoMap(
-    postList: List<Post>,
+    postList: List<ChanPost>,
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): List<Long> {
+    return retainSavedPostNoMap2(
+      postList.map { post -> post.postDescriptor },
+      threadDescriptor
+    )
+  }
+
+  fun retainSavedPostNoMap2(
+    postList: List<PostDescriptor>,
     threadDescriptor: ChanDescriptor.ThreadDescriptor
   ): List<Long> {
     if (postList.isEmpty()) {
@@ -172,8 +182,8 @@ class SavedReplyManager(
         ?: return@read emptyList()
 
       return@read postList
-        .filter { post -> savedRepliesNoSet.contains(post.no) }
-        .map { post -> post.no }
+        .filter { post -> savedRepliesNoSet.contains(post.postNo) }
+        .map { post -> post.postNo }
     }
   }
 

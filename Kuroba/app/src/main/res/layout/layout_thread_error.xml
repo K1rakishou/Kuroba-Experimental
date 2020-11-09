@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
-        android:textSize="24sp" />
+        android:textSize="20sp" />
 
     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
         android:id="@+id/button"

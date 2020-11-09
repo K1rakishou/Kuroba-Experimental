@@ -7,7 +7,7 @@ import com.github.k1rakishou.chan.core.site.sites.foolfuuka.FoolFuukaActions
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.FoolFuukaApi
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.FoolFuukaEndpoints
 import com.github.k1rakishou.common.DoNotStrip
-import com.github.k1rakishou.model.data.archive.ArchiveType
+import com.github.k1rakishou.common.data.ArchiveType
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
@@ -26,7 +26,7 @@ class Nyafuu : BaseFoolFuukaSite() {
     setEndpoints(FoolFuukaEndpoints(this, rootUrl()))
     setActions(FoolFuukaActions(this))
     setApi(FoolFuukaApi(this))
-    setParser(FoolFuukaCommentParser(themeEngine, mockReplyManager, archivesManager))
+    setParser(FoolFuukaCommentParser(mockReplyManager, archivesManager))
   }
 
   companion object {

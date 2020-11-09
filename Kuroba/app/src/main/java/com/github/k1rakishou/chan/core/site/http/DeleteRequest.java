@@ -16,15 +16,15 @@
  */
 package com.github.k1rakishou.chan.core.site.http;
 
-import com.github.k1rakishou.chan.core.model.Post;
+import com.github.k1rakishou.model.data.post.ChanPost;
 import com.github.k1rakishou.model.data.post.ChanSavedReply;
 
 public class DeleteRequest {
-    public final Post post;
+    public final ChanPost post;
     public final ChanSavedReply savedReply;
     public final boolean imageOnly;
 
-    public DeleteRequest(Post post, ChanSavedReply savedReply, boolean imageOnly) {
+    public DeleteRequest(ChanPost post, ChanSavedReply savedReply, boolean imageOnly) {
         this.post = post;
         this.savedReply = savedReply;
         this.imageOnly = imageOnly;

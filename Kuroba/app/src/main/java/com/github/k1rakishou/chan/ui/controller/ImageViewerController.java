@@ -44,21 +44,19 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
 import com.davemorrissey.labs.subscaleview.ImageViewState;
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
+import com.github.k1rakishou.chan.core.helper.DialogFactory;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
-import com.github.k1rakishou.chan.core.manager.DialogFactory;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
-import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.presenter.ImageViewerPresenter;
 import com.github.k1rakishou.chan.core.saver.ImageSaveTask;
 import com.github.k1rakishou.chan.core.saver.ImageSaver;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.adapter.ImageViewerAdapter;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView;
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
@@ -71,11 +69,13 @@ import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.TransitionImageView;
 import com.github.k1rakishou.chan.utils.FullScreenUtils;
-import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.chan.utils.StringUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
+import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+import com.github.k1rakishou.model.data.post.ChanPostImage;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -89,15 +89,15 @@ import javax.inject.Inject;
 import static android.view.View.GONE;
 import static android.view.View.INVISIBLE;
 import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getDimen;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getWindow;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.openLink;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.openLinkInBrowser;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.shareLink;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.waitForLayout;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLinkInBrowser;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
+import static com.github.k1rakishou.common.AndroidUtils.getWindow;
+import static com.github.k1rakishou.common.AndroidUtils.inflate;
 
 public class ImageViewerController
         extends Controller
@@ -306,7 +306,7 @@ public class ImageViewerController
     }
 
     private void goPostClicked(ToolbarMenuItem item) {
-        PostImage postImage = presenter.getCurrentPostImage();
+        ChanPostImage postImage = presenter.getCurrentPostImage();
         if (postImage == null) {
             return;
         }
@@ -341,31 +341,31 @@ public class ImageViewerController
     }
 
     private void openBrowserClicked(ToolbarMenuSubItem item) {
-        PostImage postImage = presenter.getCurrentPostImage();
-        if (postImage.imageUrl == null) {
+        ChanPostImage postImage = presenter.getCurrentPostImage();
+        if (postImage.getImageUrl() == null) {
             Logger.e(TAG, "openBrowserClicked() postImage.imageUrl is null");
             return;
         }
 
         if (ChanSettings.openLinkBrowser.get()) {
-            openLink(postImage.imageUrl.toString());
+            openLink(postImage.getImageUrl().toString());
         } else {
-            openLinkInBrowser(context, postImage.imageUrl.toString(), themeEngine.getChanTheme());
+            openLinkInBrowser(context, postImage.getImageUrl().toString(), themeEngine.getChanTheme());
         }
     }
 
     private void shareUrlClicked(ToolbarMenuSubItem item) {
-        PostImage postImage = presenter.getCurrentPostImage();
-        if (postImage.imageUrl == null) {
+        ChanPostImage postImage = presenter.getCurrentPostImage();
+        if (postImage.getImageUrl() == null) {
             Logger.e(TAG, "saveShare() postImage.imageUrl == null");
             return;
         }
 
-        shareLink(postImage.imageUrl.toString());
+        shareLink(postImage.getImageUrl().toString());
     }
 
     private void shareContentClicked(ToolbarMenuSubItem item) {
-        PostImage postImage = presenter.getCurrentPostImage();
+        ChanPostImage postImage = presenter.getCurrentPostImage();
         saveShare(true, postImage);
     }
 
@@ -409,7 +409,7 @@ public class ImageViewerController
         }
     }
 
-    private void saveShare(boolean share, PostImage postImage) {
+    private void saveShare(boolean share, ChanPostImage postImage) {
         ImageSaveTask task = new ImageSaveTask(
                 fileCacheV2,
                 fileManager,
@@ -449,7 +449,7 @@ public class ImageViewerController
     }
 
     @NonNull
-    private String appendAdditionalSubDirectories(PostImage postImage) {
+    private String appendAdditionalSubDirectories(ChanPostImage postImage) {
         long threadNo = 0L;
 
         if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
@@ -523,13 +523,13 @@ public class ImageViewerController
     }
 
     @Override
-    public void setPagerItems(ChanDescriptor chanDescriptor, List<PostImage> images, int initialIndex) {
+    public void setPagerItems(ChanDescriptor chanDescriptor, List<ChanPostImage> images, int initialIndex) {
         ImageViewerAdapter adapter = new ImageViewerAdapter(images, presenter);
         pager.setAdapter(adapter);
         pager.setCurrentItem(initialIndex);
     }
 
-    public void setImageMode(PostImage postImage, MultiImageView.Mode mode, boolean center) {
+    public void setImageMode(ChanPostImage postImage, MultiImageView.Mode mode, boolean center) {
         ImageViewerAdapter adapter = getImageViewerAdapter();
         if (adapter == null) return;
 
@@ -537,7 +537,7 @@ public class ImageViewerController
     }
 
     @Override
-    public void setVolume(PostImage postImage, boolean muted) {
+    public void setVolume(ChanPostImage postImage, boolean muted) {
         ImageViewerAdapter adapter = getImageViewerAdapter();
         if (adapter == null) {
             return;
@@ -546,7 +546,7 @@ public class ImageViewerController
         adapter.setVolume(postImage, muted);
     }
 
-    public MultiImageView.Mode getImageMode(PostImage postImage) {
+    public MultiImageView.Mode getImageMode(ChanPostImage postImage) {
         ImageViewerAdapter adapter = getImageViewerAdapter();
         if (adapter == null) {
             return MultiImageView.Mode.UNLOADED;
@@ -573,12 +573,12 @@ public class ImageViewerController
         return (ImageViewerAdapter) pager.getAdapter();
     }
 
-    public void setTitle(PostImage postImage, int index, int count, boolean spoiler) {
+    public void setTitle(ChanPostImage postImage, int index, int count, boolean spoiler) {
         if (spoiler) {
             navigation.title =
-                    getString(R.string.image_spoiler_filename) + " (" + postImage.extension.toUpperCase() + ")";
+                    getString(R.string.image_spoiler_filename) + " (" + postImage.getExtension().toUpperCase() + ")";
         } else {
-            navigation.title = postImage.filename + "." + postImage.extension;
+            navigation.title = postImage.getFilename() + "." + postImage.getExtension();
         }
 
         navigation.subtitle = (index + 1) + "/" + count;
@@ -589,12 +589,12 @@ public class ImageViewerController
         rotate.visible = getImageMode(postImage) == MultiImageView.Mode.BIGIMAGE;
     }
 
-    public void scrollToImage(PostImage postImage) {
+    public void scrollToImage(ChanPostImage postImage) {
         imageViewerCallback.scrollToImage(postImage);
     }
 
     @Override
-    public void updatePreviewImage(PostImage postImage) {
+    public void updatePreviewImage(ChanPostImage postImage) {
         imageLoaderV2.load(
                 context,
                 postImage,
@@ -674,7 +674,7 @@ public class ImageViewerController
     }
 
     @Override
-    public void startPreviewInTransition(ChanDescriptor chanDescriptor, PostImage postImage) {
+    public void startPreviewInTransition(ChanDescriptor chanDescriptor, ChanPostImage postImage) {
         ThumbnailView startImageView = getTransitionImageView(postImage);
         if (!setTransitionViewData(startImageView)) {
             presenter.onInTransitionEnd();
@@ -729,7 +729,7 @@ public class ImageViewerController
     }
 
     @Override
-    public void startPreviewOutTransition(ChanDescriptor chanDescriptor, final PostImage postImage) {
+    public void startPreviewOutTransition(ChanDescriptor chanDescriptor, final ChanPostImage postImage) {
         if (startAnimation != null || endAnimation != null) {
             return;
         }
@@ -737,7 +737,7 @@ public class ImageViewerController
         doPreviewOutAnimation(postImage);
     }
 
-    private void doPreviewOutAnimation(PostImage postImage) {
+    private void doPreviewOutAnimation(ChanPostImage postImage) {
         // Find translation and scale if the current displayed image was a bigimage
         MultiImageView multiImageView = ((ImageViewerAdapter) pager.getAdapter()).find(postImage);
         View activeView = multiImageView.getActiveView();
@@ -824,7 +824,7 @@ public class ImageViewerController
     }
 
     @Nullable
-    private ThumbnailView getTransitionImageView(PostImage postImage) {
+    private ThumbnailView getTransitionImageView(ChanPostImage postImage) {
         return imageViewerCallback.getPreviewImageTransitionView(postImage);
     }
 
@@ -936,11 +936,11 @@ public class ImageViewerController
 
     public interface ImageViewerCallback {
         @Nullable
-        ThumbnailView getPreviewImageTransitionView(PostImage postImage);
-        void scrollToImage(PostImage postImage);
+        ThumbnailView getPreviewImageTransitionView(ChanPostImage postImage);
+        void scrollToImage(ChanPostImage postImage);
     }
 
     public interface GoPostCallback {
-        ImageViewerCallback goToPost(PostImage postImage);
+        ImageViewerCallback goToPost(ChanPostImage postImage);
     }
 }

@@ -1,15 +1,15 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.common.putIfNotContains
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.SeenPost
 import com.github.k1rakishou.model.repository.SeenPostRepository
 import kotlinx.coroutines.CoroutineScope
@@ -71,7 +71,7 @@ class SeenPostsManager(
     }
   }
 
-  fun onPostBind(chanDescriptor: ChanDescriptor, post: Post) {
+  fun onPostBind(chanDescriptor: ChanDescriptor, post: ChanPost) {
     if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
       return
     }
@@ -101,11 +101,11 @@ class SeenPostsManager(
     }
   }
 
-  fun onPostUnbind(chanDescriptor: ChanDescriptor, post: Post) {
+  fun onPostUnbind(chanDescriptor: ChanDescriptor, post: ChanPost) {
     // No-op (maybe something will be added here in the future)
   }
 
-  fun hasAlreadySeenPost(chanDescriptor: ChanDescriptor, post: Post): Boolean {
+  fun hasAlreadySeenPost(chanDescriptor: ChanDescriptor, post: ChanPost): Boolean {
     if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
       return true
     }
@@ -115,7 +115,7 @@ class SeenPostsManager(
     }
 
     val threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
-    val postNo = post.no
+    val postNo = post.postNo()
 
     val seenPost = lock.read {
       seenPostsMap[threadDescriptor]?.firstOrNull { seenPost -> seenPost.postNo == postNo }

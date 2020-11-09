@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.utils
 
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
 object SharingUtils {

@@ -16,10 +16,15 @@
  */
 package com.github.k1rakishou.chan.core.di.module.application
 
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.jsonObject
 import com.github.k1rakishou.common.nextStringOrNull
-import com.github.k1rakishou.json.*
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.json.BooleanJsonSetting
+import com.github.k1rakishou.json.IntegerJsonSetting
+import com.github.k1rakishou.json.JsonSetting
+import com.github.k1rakishou.json.LongJsonSetting
+import com.github.k1rakishou.json.RuntimeTypeAdapterFactory
+import com.github.k1rakishou.json.StringJsonSetting
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder

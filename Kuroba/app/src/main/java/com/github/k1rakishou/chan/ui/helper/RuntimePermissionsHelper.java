@@ -28,12 +28,12 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.core.manager.DialogFactory;
+import com.github.k1rakishou.chan.core.helper.DialogFactory;
 
 import kotlin.Unit;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAppContext;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.openIntent;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent;
+import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
 
 public class RuntimePermissionsHelper {
     private static final int RUNTIME_PERMISSION_RESULT_ID = 3;

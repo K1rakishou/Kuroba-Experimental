@@ -20,8 +20,9 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.widget.LinearLayout
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.core_themes.IColorizableWidget
+import com.github.k1rakishou.core_themes.ThemeEngine
 import javax.inject.Inject
 
 open class TouchBlockingLinearLayout @JvmOverloads constructor(
@@ -35,7 +36,7 @@ open class TouchBlockingLinearLayout @JvmOverloads constructor(
 
   init {
     if (!isInEditMode) {
-      AndroidUtils.extractStartActivityComponent(context)
+      AppModuleAndroidUtils.extractStartActivityComponent(context)
         .inject(this)
     }
   }

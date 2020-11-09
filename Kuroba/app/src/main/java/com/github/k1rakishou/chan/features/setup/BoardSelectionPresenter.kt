@@ -10,8 +10,8 @@ import com.github.k1rakishou.chan.features.setup.data.SiteCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
 import com.github.k1rakishou.chan.ui.helper.BoardDescriptorsComparator
 import com.github.k1rakishou.chan.ui.helper.BoardHelper
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.site.ChanSiteData
 import io.reactivex.Flowable

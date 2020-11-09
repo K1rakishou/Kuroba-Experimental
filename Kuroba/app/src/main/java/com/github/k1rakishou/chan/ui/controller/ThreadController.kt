@@ -21,14 +21,14 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout.OnRefreshListener
-import com.github.k1rakishou.chan.Chan.ForegroundChangedMessage
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.manager.ApplicationVisibility
+import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityListener
+import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.manager.LocalSearchManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.model.PostImage
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.controller.ImageViewerController.ImageViewerCallback
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
@@ -39,10 +39,13 @@ import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils.dp
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterType
+import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import javax.inject.Inject
@@ -55,19 +58,22 @@ abstract class ThreadController(
   ImageViewerCallback,
   OnRefreshListener,
   ToolbarSearchCallback,
-  SlideChangeListener {
+  SlideChangeListener,
+  ApplicationVisibilityListener {
 
   @Inject
   lateinit var siteManager: SiteManager
   @Inject
   lateinit var localSearchManager: LocalSearchManager
+  @Inject
+  lateinit var applicationVisibilityManager: ApplicationVisibilityManager
 
   protected lateinit var threadLayout: ThreadLayout
   private lateinit var swipeRefreshLayout: SwipeRefreshLayout
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
   val chanDescriptor: ChanDescriptor?
-    get() = threadLayout.presenter.chanDescriptor
+    get() = threadLayout.presenter.currentChanDescriptor
 
   override val toolbar: Toolbar?
     get() = (navigationController as? ToolbarNavigationController)?.toolbar
@@ -93,16 +99,16 @@ abstract class ThreadController(
     view = swipeRefreshLayout
 
     serializedCoroutineExecutor = SerializedCoroutineExecutor(mainScope)
+    applicationVisibilityManager.addListener(this)
 
     val toolbar = toolbar
-
     toolbar?.addToolbarHeightUpdatesCallback {
       val toolbarHeight = toolbar.toolbarHeight
 
       swipeRefreshLayout.setProgressViewOffset(
         false,
-        toolbarHeight - AndroidUtils.dp(40f),
-        toolbarHeight + AndroidUtils.dp(64 - 40.toFloat())
+        toolbarHeight - dp(40f),
+        toolbarHeight + dp(64 - 40.toFloat())
       )
     }
   }
@@ -115,8 +121,10 @@ abstract class ThreadController(
 
   override fun onDestroy() {
     super.onDestroy()
+
     drawerCallbacks = null
     threadLayout.destroy()
+    applicationVisibilityManager.removeListener(this)
     EventBus.getDefault().unregister(this)
   }
 
@@ -144,35 +152,32 @@ abstract class ThreadController(
     return threadLayout.sendKeyEvent(event) || super.dispatchKeyEvent(event)
   }
 
-  @Subscribe
-  fun onEvent(message: ForegroundChangedMessage) {
-    serializedCoroutineExecutor.post {
-      threadLayout.presenter.onForegroundChanged(message.inForeground)
-    }
+  override fun onApplicationVisibilityChanged(applicationVisibility: ApplicationVisibility) {
+    threadLayout.presenter.onForegroundChanged(applicationVisibility.isInForeground())
   }
 
   @Subscribe
   fun onEvent(message: RefreshUIMessage?) {
-    threadLayout.presenter.requestData()
+    threadLayout.presenter.normalLoad()
   }
 
   override fun onRefresh() {
     threadLayout.refreshFromSwipe()
   }
 
-  override fun openReportController(post: Post) {
+  override fun openReportController(post: ChanPost) {
     val site = siteManager.bySiteDescriptor(post.boardDescriptor.siteDescriptor)
     if (site != null) {
       navigationController!!.pushController(ReportController(context, post, site))
     }
   }
 
-  fun selectPostImage(postImage: PostImage) {
+  fun selectPostImage(postImage: ChanPostImage) {
     threadLayout.presenter.selectPostImage(postImage)
   }
 
   override fun showImages(
-    images: List<PostImage>,
+    images: List<ChanPostImage>,
     index: Int,
     chanDescriptor: ChanDescriptor,
     thumbnail: ThumbnailView
@@ -187,24 +192,26 @@ abstract class ThreadController(
     }
   }
 
-  override fun getPreviewImageTransitionView(postImage: PostImage): ThumbnailView? {
+  override fun getPreviewImageTransitionView(postImage: ChanPostImage): ThumbnailView? {
     return threadLayout.getThumbnail(postImage)
   }
 
-  override fun scrollToImage(postImage: PostImage) {
+  override fun scrollToImage(postImage: ChanPostImage) {
     threadLayout.presenter.scrollToImage(postImage, true)
   }
 
-  override fun showAlbum(images: List<PostImage>, index: Int) {
-    if (threadLayout.presenter.chanThread != null) {
-      val albumViewController = AlbumViewController(context)
-      albumViewController.setImages(chanDescriptor, images, index, navigation.title)
+  override fun showAlbum(images: List<ChanPostImage>, index: Int) {
+    if (threadLayout.presenter.currentChanDescriptor == null) {
+      return
+    }
 
-      if (doubleNavigationController != null) {
-        doubleNavigationController!!.pushController(albumViewController)
-      } else {
-        navigationController!!.pushController(albumViewController)
-      }
+    val albumViewController = AlbumViewController(context)
+    albumViewController.setImages(chanDescriptor, images, index, navigation.title)
+
+    if (doubleNavigationController != null) {
+      doubleNavigationController!!.pushController(albumViewController)
+    } else {
+      navigationController!!.pushController(albumViewController)
     }
   }
 

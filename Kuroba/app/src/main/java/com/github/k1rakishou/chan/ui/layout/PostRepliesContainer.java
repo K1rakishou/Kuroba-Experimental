@@ -20,12 +20,12 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.LinearLayout;
 
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
 
 public class PostRepliesContainer extends LinearLayout implements ThemeEngine.ThemeChangesListener {
 
@@ -48,7 +48,7 @@ public class PostRepliesContainer extends LinearLayout implements ThemeEngine.Th
     }
 
     private void init() {
-        AndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
                 .inject(this);
     }
 

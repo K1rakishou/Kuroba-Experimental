@@ -25,13 +25,14 @@ import android.util.AttributeSet;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchState;
-import com.github.k1rakishou.chan.core.model.PostImage;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
+import com.github.k1rakishou.common.AndroidUtils;
+import com.github.k1rakishou.core_themes.ThemeEngine;
+import com.github.k1rakishou.model.data.post.ChanPostImage;
 import com.github.k1rakishou.model.data.post.ChanPostImageType;
 
 import javax.inject.Inject;
@@ -39,7 +40,7 @@ import javax.inject.Inject;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
 
 public class PostImageThumbnailView extends ThumbnailView {
     private static final String TAG = "PostImageThumbnailView";
@@ -51,7 +52,7 @@ public class PostImageThumbnailView extends ThumbnailView {
     @Inject
     ThemeEngine themeEngine;
 
-    private PostImage postImage;
+    private ChanPostImage postImage;
     private float ratio = 0f;
     private boolean showPrefetchLoadingIndicator;
     private boolean prefetching = false;
@@ -74,7 +75,7 @@ public class PostImageThumbnailView extends ThumbnailView {
     public PostImageThumbnailView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
-        AndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
                 .inject(this);
 
         this.playIcon = AndroidUtils.getDrawable(R.drawable.ic_play_circle_outline_white_24dp);
@@ -101,11 +102,11 @@ public class PostImageThumbnailView extends ThumbnailView {
     }
 
     public void bindPostImage(
-            @NonNull PostImage postImage,
+            @NonNull ChanPostImage postImage,
             int width,
             int height
     ) {
-        if (this.postImage == postImage) {
+        if (postImage.equals(this.postImage)) {
             return;
         }
 
@@ -154,15 +155,15 @@ public class PostImageThumbnailView extends ThumbnailView {
         }
     }
 
-    private String getUrl(PostImage postImage) {
+    private String getUrl(ChanPostImage postImage) {
         String url = postImage.getThumbnailUrl().toString();
 
         boolean highRes = ChanSettings.highResCells.get();
-        boolean hasImageUrl = postImage.imageUrl != null;
+        boolean hasImageUrl = postImage.getImageUrl() != null;
 
-        if (highRes && hasImageUrl && (!postImage.spoiler() || ChanSettings.removeImageSpoilers.get())) {
-            url = (postImage.type == ChanPostImageType.STATIC
-                    ? postImage.imageUrl
+        if (highRes && hasImageUrl && (!postImage.getSpoiler() || ChanSettings.removeImageSpoilers.get())) {
+            url = (postImage.getType() == ChanPostImageType.STATIC
+                    ? postImage.getImageUrl()
                     : postImage.getThumbnailUrl()).toString();
         }
 
@@ -177,7 +178,7 @@ public class PostImageThumbnailView extends ThumbnailView {
     public void draw(Canvas canvas) {
         super.draw(canvas);
 
-        if (postImage != null && postImage.type == ChanPostImageType.MOVIE && !error) {
+        if (postImage != null && postImage.getType() == ChanPostImageType.MOVIE && !error) {
             int iconScale = 1;
             double scalar = (Math.pow(2.0, iconScale) - 1) / Math.pow(2.0, iconScale);
             int x = (int) (getWidth() / 2.0 - playIcon.getIntrinsicWidth() * scalar);

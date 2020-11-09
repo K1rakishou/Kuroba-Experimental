@@ -24,8 +24,7 @@ import com.github.k1rakishou.chan.core.repository.LastReplyRepository;
 import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.google.gson.Gson;
 
@@ -55,12 +54,14 @@ public class RepositoryModule {
     @Provides
     @Singleton
     public ParserRepository provideParserRepository(
-            ThemeEngine themeEngine,
             MockReplyManager mockReplyManager,
             ArchivesManager archivesManager
     ) {
         Logger.d(AppModule.DI_TAG, "ParserRepository");
-        return new ParserRepository(themeEngine, mockReplyManager, archivesManager);
+        return new ParserRepository(
+                mockReplyManager,
+                archivesManager
+        );
     }
 
     @Provides

@@ -5,12 +5,12 @@ import android.content.Context;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.common.AndroidUtils;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.inflate;
 
 public abstract class BaseFloatingController extends Controller implements WindowInsetsListener {
     private static final int HPADDING = dp(8);

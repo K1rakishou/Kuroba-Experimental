@@ -1,14 +1,14 @@
 package com.github.k1rakishou.chan.features.settings.setting
 
 import android.content.Context
-import com.github.k1rakishou.chan.core.settings.BooleanSetting
-import com.github.k1rakishou.chan.core.settings.Setting
+import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.features.settings.SettingsIdentifier
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.plusAssign
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.prefs.BooleanSetting
 
-class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
+class BooleanSettingV2 : SettingV2() {
   override var requiresRestart: Boolean = false
   override var requiresUiRefresh: Boolean = false
   override lateinit var settingsIdentifier: SettingsIdentifier
@@ -37,10 +37,6 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
     return dependsOnSetting?.get() ?: true
   }
 
-  override fun onValueChange(setting: Setting<*>?, isChecked: Boolean) {
-    onCheckedChanged(isChecked)
-  }
-
   override fun update(): Int {
     return 0
   }
@@ -49,7 +45,6 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
     super.dispose()
 
     callback = null
-    setting?.removeCallback(this)
     setting = null
     dependsOnSetting = null
   }
@@ -62,6 +57,8 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
         if (!isChecked) {
           this.setting?.set(false)
           this.isChecked = false
+
+          onCheckedChanged(false)
         }
       }, { error ->
         Logger.e("BooleanSettingV2", "Error while listening for dependsOnSetting changes", error)
@@ -169,10 +166,6 @@ class BooleanSettingV2 : SettingV2(), Setting.SettingCallback<Boolean> {
 
           booleanSettingV2.isChecked = setting.get()
           booleanSettingV2.settingsIdentifier = identifier
-
-          booleanSettingV2.setting = setting.apply {
-            addCallback(booleanSettingV2)
-          }
 
           dependsOnSetting?.let { setting ->
             booleanSettingV2.subscribeToChanges(setting)

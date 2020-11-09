@@ -26,7 +26,7 @@ import com.github.k1rakishou.chan.controller.transition.PopControllerTransition;
 import com.github.k1rakishou.chan.controller.transition.PushControllerTransition;
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager;
 import com.github.k1rakishou.chan.core.navigation.HasNavigation;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
 
 import javax.inject.Inject;
 

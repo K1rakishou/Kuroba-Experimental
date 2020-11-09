@@ -2,21 +2,22 @@ package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.model.PostImage
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder
+import com.github.k1rakishou.chan.core.model.ChanPostImageBuilder
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.CommonSite.CommonApi
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.StringUtils
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.bookmark.StickyThread
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.google.gson.stream.JsonReader
 import org.jsoup.parser.Parser
 import java.io.IOException
@@ -42,7 +43,7 @@ class DvachApi internal constructor(
 
   @Throws(Exception::class)
   private suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
-    val builder = Post.Builder()
+    val builder = ChanPostBuilder()
     builder.boardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
 
     val site = siteManager.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
@@ -52,7 +53,7 @@ class DvachApi internal constructor(
 
     val endpoints = site.endpoints()
 
-    val files: MutableList<PostImage> = ArrayList()
+    val files: MutableList<ChanPostImage> = ArrayList()
     var parentPostId = 0
 
     reader.beginObject()
@@ -108,7 +109,7 @@ class DvachApi internal constructor(
 
     if (builder.op) {
       // Update OP fields later on the main thread
-      val op = Post.Builder()
+      val op = ChanPostBuilder()
       op.closed(builder.closed)
       op.archived(builder.archived)
       op.sticky(builder.sticky)
@@ -125,10 +126,10 @@ class DvachApi internal constructor(
   @Throws(IOException::class)
   private fun readPostImage(
     reader: JsonReader,
-    builder: Post.Builder,
+    builder: ChanPostBuilder,
     board: ChanBoard,
     endpoints: SiteEndpoints
-  ): PostImage? {
+  ): ChanPostImage? {
     var path: String? = null
     var fileSize: Long = 0
     var fileExt: String? = null
@@ -165,7 +166,8 @@ class DvachApi internal constructor(
 
     if (path != null && fileName != null) {
       val args = SiteEndpoints.makeArgument("path", path, "thumbnail", thumbnail)
-      return PostImage.Builder().serverFilename(fileName)
+      return ChanPostImageBuilder()
+        .serverFilename(fileName)
         .thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
         .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, board.customSpoilers, args))
         .imageUrl(endpoints.imageUrl(builder, args))
@@ -175,6 +177,7 @@ class DvachApi internal constructor(
         .imageHeight(fileHeight)
         .size(fileSize)
         .fileHash(fileHash, false)
+        .postDescriptor(builder.postDescriptor)
         .build()
     }
 

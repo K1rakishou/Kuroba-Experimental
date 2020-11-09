@@ -5,16 +5,16 @@ import android.widget.FrameLayout
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.ui.controller.LogsController
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.view.ReportProblemView
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.getString
-import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
+import com.github.k1rakishou.common.AndroidUtils.getString
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import javax.inject.Inject
@@ -36,7 +36,7 @@ class ReportProblemLayout(context: Context) : FrameLayout(context), ReportProble
   private val reportActivitySendReport: ColorizableBarButton
 
   init {
-    AndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractStartActivityComponent(context)
       .inject(this)
 
     inflate(context, R.layout.layout_report, this).apply {

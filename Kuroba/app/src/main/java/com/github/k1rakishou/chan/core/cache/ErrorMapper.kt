@@ -1,7 +1,11 @@
 package com.github.k1rakishou.chan.core.cache
 
-import com.github.k1rakishou.chan.core.cache.downloader.*
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.core.cache.downloader.ActiveDownloads
+import com.github.k1rakishou.chan.core.cache.downloader.DownloadState
+import com.github.k1rakishou.chan.core.cache.downloader.DownloaderUtils
+import com.github.k1rakishou.chan.core.cache.downloader.FileCacheException
+import com.github.k1rakishou.chan.core.cache.downloader.FileDownloadResult
+import com.github.k1rakishou.core_logger.Logger
 import io.reactivex.exceptions.CompositeException
 
 internal object ErrorMapper {

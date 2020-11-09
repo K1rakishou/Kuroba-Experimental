@@ -4,7 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.widget.Toast
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.manager.DialogFactory
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.features.settings.MediaScreen
 import com.github.k1rakishou.chan.features.settings.SettingsCoordinatorCallbacks
 import com.github.k1rakishou.chan.features.settings.screens.delegate.base_directory.MediaSettingsControllerPresenter
@@ -14,7 +14,7 @@ import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.SaveLocationController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
-import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager

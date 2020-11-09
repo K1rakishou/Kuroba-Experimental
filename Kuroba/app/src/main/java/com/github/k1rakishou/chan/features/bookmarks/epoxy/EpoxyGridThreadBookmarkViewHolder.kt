@@ -8,8 +8,8 @@ import com.airbnb.epoxy.EpoxyModelWithHolder
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkSelection
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkStats
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import javax.inject.Inject
 
@@ -58,7 +58,7 @@ abstract class EpoxyGridThreadBookmarkViewHolder
   override fun getBookmarkDescriptor(): ChanDescriptor.ThreadDescriptor? = threadDescriptor
 
   override fun bind(holder: BaseThreadBookmarkViewHolder) {
-    AndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractStartActivityComponent(context)
       .inject(this)
 
     super.bind(holder)

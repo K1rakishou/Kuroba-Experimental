@@ -3,21 +3,19 @@ package com.github.k1rakishou.model.source.remote
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.suspendCall
-import com.github.k1rakishou.model.common.Logger
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.InlinedFileInfo
 import com.github.k1rakishou.model.util.ensureBackgroundThread
 import okhttp3.OkHttpClient
 import okhttp3.Request
 
 open class InlinedFileInfoRemoteSource(
-  okHttpClient: OkHttpClient,
-  loggerTag: String,
-  logger: Logger
-) : AbstractRemoteSource(okHttpClient, logger) {
-  private val TAG = "$loggerTag InlinedFileInfoRemoteSource"
+  okHttpClient: OkHttpClient
+) : AbstractRemoteSource(okHttpClient) {
+  private val TAG = "InlinedFileInfoRemoteSource"
 
   open suspend fun fetchFromNetwork(fileUrl: String): ModularResult<InlinedFileInfo> {
-    logger.log(TAG, "fetchFromNetwork($fileUrl)")
+    Logger.d(TAG, "fetchFromNetwork($fileUrl)")
     ensureBackgroundThread()
 
     return Try {

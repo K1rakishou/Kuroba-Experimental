@@ -7,20 +7,20 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.http.Reply;
 import com.github.k1rakishou.chan.ui.controller.ImageOptionsController;
 import com.github.k1rakishou.chan.ui.controller.ImageReencodeOptionsController;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.google.gson.Gson;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.showToast;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
 
 public class ImageOptionsHelper
         implements ImageOptionsController.ImageOptionsControllerCallbacks,
@@ -39,7 +39,7 @@ public class ImageOptionsHelper
         this.context = context;
         this.callbacks = callbacks;
 
-        AndroidUtils.extractStartActivityComponent(context)
+        AppModuleAndroidUtils.extractStartActivityComponent(context)
                 .inject(this);
     }
 

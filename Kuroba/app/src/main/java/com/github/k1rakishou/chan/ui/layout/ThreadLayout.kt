@@ -32,18 +32,20 @@ import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
-import com.github.k1rakishou.chan.core.manager.*
-import com.github.k1rakishou.chan.core.model.ChanThread
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.model.PostImage
+import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager
+import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostHideManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter.ThreadPresenterCallback
-import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.core.settings.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.http.Reply
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
@@ -57,7 +59,6 @@ import com.github.k1rakishou.chan.ui.helper.PostPopupHelper.PostPopupHelperCallb
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper.RemovedPostsCallbacks
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutCallback
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
@@ -65,17 +66,27 @@ import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
 import com.github.k1rakishou.chan.ui.view.LoadView
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.widget.SnackbarWrapper
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLinkInBrowser
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.FilterType
+import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHide
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelChildren
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
@@ -152,13 +163,13 @@ class ThreadLayout @JvmOverloads constructor(
     get() = callback.toolbar
 
   override val chanDescriptor: ChanDescriptor?
-    get() = presenter.chanDescriptor
+    get() = presenter.currentChanDescriptor
 
-  override val displayingPosts: List<Post>
+  override val displayingPostDescriptors: List<PostDescriptor>
     get() = if (postPopupHelper.isOpen) {
-      postPopupHelper.displayingPosts
+      postPopupHelper.displayingPostDescriptors
     } else {
-      threadListLayout.displayingPosts
+      threadListLayout.displayingPostDescriptors
     }
 
   override val currentPosition: IntArray?
@@ -175,7 +186,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   init {
     if (!isInEditMode) {
-      AndroidUtils.extractStartActivityComponent(context)
+      AppModuleAndroidUtils.extractStartActivityComponent(context)
         .inject(this)
     }
   }
@@ -206,7 +217,7 @@ class ThreadLayout @JvmOverloads constructor(
 
     // View setup
     presenter.create(context, this)
-    threadListLayout.onCreate(presenter, presenter, presenter, presenter, this)
+    threadListLayout.onCreate(presenter, this)
     postPopupHelper = PostPopupHelper(context, presenter, this)
     imageReencodingHelper = ImageOptionsHelper(context, this)
     removedPostsHelper = RemovedPostsHelper(context, presenter, this)
@@ -245,9 +256,9 @@ class ThreadLayout @JvmOverloads constructor(
 
   override fun onClick(v: View) {
     if (v === errorRetryButton) {
-      presenter.requestData()
+      presenter.normalLoad()
     } else if (v === openThreadInArchiveButton) {
-      val descriptor = presenter.chanDescriptor
+      val descriptor = presenter.currentChanDescriptor
       if (descriptor is ChanDescriptor.ThreadDescriptor) {
         callback.showAvailableArchivesList(descriptor)
       }
@@ -260,7 +271,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   private fun openReplyInternal(openReplyLayout: Boolean): Boolean {
     if (openReplyLayout && !canOpenReplyLayout()) {
-      AndroidUtils.showToast(context, R.string.post_posting_is_not_supported)
+      showToast(context, R.string.post_posting_is_not_supported)
       return false
     }
 
@@ -269,7 +280,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   private fun canOpenReplyLayout(): Boolean {
-    val supportsPosting = presenter.chanDescriptor?.siteDescriptor()?.let { siteDescriptor ->
+    val supportsPosting = presenter.currentChanDescriptor?.siteDescriptor()?.let { siteDescriptor ->
       return@let siteManager.bySiteDescriptor(siteDescriptor)?.siteFeature(Site.SiteFeature.POSTING)
     } ?: false
 
@@ -298,7 +309,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   fun refreshFromSwipe() {
     refreshedFromSwipe = true
-    presenter.requestData()
+    presenter.normalLoad()
   }
 
   fun gainedFocus() {
@@ -331,26 +342,32 @@ class ThreadLayout @JvmOverloads constructor(
     return callback.threadBackPressed()
   }
 
-  override suspend fun showPosts(
-    thread: ChanThread?,
+  override suspend fun showPostsForChanDescriptor(
+    descriptor: ChanDescriptor?,
     filter: PostsFilter
   ) {
-    if (thread == null) {
+    if (descriptor == null) {
       return
     }
 
-    threadListLayout.showPosts(thread, filter, visible != Visible.THREAD)
+    val initial = visible != Visible.THREAD
+
+    if (!threadListLayout.showPosts(descriptor, filter, initial)) {
+      switchVisible(Visible.EMPTY)
+      return
+    }
+
     switchVisible(Visible.THREAD)
     callback.onShowPosts()
 
     replyButton.setIsCatalogFloatingActionButton(
-      thread.chanDescriptor is ChanDescriptor.CatalogDescriptor
+      chanDescriptor is ChanDescriptor.CatalogDescriptor
     )
   }
 
-  override fun postClicked(post: Post) {
+  override fun postClicked(postDescriptor: PostDescriptor) {
     if (postPopupHelper.isOpen) {
-      postPopupHelper.postClicked(post)
+      postPopupHelper.postClicked(postDescriptor)
     }
   }
 
@@ -373,7 +390,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   private fun hasSupportedActiveArchives(): Boolean {
-    return presenterOrNull?.chanDescriptor?.threadDescriptorOrNull()
+    return presenterOrNull?.currentChanDescriptor?.threadDescriptorOrNull()
       ?.let { threadDescriptor ->
         val archiveSiteDescriptors = archivesManager.getSupportedArchiveDescriptors(threadDescriptor)
           .map { archiveDescriptor -> archiveDescriptor.siteDescriptor }
@@ -406,8 +423,8 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
-  override fun showPostLinkables(post: Post) {
-    val linkables = post.linkables
+  override fun showPostLinkables(post: ChanPost) {
+    val linkables = post.postComment.linkables
     val keys = arrayOfNulls<String>(linkables.size)
 
     for (i in linkables.indices) {
@@ -420,9 +437,9 @@ class ThreadLayout @JvmOverloads constructor(
     ) { which -> presenter.onPostLinkableClicked(post, linkables[which]) }
   }
 
-  override fun clipboardPost(post: Post) {
-    AndroidUtils.setClipboardContent("Post text", post.comment.toString())
-    AndroidUtils.showToast(context, R.string.post_text_copied)
+  override fun clipboardPost(post: ChanPost) {
+    AndroidUtils.setClipboardContent("Post text", post.postComment.comment.toString())
+    showToast(context, R.string.post_text_copied)
   }
 
   override fun openLink(link: String) {
@@ -441,13 +458,13 @@ class ThreadLayout @JvmOverloads constructor(
 
   private fun openLinkConfirmed(link: String) {
     if (ChanSettings.openLinkBrowser.get()) {
-      AndroidUtils.openLink(link)
+      openLink(link)
     } else {
-      AndroidUtils.openLinkInBrowser(context, link, themeEngine.chanTheme)
+      openLinkInBrowser(context, link, themeEngine.chanTheme)
     }
   }
 
-  override fun openReportView(post: Post) {
+  override fun openReportView(post: ChanPost) {
     callback.openReportController(post)
   }
 
@@ -481,7 +498,7 @@ class ThreadLayout @JvmOverloads constructor(
     callback.setBoard(boardDescriptor, animated)
   }
 
-  override fun showPostsPopup(forPost: Post, posts: List<Post>) {
+  override fun showPostsPopup(forPost: ChanPost, posts: List<ChanPost>) {
     if (this.focusedChild != null) {
       val currentFocus = this.focusedChild
       AndroidUtils.hideKeyboard(currentFocus)
@@ -496,7 +513,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun showImages(
-    images: List<PostImage>,
+    images: List<ChanPostImage>,
     index: Int,
     chanDescriptor: ChanDescriptor,
     thumbnail: ThumbnailView
@@ -510,7 +527,7 @@ class ThreadLayout @JvmOverloads constructor(
     callback.showImages(images, index, chanDescriptor, thumbnail)
   }
 
-  override fun showAlbum(images: List<PostImage>, index: Int) {
+  override fun showAlbum(images: List<ChanPostImage>, index: Int) {
     callback.showAlbum(images, index)
   }
 
@@ -526,8 +543,8 @@ class ThreadLayout @JvmOverloads constructor(
     threadListLayout.smoothScrollNewPosts(displayPosition)
   }
 
-  override fun highlightPost(post: Post) {
-    threadListLayout.highlightPost(post)
+  override fun highlightPost(postDescriptor: PostDescriptor) {
+    threadListLayout.highlightPost(postDescriptor)
   }
 
   override fun highlightPostId(id: String) {
@@ -542,7 +559,7 @@ class ThreadLayout @JvmOverloads constructor(
     callback.openFilterForType(FilterType.TRIPCODE, tripcode.toString())
   }
 
-  override fun filterPostImageHash(post: Post) {
+  override fun filterPostImageHash(post: ChanPost) {
     if (post.postImages.isEmpty()) {
       return
     }
@@ -568,7 +585,7 @@ class ThreadLayout @JvmOverloads constructor(
     val hashes: MutableList<String> = ArrayList()
     for (image in post.postImages) {
       if (!image.isInlined && image.fileHash != null) {
-        hashes.add(image.fileHash)
+        hashes.add(image.fileHash!!)
       }
     }
 
@@ -591,9 +608,9 @@ class ThreadLayout @JvmOverloads constructor(
     threadListLayout.setSearchStatus(query, setEmptyText, hideKeyboard)
   }
 
-  override fun quote(post: Post, withText: Boolean) {
+  override fun quote(post: ChanPost, withText: Boolean) {
     if (!canOpenReplyLayout()) {
-      AndroidUtils.showToast(context, R.string.post_posting_is_not_supported)
+      showToast(context, R.string.post_posting_is_not_supported)
       return
     }
 
@@ -611,9 +628,9 @@ class ThreadLayout @JvmOverloads constructor(
     }, OPEN_REPLY_DELAY_MS)
   }
 
-  override fun quote(post: Post, text: CharSequence) {
+  override fun quote(post: ChanPost, text: CharSequence) {
     if (!canOpenReplyLayout()) {
-      AndroidUtils.showToast(context, R.string.post_posting_is_not_supported)
+      showToast(context, R.string.post_posting_is_not_supported)
       return
     }
 
@@ -632,7 +649,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
-  override fun confirmPostDelete(post: Post) {
+  override fun confirmPostDelete(post: ChanPost) {
     @SuppressLint("InflateParams")
     val view = AndroidUtils.inflate(context, R.layout.dialog_post_delete, null)
     val checkBox = view.findViewById<CheckBox>(R.id.image_only)
@@ -664,7 +681,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
-  override fun hideThread(post: Post, threadNo: Long, hide: Boolean) {
+  override fun hideThread(post: ChanPost, threadNo: Long, hide: Boolean) {
     serializedCoroutineExecutor.post {
       // hideRepliesToThisPost is false here because we don't have posts in the catalog mode so there
       // is no point in hiding replies to a thread
@@ -697,16 +714,16 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
-  override fun hideOrRemovePosts(hide: Boolean, wholeChain: Boolean, posts: Set<Post>, threadNo: Long) {
+  override fun hideOrRemovePosts(hide: Boolean, wholeChain: Boolean, postDescriptors: Set<PostDescriptor>, threadNo: Long) {
     serializedCoroutineExecutor.post {
       val hideList: MutableList<ChanPostHide> = ArrayList()
-      for (post in posts) {
+      for (postDescriptor in postDescriptors) {
         // Do not add the OP post to the hideList since we don't want to hide an OP post
         // while being in a thread (it just doesn't make any sense)
-        if (!post.isOP) {
+        if (!postDescriptor.isOP()) {
           hideList.add(
             ChanPostHide(
-              postDescriptor = post.postDescriptor,
+              postDescriptor = postDescriptor,
               onlyHide = hide,
               applyToWholeThread = false,
               applyToReplies = wholeChain
@@ -719,15 +736,15 @@ class ThreadLayout @JvmOverloads constructor(
       presenter.refreshUI()
 
       val formattedString = if (hide) {
-        AndroidUtils.getQuantityString(R.plurals.post_hidden, posts.size, posts.size)
+        AndroidUtils.getQuantityString(R.plurals.post_hidden, postDescriptors.size, postDescriptors.size)
       } else {
-        AndroidUtils.getQuantityString(R.plurals.post_removed, posts.size, posts.size)
+        AndroidUtils.getQuantityString(R.plurals.post_removed, postDescriptors.size, postDescriptors.size)
       }
 
       SnackbarWrapper.create(themeEngine.chanTheme, this, formattedString, Snackbar.LENGTH_LONG).apply {
         setAction(R.string.undo) {
           serializedCoroutineExecutor.post {
-            postFilterManager.removeMany(posts.map { post -> post.postDescriptor })
+            postFilterManager.removeMany(postDescriptors)
 
             postHideManager.removeManyChanPostHides(hideList.map { postHide -> postHide.postDescriptor })
             presenter.refreshUI()
@@ -739,7 +756,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
-  override fun unhideOrUnremovePost(post: Post) {
+  override fun unhideOrUnremovePost(post: ChanPost) {
     serializedCoroutineExecutor.post {
       postFilterManager.remove(post.postDescriptor)
 
@@ -749,7 +766,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun viewRemovedPostsForTheThread(
-    threadPosts: List<Post>,
+    threadPosts: List<PostDescriptor>,
     threadDescriptor: ChanDescriptor.ThreadDescriptor
   ) {
     removedPostsHelper.showPosts(threadPosts, threadDescriptor)
@@ -769,7 +786,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
-  override fun onPostUpdated(post: Post) {
+  override fun onPostUpdated(post: ChanPost) {
     threadListLayout.onPostUpdated(post)
   }
 
@@ -794,13 +811,13 @@ class ThreadLayout @JvmOverloads constructor(
     callback.showAvailableArchivesList(threadDescriptor)
   }
 
-  override fun showNewPostsNotification(show: Boolean, more: Int) {
+  override fun showNewPostsNotification(show: Boolean, newPostsCount: Int) {
     if (!show) {
       dismissSnackbar()
       return
     }
 
-    val descriptor = presenter.chanDescriptor
+    val descriptor = presenter.currentChanDescriptor
       ?: return
 
     if (threadListLayout.scrolledToBottom() || !BackgroundUtils.isInForeground()) {
@@ -818,7 +835,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     if (!isReplyLayoutVisible) {
-      val text = AndroidUtils.getQuantityString(R.plurals.thread_new_posts, more, more)
+      val text = AndroidUtils.getQuantityString(R.plurals.thread_new_posts, newPostsCount, newPostsCount)
       dismissSnackbar()
 
       newPostsNotification = SnackbarWrapper.create(themeEngine.chanTheme, this, text, Snackbar.LENGTH_LONG).apply {
@@ -855,7 +872,7 @@ class ThreadLayout @JvmOverloads constructor(
   fun isReplyLayoutOpen(): Boolean = threadListLayout.replyOpen
   fun isCatalogReplyLayout(): Boolean? = threadListLayout.replyPresenter.isCatalogReplyLayout()
 
-  fun getThumbnail(postImage: PostImage?): ThumbnailView? {
+  fun getThumbnail(postImage: ChanPostImage?): ThumbnailView? {
     return if (postPopupHelper.isOpen) {
       postPopupHelper.getThumbnail(postImage)
     } else {
@@ -909,7 +926,7 @@ class ThreadLayout @JvmOverloads constructor(
         threadListLayout.cleanup()
         postPopupHelper.popAll()
 
-        if (presenter.chanDescriptor == null || presenter.chanDescriptor?.isThreadDescriptor() == true) {
+        if (presenter.currentChanDescriptor == null || presenter.currentChanDescriptor?.isThreadDescriptor() == true) {
           showSearch(false)
         }
 
@@ -984,7 +1001,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
-  override fun showHideOrRemoveWholeChainDialog(hide: Boolean, post: Post, threadNo: Long) {
+  override fun showHideOrRemoveWholeChainDialog(hide: Boolean, post: ChanPost, threadNo: Long) {
     val positiveButtonText = if (hide) {
       AndroidUtils.getString(R.string.thread_layout_hide_whole_chain)
     } else {
@@ -1020,11 +1037,11 @@ class ThreadLayout @JvmOverloads constructor(
     suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean)
     suspend fun setBoard(descriptor: BoardDescriptor, animated: Boolean)
 
-    fun showImages(images: @JvmSuppressWildcards List<PostImage>, index: Int, chanDescriptor: ChanDescriptor, thumbnail: ThumbnailView)
-    fun showAlbum(images: @JvmSuppressWildcards List<PostImage>, index: Int)
+    fun showImages(images: @JvmSuppressWildcards List<ChanPostImage>, index: Int, chanDescriptor: ChanDescriptor, thumbnail: ThumbnailView)
+    fun showAlbum(images: @JvmSuppressWildcards List<ChanPostImage>, index: Int)
     fun onShowPosts()
     fun presentController(controller: Controller, animated: Boolean)
-    fun openReportController(post: Post)
+    fun openReportController(post: ChanPost)
     fun hideSwipeRefreshLayout()
     fun openFilterForType(type: FilterType, filterText: String?)
     fun threadBackPressed(): Boolean

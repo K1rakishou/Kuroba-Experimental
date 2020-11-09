@@ -1,13 +1,14 @@
 package com.github.k1rakishou.chan.core.loader.impl.external_media_service
 
 import android.graphics.BitmapFactory
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.ExtraLinkInfo
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.LinkInfoRequest
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.SpanUpdateBatch
-import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.model.data.media.GenericVideoId
@@ -25,7 +26,7 @@ internal class StreamableMediaServiceExtraInfoFetcher(
     get() = MediaServiceType.Streamable
 
   override fun isEnabled(): Boolean {
-    return ChanSettings.NetworkContentAutoLoadMode.shouldLoadForNetworkType(
+    return AppModuleAndroidUtils.shouldLoadForNetworkType(
       ChanSettings.parseStreamableTitlesAndDuration.get()
     )
   }

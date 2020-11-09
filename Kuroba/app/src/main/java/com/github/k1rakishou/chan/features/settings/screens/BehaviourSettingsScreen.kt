@@ -2,10 +2,10 @@ package com.github.k1rakishou.chan.features.settings.screens
 
 import android.content.Context
 import android.widget.Toast
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.manager.DialogFactory
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.PostHideManager
-import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.features.settings.BehaviorScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
@@ -15,8 +15,8 @@ import com.github.k1rakishou.chan.features.setup.SitesSetupController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.settings.captcha.JsCaptchaCookiesEditorController
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.postToEventBus
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.postToEventBus
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 
 class BehaviourSettingsScreen(
   context: Context,
@@ -226,7 +226,7 @@ class BehaviourSettingsScreen(
           topDescriptionIdFunc = { R.string.setting_clear_post_hides },
           callback = {
             postHideManager.clearAllPostHides()
-            AndroidUtils.showToast(context, R.string.setting_cleared_post_hides, Toast.LENGTH_LONG)
+            showToast(context, R.string.setting_cleared_post_hides, Toast.LENGTH_LONG)
             postToEventBus(RefreshUIMessage("clearhides"))
           }
         )

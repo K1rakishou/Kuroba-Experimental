@@ -5,9 +5,14 @@ import android.content.ContextWrapper
 import android.graphics.drawable.ColorDrawable
 import android.view.View
 import androidx.lifecycle.Lifecycle
-import com.airbnb.epoxy.*
+import com.airbnb.epoxy.AsyncEpoxyController
+import com.airbnb.epoxy.DiffResult
+import com.airbnb.epoxy.EpoxyController
+import com.airbnb.epoxy.EpoxyRecyclerView
+import com.airbnb.epoxy.OnModelBuildFinishedListener
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -49,7 +54,7 @@ fun Context.getLifecycleFromContext(): Lifecycle? {
 
 suspend fun View.awaitUntilLaidOut(continueRendering: Boolean = true) {
   suspendCancellableCoroutine<Unit> { cancellableContinuation ->
-    AndroidUtils.waitForLayout(this) {
+    waitForLayout(this) {
       cancellableContinuation.resume(Unit)
       return@waitForLayout continueRendering
     }

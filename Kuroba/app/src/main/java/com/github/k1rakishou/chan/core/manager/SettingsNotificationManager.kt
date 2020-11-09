@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.core_logger.Logger
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor

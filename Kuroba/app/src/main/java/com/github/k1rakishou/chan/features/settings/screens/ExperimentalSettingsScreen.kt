@@ -1,9 +1,9 @@
 package com.github.k1rakishou.chan.features.settings.screens
 
 import android.content.Context
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.manager.DialogFactory
-import com.github.k1rakishou.chan.core.settings.ChanSettings
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.settings.ExperimentalScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
@@ -12,8 +12,8 @@ import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
-import com.github.k1rakishou.chan.utils.AndroidUtils.isAndroid10
-import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
+import com.github.k1rakishou.common.AndroidUtils.isAndroid10
 
 class ExperimentalSettingsScreen(
   context: Context,

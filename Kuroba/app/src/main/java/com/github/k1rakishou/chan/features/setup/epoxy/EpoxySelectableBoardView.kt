@@ -7,9 +7,9 @@ import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.android.material.textview.MaterialTextView
 import javax.inject.Inject
 
@@ -31,7 +31,7 @@ class EpoxySelectableBoardView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_selectable_board_view, this)
 
-    AndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractStartActivityComponent(context)
       .inject(this)
 
     clickableArea = findViewById(R.id.clickable_area)

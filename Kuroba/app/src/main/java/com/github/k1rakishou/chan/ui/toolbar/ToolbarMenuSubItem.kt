@@ -16,7 +16,7 @@
  */
 package com.github.k1rakishou.chan.ui.toolbar
 
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.DoNotStrip
 import java.util.*
 

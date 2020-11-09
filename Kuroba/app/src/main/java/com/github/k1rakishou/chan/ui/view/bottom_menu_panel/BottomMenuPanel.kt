@@ -20,9 +20,11 @@ import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils.dp
+import com.github.k1rakishou.core_themes.ThemeEngine
 import javax.inject.Inject
 
 class BottomMenuPanel @JvmOverloads constructor(
@@ -41,7 +43,7 @@ class BottomMenuPanel @JvmOverloads constructor(
 
   init {
     if (!isInEditMode) {
-      AndroidUtils.extractStartActivityComponent(context)
+      AppModuleAndroidUtils.extractStartActivityComponent(context)
         .inject(this)
     }
 
@@ -49,7 +51,7 @@ class BottomMenuPanel @JvmOverloads constructor(
 
     layoutParams = FrameLayout.LayoutParams(
       LayoutParams.MATCH_PARENT,
-      AndroidUtils.getDimen(R.dimen.bottom_nav_view_height)
+      getDimen(R.dimen.bottom_nav_view_height)
     )
 
     updateColors()
@@ -268,8 +270,7 @@ class BottomMenuPanel @JvmOverloads constructor(
   }
 
   private fun updatePaddings() {
-    layoutParams.height =
-      AndroidUtils.getDimen(R.dimen.bottom_nav_view_height) + globalWindowInsetsManager.bottom()
+    layoutParams.height = getDimen(R.dimen.bottom_nav_view_height) + globalWindowInsetsManager.bottom()
 
     if (globalWindowInsetsManager.isKeyboardOpened) {
       updatePadding(bottom = 0)

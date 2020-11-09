@@ -67,5 +67,7 @@ open class AppConstants(
       "Mozilla/5.0 (Linux; Android %s; %s) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.127 Mobile Safari/537.36"
 
     private const val PROXIES_FILE_NAME = "kuroba_proxies.json"
+
+    const val RESOURCES_ENDPOINT = "https://raw.githubusercontent.com/K1rakishou/Kuroba-Experimental/release/docs/"
   }
 }

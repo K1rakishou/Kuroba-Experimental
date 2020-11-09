@@ -5,9 +5,13 @@ import android.util.Base64;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.github.k1rakishou.core_logger.Logger;
+
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild;
 
 public class StringUtils {
     private static final Pattern IMAGE_THUMBNAIL_EXTRACTOR_PATTERN = Pattern.compile("/(\\d{12,32}+)s.(.*)");
@@ -96,7 +100,7 @@ public class StringUtils {
     }
 
     public static String maskImageUrl(@NonNull String url) {
-        if (AndroidUtils.isDevBuild()) {
+        if (isDevBuild()) {
             return url;
         }
 

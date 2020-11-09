@@ -17,8 +17,8 @@
 package com.github.k1rakishou.chan.core.site.common.vichan;
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
-import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.common.ModularResult;
+import com.github.k1rakishou.core_logger.Logger;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

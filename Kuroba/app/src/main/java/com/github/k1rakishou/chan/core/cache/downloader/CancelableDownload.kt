@@ -3,8 +3,8 @@ package com.github.k1rakishou.chan.core.cache.downloader
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
 import com.github.k1rakishou.chan.core.cache.stream.WebmStreamingDataSource
 import com.github.k1rakishou.chan.core.cache.stream.WebmStreamingSource
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.StringUtils.maskImageUrl
+import com.github.k1rakishou.core_logger.Logger
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException

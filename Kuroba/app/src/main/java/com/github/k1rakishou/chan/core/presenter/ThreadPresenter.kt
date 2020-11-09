@@ -19,23 +19,38 @@ package com.github.k1rakishou.chan.core.presenter
 import android.content.Context
 import android.text.TextUtils
 import androidx.annotation.StringRes
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.cache.CacheHandler
+import com.github.k1rakishou.chan.core.helper.ChanThreadTicker
+import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
+import com.github.k1rakishou.chan.core.helper.PostHideHelper
 import com.github.k1rakishou.chan.core.loader.LoaderBatchResult
 import com.github.k1rakishou.chan.core.loader.LoaderResult.Succeeded
-import com.github.k1rakishou.chan.core.manager.*
-import com.github.k1rakishou.chan.core.model.ChanThread
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.model.PostImage
-import com.github.k1rakishou.chan.core.settings.ChanSettings
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.ChanFilterManager
+import com.github.k1rakishou.chan.core.manager.ChanReloadOptions
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
+import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
+import com.github.k1rakishou.chan.core.manager.LocalSearchManager
+import com.github.k1rakishou.chan.core.manager.LocalSearchType
+import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager
+import com.github.k1rakishou.chan.core.manager.PageRequestManager
+import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostHideManager
+import com.github.k1rakishou.chan.core.manager.SavedReplyManager
+import com.github.k1rakishou.chan.core.manager.SeenPostsManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
-import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoader
-import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoader.ChanLoaderCallback
+import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest.BoardPage
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
@@ -44,28 +59,46 @@ import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
-import com.github.k1rakishou.chan.ui.helper.PostHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutPresenterCallback
-import com.github.k1rakishou.chan.ui.text.span.PostLinkable
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.getString
-import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.Logger
-import com.github.k1rakishou.chan.utils.PostUtils.findPostById
-import com.github.k1rakishou.chan.utils.PostUtils.findPostWithReplies
 import com.github.k1rakishou.chan.utils.PostUtils.getReadableFileSize
 import com.github.k1rakishou.chan.utils.plusAssign
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils.getString
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.model.data.descriptor.*
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_spannable.PostLinkable
+import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.model.data.post.ChanOriginalPost
+import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import com.github.k1rakishou.model.source.cache.ChanCacheOptions
+import com.github.k1rakishou.model.util.ChanPostUtils
 import io.reactivex.disposables.CompositeDisposable
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
@@ -73,7 +106,6 @@ import kotlin.coroutines.CoroutineContext
 class ThreadPresenter @Inject constructor(
   private val cacheHandler: CacheHandler,
   private val bookmarksManager: BookmarksManager,
-  private val chanLoaderManager: ChanLoaderManager,
   private val pageRequestManager: PageRequestManager,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
@@ -90,17 +122,24 @@ class ThreadPresenter @Inject constructor(
   private val lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder,
   private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
   private val localSearchManager: LocalSearchManager,
-  private val postHideHelper: PostHideHelper
-) : ChanLoaderCallback,
-  PostAdapterCallback,
+  private val postHideHelper: PostHideHelper,
+  private val chanThreadManager: ChanThreadManager
+) : PostAdapterCallback,
   PostCellCallback,
   ThreadStatusCell.Callback,
   ThreadListLayoutPresenterCallback,
   CoroutineScope {
 
+  private val chanThreadTicker by lazy {
+    ChanThreadTicker(
+      scope = this,
+      isDevFlavor = isDevBuild(),
+      archivesManager = archivesManager,
+      action = this::onChanTickerTick
+    )
+  }
+
   private var threadPresenterCallback: ThreadPresenterCallback? = null
-  private var currentChanDescriptor: ChanDescriptor? = null
-  private var chanLoader: ChanThreadLoader? = null
   private var forcePageUpdate = false
   private var order = PostsFilter.Order.BUMP
   private val compositeDisposable = CompositeDisposable()
@@ -108,18 +147,20 @@ class ThreadPresenter @Inject constructor(
 
   private lateinit var postOptionsClickExecutor: RendezvousCoroutineExecutor
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
-
   private lateinit var context: Context
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("ThreadPresenter")
 
   val isBound: Boolean
-    get() = currentChanDescriptor != null && chanLoader != null
+    get() {
+      return chanThreadTicker.currentChanDescriptor != null
+        && chanThreadManager.isCached(chanThreadTicker.currentChanDescriptor)
+    }
 
   val isPinned: Boolean
     get() {
-      val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
+      val threadDescriptor = chanThreadTicker.currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
         ?: return false
 
       return bookmarksManager.exists(threadDescriptor)
@@ -127,6 +168,7 @@ class ThreadPresenter @Inject constructor(
 
   val currentLocalSearchType: LocalSearchType?
     get() {
+      val currentChanDescriptor = chanThreadTicker.currentChanDescriptor
       if (currentChanDescriptor == null) {
         return null
       }
@@ -138,8 +180,8 @@ class ThreadPresenter @Inject constructor(
       }
     }
 
-  override fun getChanDescriptor(): ChanDescriptor? {
-    return currentChanDescriptor
+  override fun getCurrentChanDescriptor(): ChanDescriptor? {
+    return chanThreadTicker.currentChanDescriptor
   }
 
   fun create(context: Context, threadPresenterCallback: ThreadPresenterCallback) {
@@ -158,7 +200,9 @@ class ThreadPresenter @Inject constructor(
   }
 
   fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
-    if (chanDescriptor == this.currentChanDescriptor) {
+    BackgroundUtils.ensureMainThread()
+
+    if (chanDescriptor == chanThreadTicker.currentChanDescriptor) {
       return
     }
 
@@ -166,13 +210,14 @@ class ThreadPresenter @Inject constructor(
       unbindChanDescriptor(false)
     }
 
-    this.postOptionsClickExecutor = RendezvousCoroutineExecutor(this)
-    this.serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
-    this.currentChanDescriptor = chanDescriptor
+    postOptionsClickExecutor = RendezvousCoroutineExecutor(this)
+    serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
 
     if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
       bookmarksManager.setCurrentOpenThreadDescriptor(chanDescriptor)
     }
+
+    chanThreadManager.bindChanDescriptor(chanDescriptor)
 
     compositeDisposable += onDemandContentLoaderManager.listenPostContentUpdates()
       .subscribe(
@@ -182,41 +227,54 @@ class ThreadPresenter @Inject constructor(
 
     threadPresenterCallback?.showLoading()
 
-    Logger.d(TAG, "chanLoaderManager.obtain($chanDescriptor)")
-    chanLoader = chanLoaderManager.obtain(chanDescriptor, this@ThreadPresenter)
+    Logger.d(TAG, "chanThreadTicker.startTicker($chanDescriptor)")
+    chanThreadTicker.startTicker(chanDescriptor)
   }
 
   fun unbindChanDescriptor(isDestroying: Boolean) {
-    if (isBound) {
-      Logger.d(TAG, "chanLoaderManager.release($chanDescriptor)")
+    BackgroundUtils.ensureMainThread()
 
+    if (isBound) {
+      val currentChanDescriptor = chanThreadTicker.currentChanDescriptor
       if (currentChanDescriptor != null) {
-        onDemandContentLoaderManager.cancelAllForDescriptor(currentChanDescriptor!!)
+        chanThreadManager.unbindChanDescriptor(currentChanDescriptor)
+        onDemandContentLoaderManager.cancelAllForDescriptor(currentChanDescriptor)
       }
 
-      chanLoader!!.clearTimer()
-      chanLoaderManager.release(chanLoader!!, this)
-      chanLoader = null
-      currentChanDescriptor = null
       threadPresenterCallback?.showLoading()
+
+      Logger.d(TAG, "chanThreadTicker.stopTicker($currentChanDescriptor)")
+      chanThreadTicker.stopTicker()
     }
 
     if (isDestroying) {
       job.cancelChildren()
     }
 
+    postOptionsClickExecutor.stop()
+    serializedCoroutineExecutor.stop()
     compositeDisposable.clear()
   }
 
-  suspend fun requestThreadInitialData(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+  private suspend fun onChanTickerTick(chanDescriptor: ChanDescriptor) {
+    Logger.d(TAG, "onChanTickerTicked($chanDescriptor)")
+
+    if (!chanThreadManager.isCached(chanDescriptor)) {
+      when (chanDescriptor) {
+        is ChanDescriptor.ThreadDescriptor -> preloadThreadInfo(chanDescriptor)
+        is ChanDescriptor.CatalogDescriptor -> preloadCatalogInfo(chanDescriptor)
+      }
+    }
+
+    normalLoad()
+  }
+
+  private suspend fun preloadThreadInfo(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     if (!isBound) {
       return
     }
 
-    if (chanLoader?.thread != null) {
-      chanLoader!!.quickLoad()
-      return
-    }
+    Logger.d(TAG, "preloadThreadInfo($threadDescriptor)")
 
     supervisorScope {
       val jobs = mutableListOf<Deferred<Unit>>()
@@ -231,18 +289,16 @@ class ThreadPresenter @Inject constructor(
         .peekError { error -> Logger.e(TAG, "requestThreadInitialData() error", error) }
         .ignore()
     }
-
-    requestData()
   }
 
-  suspend fun requestCatalogInitialData(catalogDescriptor: ChanDescriptor.CatalogDescriptor) {
+  private suspend fun preloadCatalogInfo(catalogDescriptor: ChanDescriptor.CatalogDescriptor) {
     BackgroundUtils.ensureMainThread()
 
     if (!isBound) {
       return
     }
 
-    threadPresenterCallback?.showLoading()
+    Logger.d(TAG, "preloadCatalogInfo($catalogDescriptor)")
 
     supervisorScope {
       val jobs = mutableListOf<Deferred<Unit>>()
@@ -253,57 +309,63 @@ class ThreadPresenter @Inject constructor(
         .peekError { error -> Logger.e(TAG, "requestCatalogInitialData() error", error) }
         .ignore()
     }
-
-    chanLoader?.requestData()
-  }
-
-  fun forceRequestData() {
-    BackgroundUtils.ensureMainThread()
-
-    if (!isBound || currentChanDescriptor == null) {
-      return
-    }
-
-    val threadNo = chanLoader?.thread?.op?.no
-      ?: return
-
-    launch {
-      val threadDescriptor = currentChanDescriptor!!.toThreadDescriptor(threadNo)
-      threadPresenterCallback?.showLoading()
-
-      chanPostRepository.awaitUntilInitialized()
-      chanPostRepository.deleteThread(threadDescriptor)
-        .peekError { error -> Logger.e(TAG, "Failed to delete thread ${threadDescriptor}", error) }
-
-      val postDescriptors = chanLoader?.thread?.getPosts()
-        ?.map { post -> post.postDescriptor }
-        ?: emptyList()
-
-      postFilterManager.removeMany(postDescriptors)
-      chanLoader?.thread?.clearPosts()
-
-      chanLoader?.requestData()
-    }
-  }
-
-  fun requestData() {
-    BackgroundUtils.ensureMainThread()
-
-    if (isBound) {
-      threadPresenterCallback?.showLoading()
-      chanLoader?.requestData()
-    }
   }
 
   fun quickReload(showLoading: Boolean = true, requestNewPosts: Boolean = true) {
     BackgroundUtils.ensureMainThread()
+    Logger.d(TAG, "quickReload($showLoading, $requestNewPosts)")
 
-    if (isBound) {
+    val currentChanDescriptor = chanThreadTicker.currentChanDescriptor
+    if (currentChanDescriptor == null) {
+      Logger.d(TAG, "quickReload() chanThreadTicker.currentChanDescriptor==null")
+      return
+    }
+
+    launch {
+      if (requestNewPosts) {
+        normalLoad(showLoading = showLoading)
+      }
+
+      onChanLoaderData(currentChanDescriptor)
+    }
+  }
+
+  fun clearMemoryCacheAndReload() {
+    Logger.d(TAG, "clearMemoryCacheAndReload()")
+    normalLoad(reloadOptions = ChanReloadOptions.ClearMemoryCache)
+  }
+
+  fun normalLoad(
+    showLoading: Boolean = true,
+    reloadOptions: ChanReloadOptions = ChanReloadOptions.RetainAll,
+    cacheOptions: ChanCacheOptions = ChanCacheOptions.StoreEverywhere
+  ) {
+    BackgroundUtils.ensureMainThread()
+    Logger.d(TAG, "normalLoad($showLoading, $reloadOptions, $cacheOptions)")
+
+    val currentChanDescriptor = chanThreadTicker.currentChanDescriptor
+    if (currentChanDescriptor == null) {
+      Logger.d(TAG, "normalLoad() chanThreadTicker.currentChanDescriptor==null")
+      return
+    }
+
+    launch {
       if (showLoading) {
         threadPresenterCallback?.showLoading()
       }
 
-      chanLoader?.quickLoad(requestNewPosts)
+      chanThreadManager.reloadFromNetwork(currentChanDescriptor, reloadOptions, cacheOptions) { threadLoadResult ->
+        Logger.d(TAG, "normalLoad() threadLoadResult=$threadLoadResult")
+
+        if (threadLoadResult is ThreadLoadResult.Error) {
+          onChanLoaderError(threadLoadResult.exception)
+          return@reloadFromNetwork
+        }
+
+        if (threadLoadResult is ThreadLoadResult.Loaded) {
+          onChanLoaderData(threadLoadResult.chanDescriptor)
+        }
+      }
     }
   }
 
@@ -339,27 +401,24 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  suspend fun onForegroundChanged(foreground: Boolean) {
+  fun onForegroundChanged(foreground: Boolean) {
     if (!isBound) {
       return
     }
 
-    if (foreground && isWatching) {
-      chanLoader!!.requestMoreDataAndResetTimer()
-
-      if (chanLoader!!.thread != null) {
-        // Show loading indicator in the status cell
-        showPosts()
-      }
-
-      return
+    if (foreground && isWatching()) {
+      chanThreadTicker.resetTicker()
+    } else {
+      chanThreadTicker.stopTicker()
     }
-
-    chanLoader!!.clearTimer()
   }
 
   @Synchronized
   fun pin(): Boolean {
+    if (!isBound) {
+      return false
+    }
+
     if (!bookmarksManager.isReady()) {
       return false
     }
@@ -372,12 +431,12 @@ class ThreadPresenter @Inject constructor(
       return true
     }
 
-    val op = chanLoader?.thread?.op
+    val op = chanThreadManager.getChanThread(threadDescriptor)?.getOriginalPost()
     if (op != null) {
       bookmarksManager.createBookmark(
         threadDescriptor,
-        PostHelper.getTitle(op, threadDescriptor),
-        op.firstImage()?.thumbnailUrl
+        ChanPostUtils.getTitle(op, threadDescriptor),
+        op.firstImage()?.actualThumbnailUrl
       )
 
       return true
@@ -388,7 +447,7 @@ class ThreadPresenter @Inject constructor(
   }
 
   suspend fun onSearchVisibilityChanged(visible: Boolean) {
-    if (currentChanDescriptor == null) {
+    if (!isBound) {
       return
     }
 
@@ -403,13 +462,11 @@ class ThreadPresenter @Inject constructor(
       localSearchManager.clearSearch(localSearchType)
     }
 
-    if (chanLoader != null && chanLoader!!.thread != null) {
-      showPosts()
-    }
+    showPosts()
   }
 
   suspend fun onSearchEntered() {
-    if (chanLoader == null || chanLoader!!.thread == null) {
+    if (!isBound) {
       return
     }
 
@@ -438,7 +495,7 @@ class ThreadPresenter @Inject constructor(
     if (this.order != order) {
       this.order = order
 
-      if (chanLoader != null && chanLoader!!.thread != null) {
+      if (isBound) {
         scrollTo(0, false)
         showPosts()
       }
@@ -451,20 +508,23 @@ class ThreadPresenter @Inject constructor(
 
   @Synchronized
   fun showAlbum() {
-    val posts = threadPresenterCallback?.displayingPosts
-    val pos = threadPresenterCallback?.currentPosition
+    val postDescriptors = threadPresenterCallback?.displayingPostDescriptors
+    val position = threadPresenterCallback?.currentPosition
 
-    if (posts == null || pos == null) {
+    if (postDescriptors == null || position == null) {
       return
     }
 
-    val displayPosition = pos[0]
-    val images: MutableList<PostImage> = ArrayList()
+    val displayPosition = position[0]
+    val images: MutableList<ChanPostImage> = ArrayList()
     var index = 0
 
-    for (i in posts.indices) {
-      val item = posts[i]
-      images.addAll(item.postImages)
+    for (i in postDescriptors.indices) {
+      val postDescriptor = postDescriptors[i]
+      val postImages = chanThreadManager.getPost(postDescriptor)?.postImages
+        ?: continue
+
+      images.addAll(postImages)
 
       if (i == displayPosition) {
         index = images.size
@@ -474,21 +534,21 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.showAlbum(images, index)
   }
 
-  override fun onPostBind(post: Post) {
+  override fun onPostBind(post: ChanPost) {
     BackgroundUtils.ensureMainThread()
 
-    if (currentChanDescriptor != null) {
-      onDemandContentLoaderManager.onPostBind(currentChanDescriptor!!, post)
-      seenPostsManager.onPostBind(currentChanDescriptor!!, post)
+    currentChanDescriptor?.let { descriptor ->
+      onDemandContentLoaderManager.onPostBind(descriptor, post)
+      seenPostsManager.onPostBind(descriptor, post)
     }
   }
 
-  override fun onPostUnbind(post: Post, isActuallyRecycling: Boolean) {
+  override fun onPostUnbind(post: ChanPost, isActuallyRecycling: Boolean) {
     BackgroundUtils.ensureMainThread()
 
-    if (currentChanDescriptor != null) {
-      onDemandContentLoaderManager.onPostUnbind(currentChanDescriptor!!, post, isActuallyRecycling)
-      seenPostsManager.onPostUnbind(currentChanDescriptor!!, post)
+    currentChanDescriptor?.let { descriptor ->
+      onDemandContentLoaderManager.onPostUnbind(descriptor, post, isActuallyRecycling)
+      seenPostsManager.onPostUnbind(descriptor, post)
     }
   }
 
@@ -498,40 +558,20 @@ class ThreadPresenter @Inject constructor(
 
     var shouldShowLoadingIndicator = false
 
-    chanLoaderManager.currentCatalogDescriptor?.let { catalogDescriptor ->
-      val chanLoader = chanLoaderManager.getLoader(catalogDescriptor)
-        ?: return@let
-
-      val catalogPosts = chanLoader.thread?.getPosts()
-        ?: return@let
-
-      val threadDescriptors = catalogPosts.map { catalogPost ->
-        check(catalogPost.isOP) { "Not OP post!" }
-        return@map ChanDescriptor.ThreadDescriptor.create(catalogDescriptor, catalogPost.no)
-      }
-
+    chanThreadManager.currentCatalogDescriptor?.let { catalogDescriptor ->
       if (catalogDescriptor == currentChanDescriptor) {
         shouldShowLoadingIndicator = true
       }
 
-      chanPostRepository.deleteThreadsFromCache(threadDescriptors)
-
-      chanLoader.thread?.clearPosts()
-      chanLoader.requestData()
+      clearMemoryCacheAndReload()
     }
 
-    chanLoaderManager.currentThreadDescriptor?.let { threadDescriptor ->
-      val chanLoader = chanLoaderManager.getLoader(threadDescriptor)
-        ?: return@let
-
+    chanThreadManager.currentThreadDescriptor?.let { threadDescriptor ->
       if (threadDescriptor == currentChanDescriptor) {
         shouldShowLoadingIndicator = true
       }
 
-      chanPostRepository.deleteThreadsFromCache(listOf(threadDescriptor))
-
-      chanLoader.thread?.clearPosts()
-      chanLoader.requestData()
+      clearMemoryCacheAndReload()
     }
 
     if (shouldShowLoadingIndicator) {
@@ -551,96 +591,115 @@ class ThreadPresenter @Inject constructor(
     return batchResult.results.any { it is Succeeded && it.needUpdateView }
   }
 
-  override suspend fun onChanLoaderData(result: ChanThread) {
+  private suspend fun onChanLoaderError(error: ChanLoaderException) {
+    BackgroundUtils.ensureMainThread()
+    Logger.e(TAG, "onChanLoaderError() called", error)
+
+    threadPresenterCallback?.showError(error)
+  }
+
+  private suspend fun onChanLoaderData(loadedChanDescriptor: ChanDescriptor) {
     BackgroundUtils.ensureMainThread()
     Logger.d(TAG, "onChanLoaderData() called")
 
     if (!isBound) {
-      Logger.e(TAG, "onChanLoaderData when not bound!")
+      Logger.e(TAG, "onChanLoaderData() not bound!")
       return
     }
 
     val localChanDescriptor = currentChanDescriptor
-      ?: return
+    if (localChanDescriptor == null) {
+      Logger.e(TAG, "onChanLoaderData() currentChanDescriptor==null")
+      return
+    }
 
-    if (isWatching) {
-      chanLoader!!.setTimer()
+    if (localChanDescriptor != loadedChanDescriptor) {
+      Logger.e(TAG, "onChanLoaderData() localChanDescriptor " +
+        "($localChanDescriptor) != loadedChanDescriptor ($loadedChanDescriptor)")
+      return
+    }
+
+    if (isWatching()) {
+      chanThreadTicker.kickTicker()
     }
 
     // allow for search refreshes inside the catalog
-    if (result.chanDescriptor.isCatalogDescriptor()) {
+    if (loadedChanDescriptor is ChanDescriptor.CatalogDescriptor) {
       onSearchEntered()
     } else {
       showPosts()
     }
 
     if (localChanDescriptor is ChanDescriptor.ThreadDescriptor) {
-      handleNewPosts(localChanDescriptor, result)
+      handleNewPosts(localChanDescriptor, loadedChanDescriptor)
     }
 
     chanThreadViewableInfoManager.getAndConsumeMarkedPostNo(localChanDescriptor) { markedPostNo ->
       handleMarkedPost(markedPostNo)
     }
 
-    createNewNavHistoryElement(localChanDescriptor, result)
-    updateBookmarkInfoIfNecessary(localChanDescriptor, result)
+    createNewNavHistoryElement(localChanDescriptor)
+
+    if (localChanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      updateBookmarkInfoIfNecessary(localChanDescriptor)
+    }
   }
 
-  private fun handleNewPosts(threadDescriptor: ChanDescriptor.ThreadDescriptor, result: ChanThread) {
-    var more = 0
+  private fun handleNewPosts(
+    localThreadDescriptor: ChanDescriptor.ThreadDescriptor,
+    loadedChanDescriptor: ChanDescriptor
+  ) {
+    var newPostsCount = 0
 
-    chanThreadViewableInfoManager.update(threadDescriptor) { chanThreadViewableInfo ->
+    chanThreadViewableInfoManager.update(localThreadDescriptor) { chanThreadViewableInfo ->
       val lastLoadedPostNo = chanThreadViewableInfo.lastLoadedPostNo
-
       if (lastLoadedPostNo > 0) {
-        for (post in result.getPosts()) {
-          if (post.no == lastLoadedPostNo) {
-            more = result.postsCount - result.getPosts().indexOf(post) - 1
-            break
-          }
-        }
+        newPostsCount = chanThreadManager.getNewPostsCount(localThreadDescriptor, lastLoadedPostNo)
       }
 
-      chanThreadViewableInfo.lastLoadedPostNo = result.getPosts().lastOrNull()?.no ?: -1L
+      chanThreadViewableInfo.lastLoadedPostNo = chanThreadManager.getLastPost(localThreadDescriptor)
+        ?.postNo()
+        ?: -1L
 
       if (chanThreadViewableInfo.lastViewedPostNo < 0L) {
         chanThreadViewableInfo.lastViewedPostNo = chanThreadViewableInfo.lastLoadedPostNo
       }
     }
 
-    if (more > 0 && threadDescriptor.threadNo == result.chanDescriptor.threadNoOrNull()) {
-      threadPresenterCallback?.showNewPostsNotification(true, more)
+    if (newPostsCount > 0 && localThreadDescriptor.threadNo == loadedChanDescriptor.threadNoOrNull()) {
+      threadPresenterCallback?.showNewPostsNotification(true, newPostsCount)
     }
 
-    if (threadDescriptor.threadNo == result.chanDescriptor.threadNoOrNull()) {
+    if (localThreadDescriptor.threadNo == loadedChanDescriptor.threadNoOrNull()) {
       if (forcePageUpdate) {
-        pageRequestManager.forceUpdateForBoard(threadDescriptor.boardDescriptor)
+        pageRequestManager.forceUpdateForBoard(localThreadDescriptor.boardDescriptor)
         forcePageUpdate = false
       }
     }
   }
 
   private fun handleMarkedPost(markedPostNo: Long) {
-    val chanThread = chanLoader?.thread
+    val markedPost = chanThreadManager.findPostByPostNo(currentChanDescriptor, markedPostNo)
       ?: return
 
-    val markedPost = findPostById(markedPostNo, chanThread)
-      ?: return
-
-    highlightPost(markedPost)
+    highlightPost(markedPost.postDescriptor)
 
     if (BackgroundUtils.isInForeground()) {
-      BackgroundUtils.runOnMainThread({ scrollToPost(markedPost, false) }, 1000)
+      BackgroundUtils.runOnMainThread({ scrollToPost(markedPost.postDescriptor, false) }, 1000)
     }
   }
 
-  private fun updateBookmarkInfoIfNecessary(chanDescriptor: ChanDescriptor, chanThread: ChanThread) {
-    val threadDescriptor = chanDescriptor.toThreadDescriptor(chanThread.op.no)
-    val opThumbnailUrl = chanLoader?.thread?.op?.firstImage()?.thumbnailUrl
-    val title = PostHelper.getTitle(chanThread.op, threadDescriptor)
+  private fun updateBookmarkInfoIfNecessary(localThreadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    val originalPost = chanThreadManager.getChanThread(localThreadDescriptor)
+      ?.getOriginalPost()
 
-    val updatedBookmarkDescriptor = bookmarksManager.updateBookmark(threadDescriptor) { threadBookmark ->
-      if (threadBookmark.title.isNullOrEmpty()) {
+    val opThumbnailUrl = originalPost?.firstImage()
+      ?.actualThumbnailUrl
+
+    val title = ChanPostUtils.getTitle(originalPost, localThreadDescriptor)
+
+    val updatedBookmarkDescriptor = bookmarksManager.updateBookmark(localThreadDescriptor) { threadBookmark ->
+      if (threadBookmark.title.isNullOrEmpty() && title.isNotEmpty()) {
         threadBookmark.title = title
       }
 
@@ -654,34 +713,35 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  private fun createNewNavHistoryElement(chanDescriptor: ChanDescriptor, chanThread: ChanThread) {
-    when (chanDescriptor) {
+  private fun createNewNavHistoryElement(localChanDescriptor: ChanDescriptor) {
+    when (localChanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> {
-        val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+        val site = siteManager.bySiteDescriptor(localChanDescriptor.siteDescriptor())
           ?: return
 
         val siteIconUrl = site.icon().url
-        val title = String.format(Locale.ENGLISH, "%s/%s", site.name(), chanDescriptor.boardCode())
+        val title = String.format(Locale.ENGLISH, "%s/%s", site.name(), localChanDescriptor.boardCode())
 
-        historyNavigationManager.createNewNavElement(chanDescriptor, siteIconUrl, title)
+        historyNavigationManager.createNewNavElement(localChanDescriptor, siteIconUrl, title)
       }
 
       is ChanDescriptor.ThreadDescriptor -> {
-        val image = chanLoader?.thread?.op?.firstImage()
-        val title = PostHelper.getTitle(chanThread.op, chanDescriptor)
+        val opThumbnailUrl = chanThreadManager.getChanThread(localChanDescriptor)
+          ?.getOriginalPost()
+          ?.firstImage()
+          ?.actualThumbnailUrl
 
-        if (image != null && title.isNotEmpty()) {
-          historyNavigationManager.createNewNavElement(chanDescriptor, image.thumbnailUrl, title)
+        val chanOriginalPost = chanThreadManager.getChanThread(localChanDescriptor)
+          ?.getOriginalPost()
+
+        if (chanOriginalPost != null) {
+          val title = ChanPostUtils.getTitle(chanOriginalPost, localChanDescriptor)
+          if (opThumbnailUrl != null && title.isNotEmpty()) {
+            historyNavigationManager.createNewNavElement(localChanDescriptor, opThumbnailUrl, title)
+          }
         }
       }
     }
-  }
-
-  override fun onChanLoaderError(error: ChanLoaderException) {
-    BackgroundUtils.ensureMainThread()
-    Logger.d(TAG, "onChanLoaderError() called")
-
-    threadPresenterCallback?.showError(error)
   }
 
   override suspend fun onListScrolledToBottom() {
@@ -689,20 +749,19 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    val thread = chanLoader?.thread
-      ?: return
+    val descriptor = currentChanDescriptor
 
-    val descriptor = chanDescriptor
+    if (descriptor is ChanDescriptor.ThreadDescriptor) {
+      if (chanThreadManager.getThreadPostsCount(descriptor) > 0) {
+        val lastPostNo = chanThreadManager.getLastPost(descriptor)?.postNo()
+        if (lastPostNo != null) {
+          chanThreadViewableInfoManager.update(descriptor) { chanThreadViewableInfo ->
+            chanThreadViewableInfo.lastViewedPostNo = lastPostNo
+          }
 
-    if (descriptor is ChanDescriptor.ThreadDescriptor && thread.postsCount > 0) {
-      val posts = thread.getPosts()
-      val lastPostNo = posts.last().no
-
-      chanThreadViewableInfoManager.update(descriptor) { chanThreadViewableInfo ->
-        chanThreadViewableInfo.lastViewedPostNo = lastPostNo
+          lastViewedPostNoInfoHolder.setLastViewedPostNo(descriptor, lastPostNo)
+        }
       }
-
-      lastViewedPostNoInfoHolder.setLastViewedPostNo(descriptor, lastPostNo)
     }
 
     threadPresenterCallback?.showNewPostsNotification(false, -1)
@@ -712,21 +771,28 @@ class ThreadPresenter @Inject constructor(
   }
 
   fun onNewPostsViewClicked() {
-    if (!isBound || chanDescriptor == null) {
+    if (!isBound) {
       return
     }
 
-    chanThreadViewableInfoManager.view(chanDescriptor!!) { chanThreadViewableInfoView ->
-      val post = findPostById(chanThreadViewableInfoView.lastViewedPostNo, chanLoader!!.thread)
+    val chanDescriptor = currentChanDescriptor
+      ?: return
+
+    chanThreadViewableInfoManager.view(currentChanDescriptor!!) { chanThreadViewableInfoView ->
+      val post = chanThreadManager.findPostByPostNo(
+        chanDescriptor,
+        chanThreadViewableInfoView.lastViewedPostNo
+      )
+
       var position = -1
 
       if (post != null) {
-        val posts = threadPresenterCallback?.displayingPosts
+        val posts = threadPresenterCallback?.displayingPostDescriptors
           ?: return@view
 
         for (i in posts.indices) {
           val needle = posts[i]
-          if (post.no == needle.no) {
+          if (post.postNo() == needle.postNo) {
             position = i
             break
           }
@@ -742,7 +808,7 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.scrollTo(displayPosition, smooth)
   }
 
-  fun scrollToImage(postImage: PostImage, smooth: Boolean) {
+  fun scrollToImage(postImage: ChanPostImage, smooth: Boolean) {
     val localSearchType = currentLocalSearchType
       ?: return
 
@@ -752,13 +818,16 @@ class ThreadPresenter @Inject constructor(
     }
 
     var position = -1
-    val posts = threadPresenterCallback?.displayingPosts
+    val postDescriptors = threadPresenterCallback?.displayingPostDescriptors
       ?: return
 
-    out@ for (i in posts.indices) {
-      val post = posts[i]
-      for (j in 0 until post.postImagesCount) {
-        if (post.postImages[j] === postImage) {
+    out@ for (i in postDescriptors.indices) {
+      val postDescriptor = postDescriptors[i]
+      val postImages = chanThreadManager.getPost(postDescriptor)?.postImages
+        ?: continue
+
+      for (image in postImages) {
+        if (image == postImage) {
           position = i
           break@out
         }
@@ -770,19 +839,19 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  fun scrollToPost(needle: Post, smooth: Boolean) {
-    scrollToPostByPostNo(needle.no, smooth)
+  fun scrollToPost(needle: PostDescriptor, smooth: Boolean) {
+    scrollToPostByPostNo(needle.postNo, smooth)
   }
 
   @JvmOverloads
   fun scrollToPostByPostNo(postNo: Long, smooth: Boolean = true) {
     var position = -1
-    val posts = threadPresenterCallback?.displayingPosts
+    val posts = threadPresenterCallback?.displayingPostDescriptors
       ?: return
 
     for (i in posts.indices) {
       val post = posts[i]
-      if (post.no == postNo) {
+      if (post.postNo == postNo) {
         position = i
         break
       }
@@ -793,43 +862,46 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  fun highlightPost(post: Post) {
-    threadPresenterCallback?.highlightPost(post)
+  fun highlightPost(postDescriptor: PostDescriptor) {
+    threadPresenterCallback?.highlightPost(postDescriptor)
   }
 
   fun selectPost(post: Long) {
     threadPresenterCallback?.selectPost(post)
   }
 
-  fun selectPostImage(postImage: PostImage) {
-    val posts = threadPresenterCallback?.displayingPosts
+  fun selectPostImage(postImage: ChanPostImage) {
+    val postDescriptors = threadPresenterCallback?.displayingPostDescriptors
       ?: return
 
-    for (post in posts) {
+    for (postDescriptor in postDescriptors) {
+      val post = chanThreadManager.getPost(postDescriptor)
+        ?: continue
+
       for (image in post.postImages) {
         if (image.equalUrl(postImage)) {
-          scrollToPost(post, false)
-          highlightPost(post)
+          scrollToPost(post.postDescriptor, false)
+          highlightPost(post.postDescriptor)
           return
         }
       }
     }
   }
 
-  override fun onPostClicked(post: Post) {
+  override fun onPostClicked(post: ChanPost) {
     if (!isBound || currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
       return
     }
 
     serializedCoroutineExecutor.post {
-      val newThreadDescriptor = currentChanDescriptor!!.toThreadDescriptor(post.no)
-      highlightPost(post)
+      val newThreadDescriptor = currentChanDescriptor!!.toThreadDescriptor(post.postNo())
+      highlightPost(post.postDescriptor)
 
       threadPresenterCallback?.showThread(newThreadDescriptor)
     }
   }
 
-  override fun onPostDoubleClicked(post: Post) {
+  override fun onPostDoubleClicked(post: ChanPost) {
     if (!isBound || currentChanDescriptor is ChanDescriptor.CatalogDescriptor) {
       return
     }
@@ -846,36 +918,38 @@ class ThreadPresenter @Inject constructor(
         threadPresenterCallback?.setSearchStatus(null, setEmptyText = false, hideKeyboard = true)
         threadPresenterCallback?.showSearch(false)
 
-        highlightPost(post)
-        scrollToPost(post, false)
+        highlightPost(post.postDescriptor)
+        scrollToPost(post.postDescriptor, false)
       } else {
-        threadPresenterCallback?.postClicked(post)
+        threadPresenterCallback?.postClicked(post.postDescriptor)
       }
     }
   }
 
-  override fun onThumbnailClicked(postImage: PostImage, thumbnail: ThumbnailView) {
+  override fun onThumbnailClicked(postImage: ChanPostImage, thumbnail: ThumbnailView) {
     if (!isBound) {
       return
     }
 
-    val posts = threadPresenterCallback?.displayingPosts
+    val postDescriptors = threadPresenterCallback?.displayingPostDescriptors
       ?: return
 
     var index = -1
-    val images = ArrayList<PostImage>()
+    val images = ArrayList<ChanPostImage>()
 
-    for (post in posts) {
+    for (postDescriptor in postDescriptors) {
+      val post = chanThreadManager.getPost(postDescriptor)
+        ?: continue
+
       for (image in post.postImages) {
-        if (image.imageUrl == null && image.thumbnailUrl == null) {
+        if (image.imageUrl == null && image.actualThumbnailUrl == null) {
           Logger.d(TAG, "onThumbnailClicked() image.imageUrl == null && image.thumbnailUrl == null")
           continue
         }
 
         val imageUrl = image.imageUrl
-        val setCallback = (!post.deleted.get()
-          || ArchiveDescriptor.isActualArchive(image.archiveId)
-          || imageUrl != null && cacheHandler.cacheFileExists(imageUrl.toString()))
+        val setCallback = (!post.deleted ||
+          imageUrl != null && cacheHandler.cacheFileExists(imageUrl.toString()))
 
         if (setCallback) {
           // Deleted posts always have 404'd images, but let it through if the file exists
@@ -894,13 +968,13 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  override fun onThumbnailLongClicked(postImage: PostImage, thumbnail: ThumbnailView) {
+  override fun onThumbnailLongClicked(postImage: ChanPostImage, thumbnail: ThumbnailView) {
     if (!isBound) {
       return
     }
 
     val gravity = if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-      when (chanDescriptor) {
+      when (currentChanDescriptor) {
         is ChanDescriptor.CatalogDescriptor -> FloatingListMenuGravity.Left
         is ChanDescriptor.ThreadDescriptor -> FloatingListMenuGravity.Right
         else -> return
@@ -922,7 +996,7 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.presentController(floatingListMenuController, true)
   }
 
-  private fun onThumbnailOptionClicked(id: Int, postImage: PostImage, thumbnail: ThumbnailView) {
+  private fun onThumbnailOptionClicked(id: Int, postImage: ChanPostImage, thumbnail: ThumbnailView) {
     when (id) {
       THUMBNAIL_COPY_URL -> {
         if (postImage.imageUrl == null) {
@@ -935,7 +1009,7 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  override fun onPopulatePostOptions(post: Post, menu: MutableList<FloatingListMenuItem>) {
+  override fun onPopulatePostOptions(post: ChanPost, menu: MutableList<FloatingListMenuItem>) {
     if (!isBound) {
       return
     }
@@ -949,8 +1023,8 @@ class ThreadPresenter @Inject constructor(
     if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
       val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
         chanDescriptor.siteName(),
-        post.boardDescriptor.boardCode,
-        post.no
+        post.postDescriptor.boardDescriptor().boardCode,
+        post.postNo()
       )
 
       if (!bookmarksManager.exists(threadDescriptor)) {
@@ -965,7 +1039,7 @@ class ThreadPresenter @Inject constructor(
       menu.add(createMenuItem(POST_OPTION_REPORT, R.string.post_report))
     }
 
-    if (chanDescriptor.isCatalogDescriptor() || chanDescriptor.isThreadDescriptor() && !post.isOP) {
+    if (chanDescriptor.isCatalogDescriptor() || chanDescriptor.isThreadDescriptor() && !post.postDescriptor.isOP()) {
       if (!postFilterManager.getFilterStub(post.postDescriptor)) {
         menu.add(createMenuItem(POST_OPTION_HIDE, R.string.post_hide))
       }
@@ -987,7 +1061,7 @@ class ThreadPresenter @Inject constructor(
       }
     }
 
-    val siteDescriptor = post.boardDescriptor.siteDescriptor
+    val siteDescriptor = post.postDescriptor.boardDescriptor().siteDescriptor
     val containsSite = siteManager.bySiteDescriptor(siteDescriptor) != null
 
     if (site.siteFeature(Site.SiteFeature.POST_DELETE)) {
@@ -999,7 +1073,7 @@ class ThreadPresenter @Inject constructor(
       }
     }
 
-    if (post.linkables.size > 0) {
+    if (post.postComment.linkables.isNotEmpty()) {
       menu.add(createMenuItem(POST_OPTION_LINKS, R.string.post_show_links))
     }
 
@@ -1019,7 +1093,7 @@ class ThreadPresenter @Inject constructor(
       menu.add(createMenuItem(POST_OPTION_SAVE, stringId))
     }
 
-    if (AndroidUtils.isDevBuild()) {
+    if (isDevBuild()) {
       val threadNo = chanDescriptor.threadNoOrNull() ?: -1L
       if (threadNo > 0) {
         menu.add(createMenuItem(POST_OPTION_MOCK_REPLY, R.string.mock_reply))
@@ -1037,7 +1111,7 @@ class ThreadPresenter @Inject constructor(
     )
   }
 
-  override fun onPostOptionClicked(post: Post, id: Any, inPopup: Boolean) {
+  override fun onPostOptionClicked(post: ChanPost, id: Any, inPopup: Boolean) {
     postOptionsClickExecutor.post {
       when (id as Int) {
         POST_OPTION_QUOTE -> {
@@ -1049,7 +1123,7 @@ class ThreadPresenter @Inject constructor(
           threadPresenterCallback?.quote(post, true)
         }
         POST_OPTION_INFO -> showPostInfo(post)
-        POST_OPTION_LINKS -> if (post.linkables.size > 0) {
+        POST_OPTION_LINKS -> if (post.postComment.linkables.isNotEmpty()) {
           threadPresenterCallback?.showPostLinkables(post)
         }
         POST_OPTION_COPY_TEXT -> threadPresenterCallback?.clipboardPost(post)
@@ -1059,7 +1133,11 @@ class ThreadPresenter @Inject constructor(
           }
           threadPresenterCallback?.openReportView(post)
         }
-        POST_OPTION_HIGHLIGHT_ID -> threadPresenterCallback?.highlightPostId(post.posterId)
+        POST_OPTION_HIGHLIGHT_ID -> {
+          val posterId = post.posterId
+            ?: return@post
+          threadPresenterCallback?.highlightPostId(posterId)
+        }
         POST_OPTION_HIGHLIGHT_TRIPCODE -> threadPresenterCallback?.highlightPostTripcode(post.tripcode)
         POST_OPTION_FILTER_TRIPCODE -> threadPresenterCallback?.filterPostTripcode(post.tripcode)
         POST_OPTION_FILTER_IMAGE_HASH -> threadPresenterCallback?.filterPostImageHash(post)
@@ -1069,14 +1147,14 @@ class ThreadPresenter @Inject constructor(
           val descriptor = currentChanDescriptor
             ?: return@post
 
-          if (!post.isOP) {
+          if (!post.postDescriptor.isOP()) {
             return@post
           }
 
           bookmarksManager.createBookmark(
-            descriptor.toThreadDescriptor(post.no),
-            PostHelper.getTitle(post, chanDescriptor),
-            post.firstImage()?.thumbnailUrl
+            descriptor.toThreadDescriptor(post.postNo()),
+            ChanPostUtils.getTitle(post as ChanOriginalPost, currentChanDescriptor),
+            post.firstImage()?.actualThumbnailUrl
           )
         }
         POST_OPTION_OPEN_BROWSER -> if (isBound) {
@@ -1084,48 +1162,59 @@ class ThreadPresenter @Inject constructor(
             siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
           } ?: return@post
 
-          val url = site.resolvable().desktopUrl(currentChanDescriptor!!, post.no)
-          AndroidUtils.openLink(url)
+          val url = site.resolvable().desktopUrl(currentChanDescriptor!!, post.postNo())
+          openLink(url)
         }
         POST_OPTION_SHARE -> if (isBound) {
           val site = currentChanDescriptor?.let { chanDescriptor ->
             siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
           } ?: return@post
 
-          val url = site.resolvable().desktopUrl(currentChanDescriptor!!, post.no)
-          AndroidUtils.shareLink(url)
+          val url = site.resolvable().desktopUrl(currentChanDescriptor!!, post.postNo())
+          shareLink(url)
         }
         POST_OPTION_REMOVE,
         POST_OPTION_HIDE -> {
-          if (chanLoader == null || chanLoader!!.thread == null) {
+          val hide = id == POST_OPTION_HIDE
+          val chanDescriptor = currentChanDescriptor
+            ?: return@post
+
+          if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+            threadPresenterCallback?.hideThread(post, post.postNo(), hide)
             return@post
           }
 
-          val hide = id == POST_OPTION_HIDE
-          if (chanLoader!!.thread!!.chanDescriptor.isCatalogDescriptor()) {
-            threadPresenterCallback?.hideThread(post, post.no, hide)
+          chanDescriptor as ChanDescriptor.ThreadDescriptor
+
+          val threadNo = chanThreadManager.getChanThread(chanDescriptor)?.getOriginalPost()?.postNo()
+            ?: return@post
+
+          val isEmpty = post.repliesFromCount == 0
+          if (isEmpty) {
+            // no replies to this post so no point in showing the dialog
+            hideOrRemovePosts(
+              hide = hide,
+              wholeChain = false,
+              post = post,
+              threadNo = threadNo
+            )
           } else {
-            val isEmpty = post.repliesFromCount == 0
-            if (isEmpty) {
-              // no replies to this post so no point in showing the dialog
-              hideOrRemovePosts(hide, false, post, chanLoader!!.thread!!.op.no)
-            } else {
-              // show a dialog to the user with options to hide/remove the whole chain of posts
-              threadPresenterCallback?.showHideOrRemoveWholeChainDialog(hide,
-                post,
-                chanLoader!!.thread!!.op.no
-              )
-            }
+            // show a dialog to the user with options to hide/remove the whole chain of posts
+            threadPresenterCallback?.showHideOrRemoveWholeChainDialog(
+              hide = hide,
+              post = post,
+              threadNo = threadNo
+            )
           }
         }
         POST_OPTION_MOCK_REPLY -> if (isBound && currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
           val threadDescriptor = currentChanDescriptor!! as ChanDescriptor.ThreadDescriptor
 
           mockReplyManager.addMockReply(
-            post.boardDescriptor.siteName(),
+            post.postDescriptor.boardDescriptor().siteName(),
             threadDescriptor.boardCode(),
             threadDescriptor.threadNo,
-            post.no
+            post.postNo()
           )
           showToast(context, "Refresh to add mock replies")
         }
@@ -1133,16 +1222,15 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  override fun onPostLinkableClicked(post: Post, linkable: PostLinkable) {
+  override fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable) {
     serializedCoroutineExecutor.post {
       if (!isBound) {
         return@post
       }
 
-      val thread = chanLoader?.thread
+      val currentThreadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
         ?: return@post
-      val siteName = currentChanDescriptor?.siteName()
-        ?: return@post
+      val siteName = currentThreadDescriptor.siteName()
 
       if (ChanSettings.verboseLogs.get()) {
         Logger.d(TAG, "onPostLinkableClicked, linkable=${linkable}")
@@ -1155,7 +1243,7 @@ class ThreadPresenter @Inject constructor(
           return@post
         }
 
-        val linked = findPostById(postId, thread)
+        val linked = chanThreadManager.findPostByPostNo(currentThreadDescriptor, postId)
         if (linked != null) {
           threadPresenterCallback?.showPostsPopup(post, listOf(linked))
         }
@@ -1292,17 +1380,17 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  override fun onPostNoClicked(post: Post) {
+  override fun onPostNoClicked(post: ChanPost) {
     threadPresenterCallback?.quote(post, false)
   }
 
-  override fun onPostSelectionQuoted(post: Post, quoted: CharSequence) {
+  override fun onPostSelectionQuoted(post: ChanPost, quoted: CharSequence) {
     threadPresenterCallback?.quote(post, quoted)
   }
 
-  override fun showPostOptions(post: Post, inPopup: Boolean, items: List<FloatingListMenuItem>) {
+  override fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>) {
     val gravity = if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-      when (chanDescriptor) {
+      when (currentChanDescriptor) {
         is ChanDescriptor.CatalogDescriptor -> FloatingListMenuGravity.BottomLeft
         is ChanDescriptor.ThreadDescriptor -> FloatingListMenuGravity.BottomRight
         else -> return
@@ -1321,7 +1409,7 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.presentController(floatingListMenuController, true)
   }
 
-  override fun hasAlreadySeenPost(post: Post): Boolean {
+  override fun hasAlreadySeenPost(post: ChanPost): Boolean {
     if (currentChanDescriptor == null) {
       // Invalid loadable, hide the label
       return true
@@ -1335,15 +1423,17 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  override fun onShowPostReplies(post: Post) {
+  override fun onShowPostReplies(post: ChanPost) {
     if (!isBound) {
       return
     }
 
-    val posts: MutableList<Post> = ArrayList()
+    val posts: MutableList<ChanPost> = ArrayList()
+    val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
+      ?: return
 
-    post.iterateRepliesFrom { no ->
-      val replyPost = findPostById(no, chanLoader!!.thread)
+    post.iterateRepliesFrom { replyPostNo ->
+      val replyPost = chanThreadManager.findPostByPostNo(threadDescriptor, replyPostNo)
       if (replyPost != null) {
         posts.add(replyPost)
       }
@@ -1354,34 +1444,26 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  override fun getTimeUntilLoadMore(): Long {
-    return chanLoader?.timeUntilLoadMore ?: 0L
+  override suspend fun timeUntilLoadMoreMs(): Long {
+    return chanThreadTicker.timeUntilLoadMoreMs() ?: 0L
   }
 
   override fun isWatching(): Boolean {
-    val thread = chanLoader?.thread
+    val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
       ?: return false
-    val isThreadDescriptor = currentChanDescriptor?.isThreadDescriptor()
-      ?: false
+
+    val thread = chanThreadManager.getChanThread(threadDescriptor)
+      ?: return false
 
     return ChanSettings.autoRefreshThread.get()
       && BackgroundUtils.isInForeground()
       && isBound
-      && isThreadDescriptor
-      && !thread.isClosed
-      && !thread.isArchived
+      && !thread.isClosed()
+      && !thread.isArchived()
   }
 
-  override fun getChanThread(): ChanThread? {
-    return chanLoader?.thread
-  }
-
-  fun threadDescriptorOrNull(): ChanDescriptor.ThreadDescriptor? {
-    return chanThread?.chanDescriptor as? ChanDescriptor.ThreadDescriptor
-  }
-
-  override fun getPage(op: Post): BoardPage? {
-    return pageRequestManager.getPage(op)
+  override fun getPage(originalPostDescriptor: PostDescriptor): BoardPage? {
+    return pageRequestManager.getPage(originalPostDescriptor)
   }
 
   override fun onListStatusClicked() {
@@ -1389,14 +1471,22 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    val canRequestMode = chanLoader?.thread
-      ?.let { thread -> !thread.isArchived && !thread.isDeleted } == true
+    val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
+      ?: return
 
-    if (canRequestMode) {
-      chanLoader?.requestMoreDataAndResetTimer()
+    val currentThread = chanThreadManager.getChanThread(threadDescriptor)
+      ?: return
+
+    val canRequestMore = !currentThread.isArchived() && !currentThread.isDeleted()
+    if (canRequestMore) {
+      chanThreadTicker.resetEverythingAndKickTicker()
     }
 
     threadPresenterCallback?.showToolbar()
+  }
+
+  fun threadDescriptorOrNull(): ChanDescriptor.ThreadDescriptor? {
+    return currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
   }
 
   override suspend fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
@@ -1405,32 +1495,31 @@ class ThreadPresenter @Inject constructor(
 
   override fun requestNewPostLoad() {
     if (isBound && currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
-      chanLoader?.requestMoreDataAndResetTimer()
+      chanThreadTicker.resetEverythingAndKickTicker()
       // put in a "request" for a page update whenever the next set of data comes in
       forcePageUpdate = true
     }
   }
 
-  override fun onUnhidePostClick(post: Post) {
+  override fun onUnhidePostClick(post: ChanPost) {
     threadPresenterCallback?.unhideOrUnremovePost(post)
   }
 
-  private suspend fun saveUnsavePost(post: Post) {
+  private suspend fun saveUnsavePost(post: ChanPost) {
     if (savedReplyManager.isSaved(post.postDescriptor)) {
       savedReplyManager.unsavePost(post.postDescriptor)
     } else {
       savedReplyManager.savePost(post.postDescriptor)
     }
 
-    chanPostRepository.deleteThreadsFromCache(listOf(post.postDescriptor.threadDescriptor()))
-    chanLoader?.thread?.clearPosts()
+    // TODO(KurobaEx): refactoring (maybe I should reload everything from the database instead?)
 
     // force reload for reply highlighting
-    requestData()
+    clearMemoryCacheAndReload()
   }
 
-  private fun requestDeletePost(post: Post) {
-    if (siteManager.bySiteDescriptor(post.boardDescriptor.siteDescriptor) == null) {
+  private fun requestDeletePost(post: ChanPost) {
+    if (siteManager.bySiteDescriptor(post.postDescriptor.boardDescriptor().siteDescriptor) == null) {
       return
     }
 
@@ -1441,9 +1530,9 @@ class ThreadPresenter @Inject constructor(
   }
 
   @Suppress("MoveVariableDeclarationIntoWhen")
-  fun deletePostConfirmed(post: Post, onlyImageDelete: Boolean) {
+  fun deletePostConfirmed(post: ChanPost, onlyImageDelete: Boolean) {
     launch {
-      val site = siteManager.bySiteDescriptor(post.boardDescriptor.siteDescriptor)
+      val site = siteManager.bySiteDescriptor(post.postDescriptor.boardDescriptor().siteDescriptor)
         ?: return@launch
 
       threadPresenterCallback?.showDeleting()
@@ -1478,10 +1567,9 @@ class ThreadPresenter @Inject constructor(
               .valueOrNull() != null
 
             if (isSuccess) {
-              savedReplyManager.unsavePost(post.postDescriptor)
-              chanLoader?.thread?.deletePost(post.postDescriptor)
+              chanThreadManager.deletePost(post.postDescriptor)
 
-              requestData()
+              normalLoad()
             }
           }
 
@@ -1499,7 +1587,7 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  private fun showPostInfo(post: Post) {
+  private fun showPostInfo(post: ChanPost) {
     val text = StringBuilder()
 
     for (image in post.postImages) {
@@ -1521,7 +1609,7 @@ class ThreadPresenter @Inject constructor(
           .append(getReadableFileSize(image.size))
       }
 
-      if (image.spoiler() && image.isInlined) {
+      if (image.spoiler && image.isInlined) {
         // all linked files are spoilered, don't say that
         text.append("\nSpoilered")
       }
@@ -1531,24 +1619,30 @@ class ThreadPresenter @Inject constructor(
 
     text
       .append("Posted: ")
-      .append(PostHelper.getLocalDate(post))
+      .append(ChanPostUtils.getLocalDate(post))
 
-    if (!TextUtils.isEmpty(post.posterId) && isBound && chanLoader!!.thread != null) {
-      text
-        .append("\nId: ")
-        .append(post.posterId)
+    if (!TextUtils.isEmpty(post.posterId) && isBound) {
+      val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
+      if (threadDescriptor != null) {
+        val thread = chanThreadManager.getChanThread(threadDescriptor)
+        if (thread != null) {
+          text
+            .append("\nId: ")
+            .append(post.posterId)
 
-      var count = 0
+          var count = 0
 
-      chanLoader?.thread?.getPosts()?.forEach { p ->
-        if (p.posterId == post.posterId) {
-          count++
+          thread.iteratePostsOrdered { chanPost ->
+            if (chanPost.posterId == post.posterId) {
+              count++
+            }
+          }
+
+          text
+            .append("\nCount: ")
+            .append(count)
         }
       }
-
-      text
-        .append("\nCount: ")
-        .append(count)
     }
 
     if (!TextUtils.isEmpty(post.tripcode)) {
@@ -1557,41 +1651,46 @@ class ThreadPresenter @Inject constructor(
         .append(post.tripcode)
     }
 
-    if (post.httpIcons != null && post.httpIcons.isNotEmpty()) {
-      for (icon in post.httpIcons) {
+    if (post.postIcons.isNotEmpty()) {
+      for (icon in post.postIcons) {
         when {
-          icon.url.toString().contains("troll") -> {
-            text.append("\nTroll Country: ").append(icon.name)
+          icon.iconUrl.toString().contains("troll") -> {
+            text.append("\nTroll Country: ").append(icon.iconName)
           }
-          icon.url.toString().contains("country") -> {
-            text.append("\nCountry: ").append(icon.name)
+          icon.iconUrl.toString().contains("country") -> {
+            text.append("\nCountry: ").append(icon.iconName)
           }
-          icon.url.toString().contains("minileaf") -> {
-            text.append("\n4chan Pass Year: ").append(icon.name)
+          icon.iconUrl.toString().contains("minileaf") -> {
+            text.append("\n4chan Pass Year: ").append(icon.iconName)
           }
         }
       }
     }
 
-    if (!TextUtils.isEmpty(post.capcode)) {
-      text.append("\nCapcode: ").append(post.capcode)
+    if (!TextUtils.isEmpty(post.moderatorCapcode)) {
+      text
+        .append("\nCapcode: ")
+        .append(post.moderatorCapcode)
     }
 
     threadPresenterCallback?.showPostInfo(text.toString())
   }
 
   private suspend fun showPosts() {
-    if (chanLoader == null || chanLoader!!.thread == null) {
+    if (!isBound) {
       return
     }
+
+    val descriptor = currentChanDescriptor
+      ?: return
 
     val localSearchType = currentLocalSearchType
       ?: return
 
     val searchQuery = localSearchManager.getSearchQuery(localSearchType)
 
-    threadPresenterCallback?.showPosts(
-      chanLoader!!.thread,
+    threadPresenterCallback?.showPostsForChanDescriptor(
+      descriptor,
       PostsFilter(postHideHelper, order, searchQuery)
     )
   }
@@ -1600,19 +1699,25 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.showImageReencodingWindow(currentChanDescriptor!!, supportsReencode)
   }
 
-  fun hideOrRemovePosts(hide: Boolean, wholeChain: Boolean, post: Post, threadNo: Long) {
-    val posts: MutableSet<Post> = HashSet()
-    if (isBound) {
-      if (wholeChain) {
-        val thread = chanLoader!!.thread
-        if (thread != null) {
-          posts.addAll(findPostWithReplies(post.no, thread.getPosts()))
-        }
-      } else {
-        val foundPost = findPostById(post.no, chanLoader!!.thread)
-        if (foundPost != null) {
-          posts.add(foundPost)
-        }
+  fun hideOrRemovePosts(hide: Boolean, wholeChain: Boolean, post: ChanPost, threadNo: Long) {
+    if (!isBound) {
+      return
+    }
+
+    val descriptor = currentChanDescriptor
+      ?: return
+
+    val posts: MutableSet<PostDescriptor> = HashSet()
+
+    if (wholeChain) {
+      val foundPosts = chanThreadManager.findPostWithReplies(descriptor, post.postNo())
+        .map { chanPost -> chanPost.postDescriptor }
+
+      posts.addAll(foundPosts)
+    } else {
+      val foundPost = chanThreadManager.findPostByPostNo(descriptor, post.postNo())
+      if (foundPost != null) {
+        posts.add(foundPost.postDescriptor)
       }
     }
 
@@ -1624,13 +1729,13 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    val posts = chanLoader?.thread?.getPosts()
-      ?: return
-
     val threadDescriptor = (currentChanDescriptor as? ChanDescriptor.ThreadDescriptor)
       ?: return
 
-    threadPresenterCallback?.viewRemovedPostsForTheThread(posts, threadDescriptor)
+    val postDescriptors = chanThreadManager.getChanThread(threadDescriptor)?.getPostDescriptors()
+      ?: return
+
+    threadPresenterCallback?.viewRemovedPostsForTheThread(postDescriptors, threadDescriptor)
   }
 
   fun onRestoreRemovedPostsClicked(selectedPosts: List<PostDescriptor>) {
@@ -1642,52 +1747,52 @@ class ThreadPresenter @Inject constructor(
   }
 
   interface ThreadPresenterCallback {
-    val displayingPosts: List<Post>
+    val displayingPostDescriptors: List<PostDescriptor>
     val currentPosition: IntArray?
 
-    suspend fun showPosts(thread: ChanThread?, filter: PostsFilter)
-    fun postClicked(post: Post)
+    suspend fun showPostsForChanDescriptor(descriptor: ChanDescriptor?, filter: PostsFilter)
+    fun postClicked(postDescriptor: PostDescriptor)
     fun showError(error: ChanLoaderException)
     fun showLoading()
     fun showEmpty()
     fun showPostInfo(info: String)
-    fun showPostLinkables(post: Post)
-    fun clipboardPost(post: Post)
+    fun showPostLinkables(post: ChanPost)
+    fun clipboardPost(post: ChanPost)
     suspend fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showExternalThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun openThreadInArchive(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
     suspend fun setBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
     fun openLink(link: String)
-    fun openReportView(post: Post)
-    fun showPostsPopup(forPost: Post, posts: List<Post>)
+    fun openReportView(post: ChanPost)
+    fun showPostsPopup(forPost: ChanPost, posts: List<ChanPost>)
     fun hidePostsPopup()
-    fun showImages(images: List<PostImage>, index: Int, chanDescriptor: ChanDescriptor, thumbnail: ThumbnailView)
-    fun showAlbum(images: List<PostImage>, index: Int)
+    fun showImages(images: List<ChanPostImage>, index: Int, chanDescriptor: ChanDescriptor, thumbnail: ThumbnailView)
+    fun showAlbum(images: List<ChanPostImage>, index: Int)
     fun scrollTo(displayPosition: Int, smooth: Boolean)
     fun smoothScrollNewPosts(displayPosition: Int)
-    fun highlightPost(post: Post)
+    fun highlightPost(postDescriptor: PostDescriptor)
     fun highlightPostId(id: String)
     fun highlightPostTripcode(tripcode: CharSequence?)
     fun filterPostTripcode(tripcode: CharSequence?)
-    fun filterPostImageHash(post: Post)
+    fun filterPostImageHash(post: ChanPost)
     fun selectPost(post: Long)
     fun showSearch(show: Boolean)
     fun setSearchStatus(query: String?, setEmptyText: Boolean, hideKeyboard: Boolean)
-    fun quote(post: Post, withText: Boolean)
-    fun quote(post: Post, text: CharSequence)
-    fun confirmPostDelete(post: Post)
+    fun quote(post: ChanPost, withText: Boolean)
+    fun quote(post: ChanPost, text: CharSequence)
+    fun confirmPostDelete(post: ChanPost)
     fun showDeleting()
     fun hideDeleting(message: String)
-    fun hideThread(post: Post, threadNo: Long, hide: Boolean)
-    fun showNewPostsNotification(show: Boolean, more: Int)
+    fun hideThread(post: ChanPost, threadNo: Long, hide: Boolean)
+    fun showNewPostsNotification(show: Boolean, newPostsCount: Int)
     fun showImageReencodingWindow(chanDescriptor: ChanDescriptor, supportsReencode: Boolean)
-    fun showHideOrRemoveWholeChainDialog(hide: Boolean, post: Post, threadNo: Long)
-    fun hideOrRemovePosts(hide: Boolean, wholeChain: Boolean, posts: Set<Post>, threadNo: Long)
-    fun unhideOrUnremovePost(post: Post)
-    fun viewRemovedPostsForTheThread(threadPosts: List<Post>, threadDescriptor: ChanDescriptor.ThreadDescriptor)
+    fun showHideOrRemoveWholeChainDialog(hide: Boolean, post: ChanPost, threadNo: Long)
+    fun hideOrRemovePosts(hide: Boolean, wholeChain: Boolean, postDescriptors: Set<PostDescriptor>, threadNo: Long)
+    fun unhideOrUnremovePost(post: ChanPost)
+    fun viewRemovedPostsForTheThread(threadPosts: List<PostDescriptor>, threadDescriptor: ChanDescriptor.ThreadDescriptor)
     fun onRestoreRemovedPostsClicked(chanDescriptor: ChanDescriptor, selectedPosts: List<PostDescriptor>)
-    fun onPostUpdated(post: Post)
+    fun onPostUpdated(post: ChanPost)
     fun presentController(floatingListMenuController: FloatingListMenuController, animate: Boolean)
     fun showToolbar()
     fun showAvailableArchivesList(threadDescriptor: ChanDescriptor.ThreadDescriptor)

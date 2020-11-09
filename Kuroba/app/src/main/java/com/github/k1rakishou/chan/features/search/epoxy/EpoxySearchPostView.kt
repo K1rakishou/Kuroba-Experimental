@@ -13,9 +13,9 @@ import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.search.data.ThumbnailInfo
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.google.android.material.textview.MaterialTextView
 import java.lang.ref.WeakReference
@@ -49,7 +49,7 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_search_post_view, this)
 
-    AndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractStartActivityComponent(context)
       .inject(this)
 
     searchPostRootContainer = findViewById(R.id.search_post_root_container)

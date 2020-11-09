@@ -5,8 +5,11 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.util.AttributeSet
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.core_themes.IColorizableWidget
+import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.manipulateColor
 import com.google.android.material.chip.Chip
 import javax.inject.Inject
 
@@ -21,7 +24,7 @@ class ColorizableChip @JvmOverloads constructor(
 
   init {
     if (!isInEditMode) {
-      AndroidUtils.extractStartActivityComponent(context)
+      AppModuleAndroidUtils.extractStartActivityComponent(context)
         .inject(this)
     }
   }
@@ -37,12 +40,12 @@ class ColorizableChip @JvmOverloads constructor(
       return
     }
 
-    val isBackColorDark = AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+    val isBackColorDark = isDarkColor(themeEngine.chanTheme.backColor)
 
     val chipBackColor = if (isBackColorDark) {
-      AndroidUtils.manipulateColor(themeEngine.chanTheme.backColor, 1.4f)
+      manipulateColor(themeEngine.chanTheme.backColor, 1.4f)
     } else {
-      AndroidUtils.manipulateColor(themeEngine.chanTheme.backColor, .6f)
+      manipulateColor(themeEngine.chanTheme.backColor, .6f)
     }
 
     chipBackgroundColor = ColorStateList(
@@ -64,7 +67,7 @@ class ColorizableChip @JvmOverloads constructor(
 
     highlightColor = themeEngine.chanTheme.accentColor
 
-    val textColor = if (AndroidUtils.isDarkColor(chipBackColor)) {
+    val textColor = if (isDarkColor(chipBackColor)) {
       Color.WHITE
     } else {
       Color.BLACK

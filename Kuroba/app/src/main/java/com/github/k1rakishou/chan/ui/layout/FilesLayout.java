@@ -29,18 +29,21 @@ import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.github.k1rakishou.PersistableChanState;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.saver.FileWatcher;
 import com.github.k1rakishou.chan.ui.adapter.FilesAdapter;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.RecyclerUtils;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.inject.Inject;
+
+import static com.github.k1rakishou.core_themes.ThemeEngine.isDarkColor;
 
 public class FilesLayout
         extends LinearLayout
@@ -80,7 +83,7 @@ public class FilesLayout
 
     private void init() {
         if (!isInEditMode()) {
-            AndroidUtils.extractStartActivityComponent(getContext())
+            AppModuleAndroidUtils.extractStartActivityComponent(getContext())
                     .inject(this);
         }
     }
@@ -105,8 +108,8 @@ public class FilesLayout
             filesAdapter.refresh();
         }
 
-        boolean isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.getBackColor());
-        backImage.setImageDrawable(themeEngine.tintDrawable(backImage.getDrawable(), isDarkColor));
+        boolean isDark = isDarkColor(themeEngine.chanTheme.getBackColor());
+        backImage.setImageDrawable(themeEngine.tintDrawable(backImage.getDrawable(), isDark));
     }
 
     @Override
@@ -136,7 +139,7 @@ public class FilesLayout
     public void setFiles(FileWatcher.FileItems fileItems) {
         // Save the associated list position
         if (currentFileItems != null) {
-            RecyclerUtils.IndexAndTop indexTop = RecyclerUtils.getIndexAndTop(recyclerView);
+            PersistableChanState.IndexAndTop indexTop = RecyclerUtils.getIndexAndTop(recyclerView);
             currentHistory.index = indexTop.getIndex();
             currentHistory.top = indexTop.getTop();
             history.put(currentFileItems.path.getAbsolutePath(), currentHistory);

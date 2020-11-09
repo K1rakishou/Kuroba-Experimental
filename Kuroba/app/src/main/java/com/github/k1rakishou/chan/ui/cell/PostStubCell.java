@@ -27,25 +27,26 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.core.manager.PostPreloadedInfoHolder;
-import com.github.k1rakishou.chan.core.model.Post;
-import com.github.k1rakishou.chan.core.model.PostImage;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
-import com.github.k1rakishou.chan.ui.theme.ChanTheme;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
+import com.github.k1rakishou.common.AndroidUtils;
+import com.github.k1rakishou.core_themes.ChanTheme;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+import com.github.k1rakishou.model.data.post.ChanPost;
+import com.github.k1rakishou.model.data.post.ChanPostImage;
+import com.github.k1rakishou.model.util.ChanPostUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
 
 public class PostStubCell
         extends RelativeLayout
@@ -56,12 +57,11 @@ public class PostStubCell
     ThemeEngine themeEngine;
 
     private ChanTheme theme;
-    private Post post;
+    private ChanPost post;
     private ChanSettings.PostViewMode postViewMode;
     private boolean showDivider;
     @Nullable
     private PostCellInterface.PostCellCallback callback;
-    PostPreloadedInfoHolder postPreloadedInfoHolder;
 
     private TextView title;
     private ColorizableDivider divider;
@@ -83,7 +83,7 @@ public class PostStubCell
     }
 
     private void init() {
-        AndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
                 .inject(this);
     }
 
@@ -148,11 +148,10 @@ public class PostStubCell
 
     public void setPost(
             ChanDescriptor chanDescriptor,
-            final Post post,
+            final ChanPost post,
             final int currentPostIndex,
             final int realPostIndex,
             PostCellInterface.PostCellCallback callback,
-            PostPreloadedInfoHolder postPreloadedInfoHolder,
             boolean inPopup,
             boolean highlighted,
             boolean selected,
@@ -170,18 +169,17 @@ public class PostStubCell
         this.post = post;
         this.inPopup = inPopup;
         this.callback = callback;
-        this.postPreloadedInfoHolder = postPreloadedInfoHolder;
         this.postViewMode = postViewMode;
         this.showDivider = showDivider;
 
         bindPost(post);
     }
 
-    public Post getPost() {
+    public ChanPost getPost() {
         return post;
     }
 
-    public ThumbnailView getThumbnailView(PostImage postImage) {
+    public ThumbnailView getThumbnailView(ChanPostImage postImage) {
         return null;
     }
 
@@ -190,21 +188,23 @@ public class PostStubCell
         return false;
     }
 
-    private void bindPost(Post post) {
+    private void bindPost(ChanPost post) {
         if (callback == null) {
             throw new NullPointerException("Callback is null during bindPost()");
         }
 
-        if (!TextUtils.isEmpty(post.subject)) {
-            title.setText(post.subject);
+        if (!TextUtils.isEmpty(post.getSubject())) {
+            CharSequence subject = post.getSubject();
+            ChanPostUtils.postCommentSpansSetThemeEngine(subject, themeEngine);
+
+            title.setText(subject);
         } else {
-            CharSequence titleText;
-            if (post.getComment().length() > TITLE_MAX_LENGTH) {
-                titleText = post.getComment().subSequence(0, TITLE_MAX_LENGTH);
-            } else {
-                titleText = post.getComment();
+            CharSequence titleText = post.getPostComment().getComment();
+            if (titleText.length() > TITLE_MAX_LENGTH) {
+                titleText = titleText.subSequence(0, TITLE_MAX_LENGTH);
             }
 
+            ChanPostUtils.postCommentSpansSetThemeEngine(titleText, themeEngine);
             title.setText(titleText);
         }
 

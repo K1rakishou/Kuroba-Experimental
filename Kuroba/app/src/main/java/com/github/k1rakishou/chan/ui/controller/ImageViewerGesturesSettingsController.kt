@@ -3,9 +3,9 @@ package com.github.k1rakishou.chan.ui.controller
 import android.content.Context
 import android.widget.RadioGroup
 import androidx.constraintlayout.widget.ConstraintLayout
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
-import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 
 class ImageViewerGesturesSettingsController(context: Context) : BaseFloatingController(context) {

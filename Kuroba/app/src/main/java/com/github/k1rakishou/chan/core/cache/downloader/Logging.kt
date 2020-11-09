@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.cache.downloader
 
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.core_logger.Logger
 
 internal fun log(tag: String, message: String) {
   Logger.d(tag, String.format("[%s]: %s", Thread.currentThread().name, message))

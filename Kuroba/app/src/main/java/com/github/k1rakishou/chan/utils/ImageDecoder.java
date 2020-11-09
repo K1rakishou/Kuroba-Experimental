@@ -30,7 +30,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getRes;
+import static com.github.k1rakishou.common.AndroidUtils.getRes;
 
 /**
  * Simple ImageDecoder. Taken from Volley ImageRequest.

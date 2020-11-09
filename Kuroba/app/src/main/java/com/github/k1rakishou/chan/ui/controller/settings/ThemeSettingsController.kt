@@ -37,19 +37,15 @@ import androidx.core.text.getSpans
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager.widget.ViewPager
-import com.github.k1rakishou.chan.BuildConfig
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
-import com.github.k1rakishou.chan.core.manager.PostPreloadedInfoHolder
-import com.github.k1rakishou.chan.core.manager.ThemeParser
-import com.github.k1rakishou.chan.core.model.ChanThread
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.model.PostImage
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder
+import com.github.k1rakishou.chan.core.model.ChanPostImageBuilder
 import com.github.k1rakishou.chan.core.model.PostIndexed
-import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
@@ -60,21 +56,30 @@ import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
-import com.github.k1rakishou.chan.ui.text.span.ColorizableBackgroundColorSpan
-import com.github.k1rakishou.chan.ui.text.span.ColorizableForegroundColorSpan
-import com.github.k1rakishou.chan.ui.text.span.PostLinkable
-import com.github.k1rakishou.chan.ui.text.span.ThemeEditorPostLinkable
-import com.github.k1rakishou.chan.ui.theme.ChanTheme
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.ui.toolbar.*
+import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem
+import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
+import com.github.k1rakishou.chan.ui.toolbar.Toolbar
+import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
+import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.ViewPagerAdapter
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.ViewUtils.changeEdgeEffect
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils.dp
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.exhaustive
+import com.github.k1rakishou.core_spannable.ColorizableBackgroundColorSpan
+import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan
+import com.github.k1rakishou.core_spannable.PostLinkable
+import com.github.k1rakishou.core_spannable.ThemeEditorPostLinkable
+import com.github.k1rakishou.core_themes.ChanTheme
+import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.getComplementaryColor
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
+import com.github.k1rakishou.core_themes.ThemeParser
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.callback.FileChooserCallback
@@ -82,6 +87,8 @@ import com.github.k1rakishou.fsaf.callback.FileCreateCallback
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -111,29 +118,29 @@ class ThemeSettingsController(context: Context) : Controller(context),
     ChanDescriptor.ThreadDescriptor.create("test_site", "test_board", 1234567890L)
 
   private val dummyPostCallback: PostCellCallback = object : PostCellCallback {
-    override fun onPostBind(post: Post) {}
-    override fun onPostUnbind(post: Post, isActuallyRecycling: Boolean) {}
-    override fun onPostClicked(post: Post) {}
-    override fun onPostDoubleClicked(post: Post) {}
-    override fun onThumbnailClicked(postImage: PostImage, thumbnail: ThumbnailView) {}
-    override fun onThumbnailLongClicked(postImage: PostImage, thumbnail: ThumbnailView) {}
-    override fun onShowPostReplies(post: Post) {}
-    override fun onPopulatePostOptions(post: Post, menu: MutableList<FloatingListMenuItem>) {}
-    override fun onPostOptionClicked(post: Post, id: Any, inPopup: Boolean) {}
-    override fun onPostLinkableClicked(post: Post, linkable: PostLinkable) {}
-    override fun onPostNoClicked(post: Post) {}
-    override fun onPostSelectionQuoted(post: Post, quoted: CharSequence) {}
-    override fun showPostOptions(post: Post, inPopup: Boolean, items: List<FloatingListMenuItem>) {}
+    override fun onPostBind(post: ChanPost) {}
+    override fun onPostUnbind(post: ChanPost, isActuallyRecycling: Boolean) {}
+    override fun onPostClicked(post: ChanPost) {}
+    override fun onPostDoubleClicked(post: ChanPost) {}
+    override fun onThumbnailClicked(postImage: ChanPostImage, thumbnail: ThumbnailView) {}
+    override fun onThumbnailLongClicked(postImage: ChanPostImage, thumbnail: ThumbnailView) {}
+    override fun onShowPostReplies(post: ChanPost) {}
+    override fun onPopulatePostOptions(post: ChanPost, menu: MutableList<FloatingListMenuItem>) {}
+    override fun onPostOptionClicked(post: ChanPost, id: Any, inPopup: Boolean) {}
+    override fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable) {}
+    override fun onPostNoClicked(post: ChanPost) {}
+    override fun onPostSelectionQuoted(post: ChanPost, quoted: CharSequence) {}
+    override fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>) {}
 
-    override fun getChanDescriptor(): ChanDescriptor? {
+    override fun getCurrentChanDescriptor(): ChanDescriptor? {
       return dummyThreadDescriptor
     }
 
-    override fun getPage(op: Post): BoardPage? {
+    override fun getPage(originalPostDescriptor: PostDescriptor): BoardPage? {
       return null
     }
 
-    override fun hasAlreadySeenPost(post: Post): Boolean {
+    override fun hasAlreadySeenPost(post: ChanPost): Boolean {
       return false
     }
   }
@@ -376,7 +383,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
       ?: return
 
     val compositeColor = (theme.backColor.toLong() + theme.primaryColor.toLong()) / 2
-    val backgroundColor = AndroidUtils.getComplementaryColor(compositeColor.toInt())
+    val backgroundColor = getComplementaryColor(compositeColor.toInt())
     root.setBackgroundColor(backgroundColor)
 
     updateCurrentThemeIndicator(theme.isLightTheme)
@@ -399,7 +406,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
   private fun FloatingActionButton.updateColors(theme: ChanTheme) {
     backgroundTintList = ColorStateList.valueOf(theme.accentColor)
 
-    val isDarkColor = AndroidUtils.isDarkColor(theme.accentColor)
+    val isDarkColor = isDarkColor(theme.accentColor)
     if (isDarkColor) {
       drawable.setTint(Color.WHITE)
     } else {
@@ -407,7 +414,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
     }
   }
 
-  private inner class Adapter() : ViewPagerAdapter() {
+  private inner class Adapter : ViewPagerAdapter() {
     val themeMap = mutableMapOf<Int, ChanTheme>()
 
     override fun getView(position: Int, parent: ViewGroup): View {
@@ -430,11 +437,11 @@ class ThemeSettingsController(context: Context) : Controller(context),
   private fun createSimpleThreadView(
     theme: ChanTheme
   ): CoordinatorLayout {
-    val parser = CommentParser(themeEngine, mockReplyManager)
+    val parser = CommentParser(mockReplyManager)
       .addDefaultRules()
 
-    val postParser = DefaultPostParser(themeEngine, parser, postFilterManager, archivesManager)
-    val builder1 = Post.Builder()
+    val postParser = DefaultPostParser(parser, postFilterManager, archivesManager)
+    val builder1 = ChanPostBuilder()
       .boardDescriptor(dummyBoardDescriptor)
       .id(123456789)
       .opId(123456789)
@@ -451,11 +458,11 @@ class ThemeSettingsController(context: Context) : Controller(context),
           + "<span class=\"quote\">&gt;Nam non hendrerit justo, venenatis bibendum arcu.</span>"
       )
 
-    val post1 = postParser.parse(theme, builder1, parserCallback)
+    val post1 = postParser.parse(builder1, parserCallback)
     post1.repliesFrom.add(234567890L)
 
     val pd2 = PostDescriptor.create(dummyBoardDescriptor, 234567890L, 123456789L)
-    val builder2 = Post.Builder()
+    val builder2 = ChanPostBuilder()
       .boardDescriptor(dummyBoardDescriptor)
       .id(234567890)
       .opId(123456789)
@@ -470,10 +477,10 @@ class ThemeSettingsController(context: Context) : Controller(context),
       .tripcode("!N4EoL/Xuog")
       .postImages(
         listOf(
-          PostImage.Builder()
+          ChanPostImageBuilder()
             .serverFilename("123123123123.jpg")
-            .imageUrl((BuildConfig.RESOURCES_ENDPOINT + "release_icon_512.png").toHttpUrl())
-            .thumbnailUrl((BuildConfig.RESOURCES_ENDPOINT + "release_icon_512.png").toHttpUrl())
+            .imageUrl((AppConstants.RESOURCES_ENDPOINT + "release_icon_512.png").toHttpUrl())
+            .thumbnailUrl((AppConstants.RESOURCES_ENDPOINT + "release_icon_512.png").toHttpUrl())
             .filename("icon")
             .extension("png")
             .postDescriptor(pd2)
@@ -481,19 +488,19 @@ class ThemeSettingsController(context: Context) : Controller(context),
         )
       )
 
-    val post2 = postParser.parse(theme, builder2, parserCallback)
+    val post2 = postParser.parse(builder2, parserCallback)
 
-    val posts: MutableList<Post> = ArrayList()
+    val posts: MutableList<ChanPost> = ArrayList()
     posts.add(post1)
     posts.add(post2)
 
     hackSpanColors(post1.subject, theme)
     hackSpanColors(post1.tripcode, theme)
-    hackSpanColors(post1.comment, theme)
+    hackSpanColors(post1.postComment.comment, theme)
 
     hackSpanColors(post2.subject, theme)
     hackSpanColors(post2.tripcode, theme)
-    hackSpanColors(post2.comment, theme)
+    hackSpanColors(post2.postComment.comment, theme)
 
     val linearLayout = LinearLayout(context)
     linearLayout.layoutParams = LinearLayout.LayoutParams(
@@ -519,37 +526,35 @@ class ThemeSettingsController(context: Context) : Controller(context),
       postFilterManager,
       postsView,
       object : PostAdapterCallback {
-        override fun getChanDescriptor(): ChanDescriptor? {
+        override fun getCurrentChanDescriptor(): ChanDescriptor? {
           return dummyThreadDescriptor
         }
 
-        override fun onUnhidePostClick(post: Post) {}
+        override fun onUnhidePostClick(post: ChanPost) {}
       },
       dummyPostCallback,
       object : ThreadStatusCell.Callback {
-        override fun getTimeUntilLoadMore(): Long {
+        override suspend fun timeUntilLoadMoreMs(): Long {
           return 0
+        }
+
+        override fun getCurrentChanDescriptor(): ChanDescriptor? {
+          return null
+        }
+
+        override fun getPage(originalPostDescriptor: PostDescriptor): BoardPage? {
+          return null
         }
 
         override fun isWatching(): Boolean {
           return false
         }
 
-        override fun getChanThread(): ChanThread? {
-          return null
-        }
-
-        override fun getPage(op: Post): BoardPage? {
-          return null
-        }
-
         override fun onListStatusClicked() {}
       }
     )
 
-    val postPreloadedInfoHolder = PostPreloadedInfoHolder()
-    postPreloadedInfoHolder.preloadPostsInfo(posts)
-    adapter.setThread(dummyThreadDescriptor, postPreloadedInfoHolder, indexPosts(posts), theme)
+    adapter.setThread(dummyThreadDescriptor, indexPosts(posts), theme)
     adapter.setPostViewMode(ChanSettings.PostViewMode.LIST)
     postsView.adapter = adapter
 
@@ -577,7 +582,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
       toolbar,
       LinearLayout.LayoutParams(
         ViewGroup.LayoutParams.MATCH_PARENT,
-        AndroidUtils.getDimen(R.dimen.toolbar_height)
+        getDimen(R.dimen.toolbar_height)
       )
     )
     linearLayout.addView(
@@ -643,7 +648,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
     }
   }
 
-  private fun indexPosts(posts: List<Post>): List<PostIndexed> {
+  private fun indexPosts(posts: List<ChanPost>): List<PostIndexed> {
     return posts.mapIndexed { index, post -> PostIndexed(post, index, index) }
   }
 
@@ -666,6 +671,12 @@ class ThemeSettingsController(context: Context) : Controller(context),
           else -> throw IllegalStateException("Unknown span: ${span::class.java.simpleName}")
         }
 
+        if (span is ColorizableBackgroundColorSpan) {
+          span.themeEngine = themeEngine
+        } else if (span is  ColorizableForegroundColorSpan) {
+          span.themeEngine = themeEngine
+        }
+
         input.removeSpan(span)
         input.setSpan(
           ForegroundColorSpan(theme.getColorByColorId(newColor)),
@@ -681,6 +692,8 @@ class ThemeSettingsController(context: Context) : Controller(context),
         val start = input.getSpanStart(span)
         val end = input.getSpanEnd(span)
         val flags = input.getSpanFlags(span)
+
+        span.themeEngine = themeEngine
 
         input.removeSpan(span)
         input.setSpan(

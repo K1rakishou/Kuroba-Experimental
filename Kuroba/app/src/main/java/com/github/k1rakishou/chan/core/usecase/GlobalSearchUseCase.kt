@@ -7,13 +7,13 @@ import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
-import com.github.k1rakishou.chan.ui.text.span.BackgroundColorSpanHashed
-import com.github.k1rakishou.chan.ui.text.span.ForegroundColorSpanHashed
-import com.github.k1rakishou.chan.ui.theme.ChanTheme
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_spannable.BackgroundColorSpanHashed
+import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed
+import com.github.k1rakishou.core_themes.ChanTheme
+import com.github.k1rakishou.core_themes.ThemeEngine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.regex.Pattern
@@ -77,13 +77,12 @@ class GlobalSearchUseCase(
     }
 
     searchResult as SearchResult.Success
-
     val theme = themeEngine.chanTheme
 
     searchResult.searchEntries.forEach { searchEntry ->
       searchEntry.thread.posts.forEach { searchEntryPost ->
         searchEntryPost.commentRaw?.let { commentRaw ->
-          val parsedComment = simpleCommentParser.parseComment(theme, commentRaw.toString()) ?: ""
+          val parsedComment = simpleCommentParser.parseComment(commentRaw.toString()) ?: ""
           val spannedComment = SpannableString(parsedComment)
 
           findAllQueryEntriesInsideCommentAndMarkThem(searchResult.query, spannedComment, theme)

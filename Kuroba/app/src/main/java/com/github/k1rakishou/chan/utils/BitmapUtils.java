@@ -13,6 +13,7 @@ import androidx.core.util.Pair;
 import androidx.exifinterface.media.ExifInterface;
 
 import com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter;
+import com.github.k1rakishou.core_logger.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,8 +27,8 @@ import static android.graphics.Bitmap.CompressFormat.PNG;
 import static com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter.ReencodeType.AS_IS;
 import static com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter.ReencodeType.AS_JPEG;
 import static com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter.ReencodeType.AS_PNG;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAppContext;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getRes;
+import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
+import static com.github.k1rakishou.common.AndroidUtils.getRes;
 
 public class BitmapUtils {
     private static final String TAG = "BitmapUtils";

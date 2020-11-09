@@ -1,7 +1,6 @@
 package com.github.k1rakishou.model.source.local
 
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanSavedReply
@@ -9,9 +8,7 @@ import com.github.k1rakishou.model.mapper.ChanSavedReplyMapper
 
 class ChanSavedReplyLocalSource(
   database: KurobaDatabase,
-  loggerTag: String,
   private val isDevFlavor: Boolean,
-  private val logger: Logger
 ) : AbstractLocalSource(database) {
   private val chanSavedReplyDao = database.chanSavedReplyDao()
 
@@ -45,5 +42,5 @@ class ChanSavedReplyLocalSource(
     )
   }
 
-  private val TAG = "$loggerTag ChanSavedReplyLocalSource"
+  private val TAG = "ChanSavedReplyLocalSource"
 }

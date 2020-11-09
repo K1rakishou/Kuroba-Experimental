@@ -1,18 +1,14 @@
 package com.github.k1rakishou.model.source.local
 
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.SeenPost
 import com.github.k1rakishou.model.mapper.SeenPostMapper
 import org.joda.time.DateTime
 
 open class SeenPostLocalSource(
-  database: KurobaDatabase,
-  loggerTag: String,
-  private val logger: Logger
+  database: KurobaDatabase
 ) : AbstractLocalSource(database) {
-  private val TAG = "$loggerTag SeenPostLocalSource"
   private val seenPostDao = database.seenPostDao()
   private val chanBoardDao = database.chanBoardDao()
   private val chanThreadDao = database.chanThreadDao()
@@ -33,7 +29,6 @@ open class SeenPostLocalSource(
     seenPostDao.insert(
       SeenPostMapper.toEntity(chanThreadEntityId, seenPost)
     )
-
   }
 
   open suspend fun selectAllByThreadDescriptor(

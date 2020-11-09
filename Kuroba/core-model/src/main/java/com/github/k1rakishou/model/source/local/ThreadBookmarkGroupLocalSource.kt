@@ -2,7 +2,6 @@ package com.github.k1rakishou.model.source.local
 
 import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.bookmark.CreateBookmarkGroupEntriesTransaction
 import com.github.k1rakishou.model.data.bookmark.DeleteBookmarkGroupEntriesTransaction
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroup
@@ -15,12 +14,10 @@ import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
 
 class ThreadBookmarkGroupLocalSource(
   database: KurobaDatabase,
-  loggerTag: String,
   private val isDevFlavor: Boolean,
-  private val logger: Logger,
   private val chanDescriptorCache: ChanDescriptorCache
 ) : AbstractLocalSource(database) {
-  private val TAG = "$loggerTag ThreadBookmarkGroupLocalSource"
+  private val TAG = "ThreadBookmarkGroupLocalSource"
   private val threadBookmarkGroupDao = database.threadBookmarkGroupDao()
 
   suspend fun selectAll(): List<ThreadBookmarkGroup> {

@@ -16,11 +16,12 @@
  */
 package com.github.k1rakishou.chan.core.site.parser
 
-import com.github.k1rakishou.chan.core.model.Post
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder
 import com.github.k1rakishou.chan.utils.PostUtils
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -29,32 +30,25 @@ class ChanReaderProcessor(
   private val chanPostRepository: ChanPostRepository,
   val chanDescriptor: ChanDescriptor
 ) {
-  private val toParse = mutableListWithCap<Post.Builder>(64)
+  private val toParse = mutableListWithCap<ChanPostBuilder>(64)
   private val postNoOrderedList = mutableListWithCap<Long>(64)
-  private var op: Post.Builder? = null
+  private var op: ChanPostBuilder? = null
 
   private val lock = Mutex()
 
-  suspend fun setOp(op: Post.Builder?) {
+  suspend fun setOp(op: ChanPostBuilder?) {
     lock.withLock { this.op = op }
   }
 
-  suspend fun getOp(): Post.Builder? {
+  suspend fun getOp(): ChanPostBuilder? {
     return lock.withLock { this.op }
   }
 
-  suspend fun getThreadCap(): Int {
-    return lock.withLock {
-      var maxCount = op?.stickyCap ?: Int.MAX_VALUE
-      if (maxCount < 0) {
-        maxCount = Int.MAX_VALUE
-      }
-
-      return@withLock maxCount
-    }
+  suspend fun getThreadCap(): Int? {
+    return lock.withLock { op?.stickyCap }
   }
 
-  suspend fun addPost(postBuilder: Post.Builder) {
+  suspend fun addPost(postBuilder: ChanPostBuilder) {
     lock.withLock {
       if (differsFromCached(postBuilder)) {
         addForParse(postBuilder)
@@ -64,14 +58,14 @@ class ChanReaderProcessor(
     }
   }
 
-  suspend fun getToParse(): List<Post.Builder> {
+  suspend fun getToParse(): List<ChanPostBuilder> {
     return lock.withLock { toParse }
   }
 
-  suspend fun getPostsSortedByIndexes(posts: List<Post>): List<Post> {
+  suspend fun getPostsSortedByIndexes(posts: List<ChanPost>): List<ChanPost> {
     return lock.withLock {
       return@withLock postNoOrderedList.mapNotNull { postNo ->
-        return@mapNotNull posts.firstOrNull { post -> post.no == postNo }
+        return@mapNotNull posts.firstOrNull { post -> post.postNo() == postNo }
       }
     }
   }
@@ -84,7 +78,7 @@ class ChanReaderProcessor(
     return lock.withLock { postNoOrderedList.size }
   }
 
-  private suspend fun differsFromCached(builder: Post.Builder): Boolean {
+  private fun differsFromCached(builder: ChanPostBuilder): Boolean {
     val postDescriptor = if (builder.op) {
       PostDescriptor.create(
         builder.boardDescriptor!!.siteName(),
@@ -98,6 +92,11 @@ class ChanReaderProcessor(
         builder.opId,
         builder.id
       )
+    }
+
+    check(postDescriptor.isOP() == builder.op) {
+      "isOP flags differ for ($postDescriptor) and ${builder}, " +
+        "postDescriptor.isOP: ${postDescriptor.isOP()}, builder.op: ${builder.op}"
     }
 
     val chanPost = chanPostRepository.getCachedPost(postDescriptor, builder.op)
@@ -121,7 +120,7 @@ class ChanReaderProcessor(
     return false
   }
 
-  private fun addForParse(postBuilder: Post.Builder) {
+  private fun addForParse(postBuilder: ChanPostBuilder) {
     toParse.add(postBuilder)
   }
 }

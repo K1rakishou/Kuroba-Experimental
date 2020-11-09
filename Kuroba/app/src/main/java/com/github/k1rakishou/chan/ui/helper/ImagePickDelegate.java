@@ -29,16 +29,16 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.cache.FileCacheListener;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.widget.CancellableToast;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.IOUtils;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.fsaf.file.RawFile;
 
@@ -54,10 +54,10 @@ import java.util.concurrent.Executors;
 
 import okhttp3.HttpUrl;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAppContext;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getClipboardContent;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.showToast;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
+import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
+import static com.github.k1rakishou.common.AndroidUtils.getClipboardContent;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
 
 public class ImagePickDelegate {
     private static final String TAG = "ImagePickActivity";

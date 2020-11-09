@@ -10,7 +10,8 @@ import androidx.core.view.marginEnd
 import androidx.core.view.marginStart
 import androidx.core.view.marginTop
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
 import javax.inject.Inject
 
 class ViewContainerWithMaxSize @JvmOverloads constructor(
@@ -25,7 +26,7 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
   var maxHeight: Int = 0
 
   init {
-    AndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractStartActivityComponent(context)
       .inject(this)
   }
 

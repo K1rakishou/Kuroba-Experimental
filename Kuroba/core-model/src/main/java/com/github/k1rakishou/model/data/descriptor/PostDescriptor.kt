@@ -10,12 +10,24 @@ open class PostDescriptor protected constructor(
   open val postSubNo: Long = 0L
 ) {
 
-  fun isOP(): Boolean = postNo == descriptor.threadNoOrNull()
+  fun isOP(): Boolean {
+    return when (descriptor) {
+      is ChanDescriptor.ThreadDescriptor -> postNo == descriptor.threadNoOrNull()
+      is ChanDescriptor.CatalogDescriptor -> true
+    }
+  }
 
   fun threadDescriptor(): ChanDescriptor.ThreadDescriptor {
     return when (descriptor) {
       is ChanDescriptor.ThreadDescriptor -> descriptor
       is ChanDescriptor.CatalogDescriptor -> descriptor.toThreadDescriptor(postNo)
+    }
+  }
+
+  fun catalogDescriptor(): ChanDescriptor.CatalogDescriptor {
+    return when (val desc = descriptor) {
+      is ChanDescriptor.ThreadDescriptor -> desc.catalogDescriptor()
+      is ChanDescriptor.CatalogDescriptor -> desc
     }
   }
 

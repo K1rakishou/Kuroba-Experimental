@@ -5,7 +5,7 @@ import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.PartialContentOkHttpDispatcher
 import com.github.k1rakishou.chan.core.cache.createFileDownloadRequest
 import com.github.k1rakishou.chan.core.cache.withServer
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.RawFile
 import io.reactivex.subscribers.TestSubscriber
@@ -14,7 +14,10 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okio.Buffer
 import org.junit.After
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith

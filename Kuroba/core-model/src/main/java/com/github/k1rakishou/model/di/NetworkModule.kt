@@ -1,10 +1,7 @@
 package com.github.k1rakishou.model.di
 
-import com.github.k1rakishou.model.di.annotation.OkHttpDns
-import com.github.k1rakishou.model.di.annotation.OkHttpProtocols
 import dagger.Module
 import dagger.Provides
-import okhttp3.Dns
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import java.util.concurrent.TimeUnit
@@ -15,16 +12,13 @@ class NetworkModule {
 
   @Singleton
   @Provides
-  fun provideOkHttpClient(
-    @OkHttpDns dns: Dns,
-    @OkHttpProtocols okHttpProtocols: OkHttpProtocolList
-  ): OkHttpClient {
+  fun provideOkHttpClient(dependencies: ModelComponent.Dependencies): OkHttpClient {
     return OkHttpClient().newBuilder()
       .connectTimeout(30, TimeUnit.SECONDS)
       .readTimeout(30, TimeUnit.SECONDS)
       .writeTimeout(30, TimeUnit.SECONDS)
-      .protocols(okHttpProtocols.protocols)
-      .dns(dns)
+      .protocols(dependencies.okHttpProtocols.protocols)
+      .dns(dependencies.dns)
       .build()
   }
 

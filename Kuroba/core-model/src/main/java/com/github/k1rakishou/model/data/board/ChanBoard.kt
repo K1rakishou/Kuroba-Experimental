@@ -35,6 +35,8 @@ data class ChanBoard(
   fun boardCode(): String = boardDescriptor.boardCode
 
   companion object {
+    const val DEFAULT_CATALOG_SIZE = 150
+
     @JvmStatic
     fun create(boardDescriptor: BoardDescriptor, boardName: String): ChanBoard {
       return ChanBoard(

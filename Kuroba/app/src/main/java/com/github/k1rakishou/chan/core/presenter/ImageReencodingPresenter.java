@@ -23,17 +23,17 @@ import android.graphics.Point;
 import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.http.Reply;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.BitmapUtils;
 import com.github.k1rakishou.chan.utils.ImageDecoder;
-import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.chan.utils.StringUtils;
 import com.github.k1rakishou.common.DoNotStrip;
+import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.google.gson.Gson;
 
@@ -44,10 +44,10 @@ import javax.inject.Inject;
 
 import static com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter.ReencodeType.AS_IS;
 import static com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter.ReencodeType.AS_JPEG;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getDisplaySize;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.showToast;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.getDisplaySize;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
 
 public class ImageReencodingPresenter {
     private final static String TAG = "ImageReencodingPresenter";
@@ -70,7 +70,7 @@ public class ImageReencodingPresenter {
             ChanDescriptor chanDescriptor,
             ImageOptions lastOptions
     ) {
-        AndroidUtils.extractStartActivityComponent(context)
+        AppModuleAndroidUtils.extractStartActivityComponent(context)
                 .inject(this);
 
         this.context = context;

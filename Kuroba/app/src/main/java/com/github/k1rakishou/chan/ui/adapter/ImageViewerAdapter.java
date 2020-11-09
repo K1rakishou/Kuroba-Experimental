@@ -19,10 +19,10 @@ package com.github.k1rakishou.chan.ui.adapter;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.ui.view.MultiImageView;
 import com.github.k1rakishou.chan.ui.view.ViewPagerAdapter;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.model.data.post.ChanPostImage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,14 +31,14 @@ public class ImageViewerAdapter
         extends ViewPagerAdapter {
     private static final String TAG = "ImageViewerAdapter";
 
-    private final List<PostImage> images;
+    private final List<ChanPostImage> images;
     private final MultiImageView.Callback multiImageViewCallback;
 
     private List<MultiImageView> loadedViews = new ArrayList<>(3);
     private List<ModeChange> pendingModeChanges = new ArrayList<>();
 
     public ImageViewerAdapter(
-            List<PostImage> images,
+            List<ChanPostImage> images,
             MultiImageView.Callback multiImageViewCallback
     ) {
         this.images = images;
@@ -55,7 +55,7 @@ public class ImageViewerAdapter
 
     @Override
     public View getView(int position, ViewGroup parent) {
-        PostImage postImage = images.get(position);
+        ChanPostImage postImage = images.get(position);
         MultiImageView view = new MultiImageView(parent.getContext());
 
         // hacky but good enough
@@ -82,7 +82,7 @@ public class ImageViewerAdapter
         return images.size();
     }
 
-    public MultiImageView find(PostImage postImage) {
+    public MultiImageView find(ChanPostImage postImage) {
         for (MultiImageView view : loadedViews) {
             if (view.getPostImage() == postImage) {
                 return view;
@@ -104,7 +104,7 @@ public class ImageViewerAdapter
         pendingModeChanges.clear();
     }
 
-    public void setMode(final PostImage postImage, MultiImageView.Mode mode, boolean center) {
+    public void setMode(final ChanPostImage postImage, MultiImageView.Mode mode, boolean center) {
         MultiImageView view = find(postImage);
         if (view == null || view.getWindowToken() == null) {
             pendingModeChanges.add(new ModeChange(mode, postImage, center));
@@ -113,7 +113,7 @@ public class ImageViewerAdapter
         }
     }
 
-    public void setVolume(PostImage postImage, boolean muted) {
+    public void setVolume(ChanPostImage postImage, boolean muted) {
         // It must be loaded, or the user is not able to click the menu item.
         MultiImageView view = find(postImage);
         if (view != null) {
@@ -121,7 +121,7 @@ public class ImageViewerAdapter
         }
     }
 
-    public MultiImageView.Mode getMode(PostImage postImage) {
+    public MultiImageView.Mode getMode(ChanPostImage postImage) {
         MultiImageView view = find(postImage);
         if (view == null) {
             Logger.w(TAG, "getMode view not found");
@@ -137,21 +137,21 @@ public class ImageViewerAdapter
         }
     }
 
-    public void toggleTransparency(PostImage postImage) {
+    public void toggleTransparency(ChanPostImage postImage) {
         MultiImageView view = find(postImage);
         if (view != null) {
             view.toggleTransparency();
         }
     }
 
-    public void rotateImage(PostImage postImage, int degrees) {
+    public void rotateImage(ChanPostImage postImage, int degrees) {
         MultiImageView view = find(postImage);
         if (view != null) {
             view.rotateImage(degrees);
         }
     }
 
-    public void onImageSaved(PostImage postImage) {
+    public void onImageSaved(ChanPostImage postImage) {
         MultiImageView view = find(postImage);
         if (view != null) {
             view.setImageAlreadySaved();
@@ -160,10 +160,10 @@ public class ImageViewerAdapter
 
     private static class ModeChange {
         public MultiImageView.Mode mode;
-        public PostImage postImage;
+        public ChanPostImage postImage;
         public boolean center;
 
-        private ModeChange(MultiImageView.Mode mode, PostImage postImage, boolean center) {
+        private ModeChange(MultiImageView.Mode mode, ChanPostImage postImage, boolean center) {
             this.mode = mode;
             this.postImage = postImage;
             this.center = center;

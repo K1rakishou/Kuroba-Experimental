@@ -1,24 +1,21 @@
 package com.github.k1rakishou.chan.core.site.common
 
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
-import com.github.k1rakishou.chan.core.model.Post
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.ICommentParser
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.core.site.parser.PostParser
-import com.github.k1rakishou.chan.ui.theme.ChanTheme
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.Logger
-import com.github.k1rakishou.model.data.archive.ArchiveType
+import com.github.k1rakishou.common.data.ArchiveType
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import org.jsoup.nodes.Element
 import java.util.regex.Pattern
 
 class FoolFuukaCommentParser(
-  themeEngine: ThemeEngine,
   mockReplyManager: MockReplyManager,
   private val archivesManager: ArchivesManager
-) : CommentParser(themeEngine, mockReplyManager), ICommentParser {
+) : CommentParser(mockReplyManager), ICommentParser {
 
   init {
     addDefaultRules()
@@ -26,8 +23,7 @@ class FoolFuukaCommentParser(
 
   override fun handleTag(
     callback: PostParser.Callback,
-    theme: ChanTheme,
-    post: Post.Builder,
+    post: ChanPostBuilder,
     tag: String,
     text: CharSequence,
     element: Element
@@ -41,7 +37,7 @@ class FoolFuukaCommentParser(
       newTag = "a"
     }
 
-    return super.handleTag(callback, theme, post, newTag, text, newElement)
+    return super.handleTag(callback, post, newTag, text, newElement)
   }
 
   override fun getQuotePattern(): Pattern {
@@ -52,7 +48,7 @@ class FoolFuukaCommentParser(
     return FULL_QUOTE_PATTERN
   }
 
-  override fun extractQuote(href: String, post: Post.Builder): String {
+  override fun extractQuote(href: String, post: ChanPostBuilder): String {
     val matcher = getDefaultQuotePattern(post.postDescriptor)?.matcher(href)
     if (matcher == null) {
       Logger.d(TAG, "getDefaultQuotePattern returned null for postDescriptor=${post.postDescriptor}")

@@ -21,7 +21,7 @@ import android.view.View;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.ui.controller.settings.SettingsController;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
 
 public class LinkSettingView
         extends SettingView {

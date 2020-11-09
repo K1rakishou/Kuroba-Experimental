@@ -17,8 +17,8 @@
 package com.github.k1rakishou.chan.core.site.loader
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.manager.FilterEngine
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.site.Site
@@ -27,20 +27,26 @@ import com.github.k1rakishou.chan.core.site.loader.internal.NormalPostLoader
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsUseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ReloadPostsFromDatabaseUseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
+import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.suspendCall
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.repository.ChanPostRepository
-import com.google.gson.Gson
+import com.github.k1rakishou.model.source.cache.ChanCacheOptions
 import com.google.gson.stream.JsonReader
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.Request
 import okhttp3.Response
@@ -63,7 +69,6 @@ import kotlin.time.measureTimedValue
  * future. For now it will stay the way it is.
  * */
 class ChanThreadLoaderCoordinator(
-  private val gson: Gson,
   private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val savedReplyManager: SavedReplyManager,
   private val filterEngine: FilterEngine,
@@ -71,7 +76,6 @@ class ChanThreadLoaderCoordinator(
   private val appConstants: AppConstants,
   private val postFilterManager: PostFilterManager,
   private val verboseLogsEnabled: Boolean,
-  private val themeEngine: ThemeEngine,
   private val boardManager: BoardManager
 ) : CoroutineScope {
   private val job = SupervisorJob()
@@ -81,10 +85,8 @@ class ChanThreadLoaderCoordinator(
 
   private val reloadPostsFromDatabaseUseCase by lazy {
     ReloadPostsFromDatabaseUseCase(
-      gson,
       chanPostRepository,
-      boardManager,
-      themeEngine
+      boardManager
     )
   }
 
@@ -96,14 +98,12 @@ class ChanThreadLoaderCoordinator(
       filterEngine,
       postFilterManager,
       savedReplyManager,
-      themeEngine,
       boardManager
     )
   }
 
   private val storePostsInRepositoryUseCase by lazy {
     StorePostsInRepositoryUseCase(
-      gson,
       chanPostRepository
     )
   }
@@ -118,21 +118,26 @@ class ChanThreadLoaderCoordinator(
     )
   }
 
-  private val databasePostLoader by lazy { DatabasePostLoader(reloadPostsFromDatabaseUseCase) }
+  private val databasePostLoader by lazy {
+    DatabasePostLoader(
+      reloadPostsFromDatabaseUseCase
+    )
+  }
 
   @OptIn(ExperimentalTime::class)
-  fun loadThread(
+  suspend fun loadThread(
     url: String,
-    requestParams: ChanLoaderRequestParams,
-    resultCallback: suspend (ModularResult<ThreadLoadResult>) -> Unit
-  ): Job {
-    Logger.d(TAG, "loadThread($url, $requestParams)")
+    chanDescriptor: ChanDescriptor,
+    cacheOptions: ChanCacheOptions,
+    chanReader: ChanReader
+  ): ModularResult<ThreadLoadResult> {
+    Logger.d(TAG, "loadThread($url, $chanDescriptor, $cacheOptions, ${chanReader.javaClass.simpleName})")
 
-    return launch(Dispatchers.IO) {
+    return withContext(Dispatchers.IO) {
       BackgroundUtils.ensureBackgroundThread()
       chanPostRepository.awaitUntilInitialized()
 
-      val result = Try {
+      return@withContext Try {
         val request = Request.Builder()
           .url(url)
           .get()
@@ -142,61 +147,69 @@ class ChanThreadLoaderCoordinator(
         val (response, time) = try {
           measureTimedValue { proxiedOkHttpClient.okHttpClient().suspendCall(request) }
         } catch (error: IOException) {
-          return@Try fallbackPostLoadOnNetworkError(requestParams, error)
+          return@Try fallbackPostLoadOnNetworkError(chanDescriptor, error)
         }
 
         Logger.d(TAG, "loadThread from network took $time")
 
         if (!response.isSuccessful) {
-          return@Try fallbackPostLoadOnNetworkError(requestParams, ServerException(response.code))
+          return@Try fallbackPostLoadOnNetworkError(chanDescriptor, ServerException(response.code))
         }
 
-        val chanReaderProcessor = readPostsFromResponse(response, requestParams)
+        val chanReaderProcessor = readPostsFromResponse(response, chanDescriptor, chanReader)
           .unwrap()
 
         return@Try normalPostLoader.loadPosts(
           url,
           chanReaderProcessor,
-          requestParams
+          cacheOptions,
+          chanDescriptor,
+          chanReader
         )
       }.mapError { error -> ChanLoaderException(error) }
-
-      resultCallback.invoke(result)
     }
   }
 
-  suspend fun reloadThreadFromDatabase(threadDescriptor: ChanDescriptor.ThreadDescriptor): ChanLoaderResponse? {
+  suspend fun reloadThreadFromDatabase(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ) {
     Logger.d(TAG, "reloadThreadFromDatabase($threadDescriptor)")
     BackgroundUtils.ensureBackgroundThread()
 
-    return databasePostLoader.loadPosts(threadDescriptor)
+    databasePostLoader.loadPosts(threadDescriptor)
   }
 
-  suspend fun reloadCatalogFromDatabase(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>): ChanLoaderResponse? {
-    Logger.d(TAG, "reloadThreadFromDatabase(${threadDescriptors.size})")
+  suspend fun reloadCatalogFromDatabase(
+    threadDescriptors: List<ChanDescriptor.ThreadDescriptor>
+  ) {
+    Logger.d(TAG, "reloadCatalogFromDatabase(${threadDescriptors.size})")
     BackgroundUtils.ensureBackgroundThread()
 
-    return databasePostLoader.loadCatalog(threadDescriptors)
+    databasePostLoader.loadCatalog(threadDescriptors)
   }
 
   private suspend fun fallbackPostLoadOnNetworkError(
-    requestParams: ChanLoaderRequestParams,
+    chanDescriptor: ChanDescriptor,
     error: Exception
   ): ThreadLoadResult {
     BackgroundUtils.ensureBackgroundThread()
 
-    val chanLoaderResponse = databasePostLoader.loadPosts(requestParams.chanDescriptor)
+    databasePostLoader.loadPosts(chanDescriptor)
       ?: throw error
 
     val isThreadDeleted = error is ServerException && error.statusCode == 404
+    if (isThreadDeleted && chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      chanPostRepository.markThreadAsDeleted(chanDescriptor, true)
+    }
 
     Logger.e(TAG, "Successfully recovered from network error (${error.errorMessageOrClassName()})")
-    return ThreadLoadResult.LoadedFromDatabaseCopy(chanLoaderResponse, isThreadDeleted)
+    return ThreadLoadResult.Loaded(chanDescriptor)
   }
 
   private suspend fun readPostsFromResponse(
     response: Response,
-    requestParams: ChanLoaderRequestParams
+    chanDescriptor: ChanDescriptor,
+    chanReader: ChanReader
   ): ModularResult<ChanReaderProcessor> {
     BackgroundUtils.ensureBackgroundThread()
 
@@ -209,14 +222,12 @@ class ChanThreadLoaderCoordinator(
           .use { jsonReader ->
             val chanReaderProcessor = ChanReaderProcessor(
               chanPostRepository,
-              requestParams.chanDescriptor
+              chanDescriptor
             )
 
-            val reader = requestParams.chanReader
-
-            when (requestParams.chanDescriptor) {
-              is ChanDescriptor.ThreadDescriptor -> reader.loadThread(jsonReader, chanReaderProcessor)
-              is ChanDescriptor.CatalogDescriptor -> reader.loadCatalog(jsonReader, chanReaderProcessor)
+            when (chanDescriptor) {
+              is ChanDescriptor.ThreadDescriptor -> chanReader.loadThread(jsonReader, chanReaderProcessor)
+              is ChanDescriptor.CatalogDescriptor -> chanReader.loadCatalog(jsonReader, chanReaderProcessor)
               else -> throw IllegalArgumentException("Unknown mode")
             }
 

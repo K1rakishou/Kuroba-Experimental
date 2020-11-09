@@ -5,10 +5,12 @@ import android.content.res.ColorStateList
 import android.util.AttributeSet
 import androidx.core.view.ViewCompat
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.ViewUtils.setEditTextCursorColor
 import com.github.k1rakishou.chan.utils.ViewUtils.setHandlesColors
+import com.github.k1rakishou.core_themes.IColorizableWidget
+import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.manipulateColor
 import com.google.android.material.textfield.TextInputEditText
 import javax.inject.Inject
 
@@ -24,7 +26,7 @@ open class ColorizableEditText @JvmOverloads constructor(
 
   init {
     if (!isInEditMode) {
-      AndroidUtils.extractStartActivityComponent(context)
+      AppModuleAndroidUtils.extractStartActivityComponent(context)
         .inject(this)
     }
   }
@@ -54,7 +56,7 @@ open class ColorizableEditText @JvmOverloads constructor(
         ),
         intArrayOf(
           themeEngine.chanTheme.textColorHint,
-          AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorHint, 1.2f),
+          manipulateColor(themeEngine.chanTheme.textColorHint, 1.2f),
         )
       )
     )
@@ -68,9 +70,9 @@ open class ColorizableEditText @JvmOverloads constructor(
           intArrayOf()
         ),
         intArrayOf(
-          AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, 1.2f),
+          manipulateColor(themeEngine.chanTheme.textColorPrimary, 1.2f),
           themeEngine.chanTheme.textColorPrimary,
-          AndroidUtils.manipulateColor(themeEngine.chanTheme.textColorPrimary, .8f),
+          manipulateColor(themeEngine.chanTheme.textColorPrimary, .8f),
           themeEngine.chanTheme.textColorHint
         )
       )
@@ -86,7 +88,7 @@ open class ColorizableEditText @JvmOverloads constructor(
           intArrayOf()
         ),
         intArrayOf(
-          AndroidUtils.manipulateColor(themeEngine.chanTheme.accentColor, 1.2f),
+          manipulateColor(themeEngine.chanTheme.accentColor, 1.2f),
           themeEngine.chanTheme.defaultColors.controlNormalColor,
           themeEngine.chanTheme.getDisabledTextColor(themeEngine.chanTheme.defaultColors.controlNormalColor),
           themeEngine.chanTheme.textColorHint

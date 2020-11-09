@@ -6,8 +6,8 @@ import android.util.Range;
 import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
-import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.common.AppConstants;
+import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.fsaf.file.RawFile;
 import com.google.android.exoplayer2.C;

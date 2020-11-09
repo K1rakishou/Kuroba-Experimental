@@ -11,7 +11,7 @@ import android.view.ViewParent
 import android.widget.Scroller
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
-import com.github.k1rakishou.chan.utils.AndroidUtils.dp
+import com.github.k1rakishou.common.AndroidUtils.dp
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min

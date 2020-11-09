@@ -58,9 +58,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             tools:text="subtitle"/>
     </FrameLayout>
 
-    <!-- menu inserted here
-     TODO: make this layout relative and make a ViewStub but with programatically added views -->
-
+    <!-- menu inserted here -->
     <!-- rightView inserted here -->
 
 </LinearLayout>

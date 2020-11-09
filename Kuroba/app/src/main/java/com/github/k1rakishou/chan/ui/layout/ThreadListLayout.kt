@@ -36,16 +36,19 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
-import com.github.k1rakishou.chan.core.manager.*
-import com.github.k1rakishou.chan.core.model.ChanThread
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.model.PostImage
+import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
+import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.presenter.ReplyPresenter
-import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.core.settings.ChanSettings.PostViewMode
+import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.site.http.Reply
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter
@@ -56,24 +59,31 @@ import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.PostStubCell
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.layout.ReplyLayout.ReplyLayoutCallback
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
 import com.github.k1rakishou.chan.ui.view.PostInfoMapItemDecoration
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.dp
-import com.github.k1rakishou.chan.utils.AndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.Logger
-import com.github.k1rakishou.chan.utils.PostUtils
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils.dp
 import com.github.k1rakishou.common.updatePaddings
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import io.reactivex.disposables.CompositeDisposable
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelChildren
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
@@ -105,35 +115,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   lateinit var chanThreadViewableInfoManager: ChanThreadViewableInfoManager
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
-
-  private lateinit var replyLayout: ReplyLayout
-  private lateinit var searchStatus: TextView
-  private lateinit var recyclerView: ColorizableRecyclerView
-  private lateinit var postAdapter: PostAdapter
-
-  private val compositeDisposable = CompositeDisposable()
-  private val job = SupervisorJob()
-
-  private lateinit var listScrollToBottomExecutor: RendezvousCoroutineExecutor
-  private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
-
-  override val coroutineContext: CoroutineContext
-    get() = job + Dispatchers.Main + CoroutineName("ThreadListLayout")
-
-  private var layoutManager: RecyclerView.LayoutManager? = null
-  private var fastScroller: FastScroller? = null
-  private var postInfoMapItemDecoration: PostInfoMapItemDecoration? = null
-  private var callback: ThreadListLayoutPresenterCallback? = null
-  private var threadListLayoutCallback: ThreadListLayoutCallback? = null
-  private var postViewMode: PostViewMode? = null
-  private var spanCount = 2
-  private var searchOpen = false
-  private var lastPostCount = 0
-  private var hat: Bitmap? = null
-  private var showingThread: ChanThread? = null
-
-  var replyOpen = false
-    private set
+  @Inject
+  lateinit var chanThreadManager: ChanThreadManager
 
   private val PARTY: ItemDecoration = object : ItemDecoration() {
     override fun onDrawOver(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
@@ -150,7 +133,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
           val postView = child as PostCellInterface
           val post = postView.getPost()
 
-          if (post == null || !post.isOP || post.postImages.isEmpty()) {
+          if (post == null || !post.isOP() || post.postImages.isEmpty()) {
             i++
             continue
           }
@@ -181,7 +164,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   val replyPresenter: ReplyPresenter
     get() = replyLayout.getPresenter()
 
-  val displayingPosts: List<Post>
+  val displayingPostDescriptors: List<PostDescriptor>
     get() = postAdapter.displayList
 
   val indexAndTop: IntArray?
@@ -222,12 +205,46 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       return -1
     }
 
+  private lateinit var replyLayout: ReplyLayout
+  private lateinit var searchStatus: TextView
+  private lateinit var recyclerView: ColorizableRecyclerView
+  private lateinit var postAdapter: PostAdapter
+
+  private val compositeDisposable = CompositeDisposable()
+  private val job = SupervisorJob()
+
+  private lateinit var listScrollToBottomExecutor: RendezvousCoroutineExecutor
+  private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
+
+  override val coroutineContext: CoroutineContext
+    get() = job + Dispatchers.Main + CoroutineName("ThreadListLayout")
+
+  private var threadPresenter: ThreadPresenter? = null
+
+  private var layoutManager: RecyclerView.LayoutManager? = null
+  private var fastScroller: FastScroller? = null
+  private var postInfoMapItemDecoration: PostInfoMapItemDecoration? = null
+  private var callback: ThreadListLayoutPresenterCallback? = null
+  private var threadListLayoutCallback: ThreadListLayoutCallback? = null
+  private var postViewMode: PostViewMode? = null
+  private var spanCount = 2
+  private var searchOpen = false
+  private var lastPostCount = 0
+  private var hat: Bitmap? = null
+
+  var replyOpen = false
+    private set
+
+  override fun getShowingChanDescriptor(): ChanDescriptor? {
+    return threadPresenter?.currentChanDescriptor
+  }
+
   private fun currentThreadDescriptorOrNull(): ThreadDescriptor? {
-    return showingThread?.chanDescriptor?.threadDescriptorOrNull()
+    return showingChanDescriptor?.threadDescriptorOrNull()
   }
 
   private fun currentChanDescriptorOrNull(): ChanDescriptor? {
-    return showingThread?.chanDescriptor
+    return showingChanDescriptor
   }
 
   private fun forceRecycleAllPostViews() {
@@ -262,7 +279,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   override fun onFinishInflate() {
     super.onFinishInflate()
 
-    AndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractStartActivityComponent(context)
       .inject(this)
 
     // View binding
@@ -281,13 +298,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   fun onCreate(
-    postAdapterCallback: PostAdapterCallback?,
-    postCellCallback: PostCellCallback?,
-    statusCellCallback: ThreadStatusCell.Callback?,
-    callback: ThreadListLayoutPresenterCallback?,
-    threadListLayoutCallback: ThreadListLayoutCallback?
+    threadPresenter: ThreadPresenter,
+    threadListLayoutCallback: ThreadListLayoutCallback
   ) {
-    this.callback = callback
+    this.callback = threadPresenter
+    this.threadPresenter = threadPresenter
     this.threadListLayoutCallback = threadListLayoutCallback
 
     listScrollToBottomExecutor = RendezvousCoroutineExecutor(this)
@@ -296,9 +311,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     postAdapter = PostAdapter(
       postFilterManager,
       recyclerView,
-      postAdapterCallback,
-      postCellCallback,
-      statusCellCallback
+      threadPresenter as PostAdapterCallback,
+      threadPresenter as PostCellCallback,
+      threadPresenter as ThreadStatusCell.Callback
     )
 
     recyclerView.adapter = postAdapter
@@ -329,6 +344,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     forceRecycleAllPostViews()
     recyclerView.adapter = null
+    threadPresenter = null
   }
 
   override fun onToolbarHeightKnown(heightChanged: Boolean) {
@@ -337,7 +353,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   private fun onRecyclerViewScrolled(recyclerView: RecyclerView) {
     // onScrolled can be called after cleanup()
-    if (showingThread == null) {
+    if (showingChanDescriptor == null) {
       return
     }
 
@@ -466,14 +482,19 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   suspend fun showPosts(
-    thread: ChanThread,
+    descriptor: ChanDescriptor,
     filter: PostsFilter,
     initial: Boolean
-  ) {
-    showingThread = thread
+  ): Boolean {
+    val presenter = threadPresenter
+      ?: return false
+
+    if (descriptor != presenter.currentChanDescriptor) {
+      return false
+    }
 
     if (initial) {
-      replyLayout.bindLoadable(thread.chanDescriptor)
+      replyLayout.bindLoadable(descriptor)
 
       recyclerView.layoutManager = null
       recyclerView.layoutManager = layoutManager
@@ -483,27 +504,29 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     setFastScroll(true)
 
+    val posts = chanThreadManager.getMutableListOfPosts(descriptor)
+
     postAdapter.setThread(
-      thread.chanDescriptor,
-      thread.postPreloadedInfoHolder,
-      filter.apply(thread.getPosts()),
+      descriptor,
+      filter.applyFilter(descriptor, posts),
       themeEngine.chanTheme
     )
 
     val chanDescriptor = currentChanDescriptorOrNull()
     if (chanDescriptor != null) {
-      restorePrevScrollPosition(chanDescriptor, thread, initial)
+      restorePrevScrollPosition(chanDescriptor, initial)
     }
+
+    return true
   }
 
   private fun restorePrevScrollPosition(
     chanDescriptor: ChanDescriptor,
-    thread: ChanThread,
     initial: Boolean
   ) {
     val markedPostNo = chanThreadViewableInfoManager.getMarkedPostNo(chanDescriptor)
     val markedPost = if (markedPostNo != null) {
-      PostUtils.findPostById(markedPostNo, thread)
+      chanThreadManager.findPostByPostNo(chanDescriptor, markedPostNo)
     } else {
       null
     }
@@ -529,7 +552,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       chanThreadViewableInfoManager.getAndConsumeMarkedPostNo(chanDescriptor) { postNo ->
         val position = getPostPositionInAdapter(postNo)
         if (position >= 0) {
-          highlightPost(markedPost)
+          highlightPost(markedPost.postDescriptor)
 
           when (postViewMode) {
             PostViewMode.LIST -> (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
@@ -548,11 +571,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   private fun getPostPositionInAdapter(postNo: Long): Int {
     var position = -1
-    val posts = postAdapter.displayList
+    val postDescriptors = postAdapter.displayList
 
-    for (i in posts.indices) {
-      val post = posts[i]
-      if (post.no == postNo) {
+    for (i in postDescriptors.indices) {
+      val postDescriptor = postDescriptors[i]
+      if (postDescriptor.postNo == postNo) {
         position = i
         break
       }
@@ -594,23 +617,19 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   fun gainedFocus() {
     val chanDescriptor = currentChanDescriptorOrNull()
-    val currentThread = thread
-    if (chanDescriptor != null && currentThread != null) {
-      restorePrevScrollPosition(chanDescriptor, currentThread, false)
+    if (chanDescriptor != null) {
+      restorePrevScrollPosition(chanDescriptor, false)
     }
 
     showToolbarIfNeeded()
   }
 
   override fun openReply(open: Boolean) {
-    if (showingThread == null || replyOpen == open) {
+    if (currentChanDescriptorOrNull() == null || replyOpen == open) {
       return
     }
 
-    val thread = thread
-      ?: return
-    val chanDescriptor = thread.chanDescriptor
-
+    val chanDescriptor = currentChanDescriptorOrNull()
     replyOpen = open
 
     replyLayout.measure(
@@ -680,7 +699,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   fun openSearch(open: Boolean) {
-    if (showingThread == null || searchOpen == open) {
+    if (currentChanDescriptorOrNull() == null || searchOpen == open) {
       return
     }
 
@@ -737,7 +756,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
 
     if (query != null) {
-      val size = displayingPosts.size
+      val size = displayingPostDescriptors.size
       searchStatus.text = AndroidUtils.getString(
         R.string.search_results,
         AndroidUtils.getQuantityString(R.plurals.posts, size, size),
@@ -815,16 +834,15 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     openReply(false)
 
-    if (showingThread != null && showingThread?.chanDescriptor?.isThreadDescriptor() == true) {
+    if (currentChanDescriptorOrNull() is ThreadDescriptor) {
       openSearch(false)
     }
 
-    showingThread = null
     lastPostCount = 0
     noParty()
   }
 
-  fun getThumbnail(postImage: PostImage?): ThumbnailView? {
+  fun getThumbnail(postImage: ChanPostImage?): ThumbnailView? {
     val layoutManager = recyclerView.layoutManager
       ?: return null
 
@@ -867,8 +885,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
   }
 
-  fun highlightPost(post: Post?) {
-    postAdapter.highlightPost(post)
+  fun highlightPost(postDescriptor: PostDescriptor?) {
+    postAdapter.highlightPost(postDescriptor)
   }
 
   fun highlightPostId(id: String?) {
@@ -895,10 +913,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   override fun requestNewPostLoad() {
     callback?.requestNewPostLoad()
-  }
-
-  override fun getThread(): ChanThread? {
-    return showingThread
   }
 
   override fun showImageReencodingWindow(supportsReencode: Boolean) {
@@ -957,20 +971,23 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       return
     }
 
-    val thread = thread
-    if (thread != null) {
-      if (thread.chanDescriptor.isThreadDescriptor() && postInfoMapItemDecoration == null) {
-        postInfoMapItemDecoration = PostInfoMapItemDecoration(
-          context,
-          ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT
-        )
-      }
+    val chanDescriptor = currentChanDescriptorOrNull()
+    if (chanDescriptor != null) {
+      if (chanDescriptor is ThreadDescriptor) {
+        val chanThread = chanThreadManager.getChanThread(chanDescriptor)
+        if (chanThread != null) {
+          if (postInfoMapItemDecoration == null) {
+            postInfoMapItemDecoration = PostInfoMapItemDecoration(
+              context,
+              ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT
+            )
+          }
 
-      if (postInfoMapItemDecoration != null) {
-        postInfoMapItemDecoration!!.setItems(
-          extractPostMapInfoHolderUseCase.execute(thread.getPosts()),
-          thread.postsCount
-        )
+          postInfoMapItemDecoration!!.setItems(
+            extractPostMapInfoHolderUseCase.execute(chanThread.getPostDescriptors()),
+            chanThread.postsCount
+          )
+        }
       }
 
       if (fastScroller == null) {
@@ -1069,11 +1086,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   private fun party() {
-    if (showingThread == null) {
-      return
-    }
+    val chanDescriptor = showingChanDescriptor
+      ?: return
 
-    if (showingThread!!.chanDescriptor.siteDescriptor().is4chan()) {
+    if (chanDescriptor.siteDescriptor().is4chan()) {
       val calendar = Calendar.getInstance()
       if (calendar[Calendar.MONTH] == Calendar.OCTOBER && calendar[Calendar.DAY_OF_MONTH] == 1) {
         recyclerView.addItemDecoration(PARTY)
@@ -1093,7 +1109,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     replyLayout.onImageOptionsComplete()
   }
 
-  fun onPostUpdated(post: Post) {
+  fun onPostUpdated(post: ChanPost) {
     BackgroundUtils.ensureMainThread()
 
     postAdapter.updatePost(post)

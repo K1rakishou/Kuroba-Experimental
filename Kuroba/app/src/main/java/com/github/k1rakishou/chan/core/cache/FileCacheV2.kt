@@ -2,21 +2,35 @@ package com.github.k1rakishou.chan.core.cache
 
 import android.annotation.SuppressLint
 import android.net.ConnectivityManager
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
-import com.github.k1rakishou.chan.core.cache.downloader.*
-import com.github.k1rakishou.chan.core.model.PostImage
-import com.github.k1rakishou.chan.core.settings.ChanSettings
+import com.github.k1rakishou.chan.core.cache.downloader.ActiveDownloads
+import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
+import com.github.k1rakishou.chan.core.cache.downloader.ChunkDownloader
+import com.github.k1rakishou.chan.core.cache.downloader.ChunkMerger
+import com.github.k1rakishou.chan.core.cache.downloader.ChunkPersister
+import com.github.k1rakishou.chan.core.cache.downloader.ConcurrentChunkedFileDownloader
+import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
+import com.github.k1rakishou.chan.core.cache.downloader.DownloadState
+import com.github.k1rakishou.chan.core.cache.downloader.FileCacheException
+import com.github.k1rakishou.chan.core.cache.downloader.FileDownloadRequest
+import com.github.k1rakishou.chan.core.cache.downloader.FileDownloadResult
+import com.github.k1rakishou.chan.core.cache.downloader.PartialContentSupportChecker
+import com.github.k1rakishou.chan.core.cache.downloader.log
+import com.github.k1rakishou.chan.core.cache.downloader.logError
+import com.github.k1rakishou.chan.core.cache.downloader.logErrorsAndExtractErrorMessage
 import com.github.k1rakishou.chan.core.site.SiteResolver
-import com.github.k1rakishou.chan.utils.AndroidUtils.getNetworkClass
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getNetworkClass
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils.runOnMainThread
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.chan.utils.PostUtils
 import com.github.k1rakishou.chan.utils.StringUtils.maskImageUrl
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.exhaustive
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.RawFile
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import io.reactivex.Flowable
 import io.reactivex.processors.PublishProcessor
 import io.reactivex.schedulers.Schedulers
@@ -147,7 +161,7 @@ class FileCacheV2(
     }
   }
 
-  fun enqueueMediaPrefetchRequest(postImage: PostImage): CancelableDownload? {
+  fun enqueueMediaPrefetchRequest(postImage: ChanPostImage): CancelableDownload? {
     val imageUrl = postImage.imageUrl
       ?: return null
 
@@ -177,7 +191,7 @@ class FileCacheV2(
   }
 
   fun enqueueChunkedDownloadFileRequest(
-    postImage: PostImage,
+    postImage: ChanPostImage,
     extraInfo: DownloadRequestExtraInfo,
     callback: FileCacheListener?
   ): CancelableDownload? {
@@ -191,7 +205,7 @@ class FileCacheV2(
   }
 
   fun enqueueNormalDownloadFileRequest(
-    postImage: PostImage,
+    postImage: ChanPostImage,
     isBatchDownload: Boolean,
     callback: FileCacheListener?
   ): CancelableDownload? {
@@ -222,7 +236,7 @@ class FileCacheV2(
 
   @SuppressLint("CheckResult")
   private fun enqueueDownloadFileRequest(
-    postImage: PostImage,
+    postImage: ChanPostImage,
     extraInfo: DownloadRequestExtraInfo,
     chunksCount: Int,
     isBatchDownload: Boolean,

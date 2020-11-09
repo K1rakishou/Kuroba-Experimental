@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.di.module.application;
 
-import com.github.k1rakishou.chan.utils.Logger;
+
+import com.github.k1rakishou.core_logger.Logger;
 
 import java.util.Locale;
 import java.util.concurrent.Executor;

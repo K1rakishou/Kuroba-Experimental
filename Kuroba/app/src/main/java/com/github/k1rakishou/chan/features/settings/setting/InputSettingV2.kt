@@ -1,11 +1,11 @@
 package com.github.k1rakishou.chan.features.settings.setting
 
 import android.content.Context
-import com.github.k1rakishou.chan.core.manager.DialogFactory
-import com.github.k1rakishou.chan.core.settings.BooleanSetting
-import com.github.k1rakishou.chan.core.settings.Setting
+import com.github.k1rakishou.Setting
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.features.settings.SettingsIdentifier
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
+import com.github.k1rakishou.prefs.BooleanSetting
 
 class InputSettingV2<T : Any> : SettingV2() {
   private var updateCounter = 0

@@ -20,20 +20,18 @@ import android.text.Spannable;
 
 import androidx.annotation.NonNull;
 
-import com.github.k1rakishou.chan.core.model.Post;
-import com.github.k1rakishou.chan.ui.theme.ChanTheme;
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder;
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
+import com.github.k1rakishou.model.data.post.ChanPost;
 
 public interface PostParser {
-    Post parse(
-            @NonNull ChanTheme theme,
-            Post.Builder builder,
+    ChanPost parse(
+            ChanPostBuilder builder,
             Callback callback
     );
 
     Spannable parseComment(
-            ChanTheme theme,
-            Post.Builder post,
+            ChanPostBuilder post,
             CharSequence commentRaw,
             boolean addPostImages,
             Callback callback

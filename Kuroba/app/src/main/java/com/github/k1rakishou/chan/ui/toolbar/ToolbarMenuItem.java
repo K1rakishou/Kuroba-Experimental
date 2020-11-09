@@ -30,7 +30,7 @@ import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuCo
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity;
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -43,8 +43,8 @@ import kotlin.jvm.functions.Function1;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getRes;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.removeFromParentView;
+import static com.github.k1rakishou.common.AndroidUtils.getRes;
+import static com.github.k1rakishou.common.AndroidUtils.removeFromParentView;
 
 /**
  * An item for the Toolbar menu. These are ImageViews with an icon, that when pressed call

@@ -5,7 +5,7 @@ import android.view.MotionEvent
 import android.view.ViewParent
 import com.github.k1rakishou.chan.ui.controller.BrowseController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
 import kotlin.math.abs
 import kotlin.math.max
 

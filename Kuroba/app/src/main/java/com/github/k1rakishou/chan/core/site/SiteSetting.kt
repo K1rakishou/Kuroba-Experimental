@@ -16,8 +16,8 @@
  */
 package com.github.k1rakishou.chan.core.site
 
-import com.github.k1rakishou.chan.core.settings.OptionsSetting
-import com.github.k1rakishou.chan.core.settings.StringSetting
+import com.github.k1rakishou.prefs.OptionsSetting
+import com.github.k1rakishou.prefs.StringSetting
 
 sealed class SiteSetting(val name: String) {
 

@@ -6,8 +6,11 @@ import android.graphics.Color
 import android.util.AttributeSet
 import androidx.core.view.ViewCompat
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.core_themes.IColorizableWidget
+import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.manipulateColor
 import com.google.android.material.button.MaterialButton
 import javax.inject.Inject
 
@@ -22,7 +25,7 @@ class ColorizableButton @JvmOverloads constructor(
 
   init {
     if (!isInEditMode) {
-      AndroidUtils.extractStartActivityComponent(context)
+      AppModuleAndroidUtils.extractStartActivityComponent(context)
         .inject(this)
     }
   }
@@ -48,15 +51,15 @@ class ColorizableButton @JvmOverloads constructor(
           intArrayOf()
         ),
         intArrayOf(
-          AndroidUtils.manipulateColor(themeEngine.chanTheme.accentColor, 1.2f),
+          manipulateColor(themeEngine.chanTheme.accentColor, 1.2f),
           themeEngine.chanTheme.accentColor,
-          AndroidUtils.manipulateColor(themeEngine.chanTheme.accentColor, .5f),
+          manipulateColor(themeEngine.chanTheme.accentColor, .5f),
           themeEngine.chanTheme.accentColor
         )
       )
     )
 
-    val isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.accentColor)
+    val isDarkColor = isDarkColor(themeEngine.chanTheme.accentColor)
     val textColorEnabled = if (isDarkColor) {
       Color.WHITE
     } else {

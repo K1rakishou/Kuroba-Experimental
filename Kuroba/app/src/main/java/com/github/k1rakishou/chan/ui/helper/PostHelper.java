@@ -16,63 +16,14 @@
  */
 package com.github.k1rakishou.chan.ui.helper;
 
-import android.graphics.Bitmap;
-import android.text.SpannableString;
 import android.text.TextUtils;
-import android.text.style.ImageSpan;
 
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.chan.core.model.Post;
 import com.github.k1rakishou.chan.core.site.http.Reply;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAppContext;
-
 public class PostHelper {
-    public static CharSequence prependIcon(CharSequence total, Bitmap bitmap, int height) {
-        SpannableString string = new SpannableString("  ");
-        ImageSpan imageSpan = new ImageSpan(getAppContext(), bitmap);
-
-        int width = (int) (height / (bitmap.getHeight() / (float) bitmap.getWidth()));
-
-        imageSpan.getDrawable().setBounds(0, 0, width, height);
-        string.setSpan(imageSpan, 0, 1, 0);
-        if (total == null) {
-            return string;
-        } else {
-            return TextUtils.concat(string, " ", total);
-        }
-    }
-
-    public static String getTitle(@Nullable Post post, @Nullable ChanDescriptor chanDescriptor) {
-        if (post != null) {
-            if (!TextUtils.isEmpty(post.subject)) {
-                return "/" + post.boardDescriptor.getBoardCode() + "/ - " + post.subject.toString();
-            } else if (!TextUtils.isEmpty(post.getComment())) {
-                int length = Math.min(post.getComment().length(), 200);
-                return "/" + post.boardDescriptor.getBoardCode() + "/ - " + post.getComment().subSequence(0, length);
-            } else {
-                return "/" + post.boardDescriptor.getBoardCode() + "/" + post.no;
-            }
-        } else if (chanDescriptor != null) {
-            if (chanDescriptor instanceof ChanDescriptor.CatalogDescriptor) {
-                return "/" + chanDescriptor.boardCode() + "/";
-            } else {
-                ChanDescriptor.ThreadDescriptor threadDescriptor =
-                        (ChanDescriptor.ThreadDescriptor) chanDescriptor;
-
-                return "/" + chanDescriptor.boardCode() + "/" + threadDescriptor.getThreadNo();
-            }
-        } else {
-            return "";
-        }
-    }
 
     @Nullable
     public static String getTitle(Reply reply) {
@@ -93,14 +44,5 @@ public class PostHelper {
 
             return "/" + boardCode + "/" + threadNo;
         }
-    }
-
-    private static DateFormat dateFormat =
-            SimpleDateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.MEDIUM, Locale.ENGLISH);
-    private static Date tmpDate = new Date();
-
-    public static String getLocalDate(Post post) {
-        tmpDate.setTime(post.time * 1000L);
-        return dateFormat.format(tmpDate);
     }
 }

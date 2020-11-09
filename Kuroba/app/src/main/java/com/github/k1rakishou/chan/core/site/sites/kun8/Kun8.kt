@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.kun8
 
-import com.github.k1rakishou.chan.core.model.Post
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder
 import com.github.k1rakishou.chan.core.model.SiteBoards
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
@@ -51,7 +51,7 @@ class Kun8 : CommonSite() {
     })
 
     setEndpoints(object : VichanEndpoints(this, "https://8kun.top", "https://sys.8kun.top") {
-      override fun imageUrl(post: Post.Builder, arg: Map<String, String>): HttpUrl {
+      override fun imageUrl(post: ChanPostBuilder, arg: Map<String, String>): HttpUrl {
         val tim = requireNotNull(arg["tim"]) { "\"tim\" parameter not found" }
         val ext = requireNotNull(arg["ext"]) { "\"ext\" parameter not found" }
 
@@ -59,7 +59,7 @@ class Kun8 : CommonSite() {
         return requireNotNull(url) { "image url is null" }
       }
 
-      override fun thumbnailUrl(post: Post.Builder, spoiler: Boolean, customSpoilters: Int, arg: Map<String, String>): HttpUrl {
+      override fun thumbnailUrl(post: ChanPostBuilder, spoiler: Boolean, customSpoilters: Int, arg: Map<String, String>): HttpUrl {
         val tim = requireNotNull(arg["tim"]) { "\"tim\" parameter not found" }
 
         val extension = when (val ext = requireNotNull(arg["ext"]) { "\"ext\" parameter not found" }) {
@@ -121,7 +121,7 @@ class Kun8 : CommonSite() {
     })
 
     setApi(VichanApi(siteManager, boardManager, this))
-    setParser(VichanCommentParser(themeEngine, mockReplyManager))
+    setParser(VichanCommentParser(mockReplyManager))
   }
 
   override fun commentParserType(): CommentParserType {

@@ -17,11 +17,11 @@
 package com.github.k1rakishou.chan.core.site.http
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.suspendCall
+import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow

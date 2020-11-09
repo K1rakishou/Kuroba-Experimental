@@ -3,11 +3,11 @@ package com.github.k1rakishou.chan.core.usecase
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.common.putIfNotContains
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import kotlinx.coroutines.CoroutineScope

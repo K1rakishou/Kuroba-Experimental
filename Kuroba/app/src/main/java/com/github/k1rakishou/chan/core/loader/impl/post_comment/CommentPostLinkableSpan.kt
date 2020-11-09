@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.loader.impl.post_comment
 
-import com.github.k1rakishou.chan.ui.text.span.PostLinkable
+import com.github.k1rakishou.core_spannable.PostLinkable
 
 internal data class CommentPostLinkableSpan(
   val postLinkable: PostLinkable,

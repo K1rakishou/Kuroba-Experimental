@@ -1,11 +1,11 @@
 package com.github.k1rakishou.chan.core.loader.impl
 
 import com.github.k1rakishou.chan.core.loader.LoaderResult
-import com.github.k1rakishou.chan.core.loader.LoaderType
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader
 import com.github.k1rakishou.chan.core.loader.PostLoaderData
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.model.data.post.LoaderType
 import io.reactivex.Single
 
 class Chan4CloudFlareImagePreloader(

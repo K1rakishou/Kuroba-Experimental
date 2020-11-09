@@ -2,20 +2,21 @@ package com.github.k1rakishou.chan.core.site.common.taimaba
 
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.model.PostHttpIcon
-import com.github.k1rakishou.chan.core.model.PostImage
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder
+import com.github.k1rakishou.chan.core.model.ChanPostImageBuilder
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.CommonSite.CommonApi
 import com.github.k1rakishou.chan.core.site.parser.ChanReader.Companion.DEFAULT_POST_LIST_CAPACITY
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.google.gson.stream.JsonReader
 import org.jsoup.parser.Parser
 import java.io.IOException
@@ -41,7 +42,7 @@ class TaimabaApi(
 
   @Throws(Exception::class)
   private suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
-    val builder = Post.Builder()
+    val builder = ChanPostBuilder()
     builder.boardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
 
     val site = siteManager.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
@@ -66,7 +67,7 @@ class TaimabaApi(
     builder.op(true)
     builder.opId(0)
     var postcom: String? = null
-    val files: MutableList<PostImage> = ArrayList()
+    val files: MutableList<ChanPostImage> = ArrayList()
 
     // Country flag
     var countryCode: String? = null
@@ -133,7 +134,8 @@ class TaimabaApi(
     // The file from between the other values.
     if (fileName != null && fileExt != null) {
       val args = SiteEndpoints.makeArgument("tim", fileName, "ext", fileExt)
-      val image = PostImage.Builder().thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
+      val image = ChanPostImageBuilder()
+        .thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
         .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, board.customSpoilers, args))
         .imageUrl(endpoints.imageUrl(builder, args))
         .filename(Parser.unescapeEntities(fileName, false))
@@ -142,6 +144,7 @@ class TaimabaApi(
         .imageHeight(fileHeight)
         .spoiler(fileSpoiler)
         .size(fileSize)
+        .postDescriptor(builder.postDescriptor)
         .build()
 
       // Insert it at the beginning.
@@ -152,7 +155,7 @@ class TaimabaApi(
 
     if (builder.op) {
       // Update OP fields later on the main thread
-      val op = Post.Builder()
+      val op = ChanPostBuilder()
       op.closed(builder.closed)
       op.archived(builder.archived)
       op.sticky(builder.sticky)
@@ -165,12 +168,12 @@ class TaimabaApi(
 
     if (countryCode != null && countryName != null) {
       val countryUrl = endpoints.icon("country", SiteEndpoints.makeArgument("country_code", countryCode))
-      builder.addHttpIcon(PostHttpIcon(countryUrl, "$countryName/$countryCode"))
+      builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/$countryCode"))
     }
 
     if (trollCountryCode != null && countryName != null) {
       val countryUrl = endpoints.icon("troll_country", SiteEndpoints.makeArgument("troll_country_code", trollCountryCode))
-      builder.addHttpIcon(PostHttpIcon(countryUrl, "$countryName/t_$trollCountryCode"))
+      builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/t_$trollCountryCode"))
     }
 
     chanReaderProcessor.addPost(builder)
@@ -197,10 +200,10 @@ class TaimabaApi(
   @Throws(IOException::class)
   private fun readPostImage(
     reader: JsonReader,
-    builder: Post.Builder,
+    builder: ChanPostBuilder,
     board: ChanBoard,
     endpoints: SiteEndpoints
-  ): PostImage? {
+  ): ChanPostImage? {
     var fileSize: Long = 0
     var fileExt: String? = null
     var fileWidth = 0
@@ -226,7 +229,8 @@ class TaimabaApi(
 
     if (fileName != null && fileExt != null) {
       val args = SiteEndpoints.makeArgument("tim", fileName, "ext", fileExt)
-      return PostImage.Builder().thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
+      return ChanPostImageBuilder()
+        .thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
         .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, board.customSpoilers, args))
         .imageUrl(endpoints.imageUrl(builder, args))
         .filename(Parser.unescapeEntities(fileName, false))
@@ -235,6 +239,7 @@ class TaimabaApi(
         .imageHeight(fileHeight)
         .spoiler(fileSpoiler)
         .size(fileSize)
+        .postDescriptor(builder.postDescriptor)
         .build()
     }
 

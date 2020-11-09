@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.features.settings.screens
 
 import android.content.Context
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.manager.DialogFactory
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
 import com.github.k1rakishou.chan.features.settings.ImportExportScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup

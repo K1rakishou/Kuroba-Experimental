@@ -6,7 +6,7 @@ import com.github.k1rakishou.chan.core.site.ParserRepository
 import com.github.k1rakishou.chan.core.site.sites.Lainchan
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.whenever

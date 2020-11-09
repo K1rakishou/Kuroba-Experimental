@@ -1,13 +1,13 @@
 package com.github.k1rakishou.chan.features.settings.screens
 
 import android.content.Context
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
-import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.features.settings.DatabaseSummaryScreen
 import com.github.k1rakishou.chan.features.settings.DeveloperScreen
 import com.github.k1rakishou.chan.features.settings.SettingClickAction
@@ -15,10 +15,10 @@ import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.ui.controller.LogsController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.getString
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
+import com.github.k1rakishou.common.AndroidUtils.getString
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
 
 class DeveloperSettingsScreen(
   context: Context,
@@ -92,7 +92,7 @@ class DeveloperSettingsScreen(
           },
           callback = {
             fileCacheV2.clearCache()
-            AndroidUtils.showToast(context, "Cleared image cache")
+            showToast(context, "Cleared image cache")
           }
         )
 
@@ -111,7 +111,7 @@ class DeveloperSettingsScreen(
           topDescriptionIdFunc = { R.string.settings_dump_thread_stack },
           callback = {
             dumpThreadStack()
-            AndroidUtils.showToast(context, "Thread stack dumped")
+            showToast(context, "Thread stack dumped")
           }
         )
 
@@ -121,7 +121,7 @@ class DeveloperSettingsScreen(
           topDescriptionIdFunc = { R.string.settings_reset_thread_open_counter },
           callback = {
             ChanSettings.threadOpenCounter.reset()
-            AndroidUtils.showToast(context, "Done")
+            showToast(context, "Done")
           }
         )
 

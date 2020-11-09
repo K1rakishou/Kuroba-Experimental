@@ -23,15 +23,15 @@ import android.view.ViewGroup;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.chan.ui.theme.widget.IColorizableWidget;
 import com.github.k1rakishou.chan.ui.widget.SlidingPaneLayoutEx;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
+import com.github.k1rakishou.core_themes.IColorizableWidget;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.waitForLayout;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
 
 public class ThreadSlidingPaneLayout extends SlidingPaneLayoutEx implements IColorizableWidget {
 
@@ -60,7 +60,7 @@ public class ThreadSlidingPaneLayout extends SlidingPaneLayoutEx implements ICol
 
     private void init() {
         if (!isInEditMode()) {
-            AndroidUtils.extractStartActivityComponent(getContext())
+            AppModuleAndroidUtils.extractStartActivityComponent(getContext())
                     .inject(this);
         }
     }

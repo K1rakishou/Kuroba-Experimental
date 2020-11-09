@@ -1,13 +1,21 @@
 package com.github.k1rakishou.model.repository
 
-import com.github.k1rakishou.common.*
+import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.common.MurmurHashUtils
+import com.github.k1rakishou.common.SuspendableInitializer
+import com.github.k1rakishou.common.linkedMapWithCap
+import com.github.k1rakishou.common.mutableMapWithCap
+import com.github.k1rakishou.common.myAsync
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
-import com.github.k1rakishou.model.source.cache.PostsCache
+import com.github.k1rakishou.model.source.cache.ChanCacheOptions
+import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import com.github.k1rakishou.model.source.local.ChanPostLocalSource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,16 +27,14 @@ import kotlin.time.measureTimedValue
 
 class ChanPostRepository(
   database: KurobaDatabase,
-  loggerTag: String,
-  logger: Logger,
   private val isDevFlavor: Boolean,
   private val applicationScope: CoroutineScope,
+  private val appConstants: AppConstants,
   private val localSource: ChanPostLocalSource,
-  private val appConstants: AppConstants
-) : AbstractRepository(database, logger) {
-  private val TAG = "$loggerTag ChanPostRepository"
+  private val chanThreadsCache: ChanThreadsCache
+) : AbstractRepository(database) {
+  private val TAG = "ChanPostRepository"
   private val suspendableInitializer = SuspendableInitializer<Unit>("ChanPostRepository")
-  private val postCache = PostsCache(appConstants.maxPostsCountInPostsCache, loggerTag, logger)
 
   init {
     applicationScope.launch(Dispatchers.Default) {
@@ -51,7 +57,7 @@ class ChanPostRepository(
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
     return applicationScope.myAsync {
-      return@myAsync postCache.getTotalCachedPostsCount()
+      return@myAsync chanThreadsCache.getTotalCachedPostsCount()
     }
   }
 
@@ -69,8 +75,10 @@ class ChanPostRepository(
    * Returns a list of posts that differ from the cached ones and which we want to parse again and
    * show the user (otherwise show cached posts)
    * */
+  @Suppress("UNCHECKED_CAST")
   suspend fun insertOrUpdateMany(
-    posts: MutableList<ChanPost>,
+    posts: List<ChanPost>,
+    cacheOptions: ChanCacheOptions,
     isCatalog: Boolean
   ): ModularResult<List<Long>> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
@@ -78,48 +86,59 @@ class ChanPostRepository(
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         if (isCatalog) {
-          return@tryWithTransaction insertOrUpdateCatalogOriginalPosts(posts)
+          require(posts.all { post -> post is ChanOriginalPost }) {
+            "Not all posts are original posts"
+          }
+
+          return@tryWithTransaction insertOrUpdateCatalogOriginalPosts(
+            posts as List<ChanOriginalPost>,
+            cacheOptions
+          )
         } else {
-          return@tryWithTransaction insertOrUpdateThreadPosts(posts)
+          return@tryWithTransaction insertOrUpdateThreadPosts(
+            posts,
+            cacheOptions
+          )
         }
       }
     }
   }
 
-  suspend fun getCachedThreadPostsNos(threadDescriptor: ChanDescriptor.ThreadDescriptor): Set<Long> {
+  fun getCachedThreadPostsNos(threadDescriptor: ChanDescriptor.ThreadDescriptor): Set<Long> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    return postCache.getAllPostNoSet(threadDescriptor, Int.MAX_VALUE)
+    return chanThreadsCache.getThreadPostNoSet(threadDescriptor)
   }
 
-  suspend fun getCachedPost(postDescriptor: PostDescriptor, isOP: Boolean): ChanPost? {
+  fun getCachedPost(postDescriptor: PostDescriptor, isOP: Boolean): ChanPost? {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    return postCache.getPostFromCache(postDescriptor, isOP)
+    check(postDescriptor.isOP() == isOP) {
+      "isOP flags differ for ($postDescriptor), " +
+        "postDescriptor.isOP: ${postDescriptor.isOP()}, isOP: $isOP"
+    }
+
+    if (isOP) {
+      return chanThreadsCache.getOriginalPostFromCache(postDescriptor)
+    } else {
+      return chanThreadsCache.getPostFromCache(postDescriptor)
+    }
   }
 
-  suspend fun deleteThreadsFromCache(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
+  fun putPostHash(postDescriptor: PostDescriptor, hash: MurmurHashUtils.Murmur3Hash) {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    postCache.deleteThreads(threadDescriptors)
+    chanThreadsCache.putPostHash(postDescriptor, hash)
   }
 
-  suspend fun deletePostFromCache(postDescriptor: PostDescriptor) {
+  fun getPostHash(postDescriptor: PostDescriptor): MurmurHashUtils.Murmur3Hash? {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    postCache.deletePost(postDescriptor)
+    return chanThreadsCache.getPostHash(postDescriptor)
   }
 
-  suspend fun putPostHash(postDescriptor: PostDescriptor, hash: MurmurHashUtils.Murmur3Hash) {
-    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
-
-    postCache.putPostHash(postDescriptor, hash)
-  }
-
-  suspend fun getPostHash(postDescriptor: PostDescriptor): MurmurHashUtils.Murmur3Hash? {
-    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
-
-    return postCache.getPostHash(postDescriptor)
+  fun markThreadAsDeleted(threadDescriptor: ChanDescriptor.ThreadDescriptor, deleted: Boolean) {
+    chanThreadsCache.markThreadAsDeleted(threadDescriptor, deleted)
   }
 
   suspend fun getCatalogOriginalPosts(
@@ -129,20 +148,20 @@ class ChanPostRepository(
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
     require(count > 0) { "Bad count param: $count" }
 
-    logger.log(TAG, "getCatalogOriginalPosts(descriptor=$descriptor, count=$count)")
+    Logger.d(TAG, "getCatalogOriginalPosts(descriptor=$descriptor, count=$count)")
 
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
-        val originalPostsFromDatabase = localSource.getCatalogOriginalPosts(
+        val catalogPosts = localSource.getCatalogOriginalPosts(
           descriptor,
           count
         )
 
-        if (originalPostsFromDatabase.isNotEmpty()) {
-          postCache.putManyIntoCache(originalPostsFromDatabase)
+        if (catalogPosts.isNotEmpty()) {
+          chanThreadsCache.putManyCatalogPostsIntoCache(catalogPosts)
         }
 
-        return@tryWithTransaction originalPostsFromDatabase
+        return@tryWithTransaction catalogPosts
           // Sort in descending order by threads' lastModified value because that's the BUMP ordering
           .sortedByDescending { chanPost -> chanPost.lastModified }
       }
@@ -158,7 +177,7 @@ class ChanPostRepository(
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         val originalPostsFromCache = threadNoList.mapNotNull { threadNo ->
-          postCache.getOriginalPostFromCache(descriptor.toThreadDescriptor(threadNo))
+          chanThreadsCache.getOriginalPostFromCache(descriptor.toThreadDescriptor(threadNo))
         }
 
         val originalPostNoFromCacheSet = originalPostsFromCache.map { post ->
@@ -171,23 +190,23 @@ class ChanPostRepository(
 
         if (originalPostNoListToGetFromDatabase.isEmpty()) {
           // All posts were found in the cache
-          logger.log(TAG, "getCatalogOriginalPosts() found all posts in the cache " +
+          Logger.d(TAG, "getCatalogOriginalPosts() found all posts in the cache " +
             "(count=${originalPostsFromCache.size})")
           return@tryWithTransaction originalPostsFromCache
         }
 
-        val originalPostsFromDatabase = localSource.getCatalogOriginalPosts(
+        val catalogPostsFromDatabase = localSource.getCatalogOriginalPosts(
           descriptor,
           originalPostNoListToGetFromDatabase
         )
 
-        if (originalPostsFromDatabase.isNotEmpty()) {
-          postCache.putManyIntoCache(originalPostsFromDatabase)
+        if (catalogPostsFromDatabase.isNotEmpty()) {
+          chanThreadsCache.putManyCatalogPostsIntoCache(catalogPostsFromDatabase)
         }
 
-        logger.log(TAG, "getCatalogOriginalPosts() found ${originalPostsFromCache.size} posts in " +
-          "the cache and the rest (${originalPostsFromDatabase.size}) taken from the database")
-        return@tryWithTransaction originalPostsFromCache + originalPostsFromDatabase
+        Logger.d(TAG, "getCatalogOriginalPosts() found ${originalPostsFromCache.size} posts in " +
+          "the cache and the rest (${catalogPostsFromDatabase.size}) taken from the database")
+        return@tryWithTransaction originalPostsFromCache + catalogPostsFromDatabase
       }
     }
   }
@@ -197,12 +216,12 @@ class ChanPostRepository(
    * */
   suspend fun getCatalogOriginalPosts(
     threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
-  ): ModularResult<LinkedHashMap<ChanDescriptor.ThreadDescriptor, ChanPost>> {
+  ): ModularResult<LinkedHashMap<ChanDescriptor.ThreadDescriptor, ChanOriginalPost>> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
-        val originalPostsFromCache = postCache.getOriginalPostsFromCache(threadDescriptors)
+        val originalPostsFromCache = chanThreadsCache.getCatalogPostsFromCache(threadDescriptors)
 
         val notCachedOriginalPostThreadDescriptors = threadDescriptors.filter { threadDescriptor ->
           !originalPostsFromCache.containsKey(threadDescriptor)
@@ -210,36 +229,30 @@ class ChanPostRepository(
 
         if (notCachedOriginalPostThreadDescriptors.isEmpty()) {
           // All posts were found in the cache
-          logger.log(TAG, "getCatalogOriginalPosts() found all posts in the cache " +
+          Logger.d(TAG, "getCatalogOriginalPosts() found all posts in the cache " +
             "(count=${originalPostsFromCache.size})")
           return@tryWithTransaction originalPostsFromCache
         }
 
-        val originalPostsFromDatabase = localSource.getCatalogOriginalPosts(
+        val catalogPostsFromDatabase = localSource.getCatalogOriginalPosts(
           notCachedOriginalPostThreadDescriptors
         )
 
-        if (originalPostsFromDatabase.isNotEmpty()) {
-          postCache.putManyIntoCache(originalPostsFromDatabase.values)
+        if (catalogPostsFromDatabase.isNotEmpty()) {
+          chanThreadsCache.putManyCatalogPostsIntoCache(catalogPostsFromDatabase.values.toList())
         }
 
-        val tempMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanPost>(
-          originalPostsFromCache.size + originalPostsFromDatabase.size
+        val tempMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanOriginalPost>(
+          originalPostsFromCache.size + catalogPostsFromDatabase.size
         )
 
-        logger.log(TAG, "getCatalogOriginalPosts() found ${originalPostsFromCache.size} posts in " +
-          "the cache and the rest (${originalPostsFromDatabase.size}) taken from the database")
+        Logger.d(TAG, "getCatalogOriginalPosts() found ${originalPostsFromCache.size} posts in " +
+          "the cache and the rest (${catalogPostsFromDatabase.size}) taken from the database")
 
         tempMap.putAll(originalPostsFromCache)
-        tempMap.putAll(originalPostsFromDatabase)
+        tempMap.putAll(catalogPostsFromDatabase)
 
-        if (isDevFlavor) {
-          tempMap.values.forEach { chanPost ->
-            check(chanPost.isOp) { "getCatalogOriginalPosts() is returning a non-OP post!" }
-          }
-        }
-
-        val resultMap = linkedMapWithCap<ChanDescriptor.ThreadDescriptor, ChanPost>(tempMap.size)
+        val resultMap = linkedMapWithCap<ChanDescriptor.ThreadDescriptor, ChanOriginalPost>(tempMap.size)
 
         threadDescriptors.forEach { threadDescriptor ->
           resultMap[threadDescriptor] = requireNotNull(tempMap[threadDescriptor])
@@ -256,36 +269,48 @@ class ChanPostRepository(
 
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
-        logger.log(TAG, "preloadForThread($threadDescriptor) begin")
+        Logger.d(TAG, "preloadForThread($threadDescriptor) begin")
 
         val time = measureTime {
-          val postsFromDatabase = localSource.getThreadPosts(
-            threadDescriptor,
-            emptySet(),
-            Int.MAX_VALUE
-          )
-
-          logger.log(TAG, "preloadForThread($threadDescriptor) got ${postsFromDatabase.size} from DB")
+          val postsFromDatabase = localSource.getThreadPosts(threadDescriptor)
+          Logger.d(TAG, "preloadForThread($threadDescriptor) got ${postsFromDatabase.size} from DB")
 
           if (postsFromDatabase.isNotEmpty()) {
-            postCache.putManyIntoCache(postsFromDatabase)
+            chanThreadsCache.putManyThreadPostsIntoCache(
+              postsFromDatabase,
+              ChanCacheOptions.StoreInMemory
+            )
           }
         }
 
-        logger.log(TAG, "preloadForThread($threadDescriptor) end, took $time")
+        Logger.d(TAG, "preloadForThread($threadDescriptor) end, took $time")
       }
     }
   }
 
   suspend fun getThreadPosts(
-    descriptor: ChanDescriptor.ThreadDescriptor,
-    maxCount: Int
+    descriptor: ChanDescriptor.ThreadDescriptor
   ): List<ChanPost> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
-    logger.log(TAG, "getThreadPosts(descriptor=$descriptor, maxCount=$maxCount)")
+    Logger.d(TAG, "getThreadPosts(descriptor=$descriptor)")
 
     return applicationScope.myAsync {
-      return@myAsync postCache.getAll(descriptor, maxCount)
+      val postsFromCache = chanThreadsCache.getThreadPosts(descriptor)
+      if (postsFromCache.isNotEmpty()) {
+        return@myAsync postsFromCache
+      }
+
+      val postsFromDatabase = localSource.getThreadPosts(descriptor)
+      if (postsFromDatabase.isEmpty()) {
+        return@myAsync emptyList()
+      }
+
+      chanThreadsCache.putManyThreadPostsIntoCache(
+        postsFromDatabase,
+        ChanCacheOptions.StoreInMemory
+      )
+
+      return@myAsync postsFromDatabase
     }
   }
 
@@ -295,7 +320,7 @@ class ChanPostRepository(
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         val result = localSource.deleteAll()
-        postCache.deleteAll()
+        chanThreadsCache.deleteAll()
 
         return@tryWithTransaction result
       }
@@ -308,9 +333,28 @@ class ChanPostRepository(
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         val result = localSource.deleteThread(threadDescriptor)
-        postCache.deleteThread(threadDescriptor)
+        chanThreadsCache.deleteThread(threadDescriptor)
 
         return@tryWithTransaction result
+      }
+    }
+  }
+
+  suspend fun deleteCatalog(catalogDescriptor: ChanDescriptor.CatalogDescriptor): ModularResult<Unit> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        val threadDescriptors = chanThreadsCache.getCatalog(catalogDescriptor)
+          ?.mapPostsOrdered { chanOriginalPost -> chanOriginalPost.postDescriptor.threadDescriptor() }
+          ?.distinct()
+
+        if (threadDescriptors != null) {
+          localSource.deleteCatalog(threadDescriptors)
+        }
+
+        chanThreadsCache.deleteCatalog(catalogDescriptor)
+        return@tryWithTransaction
       }
     }
   }
@@ -321,7 +365,7 @@ class ChanPostRepository(
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         localSource.deletePost(postDescriptor)
-        postCache.deletePost(postDescriptor)
+        chanThreadsCache.deletePost(postDescriptor)
 
         return@tryWithTransaction
       }
@@ -348,23 +392,28 @@ class ChanPostRepository(
     }
   }
 
-  private suspend fun insertOrUpdateCatalogOriginalPosts(posts: MutableList<ChanPost>): List<Long> {
+  private suspend fun insertOrUpdateCatalogOriginalPosts(
+    posts: List<ChanOriginalPost>,
+    cacheOptions: ChanCacheOptions
+  ): List<Long> {
     if (posts.isEmpty()) {
       return emptyList()
     }
 
-    require(posts.all { post -> post.isOp }) { "Not all posts are original posts" }
-    localSource.insertManyOriginalPosts(posts)
+    localSource.insertManyOriginalPosts(posts, cacheOptions)
 
     if (posts.isNotEmpty()) {
-      postCache.putManyIntoCache(posts)
+      chanThreadsCache.putManyCatalogPostsIntoCache(posts)
     }
 
     return posts.map { it.postDescriptor.postNo }
   }
 
-  private suspend fun insertOrUpdateThreadPosts(posts: MutableList<ChanPost>): List<Long> {
-    var originalPost: ChanPost? = null
+  private suspend fun insertOrUpdateThreadPosts(
+    posts: List<ChanPost>,
+    cacheOptions: ChanCacheOptions
+  ): List<Long> {
+    var originalPost: ChanOriginalPost? = null
     val postsThatDifferWithCache = ArrayList<ChanPost>()
 
     // Figure out what posts differ from the cache that we want to update in the
@@ -372,50 +421,57 @@ class ChanPostRepository(
     posts.forEach { chanPost ->
       val differsFromCached = postDiffersFromCached(chanPost)
       if (differsFromCached) {
-        if (chanPost.isOp) {
+        if (chanPost is ChanOriginalPost) {
           if (originalPost != null) {
             throw IllegalStateException("More than one OP found!")
           }
 
           originalPost = chanPost
-        } else {
-          postsThatDifferWithCache += chanPost
         }
+
+        postsThatDifferWithCache += chanPost
       }
     }
 
-    logger.log(TAG, "insertOrUpdateThreadPosts() ${postsThatDifferWithCache.size} posts differ from " +
+    if (originalPost == null) {
+      Logger.e(TAG, "Posts have no original post")
+      return emptyList()
+    }
+
+    if (postsThatDifferWithCache.isEmpty()) {
+      Logger.d(TAG, "postsThatDifferWithCache is empty")
+      return emptyList()
+    }
+
+    Logger.d(TAG, "insertOrUpdateThreadPosts() ${postsThatDifferWithCache.size} posts differ from " +
       "the cache (total posts=${posts.size})")
 
-    val chanThreadId = if (originalPost != null) {
-      val chanThreadId = localSource.insertOriginalPost(originalPost!!)
-      postCache.putIntoCache(originalPost!!)
-
-      chanThreadId
-    } else {
-      if (postsThatDifferWithCache.isNotEmpty()) {
-        localSource.getThreadIdByPostDescriptor(
-          postsThatDifferWithCache.first().postDescriptor
-        )
-      } else {
-        null
-      }
-    }
-
+    val chanThreadId = localSource.getThreadIdByPostDescriptor(originalPost!!.postDescriptor)
     if (chanThreadId == null) {
-      return if (originalPost == null) {
-        emptyList()
-      } else {
-        listOf(originalPost!!.postDescriptor.postNo)
-      }
+      return originalPost?.postDescriptor?.postNo
+        ?.let { post -> listOf(post) }
+        ?: emptyList()
     }
 
-    if (postsThatDifferWithCache.isNotEmpty()) {
-      localSource.insertPosts(chanThreadId, postsThatDifferWithCache)
-      postCache.putManyIntoCache(postsThatDifferWithCache)
-    }
+    localSource.insertPosts(postsThatDifferWithCache, cacheOptions)
+    chanThreadsCache.putManyThreadPostsIntoCache(postsThatDifferWithCache, cacheOptions)
 
     return postsThatDifferWithCache.map { it.postDescriptor.postNo }
+  }
+
+  suspend fun cleanupPostsInRollingStickyThread(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    threadCap: Int
+  ): ModularResult<Unit> {
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        val chanThread = chanThreadsCache.getThread(threadDescriptor)
+          ?: return@tryWithTransaction
+
+        val postDescriptors = chanThread.cleanupPostsInRollingStickyThread(threadCap)
+        localSource.deletePosts(postDescriptors)
+      }
+    }
   }
 
   @OptIn(ExperimentalTime::class)
@@ -424,14 +480,14 @@ class ChanPostRepository(
       return@myAsync tryWithTransaction {
         val totalAmountOfPostsInDatabase = localSource.countTotalAmountOfPosts()
         if (totalAmountOfPostsInDatabase <= 0) {
-          logger.log(TAG, "deleteOldPostsIfNeeded database is empty")
+          Logger.d(TAG, "deleteOldPostsIfNeeded database is empty")
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }
 
         val maxPostsAmount = appConstants.maxAmountOfPostsInDatabase
 
         if (!forced && totalAmountOfPostsInDatabase < maxPostsAmount) {
-          logger.log(TAG, "Not enough posts to start deleting, " +
+          Logger.d(TAG, "Not enough posts to start deleting, " +
             "posts in database amount: $totalAmountOfPostsInDatabase, " +
             "max allowed posts amount: $maxPostsAmount")
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
@@ -448,20 +504,20 @@ class ChanPostRepository(
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }
 
-        logger.log(TAG, "Starting deleting $toDeleteCount posts " +
+        Logger.d(TAG, "Starting deleting $toDeleteCount posts " +
           "(totalAmountOfPostsInDatabase = $totalAmountOfPostsInDatabase, " +
           "maxPostsAmount = $maxPostsAmount)")
 
         val (deleteMRResult, time) = measureTimedValue { Try { localSource.deleteOldPosts(toDeleteCount) } }
         val deleteResult = if (deleteMRResult is ModularResult.Error) {
-          logger.logError(TAG, "Error while trying to delete old posts", deleteMRResult.error)
+          Logger.d(TAG, "Error while trying to delete old posts", deleteMRResult.error)
           throw deleteMRResult.error
         } else {
           (deleteMRResult as ModularResult.Value).value
         }
 
         val newAmount = localSource.countTotalAmountOfPosts()
-        logger.log(TAG, "Deleted ${deleteResult.deletedTotal} posts, " +
+        Logger.d(TAG, "Deleted ${deleteResult.deletedTotal} posts, " +
           "skipped ${deleteResult.skippedTotal} posts, $newAmount posts left, took $time")
 
         return@tryWithTransaction deleteResult
@@ -475,14 +531,14 @@ class ChanPostRepository(
       return@myAsync tryWithTransaction {
         val totalAmountOfThreadsInDatabase = localSource.countTotalAmountOfThreads()
         if (totalAmountOfThreadsInDatabase <= 0) {
-          logger.log(TAG, "deleteOldThreadsIfNeeded database is empty")
+          Logger.d(TAG, "deleteOldThreadsIfNeeded database is empty")
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }
 
         val maxThreadsAmount = appConstants.maxAmountOfThreadsInDatabase
 
         if (!forced && totalAmountOfThreadsInDatabase < maxThreadsAmount) {
-          logger.log(TAG, "Not enough threads to start deleting, " +
+          Logger.d(TAG, "Not enough threads to start deleting, " +
             "threads in database amount: $totalAmountOfThreadsInDatabase, " +
             "max allowed threads amount: $maxThreadsAmount")
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
@@ -499,20 +555,20 @@ class ChanPostRepository(
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }
 
-        logger.log(TAG, "Starting deleting $toDeleteCount threads " +
+        Logger.d(TAG, "Starting deleting $toDeleteCount threads " +
           "(totalAmountOfThreadsInDatabase = $totalAmountOfThreadsInDatabase, " +
           "maxThreadsAmount = $maxThreadsAmount)")
 
         val (deleteMRResult, time) = measureTimedValue { Try { localSource.deleteOldThreads(toDeleteCount) } }
         val deleteResult = if (deleteMRResult is ModularResult.Error) {
-          logger.logError(TAG, "Error while trying to delete old threads", deleteMRResult.error)
+          Logger.d(TAG, "Error while trying to delete old threads", deleteMRResult.error)
           throw deleteMRResult.error
         } else {
           (deleteMRResult as ModularResult.Value).value
         }
 
         val newAmount = localSource.countTotalAmountOfThreads()
-        logger.log(TAG, "Deleted ${deleteResult.deletedTotal} threads, " +
+        Logger.d(TAG, "Deleted ${deleteResult.deletedTotal} threads, " +
           "skipped ${deleteResult.skippedTotal} threads, $newAmount threads left, took $time")
 
         return@tryWithTransaction deleteResult
@@ -520,14 +576,19 @@ class ChanPostRepository(
     }
   }
 
-  private suspend fun postDiffersFromCached(chanPost: ChanPost): Boolean {
-    val fromCache = postCache.getPostFromCache(
-      chanPost.postDescriptor,
-      chanPost.isOp
-    ) ?: // Post is not cached yet - update
-      return true
+  private fun postDiffersFromCached(chanPost: ChanPost): Boolean {
+    val fromCache = if (chanPost is ChanOriginalPost) {
+      chanThreadsCache.getOriginalPostFromCache(chanPost.postDescriptor)
+    } else {
+      chanThreadsCache.getPostFromCache(chanPost.postDescriptor)
+    }
 
-    if (fromCache.isOp) {
+    if (fromCache == null) {
+      // Post is not cached yet - update
+      return true
+    }
+
+    if (fromCache is ChanOriginalPost) {
       // Cached post is an original post - always update
       return true
     }

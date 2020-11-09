@@ -2,8 +2,8 @@ package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.myAsync
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.bookmark.CreateBookmarkGroupEntriesTransaction
 import com.github.k1rakishou.model.data.bookmark.DeleteBookmarkGroupEntriesTransaction
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroup
@@ -15,12 +15,10 @@ import kotlin.time.measureTimedValue
 
 class ThreadBookmarkGroupRepository(
   database: KurobaDatabase,
-  loggerTag: String,
-  logger: Logger,
   private val applicationScope: CoroutineScope,
   private val localSource: ThreadBookmarkGroupLocalSource
-) : AbstractRepository(database, logger) {
-  private val TAG = "$loggerTag ThreadBookmarkGroupRepository"
+) : AbstractRepository(database) {
+  private val TAG = "ThreadBookmarkGroupRepository"
 
   @OptIn(ExperimentalTime::class)
   suspend fun initialize(): ModularResult<List<ThreadBookmarkGroup>> {
@@ -34,7 +32,7 @@ class ThreadBookmarkGroupRepository(
           return@measureTimedValue localSource.selectAll()
         }
 
-        logger.log(TAG, "initialize() -> ${bookmarks.size} took $duration")
+        Logger.d(TAG, "initialize() -> ${bookmarks.size} took $duration")
         return@tryWithTransaction bookmarks
       }
     }

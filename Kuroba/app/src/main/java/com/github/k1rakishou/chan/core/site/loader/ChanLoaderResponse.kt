@@ -16,23 +16,12 @@
  */
 package com.github.k1rakishou.chan.core.site.loader
 
-import com.github.k1rakishou.chan.core.manager.PostPreloadedInfoHolder
-import com.github.k1rakishou.chan.core.model.Post
+import com.github.k1rakishou.model.data.post.ChanOriginalPost
+import com.github.k1rakishou.model.data.post.ChanPost
 
 class ChanLoaderResponse(
   // Op Post that is created new each time.
   // Used to later copy members like image count to the real op on the main thread.
-  val op: Post.Builder,
-  val posts: List<Post>
-) {
-  lateinit var postPreloadedInfoHolder: PostPreloadedInfoHolder
-
-  /**
-   * When construction ChanLoaderResponse don't forget to call this method AFTER the posts are added.
-   * */
-  fun preloadPostsInfo() {
-    val holder = PostPreloadedInfoHolder()
-    holder.preloadPostsInfo(posts)
-    postPreloadedInfoHolder = holder
-  }
-}
+  val op: ChanOriginalPost,
+  val posts: List<ChanPost>
+)

@@ -2,8 +2,8 @@ package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.myAsync
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmark
 import com.github.k1rakishou.model.source.local.ThreadBookmarkLocalSource
 import com.github.k1rakishou.model.util.ensureBackgroundThread
@@ -13,12 +13,10 @@ import kotlin.time.measureTimedValue
 
 class BookmarksRepository(
   database: KurobaDatabase,
-  loggerTag: String,
-  logger: Logger,
   private val applicationScope: CoroutineScope,
   private val localSource: ThreadBookmarkLocalSource
-) : AbstractRepository(database, logger) {
-  private val TAG = "$loggerTag BookmarksRepository"
+) : AbstractRepository(database) {
+  private val TAG = "BookmarksRepository"
 
   @OptIn(ExperimentalTime::class)
   suspend fun initialize(allSiteNames: Set<String>): ModularResult<List<ThreadBookmark>> {
@@ -32,7 +30,7 @@ class BookmarksRepository(
           return@measureTimedValue localSource.selectAll()
         }
 
-        logger.log(TAG, "initialize() -> ${bookmarks.size} took $duration")
+        Logger.d(TAG, "initialize() -> ${bookmarks.size} took $duration")
         return@tryWithTransaction bookmarks
       }
     }
@@ -46,7 +44,7 @@ class BookmarksRepository(
           return@measureTimedValue localSource.persist(bookmarks)
         }
 
-        logger.log(TAG, "persist(${bookmarks.size}) took $duration")
+        Logger.d(TAG, "persist(${bookmarks.size}) took $duration")
         return@tryWithTransaction result
       }
     }

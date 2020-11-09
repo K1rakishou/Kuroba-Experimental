@@ -5,7 +5,7 @@ import android.view.MotionEvent
 import android.view.VelocityTracker
 import android.view.ViewConfiguration
 import android.view.ViewParent
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
 
 abstract class ControllerTracker(
   protected val context: Context

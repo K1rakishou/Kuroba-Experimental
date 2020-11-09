@@ -5,8 +5,9 @@ import android.util.AttributeSet
 import android.widget.FrameLayout
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.manipulateColor
 import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
@@ -22,7 +23,7 @@ class EpoxySearchPostGapView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_search_post_gap_view, this)
 
-    AndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractStartActivityComponent(context)
       .inject(this)
 
     onThemeChanged()
@@ -39,7 +40,7 @@ class EpoxySearchPostGapView @JvmOverloads constructor(
   }
 
   override fun onThemeChanged() {
-    setBackgroundColor(AndroidUtils.manipulateColor(themeEngine.chanTheme.backColor, .8f))
+    setBackgroundColor(manipulateColor(themeEngine.chanTheme.backColor, .8f))
   }
 
 }

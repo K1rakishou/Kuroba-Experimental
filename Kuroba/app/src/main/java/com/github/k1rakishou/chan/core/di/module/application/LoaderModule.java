@@ -12,7 +12,7 @@ import com.github.k1rakishou.chan.core.loader.impl.external_media_service.Stream
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.YoutubeMediaServiceExtraInfoFetcher;
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.model.repository.InlinedFileInfoRepository;
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository;
 

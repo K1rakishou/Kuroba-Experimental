@@ -1,10 +1,10 @@
 package com.github.k1rakishou.chan.features.settings.setting
 
 import android.content.Context
-import com.github.k1rakishou.chan.core.settings.BooleanSetting
 import com.github.k1rakishou.chan.features.settings.SettingClickAction
 import com.github.k1rakishou.chan.features.settings.SettingsIdentifier
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
+import com.github.k1rakishou.prefs.BooleanSetting
 
 open class LinkSettingV2 protected constructor() : SettingV2() {
   private var updateCounter = 0

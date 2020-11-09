@@ -1,13 +1,14 @@
 package com.github.k1rakishou.chan.core.di.module.application;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.BookmarksManager;
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
 import com.github.k1rakishou.chan.core.manager.PostHideManager;
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase;
@@ -15,10 +16,9 @@ import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
-import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.common.AppConstants;
+import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.repository.ChanPostRepository;
 
@@ -28,6 +28,8 @@ import dagger.Module;
 import dagger.Provides;
 import kotlinx.coroutines.CoroutineScope;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild;
+
 @Module
 public class UseCaseModule {
 
@@ -35,13 +37,15 @@ public class UseCaseModule {
     @Singleton
     public ExtractPostMapInfoHolderUseCase provideExtractReplyPostsPositionsFromPostsListUseCase(
             SavedReplyManager savedReplyManager,
-            SiteManager siteManager
+            SiteManager siteManager,
+            ChanThreadManager chanThreadManager
     ) {
         Logger.d(AppModule.DI_TAG, "ExtractPostMapInfoHolderUseCase");
 
         return new ExtractPostMapInfoHolderUseCase(
                 savedReplyManager,
-                siteManager
+                siteManager,
+                chanThreadManager
         );
     }
 
@@ -58,7 +62,7 @@ public class UseCaseModule {
         Logger.d(AppModule.DI_TAG, "FetchThreadBookmarkInfoUseCase");
 
         return new FetchThreadBookmarkInfoUseCase(
-                AndroidUtils.isDevBuild(),
+                isDevBuild(),
                 ChanSettings.verboseLogs.get(),
                 appScope,
                 okHttpClient,

@@ -1,13 +1,13 @@
 package com.github.k1rakishou.chan.features.proxies
 
 import android.content.Context
+import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
-import com.github.k1rakishou.chan.core.manager.DialogFactory
-import com.github.k1rakishou.chan.core.manager.ProxyStorage
-import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
+import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.features.proxies.data.ProxyEntryView
 import com.github.k1rakishou.chan.features.proxies.data.ProxySetupState
@@ -16,8 +16,8 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.getString
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils.getString
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject

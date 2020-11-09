@@ -16,12 +16,13 @@
  */
 package com.github.k1rakishou.chan.core.site.common.taimaba;
 
-import com.github.k1rakishou.chan.BuildConfig;
-import com.github.k1rakishou.chan.core.model.Post;
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder;
 import com.github.k1rakishou.chan.core.site.common.CommonSite;
+import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+import com.github.k1rakishou.model.data.post.ChanPost;
 
 import java.util.Locale;
 import java.util.Map;
@@ -63,15 +64,15 @@ public class TaimabaEndpoints
     }
 
     @Override
-    public HttpUrl thumbnailUrl(Post.Builder post, boolean spoiler, int customSpoilers, Map<String, String> arg) {
+    public HttpUrl thumbnailUrl(ChanPostBuilder post, boolean spoiler, int customSpoilers, Map<String, String> arg) {
         switch (arg.get("ext")) {
             case "swf":
-                return HttpUrl.parse(BuildConfig.RESOURCES_ENDPOINT + "swf_thumb.png");
+                return HttpUrl.parse(AppConstants.RESOURCES_ENDPOINT + "swf_thumb.png");
             case "mp3":
             case "m4a":
             case "ogg":
             case "flac":
-                return HttpUrl.parse(BuildConfig.RESOURCES_ENDPOINT + "audio_thumb.png");
+                return HttpUrl.parse(AppConstants.RESOURCES_ENDPOINT + "audio_thumb.png");
             default:
                 return sys.builder()
                         .s(post.boardDescriptor.getBoardCode())
@@ -82,7 +83,7 @@ public class TaimabaEndpoints
     }
 
     @Override
-    public HttpUrl imageUrl(Post.Builder post, Map<String, String> arg) {
+    public HttpUrl imageUrl(ChanPostBuilder post, Map<String, String> arg) {
         return sys.builder()
                 .s(post.boardDescriptor.getBoardCode())
                 .s("src")
@@ -112,15 +113,15 @@ public class TaimabaEndpoints
     }
 
     @Override
-    public HttpUrl report(Post post) {
+    public HttpUrl report(ChanPost post) {
         return report.newBuilder()
                 .addPathSegment("narcbot")
                 .addPathSegment("ajaxReport.jsp")
-                .addQueryParameter("postId", String.valueOf(post.no))
+                .addQueryParameter("postId", String.valueOf(post.postNo()))
                 .addQueryParameter("reason", "RULE_VIOLATION")
                 .addQueryParameter("note", "")
                 .addQueryParameter("location",
-                        "http://boards.420chan.org/" + post.boardDescriptor.getBoardCode() + "/" + post.no
+                        "http://boards.420chan.org/" + post.getBoardDescriptor().getBoardCode() + "/" + post.postNo()
                 )
                 .build();
     }

@@ -17,16 +17,16 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
-import com.github.k1rakishou.chan.core.model.Post;
-import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
+import com.github.k1rakishou.model.data.post.ChanPost;
+import com.github.k1rakishou.model.data.post.ChanPostImage;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -38,9 +38,11 @@ import java.util.Locale;
 
 import javax.inject.Inject;
 
+import okhttp3.HttpUrl;
+
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
+import static com.github.k1rakishou.common.AndroidUtils.inflate;
 
 public class RemovedPostsController
         extends BaseFloatingController
@@ -114,18 +116,18 @@ public class RemovedPostsController
         return true;
     }
 
-    public void showRemovePosts(List<Post> removedPosts) {
+    public void showRemovePosts(List<ChanPost> removedPosts) {
         BackgroundUtils.ensureMainThread();
 
         RemovedPost[] removedPostsArray = new RemovedPost[removedPosts.size()];
 
         for (int i = 0, removedPostsSize = removedPosts.size(); i < removedPostsSize; i++) {
-            Post post = removedPosts.get(i);
+            ChanPost post = removedPosts.get(i);
 
             removedPostsArray[i] = new RemovedPost(
                     post.getPostImages(),
                     post.getPostDescriptor(),
-                    post.getComment().toString(),
+                    post.getPostComment().getComment(),
                     false
             );
         }
@@ -171,12 +173,17 @@ public class RemovedPostsController
     }
 
     public static class RemovedPost {
-        private List<PostImage> images;
+        private List<ChanPostImage> images;
         private PostDescriptor postDescriptor;
-        private String comment;
+        private CharSequence comment;
         private boolean checked;
 
-        public RemovedPost(List<PostImage> images, PostDescriptor postDescriptor, String comment, boolean checked) {
+        public RemovedPost(
+                List<ChanPostImage> images,
+                PostDescriptor postDescriptor,
+                CharSequence comment,
+                boolean checked
+        ) {
             this.images = images;
             this.postDescriptor = postDescriptor;
             this.comment = comment;
@@ -187,7 +194,7 @@ public class RemovedPostsController
             this.checked = checked;
         }
 
-        public List<PostImage> getImages() {
+        public List<ChanPostImage> getImages() {
             return images;
         }
 
@@ -195,7 +202,7 @@ public class RemovedPostsController
             return postDescriptor;
         }
 
-        public String getComment() {
+        public CharSequence getComment() {
             return comment;
         }
 
@@ -247,36 +254,39 @@ public class RemovedPostsController
             postNo.setText(String.format(Locale.ENGLISH, "No. %d", removedPost.postDescriptor.getPostNo()));
             postComment.setText(removedPost.comment);
             checkbox.setChecked(removedPost.isChecked());
+            postImage.setVisibility(GONE);
 
             if (removedPost.images.size() > 0) {
-                // load only the first image
-                PostImage image = removedPost.getImages().get(0);
-                postImage.setVisibility(VISIBLE);
+                ChanPostImage image = removedPost.getImages().get(0);
+                HttpUrl thumbnailUrl = image.getThumbnailUrl();
 
-                imageLoaderV2.loadFromNetwork(
-                        getContext(),
-                        image.getThumbnailUrl().toString(),
-                        postImage.getWidth(),
-                        postImage.getHeight(),
-                        new ImageLoaderV2.ImageListener() {
-                            @Override
-                            public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
-                                postImage.setImageBitmap(drawable.getBitmap());
-                            }
+                if (thumbnailUrl != null) {
+                    // load only the first image
+                    postImage.setVisibility(VISIBLE);
 
-                            @Override
-                            public void onNotFound() {
-                                onResponseError(new IOException("Not found"));
-                            }
+                    imageLoaderV2.loadFromNetwork(
+                            getContext(),
+                            thumbnailUrl.toString(),
+                            postImage.getWidth(),
+                            postImage.getHeight(),
+                            new ImageLoaderV2.ImageListener() {
+                                @Override
+                                public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
+                                    postImage.setImageBitmap(drawable.getBitmap());
+                                }
 
-                            @Override
-                            public void onResponseError(@NotNull Throwable error) {
-                                Logger.e(TAG, "Error while trying to download post image", error);
-                                postImage.setVisibility(GONE);
-                            }
-                        });
-            } else {
-                postImage.setVisibility(GONE);
+                                @Override
+                                public void onNotFound() {
+                                    onResponseError(new IOException("Not found"));
+                                }
+
+                                @Override
+                                public void onResponseError(@NotNull Throwable error) {
+                                    Logger.e(TAG, "Error while trying to download post image", error);
+                                    postImage.setVisibility(GONE);
+                                }
+                            });
+                }
             }
 
             checkbox.setOnClickListener(v -> onItemClick(position));

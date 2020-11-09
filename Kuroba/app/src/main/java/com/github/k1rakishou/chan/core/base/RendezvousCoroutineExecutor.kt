@@ -1,8 +1,9 @@
 package com.github.k1rakishou.chan.core.base
 
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
@@ -16,9 +17,10 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalCoroutinesApi::class)
 class RendezvousCoroutineExecutor(private val scope: CoroutineScope) {
   private val channel = Channel<SerializedAction>(Channel.RENDEZVOUS)
+  private var job: Job? = null
 
   init {
-    scope.launch {
+    job = scope.launch {
       channel.consumeEach { serializedAction ->
         try {
           serializedAction.action()
@@ -31,11 +33,16 @@ class RendezvousCoroutineExecutor(private val scope: CoroutineScope) {
 
   fun post(func: suspend () -> Unit) {
     if (channel.isClosedForSend) {
-      return
+      throw IllegalStateException("Channel is closed!")
     }
 
     val serializedAction = SerializedAction(func)
     channel.offer(serializedAction)
+  }
+
+  fun stop() {
+    job?.cancel()
+    job = null
   }
 
   data class SerializedAction(

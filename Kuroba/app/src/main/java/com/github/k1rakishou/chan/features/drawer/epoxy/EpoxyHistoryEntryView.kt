@@ -11,12 +11,16 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import coil.request.Disposable
 import coil.transform.CircleCropTransformation
-import com.airbnb.epoxy.*
+import com.airbnb.epoxy.AfterPropsSet
+import com.airbnb.epoxy.CallbackProp
+import com.airbnb.epoxy.ModelProp
+import com.airbnb.epoxy.ModelView
+import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.drawer.data.NavHistoryBookmarkAdditionalInfo
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import java.lang.ref.WeakReference
@@ -52,7 +56,7 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_history_entry_view, this)
 
-    AndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractStartActivityComponent(context)
       .inject(this)
 
     viewHolder = findViewById(R.id.history_entry_view_holder)

@@ -5,12 +5,10 @@ import android.text.TextUtils
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParamsBuilder
-import com.github.k1rakishou.chan.ui.text.span.PostLinkable
-import com.github.k1rakishou.chan.ui.theme.ChanTheme
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.DoNotStrip
-import com.github.k1rakishou.model.data.theme.ChanThemeColorId
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ChanThemeColorId
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
@@ -33,7 +31,7 @@ open class SimpleCommentParser {
     rule(StyleRule.tagRule("br").just("\n"))
     rule(StyleRule.tagRule("wbr").nullify())
 
-    rule(StyleRule.tagRule("s").link(PostLinkable.Type.SPOILER))
+    rule(StyleRule.tagRule("s").link(com.github.k1rakishou.core_spannable.PostLinkable.Type.SPOILER))
     rule(StyleRule.tagRule("b").bold())
     rule(StyleRule.tagRule("i").italic())
     rule(StyleRule.tagRule("em").italic())
@@ -47,7 +45,7 @@ open class SimpleCommentParser {
 
     rule(StyleRule.tagRule("span")
       .cssClass("spoiler")
-      .link(PostLinkable.Type.SPOILER)
+      .link(com.github.k1rakishou.core_spannable.PostLinkable.Type.SPOILER)
     )
 
     rule(StyleRule.tagRule("span").cssClass("abbr").nullify())
@@ -58,7 +56,6 @@ open class SimpleCommentParser {
   }
 
   open fun parseComment(
-    theme: ChanTheme,
     commentRaw: CharSequence
   ): CharSequence? {
     var total: CharSequence? = null
@@ -69,7 +66,7 @@ open class SimpleCommentParser {
       val nodes = document.body().childNodes()
       val texts = ArrayList<CharSequence>(nodes.size)
 
-      nodes.mapNotNullTo(texts) { parseNode(theme, it) }
+      nodes.mapNotNullTo(texts) { parseNode(it) }
 
       total = TextUtils.concat(*texts.toTypedArray())
     } catch (e: Exception) {
@@ -81,7 +78,6 @@ open class SimpleCommentParser {
   }
 
   private fun parseNode(
-    theme: ChanTheme,
     node: Node
   ): CharSequence? {
     if (node is TextNode) {
@@ -99,12 +95,11 @@ open class SimpleCommentParser {
       val innerNodes = node.childNodes()
       val texts: MutableList<CharSequence> = ArrayList(innerNodes.size + 1)
 
-      innerNodes.mapNotNullTo(texts) { parseNode(theme, it) }
+      innerNodes.mapNotNullTo(texts) { parseNode(it) }
 
       val allInnerText = TextUtils.concat(*texts.toTypedArray())
 
       val result: CharSequence? = handleTag(
-        theme,
         nodeName,
         allInnerText,
         node
@@ -118,7 +113,6 @@ open class SimpleCommentParser {
   }
 
   private fun handleTag(
-    theme: ChanTheme,
     tag: String,
     text: CharSequence,
     element: Element
@@ -132,7 +126,6 @@ open class SimpleCommentParser {
       for (rule in rules) {
         if (rule.highPriority() == highPriority && rule.applies(element)) {
           val params = StyleRulesParamsBuilder()
-            .withTheme(theme)
             .withText(text)
             .withElement(element)
             .build()

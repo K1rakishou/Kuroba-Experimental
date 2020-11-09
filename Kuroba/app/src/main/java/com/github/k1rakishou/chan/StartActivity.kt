@@ -16,9 +16,12 @@
  */
 package com.github.k1rakishou.chan
 
+import android.app.Activity
+import android.app.ActivityManager
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.ViewGroup
@@ -30,12 +33,23 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.lifecycleScope
 import com.airbnb.epoxy.EpoxyController
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
 import com.github.k1rakishou.chan.core.di.module.activity.StartActivityModule
-import com.github.k1rakishou.chan.core.manager.*
+import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager
+import com.github.k1rakishou.chan.core.manager.ChanFilterManager
+import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
+import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.UpdateManager
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar
-import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.features.drawer.DrawerController
 import com.github.k1rakishou.chan.ui.controller.AlbumViewController
@@ -47,13 +61,21 @@ import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationContro
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.helper.ImagePickDelegate
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
-import com.github.k1rakishou.chan.utils.*
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
+import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.FullScreenUtils
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupFullscreen
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
+import com.github.k1rakishou.chan.utils.NotificationConstants
+import com.github.k1rakishou.chan.utils.plusAssign
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.updateMargins
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ChanTheme
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -201,11 +223,11 @@ class StartActivity : AppCompatActivity(),
 
   @OptIn(ExperimentalTime::class)
   private fun createUi() {
-    if (AndroidUtils.isDevBuild()) {
+    if (isDevBuild()) {
       EpoxyController.setGlobalDebugLoggingEnabled(true)
     }
 
-    themeEngine.setupContext(this)
+    setupContext(this, themeEngine.chanTheme)
     fileChooser.setCallbacks(this)
 
     contentView = findViewById(android.R.id.content)
@@ -816,7 +838,7 @@ class StartActivity : AppCompatActivity(),
     }
 
     if (!exitFlag) {
-      AndroidUtils.showToast(this, R.string.action_confirm_exit)
+      showToast(this, R.string.action_confirm_exit)
       exitFlag = true
       BackgroundUtils.runOnMainThread({ exitFlag = false }, 650)
     } else {
@@ -886,6 +908,29 @@ class StartActivity : AppCompatActivity(),
   public override fun onStop() {
     super.onStop()
     Logger.d(TAG, "stop")
+  }
+
+  private fun setupContext(context: Activity, chanTheme: ChanTheme) {
+    val taskDescription = if (AndroidUtils.isAndroidP()) {
+      ActivityManager.TaskDescription(
+        null,
+        R.drawable.ic_stat_notify,
+        chanTheme.primaryColor
+      )
+    } else {
+      val taskDescriptionBitmap = BitmapFactory.decodeResource(
+        context.resources,
+        R.drawable.ic_stat_notify
+      )
+
+      ActivityManager.TaskDescription(
+        null,
+        taskDescriptionBitmap,
+        chanTheme.primaryColor
+      )
+    }
+
+    context.setTaskDescription(taskDescription)
   }
 
   companion object {

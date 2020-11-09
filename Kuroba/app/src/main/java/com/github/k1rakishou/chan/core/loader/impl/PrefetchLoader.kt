@@ -1,20 +1,22 @@
 package com.github.k1rakishou.chan.core.loader.impl
 
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.loader.LoaderResult
-import com.github.k1rakishou.chan.core.loader.LoaderType
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader
 import com.github.k1rakishou.chan.core.loader.PostLoaderData
 import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager
-import com.github.k1rakishou.chan.core.model.Post
-import com.github.k1rakishou.chan.core.model.PostImage
-import com.github.k1rakishou.chan.core.settings.ChanSettings
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.data.post.ChanPostImageType
+import com.github.k1rakishou.model.data.post.LoaderType
 import io.reactivex.Scheduler
 import io.reactivex.Single
 import kotlin.math.abs
@@ -110,7 +112,7 @@ class PrefetchLoader(
 
   private fun tryGetPrefetchBatch(
     chanDescriptor: ChanDescriptor,
-    post: Post
+    post: ChanPost
   ): List<Prefetch> {
     if (post.isContentLoadedForLoader(loaderType)) {
       return emptyList()
@@ -123,7 +125,7 @@ class PrefetchLoader(
     return getPrefetchBatch(post, chanDescriptor)
   }
 
-  private fun getPrefetchBatch(post: Post, chanDescriptor: ChanDescriptor): List<Prefetch> {
+  private fun getPrefetchBatch(post: ChanPost, chanDescriptor: ChanDescriptor): List<Prefetch> {
     BackgroundUtils.ensureBackgroundThread()
 
     return post.postImages.mapNotNull { postImage ->
@@ -135,17 +137,17 @@ class PrefetchLoader(
     }
   }
 
-  private fun onPrefetchStarted(postImage: PostImage) {
+  private fun onPrefetchStarted(postImage: ChanPostImage) {
     prefetchImageDownloadIndicatorManager.onPrefetchStarted(postImage)
   }
 
-  private fun onPrefetchProgress(postImage: PostImage, progress: Float) {
+  private fun onPrefetchProgress(postImage: ChanPostImage, progress: Float) {
     prefetchImageDownloadIndicatorManager.onPrefetchProgress(postImage, progress)
   }
 
-  private fun onPrefetchCompleted(postImage: PostImage, success: Boolean = true) {
+  private fun onPrefetchCompleted(postImage: ChanPostImage, success: Boolean = true) {
     if (success) {
-      postImage.setPrefetched()
+      postImage.isPrefetched = true
     }
 
     prefetchImageDownloadIndicatorManager.onPrefetchCompleted(postImage)
@@ -155,8 +157,32 @@ class PrefetchLoader(
     return ChanSettings.autoLoadThreadImages.get()
   }
 
+  private fun ChanPostImage.canBeUsedForPrefetch(): Boolean {
+    if (isInlined) {
+      return false
+    }
+
+    if (imageUrl == null) {
+      return false
+    }
+
+    if (size > ChanPostImage.MAX_PREFETCH_FILE_SIZE) {
+      // The file is too big
+      return false
+    }
+
+    return when (type) {
+      ChanPostImageType.STATIC,
+      ChanPostImageType.GIF -> shouldLoadForNetworkType(ChanSettings.imageAutoLoadNetwork.get())
+      ChanPostImageType.MOVIE -> shouldLoadForNetworkType(ChanSettings.videoAutoLoadNetwork.get())
+      ChanPostImageType.PDF,
+      ChanPostImageType.SWF -> false
+      else -> throw IllegalStateException("Unexpected value: $type")
+    }
+  }
+
   private data class Prefetch(
-    val postImage: PostImage,
+    val postImage: ChanPostImage,
     val chanDescriptor: ChanDescriptor
   )
 

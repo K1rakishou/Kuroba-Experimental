@@ -24,11 +24,11 @@ import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AlertDialog;
 
-import com.github.k1rakishou.chan.core.manager.DialogFactory;
-import com.github.k1rakishou.chan.core.settings.Setting;
+import com.github.k1rakishou.Setting;
+import com.github.k1rakishou.chan.core.helper.DialogFactory;
 import com.github.k1rakishou.chan.ui.controller.settings.SettingsController;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 
 import javax.inject.Inject;
 
@@ -36,8 +36,8 @@ import kotlin.Unit;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
 
 /**
  * Created by Zetsubou on 02.07.2015
@@ -64,7 +64,7 @@ public class IntegerSettingView
     ) {
         super(settingsController, name);
 
-        AndroidUtils.extractStartActivityComponent(settingsController.context)
+        AppModuleAndroidUtils.extractStartActivityComponent(settingsController.context)
                 .inject(this);
 
         this.setting = setting;

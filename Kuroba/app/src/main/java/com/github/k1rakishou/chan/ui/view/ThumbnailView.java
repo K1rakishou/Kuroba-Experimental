@@ -44,9 +44,9 @@ import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.base.Debouncer;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
+import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,8 +55,8 @@ import javax.inject.Inject;
 
 import coil.request.Disposable;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.sp;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
+import static com.github.k1rakishou.common.AndroidUtils.sp;
 
 public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
     private static final String TAG = "ThumbnailView";
@@ -109,7 +109,7 @@ public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
     }
 
     private void init() {
-        AndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
                 .inject(this);
 
         textPaint.setColor(themeEngine.getChanTheme().getTextColorPrimary());

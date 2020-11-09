@@ -29,7 +29,7 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
 
 public class ColorPickerView
         extends View {

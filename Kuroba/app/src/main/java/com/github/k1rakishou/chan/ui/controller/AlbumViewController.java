@@ -29,7 +29,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
-import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.ui.cell.AlbumViewCell;
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController;
@@ -39,14 +38,15 @@ import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+import com.github.k1rakishou.model.data.post.ChanPostImage;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getQuantityString;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.getQuantityString;
+import static com.github.k1rakishou.common.AndroidUtils.inflate;
 
 public class AlbumViewController
         extends Controller
@@ -55,7 +55,7 @@ public class AlbumViewController
         RequiresNoBottomNavBar {
     private ColorizableGridRecyclerView recyclerView;
 
-    private List<PostImage> postImages;
+    private List<ChanPostImage> postImages;
     private int targetIndex = -1;
     private ChanDescriptor chanDescriptor;
 
@@ -86,7 +86,7 @@ public class AlbumViewController
         recyclerView.scrollToPosition(targetIndex);
     }
 
-    public void setImages(ChanDescriptor chanDescriptor, List<PostImage> postImages, int index, String title) {
+    public void setImages(ChanDescriptor chanDescriptor, List<ChanPostImage> postImages, int index, String title) {
         this.chanDescriptor = chanDescriptor;
         this.postImages = postImages;
 
@@ -109,7 +109,7 @@ public class AlbumViewController
 
     @Nullable
     @Override
-    public ThumbnailView getPreviewImageTransitionView(PostImage postImage) {
+    public ThumbnailView getPreviewImageTransitionView(ChanPostImage postImage) {
         ThumbnailView thumbnail = null;
         for (int i = 0; i < recyclerView.getChildCount(); i++) {
             View view = recyclerView.getChildAt(i);
@@ -126,13 +126,13 @@ public class AlbumViewController
     }
 
     @Override
-    public void scrollToImage(PostImage postImage) {
+    public void scrollToImage(ChanPostImage postImage) {
         int index = postImages.indexOf(postImage);
         recyclerView.smoothScrollToPosition(index);
     }
 
     @Override
-    public ImageViewerController.ImageViewerCallback goToPost(PostImage postImage) {
+    public ImageViewerController.ImageViewerCallback goToPost(ChanPostImage postImage) {
         ThreadController threadController = null;
 
         if (previousSiblingController instanceof ThreadController) {
@@ -164,7 +164,7 @@ public class AlbumViewController
         }
     }
 
-    private void openImage(AlbumItemCellHolder albumItemCellHolder, PostImage postImage) {
+    private void openImage(AlbumItemCellHolder albumItemCellHolder, ChanPostImage postImage) {
         // Just ignore the showImages request when the image is not loaded
         if (albumItemCellHolder.thumbnailView.getBitmap() != null) {
             final ImageViewerNavigationController imageViewer = new ImageViewerNavigationController(context);
@@ -174,8 +174,7 @@ public class AlbumViewController
         }
     }
 
-    private class AlbumAdapter
-            extends RecyclerView.Adapter<AlbumItemCellHolder> {
+    private class AlbumAdapter extends RecyclerView.Adapter<AlbumItemCellHolder> {
         private ChanDescriptor chanDescriptor;
 
         public AlbumAdapter(ChanDescriptor chanDescriptor) {
@@ -193,7 +192,7 @@ public class AlbumViewController
 
         @Override
         public void onBindViewHolder(AlbumItemCellHolder holder, int position) {
-            PostImage postImage = postImages.get(position);
+            ChanPostImage postImage = postImages.get(position);
 
             if (postImage != null) {
                 holder.cell.setPostImage(postImage);
@@ -227,7 +226,7 @@ public class AlbumViewController
         @Override
         public void onClick(View v) {
             int adapterPosition = getAdapterPosition();
-            PostImage postImage = postImages.get(adapterPosition);
+            ChanPostImage postImage = postImages.get(adapterPosition);
             openImage(this, postImage);
         }
     }

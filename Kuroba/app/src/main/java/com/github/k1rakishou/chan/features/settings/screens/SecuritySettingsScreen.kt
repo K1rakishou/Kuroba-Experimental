@@ -2,14 +2,14 @@ package com.github.k1rakishou.chan.features.settings.screens
 
 import android.content.Context
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.manager.ProxyStorage
+import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.features.proxies.ProxySetupController
 import com.github.k1rakishou.chan.features.settings.SecurityScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
-import com.github.k1rakishou.chan.utils.AndroidUtils.getString
+import com.github.k1rakishou.common.AndroidUtils.getString
 
 class SecuritySettingsScreen(
   context: Context,

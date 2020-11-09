@@ -45,16 +45,15 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.StartActivity;
+import com.github.k1rakishou.chan.core.helper.ProxyStorage;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.KeyboardStateListener;
-import com.github.k1rakishou.chan.core.manager.ProxyStorage;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
-import com.github.k1rakishou.chan.core.model.ChanThread;
 import com.github.k1rakishou.chan.core.presenter.ReplyPresenter;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.SiteAuthentication;
 import com.github.k1rakishou.chan.core.site.http.Reply;
@@ -70,16 +69,17 @@ import com.github.k1rakishou.chan.ui.helper.HintPopup;
 import com.github.k1rakishou.chan.ui.helper.ImagePickDelegate;
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage;
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowDrawable;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView;
 import com.github.k1rakishou.chan.ui.view.LoadView;
 import com.github.k1rakishou.chan.ui.view.SelectionListeningEditText;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.ImageDecoder;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.common.AndroidUtils;
+import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
@@ -94,11 +94,12 @@ import javax.inject.Inject;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.hideKeyboard;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.requestViewAndKeyboardFocus;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.showToast;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
+import static com.github.k1rakishou.common.AndroidUtils.hideKeyboard;
+import static com.github.k1rakishou.common.AndroidUtils.requestViewAndKeyboardFocus;
+import static com.github.k1rakishou.core_themes.ThemeEngine.isDarkColor;
 
 // TODO(KurobaEx): When catalog reply is opened and we open any thread via "tabs" the opened thread
 //  will be glitched, it won't have the bottomNavBar because we have a replyLayout opened.
@@ -219,8 +220,7 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
     @Override
     public void onThemeChanged() {
         commentCounter.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
-
-        boolean isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.getBackColor());
+        boolean isDarkColor = isDarkColor(themeEngine.chanTheme.getBackColor());
 
         if (attach.getDrawable() != null) {
             attach.setImageDrawable(themeEngine.tintDrawable(attach.getDrawable(), isDarkColor));
@@ -262,7 +262,7 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
         super.onFinishInflate();
 
         if (!isInEditMode()) {
-            AndroidUtils.extractStartActivityComponent(getContext())
+            AppModuleAndroidUtils.extractStartActivityComponent(getContext())
                     .inject(this);
         }
 
@@ -909,7 +909,7 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
     @Override
     public void openPreview(boolean show, File previewFile) {
         previewHolder.setClickable(false);
-        boolean isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.getBackColor());
+        boolean isDarkColor = isDarkColor(themeEngine.chanTheme.getBackColor());
 
         if (show) {
             ImageDecoder.decodeFileOnBackgroundThread(
@@ -998,12 +998,11 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
 
             @Override
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                ChanThread thread = callback.getThread();
-                if (thread == null) {
+                ChanDescriptor chanDescriptor = callback.getShowingChanDescriptor();
+                if (chanDescriptor == null) {
                     return true;
                 }
 
-                ChanDescriptor chanDescriptor = thread.getChanDescriptor();
                 ChanBoard board = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor());
                 if (board == null) {
                     return true;
@@ -1133,9 +1132,10 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
         return ((StartActivity) getContext()).getImagePickDelegate();
     }
 
+    @Nullable
     @Override
-    public ChanThread getThread() {
-        return callback.getThread();
+    public ChanDescriptor getChanDescriptor() {
+        return callback.getShowingChanDescriptor();
     }
 
     public void onImageOptionsApplied(Reply reply, boolean filenameRemoved) {
@@ -1200,7 +1200,7 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
         void requestNewPostLoad();
 
         @Nullable
-        ChanThread getThread();
+        ChanDescriptor getShowingChanDescriptor();
 
         void showImageReencodingWindow(boolean supportsReencode);
 

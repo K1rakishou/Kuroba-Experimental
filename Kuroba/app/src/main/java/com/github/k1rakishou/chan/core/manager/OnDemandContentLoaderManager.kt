@@ -6,11 +6,11 @@ import com.github.k1rakishou.chan.core.loader.LoaderBatchResult
 import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader
 import com.github.k1rakishou.chan.core.loader.PostLoaderData
-import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -133,11 +133,11 @@ class OnDemandContentLoaderManager(
       .hide()
   }
 
-  fun onPostBind(chanDescriptor: ChanDescriptor, post: Post) {
+  fun onPostBind(chanDescriptor: ChanDescriptor, post: ChanPost) {
     BackgroundUtils.ensureMainThread()
     check(loaders.isNotEmpty()) { "No loaders!" }
 
-    val postDescriptor = PostDescriptor.create(chanDescriptor, post.no)
+    val postDescriptor = PostDescriptor.create(chanDescriptor, post.postNo())
     val postLoaderData = PostLoaderData(chanDescriptor, post)
 
     val alreadyAdded = rwLock.write {
@@ -160,7 +160,7 @@ class OnDemandContentLoaderManager(
     postLoaderRxQueue.onNext(postLoaderData)
   }
 
-  fun onPostUnbind(chanDescriptor: ChanDescriptor, post: Post, isActuallyRecycling: Boolean) {
+  fun onPostUnbind(chanDescriptor: ChanDescriptor, post: ChanPost, isActuallyRecycling: Boolean) {
     BackgroundUtils.ensureMainThread()
     check(loaders.isNotEmpty()) { "No loaders!" }
 
@@ -170,7 +170,7 @@ class OnDemandContentLoaderManager(
       return
     }
 
-    val postDescriptor = PostDescriptor.create(chanDescriptor, post.no)
+    val postDescriptor = PostDescriptor.create(chanDescriptor, post.postNo())
 
     rwLock.write {
       val postLoaderData = activeLoaders[chanDescriptor]?.remove(postDescriptor)
@@ -208,7 +208,7 @@ class OnDemandContentLoaderManager(
     return rwLock.read {
       val postDescriptor = PostDescriptor.create(
         postLoaderData.chanDescriptor,
-        postLoaderData.post.no
+        postLoaderData.post.postNo()
       )
 
       return@read activeLoaders[postLoaderData.chanDescriptor]?.containsKey(postDescriptor)

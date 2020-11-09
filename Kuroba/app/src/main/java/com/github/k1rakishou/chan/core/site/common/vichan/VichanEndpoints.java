@@ -16,11 +16,12 @@
  */
 package com.github.k1rakishou.chan.core.site.common.vichan;
 
-import com.github.k1rakishou.chan.core.model.Post;
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder;
 import com.github.k1rakishou.chan.core.site.common.CommonSite;
 import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+import com.github.k1rakishou.model.data.post.ChanPost;
 
 import java.util.Locale;
 import java.util.Map;
@@ -55,12 +56,12 @@ public class VichanEndpoints
     }
 
     @Override
-    public HttpUrl thumbnailUrl(Post.Builder post, boolean spoiler, int customSpoilter, Map<String, String> arg) {
+    public HttpUrl thumbnailUrl(ChanPostBuilder post, boolean spoiler, int customSpoilter, Map<String, String> arg) {
         return root.builder().s(post.boardDescriptor.getBoardCode()).s("thumb").s(arg.get("tim") + ".png").url();
     }
 
     @Override
-    public HttpUrl imageUrl(Post.Builder post, Map<String, String> arg) {
+    public HttpUrl imageUrl(ChanPostBuilder post, Map<String, String> arg) {
         return root.builder().s(post.boardDescriptor.getBoardCode()).s("src").s(arg.get("tim") + "." + arg.get("ext")).url();
     }
 
@@ -86,7 +87,7 @@ public class VichanEndpoints
     }
 
     @Override
-    public HttpUrl delete(Post post) {
+    public HttpUrl delete(ChanPost post) {
         return sys.builder().s("post.php").url();
     }
 }

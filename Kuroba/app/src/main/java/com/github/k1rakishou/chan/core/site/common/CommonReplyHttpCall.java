@@ -23,7 +23,7 @@ import com.github.k1rakishou.chan.core.site.http.HttpCall;
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody;
 import com.github.k1rakishou.chan.core.site.http.Reply;
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
 import org.jsoup.Jsoup;

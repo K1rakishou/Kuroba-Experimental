@@ -33,8 +33,8 @@ import androidx.core.app.NotificationCompat;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.common.DoNotStrip;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getNotificationManager;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.postToEventBus;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.postToEventBus;
+import static com.github.k1rakishou.common.AndroidUtils.getNotificationManager;
 
 @DoNotStrip
 public class SavingNotification

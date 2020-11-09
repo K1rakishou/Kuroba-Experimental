@@ -38,20 +38,21 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.core.helper.DialogFactory;
+import com.github.k1rakishou.chan.core.helper.FilterEngine;
+import com.github.k1rakishou.chan.core.helper.FilterEngine.FilterAction;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
-import com.github.k1rakishou.chan.core.manager.DialogFactory;
-import com.github.k1rakishou.chan.core.manager.FilterEngine;
-import com.github.k1rakishou.chan.core.manager.FilterEngine.FilterAction;
 import com.github.k1rakishou.chan.ui.helper.BoardHelper;
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowDrawable;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView;
 import com.github.k1rakishou.chan.ui.view.ColorPickerView;
 import com.github.k1rakishou.chan.ui.view.FloatingMenu;
 import com.github.k1rakishou.chan.ui.view.FloatingMenuItem;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
+import com.github.k1rakishou.common.AndroidUtils;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
 import com.github.k1rakishou.model.data.filter.FilterType;
@@ -65,8 +66,8 @@ import javax.inject.Inject;
 
 import kotlin.Unit;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
 
 public class FilterLayout extends LinearLayout implements View.OnClickListener {
     private ColorizableTextView typeText;
@@ -113,7 +114,7 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
         super.onFinishInflate();
 
         if (!isInEditMode()) {
-            AndroidUtils.extractStartActivityComponent(getContext())
+            AppModuleAndroidUtils.extractStartActivityComponent(getContext())
                     .inject(this);
         }
 

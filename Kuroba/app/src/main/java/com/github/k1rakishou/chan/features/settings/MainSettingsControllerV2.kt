@@ -13,7 +13,11 @@ import com.github.k1rakishou.chan.features.settings.epoxy.epoxyBooleanSetting
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyLinkSetting
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyNoSettingsFoundView
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxySettingsGroupTitle
-import com.github.k1rakishou.chan.features.settings.setting.*
+import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.SettingV2
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController.ToolbarSearchCallback
@@ -22,9 +26,10 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
-import com.github.k1rakishou.chan.utils.AndroidUtils.*
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.postToEventBus
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.chan.utils.plusAssign
+import com.github.k1rakishou.common.AndroidUtils.inflate
 import com.github.k1rakishou.common.exhaustive
 import kotlinx.coroutines.FlowPreview
 import javax.inject.Inject
@@ -285,7 +290,7 @@ class MainSettingsControllerV2(
                   settingsCoordinator.rebuildScreen(clickAction.screenIdentifier, BuildOptions.Default)
                 }
                 is SettingClickAction.ShowToast -> {
-                  showToast(context, clickAction.messageId)
+                  showToast(clickAction.messageId)
                 }
               }.exhaustive
             }

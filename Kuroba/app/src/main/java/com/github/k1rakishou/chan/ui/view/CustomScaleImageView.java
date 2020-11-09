@@ -20,8 +20,8 @@ import android.content.Context;
 import android.graphics.RectF;
 
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
-import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.common.DoNotStrip;
+import com.github.k1rakishou.core_logger.Logger;
 
 @DoNotStrip
 public class CustomScaleImageView

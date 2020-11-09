@@ -27,12 +27,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.saver.FileWatcher;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
+import static com.github.k1rakishou.common.AndroidUtils.inflate;
+import static com.github.k1rakishou.core_themes.ThemeEngine.isDarkColor;
 
 public class FilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final int ITEM_TYPE_FOLDER = 0;
@@ -92,7 +92,7 @@ public class FilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> 
                     Drawable drawable = themeEngine.getDrawableTinted(
                             context,
                             R.drawable.ic_folder_black_24dp,
-                            AndroidUtils.isDarkColor(themeEngine.getChanTheme().getBackColor())
+                            isDarkColor(themeEngine.getChanTheme().getBackColor())
                     );
 
                     fileViewHolder.image.setImageDrawable(drawable);

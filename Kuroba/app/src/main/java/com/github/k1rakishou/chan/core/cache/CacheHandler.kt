@@ -18,10 +18,15 @@ package com.github.k1rakishou.chan.core.cache
 
 import android.os.Environment
 import android.text.TextUtils
-import com.github.k1rakishou.chan.utils.*
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.ConversionUtils.charArrayToInt
 import com.github.k1rakishou.chan.utils.ConversionUtils.intToCharArray
+import com.github.k1rakishou.chan.utils.HashingUtil
+import com.github.k1rakishou.chan.utils.StringUtils
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.mutableListWithCap
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.FileDescriptorMode
@@ -661,7 +666,7 @@ class CacheHandler(
     val state = Environment.getExternalStorageState(file)
     val externalCacheDir = AndroidUtils.getAppContext().externalCacheDir?.absolutePath ?: "<null>"
     val internalCacheDir = AndroidUtils.getAppContext().cacheDir ?: "<null>"
-    val availableSpace = AndroidUtils.getAvailableSpaceInBytes(file)
+    val availableSpace = AppModuleAndroidUtils.getAvailableSpaceInBytes(file)
 
     return "(exists = ${file.exists()}, " +
       "parent exists = ${file.parentFile?.exists()}, " +

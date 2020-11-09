@@ -8,13 +8,17 @@ import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerSta
 import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerStateData
 import com.github.k1rakishou.chan.features.search.data.SelectedSite
 import com.github.k1rakishou.chan.features.search.data.SitesWithSearch
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal class GlobalSearchPresenter(
   private val siteManager: SiteManager

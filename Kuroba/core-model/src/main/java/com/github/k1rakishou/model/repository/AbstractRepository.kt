@@ -3,13 +3,12 @@ package com.github.k1rakishou.model.repository
 import androidx.room.withTransaction
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.util.errorMessageOrClassName
 
 abstract class AbstractRepository(
-  private val database: KurobaDatabase,
-  protected val logger: Logger
+  private val database: KurobaDatabase
 ) {
 
   protected suspend fun <T> tryWithTransaction(func: suspend () -> T): ModularResult<T> {
@@ -41,7 +40,7 @@ abstract class AbstractRepository(
 
     when (val localSourceResult = getFromLocalSourceFunc()) {
       is ModularResult.Error -> {
-        logger.logError(tag,
+        Logger.e(tag,
           "Error while trying to get ${T::class.java.simpleName} from " +
             "local source: error = ${localSourceResult.error.errorMessageOrClassName()}"
         )
@@ -61,7 +60,7 @@ abstract class AbstractRepository(
 
     when (val remoteSourceResult = getFromRemoteSourceFunc()) {
       is ModularResult.Error -> {
-        logger.logError(tag,
+        Logger.e(tag,
           "Error while trying to fetch ${T::class.java.simpleName} from " +
             "remote source: error = ${remoteSourceResult.error.errorMessageOrClassName()}"
         )
@@ -70,7 +69,7 @@ abstract class AbstractRepository(
       is ModularResult.Value -> {
         return when (val storeResult = storeIntoLocalSourceFunc(remoteSourceResult.value)) {
           is ModularResult.Error -> {
-                logger.logError(tag,
+                Logger.e(tag,
                   "Error while trying to store ${T::class.java.simpleName} in the " +
                           "local source: error = ${storeResult.error.errorMessageOrClassName()}"
                 )

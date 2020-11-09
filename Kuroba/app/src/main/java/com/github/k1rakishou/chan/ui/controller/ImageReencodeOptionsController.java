@@ -15,7 +15,6 @@ import com.github.k1rakishou.chan.core.di.component.activity.StartActivityCompon
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter;
 import com.github.k1rakishou.chan.ui.helper.ImageOptionsHelper;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableSlider;
@@ -23,9 +22,7 @@ import com.google.android.material.slider.Slider;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.inject.Inject;
-
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
 
 public class ImageReencodeOptionsController
         extends BaseFloatingController
@@ -33,9 +30,6 @@ public class ImageReencodeOptionsController
         RadioGroup.OnCheckedChangeListener,
         RequiresNoBottomNavBar {
     private final static String TAG = "ImageReencodeOptionsController";
-
-    @Inject
-    ThemeEngine themeEngine;
 
     private ImageReencodeOptionsCallbacks callbacks;
     private ImageOptionsHelper imageReencodingHelper;

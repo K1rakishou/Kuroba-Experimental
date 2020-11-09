@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.ui.view
 import android.content.Context
 import android.util.AttributeSet
 import android.view.animation.DecelerateInterpolator
-import com.github.k1rakishou.chan.core.settings.ChanSettings
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarCollapseCallback
 import com.github.k1rakishou.common.updatePaddings

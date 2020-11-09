@@ -1,8 +1,8 @@
 package com.github.k1rakishou.chan.core.net
 
-import com.github.k1rakishou.chan.core.manager.ProxyStorage
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.core_logger.Logger
 import java.io.IOException
 import java.net.Proxy
 import java.net.ProxySelector

@@ -9,17 +9,22 @@ import com.github.k1rakishou.chan.core.di.component.activity.StartActivityCompon
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
-import com.github.k1rakishou.chan.utils.AndroidUtils.*
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getScreenOrientation
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout
+import com.github.k1rakishou.common.AndroidUtils.inflate
 import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.common.updatePaddings
+import com.github.k1rakishou.core_themes.ThemeEngine
 import javax.inject.Inject
 
 class BottomNavBarAwareNavigationController(
   context: Context,
   private val listener: CloseBottomNavBarAwareNavigationControllerListener
-) : ToolbarNavigationController(context), OnMeasuredCallback, WindowInsetsListener {
+) : ToolbarNavigationController(context), AppModuleAndroidUtils.OnMeasuredCallback, WindowInsetsListener {
 
   @Inject
   lateinit var themeEngine: ThemeEngine

@@ -30,7 +30,7 @@ import androidx.annotation.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.removeFromParentView;
+import static com.github.k1rakishou.common.AndroidUtils.removeFromParentView;
 
 /**
  * Container for a view with an ProgressBar. Toggles between the view and a

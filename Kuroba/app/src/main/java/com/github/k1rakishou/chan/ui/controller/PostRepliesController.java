@@ -27,21 +27,20 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
-import com.github.k1rakishou.chan.core.manager.PostPreloadedInfoHolder;
-import com.github.k1rakishou.chan.core.model.Post;
-import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface;
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.ui.view.LoadView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
+import com.github.k1rakishou.model.data.post.ChanPost;
+import com.github.k1rakishou.model.data.post.ChanPostImage;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +49,8 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
+import static com.github.k1rakishou.common.AndroidUtils.inflate;
+import static com.github.k1rakishou.core_themes.ThemeEngine.isDarkColor;
 
 public class PostRepliesController
         extends BaseFloatingController implements ThemeEngine.ThemeChangesListener {
@@ -119,10 +119,12 @@ public class PostRepliesController
             return;
         }
 
-        boolean isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.getBackColor());
+        boolean isDarkColor = isDarkColor(themeEngine.chanTheme.getBackColor());
 
-        Drawable backDrawable = themeEngine.getDrawableTinted(context, R.drawable.ic_arrow_back_white_24dp, isDarkColor);
-        Drawable doneDrawable = themeEngine.getDrawableTinted(context, R.drawable.ic_done_white_24dp, isDarkColor);
+        Drawable backDrawable =
+                themeEngine.getDrawableTinted(context, R.drawable.ic_arrow_back_white_24dp, isDarkColor);
+        Drawable doneDrawable =
+                themeEngine.getDrawableTinted(context, R.drawable.ic_done_white_24dp, isDarkColor);
 
         if (repliesBackText != null) {
             repliesBackText.setTextColor(themeEngine.chanTheme.getTextColorPrimary());
@@ -150,7 +152,7 @@ public class PostRepliesController
         }
     }
 
-    public ThumbnailView getThumbnail(PostImage postImage) {
+    public ThumbnailView getThumbnail(ChanPostImage postImage) {
         if (repliesView == null) {
             return null;
         }
@@ -161,10 +163,10 @@ public class PostRepliesController
             View view = repliesView.getChildAt(i);
             if (view instanceof PostCellInterface) {
                 PostCellInterface postView = (PostCellInterface) view;
-                Post post = postView.getPost();
+                ChanPost post = postView.getPost();
 
                 if (post != null) {
-                    for (PostImage image : post.getPostImages()) {
+                    for (ChanPostImage image : post.getPostImages()) {
                         if (image.equalUrl(postImage)) {
                             thumbnail = postView.getThumbnailView(postImage);
                         }
@@ -180,8 +182,14 @@ public class PostRepliesController
         displayData(chanDescriptor, data);
     }
 
-    public List<Post> getPostRepliesData() {
-        return displayingData.posts;
+    public List<PostDescriptor> getPostRepliesData() {
+        List<PostDescriptor> postDescriptors = new ArrayList<>();
+
+        for (ChanPost post : displayingData.posts) {
+            postDescriptors.add(post.getPostDescriptor());
+        }
+
+        return postDescriptors;
     }
 
     public void scrollTo(int displayPosition) {
@@ -205,12 +213,8 @@ public class PostRepliesController
         repliesBackText = dataView.findViewById(R.id.replies_back_icon);
         repliesCloseText = dataView.findViewById(R.id.replies_close_icon);
 
-        PostPreloadedInfoHolder postPreloadedInfoHolder = new PostPreloadedInfoHolder();
-        postPreloadedInfoHolder.preloadPostsInfo(data.posts);
-
         RepliesAdapter repliesAdapter = new RepliesAdapter(
                 presenter,
-                postPreloadedInfoHolder,
                 chanDescriptor,
                 themeEngine
         );
@@ -225,7 +229,7 @@ public class PostRepliesController
         loadView.setView(dataView);
 
         first = false;
-        restoreScrollPosition(data.forPost.no);
+        restoreScrollPosition(data.forPost.postNo());
 
         onThemeChanged();
     }
@@ -251,7 +255,7 @@ public class PostRepliesController
             return;
         }
 
-        scrollPositionCache.put(displayingData.forPost.no, position);
+        scrollPositionCache.put(displayingData.forPost.postNo(), position);
     }
 
     private void restoreScrollPosition(long postNo) {
@@ -277,19 +281,16 @@ public class PostRepliesController
         public static final int POST_REPLY_VIEW_TYPE = 0;
 
         private ThreadPresenter presenter;
-        private PostPreloadedInfoHolder postPreloadedInfoHolder;
         private ChanDescriptor chanDescriptor;
         private PostPopupHelper.RepliesData data;
         private ThemeEngine themeEngine;
 
         public RepliesAdapter(
                 ThreadPresenter presenter,
-                PostPreloadedInfoHolder postPreloadedInfoHolder,
                 ChanDescriptor chanDescriptor,
                 ThemeEngine themeEngine
         ) {
             this.presenter = presenter;
-            this.postPreloadedInfoHolder = postPreloadedInfoHolder;
             this.chanDescriptor = chanDescriptor;
             this.themeEngine = themeEngine;
         }
@@ -306,10 +307,9 @@ public class PostRepliesController
         public void onBindViewHolder(@NonNull ReplyViewHolder holder, int position) {
             holder.onBind(
                     presenter,
-                    postPreloadedInfoHolder,
                     chanDescriptor,
                     data.posts.get(position),
-                    data.forPost.no,
+                    data.forPost.postNo(),
                     position,
                     getItemCount(),
                     themeEngine
@@ -328,9 +328,9 @@ public class PostRepliesController
 
         @Override
         public long getItemId(int position) {
-            Post post = data.posts.get(position);
-            int repliesFromSize = post.getRepliesFromCount();
-            return ((long) repliesFromSize << 32L) + post.no;
+            ChanPost post = data.posts.get(position);
+            int repliesFromCount = post.getRepliesFromCount();
+            return ((long) repliesFromCount << 32L) + post.postNo();
         }
 
         @Override
@@ -366,9 +366,8 @@ public class PostRepliesController
 
         public void onBind(
                 ThreadPresenter presenter,
-                PostPreloadedInfoHolder postPreloadedInfoHolder,
                 ChanDescriptor chanDescriptor,
-                Post post,
+                ChanPost post,
                 long markedNo,
                 int position,
                 int itemCount,
@@ -382,7 +381,6 @@ public class PostRepliesController
                     -1,
                     -1,
                     presenter,
-                    postPreloadedInfoHolder,
                     true,
                     false,
                     false,

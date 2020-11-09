@@ -120,7 +120,7 @@ public class Sushichan
         setEndpoints(new VichanEndpoints(this, "https://sushigirl.us/", "https://sushigirl.us/"));
         setActions(new VichanActions(this, getProxiedOkHttpClient(), getSiteManager()));
         setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
-        setParser(new VichanCommentParser(themeEngine, getMockReplyManager()));
+        setParser(new VichanCommentParser(getMockReplyManager()));
     }
 
     @NotNull

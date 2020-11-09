@@ -19,7 +19,7 @@ package com.github.k1rakishou.chan.ui.settings;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
 
 public class SettingsGroup {
     public final String name;

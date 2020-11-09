@@ -23,13 +23,13 @@ import android.content.DialogInterface;
 import android.os.Environment;
 import android.view.View;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.StartActivity;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
-import com.github.k1rakishou.chan.core.manager.DialogFactory;
+import com.github.k1rakishou.chan.core.helper.DialogFactory;
 import com.github.k1rakishou.chan.core.saver.FileWatcher;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.adapter.FilesAdapter;
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper;
 import com.github.k1rakishou.chan.ui.layout.FilesLayout;
@@ -44,8 +44,8 @@ import javax.inject.Inject;
 
 import kotlin.Unit;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
+import static com.github.k1rakishou.common.AndroidUtils.inflate;
 
 public class SaveLocationController
         extends Controller

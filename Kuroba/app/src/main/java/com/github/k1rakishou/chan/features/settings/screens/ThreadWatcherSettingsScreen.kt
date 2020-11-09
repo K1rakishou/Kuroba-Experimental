@@ -5,18 +5,18 @@ import android.text.SpannableString
 import android.text.method.LinkMovementMethod
 import android.text.util.Linkify
 import android.widget.TextView
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
-import com.github.k1rakishou.chan.core.manager.DialogFactory
-import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.core.settings.state.PersistableChanState
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.ThreadWatcherScreen
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils.getString
 import com.github.k1rakishou.chan.utils.PhoneWithBackgroundLimitationsHelper
+import com.github.k1rakishou.common.AndroidUtils.getString
+import com.github.k1rakishou.core_themes.ThemeEngine
 import java.util.concurrent.TimeUnit
 
 

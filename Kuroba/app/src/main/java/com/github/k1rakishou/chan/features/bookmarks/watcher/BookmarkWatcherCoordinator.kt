@@ -1,13 +1,17 @@
 package com.github.k1rakishou.chan.features.bookmarks.watcher
 
 import android.content.Context
-import androidx.work.*
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibility
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
-import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getFlavorType
+import com.github.k1rakishou.core_logger.Logger
 import io.reactivex.Flowable
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineScope
@@ -235,7 +239,7 @@ class BookmarkWatcherCoordinator(
   }
 
   private fun getUniqueWorkTag(): String {
-    return "${TAG}_${AndroidUtils.getFlavorType().name}"
+    return "${TAG}_${getFlavorType().name}"
   }
 
   private fun isWantedBookmarkChange(bookmarkChange: BookmarksManager.BookmarkChange): Boolean {

@@ -1,11 +1,25 @@
 package com.github.k1rakishou.chan.features.settings.screens
 
 import android.content.Context
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.manager.*
-import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.features.settings.*
+import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.manager.ChanFilterManager
+import com.github.k1rakishou.chan.core.manager.ReportManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.UpdateManager
+import com.github.k1rakishou.chan.features.settings.AppearanceScreen
+import com.github.k1rakishou.chan.features.settings.BehaviorScreen
+import com.github.k1rakishou.chan.features.settings.DeveloperScreen
+import com.github.k1rakishou.chan.features.settings.ExperimentalScreen
+import com.github.k1rakishou.chan.features.settings.ImportExportScreen
+import com.github.k1rakishou.chan.features.settings.MainScreen
+import com.github.k1rakishou.chan.features.settings.MediaScreen
+import com.github.k1rakishou.chan.features.settings.SecurityScreen
+import com.github.k1rakishou.chan.features.settings.SettingClickAction
+import com.github.k1rakishou.chan.features.settings.SettingsGroup
+import com.github.k1rakishou.chan.features.settings.ThreadWatcherScreen
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.setup.SitesSetupController
@@ -15,7 +29,14 @@ import com.github.k1rakishou.chan.ui.controller.ReportProblemController
 import com.github.k1rakishou.chan.ui.controller.crashlogs.ReviewCrashLogsController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
-import com.github.k1rakishou.chan.utils.AndroidUtils.*
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getVerifiedBuildType
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isFdroidBuild
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
+import com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType
+import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
+import com.github.k1rakishou.common.AndroidUtils.getQuantityString
+import com.github.k1rakishou.common.AndroidUtils.getString
 
 class MainSettingsScreen(
   context: Context,
@@ -242,8 +263,10 @@ class MainSettingsScreen(
   }
 
   private fun createAppVersionString(): String {
-    val isVerified = getVerifiedBuildType() == VerifiedBuildType.Release
-      || getVerifiedBuildType() == VerifiedBuildType.Debug
+    val verifiedBuildType = getVerifiedBuildType()
+
+    val isVerified = verifiedBuildType == VerifiedBuildType.Release
+      || verifiedBuildType == VerifiedBuildType.Debug
 
     val verificationBadge = if (isVerified) {
       "✓"

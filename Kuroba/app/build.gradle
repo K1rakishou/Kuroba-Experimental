@@ -65,7 +65,6 @@ android {
         // but using a remote resource works easier with the application architecture than using a local resource/drawable
         buildConfigField "String", "UPDATE_API_ENDPOINT", "\"https://api.github.com/repos/K1rakishou/Kuroba-Experimental/releases/latest\""
         buildConfigField "String", "GITHUB_ENDPOINT", "\"https://github.com/K1rakishou/Kuroba-Experimental\""
-        buildConfigField "String", "RESOURCES_ENDPOINT", "\"https://raw.githubusercontent.com/K1rakishou/Kuroba-Experimental/release/docs/\""
         // this is for your development server endpoint
         // you WILL need to change the code in UpdateManager if your endpoint changes or you use a different API structure
         buildConfigField "String", "DEV_API_ENDPOINT", "\"https://kuroba.io:8443\""
@@ -286,15 +285,18 @@ android {
 }
 
 dependencies {
+    implementation project(':core-logger')
+    implementation project(':core-settings')
+    implementation project(':core-themes')
+    implementation project(':core-spannable')
     implementation project(':core-common')
     implementation project(':core-model')
-    implementation project(':core-settings')
     implementation project(':core-parser')
 
     implementation "androidx.appcompat:appcompat:${versions.appcompat}"
-    implementation 'androidx.browser:browser:1.2.0'
+    implementation "androidx.browser:browser:${versions.androidx_browser}"
+    implementation "androidx.preference:preference-ktx:${versions.androidx_preferences_ktx}"
     implementation 'androidx.constraintlayout:constraintlayout:2.0.2'
-    implementation 'androidx.preference:preference-ktx:1.1.1'
     implementation 'androidx.slidingpanelayout:slidingpanelayout:1.1.0'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation "androidx.core:core-ktx:${versions.core_ktx}"
@@ -313,8 +315,8 @@ dependencies {
     implementation "com.google.code.gson:gson:${versions.gson}"
     // noinspection GradleDependency we want to get rid of this dependency eventually.
     implementation 'com.vladsch.flexmark:flexmark:0.60.2'
-    implementation 'io.reactivex.rxjava2:rxjava:2.2.19'
-    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
+    implementation "io.reactivex.rxjava2:rxjava:${versions.rxjava}"
+    implementation "io.reactivex.rxjava2:rxandroid:${versions.rxandroid}"
     implementation "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin_version}"
     implementation "joda-time:joda-time:${versions.joda_time}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlin_coroutines_version}"
@@ -323,7 +325,7 @@ dependencies {
     implementation 'io.coil-kt:coil-base:0.12.0'
 
     // noinspection GradleDependency wants to upgrade to older version
-    implementation 'com.github.K1rakishou:Fuck-Storage-Access-Framework:v1.0-alpha42'
+    implementation "com.github.K1rakishou:Fuck-Storage-Access-Framework:${versions.fsaf}"
 
     implementation "androidx.room:room-runtime:${versions.room_version}"
     kapt "androidx.room:room-compiler:${versions.room_version}"

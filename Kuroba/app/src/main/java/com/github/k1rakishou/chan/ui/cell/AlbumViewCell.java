@@ -23,19 +23,19 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.core.model.PostImage;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
+import com.github.k1rakishou.model.data.post.ChanPostImage;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getDimen;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen;
 import static com.github.k1rakishou.chan.utils.PostUtils.getReadableFileSize;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
 
 public class AlbumViewCell
         extends FrameLayout {
-    private PostImage postImage;
+    private ChanPostImage postImage;
     private PostImageThumbnailView thumbnailView;
     private TextView text;
 
@@ -58,7 +58,7 @@ public class AlbumViewCell
         text = findViewById(R.id.text);
     }
 
-    public void setPostImage(@NonNull PostImage postImage) {
+    public void setPostImage(@NonNull ChanPostImage postImage) {
         this.postImage = postImage;
         int thumbnailSize = getDimen(R.dimen.cell_post_thumbnail_size);
 
@@ -71,19 +71,19 @@ public class AlbumViewCell
                 ChanSettings.highResCells.get() ? ChanSettings.HI_RES_THUMBNAIL_SIZE : thumbnailSize
         );
 
-        String details = postImage.extension.toUpperCase()
+        String details = postImage.getExtension().toUpperCase()
                 + " "
-                + postImage.imageWidth
+                + postImage.getImageWidth()
                 + "x"
-                + postImage.imageHeight
+                + postImage.getImageHeight()
                 + " "
                 + getReadableFileSize(postImage.getSize());
 
         // if -1, linked image, no info
-        text.setText(postImage.isInlined ? postImage.extension.toUpperCase() : details);
+        text.setText(postImage.isInlined() ? postImage.getExtension().toUpperCase() : details);
     }
 
-    public PostImage getPostImage() {
+    public ChanPostImage getPostImage() {
         return postImage;
     }
 

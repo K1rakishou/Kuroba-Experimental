@@ -19,10 +19,11 @@ package com.github.k1rakishou.chan.core.site;
 import androidx.annotation.Nullable;
 import androidx.collection.ArrayMap;
 
-import com.github.k1rakishou.chan.core.model.Post;
+import com.github.k1rakishou.chan.core.model.ChanPostBuilder;
 import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+import com.github.k1rakishou.model.data.post.ChanPost;
 
 import java.util.Map;
 
@@ -37,9 +38,9 @@ public interface SiteEndpoints {
 
     HttpUrl thread(ChanDescriptor.ThreadDescriptor threadDescriptor);
 
-    HttpUrl imageUrl(Post.Builder post, Map<String, String> arg);
+    HttpUrl imageUrl(ChanPostBuilder post, Map<String, String> arg);
 
-    HttpUrl thumbnailUrl(Post.Builder post, boolean spoiler, int customSpoilers, Map<String, String> arg);
+    HttpUrl thumbnailUrl(ChanPostBuilder post, boolean spoiler, int customSpoilers, Map<String, String> arg);
 
     HttpUrl icon(String icon, Map<String, String> arg);
 
@@ -51,9 +52,9 @@ public interface SiteEndpoints {
 
     HttpUrl reply(ChanDescriptor chanDescriptor);
 
-    HttpUrl delete(Post post);
+    HttpUrl delete(ChanPost post);
 
-    HttpUrl report(Post post);
+    HttpUrl report(ChanPost post);
 
     HttpUrl login();
 

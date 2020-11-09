@@ -30,7 +30,8 @@ import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclu
 import com.github.k1rakishou.chan.features.gesture_editor.ExclusionZone
 import com.github.k1rakishou.chan.ui.controller.BrowseController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
 import java.util.*
 import javax.inject.Inject
 
@@ -57,7 +58,7 @@ class NavigationControllerContainerLayout : FrameLayout {
   }
 
   private fun preInit() {
-    AndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractStartActivityComponent(context)
       .inject(this)
   }
 

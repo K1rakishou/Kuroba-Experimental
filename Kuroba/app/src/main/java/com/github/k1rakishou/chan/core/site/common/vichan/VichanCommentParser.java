@@ -22,8 +22,7 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParser;
 import com.github.k1rakishou.chan.core.site.parser.ICommentParser;
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.model.data.theme.ChanThemeColorId;
+import com.github.k1rakishou.core_themes.ChanThemeColorId;
 
 import java.util.regex.Pattern;
 
@@ -31,8 +30,8 @@ public class VichanCommentParser extends CommentParser implements ICommentParser
     private static final Pattern QUOTE_PATTERN = Pattern.compile("#(\\d+)");
     private static final Pattern FULL_QUOTE_PATTERN = Pattern.compile("/(\\w+)/\\w+/(\\d+)\\.html#(\\d+)");
 
-    public VichanCommentParser(ThemeEngine themeEngine, MockReplyManager mockReplyManager) {
-        super(themeEngine, mockReplyManager);
+    public VichanCommentParser(MockReplyManager mockReplyManager) {
+        super(mockReplyManager);
         addDefaultRules();
 
         rule(StyleRule.tagRule("p")

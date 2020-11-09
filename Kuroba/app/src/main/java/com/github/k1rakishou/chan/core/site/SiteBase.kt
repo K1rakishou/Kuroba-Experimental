@@ -28,14 +28,17 @@ import com.github.k1rakishou.chan.core.model.SiteBoards
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.json.JsonSettings
 import com.github.k1rakishou.json.JsonSettingsProvider
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
 import java.security.SecureRandom
 import java.util.*
@@ -61,8 +64,6 @@ abstract class SiteBase : Site, CoroutineScope {
   protected lateinit var postFilterManager: PostFilterManager
   @Inject
   protected lateinit var mockReplyManager: MockReplyManager
-  @Inject
-  protected lateinit var themeEngine: ThemeEngine
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("SiteBase")

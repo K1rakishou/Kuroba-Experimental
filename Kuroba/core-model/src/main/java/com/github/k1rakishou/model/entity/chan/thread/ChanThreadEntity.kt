@@ -1,6 +1,10 @@
 package com.github.k1rakishou.model.entity.chan.thread
 
-import androidx.room.*
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardIdEntity
 
 @Entity(
@@ -40,10 +44,10 @@ data class ChanThreadEntity(
   val ownerBoardId: Long,
   @ColumnInfo(name = LAST_MODIFIED_COLUMN_NAME)
   val lastModified: Long = -1L,
-  @ColumnInfo(name = REPLIES_COLUMN_NAME)
-  val replies: Int = -1,
-  @ColumnInfo(name = THREAD_IMAGES_COUNT_COLUMN_NAME)
-  val threadImagesCount: Int = -1,
+  @ColumnInfo(name = CATALOG_REPLIES_COUNT_COLUMN_NAME)
+  val catalogRepliesCount: Int = -1,
+  @ColumnInfo(name = CATALOG_IMAGES_COUNT_COLUMN_NAME)
+  val catalogImagesCount: Int = -1,
   @ColumnInfo(name = UNIQUE_IPS_COLUMN_NAME)
   val uniqueIps: Int = -1,
   @ColumnInfo(name = STICKY_COLUMN_NAME)
@@ -62,8 +66,8 @@ data class ChanThreadEntity(
     const val THREAD_NO_COLUMN_NAME = "thread_no"
     const val OWNER_BOARD_ID_COLUMN_NAME = "owner_board_id"
     const val LAST_MODIFIED_COLUMN_NAME = "last_modified"
-    const val REPLIES_COLUMN_NAME = "replies"
-    const val THREAD_IMAGES_COUNT_COLUMN_NAME = "thread_images_count"
+    const val CATALOG_REPLIES_COUNT_COLUMN_NAME = "catalog_replies_count"
+    const val CATALOG_IMAGES_COUNT_COLUMN_NAME = "catalog_images_count"
     const val UNIQUE_IPS_COLUMN_NAME = "unique_ips"
     const val STICKY_COLUMN_NAME = "sticky"
     const val CLOSED_COLUMN_NAME = "closed"

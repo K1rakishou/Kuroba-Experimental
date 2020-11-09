@@ -5,7 +5,7 @@ import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginResponse
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.core_logger.Logger
 import okhttp3.FormBody
 import okhttp3.Request
 import okhttp3.Response

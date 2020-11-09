@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.loader
 
+import com.github.k1rakishou.model.data.post.LoaderType
 import io.reactivex.Single
 
 abstract class OnDemandContentLoader(

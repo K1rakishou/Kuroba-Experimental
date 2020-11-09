@@ -14,9 +14,10 @@ import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils.dp
+import com.github.k1rakishou.core_themes.ThemeEngine
 import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
@@ -37,7 +38,7 @@ class EpoxyLinkSetting @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_setting_link, this)
 
-    AndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractStartActivityComponent(context)
       .inject(this)
 
     topDescriptor = findViewById(R.id.top)

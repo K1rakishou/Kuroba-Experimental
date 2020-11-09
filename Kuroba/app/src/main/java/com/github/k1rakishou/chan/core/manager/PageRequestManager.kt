@@ -16,18 +16,22 @@
  */
 package com.github.k1rakishou.chan.core.manager
 
-import com.github.k1rakishou.chan.core.model.Post
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest.BoardPage
-import com.github.k1rakishou.chan.utils.Logger
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
@@ -57,16 +61,16 @@ class PageRequestManager(
       .hide()
   }
 
-  fun getPage(op: Post?): BoardPage? {
-    if (op == null) {
+  fun getPage(originalPostDescriptor: PostDescriptor?): BoardPage? {
+    if (originalPostDescriptor == null) {
       return null
     }
 
-    if (!pagesRequestsSupported(op.postDescriptor.boardDescriptor().siteDescriptor)) {
+    if (!pagesRequestsSupported(originalPostDescriptor.boardDescriptor().siteDescriptor)) {
       return null
     }
 
-    return findPage(op.boardDescriptor, op.no)
+    return findPage(originalPostDescriptor.boardDescriptor(), originalPostDescriptor.postNo)
   }
 
   fun getPage(threadDescriptor: ChanDescriptor.ThreadDescriptor?): BoardPage? {

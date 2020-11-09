@@ -3,11 +3,11 @@ package com.github.k1rakishou.chan.features.settings.screens.delegate.base_direc
 import android.content.Context
 import android.widget.Toast
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.manager.DialogFactory
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
-import com.github.k1rakishou.chan.utils.AndroidUtils.getString
-import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.AndroidUtils.getString
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.ExternalFile

@@ -1,9 +1,9 @@
 package com.github.k1rakishou.chan.features.settings.screens
 
 import android.content.Context
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.manager.DialogFactory
-import com.github.k1rakishou.chan.core.settings.ChanSettings
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.features.settings.MediaScreen
 import com.github.k1rakishou.chan.features.settings.SettingsCoordinatorCallbacks
 import com.github.k1rakishou.chan.features.settings.SettingsGroup

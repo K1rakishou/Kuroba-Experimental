@@ -2,11 +2,11 @@ package com.github.k1rakishou.model.converter
 
 import androidx.room.TypeConverter
 import com.github.k1rakishou.json.JsonSettings
-import com.github.k1rakishou.model.DatabaseModuleInjector
 import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.ModelModuleInjector
 
 class JsonSettingsTypeConverter {
-  private val gson by lazy { DatabaseModuleInjector.modelMainComponent.getGson() }
+  private val gson by lazy { ModelModuleInjector.modelComponent.getGson() }
 
   @TypeConverter
   fun toJsonSettings(jsonSettings: String?): JsonSettings? {

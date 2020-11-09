@@ -7,8 +7,9 @@ import androidx.appcompat.widget.AppCompatImageView
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.google.android.material.textview.MaterialTextView
 import javax.inject.Inject
@@ -31,7 +32,7 @@ class EpoxyBoardView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_board_view, this)
 
-    AndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractStartActivityComponent(context)
       .inject(this)
 
     boardName = findViewById(R.id.board_name)
@@ -45,7 +46,7 @@ class EpoxyBoardView @JvmOverloads constructor(
       themeEngine.getDrawableTinted(
         context,
         R.drawable.ic_reorder_white_24dp,
-        AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+        isDarkColor(themeEngine.chanTheme.backColor)
       )
     )
   }
@@ -96,7 +97,7 @@ class EpoxyBoardView @JvmOverloads constructor(
       return
     }
 
-    val isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+    val isDarkColor = isDarkColor(themeEngine.chanTheme.backColor)
     boardReorder.setImageDrawable(themeEngine.tintDrawable(boardReorder.drawable, isDarkColor))
   }
 

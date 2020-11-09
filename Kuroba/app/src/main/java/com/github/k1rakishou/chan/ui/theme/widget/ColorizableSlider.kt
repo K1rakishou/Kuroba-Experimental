@@ -4,8 +4,10 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.core_themes.IColorizableWidget
+import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.manipulateColor
 import com.google.android.material.slider.Slider
 import javax.inject.Inject
 
@@ -20,7 +22,7 @@ class ColorizableSlider @JvmOverloads constructor(
 
   init {
     if (!isInEditMode) {
-      AndroidUtils.extractStartActivityComponent(context)
+      AppModuleAndroidUtils.extractStartActivityComponent(context)
         .inject(this)
     }
   }
@@ -46,7 +48,7 @@ class ColorizableSlider @JvmOverloads constructor(
         intArrayOf()
       ),
       intArrayOf(
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.accentColor, 1.2f),
+        manipulateColor(themeEngine.chanTheme.accentColor, 1.2f),
         themeEngine.chanTheme.accentColor,
         themeEngine.chanTheme.getControlDisabledColor(themeEngine.chanTheme.defaultColors.controlNormalColor),
         themeEngine.chanTheme.accentColor
@@ -62,9 +64,9 @@ class ColorizableSlider @JvmOverloads constructor(
       ),
       intArrayOf(
         themeEngine.chanTheme.accentColor,
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.defaultColors.controlNormalColor, .6f),
+        manipulateColor(themeEngine.chanTheme.defaultColors.controlNormalColor, .6f),
         themeEngine.chanTheme.getControlDisabledColor(themeEngine.chanTheme.defaultColors.controlNormalColor),
-        AndroidUtils.manipulateColor(themeEngine.chanTheme.defaultColors.controlNormalColor, .6f)
+        manipulateColor(themeEngine.chanTheme.defaultColors.controlNormalColor, .6f)
       )
     )
   }

@@ -18,8 +18,8 @@ package com.github.k1rakishou.chan.ui.settings;
 
 import android.view.View;
 
+import com.github.k1rakishou.Setting;
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.core.settings.Setting;
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController;
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity;
 import com.github.k1rakishou.chan.ui.controller.settings.SettingsController;
@@ -31,7 +31,7 @@ import java.util.List;
 
 import kotlin.Unit;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
 
 public class ListSettingView<T>
         extends SettingView

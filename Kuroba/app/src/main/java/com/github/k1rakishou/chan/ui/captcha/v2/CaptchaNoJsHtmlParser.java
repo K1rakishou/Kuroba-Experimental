@@ -26,7 +26,7 @@ import androidx.core.util.Pair;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.IOUtils;
-import com.github.k1rakishou.chan.utils.Logger;
+import com.github.k1rakishou.core_logger.Logger;
 
 import java.io.File;
 import java.io.FileOutputStream;

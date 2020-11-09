@@ -12,8 +12,8 @@ import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.android.material.textview.MaterialTextView
 import java.lang.ref.WeakReference
 import javax.inject.Inject
@@ -38,7 +38,7 @@ internal class EpoxySearchSelectedSiteView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_search_selected_site_view, this)
 
-    AndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractStartActivityComponent(context)
       .inject(this)
 
     siteIcon = findViewById(R.id.site_icon)

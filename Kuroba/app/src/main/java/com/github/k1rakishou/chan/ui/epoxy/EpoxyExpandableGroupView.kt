@@ -8,9 +8,10 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
-import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
 import javax.inject.Inject
 
 
@@ -33,7 +34,7 @@ class EpoxyExpandableGroupView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_expandable_group_view, this)
 
-    AndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractStartActivityComponent(context)
       .inject(this)
 
     toggleIndicator = findViewById(R.id.toggle_indicator_view)
@@ -94,12 +95,12 @@ class EpoxyExpandableGroupView @JvmOverloads constructor(
   }
 
   private fun updateDividerColor() {
-    val isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+    val isDarkColor = isDarkColor(themeEngine.chanTheme.backColor)
     divider.setBackgroundColor(themeEngine.resolveTintColor(isDarkColor))
   }
 
   private fun updateToggleIndicator() {
-    val isDarkColor = AndroidUtils.isDarkColor(themeEngine.chanTheme.backColor)
+    val isDarkColor = isDarkColor(themeEngine.chanTheme.backColor)
 
     val tintedDrawable = themeEngine.getDrawableTinted(
       context,

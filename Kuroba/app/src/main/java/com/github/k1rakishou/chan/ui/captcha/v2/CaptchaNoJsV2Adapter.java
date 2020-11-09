@@ -16,8 +16,8 @@ import java.util.List;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.inflate;
 import static com.github.k1rakishou.chan.utils.AnimationUtils.animateViewScale;
+import static com.github.k1rakishou.common.AndroidUtils.inflate;
 
 public class CaptchaNoJsV2Adapter
         extends BaseAdapter {

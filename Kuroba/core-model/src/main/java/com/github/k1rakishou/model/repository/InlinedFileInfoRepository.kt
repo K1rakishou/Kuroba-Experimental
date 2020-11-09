@@ -3,7 +3,6 @@ package com.github.k1rakishou.model.repository
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.InlinedFileInfo
 import com.github.k1rakishou.model.source.cache.GenericCacheSource
 import com.github.k1rakishou.model.source.local.InlinedFileInfoLocalSource
@@ -13,14 +12,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class InlinedFileInfoRepository(
   database: KurobaDatabase,
-  loggerTag: String,
-  logger: Logger,
   private val applicationScope: CoroutineScope,
   private val cache: GenericCacheSource<String, InlinedFileInfo>,
   private val inlinedFileInfoLocalSource: InlinedFileInfoLocalSource,
   private val inlinedFileInfoRemoteSource: InlinedFileInfoRemoteSource
-) : AbstractRepository(database, logger) {
-  private val TAG = "$loggerTag InlinedFileInfoRepository"
+) : AbstractRepository(database) {
+  private val TAG = "InlinedFileInfoRepository"
   private val alreadyExecuted = AtomicBoolean(false)
 
   suspend fun getInlinedFileInfo(fileUrl: String): ModularResult<InlinedFileInfo> {

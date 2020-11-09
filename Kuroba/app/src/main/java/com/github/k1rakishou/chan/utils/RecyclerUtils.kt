@@ -18,8 +18,9 @@ package com.github.k1rakishou.chan.utils
 
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Recycler
+import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.google.gson.annotations.SerializedName
+import com.github.k1rakishou.core_logger.Logger
 
 object RecyclerUtils {
   private const val TAG = "RecyclerUtils"
@@ -37,29 +38,23 @@ object RecyclerUtils {
   }
 
   @JvmStatic
-  fun getIndexAndTop(recyclerView: RecyclerView): IndexAndTop {
+  fun getIndexAndTop(recyclerView: RecyclerView): PersistableChanState.IndexAndTop {
     var index = 0
     var top = 0
 
     val layoutManager = recyclerView.layoutManager
-      ?: return IndexAndTop(index, top)
+      ?: return PersistableChanState.IndexAndTop(index, top)
 
     if (layoutManager.childCount > 0) {
       val topChild = layoutManager.getChildAt(0)
-        ?: return IndexAndTop(index, top)
+        ?: return PersistableChanState.IndexAndTop(index, top)
 
       index = (topChild.layoutParams as RecyclerView.LayoutParams).viewLayoutPosition
       val params = topChild.layoutParams as RecyclerView.LayoutParams
       top = layoutManager.getDecoratedTop(topChild) - params.topMargin - recyclerView.paddingTop
     }
 
-    return IndexAndTop(index, top)
+    return PersistableChanState.IndexAndTop(index, top)
   }
 
-  data class IndexAndTop(
-    @SerializedName("index")
-    var index: Int = 0,
-    @SerializedName("top")
-    var top: Int = 0
-  )
 }

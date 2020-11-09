@@ -22,19 +22,18 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParser;
 import com.github.k1rakishou.chan.core.site.parser.ICommentParser;
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.model.data.theme.ChanThemeColorId;
+import com.github.k1rakishou.core_themes.ChanThemeColorId;
 
 import java.util.regex.Pattern;
 
-import static com.github.k1rakishou.chan.utils.AndroidUtils.sp;
+import static com.github.k1rakishou.common.AndroidUtils.sp;
 
 public class TaimabaCommentParser extends CommentParser implements ICommentParser {
     private static final Pattern QUOTE_PATTERN = Pattern.compile("#(\\d+)");
     private static final Pattern FULL_QUOTE_PATTERN = Pattern.compile("/(\\w+)/thread/(\\d+)#(\\d+)");
 
-    public TaimabaCommentParser(ThemeEngine themeEngine, MockReplyManager mockReplyManager) {
-        super(themeEngine, mockReplyManager);
+    public TaimabaCommentParser(MockReplyManager mockReplyManager) {
+        super(mockReplyManager);
         addDefaultRules();
 
         rule(StyleRule.tagRule("strike").strikeThrough());

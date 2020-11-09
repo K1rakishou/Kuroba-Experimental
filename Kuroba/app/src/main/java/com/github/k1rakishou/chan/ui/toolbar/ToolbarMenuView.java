@@ -22,11 +22,11 @@ import android.view.Gravity;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.common.AndroidUtils;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
 
 /**
  * The container view for the list of ToolbarMenuItems, a list of ImageViews.

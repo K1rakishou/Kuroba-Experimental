@@ -6,15 +6,16 @@ import android.os.Build
 import android.widget.ArrayAdapter
 import androidx.annotation.RequiresApi
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.manager.DialogFactory
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10GestureZonesController
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.gesture_editor.AttachSide
 import com.github.k1rakishou.chan.features.gesture_editor.ExclusionZone
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
-import com.github.k1rakishou.chan.utils.AndroidUtils
-import com.github.k1rakishou.chan.utils.AndroidUtils.getString
-import com.github.k1rakishou.chan.utils.AndroidUtils.showToast
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getScreenOrientation
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils.getString
 
 class ExclusionZoneSettingsDelegate(
   private val context: Context,
@@ -60,7 +61,7 @@ class ExclusionZoneSettingsDelegate(
       else -> throw IllegalStateException("Unhandled orientation index $selectedIndex")
     }
 
-    if (AndroidUtils.getScreenOrientation() != orientation) {
+    if (getScreenOrientation() != orientation) {
       showToast(context, R.string.setting_exclusion_zones_wrong_phone_orientation)
       return
     }

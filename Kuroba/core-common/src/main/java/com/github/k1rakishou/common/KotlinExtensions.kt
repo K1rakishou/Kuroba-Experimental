@@ -5,8 +5,18 @@ import android.view.ViewGroup
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
-import kotlinx.coroutines.*
-import okhttp3.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.suspendCancellableCoroutine
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 import java.io.IOException
 import java.util.*
 import java.util.regex.Matcher
@@ -391,6 +401,10 @@ fun String.ellipsizeEnd(maxLength: Int): String {
   }
 
   return this.take(maxLength - threeDotsLength) + "..."
+}
+
+fun String?.isNotNullOrEmpty(): Boolean {
+  return this != null && this.isNotEmpty()
 }
 
 @Suppress("ReplaceSizeCheckWithIsNotEmpty", "NOTHING_TO_INLINE")

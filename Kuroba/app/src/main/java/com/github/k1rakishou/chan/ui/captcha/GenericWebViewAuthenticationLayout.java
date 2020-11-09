@@ -26,7 +26,7 @@ import android.webkit.WebView;
 
 import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.SiteAuthentication;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 
 import java.util.concurrent.TimeUnit;
@@ -65,7 +65,7 @@ public class GenericWebViewAuthenticationLayout
     }
 
     private void init() {
-        AndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
                 .inject(this);
     }
 

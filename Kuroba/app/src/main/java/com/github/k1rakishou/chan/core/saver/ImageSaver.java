@@ -28,22 +28,22 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.StartActivity;
-import com.github.k1rakishou.chan.core.model.PostImage;
-import com.github.k1rakishou.chan.core.settings.ChanSettings;
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper;
 import com.github.k1rakishou.chan.ui.service.SavingNotification;
 import com.github.k1rakishou.chan.ui.settings.base_directory.SavedFilesBaseDirectory;
 import com.github.k1rakishou.chan.ui.widget.CancellableToast;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
-import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.chan.utils.StringUtils;
+import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.fsaf.file.AbstractFile;
 import com.github.k1rakishou.fsaf.file.DirectorySegment;
 import com.github.k1rakishou.fsaf.file.FileSegment;
 import com.github.k1rakishou.fsaf.util.FSAFUtils;
+import com.github.k1rakishou.model.data.post.ChanPostImage;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -68,9 +68,9 @@ import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledImageSaveR
 import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledImageSaveResult.NoWriteExternalStoragePermission;
 import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledImageSaveResult.Ok;
 import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledImageSaveResult.UnknownError;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getAppContext;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.StringUtils.maskImageUrl;
+import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
+import static com.github.k1rakishou.common.AndroidUtils.getString;
 
 public class ImageSaver {
     private static final String TAG = "ImageSaver";
@@ -214,7 +214,7 @@ public class ImageSaver {
             return;
         }
 
-        PostImage postImage = task.getPostImage();
+        ChanPostImage postImage = task.getPostImage();
         task.setDestination(deduplicateFile(postImage, task, saveLocation));
 
         // At this point we already have disk permissions
@@ -412,7 +412,7 @@ public class ImageSaver {
             boolean allSuccess = true;
 
             for (ImageSaveTask task : tasks) {
-                PostImage postImage = task.getPostImage();
+                ChanPostImage postImage = task.getPostImage();
 
                 AbstractFile saveLocation = getSaveLocation(task);
                 if (saveLocation == null) {
@@ -536,22 +536,22 @@ public class ImageSaver {
 
     @NonNull
     private AbstractFile deduplicateFile(
-            PostImage postImage,
+            ChanPostImage postImage,
             ImageSaveTask task,
             @NonNull AbstractFile saveLocation) {
         String name = ChanSettings.saveServerFilename.get()
-                ? postImage.serverFilename
-                : postImage.filename;
+                ? postImage.getServerFilename()
+                : postImage.getFilename();
 
         // dedupe shared files to have their own file name; ok to overwrite, prevents lots
         // of downloads for multiple shares
-        String fileName = filterName(name + (task.getShare() ? "_shared" : "") + "." + postImage.extension, true);
+        String fileName = filterName(name + (task.getShare() ? "_shared" : "") + "." + postImage.getExtension(), true);
         AbstractFile saveFile = saveLocation.clone(new FileSegment(fileName));
 
         // shared files don't need deduplicating
         while (fileManager.exists(saveFile) && !task.getShare()) {
             String currentTimeHash = Long.toString(SystemClock.elapsedRealtimeNanos(), Character.MAX_RADIX);
-            String resultFileName = name + "_" + currentTimeHash + "." + postImage.extension;
+            String resultFileName = name + "_" + currentTimeHash + "." + postImage.getExtension();
 
             fileName = filterName(resultFileName, true);
             saveFile = saveLocation.clone(new FileSegment(fileName));

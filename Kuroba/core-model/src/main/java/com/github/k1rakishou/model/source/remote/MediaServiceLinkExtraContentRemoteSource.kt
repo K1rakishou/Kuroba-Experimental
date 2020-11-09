@@ -3,7 +3,7 @@ package com.github.k1rakishou.model.source.remote
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.suspendCall
-import com.github.k1rakishou.model.common.Logger
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.media.GenericVideoId
 import com.github.k1rakishou.model.data.media.MediaServiceLinkExtraInfo
 import com.github.k1rakishou.model.data.video_service.ApiType
@@ -19,17 +19,15 @@ import okhttp3.ResponseBody
 
 open class MediaServiceLinkExtraContentRemoteSource(
   okHttpClient: OkHttpClient,
-  loggerTag: String,
-  logger: Logger
-) : AbstractRemoteSource(okHttpClient, logger) {
-  private val TAG = "$loggerTag MediaServiceLinkExtraContentRemoteSource"
+) : AbstractRemoteSource(okHttpClient) {
+  private val TAG = "MediaServiceLinkExtraContentRemoteSource"
 
   open suspend fun fetchFromNetwork(
     requestUrl: String,
     videoId: GenericVideoId,
     mediaServiceType: MediaServiceType
   ): ModularResult<MediaServiceLinkExtraInfo> {
-    logger.log(TAG, "fetchFromNetwork($requestUrl, $mediaServiceType)")
+    Logger.d(TAG, "fetchFromNetwork($requestUrl, $mediaServiceType)")
     ensureBackgroundThread()
 
     return Try {

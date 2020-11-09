@@ -13,7 +13,8 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
-import com.github.k1rakishou.chan.utils.AndroidUtils.*
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getScreenOrientation
+import com.github.k1rakishou.common.AndroidUtils.dp
 
 
 @RequiresApi(Build.VERSION_CODES.Q)
@@ -84,7 +85,7 @@ class AdjustAndroid10GestureZonesController(context: Context) : Controller(conte
     )
 
     adjustZonesView.setOnZoneAddedCallback {
-      showToast(context, R.string.setting_exclusion_zones_zone_added_message)
+      showToast(R.string.setting_exclusion_zones_zone_added_message)
       stopPresenting()
     }
   }

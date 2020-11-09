@@ -1,9 +1,9 @@
 package com.github.k1rakishou.chan.core.net
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
-import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.suspendCall
+import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Request

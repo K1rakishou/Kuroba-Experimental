@@ -22,13 +22,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import javax.inject.Inject;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
 
 public class SplitNavigationControllerLayout extends LinearLayout implements ThemeEngine.ThemeChangesListener {
 
@@ -54,7 +54,7 @@ public class SplitNavigationControllerLayout extends LinearLayout implements The
     public SplitNavigationControllerLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
 
-        AndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
                 .inject(this);
 
         setOrientation(LinearLayout.HORIZONTAL);

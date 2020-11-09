@@ -1,7 +1,6 @@
 package com.github.k1rakishou.model.source.local
 
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -10,12 +9,10 @@ import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
 
 class BoardLocalSource(
   database: KurobaDatabase,
-  loggerTag: String,
   private val isDevFlavor: Boolean,
-  private val logger: Logger,
   private val chanDescriptorCache: ChanDescriptorCache
 ) : AbstractLocalSource(database) {
-  private val TAG = "$loggerTag BoardLocalSource"
+  private val TAG = "BoardLocalSource"
   private val chanBoardDao = database.chanBoardDao()
 
   suspend fun selectAllBoards(): Map<SiteDescriptor, List<ChanBoard>> {

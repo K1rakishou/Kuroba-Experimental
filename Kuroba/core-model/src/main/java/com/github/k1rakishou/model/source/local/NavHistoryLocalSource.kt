@@ -1,16 +1,13 @@
 package com.github.k1rakishou.model.source.local
 
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.model.mapper.NavHistoryElementMapper
 
 class NavHistoryLocalSource(
   database: KurobaDatabase,
-  loggerTag: String,
-  private val logger: Logger
 ) : AbstractLocalSource(database) {
-  private val TAG = "$loggerTag NavHistoryLocalSource"
+  private val TAG = "NavHistoryLocalSource"
   private val navHistoryDao = database.navHistoryDao()
 
   suspend fun selectAll(maxCount: Int): List<NavHistoryElement> {

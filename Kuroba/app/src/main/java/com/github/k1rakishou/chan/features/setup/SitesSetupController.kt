@@ -26,8 +26,8 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyExpandableGroupView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
-import com.github.k1rakishou.chan.utils.AndroidUtils
 import com.github.k1rakishou.chan.utils.plusAssign
+import com.github.k1rakishou.common.AndroidUtils
 import javax.inject.Inject
 
 class SitesSetupController(context: Context) : Controller(context), SitesSetupView {

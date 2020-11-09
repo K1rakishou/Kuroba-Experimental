@@ -11,8 +11,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.viewpager.widget.ViewPager
-import com.github.k1rakishou.chan.ui.theme.ChanTheme
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ChanTheme
 import java.lang.reflect.Field
 
 

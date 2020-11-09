@@ -43,13 +43,13 @@ import com.github.k1rakishou.chan.core.site.SiteAuthentication;
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback;
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout;
-import com.github.k1rakishou.chan.utils.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
-import com.github.k1rakishou.chan.utils.Logger;
 import com.github.k1rakishou.common.AppConstants;
+import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -57,12 +57,15 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2_NOJS;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AndroidUtils.showToast;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
+import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.core_themes.ThemeEngine.isDarkColor;
 
 public class CaptchaNoJsLayoutV2
         extends TouchBlockingFrameLayout
-        implements AuthenticationLayoutInterface, CaptchaNoJsPresenterV2.AuthenticationCallbacks, ThemeEngine.ThemeChangesListener {
+        implements AuthenticationLayoutInterface,
+        CaptchaNoJsPresenterV2.AuthenticationCallbacks,
+        ThemeEngine.ThemeChangesListener {
     private static final String TAG = "CaptchaNoJsLayoutV2";
     private static final long RECAPTCHA_TOKEN_LIVE_TIME = TimeUnit.MINUTES.toMillis(2);
 
@@ -99,7 +102,7 @@ public class CaptchaNoJsLayoutV2
     public CaptchaNoJsLayoutV2(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
 
-        AndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
                 .inject(this);
 
         this.presenter = new CaptchaNoJsPresenterV2(this, proxiedOkHttpClient, appConstants, context);
@@ -144,7 +147,7 @@ public class CaptchaNoJsLayoutV2
         captchaChallengeTitle.setBackgroundColor(primaryColor);
 
         int textColor = Color.LTGRAY;
-        if (!AndroidUtils.isDarkColor(primaryColor)) {
+        if (!isDarkColor(primaryColor)) {
             textColor = Color.DKGRAY;
         }
 
@@ -241,6 +244,7 @@ public class CaptchaNoJsLayoutV2
     public void onCaptchaInfoParseError(Throwable error) {
         BackgroundUtils.runOnMainThread(() -> {
             Logger.e(TAG, "CaptchaV2 error", error);
+
             showToast(getContext(), error.getMessage(), Toast.LENGTH_LONG);
             captchaVerifyButton.setEnabled(true);
             callback.onFallbackToV1CaptchaView(isAutoReply);

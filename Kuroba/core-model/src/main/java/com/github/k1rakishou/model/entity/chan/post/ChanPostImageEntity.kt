@@ -1,7 +1,10 @@
 package com.github.k1rakishou.model.entity.chan.post
 
-import androidx.room.*
-import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
 import com.github.k1rakishou.model.data.post.ChanPostImageType
 import okhttp3.HttpUrl
 
@@ -20,18 +23,11 @@ import okhttp3.HttpUrl
     Index(
       value = [
         ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME,
-        ChanPostImageEntity.OWNER_ARCHIVE_ID_COLUMN_NAME,
         ChanPostImageEntity.SERVER_FILENAME_COLUMN_NAME
       ],
       unique = true
     ),
-    Index(value = [ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME]),
-    Index(
-      value = [
-        ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME,
-        ChanPostImageEntity.OWNER_ARCHIVE_ID_COLUMN_NAME
-      ]
-    )
+    Index(value = [ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME])
   ]
 )
 data class ChanPostImageEntity(
@@ -40,8 +36,6 @@ data class ChanPostImageEntity(
   var postImageId: Long = 0L,
   @ColumnInfo(name = OWNER_POST_ID_COLUMN_NAME)
   val ownerPostId: Long,
-  @ColumnInfo(name = OWNER_ARCHIVE_ID_COLUMN_NAME)
-  val ownerArchiveId: Long = ArchiveDescriptor.NO_ARCHIVE_ID,
   @ColumnInfo(name = SERVER_FILENAME_COLUMN_NAME)
   val serverFilename: String,
   @ColumnInfo(name = THUMBNAIL_URL_COLUMN_NAME)
@@ -75,7 +69,6 @@ data class ChanPostImageEntity(
 
     const val POST_IMAGE_ID_COLUMN_NAME = "post_image_id"
     const val OWNER_POST_ID_COLUMN_NAME = "owner_post_id"
-    const val OWNER_ARCHIVE_ID_COLUMN_NAME = "owner_archive_id"
     const val SERVER_FILENAME_COLUMN_NAME = "server_filename"
     const val THUMBNAIL_URL_COLUMN_NAME = "thumbnail_url"
     const val SPOILER_THUMBNAIL_URL_COLUMN_NAME = "spoiler_thumbnail_url"

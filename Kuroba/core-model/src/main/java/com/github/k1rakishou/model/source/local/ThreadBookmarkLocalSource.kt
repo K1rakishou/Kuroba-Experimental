@@ -4,8 +4,8 @@ import com.github.k1rakishou.common.flatMapIndexed
 import com.github.k1rakishou.common.mapReverseIndexedNotNull
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.common.Logger
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmark
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkEntity
@@ -18,13 +18,11 @@ import com.github.k1rakishou.model.source.cache.ThreadBookmarkCache
 
 class ThreadBookmarkLocalSource(
   database: KurobaDatabase,
-  loggerTag: String,
   private val isDevFlavor: Boolean,
-  private val logger: Logger,
   private val chanDescriptorCache: ChanDescriptorCache,
   private val threadBookmarkCache: ThreadBookmarkCache
 ) : AbstractLocalSource(database) {
-  private val TAG = "$loggerTag ThreadBookmarkLocalSource"
+  private val TAG = "ThreadBookmarkLocalSource"
   private val threadBookmarkDao = database.threadBookmarkDao()
   private val threadBookmarkReplyDao = database.threadBookmarkReplyDao()
   private val threadBookmarkGroupDao = database.threadBookmarkGroupDao()
@@ -46,7 +44,7 @@ class ThreadBookmarkLocalSource(
       }
     }
 
-    logger.log(TAG, "siteNamesForNewGroups=${siteNamesForNewGroups}, maxOrder=$maxOrder")
+    Logger.d(TAG, "siteNamesForNewGroups=${siteNamesForNewGroups}, maxOrder=$maxOrder")
 
     if (siteNamesForNewGroups.isEmpty()) {
       return
@@ -66,7 +64,7 @@ class ThreadBookmarkLocalSource(
       ++newOrder
     }
 
-    logger.log(TAG, "newBookmarkGroups=${newBookmarkGroups}")
+    Logger.d(TAG, "newBookmarkGroups=${newBookmarkGroups}")
     threadBookmarkGroupDao.createGroups(newBookmarkGroups)
   }
 
@@ -89,7 +87,7 @@ class ThreadBookmarkLocalSource(
 
   suspend fun persist(bookmarks: List<ThreadBookmark>) {
     ensureInTransaction()
-    logger.log(TAG, "persist(${bookmarks.size})")
+    Logger.d(TAG, "persist(${bookmarks.size})")
 
     val threadDescriptors = bookmarks.map { bookmark -> bookmark.threadDescriptor }
     val cachedBookmarks = threadBookmarkCache.getMany(threadDescriptors)
@@ -108,7 +106,7 @@ class ThreadBookmarkLocalSource(
       insertOrUpdateBookmarks(toInsertOrUpdateInDatabase)
     }
 
-    logger.log(TAG, "persist() inserted/updated ${toInsertOrUpdateInDatabase.size} bookmarks, " +
+    Logger.d(TAG, "persist() inserted/updated ${toInsertOrUpdateInDatabase.size} bookmarks, " +
       "deleted ${toDelete.size} bookmarks")
   }
 
@@ -172,8 +170,7 @@ class ThreadBookmarkLocalSource(
     )
 
     cacheNewBookmarkDatabaseIds(toInsertOrUpdateInDatabase, toInsertOrUpdateThreadBookmarkEntities)
-
-    logger.log(TAG, "persist() inserted/updated ${toInsertOrUpdateBookmarkReplyEntities.size} replies")
+    Logger.d(TAG, "persist() inserted/updated ${toInsertOrUpdateBookmarkReplyEntities.size} replies")
   }
 
   private fun retainDeletedBookmarks(

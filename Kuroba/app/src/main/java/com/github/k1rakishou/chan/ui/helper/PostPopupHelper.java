@@ -19,11 +19,12 @@ package com.github.k1rakishou.chan.ui.helper;
 import android.content.Context;
 
 import com.github.k1rakishou.chan.controller.Controller;
-import com.github.k1rakishou.chan.core.model.Post;
-import com.github.k1rakishou.chan.core.model.PostImage;
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter;
 import com.github.k1rakishou.chan.ui.controller.PostRepliesController;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
+import com.github.k1rakishou.model.data.post.ChanPost;
+import com.github.k1rakishou.model.data.post.ChanPostImage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,7 @@ public class PostPopupHelper {
         this.callback = callback;
     }
 
-    public void showPosts(Post forPost, List<Post> posts) {
+    public void showPosts(ChanPost forPost, List<ChanPost> posts) {
         RepliesData data = new RepliesData(forPost, posts);
         dataQueue.add(data);
 
@@ -50,11 +51,11 @@ public class PostPopupHelper {
             present();
         }
 
-        if (presenter.getChanDescriptor() == null) {
+        if (presenter.getCurrentChanDescriptor() == null) {
             throw new IllegalStateException("Thread loadable cannot be null");
         }
 
-        presentingController.setPostRepliesData(presenter.getChanDescriptor(), data);
+        presentingController.setPostRepliesData(presenter.getCurrentChanDescriptor(), data);
     }
 
     public void pop() {
@@ -63,11 +64,14 @@ public class PostPopupHelper {
         }
 
         if (dataQueue.size() > 0) {
-            if (presenter.getChanDescriptor() == null) {
+            if (presenter.getCurrentChanDescriptor() == null) {
                 throw new IllegalStateException("Thread loadable cannot be null");
             }
 
-            presentingController.setPostRepliesData(presenter.getChanDescriptor(), dataQueue.get(dataQueue.size() - 1));
+            presentingController.setPostRepliesData(
+                    presenter.getCurrentChanDescriptor(),
+                    dataQueue.get(dataQueue.size() - 1)
+            );
         } else {
             dismiss();
         }
@@ -82,7 +86,7 @@ public class PostPopupHelper {
         return presentingController != null && presentingController.alive;
     }
 
-    public List<Post> getDisplayingPosts() {
+    public List<PostDescriptor> getDisplayingPostDescriptors() {
         return presentingController.getPostRepliesData();
     }
 
@@ -90,14 +94,14 @@ public class PostPopupHelper {
         presentingController.scrollTo(displayPosition);
     }
 
-    public ThumbnailView getThumbnail(PostImage postImage) {
+    public ThumbnailView getThumbnail(ChanPostImage postImage) {
         return presentingController.getThumbnail(postImage);
     }
 
-    public void postClicked(Post p) {
+    public void postClicked(PostDescriptor postDescriptor) {
         popAll();
-        presenter.highlightPost(p);
-        presenter.scrollToPost(p, true);
+        presenter.highlightPost(postDescriptor);
+        presenter.scrollToPost(postDescriptor, true);
     }
 
     private void dismiss() {
@@ -115,10 +119,10 @@ public class PostPopupHelper {
     }
 
     public static class RepliesData {
-        public List<Post> posts;
-        public Post forPost;
+        public List<ChanPost> posts;
+        public ChanPost forPost;
 
-        public RepliesData(Post forPost, List<Post> posts) {
+        public RepliesData(ChanPost forPost, List<ChanPost> posts) {
             this.forPost = forPost;
             this.posts = posts;
         }

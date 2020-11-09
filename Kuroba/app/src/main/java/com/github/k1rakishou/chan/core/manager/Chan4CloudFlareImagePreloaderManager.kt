@@ -1,17 +1,27 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
-import com.github.k1rakishou.chan.core.model.ChanThread
-import com.github.k1rakishou.chan.core.model.PostImage
-import com.github.k1rakishou.chan.core.settings.ChanSettings
-import com.github.k1rakishou.chan.utils.Logger
-import com.github.k1rakishou.common.*
+import com.github.k1rakishou.common.awaitSilently
+import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.highLowMap
+import com.github.k1rakishou.common.isExceptionImportant
+import com.github.k1rakishou.common.mutableMapWithCap
+import com.github.k1rakishou.common.suspendCall
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import kotlinx.coroutines.*
+import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.data.thread.ChanThread
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.supervisorScope
 import okhttp3.Request
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -22,7 +32,7 @@ class Chan4CloudFlareImagePreloaderManager(
   private val appScope: CoroutineScope,
   private val verboseLogsEnabled: Boolean,
   private val realProxiedOkHttpClient: RealProxiedOkHttpClient,
-  private val chanLoaderManager: ChanLoaderManager
+  private val chanThreadManager: ChanThreadManager
 ) {
   private val lock = ReentrantReadWriteLock()
 
@@ -125,12 +135,15 @@ class Chan4CloudFlareImagePreloaderManager(
       return true
     }
 
-    if (!postDescriptor.descriptor.siteDescriptor().is4chan()) {
+    val threadDescriptor = postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
+      ?: return true
+
+    if (!threadDescriptor.siteDescriptor().is4chan()) {
       // Only works on 4chan
       return true
     }
 
-    val chanThread = chanLoaderManager.getLoader(postDescriptor.descriptor)?.thread
+    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
       ?: return false
 
     val postDescriptors = chanThread.mapPostsWithImagesAround(
@@ -148,7 +161,7 @@ class Chan4CloudFlareImagePreloaderManager(
 
   fun startLoading(
     chanDescriptor: ChanDescriptor?,
-    postImage: PostImage,
+    postImage: ChanPostImage,
     leftCount: Int,
     rightCount: Int
   ) {
@@ -163,11 +176,14 @@ class Chan4CloudFlareImagePreloaderManager(
       return
     }
 
-    if (!chanDescriptor.siteDescriptor().is4chan()) {
+    val threadDescriptor = chanDescriptor as? ChanDescriptor.ThreadDescriptor
+      ?: return
+
+    if (!threadDescriptor.siteDescriptor().is4chan()) {
       return
     }
 
-    val chanThread = chanLoaderManager.getLoader(chanDescriptor)?.thread
+    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
       ?: return
 
     val possibleToPreload = chanThread.mapPostsWithImagesAround(
@@ -199,12 +215,15 @@ class Chan4CloudFlareImagePreloaderManager(
       return false
     }
 
-    if (!postDescriptor.descriptor.siteDescriptor().is4chan()) {
+    val threadDescriptor = postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
+      ?: return false
+
+    if (!threadDescriptor.siteDescriptor().is4chan()) {
       // Only works on 4chan
       return false
     }
 
-    val chanThread = chanLoaderManager.getLoader(postDescriptor.descriptor)?.thread
+    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
       ?: return false
 
     val possibleToPreload = chanThread.mapPostsWithImagesAround(
@@ -240,10 +259,13 @@ class Chan4CloudFlareImagePreloaderManager(
     return true
   }
 
-  fun cancelLoading(postImage: PostImage, swipedForward: Boolean) {
+  fun cancelLoading(postImage: ChanPostImage, swipedForward: Boolean) {
     val postDescriptor = postImage.ownerPostDescriptor
 
-    val chanThread = chanLoaderManager.getLoader(postDescriptor.descriptor)?.thread
+    val threadDescriptor = postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
+      ?: return
+
+    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
       ?: return
 
     val offset = if (swipedForward) {
@@ -263,12 +285,15 @@ class Chan4CloudFlareImagePreloaderManager(
       return
     }
 
-    if (!postDescriptor.descriptor.siteDescriptor().is4chan()) {
+    val threadDescriptor = postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
+      ?: return
+
+    if (!threadDescriptor.siteDescriptor().is4chan()) {
       // Only works on 4chan
       return
     }
 
-    val chanThread = chanLoaderManager.getLoader(postDescriptor.descriptor)?.thread
+    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
       ?: return
 
     if (!chanThread.postHasImages(postDescriptor)) {
@@ -290,15 +315,18 @@ class Chan4CloudFlareImagePreloaderManager(
   }
 
   private suspend fun preloadImagesForPost(postDescriptor: PostDescriptor) {
-    val thread = chanLoaderManager.getLoader(postDescriptor.descriptor)?.thread
-    if (thread == null) {
-      Logger.d(TAG, "preloadImagesForPost() No thread found by descriptor: ${postDescriptor.descriptor}")
+    val threadDescriptor = postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
+      ?: return
+
+    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
+    if (chanThread == null) {
+      Logger.d(TAG, "preloadImagesForPost() No thread found by descriptor: ${threadDescriptor}")
       return
     }
 
-    val imagesToLoad = mutableListOf<PostImage>()
+    val imagesToLoad = mutableListOf<ChanPostImage>()
 
-    val success = thread.iteratePostImages(postDescriptor) { postImage ->
+    val success = chanThread.iteratePostImages(postDescriptor) { postImage ->
       if (!postImage.canBeUsedForCloudflarePreloading()) {
         Logger.d(TAG, "preloadImagesForPost() Cannot preload image: ${postImage.serverFilename}")
         return@iteratePostImages
@@ -349,7 +377,7 @@ class Chan4CloudFlareImagePreloaderManager(
     }
   }
 
-  private suspend fun preloadImage(postImage: PostImage) {
+  private suspend fun preloadImage(postImage: ChanPostImage) {
     val imageUrl = postImage.imageUrl
     if (imageUrl == null) {
       Logger.d(TAG, "preloadImage() postImage.imageUrl == null")

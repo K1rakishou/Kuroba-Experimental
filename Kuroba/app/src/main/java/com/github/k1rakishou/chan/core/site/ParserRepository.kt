@@ -9,21 +9,19 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.parser.ICommentParser
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.core.site.sites.dvach.DvachCommentParser
-import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 
 class ParserRepository(
-  private val themeEngine: ThemeEngine,
   private val mockReplyManager: MockReplyManager,
   private val archivesManager: ArchivesManager
 ) {
   private val parsers = mutableMapOf<CommentParserType, ICommentParser>()
 
   init {
-    parsers[CommentParserType.Default] = CommentParser(themeEngine, mockReplyManager)
-    parsers[CommentParserType.DvachParser] = DvachCommentParser(themeEngine, mockReplyManager)
-    parsers[CommentParserType.FoolFuukaParser] = FoolFuukaCommentParser(themeEngine, mockReplyManager, archivesManager)
-    parsers[CommentParserType.TaimabaParser] = TaimabaCommentParser(themeEngine, mockReplyManager)
-    parsers[CommentParserType.VichanParser] = VichanCommentParser(themeEngine, mockReplyManager)
+    parsers[CommentParserType.Default] = CommentParser(mockReplyManager)
+    parsers[CommentParserType.DvachParser] = DvachCommentParser(mockReplyManager)
+    parsers[CommentParserType.FoolFuukaParser] = FoolFuukaCommentParser(mockReplyManager, archivesManager)
+    parsers[CommentParserType.TaimabaParser] = TaimabaCommentParser(mockReplyManager)
+    parsers[CommentParserType.VichanParser] = VichanCommentParser(mockReplyManager)
   }
 
   @Synchronized
