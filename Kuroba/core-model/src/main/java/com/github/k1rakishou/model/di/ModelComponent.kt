@@ -4,6 +4,7 @@ import android.app.Application
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.model.repository.BoardRepository
 import com.github.k1rakishou.model.repository.BookmarksRepository
+import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanFilterRepository
 import com.github.k1rakishou.model.repository.ChanPostHideRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
@@ -45,6 +46,7 @@ interface ModelComponent {
   fun getChanPostHideRepository(): ChanPostHideRepository
   fun getChanFilterRepository(): ChanFilterRepository
   fun getThreadBookmarkGroupRepository(): ThreadBookmarkGroupRepository
+  fun getChanCatalogSnapshotRepository(): ChanCatalogSnapshotRepository
   fun getChanThreadsCache(): ChanThreadsCache
 
   @Component.Builder
@@ -56,7 +58,7 @@ interface ModelComponent {
 
   class Dependencies(
     val application: Application,
-    val scope: CoroutineScope,
+    val coroutineScope: CoroutineScope,
     val verboseLogs: Boolean,
     val isDevFlavor: Boolean,
     val dns: Dns,

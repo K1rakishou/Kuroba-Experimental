@@ -62,6 +62,13 @@ class ChanReaderProcessor(
     return lock.withLock { toParse }
   }
 
+  suspend fun getThreadDescriptors(): List<ChanDescriptor.ThreadDescriptor> {
+    return lock.withLock {
+      return@withLock toParse
+        .map { chanPostBuilder -> chanPostBuilder.postDescriptor.threadDescriptor() }
+    }
+  }
+
   suspend fun getPostsSortedByIndexes(posts: List<ChanPost>): List<ChanPost> {
     return lock.withLock {
       return@withLock postNoOrderedList.mapNotNull { postNo ->
@@ -123,4 +130,9 @@ class ChanReaderProcessor(
   private fun addForParse(postBuilder: ChanPostBuilder) {
     toParse.add(postBuilder)
   }
+
+  override fun toString(): String {
+    return "ChanReaderProcessor{chanDescriptor=$chanDescriptor, toParse=${toParse.size}}"
+  }
+
 }

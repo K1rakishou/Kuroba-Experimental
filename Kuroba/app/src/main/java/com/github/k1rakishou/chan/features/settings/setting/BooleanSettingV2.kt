@@ -166,6 +166,7 @@ class BooleanSettingV2 : SettingV2() {
 
           booleanSettingV2.isChecked = setting.get()
           booleanSettingV2.settingsIdentifier = identifier
+          booleanSettingV2.setting = setting
 
           dependsOnSetting?.let { setting ->
             booleanSettingV2.subscribeToChanges(setting)

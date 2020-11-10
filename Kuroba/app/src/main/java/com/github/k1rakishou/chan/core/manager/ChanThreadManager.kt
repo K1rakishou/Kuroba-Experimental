@@ -8,10 +8,10 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.catalog.ChanCatalog
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
-import com.github.k1rakishou.model.data.thread.ChanCatalog
 import com.github.k1rakishou.model.data.thread.ChanThread
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.source.cache.ChanCacheOptions
@@ -70,7 +70,9 @@ class ChanThreadManager(
     if (reloadOptions.canClearCache()) {
       when (chanDescriptor) {
         is ChanDescriptor.ThreadDescriptor -> chanThreadsCache.deleteThread(chanDescriptor)
-        is ChanDescriptor.CatalogDescriptor -> chanThreadsCache.deleteCatalog(chanDescriptor)
+        is ChanDescriptor.CatalogDescriptor -> {
+          // no-op, we never delete threads from catalog snapshots
+        }
       }
     }
 
@@ -263,7 +265,7 @@ class ChanThreadManager(
       bookmarksManager.onThreadIsFetchingData(chanDescriptor)
     }
 
-    return chanThreadLoaderCoordinator.loadThread(
+    return chanThreadLoaderCoordinator.loadThreadOrCatalog(
       url,
       chanDescriptor,
       cacheOptions,

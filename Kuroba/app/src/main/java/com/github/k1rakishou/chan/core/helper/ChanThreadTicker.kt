@@ -270,7 +270,6 @@ class ChanThreadTicker(
     fun resetCurrentChanDescriptor() {
       this.currentChanDescriptor = null
     }
-
   }
 
   private data class TickerInput(

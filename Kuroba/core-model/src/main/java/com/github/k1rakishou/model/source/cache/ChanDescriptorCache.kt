@@ -76,8 +76,10 @@ class ChanDescriptorCache(
       return fromCache
     }
 
-    val fromDatabase = chanBoardDao.selectBoardDatabaseId(boardDescriptor.siteName(), boardDescriptor.boardCode)
-      ?: return null
+    val fromDatabase = chanBoardDao.selectBoardDatabaseId(
+      boardDescriptor.siteName(),
+      boardDescriptor.boardCode
+    ) ?: return null
 
     mutex.withLock { boardIdCache[boardDescriptor] = fromDatabase }
     return fromDatabase

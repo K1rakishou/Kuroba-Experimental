@@ -240,10 +240,7 @@ class PostCell : LinearLayout, PostCellInterface {
     gestureDetector = GestureDetector(context, DoubleTapGestureListener())
 
     linkClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostLinkColor, 1.3f)
-    linkClickSpan.themeEngine = themeEngine
-
     quoteClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostQuoteColor, 1.3f)
-    quoteClickSpan.themeEngine = themeEngine
   }
 
   override fun onPostRecycled(isActuallyRecycling: Boolean) {
@@ -391,8 +388,6 @@ class PostCell : LinearLayout, PostCellInterface {
     bindIcons(theme, post)
 
     val commentText = getCommentText(post)
-    ChanPostUtils.postCommentSpansSetThemeEngine(commentText, themeEngine)
-
     bindPostComment(theme, post, commentText)
 
     if (threadMode) {
@@ -495,18 +490,12 @@ class PostCell : LinearLayout, PostCellInterface {
     }
 
     if (post.subject.isNotNullNorEmpty()) {
-      val subject = post.subject!!
-      ChanPostUtils.postCommentSpansSetThemeEngine(subject, themeEngine)
-
-      titleParts.add(subject)
+      titleParts.add(post.subject!!)
       titleParts.add("\n")
     }
 
     if (post.tripcode.isNotNullNorEmpty()) {
-      val tripcode = post.tripcode!!
-      ChanPostUtils.postCommentSpansSetThemeEngine(tripcode, themeEngine)
-
-      titleParts.add(tripcode)
+      titleParts.add(post.tripcode!!)
     }
 
     val noText = String.format(Locale.ENGLISH, "%sNo. %d", postIndexText, post.postNo())
@@ -869,7 +858,7 @@ class PostCell : LinearLayout, PostCellInterface {
     val linkables = commentSpanned.getSpans(
       0,
       commentSpanned.length,
-      com.github.k1rakishou.core_spannable.PostLinkable::class.java
+      PostLinkable::class.java
     )
 
     for (linkable in linkables) {

@@ -1,4 +1,4 @@
-package com.github.k1rakishou.model.data.thread
+package com.github.k1rakishou.model.data.catalog
 
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor

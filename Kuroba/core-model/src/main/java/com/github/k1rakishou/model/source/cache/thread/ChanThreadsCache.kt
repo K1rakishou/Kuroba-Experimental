@@ -6,20 +6,19 @@ import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.linkedMapWithCap
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
-import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.catalog.ChanCatalog
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
-import com.github.k1rakishou.model.data.thread.ChanCatalog
 import com.github.k1rakishou.model.data.thread.ChanThread
 import com.github.k1rakishou.model.source.cache.ChanCacheOptions
+import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.collections.LinkedHashSet
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.time.ExperimentalTime
@@ -27,13 +26,12 @@ import kotlin.time.measureTime
 
 class ChanThreadsCache(
   private val isDevFlavor: Boolean,
-  private val maxCacheSize: Int
+  private val maxCacheSize: Int,
+  private val chanCatalogSnapshotCache: ChanCatalogSnapshotCache
 ) {
   private val tag = "PostsCache"
 
   private val lock = ReentrantReadWriteLock()
-  @GuardedBy("lock")
-  private val chanCatalogs = mutableMapWithCap<ChanDescriptor.CatalogDescriptor, LinkedHashSet<ChanDescriptor.ThreadDescriptor>>(128)
   @GuardedBy("lock")
   private val chanThreads = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanThread>(128)
   @GuardedBy("lock")
@@ -58,15 +56,7 @@ class ChanThreadsCache(
       runOldPostEvictionRoutineIfNeeded()
 
       originalPosts.forEach { chanOriginalPost ->
-        val catalogDescriptor = chanOriginalPost.postDescriptor.catalogDescriptor()
         val threadDescriptor = chanOriginalPost.postDescriptor.threadDescriptor()
-
-        chanCatalogs.putIfNotContains(
-          catalogDescriptor,
-          LinkedHashSet(DEFAULT_CATALOG_THREADS_COUNT)
-        )
-
-        chanCatalogs[catalogDescriptor]!!.add(threadDescriptor)
 
         if (!chanThreads.containsKey(threadDescriptor)) {
           chanThreads[threadDescriptor] = ChanThread(threadDescriptor)
@@ -100,16 +90,7 @@ class ChanThreadsCache(
 
     lock.write {
       runOldPostEvictionRoutineIfNeeded()
-
-      val catalogDescriptor = originalPost.postDescriptor.descriptor.catalogDescriptor()
       val threadDescriptor = originalPost.postDescriptor.descriptor as ChanDescriptor.ThreadDescriptor
-
-      chanCatalogs.putIfNotContains(
-        catalogDescriptor,
-        LinkedHashSet(DEFAULT_CATALOG_THREADS_COUNT)
-      )
-
-      chanCatalogs[catalogDescriptor]!!.add(threadDescriptor)
 
       if (!chanThreads.containsKey(threadDescriptor)) {
         chanThreads[threadDescriptor] = ChanThread(threadDescriptor)
@@ -143,7 +124,8 @@ class ChanThreadsCache(
           return@read chanThreads[chanDescriptor]?.getPost(postDescriptor)
         }
         is ChanDescriptor.CatalogDescriptor -> {
-          val threadDescriptors = chanCatalogs[chanDescriptor]
+          val threadDescriptors = chanCatalogSnapshotCache.get(chanDescriptor.boardDescriptor)
+            ?.catalogThreadDescriptors
             ?: return@read null
 
           val threadDescriptor = threadDescriptors
@@ -165,7 +147,8 @@ class ChanThreadsCache(
 
   fun getCatalog(catalogDescriptor: ChanDescriptor.CatalogDescriptor): ChanCatalog? {
     return lock.read {
-      val threadDescriptors = chanCatalogs[catalogDescriptor]
+      val threadDescriptors = chanCatalogSnapshotCache.get(catalogDescriptor.boardDescriptor)
+        ?.catalogThreadDescriptors
         ?: return@read null
 
       val posts =  threadDescriptors
@@ -186,7 +169,8 @@ class ChanThreadsCache(
           return@read chanThreads[chanDescriptor]?.hasAtLeastOnePost() ?: false
         }
         is ChanDescriptor.CatalogDescriptor -> {
-          val catalogThreadDescriptors = chanCatalogs[chanDescriptor]
+          val catalogThreadDescriptors = chanCatalogSnapshotCache.get(chanDescriptor.boardDescriptor)
+            ?.catalogThreadDescriptors
             ?: return@read false
 
           return@read catalogThreadDescriptors.any { threadDescriptor ->
@@ -269,11 +253,6 @@ class ChanThreadsCache(
 
       val chanThread = chanThreads[threadDescriptor]
       if (chanThread != null) {
-        val chanPost = chanThread.getPost(postDescriptor)
-        if (chanPost != null && chanPost.isOP()) {
-          deleteCatalogPostIfNeeded(chanPost.postDescriptor.threadDescriptor())
-        }
-
         chanThread.deletePost(postDescriptor)
       }
 
@@ -285,15 +264,6 @@ class ChanThreadsCache(
     deleteThreads(listOf(threadDescriptor))
   }
 
-  fun deleteCatalog(chanDescriptor: ChanDescriptor.CatalogDescriptor) {
-    lock.write {
-      val catalogThreads = chanCatalogs[chanDescriptor]
-        ?: return@write
-
-      deleteThreads(catalogThreads)
-    }
-  }
-
   fun deleteThreads(threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) {
     lock.write {
       threadDescriptors.forEach { threadDescriptor ->
@@ -302,19 +272,7 @@ class ChanThreadsCache(
         }
 
         chanThreads.remove(threadDescriptor)
-        deleteCatalogPostIfNeeded(threadDescriptor)
       }
-    }
-  }
-
-  private fun deleteCatalogPostIfNeeded(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    require(lock.isWriteLocked) { "Lock must be write locked" }
-
-    val catalogDescriptor = threadDescriptor.catalogDescriptor()
-    chanCatalogs[catalogDescriptor]?.remove(threadDescriptor)
-
-    if (chanCatalogs[catalogDescriptor]?.isEmpty() == true) {
-      chanCatalogs.remove(catalogDescriptor)
     }
   }
 
@@ -322,7 +280,6 @@ class ChanThreadsCache(
     lock.write {
       lastEvictInvokeTime.set(0)
       rawPostHashesMap.clear()
-      chanCatalogs.clear()
       chanThreads.clear()
       rawPostHashesMap.clear()
     }

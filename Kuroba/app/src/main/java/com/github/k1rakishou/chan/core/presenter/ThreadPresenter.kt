@@ -83,6 +83,7 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.source.cache.ChanCacheOptions
 import com.github.k1rakishou.model.util.ChanPostUtils
@@ -112,6 +113,7 @@ class ThreadPresenter @Inject constructor(
   private val savedReplyManager: SavedReplyManager,
   private val postHideManager: PostHideManager,
   private val chanPostRepository: ChanPostRepository,
+  private val chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository,
   private val mockReplyManager: MockReplyManager,
   private val archivesManager: ArchivesManager,
   private val onDemandContentLoaderManager: OnDemandContentLoaderManager,
@@ -142,6 +144,8 @@ class ThreadPresenter @Inject constructor(
   private var threadPresenterCallback: ThreadPresenterCallback? = null
   private var forcePageUpdate = false
   private var order = PostsFilter.Order.BUMP
+
+  private val verboseLogs by lazy { ChanSettings.verboseLogs.get() }
   private val compositeDisposable = CompositeDisposable()
   private val job = SupervisorJob()
 
@@ -154,8 +158,24 @@ class ThreadPresenter @Inject constructor(
 
   val isBound: Boolean
     get() {
-      return chanThreadTicker.currentChanDescriptor != null
-        && chanThreadManager.isCached(chanThreadTicker.currentChanDescriptor)
+      val currentDescriptor = chanThreadTicker.currentChanDescriptor
+      if (currentDescriptor == null) {
+        if (verboseLogs) {
+          Logger.e(TAG, "isBound() currentChanDescriptor == null")
+        }
+
+        return false
+      }
+
+      if (!chanThreadManager.isCached(currentDescriptor)) {
+        if (verboseLogs) {
+          Logger.e(TAG, "isBound() currentChanDescriptor (${currentDescriptor}) is not cached")
+        }
+
+        return false
+      }
+
+      return true
     }
 
   val isPinned: Boolean
@@ -206,7 +226,7 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    if (isBound) {
+    if (chanThreadTicker.currentChanDescriptor != null) {
       unbindChanDescriptor(false)
     }
 
@@ -234,7 +254,7 @@ class ThreadPresenter @Inject constructor(
   fun unbindChanDescriptor(isDestroying: Boolean) {
     BackgroundUtils.ensureMainThread()
 
-    if (isBound) {
+    if (chanThreadTicker.currentChanDescriptor != null) {
       val currentChanDescriptor = chanThreadTicker.currentChanDescriptor
       if (currentChanDescriptor != null) {
         chanThreadManager.unbindChanDescriptor(currentChanDescriptor)
@@ -304,6 +324,13 @@ class ThreadPresenter @Inject constructor(
       val jobs = mutableListOf<Deferred<Unit>>()
 
       jobs += async(Dispatchers.IO) { postHideManager.preloadForCatalog(catalogDescriptor) }
+      jobs += async(Dispatchers.IO) {
+        chanCatalogSnapshotRepository.preloadChanCatalogSnapshot(catalogDescriptor)
+          .peekError { error -> Logger.e(TAG, "preloadChanCatalogSnapshot($catalogDescriptor) error", error) }
+          .ignore()
+
+        return@async
+      }
 
       ModularResult.Try { jobs.awaitAll() }
         .peekError { error -> Logger.e(TAG, "requestCatalogInitialData() error", error) }

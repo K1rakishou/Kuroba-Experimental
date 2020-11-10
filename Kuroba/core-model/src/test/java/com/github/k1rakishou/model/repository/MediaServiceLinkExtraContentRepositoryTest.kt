@@ -6,10 +6,15 @@ import com.github.k1rakishou.model.data.media.GenericVideoId
 import com.github.k1rakishou.model.data.media.MediaServiceLinkExtraInfo
 import com.github.k1rakishou.model.data.video_service.MediaServiceLinkExtraContent
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
-import com.github.k1rakishou.model.source.cache.GenericCacheSource
+import com.github.k1rakishou.model.source.cache.GenericSuspendableCacheSource
 import com.github.k1rakishou.model.source.local.MediaServiceLinkExtraContentLocalSource
 import com.github.k1rakishou.model.source.remote.MediaServiceLinkExtraContentRemoteSource
-import com.nhaarman.mockitokotlin2.*
+import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.times
+import com.nhaarman.mockitokotlin2.verify
+import com.nhaarman.mockitokotlin2.verifyZeroInteractions
+import com.nhaarman.mockitokotlin2.whenever
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -26,7 +31,7 @@ import org.robolectric.RobolectricTestRunner
 class MediaServiceLinkExtraContentRepositoryTest {
   private val coroutineScope = TestCoroutineScope()
 
-  lateinit var cache: GenericCacheSource<MediaServiceLinkExtraContentRepository.MediaServiceKey, MediaServiceLinkExtraContent>
+  lateinit var cache: GenericSuspendableCacheSource<MediaServiceLinkExtraContentRepository.MediaServiceKey, MediaServiceLinkExtraContent>
   lateinit var repository: MediaServiceLinkExtraContentRepository
   lateinit var localSource: MediaServiceLinkExtraContentLocalSource
   lateinit var remoteSource: MediaServiceLinkExtraContentRemoteSource

@@ -40,7 +40,6 @@ import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPost;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
-import com.github.k1rakishou.model.util.ChanPostUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -253,11 +252,8 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
         }
 
         if (!TextUtils.isEmpty(post.getSubject())) {
-            CharSequence subject = post.getSubject();
-            ChanPostUtils.postCommentSpansSetThemeEngine(subject, themeEngine);
-
             title.setVisibility(VISIBLE);
-            title.setText(subject);
+            title.setText(post.getSubject());
         } else {
             title.setVisibility(GONE);
             title.setText(null);
@@ -268,7 +264,6 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
             commentText = commentText.subSequence(0, COMMENT_MAX_LENGTH);
         }
 
-        ChanPostUtils.postCommentSpansSetThemeEngine(commentText, themeEngine);
         comment.setText(commentText);
         comment.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
 

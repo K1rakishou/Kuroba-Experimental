@@ -6,7 +6,7 @@ import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.media.GenericVideoId
 import com.github.k1rakishou.model.data.video_service.MediaServiceLinkExtraContent
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
-import com.github.k1rakishou.model.source.cache.GenericCacheSource
+import com.github.k1rakishou.model.source.cache.GenericSuspendableCacheSource
 import com.github.k1rakishou.model.source.local.MediaServiceLinkExtraContentLocalSource
 import com.github.k1rakishou.model.source.remote.MediaServiceLinkExtraContentRemoteSource
 import com.github.k1rakishou.model.util.ensureBackgroundThread
@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class MediaServiceLinkExtraContentRepository(
   database: KurobaDatabase,
   private val applicationScope: CoroutineScope,
-  private val cache: GenericCacheSource<MediaServiceKey, MediaServiceLinkExtraContent>,
+  private val cache: GenericSuspendableCacheSource<MediaServiceKey, MediaServiceLinkExtraContent>,
   private val mediaServiceLinkExtraContentLocalSource: MediaServiceLinkExtraContentLocalSource,
   private val mediaServiceLinkExtraContentRemoteSource: MediaServiceLinkExtraContentRemoteSource
 ) : AbstractRepository(database) {

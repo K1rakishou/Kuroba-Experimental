@@ -39,7 +39,6 @@ import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPost;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
-import com.github.k1rakishou.model.util.ChanPostUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -194,17 +193,13 @@ public class PostStubCell
         }
 
         if (!TextUtils.isEmpty(post.getSubject())) {
-            CharSequence subject = post.getSubject();
-            ChanPostUtils.postCommentSpansSetThemeEngine(subject, themeEngine);
-
-            title.setText(subject);
+            title.setText(post.getSubject());
         } else {
             CharSequence titleText = post.getPostComment().getComment();
             if (titleText.length() > TITLE_MAX_LENGTH) {
                 titleText = titleText.subSequence(0, TITLE_MAX_LENGTH);
             }
 
-            ChanPostUtils.postCommentSpansSetThemeEngine(titleText, themeEngine);
             title.setText(titleText);
         }
 

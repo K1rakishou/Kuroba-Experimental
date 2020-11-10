@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import dagger.Module
 import dagger.Provides
@@ -24,6 +25,7 @@ class HelperModule {
     savedReplyManager: SavedReplyManager,
     filterEngine: FilterEngine,
     chanPostRepository: ChanPostRepository,
+    chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository,
     appConstants: AppConstants,
     postFilterManager: PostFilterManager,
     boardManager: BoardManager
@@ -35,6 +37,7 @@ class HelperModule {
       savedReplyManager,
       filterEngine,
       chanPostRepository,
+      chanCatalogSnapshotRepository,
       appConstants,
       postFilterManager,
       ChanSettings.verboseLogs.get(),

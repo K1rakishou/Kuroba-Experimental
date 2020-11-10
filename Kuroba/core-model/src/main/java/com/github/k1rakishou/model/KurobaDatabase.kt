@@ -16,6 +16,7 @@ import com.github.k1rakishou.model.converter.ReplyTypeTypeConverter
 import com.github.k1rakishou.model.converter.TextTypeTypeConverter
 import com.github.k1rakishou.model.converter.VideoServiceTypeConverter
 import com.github.k1rakishou.model.dao.ChanBoardDao
+import com.github.k1rakishou.model.dao.ChanCatalogSnapshotDao
 import com.github.k1rakishou.model.dao.ChanFilterDao
 import com.github.k1rakishou.model.dao.ChanPostDao
 import com.github.k1rakishou.model.dao.ChanPostHideDao
@@ -43,6 +44,7 @@ import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkGroupEntryEntit
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkReplyEntity
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardEntity
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardIdEntity
+import com.github.k1rakishou.model.entity.chan.catalog.ChanCatalogSnapshotEntity
 import com.github.k1rakishou.model.entity.chan.filter.ChanFilterBoardConstraintEntity
 import com.github.k1rakishou.model.entity.chan.filter.ChanFilterEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostEntity
@@ -70,6 +72,7 @@ import com.github.k1rakishou.model.migrations.Migration_v5_to_v6
 import com.github.k1rakishou.model.migrations.Migration_v6_to_v7
 import com.github.k1rakishou.model.migrations.Migration_v7_to_v8
 import com.github.k1rakishou.model.migrations.Migration_v8_to_v9
+import com.github.k1rakishou.model.migrations.Migration_v9_to_v10
 
 @DoNotStrip
 @Database(
@@ -91,6 +94,7 @@ import com.github.k1rakishou.model.migrations.Migration_v8_to_v9
     ChanThreadViewableInfoEntity::class,
     ChanFilterEntity::class,
     ChanFilterBoardConstraintEntity::class,
+    ChanCatalogSnapshotEntity::class,
     MediaServiceLinkExtraContentEntity::class,
     SeenPostEntity::class,
     InlinedFileInfoEntity::class,
@@ -105,7 +109,7 @@ import com.github.k1rakishou.model.migrations.Migration_v8_to_v9
     ChanThreadsWithPosts::class,
     OldChanPostThread::class
   ],
-  version = 9,
+  version = 10,
   exportSchema = true
 )
 @TypeConverters(
@@ -141,6 +145,7 @@ abstract class KurobaDatabase : RoomDatabase() {
   abstract fun chanSavedReplyDao(): ChanSavedReplyDao
   abstract fun chanPostHideDao(): ChanPostHideDao
   abstract fun chanFilterDao(): ChanFilterDao
+  abstract fun chanCatalogSnapshotDao(): ChanCatalogSnapshotDao
 
   suspend fun ensureInTransaction() {
     require(inTransaction()) { "Must be executed in a transaction!" }
@@ -171,7 +176,8 @@ abstract class KurobaDatabase : RoomDatabase() {
           Migration_v5_to_v6(),
           Migration_v6_to_v7(),
           Migration_v7_to_v8(),
-          Migration_v8_to_v9()
+          Migration_v8_to_v9(),
+          Migration_v9_to_v10()
         )
         .fallbackToDestructiveMigrationOnDowngrade()
         .build()

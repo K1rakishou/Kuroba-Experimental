@@ -29,6 +29,7 @@ class ReloadPostsFromDatabaseUseCase(
         // descriptor and then just sort the in the correct order. We should also use
         // the stickyCap parameter if present.
         chanPostRepository.getThreadPosts(chanDescriptor)
+          .unwrap()
       }
       is ChanDescriptor.CatalogDescriptor -> {
         val postsToGet = chanReaderProcessor.getPostNoListOrdered()
@@ -39,7 +40,8 @@ class ReloadPostsFromDatabaseUseCase(
         // is to get every post by it's postNo that we receive from the server. It's
         // already in correct order (the server order) so we don't even need to sort
         // them.
-        chanPostRepository.getCatalogOriginalPosts(chanDescriptor, postsToGet).unwrap()
+        chanPostRepository.getCatalogOriginalPosts(chanDescriptor, postsToGet)
+          .unwrap()
       }
     }
 
@@ -51,17 +53,17 @@ class ReloadPostsFromDatabaseUseCase(
 
   suspend fun reloadPosts(chanDescriptor: ChanDescriptor): List<ChanPost> {
     BackgroundUtils.ensureBackgroundThread()
-
     chanPostRepository.awaitUntilInitialized()
 
-    return when (chanDescriptor) {
+    when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
         chanPostRepository.preloadForThread(chanDescriptor).safeUnwrap { error ->
           Logger.e(TAG, "reloadPosts() Failed to preload posts for thread ${chanDescriptor}", error)
           return emptyList()
         }
 
-        chanPostRepository.getThreadPosts(chanDescriptor)
+        return chanPostRepository.getThreadPosts(chanDescriptor)
+          .unwrap()
       }
       is ChanDescriptor.CatalogDescriptor -> {
         boardManager.awaitUntilInitialized()
@@ -73,7 +75,8 @@ class ReloadPostsFromDatabaseUseCase(
           ChanBoard.DEFAULT_CATALOG_SIZE
         }
 
-        chanPostRepository.getCatalogOriginalPosts(chanDescriptor, postsToLoadCount).unwrap()
+        return chanPostRepository.getCatalogOriginalPosts(chanDescriptor, postsToLoadCount)
+          .unwrap()
       }
     }
   }

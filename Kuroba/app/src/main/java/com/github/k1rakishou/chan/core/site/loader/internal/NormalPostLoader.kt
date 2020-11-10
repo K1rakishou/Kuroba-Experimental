@@ -10,8 +10,10 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.catalog.ChanCatalogSnapshot
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.source.cache.ChanCacheOptions
 import kotlin.time.Duration
@@ -24,7 +26,8 @@ internal class NormalPostLoader(
   private val parsePostsUseCase: ParsePostsUseCase,
   private val storePostsInRepositoryUseCase: StorePostsInRepositoryUseCase,
   private val reloadPostsFromDatabaseUseCase: ReloadPostsFromDatabaseUseCase,
-  private val chanPostRepository: ChanPostRepository
+  private val chanPostRepository: ChanPostRepository,
+  private val chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository
 ) : AbstractPostLoader() {
 
   @OptIn(ExperimentalTime::class)
@@ -36,6 +39,19 @@ internal class NormalPostLoader(
     chanReader: ChanReader
   ): ThreadLoadResult {
     chanPostRepository.awaitUntilInitialized()
+    Logger.d(TAG, "loadPosts($url, $chanReaderProcessor, $cacheOptions, " +
+      "$chanDescriptor, ${chanReader.javaClass.simpleName})")
+
+    if (chanReaderProcessor.chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+      val chanCatalogSnapshot = ChanCatalogSnapshot.fromSortedThreadDescriptorList(
+        chanReaderProcessor.chanDescriptor.boardDescriptor,
+        chanReaderProcessor.getThreadDescriptors()
+      )
+
+      chanCatalogSnapshotRepository.storeChanCatalogSnapshot(chanCatalogSnapshot)
+        .peekError { error -> Logger.e(TAG, "storeChanCatalogSnapshot() error", error) }
+        .ignore()
+    }
 
     val cleanupDuration = runRollingStickyThreadCleanupRoutineIfNeeded(
       chanDescriptor,
@@ -100,26 +116,28 @@ internal class NormalPostLoader(
     val needCleanupThread = (threadCap != null && threadCap > 0)
       && chanDescriptor is ChanDescriptor.ThreadDescriptor
 
-    return if (needCleanupThread) {
-      measureTime {
-        val deleteResult = chanPostRepository.cleanupPostsInRollingStickyThread(
-          chanDescriptor as ChanDescriptor.ThreadDescriptor,
-          threadCap!!
-        )
+    if (!needCleanupThread) {
+      return null
+    }
 
-        if (deleteResult is ModularResult.Error) {
-          Logger.e(
-            TAG,
-            "cleanupPostsInRollingStickyThread(${chanDescriptor}, $threadCap) error",
-            deleteResult.error
-          )
-        }
+    Logger.d(TAG, "runRollingStickyThreadCleanupRoutineIfNeeded() " +
+      "chanDescriptor=$chanDescriptor, threadCap=$threadCap")
+
+    return measureTime {
+      val deleteResult = chanPostRepository.cleanupPostsInRollingStickyThread(
+        chanDescriptor as ChanDescriptor.ThreadDescriptor,
+        threadCap!!
+      )
+
+      if (deleteResult is ModularResult.Error) {
+        Logger.e(
+          TAG,
+          "cleanupPostsInRollingStickyThread(${chanDescriptor}, $threadCap) error",
+          deleteResult.error
+        )
       }
-    } else {
-      null
     }
   }
-
 
   @OptIn(ExperimentalTime::class)
   private fun createLogString(

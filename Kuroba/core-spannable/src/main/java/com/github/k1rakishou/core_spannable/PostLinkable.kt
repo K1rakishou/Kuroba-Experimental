@@ -36,8 +36,14 @@ open class PostLinkable(
   val key: CharSequence,
   val linkableValue: Value,
   val type: Type
-) : ClickableSpan(), SpannableDependsOnThemeEngine {
-  lateinit var themeEngine: ThemeEngine
+) : ClickableSpan() {
+  protected var themeEngineOverride: ThemeEngine? = null
+
+  private val themeEngine by lazy {
+    // A hack for ThemeSettingsController
+    return@lazy themeEngineOverride
+      ?: SpannableModuleInjector.themeEngine
+  }
 
   var isSpoilerVisible: Boolean = ChanSettings.revealTextSpoilers.get()
     private set

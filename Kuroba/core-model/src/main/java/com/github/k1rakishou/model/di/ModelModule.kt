@@ -9,6 +9,7 @@ import com.github.k1rakishou.json.StringJsonSetting
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.repository.BoardRepository
 import com.github.k1rakishou.model.repository.BookmarksRepository
+import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanFilterRepository
 import com.github.k1rakishou.model.repository.ChanPostHideRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
@@ -20,11 +21,13 @@ import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentReposi
 import com.github.k1rakishou.model.repository.SeenPostRepository
 import com.github.k1rakishou.model.repository.SiteRepository
 import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository
+import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
-import com.github.k1rakishou.model.source.cache.GenericCacheSource
+import com.github.k1rakishou.model.source.cache.GenericSuspendableCacheSource
 import com.github.k1rakishou.model.source.cache.ThreadBookmarkCache
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import com.github.k1rakishou.model.source.local.BoardLocalSource
+import com.github.k1rakishou.model.source.local.ChanCatalogSnapshotLocalSource
 import com.github.k1rakishou.model.source.local.ChanFilterLocalSource
 import com.github.k1rakishou.model.source.local.ChanPostHideLocalSource
 import com.github.k1rakishou.model.source.local.ChanPostLocalSource
@@ -88,12 +91,20 @@ class ModelModule {
 
   @Singleton
   @Provides
+  fun provideChanCatalogSnapshotCache(): ChanCatalogSnapshotCache {
+    return ChanCatalogSnapshotCache()
+  }
+
+  @Singleton
+  @Provides
   fun provideChanThreadsCache(
-    dependencies: ModelComponent.Dependencies
+    dependencies: ModelComponent.Dependencies,
+    chanCatalogSnapshotCache: ChanCatalogSnapshotCache
   ): ChanThreadsCache {
     return ChanThreadsCache(
       dependencies.isDevFlavor,
-      dependencies.appConstants.maxPostsCountInPostsCache
+      dependencies.appConstants.maxPostsCountInPostsCache,
+      chanCatalogSnapshotCache
     )
   }
 
@@ -259,6 +270,20 @@ class ModelModule {
     )
   }
 
+  @Singleton
+  @Provides
+  fun provideChanCatalogSnapshotLocalSource(
+    database: KurobaDatabase,
+    chanDescriptorCache: ChanDescriptorCache,
+    chanCatalogSnapshotCache: ChanCatalogSnapshotCache
+  ): ChanCatalogSnapshotLocalSource {
+    return ChanCatalogSnapshotLocalSource(
+      database,
+      chanDescriptorCache,
+      chanCatalogSnapshotCache
+    )
+  }
+
   /**
    * Remote sources
    * */
@@ -293,8 +318,8 @@ class ModelModule {
   ): MediaServiceLinkExtraContentRepository {
     return MediaServiceLinkExtraContentRepository(
       database,
-      dependencies.scope,
-      GenericCacheSource(),
+      dependencies.coroutineScope,
+      GenericSuspendableCacheSource(),
       mediaServiceLinkExtraContentLocalSource,
       mediaServiceLinkExtraContentRemoteSource
     )
@@ -309,7 +334,7 @@ class ModelModule {
   ): SeenPostRepository {
     return SeenPostRepository(
       database,
-      dependencies.scope,
+      dependencies.coroutineScope,
       seenPostLocalSource
     )
   }
@@ -324,8 +349,8 @@ class ModelModule {
   ): InlinedFileInfoRepository {
     return InlinedFileInfoRepository(
       database,
-      dependencies.scope,
-      GenericCacheSource(),
+      dependencies.coroutineScope,
+      GenericSuspendableCacheSource(),
       inlinedFileInfoLocalSource,
       inlinedFileInfoRemoteSource
     )
@@ -342,7 +367,7 @@ class ModelModule {
     return ChanPostRepository(
       database,
       dependencies.isDevFlavor,
-      dependencies.scope,
+      dependencies.coroutineScope,
       dependencies.appConstants,
       chanPostLocalSource,
       chanThreadsCache
@@ -358,7 +383,7 @@ class ModelModule {
   ): HistoryNavigationRepository {
     return HistoryNavigationRepository(
       database,
-      dependencies.scope,
+      dependencies.coroutineScope,
       navHistoryLocalSource
     )
   }
@@ -372,7 +397,7 @@ class ModelModule {
   ): BookmarksRepository {
     return BookmarksRepository(
       database,
-      dependencies.scope,
+      dependencies.coroutineScope,
       threadBookmarkLocalSource
     )
   }
@@ -386,7 +411,7 @@ class ModelModule {
   ): ChanThreadViewableInfoRepository {
     return ChanThreadViewableInfoRepository(
       database,
-      dependencies.scope,
+      dependencies.coroutineScope,
       chanThreadViewableInfoLocalSource
     )
   }
@@ -400,7 +425,7 @@ class ModelModule {
   ): SiteRepository {
     return SiteRepository(
       database,
-      dependencies.scope,
+      dependencies.coroutineScope,
       siteLocalSource
     )
   }
@@ -414,7 +439,7 @@ class ModelModule {
   ): BoardRepository {
     return BoardRepository(
       database,
-      dependencies.scope,
+      dependencies.coroutineScope,
       boardLocalSource
     )
   }
@@ -428,7 +453,7 @@ class ModelModule {
   ): ChanSavedReplyRepository {
     return ChanSavedReplyRepository(
       database,
-      dependencies.scope,
+      dependencies.coroutineScope,
       chanSavedReplyLocalSource
     )
   }
@@ -442,7 +467,7 @@ class ModelModule {
   ): ChanPostHideRepository {
     return ChanPostHideRepository(
       database,
-      dependencies.scope,
+      dependencies.coroutineScope,
       chanPostHideLocalSource
     )
   }
@@ -456,7 +481,7 @@ class ModelModule {
   ): ChanFilterRepository {
     return ChanFilterRepository(
       database,
-      dependencies.scope,
+      dependencies.coroutineScope,
       chanFilterLocalSource
     )
   }
@@ -470,7 +495,21 @@ class ModelModule {
   ): ThreadBookmarkGroupRepository {
     return ThreadBookmarkGroupRepository(
       database,
-      dependencies.scope,
+      dependencies.coroutineScope,
+      localSource
+    )
+  }
+
+  @Singleton
+  @Provides
+  fun provideChanCatalogSnapshotRepository(
+    dependencies: ModelComponent.Dependencies,
+    database: KurobaDatabase,
+    localSource: ChanCatalogSnapshotLocalSource
+  ): ChanCatalogSnapshotRepository {
+    return ChanCatalogSnapshotRepository(
+      database,
+      dependencies.coroutineScope,
       localSource
     )
   }

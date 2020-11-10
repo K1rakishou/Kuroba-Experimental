@@ -4,14 +4,13 @@ import android.graphics.Color
 import android.text.TextPaint
 import android.text.style.BackgroundColorSpan
 import com.github.k1rakishou.core_themes.ChanThemeColorId
-import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.Companion.manipulateColor
 
 data class ColorizableBackgroundColorSpan @JvmOverloads constructor(
   val chanThemeColorId: ChanThemeColorId,
   val colorModificationFactor: Float? = null
-) : BackgroundColorSpan(Color.MAGENTA), SpannableDependsOnThemeEngine {
-  lateinit var themeEngine: ThemeEngine
+) : BackgroundColorSpan(Color.MAGENTA) {
+  private val themeEngine by lazy { SpannableModuleInjector.themeEngine }
 
   override fun updateDrawState(textPaint: TextPaint) {
     var color = themeEngine.chanTheme.getColorByColorId(chanThemeColorId)

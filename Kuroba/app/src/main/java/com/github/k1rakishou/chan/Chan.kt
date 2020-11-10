@@ -64,6 +64,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_spannable.SpannableModuleInjector
 import com.github.k1rakishou.core_themes.ThemesModuleInjector
 import com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy
 import com.github.k1rakishou.fsaf.FileManager
@@ -199,6 +200,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     ).getThemeEngine()
 
     themeEngine.initialize(this)
+    SpannableModuleInjector.initialize(themeEngine)
 
     val modelComponent = ModelModuleInjector.build(
       this,

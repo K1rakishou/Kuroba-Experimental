@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.core.di.module.application;
 import com.github.k1rakishou.model.di.ModelComponent;
 import com.github.k1rakishou.model.repository.BoardRepository;
 import com.github.k1rakishou.model.repository.BookmarksRepository;
+import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository;
 import com.github.k1rakishou.model.repository.ChanFilterRepository;
 import com.github.k1rakishou.model.repository.ChanPostHideRepository;
 import com.github.k1rakishou.model.repository.ChanPostRepository;
@@ -125,6 +126,14 @@ public class RoomDatabaseModule {
             ModelComponent modelComponent
     ) {
         return modelComponent.getThreadBookmarkGroupRepository();
+    }
+
+    @Provides
+    @Singleton
+    public ChanCatalogSnapshotRepository provideChanCatalogSnapshotRepository(
+            ModelComponent modelComponent
+    ) {
+        return modelComponent.getChanCatalogSnapshotRepository();
     }
 
     @Provides

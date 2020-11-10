@@ -4,7 +4,7 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.InlinedFileInfo
-import com.github.k1rakishou.model.source.cache.GenericCacheSource
+import com.github.k1rakishou.model.source.cache.GenericSuspendableCacheSource
 import com.github.k1rakishou.model.source.local.InlinedFileInfoLocalSource
 import com.github.k1rakishou.model.source.remote.InlinedFileInfoRemoteSource
 import kotlinx.coroutines.CoroutineScope
@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class InlinedFileInfoRepository(
   database: KurobaDatabase,
   private val applicationScope: CoroutineScope,
-  private val cache: GenericCacheSource<String, InlinedFileInfo>,
+  private val cache: GenericSuspendableCacheSource<String, InlinedFileInfo>,
   private val inlinedFileInfoLocalSource: InlinedFileInfoLocalSource,
   private val inlinedFileInfoRemoteSource: InlinedFileInfoRemoteSource
 ) : AbstractRepository(database) {

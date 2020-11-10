@@ -411,7 +411,8 @@ class MultiImageView @JvmOverloads constructor(
         }
 
         override fun onNotFound() {
-          onResponseError(IOException("Not found"))
+          thumbnailRequestDisposable = null
+          onNotFoundTryToFallback()
         }
 
         override fun onResponseError(error: Throwable) {
@@ -432,7 +433,7 @@ class MultiImageView @JvmOverloads constructor(
     }
 
     val extraInfo = DownloadRequestExtraInfo(
-      postImage!!.size,
+      postImage.size,
       postImage.fileHash
     )
 
@@ -989,25 +990,6 @@ class MultiImageView @JvmOverloads constructor(
     val prevActiveView = findView(ThumbnailImageView::class.java)
 
     val image = CustomScaleImageView(context)
-    image.setImage(imageSource)
-
-    val layoutParams = LayoutParams(
-      ViewGroup.LayoutParams.MATCH_PARENT,
-      ViewGroup.LayoutParams.MATCH_PARENT
-    )
-
-    // this is required because unlike the other views, if we don't have layout dimensions,
-    // the callback won't be called
-    // see https://github.com/davemorrissey/subsampling-scale-image-view/issues/143
-    if (isSpoiler) {
-      // If the image is a spoiler image we don't want to show the crossfade animation because it
-      // will look ugly due to preview and original having different dimensions (because preview is
-      // the spoiler image)
-      addView(image, 0, layoutParams)
-    } else {
-      addView(image, layoutParams)
-    }
-
     image.setCallback(object : CustomScaleImageView.Callback {
       override fun onReady() {
         if (!hasContent || mode == Mode.BIGIMAGE) {
@@ -1031,8 +1013,26 @@ class MultiImageView @JvmOverloads constructor(
       }
     })
 
+    val layoutParams = LayoutParams(
+      ViewGroup.LayoutParams.MATCH_PARENT,
+      ViewGroup.LayoutParams.MATCH_PARENT
+    )
+
+    // this is required because unlike the other views, if we don't have layout dimensions,
+    // the callback won't be called
+    // see https://github.com/davemorrissey/subsampling-scale-image-view/issues/143
+    if (isSpoiler) {
+      // If the image is a spoiler image we don't want to show the crossfade animation because it
+      // will look ugly due to preview and original having different dimensions (because preview is
+      // the spoiler image)
+      addView(image, 0, layoutParams)
+    } else {
+      addView(image, layoutParams)
+    }
+
     image.setOnClickListener(null)
     image.setOnTouchListener { _, motionEvent -> gestureDetector.onTouchEvent(motionEvent) }
+    image.setImage(imageSource)
   }
 
   private fun runAppearAnimation(
@@ -1099,7 +1099,6 @@ class MultiImageView @JvmOverloads constructor(
       return
     }
 
-    cancellableToast.showToast(context, R.string.image_not_found)
     callback?.hideProgress(this@MultiImageView)
 
     imageNotFoundPlaceholderLoadJob = mainScope.launch {

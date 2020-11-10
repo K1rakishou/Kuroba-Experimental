@@ -9,7 +9,7 @@ class GenericCacheSourceTest {
 
   @Test
   fun `test cache trim`() {
-    val cache = GenericCacheSource<String, String>(2, 4, 2)
+    val cache = GenericSuspendableCacheSource<String, String>(2, 4, 2)
 
     runBlocking {
       cache.store("1", "a")

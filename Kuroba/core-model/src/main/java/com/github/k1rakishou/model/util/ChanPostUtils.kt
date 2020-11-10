@@ -1,12 +1,6 @@
 package com.github.k1rakishou.model.util
 
-import android.text.Spannable
 import android.text.TextUtils
-import android.text.style.CharacterStyle
-import com.github.k1rakishou.core_spannable.ColorizableBackgroundColorSpan
-import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan
-import com.github.k1rakishou.core_spannable.PostLinkable
-import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
@@ -62,34 +56,6 @@ object ChanPostUtils {
     val postsSet = HashSet<ChanPost>()
     findPostWithRepliesRecursive(postNo, posts, postsSet)
     return postsSet
-  }
-
-  @JvmStatic
-  fun postCommentSpansSetThemeEngine(comment: CharSequence, themeEngine: ThemeEngine) {
-    val spannableComment = comment as? Spannable
-      ?: return
-
-    val spans = spannableComment.getSpans(0, spannableComment.length, CharacterStyle::class.java)
-    if (spans.isEmpty()) {
-      return
-    }
-
-    spans.forEach { span ->
-      if (span is ColorizableBackgroundColorSpan) {
-        span.themeEngine = themeEngine
-        return@forEach
-      }
-
-      if (span is ColorizableForegroundColorSpan) {
-        span.themeEngine = themeEngine
-        return@forEach
-      }
-
-      if (span is PostLinkable) {
-        span.themeEngine = themeEngine
-        return@forEach
-      }
-    }
   }
 
   /**

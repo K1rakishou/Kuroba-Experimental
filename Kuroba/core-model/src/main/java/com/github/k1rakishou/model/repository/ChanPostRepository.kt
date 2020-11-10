@@ -290,27 +290,29 @@ class ChanPostRepository(
 
   suspend fun getThreadPosts(
     descriptor: ChanDescriptor.ThreadDescriptor
-  ): List<ChanPost> {
+  ): ModularResult<List<ChanPost>> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
     Logger.d(TAG, "getThreadPosts(descriptor=$descriptor)")
 
     return applicationScope.myAsync {
-      val postsFromCache = chanThreadsCache.getThreadPosts(descriptor)
-      if (postsFromCache.isNotEmpty()) {
-        return@myAsync postsFromCache
+      return@myAsync tryWithTransaction {
+        val postsFromCache = chanThreadsCache.getThreadPosts(descriptor)
+        if (postsFromCache.isNotEmpty()) {
+          return@tryWithTransaction postsFromCache
+        }
+
+        val postsFromDatabase = localSource.getThreadPosts(descriptor)
+        if (postsFromDatabase.isEmpty()) {
+          return@tryWithTransaction emptyList()
+        }
+
+        chanThreadsCache.putManyThreadPostsIntoCache(
+          postsFromDatabase,
+          ChanCacheOptions.StoreInMemory
+        )
+
+        return@tryWithTransaction postsFromDatabase
       }
-
-      val postsFromDatabase = localSource.getThreadPosts(descriptor)
-      if (postsFromDatabase.isEmpty()) {
-        return@myAsync emptyList()
-      }
-
-      chanThreadsCache.putManyThreadPostsIntoCache(
-        postsFromDatabase,
-        ChanCacheOptions.StoreInMemory
-      )
-
-      return@myAsync postsFromDatabase
     }
   }
 
@@ -353,7 +355,6 @@ class ChanPostRepository(
           localSource.deleteCatalog(threadDescriptors)
         }
 
-        chanThreadsCache.deleteCatalog(catalogDescriptor)
         return@tryWithTransaction
       }
     }
@@ -470,6 +471,9 @@ class ChanPostRepository(
 
         val postDescriptors = chanThread.cleanupPostsInRollingStickyThread(threadCap)
         localSource.deletePosts(postDescriptors)
+
+        Logger.d(TAG, "cleanupPostsInRollingStickyThread() deleted ${postDescriptors.size} " +
+          "posts from cache and database")
       }
     }
   }

@@ -3,10 +3,15 @@ package com.github.k1rakishou.model.repository
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.TestDatabaseModuleComponent
 import com.github.k1rakishou.model.data.InlinedFileInfo
-import com.github.k1rakishou.model.source.cache.GenericCacheSource
+import com.github.k1rakishou.model.source.cache.GenericSuspendableCacheSource
 import com.github.k1rakishou.model.source.local.InlinedFileInfoLocalSource
 import com.github.k1rakishou.model.source.remote.InlinedFileInfoRemoteSource
-import com.nhaarman.mockitokotlin2.*
+import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.times
+import com.nhaarman.mockitokotlin2.verify
+import com.nhaarman.mockitokotlin2.verifyZeroInteractions
+import com.nhaarman.mockitokotlin2.whenever
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
@@ -23,7 +28,7 @@ import org.robolectric.RobolectricTestRunner
 class InlinedFileInfoRepositoryTest {
   private val coroutineScope = TestCoroutineScope()
 
-  lateinit var cache: GenericCacheSource<String, InlinedFileInfo>
+  lateinit var cache: GenericSuspendableCacheSource<String, InlinedFileInfo>
   lateinit var repository: InlinedFileInfoRepository
   lateinit var localSource: InlinedFileInfoLocalSource
   lateinit var remoteSource: InlinedFileInfoRemoteSource

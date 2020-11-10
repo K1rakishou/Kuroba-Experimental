@@ -6,7 +6,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.thread.ChanThreadViewableInfo
 import com.github.k1rakishou.model.mapper.ChanThreadViewableInfoMapper
 import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
-import com.github.k1rakishou.model.source.cache.GenericCacheSource
+import com.github.k1rakishou.model.source.cache.GenericSuspendableCacheSource
 
 class ChanThreadViewableInfoLocalSource(
   database: KurobaDatabase,
@@ -15,7 +15,7 @@ class ChanThreadViewableInfoLocalSource(
   private val TAG = "ChanThreadViewableInfoLocalSource"
   private val chanThreadViewableInfoDao = database.chanThreadViewableInfoDao()
   private val chanThreadViewableInfoCache =
-    GenericCacheSource<ChanDescriptor.ThreadDescriptor, ChanThreadViewableInfo>()
+    GenericSuspendableCacheSource<ChanDescriptor.ThreadDescriptor, ChanThreadViewableInfo>()
 
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): ChanThreadViewableInfo? {
     ensureInTransaction()

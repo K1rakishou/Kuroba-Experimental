@@ -40,11 +40,6 @@ class ParsePostsUseCase(
     chanPostRepository.awaitUntilInitialized()
     boardManager.awaitUntilInitialized()
 
-    if (verboseLogsEnabled) {
-      Logger.d(TAG, "parseNewPostsPosts(chanDescriptor=$chanDescriptor, " +
-        "postsToParseSize=${postBuildersToParse.size})")
-    }
-
     if (postBuildersToParse.isEmpty()) {
       return emptyList()
     }
@@ -53,11 +48,17 @@ class ParsePostsUseCase(
     val boardDescriptors = getBoardDescriptors(chanDescriptor)
     val filters = loadFilters(chanDescriptor)
 
+    Logger.d(TAG, "parseNewPostsPosts(chanDescriptor=$chanDescriptor, " +
+      "postsToParseSize=${postBuildersToParse.size}), " +
+      "internalIds=${internalIds.size}, " +
+      "boardDescriptors=${boardDescriptors.size}, " +
+      "filters=${filters.size}")
+
     return supervisorScope {
       return@supervisorScope postBuildersToParse
         .chunked(POSTS_PER_BATCH)
         .flatMap { postToParseChunk ->
-          val deferred = postToParseChunk.map { postToParse ->
+          val deferredList = postToParseChunk.map { postToParse ->
             return@map async(dispatcher) {
               return@async PostParseWorker(
                 filterEngine,
@@ -72,7 +73,7 @@ class ParsePostsUseCase(
             }
           }
 
-          return@flatMap deferred.awaitAll().filterNotNull()
+          return@flatMap deferredList.awaitAll().filterNotNull()
         }
     }
   }

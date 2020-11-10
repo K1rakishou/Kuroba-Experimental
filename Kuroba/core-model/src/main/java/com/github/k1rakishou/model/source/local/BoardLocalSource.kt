@@ -17,7 +17,6 @@ class BoardLocalSource(
 
   suspend fun selectAllBoards(): Map<SiteDescriptor, List<ChanBoard>> {
     ensureInTransaction()
-
     val allActiveBoards = chanBoardDao.selectAllBoards()
 
     allActiveBoards.forEach { chanBoardFull ->

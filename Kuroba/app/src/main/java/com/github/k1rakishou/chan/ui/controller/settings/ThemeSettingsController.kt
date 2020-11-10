@@ -671,12 +671,6 @@ class ThemeSettingsController(context: Context) : Controller(context),
           else -> throw IllegalStateException("Unknown span: ${span::class.java.simpleName}")
         }
 
-        if (span is ColorizableBackgroundColorSpan) {
-          span.themeEngine = themeEngine
-        } else if (span is  ColorizableForegroundColorSpan) {
-          span.themeEngine = themeEngine
-        }
-
         input.removeSpan(span)
         input.setSpan(
           ForegroundColorSpan(theme.getColorByColorId(newColor)),
@@ -692,8 +686,6 @@ class ThemeSettingsController(context: Context) : Controller(context),
         val start = input.getSpanStart(span)
         val end = input.getSpanEnd(span)
         val flags = input.getSpanFlags(span)
-
-        span.themeEngine = themeEngine
 
         input.removeSpan(span)
         input.setSpan(

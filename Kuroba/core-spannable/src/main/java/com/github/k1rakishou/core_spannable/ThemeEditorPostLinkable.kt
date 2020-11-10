@@ -18,7 +18,7 @@ class ThemeEditorPostLinkable(
 ) : PostLinkable(key, linkableValue, type) {
 
   init {
-    super.themeEngine = themeEngine
+    super.themeEngineOverride = themeEngine
   }
 
   override fun getTheme(): ChanTheme {

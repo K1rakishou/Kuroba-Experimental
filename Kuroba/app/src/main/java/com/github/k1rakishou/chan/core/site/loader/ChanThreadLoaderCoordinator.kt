@@ -37,6 +37,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.source.cache.ChanCacheOptions
 import com.google.gson.stream.JsonReader
@@ -73,6 +74,7 @@ class ChanThreadLoaderCoordinator(
   private val savedReplyManager: SavedReplyManager,
   private val filterEngine: FilterEngine,
   private val chanPostRepository: ChanPostRepository,
+  private val chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository,
   private val appConstants: AppConstants,
   private val postFilterManager: PostFilterManager,
   private val verboseLogsEnabled: Boolean,
@@ -114,7 +116,8 @@ class ChanThreadLoaderCoordinator(
       parsePostsUseCase,
       storePostsInRepositoryUseCase,
       reloadPostsFromDatabaseUseCase,
-      chanPostRepository
+      chanPostRepository,
+      chanCatalogSnapshotRepository
     )
   }
 
@@ -125,13 +128,13 @@ class ChanThreadLoaderCoordinator(
   }
 
   @OptIn(ExperimentalTime::class)
-  suspend fun loadThread(
+  suspend fun loadThreadOrCatalog(
     url: String,
     chanDescriptor: ChanDescriptor,
     cacheOptions: ChanCacheOptions,
     chanReader: ChanReader
   ): ModularResult<ThreadLoadResult> {
-    Logger.d(TAG, "loadThread($url, $chanDescriptor, $cacheOptions, ${chanReader.javaClass.simpleName})")
+    Logger.d(TAG, "loadThreadOrCatalog($url, $chanDescriptor, $cacheOptions, ${chanReader.javaClass.simpleName})")
 
     return withContext(Dispatchers.IO) {
       BackgroundUtils.ensureBackgroundThread()
@@ -144,20 +147,24 @@ class ChanThreadLoaderCoordinator(
           .header("User-Agent", appConstants.userAgent)
           .build()
 
-        val (response, time) = try {
+        val (response, requestDuration) = try {
           measureTimedValue { proxiedOkHttpClient.okHttpClient().suspendCall(request) }
         } catch (error: IOException) {
           return@Try fallbackPostLoadOnNetworkError(chanDescriptor, error)
         }
 
-        Logger.d(TAG, "loadThread from network took $time")
+        Logger.d(TAG, "loadThreadOrCatalog() from network took $requestDuration")
 
         if (!response.isSuccessful) {
           return@Try fallbackPostLoadOnNetworkError(chanDescriptor, ServerException(response.code))
         }
 
-        val chanReaderProcessor = readPostsFromResponse(response, chanDescriptor, chanReader)
-          .unwrap()
+        val (chanReaderProcessor, readPostsDuration) = measureTimedValue {
+          readPostsFromResponse(response, chanDescriptor, chanReader)
+            .unwrap()
+        }
+
+        Logger.d(TAG, "loadThreadOrCatalog() read posts from response took $readPostsDuration")
 
         return@Try normalPostLoader.loadPosts(
           url,
