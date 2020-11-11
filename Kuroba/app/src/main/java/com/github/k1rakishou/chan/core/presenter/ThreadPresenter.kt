@@ -280,21 +280,15 @@ class ThreadPresenter @Inject constructor(
   private suspend fun onChanTickerTick(chanDescriptor: ChanDescriptor) {
     Logger.d(TAG, "onChanTickerTicked($chanDescriptor)")
 
-    if (!chanThreadManager.isCached(chanDescriptor)) {
-      when (chanDescriptor) {
-        is ChanDescriptor.ThreadDescriptor -> preloadThreadInfo(chanDescriptor)
-        is ChanDescriptor.CatalogDescriptor -> preloadCatalogInfo(chanDescriptor)
-      }
+    when (chanDescriptor) {
+      is ChanDescriptor.ThreadDescriptor -> preloadThreadInfo(chanDescriptor)
+      is ChanDescriptor.CatalogDescriptor -> preloadCatalogInfo(chanDescriptor)
     }
 
     normalLoad()
   }
 
   private suspend fun preloadThreadInfo(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    if (!isBound) {
-      return
-    }
-
     Logger.d(TAG, "preloadThreadInfo($threadDescriptor)")
 
     supervisorScope {
@@ -304,7 +298,13 @@ class ThreadPresenter @Inject constructor(
       jobs += async(Dispatchers.IO) { chanThreadViewableInfoManager.preloadForThread(threadDescriptor) }
       jobs += async(Dispatchers.IO) { savedReplyManager.preloadForThread(threadDescriptor) }
       jobs += async(Dispatchers.IO) { postHideManager.preloadForThread(threadDescriptor) }
-      jobs += async(Dispatchers.IO) { chanPostRepository.preloadForThread(threadDescriptor).unwrap() }
+
+      // Only preload when this thread is not yet in cache
+      if (!chanThreadManager.isCached(threadDescriptor)) {
+        jobs += async(Dispatchers.IO) {
+          chanPostRepository.preloadForThread(threadDescriptor).unwrap()
+        }
+      }
 
       ModularResult.Try { jobs.awaitAll() }
         .peekError { error -> Logger.e(TAG, "requestThreadInitialData() error", error) }
@@ -314,11 +314,6 @@ class ThreadPresenter @Inject constructor(
 
   private suspend fun preloadCatalogInfo(catalogDescriptor: ChanDescriptor.CatalogDescriptor) {
     BackgroundUtils.ensureMainThread()
-
-    if (!isBound) {
-      return
-    }
-
     Logger.d(TAG, "preloadCatalogInfo($catalogDescriptor)")
 
     supervisorScope {
@@ -650,8 +645,11 @@ class ThreadPresenter @Inject constructor(
       return false
     }
 
+    val newPostsCount = getNewPostsCount(localChanDescriptor)
+
     if (isWatching()) {
-      chanThreadTicker.kickTicker()
+      val shouldResetTimer = newPostsCount > 0
+      chanThreadTicker.kickTicker(resetTimer = shouldResetTimer)
     }
 
     // allow for search refreshes inside the catalog
@@ -662,7 +660,16 @@ class ThreadPresenter @Inject constructor(
     }
 
     if (localChanDescriptor is ChanDescriptor.ThreadDescriptor) {
-      handleNewPosts(localChanDescriptor, loadedChanDescriptor)
+      if (newPostsCount > 0 && localChanDescriptor.threadNo == loadedChanDescriptor.threadNoOrNull()) {
+        threadPresenterCallback?.showNewPostsNotification(true, newPostsCount)
+      }
+
+      if (localChanDescriptor.threadNo == loadedChanDescriptor.threadNoOrNull()) {
+        if (forcePageUpdate) {
+          pageRequestManager.forceUpdateForBoard(localChanDescriptor.boardDescriptor)
+          forcePageUpdate = false
+        }
+      }
     }
 
     chanThreadViewableInfoManager.getAndConsumeMarkedPostNo(localChanDescriptor) { markedPostNo ->
@@ -678,19 +685,20 @@ class ThreadPresenter @Inject constructor(
     return true
   }
 
-  private fun handleNewPosts(
-    localThreadDescriptor: ChanDescriptor.ThreadDescriptor,
-    loadedChanDescriptor: ChanDescriptor
-  ) {
+  private fun getNewPostsCount(chanDescriptor: ChanDescriptor): Int {
     var newPostsCount = 0
 
-    chanThreadViewableInfoManager.update(localThreadDescriptor) { chanThreadViewableInfo ->
+    if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
+      return newPostsCount
+    }
+
+    chanThreadViewableInfoManager.update(chanDescriptor) { chanThreadViewableInfo ->
       val lastLoadedPostNo = chanThreadViewableInfo.lastLoadedPostNo
       if (lastLoadedPostNo > 0) {
-        newPostsCount = chanThreadManager.getNewPostsCount(localThreadDescriptor, lastLoadedPostNo)
+        newPostsCount = chanThreadManager.getNewPostsCount(chanDescriptor, lastLoadedPostNo)
       }
 
-      chanThreadViewableInfo.lastLoadedPostNo = chanThreadManager.getLastPost(localThreadDescriptor)
+      chanThreadViewableInfo.lastLoadedPostNo = chanThreadManager.getLastPost(chanDescriptor)
         ?.postNo()
         ?: -1L
 
@@ -699,16 +707,7 @@ class ThreadPresenter @Inject constructor(
       }
     }
 
-    if (newPostsCount > 0 && localThreadDescriptor.threadNo == loadedChanDescriptor.threadNoOrNull()) {
-      threadPresenterCallback?.showNewPostsNotification(true, newPostsCount)
-    }
-
-    if (localThreadDescriptor.threadNo == loadedChanDescriptor.threadNoOrNull()) {
-      if (forcePageUpdate) {
-        pageRequestManager.forceUpdateForBoard(localThreadDescriptor.boardDescriptor)
-        forcePageUpdate = false
-      }
-    }
+    return newPostsCount
   }
 
   private fun handleMarkedPost(markedPostNo: Long) {

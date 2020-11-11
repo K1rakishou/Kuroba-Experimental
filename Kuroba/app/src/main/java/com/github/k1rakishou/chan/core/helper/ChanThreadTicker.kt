@@ -88,18 +88,22 @@ class ChanThreadTicker(
     chanTickerData.resetAll()
     chanTickerData.updateCurrentChanDescriptor(descriptor)
 
-    kickTicker()
+    kickTicker(resetTimer = false)
   }
 
   fun resetEverythingAndKickTicker() {
     Logger.d(TAG, "resetEverythingAndKickTicker()")
 
     chanTickerData.resetAll()
-    kickTicker()
+    kickTicker(resetTimer = false)
   }
 
-  fun kickTicker() {
-    Logger.d(TAG, "kickTicker()")
+  fun kickTicker(resetTimer: Boolean) {
+    Logger.d(TAG, "kickTicker($resetTimer)")
+
+    if (resetTimer) {
+      chanTickerData.resetTimer()
+    }
 
     val descriptor = chanTickerData.currentChanDescriptor()
     if (descriptor == null) {
@@ -245,6 +249,12 @@ class ChanThreadTicker(
     }
 
     @Synchronized
+    fun resetTimer() {
+      this.currentTimeoutIndex = 0
+      this.waitTimeSeconds = 0
+    }
+
+    @Synchronized
     fun updateCurrentTimeoutIndex(newTimeoutIndex: Int) {
       this.currentTimeoutIndex = newTimeoutIndex
     }
@@ -270,6 +280,7 @@ class ChanThreadTicker(
     fun resetCurrentChanDescriptor() {
       this.currentChanDescriptor = null
     }
+
   }
 
   private data class TickerInput(

@@ -20,8 +20,10 @@ class ChanThread(
 
   @GuardedBy("lock")
   private val threadPosts = mutableListOf<ChanPost>()
+
   @GuardedBy("lock")
   private val postsByPostDescriptors = mutableMapOf<PostDescriptor, ChanPost>()
+
   @GuardedBy("lock")
   private var lastAccessTime = System.currentTimeMillis()
 
@@ -82,6 +84,10 @@ class ChanThread(
         addedOrUpdatedPosts = true
       }
 
+      if (addedOrUpdatedPosts) {
+        threadPosts.sortWith(POSTS_COMPARATOR)
+      }
+
       updateLastAccessTime()
       checkPostsConsistency()
 
@@ -113,6 +119,8 @@ class ChanThread(
       } else {
         threadPosts.add(newChanOriginalPost)
         postsByPostDescriptors[newChanOriginalPost.postDescriptor] = newChanOriginalPost
+
+        threadPosts.sortWith(POSTS_COMPARATOR)
       }
 
       updateLastAccessTime()
@@ -354,7 +362,8 @@ class ChanThread(
 
   fun getPostDescriptorRelativeTo(postDescriptor: PostDescriptor, offset: Int): PostDescriptor? {
     return lock.read {
-      val currentPostIndex = threadPosts.indexOfFirst { post -> post.postDescriptor == postDescriptor }
+      val currentPostIndex =
+        threadPosts.indexOfFirst { post -> post.postDescriptor == postDescriptor }
       if (currentPostIndex < 0) {
         return@read null
       }
@@ -364,7 +373,10 @@ class ChanThread(
     }
   }
 
-  fun iteratePostImages(postDescriptor: PostDescriptor, iterator: (ChanPostImage) -> Unit): Boolean {
+  fun iteratePostImages(
+    postDescriptor: PostDescriptor,
+    iterator: (ChanPostImage) -> Unit
+  ): Boolean {
     return lock.read {
       val post = postsByPostDescriptors[postDescriptor]
         ?: return@read false
@@ -488,4 +500,8 @@ class ChanThread(
     }
   }
 
+  companion object {
+    private var POSTS_COMPARATOR = compareBy<ChanPost>({ chanPost -> chanPost.postDescriptor.postNo })
+      .thenBy { chanPost -> chanPost.postDescriptor.postSubNo }
+  }
 }

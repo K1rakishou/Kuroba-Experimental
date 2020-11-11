@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.core.site.loader.internal
 
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsUseCase
-import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ReloadPostsFromDatabaseUseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
@@ -25,7 +24,6 @@ internal class NormalPostLoader(
   private val appConstants: AppConstants,
   private val parsePostsUseCase: ParsePostsUseCase,
   private val storePostsInRepositoryUseCase: StorePostsInRepositoryUseCase,
-  private val reloadPostsFromDatabaseUseCase: ReloadPostsFromDatabaseUseCase,
   private val chanPostRepository: ChanPostRepository,
   private val chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository
 ) : AbstractPostLoader() {
@@ -79,21 +77,12 @@ internal class NormalPostLoader(
       )
     }
 
-    val (reloadedPosts, reloadingDuration) = measureTimedValue {
-      return@measureTimedValue reloadPostsFromDatabaseUseCase.reloadPostsOrdered(
-        chanReaderProcessor,
-        chanDescriptor
-      )
-    }
-
     val cachedPostsCount = chanPostRepository.getTotalCachedPostsCount()
 
     val logStr = createLogString(
       url,
       storeDuration,
       storedPostNoList,
-      reloadingDuration,
-      reloadedPosts,
       parsingDuration,
       parsedPosts,
       cachedPostsCount,
@@ -131,11 +120,8 @@ internal class NormalPostLoader(
       )
 
       if (deleteResult is ModularResult.Error) {
-        Logger.e(
-          TAG,
-          "cleanupPostsInRollingStickyThread(${chanDescriptor}, $threadCap) error",
-          deleteResult.error
-        )
+        val errorMsg = "cleanupPostsInRollingStickyThread(${chanDescriptor}, $threadCap) error"
+        Logger.e(TAG, errorMsg, deleteResult.error)
       }
     }
   }
@@ -145,8 +131,6 @@ internal class NormalPostLoader(
     url: String,
     storeDuration: Duration,
     storedPostNoList: List<Long>,
-    reloadingDuration: Duration,
-    reloadedPosts: List<ChanPost>,
     parsingDuration: Duration,
     parsedPosts: List<ChanPost>,
     cachedPostsCount: Int,
@@ -162,7 +146,6 @@ internal class NormalPostLoader(
     return buildString {
       appendLine("ChanReaderRequest.readJson() stats: url = $urlToLog.")
       appendLine("Store new posts took $storeDuration (stored ${storedPostNoList.size} posts).")
-      appendLine("Reload posts took $reloadingDuration, (reloaded ${reloadedPosts.size} posts).")
       appendLine("Parse posts took = $parsingDuration, (parsed ${parsedPosts.size} out of $totalPostsCount posts).")
       appendLine("Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsCountInPostsCache}).")
 

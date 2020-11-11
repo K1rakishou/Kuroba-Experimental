@@ -46,22 +46,22 @@ class ChanCatalogSnapshotLocalSource(
 
   suspend fun preloadChanCatalogSnapshot(
     catalogDescriptor: ChanDescriptor.CatalogDescriptor
-  ) {
+  ): Boolean {
     ensureInTransaction()
     val boardDescriptor = catalogDescriptor.boardDescriptor
 
     val fromCache = chanCatalogSnapshotCache.get(boardDescriptor)
     if (fromCache != null && !fromCache.isEmpty()) {
       // Already have something cached, no need to overwrite it with the database data
-      return
+      return false
     }
 
     val boardId = chanDescriptorCache.getBoardIdByBoardDescriptor(boardDescriptor)
-      ?: return
+      ?: return false
 
     val chanCatalogSnapshotEntityList = chanCatalogSnapshotDao.selectManyByBoardIdOrdered(boardId)
     if (chanCatalogSnapshotEntityList.isEmpty()) {
-      return
+      return false
     }
 
     val chanCatalogSnapshotEntryList =
@@ -75,11 +75,13 @@ class ChanCatalogSnapshotLocalSource(
       }
 
     if (chanCatalogSnapshotEntryList.isEmpty()) {
-      return
+      return false
     }
 
     val chanCatalogSnapshot = ChanCatalogSnapshot(boardDescriptor, chanCatalogSnapshotEntryList)
     chanCatalogSnapshotCache.store(chanCatalogSnapshot.boardDescriptor, chanCatalogSnapshot)
+
+    return true
   }
 
   fun getCatalogSnapshot(catalogDescriptor: ChanDescriptor.CatalogDescriptor): ChanCatalogSnapshot? {

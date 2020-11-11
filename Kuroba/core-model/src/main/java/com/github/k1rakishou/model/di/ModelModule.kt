@@ -509,6 +509,7 @@ class ModelModule {
   ): ChanCatalogSnapshotRepository {
     return ChanCatalogSnapshotRepository(
       database,
+      dependencies.verboseLogs,
       dependencies.coroutineScope,
       localSource
     )

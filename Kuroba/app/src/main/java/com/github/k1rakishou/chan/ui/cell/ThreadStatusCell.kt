@@ -183,8 +183,9 @@ class ThreadStatusCell(
       builder.append('\n')
     }
 
-    appendThreadRefreshPart(chanThread, builder)
-    builder.append('\n')
+    if (appendThreadRefreshPart(chanThread, builder)) {
+      builder.append('\n')
+    }
 
     val op = chanThread.getOriginalPost()
     val boardDescriptor = op.postDescriptor.boardDescriptor()
@@ -207,32 +208,24 @@ class ThreadStatusCell(
     op: ChanOriginalPost,
     board: ChanBoard
   ) {
-    val hasReplies = op.catalogRepliesCount >= 0 || chanThread.repliesCount > 0
-    val hasImages = op.catalogImagesCount >= 0 || chanThread.imagesCount > 0
+    val hasReplies = chanThread.repliesCount > 0
+    val hasImages = chanThread.imagesCount > 0
 
     if (hasReplies && hasImages) {
       val hasBumpLimit = board.bumpLimit > 0
       val hasImageLimit = board.imageLimit > 0
 
-      val totalRepliesCount = if (op.catalogRepliesCount >= 0) {
-        op.catalogRepliesCount
-      } else {
-        chanThread.postsCount - 1
-      }
-
+      val totalRepliesCount = chanThread.repliesCount
       val replies = SpannableString(totalRepliesCount.toString() + "R")
-      if (hasBumpLimit && op.catalogRepliesCount >= board.bumpLimit) {
+
+      if (hasBumpLimit && totalRepliesCount >= board.bumpLimit) {
         replies.setSpan(StyleSpan(Typeface.ITALIC), 0, replies.length, 0)
       }
 
-      val threadImagesCount = if (op.catalogImagesCount >= 0) {
-        op.catalogImagesCount
-      } else {
-        chanThread.imagesCount
-      }
-
+      val threadImagesCount = chanThread.imagesCount
       val images = SpannableString(threadImagesCount.toString() + "I")
-      if (hasImageLimit && op.catalogImagesCount >= board.imageLimit) {
+
+      if (hasImageLimit && threadImagesCount >= board.imageLimit) {
         images.setSpan(StyleSpan(Typeface.ITALIC), 0, images.length, 0)
       }
 
@@ -262,13 +255,16 @@ class ThreadStatusCell(
     }
   }
 
-  private suspend fun appendThreadRefreshPart(chanThread: ChanThread, builder: SpannableStringBuilder) {
+  private suspend fun appendThreadRefreshPart(
+    chanThread: ChanThread,
+    builder: SpannableStringBuilder
+  ): Boolean {
     if (!chanThread.canUpdateThread()) {
-      return
+      return false
     }
 
     val timeSeconds = callback?.timeUntilLoadMoreMs()?.div(1000L)
-      ?: return
+      ?: return false
 
     when {
       callback?.isWatching() == false -> {
@@ -281,6 +277,8 @@ class ThreadStatusCell(
         builder.append(AndroidUtils.getString(R.string.thread_refresh_countdown, timeSeconds))
       }
     }
+
+    return true
   }
 
   private fun appendThreadStatusPart(

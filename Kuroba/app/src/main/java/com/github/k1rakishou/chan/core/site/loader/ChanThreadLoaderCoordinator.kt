@@ -116,7 +116,6 @@ class ChanThreadLoaderCoordinator(
       appConstants,
       parsePostsUseCase,
       storePostsInRepositoryUseCase,
-      reloadPostsFromDatabaseUseCase,
       chanPostRepository,
       chanCatalogSnapshotRepository
     )

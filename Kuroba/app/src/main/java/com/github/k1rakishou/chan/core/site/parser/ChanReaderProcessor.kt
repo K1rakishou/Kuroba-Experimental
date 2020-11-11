@@ -21,7 +21,6 @@ import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.common.removeIfKt
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
@@ -101,18 +100,6 @@ class ChanReaderProcessor(
       return@withLock toParse
         .map { chanPostBuilder -> chanPostBuilder.postDescriptor.threadDescriptor() }
     }
-  }
-
-  suspend fun getPostsSortedByIndexes(posts: List<ChanPost>): List<ChanPost> {
-    return lock.withLock {
-      return@withLock postOrderedList.mapNotNull { postDescriptor ->
-        return@mapNotNull posts.firstOrNull { post -> post.postDescriptor == postDescriptor }
-      }
-    }
-  }
-
-  suspend fun getPostListOrdered(): List<PostDescriptor> {
-    return lock.withLock { postOrderedList.toList() }
   }
 
   suspend fun getTotalPostsCount(): Int {
