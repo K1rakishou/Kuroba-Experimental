@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.core.site.common
 
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
-import com.github.k1rakishou.chan.core.model.ChanPostBuilder
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.ICommentParser
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
@@ -9,6 +8,7 @@ import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.common.data.ArchiveType
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import org.jsoup.nodes.Element
 import java.util.regex.Pattern
 

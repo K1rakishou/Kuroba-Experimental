@@ -18,11 +18,11 @@ package com.github.k1rakishou.chan.ui.adapter
 
 import android.text.TextUtils
 import com.github.k1rakishou.chan.core.helper.PostHideHelper
-import com.github.k1rakishou.chan.core.model.PostIndexed
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.PostIndexed
 import java.util.*
 
 class PostsFilter(

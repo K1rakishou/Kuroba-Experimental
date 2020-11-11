@@ -104,7 +104,10 @@ inline fun <T, R> Iterable<T>.flatMapNotNull(transform: (T) -> Iterable<R>?): Li
   return flatMapNotNullTo(ArrayList<R>(), transform)
 }
 
-inline fun <T, R, C : MutableCollection<in R>> Iterable<T>.flatMapNotNullTo(destination: C, transform: (T) -> Iterable<R>?): C {
+inline fun <T, R, C : MutableCollection<in R>> Iterable<T>.flatMapNotNullTo(
+  destination: C,
+  transform: (T) -> Iterable<R>?
+): C {
   this
     .mapNotNull { transform(it) }
     .forEach { destination.addAll(it) }
@@ -121,6 +124,22 @@ inline fun <T, R> Collection<T>.flatMapIndexed(transform: (Int, T) -> Collection
   }
 
   return destination
+}
+
+fun <T> MutableCollection<T>.removeIfKt(filter: (T) -> Boolean): Boolean {
+  Objects.requireNonNull(filter)
+
+  var removed = false
+  val each = iterator()
+
+  while (each.hasNext()) {
+    if (filter.invoke(each.next())) {
+      each.remove()
+      removed = true
+    }
+  }
+
+  return removed
 }
 
 @Suppress("RedundantAsync")
@@ -201,7 +220,10 @@ inline fun <T, R> List<T>.highLowMap(mapper: (T) -> R): List<R> {
   return resultList
 }
 
-inline fun <T, R : Any, C : MutableCollection<in R>> Collection<T>.mapReverseIndexedNotNullTo(destination: C, transform: (index: Int, T) -> R?): C {
+inline fun <T, R : Any, C : MutableCollection<in R>> Collection<T>.mapReverseIndexedNotNullTo(
+  destination: C,
+  transform: (index: Int, T) -> R?
+): C {
   forEachReverseIndexed { index, element -> transform(index, element)?.let { destination.add(it) } }
   return destination
 }
@@ -354,7 +376,7 @@ private fun findChildRecursively(viewGroup: ViewGroup, predicate: (View) -> Bool
   return null
 }
 
-fun <T: View> View.findChildren(predicate: (View) -> Boolean): Set<T> {
+fun <T : View> View.findChildren(predicate: (View) -> Boolean): Set<T> {
   val children = hashSetOf<View>()
 
   if (predicate(this)) {

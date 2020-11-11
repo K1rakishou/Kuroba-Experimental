@@ -20,9 +20,9 @@ import android.text.Spannable;
 
 import androidx.annotation.NonNull;
 
-import com.github.k1rakishou.chan.core.model.ChanPostBuilder;
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPost;
+import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 
 public interface PostParser {
     ChanPost parse(

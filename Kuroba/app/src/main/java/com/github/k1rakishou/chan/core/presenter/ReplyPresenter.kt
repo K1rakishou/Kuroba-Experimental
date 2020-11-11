@@ -42,9 +42,8 @@ import com.github.k1rakishou.chan.ui.helper.PostHelper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.BitmapUtils
-import com.github.k1rakishou.chan.utils.PostUtils.getReadableFileSize
-import com.github.k1rakishou.chan.utils.StringUtils
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -52,6 +51,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanSavedReply
 import com.github.k1rakishou.model.util.ChanPostUtils
+import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

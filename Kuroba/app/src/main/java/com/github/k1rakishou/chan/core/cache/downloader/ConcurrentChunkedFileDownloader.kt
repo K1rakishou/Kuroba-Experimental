@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.cache.downloader
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.StringUtils.maskImageUrl
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.RawFile
 import io.reactivex.Flowable
@@ -75,9 +74,9 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
           output
         )
       }
-        .doOnSubscribe { log(TAG, "Starting downloading (${maskImageUrl(url)})") }
+        .doOnSubscribe { log(TAG, "Starting downloading ($url)") }
         .doOnComplete {
-          log(TAG, "Completed downloading (${maskImageUrl(url)})")
+          log(TAG, "Completed downloading ($url)")
           removeChunksFromDisk(url)
         }
         .doOnError { error ->
@@ -120,7 +119,7 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
     output: RawFile
   ): Flowable<FileDownloadResult> {
     if (verboseLogs) {
-      log(TAG, "File (${maskImageUrl(url)}) was split into chunks: ${chunks}")
+      log(TAG, "File ($url) was split into chunks: ${chunks}")
     }
 
     if (!partialContentCheckResult.couldDetermineFileSize() && chunks.size != 1) {
@@ -294,7 +293,7 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
 
         // Only use retry-on-IO-error with batch gallery downloads
         if (isGalleryBatchDownload && retry) {
-          log(TAG, "Retrying chunk ($chunk) for url ${maskImageUrl(url)}, " +
+          log(TAG, "Retrying chunk ($chunk) for url $url, " +
             "error = ${error.javaClass.simpleName}, msg = ${error.message}")
         }
 

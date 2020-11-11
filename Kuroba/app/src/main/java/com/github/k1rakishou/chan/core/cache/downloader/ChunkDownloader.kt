@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.cache.downloader
 import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.cache.downloader.DownloaderUtils.isCancellationError
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.StringUtils.maskImageUrl
 import com.github.k1rakishou.common.AppConstants
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
@@ -34,7 +33,7 @@ internal class ChunkDownloader(
     }
 
     if (verboseLogs) {
-      log(TAG, "Start downloading (${maskImageUrl(url)}), chunk ${chunk.start}..${chunk.end}")
+      log(TAG, "Start downloading url=$url, chunk ${chunk.start}..${chunk.end}")
     }
 
     val builder = Request.Builder()
@@ -103,8 +102,8 @@ internal class ChunkDownloader(
           val exceptionMessage = e.message ?: "No message"
 
           log(TAG,
-            "Couldn't get chunk response, reason = ${e.javaClass.simpleName} ($exceptionMessage)" +
-              " (${maskImageUrl(url)}) ${chunk.start}..${chunk.end}, time = ${diff}ms"
+            "Couldn't get chunk response, reason = ${e.javaClass.simpleName} ($exceptionMessage) " +
+              "($url) ${chunk.start}..${chunk.end}, time = ${diff}ms"
           )
 
           if (!isCancellationError(e)) {
@@ -122,8 +121,7 @@ internal class ChunkDownloader(
         override fun onResponse(call: Call, response: Response) {
           if (verboseLogs) {
             val diff = System.currentTimeMillis() - startTime
-            log(TAG, "Got chunk response in (${maskImageUrl(url)}) " +
-              "${chunk.start}..${chunk.end} in ${diff}ms")
+            log(TAG, "Got chunk response in ($url) ${chunk.start}..${chunk.end} in ${diff}ms")
           }
 
           serializedEmitter.onNext(response)

@@ -6,9 +6,11 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
+import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 
 internal class DatabasePostLoader(
-  private val reloadPostsFromDatabaseUseCase: ReloadPostsFromDatabaseUseCase
+  private val reloadPostsFromDatabaseUseCase: ReloadPostsFromDatabaseUseCase,
+  private val chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository
 ) : AbstractPostLoader() {
 
   suspend fun loadPosts(chanDescriptor: ChanDescriptor): ChanLoaderResponse? {
@@ -29,10 +31,16 @@ internal class DatabasePostLoader(
     return ChanLoaderResponse(originalPost, reloadedPosts)
   }
 
-  suspend fun loadCatalog(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>): ChanLoaderResponse? {
+  suspend fun loadCatalog(catalogDescriptor: ChanDescriptor.CatalogDescriptor): ChanLoaderResponse? {
     BackgroundUtils.ensureBackgroundThread()
 
-    val reloadedPosts = reloadPostsFromDatabaseUseCase.reloadCatalogThreads(threadDescriptors)
+    val currentCatalogSnapshot = chanCatalogSnapshotRepository.getCatalogSnapshot(catalogDescriptor)
+      ?: return null
+
+    val reloadedPosts = reloadPostsFromDatabaseUseCase.reloadCatalogThreads(
+      currentCatalogSnapshot.catalogThreadDescriptors
+    )
+
     if (reloadedPosts.isEmpty()) {
       Logger.d(TAG, "loadCatalog() reloadCatalogThreads() returned empty list")
       return null

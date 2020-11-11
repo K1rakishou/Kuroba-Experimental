@@ -1,11 +1,11 @@
 package com.github.k1rakishou.chan.core.manager
 
-import com.github.k1rakishou.chan.core.model.PostFilter
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.PostFilter
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write

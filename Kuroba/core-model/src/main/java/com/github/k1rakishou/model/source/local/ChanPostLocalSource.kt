@@ -2,6 +2,7 @@ package com.github.k1rakishou.model.source.local
 
 import com.github.k1rakishou.common.flatMapIndexed
 import com.github.k1rakishou.common.mutableMapWithCap
+import com.github.k1rakishou.common.options.ChanCacheOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.SpannableStringMapper
 import com.github.k1rakishou.model.KurobaDatabase
@@ -22,7 +23,6 @@ import com.github.k1rakishou.model.mapper.ChanPostHttpIconMapper
 import com.github.k1rakishou.model.mapper.ChanPostImageMapper
 import com.github.k1rakishou.model.mapper.ChanThreadMapper
 import com.github.k1rakishou.model.mapper.TextSpanMapper
-import com.github.k1rakishou.model.source.cache.ChanCacheOptions
 import com.google.gson.Gson
 
 class ChanPostLocalSource(

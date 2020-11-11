@@ -56,6 +56,7 @@ import com.github.k1rakishou.chan.utils.SharingUtils.getUrlForSharing
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.getString
+import com.github.k1rakishou.common.options.ChanLoadOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
@@ -313,11 +314,17 @@ open class ViewThreadController(
   }
 
   private fun reloadClicked(item: ToolbarMenuSubItem) {
-    threadLayout.presenter.normalLoad()
+    threadLayout.presenter.normalLoad(
+      showLoading = true,
+      chanLoadOptions = ChanLoadOptions.ClearMemoryCache
+    )
   }
 
   private fun forceReloadClicked(item: ToolbarMenuSubItem) {
-    threadLayout.presenter.clearMemoryCacheAndReload()
+    threadLayout.presenter.normalLoad(
+      showLoading = true,
+      chanLoadOptions = ChanLoadOptions.ClearMemoryAndDatabaseCaches
+    )
   }
 
   private fun showAvailableArchives(descriptor: ThreadDescriptor) {
@@ -336,7 +343,6 @@ open class ViewThreadController(
         R.string.thread_presenter_no_archives_found_to_open_thread,
         descriptor.toString()
       )
-
       showToast(message, Toast.LENGTH_LONG)
       return
     }

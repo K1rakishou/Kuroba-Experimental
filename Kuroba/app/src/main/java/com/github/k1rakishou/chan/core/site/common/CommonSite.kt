@@ -19,8 +19,6 @@ package com.github.k1rakishou.chan.core.site.common
 import android.text.TextUtils
 import android.webkit.WebView
 import androidx.annotation.CallSuper
-import com.github.k1rakishou.chan.core.model.ChanPostBuilder
-import com.github.k1rakishou.chan.core.model.SiteBoards
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
 import com.github.k1rakishou.chan.core.site.Site
@@ -50,6 +48,8 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostBuilder
+import com.github.k1rakishou.model.data.site.SiteBoards
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow

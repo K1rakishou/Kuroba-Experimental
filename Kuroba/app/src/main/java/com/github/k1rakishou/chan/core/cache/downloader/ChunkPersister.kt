@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.core.cache.downloader
 
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.StringUtils.maskImageUrl
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.RawFile
@@ -12,7 +11,11 @@ import io.reactivex.FlowableEmitter
 import okhttp3.Response
 import okhttp3.ResponseBody
 import okhttp3.internal.closeQuietly
-import okio.*
+import okio.Buffer
+import okio.BufferedSink
+import okio.BufferedSource
+import okio.buffer
+import okio.sink
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicLong
 
@@ -38,8 +41,7 @@ internal class ChunkPersister(
       try {
         if (verboseLogs) {
           log(TAG,
-            "storeChunkInFile($chunkIndex) (${maskImageUrl(url)}) " +
-              "called for chunk ${chunk.start}..${chunk.end}"
+            "storeChunkInFile($chunkIndex) ($url) called for chunk ${chunk.start}..${chunk.end}"
           )
         }
 
@@ -99,8 +101,7 @@ internal class ChunkPersister(
             }
           }
 
-          log(TAG, "storeChunkInFile(${chunkIndex}) success, url = ${maskImageUrl(url)}, " +
-            "chunk ${chunk.start}..${chunk.end}")
+          log(TAG, "storeChunkInFile(${chunkIndex}) success, url=$url, chunk ${chunk.start}..${chunk.end}")
         } catch (error: Throwable) {
           deleteChunkFile(chunkCacheFile)
           throw error
@@ -133,7 +134,7 @@ internal class ChunkPersister(
     // If totalChunksCount == 1 then there is nothing else to stop so we can just emit
     // one error
     if (isStoppedOrCanceled || totalChunksCount > 1 && error !is IOException) {
-      log(TAG, "handleErrors($chunkIndex) (${maskImageUrl(url)}) cancel for chunk ${chunk.start}..${chunk.end}")
+      log(TAG, "handleErrors($chunkIndex) ($url) cancel for chunk ${chunk.start}..${chunk.end}")
 
       // First emit an error
       if (isStoppedOrCanceled) {
@@ -155,7 +156,7 @@ internal class ChunkPersister(
         DownloadState.Stopped -> activeDownloads.get(url)?.cancelableDownload?.stop()
       }.exhaustive
     } else {
-      log(TAG, "handleErrors($chunkIndex) (${maskImageUrl(url)}) fail for chunk ${chunk.start}..${chunk.end}")
+      log(TAG, "handleErrors($chunkIndex) ($url) fail for chunk ${chunk.start}..${chunk.end}")
       serializedEmitter.tryOnError(error)
     }
   }
@@ -260,10 +261,7 @@ internal class ChunkPersister(
       }
 
       if (verboseLogs) {
-        log(TAG,
-          "pipeChunk($chunkIndex) (${maskImageUrl(url)}) SUCCESS for chunk " +
-            "${chunk.start}..${chunk.end}"
-        )
+        log(TAG, "pipeChunk($chunkIndex) ($url) SUCCESS for chunk ${chunk.start}..${chunk.end}")
       }
 
       serializedEmitter.onNext(

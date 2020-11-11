@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.utils
 
+import com.github.k1rakishou.common.StringUtils
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

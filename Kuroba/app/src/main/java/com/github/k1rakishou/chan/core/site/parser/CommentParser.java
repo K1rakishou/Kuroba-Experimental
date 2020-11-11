@@ -28,7 +28,6 @@ import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.chan.core.model.ChanPostBuilder;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParams;
 import com.github.k1rakishou.common.CommentParserConstants;
@@ -39,6 +38,7 @@ import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed;
 import com.github.k1rakishou.core_spannable.PostLinkable;
 import com.github.k1rakishou.core_themes.ChanThemeColorId;
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
+import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;

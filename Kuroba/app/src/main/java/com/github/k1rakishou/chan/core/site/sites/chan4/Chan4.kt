@@ -4,8 +4,6 @@ import android.webkit.CookieManager
 import android.webkit.WebView
 import com.github.k1rakishou.OptionSettingItem
 import com.github.k1rakishou.SharedPreferencesSettingProvider
-import com.github.k1rakishou.chan.core.model.ChanPostBuilder
-import com.github.k1rakishou.chan.core.model.SiteBoards
 import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
@@ -42,6 +40,8 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostBuilder
+import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import kotlinx.coroutines.InternalCoroutinesApi

@@ -6,6 +6,7 @@ import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.linkedMapWithCap
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
+import com.github.k1rakishou.common.options.ChanCacheOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.catalog.ChanCatalog
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -13,7 +14,6 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.thread.ChanThread
-import com.github.k1rakishou.model.source.cache.ChanCacheOptions
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -25,7 +25,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 class ChanThreadsCache(
-  private val isDevFlavor: Boolean,
+  private val isDevBuild: Boolean,
   private val maxCacheSize: Int,
   private val chanCatalogSnapshotCache: ChanCatalogSnapshotCache
 ) {
@@ -59,7 +59,7 @@ class ChanThreadsCache(
         val threadDescriptor = chanOriginalPost.postDescriptor.threadDescriptor()
 
         if (!chanThreads.containsKey(threadDescriptor)) {
-          chanThreads[threadDescriptor] = ChanThread(threadDescriptor)
+          chanThreads[threadDescriptor] = ChanThread(isDevBuild, threadDescriptor)
         }
 
         chanThreads[threadDescriptor]?.setOrUpdateOriginalPost(chanOriginalPost)
@@ -75,7 +75,7 @@ class ChanThreadsCache(
     val originalPost = posts.first()
     require(originalPost is ChanOriginalPost) { "First post is not a original post: ${posts.first()}" }
 
-    if (isDevFlavor) {
+    if (isDevBuild) {
       val distinctByChanDescriptor = posts
         .map { chanPost -> chanPost.postDescriptor.descriptor }
         .toSet()
@@ -93,11 +93,11 @@ class ChanThreadsCache(
       val threadDescriptor = originalPost.postDescriptor.descriptor as ChanDescriptor.ThreadDescriptor
 
       if (!chanThreads.containsKey(threadDescriptor)) {
-        chanThreads[threadDescriptor] = ChanThread(threadDescriptor)
+        chanThreads[threadDescriptor] = ChanThread(isDevBuild, threadDescriptor)
       }
 
       if (cacheOptions.canStoreInMemory()) {
-        chanThreads[threadDescriptor]!!.replacePosts(posts)
+        chanThreads[threadDescriptor]!!.addOrUpdatePosts(posts)
       } else {
         chanThreads[threadDescriptor]!!.setOrUpdateOriginalPost(originalPost)
       }

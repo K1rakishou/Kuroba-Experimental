@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.cache.downloader
 
-import com.github.k1rakishou.chan.utils.StringUtils.maskImageUrl
 import com.github.k1rakishou.fsaf.file.RawFile
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
@@ -52,9 +51,7 @@ internal open class FileDownloadRequest(
       }
     }
 
-    return "[FileDownloadRequest: " +
-      "url = ${maskImageUrl(url)}, " +
-      "outputFileName = $outputFileName]"
+    return "[FileDownloadRequest: url=$url, outputFileName = $outputFileName]"
   }
 }
 

@@ -1,8 +1,7 @@
-package com.github.k1rakishou.chan.core.model
+package com.github.k1rakishou.model.data.post
 
 import android.text.Spannable
 import com.github.k1rakishou.core_spannable.PostLinkable
-import com.github.k1rakishou.model.data.post.PostComment
 
 // Thread safe
 class PostCommentBuilder(

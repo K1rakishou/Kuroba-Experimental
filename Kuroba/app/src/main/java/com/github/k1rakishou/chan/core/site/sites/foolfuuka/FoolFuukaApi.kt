@@ -1,18 +1,19 @@
 package com.github.k1rakishou.chan.core.site.sites.foolfuuka
 
-import com.github.k1rakishou.chan.core.mapper.ArchiveThreadMapper
 import com.github.k1rakishou.chan.core.site.common.CommonClientException
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.jsonObject
 import com.github.k1rakishou.common.nextStringOrNull
+import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.archive.ArchivePost
 import com.github.k1rakishou.model.data.archive.ArchivePostMedia
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.mapper.ArchiveThreadMapper
 import com.github.k1rakishou.model.util.extractFileNameExtension
 import com.github.k1rakishou.model.util.removeExtensionIfPresent
 import com.google.gson.stream.JsonReader
@@ -22,7 +23,11 @@ class FoolFuukaApi(
   site: CommonSite
 ) : CommonSite.CommonApi(site) {
 
-  override suspend fun loadThread(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
+  override suspend fun loadThread(
+    reader: JsonReader,
+    chanReadOptions: ChanReadOptions,
+    chanReaderProcessor: ChanReaderProcessor
+  ) {
     val chanDescriptor = chanReaderProcessor.chanDescriptor
 
     val threadDescriptor = chanDescriptor.threadDescriptorOrNull()
@@ -57,7 +62,7 @@ class FoolFuukaApi(
       }
     }
 
-    println()
+    chanReaderProcessor.applyChanReadOptions(chanReadOptions)
   }
 
   private suspend fun readOriginalPost(

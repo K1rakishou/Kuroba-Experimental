@@ -326,7 +326,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     setFastScroll(false)
     attachToolbarScroll(true)
 
-    threadListLayoutCallback?.toolbar?.addToolbarHeightUpdatesCallback(this)
+    threadListLayoutCallback.toolbar?.addToolbarHeightUpdatesCallback(this)
 
     // Wait a little bit so that the toolbar has it's updated height (which depends on the window
     // insets)

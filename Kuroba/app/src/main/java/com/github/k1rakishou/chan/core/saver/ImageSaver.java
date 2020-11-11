@@ -36,7 +36,7 @@ import com.github.k1rakishou.chan.ui.service.SavingNotification;
 import com.github.k1rakishou.chan.ui.settings.base_directory.SavedFilesBaseDirectory;
 import com.github.k1rakishou.chan.ui.widget.CancellableToast;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
-import com.github.k1rakishou.chan.utils.StringUtils;
+import com.github.k1rakishou.common.StringUtils;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.fsaf.file.AbstractFile;
@@ -68,7 +68,6 @@ import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledImageSaveR
 import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledImageSaveResult.NoWriteExternalStoragePermission;
 import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledImageSaveResult.Ok;
 import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledImageSaveResult.UnknownError;
-import static com.github.k1rakishou.chan.utils.StringUtils.maskImageUrl;
 import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
 import static com.github.k1rakishou.common.AndroidUtils.getString;
 
@@ -320,7 +319,7 @@ public class ImageSaver {
             onBatchCompleted();
         }
 
-        Logger.e(TAG, "imageSaveTaskFailed imageUrl = " + maskImageUrl(task.getPostImageUrl()));
+        Logger.e(TAG, "imageSaveTaskFailed imageUrl = " + task.getPostImageUrl());
 
         String errorMessage = getString(R.string.image_saver_failed_to_save_image, error.getMessage());
         cancellableToast.showToast(
@@ -341,7 +340,7 @@ public class ImageSaver {
             callbacks.onImageProcessed(doneTasks.get(), failedTasks.get(), totalTasks.get());
         }
 
-        Logger.d(TAG, "imageSaveTaskFinished imageUrl = " + maskImageUrl(task.getPostImageUrl()));
+        Logger.d(TAG, "imageSaveTaskFinished imageUrl = " + task.getPostImageUrl());
         boolean wasAlbumSave = false;
 
         if (checkBatchCompleted()) {

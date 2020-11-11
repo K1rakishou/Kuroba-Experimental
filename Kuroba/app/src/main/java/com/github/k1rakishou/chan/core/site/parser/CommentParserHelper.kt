@@ -19,12 +19,12 @@ package com.github.k1rakishou.chan.core.site.parser
 import android.text.SpannableString
 import android.text.Spanned
 import androidx.core.text.buildSpannedString
-import com.github.k1rakishou.chan.core.model.ChanPostBuilder
-import com.github.k1rakishou.chan.core.model.ChanPostImageBuilder
-import com.github.k1rakishou.chan.utils.StringUtils
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
+import com.github.k1rakishou.model.data.post.ChanPostBuilder
+import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.nibor.autolink.LinkExtractor

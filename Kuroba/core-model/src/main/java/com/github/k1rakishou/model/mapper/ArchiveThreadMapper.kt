@@ -1,15 +1,15 @@
-package com.github.k1rakishou.chan.core.mapper
+package com.github.k1rakishou.model.mapper
 
 import android.text.SpannableString
-import com.github.k1rakishou.chan.core.model.ChanPostBuilder
-import com.github.k1rakishou.chan.core.model.ChanPostImageBuilder
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.archive.ArchivePost
 import com.github.k1rakishou.model.data.archive.ArchivePostMedia
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 object ArchiveThreadMapper {

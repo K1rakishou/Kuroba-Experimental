@@ -9,13 +9,13 @@ import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.options.ChanCacheOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.catalog.ChanCatalogSnapshot
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
-import com.github.k1rakishou.model.source.cache.ChanCacheOptions
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
@@ -66,16 +66,17 @@ internal class NormalPostLoader(
       )
     }
 
+    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      // We loaded the thread, mark it as not deleted (in case it somehow was marked as deleted)
+      chanPostRepository.markThreadAsDeleted(chanDescriptor, false)
+    }
+
     val (storedPostNoList, storeDuration) = measureTimedValue {
       storePostsInRepositoryUseCase.storePosts(
         parsedPosts,
         cacheOptions,
         chanDescriptor.isCatalogDescriptor()
       )
-    }
-
-    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-      chanPostRepository.markThreadAsDeleted(chanDescriptor, true)
     }
 
     val (reloadedPosts, reloadingDuration) = measureTimedValue {

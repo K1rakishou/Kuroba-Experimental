@@ -1,8 +1,8 @@
-package com.github.k1rakishou.chan.core.mapper
+package com.github.k1rakishou.model.mapper
 
-import com.github.k1rakishou.chan.core.model.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.PostComment
 
 object ChanPostMapper {

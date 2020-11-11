@@ -23,7 +23,6 @@ import androidx.core.text.HtmlCompat;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
-import com.github.k1rakishou.chan.core.model.ChanPostBuilder;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.filter.ChanFilter;
@@ -31,6 +30,7 @@ import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
 import com.github.k1rakishou.model.data.filter.FilterType;
 import com.github.k1rakishou.model.data.post.ChanOriginalPost;
 import com.github.k1rakishou.model.data.post.ChanPost;
+import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 

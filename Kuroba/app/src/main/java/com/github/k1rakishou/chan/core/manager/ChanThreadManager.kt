@@ -7,6 +7,9 @@ import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.mutableListWithCap
+import com.github.k1rakishou.common.options.ChanCacheOptions
+import com.github.k1rakishou.common.options.ChanLoadOptions
+import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.catalog.ChanCatalog
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -14,7 +17,6 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.thread.ChanThread
 import com.github.k1rakishou.model.repository.ChanPostRepository
-import com.github.k1rakishou.model.source.cache.ChanCacheOptions
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 
 /**
@@ -54,20 +56,23 @@ class ChanThreadManager(
     }
   }
 
-  suspend fun reloadFromNetwork(
+  suspend fun loadThreadOrCatalog(
     chanDescriptor: ChanDescriptor,
-    reloadOptions: ChanReloadOptions,
-    cacheOptions: ChanCacheOptions,
+    requestNewPostsFromServer: Boolean,
+    chanLoadOptions: ChanLoadOptions,
+    chanCacheOptions: ChanCacheOptions,
+    chanReadOptions: ChanReadOptions,
     onReloaded: suspend (ThreadLoadResult) -> Unit
   ) {
     BackgroundUtils.ensureMainThread()
-    Logger.d(TAG, "reloadFromNetwork($chanDescriptor, $reloadOptions, $cacheOptions)")
+    Logger.d(TAG, "loadThreadOrCatalog($chanDescriptor, $requestNewPostsFromServer, " +
+      "$chanLoadOptions, $chanCacheOptions, $chanReadOptions)")
 
-    if (reloadOptions.isNotDefault()) {
+    if (chanLoadOptions.isNotDefault()) {
       postFilterManager.removeAllForDescriptor(chanDescriptor)
     }
 
-    if (reloadOptions.canClearCache()) {
+    if (chanLoadOptions.canClearCache()) {
       when (chanDescriptor) {
         is ChanDescriptor.ThreadDescriptor -> chanThreadsCache.deleteThread(chanDescriptor)
         is ChanDescriptor.CatalogDescriptor -> {
@@ -76,14 +81,21 @@ class ChanThreadManager(
       }
     }
 
-    if (reloadOptions.canClearDatabase()) {
+    if (chanLoadOptions.canClearDatabase()) {
       when (chanDescriptor) {
         is ChanDescriptor.ThreadDescriptor -> chanPostRepository.deleteThread(chanDescriptor)
         is ChanDescriptor.CatalogDescriptor -> chanPostRepository.deleteCatalog(chanDescriptor)
       }
     }
 
-    when (val threadLoaderResult = reloadFromNetworkInternal(chanDescriptor, cacheOptions)) {
+    val threadLoaderResult = loadInternal(
+      chanDescriptor = chanDescriptor,
+      requestNewPostsFromServer = requestNewPostsFromServer,
+      chanCacheOptions = chanCacheOptions,
+      chanReadOptions = chanReadOptions
+    )
+
+    when (threadLoaderResult) {
       is ModularResult.Value -> {
         onReloaded.invoke(threadLoaderResult.value)
       }
@@ -236,19 +248,21 @@ class ChanThreadManager(
     return chanThreadsCache.getThread(threadDescriptor)?.getNewPostsCount(lastPostNo) ?: 0
   }
 
-  private suspend fun reloadFromNetworkInternal(
+  private suspend fun loadInternal(
     chanDescriptor: ChanDescriptor,
-    cacheOptions: ChanCacheOptions
+    requestNewPostsFromServer: Boolean,
+    chanCacheOptions: ChanCacheOptions,
+    chanReadOptions: ChanReadOptions,
   ): ModularResult<ThreadLoadResult> {
     siteManager.awaitUntilInitialized()
     bookmarksManager.awaitUntilInitialized()
 
     when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
-        Logger.d(TAG, "reloadFromNetworkInternal() Requested thread /$chanDescriptor/")
+        Logger.d(TAG, "loadInternal() Requested thread /$chanDescriptor/")
       }
       is ChanDescriptor.CatalogDescriptor -> {
-        Logger.d(TAG, "reloadFromNetworkInternal() Requested catalog /$chanDescriptor/")
+        Logger.d(TAG, "loadInternal() Requested catalog /$chanDescriptor/")
       }
     }
 
@@ -258,40 +272,38 @@ class ChanThreadManager(
       return ModularResult.value(ThreadLoadResult.Error(ChanLoaderException(error)))
     }
 
-    val url = ChanThreadLoaderCoordinator.getChanUrl(site, chanDescriptor).toString()
+    if (!requestNewPostsFromServer) {
+      // Do not load new posts from the network, just refresh memory caches with data from the
+      //  database
+      return when (chanDescriptor) {
+        is ChanDescriptor.ThreadDescriptor ->
+          chanThreadLoaderCoordinator.reloadThreadFromDatabase(chanDescriptor)
+        is ChanDescriptor.CatalogDescriptor ->
+          chanThreadLoaderCoordinator.reloadCatalogFromDatabase(chanDescriptor)
+      }
+    }
 
-    // Notify the listeners that loader is starting to fetch data from the server
+    // Notify the bookmarksManager that loader is starting to fetch data from the server so that
+    //  bookmarksManager can start loading bookmark info for this thread
     if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
       bookmarksManager.onThreadIsFetchingData(chanDescriptor)
     }
 
+    val url = ChanThreadLoaderCoordinator.getChanUrl(
+      site,
+      chanDescriptor
+    ).toString()
+
     return chanThreadLoaderCoordinator.loadThreadOrCatalog(
       url,
       chanDescriptor,
-      cacheOptions,
+      chanCacheOptions,
+      chanReadOptions,
       site.chanReader()
     )
   }
 
   companion object {
     private const val TAG = "ChanThreadManager"
-  }
-}
-
-enum class ChanReloadOptions {
-  RetainAll,
-  ClearMemoryCache,
-  ClearDatabaseCache;
-
-  fun isNotDefault(): Boolean {
-    return this != RetainAll
-  }
-
-  fun canClearCache(): Boolean {
-    return this == ClearMemoryCache || this == ClearDatabaseCache
-  }
-
-  fun canClearDatabase(): Boolean {
-    return this == ClearDatabaseCache
   }
 }

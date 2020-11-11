@@ -33,7 +33,6 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
-import com.github.k1rakishou.chan.core.manager.ChanReloadOptions
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
@@ -67,12 +66,14 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.PostUtils.getReadableFileSize
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.getString
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.options.ChanCacheOptions
+import com.github.k1rakishou.common.options.ChanLoadOptions
+import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
@@ -85,8 +86,8 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
-import com.github.k1rakishou.model.source.cache.ChanCacheOptions
 import com.github.k1rakishou.model.util.ChanPostUtils
+import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -338,7 +339,7 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  fun quickReload(showLoading: Boolean = true, requestNewPosts: Boolean = true) {
+  fun quickReload(showLoading: Boolean = false, requestNewPosts: Boolean = true) {
     BackgroundUtils.ensureMainThread()
     Logger.d(TAG, "quickReload($showLoading, $requestNewPosts)")
 
@@ -349,26 +350,23 @@ class ThreadPresenter @Inject constructor(
     }
 
     launch {
-      if (requestNewPosts) {
-        normalLoad(showLoading = showLoading)
-      }
-
-      onChanLoaderData(currentChanDescriptor)
+      normalLoad(
+        showLoading = showLoading,
+        requestNewPostsFromServer = requestNewPosts
+      )
     }
   }
 
-  fun clearMemoryCacheAndReload() {
-    Logger.d(TAG, "clearMemoryCacheAndReload()")
-    normalLoad(reloadOptions = ChanReloadOptions.ClearMemoryCache)
-  }
-
   fun normalLoad(
-    showLoading: Boolean = true,
-    reloadOptions: ChanReloadOptions = ChanReloadOptions.RetainAll,
-    cacheOptions: ChanCacheOptions = ChanCacheOptions.StoreEverywhere
+    showLoading: Boolean = false,
+    requestNewPostsFromServer: Boolean = true,
+    chanLoadOptions: ChanLoadOptions = ChanLoadOptions.RetainAll,
+    chanCacheOptions: ChanCacheOptions = ChanCacheOptions.StoreEverywhere,
+    chanReadOptions: ChanReadOptions = ChanReadOptions.default()
   ) {
     BackgroundUtils.ensureMainThread()
-    Logger.d(TAG, "normalLoad($showLoading, $reloadOptions, $cacheOptions)")
+    Logger.d(TAG, "normalLoad(showLoading=$showLoading, requestNewPostsFromServer=$requestNewPostsFromServer, " +
+      "$chanLoadOptions, $chanCacheOptions, $chanReadOptions)")
 
     val currentChanDescriptor = chanThreadTicker.currentChanDescriptor
     if (currentChanDescriptor == null) {
@@ -381,12 +379,18 @@ class ThreadPresenter @Inject constructor(
         threadPresenterCallback?.showLoading()
       }
 
-      chanThreadManager.reloadFromNetwork(currentChanDescriptor, reloadOptions, cacheOptions) { threadLoadResult ->
+      chanThreadManager.loadThreadOrCatalog(
+        chanDescriptor = currentChanDescriptor,
+        requestNewPostsFromServer = requestNewPostsFromServer,
+        chanLoadOptions = chanLoadOptions,
+        chanCacheOptions = chanCacheOptions,
+        chanReadOptions = chanReadOptions
+      ) { threadLoadResult ->
         Logger.d(TAG, "normalLoad() threadLoadResult=$threadLoadResult")
 
         if (threadLoadResult is ThreadLoadResult.Error) {
           onChanLoaderError(threadLoadResult.exception)
-          return@reloadFromNetwork
+          return@loadThreadOrCatalog
         }
 
         if (threadLoadResult is ThreadLoadResult.Loaded) {
@@ -590,7 +594,7 @@ class ThreadPresenter @Inject constructor(
         shouldShowLoadingIndicator = true
       }
 
-      clearMemoryCacheAndReload()
+      normalLoad(showLoading = false)
     }
 
     chanThreadManager.currentThreadDescriptor?.let { threadDescriptor ->
@@ -598,7 +602,7 @@ class ThreadPresenter @Inject constructor(
         shouldShowLoadingIndicator = true
       }
 
-      clearMemoryCacheAndReload()
+      normalLoad(showLoading = false)
     }
 
     if (shouldShowLoadingIndicator) {
@@ -625,25 +629,25 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.showError(error)
   }
 
-  private suspend fun onChanLoaderData(loadedChanDescriptor: ChanDescriptor) {
+  private suspend fun onChanLoaderData(loadedChanDescriptor: ChanDescriptor): Boolean {
     BackgroundUtils.ensureMainThread()
     Logger.d(TAG, "onChanLoaderData() called")
 
     if (!isBound) {
       Logger.e(TAG, "onChanLoaderData() not bound!")
-      return
+      return false
     }
 
     val localChanDescriptor = currentChanDescriptor
     if (localChanDescriptor == null) {
       Logger.e(TAG, "onChanLoaderData() currentChanDescriptor==null")
-      return
+      return false
     }
 
     if (localChanDescriptor != loadedChanDescriptor) {
       Logger.e(TAG, "onChanLoaderData() localChanDescriptor " +
         "($localChanDescriptor) != loadedChanDescriptor ($loadedChanDescriptor)")
-      return
+      return false
     }
 
     if (isWatching()) {
@@ -670,6 +674,8 @@ class ThreadPresenter @Inject constructor(
     if (localChanDescriptor is ChanDescriptor.ThreadDescriptor) {
       updateBookmarkInfoIfNecessary(localChanDescriptor)
     }
+
+    return true
   }
 
   private fun handleNewPosts(
@@ -1542,7 +1548,7 @@ class ThreadPresenter @Inject constructor(
     // TODO(KurobaEx): refactoring (maybe I should reload everything from the database instead?)
 
     // force reload for reply highlighting
-    clearMemoryCacheAndReload()
+    normalLoad(showLoading = true, chanLoadOptions = ChanLoadOptions.ClearMemoryCache)
   }
 
   private fun requestDeletePost(post: ChanPost) {

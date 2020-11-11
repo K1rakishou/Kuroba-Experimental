@@ -2,21 +2,22 @@ package com.github.k1rakishou.chan.core.site.common.taimaba
 
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.model.ChanPostBuilder
-import com.github.k1rakishou.chan.core.model.ChanPostImageBuilder
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.CommonSite.CommonApi
 import com.github.k1rakishou.chan.core.site.parser.ChanReader.Companion.DEFAULT_POST_LIST_CAPACITY
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.google.gson.stream.JsonReader
 import org.jsoup.parser.Parser
 import java.io.IOException
@@ -31,13 +32,23 @@ class TaimabaApi(
 ) : CommonApi(commonSite) {
 
   @Throws(Exception::class)
-  override suspend fun loadThread(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
-    vichanReaderExtensions.iteratePostsInThread(reader) { reader -> readPostObject(reader, chanReaderProcessor) }
+  override suspend fun loadThread(
+    reader: JsonReader,
+    chanReadOptions: ChanReadOptions,
+    chanReaderProcessor: ChanReaderProcessor
+  ) {
+    vichanReaderExtensions.iteratePostsInThread(reader) { reader ->
+      readPostObject(reader, chanReaderProcessor)
+    }
+
+    chanReaderProcessor.applyChanReadOptions(chanReadOptions)
   }
 
   @Throws(Exception::class)
   override suspend fun loadCatalog(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
-    vichanReaderExtensions.iterateThreadsInCatalog(reader) { reader -> readPostObject(reader, chanReaderProcessor) }
+    vichanReaderExtensions.iterateThreadsInCatalog(reader) { reader ->
+      readPostObject(reader, chanReaderProcessor)
+    }
   }
 
   @Throws(Exception::class)

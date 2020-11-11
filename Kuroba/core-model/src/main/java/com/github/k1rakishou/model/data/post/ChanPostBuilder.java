@@ -1,19 +1,16 @@
-package com.github.k1rakishou.chan.core.model;
+package com.github.k1rakishou.model.data.post;
 
 import android.text.SpannableString;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.chan.core.mapper.ChanPostMapper;
-import com.github.k1rakishou.chan.utils.PostUtils;
 import com.github.k1rakishou.common.MurmurHashUtils;
 import com.github.k1rakishou.core_spannable.PostLinkable;
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
-import com.github.k1rakishou.model.data.post.ChanPost;
-import com.github.k1rakishou.model.data.post.ChanPostHttpIcon;
-import com.github.k1rakishou.model.data.post.ChanPostImage;
+import com.github.k1rakishou.model.mapper.ChanPostMapper;
+import com.github.k1rakishou.model.util.ChanPostUtils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -66,7 +63,7 @@ public class ChanPostBuilder {
 
     private final Lazy<MurmurHashUtils.Murmur3Hash> commentHash = LazyKt.lazy(
             this,
-            () -> PostUtils.getPostHash(this)
+            () -> ChanPostUtils.getPostHash(this)
     );
 
     public ChanPostBuilder() {

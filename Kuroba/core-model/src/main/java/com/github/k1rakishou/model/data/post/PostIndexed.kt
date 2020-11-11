@@ -1,6 +1,4 @@
-package com.github.k1rakishou.chan.core.model
-
-import com.github.k1rakishou.model.data.post.ChanPost
+package com.github.k1rakishou.model.data.post
 
 data class PostIndexed(
   val post: ChanPost,

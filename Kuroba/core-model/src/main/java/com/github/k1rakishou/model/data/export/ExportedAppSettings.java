@@ -14,12 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.core.model.export;
+package com.github.k1rakishou.model.data.export;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.chan.core.repository.ImportExportRepository;
 import com.github.k1rakishou.common.DoNotStrip;
 import com.google.gson.annotations.SerializedName;
 
@@ -28,6 +27,10 @@ import java.util.List;
 
 @DoNotStrip
 public class ExportedAppSettings {
+    // Don't forget to change this when changing any of the Export models.
+    // Also, don't forget to handle the change in the onUpgrade or onDowngrade methods
+    public static final int CURRENT_EXPORT_SETTINGS_VERSION = 1;
+
     @SerializedName("exported_settings_version")
     private int version;
     @SerializedName("exported_sites")
@@ -62,7 +65,7 @@ public class ExportedAppSettings {
 
     public static ExportedAppSettings empty() {
         return new ExportedAppSettings(
-                ImportExportRepository.CURRENT_EXPORT_SETTINGS_VERSION,
+                CURRENT_EXPORT_SETTINGS_VERSION,
                 new ArrayList<>(),
                 new ArrayList<>(),
                 new ArrayList<>(),

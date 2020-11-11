@@ -30,8 +30,8 @@ import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen;
-import static com.github.k1rakishou.chan.utils.PostUtils.getReadableFileSize;
 import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize;
 
 public class AlbumViewCell
         extends FrameLayout {

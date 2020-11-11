@@ -86,10 +86,7 @@ object ChanThreadMapper {
       isSavedReply = chanPostFull.chanPostEntity.isSavedReply
     )
 
-    if (chanPostFull.chanPostEntity.deleted) {
-      chanOriginalPost.setPostDeleted()
-    }
-
+    chanOriginalPost.setPostDeleted(chanPostFull.chanPostEntity.deleted)
     return chanOriginalPost
   }
 

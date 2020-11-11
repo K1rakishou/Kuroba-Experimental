@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.cache.downloader
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
 import com.github.k1rakishou.chan.core.cache.stream.WebmStreamingDataSource
 import com.github.k1rakishou.chan.core.cache.stream.WebmStreamingSource
-import com.github.k1rakishou.chan.utils.StringUtils.maskImageUrl
 import com.github.k1rakishou.core_logger.Logger
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
@@ -163,7 +162,7 @@ class CancelableDownload(
         }
 
         Logger.d(TAG, "$action file download request (cleanup took: ${totalTime}ms, " +
-          "funcsCount=$funcsCount), url = ${maskImageUrl(url)}")
+          "funcsCount=$funcsCount), url=$url")
       }
         // We use timeout here just in case to not get deadlocked
         .get(MAX_CANCELLATION_WAIT_TIME_SECONDS, TimeUnit.SECONDS)
@@ -175,7 +174,7 @@ class CancelableDownload(
 
       // Catch all the exceptions. Otherwise some request info won't be cleared when an error
       // occurs.
-      Logger.e(TAG, "Error while trying to dispose of a request for url = (${maskImageUrl(url)})", error)
+      Logger.e(TAG, "Error while trying to dispose of a request for url=$url)", error)
     }
   }
 

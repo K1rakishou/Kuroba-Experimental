@@ -25,11 +25,18 @@ class ChanCatalogSnapshotLocalSource(
       return
     }
 
-    val boardId = chanDescriptorCache.getBoardIdByBoardDescriptor(chanCatalogSnapshot.boardDescriptor)
-      ?: return
+    val boardId = chanDescriptorCache.getBoardIdByBoardDescriptor(
+      chanCatalogSnapshot.boardDescriptor
+    ) ?: return
 
     val chanCatalogSnapshotEntityList = chanCatalogSnapshot.catalogThreadDescriptors
-      .mapIndexed { order, threadDescriptor -> ChanCatalogSnapshotEntity(boardId, threadDescriptor.threadNo, order) }
+      .mapIndexed { order, threadDescriptor ->
+        return@mapIndexed ChanCatalogSnapshotEntity(
+          boardId,
+          threadDescriptor.threadNo,
+          order
+        )
+      }
 
     chanCatalogSnapshotDao.deleteManyByBoardId(boardId)
     chanCatalogSnapshotDao.insertMany(chanCatalogSnapshotEntityList)
@@ -57,14 +64,15 @@ class ChanCatalogSnapshotLocalSource(
       return
     }
 
-    val chanCatalogSnapshotEntryList = chanCatalogSnapshotEntityList.mapIndexed { index, chanCatalogSnapshotEntity ->
-      val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
-        boardDescriptor,
-        chanCatalogSnapshotEntity.threadNo
-      )
+    val chanCatalogSnapshotEntryList =
+      chanCatalogSnapshotEntityList.mapIndexed { index, chanCatalogSnapshotEntity ->
+        val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+          boardDescriptor,
+          chanCatalogSnapshotEntity.threadNo
+        )
 
-      return@mapIndexed ChanCatalogSnapshotEntry(threadDescriptor, index)
-    }
+        return@mapIndexed ChanCatalogSnapshotEntry(threadDescriptor, index)
+      }
 
     if (chanCatalogSnapshotEntryList.isEmpty()) {
       return
@@ -72,6 +80,10 @@ class ChanCatalogSnapshotLocalSource(
 
     val chanCatalogSnapshot = ChanCatalogSnapshot(boardDescriptor, chanCatalogSnapshotEntryList)
     chanCatalogSnapshotCache.store(chanCatalogSnapshot.boardDescriptor, chanCatalogSnapshot)
+  }
+
+  fun getCatalogSnapshot(catalogDescriptor: ChanDescriptor.CatalogDescriptor): ChanCatalogSnapshot? {
+    return chanCatalogSnapshotCache.get(catalogDescriptor.boardDescriptor)
   }
 
 }

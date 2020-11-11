@@ -120,10 +120,7 @@ object ChanPostEntityMapper {
       )
     }
 
-    if (chanPostEntity.deleted) {
-      post.setPostDeleted()
-    }
-
+    post.setPostDeleted(chanPostEntity.deleted)
     return post
   }
 

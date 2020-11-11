@@ -26,6 +26,10 @@ class ChanCatalogSnapshotRepository(
     }
   }
 
+  fun getCatalogSnapshot(catalogDescriptor: ChanDescriptor.CatalogDescriptor): ChanCatalogSnapshot? {
+    return localSource.getCatalogSnapshot(catalogDescriptor)
+  }
+
   suspend fun storeChanCatalogSnapshot(
     chanCatalogSnapshot: ChanCatalogSnapshot
   ): ModularResult<Unit> {

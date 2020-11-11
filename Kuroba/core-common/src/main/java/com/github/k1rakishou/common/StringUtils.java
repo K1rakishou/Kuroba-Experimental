@@ -1,17 +1,13 @@
-package com.github.k1rakishou.chan.utils;
+package com.github.k1rakishou.common;
 
 import android.util.Base64;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.core_logger.Logger;
-
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild;
 
 public class StringUtils {
     private static final Pattern IMAGE_THUMBNAIL_EXTRACTOR_PATTERN = Pattern.compile("/(\\d{12,32}+)s.(.*)");
@@ -92,33 +88,10 @@ public class StringUtils {
         try {
             bytes = Base64.decode(base64Encoded, Base64.DEFAULT);
         } catch (Throwable error) {
-            Logger.e("decodeBase64", "Error decoding base64 string! Msg: " + error.getMessage());
             return null;
         }
 
         return bytesToHex(bytes);
-    }
-
-    public static String maskImageUrl(@NonNull String url) {
-        if (isDevBuild()) {
-            return url;
-        }
-
-        if (url.length() < 4) {
-            return url;
-        }
-
-        String extension = extractFileNameExtension(url);
-
-        int extensionLength = extension == null ? 0 : (extension.length() + 1);
-        int charactersToTrim = 3 + extensionLength;
-
-        if (url.length() < charactersToTrim) {
-            return url;
-        }
-
-        String trimmedUrl = url.substring(0, url.length() - charactersToTrim);
-        return trimmedUrl + "XXX" + (extension == null ? "" : "." + extension);
     }
 
     public static boolean endsWithAny(String s, String[] suffixes) {

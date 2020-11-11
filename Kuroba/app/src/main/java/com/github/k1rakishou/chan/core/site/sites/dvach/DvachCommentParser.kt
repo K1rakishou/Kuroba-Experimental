@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import android.text.TextUtils
-import com.github.k1rakishou.chan.core.model.ChanPostBuilder
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
 import com.github.k1rakishou.chan.core.site.parser.ICommentParser
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
@@ -11,6 +10,7 @@ import com.github.k1rakishou.common.CommentParserConstants
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import org.jsoup.nodes.Element
 import java.util.regex.Matcher
 import java.util.regex.Pattern

@@ -3,8 +3,8 @@ package com.github.k1rakishou.chan.core.site.parser.style;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.chan.core.model.ChanPostBuilder;
 import com.github.k1rakishou.chan.core.site.parser.PostParser;
+import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 
 import org.jsoup.nodes.Element;
 

@@ -5,11 +5,11 @@ import android.text.TextUtils;
 
 import com.github.k1rakishou.chan.core.manager.ArchivesManager;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
-import com.github.k1rakishou.chan.core.model.ChanPostBuilder;
 import com.github.k1rakishou.chan.core.site.common.DefaultPostParser;
 import com.github.k1rakishou.chan.core.site.parser.CommentParser;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.model.data.post.ChanPost;
+import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;

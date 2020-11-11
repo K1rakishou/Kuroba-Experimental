@@ -2,13 +2,13 @@ package com.github.k1rakishou.chan.core.site.sites.kun8
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.model.SiteBoards
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.common.jsonArray
 import com.github.k1rakishou.common.jsonObject
 import com.github.k1rakishou.model.data.board.BoardBuilder
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.model.data.site.SiteBoards
 import com.google.gson.stream.JsonReader
 import okhttp3.Request
 import java.util.*

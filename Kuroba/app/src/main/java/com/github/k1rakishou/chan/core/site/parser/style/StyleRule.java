@@ -28,7 +28,6 @@ import android.text.style.UnderlineSpan;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.chan.core.model.ChanPostBuilder;
 import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper;
 import com.github.k1rakishou.chan.core.site.parser.PostParser;
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed;
@@ -37,6 +36,7 @@ import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan;
 import com.github.k1rakishou.core_spannable.CustomTypefaceSpan;
 import com.github.k1rakishou.core_spannable.PostLinkable;
 import com.github.k1rakishou.core_themes.ChanThemeColorId;
+import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 
 import org.jsoup.nodes.Element;
 

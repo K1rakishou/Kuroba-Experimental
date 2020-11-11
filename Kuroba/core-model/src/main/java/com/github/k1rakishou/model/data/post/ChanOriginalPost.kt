@@ -23,6 +23,7 @@ class ChanOriginalPost(
   val sticky: Boolean = false,
   val closed: Boolean = false,
   val archived: Boolean = false,
+  repliesFrom: Set<Long>? = null
 ) : ChanPost(
   chanPostId,
   postDescriptor,
@@ -36,7 +37,8 @@ class ChanOriginalPost(
   name,
   posterId,
   moderatorCapcode,
-  isSavedReply
+  isSavedReply,
+  repliesFrom
 ) {
 
   override fun equals(other: Any?): Boolean {

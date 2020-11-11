@@ -7,11 +7,13 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.data.post.LoaderType
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 class ChanThread(
+  private val isDevBuild: Boolean,
   val threadDescriptor: ChanDescriptor.ThreadDescriptor
 ) {
   private val lock = ReentrantReadWriteLock()
@@ -43,20 +45,78 @@ class ChanThread(
   fun isArchived(): Boolean = lock.read { getOriginalPost().archived }
   fun isDeleted(): Boolean = lock.read { getOriginalPost().deleted }
 
-  fun replacePosts(newPosts: List<ChanPost>) {
-    lock.write {
-      require(newPosts.isNotEmpty()) { "newPosts are empty!" }
-      require(newPosts.first() is ChanOriginalPost) {
-        "First post is not an original post! post=${newPosts.first()}"
+  fun addOrUpdatePosts(newChanPosts: List<ChanPost>): Boolean {
+    return lock.write {
+      require(newChanPosts.isNotEmpty()) { "newPosts are empty!" }
+      require(newChanPosts.first() is ChanOriginalPost) {
+        "First post is not an original post! post=${newChanPosts.first()}"
+      }
+
+      var addedOrUpdatedPosts = false
+
+      newChanPosts.forEach { newChanPost ->
+        // We don't have this post, just add it at the end
+        if (!postsByPostDescriptors.containsKey(newChanPost.postDescriptor)) {
+          threadPosts.add(newChanPost)
+          postsByPostDescriptors[newChanPost.postDescriptor] = newChanPost
+
+          addedOrUpdatedPosts = true
+          return@forEach
+        }
+
+        val oldChanPostIndex = threadPosts
+          .indexOfFirst { post -> post.postDescriptor == newChanPost.postDescriptor }
+        check(oldChanPostIndex >= 0) { "Bad oldChanPostIndex: $oldChanPostIndex" }
+
+        val oldChanPost = threadPosts[oldChanPostIndex]
+        if (oldChanPost == newChanPost) {
+          return@forEach
+        }
+
+        // We already have this post, we need to merge old and new posts into one and replace old
+        // post with the merged post
+        val mergedPost = mergePosts(oldChanPost, newChanPost)
+        threadPosts[oldChanPostIndex] = mergedPost
+        postsByPostDescriptors[newChanPost.postDescriptor] = mergedPost
+
+        addedOrUpdatedPosts = true
       }
 
       updateLastAccessTime()
+      checkPostsConsistency()
 
-      threadPosts.clear()
-      postsByPostDescriptors.clear()
+      return@write addedOrUpdatedPosts
+    }
+  }
 
-      threadPosts.addAll(newPosts)
-      newPosts.forEach { post -> postsByPostDescriptors[post.postDescriptor] = post }
+  fun setOrUpdateOriginalPost(newChanOriginalPost: ChanOriginalPost) {
+    lock.write {
+      val oldPostDescriptor = threadPosts.firstOrNull()?.postDescriptor
+      val newPostDescriptor = newChanOriginalPost.postDescriptor
+
+      if (oldPostDescriptor != null) {
+        check(oldPostDescriptor == newPostDescriptor) {
+          "Post descriptors are not the same! (old: $oldPostDescriptor, new: $newPostDescriptor)"
+        }
+      }
+
+      if (threadPosts.isNotEmpty()) {
+        require(threadPosts.first() is ChanOriginalPost) {
+          "First post is not an original post! post=${threadPosts.first()}"
+        }
+
+        val oldChanOriginalPost = threadPosts.first()
+        val mergedChanOriginalPost = mergePosts(oldChanOriginalPost, newChanOriginalPost)
+
+        threadPosts[0] = mergedChanOriginalPost
+        postsByPostDescriptors[newChanOriginalPost.postDescriptor] = mergedChanOriginalPost
+      } else {
+        threadPosts.add(newChanOriginalPost)
+        postsByPostDescriptors[newChanOriginalPost.postDescriptor] = newChanOriginalPost
+      }
+
+      updateLastAccessTime()
+      checkPostsConsistency()
     }
   }
 
@@ -85,33 +145,6 @@ class ChanThread(
 
   fun getLastAccessTime(): Long {
     return lock.read { lastAccessTime }
-  }
-
-  fun setOrUpdateOriginalPost(chanOriginalPost: ChanOriginalPost) {
-    lock.write {
-      updateLastAccessTime()
-
-      val oldPostDescriptor = threadPosts.firstOrNull()?.postDescriptor
-      val newPostDescriptor = chanOriginalPost.postDescriptor
-
-      if (oldPostDescriptor != null) {
-        check(oldPostDescriptor == newPostDescriptor) {
-          "Post descriptors are not the same! (old: $oldPostDescriptor, new: $newPostDescriptor)"
-        }
-      }
-
-      if (threadPosts.isNotEmpty()) {
-        require(threadPosts.first() is ChanOriginalPost) {
-          "First post is not an original post! post=${threadPosts.first()}"
-        }
-
-        threadPosts[0] = chanOriginalPost
-      } else {
-        threadPosts.add(chanOriginalPost)
-      }
-
-      postsByPostDescriptors[chanOriginalPost.postDescriptor] = chanOriginalPost
-    }
   }
 
   fun setDeleted(deleted: Boolean) {
@@ -351,4 +384,108 @@ class ChanThread(
   fun hasAtLeastOnePost(): Boolean {
     return lock.read { threadPosts.isNotEmpty() }
   }
+
+  private fun mergePosts(oldChanPost: ChanPost, newPost: ChanPost): ChanPost {
+    if (oldChanPost is ChanOriginalPost || newPost is ChanOriginalPost) {
+      return mergeOriginalPosts(oldChanPost, newPost)
+    }
+
+    val mergedPost = ChanPost(
+      chanPostId = oldChanPost.chanPostId,
+      postDescriptor = oldChanPost.postDescriptor,
+      repliesFrom = oldChanPost.repliesFrom,
+      postImages = newPost.postImages,
+      postIcons = newPost.postIcons,
+      repliesTo = newPost.repliesTo,
+      timestamp = newPost.timestamp,
+      postComment = newPost.postComment,
+      subject = newPost.subject,
+      tripcode = newPost.tripcode,
+      name = newPost.name,
+      posterId = newPost.posterId,
+      moderatorCapcode = newPost.moderatorCapcode,
+      isSavedReply = newPost.isSavedReply
+    )
+
+    LoaderType.values().forEach { loaderType ->
+      if (oldChanPost.isContentLoadedForLoader(loaderType)) {
+        mergedPost.setContentLoadedForLoader(loaderType)
+      }
+    }
+
+    mergedPost.setPostDeleted(oldChanPost.deleted)
+
+    return mergedPost
+  }
+
+  private fun mergeOriginalPosts(
+    oldChanPost: ChanPost,
+    newPost: ChanPost
+  ): ChanOriginalPost {
+    require(oldChanPost is ChanOriginalPost) { "oldChanPost is not ChanOriginalPost" }
+    require(newPost is ChanOriginalPost) { "newPost is not ChanOriginalPost" }
+
+    val oldChanOriginalPost = oldChanPost as ChanOriginalPost
+    val newChanOriginalPost = newPost as ChanOriginalPost
+
+    val mergedOriginalPost = ChanOriginalPost(
+      chanPostId = oldChanOriginalPost.chanPostId,
+      postDescriptor = oldChanOriginalPost.postDescriptor,
+      repliesFrom = oldChanOriginalPost.repliesFrom,
+      postImages = newChanOriginalPost.postImages,
+      postIcons = newChanOriginalPost.postIcons,
+      repliesTo = newChanOriginalPost.repliesTo,
+      timestamp = newChanOriginalPost.timestamp,
+      postComment = newChanOriginalPost.postComment,
+      subject = newChanOriginalPost.subject,
+      tripcode = newChanOriginalPost.tripcode,
+      name = newChanOriginalPost.name,
+      posterId = newChanOriginalPost.posterId,
+      moderatorCapcode = newChanOriginalPost.moderatorCapcode,
+      isSavedReply = newChanOriginalPost.isSavedReply,
+      catalogRepliesCount = newChanOriginalPost.catalogRepliesCount,
+      catalogImagesCount = newChanOriginalPost.catalogImagesCount,
+      uniqueIps = newChanOriginalPost.uniqueIps,
+      lastModified = newChanOriginalPost.lastModified,
+      sticky = newChanOriginalPost.sticky,
+      closed = newChanOriginalPost.closed,
+      archived = newChanOriginalPost.archived
+    )
+
+    LoaderType.values().forEach { loaderType ->
+      if (oldChanOriginalPost.isContentLoadedForLoader(loaderType)) {
+        mergedOriginalPost.setContentLoadedForLoader(loaderType)
+      }
+    }
+
+    mergedOriginalPost.setPostDeleted(oldChanOriginalPost.deleted)
+
+    return mergedOriginalPost
+  }
+
+  private fun checkPostsConsistency() {
+    if (!isDevBuild) {
+      return
+    }
+
+    lock.read {
+      check(threadPosts.size == postsByPostDescriptors.size) {
+        "Sizes do not match (threadPosts.size=${threadPosts.size}, " +
+          "postsByPostDescriptors.size=${postsByPostDescriptors.size}"
+      }
+
+      var prevPostNo = Long.MIN_VALUE
+
+      threadPosts.forEach { chanPost1 ->
+        val chanPost2 = postsByPostDescriptors[chanPost1.postDescriptor]
+
+        checkNotNull(chanPost2) { "postsByPostDescriptors does not contain $chanPost1" }
+        check(chanPost1 == chanPost2) { "Posts do not match (chanPost1=$chanPost1, chanPost2=$chanPost2)" }
+
+        check(chanPost1.postNo() > prevPostNo) { "Posts are not sorted!" }
+        prevPostNo = chanPost1.postNo()
+      }
+    }
+  }
+
 }

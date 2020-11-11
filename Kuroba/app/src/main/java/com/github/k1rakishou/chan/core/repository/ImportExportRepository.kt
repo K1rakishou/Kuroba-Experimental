@@ -17,7 +17,6 @@
 package com.github.k1rakishou.chan.core.repository
 
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.chan.core.model.export.ExportedAppSettings
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository.ImportExport.Export
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository.ImportExport.Import
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase
@@ -28,6 +27,8 @@ import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.ExternalFile
 import com.github.k1rakishou.fsaf.file.FileDescriptorMode
+import com.github.k1rakishou.model.data.export.ExportedAppSettings
+import com.github.k1rakishou.model.data.export.ExportedAppSettings.CURRENT_EXPORT_SETTINGS_VERSION
 import com.google.gson.Gson
 import java.io.FileReader
 import java.io.FileWriter
@@ -205,9 +206,5 @@ constructor(
 
   companion object {
     private const val TAG = "ImportExportRepository"
-
-    // Don't forget to change this when changing any of the Export models.
-    // Also, don't forget to handle the change in the onUpgrade or onDowngrade methods
-    const val CURRENT_EXPORT_SETTINGS_VERSION = 1
   }
 }

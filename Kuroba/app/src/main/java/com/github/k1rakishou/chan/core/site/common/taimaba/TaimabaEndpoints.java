@@ -16,13 +16,13 @@
  */
 package com.github.k1rakishou.chan.core.site.common.taimaba;
 
-import com.github.k1rakishou.chan.core.model.ChanPostBuilder;
 import com.github.k1rakishou.chan.core.site.common.CommonSite;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPost;
+import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 
 import java.util.Locale;
 import java.util.Map;

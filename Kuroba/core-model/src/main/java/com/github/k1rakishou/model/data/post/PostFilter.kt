@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.model
+package com.github.k1rakishou.model.data.post
 
 data class PostFilter(
   var enabled: Boolean = false,

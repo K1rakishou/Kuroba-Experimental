@@ -1,14 +1,12 @@
-package com.github.k1rakishou.chan.core.model;
+package com.github.k1rakishou.model.data.post;
 
 import android.text.TextUtils;
 
 import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.ChanSettings;
-import com.github.k1rakishou.chan.utils.StringUtils;
+import com.github.k1rakishou.common.StringUtils;
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
-import com.github.k1rakishou.model.data.post.ChanPostImage;
-import com.github.k1rakishou.model.data.post.ChanPostImageType;
 
 import okhttp3.HttpUrl;
 

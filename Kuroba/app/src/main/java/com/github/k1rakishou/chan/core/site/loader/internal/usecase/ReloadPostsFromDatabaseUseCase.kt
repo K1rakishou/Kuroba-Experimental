@@ -32,7 +32,7 @@ class ReloadPostsFromDatabaseUseCase(
           .unwrap()
       }
       is ChanDescriptor.CatalogDescriptor -> {
-        val postsToGet = chanReaderProcessor.getPostNoListOrdered()
+        val postsToGet = chanReaderProcessor.getPostListOrdered()
 
         // When in catalog mode, we can't just select posts from the database and then
         // sort them, because the actual order of the posts in the catalog depends on

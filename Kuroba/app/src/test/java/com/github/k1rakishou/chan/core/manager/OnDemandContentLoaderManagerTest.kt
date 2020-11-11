@@ -5,11 +5,11 @@ import com.github.k1rakishou.chan.core.loader.LoaderBatchResult
 import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader
 import com.github.k1rakishou.chan.core.loader.PostLoaderData
-import com.github.k1rakishou.chan.core.model.ChanPostBuilder
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.LoaderType
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.never

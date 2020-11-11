@@ -1,4 +1,4 @@
-package com.github.k1rakishou.model.source.cache
+package com.github.k1rakishou.common.options
 
 enum class ChanCacheOptions {
   StoreInMemory,

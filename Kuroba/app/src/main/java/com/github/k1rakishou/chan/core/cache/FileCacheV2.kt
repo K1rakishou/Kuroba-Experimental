@@ -23,14 +23,13 @@ import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getNetworkClass
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils.runOnMainThread
-import com.github.k1rakishou.chan.utils.PostUtils
-import com.github.k1rakishou.chan.utils.StringUtils.maskImageUrl
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.util.ChanPostUtils
 import io.reactivex.Flowable
 import io.reactivex.processors.PublishProcessor
 import io.reactivex.schedulers.Schedulers
@@ -274,7 +273,7 @@ class FileCacheV2(
       return cancelableDownload
     }
 
-    log(TAG, "Downloading a file, url = ${maskImageUrl(url)}")
+    log(TAG, "Downloading a file, url=$url")
     normalRequestQueue.onNext(url)
 
     return cancelableDownload
@@ -301,7 +300,7 @@ class FileCacheV2(
     return synchronized(activeDownloads) {
       val prevRequest = activeDownloads.get(url)
       if (prevRequest != null) {
-        log(TAG, "Request ${maskImageUrl(url)} is already active, re-subscribing to it")
+        log(TAG, "Request $url is already active, re-subscribing to it")
 
         val prevCancelableDownload = prevRequest.cancelableDownload
         if (callback != null) {
@@ -389,8 +388,8 @@ class FileCacheV2(
             return
           }
 
-          val downloadedString = PostUtils.getReadableFileSize(downloaded)
-          val totalString = PostUtils.getReadableFileSize(total)
+          val downloadedString = ChanPostUtils.getReadableFileSize(downloaded)
+          val totalString = ChanPostUtils.getReadableFileSize(total)
 
           log(TAG, "Success (" +
             "downloaded = ${downloadedString} ($downloaded B), " +
@@ -419,8 +418,8 @@ class FileCacheV2(
 
           if (SHOW_PROGRESS_LOGS) {
             val percents = (result.downloaded.toFloat() / chunkSize.toFloat()) * 100f
-            val downloadedString = PostUtils.getReadableFileSize(result.downloaded)
-            val totalString = PostUtils.getReadableFileSize(chunkSize)
+            val downloadedString = ChanPostUtils.getReadableFileSize(result.downloaded)
+            val totalString = ChanPostUtils.getReadableFileSize(chunkSize)
 
             log(TAG,
               "Progress " +
@@ -635,7 +634,7 @@ class FileCacheV2(
       return
     }
 
-    log(TAG, "Purging ${maskImageUrl(url)}, file = ${output.getFullPath()}")
+    log(TAG, "Purging $url, file = ${output.getFullPath()}")
 
     if (!cacheHandler.deleteCacheFile(output)) {
       logError(TAG, "Could not delete the file in purgeOutput, output = ${output.getFullPath()}")

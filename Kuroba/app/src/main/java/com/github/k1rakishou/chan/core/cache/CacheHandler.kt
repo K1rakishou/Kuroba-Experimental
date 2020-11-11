@@ -23,8 +23,8 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.ConversionUtils.charArrayToInt
 import com.github.k1rakishou.chan.utils.ConversionUtils.intToCharArray
 import com.github.k1rakishou.chan.utils.HashingUtil
-import com.github.k1rakishou.chan.utils.StringUtils
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager

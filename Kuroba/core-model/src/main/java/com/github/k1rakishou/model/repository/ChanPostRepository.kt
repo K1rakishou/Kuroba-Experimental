@@ -8,13 +8,13 @@ import com.github.k1rakishou.common.SuspendableInitializer
 import com.github.k1rakishou.common.linkedMapWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.common.myAsync
+import com.github.k1rakishou.common.options.ChanCacheOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
-import com.github.k1rakishou.model.source.cache.ChanCacheOptions
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import com.github.k1rakishou.model.source.local.ChanPostLocalSource
 import kotlinx.coroutines.CoroutineScope
@@ -110,15 +110,10 @@ class ChanPostRepository(
     return chanThreadsCache.getThreadPostNoSet(threadDescriptor)
   }
 
-  fun getCachedPost(postDescriptor: PostDescriptor, isOP: Boolean): ChanPost? {
+  fun getCachedPost(postDescriptor: PostDescriptor): ChanPost? {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    check(postDescriptor.isOP() == isOP) {
-      "isOP flags differ for ($postDescriptor), " +
-        "postDescriptor.isOP: ${postDescriptor.isOP()}, isOP: $isOP"
-    }
-
-    if (isOP) {
+    if (postDescriptor.isOP()) {
       return chanThreadsCache.getOriginalPostFromCache(postDescriptor)
     } else {
       return chanThreadsCache.getPostFromCache(postDescriptor)
@@ -170,23 +165,23 @@ class ChanPostRepository(
 
   suspend fun getCatalogOriginalPosts(
     descriptor: ChanDescriptor.CatalogDescriptor,
-    threadNoList: Collection<Long>
+    originalPostDescriptorList: Collection<PostDescriptor>
   ): ModularResult<List<ChanPost>> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
-        val originalPostsFromCache = threadNoList.mapNotNull { threadNo ->
-          chanThreadsCache.getOriginalPostFromCache(descriptor.toThreadDescriptor(threadNo))
+        val originalPostsFromCache = originalPostDescriptorList.mapNotNull { postDescriptor ->
+          chanThreadsCache.getOriginalPostFromCache(postDescriptor.threadDescriptor())
         }
 
-        val originalPostNoFromCacheSet = originalPostsFromCache.map { post ->
-          post.postDescriptor.postNo
-        }.toSet()
+        val originalPostsFromCacheSet = originalPostsFromCache
+          .map { post -> post.postDescriptor }
+          .toSet()
 
-        val originalPostNoListToGetFromDatabase = threadNoList.filter { threadNo ->
-          threadNo !in originalPostNoFromCacheSet
-        }
+        val originalPostNoListToGetFromDatabase = originalPostDescriptorList
+          .filter { postDescriptor -> postDescriptor !in originalPostsFromCacheSet }
+          .map { postDescriptor -> postDescriptor.postNo }
 
         if (originalPostNoListToGetFromDatabase.isEmpty()) {
           // All posts were found in the cache

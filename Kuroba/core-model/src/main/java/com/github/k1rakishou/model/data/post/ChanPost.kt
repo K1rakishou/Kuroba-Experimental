@@ -17,7 +17,8 @@ open class ChanPost(
   val name: String? = null,
   val posterId: String? = null,
   val moderatorCapcode: String? = null,
-  val isSavedReply: Boolean = false
+  val isSavedReply: Boolean = false,
+  repliesFrom: Set<Long>? = null
 ) {
   /**
    * We use this map to avoid infinite loops when binding posts since after all post content
@@ -39,7 +40,7 @@ open class ChanPost(
   fun firstImage(): ChanPostImage? = postImages.firstOrNull()
 
   @Synchronized
-  fun setPostDeleted(isDeleted: Boolean = true) {
+  fun setPostDeleted(isDeleted: Boolean) {
     deleted = isDeleted
   }
 
@@ -69,16 +70,18 @@ open class ChanPost(
     for (loaderType in LoaderType.values()) {
       onDemandContentLoadedMap[loaderType] = false
     }
+
+    repliesFrom?.let { replies -> this.repliesFrom.addAll(replies) }
   }
 
   @Synchronized
-  open fun isContentLoadedForLoader(loaderType: LoaderType?): Boolean {
+  open fun isContentLoadedForLoader(loaderType: LoaderType): Boolean {
     return onDemandContentLoadedMap[loaderType] ?: return false
   }
 
   @Synchronized
-  open fun setContentLoadedForLoader(loaderType: LoaderType?) {
-    onDemandContentLoadedMap[loaderType!!] = true
+  open fun setContentLoadedForLoader(loaderType: LoaderType) {
+    onDemandContentLoadedMap[loaderType] = true
   }
 
   @Synchronized

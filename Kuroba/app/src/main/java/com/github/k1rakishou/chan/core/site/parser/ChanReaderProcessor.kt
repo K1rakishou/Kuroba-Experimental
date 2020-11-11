@@ -16,13 +16,15 @@
  */
 package com.github.k1rakishou.chan.core.site.parser
 
-import com.github.k1rakishou.chan.core.model.ChanPostBuilder
-import com.github.k1rakishou.chan.utils.PostUtils
 import com.github.k1rakishou.common.mutableListWithCap
+import com.github.k1rakishou.common.options.ChanReadOptions
+import com.github.k1rakishou.common.removeIfKt
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -31,7 +33,7 @@ class ChanReaderProcessor(
   val chanDescriptor: ChanDescriptor
 ) {
   private val toParse = mutableListWithCap<ChanPostBuilder>(64)
-  private val postNoOrderedList = mutableListWithCap<Long>(64)
+  private val postOrderedList = mutableListWithCap<PostDescriptor>(64)
   private var op: ChanPostBuilder? = null
 
   private val lock = Mutex()
@@ -51,10 +53,42 @@ class ChanReaderProcessor(
   suspend fun addPost(postBuilder: ChanPostBuilder) {
     lock.withLock {
       if (differsFromCached(postBuilder)) {
-        addForParse(postBuilder)
+        toParse.add(postBuilder)
       }
 
-      postNoOrderedList.add(postBuilder.id)
+      postOrderedList.add(postBuilder.postDescriptor)
+    }
+  }
+
+  suspend fun applyChanReadOptions(chanReadOptions: ChanReadOptions) {
+    if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
+      return
+    }
+
+    if (chanReadOptions.isDefault()) {
+      return
+    }
+
+    lock.withLock {
+      val postRanges = chanReadOptions.getRanges(postOrderedList.size)
+      val postDescriptorsToDelete = mutableSetOf<PostDescriptor>()
+
+      for ((index, postDescriptor) in postOrderedList.withIndex()) {
+        val anyRangeContainsThisPost = postRanges.any { postRange -> postRange.contains(index) }
+        if (anyRangeContainsThisPost) {
+          // At least one range contains this post's index, so we need to retain it
+          continue
+        }
+
+        postDescriptorsToDelete += postDescriptor
+      }
+
+      if (postDescriptorsToDelete.isEmpty()) {
+        return@withLock
+      }
+
+      postOrderedList.removeAll(postDescriptorsToDelete)
+      toParse.removeIfKt { postToParse -> postToParse.postDescriptor in postDescriptorsToDelete }
     }
   }
 
@@ -71,53 +105,37 @@ class ChanReaderProcessor(
 
   suspend fun getPostsSortedByIndexes(posts: List<ChanPost>): List<ChanPost> {
     return lock.withLock {
-      return@withLock postNoOrderedList.mapNotNull { postNo ->
-        return@mapNotNull posts.firstOrNull { post -> post.postNo() == postNo }
+      return@withLock postOrderedList.mapNotNull { postDescriptor ->
+        return@mapNotNull posts.firstOrNull { post -> post.postDescriptor == postDescriptor }
       }
     }
   }
 
-  suspend fun getPostNoListOrdered(): List<Long> {
-    return lock.withLock { postNoOrderedList }
+  suspend fun getPostListOrdered(): List<PostDescriptor> {
+    return lock.withLock { postOrderedList.toList() }
   }
 
   suspend fun getTotalPostsCount(): Int {
-    return lock.withLock { postNoOrderedList.size }
+    return lock.withLock { postOrderedList.size }
   }
 
   private fun differsFromCached(builder: ChanPostBuilder): Boolean {
-    val postDescriptor = if (builder.op) {
-      PostDescriptor.create(
-        builder.boardDescriptor!!.siteName(),
-        builder.boardDescriptor!!.boardCode,
-        builder.id
-      )
-    } else {
-      PostDescriptor.create(
-        builder.boardDescriptor!!.siteName(),
-        builder.boardDescriptor!!.boardCode,
-        builder.opId,
-        builder.id
-      )
-    }
-
-    check(postDescriptor.isOP() == builder.op) {
-      "isOP flags differ for ($postDescriptor) and ${builder}, " +
-        "postDescriptor.isOP: ${postDescriptor.isOP()}, builder.op: ${builder.op}"
-    }
-
-    val chanPost = chanPostRepository.getCachedPost(postDescriptor, builder.op)
+    val chanPost = chanPostRepository.getCachedPost(builder.postDescriptor)
     if (chanPost == null) {
       chanPostRepository.putPostHash(builder.postDescriptor, builder.getPostHash)
       return true
     }
 
-    if (PostUtils.postsDiffer(builder, chanPost)) {
+    if (ChanPostUtils.postsDiffer(builder, chanPost)) {
+      chanPostRepository.putPostHash(builder.postDescriptor, builder.getPostHash)
       return true
     }
 
     val cachedPostHash = chanPostRepository.getPostHash(builder.postDescriptor)
-      ?: return true
+    if (cachedPostHash == null) {
+      chanPostRepository.putPostHash(builder.postDescriptor, builder.getPostHash)
+      return true
+    }
 
     if (builder.getPostHash != cachedPostHash) {
       chanPostRepository.putPostHash(builder.postDescriptor, builder.getPostHash)
@@ -125,10 +143,6 @@ class ChanReaderProcessor(
     }
 
     return false
-  }
-
-  private fun addForParse(postBuilder: ChanPostBuilder) {
-    toParse.add(postBuilder)
   }
 
   override fun toString(): String {

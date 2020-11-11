@@ -16,7 +16,6 @@
  */
 package com.github.k1rakishou.chan.core.site
 
-import com.github.k1rakishou.chan.core.model.SiteBoards
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
@@ -26,6 +25,7 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.json.JsonSettings
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.model.data.site.SiteBoards
 
 @DoNotStrip
 interface Site {

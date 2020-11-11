@@ -1,10 +1,10 @@
 package com.github.k1rakishou.chan.core.site.loader.internal.usecase
 
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.options.ChanCacheOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.repository.ChanPostRepository
-import com.github.k1rakishou.model.source.cache.ChanCacheOptions
 
 class StorePostsInRepositoryUseCase(
   private val chanPostRepository: ChanPostRepository

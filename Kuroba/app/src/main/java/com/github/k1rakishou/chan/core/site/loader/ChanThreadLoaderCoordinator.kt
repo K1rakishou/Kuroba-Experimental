@@ -34,12 +34,13 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.options.ChanCacheOptions
+import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
-import com.github.k1rakishou.model.source.cache.ChanCacheOptions
 import com.google.gson.stream.JsonReader
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineName
@@ -123,7 +124,8 @@ class ChanThreadLoaderCoordinator(
 
   private val databasePostLoader by lazy {
     DatabasePostLoader(
-      reloadPostsFromDatabaseUseCase
+      reloadPostsFromDatabaseUseCase,
+      chanCatalogSnapshotRepository
     )
   }
 
@@ -131,10 +133,12 @@ class ChanThreadLoaderCoordinator(
   suspend fun loadThreadOrCatalog(
     url: String,
     chanDescriptor: ChanDescriptor,
-    cacheOptions: ChanCacheOptions,
+    chanCacheOptions: ChanCacheOptions,
+    chanReadOptions: ChanReadOptions,
     chanReader: ChanReader
   ): ModularResult<ThreadLoadResult> {
-    Logger.d(TAG, "loadThreadOrCatalog($url, $chanDescriptor, $cacheOptions, ${chanReader.javaClass.simpleName})")
+    Logger.d(TAG, "loadThreadOrCatalog($url, $chanDescriptor, $chanCacheOptions, " +
+      "$chanReadOptions, ${chanReader.javaClass.simpleName})")
 
     return withContext(Dispatchers.IO) {
       BackgroundUtils.ensureBackgroundThread()
@@ -160,7 +164,7 @@ class ChanThreadLoaderCoordinator(
         }
 
         val (chanReaderProcessor, readPostsDuration) = measureTimedValue {
-          readPostsFromResponse(response, chanDescriptor, chanReader)
+          readPostsFromResponse(response, chanDescriptor, chanReadOptions, chanReader)
             .unwrap()
         }
 
@@ -169,7 +173,7 @@ class ChanThreadLoaderCoordinator(
         return@Try normalPostLoader.loadPosts(
           url,
           chanReaderProcessor,
-          cacheOptions,
+          chanCacheOptions,
           chanDescriptor,
           chanReader
         )
@@ -179,20 +183,26 @@ class ChanThreadLoaderCoordinator(
 
   suspend fun reloadThreadFromDatabase(
     threadDescriptor: ChanDescriptor.ThreadDescriptor
-  ) {
+  ): ModularResult<ThreadLoadResult> {
     Logger.d(TAG, "reloadThreadFromDatabase($threadDescriptor)")
     BackgroundUtils.ensureBackgroundThread()
 
-    databasePostLoader.loadPosts(threadDescriptor)
+    return Try {
+      databasePostLoader.loadPosts(threadDescriptor)
+      return@Try ThreadLoadResult.Loaded(threadDescriptor)
+    }
   }
 
   suspend fun reloadCatalogFromDatabase(
-    threadDescriptors: List<ChanDescriptor.ThreadDescriptor>
-  ) {
-    Logger.d(TAG, "reloadCatalogFromDatabase(${threadDescriptors.size})")
+    catalogDescriptor: ChanDescriptor.CatalogDescriptor
+  ): ModularResult<ThreadLoadResult> {
+    Logger.d(TAG, "reloadCatalogFromDatabase($catalogDescriptor)")
     BackgroundUtils.ensureBackgroundThread()
 
-    databasePostLoader.loadCatalog(threadDescriptors)
+    return Try {
+      databasePostLoader.loadCatalog(catalogDescriptor)
+      return@Try ThreadLoadResult.Loaded(catalogDescriptor)
+    }
   }
 
   private suspend fun fallbackPostLoadOnNetworkError(
@@ -209,6 +219,8 @@ class ChanThreadLoaderCoordinator(
       chanPostRepository.markThreadAsDeleted(chanDescriptor, true)
     }
 
+    // TODO(KurobaEx): update in the database that the thread is deleted
+
     Logger.e(TAG, "Successfully recovered from network error (${error.errorMessageOrClassName()})")
     return ThreadLoadResult.Loaded(chanDescriptor)
   }
@@ -216,6 +228,7 @@ class ChanThreadLoaderCoordinator(
   private suspend fun readPostsFromResponse(
     response: Response,
     chanDescriptor: ChanDescriptor,
+    chanReadOptions: ChanReadOptions,
     chanReader: ChanReader
   ): ModularResult<ChanReaderProcessor> {
     BackgroundUtils.ensureBackgroundThread()
@@ -233,8 +246,12 @@ class ChanThreadLoaderCoordinator(
             )
 
             when (chanDescriptor) {
-              is ChanDescriptor.ThreadDescriptor -> chanReader.loadThread(jsonReader, chanReaderProcessor)
-              is ChanDescriptor.CatalogDescriptor -> chanReader.loadCatalog(jsonReader, chanReaderProcessor)
+              is ChanDescriptor.ThreadDescriptor -> {
+                chanReader.loadThread(jsonReader, chanReadOptions, chanReaderProcessor)
+              }
+              is ChanDescriptor.CatalogDescriptor -> {
+                chanReader.loadCatalog(jsonReader, chanReaderProcessor)
+              }
               else -> throw IllegalArgumentException("Unknown mode")
             }
 

@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.core.model.export;
+package com.github.k1rakishou.model.data.export;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;

@@ -3,11 +3,11 @@ package com.github.k1rakishou.chan.core.helper
 import android.annotation.SuppressLint
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHideManager
-import com.github.k1rakishou.chan.core.model.PostFilter
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHide
+import com.github.k1rakishou.model.data.post.PostFilter
 import com.github.k1rakishou.model.util.ChanPostUtils
 import java.util.*
 
