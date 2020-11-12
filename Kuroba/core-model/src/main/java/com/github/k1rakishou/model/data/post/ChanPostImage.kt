@@ -23,7 +23,7 @@ class ChanPostImage(
   val ownerPostDescriptor: PostDescriptor
 ) {
   val hidden: Boolean
-    get() = actuallyHidden || ChanSettings.hideImages.get()
+    get() = hiddenByFilter || ChanSettings.hideImages.get()
 
   val size: Long = fileSize
     get() = loadedFileSize ?: field
@@ -36,7 +36,7 @@ class ChanPostImage(
 
   @get:Synchronized
   @set:Synchronized
-  var actuallyHidden: Boolean = false
+  var hiddenByFilter: Boolean = false
 
   @Synchronized
   fun setSize(newSize: Long) {

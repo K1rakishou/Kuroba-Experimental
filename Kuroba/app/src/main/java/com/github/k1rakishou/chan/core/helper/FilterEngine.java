@@ -28,8 +28,6 @@ import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.filter.ChanFilter;
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
 import com.github.k1rakishou.model.data.filter.FilterType;
-import com.github.k1rakishou.model.data.post.ChanOriginalPost;
-import com.github.k1rakishou.model.data.post.ChanPost;
 import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
@@ -169,22 +167,21 @@ public class FilterEngine {
                 // to be hidden, which applies a custom spoiler image, or removes the image from
                 // the post entirely since this is a Post.Builder instance
                 if (filter.getAction() == FilterAction.HIDE.id) {
-                    image.setActuallyHidden(true);
+                    image.setHiddenByFilter(true);
                 } else if (filter.getAction() == FilterAction.REMOVE.id) {
                     post.postImages.remove(image);
                 }
+
                 return false;
             }
         }
 
         // figure out if the post has a country code, if so check the filter
         String countryCode = "";
-        if (post.httpIcons != null) {
-            for (ChanPostHttpIcon icon : post.httpIcons) {
-                if (icon.getIconName().indexOf('/') != -1) {
-                    countryCode = icon.getIconName().substring(icon.getIconName().indexOf('/') + 1);
-                    break;
-                }
+        for (ChanPostHttpIcon icon : post.httpIcons) {
+            if (icon.getIconName().indexOf('/') != -1) {
+                countryCode = icon.getIconName().substring(icon.getIconName().indexOf('/') + 1);
+                break;
             }
         }
 
@@ -195,78 +192,6 @@ public class FilterEngine {
 
         StringBuilder files = new StringBuilder();
         for (ChanPostImage image : post.postImages) {
-            files.append(image.getFilename()).append(" ");
-        }
-
-        String fnames = files.toString();
-        return !fnames.isEmpty() && typeMatches(filter, FilterType.FILENAME) && matches(filter, fnames, false);
-    }
-
-    /**
-     * This method is a rough duplicate of the one with Post.Builder
-     * However is only used for post-processing, like filter watching
-     *
-     * @param filter the filter to use
-     * @param post   the post content to test against
-     * @return true if the filter matches and should be applied to the content, false if not
-     */
-    @AnyThread
-    public boolean matches(ChanFilter filter, ChanPost post) {
-        if (!post.getModeratorCapcode().isEmpty()
-                || (post instanceof ChanOriginalPost && ((ChanOriginalPost) post).getSticky())) {
-            return false;
-        }
-
-        if (filter.getOnlyOnOP() && !post.isOP()) {
-            return false;
-        }
-
-        if (filter.getApplyToSaved() && !post.isSavedReply()) {
-            return false;
-        }
-
-        if (typeMatches(filter, FilterType.TRIPCODE) && matches(filter, post.getTripcode(), false)) {
-            return true;
-        }
-
-        if (typeMatches(filter, FilterType.NAME) && matches(filter, post.getName(), false)) {
-            return true;
-        }
-
-        if (typeMatches(filter, FilterType.COMMENT) && matches(filter, post.getPostComment().getComment().toString(), false)) {
-            return true;
-        }
-
-        if (typeMatches(filter, FilterType.ID) && matches(filter, post.getPosterId(), false)) {
-            return true;
-        }
-
-        if (typeMatches(filter, FilterType.SUBJECT) && matches(filter, post.getSubject(), false)) {
-            return true;
-        }
-
-        for (ChanPostImage image : post.getPostImages()) {
-            // for this case, we don't do any actions, so just return if it actually does match
-            if (typeMatches(filter, FilterType.IMAGE) && matches(filter, image.getFileHash(), false)) {
-                return true;
-            }
-        }
-
-        // figure out if the post has a country code, if so check the filter
-        String countryCode = "";
-        for (ChanPostHttpIcon icon : post.getPostIcons()) {
-            if (icon.getIconName().indexOf('/') != -1) {
-                countryCode = icon.getIconName().substring(icon.getIconName().indexOf('/') + 1);
-                break;
-            }
-        }
-
-        if (!countryCode.isEmpty() && typeMatches(filter, FilterType.COUNTRY_CODE) && matches(filter, countryCode, false)) {
-            return true;
-        }
-
-        StringBuilder files = new StringBuilder();
-        for (ChanPostImage image : post.getPostImages()) {
             files.append(image.getFilename()).append(" ");
         }
 
@@ -315,7 +240,7 @@ public class FilterEngine {
             try {
                 return matcher.find();
             } catch (IllegalArgumentException e) {
-                Logger.w(TAG, "matcher.find() exception", e);
+                Logger.e(TAG, "matcher.find() exception, pattern=" + pattern.pattern(), e);
                 return false;
             }
         } else {
@@ -355,7 +280,7 @@ public class FilterEngine {
             try {
                 return matcher.find();
             } catch (IllegalArgumentException e) {
-                Logger.w(TAG, "matcher.find() exception", e);
+                Logger.e(TAG, "matcher.find() exception, pattern=" + pattern.pattern(), e);
                 return false;
             }
         } else {
