@@ -1030,6 +1030,7 @@ class ThreadLayout @JvmOverloads constructor(
 
     dialogFactory.createSimpleConfirmationDialog(
       context = context,
+      titleText = message,
       negativeButtonText = negativeButtonText,
       onNegativeButtonClickListener = { presenter.hideOrRemovePosts(hide, false, post, threadNo) },
       positiveButtonText = positiveButtonText,
