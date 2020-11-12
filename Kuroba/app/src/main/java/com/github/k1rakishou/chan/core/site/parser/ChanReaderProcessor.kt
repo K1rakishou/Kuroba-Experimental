@@ -107,6 +107,11 @@ class ChanReaderProcessor(
   }
 
   private fun differsFromCached(builder: ChanPostBuilder): Boolean {
+    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+      // Always update catalog posts
+      return true
+    }
+
     val chanPost = chanPostRepository.getCachedPost(builder.postDescriptor)
     if (chanPost == null) {
       chanPostRepository.putPostHash(builder.postDescriptor, builder.getPostHash)

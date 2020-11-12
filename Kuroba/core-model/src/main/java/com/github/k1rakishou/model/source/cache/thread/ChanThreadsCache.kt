@@ -35,17 +35,17 @@ class ChanThreadsCache(
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
   private val chanThreads = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanThread>(128)
-  @GuardedBy("lock")
-  private val rawPostHashesMap = mutableMapWithCap<PostDescriptor, MurmurHashUtils.Murmur3Hash>(1024)
 
   private val lastEvictInvokeTime = AtomicLong(0L)
 
   fun putPostHash(postDescriptor: PostDescriptor, hash: MurmurHashUtils.Murmur3Hash) {
-    lock.write { rawPostHashesMap[postDescriptor] = hash }
+    lock.write {
+      chanThreads[postDescriptor.threadDescriptor()]?.putPostHash(postDescriptor, hash)
+    }
   }
 
   fun getPostHash(postDescriptor: PostDescriptor): MurmurHashUtils.Murmur3Hash? {
-    return lock.read { rawPostHashesMap[postDescriptor] }
+    return lock.read { chanThreads[postDescriptor.threadDescriptor()]?.getPostHash(postDescriptor) }
   }
 
   fun putManyCatalogPostsIntoCache(originalPosts: List<ChanOriginalPost>) {
@@ -260,8 +260,6 @@ class ChanThreadsCache(
       if (chanThread != null) {
         chanThread.deletePost(postDescriptor)
       }
-
-      rawPostHashesMap.remove(postDescriptor)
     }
   }
 
@@ -272,10 +270,6 @@ class ChanThreadsCache(
   fun deleteThreads(threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) {
     lock.write {
       threadDescriptors.forEach { threadDescriptor ->
-        chanThreads[threadDescriptor]?.iteratePostsOrdered { chanPost ->
-          rawPostHashesMap.remove(chanPost.postDescriptor)
-        }
-
         chanThreads.remove(threadDescriptor)
       }
     }
@@ -284,9 +278,7 @@ class ChanThreadsCache(
   fun deleteAll() {
     lock.write {
       lastEvictInvokeTime.set(0)
-      rawPostHashesMap.clear()
       chanThreads.clear()
-      rawPostHashesMap.clear()
     }
   }
 
@@ -295,22 +287,24 @@ class ChanThreadsCache(
     require(lock.isWriteLocked) { "Lock must be write locked!" }
 
     val delta = System.currentTimeMillis() - lastEvictInvokeTime.get()
-    if (delta > EVICTION_TIMEOUT_MS) {
-      val currentTotalPostsCount = getTotalCachedPostsCount()
-      if (currentTotalPostsCount > maxCacheSize && chanThreads.size > IMMUNE_THREADS_COUNT) {
-        // Evict 35% of the cache
-        val amountToEvict = (currentTotalPostsCount / 100) * 35
-        if (amountToEvict > 0) {
-          Logger.d(tag, "evictOld start (posts: ${currentTotalPostsCount}/${maxCacheSize})")
-          val time = measureTime { evictOld(amountToEvict) }
-          Logger.d(
-            tag,
-            "evictOld end (posts: ${currentTotalPostsCount}/${maxCacheSize}), took ${time}"
-          )
-        }
+    if (delta < EVICTION_TIMEOUT_MS) {
+      return
+    }
 
-        lastEvictInvokeTime.set(System.currentTimeMillis())
+    val currentTotalPostsCount = getTotalCachedPostsCount()
+    if (currentTotalPostsCount > maxCacheSize && chanThreads.size > IMMUNE_THREADS_COUNT) {
+      // Evict 35% of the cache
+      val amountToEvict = (currentTotalPostsCount / 100) * 35
+      if (amountToEvict > 0) {
+        Logger.d(tag, "evictOld start (posts: ${currentTotalPostsCount}/${maxCacheSize})")
+        val time = measureTime { evictOld(amountToEvict) }
+        Logger.d(
+          tag,
+          "evictOld end (posts: ${currentTotalPostsCount}/${maxCacheSize}), took ${time}"
+        )
       }
+
+      lastEvictInvokeTime.set(System.currentTimeMillis())
     }
   }
 

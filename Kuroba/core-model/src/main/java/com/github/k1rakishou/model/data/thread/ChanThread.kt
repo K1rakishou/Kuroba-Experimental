@@ -1,6 +1,7 @@
 package com.github.k1rakishou.model.data.thread
 
 import androidx.annotation.GuardedBy
+import com.github.k1rakishou.common.MurmurHashUtils
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -24,10 +25,10 @@ class ChanThread(
 
   @GuardedBy("lock")
   private val threadPosts = mutableListOf<ChanPost>()
-
   @GuardedBy("lock")
   private val postsByPostDescriptors = mutableMapOf<PostDescriptor, ChanPost>()
-
+  @GuardedBy("lock")
+  private val rawPostHashesMap = mutableMapOf<PostDescriptor, MurmurHashUtils.Murmur3Hash>()
   @GuardedBy("lock")
   private var lastAccessTime = System.currentTimeMillis()
 
@@ -50,6 +51,14 @@ class ChanThread(
   fun isClosed(): Boolean = lock.read { getOriginalPost().closed }
   fun isArchived(): Boolean = lock.read { getOriginalPost().archived }
   fun isDeleted(): Boolean = lock.read { getOriginalPost().deleted }
+
+  fun putPostHash(postDescriptor: PostDescriptor, hash: MurmurHashUtils.Murmur3Hash) {
+    lock.write { rawPostHashesMap[postDescriptor] = hash }
+  }
+
+  fun getPostHash(postDescriptor: PostDescriptor): MurmurHashUtils.Murmur3Hash? {
+    return lock.read { rawPostHashesMap[postDescriptor] }
+  }
 
   fun addOrUpdatePosts(newChanPosts: List<ChanPost>): Boolean {
     return lock.write {
@@ -194,6 +203,11 @@ class ChanThread(
       val postsToDelete = threadPosts.subList(1, toDeleteCount)
       threadPosts.removeAll(postsToDelete)
 
+      postsToDelete.forEach { chanPost ->
+        postsByPostDescriptors.remove(chanPost.postDescriptor)
+        rawPostHashesMap.remove(chanPost.postDescriptor)
+      }
+
       require(threadPosts.first() is ChanOriginalPost) {
         "First post is not an original post! post=${threadPosts.first()}"
       }
@@ -280,6 +294,7 @@ class ChanThread(
         threadPosts.removeAt(postIndex)
       }
 
+      rawPostHashesMap.remove(postDescriptor)
       postsByPostDescriptors.remove(postDescriptor)
     }
   }
