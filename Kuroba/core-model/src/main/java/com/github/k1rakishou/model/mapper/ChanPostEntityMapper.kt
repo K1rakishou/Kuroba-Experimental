@@ -15,11 +15,6 @@ import com.github.k1rakishou.model.entity.chan.post.ChanTextSpanEntity
 import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
 import com.github.k1rakishou.model.source.local.ChanPostLocalSource
 import com.google.gson.Gson
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.set
 
 object ChanPostEntityMapper {
 
@@ -181,36 +176,6 @@ object ChanPostEntityMapper {
       comment,
       postLinkables
     )
-  }
-
-  fun fillInReplies(totalPosts: List<ChanPost>) {
-    val postsByNo: MutableMap<Long, ChanPost> = HashMap()
-    for (post in totalPosts) {
-      postsByNo[post.postNo()] = post
-    }
-
-    // Maps post no's to a list of no's that that post received replies from
-    val replies: MutableMap<Long, MutableList<Long>> = HashMap()
-
-    for (sourcePost in totalPosts) {
-      for (replyTo in sourcePost.repliesTo) {
-        var value = replies[replyTo]
-
-        if (value == null) {
-          value = ArrayList(3)
-          replies[replyTo] = value
-        }
-
-        value.add(sourcePost.postNo())
-      }
-    }
-
-    for ((postNo, replyList) in replies) {
-      val subject = postsByNo[postNo]
-
-      // Sometimes a post replies to a ghost, a post that doesn't exist.
-      subject?.repliesFrom?.addAll(replyList)
-    }
   }
 
 }

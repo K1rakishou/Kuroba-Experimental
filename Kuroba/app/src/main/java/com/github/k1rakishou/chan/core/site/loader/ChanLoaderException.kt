@@ -9,7 +9,7 @@ import java.util.concurrent.CancellationException
 import javax.net.ssl.SSLException
 
 
-class ChanLoaderException(
+open class ChanLoaderException(
   private val exception: Throwable
 ) : Exception(exception) {
 
@@ -47,6 +47,8 @@ class ChanLoaderException(
   }
 
 }
+
+class ClientException(message: String) : ChanLoaderException(Exception(message))
 
 class ServerException(val statusCode: Int) : Exception("Bad status code: ${statusCode}") {
   fun isAuthError(): Boolean {

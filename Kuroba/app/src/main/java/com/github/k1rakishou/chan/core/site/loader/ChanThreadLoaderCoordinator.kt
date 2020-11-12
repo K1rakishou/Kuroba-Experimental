@@ -22,8 +22,8 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.loader.internal.ChanPostPersister
 import com.github.k1rakishou.chan.core.site.loader.internal.DatabasePostLoader
-import com.github.k1rakishou.chan.core.site.loader.internal.NormalPostLoader
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsUseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ReloadPostsFromDatabaseUseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
@@ -111,8 +111,8 @@ class ChanThreadLoaderCoordinator(
     )
   }
 
-  private val normalPostLoader by lazy {
-    NormalPostLoader(
+  private val chanPostPersister by lazy {
+    ChanPostPersister(
       appConstants,
       parsePostsUseCase,
       storePostsInRepositoryUseCase,
@@ -163,13 +163,17 @@ class ChanThreadLoaderCoordinator(
         }
 
         val (chanReaderProcessor, readPostsDuration) = measureTimedValue {
-          readPostsFromResponse(response, chanDescriptor, chanReadOptions, chanReader)
-            .unwrap()
+          return@measureTimedValue readPostsFromResponse(
+            response,
+            chanDescriptor,
+            chanReadOptions,
+            chanReader
+          ).unwrap()
         }
 
         Logger.d(TAG, "loadThreadOrCatalog() read posts from response took $readPostsDuration")
 
-        return@Try normalPostLoader.loadPosts(
+        return@Try chanPostPersister.persistPosts(
           url,
           chanReaderProcessor,
           chanCacheOptions,

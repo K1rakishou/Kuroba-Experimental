@@ -54,7 +54,7 @@ class ParsePostsUseCase(
       "boardDescriptors=${boardDescriptors.size}, " +
       "filters=${filters.size}")
 
-    return supervisorScope {
+    val parsedPosts = supervisorScope {
       return@supervisorScope postBuildersToParse
         .chunked(POSTS_PER_BATCH)
         .flatMap { postToParseChunk ->
@@ -76,6 +76,9 @@ class ParsePostsUseCase(
           return@flatMap deferredList.awaitAll().filterNotNull()
         }
     }
+
+    Logger.d(TAG, "parseNewPostsPosts(chanDescriptor=$chanDescriptor) -> parsedPosts=${parsedPosts.size}")
+    return parsedPosts
   }
 
   private fun getBoardDescriptors(chanDescriptor: ChanDescriptor): Set<BoardDescriptor> {

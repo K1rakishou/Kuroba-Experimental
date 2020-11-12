@@ -17,6 +17,7 @@ import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import com.github.k1rakishou.model.source.local.ChanPostLocalSource
+import com.github.k1rakishou.model.util.ensureBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -80,25 +81,31 @@ class ChanPostRepository(
     posts: List<ChanPost>,
     cacheOptions: ChanCacheOptions,
     isCatalog: Boolean
-  ): ModularResult<List<Long>> {
+  ): ModularResult<Int> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+    ensureBackgroundThread()
 
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         if (isCatalog) {
-          require(posts.all { post -> post is ChanOriginalPost }) {
-            "Not all posts are original posts"
-          }
+          val allPostsAreOriginal = posts.all { post -> post is ChanOriginalPost }
+          require(allPostsAreOriginal) { "Not all posts are original posts" }
 
-          return@tryWithTransaction insertOrUpdateCatalogOriginalPosts(
+          val postsCount = insertOrUpdateCatalogOriginalPosts(
             posts as List<ChanOriginalPost>,
             cacheOptions
           )
+
+          Logger.d(TAG, "insertOrUpdateMany(isCatalog=$isCatalog) -> $postsCount")
+          return@tryWithTransaction postsCount
         } else {
-          return@tryWithTransaction insertOrUpdateThreadPosts(
+          val newPostsCount = insertOrUpdateThreadPosts(
             posts,
             cacheOptions
           )
+
+          Logger.d(TAG, "insertOrUpdateMany(isCatalog=$isCatalog) -> $newPostsCount")
+          return@tryWithTransaction newPostsCount
         }
       }
     }
@@ -261,6 +268,7 @@ class ChanPostRepository(
   @OptIn(ExperimentalTime::class)
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Unit> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+    ensureBackgroundThread()
 
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
@@ -287,6 +295,8 @@ class ChanPostRepository(
     descriptor: ChanDescriptor.ThreadDescriptor
   ): ModularResult<List<ChanPost>> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+    ensureBackgroundThread()
+
     Logger.d(TAG, "getThreadPosts(descriptor=$descriptor)")
 
     return applicationScope.myAsync {
@@ -391,24 +401,25 @@ class ChanPostRepository(
   private suspend fun insertOrUpdateCatalogOriginalPosts(
     posts: List<ChanOriginalPost>,
     cacheOptions: ChanCacheOptions
-  ): List<Long> {
+  ): Int {
+    ensureBackgroundThread()
+
     if (posts.isEmpty()) {
-      return emptyList()
+      return 0
     }
 
     localSource.insertManyOriginalPosts(posts, cacheOptions)
+    chanThreadsCache.putManyCatalogPostsIntoCache(posts)
 
-    if (posts.isNotEmpty()) {
-      chanThreadsCache.putManyCatalogPostsIntoCache(posts)
-    }
-
-    return posts.map { it.postDescriptor.postNo }
+    return posts.size
   }
 
   private suspend fun insertOrUpdateThreadPosts(
     posts: List<ChanPost>,
     cacheOptions: ChanCacheOptions
-  ): List<Long> {
+  ): Int {
+    ensureBackgroundThread()
+
     var originalPost: ChanOriginalPost? = null
     val postsThatDifferWithCache = ArrayList<ChanPost>()
 
@@ -431,28 +442,21 @@ class ChanPostRepository(
 
     if (originalPost == null) {
       Logger.e(TAG, "Posts have no original post")
-      return emptyList()
+      return 0
     }
 
     if (postsThatDifferWithCache.isEmpty()) {
       Logger.d(TAG, "postsThatDifferWithCache is empty")
-      return emptyList()
+      return 0
     }
 
     Logger.d(TAG, "insertOrUpdateThreadPosts() ${postsThatDifferWithCache.size} posts differ from " +
       "the cache (total posts=${posts.size})")
 
-    val chanThreadId = localSource.getThreadIdByPostDescriptor(originalPost!!.postDescriptor)
-    if (chanThreadId == null) {
-      return originalPost?.postDescriptor?.postNo
-        ?.let { post -> listOf(post) }
-        ?: emptyList()
-    }
-
     localSource.insertPosts(postsThatDifferWithCache, cacheOptions)
     chanThreadsCache.putManyThreadPostsIntoCache(postsThatDifferWithCache, cacheOptions)
 
-    return postsThatDifferWithCache.map { it.postDescriptor.postNo }
+    return postsThatDifferWithCache.size
   }
 
   suspend fun cleanupPostsInRollingStickyThread(

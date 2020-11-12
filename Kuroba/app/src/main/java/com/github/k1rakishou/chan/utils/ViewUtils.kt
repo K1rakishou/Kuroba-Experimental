@@ -66,7 +66,7 @@ object ViewUtils {
       }
 
     } catch (error: Exception) {
-      Logger.e(TAG, "setEditTextCursorColor() failure, error=${error.errorMessageOrClassName()}")
+      Logger.d(TAG, "setEditTextCursorColor() failure, error=${error.errorMessageOrClassName()}")
     }
   }
 
@@ -131,7 +131,7 @@ object ViewUtils {
         }
       }
     } catch (error: Exception) {
-      Logger.e(TAG, "setHandlesColors() failure, error=${error.errorMessageOrClassName()}")
+      Logger.d(TAG, "setHandlesColors() failure, error=${error.errorMessageOrClassName()}")
     }
   }
 
@@ -159,7 +159,7 @@ object ViewUtils {
       f2.isAccessible = true
       f2.set(this, edgeEffectBottom)
     } catch (error: Exception) {
-      Logger.e(TAG, "AbsListView.changeEdgeEffect() failure, error=${error.errorMessageOrClassName()}")
+      Logger.d(TAG, "AbsListView.changeEdgeEffect() failure, error=${error.errorMessageOrClassName()}")
     }
   }
 
@@ -180,7 +180,7 @@ object ViewUtils {
       f2.isAccessible = true
       f2.set(this, rightEdge)
     } catch (error: Exception) {
-      Logger.e(TAG, "ViewPager.changeEdgeEffect() failure, error=${error.errorMessageOrClassName()}")
+      Logger.d(TAG, "ViewPager.changeEdgeEffect() failure, error=${error.errorMessageOrClassName()}")
     }
   }
 
@@ -194,7 +194,7 @@ object ViewUtils {
       f2.isAccessible = true
       (f2.get(this) as? TextView)?.let { progressPercent -> progressPercent.setTextColor(theme.textColorSecondary) }
     } catch (error: Exception) {
-      Logger.e(TAG, "ProgressDialog.changeProgressColor() failure, error=${error.errorMessageOrClassName()}")
+      Logger.d(TAG, "ProgressDialog.changeProgressColor() failure, error=${error.errorMessageOrClassName()}")
     }
   }
 

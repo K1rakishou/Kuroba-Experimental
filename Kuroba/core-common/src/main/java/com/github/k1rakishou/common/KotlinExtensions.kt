@@ -25,6 +25,8 @@ import kotlin.collections.HashMap
 import kotlin.collections.LinkedHashMap
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -143,16 +145,12 @@ fun <T> MutableCollection<T>.removeIfKt(filter: (T) -> Boolean): Boolean {
 }
 
 @Suppress("RedundantAsync")
-suspend fun <T> CoroutineScope.myAsyncSafe(func: suspend () -> T): ModularResult<T> {
+suspend fun <T> CoroutineScope.myAsync(
+  context: CoroutineContext = EmptyCoroutineContext,
+  func: suspend () -> T
+): T {
   return supervisorScope {
-    Try { async { func() }.await() }
-  }
-}
-
-@Suppress("RedundantAsync")
-suspend fun <T> CoroutineScope.myAsync(func: suspend () -> T): T {
-  return supervisorScope {
-    async { func() }.await()
+    async(context = context) { func() }.await()
   }
 }
 

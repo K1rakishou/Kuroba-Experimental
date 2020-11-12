@@ -440,7 +440,7 @@ class ChanPostLocalSource(
 
     val postAdditionalData = getPostsAdditionalData(postIdList)
 
-    val chanPosts = chanPostFullList
+    return chanPostFullList
       .mapNotNull { chanPostFull ->
         val postTextSnapEntityList =
           textSpansGroupedByPostId[chanPostFull.chanPostIdEntity.postId]
@@ -455,9 +455,6 @@ class ChanPostLocalSource(
           postAdditionalData
         )
       }
-
-    ChanPostEntityMapper.fillInReplies(chanPosts)
-    return chanPosts
   }
 
   private suspend fun getPostsAdditionalData(postIdList: List<Long>): PostAdditionalData {

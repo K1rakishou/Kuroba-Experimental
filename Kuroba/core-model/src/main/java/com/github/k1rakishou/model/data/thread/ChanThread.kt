@@ -8,7 +8,12 @@ import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.LoaderType
+import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.collections.ArrayList
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.set
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
@@ -86,6 +91,7 @@ class ChanThread(
 
       if (addedOrUpdatedPosts) {
         threadPosts.sortWith(POSTS_COMPARATOR)
+        recalculatePostReplies()
       }
 
       updateLastAccessTime()
@@ -426,7 +432,6 @@ class ChanThread(
     }
 
     mergedPost.setPostDeleted(oldChanPost.deleted)
-
     return mergedPost
   }
 
@@ -471,8 +476,39 @@ class ChanThread(
     }
 
     mergedOriginalPost.setPostDeleted(oldChanOriginalPost.deleted)
-
     return mergedOriginalPost
+  }
+
+  private fun recalculatePostReplies() {
+    require(lock.isWriteLocked) { "Lock must be write locked!" }
+
+    val postsByNo: MutableMap<Long, ChanPost> = HashMap()
+    for (post in threadPosts) {
+      postsByNo[post.postNo()] = post
+    }
+
+    // Maps post no's to a list of no's that that post received replies from
+    val replies: MutableMap<Long, MutableList<Long>> = HashMap()
+
+    for (sourcePost in threadPosts) {
+      for (replyTo in sourcePost.repliesTo) {
+        var value = replies[replyTo]
+
+        if (value == null) {
+          value = ArrayList(3)
+          replies[replyTo] = value
+        }
+
+        value.add(sourcePost.postNo())
+      }
+    }
+
+    for ((postNo, replyList) in replies) {
+      val subject = postsByNo[postNo]
+
+      // Sometimes a post replies to a ghost, a post that doesn't exist.
+      subject?.repliesFrom?.addAll(replyList)
+    }
   }
 
   private fun checkPostsConsistency() {

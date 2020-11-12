@@ -100,6 +100,9 @@ open class ViewThreadController(
   private val threadFollowerpool: Deque<Pair<ThreadDescriptor, ThreadDescriptor>> = ArrayDeque()
   private var hintPopup: HintPopup? = null
 
+  override val threadControllerType: ThreadControllerType
+    get() = ThreadControllerType.Thread
+
   override fun injectDependencies(component: StartActivityComponent) {
     component.inject(this)
   }

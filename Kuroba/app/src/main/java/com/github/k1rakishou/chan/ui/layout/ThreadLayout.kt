@@ -51,6 +51,7 @@ import com.github.k1rakishou.chan.core.site.http.Reply
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
+import com.github.k1rakishou.chan.ui.controller.ThreadController
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.helper.ImageOptionsHelper
 import com.github.k1rakishou.chan.ui.helper.ImageOptionsHelper.ImageReencodingHelperCallback
@@ -309,12 +310,12 @@ class ThreadLayout @JvmOverloads constructor(
 
   fun refreshFromSwipe() {
     refreshedFromSwipe = true
-    presenter.normalLoad()
+    presenter.normalLoad(showLoading = true)
   }
 
-  fun gainedFocus() {
+  fun gainedFocus(threadControllerType: ThreadController.ThreadControllerType) {
     if (visible == Visible.THREAD) {
-      threadListLayout.gainedFocus()
+      threadListLayout.gainedFocus(threadControllerType)
     }
   }
 
@@ -347,6 +348,7 @@ class ThreadLayout @JvmOverloads constructor(
     filter: PostsFilter
   ) {
     if (descriptor == null) {
+      Logger.d(TAG, "showPostsForChanDescriptor() descriptor==null")
       return
     }
 
@@ -390,20 +392,20 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   private fun hasSupportedActiveArchives(): Boolean {
-    return presenterOrNull?.currentChanDescriptor?.threadDescriptorOrNull()
-      ?.let { threadDescriptor ->
-        val archiveSiteDescriptors = archivesManager.getSupportedArchiveDescriptors(threadDescriptor)
-          .map { archiveDescriptor -> archiveDescriptor.siteDescriptor }
+    val threadDescriptor = presenterOrNull?.currentChanDescriptor?.threadDescriptorOrNull()
+      ?: return false
 
-        val hasActiveSites = archiveSiteDescriptors
-          .any { siteDescriptor -> siteManager.isSiteActive(siteDescriptor) }
+    val archiveSiteDescriptors = archivesManager.getSupportedArchiveDescriptors(threadDescriptor)
+      .map { archiveDescriptor -> archiveDescriptor.siteDescriptor }
 
-        if (!hasActiveSites) {
-          return@let false
-        }
+    val hasActiveSites = archiveSiteDescriptors
+      .any { siteDescriptor -> siteManager.isSiteActive(siteDescriptor) }
 
-        return@let true
-      } ?: false
+    if (!hasActiveSites) {
+      return false
+    }
+
+    return true
   }
 
   override fun showLoading() {

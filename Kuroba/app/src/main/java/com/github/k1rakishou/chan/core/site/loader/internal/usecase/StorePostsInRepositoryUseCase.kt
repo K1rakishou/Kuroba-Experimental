@@ -14,14 +14,13 @@ class StorePostsInRepositoryUseCase(
     posts: List<ChanPost>,
     cacheOptions: ChanCacheOptions,
     isCatalog: Boolean
-  ): List<Long> {
+  ): Int {
     BackgroundUtils.ensureBackgroundThread()
-    Logger.d(TAG, "storePosts(postsCount=${posts.size}, isCatalog=$isCatalog)")
-
     chanPostRepository.awaitUntilInitialized()
 
     if (posts.isEmpty()) {
-      return emptyList()
+      Logger.d(TAG, "storePosts(postsCount=${posts.size}, isCatalog=$isCatalog) -> 0")
+      return 0
     }
 
     return chanPostRepository.insertOrUpdateMany(

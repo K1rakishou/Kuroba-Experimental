@@ -49,6 +49,7 @@ import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
+import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest.BoardPage
@@ -56,6 +57,7 @@ import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
+import com.github.k1rakishou.chan.ui.controller.ThreadController
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutPresenterCallback
@@ -145,6 +147,10 @@ class ThreadPresenter @Inject constructor(
   private var threadPresenterCallback: ThreadPresenterCallback? = null
   private var forcePageUpdate = false
   private var order = PostsFilter.Order.BUMP
+  private var currentFocusedController = CurrentFocusedController.None
+
+  var chanThreadLoadingState = ChanThreadLoadingState.Uninitialized
+    private set
 
   private val verboseLogs by lazy { ChanSettings.verboseLogs.get() }
   private val compositeDisposable = CompositeDisposable()
@@ -189,6 +195,15 @@ class ThreadPresenter @Inject constructor(
 
   val currentLocalSearchType: LocalSearchType?
     get() {
+      if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SLIDE) {
+        // For slide we need to check the state of the SlidingPaneLayout is currently focused
+        return when (currentFocusedController) {
+          CurrentFocusedController.Catalog -> LocalSearchType.CatalogSearch
+          CurrentFocusedController.Thread -> LocalSearchType.ThreadSearch
+          CurrentFocusedController.None -> null
+        }
+      }
+
       val currentChanDescriptor = chanThreadTicker.currentChanDescriptor
       if (currentChanDescriptor == null) {
         return null
@@ -275,10 +290,12 @@ class ThreadPresenter @Inject constructor(
     postOptionsClickExecutor.stop()
     serializedCoroutineExecutor.stop()
     compositeDisposable.clear()
+
+    chanThreadLoadingState = ChanThreadLoadingState.Uninitialized
   }
 
   private suspend fun onChanTickerTick(chanDescriptor: ChanDescriptor) {
-    Logger.d(TAG, "onChanTickerTicked($chanDescriptor)")
+    Logger.d(TAG, "onChanTickerTick($chanDescriptor)")
 
     when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> preloadThreadInfo(chanDescriptor)
@@ -360,14 +377,17 @@ class ThreadPresenter @Inject constructor(
     chanReadOptions: ChanReadOptions = ChanReadOptions.default()
   ) {
     BackgroundUtils.ensureMainThread()
-    Logger.d(TAG, "normalLoad(showLoading=$showLoading, requestNewPostsFromServer=$requestNewPostsFromServer, " +
-      "$chanLoadOptions, $chanCacheOptions, $chanReadOptions)")
 
     val currentChanDescriptor = chanThreadTicker.currentChanDescriptor
     if (currentChanDescriptor == null) {
       Logger.d(TAG, "normalLoad() chanThreadTicker.currentChanDescriptor==null")
       return
     }
+
+    Logger.d(TAG, "normalLoad(showLoading=$showLoading, requestNewPostsFromServer=$requestNewPostsFromServer, " +
+      "$chanLoadOptions, $chanCacheOptions, $chanReadOptions)")
+
+    chanThreadLoadingState = ChanThreadLoadingState.Loading
 
     launch {
       if (showLoading) {
@@ -388,9 +408,15 @@ class ThreadPresenter @Inject constructor(
           return@loadThreadOrCatalog
         }
 
-        if (threadLoadResult is ThreadLoadResult.Loaded) {
-          onChanLoaderData(threadLoadResult.chanDescriptor)
+        threadLoadResult as ThreadLoadResult.Loaded
+        val successfullyProcessedNewPosts = onChanLoaderData(threadLoadResult.chanDescriptor)
+
+        if (!successfullyProcessedNewPosts) {
+          val error = ClientException("Failed to load thread because of unknown error. See logs for more info.")
+          onChanLoaderError(error)
         }
+
+        chanThreadLoadingState = ChanThreadLoadingState.Loaded
       }
     }
   }
@@ -493,13 +519,14 @@ class ThreadPresenter @Inject constructor(
 
   suspend fun onSearchEntered() {
     if (!isBound) {
+      Logger.d(TAG, "onSearchEntered() isBound==false")
       return
     }
 
-    val localSearchType = currentLocalSearchType
-      ?: return
+    val query = currentLocalSearchType?.let { localSearchType ->
+      localSearchManager.getSearchQuery(localSearchType)
+    }
 
-    val query = localSearchManager.getSearchQuery(localSearchType)
     showPosts()
 
     if (TextUtils.isEmpty(query)) {
@@ -619,7 +646,12 @@ class ThreadPresenter @Inject constructor(
 
   private suspend fun onChanLoaderError(error: ChanLoaderException) {
     BackgroundUtils.ensureMainThread()
-    Logger.e(TAG, "onChanLoaderError() called", error)
+
+    if (error is ClientException) {
+      Logger.e(TAG, "onChanLoaderError() called, error=${error.errorMessageOrClassName()}")
+    } else {
+      Logger.e(TAG, "onChanLoaderError() called", error)
+    }
 
     threadPresenterCallback?.showError(error)
   }
@@ -1710,16 +1742,19 @@ class ThreadPresenter @Inject constructor(
 
   private suspend fun showPosts() {
     if (!isBound) {
+      Logger.d(TAG, "showPosts() isBound==false")
       return
     }
 
     val descriptor = currentChanDescriptor
-      ?: return
+    if (descriptor == null) {
+      Logger.d(TAG, "showPosts() currentChanDescriptor==null")
+      return
+    }
 
-    val localSearchType = currentLocalSearchType
-      ?: return
-
-    val searchQuery = localSearchManager.getSearchQuery(localSearchType)
+    val searchQuery = currentLocalSearchType?.let { localSearchType ->
+      localSearchManager.getSearchQuery(localSearchType)
+    }
 
     threadPresenterCallback?.showPostsForChanDescriptor(
       descriptor,
@@ -1776,6 +1811,31 @@ class ThreadPresenter @Inject constructor(
     }
 
     threadPresenterCallback?.onRestoreRemovedPostsClicked(currentChanDescriptor!!, selectedPosts)
+  }
+
+  fun gainedFocus(threadControllerType: ThreadController.ThreadControllerType) {
+    if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SLIDE) {
+      // If we are not in SLIDE layout mode, then we don't need to check the state of SlidingPaneLayout
+      currentFocusedController = CurrentFocusedController.None
+      return
+    }
+
+    currentFocusedController = when (threadControllerType) {
+      ThreadController.ThreadControllerType.Catalog -> CurrentFocusedController.Catalog
+      ThreadController.ThreadControllerType.Thread -> CurrentFocusedController.Thread
+    }
+  }
+
+  enum class CurrentFocusedController {
+    Catalog,
+    Thread,
+    None
+  }
+
+  enum class ChanThreadLoadingState {
+    Uninitialized,
+    Loading,
+    Loaded
   }
 
   interface ThreadPresenterCallback {

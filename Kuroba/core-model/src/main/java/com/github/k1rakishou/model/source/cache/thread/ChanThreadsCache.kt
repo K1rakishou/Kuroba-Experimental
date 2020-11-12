@@ -15,6 +15,7 @@ import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.thread.ChanThread
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
+import com.github.k1rakishou.model.util.ensureBackgroundThread
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
@@ -68,6 +69,10 @@ class ChanThreadsCache(
   }
 
   fun putManyThreadPostsIntoCache(posts: List<ChanPost>, cacheOptions: ChanCacheOptions) {
+    // We are doing some kinda heavy stuff (reply calculations) so we want this method to always be
+    //  called on a background thread.
+    ensureBackgroundThread()
+
     if (posts.isEmpty()) {
       return
     }

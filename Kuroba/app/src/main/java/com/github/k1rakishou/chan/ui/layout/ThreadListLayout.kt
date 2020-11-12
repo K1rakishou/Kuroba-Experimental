@@ -58,6 +58,7 @@ import com.github.k1rakishou.chan.ui.cell.PostCellInterface
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.PostStubCell
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
+import com.github.k1rakishou.chan.ui.controller.ThreadController
 import com.github.k1rakishou.chan.ui.layout.ReplyLayout.ReplyLayoutCallback
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
@@ -357,6 +358,16 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       return
     }
 
+    val chanThreadLoadingState = threadPresenter?.chanThreadLoadingState
+      ?: ThreadPresenter.ChanThreadLoadingState.Uninitialized
+
+    if (chanThreadLoadingState != ThreadPresenter.ChanThreadLoadingState.Loaded) {
+      // When reloading a thread, this callback will be called immediately which will result in
+      //  "indexAndTop" being zeroes which will overwrite the old scroll position with incorrect
+      //  values.
+      return
+    }
+
     val chanDescriptor = currentChanDescriptorOrNull()
       ?: return
     val indexTop = indexAndTop
@@ -487,9 +498,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     initial: Boolean
   ): Boolean {
     val presenter = threadPresenter
-      ?: return false
-
-    if (descriptor != presenter.currentChanDescriptor) {
+    if (presenter == null) {
+      Logger.d(TAG, "showPosts() threadPresenter==null")
       return false
     }
 
@@ -503,7 +513,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
 
     setFastScroll(true)
-
     val posts = chanThreadManager.getMutableListOfPosts(descriptor)
 
     postAdapter.setThread(
@@ -615,7 +624,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     return false
   }
 
-  fun gainedFocus() {
+  fun gainedFocus(threadControllerType: ThreadController.ThreadControllerType) {
+    threadPresenter?.gainedFocus(threadControllerType)
+
     val chanDescriptor = currentChanDescriptorOrNull()
     if (chanDescriptor != null) {
       restorePrevScrollPosition(chanDescriptor, false)

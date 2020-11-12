@@ -96,6 +96,9 @@ class BrowseController(
   private var initialized = false
   private var menuBuiltOnce = false
 
+  override val threadControllerType: ThreadControllerType
+    get() = ThreadControllerType.Catalog
+
   override fun injectDependencies(component: StartActivityComponent) {
     component.inject(this)
   }
@@ -590,7 +593,7 @@ class BrowseController(
   }
 
   private fun openBrowserClicked(item: ToolbarMenuSubItem) {
-    handleShareAndOpenInBrowser(false)
+    handleShareOrOpenInBrowser(false)
   }
 
   private fun openThreadById(item: ToolbarMenuSubItem) {
@@ -624,7 +627,7 @@ class BrowseController(
   }
 
   private fun shareClicked(item: ToolbarMenuSubItem) {
-    handleShareAndOpenInBrowser(true)
+    handleShareOrOpenInBrowser(true)
   }
 
   private fun upClicked(item: ToolbarMenuSubItem) {
@@ -639,28 +642,28 @@ class BrowseController(
     threadLayout.openReply(false)
   }
 
-  private fun handleShareAndOpenInBrowser(share: Boolean) {
+  private fun handleShareOrOpenInBrowser(share: Boolean) {
     val presenter = threadLayout.presenter
     if (!presenter.isBound) {
       return
     }
 
     if (presenter.currentChanDescriptor == null) {
-      Logger.e(TAG, "handleShareAndOpenInBrowser() chanThread == null")
+      Logger.e(TAG, "handleShareOrOpenInBrowser() chanThread == null")
       showToast(R.string.cannot_open_in_browser_already_deleted)
       return
     }
 
     val chanDescriptor = presenter.currentChanDescriptor
     if (chanDescriptor == null) {
-      Logger.e(TAG, "handleShareAndOpenInBrowser() chanDescriptor == null")
+      Logger.e(TAG, "handleShareOrOpenInBrowser() chanDescriptor == null")
       showToast(R.string.cannot_open_in_browser_already_deleted)
       return
     }
 
     val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
     if (site == null) {
-      Logger.e(TAG, "handleShareAndOpenInBrowser() site == null " +
+      Logger.e(TAG, "handleShareOrOpenInBrowser() site == null " +
         "(siteDescriptor = ${chanDescriptor.siteDescriptor()})")
       showToast(R.string.cannot_open_in_browser_already_deleted)
       return

@@ -39,6 +39,7 @@ import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.dp
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -78,6 +79,8 @@ abstract class ThreadController(
   override val toolbar: Toolbar?
     get() = (navigationController as? ToolbarNavigationController)?.toolbar
 
+  abstract val threadControllerType: ThreadControllerType
+
   override fun onCreate() {
     super.onCreate()
 
@@ -93,6 +96,7 @@ abstract class ThreadController(
         return threadLayout.canChildScrollUp()
       }
     }
+
     swipeRefreshLayout.id = R.id.swipe_refresh_layout
     swipeRefreshLayout.addView(threadLayout)
     swipeRefreshLayout.setOnRefreshListener(this)
@@ -116,7 +120,7 @@ abstract class ThreadController(
   override fun onShow() {
     super.onShow()
 
-    threadLayout.gainedFocus()
+    threadLayout.gainedFocus(threadControllerType)
   }
 
   override fun onDestroy() {
@@ -260,7 +264,21 @@ abstract class ThreadController(
   }
 
   override fun onSlideChanged(leftOpen: Boolean) {
-    threadLayout.gainedFocus()
+    val changedTo = if (leftOpen) {
+      ThreadControllerType.Catalog
+    } else {
+      ThreadControllerType.Thread
+    }
+
+    val current = threadControllerType
+
+    if (isDevBuild()) {
+      check(changedTo == current) {
+        "ThreadControllerTypes do not match! changedTo=$changedTo, current=$current"
+      }
+    }
+
+    threadLayout.gainedFocus(changedTo)
   }
 
   override fun threadBackPressed(): Boolean {
@@ -269,6 +287,11 @@ abstract class ThreadController(
 
   override fun showAvailableArchivesList(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     // no-op
+  }
+
+  enum class ThreadControllerType {
+    Catalog,
+    Thread
   }
 
   companion object {
