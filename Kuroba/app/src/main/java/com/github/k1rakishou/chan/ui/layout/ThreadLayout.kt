@@ -789,6 +789,12 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun onPostUpdated(post: ChanPost) {
+    BackgroundUtils.ensureMainThread()
+
+    if (postPopupHelper.isOpen) {
+      postPopupHelper.onPostUpdated(post)
+    }
+
     threadListLayout.onPostUpdated(post)
   }
 

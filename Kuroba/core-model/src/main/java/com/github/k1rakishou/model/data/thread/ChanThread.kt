@@ -7,7 +7,6 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
-import com.github.k1rakishou.model.data.post.LoaderType
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.collections.ArrayList
@@ -425,12 +424,7 @@ class ChanThread(
       isSavedReply = newPost.isSavedReply
     )
 
-    LoaderType.values().forEach { loaderType ->
-      if (oldChanPost.isContentLoadedForLoader(loaderType)) {
-        mergedPost.setContentLoadedForLoader(loaderType)
-      }
-    }
-
+    mergedPost.replaceOnDemandContentLoadedMap(oldChanPost.copyOnDemandContentLoadedMap())
     mergedPost.setPostDeleted(oldChanPost.deleted)
     return mergedPost
   }
@@ -469,12 +463,7 @@ class ChanThread(
       archived = newChanOriginalPost.archived
     )
 
-    LoaderType.values().forEach { loaderType ->
-      if (oldChanOriginalPost.isContentLoadedForLoader(loaderType)) {
-        mergedOriginalPost.setContentLoadedForLoader(loaderType)
-      }
-    }
-
+    mergedOriginalPost.replaceOnDemandContentLoadedMap(oldChanOriginalPost.copyOnDemandContentLoadedMap())
     mergedOriginalPost.setPostDeleted(oldChanOriginalPost.deleted)
     return mergedOriginalPost
   }

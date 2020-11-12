@@ -22,9 +22,12 @@ import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter;
 import com.github.k1rakishou.chan.ui.controller.PostRepliesController;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
+import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPost;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +59,11 @@ public class PostPopupHelper {
         }
 
         presentingController.setPostRepliesData(presenter.getCurrentChanDescriptor(), data);
+    }
+
+    public void onPostUpdated(@NotNull ChanPost post) {
+        BackgroundUtils.ensureMainThread();
+        presentingController.onPostUpdated(post);
     }
 
     public void pop() {

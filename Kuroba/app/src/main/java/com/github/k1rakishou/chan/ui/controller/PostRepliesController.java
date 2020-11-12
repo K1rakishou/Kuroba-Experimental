@@ -36,6 +36,7 @@ import com.github.k1rakishou.chan.ui.helper.PostPopupHelper;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.ui.view.LoadView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
+import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
@@ -176,6 +177,18 @@ public class PostRepliesController
         }
 
         return thumbnail;
+    }
+
+    public void onPostUpdated(@NotNull ChanPost post) {
+        BackgroundUtils.ensureMainThread();
+
+        RecyclerView.Adapter<?> adapter = repliesView.getAdapter();
+        if (!(adapter instanceof RepliesAdapter)) {
+            return;
+        }
+
+        RepliesAdapter repliesAdapter = (RepliesAdapter) adapter;
+        repliesAdapter.onPostUpdated(post);
     }
 
     public void setPostRepliesData(ChanDescriptor chanDescriptor, PostPopupHelper.RepliesData data) {
@@ -352,6 +365,19 @@ public class PostRepliesController
         public void clear() {
             data.posts.clear();
             notifyDataSetChanged();
+        }
+
+        public void onPostUpdated(ChanPost post) {
+            List<ChanPost> posts = data.posts;
+
+            for (int postIndex = 0; postIndex < posts.size(); postIndex++) {
+                ChanPost chanPost = posts.get(postIndex);
+
+                if (chanPost.getPostDescriptor() == post.getPostDescriptor()) {
+                    notifyItemChanged(postIndex);
+                    return;
+                }
+            }
         }
     }
 

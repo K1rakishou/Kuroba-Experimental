@@ -1,6 +1,7 @@
 package com.github.k1rakishou.model.data.post
 
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import java.util.*
 
@@ -25,7 +26,7 @@ open class ChanPost(
    * loaders have done their jobs we update the post via notifyItemChange, which triggers
    * onPostBind() again.
    */
-  private val onDemandContentLoadedMap = HashMap<LoaderType, Boolean>()
+  private val onDemandContentLoadedMap = HashMap<LoaderType, LoaderContentLoadState>()
 
   @get:Synchronized
   var deleted: Boolean = false
@@ -68,31 +69,61 @@ open class ChanPost(
     onDemandContentLoadedMap.clear()
 
     for (loaderType in LoaderType.values()) {
-      onDemandContentLoadedMap[loaderType] = false
+      onDemandContentLoadedMap[loaderType] = LoaderContentLoadState()
     }
 
     repliesFrom?.let { replies -> this.repliesFrom.addAll(replies) }
   }
 
   @Synchronized
-  open fun isContentLoadedForLoader(loaderType: LoaderType): Boolean {
-    return onDemandContentLoadedMap[loaderType] ?: return false
+  open fun isContentLoadedForLoader(chanDescriptor: ChanDescriptor, loaderType: LoaderType): Boolean {
+    return onDemandContentLoadedMap[loaderType]
+      ?.isContentLoadedFor(chanDescriptor)
+      ?: false
   }
 
   @Synchronized
-  open fun setContentLoadedForLoader(loaderType: LoaderType) {
-    onDemandContentLoadedMap[loaderType] = true
+  open fun setContentLoadedForLoader(chanDescriptor: ChanDescriptor, loaderType: LoaderType) {
+    onDemandContentLoadedMap[loaderType]?.setContentLoadedFor(chanDescriptor)
+  }
+
+  @Synchronized
+  fun setContentLoaded(loaderType: LoaderType) {
+    onDemandContentLoadedMap[loaderType]?.setContentLoaded()
   }
 
   @Synchronized
   open fun allLoadersCompletedLoading(): Boolean {
-    for (loaderCompletedLoading in onDemandContentLoadedMap.values) {
-      if (!loaderCompletedLoading) {
+    for (loaderContentLoadState in onDemandContentLoadedMap.values) {
+      if (loaderContentLoadState.everythingLoaded()) {
         return false
       }
     }
 
     return true
+  }
+
+  @Synchronized
+  fun copyOnDemandContentLoadedMap(): Map<LoaderType, LoaderContentLoadState> {
+    val newMap = mutableMapOf<LoaderType, LoaderContentLoadState>()
+
+    onDemandContentLoadedMap.forEach { (loaderType, state) ->
+      newMap[loaderType] = state
+    }
+
+    return newMap
+  }
+
+  @Synchronized
+  fun replaceOnDemandContentLoadedMap(newMap: Map<LoaderType, LoaderContentLoadState>) {
+    onDemandContentLoadedMap.clear()
+    onDemandContentLoadedMap.putAll(newMap)
+
+    LoaderType.values().forEach { loaderType ->
+      check(onDemandContentLoadedMap.containsKey(loaderType)) {
+        "No loaderType (${loaderType}) was found in input map!"
+      }
+    }
   }
 
   @Synchronized

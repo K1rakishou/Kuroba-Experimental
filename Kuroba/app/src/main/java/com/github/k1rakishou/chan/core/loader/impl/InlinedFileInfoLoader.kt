@@ -40,7 +40,7 @@ class InlinedFileInfoLoader(
   override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
     BackgroundUtils.ensureBackgroundThread()
 
-    if (postLoaderData.post.isContentLoadedForLoader(loaderType)) {
+    if (postLoaderData.post.isContentLoadedForLoader(postLoaderData.chanDescriptor, loaderType)) {
       return rejected()
     }
 
@@ -95,7 +95,7 @@ class InlinedFileInfoLoader(
       postLoaderData.post.updatePostImageSize(fileUrl, fileSize)
     }
 
-    postLoaderData.post.setContentLoadedForLoader(loaderType)
+    postLoaderData.post.setContentLoadedForLoader(postLoaderData.chanDescriptor, loaderType)
     return LoaderResult.Succeeded(loaderType, true)
   }
 

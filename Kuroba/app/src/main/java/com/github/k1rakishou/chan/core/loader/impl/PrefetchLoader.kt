@@ -86,7 +86,7 @@ class PrefetchLoader(
         }
 
         override fun onSuccess(file: RawFile) {
-          postLoaderData.post.setContentLoadedForLoader(loaderType)
+          postLoaderData.post.setContentLoaded(loaderType)
           onPrefetchCompleted(prefetch.postImage)
         }
 
@@ -114,7 +114,7 @@ class PrefetchLoader(
     chanDescriptor: ChanDescriptor,
     post: ChanPost
   ): List<Prefetch> {
-    if (post.isContentLoadedForLoader(loaderType)) {
+    if (post.isContentLoadedForLoader(chanDescriptor, loaderType)) {
       return emptyList()
     }
 

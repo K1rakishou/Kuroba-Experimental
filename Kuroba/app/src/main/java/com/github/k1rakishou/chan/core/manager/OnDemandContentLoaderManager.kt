@@ -11,6 +11,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.LoaderType
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -147,6 +148,15 @@ class OnDemandContentLoaderManager(
 
       if (activeLoaders[chanDescriptor]!!.containsKey(postDescriptor)) {
         return@write true
+      }
+
+      if (chanDescriptor is ChanDescriptor.ThreadDescriptor && !post.isOP()) {
+        // TODO(KurobaEx): kuroba-catalog-last-posts
+        // To avoid case where post content won't ever be considered fully loaded because we don't
+        //  show regular (not original) posts in the catalog (at least for now)
+        LoaderType.values().forEach { loaderType ->
+          post.setContentLoadedForLoader(chanDescriptor.catalogDescriptor(), loaderType)
+        }
       }
 
       activeLoaders[chanDescriptor]!![postDescriptor] = postLoaderData
