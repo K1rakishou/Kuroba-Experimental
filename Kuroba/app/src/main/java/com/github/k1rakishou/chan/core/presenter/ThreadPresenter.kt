@@ -270,17 +270,19 @@ class ThreadPresenter @Inject constructor(
   fun unbindChanDescriptor(isDestroying: Boolean) {
     BackgroundUtils.ensureMainThread()
 
-    if (chanThreadTicker.currentChanDescriptor != null) {
-      val currentChanDescriptor = chanThreadTicker.currentChanDescriptor
-      if (currentChanDescriptor != null) {
-        chanThreadManager.unbindChanDescriptor(currentChanDescriptor)
-        onDemandContentLoaderManager.cancelAllForDescriptor(currentChanDescriptor)
-      }
-
+    val currentChanDescriptor = chanThreadTicker.currentChanDescriptor
+    if (currentChanDescriptor != null) {
       threadPresenterCallback?.showLoading()
 
+      chanThreadManager.unbindChanDescriptor(currentChanDescriptor)
+      onDemandContentLoaderManager.cancelAllForDescriptor(currentChanDescriptor)
+
+      if (currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
+        bookmarksManager.setCurrentOpenThreadDescriptor(null)
+      }
+
       Logger.d(TAG, "chanThreadTicker.stopTicker($currentChanDescriptor)")
-      chanThreadTicker.stopTicker()
+      chanThreadTicker.stopTicker(resetCurrentChanDescriptor = true)
     }
 
     if (isDestroying) {
@@ -457,7 +459,7 @@ class ThreadPresenter @Inject constructor(
     if (foreground && isWatching()) {
       chanThreadTicker.resetTicker()
     } else {
-      chanThreadTicker.stopTicker()
+      chanThreadTicker.stopTicker(resetCurrentChanDescriptor = false)
     }
   }
 
@@ -1759,7 +1761,13 @@ class ThreadPresenter @Inject constructor(
   }
 
   fun showImageReencodingWindow(supportsReencode: Boolean) {
-    threadPresenterCallback?.showImageReencodingWindow(currentChanDescriptor!!, supportsReencode)
+    val chanDescriptor = currentChanDescriptor
+    if (chanDescriptor == null) {
+      Logger.e(TAG, "showImageReencodingWindow() chanDescriptor==null")
+      return
+    }
+
+    threadPresenterCallback?.showImageReencodingWindow(chanDescriptor, supportsReencode)
   }
 
   fun hideOrRemovePosts(hide: Boolean, wholeChain: Boolean, post: ChanPost, threadNo: Long) {

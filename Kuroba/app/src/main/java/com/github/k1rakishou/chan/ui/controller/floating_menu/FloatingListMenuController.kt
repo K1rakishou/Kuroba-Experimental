@@ -63,11 +63,6 @@ open class FloatingListMenuController @JvmOverloads constructor(
     floatingListMenu.setStackCallback(null)
   }
 
-  override fun onBack(): Boolean {
-    stopPresenting(true)
-    return true
-  }
-
   open fun stack(moreItems: List<FloatingListMenuItem>) {
     presentController(
       FloatingListMenuController(

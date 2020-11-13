@@ -23,8 +23,6 @@ class BookmarksSortingController(
   private lateinit var cancel: ColorizableBarButton
   private lateinit var apply: ColorizableBarButton
 
-  private var presenting = true
-
   override fun getLayoutId(): Int = R.layout.controller_bookmarks_sorting
 
   override fun injectDependencies(component: StartActivityComponent) {
@@ -96,24 +94,6 @@ class BookmarksSortingController(
 
     ChanSettings.bookmarksSortOrder.set(newOrder)
     return true
-  }
-
-  override fun onBack(): Boolean {
-    if (presenting) {
-      pop()
-      return true
-    }
-
-    return super.onBack()
-  }
-
-  private fun pop() {
-    if (!presenting) {
-      return
-    }
-
-    presenting = false
-    stopPresenting()
   }
 
   override fun onDestroy() {

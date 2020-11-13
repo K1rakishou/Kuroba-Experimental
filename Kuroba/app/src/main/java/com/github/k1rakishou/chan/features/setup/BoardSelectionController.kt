@@ -63,8 +63,6 @@ class BoardSelectionController(
   private lateinit var outsideArea: FrameLayout
   private lateinit var openSitesButton: ColorizableBarButton
 
-  private var presenting = true
-
   override fun getLayoutId(): Int = R.layout.controller_board_selection
 
   override fun injectDependencies(component: StartActivityComponent) {
@@ -158,15 +156,6 @@ class BoardSelectionController(
     }
   }
 
-  override fun onBack(): Boolean {
-    if (presenting) {
-      pop()
-      return true
-    }
-
-    return super.onBack()
-  }
-
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun startListeningForSearchQueries(): Flow<String> {
     return callbackFlow<String> {
@@ -176,16 +165,6 @@ class BoardSelectionController(
 
       awaitClose()
     }
-  }
-
-
-  private fun pop() {
-    if (!presenting) {
-      return
-    }
-
-    presenting = false
-    stopPresenting()
   }
 
   interface UserSelectionListener {

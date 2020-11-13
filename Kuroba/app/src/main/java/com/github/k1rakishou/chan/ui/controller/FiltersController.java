@@ -142,6 +142,7 @@ public class FiltersController
 
         navigation.setTitle(R.string.filters_screen);
         navigation.swipeable = false;
+
         navigation.buildMenu()
                 .withItem(R.drawable.ic_search_white_24dp, this::searchClicked)
                 .withItem(R.drawable.ic_help_outline_white_24dp, this::helpClicked)

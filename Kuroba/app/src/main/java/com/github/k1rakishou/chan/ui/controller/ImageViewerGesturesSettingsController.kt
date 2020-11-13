@@ -15,8 +15,6 @@ class ImageViewerGesturesSettingsController(context: Context) : BaseFloatingCont
   private lateinit var swipeUpGroup: RadioGroup
   private lateinit var swipeDownGroup: RadioGroup
 
-  private var presenting = true
-
   override fun getLayoutId(): Int = R.layout.controller_image_viewer_gestures_settings
 
   override fun injectDependencies(component: StartActivityComponent) {
@@ -95,24 +93,6 @@ class ImageViewerGesturesSettingsController(context: Context) : BaseFloatingCont
 
       pop()
     }
-  }
-
-  override fun onBack(): Boolean {
-    if (presenting) {
-      pop()
-      return true
-    }
-
-    return super.onBack()
-  }
-
-  private fun pop() {
-    if (!presenting) {
-      return
-    }
-
-    presenting = false
-    stopPresenting()
   }
 
 }

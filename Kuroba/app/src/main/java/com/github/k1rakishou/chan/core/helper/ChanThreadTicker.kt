@@ -169,11 +169,15 @@ class ChanThreadTicker(
     actor.offer(tickerAction)
   }
 
-  fun stopTicker() {
+  fun stopTicker(resetCurrentChanDescriptor: Boolean) {
     Logger.d(TAG, "stopTicker()")
 
     chanTickerData.resetAll()
-    chanTickerData.resetCurrentChanDescriptor()
+
+    if (resetCurrentChanDescriptor) {
+      chanTickerData.resetCurrentChanDescriptor()
+    }
+
     actor.offer(TickerAction.StopTicker)
   }
 

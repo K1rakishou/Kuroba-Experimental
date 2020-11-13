@@ -61,8 +61,6 @@ class AddBoardsController(
   private lateinit var addBoards: ColorizableBarButton
   private lateinit var addBoardsExecutor: RendezvousCoroutineExecutor
 
-  private var presenting = true
-
   override fun getLayoutId(): Int = R.layout.controller_add_boards
 
   override fun injectDependencies(component: StartActivityComponent) {
@@ -119,24 +117,15 @@ class AddBoardsController(
     presenter.onDestroy()
   }
 
-  override fun onBack(): Boolean {
-    if (presenting) {
-      pop()
-      return true
+  override fun pop(): Boolean {
+    if (!super.pop()) {
+      return false
     }
-
-    return super.onBack()
-  }
-
-  private fun pop() {
-    if (!presenting) {
-      return
-    }
-
-    presenting = false
 
     callback.onRefreshBoards()
     stopPresenting()
+
+    return true
   }
 
   private fun onStateChanged(state: AddBoardsControllerState) {

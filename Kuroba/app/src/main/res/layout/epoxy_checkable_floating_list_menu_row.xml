@@ -23,6 +23,7 @@
             android:layout_weight="1"
             android:maxLines="2"
             android:gravity="center_vertical"
+            android:layout_gravity="center_vertical"
             android:ellipsize="end"
             android:textSize="16sp"
             tools:text="@string/lorem_ipsum"/>

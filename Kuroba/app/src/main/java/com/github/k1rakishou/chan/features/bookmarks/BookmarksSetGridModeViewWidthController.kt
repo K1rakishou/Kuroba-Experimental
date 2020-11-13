@@ -21,8 +21,6 @@ class BookmarksSetGridModeViewWidthController(
   private lateinit var cancel: ColorizableBarButton
   private lateinit var apply: ColorizableBarButton
 
-  private var presenting = true
-
   override fun getLayoutId(): Int = R.layout.controller_bookmarks_set_grid_view_width
 
   override fun injectDependencies(component: StartActivityComponent) {
@@ -64,24 +62,6 @@ class BookmarksSetGridModeViewWidthController(
 
       pop()
     }
-  }
-
-  override fun onBack(): Boolean {
-    if (presenting) {
-      pop()
-      return true
-    }
-
-    return super.onBack()
-  }
-
-  private fun pop() {
-    if (!presenting) {
-      return
-    }
-
-    presenting = false
-    stopPresenting()
   }
 
   override fun onDestroy() {

@@ -134,7 +134,7 @@ class BookmarksManager(
     return lock.read { bookmarks.containsKey(threadDescriptor) }
   }
 
-  fun setCurrentOpenThreadDescriptor(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+  fun setCurrentOpenThreadDescriptor(threadDescriptor: ChanDescriptor.ThreadDescriptor?) {
     currentOpenThread.set(threadDescriptor)
   }
 

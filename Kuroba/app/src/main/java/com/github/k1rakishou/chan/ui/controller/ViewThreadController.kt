@@ -229,8 +229,7 @@ open class ViewThreadController(
         R.string.action_go_to_post,
         isDevBuild()
       ) { item -> onGoToPostClicked(item) }
-      .withScrollBarLabelsOptions()
-      .withThreadViewOptions()
+      .withThreadOptions()
       .withSubItem(
         ACTION_SCROLL_TO_TOP,
         R.string.action_scroll_to_top
@@ -245,10 +244,10 @@ open class ViewThreadController(
       .build()
   }
 
-  private fun NavigationItem.MenuOverflowBuilder.withThreadViewOptions(): NavigationItem.MenuOverflowBuilder {
+  private fun NavigationItem.MenuOverflowBuilder.withThreadOptions(): NavigationItem.MenuOverflowBuilder {
     return withNestedOverflow(
-      ACTION_THREAD_VIEW_OPTIONS,
-      R.string.action_thread_view_options,
+      ACTION_THREAD_OPTIONS,
+      R.string.action_thread_options,
       true
     )
       .addNestedCheckableItem(
@@ -258,15 +257,6 @@ open class ViewThreadController(
         ChanSettings.scrollingTextForThreadTitles.get(),
         ACTION_USE_SCROLLING_TEXT_FOR_THREAD_TITLE
       ) { item -> onThreadViewOptionClicked(item) }
-      .build()
-  }
-
-  private fun NavigationItem.MenuOverflowBuilder.withScrollBarLabelsOptions(): NavigationItem.MenuOverflowBuilder {
-    return withNestedOverflow(
-      ACTION_SHOW_SCROLLBAR_LABELING_OPTIONS,
-      R.string.action_scrollbar_post_highlights,
-      true
-    )
       .addNestedCheckableItem(
         ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR,
         R.string.action_mark_replies_your_posts_on_scrollbar,
@@ -288,9 +278,14 @@ open class ViewThreadController(
         ChanSettings.markCrossThreadQuotesOnScrollbar.get(),
         ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR
       ) { item -> onScrollbarLabelingOptionClicked(item) }
+      .addNestedItem(
+        ACTION_SET_THREAD_MAX_POSTS_CAP,
+        R.string.action_set_thread_max_displayed_posts_capacity,
+        true,
+        null
+      ) { item -> onChangeThreadMaxPostsCapacityOptionClicked(item) }
       .build()
   }
-
 
   private fun albumClicked(item: ToolbarMenuItem) {
     threadLayout.presenter.showAlbum()
@@ -441,6 +436,10 @@ open class ViewThreadController(
     } else {
       throw IllegalStateException("Unknown clickedItemId $clickedItemId")
     }
+  }
+
+  private fun onChangeThreadMaxPostsCapacityOptionClicked(item: ToolbarMenuSubItem) {
+
   }
 
   private fun onScrollbarLabelingOptionClicked(item: ToolbarMenuSubItem) {
@@ -765,15 +764,14 @@ open class ViewThreadController(
     private const val ACTION_OPEN_BROWSER = 9006
     private const val ACTION_SHARE = 9007
     private const val ACTION_GO_TO_POST = 9008
-    private const val ACTION_SHOW_SCROLLBAR_LABELING_OPTIONS = 9009
-    private const val ACTION_THREAD_VIEW_OPTIONS = 9010
-    private const val ACTION_SCROLL_TO_TOP = 9011
-    private const val ACTION_SCROLL_TO_BOTTOM = 9012
+    private const val ACTION_THREAD_OPTIONS = 9009
+    private const val ACTION_SCROLL_TO_TOP = 9010
+    private const val ACTION_SCROLL_TO_BOTTOM = 9011
 
-    private const val ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR = 9100
-    private const val ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR = 9101
-    private const val ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR = 9102
-
-    private const val ACTION_USE_SCROLLING_TEXT_FOR_THREAD_TITLE = 9200
+    private const val ACTION_USE_SCROLLING_TEXT_FOR_THREAD_TITLE = 9100
+    private const val ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR = 9101
+    private const val ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR = 9102
+    private const val ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR = 9103
+    private const val ACTION_SET_THREAD_MAX_POSTS_CAP = 9104
   }
 }
