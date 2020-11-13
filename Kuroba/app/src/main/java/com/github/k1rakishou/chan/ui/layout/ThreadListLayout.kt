@@ -1122,8 +1122,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   fun onPostUpdated(post: ChanPost) {
     BackgroundUtils.ensureMainThread()
-
     postAdapter.updatePost(post)
+  }
+
+  fun isErrorShown(): Boolean {
+    BackgroundUtils.ensureMainThread()
+    return postAdapter.isErrorShown()
   }
 
   interface ThreadListLayoutPresenterCallback {

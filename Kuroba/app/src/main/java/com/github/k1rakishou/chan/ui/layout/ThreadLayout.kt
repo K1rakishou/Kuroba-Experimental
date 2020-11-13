@@ -384,6 +384,8 @@ class ThreadLayout @JvmOverloads constructor(
       ?: AndroidUtils.getString(error.errorMessage)
 
     if (visible == Visible.THREAD) {
+      // Hide the button so the user can see the full error message
+      replyButton.hide()
       threadListLayout.showError(errorMessage)
     } else {
       switchVisible(Visible.ERROR)
@@ -809,7 +811,7 @@ class ThreadLayout @JvmOverloads constructor(
     scrollToBottomDebouncer.post({
       currentToolbar.collapseShow(true)
 
-      if (replyButton.visibility != View.VISIBLE) {
+      if (!threadListLayout.isErrorShown() && replyButton.visibility != View.VISIBLE) {
         replyButton.show()
       }
     }, SCROLL_TO_BOTTOM_DEBOUNCE_TIMEOUT_MS)
@@ -896,6 +898,7 @@ class ThreadLayout @JvmOverloads constructor(
     if (show == showingReplyButton || !replyButtonEnabled) {
       return
     }
+
     showingReplyButton = show
 
     if (show && replyButton.visibility != View.VISIBLE) {

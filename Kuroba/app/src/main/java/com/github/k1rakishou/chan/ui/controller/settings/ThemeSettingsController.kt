@@ -483,9 +483,9 @@ class ThemeSettingsController(context: Context) : Controller(context),
             .thumbnailUrl((AppConstants.RESOURCES_ENDPOINT + "release_icon_512.png").toHttpUrl())
             .filename("icon")
             .extension("png")
-            .postDescriptor(pd2)
             .build()
-        )
+        ),
+        pd2
       )
 
     val post2 = postParser.parse(builder2, parserCallback)

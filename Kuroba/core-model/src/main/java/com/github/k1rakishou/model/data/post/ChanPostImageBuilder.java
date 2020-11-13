@@ -102,11 +102,6 @@ public class ChanPostImageBuilder {
         return this;
     }
 
-    public ChanPostImageBuilder postDescriptor(PostDescriptor postDescriptor) {
-        this.ownerPostDescriptor = postDescriptor;
-        return this;
-    }
-
     public ChanPostImage build() {
         if (ChanSettings.removeImageSpoilers.get()) {
             spoiler = false;
@@ -135,8 +130,7 @@ public class ChanPostImageBuilder {
                 isInlined,
                 size,
                 fileHash,
-                getImageType(extension),
-                ownerPostDescriptor
+                getImageType(extension)
         );
     }
 

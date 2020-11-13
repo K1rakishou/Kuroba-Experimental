@@ -195,14 +195,13 @@ class FutabaChanReader(
         .spoiler(fileSpoiler)
         .size(fileSize)
         .fileHash(fileHash, true)
-        .postDescriptor(builder.postDescriptor)
         .build()
 
       // Insert it at the beginning.
       files.add(0, image)
     }
 
-    builder.postImages(files)
+    builder.postImages(files, builder.postDescriptor)
 
     if (builder.op) {
       // Update OP fields later on the main thread
@@ -288,7 +287,6 @@ class FutabaChanReader(
         .spoiler(fileSpoiler)
         .size(fileSize)
         .fileHash(fileHash, true)
-        .postDescriptor(builder.postDescriptor)
         .build()
     }
 

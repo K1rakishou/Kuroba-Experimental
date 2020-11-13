@@ -215,9 +215,13 @@ public class ChanPostBuilder {
         return this;
     }
 
-    public ChanPostBuilder postImages(List<ChanPostImage> images) {
+    public ChanPostBuilder postImages(List<ChanPostImage> images, PostDescriptor ownerPostDescriptor) {
         synchronized (this) {
             this.postImages.addAll(images);
+
+            for (ChanPostImage postImage : this.postImages) {
+                postImage.setPostDescriptor(ownerPostDescriptor);
+            }
         }
 
         return this;

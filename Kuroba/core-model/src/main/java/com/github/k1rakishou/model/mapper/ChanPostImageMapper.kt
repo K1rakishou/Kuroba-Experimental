@@ -43,9 +43,8 @@ object ChanPostImageMapper {
       isInlined = chanPostImageEntity.isInlined,
       fileSize = chanPostImageEntity.fileSize,
       fileHash = chanPostImageEntity.fileHash,
-      type = chanPostImageEntity.type,
-      ownerPostDescriptor = ownerPostDescriptor
-    )
+      type = chanPostImageEntity.type
+    ).apply { setPostDescriptor(ownerPostDescriptor) }
   }
 
 }

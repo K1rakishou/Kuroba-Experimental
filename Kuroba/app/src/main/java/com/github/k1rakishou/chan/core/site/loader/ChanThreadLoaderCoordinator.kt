@@ -59,6 +59,7 @@ import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
@@ -113,7 +114,6 @@ class ChanThreadLoaderCoordinator(
 
   private val chanPostPersister by lazy {
     ChanPostPersister(
-      appConstants,
       parsePostsUseCase,
       storePostsInRepositoryUseCase,
       chanPostRepository,
@@ -156,8 +156,6 @@ class ChanThreadLoaderCoordinator(
           return@Try fallbackPostLoadOnNetworkError(chanDescriptor, error)
         }
 
-        Logger.d(TAG, "loadThreadOrCatalog() from network took $requestDuration")
-
         if (!response.isSuccessful) {
           return@Try fallbackPostLoadOnNetworkError(chanDescriptor, ServerException(response.code))
         }
@@ -171,28 +169,66 @@ class ChanThreadLoaderCoordinator(
           ).unwrap()
         }
 
-        Logger.d(TAG, "loadThreadOrCatalog() read posts from response took $readPostsDuration")
-
-        return@Try chanPostPersister.persistPosts(
+        val (threadLoadResult, loadTimeInfo) = chanPostPersister.persistPosts(
           url,
           chanReaderProcessor,
           chanCacheOptions,
           chanDescriptor,
           chanReader
         )
+
+        loadRequestStatistics(loadTimeInfo, requestDuration, readPostsDuration)
+        return@Try threadLoadResult
       }.mapError { error -> ChanLoaderException(error) }
     }
+  }
+
+  @OptIn(ExperimentalTime::class)
+  private suspend fun loadRequestStatistics(
+    loadTimeInfo: ChanPostPersister.LoadTimeInfo?,
+    requestDuration: Duration,
+    readPostsDuration: Duration
+  ) {
+    if (loadTimeInfo == null) {
+      return
+    }
+
+    val url = loadTimeInfo.url
+    val storeDuration = loadTimeInfo.storeDuration
+    val storedPostsCount = loadTimeInfo.storedPostsCount
+    val parsingDuration = loadTimeInfo.parsingDuration
+    val parsedPostsCount = loadTimeInfo.parsedPostsCount
+    val totalPostsCount = loadTimeInfo.totalPostsCount
+    val cleanupDuration = loadTimeInfo.cleanupDuration
+    val cachedPostsCount = chanPostRepository.getTotalCachedPostsCount()
+
+    val logString = buildString {
+      appendLine("ChanReaderRequest.readJson() stats:")
+      appendLine("url = $url.")
+      appendLine("Network request execution took $requestDuration.")
+      appendLine("Json reading took $readPostsDuration.")
+      appendLine("Store new posts took $storeDuration (stored ${storedPostsCount} posts).")
+      appendLine("Parse posts took = $parsingDuration, (parsed ${parsedPostsCount} out of $totalPostsCount posts).")
+      appendLine("Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsCountInPostsCache}).")
+
+      if (cleanupDuration != null) {
+        appendLine("Sticky thread old post clean up routine took ${cleanupDuration}.")
+      }
+    }
+
+    Logger.d(TAG, logString)
   }
 
   suspend fun reloadThreadFromDatabase(
     threadDescriptor: ChanDescriptor.ThreadDescriptor
   ): ModularResult<ThreadLoadResult> {
     Logger.d(TAG, "reloadThreadFromDatabase($threadDescriptor)")
-    BackgroundUtils.ensureBackgroundThread()
 
-    return Try {
-      databasePostLoader.loadPosts(threadDescriptor)
-      return@Try ThreadLoadResult.Loaded(threadDescriptor)
+    return withContext(Dispatchers.IO) {
+      return@withContext Try {
+        databasePostLoader.loadPosts(threadDescriptor)
+        return@Try ThreadLoadResult.Loaded(threadDescriptor)
+      }
     }
   }
 
@@ -200,11 +236,12 @@ class ChanThreadLoaderCoordinator(
     catalogDescriptor: ChanDescriptor.CatalogDescriptor
   ): ModularResult<ThreadLoadResult> {
     Logger.d(TAG, "reloadCatalogFromDatabase($catalogDescriptor)")
-    BackgroundUtils.ensureBackgroundThread()
 
-    return Try {
-      databasePostLoader.loadCatalog(catalogDescriptor)
-      return@Try ThreadLoadResult.Loaded(catalogDescriptor)
+    return withContext(Dispatchers.IO) {
+      return@withContext Try {
+        databasePostLoader.loadCatalog(catalogDescriptor)
+        return@Try ThreadLoadResult.Loaded(catalogDescriptor)
+      }
     }
   }
 

@@ -114,6 +114,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableProgressBar;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton;
@@ -205,6 +206,7 @@ public interface StartActivityComponent {
     void inject(ColorizableProgressBar colorizableProgressBar);
     void inject(ColorizableRadioButton colorizableRadioButton);
     void inject(ColorizableRecyclerView colorizableRecyclerView);
+    void inject(ColorizableGridRecyclerView colorizableGridRecyclerView);
     void inject(ColorizableScrollView colorizableScrollView);
     void inject(ColorizableSlider colorizableSlider);
     void inject(ColorizableSwitchMaterial colorizableSwitchMaterial);

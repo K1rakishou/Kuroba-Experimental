@@ -420,7 +420,6 @@ class ChanPostRepository(
   ): Int {
     ensureBackgroundThread()
 
-    var originalPost: ChanOriginalPost? = null
     val postsThatDifferWithCache = ArrayList<ChanPost>()
 
     // Figure out what posts differ from the cache that we want to update in the
@@ -428,21 +427,8 @@ class ChanPostRepository(
     posts.forEach { chanPost ->
       val differsFromCached = postDiffersFromCached(chanPost)
       if (differsFromCached) {
-        if (chanPost is ChanOriginalPost) {
-          if (originalPost != null) {
-            throw IllegalStateException("More than one OP found!")
-          }
-
-          originalPost = chanPost
-        }
-
         postsThatDifferWithCache += chanPost
       }
-    }
-
-    if (originalPost == null) {
-      Logger.e(TAG, "Posts have no original post")
-      return 0
     }
 
     if (postsThatDifferWithCache.isEmpty()) {

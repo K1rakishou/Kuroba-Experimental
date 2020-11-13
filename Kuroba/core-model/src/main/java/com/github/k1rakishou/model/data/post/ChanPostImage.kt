@@ -19,14 +19,18 @@ class ChanPostImage(
   val isInlined: Boolean = false,
   fileSize: Long = 0L,
   val fileHash: String? = null,
-  val type: ChanPostImageType? = null,
-  val ownerPostDescriptor: PostDescriptor
+  val type: ChanPostImageType? = null
 ) {
   val hidden: Boolean
     get() = hiddenByFilter || ChanSettings.hideImages.get()
 
   val size: Long = fileSize
     get() = loadedFileSize ?: field
+
+  @get:Synchronized
+  @set:Synchronized
+  lateinit var ownerPostDescriptor: PostDescriptor
+    private set
 
   private var loadedFileSize: Long? = null
 
@@ -41,6 +45,20 @@ class ChanPostImage(
   @Synchronized
   fun setSize(newSize: Long) {
     loadedFileSize = newSize
+  }
+
+  @Synchronized
+  fun setPostDescriptor(postDescriptor: PostDescriptor) {
+    if (::ownerPostDescriptor.isInitialized) {
+      check(ownerPostDescriptor == postDescriptor) {
+        "Attempt to replace post descriptor to a different one. " +
+          "prevPostDescriptor=$ownerPostDescriptor, newPostDescriptor=$postDescriptor"
+      }
+
+      return
+    }
+
+    ownerPostDescriptor = postDescriptor
   }
 
   fun canBeUsedForCloudflarePreloading(): Boolean {

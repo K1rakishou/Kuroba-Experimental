@@ -38,8 +38,8 @@ class DvachApi internal constructor(
     chanReadOptions: ChanReadOptions,
     chanReaderProcessor: ChanReaderProcessor
   ) {
-    iteratePostsInThread(reader) { _, jsonReader ->
-      readPostObject(jsonReader, chanReaderProcessor)
+    iteratePostsInThread(reader) { dvachExtraThreadInfo, jsonReader ->
+      readPostObject(jsonReader, dvachExtraThreadInfo, chanReaderProcessor)
     }
 
     chanReaderProcessor.applyChanReadOptions(chanReadOptions)
@@ -52,13 +52,14 @@ class DvachApi internal constructor(
   ) {
 
     iterateThreadsInCatalog(reader) { jsonReader ->
-      readPostObject(jsonReader, chanReaderProcessor)
+      readPostObject(jsonReader, null, chanReaderProcessor)
     }
   }
 
   @Throws(Exception::class)
   private suspend fun readPostObject(
     reader: JsonReader,
+    dvachExtraThreadInfo: DvachExtraThreadInfo?,
     chanReaderProcessor: ChanReaderProcessor
   ) {
     val builder = ChanPostBuilder()
@@ -73,6 +74,7 @@ class DvachApi internal constructor(
 
     val files: MutableList<ChanPostImage> = ArrayList()
     var parentPostId = 0
+    var rollingSticky = false
 
     reader.beginObject()
 
@@ -91,6 +93,7 @@ class DvachApi internal constructor(
           }
         }
         "sticky" -> builder.sticky(reader.nextInt() == 1 && builder.op)
+        "endless" -> rollingSticky = reader.nextInt() == 1
         "closed" -> builder.closed(reader.nextInt() == 1)
         "archived" -> builder.archived(reader.nextInt() == 1)
         "posts_count" -> builder.replies(reader.nextInt() - 1)
@@ -123,7 +126,7 @@ class DvachApi internal constructor(
       builder.opId(builder.id)
     }
 
-    builder.postImages(files)
+    builder.postImages(files, builder.postDescriptor)
 
     if (builder.op) {
       // Update OP fields later on the main thread
@@ -135,6 +138,11 @@ class DvachApi internal constructor(
       op.threadImagesCount(builder.threadImagesCount)
       op.uniqueIps(builder.uniqueIps)
       op.lastModified(builder.lastModified)
+
+      if (rollingSticky && builder.sticky && dvachExtraThreadInfo != null) {
+        op.stickyCap(dvachExtraThreadInfo.bumpLimit)
+      }
+
       chanReaderProcessor.setOp(op)
     }
 
@@ -195,7 +203,6 @@ class DvachApi internal constructor(
         .imageHeight(fileHeight)
         .size(fileSize)
         .fileHash(fileHash, false)
-        .postDescriptor(builder.postDescriptor)
         .build()
     }
 

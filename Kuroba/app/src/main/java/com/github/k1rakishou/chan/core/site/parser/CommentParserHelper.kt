@@ -255,10 +255,9 @@ object CommentParserHelper {
         .spoiler(true)
         .isInlined(true)
         .size(-1)
-        .postDescriptor(chanPost.postDescriptor)
         .build()
 
-      chanPost.postImages(listOf(postImage))
+      chanPost.postImages(listOf(postImage), chanPost.postDescriptor)
     }
   }
 

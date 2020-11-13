@@ -502,7 +502,7 @@ class BrowseController(
       return
     }
 
-    presenter.normalLoad()
+    presenter.normalLoad(showLoading = true, requestNewPostsFromServer = true)
 
     // Give the rotation menu item view a spin.
     val refreshView: View = item.view

@@ -425,10 +425,6 @@ class ThreadPresenter @Inject constructor(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     archiveDescriptor: ArchiveDescriptor
   ) {
-    if (!isBound) {
-      return
-    }
-
     Logger.d(TAG, "openThreadInArchive($threadDescriptor, $archiveDescriptor)")
 
     val archiveThreadDescriptor = ChanDescriptor.ThreadDescriptor(

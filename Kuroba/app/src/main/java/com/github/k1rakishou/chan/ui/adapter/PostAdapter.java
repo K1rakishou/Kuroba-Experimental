@@ -413,6 +413,7 @@ public class PostAdapter
 
     public void showError(String error) {
         this.error = error;
+
         if (showStatusView()) {
             final int childCount = recyclerView.getChildCount();
             for (int i = 0; i < childCount; i++) {
@@ -538,6 +539,10 @@ public class PostAdapter
 
         ChanPost post = displayList.get(correctedPosition);
         return post.postNo();
+    }
+
+    public boolean isErrorShown() {
+        return error != null;
     }
 
     public static class PostViewHolder extends RecyclerView.ViewHolder {

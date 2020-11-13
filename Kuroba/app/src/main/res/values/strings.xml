@@ -230,6 +230,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="thread_load_failed_parsing">API parse error</string>
     <string name="thread_load_failed_server">Server error</string>
     <string name="thread_load_failed_not_found">404 not found</string>
+    <string name="thread_refresh_error_text_title">Error while trying to update thread:</string>
     <string name="thread_refresh_bar_inactive">Tap to refresh</string>
     <string name="thread_refresh_countdown">Loading in %1$ds</string>
     <string name="thread_load_failed_retry">Retry</string>

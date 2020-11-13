@@ -112,6 +112,11 @@ class ChanReaderProcessor(
       return true
     }
 
+    if (builder.op) {
+      // Always update original post
+      return true
+    }
+
     val chanPost = chanPostRepository.getCachedPost(builder.postDescriptor)
     if (chanPost == null) {
       chanPostRepository.putPostHash(builder.postDescriptor, builder.getPostHash)

@@ -39,24 +39,37 @@ class ChanThreadTicker(
             try {
               val waitTimeMillis = chanTickerData.waitTimeMillis()
               Logger.d(TAG, "StartOrResetTicker scheduled, waiting ${waitTimeMillis}ms")
-
               delay(waitTimeMillis)
 
-              val tickerInput = TickerInput(
-                tickerAction.chanDescriptor,
-                chanTickerData.getCurrentTimeoutIndex()
-              )
+              run {
+                Logger.d(TAG, "StartOrResetTicker run action begin")
 
-              Logger.d(TAG, "StartOrResetTicker run action begin")
-              val result = tickerRunAction(tickerInput)
-              Logger.d(TAG, "StartOrResetTicker run action end")
+                try {
+                  action.invoke(tickerAction.chanDescriptor)
+                } catch (error: Throwable) {
+                  if (error is CancellationException || isDevFlavor) {
+                    throw error
+                  }
 
-              chanTickerData.updateCurrentTimeoutIndex(result.nextTimeoutIndex)
-              chanTickerData.updateWaitTimeSeconds(result.waitTimeSeconds)
+                  Logger.e(TAG, "Error while trying to execute action in tickerWorkLoop", error)
+                }
+
+                Logger.d(TAG, "StartOrResetTicker run action end")
+              }
+
+              val nextTimeoutIndex = increaseCurrentTimeoutIndex()
+              val nextWaitTimeSeconds = getWaitTimeSeconds()
+
+              if (nextWaitTimeSeconds == null || nextTimeoutIndex == null) {
+                return@launch
+              }
+
+              chanTickerData.updateCurrentTimeoutIndex(nextTimeoutIndex)
+              chanTickerData.updateWaitTimeSeconds(nextWaitTimeSeconds)
 
               Logger.d(TAG, "StartOrResetTicker done, " +
-                "nextTimeoutIndex=${result.nextTimeoutIndex}, " +
-                "waitTimeSeconds=${result.waitTimeSeconds}")
+                "nextTimeoutIndex=${nextTimeoutIndex}, " +
+                "nextWaitTimeSeconds=${nextWaitTimeSeconds}")
 
             } catch (error: Throwable) {
               if (error is CancellationException) {
@@ -102,7 +115,11 @@ class ChanThreadTicker(
     Logger.d(TAG, "kickTicker($resetTimer)")
 
     if (resetTimer) {
-      chanTickerData.resetTimer()
+      val chanDescriptor = chanTickerData.currentChanDescriptor()
+        ?: return
+
+      val nextWaitTimeSeconds = getWaitTimeSecondsByTimeoutIndex(chanDescriptor, 0)
+      chanTickerData.kickTimer(nextWaitTimeSeconds)
     }
 
     val descriptor = chanTickerData.currentChanDescriptor()
@@ -162,47 +179,44 @@ class ChanThreadTicker(
 
   fun timeUntilLoadMoreMs(): Long? = chanTickerData.getTimeUntilLoadMoreMs()
 
-  private suspend fun tickerRunAction(input: TickerInput): TickerResult {
-    try {
-      action.invoke(input.currentDescriptor)
-    } catch (error: Throwable) {
-      if (error is CancellationException) {
-        throw error
-      }
+  @Synchronized
+  private fun increaseCurrentTimeoutIndex(): Int? {
+    val currentDescriptor = chanTickerData.currentChanDescriptor()
+      ?: return null
+    val currentTimeoutIndex = chanTickerData.getCurrentTimeoutIndex()
 
-      if (isDevFlavor) {
-        throw error
-      }
-
-      Logger.e(TAG, "Error while trying to execute action in tickerWorkLoop", error)
-    }
-
-    val waitTimeSeconds = getWaitTimeSeconds(input)
-    val nextTimeoutIndex = increaseCurrentTimeoutIndex(input)
-
-    return TickerResult(nextTimeoutIndex, waitTimeSeconds)
-  }
-
-  private fun increaseCurrentTimeoutIndex(input: TickerInput): Int {
-    val isArchiveDescriptor = archivesManager.isSiteArchive(input.currentDescriptor.siteDescriptor())
+    val isArchiveDescriptor = archivesManager.isSiteArchive(currentDescriptor.siteDescriptor())
     val maxIndex = if (isArchiveDescriptor) {
       ARCHIVE_WATCH_TIMEOUTS.lastIndex
     } else {
       NORMAL_WATCH_TIMEOUTS.lastIndex
     }
 
-    return min(input.currentTimeoutIndex + 1, maxIndex)
+    return min(currentTimeoutIndex + 1, maxIndex)
   }
 
-  private fun getWaitTimeSeconds(input: TickerInput): Long {
-    val isArchiveDescriptor = archivesManager.isSiteArchive(input.currentDescriptor.siteDescriptor())
+  @Synchronized
+  private fun getWaitTimeSeconds(): Long? {
+    val currentDescriptor = chanTickerData.currentChanDescriptor()
+      ?: return null
+    val currentTimeoutIndex = chanTickerData.getCurrentTimeoutIndex()
+
+    return getWaitTimeSecondsByTimeoutIndex(currentDescriptor, currentTimeoutIndex)
+  }
+
+  @Synchronized
+  private fun getWaitTimeSecondsByTimeoutIndex(
+    currentDescriptor: ChanDescriptor,
+    currentTimeoutIndex: Int
+  ): Long {
+    val isArchiveDescriptor = archivesManager.isSiteArchive(currentDescriptor.siteDescriptor())
     if (isArchiveDescriptor) {
-      return ARCHIVE_WATCH_TIMEOUTS.getOrElse(input.currentTimeoutIndex) {
-        return@getOrElse ARCHIVE_WATCH_TIMEOUTS[input.currentTimeoutIndex]
+      return ARCHIVE_WATCH_TIMEOUTS.getOrElse(currentTimeoutIndex) {
+        return@getOrElse ARCHIVE_WATCH_TIMEOUTS[currentTimeoutIndex]
       }
     } else {
-      return NORMAL_WATCH_TIMEOUTS.getOrElse(input.currentTimeoutIndex) {
-        return@getOrElse NORMAL_WATCH_TIMEOUTS[input.currentTimeoutIndex]
+      return NORMAL_WATCH_TIMEOUTS.getOrElse(currentTimeoutIndex) {
+        return@getOrElse NORMAL_WATCH_TIMEOUTS[currentTimeoutIndex]
       }
     }
   }
@@ -249,9 +263,9 @@ class ChanThreadTicker(
     }
 
     @Synchronized
-    fun resetTimer() {
+    fun kickTimer(nextWaitTimeSeconds: Long) {
       this.currentTimeoutIndex = 0
-      this.waitTimeSeconds = 0
+      this.waitTimeSeconds = nextWaitTimeSeconds
     }
 
     @Synchronized
@@ -286,11 +300,6 @@ class ChanThreadTicker(
   private data class TickerInput(
     val currentDescriptor: ChanDescriptor.ThreadDescriptor,
     val currentTimeoutIndex: Int = 0
-  )
-
-  private data class TickerResult(
-    val nextTimeoutIndex: Int = 0,
-    val waitTimeSeconds: Long
   )
 
   private sealed class TickerAction {

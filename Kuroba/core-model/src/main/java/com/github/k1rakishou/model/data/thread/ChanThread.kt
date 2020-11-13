@@ -191,15 +191,16 @@ class ChanThread(
         return@write emptyList()
       }
 
-      require(threadPosts.first() is ChanOriginalPost) {
-        "First post is not an original post! post=${threadPosts.first()}"
-      }
-
       val toDeleteCount = threadPosts.size - threadCap
       if (toDeleteCount <= 0) {
         return@write emptyList()
       }
 
+      require(threadPosts.first() is ChanOriginalPost) {
+        "First post is not an original post! post=${threadPosts.first()}"
+      }
+
+      // Never delete the original post
       val postsToDelete = threadPosts.subList(1, toDeleteCount)
       threadPosts.removeAll(postsToDelete)
 

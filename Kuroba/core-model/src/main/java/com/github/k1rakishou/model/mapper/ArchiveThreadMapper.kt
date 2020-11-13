@@ -6,7 +6,6 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.archive.ArchivePost
 import com.github.k1rakishou.model.data.archive.ArchivePostMedia
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
-import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
@@ -21,7 +20,7 @@ object ArchiveThreadMapper {
   ): ChanPostBuilder {
     val images = archivePost.archivePostMediaList.mapNotNull { archivePostMedia ->
       return@mapNotNull Try {
-        return@Try fromPostMedia(archivePost.postDescriptor, archivePostMedia)
+        return@Try fromPostMedia(archivePostMedia)
       }.safeUnwrap { error ->
         Logger.e(TAG, "Error mapping archive post media ${archivePostMedia.imageUrl}", error)
         return@mapNotNull null
@@ -41,7 +40,7 @@ object ArchiveThreadMapper {
       .subject(archivePost.subject)
       .tripcode(archivePost.tripcode)
       .setUnixTimestampSeconds(archivePost.unixTimestampSeconds)
-      .postImages(images)
+      .postImages(images, archivePost.postDescriptor)
       .moderatorCapcode(archivePost.moderatorCapcode)
       .isSavedReply(false)
       .deleted(false)
@@ -52,7 +51,6 @@ object ArchiveThreadMapper {
   }
 
   private fun fromPostMedia(
-    postDescriptor: PostDescriptor,
     archivePostMedia: ArchivePostMedia
   ): ChanPostImage? {
     val imageUrl = archivePostMedia.imageUrl?.toHttpUrl()
@@ -68,7 +66,6 @@ object ArchiveThreadMapper {
       .fileHash(archivePostMedia.fileHashBase64, true)
       .imageUrl(imageUrl)
       .spoiler(false)
-      .postDescriptor(postDescriptor)
       .build()
   }
 

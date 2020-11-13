@@ -7,7 +7,6 @@ import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsIn
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.options.ChanCacheOptions
@@ -22,7 +21,6 @@ import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 internal class ChanPostPersister(
-  private val appConstants: AppConstants,
   private val parsePostsUseCase: ParsePostsUseCase,
   private val storePostsInRepositoryUseCase: StorePostsInRepositoryUseCase,
   private val chanPostRepository: ChanPostRepository,
@@ -36,7 +34,7 @@ internal class ChanPostPersister(
     cacheOptions: ChanCacheOptions,
     chanDescriptor: ChanDescriptor,
     chanReader: ChanReader
-  ): ThreadLoadResult {
+  ): ThreadResultWithTimeInfo {
     return Try {
       BackgroundUtils.ensureBackgroundThread()
       chanPostRepository.awaitUntilInitialized()
@@ -81,21 +79,28 @@ internal class ChanPostPersister(
         )
       }
 
-      val logStr = createLogString(
-        url,
-        storeDuration,
-        storedPostsCount,
-        parsingDuration,
-        parsedPosts.size,
-        chanReaderProcessor.getTotalPostsCount(),
-        cleanupDuration
-      )
-
-      Logger.d(TAG, logStr)
       checkNotNull(chanReaderProcessor.getOp()) { "OP is null" }
 
-      return@Try ThreadLoadResult.Loaded(chanDescriptor)
-    }.mapErrorToValue { error -> ThreadLoadResult.Error(ChanLoaderException(error)) }
+      val loadTimeInfo = LoadTimeInfo(
+        url = url,
+        storeDuration = storeDuration,
+        storedPostsCount = storedPostsCount,
+        parsingDuration = parsingDuration,
+        parsedPostsCount = parsedPosts.size,
+        totalPostsCount = chanReaderProcessor.getTotalPostsCount(),
+        cleanupDuration = cleanupDuration
+      )
+
+      return@Try ThreadResultWithTimeInfo(
+        threadLoadResult = ThreadLoadResult.Loaded(chanDescriptor),
+        timeInfo = loadTimeInfo
+      )
+    }.mapErrorToValue { error ->
+      return@mapErrorToValue ThreadResultWithTimeInfo(
+        threadLoadResult = ThreadLoadResult.Error(ChanLoaderException(error)),
+        timeInfo = null
+      )
+    }
   }
 
   @OptIn(ExperimentalTime::class)
@@ -128,29 +133,20 @@ internal class ChanPostPersister(
     }
   }
 
-  @OptIn(ExperimentalTime::class)
-  private suspend fun createLogString(
-    url: String,
-    storeDuration: Duration,
-    storedPostsCount: Int,
-    parsingDuration: Duration,
-    parsedPostsCount: Int,
-    totalPostsCount: Int,
-    cleanupDuration: Duration?
-  ): String {
-    val cachedPostsCount = chanPostRepository.getTotalCachedPostsCount()
+  data class ThreadResultWithTimeInfo(
+    val threadLoadResult: ThreadLoadResult,
+    val timeInfo: LoadTimeInfo?
+  )
 
-    return buildString {
-      appendLine("ChanReaderRequest.readJson() stats: url = $url.")
-      appendLine("Store new posts took $storeDuration (stored ${storedPostsCount} posts).")
-      appendLine("Parse posts took = $parsingDuration, (parsed ${parsedPostsCount} out of $totalPostsCount posts).")
-      appendLine("Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsCountInPostsCache}).")
-
-      if (cleanupDuration != null) {
-        appendLine("Sticky thread old post clean up routine took ${cleanupDuration}.")
-      }
-    }
-  }
+  class LoadTimeInfo @OptIn(ExperimentalTime::class) constructor(
+    val url: String,
+    val storeDuration: Duration,
+    val storedPostsCount: Int,
+    val parsingDuration: Duration,
+    val parsedPostsCount: Int,
+    val totalPostsCount: Int,
+    val cleanupDuration: Duration?
+  )
 
   companion object {
     private const val TAG = "NormalPostLoader"

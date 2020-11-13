@@ -27,6 +27,7 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -64,6 +65,7 @@ class ThreadStatusCell(
   private var callback: Callback? = null
   private var error: String? = null
 
+  private val clickDebouncer = Debouncer(eagerInitialization = false)
   private val job = SupervisorJob()
   private val scope = CoroutineScope(job + Dispatchers.Main)
   private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(scope)
@@ -112,13 +114,15 @@ class ThreadStatusCell(
   }
 
   override fun onClick(v: View) {
-    error = null
+    clickDebouncer.post({
+      error = null
 
-    if (callback?.getCurrentChanDescriptor() != null) {
-      callback?.onListStatusClicked()
-    }
+      if (callback?.getCurrentChanDescriptor() != null) {
+        callback?.onListStatusClicked()
+      }
 
-    update()
+      update()
+    }, 1_000L)
   }
 
   override fun onFinishInflate() {
@@ -167,7 +171,15 @@ class ThreadStatusCell(
     }
 
     if (error != null) {
-      statusCellText.text = "$error\n${AndroidUtils.getString(R.string.thread_refresh_bar_inactive)}"
+      statusCellText.text = buildString {
+        appendLine(AndroidUtils.getString(R.string.thread_refresh_error_text_title))
+        append("\"")
+        append(error)
+        append("\"")
+        appendLine()
+        appendLine(AndroidUtils.getString(R.string.thread_refresh_bar_inactive))
+      }
+
       return
     }
 
@@ -188,12 +200,9 @@ class ThreadStatusCell(
     }
 
     val op = chanThread.getOriginalPost()
-    val boardDescriptor = op.postDescriptor.boardDescriptor()
 
-    if (boardDescriptor != null) {
-      val board = boardManager.byBoardDescriptor(boardDescriptor)
-      board?.let { appendThreadStatisticsPart(chanThread, builder, op, it) }
-    }
+    val board = boardManager.byBoardDescriptor(op.postDescriptor.boardDescriptor())
+    board?.let { appendThreadStatisticsPart(chanThread, builder, op, it) }
 
     statusCellText.text = builder
 
