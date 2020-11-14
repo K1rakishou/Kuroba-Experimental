@@ -157,8 +157,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   private val scrollListener: RecyclerView.OnScrollListener = object : RecyclerView.OnScrollListener() {
-    override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-      onRecyclerViewScrolled(recyclerView)
+    override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+      if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+        onRecyclerViewScrolled(recyclerView)
+      }
     }
   }
 
@@ -379,9 +381,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
 
     val last = completeBottomAdapterPosition
-    updateLastViewedPostNo(last)
+    if (last >= 0) {
+      updateLastViewedPostNo(last)
+    }
 
-    if (last == postAdapter.itemCount - 1 && last > lastPostCount) {
+    if (last == postAdapter.itemCount - 1 && last != lastPostCount) {
       lastPostCount = last
 
       // As requested by the RecyclerView, make sure that the adapter isn't changed
@@ -398,7 +402,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   private fun updateLastViewedPostNo(last: Int) {
-    if (last <= lastPostCount) {
+    if (last < 0 || last == lastPostCount) {
       return
     }
 

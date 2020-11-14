@@ -521,9 +521,16 @@ public class PostAdapter
     }
 
     public long getPostNo(int itemPosition) {
-        int correctedPosition = getPostPosition(itemPosition);
-        int itemViewType = getItemViewType(correctedPosition);
+        if (itemPosition < 0) {
+            return -1;
+        }
 
+        int correctedPosition = getPostPosition(itemPosition);
+        if (correctedPosition < 0) {
+            return -1;
+        }
+
+        int itemViewType = getItemViewType(correctedPosition);
         if (itemViewType == TYPE_STATUS) {
             correctedPosition = getPostPosition(correctedPosition - 1);
             itemViewType = getItemViewType(correctedPosition);
