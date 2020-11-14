@@ -74,7 +74,7 @@ import javax.inject.Inject
 open class ViewThreadController(
   context: Context,
   drawerCallbacks: DrawerCallbacks?,
-  private var threadDescriptor: ThreadDescriptor
+  startingThreadDescriptor: ThreadDescriptor
 ) : ThreadController(context, drawerCallbacks),
   ThreadLayoutCallback,
   ToobarThreedotMenuCallback,
@@ -96,8 +96,10 @@ open class ViewThreadController(
   private var pinItemPinned = false
 
   // pairs of the current ThreadDescriptor and the thread we're going to's ThreadDescriptor
-  private val threadFollowerpool: Deque<Pair<ThreadDescriptor, ThreadDescriptor>> = ArrayDeque()
+  private val threadFollowerPool: Deque<Pair<ThreadDescriptor, ThreadDescriptor>> = ArrayDeque()
   private var hintPopup: HintPopup? = null
+
+  private var threadDescriptor: ThreadDescriptor = startingThreadDescriptor
 
   override val threadControllerType: ThreadControllerType
     get() = ThreadControllerType.Thread
@@ -520,7 +522,7 @@ open class ViewThreadController(
     mainScope.launch(Dispatchers.Main.immediate) {
       Logger.d(TAG, "showExternalThreadInternal($threadToOpenDescriptor)")
 
-      threadFollowerpool.addFirst(Pair(threadDescriptor, threadToOpenDescriptor))
+      threadFollowerPool.addFirst(Pair(threadDescriptor, threadToOpenDescriptor))
       loadThread(threadToOpenDescriptor)
     }
   }
@@ -587,31 +589,42 @@ open class ViewThreadController(
     }
   }
 
-  private suspend fun loadThreadInternal(threadDescriptor: ThreadDescriptor) {
+  private suspend fun loadThreadInternal(newThreadDescriptor: ThreadDescriptor) {
     val presenter = threadLayout.presenter
+    val oldThreadDescriptor = threadLayout.presenter.currentChanDescriptor as? ThreadDescriptor
 
-    presenter.bindChanDescriptor(threadDescriptor)
-    this.threadDescriptor = threadDescriptor
+    presenter.bindChanDescriptor(newThreadDescriptor)
+    this.threadDescriptor = newThreadDescriptor
 
     updateMenuItems()
-    updateNavigationTitle(threadDescriptor)
+    updateNavigationTitle(oldThreadDescriptor, newThreadDescriptor)
     requireNavController().requireToolbar().updateTitle(navigation)
 
     setPinIconState(false)
-    updateLeftPaneHighlighting(threadDescriptor)
+    updateLeftPaneHighlighting(newThreadDescriptor)
     showHints()
   }
 
-  private fun updateNavigationTitle(threadDescriptor: ThreadDescriptor?) {
-    val chanDescriptor = threadLayout.presenter.currentChanDescriptor as? ThreadDescriptor
-      ?: return
+  private fun updateNavigationTitle(
+    oldThreadDescriptor: ThreadDescriptor?,
+    newThreadDescriptor: ThreadDescriptor?
+  ) {
+    if (oldThreadDescriptor == null && newThreadDescriptor == null) {
+      return
+    }
 
-    if (chanDescriptor == threadDescriptor) {
-      val originalPost = chanThreadManager.getChanThread(chanDescriptor)?.getOriginalPost()
-      navigation.title = ChanPostUtils.getTitle(originalPost, threadDescriptor)
+    if (oldThreadDescriptor == newThreadDescriptor) {
+      setNavigationTitleFromDescriptor(newThreadDescriptor)
     } else {
       navigation.title = getString(R.string.loading)
     }
+  }
+
+  private fun setNavigationTitleFromDescriptor(threadDescriptor: ThreadDescriptor?) {
+    val originalPost = chanThreadManager.getChanThread(threadDescriptor)
+      ?.getOriginalPost()
+
+    navigation.title = ChanPostUtils.getTitle(originalPost, threadDescriptor)
   }
 
   private fun updateMenuItems() {
@@ -651,7 +664,7 @@ open class ViewThreadController(
   override fun onShowPosts() {
     super.onShowPosts()
 
-    updateNavigationTitle(threadDescriptor)
+    setNavigationTitleFromDescriptor(threadDescriptor)
     setPinIconState(false)
     requireNavController().requireToolbar().updateTitle(navigation)
     requireNavController().requireToolbar().updateViewForItem(navigation)
@@ -715,16 +728,16 @@ open class ViewThreadController(
   override fun threadBackPressed(): Boolean {
     // clear the pool if the current thread isn't a part of this crosspost chain
     // ie a new thread is loaded and a new chain is started; this will never throw null pointer exceptions
-    if (!threadFollowerpool.isEmpty() && threadFollowerpool.peekFirst().second != threadDescriptor) {
-      threadFollowerpool.clear()
+    if (!threadFollowerPool.isEmpty() && threadFollowerPool.peekFirst().second != threadDescriptor) {
+      threadFollowerPool.clear()
     }
 
     // if the thread is new, it'll be empty here, so we'll get back-to-catalog functionality
-    if (threadFollowerpool.isEmpty()) {
+    if (threadFollowerPool.isEmpty()) {
       return false
     }
 
-    val threadDescriptor = threadFollowerpool.removeFirst().first
+    val threadDescriptor = threadFollowerPool.removeFirst().first
       ?: return false
 
     mainScope.launch(Dispatchers.Main.immediate) { loadThread(threadDescriptor) }
