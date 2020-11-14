@@ -14,7 +14,6 @@ import com.github.k1rakishou.chan.features.setup.epoxy.selection.epoxyBoardSelec
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.epoxySiteSelectionView
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
-import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.layout.SearchLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
@@ -111,11 +110,6 @@ class BoardSelectionController(
   private fun onStateChanged(state: BoardSelectionControllerState) {
     epoxyRecyclerView.withModels {
       when (state) {
-        BoardSelectionControllerState.Loading -> {
-          epoxyLoadingView {
-            id("boards_selection_loading_view")
-          }
-        }
         BoardSelectionControllerState.Empty -> {
           epoxyTextView {
             id("boards_selection_empty_text_view")

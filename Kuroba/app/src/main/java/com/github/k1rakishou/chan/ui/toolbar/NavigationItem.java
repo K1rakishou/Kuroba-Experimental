@@ -20,8 +20,8 @@ import android.graphics.drawable.Drawable;
 import android.view.View;
 
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity;
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController;
+import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +35,7 @@ import static com.github.k1rakishou.common.AndroidUtils.getString;
  * The navigation properties for a Controller. Controls common properties that parent controllers
  * need to know, such as the title of the controller.
  * <p>
- * This is also used to set up the toolbar menu, see {@link #buildMenu(FloatingListMenuGravity)}.
+ * This is also used to set up the toolbar menu, see {@link #buildMenu(ConstraintLayoutBiasPair)}.
  */
 public class NavigationItem {
     public String title = "";
@@ -70,11 +70,11 @@ public class NavigationItem {
     }
 
     public MenuBuilder buildMenu() {
-        return new MenuBuilder(FloatingListMenuGravity.TopRight, this);
+        return new MenuBuilder(ConstraintLayoutBiasPair.TopRight, this);
     }
 
-    public MenuBuilder buildMenu(FloatingListMenuGravity floatingListMenuGravity) {
-        return new MenuBuilder(floatingListMenuGravity, this);
+    public MenuBuilder buildMenu(ConstraintLayoutBiasPair constraintLayoutBiasPair) {
+        return new MenuBuilder(constraintLayoutBiasPair, this);
     }
 
     public void setMiddleMenu(ToolbarMiddleMenu middleMenu) {
@@ -96,11 +96,11 @@ public class NavigationItem {
     public static class MenuBuilder {
         private final NavigationItem navigationItem;
         private final ToolbarMenu menu;
-        private FloatingListMenuGravity floatingListMenuGravity;
+        private ConstraintLayoutBiasPair constraintLayoutBiasPair;
 
-        public MenuBuilder(FloatingListMenuGravity floatingListMenuGravity, NavigationItem navigationItem) {
+        public MenuBuilder(ConstraintLayoutBiasPair constraintLayoutBiasPair, NavigationItem navigationItem) {
             this.navigationItem = navigationItem;
-            this.floatingListMenuGravity = floatingListMenuGravity;
+            this.constraintLayoutBiasPair = constraintLayoutBiasPair;
             menu = new ToolbarMenu();
         }
 
@@ -117,7 +117,7 @@ public class NavigationItem {
         }
 
         public MenuBuilder withItem(ToolbarMenuItem menuItem) {
-            menuItem.floatingListMenuGravity = floatingListMenuGravity;
+            menuItem.constraintLayoutBiasPair = constraintLayoutBiasPair;
             menu.addItem(menuItem);
             return this;
         }
@@ -127,7 +127,7 @@ public class NavigationItem {
                     new ToolbarMenuItem(
                             ToolbarMenu.OVERFLOW_ID,
                             R.drawable.ic_more_vert_white_24dp,
-                            floatingListMenuGravity,
+                            constraintLayoutBiasPair,
                             ToolbarMenuItem::showSubmenu,
                             navigationController,
                             null
@@ -143,7 +143,7 @@ public class NavigationItem {
                     new ToolbarMenuItem(
                             ToolbarMenu.OVERFLOW_ID,
                             R.drawable.ic_more_vert_white_24dp,
-                            floatingListMenuGravity,
+                            constraintLayoutBiasPair,
                             ToolbarMenuItem::showSubmenu,
                             navigationController,
                             threedotMenuCallback

@@ -29,7 +29,6 @@ class BoardSelectionPresenter(
 
   override fun onCreate(view: BoardSelectionView) {
     super.onCreate(view)
-    setState(BoardSelectionControllerState.Loading)
 
     scope.launch {
       siteManager.awaitUntilInitialized()
@@ -51,8 +50,6 @@ class BoardSelectionPresenter(
   }
 
   fun onSearchQueryChanged(query: String) {
-    setState(BoardSelectionControllerState.Loading)
-
     showActiveSitesWithBoardsSorted(query)
   }
 

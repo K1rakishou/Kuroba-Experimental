@@ -37,12 +37,13 @@ import com.github.k1rakishou.chan.features.bookmarks.epoxy.UnifiedBookmarkInfoAc
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyGridThreadBookmarkViewHolder
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyListThreadBookmarkViewHolder
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
-import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
+import com.github.k1rakishou.chan.ui.controller.settings.RangeSettingUpdaterController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyExpandableGroupView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
+import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.FastScroller
@@ -246,7 +247,7 @@ class BookmarksController(
 
     serializedCoroutineExecutor = SerializedCoroutineExecutor(mainScope)
 
-    navigation.buildMenu(FloatingListMenuGravity.TopRight)
+    navigation.buildMenu(ConstraintLayoutBiasPair.TopRight)
       .withItem(R.drawable.ic_search_white_24dp) {
         (navigationController as ToolbarNavigationController).showSearch()
       }
@@ -274,7 +275,23 @@ class BookmarksController(
         ACTION_SET_GRID_BOOKMARK_VIEW_WIDTH,
         R.string.controller_bookmarks_set_grid_bookmark_view_width,
         PersistableChanState.viewThreadBookmarksGridMode.get(), {
-          requireNavController().presentController(BookmarksSetGridModeViewWidthController(context, this))
+          val rangeSettingUpdaterController = RangeSettingUpdaterController(
+            context = context,
+            constraintLayoutBiasPair = ConstraintLayoutBiasPair.TopRight,
+            titleStringId = R.string.controller_bookmarks_set_grid_view_width_text,
+            minValue = context.resources.getDimension(R.dimen.thread_grid_bookmark_view_min_width),
+            maxValue = context.resources.getDimension(R.dimen.thread_grid_bookmark_view_max_width),
+            currentValue = ChanSettings.bookmarkGridViewWidth.get().toFloat(),
+            applyClickedFunc = { newValue ->
+              val currentValue = ChanSettings.bookmarkGridViewWidth.get()
+              if (currentValue != newValue) {
+                ChanSettings.bookmarkGridViewWidth.set(newValue)
+                reloadBookmarksAndUpdateViewMode()
+              }
+            }
+          )
+
+          requireNavController().presentController(rangeSettingUpdaterController)
         }
       )
       .build()
@@ -358,7 +375,7 @@ class BookmarksController(
     bookmarksPresenter.reloadBookmarks()
   }
 
-  override fun reloadBookmarksAndUpdateViewMode() {
+  private fun reloadBookmarksAndUpdateViewMode() {
     Logger.d(TAG, "Calling reloadBookmarks() because grid bookmark view width was changed")
 
     updateLayoutManager(forced = true)

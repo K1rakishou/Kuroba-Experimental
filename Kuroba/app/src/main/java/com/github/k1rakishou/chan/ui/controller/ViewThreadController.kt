@@ -35,13 +35,12 @@ import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.LocalSearchType
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
-import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController
-import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.helper.HintPopup
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
+import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenu
@@ -174,9 +173,9 @@ open class ViewThreadController(
 
   protected fun buildMenu() {
     val gravity = if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-      FloatingListMenuGravity.TopRight
+      ConstraintLayoutBiasPair.TopRight
     } else {
-      FloatingListMenuGravity.Top
+      ConstraintLayoutBiasPair.Top
     }
 
     val menuBuilder = navigation.buildMenu(gravity)
@@ -361,7 +360,7 @@ open class ViewThreadController(
 
     val floatingListMenuController = FloatingListMenuController(
       context,
-      FloatingListMenuGravity.TopRight,
+      ConstraintLayoutBiasPair.TopRight,
       items,
       itemClickListener = { clickedItem ->
         val archiveDescriptor = (clickedItem.key as? ArchiveDescriptor)

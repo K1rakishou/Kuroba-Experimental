@@ -52,7 +52,7 @@ import com.github.k1rakishou.chan.ui.adapter.PostAdapter
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
-import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
+import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
@@ -176,7 +176,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
 
     if (AndroidUtils.isAndroid10()) {
       navigation
-        .buildMenu(FloatingListMenuGravity.TopRight)
+        .buildMenu(ConstraintLayoutBiasPair.TopRight)
         .withOverflow(navigationController, this)
         .withCheckableSubItem(
           ACTION_IGNORE_DARK_NIGHT_MODE,
@@ -564,7 +564,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
     val item = NavigationItem()
     item.title = theme.name
     item.hasBack = false
-    item.buildMenu(FloatingListMenuGravity.TopRight)
+    item.buildMenu(ConstraintLayoutBiasPair.TopRight)
       .withOverflow(navigationController, this)
       .addSubItems(theme.isDarkTheme)
       .build()

@@ -33,8 +33,8 @@ import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager;
 import com.github.k1rakishou.chan.core.site.ImageSearch;
-import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController;
-import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity;
+import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController;
+import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair;
 import com.github.k1rakishou.chan.ui.view.MultiImageView;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
@@ -775,7 +775,7 @@ public class ImageViewerPresenter
 
         FloatingListMenuController floatingListMenuController = new FloatingListMenuController(
                 context,
-                FloatingListMenuGravity.Center,
+                ConstraintLayoutBiasPair.Center,
                 items,
                 item -> {
                     for (ImageSearch imageSearch : ImageSearch.engines) {

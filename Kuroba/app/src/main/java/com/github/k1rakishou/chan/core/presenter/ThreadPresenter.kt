@@ -57,10 +57,10 @@ import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
+import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.ThreadController
-import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController
-import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutPresenterCallback
+import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
@@ -272,8 +272,6 @@ class ThreadPresenter @Inject constructor(
 
     val currentChanDescriptor = chanThreadTicker.currentChanDescriptor
     if (currentChanDescriptor != null) {
-      threadPresenterCallback?.showLoading()
-
       chanThreadManager.unbindChanDescriptor(currentChanDescriptor)
       onDemandContentLoaderManager.cancelAllForDescriptor(currentChanDescriptor)
 
@@ -1037,12 +1035,12 @@ class ThreadPresenter @Inject constructor(
 
     val gravity = if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
       when (currentChanDescriptor) {
-        is ChanDescriptor.CatalogDescriptor -> FloatingListMenuGravity.Left
-        is ChanDescriptor.ThreadDescriptor -> FloatingListMenuGravity.Right
+        is ChanDescriptor.CatalogDescriptor -> ConstraintLayoutBiasPair.Left
+        is ChanDescriptor.ThreadDescriptor -> ConstraintLayoutBiasPair.Right
         else -> return
       }
     } else {
-      FloatingListMenuGravity.Bottom
+      ConstraintLayoutBiasPair.Bottom
     }
 
     val items = mutableListOf<FloatingListMenuItem>()
@@ -1453,12 +1451,12 @@ class ThreadPresenter @Inject constructor(
   override fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>) {
     val gravity = if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
       when (currentChanDescriptor) {
-        is ChanDescriptor.CatalogDescriptor -> FloatingListMenuGravity.BottomLeft
-        is ChanDescriptor.ThreadDescriptor -> FloatingListMenuGravity.BottomRight
+        is ChanDescriptor.CatalogDescriptor -> ConstraintLayoutBiasPair.BottomLeft
+        is ChanDescriptor.ThreadDescriptor -> ConstraintLayoutBiasPair.BottomRight
         else -> return
       }
     } else {
-      FloatingListMenuGravity.Bottom
+      ConstraintLayoutBiasPair.Bottom
     }
 
     val floatingListMenuController = FloatingListMenuController(

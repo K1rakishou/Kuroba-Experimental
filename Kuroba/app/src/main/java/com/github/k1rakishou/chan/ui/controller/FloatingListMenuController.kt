@@ -1,17 +1,17 @@
-package com.github.k1rakishou.chan.ui.controller.floating_menu
+package com.github.k1rakishou.chan.ui.controller
 
 import android.content.Context
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.updateLayoutParams
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
-import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
+import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenu
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 
 open class FloatingListMenuController @JvmOverloads constructor(
   context: Context,
-  private val floatingListMenuGravity: FloatingListMenuGravity,
+  private val constraintLayoutBiasPair: ConstraintLayoutBiasPair,
   private val items: List<FloatingListMenuItem>,
   private val itemClickListener: (item: FloatingListMenuItem) -> Unit,
   private val menuDismissListener: (() -> Unit)? = null
@@ -37,8 +37,8 @@ open class FloatingListMenuController @JvmOverloads constructor(
     }
 
     floatingListMenu.updateLayoutParams<ConstraintLayout.LayoutParams> {
-      horizontalBias = floatingListMenuGravity.horizontalBias
-      verticalBias = floatingListMenuGravity.verticalBias
+      horizontalBias = constraintLayoutBiasPair.horizontalBias
+      verticalBias = constraintLayoutBiasPair.verticalBias
     }
 
     floatingListMenu.setStackCallback { moreItems -> stack(moreItems) }
@@ -67,7 +67,7 @@ open class FloatingListMenuController @JvmOverloads constructor(
     presentController(
       FloatingListMenuController(
         context,
-        floatingListMenuGravity,
+        constraintLayoutBiasPair,
         moreItems,
         itemClickListener,
         menuDismissListener

@@ -51,8 +51,8 @@ import com.github.k1rakishou.chan.core.site.http.Reply
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
+import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.ThreadController
-import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.helper.ImageOptionsHelper
 import com.github.k1rakishou.chan.ui.helper.ImageOptionsHelper.ImageReencodingHelperCallback
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
@@ -937,7 +937,9 @@ class ThreadLayout @JvmOverloads constructor(
         threadListLayout.cleanup()
         postPopupHelper.popAll()
 
-        if (presenter.currentChanDescriptor == null || presenter.currentChanDescriptor?.isThreadDescriptor() == true) {
+        val currentChanDescriptor = presenter.currentChanDescriptor
+
+        if (currentChanDescriptor == null || currentChanDescriptor.isThreadDescriptor()) {
           showSearch(false)
         }
 

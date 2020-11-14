@@ -10,6 +10,7 @@
     android:focusable="true">
 
     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
+        android:id="@+id/controller_range_setting_updater_card_view"
         android:layout_width="256dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
@@ -26,19 +27,19 @@
             android:layout_height="wrap_content">
 
             <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
-                android:id="@+id/grid_bookmark_view_text"
+                android:id="@+id/controller_range_setting_updater_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:gravity="center_horizontal"
-                android:text="@string/controller_bookmarks_set_grid_view_width_text"
                 android:textSize="18sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="Sample title"/>
 
             <LinearLayout
-                android:id="@+id/grid_bookmark_markers_holder"
+                android:id="@+id/controller_range_setting_updater_markers_holder"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:layout_marginTop="8dp"
@@ -47,10 +48,10 @@
                 android:orientation="horizontal"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/grid_bookmark_view_text">
+                app:layout_constraintTop_toBottomOf="@+id/controller_range_setting_updater_title">
 
                 <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
-                    android:id="@+id/grid_bookmark_view_min_width_text"
+                    android:id="@+id/controller_range_setting_updater_min_value_text_view"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     tools:text="100" />
@@ -61,7 +62,7 @@
                     android:layout_weight="1" />
 
                 <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
-                    android:id="@+id/grid_bookmark_view_max_width_text"
+                    android:id="@+id/controller_range_setting_updater_max_value_text_view"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     tools:text="500" />
@@ -69,13 +70,13 @@
             </LinearLayout>
 
             <com.github.k1rakishou.chan.ui.theme.widget.ColorizableSlider
-                android:id="@+id/view_width_slider"
+                android:id="@+id/controller_range_setting_updater_slider"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:stepSize="1"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/grid_bookmark_markers_holder" />
+                app:layout_constraintTop_toBottomOf="@+id/controller_range_setting_updater_markers_holder" />
 
             <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                 android:id="@+id/cancel_button"
@@ -85,7 +86,7 @@
                 android:text="@string/cancel"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/apply_button"
-                app:layout_constraintTop_toBottomOf="@+id/view_width_slider" />
+                app:layout_constraintTop_toBottomOf="@+id/controller_range_setting_updater_slider" />
 
             <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                 android:id="@+id/apply_button"

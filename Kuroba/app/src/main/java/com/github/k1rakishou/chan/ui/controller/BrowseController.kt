@@ -42,12 +42,12 @@ import com.github.k1rakishou.chan.features.setup.SitesSetupController
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
-import com.github.k1rakishou.chan.ui.controller.floating_menu.FloatingListMenuGravity
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.helper.HintPopup
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
+import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
@@ -296,9 +296,9 @@ class BrowseController(
     menuBuiltOnce = true
 
     val gravity = if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-      FloatingListMenuGravity.TopLeft
+      ConstraintLayoutBiasPair.TopLeft
     } else {
-      FloatingListMenuGravity.Top
+      ConstraintLayoutBiasPair.Top
     }
 
     val menuBuilder = navigation.buildMenu(gravity)

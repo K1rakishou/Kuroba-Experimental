@@ -1,6 +1,6 @@
-package com.github.k1rakishou.chan.ui.controller.floating_menu
+package com.github.k1rakishou.chan.ui.misc
 
-enum class FloatingListMenuGravity(
+enum class ConstraintLayoutBiasPair(
   val horizontalBias: Float,
   val verticalBias: Float
 ) {
