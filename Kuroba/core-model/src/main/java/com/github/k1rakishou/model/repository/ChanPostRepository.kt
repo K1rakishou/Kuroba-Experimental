@@ -62,6 +62,22 @@ class ChanPostRepository(
     }
   }
 
+  suspend fun getTotalCachedThreadCount(): Int {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+
+    return applicationScope.myAsync {
+      return@myAsync chanThreadsCache.getCachedThreadsCount()
+    }
+  }
+
+  suspend fun getThreadsWithMoreThanOnePostCount(): Int {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+
+    return applicationScope.myAsync {
+      return@myAsync chanThreadsCache.getThreadsWithMoreThanOnePostCount()
+    }
+  }
+
   suspend fun createEmptyThreadIfNotExists(descriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Long?> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 

@@ -41,6 +41,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import com.google.gson.stream.JsonReader
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineName
@@ -198,9 +199,12 @@ class ChanThreadLoaderCoordinator(
     val storedPostsCount = loadTimeInfo.storedPostsCount
     val parsingDuration = loadTimeInfo.parsingDuration
     val parsedPostsCount = loadTimeInfo.parsedPostsCount
-    val totalPostsCount = loadTimeInfo.totalPostsCount
+    val postsInChanReaderProcessor = loadTimeInfo.postsInChanReaderProcessor
     val cleanupDuration = loadTimeInfo.cleanupDuration
+
     val cachedPostsCount = chanPostRepository.getTotalCachedPostsCount()
+    val cachedThreadsCount = chanPostRepository.getTotalCachedThreadCount()
+    val threadsWithMoreThanOnePostCount = chanPostRepository.getThreadsWithMoreThanOnePostCount()
 
     val logString = buildString {
       appendLine("ChanReaderRequest.readJson() stats:")
@@ -208,8 +212,10 @@ class ChanThreadLoaderCoordinator(
       appendLine("Network request execution took $requestDuration.")
       appendLine("Json reading took $readPostsDuration.")
       appendLine("Store new posts took $storeDuration (stored ${storedPostsCount} posts).")
-      appendLine("Parse posts took = $parsingDuration, (parsed ${parsedPostsCount} out of $totalPostsCount posts).")
-      appendLine("Total in-memory cached posts count = ($cachedPostsCount/${appConstants.maxPostsCountInPostsCache}).")
+      appendLine("Parse posts took = $parsingDuration, (parsed ${parsedPostsCount} out of $postsInChanReaderProcessor posts).")
+      appendLine("Total in-memory cached posts count = $cachedPostsCount/${appConstants.maxPostsCountInPostsCache}.")
+      appendLine("Threads with more than one post count = ($threadsWithMoreThanOnePostCount/${ChanThreadsCache.IMMUNE_THREADS_COUNT}), " +
+        "total cached threads count = ${cachedThreadsCount}.")
 
       if (cleanupDuration != null) {
         appendLine("Sticky thread old post clean up routine took ${cleanupDuration}.")

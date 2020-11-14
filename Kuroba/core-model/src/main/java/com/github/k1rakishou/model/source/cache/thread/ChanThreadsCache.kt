@@ -109,6 +109,17 @@ class ChanThreadsCache(
     }
   }
 
+  fun getCachedThreadsCount(): Int {
+    return lock.read { chanThreads.size }
+  }
+
+  fun getThreadsWithMoreThanOnePostCount(): Int {
+    return lock.read {
+      return@read chanThreads
+        .count { (_, chanThread) -> chanThread.postsCount > 1 }
+    }
+  }
+
   fun getOriginalPostFromCache(postDescriptor: PostDescriptor): ChanOriginalPost? {
     return lock.read {
       val threadDescriptor = postDescriptor.threadDescriptor()
@@ -255,11 +266,7 @@ class ChanThreadsCache(
   fun deletePost(postDescriptor: PostDescriptor) {
     lock.write {
       val threadDescriptor = postDescriptor.threadDescriptor()
-
-      val chanThread = chanThreads[threadDescriptor]
-      if (chanThread != null) {
-        chanThread.deletePost(postDescriptor)
-      }
+      chanThreads[threadDescriptor]?.deletePost(postDescriptor)
     }
   }
 
@@ -292,20 +299,27 @@ class ChanThreadsCache(
     }
 
     val currentTotalPostsCount = getTotalCachedPostsCount()
-    if (currentTotalPostsCount > maxCacheSize && chanThreads.size > IMMUNE_THREADS_COUNT) {
-      // Evict 35% of the cache
-      val amountToEvict = (currentTotalPostsCount / 100) * 35
-      if (amountToEvict > 0) {
-        Logger.d(tag, "evictOld start (posts: ${currentTotalPostsCount}/${maxCacheSize})")
-        val time = measureTime { evictOld(amountToEvict) }
-        Logger.d(
-          tag,
-          "evictOld end (posts: ${currentTotalPostsCount}/${maxCacheSize}), took ${time}"
-        )
-      }
-
-      lastEvictInvokeTime.set(System.currentTimeMillis())
+    if (currentTotalPostsCount <= maxCacheSize) {
+      return
     }
+
+    val amountOfThreadsWithMoreThanOnPost = getThreadsWithMoreThanOnePostCount()
+    if (amountOfThreadsWithMoreThanOnPost <= IMMUNE_THREADS_COUNT) {
+      return
+    }
+
+    // Evict 35% of the cache
+    val amountToEvict = (currentTotalPostsCount / 100) * 35
+    if (amountToEvict > 0) {
+      Logger.d(tag, "evictOld start (posts: ${currentTotalPostsCount}/${maxCacheSize})")
+      val time = measureTime { evictOld(amountToEvict) }
+      Logger.d(
+        tag,
+        "evictOld end (posts: ${currentTotalPostsCount}/${maxCacheSize}), took ${time}"
+      )
+    }
+
+    lastEvictInvokeTime.set(System.currentTimeMillis())
   }
 
   private fun evictOld(amountToEvictParam: Int) {
@@ -366,8 +380,7 @@ class ChanThreadsCache(
     // posts from 10 threads. Without considering the immune threads it will evict posts for 10
     // threads and will leave 6 threads in the cache. But with immune threads it will only evict
     // posts for 6 oldest threads, always leaving the freshest 10 untouched.
-    private const val IMMUNE_THREADS_COUNT = 25
-    private const val DEFAULT_CATALOG_THREADS_COUNT = 150
+    const val IMMUNE_THREADS_COUNT = 15
 
     // 1 minute
     private val EVICTION_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(1)
