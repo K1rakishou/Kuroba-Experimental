@@ -26,6 +26,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
@@ -238,8 +239,15 @@ class ThreadStatusCell(
         images.setSpan(StyleSpan(Typeface.ITALIC), 0, images.length, 0)
       }
 
+      val threadMaxPostCapacity = if (ChanSettings.threadMaxPostCapacity.isDefault) {
+        ""
+      } else {
+        " (${ChanSettings.threadMaxPostCapacity.get()} cap)"
+      }
+
       builder
         .append(replies)
+        .append(threadMaxPostCapacity)
         .append(" / ")
         .append(images)
 

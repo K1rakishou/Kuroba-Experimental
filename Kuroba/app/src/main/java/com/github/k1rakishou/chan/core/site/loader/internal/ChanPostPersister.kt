@@ -53,11 +53,6 @@ internal class ChanPostPersister(
           .ignore()
       }
 
-      val cleanupDuration = runRollingStickyThreadCleanupRoutineIfNeeded(
-        chanDescriptor,
-        chanReaderProcessor
-      )
-
       val (parsedPosts, parsingDuration) = measureTimedValue {
         return@measureTimedValue parsePostsUseCase.parseNewPostsPosts(
           chanDescriptor,
@@ -78,6 +73,11 @@ internal class ChanPostPersister(
           chanDescriptor.isCatalogDescriptor()
         )
       }
+
+      val cleanupDuration = runRollingStickyThreadCleanupRoutineIfNeeded(
+        chanDescriptor,
+        chanReaderProcessor
+      )
 
       checkNotNull(chanReaderProcessor.getOp()) { "OP is null" }
 

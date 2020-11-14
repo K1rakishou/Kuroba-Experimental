@@ -369,12 +369,23 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
+  /**
+   * A very flexible method to load new posts or reload posts from database.
+   * [chanLoadOptions] allows you to delete previous posts from in-memory cache or from database
+   * (for example when in case something goes wrong and some post data gets corrupted).
+   * [chanCacheOptions] allows you to select where posts will be stored (in in-memory cache or/and
+   * in the database).
+   * [chanReadOptions] allows you to configure how many posts to extract out of the posts list that
+   * we get from the server. This is very useful when you want to set a thread max posts capacity
+   * or if you want to store in the cache only a part of a thread (for example you want to show a
+   * thread preview).
+   * */
   fun normalLoad(
     showLoading: Boolean = false,
     requestNewPostsFromServer: Boolean = true,
     chanLoadOptions: ChanLoadOptions = ChanLoadOptions.RetainAll,
     chanCacheOptions: ChanCacheOptions = ChanCacheOptions.StoreEverywhere,
-    chanReadOptions: ChanReadOptions = ChanReadOptions.default()
+    chanReadOptions: ChanReadOptions = ChanReadOptions.default(ChanSettings.threadMaxPostCapacity.get())
   ) {
     BackgroundUtils.ensureMainThread()
 
@@ -385,7 +396,7 @@ class ThreadPresenter @Inject constructor(
     }
 
     Logger.d(TAG, "normalLoad(showLoading=$showLoading, requestNewPostsFromServer=$requestNewPostsFromServer, " +
-      "$chanLoadOptions, $chanCacheOptions, $chanReadOptions)")
+      "chanLoadOptions=$chanLoadOptions, chanCacheOptions=$chanCacheOptions, chanReadOptions=$chanReadOptions)")
 
     chanThreadLoadingState = ChanThreadLoadingState.Loading
 
@@ -405,6 +416,7 @@ class ThreadPresenter @Inject constructor(
 
         if (threadLoadResult is ThreadLoadResult.Error) {
           onChanLoaderError(threadLoadResult.exception)
+          chanThreadLoadingState = ChanThreadLoadingState.Loaded
           return@loadThreadOrCatalog
         }
 

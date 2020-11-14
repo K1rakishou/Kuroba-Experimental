@@ -137,8 +137,9 @@ class ChanThreadLoaderCoordinator(
     chanReadOptions: ChanReadOptions,
     chanReader: ChanReader
   ): ModularResult<ThreadLoadResult> {
-    Logger.d(TAG, "loadThreadOrCatalog($url, $chanDescriptor, $chanCacheOptions, " +
-      "$chanReadOptions, ${chanReader.javaClass.simpleName})")
+    Logger.d(TAG, "loadThreadOrCatalog(url=$url, chanDescriptor=$chanDescriptor, " +
+      "chanCacheOptions=$chanCacheOptions, chanReadOptions=$chanReadOptions, " +
+      "chanReader=${chanReader.javaClass.simpleName})")
 
     return withContext(Dispatchers.IO) {
       BackgroundUtils.ensureBackgroundThread()
@@ -178,7 +179,7 @@ class ChanThreadLoaderCoordinator(
           chanReader
         )
 
-        loadRequestStatistics(loadTimeInfo, requestDuration, readPostsDuration)
+        loadRequestStatistics(chanDescriptor, loadTimeInfo, requestDuration, readPostsDuration)
         return@Try threadLoadResult
       }.mapError { error -> ChanLoaderException(error) }
     }
@@ -186,6 +187,7 @@ class ChanThreadLoaderCoordinator(
 
   @OptIn(ExperimentalTime::class)
   private suspend fun loadRequestStatistics(
+    chanDescriptor: ChanDescriptor,
     loadTimeInfo: ChanPostPersister.LoadTimeInfo?,
     requestDuration: Duration,
     readPostsDuration: Duration
@@ -206,6 +208,12 @@ class ChanThreadLoaderCoordinator(
     val cachedThreadsCount = chanPostRepository.getTotalCachedThreadCount()
     val threadsWithMoreThanOnePostCount = chanPostRepository.getThreadsWithMoreThanOnePostCount()
 
+    val currentThreadCachedPostsCount = if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      chanPostRepository.getThreadCachedPostsCount(chanDescriptor)
+    } else {
+      null
+    }
+
     val logString = buildString {
       appendLine("ChanReaderRequest.readJson() stats:")
       appendLine("url = $url.")
@@ -214,7 +222,13 @@ class ChanThreadLoaderCoordinator(
       appendLine("Store new posts took $storeDuration (stored ${storedPostsCount} posts).")
       appendLine("Parse posts took = $parsingDuration, (parsed ${parsedPostsCount} out of $postsInChanReaderProcessor posts).")
       appendLine("Total in-memory cached posts count = $cachedPostsCount/${appConstants.maxPostsCountInPostsCache}.")
-      appendLine("Threads with more than one post count = ($threadsWithMoreThanOnePostCount/${ChanThreadsCache.IMMUNE_THREADS_COUNT}), " +
+
+      if (currentThreadCachedPostsCount != null) {
+        appendLine("Current thread cached posts count = ${currentThreadCachedPostsCount}")
+      }
+
+      appendLine("Threads with more than one post " +
+        "count = ($threadsWithMoreThanOnePostCount/${ChanThreadsCache.IMMUNE_THREADS_COUNT}), " +
         "total cached threads count = ${cachedThreadsCount}.")
 
       if (cleanupDuration != null) {
@@ -288,16 +302,13 @@ class ChanThreadLoaderCoordinator(
           .use { jsonReader ->
             val chanReaderProcessor = ChanReaderProcessor(
               chanPostRepository,
+              chanReadOptions,
               chanDescriptor
             )
 
             when (chanDescriptor) {
-              is ChanDescriptor.ThreadDescriptor -> {
-                chanReader.loadThread(jsonReader, chanReadOptions, chanReaderProcessor)
-              }
-              is ChanDescriptor.CatalogDescriptor -> {
-                chanReader.loadCatalog(jsonReader, chanReaderProcessor)
-              }
+              is ChanDescriptor.ThreadDescriptor -> chanReader.loadThread(jsonReader, chanReaderProcessor)
+              is ChanDescriptor.CatalogDescriptor -> chanReader.loadCatalog(jsonReader, chanReaderProcessor)
               else -> throw IllegalArgumentException("Unknown mode")
             }
 

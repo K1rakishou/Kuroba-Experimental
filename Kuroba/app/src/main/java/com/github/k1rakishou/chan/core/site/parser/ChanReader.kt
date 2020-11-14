@@ -17,7 +17,6 @@
 package com.github.k1rakishou.chan.core.site.parser
 
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.google.gson.stream.JsonReader
@@ -28,7 +27,6 @@ interface ChanReader {
   @Throws(Exception::class)
   suspend fun loadThread(
     reader: JsonReader,
-    chanReadOptions: ChanReadOptions,
     chanReaderProcessor: ChanReaderProcessor
   )
 

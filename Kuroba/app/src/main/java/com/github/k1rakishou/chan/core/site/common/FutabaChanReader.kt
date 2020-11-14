@@ -12,7 +12,6 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.bookmark.StickyThread
@@ -63,14 +62,13 @@ class FutabaChanReader(
   @Throws(Exception::class)
   override suspend fun loadThread(
     reader: JsonReader,
-    chanReadOptions: ChanReadOptions,
     chanReaderProcessor: ChanReaderProcessor
   ) {
     iteratePostsInThread(reader) { reader ->
       readPostObject(reader, chanReaderProcessor)
     }
 
-    chanReaderProcessor.applyChanReadOptions(chanReadOptions)
+    chanReaderProcessor.applyChanReadOptions()
   }
 
   @Throws(Exception::class)

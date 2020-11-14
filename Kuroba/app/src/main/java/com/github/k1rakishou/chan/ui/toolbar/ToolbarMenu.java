@@ -16,6 +16,8 @@
  */
 package com.github.k1rakishou.chan.ui.toolbar;
 
+import androidx.annotation.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +45,34 @@ public class ToolbarMenu {
             for (ToolbarMenuSubItem subItem : overflow.subItems) {
                 if (subItem.id == id) {
                     return subItem;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    @Nullable
+    public ToolbarMenuSubItem findNestedSubItem(int id) {
+        ToolbarMenuItem overflow = findItem(OVERFLOW_ID);
+        if (overflow != null) {
+            return findNestedSubItemInternal(id, overflow.subItems);
+        }
+
+        return null;
+    }
+
+    @Nullable
+    private ToolbarMenuSubItem findNestedSubItemInternal(int id, List<ToolbarMenuSubItem> subItems) {
+        for (ToolbarMenuSubItem subItem : subItems) {
+            if (subItem.id == id) {
+                return subItem;
+            }
+
+            if (subItem.moreItems.size() > 0) {
+                ToolbarMenuSubItem item = findNestedSubItemInternal(id, subItem.moreItems);
+                if (item != null) {
+                    return item;
                 }
             }
         }

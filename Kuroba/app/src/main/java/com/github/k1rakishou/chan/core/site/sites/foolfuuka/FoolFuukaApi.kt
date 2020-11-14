@@ -6,7 +6,6 @@ import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.jsonObject
 import com.github.k1rakishou.common.nextStringOrNull
-import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.archive.ArchivePost
 import com.github.k1rakishou.model.data.archive.ArchivePostMedia
@@ -25,7 +24,6 @@ class FoolFuukaApi(
 
   override suspend fun loadThread(
     reader: JsonReader,
-    chanReadOptions: ChanReadOptions,
     chanReaderProcessor: ChanReaderProcessor
   ) {
     val chanDescriptor = chanReaderProcessor.chanDescriptor
@@ -62,7 +60,7 @@ class FoolFuukaApi(
       }
     }
 
-    chanReaderProcessor.applyChanReadOptions(chanReadOptions)
+    chanReaderProcessor.applyChanReadOptions()
   }
 
   private suspend fun readOriginalPost(

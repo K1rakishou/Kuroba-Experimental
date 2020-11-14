@@ -346,9 +346,9 @@ public class ChanSettings {
     public static OptionsSetting<ImageGestureActionType> imageSwipeUpGesture;
     public static OptionsSetting<ImageGestureActionType> imageSwipeDownGesture;
     public static BooleanSetting rememberThreadNavigationHistory;
+    public static RangeSetting threadMaxPostCapacity;
     //endregion
     //endregion
-
 
     private static void initInternal() {
         try {
@@ -559,6 +559,13 @@ public class ChanSettings {
                     p,
                     "remember_thread_navigation_history",
                     true
+            );
+            threadMaxPostCapacity = new RangeSetting(
+                    p,
+                    "thread_max_post_capacity",
+                    0,
+                    0,
+                    1000
             );
         } catch (Throwable error) {
             // If something crashes while the settings are initializing we at least will have the

@@ -29,6 +29,7 @@ import kotlinx.coroutines.sync.withLock
 
 class ChanReaderProcessor(
   private val chanPostRepository: ChanPostRepository,
+  private val chanReadOptions: ChanReadOptions,
   val chanDescriptor: ChanDescriptor
 ) {
   private val toParse = mutableListWithCap<ChanPostBuilder>(64)
@@ -46,7 +47,13 @@ class ChanReaderProcessor(
   }
 
   suspend fun getThreadCap(): Int? {
-    return lock.withLock { op?.stickyCap }
+    return lock.withLock {
+      if (chanReadOptions.threadMaxPostsCapacity > 0) {
+        return@withLock chanReadOptions.threadMaxPostsCapacity
+      }
+
+      return@withLock op?.stickyCap
+    }
   }
 
   suspend fun addPost(postBuilder: ChanPostBuilder) {
@@ -59,7 +66,7 @@ class ChanReaderProcessor(
     }
   }
 
-  suspend fun applyChanReadOptions(chanReadOptions: ChanReadOptions) {
+  suspend fun applyChanReadOptions() {
     if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
       return
     }
@@ -69,7 +76,7 @@ class ChanReaderProcessor(
     }
 
     lock.withLock {
-      val postRanges = chanReadOptions.getRanges(postOrderedList.size)
+      val postRanges = chanReadOptions.getRetainPostRanges(postOrderedList.size)
       val postDescriptorsToDelete = mutableSetOf<PostDescriptor>()
 
       for ((index, postDescriptor) in postOrderedList.withIndex()) {

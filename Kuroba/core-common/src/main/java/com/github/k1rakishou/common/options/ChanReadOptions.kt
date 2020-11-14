@@ -12,18 +12,27 @@ data class ChanReadOptions(
   // This value does not include OP
   val readFirstPostsCount: Int = Int.MAX_VALUE,
   // This value does not include OP
-  val readLastPostsCount: Int = Int.MAX_VALUE
+  val readLastPostsCount: Int = Int.MAX_VALUE,
+  // This value represents then last N posts that will be retained
+  val threadMaxPostsCapacity: Int = 0,
 ) {
 
   private fun ignoreReadFirstPostsCount(): Boolean = readFirstPostsCount == Int.MAX_VALUE
   private fun ignoreReadLastPostsCount(): Boolean = readLastPostsCount == Int.MAX_VALUE
+  private fun ignoreThreadMaxPostsCapacity(): Boolean = threadMaxPostsCapacity <= 0
 
-  fun getRanges(postsCount: Int): List<IntRange> {
+  /**
+   * Returns a list of IntRange
+   * */
+  fun getRetainPostRanges(postsCount: Int): List<IntRange> {
     if (postsCount <= 0) {
       return emptyList()
     }
 
-    if (!readOriginalPost && ignoreReadFirstPostsCount() && ignoreReadLastPostsCount()) {
+    if (!readOriginalPost
+      && ignoreReadFirstPostsCount()
+      && ignoreReadLastPostsCount()
+      && ignoreThreadMaxPostsCapacity()) {
       return emptyList()
     }
 
@@ -40,17 +49,30 @@ data class ChanReadOptions(
       resultList += (postsCount - readLastPostsCount).coerceAtLeast(1) .. postsCount
     }
 
+    if (!ignoreThreadMaxPostsCapacity()) {
+      resultList += (postsCount - threadMaxPostsCapacity).coerceAtLeast(1) .. postsCount
+    }
+
     return resultList
   }
 
   fun isDefault(): Boolean {
     return readOriginalPost
-      && readFirstPostsCount == Int.MAX_VALUE
-      && readLastPostsCount == Int.MAX_VALUE
+      && ignoreReadFirstPostsCount()
+      && ignoreReadLastPostsCount()
+      && ignoreThreadMaxPostsCapacity()
   }
 
   companion object {
-    fun default(): ChanReadOptions = ChanReadOptions(true, Int.MAX_VALUE, Int.MAX_VALUE)
+    fun default(threadMaxPostsCapacity: Int): ChanReadOptions {
+      val maxPostsCapacity = if (threadMaxPostsCapacity < 0) {
+        0
+      } else {
+        threadMaxPostsCapacity
+      }
+
+      return ChanReadOptions(true, Int.MAX_VALUE, Int.MAX_VALUE, maxPostsCapacity)
+    }
   }
 
 }

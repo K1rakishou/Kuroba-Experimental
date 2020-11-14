@@ -252,7 +252,7 @@ class ChanThreadManager(
     chanDescriptor: ChanDescriptor,
     requestNewPostsFromServer: Boolean,
     chanCacheOptions: ChanCacheOptions,
-    chanReadOptions: ChanReadOptions,
+    chanReadOptions: ChanReadOptions
   ): ModularResult<ThreadLoadResult> {
     siteManager.awaitUntilInitialized()
     bookmarksManager.awaitUntilInitialized()

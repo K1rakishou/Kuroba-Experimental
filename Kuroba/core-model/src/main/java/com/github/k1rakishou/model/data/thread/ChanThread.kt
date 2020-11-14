@@ -201,7 +201,11 @@ class ChanThread(
       }
 
       // Never delete the original post
-      val postsToDelete = threadPosts.subList(1, toDeleteCount)
+      val postsToDelete = threadPosts.subList(1, toDeleteCount).toList()
+      if (postsToDelete.isEmpty()) {
+        return@write emptyList()
+      }
+
       threadPosts.removeAll(postsToDelete)
 
       postsToDelete.forEach { chanPost ->
@@ -212,6 +216,8 @@ class ChanThread(
       require(threadPosts.first() is ChanOriginalPost) {
         "First post is not an original post! post=${threadPosts.first()}"
       }
+
+      checkPostsConsistency()
 
       return@write postsToDelete.map { chanPost -> chanPost.postDescriptor }
     }
@@ -422,6 +428,8 @@ class ChanThread(
     if (oldChanPost is ChanOriginalPost || newPost is ChanOriginalPost) {
       return mergeOriginalPosts(oldChanPost, newPost)
     }
+
+    check(oldChanPost.postDescriptor == newPost.postDescriptor) { "Post descriptors differ!" }
 
     val mergedPost = ChanPost(
       chanPostId = oldChanPost.chanPostId,

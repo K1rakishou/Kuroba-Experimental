@@ -93,6 +93,10 @@ public class NavigationItem {
         return menu == null ? null : menu.findSubItem(id);
     }
 
+    public ToolbarMenuSubItem findNestedSubItem(int id) {
+        return menu == null ? null : menu.findNestedSubItem(id);
+    }
+
     public static class MenuBuilder {
         private final NavigationItem navigationItem;
         private final ToolbarMenu menu;
@@ -288,6 +292,32 @@ public class NavigationItem {
         public MenuNestedOverflowBuilder addNestedItem(
                 int itemId,
                 int text,
+                boolean visible,
+                Object value,
+                ToolbarMenuSubItem.ClickCallback clickCallback
+        ) {
+            for (ToolbarMenuSubItem subItem : menuSubItem.moreItems) {
+                if (subItem.id == itemId) {
+                    throw new IllegalArgumentException("Menu item with id " + itemId + " was already added");
+                }
+            }
+
+            nestedMenuItems.add(
+                    new ToolbarMenuSubItem(
+                            itemId,
+                            text,
+                            clickCallback,
+                            visible,
+                            value
+                    )
+            );
+
+            return this;
+        }
+
+        public MenuNestedOverflowBuilder addNestedItem(
+                int itemId,
+                String text,
                 boolean visible,
                 Object value,
                 ToolbarMenuSubItem.ClickCallback clickCallback

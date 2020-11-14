@@ -9,7 +9,6 @@ import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
-import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.bookmark.StickyThread
@@ -35,14 +34,13 @@ class DvachApi internal constructor(
   @Throws(Exception::class)
   override suspend fun loadThread(
     reader: JsonReader,
-    chanReadOptions: ChanReadOptions,
     chanReaderProcessor: ChanReaderProcessor
   ) {
     iteratePostsInThread(reader) { dvachExtraThreadInfo, jsonReader ->
       readPostObject(jsonReader, dvachExtraThreadInfo, chanReaderProcessor)
     }
 
-    chanReaderProcessor.applyChanReadOptions(chanReadOptions)
+    chanReaderProcessor.applyChanReadOptions()
   }
 
   @Throws(Exception::class)

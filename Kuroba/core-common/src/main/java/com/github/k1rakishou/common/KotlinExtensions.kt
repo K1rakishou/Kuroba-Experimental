@@ -132,11 +132,11 @@ fun <T> MutableCollection<T>.removeIfKt(filter: (T) -> Boolean): Boolean {
   Objects.requireNonNull(filter)
 
   var removed = false
-  val each = iterator()
+  val mutableIterator = iterator()
 
-  while (each.hasNext()) {
-    if (filter.invoke(each.next())) {
-      each.remove()
+  while (mutableIterator.hasNext()) {
+    if (filter.invoke(mutableIterator.next())) {
+      mutableIterator.remove()
       removed = true
     }
   }

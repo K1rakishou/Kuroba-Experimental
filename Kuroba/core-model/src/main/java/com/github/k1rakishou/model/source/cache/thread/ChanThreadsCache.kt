@@ -120,6 +120,10 @@ class ChanThreadsCache(
     }
   }
 
+  fun getThreadCachedPostsCount(threadDescriptor: ChanDescriptor.ThreadDescriptor): Int? {
+    return lock.read { chanThreads[threadDescriptor]?.postsCount }
+  }
+
   fun getOriginalPostFromCache(postDescriptor: PostDescriptor): ChanOriginalPost? {
     return lock.read {
       val threadDescriptor = postDescriptor.threadDescriptor()

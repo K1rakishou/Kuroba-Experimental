@@ -11,7 +11,7 @@
 
     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
         android:id="@+id/controller_range_setting_updater_card_view"
-        android:layout_width="256dp"
+        android:layout_width="320dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginTop="24dp"
@@ -36,14 +36,14 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                tools:text="Sample title"/>
+                tools:text="Sample title" />
 
-            <LinearLayout
+            <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/controller_range_setting_updater_markers_holder"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_marginTop="8dp"
                 android:layout_marginStart="4dp"
+                android:layout_marginTop="8dp"
                 android:layout_marginEnd="4dp"
                 android:orientation="horizontal"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -54,20 +54,32 @@
                     android:id="@+id/controller_range_setting_updater_min_value_text_view"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
                     tools:text="100" />
 
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="1dp"
-                    android:layout_weight="1" />
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
+                    android:id="@+id/controller_range_setting_updater_current_value_input"
+                    android:layout_width="64dp"
+                    android:layout_height="wrap_content"
+                    android:maxLength="4"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/controller_range_setting_updater_max_value_text_view"
+                    app:layout_constraintStart_toEndOf="@+id/controller_range_setting_updater_min_value_text_view"
+                    app:layout_constraintTop_toTopOf="parent"
+                    tools:text="2502" />
 
                 <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
                     android:id="@+id/controller_range_setting_updater_max_value_text_view"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent"
                     tools:text="500" />
 
-            </LinearLayout>
+            </androidx.constraintlayout.widget.ConstraintLayout>
 
             <com.github.k1rakishou.chan.ui.theme.widget.ColorizableSlider
                 android:id="@+id/controller_range_setting_updater_slider"
@@ -79,23 +91,36 @@
                 app:layout_constraintTop_toBottomOf="@+id/controller_range_setting_updater_markers_holder" />
 
             <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+                android:id="@+id/reset_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/reset"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/cancel_button"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                 android:id="@+id/cancel_button"
-                android:layout_width="96dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="@string/cancel"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toStartOf="@+id/apply_button"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/reset_button"
                 app:layout_constraintTop_toBottomOf="@+id/controller_range_setting_updater_slider" />
 
             <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                 android:id="@+id/apply_button"
-                android:layout_width="96dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
                 android:text="@string/apply"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent" />
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/cancel_button" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

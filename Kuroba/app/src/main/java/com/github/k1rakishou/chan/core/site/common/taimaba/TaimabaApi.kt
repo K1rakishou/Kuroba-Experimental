@@ -8,7 +8,6 @@ import com.github.k1rakishou.chan.core.site.common.CommonSite.CommonApi
 import com.github.k1rakishou.chan.core.site.parser.ChanReader.Companion.DEFAULT_POST_LIST_CAPACITY
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
@@ -34,14 +33,13 @@ class TaimabaApi(
   @Throws(Exception::class)
   override suspend fun loadThread(
     reader: JsonReader,
-    chanReadOptions: ChanReadOptions,
     chanReaderProcessor: ChanReaderProcessor
   ) {
     vichanReaderExtensions.iteratePostsInThread(reader) { reader ->
       readPostObject(reader, chanReaderProcessor)
     }
 
-    chanReaderProcessor.applyChanReadOptions(chanReadOptions)
+    chanReaderProcessor.applyChanReadOptions()
   }
 
   @Throws(Exception::class)

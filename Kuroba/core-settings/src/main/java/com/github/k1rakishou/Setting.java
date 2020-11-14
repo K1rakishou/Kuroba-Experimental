@@ -33,6 +33,17 @@ public abstract class Setting<T> {
 
     public abstract void setSync(T value);
 
+    public boolean isDefault() {
+        T def = getDefault();
+        T curr = get();
+
+        if (def != null && curr == null) {
+            return false;
+        }
+
+        return curr.equals(def);
+    }
+
     public T getDefault() {
         return def;
     }
