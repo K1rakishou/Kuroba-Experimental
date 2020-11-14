@@ -345,6 +345,7 @@ public class ChanSettings {
     public static RangeSetting bookmarkGridViewWidth;
     public static OptionsSetting<ImageGestureActionType> imageSwipeUpGesture;
     public static OptionsSetting<ImageGestureActionType> imageSwipeDownGesture;
+    public static BooleanSetting rememberThreadNavigationHistory;
     //endregion
     //endregion
 
@@ -553,6 +554,11 @@ public class ChanSettings {
                     "image_swipe_down_gesture",
                     ImageGestureActionType.class,
                     ImageGestureActionType.SaveImage
+            );
+            rememberThreadNavigationHistory = new BooleanSetting(
+                    p,
+                    "remember_thread_navigation_history",
+                    true
             );
         } catch (Throwable error) {
             // If something crashes while the settings are initializing we at least will have the

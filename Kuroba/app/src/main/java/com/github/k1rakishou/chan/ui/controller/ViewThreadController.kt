@@ -18,7 +18,6 @@ package com.github.k1rakishou.chan.ui.controller
 
 import android.content.Context
 import android.widget.Toast
-import androidx.core.util.Pair
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.R.string.action_reload
@@ -33,6 +32,7 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.B
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.LocalSearchType
+import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
@@ -67,7 +67,6 @@ import com.github.k1rakishou.model.util.ChanPostUtils
 import io.reactivex.android.schedulers.AndroidSchedulers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -92,13 +91,12 @@ open class ViewThreadController(
   lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var chanThreadManager: ChanThreadManager
+  @Inject
+  lateinit var threadFollowHistoryManager: ThreadFollowHistoryManager
 
   private var pinItemPinned = false
 
-  // pairs of the current ThreadDescriptor and the thread we're going to's ThreadDescriptor
-  private val threadFollowerPool: Deque<Pair<ThreadDescriptor, ThreadDescriptor>> = ArrayDeque()
   private var hintPopup: HintPopup? = null
-
   private var threadDescriptor: ThreadDescriptor = startingThreadDescriptor
 
   override val threadControllerType: ThreadControllerType
@@ -285,6 +283,13 @@ open class ViewThreadController(
         true,
         null
       ) { item -> onChangeThreadMaxPostsCapacityOptionClicked(item) }
+      .addNestedCheckableItem(
+        ACTION_REMEMBER_THREAD_NAVIGATION_HISTORY,
+        R.string.action_remember_thread_navigation_history,
+        true,
+        ChanSettings.rememberThreadNavigationHistory.get(),
+        null
+      ) { item -> onRememberThreadNavHistoryOptionClicked(item) }
       .build()
   }
 
@@ -439,8 +444,13 @@ open class ViewThreadController(
     }
   }
 
-  private fun onChangeThreadMaxPostsCapacityOptionClicked(item: ToolbarMenuSubItem) {
+  private fun onRememberThreadNavHistoryOptionClicked(item: ToolbarMenuSubItem) {
+    item as CheckableToolbarMenuSubItem
+    item.isChecked = ChanSettings.rememberThreadNavigationHistory.toggle()
+  }
 
+  private fun onChangeThreadMaxPostsCapacityOptionClicked(item: ToolbarMenuSubItem) {
+    // TODO(KurobaEx):
   }
 
   private fun onScrollbarLabelingOptionClicked(item: ToolbarMenuSubItem) {
@@ -522,7 +532,6 @@ open class ViewThreadController(
     mainScope.launch(Dispatchers.Main.immediate) {
       Logger.d(TAG, "showExternalThreadInternal($threadToOpenDescriptor)")
 
-      threadFollowerPool.addFirst(Pair(threadDescriptor, threadToOpenDescriptor))
       loadThread(threadToOpenDescriptor)
     }
   }
@@ -603,6 +612,8 @@ open class ViewThreadController(
     setPinIconState(false)
     updateLeftPaneHighlighting(newThreadDescriptor)
     showHints()
+
+    threadFollowHistoryManager.pushThreadDescriptor(newThreadDescriptor)
   }
 
   private fun updateNavigationTitle(
@@ -670,6 +681,13 @@ open class ViewThreadController(
     requireNavController().requireToolbar().updateViewForItem(navigation)
   }
 
+  override fun onShowError() {
+    super.onShowError()
+
+    navigation.title = getString(R.string.thread_loading_error_title)
+    requireNavController().requireToolbar().updateTitle(navigation)
+  }
+
   private fun updateLeftPaneHighlighting(chanDescriptor: ChanDescriptor?) {
     if (doubleNavigationController == null) {
       return
@@ -726,23 +744,18 @@ open class ViewThreadController(
   }
 
   override fun threadBackPressed(): Boolean {
-    // clear the pool if the current thread isn't a part of this crosspost chain
-    // ie a new thread is loaded and a new chain is started; this will never throw null pointer exceptions
-    if (!threadFollowerPool.isEmpty() && threadFollowerPool.peekFirst().second != threadDescriptor) {
-      threadFollowerPool.clear()
-    }
+    threadFollowHistoryManager.removeTop()
 
-    // if the thread is new, it'll be empty here, so we'll get back-to-catalog functionality
-    if (threadFollowerPool.isEmpty()) {
-      return false
-    }
-
-    val threadDescriptor = threadFollowerPool.removeFirst().first
+    val threadDescriptor = threadFollowHistoryManager.peek()
       ?: return false
 
     mainScope.launch(Dispatchers.Main.immediate) { loadThread(threadDescriptor) }
-
     return true
+  }
+
+  override fun threadBackLongPressed() {
+    threadFollowHistoryManager.clearAllExcept(threadDescriptor)
+    showToast(R.string.thread_follow_history_has_been_cleared)
   }
 
   override fun showAvailableArchivesList(threadDescriptor: ThreadDescriptor) {
@@ -785,5 +798,6 @@ open class ViewThreadController(
     private const val ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR = 9102
     private const val ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR = 9103
     private const val ACTION_SET_THREAD_MAX_POSTS_CAP = 9104
+    private const val ACTION_REMEMBER_THREAD_NAVIGATION_HISTORY = 9105
   }
 }

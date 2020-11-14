@@ -182,9 +182,9 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_mark_replies_your_posts_on_scrollbar">Highlight my posts</string>
     <string name="action_mark_replies_to_your_posts_on_scrollbar">Highlight (You)s</string>
     <string name="action_mark_cross_thread_quotes_on_scrollbar">Highlight cross-thread replies</string>
-
     <string name="action_use_scrolling_text_for_thread_title">Use scrolling text for thread title</string>
     <string name="action_set_thread_max_displayed_posts_capacity">Set max displayed posts capacity</string>
+    <string name="action_remember_thread_navigation_history">Remember thread navigation history</string>
 
     <string name="action_scroll_to_top">Top</string>
     <string name="action_scroll_to_bottom">Bottom</string>
@@ -988,6 +988,8 @@ Don't have a 4chan Pass?<br>
     <string name="cannot_open_in_browser_already_deleted">Can\'t open this thread in a browser</string>
     <string name="cannot_shared_thread_already_deleted">Can\'t share this thread</string>
     <string name="album_download_could_not_save_one_or_more_images">Could not save one or more images</string>
+    <string name="thread_follow_history_has_been_cleared">Thread follow history has been cleared</string>
+    <string name="thread_loading_error_title">Failed to load thread</string>
 
     <string name="media_settings_use_saf_for_save_location_dialog_title">Use the new Storage Access Framework API to choose images download directory?</string>
     <string name="media_settings_use_saf_for_save_location_dialog_message">If you choose to use the SAF you will be able to choose an SD-card as a place to store downloaded images</string>

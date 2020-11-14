@@ -605,12 +605,13 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   fun sendKeyEvent(event: KeyEvent): Boolean {
-    if (!ChanSettings.volumeKeysScrolling.get()) {
-      return false
-    }
-
     when (event.keyCode) {
-      KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_VOLUME_DOWN -> {
+      KeyEvent.KEYCODE_VOLUME_UP,
+      KeyEvent.KEYCODE_VOLUME_DOWN -> {
+        if (!ChanSettings.volumeKeysScrolling.get()) {
+          return false
+        }
+
         if (event.action == KeyEvent.ACTION_DOWN) {
           val down = event.keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
           val scroll = (height * 0.75).toInt()
@@ -618,6 +619,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         }
 
         return true
+      }
+      KeyEvent.KEYCODE_BACK -> {
+        if (event.isLongPress) {
+          threadListLayoutCallback?.threadBackLongPressed()
+          return true
+        }
       }
     }
 
@@ -1146,6 +1153,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     fun replyLayoutOpen(open: Boolean)
     fun showImageReencodingWindow(supportsReencode: Boolean)
     fun threadBackPressed(): Boolean
+    fun threadBackLongPressed()
   }
 
   companion object {

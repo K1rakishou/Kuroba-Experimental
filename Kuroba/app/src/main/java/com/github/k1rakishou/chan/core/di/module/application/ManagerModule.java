@@ -58,6 +58,7 @@ import com.github.k1rakishou.chan.core.manager.SeenPostsManager;
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager;
+import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager;
 import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.SiteRegistry;
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator;
@@ -632,6 +633,14 @@ public class ManagerModule {
                 chanPostRepository,
                 chanThreadLoaderCoordinator
         );
+    }
+
+    @Singleton
+    @Provides
+    public ThreadFollowHistoryManager provideThreadFollowHistoryManager() {
+        Logger.d(AppModule.DI_TAG, "ThreadFollowHistoryManager");
+
+        return new ThreadFollowHistoryManager();
     }
 
 }

@@ -343,6 +343,10 @@ class ThreadLayout @JvmOverloads constructor(
     return callback.threadBackPressed()
   }
 
+  override fun threadBackLongPressed() {
+    callback.threadBackLongPressed()
+  }
+
   override suspend fun showPostsForChanDescriptor(
     descriptor: ChanDescriptor?,
     filter: PostsFilter
@@ -391,6 +395,8 @@ class ThreadLayout @JvmOverloads constructor(
       switchVisible(Visible.ERROR)
       errorText.text = errorMessage
     }
+
+    callback.onShowError()
   }
 
   private fun hasSupportedActiveArchives(): Boolean {
@@ -1054,11 +1060,13 @@ class ThreadLayout @JvmOverloads constructor(
     fun showImages(images: @JvmSuppressWildcards List<ChanPostImage>, index: Int, chanDescriptor: ChanDescriptor, thumbnail: ThumbnailView)
     fun showAlbum(images: @JvmSuppressWildcards List<ChanPostImage>, index: Int)
     fun onShowPosts()
+    fun onShowError()
     fun presentController(controller: Controller, animated: Boolean)
     fun openReportController(post: ChanPost)
     fun hideSwipeRefreshLayout()
     fun openFilterForType(type: FilterType, filterText: String?)
     fun threadBackPressed(): Boolean
+    fun threadBackLongPressed()
     fun showAvailableArchivesList(threadDescriptor: ChanDescriptor.ThreadDescriptor)
   }
 

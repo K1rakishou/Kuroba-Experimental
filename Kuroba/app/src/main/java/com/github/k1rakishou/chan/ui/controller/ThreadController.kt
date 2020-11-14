@@ -223,6 +223,10 @@ abstract class ThreadController(
     // no-op
   }
 
+  override fun onShowError() {
+    // no-op
+  }
+
   override fun hideSwipeRefreshLayout() {
     if (!::swipeRefreshLayout.isInitialized) {
       return
@@ -283,6 +287,10 @@ abstract class ThreadController(
 
   override fun threadBackPressed(): Boolean {
     return false
+  }
+
+  override fun threadBackLongPressed() {
+    // no-op
   }
 
   override fun showAvailableArchivesList(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
