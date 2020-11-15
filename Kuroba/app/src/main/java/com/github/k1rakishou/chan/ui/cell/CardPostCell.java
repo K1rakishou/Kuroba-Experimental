@@ -162,7 +162,7 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
             boolean compact,
             ChanTheme theme
     ) {
-        if (post.equals(this.post) && theme.equals(this.theme)) {
+        if (post.equals(this.post) && theme.equals(this.theme) && inPopup == this.inPopup) {
             return;
         }
 

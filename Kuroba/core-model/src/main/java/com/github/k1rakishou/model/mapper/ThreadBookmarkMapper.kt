@@ -15,7 +15,7 @@ object ThreadBookmarkMapper {
       ownerThreadId = ownerThreadId,
       ownerGroupId = threadBookmark.groupId,
       seenPostsCount = threadBookmark.seenPostsCount,
-      totalPostsCount = threadBookmark.totalPostsCount,
+      totalPostsCount = threadBookmark.threadRepliesCount,
       lastViewedPostNo = threadBookmark.lastViewedPostNo,
       title = threadBookmark.title,
       thumbnailUrl = threadBookmark.thumbnailUrl,
@@ -35,7 +35,7 @@ object ThreadBookmarkMapper {
       groupId = threadBookmarkFull.threadBookmarkEntity.ownerGroupId
     ).apply {
       this.seenPostsCount = threadBookmarkFull.threadBookmarkEntity.seenPostsCount
-      this.totalPostsCount = threadBookmarkFull.threadBookmarkEntity.totalPostsCount
+      this.threadRepliesCount = threadBookmarkFull.threadBookmarkEntity.totalPostsCount
       this.lastViewedPostNo = threadBookmarkFull.threadBookmarkEntity.lastViewedPostNo
       this.title = threadBookmarkFull.threadBookmarkEntity.title
       this.thumbnailUrl = threadBookmarkFull.threadBookmarkEntity.thumbnailUrl

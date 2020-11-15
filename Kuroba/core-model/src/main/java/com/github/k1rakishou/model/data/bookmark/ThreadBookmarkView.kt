@@ -111,7 +111,7 @@ class ThreadBookmarkView private constructor(
         threadDescriptor = threadBookmark.threadDescriptor,
         groupId = threadBookmark.groupId,
         seenPostsCount = threadBookmark.seenPostsCount,
-        totalPostsCount = threadBookmark.totalPostsCount,
+        totalPostsCount = threadBookmark.threadRepliesCount,
         lastViewedPostNo = threadBookmark.lastViewedPostNo,
         threadBookmarkReplyViews = mapToViews(threadBookmark.threadBookmarkReplies),
         title = threadBookmark.title,

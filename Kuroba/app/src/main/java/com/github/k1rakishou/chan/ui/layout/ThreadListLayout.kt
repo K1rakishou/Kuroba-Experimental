@@ -232,7 +232,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private var postViewMode: PostViewMode? = null
   private var spanCount = 2
   private var searchOpen = false
-  private var lastPostCount = 0
+  private var prevLastPostNo = 0L
   private var hat: Bitmap? = null
 
   var replyOpen = false
@@ -380,20 +380,22 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       chanThreadViewableInfo.listViewTop = indexTop[1]
     }
 
-    val last = completeBottomAdapterPosition
-    if (last >= 0) {
-      updateLastViewedPostNo(last)
+    val currentLastPostNo = postAdapter.lastPostNo
+
+    val lastVisibleItemPosition = completeBottomAdapterPosition
+    if (lastVisibleItemPosition >= 0) {
+      updateLastViewedPostNo(lastVisibleItemPosition)
     }
 
-    if (last == postAdapter.itemCount - 1 && last != lastPostCount) {
-      lastPostCount = last
+    if (lastVisibleItemPosition == postAdapter.itemCount - 1 && currentLastPostNo > prevLastPostNo) {
+      prevLastPostNo = currentLastPostNo
 
       // As requested by the RecyclerView, make sure that the adapter isn't changed
       // while in a layout pass. Postpone to the next frame.
       listScrollToBottomExecutor.post { callback?.onListScrolledToBottom() }
     }
 
-    if (last == postAdapter.itemCount - 1) {
+    if (lastVisibleItemPosition == postAdapter.itemCount - 1) {
       val isDragging = fastScroller?.isDragging ?: false
       if (!isDragging) {
         threadListLayoutCallback?.showToolbar()
@@ -402,7 +404,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   private fun updateLastViewedPostNo(last: Int) {
-    if (last < 0 || last == lastPostCount) {
+    if (last < 0) {
       return
     }
 
@@ -860,7 +862,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       openSearch(false)
     }
 
-    lastPostCount = 0
+    prevLastPostNo = 0
     noParty()
   }
 

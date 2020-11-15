@@ -62,6 +62,7 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2.ImageListener
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.animation.PostCellAnimator.createUnseenPostIndicatorFadeAnimation
@@ -111,6 +112,8 @@ class PostCell : LinearLayout, PostCellInterface {
   lateinit var archivesManager: ArchivesManager
   @Inject
   lateinit var bookmarksManager: BookmarksManager
+  @Inject
+  lateinit var chanThreadManager: ChanThreadManager
   @Inject
   lateinit var lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder
   @Inject
@@ -276,15 +279,16 @@ class PostCell : LinearLayout, PostCellInterface {
       && this.showDivider == showDivider
       && this.filterHash == filterHash
       && this.theme == theme
+      && this.currentPostIndex == currentPostIndex
+      && this.realPostIndex == realPostIndex
     ) {
       return
     }
 
+    this.callback = callback
+
     this.chanDescriptor = chanDescriptor
     this.post = post
-    this.currentPostIndex = currentPostIndex
-    this.realPostIndex = realPostIndex
-    this.callback = callback
     this.inPopup = inPopup
     this.highlighted = highlighted
     this.postSelected = selected
@@ -292,6 +296,8 @@ class PostCell : LinearLayout, PostCellInterface {
     this.showDivider = showDivider
     this.filterHash = filterHash
     this.theme = theme
+    this.currentPostIndex = currentPostIndex
+    this.realPostIndex = realPostIndex
 
     hasColoredFilter = postFilterManager.getFilterHighlightedColor(post.postDescriptor) != 0
     bindPost(post)
@@ -418,7 +424,12 @@ class PostCell : LinearLayout, PostCellInterface {
     val threadDescriptor = chanDescriptor.threadDescriptorOrNull()
 
     if (threadDescriptor != null && currentPostIndex >= 0 && realPostIndex >= 0) {
-      bookmarksManager.onPostViewed(threadDescriptor, post.postNo(), currentPostIndex, realPostIndex)
+      val unseenPostsCount = chanThreadManager.getNewPostsCount(
+        threadDescriptor,
+        post.postNo()
+      )
+
+      bookmarksManager.onPostViewed(threadDescriptor, post.postNo(), unseenPostsCount)
       lastViewedPostNoInfoHolder.setLastViewedPostNo(threadDescriptor, post.postNo())
     }
   }

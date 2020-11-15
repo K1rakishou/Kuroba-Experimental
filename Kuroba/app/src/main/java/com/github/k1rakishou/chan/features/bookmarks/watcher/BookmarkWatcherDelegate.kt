@@ -88,6 +88,10 @@ class BookmarkWatcherDelegate(
       currentThreadDescriptor
     )
 
+    if (verboseLogsEnabled) {
+      Logger.d(TAG, "doWorkInternal() updating ${watchingBookmarkDescriptors.joinToString()}")
+    }
+
     try {
       lastPageNotificationsHelper.showOrUpdateNotifications(watchingBookmarkDescriptors)
     } catch (error: Throwable) {
@@ -273,7 +277,7 @@ class BookmarkWatcherDelegate(
       lastViewedPostNoInfoHolder.getLastViewedPostNoOrZero(threadDescriptor)
     }
 
-    threadBookmark.updateTotalPostsCount(threadBookmarkInfoObject.getPostsCountWithoutOP())
+    threadBookmark.updateThreadRepliesCount(threadBookmarkInfoObject.getPostsCountWithoutOP())
 
     // We need to handle rolling sticky (sticky threads with max posts cap) a little bit
     // differently so store this information for now (we don't need to persist it though)
@@ -286,15 +290,14 @@ class BookmarkWatcherDelegate(
     // of time seenPostsCount will be greater than totalPostsCount so we need to correct that
     // info here. If we don't do that, then in the previous case there will be one unseen post
     // left and it will be impossible to get rid of it by scrolling to the bottom of the thread.
-    if (threadBookmark.seenPostsCount > threadBookmark.totalPostsCount) {
-      threadBookmark.seenPostsCount = threadBookmark.totalPostsCount
+    if (threadBookmark.seenPostsCount > threadBookmark.threadRepliesCount) {
+      threadBookmark.seenPostsCount = threadBookmark.threadRepliesCount
     }
 
     // When seenPostsCount is zero we can update it seen post information we get by calculating
     // the amount of posts which postNo is less or equals to lastViewedPostNo
     if (threadBookmark.seenPostsCount == 0) {
-      threadBookmark.seenPostsCount =
-        threadBookmarkInfoObject.countAmountOfSeenPosts(lastViewedPostNo)
+      threadBookmark.seenPostsCount = threadBookmarkInfoObject.countAmountOfSeenPosts(lastViewedPostNo)
     }
 
     quotesToMeMap.forEach { (myPostNo, replyToMyPostList) ->
@@ -309,25 +312,14 @@ class BookmarkWatcherDelegate(
       }
     }
 
-    // In case of rolling sticky thread the total amount of posts will mostly be the same
-    // (from the point it reaches the cap and on) and once seenPostsCount becomes equal to
-    // totalPostsCount it will stuck there forever and the user won't see new posts marker from
-    // rolling sticky threads. So we need to update it a little bit differently. We need to
-    // calculate the amount of new posts (by counting every post which postNo is greater than
-    // lastViewedPostNo) and then subtracting it from seenPostsCount
-    if (originalPost.stickyThread is StickyThread.StickyWithCap) {
-      val totalPostsCount = threadBookmarkInfoObject.getPostsCountWithoutOP()
-      val newPostsCount = threadBookmarkInfoObject.simplePostObjects
-        .filter { threadBookmarkInfoPostObject ->
-          val postNo = threadBookmarkInfoPostObject.postNo()
+    val newPostsCount = threadBookmarkInfoObject.simplePostObjects
+      .count { threadBookmarkInfoPostObject ->
+        val postNo = threadBookmarkInfoPostObject.postNo()
 
-          return@filter postNo > lastViewedPostNo
-        }
-        .size
+        return@count postNo > lastViewedPostNo
+      }
 
-      threadBookmark.updateSeenPostCountInRollingSticky(totalPostsCount, newPostsCount)
-    }
-
+    threadBookmark.updateSeenPostCountAfterFetch(newPostsCount)
     threadBookmark.setBumpLimit(originalPost.isBumpLimit)
     threadBookmark.setImageLimit(originalPost.isImageLimit)
 

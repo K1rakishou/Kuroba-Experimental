@@ -394,6 +394,14 @@ public class PostAdapter
         return postDescriptors;
     }
 
+    public long getLastPostNo() {
+        if (displayList.isEmpty()) {
+            return -1;
+        }
+
+        return displayList.get(displayList.size() - 1).postNo();
+    }
+
     public void cleanup() {
         highlightedPostDescriptor = null;
         highlightedPostId = null;

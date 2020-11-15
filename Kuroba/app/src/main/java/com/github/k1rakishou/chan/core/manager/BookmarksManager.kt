@@ -494,8 +494,7 @@ class BookmarksManager(
   fun onPostViewed(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     postNo: Long,
-    currentPostIndex: Int,
-    realPostIndex: Int
+    unseenPostsCount: Int
   ) {
     if (!isReady()) {
       return
@@ -514,13 +513,14 @@ class BookmarksManager(
     }
 
     updateBookmark(threadDescriptor) { threadBookmark ->
-      threadBookmark.updateSeenPostCount(realPostIndex)
+      threadBookmark.updateSeenPostsCount(unseenPostsCount)
       threadBookmark.updateLastViewedPostNo(postNo)
       threadBookmark.readRepliesUpTo(postNo)
     }
 
     delayedBookmarksChangedExecutor.post(
-      250L, {
+      timeout = 250L,
+      func = {
         persistBookmarks(
           blocking = false,
           onBookmarksPersisted = {

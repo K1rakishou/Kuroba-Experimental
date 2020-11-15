@@ -6,13 +6,12 @@ import okhttp3.HttpUrl
 import org.joda.time.DateTime
 import java.util.*
 import kotlin.collections.HashMap
-import kotlin.math.max
 
 class ThreadBookmark private constructor(
   val threadDescriptor: ChanDescriptor.ThreadDescriptor,
   val groupId: String,
   var seenPostsCount: Int = 0,
-  var totalPostsCount: Int = 0,
+  var threadRepliesCount: Int = 0,
   var lastViewedPostNo: Long = 0,
   val threadBookmarkReplies: MutableMap<PostDescriptor, ThreadBookmarkReply> = mutableMapOf(),
   var title: String? = null,
@@ -42,7 +41,7 @@ class ThreadBookmark private constructor(
       threadDescriptor = threadDescriptor,
       groupId = groupId,
       seenPostsCount = seenPostsCount,
-      totalPostsCount = totalPostsCount,
+      threadRepliesCount = threadRepliesCount,
       lastViewedPostNo = lastViewedPostNo,
       threadBookmarkReplies = threadBookmarkRepliesCopy,
       title = title,
@@ -64,23 +63,23 @@ class ThreadBookmark private constructor(
   }
 
   fun unseenPostsCount(): Int {
-    return max(0, totalPostsCount - seenPostsCount)
+    return (threadRepliesCount - seenPostsCount).coerceAtLeast(0)
   }
 
   fun updateLastViewedPostNo(newLastViewedPostNo: Long) {
-    lastViewedPostNo = max(lastViewedPostNo, newLastViewedPostNo)
+    lastViewedPostNo = maxOf(lastViewedPostNo, newLastViewedPostNo)
   }
 
-  fun updateSeenPostCount(newSeenPostsCount: Int) {
-    seenPostsCount = max(seenPostsCount, newSeenPostsCount)
+  fun updateSeenPostsCount(unseenPostsCount: Int) {
+    seenPostsCount = maxOf(seenPostsCount, (threadRepliesCount - unseenPostsCount).coerceAtLeast(0))
   }
 
-  fun updateTotalPostsCount(newPostsCount: Int) {
-    totalPostsCount = newPostsCount
+  fun updateSeenPostCountAfterFetch(newPostsCount: Int) {
+    seenPostsCount = maxOf(0, threadRepliesCount - newPostsCount)
   }
 
-  fun updateSeenPostCountInRollingSticky(totalPostsCount: Int, newPostsCount: Int) {
-    seenPostsCount = max(0, totalPostsCount - newPostsCount)
+  fun updateThreadRepliesCount(newPostsCount: Int) {
+    threadRepliesCount = newPostsCount
   }
 
   fun setBumpLimit(bumpLimit: Boolean) {
@@ -126,7 +125,7 @@ class ThreadBookmark private constructor(
   }
 
   fun readAllPostsAndNotifications() {
-    seenPostsCount = totalPostsCount
+    seenPostsCount = threadRepliesCount
 
     threadBookmarkReplies.values.forEach { threadBookmarkReply ->
       threadBookmarkReply.alreadySeen = true
@@ -216,7 +215,7 @@ class ThreadBookmark private constructor(
     if (threadDescriptor != other.threadDescriptor) return false
     if (groupId != other.groupId) return false
     if (seenPostsCount != other.seenPostsCount) return false
-    if (totalPostsCount != other.totalPostsCount) return false
+    if (threadRepliesCount != other.threadRepliesCount) return false
     if (lastViewedPostNo != other.lastViewedPostNo) return false
     if (title != other.title) return false
     if (thumbnailUrl != other.thumbnailUrl) return false
@@ -235,7 +234,7 @@ class ThreadBookmark private constructor(
     var result = threadDescriptor.hashCode()
     result = 31 * result + groupId.hashCode()
     result = 31 * result + seenPostsCount
-    result = 31 * result + totalPostsCount
+    result = 31 * result + threadRepliesCount
     result = 31 * result + lastViewedPostNo.hashCode()
     result = 31 * result + threadBookmarkReplies.hashCode()
     result = 31 * result + (title?.hashCode() ?: 0)
@@ -248,7 +247,7 @@ class ThreadBookmark private constructor(
 
   override fun toString(): String {
     return "ThreadBookmark(threadDescriptor=$threadDescriptor, groupId=$groupId, seenPostsCount=$seenPostsCount, " +
-      "totalPostsCount=$totalPostsCount, lastViewedPostNo=$lastViewedPostNo, " +
+      "threadRepliesCount=$threadRepliesCount, lastViewedPostNo=$lastViewedPostNo, " +
       "threadBookmarkReplies=$threadBookmarkReplies, title=${title?.take(20)}, thumbnailUrl=$thumbnailUrl, " +
       "stickyThread=$stickyThread, state=${stateToString()}, createdOn=${createdOn})"
   }
