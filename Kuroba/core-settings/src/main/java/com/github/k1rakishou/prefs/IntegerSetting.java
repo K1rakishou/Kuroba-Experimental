@@ -41,6 +41,7 @@ public class IntegerSetting extends Setting<Integer> {
             cached = settingProvider.getInt(key, def);
             hasCached = true;
         }
+
         return cached;
     }
 
@@ -49,6 +50,7 @@ public class IntegerSetting extends Setting<Integer> {
         if (!value.equals(get())) {
             settingProvider.putInt(key, value);
             cached = value;
+            settingState.onNext(value);
         }
     }
 
@@ -57,6 +59,7 @@ public class IntegerSetting extends Setting<Integer> {
         if (!value.equals(get())) {
             settingProvider.putIntSync(key, value);
             cached = value;
+            settingState.onNext(value);
         }
     }
 

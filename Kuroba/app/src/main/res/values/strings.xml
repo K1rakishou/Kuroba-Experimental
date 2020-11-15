@@ -492,8 +492,10 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_watch_enable_background_description">Watch bookmarks when app is either in foreground or background</string>
     <string name="setting_watch_background_timeout">Background update interval</string>
     <string name="setting_watch_background_timeout_description">The interval between updates when placed in the background</string>
-    <string name="setting_background_watcher_first_option">%1$s (More frequent updates, worse for battery)</string>
-    <string name="setting_background_watcher_last_option">%1$s (Less frequent updates, better for battery)</string>
+    <string name="setting_background_watcher_test_option">%1$s (Option for testing. You are not supposed to see this)</string>
+    <string name="setting_background_watcher_very_bad_option">%1$s (Terrible for battery. Don\'t tell me I didn\'t warn you!)</string>
+    <string name="setting_background_watcher_non_optimal_option">%1$s (More frequent updates, bad for battery)</string>
+    <string name="setting_background_watcher_optimal_option">%1$s (Less frequent updates, good for battery)</string>
 
     <string name="setting_reply_notifications">Reply notifications</string>
     <string name="setting_reply_notifications_description">Notify when your posts are being replied to</string>

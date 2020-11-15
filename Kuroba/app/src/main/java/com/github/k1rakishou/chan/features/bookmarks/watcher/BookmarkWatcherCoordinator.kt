@@ -2,15 +2,14 @@ package com.github.k1rakishou.chan.features.bookmarks.watcher
 
 import android.content.Context
 import androidx.work.Constraints
-import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
-import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.await
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.chan.core.manager.ApplicationVisibility
-import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getFlavorType
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import io.reactivex.Flowable
 import io.reactivex.processors.PublishProcessor
@@ -23,34 +22,19 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 class BookmarkWatcherCoordinator(
-  private val isDevFlavor: Boolean,
   private val verboseLogsEnabled: Boolean,
   private val appContext: Context,
   private val appScope: CoroutineScope,
+  private val appConstants: AppConstants,
   private val bookmarksManager: BookmarksManager,
-  private val bookmarkForegroundWatcher: BookmarkForegroundWatcher,
-  private val applicationVisibilityManager: ApplicationVisibilityManager
+  private val bookmarkForegroundWatcher: BookmarkForegroundWatcher
 ) {
   // We need this subject for events buffering
   private val bookmarkChangeSubject = PublishProcessor.create<SimpleBookmarkChangeInfo>()
   private val running = AtomicBoolean(false)
-  private var currentWatcherType = WatcherType.None
 
   fun initialize() {
     Logger.d(TAG, "BookmarkWatcherCoordinator.initialize()")
-
-    applicationVisibilityManager.addListener { applicationVisibility ->
-      if (!bookmarksManager.isReady()) {
-        return@addListener
-      }
-
-      if (isDevFlavor) {
-        Logger.d(TAG, "Calling onBookmarksChanged() app visibility changed " +
-          "(applicationVisibility = $applicationVisibility)")
-      }
-
-      onBookmarksChanged()
-    }
 
     appScope.launch {
       bookmarkChangeSubject
@@ -127,10 +111,7 @@ class BookmarkWatcherCoordinator(
   }
 
   @Synchronized
-  private fun onBookmarksChanged(
-    applicationVisibility: ApplicationVisibility = applicationVisibilityManager.getCurrentAppVisibility(),
-    hasCreateBookmarkChange: Boolean = false
-  ) {
+  private suspend fun onBookmarksChanged(hasCreateBookmarkChange: Boolean = false) {
     if (!running.compareAndSet(false, true)) {
       return
     }
@@ -141,105 +122,41 @@ class BookmarkWatcherCoordinator(
         Logger.d(TAG, "onBookmarksChanged() no active bookmarks, nothing to do")
 
         cancelForegroundBookmarkWatching()
-        cancelBackgroundBookmarkWatching()
-
-        currentWatcherType = WatcherType.None
+        cancelBackgroundBookmarkWatching(appConstants, appContext)
         return
       }
 
-      if (applicationVisibility == ApplicationVisibility.Foreground) {
-        Logger.d(TAG, "Switching to foreground watcher")
-        cancelBackgroundBookmarkWatching()
+      if (!ChanSettings.watchEnabled.get()) {
+        Logger.d(TAG, "onBookmarksChanged() watchEnabled is false, stopping foreground watcher")
 
-        if (ChanSettings.watchEnabled.get()) {
-          if (currentWatcherType == WatcherType.Foreground) {
-            if (hasCreateBookmarkChange) {
-              Logger.d(TAG, "hasCreateBookmarkChange==true, restarting the foreground watcher")
-              bookmarkForegroundWatcher.restartWatching()
-            } else {
-              Logger.d(TAG, "Already using foreground watcher, do nothing")
-            }
-
-            return
-          }
-
-          Logger.d(TAG, "Switched to foreground watcher")
-
-          currentWatcherType = WatcherType.Foreground
-          bookmarkForegroundWatcher.startWatching()
-          return
-        }
-
-        Logger.d(TAG, "Can't start foreground watching because watchEnabled setting is disabled")
         cancelForegroundBookmarkWatching()
-        currentWatcherType = WatcherType.None
-      } else {
-        Logger.d(TAG, "Switching to background watcher")
-        cancelForegroundBookmarkWatching()
-
-        if (ChanSettings.watchBackground.get()) {
-          // Always update the background watcher's job
-          Logger.d(TAG, "Switched to background watcher")
-
-          currentWatcherType = WatcherType.Background
-          startBackgroundBookmarkWatchingWorkIfNeeded()
-          return
-        }
-
-        Logger.d(TAG, "Can't start background watching because watchBackground setting is disabled")
-        cancelBackgroundBookmarkWatching()
-        currentWatcherType = WatcherType.None
+        cancelBackgroundBookmarkWatching(appConstants, appContext)
+        return
       }
+
+      if (!ChanSettings.watchBackground.get()) {
+        Logger.d(TAG, "onBookmarksChanged() watchBackground is false, stopping background watcher")
+        cancelBackgroundBookmarkWatching(appConstants, appContext)
+
+        // fallthrough because we need to update the foreground watcher
+      }
+
+      if (hasCreateBookmarkChange) {
+        Logger.d(TAG, "onBookmarksChanged() hasCreateBookmarkChange==true, restarting the foreground watcher")
+        bookmarkForegroundWatcher.restartWatching()
+        return
+      }
+
+      Logger.d(TAG, "onBookmarksChanged() calling startWatchingIfNotWatchingYet()")
+      bookmarkForegroundWatcher.startWatchingIfNotWatchingYet()
     } finally {
       running.set(false)
     }
   }
 
-  private fun startBackgroundBookmarkWatchingWorkIfNeeded() {
-    val backgroundIntervalMillis = ChanSettings.watchBackgroundInterval.get().toLong()
-
-    val constraints = Constraints.Builder()
-      .setRequiredNetworkType(NetworkType.CONNECTED)
-      .build()
-
-    val workRequest = PeriodicWorkRequestBuilder<BookmarkBackgroundWatcherWorker>(
-      backgroundIntervalMillis,
-      TimeUnit.MILLISECONDS
-    )
-      .setConstraints(constraints)
-      .build()
-
-    val tag = getUniqueWorkTag()
-
-    WorkManager
-      .getInstance(appContext)
-      .enqueueUniquePeriodicWork(tag, ExistingPeriodicWorkPolicy.REPLACE, workRequest)
-      .result
-      .get(1, TimeUnit.MINUTES)
-
-    Logger.d(TAG, "startBackgroundBookmarkWatchingWorkIfNeeded() enqueued work with tag $tag")
-  }
-
   private fun cancelForegroundBookmarkWatching() {
     Logger.d(TAG, "cancelForegroundBookmarkWatching() called")
     bookmarkForegroundWatcher.stopWatching()
-  }
-
-  private fun cancelBackgroundBookmarkWatching() {
-    Logger.d(TAG, "cancelBackgroundBookmarkWatching() called")
-
-    WorkManager
-      .getInstance(appContext)
-      .cancelUniqueWork(getUniqueWorkTag())
-      .result
-      .get(1, TimeUnit.MINUTES)
-
-    val tag = getUniqueWorkTag()
-    Logger.d(TAG, "cancelBackgroundBookmarkWatching() work with tag $tag canceled")
-  }
-
-  private fun getUniqueWorkTag(): String {
-    return "${TAG}_${getFlavorType().name}"
   }
 
   private fun isWantedBookmarkChange(bookmarkChange: BookmarksManager.BookmarkChange): Boolean {
@@ -261,13 +178,53 @@ class BookmarkWatcherCoordinator(
     data class BackgroundWatcherIntervalSettingChanged(val interval: Int) : WatchSettingChange()
   }
 
-  private enum class WatcherType {
-    None,
-    Foreground,
-    Background
-  }
-
   companion object {
     private const val TAG = "BookmarkWatcherController"
+
+    suspend fun restartBackgroundWork(appConstants: AppConstants, appContext: Context) {
+      val tag = appConstants.bookmarkWatchWorkUniqueTag
+      Logger.d(TAG, "restartBackgroundJob() called tag=$tag")
+
+      if (!ChanSettings.watchBackground.get()) {
+        cancelBackgroundBookmarkWatching(appConstants, appContext)
+        return
+      }
+
+      val backgroundIntervalMillis = ChanSettings.watchBackgroundInterval.get().toLong()
+
+      val constraints = Constraints.Builder()
+        .setRequiredNetworkType(NetworkType.CONNECTED)
+        .build()
+
+      val workRequest = OneTimeWorkRequestBuilder<BookmarkBackgroundWatcherWorker>()
+        .addTag(tag)
+        .setInitialDelay(backgroundIntervalMillis, TimeUnit.MILLISECONDS)
+        .setConstraints(constraints)
+        .build()
+
+      WorkManager
+        .getInstance(appContext)
+        .enqueueUniqueWork(tag, ExistingWorkPolicy.REPLACE, workRequest)
+        .result
+        .await()
+
+      Logger.d(TAG, "restartBackgroundJob() enqueued work with tag $tag")
+    }
+
+    suspend fun cancelBackgroundBookmarkWatching(
+      appConstants: AppConstants,
+      appContext: Context
+    ) {
+      val tag = appConstants.bookmarkWatchWorkUniqueTag
+      Logger.d(TAG, "cancelBackgroundBookmarkWatching() called tag=$tag")
+
+      WorkManager
+        .getInstance(appContext)
+        .cancelUniqueWork(tag)
+        .result
+        .await()
+
+      Logger.d(TAG, "cancelBackgroundBookmarkWatching() work with tag $tag canceled")
+    }
   }
 }

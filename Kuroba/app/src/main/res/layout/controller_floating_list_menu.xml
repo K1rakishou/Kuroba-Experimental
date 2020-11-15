@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     <com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenu
         android:id="@+id/floating_list_menu"
-        android:layout_width="288dp"
+        android:layout_width="320dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"

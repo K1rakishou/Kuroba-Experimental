@@ -1,8 +1,11 @@
 package com.github.k1rakishou.chan.features.bookmarks.watcher
 
+import android.content.Context
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
@@ -24,12 +27,14 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BookmarkForegroundWatcher(
-  private val isDevFlavor: Boolean,
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
+  private val appContext: Context,
+  private val appConstants: AppConstants,
   private val bookmarksManager: BookmarksManager,
   private val archivesManager: ArchivesManager,
-  private val bookmarkWatcherDelegate: BookmarkWatcherDelegate
+  private val bookmarkWatcherDelegate: BookmarkWatcherDelegate,
+  private val applicationVisibilityManager: ApplicationVisibilityManager
 ) {
   private val channel = Channel<Unit>(Channel.RENDEZVOUS)
   private val working = AtomicBoolean(false)
@@ -72,7 +77,7 @@ class BookmarkForegroundWatcher(
   }
 
   @Synchronized
-  fun startWatching() {
+  fun startWatchingIfNotWatchingYet() {
     channel.offer(Unit)
   }
 
@@ -85,7 +90,7 @@ class BookmarkForegroundWatcher(
   @Synchronized
   fun restartWatching() {
     stopWatching()
-    startWatching()
+    startWatchingIfNotWatchingYet()
   }
 
   private suspend fun updateBookmarkForOpenedThread(
@@ -122,6 +127,8 @@ class BookmarkForegroundWatcher(
     Logger.d(TAG, "updateBookmarkForOpenedThread($threadDescriptor) called")
 
     try {
+      BookmarkWatcherCoordinator.restartBackgroundWork(appConstants, appContext)
+
       bookmarkWatcherDelegate.doWork(
         isCalledFromForeground = true,
         updateCurrentlyOpenedThread = true
@@ -136,6 +143,11 @@ class BookmarkForegroundWatcher(
     while (true) {
       bookmarksManager.awaitUntilInitialized()
 
+      if (!applicationVisibilityManager.isAppInForeground()) {
+        Logger.d(TAG, "updateBookmarksWorkerLoop() isAppInForeground is false")
+        return
+      }
+
       if (!ChanSettings.watchEnabled.get()) {
         Logger.d(TAG, "updateBookmarksWorkerLoop() ChanSettings.watchEnabled() is false")
         return
@@ -147,6 +159,8 @@ class BookmarkForegroundWatcher(
       }
 
       try {
+        BookmarkWatcherCoordinator.restartBackgroundWork(appConstants, appContext)
+
         bookmarkWatcherDelegate.doWork(
           isCalledFromForeground = true,
           updateCurrentlyOpenedThread = false

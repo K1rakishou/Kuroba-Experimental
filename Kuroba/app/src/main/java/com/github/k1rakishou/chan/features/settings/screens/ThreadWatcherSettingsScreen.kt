@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.ThreadWatcherScreen
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.PhoneWithBackgroundLimitationsHelper
 import com.github.k1rakishou.common.AndroidUtils.getString
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -105,26 +106,47 @@ class ThreadWatcherSettingsScreen(
           bottomDescriptionStringFunc = { itemName ->
             getString(R.string.setting_watch_background_timeout_description).toString() + "\n\n" + itemName
           },
-          items = INTERVALS,
+          items = kotlin.run {
+            if (AppModuleAndroidUtils.isDevBuild()) {
+              INTERVALS
+            } else {
+              INTERVALS.drop(1)
+            }
+          },
           itemNameMapper = { timeout ->
             val timeoutString = getString(
               R.string.minutes,
               TimeUnit.MILLISECONDS.toMinutes(timeout.toLong()).toInt()
             )
 
-            if (timeout == FIRST_TIMEOUT_OPTION) {
+            val testOptionThreshold = TimeUnit.MINUTES.toMillis(1).toInt()
+            if (timeout <= testOptionThreshold) {
               return@createBuilder getString(
-                R.string.setting_background_watcher_first_option,
-                timeoutString
-              )
-            } else if (timeout == LAST_TIMEOUT_OPTION) {
-              return@createBuilder getString(
-                R.string.setting_background_watcher_last_option,
+                R.string.setting_background_watcher_test_option,
                 timeoutString
               )
             }
 
-            return@createBuilder timeoutString
+            val optimalTimeoutThreshold = TimeUnit.MINUTES.toMillis(30).toInt()
+            if (timeout >= optimalTimeoutThreshold) {
+              return@createBuilder getString(
+                R.string.setting_background_watcher_optimal_option,
+                timeoutString
+              )
+            }
+
+            val nonOptimalTimeoutsThreshold = TimeUnit.MINUTES.toMillis(10).toInt()
+            if (timeout >= nonOptimalTimeoutsThreshold) {
+              return@createBuilder getString(
+                R.string.setting_background_watcher_non_optimal_option,
+                timeoutString
+              )
+            }
+
+            return@createBuilder getString(
+              R.string.setting_background_watcher_very_bad_option,
+              timeoutString
+            )
           },
           setting = ChanSettings.watchBackgroundInterval,
           dependsOnSetting = ChanSettings.watchBackground
@@ -178,6 +200,9 @@ class ThreadWatcherSettingsScreen(
 
   companion object {
     private val INTERVALS = listOf(
+      TimeUnit.MINUTES.toMillis(1).toInt(),
+      TimeUnit.MINUTES.toMillis(5).toInt(),
+      TimeUnit.MINUTES.toMillis(10).toInt(),
       TimeUnit.MINUTES.toMillis(15).toInt(),
       TimeUnit.MINUTES.toMillis(30).toInt(),
       TimeUnit.MINUTES.toMillis(45).toInt(),
@@ -185,8 +210,5 @@ class ThreadWatcherSettingsScreen(
       TimeUnit.MINUTES.toMillis(90).toInt(),
       TimeUnit.MINUTES.toMillis(120).toInt()
     )
-
-    private val FIRST_TIMEOUT_OPTION = INTERVALS.first()
-    private val LAST_TIMEOUT_OPTION = INTERVALS.last()
   }
 }

@@ -24,7 +24,6 @@ import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkReply
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import kotlinx.coroutines.CoroutineScope
 import org.joda.time.DateTime
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
@@ -32,7 +31,6 @@ import kotlin.time.measureTime
 class BookmarkWatcherDelegate(
   private val isDevFlavor: Boolean,
   private val verboseLogsEnabled: Boolean,
-  private val appScope: CoroutineScope,
   private val bookmarksManager: BookmarksManager,
   private val archivesManager: ArchivesManager,
   private val siteManager: SiteManager,
@@ -65,11 +63,13 @@ class BookmarkWatcherDelegate(
         currentThreadDescriptor
       )
     }
+
     if (result is ModularResult.Error) {
       if (result.error.isExceptionImportant()) {
         Logger.e(TAG, "BookmarkWatcherDelegate.doWork() failure", result.error)
       } else {
-        Logger.e(TAG, "BookmarkWatcherDelegate.doWork() failure, error: ${result.error.errorMessageOrClassName()}")
+        Logger.e(TAG, "BookmarkWatcherDelegate.doWork() failure, " +
+          "error: ${result.error.errorMessageOrClassName()}")
       }
     }
   }

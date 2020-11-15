@@ -6,7 +6,7 @@ import android.os.Build
 
 open class AppConstants(
   context: Context,
-  private val isDev: Boolean
+  private val flavorType: AndroidUtils.FlavorType
 ) {
   val maxPostsCountInPostsCache: Int
   val maxAmountOfPostsInDatabase: Int
@@ -16,16 +16,18 @@ open class AppConstants(
 
   val proxiesFileName = PROXIES_FILE_NAME
 
+  val bookmarkWatchWorkUniqueTag = "BookmarkWatcherController_${flavorType.name}"
+
   init {
     val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
 
-    maxAmountOfPostsInDatabase = if (isDev) {
+    maxAmountOfPostsInDatabase = if (flavorType == AndroidUtils.FlavorType.Dev) {
       5000
     } else {
       125_000
     }
 
-    maxAmountOfThreadsInDatabase = if (isDev) {
+    maxAmountOfThreadsInDatabase = if (flavorType == AndroidUtils.FlavorType.Dev) {
       500
     } else {
       12_500
@@ -38,7 +40,7 @@ open class AppConstants(
   }
 
   private fun calculatePostsCountForPostsCacheDependingOnDeviceRam(activityManager: ActivityManager?): Int {
-    if (isDev) {
+    if (flavorType == AndroidUtils.FlavorType.Dev) {
       return DEV_BUILD_POSTS_CACHE_COUNT
     }
 

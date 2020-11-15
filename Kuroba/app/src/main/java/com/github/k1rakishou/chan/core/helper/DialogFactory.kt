@@ -20,11 +20,12 @@ import com.github.k1rakishou.chan.utils.ViewUtils.changeProgressColor
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.getString
 import com.github.k1rakishou.common.exhaustive
+import com.github.k1rakishou.core_themes.ThemeEngine
 
 
 class DialogFactory(
   private val applicationVisibilityManager: ApplicationVisibilityManager,
-  private val themeEngine: com.github.k1rakishou.core_themes.ThemeEngine
+  private val themeEngine: ThemeEngine
 ) {
 
   @JvmOverloads

@@ -104,7 +104,6 @@ class ThreadStatusCell(
     unschedule()
 
     updateJob = scope.launch {
-      delay(UPDATE_INTERVAL_MS)
       update()
     }
   }
@@ -208,6 +207,7 @@ class ThreadStatusCell(
     statusCellText.text = builder
 
     if (canUpdate) {
+      delay(UPDATE_INTERVAL_MS)
       schedule()
     }
   }

@@ -185,7 +185,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     val isDev = AppModuleAndroidUtils.isDevBuild()
     System.setProperty("kotlinx.coroutines.debug", if (isDev) "on" else "off")
 
-    val appConstants = AppConstants(applicationContext, isDev)
+    val appConstants = AppConstants(applicationContext, AppModuleAndroidUtils.getFlavorType())
     logAppConstants(appConstants)
     SavingNotification.setupChannel()
 

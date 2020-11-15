@@ -357,7 +357,6 @@ public class ManagerModule {
     @Provides
     @Singleton
     public BookmarkWatcherDelegate provideBookmarkWatcherDelegate(
-            CoroutineScope appScope,
             BookmarksManager bookmarksManager,
             ArchivesManager archivesManager,
             SiteManager siteManager,
@@ -372,7 +371,6 @@ public class ManagerModule {
         return new BookmarkWatcherDelegate(
                 AppModuleAndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
-                appScope,
                 bookmarksManager,
                 archivesManager,
                 siteManager,
@@ -388,19 +386,24 @@ public class ManagerModule {
     @Singleton
     public BookmarkForegroundWatcher provideBookmarkForegroundWatcher(
             CoroutineScope appScope,
+            Context appContext,
+            AppConstants appConstants,
             BookmarksManager bookmarksManager,
             ArchivesManager archivesManager,
-            BookmarkWatcherDelegate bookmarkWatcherDelegate
+            BookmarkWatcherDelegate bookmarkWatcherDelegate,
+            ApplicationVisibilityManager applicationVisibilityManager
     ) {
         Logger.d(AppModule.DI_TAG, "BookmarkForegroundWatcher");
 
         return new BookmarkForegroundWatcher(
-                AppModuleAndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
                 appScope,
+                appContext,
+                appConstants,
                 bookmarksManager,
                 archivesManager,
-                bookmarkWatcherDelegate
+                bookmarkWatcherDelegate,
+                applicationVisibilityManager
         );
     }
 
@@ -409,20 +412,19 @@ public class ManagerModule {
     public BookmarkWatcherCoordinator provideBookmarkWatcherController(
             Context appContext,
             CoroutineScope appScope,
+            AppConstants appConstants,
             BookmarksManager bookmarksManager,
-            BookmarkForegroundWatcher bookmarkForegroundWatcher,
-            ApplicationVisibilityManager applicationVisibilityManager
+            BookmarkForegroundWatcher bookmarkForegroundWatcher
     ) {
         Logger.d(AppModule.DI_TAG, "BookmarkWatcherController");
 
         return new BookmarkWatcherCoordinator(
-                AppModuleAndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
                 appContext,
                 appScope,
+                appConstants,
                 bookmarksManager,
-                bookmarkForegroundWatcher,
-                applicationVisibilityManager
+                bookmarkForegroundWatcher
         );
     }
 
