@@ -101,6 +101,11 @@ class BookmarkForegroundWatcher(
       return
     }
 
+    if (!applicationVisibilityManager.isAppInForeground()) {
+      Logger.d(TAG, "updateBookmarkForOpenedThread() isAppInForeground is false")
+      return
+    }
+
     bookmarksManager.awaitUntilInitialized()
 
     if (bookmarksManager.currentlyOpenedThread() != threadDescriptor) {

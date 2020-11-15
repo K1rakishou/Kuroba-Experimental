@@ -150,20 +150,17 @@ class ThreadBookmark private constructor(
   ) {
     val oldStateHasTerminalFlags = state.get(BOOKMARK_STATE_THREAD_DELETED) || isStickyClosed()
     if (oldStateHasTerminalFlags) {
-      if (state.get(BOOKMARK_STATE_WATCHING)) {
-        state.clear(BOOKMARK_STATE_WATCHING)
-      }
-
+      state.clear(BOOKMARK_STATE_WATCHING)
       return
     }
 
     // We don't want to infinitely fetch information for pinned closed threads. Such threads may be
     // active for years and they usually don't get any updates (or they do but very rarely). Pinning
-    // such a thread should result in us stopping watching it right after the very first success
+    // such a thread should result in us stopping watching it right after the very first successful
     // fetch.
-    val pinnedClosedThread = stickyNoCap == true && closed == true
+    val stickyClosedThread = stickyNoCap == true && closed == true
 
-    val newStateHasTerminalFlags = deleted == true || archived == true || pinnedClosedThread
+    val newStateHasTerminalFlags = deleted == true || archived == true || stickyClosedThread
     if (newStateHasTerminalFlags) {
       // If any of the above - we don't watch that thread anymore
       state.clear(BOOKMARK_STATE_WATCHING)

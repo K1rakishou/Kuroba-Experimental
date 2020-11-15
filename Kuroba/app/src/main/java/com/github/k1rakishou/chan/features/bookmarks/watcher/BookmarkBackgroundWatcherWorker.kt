@@ -43,14 +43,14 @@ class BookmarkBackgroundWatcherWorker(
     }
 
     if (isStopped) {
-      Logger.d(TAG, "BookmarkBackgroundWatcherWorker.doWork() Cannot start BookmarkWatcherWorker, " +
+      Logger.d(TAG, "BookmarkBackgroundWatcherWorker.doWork() Cannot start BookmarkWatcherDelegate, " +
         "already stopped")
       BookmarkWatcherCoordinator.restartBackgroundWork(appConstants, applicationContext)
       return Result.success()
     }
 
     if (applicationVisibilityManager.isAppInForeground()) {
-      Logger.d(TAG, "BookmarkBackgroundWatcherWorker.doWork() Cannot start BookmarkWatcherWorker, " +
+      Logger.d(TAG, "BookmarkBackgroundWatcherWorker.doWork() Cannot start BookmarkWatcherDelegate, " +
         "app is in foreground")
       BookmarkWatcherCoordinator.restartBackgroundWork(appConstants, applicationContext)
       return Result.success()
@@ -59,7 +59,7 @@ class BookmarkBackgroundWatcherWorker(
     bookmarksManager.awaitUntilInitialized()
 
     if (!bookmarksManager.hasActiveBookmarks()) {
-      Logger.d(TAG, "BookmarkBackgroundWatcherWorker.doWork() Cannot start BookmarkWatcherWorker, " +
+      Logger.d(TAG, "BookmarkBackgroundWatcherWorker.doWork() Cannot start BookmarkWatcherDelegate, " +
         "no active bookmarks requiring service")
       return Result.success()
     }
@@ -83,6 +83,6 @@ class BookmarkBackgroundWatcherWorker(
   }
 
   companion object {
-    private const val TAG = "BookmarkWatcherWorker"
+    private const val TAG = "BookmarkBackgroundWatcherWorker"
   }
 }
