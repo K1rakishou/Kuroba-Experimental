@@ -163,12 +163,15 @@ object ChanPostUtils {
 
   @JvmStatic
   fun getPostHash(chanPostBuilder: ChanPostBuilder): MurmurHashUtils.Murmur3Hash {
-    val inputString = chanPostBuilder.postCommentBuilder.getComment().toString() +
-      (chanPostBuilder.subject ?: "") +
-      (chanPostBuilder.name ?: "") +
-      (chanPostBuilder.tripcode ?: "") +
-      (chanPostBuilder.posterId ?: "") +
-      (chanPostBuilder.moderatorCapcode ?: "")
+    val inputString = buildString {
+      append(chanPostBuilder.postCommentBuilder.getComment().toString())
+
+      chanPostBuilder.subject?.let { subject -> append(subject) }
+      chanPostBuilder.name?.let { name -> append(name) }
+      chanPostBuilder.tripcode?.let { tripcode -> append(tripcode) }
+      chanPostBuilder.posterId?.let { posterId -> append(posterId) }
+      chanPostBuilder.moderatorCapcode?.let { moderatorCapcode -> append(moderatorCapcode) }
+    }
 
     return MurmurHashUtils.murmurhash3_x64_128(inputString)
   }

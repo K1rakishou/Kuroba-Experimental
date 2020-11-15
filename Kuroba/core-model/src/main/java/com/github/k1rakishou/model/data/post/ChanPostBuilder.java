@@ -69,6 +69,11 @@ public class ChanPostBuilder {
     public ChanPostBuilder() {
     }
 
+    /**
+     * This hash is calculated on a raw post comment/subject/name/tripcode etc, before we add or
+     * remove any spans or other info into the comment or other stuff. Basically those values are
+     * the same as we receive them from the server at the moment of the hash calculation.
+     * */
     public synchronized MurmurHashUtils.Murmur3Hash getGetPostHash() {
         int commentUpdateCounter = postCommentBuilder.getCommentUpdateCounter();
         if (commentUpdateCounter > 1) {

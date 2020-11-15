@@ -289,6 +289,10 @@ class ChanPostRepository(
     }
   }
 
+  fun updateThreadLastAccessTime(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    chanThreadsCache.updateLastAccessTime(threadDescriptor)
+  }
+
   @OptIn(ExperimentalTime::class)
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Unit> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }

@@ -102,7 +102,6 @@ class ChanThread(
         recalculatePostReplies()
       }
 
-      updateLastAccessTime()
       checkPostsConsistency()
 
       return@write addedOrUpdatedPosts
@@ -137,7 +136,6 @@ class ChanThread(
         threadPosts.sortWith(POSTS_COMPARATOR)
       }
 
-      updateLastAccessTime()
       checkPostsConsistency()
     }
   }
@@ -149,19 +147,17 @@ class ChanThread(
         "First post is not an original post! post=${threadPosts.first()}"
       }
 
-      updateLastAccessTime()
       return threadPosts.first() as ChanOriginalPost
     }
   }
 
   fun getPostDescriptors(): List<PostDescriptor> {
     return lock.read {
-      updateLastAccessTime()
       return@read threadPosts.map { chanPost -> chanPost.postDescriptor }
     }
   }
 
-  private fun updateLastAccessTime() {
+  fun updateLastAccessTime() {
     lock.write { lastAccessTime = System.currentTimeMillis() }
   }
 
@@ -176,7 +172,6 @@ class ChanThread(
         "First post is not an original post! post=${threadPosts.first()}"
       }
 
-      updateLastAccessTime()
       threadPosts[0].setPostDeleted(deleted)
     }
   }
@@ -236,35 +231,11 @@ class ChanThread(
   }
 
   fun getPost(postDescriptor: PostDescriptor): ChanPost? {
-    return lock.read {
-      updateLastAccessTime()
-      return@read postsByPostDescriptors[postDescriptor]
-    }
+    return lock.read { postsByPostDescriptors[postDescriptor] }
   }
 
   fun getNewPostsCount(lastPostNo: Long): Int {
     return lock.read { threadPosts.count { chanPost -> chanPost.postNo() > lastPostNo } }
-  }
-
-  fun firstPostOrderedOrNull(predicate: (ChanPost) -> Boolean): ChanPost? {
-    return lock.read {
-      if (threadPosts.isEmpty()) {
-        return@read null
-      }
-
-      updateLastAccessTime()
-
-      for (index in threadPosts.indices) {
-        val chanPost = threadPosts.getOrNull(index)
-          ?: break
-
-        if (predicate(chanPost)) {
-          return@read chanPost
-        }
-      }
-
-      return@read null
-    }
   }
 
   fun findPostWithRepliesRecursive(
@@ -291,8 +262,6 @@ class ChanThread(
         "First post is not an original post! post=${threadPosts.first()}"
       }
 
-      updateLastAccessTime()
-
       val postIndex = threadPosts.indexOfFirst { chanPost ->
         chanPost.postDescriptor == postDescriptor
       }
@@ -303,6 +272,8 @@ class ChanThread(
 
       rawPostHashesMap.remove(postDescriptor)
       postsByPostDescriptors.remove(postDescriptor)
+
+      checkPostsConsistency()
     }
   }
 
@@ -311,8 +282,6 @@ class ChanThread(
       if (threadPosts.isEmpty()) {
         return@read
       }
-
-      updateLastAccessTime()
 
       for (index in threadPosts.indices) {
         val chanPost = threadPosts.getOrNull(index)

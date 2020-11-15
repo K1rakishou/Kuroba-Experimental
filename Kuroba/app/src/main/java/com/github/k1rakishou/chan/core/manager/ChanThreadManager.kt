@@ -44,7 +44,10 @@ class ChanThreadManager(
 
   fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
     when (chanDescriptor) {
-      is ChanDescriptor.ThreadDescriptor -> currentThreadDescriptor = chanDescriptor
+      is ChanDescriptor.ThreadDescriptor -> {
+        currentThreadDescriptor = chanDescriptor
+        chanPostRepository.updateThreadLastAccessTime(chanDescriptor)
+      }
       is ChanDescriptor.CatalogDescriptor -> currentCatalogDescriptor = chanDescriptor
     }
   }

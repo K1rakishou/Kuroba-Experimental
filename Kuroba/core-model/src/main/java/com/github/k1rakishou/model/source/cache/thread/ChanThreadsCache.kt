@@ -262,9 +262,11 @@ class ChanThreadsCache(
   }
 
   fun markThreadAsDeleted(threadDescriptor: ChanDescriptor.ThreadDescriptor, deleted: Boolean) {
-    lock.write {
-      chanThreads[threadDescriptor]?.setDeleted(deleted)
-    }
+    lock.write { chanThreads[threadDescriptor]?.setDeleted(deleted) }
+  }
+
+  fun updateLastAccessTime(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    lock.write { chanThreads[threadDescriptor]?.updateLastAccessTime() }
   }
 
   fun deletePost(postDescriptor: PostDescriptor) {
@@ -334,19 +336,19 @@ class ChanThreadsCache(
       .map { (threadDescriptor, chanThread) -> threadDescriptor to chanThread.getLastAccessTime() }
     val totalPostsCount = getTotalCachedPostsCount()
 
-    val keysSorted = accessTimes
+    val threadDescriptorsSorted = accessTimes
       // We will get the oldest accessed key in the beginning of the list
       .sortedBy { (_, lastAccessTime) -> lastAccessTime }
       .dropLast(IMMUNE_THREADS_COUNT)
-      .map { (key, _) -> key }
+      .map { (threadDescriptor, _) -> threadDescriptor }
 
-    if (keysSorted.isEmpty()) {
-      Logger.d(tag, "keysSorted is empty, accessTimes size=${accessTimes.size}")
+    if (threadDescriptorsSorted.isEmpty()) {
+      Logger.d(tag, "threadDescriptorsSorted is empty, accessTimes size=${accessTimes.size}")
       return
     }
 
     Logger.d(
-      tag, "keysSorted size=${keysSorted.size}, " +
+      tag, "threadDescriptorsSorted size=${threadDescriptorsSorted.size}, " +
         "accessTimes size=${accessTimes.size}, " +
         "totalPostsCount=${totalPostsCount}"
     )
@@ -354,14 +356,14 @@ class ChanThreadsCache(
     val threadDescriptorsToDelete = mutableListOf<ChanDescriptor.ThreadDescriptor>()
     var amountOfPostsToEvict = amountToEvictParam
 
-    for (key in keysSorted) {
+    for (threadDescriptor in threadDescriptorsSorted) {
       if (amountOfPostsToEvict <= 0) {
         break
       }
 
-      val count = chanThreads[key]?.postsCount ?: 0
+      val count = chanThreads[threadDescriptor]?.postsCount ?: 0
 
-      threadDescriptorsToDelete += key
+      threadDescriptorsToDelete += threadDescriptor
       amountOfPostsToEvict -= count
     }
 

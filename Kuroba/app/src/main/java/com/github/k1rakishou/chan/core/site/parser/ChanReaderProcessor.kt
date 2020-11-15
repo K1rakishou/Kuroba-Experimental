@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.core.site.parser
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.common.removeIfKt
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
@@ -79,6 +80,9 @@ class ChanReaderProcessor(
       val postRanges = chanReadOptions.getRetainPostRanges(postOrderedList.size)
       val postDescriptorsToDelete = mutableSetOf<PostDescriptor>()
 
+      Logger.d(TAG, "applyChanReadOptions(chanReadOptions=$chanReadOptions) " +
+        "postsCount=${postOrderedList.size}, postRanges=$postRanges")
+
       for ((index, postDescriptor) in postOrderedList.withIndex()) {
         val anyRangeContainsThisPost = postRanges.any { postRange -> postRange.contains(index) }
         if (anyRangeContainsThisPost) {
@@ -92,6 +96,8 @@ class ChanReaderProcessor(
       if (postDescriptorsToDelete.isEmpty()) {
         return@withLock
       }
+
+      Logger.d(TAG, "applyChanReadOptions() postDescriptorsToDelete=${postDescriptorsToDelete.size}")
 
       postOrderedList.removeAll(postDescriptorsToDelete)
       toParse.removeIfKt { postToParse -> postToParse.postDescriptor in postDescriptorsToDelete }
@@ -126,12 +132,10 @@ class ChanReaderProcessor(
 
     val chanPost = chanPostRepository.getCachedPost(builder.postDescriptor)
     if (chanPost == null) {
-      chanPostRepository.putPostHash(builder.postDescriptor, builder.getPostHash)
       return true
     }
 
     if (ChanPostUtils.postsDiffer(builder, chanPost)) {
-      chanPostRepository.putPostHash(builder.postDescriptor, builder.getPostHash)
       return true
     }
 
@@ -153,4 +157,7 @@ class ChanReaderProcessor(
     return "ChanReaderProcessor{chanDescriptor=$chanDescriptor, toParse=${toParse.size}}"
   }
 
+  companion object {
+    private const val TAG = "ChanReaderProcessor"
+  }
 }
