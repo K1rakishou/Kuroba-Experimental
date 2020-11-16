@@ -3,14 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/history_entry_thread_image_size"
-    android:padding="4dp"
+    android:layout_height="40dp"
     tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/drawer_header_theme_switch"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
         android:layout_marginEnd="16dp"
         app:layout_constraintBottom_toBottomOf="@+id/drawer_header_settings"
         app:layout_constraintEnd_toStartOf="@+id/drawer_header_settings"
@@ -19,12 +18,12 @@
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/drawer_header_settings"
-        android:layout_width="32dp"
-        android:layout_height="32dp"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
         android:layout_marginEnd="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:src="@drawable/ic_settings_white_24dp" />
+        tools:src="@drawable/ic_more_vert_white_24dp" />
 
 </merge>

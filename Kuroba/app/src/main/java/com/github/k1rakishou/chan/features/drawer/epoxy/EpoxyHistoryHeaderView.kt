@@ -64,7 +64,7 @@ class EpoxyHistoryHeaderView @JvmOverloads constructor(
     }
 
     drawerSettingsButton.setImageDrawable(
-      themeEngine.tintDrawable(context, R.drawable.ic_settings_white_24dp)
+      themeEngine.tintDrawable(context, R.drawable.ic_more_vert_white_24dp)
     )
   }
 
