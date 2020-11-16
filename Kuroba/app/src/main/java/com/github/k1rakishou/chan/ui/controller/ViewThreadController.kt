@@ -58,7 +58,6 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.getString
 import com.github.k1rakishou.common.options.ChanLoadOptions
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -80,8 +79,6 @@ open class ViewThreadController(
   ToobarThreedotMenuCallback,
   ReplyAutoCloseListener {
 
-  @Inject
-  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var historyNavigationManager: HistoryNavigationManager
   @Inject

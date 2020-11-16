@@ -42,6 +42,7 @@ import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.dp
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterType
@@ -60,10 +61,13 @@ abstract class ThreadController(
   OnRefreshListener,
   ToolbarSearchCallback,
   SlideChangeListener,
-  ApplicationVisibilityListener {
+  ApplicationVisibilityListener,
+  ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var siteManager: SiteManager
+  @Inject
+  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var localSearchManager: LocalSearchManager
   @Inject
@@ -100,6 +104,7 @@ abstract class ThreadController(
     swipeRefreshLayout.id = R.id.swipe_refresh_layout
     swipeRefreshLayout.addView(threadLayout)
     swipeRefreshLayout.setOnRefreshListener(this)
+
     view = swipeRefreshLayout
 
     serializedCoroutineExecutor = SerializedCoroutineExecutor(mainScope)
@@ -115,6 +120,9 @@ abstract class ThreadController(
         toolbarHeight + dp(64 - 40.toFloat())
       )
     }
+
+    onThemeChanged()
+    themeEngine.addListener(this)
   }
 
   override fun onShow() {
@@ -129,7 +137,13 @@ abstract class ThreadController(
     drawerCallbacks = null
     threadLayout.destroy()
     applicationVisibilityManager.removeListener(this)
+    themeEngine.removeListener(this)
+
     EventBus.getDefault().unregister(this)
+  }
+
+  override fun onThemeChanged() {
+    swipeRefreshLayout.setBackgroundColor(themeEngine.chanTheme.backColor)
   }
 
   fun passMotionEventIntoDrawer(event: MotionEvent): Boolean {

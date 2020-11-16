@@ -674,7 +674,7 @@ class DrawerController(
 
       epoxyHistoryHeaderView {
         id("navigation_history_header")
-        onThemeSwitcherClicked { themeEngine.toggleTheme() }
+        onThemeSwitcherClicked { epoxyRecyclerView.postDelayed({ themeEngine.toggleTheme() }, 125L) }
         onDrawerSettingsClicked { showDrawerOptions() }
       }
 

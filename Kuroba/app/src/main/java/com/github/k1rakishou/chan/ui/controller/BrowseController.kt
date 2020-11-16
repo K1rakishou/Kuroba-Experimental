@@ -57,7 +57,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.getString
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
@@ -78,8 +77,6 @@ class BrowseController(
 
   @Inject
   lateinit var presenter: BrowsePresenter
-  @Inject
-  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var boardManager: BoardManager
   @Inject
@@ -130,6 +127,7 @@ class BrowseController(
 
     if (drawerCallbacks != null) {
       drawerCallbacks!!.resetBottomNavViewCheckState()
+
       if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
         drawerCallbacks!!.showBottomNavBar(unlockTranslation = false, unlockCollapse = false)
       }
