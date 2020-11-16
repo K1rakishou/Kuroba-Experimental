@@ -52,7 +52,7 @@ class FloatingListMenu @JvmOverloads constructor(
               epoxyCheckableFloatingListMenuRow {
                 id("epoxy_checkable_floating_list_menu_row_${item.key.hashCode()}")
                 title(item.name)
-                settingEnabled(true)
+                settingEnabled(item.enabled)
                 checked(item.isCurrentlySelected)
 
                 callback {
@@ -68,7 +68,7 @@ class FloatingListMenu @JvmOverloads constructor(
               epoxyFloatingListMenuRow {
                 id("epoxy_floating_list_menu_row_${item.key.hashCode()}")
                 title(item.name)
-                settingEnabled(true)
+                settingEnabled(item.enabled)
 
                 callback {
                   if (item.more.isNotEmpty()) {

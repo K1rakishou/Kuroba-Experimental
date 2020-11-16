@@ -19,7 +19,6 @@ package com.github.k1rakishou.chan.ui.controller
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.content.Context
-import android.content.res.Configuration
 import android.view.View
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.Animation
@@ -55,7 +54,6 @@ import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLinkInBrowser
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink
-import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.getString
 import com.github.k1rakishou.core_logger.Logger
@@ -125,9 +123,6 @@ class BrowseController(
       threadLayout.setPostViewMode(ChanSettings.boardViewMode.get())
       threadLayout.presenter.setOrder(order)
     }
-
-    compositeDisposable += ChanSettings.isCurrentThemeDark.listenForChanges()
-      .subscribe { handleDayNightModeChange(context.resources.configuration) }
   }
 
   override fun onShow() {
@@ -316,15 +311,8 @@ class BrowseController(
       R.string.action_switch_board
     }
 
-    val currentThemeStringId = if (ChanSettings.isCurrentThemeDark.get()) {
-      R.string.action_switch_to_light_theme
-    } else {
-      R.string.action_switch_to_dark_theme
-    }
-
     overflowBuilder
       .withSubItem(ACTION_CHANGE_VIEW_MODE, modeStringId) { item -> viewModeClicked(item) }
-      .withSubItem(ACTION_TOGGLE_THEME, currentThemeStringId) { item -> themeToggleClicked(item) }
       .addSortMenu()
       .addDevMenu()
       .withSubItem(ACTION_OPEN_BROWSER, R.string.action_open_browser, { item -> openBrowserClicked(item) })
@@ -554,42 +542,6 @@ class BrowseController(
 
     item.text = getString(viewModeText)
     threadLayout.setPostViewMode(postViewMode)
-  }
-
-  private fun themeToggleClicked(item: ToolbarMenuSubItem) {
-    themeEngine.toggleTheme()
-
-    val isCurrentThemeDark = ChanSettings.isCurrentThemeDark.get()
-
-    val themeStringId = if (isCurrentThemeDark) {
-      R.string.action_switch_to_light_theme
-    } else {
-      R.string.action_switch_to_dark_theme
-    }
-
-    item.text = getString(themeStringId)
-  }
-
-  private fun handleDayNightModeChange(newConfig: Configuration) {
-    if (!AndroidUtils.isAndroid10()) {
-      return
-    }
-
-    val nightModeFlags = newConfig.uiMode and Configuration.UI_MODE_NIGHT_MASK
-    if (nightModeFlags == Configuration.UI_MODE_NIGHT_UNDEFINED) {
-      return
-    }
-
-    navigation.findSubItem(ACTION_TOGGLE_THEME)?.let { subItem ->
-      val isDarkTheme = nightModeFlags == Configuration.UI_MODE_NIGHT_YES
-      val themeStringId = if (isDarkTheme) {
-        R.string.action_switch_to_light_theme
-      } else {
-        R.string.action_switch_to_dark_theme
-      }
-
-      subItem.text = getString(themeStringId)
-    }
   }
 
   private fun openBrowserClicked(item: ToolbarMenuSubItem) {
@@ -865,7 +817,6 @@ class BrowseController(
     private const val ACTION_SCROLL_TO_TOP = 907
     private const val ACTION_SCROLL_TO_BOTTOM = 908
     private const val ACTION_OPEN_THREAD_BY_ID = 909
-    private const val ACTION_TOGGLE_THEME = 910
     // TODO(KurobaEx): add action "open is a separate (new?) tab"
 
     private const val SORT_MODE_BUMP = 1000

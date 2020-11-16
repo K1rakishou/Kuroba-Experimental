@@ -1,11 +1,11 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.SuspendableInitializer
-import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -40,7 +40,7 @@ class HistoryNavigationManager(
   private val persistRunning = AtomicBoolean(false)
   private val suspendableInitializer = SuspendableInitializer<Unit>("HistoryNavigationManager")
 
-  private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
+  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
@@ -49,7 +49,6 @@ class HistoryNavigationManager(
   @OptIn(ExperimentalTime::class)
   fun initialize() {
     Logger.d(TAG, "HistoryNavigationManager.initialize()")
-    serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
     appScope.launch {
       applicationVisibilityManager.addListener { visibility ->
@@ -98,10 +97,16 @@ class HistoryNavigationManager(
     }
   }
 
-  fun getAll(): List<NavHistoryElement> {
+  fun getAll(reversed: Boolean = false): List<NavHistoryElement> {
     BackgroundUtils.ensureMainThread()
 
-    return lock.read { navigationStack.toList() }
+    return lock.read {
+      if (reversed) {
+        return@read navigationStack.toList().reversed()
+      } else {
+        return@read navigationStack.toList()
+      }
+    }
   }
 
   fun getNavElementAtTop(): NavHistoryElement? {
@@ -120,16 +125,6 @@ class HistoryNavigationManager(
     }
   }
 
-  fun getFirstThreadNavElement(): NavHistoryElement? {
-    BackgroundUtils.ensureMainThread()
-
-    return lock.read {
-      return@read navigationStack.firstOrNull { navHistoryElement ->
-        navHistoryElement is NavHistoryElement.Thread
-      }
-    }
-  }
-
   fun listenForNavigationStackChanges(): Flowable<Unit> {
     BackgroundUtils.ensureMainThread()
 
@@ -141,6 +136,31 @@ class HistoryNavigationManager(
 
   suspend fun awaitUntilInitialized() = suspendableInitializer.awaitUntilInitialized()
 
+  fun canCreateNavElement(
+    bookmarksManager: BookmarksManager,
+    chanDescriptor: ChanDescriptor
+  ): Boolean {
+    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+      return ChanSettings.drawerShowNavigationHistory.get()
+    }
+
+    val threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
+
+    if (!ChanSettings.drawerShowBookmarkedThreads.get() && !ChanSettings.drawerShowNavigationHistory.get()) {
+      return false
+    }
+
+    if (!ChanSettings.drawerShowBookmarkedThreads.get()) {
+      return !bookmarksManager.exists(threadDescriptor)
+    }
+
+    if (!ChanSettings.drawerShowNavigationHistory.get()) {
+      return bookmarksManager.exists(threadDescriptor)
+    }
+
+    return true
+  }
+
   fun createNewNavElement(
     descriptor: ChanDescriptor,
     thumbnailImageUrl: HttpUrl,
@@ -148,8 +168,23 @@ class HistoryNavigationManager(
   ) {
     BackgroundUtils.ensureMainThread()
 
-    serializedCoroutineExecutor.post {
-      BackgroundUtils.ensureMainThread()
+    val newNavigationElement = NewNavigationElement(descriptor, thumbnailImageUrl, title)
+    createNewNavElements(listOf(newNavigationElement))
+  }
+
+  fun createNewNavElements(newNavigationElements: Collection<NewNavigationElement>) {
+    BackgroundUtils.ensureMainThread()
+
+    if (newNavigationElements.isEmpty()) {
+      return
+    }
+
+    var created = false
+
+    newNavigationElements.forEach { newNavigationElement ->
+      val descriptor = newNavigationElement.descriptor
+      val thumbnailImageUrl = newNavigationElement.thumbnailImageUrl
+      val title = newNavigationElement.title
 
       val navElementInfo = NavHistoryElementInfo(thumbnailImageUrl, title)
       val navElement = when (descriptor) {
@@ -157,92 +192,102 @@ class HistoryNavigationManager(
         is ChanDescriptor.CatalogDescriptor -> NavHistoryElement.Catalog(descriptor, navElementInfo)
       }
 
-      if (!addNewOrIgnore(navElement)) {
-        return@post
+      if (addNewOrIgnore(navElement)) {
+        created = true
       }
-
-      navStackChanged()
     }
+
+    if (!created) {
+      return
+    }
+
+    navStackChanged()
   }
 
   fun moveNavElementToTop(descriptor: ChanDescriptor) {
     BackgroundUtils.ensureMainThread()
 
-    serializedCoroutineExecutor.post {
-      BackgroundUtils.ensureMainThread()
+    if (!ChanSettings.drawerMoveLastAccessedThreadToTop.get()) {
+      return
+    }
 
-      val indexOfElem = lock.read {
-        return@read navigationStack.indexOfFirst { navHistoryElement ->
-          return@indexOfFirst when (navHistoryElement) {
-            is NavHistoryElement.Catalog -> navHistoryElement.descriptor == descriptor
-            is NavHistoryElement.Thread -> navHistoryElement.descriptor == descriptor
-          }
+    lock.write {
+      val indexOfElem = navigationStack.indexOfFirst { navHistoryElement ->
+        return@indexOfFirst when (navHistoryElement) {
+          is NavHistoryElement.Catalog -> navHistoryElement.descriptor == descriptor
+          is NavHistoryElement.Thread -> navHistoryElement.descriptor == descriptor
         }
       }
 
       if (indexOfElem < 0) {
-        return@post
+        return@write
       }
 
       // Move the existing navigation element at the top of the list
-      lock.write { navigationStack.add(0, navigationStack.removeAt(indexOfElem)) }
-      navStackChanged()
+      navigationStack.add(0, navigationStack.removeAt(indexOfElem))
     }
+
+    navStackChanged()
   }
 
-  fun onNavElementRemoved(descriptor: ChanDescriptor) {
+  fun onNavElementSwipedAway(descriptor: ChanDescriptor) {
+    BackgroundUtils.ensureMainThread()
+    removeNavElements(listOf(descriptor))
+  }
+
+  fun removeNavElements(descriptors: Collection<ChanDescriptor>) {
     BackgroundUtils.ensureMainThread()
 
-    serializedCoroutineExecutor.post {
-      BackgroundUtils.ensureMainThread()
+    if (descriptors.isEmpty()) {
+      return
+    }
 
-      val indexOfElem = lock.read {
-        return@read navigationStack.indexOfFirst { navHistoryElement ->
+    val removed = lock.write {
+      var removed = false
+
+      descriptors.forEach { chanDescriptor ->
+        val indexOfElem = navigationStack.indexOfFirst { navHistoryElement ->
           return@indexOfFirst when (navHistoryElement) {
-            is NavHistoryElement.Catalog -> navHistoryElement.descriptor == descriptor
-            is NavHistoryElement.Thread -> navHistoryElement.descriptor == descriptor
+            is NavHistoryElement.Catalog -> navHistoryElement.descriptor == chanDescriptor
+            is NavHistoryElement.Thread -> navHistoryElement.descriptor == chanDescriptor
           }
         }
+
+        if (indexOfElem < 0) {
+          return@forEach
+        }
+
+        navigationStack.removeAt(indexOfElem)
+        removed = true
       }
 
-      if (indexOfElem < 0) {
-        return@post
-      }
-
-      lock.write { navigationStack.removeAt(indexOfElem) }
-      navStackChanged()
+      return@write removed
     }
+
+    if (!removed) {
+      return
+    }
+
+    navStackChanged()
   }
 
-  fun isAtTop(descriptor: ChanDescriptor): Boolean {
+  fun clear() {
     BackgroundUtils.ensureMainThread()
 
-    val topNavElement = lock.read { navigationStack.firstOrNull() }
-      ?: return false
-
-    val topNavElementDescriptor = when (topNavElement) {
-      is NavHistoryElement.Catalog -> topNavElement.descriptor
-      is NavHistoryElement.Thread -> topNavElement.descriptor
-    }
-
-    return topNavElementDescriptor == descriptor
-  }
-
-  fun retainExistingThreadDescriptors(
-    bookmarkThreadDescriptors: Set<ChanDescriptor.ThreadDescriptor>
-  ): Set<ChanDescriptor.ThreadDescriptor> {
-    val retained = hashSetWithCap<ChanDescriptor.ThreadDescriptor>(32)
-
-    lock.read {
-      navigationStack.forEach { navHistoryElement ->
-        if (navHistoryElement is NavHistoryElement.Thread
-          && navHistoryElement.descriptor in bookmarkThreadDescriptors) {
-          retained += navHistoryElement.descriptor
-        }
+    val cleared = lock.write {
+      if (navigationStack.isEmpty()) {
+        return@write false
       }
+
+      navigationStack.clear()
+      return@write true
     }
 
-    return retained
+    if (!cleared) {
+      return
+    }
+
+    navStackChanged()
   }
 
   private fun persisNavigationStack(blocking: Boolean = false) {
@@ -296,19 +341,27 @@ class HistoryNavigationManager(
   private fun addNewOrIgnore(navElement: NavHistoryElement): Boolean {
     BackgroundUtils.ensureMainThread()
 
-    val indexOfElem = lock.read { navigationStack.indexOf(navElement) }
-    if (indexOfElem >= 0) {
-      return false
-    }
+    return lock.write {
+      val indexOfElem = navigationStack.indexOf(navElement)
+      if (indexOfElem >= 0) {
+        return@write false
+      }
 
-    lock.write { navigationStack.add(0, navElement) }
-    return true
+      navigationStack.add(0, navElement)
+      return@write true
+    }
   }
 
   private fun navStackChanged() {
     navigationStackChangesSubject.onNext(Unit)
     persistTaskSubject.onNext(Unit)
   }
+
+  data class NewNavigationElement(
+    val descriptor: ChanDescriptor,
+    val thumbnailImageUrl: HttpUrl,
+    val title: String
+  )
 
   companion object {
     private const val TAG = "HistoryNavigationManager"

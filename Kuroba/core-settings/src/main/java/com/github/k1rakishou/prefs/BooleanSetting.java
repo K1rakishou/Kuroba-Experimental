@@ -23,8 +23,7 @@ import io.reactivex.Flowable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.processors.BehaviorProcessor;
 
-public class BooleanSetting
-        extends Setting<Boolean> {
+public class BooleanSetting extends Setting<Boolean> {
     private boolean hasCached = false;
     private BehaviorProcessor<Boolean> settingState = BehaviorProcessor.create();
 

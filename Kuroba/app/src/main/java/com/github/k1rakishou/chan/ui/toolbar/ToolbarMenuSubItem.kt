@@ -33,6 +33,8 @@ open class ToolbarMenuSubItem {
   @JvmField
   var visible = true
   @JvmField
+  var enabled = true
+  @JvmField
   var value: Any? = null
   @JvmField
   var moreItems: MutableList<ToolbarMenuSubItem> = ArrayList()

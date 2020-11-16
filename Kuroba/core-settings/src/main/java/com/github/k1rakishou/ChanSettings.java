@@ -347,6 +347,9 @@ public class ChanSettings {
     public static OptionsSetting<ImageGestureActionType> imageSwipeDownGesture;
     public static BooleanSetting rememberThreadNavigationHistory;
     public static RangeSetting threadMaxPostCapacity;
+    public static BooleanSetting drawerMoveLastAccessedThreadToTop;
+    public static BooleanSetting drawerShowBookmarkedThreads;
+    public static BooleanSetting drawerShowNavigationHistory;
     //endregion
     //endregion
 
@@ -566,6 +569,21 @@ public class ChanSettings {
                     0,
                     0,
                     1000
+            );
+            drawerMoveLastAccessedThreadToTop = new BooleanSetting(
+                    p,
+                    "drawer_move_last_accessed_thread_to_top",
+                    true
+            );
+            drawerShowBookmarkedThreads = new BooleanSetting(
+                    p,
+                    "drawer_show_bookmarked_threads",
+                    true
+            );
+            drawerShowNavigationHistory = new BooleanSetting(
+                    p,
+                    "drawer_show_navigation_history",
+                    true
             );
         } catch (Throwable error) {
             // If something crashes while the settings are initializing we at least will have the

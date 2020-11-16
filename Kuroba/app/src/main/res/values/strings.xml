@@ -108,6 +108,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="more">More</string>
     <string name="retry">Retry</string>
     <string name="apply">Apply</string>
+    <string name="clear">Clear</string>
     <string name="unhandled_error">Unhandled error!</string>
     <string name="unknown_error">Unknown error</string>
     <string name="loading">Loading…</string>
@@ -168,8 +169,6 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_search_image">Image search</string>
     <string name="action_switch_catalog">Catalog mode</string>
     <string name="action_switch_board">Board mode</string>
-    <string name="action_switch_to_light_theme">Switch to light theme</string>
-    <string name="action_switch_to_dark_theme">Switch to dark theme</string>
 
     <string name="action_import_light_theme">Import Light theme</string>
     <string name="action_import_dark_theme">Import Dark theme</string>
@@ -987,6 +986,13 @@ Don't have a 4chan Pass?<br>
     <string name="drawer_controller_at_least_one_pin_has_download_flag">At least one pin has the \"Download\" flag, which makes this delete operation irreversible (because this operation will delete all of the saved thread\'s files from the disk). Do you really want to delete all pins?</string>
     <string name="drawer_controller_do_not_delete">Do not delete</string>
     <string name="drawer_controller_delete_all_pins">Delete all pins</string>
+    <string name="drawer_controller_navigation_history_is_empty">Navigation history is empty.\n\nOpen a board or a thread to add it here (Additionally, check drawer settings)</string>
+    <string name="drawer_controller_move_last_accessed_thread_to_top">Move last accessed thread/catalog to top</string>
+    <string name="drawer_controller_show_bookmarks">Show bookmarked threads</string>
+    <string name="drawer_controller_show_navigation_history">Show navigation history</string>
+    <string name="drawer_controller_clear_nav_history">Clear navigation history</string>
+    <string name="drawer_controller_clear_nav_history_dialog_title">Clear navigation history?</string>
+
     <string name="thread_layout_background_watcher_is_disabled_message">Thread is currently being downloaded, but the background watcher is disabled so it won\'t be incrementally updated. To enable incremental thread updating, you have to enable the background thread watcher.</string>
     <string name="cannot_open_in_browser_already_deleted">Can\'t open this thread in a browser</string>
     <string name="cannot_shared_thread_already_deleted">Can\'t share this thread</string>
@@ -1119,7 +1125,6 @@ Don't have a 4chan Pass?<br>
     <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>
     <string name="archive_fetch_history_delete_error_message">Failed to delete fetch result</string>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
-    <string name="navigation_history_is_empty">Navigation history is empty.\n\nOpen a board or a thread to add it here</string>
     <string name="updater_is_disabled_for_dev_builds">Updater is disabled for dev builds</string>
     <string name="updater_is_disabled_for_fdroid_builds">Updater is disabled for F-Droid builds</string>
 

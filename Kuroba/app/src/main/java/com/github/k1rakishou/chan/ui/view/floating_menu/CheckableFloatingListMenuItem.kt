@@ -5,6 +5,7 @@ class CheckableFloatingListMenuItem(
   name: String,
   value: Any? = null,
   visible: Boolean = true,
+  enabled: Boolean = true,
   more: MutableList<FloatingListMenuItem> = mutableListOf(),
   val isCurrentlySelected: Boolean = false
-) : FloatingListMenuItem(key, name, value, visible, more)
+) : FloatingListMenuItem(key, name, value, visible, enabled, more)

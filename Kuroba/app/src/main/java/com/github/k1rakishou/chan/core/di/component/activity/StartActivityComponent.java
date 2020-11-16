@@ -16,6 +16,7 @@ import com.github.k1rakishou.chan.features.bookmarks.epoxy.EpoxyListThreadBookma
 import com.github.k1rakishou.chan.features.drawer.DrawerController;
 import com.github.k1rakishou.chan.features.drawer.DrawerPresenter;
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryEntryView;
+import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryHeaderView;
 import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10GestureZonesController;
 import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10GestureZonesView;
 import com.github.k1rakishou.chan.features.proxies.ProxyEditorController;
@@ -238,6 +239,7 @@ public interface StartActivityComponent {
     void inject(EpoxyTextView epoxyTextView);
     void inject(EpoxyCheckableFloatingListMenuRow epoxyCheckableFloatingListMenuRow);
     void inject(EpoxyFloatingListMenuRow epoxyFloatingListMenuRow);
+    void inject(EpoxyHistoryHeaderView epoxyHistoryHeaderView);
 
     void inject(StartActivity startActivity);
     void inject(CaptchaNoJsLayoutV2 captchaNoJsLayoutV2);

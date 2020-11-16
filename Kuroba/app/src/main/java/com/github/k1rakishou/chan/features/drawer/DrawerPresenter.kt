@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -17,6 +18,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.navigation.NavHistoryElement
+import com.github.k1rakishou.model.util.ChanPostUtils
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
@@ -34,7 +36,8 @@ class DrawerPresenter(
   private val siteManager: SiteManager,
   private val bookmarksManager: BookmarksManager,
   private val pageRequestManager: PageRequestManager,
-  private val archivesManager: ArchivesManager
+  private val archivesManager: ArchivesManager,
+  private val chanThreadManager: ChanThreadManager
 ) : BasePresenter<DrawerView>() {
 
   private val historyControllerStateSubject = PublishProcessor.create<HistoryControllerState>()
@@ -52,7 +55,7 @@ class DrawerPresenter(
 
       historyNavigationManager.listenForNavigationStackChanges()
         .asFlow()
-        .collect { showNavigationHistory() }
+        .collect { reloadNavigationHistory() }
     }
 
     scope.launch {
@@ -64,31 +67,69 @@ class DrawerPresenter(
           bookmarksManager.awaitUntilInitialized()
 
           updateBadge()
-          reloadNavigationHistory(bookmarkChange)
+          handleEvents(bookmarkChange)
+          reloadNavigationHistory()
         }
     }
   }
 
-  fun onThemeChanged() {
-    updateBadge()
-  }
+  private fun handleEvents(bookmarkChange: BookmarksManager.BookmarkChange?) {
+    if (bookmarkChange is BookmarksManager.BookmarkChange.BookmarksCreated) {
+      val newNavigationElements = bookmarkChange.threadDescriptors
+        .mapNotNull { threadDescriptor -> createNewNavigationElement(threadDescriptor) }
 
-  private fun reloadNavigationHistory(bookmarkChange: BookmarksManager.BookmarkChange) {
-    val bookmarkThreadDescriptors = bookmarkChange.threadDescriptorsOrNull()?.toSet()
-
-    val retainedThreadDescriptors = if (bookmarkThreadDescriptors == null) {
-      null
-    } else {
-      historyNavigationManager.retainExistingThreadDescriptors(bookmarkThreadDescriptors)
-    }
-
-    // retainedThreadDescriptors == null means all bookmarks had changed (bookmarkChange is
-    // Initialization change)
-    if (retainedThreadDescriptors != null && retainedThreadDescriptors.isEmpty()) {
+      historyNavigationManager.createNewNavElements(newNavigationElements)
       return
     }
 
-    showNavigationHistory()
+    if (bookmarkChange is BookmarksManager.BookmarkChange.BookmarksDeleted) {
+      historyNavigationManager.removeNavElements(bookmarkChange.threadDescriptors)
+    }
+  }
+
+  fun mapBookmarksIntoNewNavigationElements(): List<HistoryNavigationManager.NewNavigationElement> {
+    return bookmarksManager.mapNotNullAllBookmarks { threadBookmarkView ->
+      createNewNavigationElement(threadBookmarkView.threadDescriptor)
+    }
+  }
+
+  private fun createNewNavigationElement(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): HistoryNavigationManager.NewNavigationElement? {
+    if (!historyNavigationManager.canCreateNavElement(bookmarksManager, threadDescriptor)) {
+      return null
+    }
+
+    val chanOriginalPost = chanThreadManager.getChanThread(threadDescriptor)
+      ?.getOriginalPost()
+
+    if (chanOriginalPost == null) {
+      return null
+    }
+
+    val opThumbnailUrl = chanThreadManager.getChanThread(threadDescriptor)
+      ?.getOriginalPost()
+      ?.firstImage()
+      ?.actualThumbnailUrl
+
+    val title = ChanPostUtils.getTitle(
+      chanOriginalPost,
+      threadDescriptor
+    )
+
+    if (opThumbnailUrl == null || title.isEmpty()) {
+      return null
+    }
+
+    return HistoryNavigationManager.NewNavigationElement(
+      threadDescriptor,
+      opThumbnailUrl,
+      title
+    )
+  }
+
+  fun onThemeChanged() {
+    updateBadge()
   }
 
   fun listenForStateChanges(): Flowable<HistoryControllerState> {
@@ -106,15 +147,11 @@ class DrawerPresenter(
       .hide()
   }
 
-  fun isCurrentlyVisible(descriptor: ChanDescriptor): Boolean {
-    return historyNavigationManager.isAtTop(descriptor)
-  }
-
   fun onNavElementSwipedAway(descriptor: ChanDescriptor) {
-    historyNavigationManager.onNavElementRemoved(descriptor)
+    historyNavigationManager.onNavElementSwipedAway(descriptor)
   }
 
-  private fun showNavigationHistory() {
+  fun reloadNavigationHistory() {
     reloadNavHistoryDebouncer.post(HISTORY_NAV_ELEMENTS_DEBOUNCE_TIMEOUT_MS) {
       ModularResult.Try { showNavigationHistoryInternal() }.safeUnwrap { error ->
         Logger.e(TAG, "showNavigationHistoryInternal() error", error)
@@ -131,55 +168,8 @@ class DrawerPresenter(
 
     val isWatcherEnabled = ChanSettings.watchEnabled.get()
 
-    val navHistoryList = historyNavigationManager.getAll().mapNotNull { navigationElement ->
-      val siteDescriptor = when (navigationElement) {
-        is NavHistoryElement.Catalog -> navigationElement.descriptor.siteDescriptor()
-        is NavHistoryElement.Thread -> navigationElement.descriptor.siteDescriptor()
-      }
-
-      val siteEnabled = siteManager.bySiteDescriptor(siteDescriptor)?.enabled() ?: false
-      if (!siteEnabled) {
-        return@mapNotNull null
-      }
-
-      val descriptor = when (navigationElement) {
-        is NavHistoryElement.Catalog -> navigationElement.descriptor
-        is NavHistoryElement.Thread -> navigationElement.descriptor
-      }
-
-      val isSiteArchive = archivesManager.isSiteArchive(descriptor.siteDescriptor())
-
-      val additionalInfo = if (isWatcherEnabled && descriptor is ChanDescriptor.ThreadDescriptor && !isSiteArchive) {
-        bookmarksManager.mapBookmark(descriptor) { threadBookmarkView ->
-          val boardPage = pageRequestManager.getPage(threadBookmarkView.threadDescriptor)
-
-          return@mapBookmark NavHistoryBookmarkAdditionalInfo(
-            watching = threadBookmarkView.isWatching(),
-            newPosts = threadBookmarkView.newPostsCount(),
-            newQuotes = threadBookmarkView.newQuotesCount(),
-            isBumpLimit = threadBookmarkView.isBumpLimit(),
-            isImageLimit = threadBookmarkView.isImageLimit(),
-            isLastPage = boardPage?.isLastPage() ?: false,
-          )
-        }
-      } else {
-        null
-      }
-
-      val siteThumbnailUrl = if (descriptor is ChanDescriptor.ThreadDescriptor) {
-        siteManager.bySiteDescriptor(siteDescriptor)?.icon()?.url
-      } else {
-        null
-      }
-
-      return@mapNotNull NavigationHistoryEntry(
-        descriptor,
-        navigationElement.navHistoryElementInfo.thumbnailUrl,
-        siteThumbnailUrl,
-        navigationElement.navHistoryElementInfo.title,
-        additionalInfo
-      )
-    }
+    val navHistoryList = historyNavigationManager.getAll()
+      .mapNotNull { navigationElement -> createNavHistoryElementOrNull(navigationElement, isWatcherEnabled) }
 
     if (navHistoryList.isEmpty()) {
       setState(HistoryControllerState.Empty)
@@ -188,6 +178,76 @@ class DrawerPresenter(
 
     setState(HistoryControllerState.Data(navHistoryList))
   }
+
+  private fun createNavHistoryElementOrNull(
+    navigationElement: NavHistoryElement,
+    isWatcherEnabled: Boolean
+  ): NavigationHistoryEntry? {
+    val siteDescriptor = when (navigationElement) {
+      is NavHistoryElement.Catalog -> navigationElement.descriptor.siteDescriptor()
+      is NavHistoryElement.Thread -> navigationElement.descriptor.siteDescriptor()
+    }
+
+    val siteEnabled = siteManager.bySiteDescriptor(siteDescriptor)?.enabled() ?: false
+    if (!siteEnabled) {
+      return null
+    }
+
+    val descriptor = when (navigationElement) {
+      is NavHistoryElement.Catalog -> navigationElement.descriptor
+      is NavHistoryElement.Thread -> navigationElement.descriptor
+    }
+
+    val canCreateNavElement = historyNavigationManager.canCreateNavElement(
+      bookmarksManager,
+      descriptor
+    )
+
+    if (!canCreateNavElement) {
+      return null
+    }
+
+    val isSiteArchive = archivesManager.isSiteArchive(descriptor.siteDescriptor())
+
+    val additionalInfo = if (canShowBookmarkInfo(isWatcherEnabled, descriptor, isSiteArchive)) {
+      val threadDescriptor = descriptor as ChanDescriptor.ThreadDescriptor
+
+      bookmarksManager.mapBookmark(threadDescriptor) { threadBookmarkView ->
+        val boardPage = pageRequestManager.getPage(threadBookmarkView.threadDescriptor)
+
+        return@mapBookmark NavHistoryBookmarkAdditionalInfo(
+          watching = threadBookmarkView.isWatching(),
+          newPosts = threadBookmarkView.newPostsCount(),
+          newQuotes = threadBookmarkView.newQuotesCount(),
+          isBumpLimit = threadBookmarkView.isBumpLimit(),
+          isImageLimit = threadBookmarkView.isImageLimit(),
+          isLastPage = boardPage?.isLastPage() ?: false,
+        )
+      }
+    } else {
+      null
+    }
+
+    val siteThumbnailUrl = if (descriptor is ChanDescriptor.ThreadDescriptor) {
+      siteManager.bySiteDescriptor(siteDescriptor)?.icon()?.url
+    } else {
+      null
+    }
+
+    return NavigationHistoryEntry(
+      descriptor,
+      navigationElement.navHistoryElementInfo.thumbnailUrl,
+      siteThumbnailUrl,
+      navigationElement.navHistoryElementInfo.title,
+      additionalInfo
+    )
+  }
+
+  private fun canShowBookmarkInfo(
+    isWatcherEnabled: Boolean,
+    descriptor: ChanDescriptor,
+    isSiteArchive: Boolean
+  ) = isWatcherEnabled && descriptor is ChanDescriptor.ThreadDescriptor && !isSiteArchive
 
   fun updateBadge() {
     if (!bookmarksManager.isReady()) {

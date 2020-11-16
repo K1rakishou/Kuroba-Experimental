@@ -32,9 +32,11 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
@@ -48,9 +50,11 @@ import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryEntryView
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryEntryViewModel_
 import com.github.k1rakishou.chan.features.drawer.epoxy.epoxyHistoryEntryView
+import com.github.k1rakishou.chan.features.drawer.epoxy.epoxyHistoryHeaderView
 import com.github.k1rakishou.chan.features.search.GlobalSearchController
 import com.github.k1rakishou.chan.features.settings.MainSettingsControllerV2
 import com.github.k1rakishou.chan.ui.controller.BrowseController
+import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.ThreadController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.controller.ViewThreadController
@@ -63,12 +67,15 @@ import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationCont
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
+import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
 import com.github.k1rakishou.chan.ui.view.HidingBottomNavigationView
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanel
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItem
+import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
+import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.widget.SimpleEpoxySwipeCallbacks
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
@@ -76,6 +83,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.AndroidUtils.dp
+import com.github.k1rakishou.common.AndroidUtils.getString
 import com.github.k1rakishou.common.AndroidUtils.inflate
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
@@ -114,6 +122,10 @@ class DrawerController(
   lateinit var pageRequestManager: PageRequestManager
   @Inject
   lateinit var archivesManager: ArchivesManager
+  @Inject
+  lateinit var chanThreadManager: ChanThreadManager
+  @Inject
+  lateinit var dialogFactory: DialogFactory
 
   private lateinit var rootLayout: TouchBlockingFrameLayout
   private lateinit var container: FrameLayout
@@ -131,7 +143,8 @@ class DrawerController(
       siteManager = siteManager,
       bookmarksManager = bookmarksManager,
       pageRequestManager = pageRequestManager,
-      archivesManager = archivesManager
+      archivesManager = archivesManager,
+      chanThreadManager = chanThreadManager
     )
   }
 
@@ -651,16 +664,25 @@ class DrawerController(
         }
       }
 
-      when (state) {
-        HistoryControllerState.Loading -> {
-          epoxyLoadingView {
-            id("history_loading_view")
-          }
+      if (state is HistoryControllerState.Loading) {
+        epoxyLoadingView {
+          id("history_loading_view")
         }
+
+        return@withModels
+      }
+
+      epoxyHistoryHeaderView {
+        id("navigation_history_header")
+        onThemeSwitcherClicked { themeEngine.toggleTheme() }
+        onDrawerSettingsClicked { showDrawerOptions() }
+      }
+
+      when (state) {
         HistoryControllerState.Empty -> {
           epoxyTextView {
             id("history_is_empty_text_view")
-            message(context.getString(R.string.navigation_history_is_empty))
+            message(context.getString(R.string.drawer_controller_navigation_history_is_empty))
           }
         }
         is HistoryControllerState.Error -> {
@@ -688,6 +710,80 @@ class DrawerController(
             }
           }
         }
+        HistoryControllerState.Loading -> throw IllegalStateException("Must be handled separately")
+      }
+    }
+  }
+
+  private fun showDrawerOptions() {
+    val drawerOptions = mutableListOf<FloatingListMenuItem>()
+
+    drawerOptions += CheckableFloatingListMenuItem(
+      key = ACTION_MOVE_LAST_ACCESSED_THREAD_TO_TOP,
+      name = getString(R.string.drawer_controller_move_last_accessed_thread_to_top),
+      isCurrentlySelected = ChanSettings.drawerMoveLastAccessedThreadToTop.get()
+    )
+
+    drawerOptions += CheckableFloatingListMenuItem(
+      key = ACTION_SHOW_BOOKMARKS,
+      name = getString(R.string.drawer_controller_show_bookmarks),
+      isCurrentlySelected = ChanSettings.drawerShowBookmarkedThreads.get()
+    )
+
+    drawerOptions += CheckableFloatingListMenuItem(
+      key = ACTION_SHOW_NAV_HISTORY,
+      name = getString(R.string.drawer_controller_show_navigation_history),
+      isCurrentlySelected = ChanSettings.drawerShowNavigationHistory.get()
+    )
+
+    drawerOptions += FloatingListMenuItem(
+      key = ACTION_CLEAR_NAV_HISTORY,
+      name = getString(R.string.drawer_controller_clear_nav_history)
+    )
+
+    val floatingListMenuController = FloatingListMenuController(
+      context = context,
+      constraintLayoutBiasPair = ConstraintLayoutBiasPair.TopLeft,
+      items = drawerOptions,
+      itemClickListener = { item -> onDrawerOptionClicked(item) }
+    )
+
+    presentController(floatingListMenuController)
+  }
+
+  private fun onDrawerOptionClicked(item: FloatingListMenuItem) {
+    when (item.key) {
+      ACTION_MOVE_LAST_ACCESSED_THREAD_TO_TOP -> {
+        ChanSettings.drawerMoveLastAccessedThreadToTop.toggle()
+      }
+      ACTION_SHOW_BOOKMARKS -> {
+        ChanSettings.drawerShowBookmarkedThreads.toggle()
+
+        if (ChanSettings.drawerShowBookmarkedThreads.get()) {
+          historyNavigationManager.createNewNavElements(
+            drawerPresenter.mapBookmarksIntoNewNavigationElements()
+          )
+        } else {
+          val bookmarkDescriptors = bookmarksManager
+            .mapAllBookmarks { threadBookmarkView -> threadBookmarkView.threadDescriptor }
+
+          historyNavigationManager.removeNavElements(bookmarkDescriptors)
+        }
+
+        drawerPresenter.reloadNavigationHistory()
+      }
+      ACTION_SHOW_NAV_HISTORY -> {
+        ChanSettings.drawerShowNavigationHistory.toggle()
+        drawerPresenter.reloadNavigationHistory()
+      }
+      ACTION_CLEAR_NAV_HISTORY -> {
+        dialogFactory.createSimpleConfirmationDialog(
+          context = context,
+          titleTextId = R.string.drawer_controller_clear_nav_history_dialog_title,
+          negativeButtonText = getString(R.string.do_not),
+          positiveButtonText = getString(R.string.clear),
+          onPositiveButtonClickListener = { historyNavigationManager.clear() }
+        )
       }
     }
   }
@@ -697,15 +793,12 @@ class DrawerController(
       val currentTopThreadController = topThreadController
         ?: return@launch
 
-      val isCurrentlyVisible = drawerPresenter.isCurrentlyVisible(navHistoryEntry.descriptor)
-      if (!isCurrentlyVisible) {
-        when (val descriptor = navHistoryEntry.descriptor) {
-          is ChanDescriptor.ThreadDescriptor -> {
-            currentTopThreadController.showThread(descriptor, true)
-          }
-          is ChanDescriptor.CatalogDescriptor -> {
-            currentTopThreadController.showBoard(descriptor.boardDescriptor, true)
-          }
+      when (val descriptor = navHistoryEntry.descriptor) {
+        is ChanDescriptor.ThreadDescriptor -> {
+          currentTopThreadController.showThread(descriptor, true)
+        }
+        is ChanDescriptor.CatalogDescriptor -> {
+          currentTopThreadController.showBoard(descriptor.boardDescriptor, true)
         }
       }
 
@@ -719,5 +812,10 @@ class DrawerController(
     private const val TAG = "DrawerController"
     private const val BOOKMARKS_BADGE_COUNTER_MAX_NUMBERS = 5
     private const val SETTINGS_BADGE_COUNTER_MAX_NUMBERS = 2
+
+    private const val ACTION_MOVE_LAST_ACCESSED_THREAD_TO_TOP = 0
+    private const val ACTION_SHOW_BOOKMARKS = 1
+    private const val ACTION_SHOW_NAV_HISTORY = 2
+    private const val ACTION_CLEAR_NAV_HISTORY = 3
   }
 }

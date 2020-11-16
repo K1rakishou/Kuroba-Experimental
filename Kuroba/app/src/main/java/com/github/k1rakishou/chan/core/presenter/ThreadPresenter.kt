@@ -786,6 +786,15 @@ class ThreadPresenter @Inject constructor(
   }
 
   private fun createNewNavHistoryElement(localChanDescriptor: ChanDescriptor) {
+    val canCreateNavElement = historyNavigationManager.canCreateNavElement(
+      bookmarksManager,
+      localChanDescriptor
+    )
+
+    if (!canCreateNavElement) {
+      return
+    }
+
     when (localChanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> {
         val site = siteManager.bySiteDescriptor(localChanDescriptor.siteDescriptor())
@@ -798,19 +807,25 @@ class ThreadPresenter @Inject constructor(
       }
 
       is ChanDescriptor.ThreadDescriptor -> {
+        val chanOriginalPost = chanThreadManager.getChanThread(localChanDescriptor)
+          ?.getOriginalPost()
+
+        if (chanOriginalPost == null) {
+          return
+        }
+
         val opThumbnailUrl = chanThreadManager.getChanThread(localChanDescriptor)
           ?.getOriginalPost()
           ?.firstImage()
           ?.actualThumbnailUrl
 
-        val chanOriginalPost = chanThreadManager.getChanThread(localChanDescriptor)
-          ?.getOriginalPost()
+        val title = ChanPostUtils.getTitle(
+          chanOriginalPost,
+          localChanDescriptor
+        )
 
-        if (chanOriginalPost != null) {
-          val title = ChanPostUtils.getTitle(chanOriginalPost, localChanDescriptor)
-          if (opThumbnailUrl != null && title.isNotEmpty()) {
-            historyNavigationManager.createNewNavElement(localChanDescriptor, opThumbnailUrl, title)
-          }
+        if (opThumbnailUrl != null && title.isNotEmpty()) {
+          historyNavigationManager.createNewNavElement(localChanDescriptor, opThumbnailUrl, title)
         }
       }
     }

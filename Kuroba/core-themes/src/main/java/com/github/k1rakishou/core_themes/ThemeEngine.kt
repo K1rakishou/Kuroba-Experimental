@@ -147,14 +147,13 @@ open class ThemeEngine(
 
     val drawableMutable = DrawableCompat.wrap(drawable).mutate()
     if (chanTheme.isLightTheme) {
-      DrawableCompat.setTint(drawableMutable, LIGHT_DRAWABLE_TINT)
-    } else {
       DrawableCompat.setTint(drawableMutable, DARK_DRAWABLE_TINT)
+    } else {
+      DrawableCompat.setTint(drawableMutable, LIGHT_DRAWABLE_TINT)
     }
 
     return drawableMutable
   }
-
 
   private fun getThemeInternal(isDarkTheme: Boolean): ChanTheme {
     return if (isDarkTheme) {
