@@ -42,6 +42,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPost;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
+import com.github.k1rakishou.model.data.post.PostIndexed;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -198,8 +199,8 @@ public class PostRepliesController
     public List<PostDescriptor> getPostRepliesData() {
         List<PostDescriptor> postDescriptors = new ArrayList<>();
 
-        for (ChanPost post : displayingData.posts) {
-            postDescriptors.add(post.getPostDescriptor());
+        for (PostIndexed post : displayingData.posts) {
+            postDescriptors.add(post.getPost().getPostDescriptor());
         }
 
         return postDescriptors;
@@ -341,9 +342,9 @@ public class PostRepliesController
 
         @Override
         public long getItemId(int position) {
-            ChanPost post = data.posts.get(position);
-            int repliesFromCount = post.getRepliesFromCount();
-            return ((long) repliesFromCount << 32L) + post.postNo();
+            PostIndexed post = data.posts.get(position);
+            int repliesFromCount = post.getPost().getRepliesFromCount();
+            return ((long) repliesFromCount << 32L) + post.getPost().postNo();
         }
 
         @Override
@@ -368,12 +369,12 @@ public class PostRepliesController
         }
 
         public void onPostUpdated(ChanPost post) {
-            List<ChanPost> posts = data.posts;
+            List<PostIndexed> posts = data.posts;
 
             for (int postIndex = 0; postIndex < posts.size(); postIndex++) {
-                ChanPost chanPost = posts.get(postIndex);
+                PostIndexed chanPost = posts.get(postIndex);
 
-                if (chanPost.getPostDescriptor() == post.getPostDescriptor()) {
+                if (chanPost.getPost().getPostDescriptor() == post.getPostDescriptor()) {
                     notifyItemChanged(postIndex);
                     return;
                 }
@@ -393,7 +394,7 @@ public class PostRepliesController
         public void onBind(
                 ThreadPresenter presenter,
                 ChanDescriptor chanDescriptor,
-                ChanPost post,
+                PostIndexed post,
                 long markedNo,
                 int position,
                 int itemCount,
@@ -403,9 +404,8 @@ public class PostRepliesController
 
             postCellInterface.setPost(
                     chanDescriptor,
-                    post,
-                    -1,
-                    -1,
+                    post.getPost(),
+                    post.getPostIndex(),
                     presenter,
                     true,
                     false,

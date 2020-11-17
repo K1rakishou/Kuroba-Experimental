@@ -140,8 +140,7 @@ class PostCell : LinearLayout, PostCellInterface {
   private var detailsSizePx = 0
   private var iconSizePx = 0
   private var paddingPx = 0
-  private var currentPostIndex = 0
-  private var realPostIndex = 0
+  private var postIndex = 0
   private var markedNo: Long = 0
 
   private var threadMode = false
@@ -256,8 +255,7 @@ class PostCell : LinearLayout, PostCellInterface {
   override fun setPost(
     chanDescriptor: ChanDescriptor,
     post: ChanPost,
-    currentPostIndex: Int,
-    realPostIndex: Int,
+    postIndex: Int,
     callback: PostCellCallback,
     inPopup: Boolean,
     highlighted: Boolean,
@@ -279,8 +277,7 @@ class PostCell : LinearLayout, PostCellInterface {
       && this.showDivider == showDivider
       && this.filterHash == filterHash
       && this.theme == theme
-      && this.currentPostIndex == currentPostIndex
-      && this.realPostIndex == realPostIndex
+      && this.postIndex == postIndex
     ) {
       return
     }
@@ -296,8 +293,7 @@ class PostCell : LinearLayout, PostCellInterface {
     this.showDivider = showDivider
     this.filterHash = filterHash
     this.theme = theme
-    this.currentPostIndex = currentPostIndex
-    this.realPostIndex = realPostIndex
+    this.postIndex = postIndex
 
     hasColoredFilter = postFilterManager.getFilterHighlightedColor(post.postDescriptor) != 0
     bindPost(post)
@@ -423,7 +419,7 @@ class PostCell : LinearLayout, PostCellInterface {
   private fun threadBookmarkViewPost(post: ChanPost) {
     val threadDescriptor = chanDescriptor.threadDescriptorOrNull()
 
-    if (threadDescriptor != null && currentPostIndex >= 0 && realPostIndex >= 0) {
+    if (threadDescriptor != null && postIndex >= 0) {
       val unseenPostsCount = chanThreadManager.getNewPostsCount(
         threadDescriptor,
         post.postNo()
@@ -496,8 +492,8 @@ class PostCell : LinearLayout, PostCellInterface {
     val titleParts: MutableList<CharSequence> = ArrayList(5)
     var postIndexText = ""
 
-    if (chanDescriptor.isThreadDescriptor() && currentPostIndex >= 0) {
-      postIndexText = String.format(Locale.ENGLISH, "#%d, ", currentPostIndex + 1)
+    if (chanDescriptor.isThreadDescriptor() && postIndex >= 0) {
+      postIndexText = String.format(Locale.ENGLISH, "#%d, ", postIndex + 1)
     }
 
     if (post.subject.isNotNullNorEmpty()) {

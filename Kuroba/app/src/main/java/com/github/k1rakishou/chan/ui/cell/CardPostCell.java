@@ -62,7 +62,6 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
 
     private ChanTheme theme;
     private ChanPost post;
-    private ChanDescriptor chanDescriptor;
     private PostCellInterface.PostCellCallback callback;
     private boolean compact = false;
     private boolean inPopup = false;
@@ -150,8 +149,7 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
     public void setPost(
             ChanDescriptor chanDescriptor,
             final ChanPost post,
-            final int currentPostIndex,
-            final int realPostIndex,
+            final int postIndex,
             PostCellInterface.PostCellCallback callback,
             boolean inPopup,
             boolean highlighted,
@@ -167,7 +165,6 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
         }
 
         this.inPopup = inPopup;
-        this.chanDescriptor = chanDescriptor;
         this.post = post;
         this.theme = theme;
         this.callback = callback;

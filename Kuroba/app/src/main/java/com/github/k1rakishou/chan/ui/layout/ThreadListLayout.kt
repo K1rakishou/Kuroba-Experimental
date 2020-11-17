@@ -637,15 +637,17 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     return false
   }
 
-  fun gainedFocus(threadControllerType: ThreadController.ThreadControllerType) {
+  fun gainedFocus(threadControllerType: ThreadController.ThreadControllerType, isThreadVisible: Boolean) {
     threadPresenter?.gainedFocus(threadControllerType)
 
-    val chanDescriptor = currentChanDescriptorOrNull()
-    if (chanDescriptor != null) {
-      restorePrevScrollPosition(chanDescriptor, false)
-    }
+    if (isThreadVisible) {
+      val chanDescriptor = currentChanDescriptorOrNull()
+      if (chanDescriptor != null) {
+        restorePrevScrollPosition(chanDescriptor, false)
+      }
 
-    showToolbarIfNeeded()
+      showToolbarIfNeeded()
+    }
   }
 
   override fun openReply(open: Boolean) {

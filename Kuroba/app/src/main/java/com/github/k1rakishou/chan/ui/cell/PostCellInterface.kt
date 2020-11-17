@@ -31,8 +31,7 @@ interface PostCellInterface {
   fun setPost(
     chanDescriptor: ChanDescriptor,
     post: ChanPost,
-    currentPostIndex: Int,
-    realPostIndex: Int,
+    postIndex: Int,
     callback: PostCellCallback,
     inPopup: Boolean,
     highlighted: Boolean,

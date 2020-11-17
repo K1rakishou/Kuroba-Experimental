@@ -33,7 +33,6 @@ class PostsFilter(
 
   suspend fun applyFilter(chanDescriptor: ChanDescriptor, posts: MutableList<ChanPost>): List<PostIndexed> {
     val postsCount = posts.size
-    val originalPostIndexes = calculateOriginalPostIndexes(posts)
 
     if (order != Order.BUMP && chanDescriptor is ChanDescriptor.CatalogDescriptor) {
       processOrder(posts as MutableList<ChanOriginalPost>)
@@ -58,26 +57,10 @@ class PostsFilter(
 
     for (currentPostIndex in retainedPosts.indices) {
       val retainedPost = retainedPosts[currentPostIndex]
-      val realIndex = requireNotNull(originalPostIndexes[retainedPost.postNo()])
-
-      indexedPosts.add(PostIndexed(retainedPost, currentPostIndex, realIndex))
+      indexedPosts.add(PostIndexed(retainedPost, currentPostIndex))
     }
 
     return indexedPosts
-  }
-
-  private fun calculateOriginalPostIndexes(original: List<ChanPost>): Map<Long, Int> {
-    if (original.isEmpty()) {
-      return emptyMap()
-    }
-
-    val originalPostIndexes: MutableMap<Long, Int> = HashMap(original.size)
-    for (postIndex in original.indices) {
-      val post = original[postIndex]
-      originalPostIndexes[post.postNo()] = postIndex
-    }
-
-    return originalPostIndexes
   }
 
   private fun processOrder(posts: List<ChanOriginalPost>) {

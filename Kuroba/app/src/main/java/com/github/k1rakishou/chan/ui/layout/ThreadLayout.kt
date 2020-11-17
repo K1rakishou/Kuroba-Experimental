@@ -41,6 +41,7 @@ import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -130,6 +131,8 @@ class ThreadLayout @JvmOverloads constructor(
   lateinit var archivesManager: ArchivesManager
   @Inject
   lateinit var dialogFactory: DialogFactory
+  @Inject
+  lateinit var chanThreadManager: ChanThreadManager
 
   private lateinit var callback: ThreadLayoutCallback
   private lateinit var progressLayout: View
@@ -219,7 +222,7 @@ class ThreadLayout @JvmOverloads constructor(
     // View setup
     presenter.create(context, this)
     threadListLayout.onCreate(presenter, this)
-    postPopupHelper = PostPopupHelper(context, presenter, this)
+    postPopupHelper = PostPopupHelper(context, presenter, chanThreadManager, this)
     imageReencodingHelper = ImageOptionsHelper(context, this)
     removedPostsHelper = RemovedPostsHelper(context, presenter, this)
     errorText.typeface = themeEngine.chanTheme.mainFont
@@ -314,9 +317,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   fun gainedFocus(threadControllerType: ThreadController.ThreadControllerType) {
-    if (visible == Visible.THREAD) {
-      threadListLayout.gainedFocus(threadControllerType)
-    }
+    threadListLayout.gainedFocus(threadControllerType, visible == Visible.THREAD)
   }
 
   fun setPostViewMode(postViewMode: PostViewMode) {

@@ -193,8 +193,7 @@ public class PostAdapter
                 postCell.setPost(
                         chanDescriptor,
                         post,
-                        postIndexed.getCurrentPostIndex(),
-                        postIndexed.getRealPostIndex(),
+                        postIndexed.getPostIndex(),
                         postCellCallback,
                         false,
                         highlight,

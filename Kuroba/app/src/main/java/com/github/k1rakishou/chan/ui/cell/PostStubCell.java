@@ -149,7 +149,6 @@ public class PostStubCell
             ChanDescriptor chanDescriptor,
             final ChanPost post,
             final int currentPostIndex,
-            final int realPostIndex,
             PostCellInterface.PostCellCallback callback,
             boolean inPopup,
             boolean highlighted,

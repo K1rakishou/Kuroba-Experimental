@@ -218,6 +218,16 @@ class ChanThreadManager(
     return chanThreadsCache.getThread(postDescriptor.threadDescriptor())?.getPost(postDescriptor)
   }
 
+  fun <T> iteratePostIndexes(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    input: Collection<T>,
+    postDescriptorSelector: (T) -> PostDescriptor,
+    iterator: (ChanPost, Int) -> Unit,
+  ) {
+    chanThreadsCache.getThread(threadDescriptor)
+      ?.iteratePostIndexes(input, threadDescriptor, postDescriptorSelector, iterator)
+  }
+
   /**
    * Just an optimization to not convert an immutable list of posts into a mutable list of posts
    * when applying filters to posts. You should prefer immutable version of this method in all

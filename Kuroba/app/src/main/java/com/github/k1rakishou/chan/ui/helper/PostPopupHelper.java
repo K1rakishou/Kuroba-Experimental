@@ -19,35 +19,48 @@ package com.github.k1rakishou.chan.ui.helper;
 import android.content.Context;
 
 import com.github.k1rakishou.chan.controller.Controller;
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter;
 import com.github.k1rakishou.chan.ui.controller.PostRepliesController;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPost;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
+import com.github.k1rakishou.model.data.post.PostIndexed;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import kotlin.Unit;
+
 public class PostPopupHelper {
-    private Context context;
-    private ThreadPresenter presenter;
+    private final Context context;
+    private final ThreadPresenter presenter;
+    private final ChanThreadManager chanThreadManager;
     private final PostPopupHelperCallback callback;
 
     private final List<RepliesData> dataQueue = new ArrayList<>();
     private PostRepliesController presentingController;
 
-    public PostPopupHelper(Context context, ThreadPresenter presenter, PostPopupHelperCallback callback) {
+    public PostPopupHelper(
+            Context context,
+            ThreadPresenter presenter,
+            ChanThreadManager chanThreadManager,
+            PostPopupHelperCallback callback
+    ) {
         this.context = context;
         this.presenter = presenter;
+        this.chanThreadManager = chanThreadManager;
         this.callback = callback;
     }
 
     public void showPosts(ChanPost forPost, List<ChanPost> posts) {
-        RepliesData data = new RepliesData(forPost, posts);
+        RepliesData data = new RepliesData(forPost, indexPosts(posts));
         dataQueue.add(data);
 
         if (dataQueue.size() == 1) {
@@ -59,6 +72,28 @@ public class PostPopupHelper {
         }
 
         presentingController.setPostRepliesData(presenter.getCurrentChanDescriptor(), data);
+    }
+
+    private List<PostIndexed> indexPosts(List<ChanPost> posts) {
+        if (posts.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<PostIndexed> postIndexedList = new ArrayList<>();
+        ChanDescriptor.ThreadDescriptor threadDescriptor =
+                posts.get(0).getPostDescriptor().threadDescriptor();
+
+        chanThreadManager.iteratePostIndexes(
+                threadDescriptor,
+                posts,
+                ChanPost::getPostDescriptor,
+                (chanPost, postIndex) -> {
+                    postIndexedList.add(new PostIndexed(chanPost, postIndex));
+                    return Unit.INSTANCE;
+                }
+        );
+
+        return postIndexedList;
     }
 
     public void onPostUpdated(@NotNull ChanPost post) {
@@ -127,10 +162,10 @@ public class PostPopupHelper {
     }
 
     public static class RepliesData {
-        public List<ChanPost> posts;
+        public List<PostIndexed> posts;
         public ChanPost forPost;
 
-        public RepliesData(ChanPost forPost, List<ChanPost> posts) {
+        public RepliesData(ChanPost forPost, List<PostIndexed> posts) {
             this.forPost = forPost;
             this.posts = posts;
         }

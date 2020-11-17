@@ -234,6 +234,36 @@ class ChanThread(
     return lock.read { postsByPostDescriptors[postDescriptor] }
   }
 
+  fun <T> iteratePostIndexes(
+    input: Collection<T>,
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    postDescriptorSelector: (T) -> PostDescriptor,
+    iterator: (ChanPost, Int) -> Unit
+  ) {
+    lock.read {
+      input.forEach { inputValue ->
+        val postDescriptor = postDescriptorSelector(inputValue)
+
+        check(postDescriptor.threadDescriptor() == threadDescriptor) {
+          "All posts must belong to the same thread! threadDescriptor=$threadDescriptor, " +
+            "postDescriptor.threadDescriptor=${postDescriptor.threadDescriptor()}"
+        }
+
+        val postIndex = threadPosts
+          .indexOfFirst { chanPost -> chanPost.postDescriptor == postDescriptor }
+
+        if (postIndex < 0) {
+          return@forEach
+        }
+
+        val chanPost = threadPosts.getOrNull(postIndex)
+          ?: return@forEach
+
+        iterator(chanPost, postIndex)
+      }
+    }
+  }
+
   fun getNewPostsCount(lastPostNo: Long): Int {
     return lock.read { threadPosts.count { chanPost -> chanPost.postNo() > lastPostNo } }
   }

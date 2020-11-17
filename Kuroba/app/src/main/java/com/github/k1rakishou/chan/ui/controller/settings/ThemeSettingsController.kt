@@ -649,7 +649,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
   }
 
   private fun indexPosts(posts: List<ChanPost>): List<PostIndexed> {
-    return posts.mapIndexed { index, post -> PostIndexed(post, index, index) }
+    return posts.mapIndexed { index, post -> PostIndexed(post, index) }
   }
 
   private fun hackSpanColors(input: CharSequence?, theme: ChanTheme) {
