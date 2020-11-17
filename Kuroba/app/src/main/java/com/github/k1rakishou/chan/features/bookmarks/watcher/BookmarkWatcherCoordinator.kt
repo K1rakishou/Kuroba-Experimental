@@ -39,7 +39,7 @@ class BookmarkWatcherCoordinator(
     appScope.launch {
       bookmarkChangeSubject
         .onBackpressureLatest()
-        .buffer(1, TimeUnit.SECONDS)
+        .buffer(150, TimeUnit.MILLISECONDS)
         .onBackpressureLatest()
         .filter { events -> events.isNotEmpty() }
         .asFlow()
@@ -55,20 +55,17 @@ class BookmarkWatcherCoordinator(
 
     appScope.launch {
       bookmarksManager.listenForBookmarksChanges()
-        .buffer(1, TimeUnit.SECONDS)
-        .filter { groupOfChanges -> groupOfChanges.isNotEmpty() }
         .asFlow()
         // Pass the filter if we have at least one bookmark change that we actually want
-        .filter { groupOfChanges -> groupOfChanges.any { change -> isWantedBookmarkChange(change) } }
-        .collect { groupOfChanges ->
+        .filter { bookmarkChange -> isWantedBookmarkChange(bookmarkChange) }
+        .collect { bookmarkChange ->
           if (verboseLogsEnabled) {
             Logger.d(TAG, "Calling onBookmarksChanged() because bookmarks have actually changed")
           }
 
-          val hasCreateBookmarkChange = groupOfChanges
-            .any { change -> change is BookmarksManager.BookmarkChange.BookmarksCreated }
-
+          val hasCreateBookmarkChange = bookmarkChange is BookmarksManager.BookmarkChange.BookmarksCreated
           val simpleBookmarkChangeInfo = SimpleBookmarkChangeInfo(hasCreateBookmarkChange)
+
           bookmarkChangeSubject.onNext(simpleBookmarkChangeInfo)
         }
     }
@@ -141,6 +138,13 @@ class BookmarkWatcherCoordinator(
         // fallthrough because we need to update the foreground watcher
       }
 
+      val canRestartBackgroundWatcher =
+        ChanSettings.watchBackground.get() && ChanSettings.watchBackground.get()
+
+      if (hasCreateBookmarkChange && canRestartBackgroundWatcher) {
+        restartBackgroundWork(appConstants, appContext)
+      }
+
       if (hasCreateBookmarkChange) {
         Logger.d(TAG, "onBookmarksChanged() hasCreateBookmarkChange==true, restarting the foreground watcher")
         bookmarkForegroundWatcher.restartWatching()
@@ -185,7 +189,11 @@ class BookmarkWatcherCoordinator(
       val tag = appConstants.bookmarkWatchWorkUniqueTag
       Logger.d(TAG, "restartBackgroundJob() called tag=$tag")
 
-      if (!ChanSettings.watchBackground.get()) {
+      if (!ChanSettings.watchEnabled.get() || !ChanSettings.watchBackground.get()) {
+        Logger.d(TAG, "restartBackgroundJob() cannot restart watcher because one of the required " +
+          "settings is turned off (watchEnabled=${ChanSettings.watchEnabled.get()}, " +
+          "watchBackground=${ChanSettings.watchBackground.get()})")
+
         cancelBackgroundBookmarkWatching(appConstants, appContext)
         return
       }

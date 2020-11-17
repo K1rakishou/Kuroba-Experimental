@@ -154,9 +154,6 @@ open class ChanPost(
     if (this === other) return true
     if (other !is ChanPost) return false
 
-    if (chanPostId != other.chanPostId) {
-      return false
-    }
     if (postDescriptor != other.postDescriptor) {
       return false
     }

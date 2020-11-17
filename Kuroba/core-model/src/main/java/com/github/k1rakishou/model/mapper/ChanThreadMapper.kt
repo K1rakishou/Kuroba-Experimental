@@ -28,25 +28,18 @@ object ChanThreadMapper {
 
   fun fromEntity(
     gson: Gson,
-    chanDescriptor: ChanDescriptor,
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
     chanThreadEntity: ChanThreadEntity,
     chanPostFull: ChanPostFull,
     chanTextSpanEntityList: List<ChanTextSpanEntity>?,
     postAdditionalData: ChanPostLocalSource.PostAdditionalData
   ): ChanOriginalPost {
-    val postDescriptor = when (chanDescriptor) {
-      is ChanDescriptor.ThreadDescriptor -> PostDescriptor.create(
-        chanDescriptor.siteName(),
-        chanDescriptor.boardCode(),
-        chanDescriptor.threadNo,
-        chanPostFull.chanPostIdEntity.postNo
-      )
-      is ChanDescriptor.CatalogDescriptor -> PostDescriptor.create(
-        chanDescriptor.siteName(),
-        chanDescriptor.boardCode(),
-        chanPostFull.chanPostIdEntity.postNo
-      )
-    }
+    val postDescriptor = PostDescriptor.create(
+      threadDescriptor.siteName(),
+      threadDescriptor.boardCode(),
+      threadDescriptor.threadNo,
+      chanPostFull.chanPostIdEntity.postNo
+    )
 
     val postImages = postAdditionalData.postImageByPostIdMap[chanPostFull.chanPostIdEntity.postId]
       ?.map { chanPostImageEntity -> ChanPostImageMapper.fromEntity(chanPostImageEntity, postDescriptor) }

@@ -262,7 +262,8 @@ class ChanPostLocalSource(
   ): Map<ChanDescriptor.ThreadDescriptor, ChanOriginalPost> {
     ensureInTransaction()
 
-    val catalogDescriptors = mutableMapWithCap<ChanDescriptor.CatalogDescriptor, MutableSet<Long>>(threadDescriptors)
+    val catalogDescriptors =
+      mutableMapWithCap<ChanDescriptor.CatalogDescriptor, MutableSet<Long>>(threadDescriptors)
 
     threadDescriptors.forEach { threadDescriptor ->
       val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(
@@ -363,7 +364,7 @@ class ChanPostLocalSource(
 
   private suspend fun loadOriginalPostsInternal(
     chanThreadEntityList: List<ChanThreadEntity>,
-    descriptor: ChanDescriptor.CatalogDescriptor
+    catalogDescriptor: ChanDescriptor.CatalogDescriptor
   ): List<ChanOriginalPost> {
     // Load threads' original posts
     val chanPostFullMap = chanThreadEntityList
@@ -395,9 +396,14 @@ class ChanPostLocalSource(
 
       val postTextSnapEntityList = textSpansGroupedByPostId[chanPostEntity.chanPostIdEntity.postId]
 
+      val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+        catalogDescriptor,
+        chanPostEntity.chanPostIdEntity.postNo
+      )
+
       return@map ChanThreadMapper.fromEntity(
         gson,
-        descriptor,
+        threadDescriptor,
         chanThreadEntity,
         chanPostEntity,
         postTextSnapEntityList,

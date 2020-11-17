@@ -57,6 +57,11 @@ class ChanThreadsCache(
       runOldPostEvictionRoutineIfNeeded()
 
       originalPosts.forEach { chanOriginalPost ->
+        check(chanOriginalPost.postDescriptor.descriptor is ChanDescriptor.ThreadDescriptor) {
+          "Only thread descriptors are allowed in the cache!" +
+            "descriptor=${chanOriginalPost.postDescriptor.descriptor}"
+        }
+
         val threadDescriptor = chanOriginalPost.postDescriptor.threadDescriptor()
 
         if (!chanThreads.containsKey(threadDescriptor)) {
@@ -87,8 +92,7 @@ class ChanThreadsCache(
 
       if (distinctByChanDescriptor.size != 1) {
         throw IllegalStateException(
-          "The input posts list contains posts from different threads! " +
-            "posts: $posts"
+          "The input posts list contains posts from different threads! posts: $posts"
         )
       }
     }

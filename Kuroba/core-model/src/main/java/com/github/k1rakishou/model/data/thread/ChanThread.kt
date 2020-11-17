@@ -70,6 +70,10 @@ class ChanThread(
       var addedOrUpdatedPosts = false
 
       newChanPosts.forEach { newChanPost ->
+        require(newChanPost.postDescriptor.descriptor is ChanDescriptor.ThreadDescriptor) {
+          "postDescriptor.descriptor must be thread ThreadDescriptor"
+        }
+
         // We don't have this post, just add it at the end
         if (!postsByPostDescriptors.containsKey(newChanPost.postDescriptor)) {
           threadPosts.add(newChanPost)
@@ -112,6 +116,16 @@ class ChanThread(
     lock.write {
       val oldPostDescriptor = threadPosts.firstOrNull()?.postDescriptor
       val newPostDescriptor = newChanOriginalPost.postDescriptor
+
+      oldPostDescriptor?.let { oldPD ->
+        check(oldPD.descriptor is ChanDescriptor.ThreadDescriptor) {
+          "oldPostDescriptor.descriptor must be thread ThreadDescriptor"
+        }
+      }
+
+      check(newPostDescriptor.descriptor is ChanDescriptor.ThreadDescriptor) {
+        "newPostDescriptor.descriptor must be thread ThreadDescriptor"
+      }
 
       if (oldPostDescriptor != null) {
         check(oldPostDescriptor == newPostDescriptor) {
@@ -456,11 +470,13 @@ class ChanThread(
     oldChanPost: ChanPost,
     newPost: ChanPost
   ): ChanOriginalPost {
-    require(oldChanPost is ChanOriginalPost) { "oldChanPost is not ChanOriginalPost" }
-    require(newPost is ChanOriginalPost) { "newPost is not ChanOriginalPost" }
+    check(oldChanPost is ChanOriginalPost) { "oldChanPost is not ChanOriginalPost" }
+    check(newPost is ChanOriginalPost) { "newPost is not ChanOriginalPost" }
 
     val oldChanOriginalPost = oldChanPost as ChanOriginalPost
     val newChanOriginalPost = newPost as ChanOriginalPost
+
+    check(oldChanOriginalPost.postDescriptor == newChanOriginalPost.postDescriptor) { "Post descriptors differ!" }
 
     val mergedOriginalPost = ChanOriginalPost(
       chanPostId = oldChanOriginalPost.chanPostId,
@@ -541,6 +557,16 @@ class ChanThread(
 
         checkNotNull(chanPost2) { "postsByPostDescriptors does not contain $chanPost1" }
         check(chanPost1 == chanPost2) { "Posts do not match (chanPost1=$chanPost1, chanPost2=$chanPost2)" }
+
+        check(chanPost1.postDescriptor.descriptor is ChanDescriptor.ThreadDescriptor) {
+          "Only thread descriptors are allowed in the cache!" +
+            "descriptor=${chanPost1.postDescriptor.descriptor}"
+        }
+
+        check(chanPost2.postDescriptor.descriptor is ChanDescriptor.ThreadDescriptor) {
+          "Only thread descriptors are allowed in the cache!" +
+            "descriptor=${chanPost2.postDescriptor.descriptor}"
+        }
 
         check(chanPost1.postNo() > prevPostNo) { "Posts are not sorted!" }
         prevPostNo = chanPost1.postNo()
