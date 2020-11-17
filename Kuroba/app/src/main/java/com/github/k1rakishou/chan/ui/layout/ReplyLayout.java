@@ -42,12 +42,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatImageView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.StartActivity;
+import com.github.k1rakishou.chan.core.helper.CommentEditingHistory;
 import com.github.k1rakishou.chan.core.helper.ProxyStorage;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
@@ -77,6 +79,7 @@ import com.github.k1rakishou.chan.ui.view.LoadView;
 import com.github.k1rakishou.chan.ui.view.SelectionListeningEditText;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.ImageDecoder;
+import com.github.k1rakishou.chan.utils.KtExtensionsKt;
 import com.github.k1rakishou.common.AndroidUtils;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
@@ -91,6 +94,8 @@ import java.io.File;
 import java.util.Set;
 
 import javax.inject.Inject;
+
+import kotlin.Unit;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
@@ -139,6 +144,7 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
     private ColorizableTextView currentProgress;
 
     // Reply views:
+    private View replyLayoutTopDivider;
     private View replyInputLayout;
     private TextView message;
     private ColorizableEditText name;
@@ -155,6 +161,7 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
     private ColorizableBarButton commentSJISButton;
     private SelectionListeningEditText comment;
     private TextView commentCounter;
+    private AppCompatImageView commentRevertChangeButton;
     private ColorizableCheckBox spoiler;
     private LinearLayout previewHolder;
     private ImageView preview;
@@ -226,6 +233,13 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
             attach.setImageDrawable(themeEngine.tintDrawable(attach.getDrawable(), isDarkColor));
         }
 
+        replyLayoutTopDivider.setBackgroundColor(
+                ThemeEngine.updateAlphaForColor(
+                        themeEngine.getChanTheme().getTextColorHint(),
+                        (int) (0.4f * 255f)
+                )
+        );
+
         moreDropdown.updateColor(themeEngine.resolveTintColor(isDarkColor));
 
         if (submit.getDrawable() != null) {
@@ -268,6 +282,7 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
 
         // Inflate reply input
         replyInputLayout = AndroidUtils.inflate(getContext(), R.layout.layout_reply_input, this, false);
+        replyLayoutTopDivider = replyInputLayout.findViewById(R.id.comment_top_divider);
         message = replyInputLayout.findViewById(R.id.message);
         name = replyInputLayout.findViewById(R.id.name);
         subject = replyInputLayout.findViewById(R.id.subject);
@@ -283,6 +298,7 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
         commentSJISButton = replyInputLayout.findViewById(R.id.comment_sjis);
         comment = replyInputLayout.findViewById(R.id.comment);
         commentCounter = replyInputLayout.findViewById(R.id.comment_counter);
+        commentRevertChangeButton = replyInputLayout.findViewById(R.id.comment_revert_change_button);
         spoiler = replyInputLayout.findViewById(R.id.spoiler);
         preview = replyInputLayout.findViewById(R.id.preview);
         previewHolder = replyInputLayout.findViewById(R.id.preview_holder);
@@ -304,6 +320,7 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
         commentMathButton.setOnClickListener(this);
         commentEqnButton.setOnClickListener(this);
         commentSJISButton.setOnClickListener(this);
+        commentRevertChangeButton.setOnClickListener(this);
 
         comment.addTextChangedListener(this);
         comment.setSelectionChangedListener(this);
@@ -522,6 +539,8 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
             insertTags("[math]", "[/math]");
         } else if (v == commentSJISButton) {
             insertTags("[sjis]", "[/sjis]");
+        } else if (v == commentRevertChangeButton) {
+            presenter.onRevertChangeButtonClicked();
         }
     }
 
@@ -696,6 +715,30 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
         return captchaHolder.getToken();
     }
 
+    @Override
+    public void updateRevertChangeButtonVisibility(boolean isBufferEmpty) {
+        if (isBufferEmpty) {
+            commentRevertChangeButton.setVisibility(View.GONE);
+        } else {
+            commentRevertChangeButton.setVisibility(View.VISIBLE);
+        }
+    }
+
+    @Override
+    public void restoreComment(@NotNull CommentEditingHistory.CommentInputState prevCommentInputState) {
+        KtExtensionsKt.doIgnoringTextWatcher(comment, this, appCompatEditText -> {
+            appCompatEditText.setText(prevCommentInputState.getText());
+
+            appCompatEditText.setSelection(
+                    prevCommentInputState.getSelectionStart(),
+                    prevCommentInputState.getSelectionEnd()
+            );
+
+            presenter.updateCommentCounter(appCompatEditText.getText());
+            return Unit.INSTANCE;
+        });
+    }
+
     private String getReason(Throwable error) {
         if (error instanceof AndroidRuntimeException && error.getMessage() != null) {
             if (error.getMessage().contains("MissingWebViewPackageException")) {
@@ -823,6 +866,12 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
 
         more.setImageDrawable(moreDropdown);
         animator.start();
+
+        if (expanded) {
+            replyLayoutTopDivider.setVisibility(View.INVISIBLE);
+        } else {
+            replyLayoutTopDivider.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
@@ -1119,7 +1168,15 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
 
     @Override
     public void afterTextChanged(Editable s) {
-        presenter.onCommentTextChanged(comment.getText());
+        presenter.updateCommentCounter(comment.getText());
+
+        CommentEditingHistory.CommentInputState commentInputState = new CommentEditingHistory.CommentInputState(
+                comment.getText().toString(),
+                comment.getSelectionStart(),
+                comment.getSelectionEnd()
+        );
+
+        presenter.updateCommentEditingHistory(commentInputState);
     }
 
     @Override

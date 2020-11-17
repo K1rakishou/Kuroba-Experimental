@@ -259,6 +259,11 @@ open class ThemeEngine(
     }
 
     @JvmStatic
+    fun updateAlphaForColor(color: Int, newAlpha: Int): Int {
+      return ColorUtils.setAlphaComponent(color, newAlpha)
+    }
+
+    @JvmStatic
     fun isDarkColor(color: Int): Boolean {
       return ColorUtils.calculateLuminance(color) < 0.5f
     }

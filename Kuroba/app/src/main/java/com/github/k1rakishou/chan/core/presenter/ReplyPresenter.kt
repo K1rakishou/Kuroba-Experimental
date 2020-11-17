@@ -23,6 +23,7 @@ import androidx.exifinterface.media.ExifInterface
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.Debouncer
+import com.github.k1rakishou.chan.core.helper.CommentEditingHistory
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -76,7 +77,10 @@ class ReplyPresenter @Inject constructor(
   private val boardManager: BoardManager,
   private val bookmarksManager: BookmarksManager,
   private val chanThreadManager: ChanThreadManager
-) : AuthenticationLayoutCallback, ImagePickCallback, CoroutineScope {
+) : AuthenticationLayoutCallback,
+  ImagePickCallback,
+  CoroutineScope,
+  CommentEditingHistory.CommentEditingHistoryListener {
 
   enum class Page {
     INPUT, AUTHENTICATION, LOADING
@@ -91,6 +95,8 @@ class ReplyPresenter @Inject constructor(
   private var pickingFile = false
 
   private val job = SupervisorJob()
+  private val commentEditingHistory = CommentEditingHistory(this)
+
   private lateinit var callback: ReplyPresenterCallback
   private lateinit var draft: Reply
   private lateinit var chanBoard: ChanBoard
@@ -386,13 +392,38 @@ class ReplyPresenter @Inject constructor(
     callback.onFallbackToV1CaptchaView(autoReply)
   }
 
-  fun onCommentTextChanged(text: CharSequence) {
+  fun updateCommentEditingHistory(commentInputState: CommentEditingHistory.CommentInputState) {
+    commentEditingHistory.updateCommentEditingHistory(commentInputState)
+  }
+
+  fun onRevertChangeButtonClicked() {
+    commentEditingHistory.onRevertChangeButtonClicked()
+  }
+
+  override fun updateRevertChangeButtonVisibility(isBufferEmpty: Boolean) {
+    callback.updateRevertChangeButtonVisibility(isBufferEmpty)
+  }
+
+  override fun restoreComment(prevCommentInputState: CommentEditingHistory.CommentInputState) {
+    callback.restoreComment(prevCommentInputState)
+  }
+
+  fun updateCommentCounter(text: CharSequence?) {
+    if (text == null) {
+      return
+    }
+
     if (chanBoard.maxCommentChars < 0) {
       return
     }
 
     val length = text.toString().toByteArray(UTF_8).size
-    callback.updateCommentCount(length, chanBoard.maxCommentChars, length > chanBoard.maxCommentChars)
+
+    callback.updateCommentCount(
+      length,
+      chanBoard.maxCommentChars,
+      length > chanBoard.maxCommentChars
+    )
   }
 
   fun onSelectionChanged() {
@@ -501,6 +532,8 @@ class ReplyPresenter @Inject constructor(
     isExpanded = false
     previewOpen = false
 
+    commentEditingHistory.reset()
+
     callback.highlightPostNos(emptySet())
     callback.openMessage(null)
     callback.setExpanded(false)
@@ -518,6 +551,7 @@ class ReplyPresenter @Inject constructor(
     callback.openPreview(false, null)
     callback.openPreviewMessage(false, null)
     callback.destroyCurrentAuthentication()
+    callback.updateRevertChangeButtonVisibility(isBufferEmpty = true)
   }
 
   private fun makeSubmitCall() {
@@ -834,6 +868,8 @@ class ReplyPresenter @Inject constructor(
     fun destroyCurrentAuthentication()
     fun showAuthenticationFailedError(error: Throwable?)
     fun getTokenOrNull(): String?
+    fun updateRevertChangeButtonVisibility(isBufferEmpty: Boolean)
+    fun restoreComment(prevCommentInputState: CommentEditingHistory.CommentInputState)
   }
 
   companion object {

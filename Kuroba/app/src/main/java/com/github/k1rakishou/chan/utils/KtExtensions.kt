@@ -3,7 +3,9 @@ package com.github.k1rakishou.chan.utils
 import android.content.Context
 import android.content.ContextWrapper
 import android.graphics.drawable.ColorDrawable
+import android.text.TextWatcher
 import android.view.View
+import androidx.appcompat.widget.AppCompatEditText
 import androidx.lifecycle.Lifecycle
 import com.airbnb.epoxy.AsyncEpoxyController
 import com.airbnb.epoxy.DiffResult
@@ -93,4 +95,10 @@ fun View.setBackgroundColorFast(newBackgroundColor: Int) {
   if (prevColor != newBackgroundColor) {
     setBackgroundColor(newBackgroundColor)
   }
+}
+
+fun AppCompatEditText.doIgnoringTextWatcher(textWatcher: TextWatcher, func: AppCompatEditText.() -> Unit) {
+  removeTextChangedListener(textWatcher)
+  func(this)
+  addTextChangedListener(textWatcher)
 }
