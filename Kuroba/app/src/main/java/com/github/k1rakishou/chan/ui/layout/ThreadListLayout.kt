@@ -566,7 +566,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     if (markedPost != null) {
       chanThreadViewableInfoManager.getAndConsumeMarkedPostNo(chanDescriptor) { postNo ->
         val position = getPostPositionInAdapter(postNo)
-        if (position >= 0) {
+        if (position < 0) {
+          return@getAndConsumeMarkedPostNo
+        }
+
+        // Delay because for some reason recycler doesn't scroll to the post sometimes
+        recyclerView.post {
           highlightPost(markedPost.postDescriptor)
 
           when (postViewMode) {

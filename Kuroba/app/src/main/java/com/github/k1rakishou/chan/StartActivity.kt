@@ -175,13 +175,13 @@ class StartActivity : AppCompatActivity(),
     val createUiTime = measureTime { createUi() }
     Logger.d(TAG, "createUi took $createUiTime")
 
+    themeEngine.addListener(this)
+    themeEngine.refreshViews()
+
     lifecycleScope.launch {
       val initializeDepsTime = measureTime { initializeDependencies(this, savedInstanceState) }
       Logger.d(TAG, "initializeDependencies took $initializeDepsTime")
     }
-
-    themeEngine.addListener(this)
-    themeEngine.refreshViews()
 
     Logger.d(TAG, "onCreate() end savedInstanceState==null: ${savedInstanceState == null}")
   }

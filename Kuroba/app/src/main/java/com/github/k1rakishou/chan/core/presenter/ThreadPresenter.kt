@@ -306,7 +306,7 @@ class ThreadPresenter @Inject constructor(
   }
 
   private suspend fun preloadThreadInfo(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    Logger.d(TAG, "preloadThreadInfo($threadDescriptor)")
+    Logger.d(TAG, "preloadThreadInfo($threadDescriptor) begin")
 
     supervisorScope {
       val jobs = mutableListOf<Deferred<Unit>>()
@@ -327,11 +327,13 @@ class ThreadPresenter @Inject constructor(
         .peekError { error -> Logger.e(TAG, "requestThreadInitialData() error", error) }
         .ignore()
     }
+
+    Logger.d(TAG, "preloadThreadInfo($threadDescriptor) end")
   }
 
   private suspend fun preloadCatalogInfo(catalogDescriptor: ChanDescriptor.CatalogDescriptor) {
     BackgroundUtils.ensureMainThread()
-    Logger.d(TAG, "preloadCatalogInfo($catalogDescriptor)")
+    Logger.d(TAG, "preloadCatalogInfo($catalogDescriptor) begin")
 
     supervisorScope {
       val jobs = mutableListOf<Deferred<Unit>>()
@@ -349,6 +351,8 @@ class ThreadPresenter @Inject constructor(
         .peekError { error -> Logger.e(TAG, "requestCatalogInitialData() error", error) }
         .ignore()
     }
+
+    Logger.d(TAG, "preloadCatalogInfo($catalogDescriptor) end")
   }
 
   fun quickReload(showLoading: Boolean = false, requestNewPosts: Boolean = true) {
@@ -666,7 +670,7 @@ class ThreadPresenter @Inject constructor(
 
   private suspend fun onChanLoaderData(loadedChanDescriptor: ChanDescriptor): Boolean {
     BackgroundUtils.ensureMainThread()
-    Logger.d(TAG, "onChanLoaderData() called")
+    Logger.d(TAG, "onChanLoaderData() called, loadedChanDescriptor=$loadedChanDescriptor")
 
     if (!isBound) {
       Logger.e(TAG, "onChanLoaderData() not bound!")

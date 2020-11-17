@@ -68,7 +68,8 @@ class ChanThreadManager(
     onReloaded: suspend (ThreadLoadResult) -> Unit
   ) {
     BackgroundUtils.ensureMainThread()
-    Logger.d(TAG, "loadThreadOrCatalog($chanDescriptor, $requestNewPostsFromServer, " +
+    Logger.d(TAG, "loadThreadOrCatalog(chanDescriptor=$chanDescriptor, " +
+      "requestNewPostsFromServer=$requestNewPostsFromServer, " +
       "$chanLoadOptions, $chanCacheOptions, $chanReadOptions)")
 
     if (chanLoadOptions.isNotDefault()) {
