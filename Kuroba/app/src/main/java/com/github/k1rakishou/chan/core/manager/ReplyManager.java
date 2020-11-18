@@ -46,6 +46,7 @@ public class ReplyManager {
             reply = new Reply();
             drafts.put(chanDescriptor, reply);
         }
+
         return reply;
     }
 

@@ -1047,7 +1047,7 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
 
             @Override
             public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                ChanDescriptor chanDescriptor = callback.getShowingChanDescriptor();
+                ChanDescriptor chanDescriptor = callback.getCurrentChanDescriptor();
                 if (chanDescriptor == null) {
                     return true;
                 }
@@ -1192,7 +1192,7 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
     @Nullable
     @Override
     public ChanDescriptor getChanDescriptor() {
-        return callback.getShowingChanDescriptor();
+        return callback.getCurrentChanDescriptor();
     }
 
     public void onImageOptionsApplied(Reply reply, boolean filenameRemoved) {
@@ -1257,7 +1257,7 @@ public class ReplyLayout extends LoadView implements View.OnClickListener,
         void requestNewPostLoad();
 
         @Nullable
-        ChanDescriptor getShowingChanDescriptor();
+        ChanDescriptor getCurrentChanDescriptor();
 
         void showImageReencodingWindow(boolean supportsReencode);
 

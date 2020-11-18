@@ -238,16 +238,16 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   var replyOpen = false
     private set
 
-  override fun getShowingChanDescriptor(): ChanDescriptor? {
+  override fun getCurrentChanDescriptor(): ChanDescriptor? {
     return threadPresenter?.currentChanDescriptor
   }
 
   private fun currentThreadDescriptorOrNull(): ThreadDescriptor? {
-    return showingChanDescriptor?.threadDescriptorOrNull()
+    return currentChanDescriptor?.threadDescriptorOrNull()
   }
 
   private fun currentChanDescriptorOrNull(): ChanDescriptor? {
-    return showingChanDescriptor
+    return currentChanDescriptor
   }
 
   private fun forceRecycleAllPostViews() {
@@ -356,7 +356,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   private fun onRecyclerViewScrolled(recyclerView: RecyclerView) {
     // onScrolled can be called after cleanup()
-    if (showingChanDescriptor == null) {
+    if (currentChanDescriptor == null) {
       return
     }
 
@@ -1117,7 +1117,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   private fun party() {
-    val chanDescriptor = showingChanDescriptor
+    val chanDescriptor = currentChanDescriptor
       ?: return
 
     if (chanDescriptor.siteDescriptor().is4chan()) {

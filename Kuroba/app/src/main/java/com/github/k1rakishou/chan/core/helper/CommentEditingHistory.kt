@@ -8,8 +8,8 @@ class CommentEditingHistory(
 ) {
   private var firstTextWatcherEventSkipped = false
 
-  private val commentEditingHistory = RingBuffer<CommentInputState>(128)
-  private val commentEditDebouncer = Debouncer(false)
+  private val buffer = RingBuffer<CommentInputState>(128)
+  private val debouncer = Debouncer(false)
 
   fun updateCommentEditingHistory(commentInputState: CommentInputState) {
     if (!firstTextWatcherEventSkipped) {
@@ -17,19 +17,19 @@ class CommentEditingHistory(
       return
     }
 
-    commentEditDebouncer.post({
-      val last = commentEditingHistory.peek()
+    debouncer.post({
+      val last = buffer.peek()
       if (last != null && last == commentInputState) {
         return@post
       }
 
-      if (commentEditingHistory.isEmpty()) {
-        commentEditingHistory.push(INITIAL_COMMENT_INPUT_STATE)
+      if (buffer.isEmpty()) {
+        buffer.push(INITIAL_COMMENT_INPUT_STATE)
       }
 
-      commentEditingHistory.push(commentInputState)
+      buffer.push(commentInputState)
       callback.updateRevertChangeButtonVisibility(isHistoryActuallyEmpty())
-    }, 150)
+    }, DEBOUNCE_TIME)
   }
 
   fun onRevertChangeButtonClicked() {
@@ -38,9 +38,9 @@ class CommentEditingHistory(
       return
     }
 
-    commentEditingHistory.pop()
+    buffer.pop()
 
-    val prevCommentInputState = commentEditingHistory.peek()
+    val prevCommentInputState = buffer.peek()
     if (prevCommentInputState == null || prevCommentInputState === INITIAL_COMMENT_INPUT_STATE) {
       if (prevCommentInputState != null) {
         callback.restoreComment(prevCommentInputState)
@@ -52,23 +52,23 @@ class CommentEditingHistory(
 
     callback.restoreComment(prevCommentInputState)
 
-    if (commentEditingHistory.isEmpty()) {
+    if (buffer.isEmpty()) {
       callback.updateRevertChangeButtonVisibility(isBufferEmpty = true)
     }
   }
 
   fun reset() {
     firstTextWatcherEventSkipped = false
-    commentEditingHistory.clear()
+    buffer.clear()
   }
 
   private fun isHistoryActuallyEmpty(): Boolean {
-    if (commentEditingHistory.isEmpty()) {
+    if (buffer.isEmpty()) {
       return true
     }
 
-    if (commentEditingHistory.size() == 1
-      && commentEditingHistory.peek() === INITIAL_COMMENT_INPUT_STATE) {
+    if (buffer.size() == 1
+      && buffer.peek() === INITIAL_COMMENT_INPUT_STATE) {
       return true
     }
 
@@ -87,6 +87,8 @@ class CommentEditingHistory(
   )
 
   companion object {
+    private const val DEBOUNCE_TIME = 150L
+
     private val INITIAL_COMMENT_INPUT_STATE = CommentInputState("", 0, 0)
   }
 }

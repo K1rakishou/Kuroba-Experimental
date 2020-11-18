@@ -18,6 +18,7 @@ package com.github.k1rakishou.chan.ui.helper;
 
 import android.app.Activity;
 import android.content.ClipData;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -208,6 +209,7 @@ public class ImagePickDelegate {
 
         if (resultCode == Activity.RESULT_OK && data != null) {
             uri = getUriOrNull(data);
+
             if (uri != null) {
                 Cursor returnCursor = activity.getContentResolver().query(uri, null, null, null, null);
                 if (returnCursor != null) {
@@ -221,7 +223,8 @@ public class ImagePickDelegate {
 
                 if (fileName == null) {
                     // As per the comment on OpenableColumns.DISPLAY_NAME:
-                    // If this is not provided then the name should default to the last segment of the file's URI.
+                    // If this is not provided then the name should default to the last segment
+                    // of the file's URI.
                     fileName = uri.getLastPathSegment();
                     fileName = fileName == null ? DEFAULT_FILE_NAME : fileName;
                 }
@@ -255,10 +258,12 @@ public class ImagePickDelegate {
 
     private void run() {
         RawFile cacheFile = fileManager.fromRawFile(replyManager.getPickFile());
+        ContentResolver contentResolver = activity.getContentResolver();
 
         InputStream is = null;
         OutputStream os = null;
-        try (ParcelFileDescriptor fileDescriptor = activity.getContentResolver().openFileDescriptor(uri, "r")) {
+
+        try (ParcelFileDescriptor fileDescriptor = contentResolver.openFileDescriptor(uri, "r")) {
             if (fileDescriptor == null) {
                 throw new IOException("Couldn't open file descriptor for uri = " + uri);
             }
@@ -267,8 +272,8 @@ public class ImagePickDelegate {
             os = fileManager.getOutputStream(cacheFile);
 
             if (os == null) {
-                throw new IOException(
-                        "Could not get OutputStream from the cacheFile, cacheFile = " + cacheFile.getFullPath());
+                throw new IOException("Could not get OutputStream from the cacheFile, " +
+                        "cacheFile = " + cacheFile.getFullPath());
             }
 
             success = IOUtils.copy(is, os, MAX_FILE_SIZE);
