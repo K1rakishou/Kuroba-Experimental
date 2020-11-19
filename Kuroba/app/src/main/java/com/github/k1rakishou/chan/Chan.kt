@@ -60,9 +60,9 @@ import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.ui.settings.base_directory.SavedFilesBaseDirectory
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
-import com.github.k1rakishou.chan.utils.AndroidUtils.getApplicationLabel
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.SpannableModuleInjector
@@ -184,6 +184,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     applicationScope = CoroutineScope(job + Dispatchers.Main + CoroutineName("Chan"))
 
     val isDev = AppModuleAndroidUtils.isDevBuild()
+    val flavorType = AppModuleAndroidUtils.getFlavorType()
+
     System.setProperty("kotlinx.coroutines.debug", if (isDev) "on" else "off")
 
     val kurobaExUserAgent = buildString {
@@ -194,7 +196,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       append(BuildConfig.BUILD_NUMBER)
     }
 
-    val appConstants = AppConstants(applicationContext, isDev, kurobaExUserAgent)
+    val appConstants = AppConstants(applicationContext, flavorType, kurobaExUserAgent)
     logAppConstants(appConstants)
     SavingNotification.setupChannel()
 
