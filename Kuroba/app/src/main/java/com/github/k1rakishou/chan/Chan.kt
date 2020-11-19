@@ -24,8 +24,27 @@ import android.os.Build
 import android.os.Bundle
 import com.github.k1rakishou.chan.core.cache.downloader.FileCacheException
 import com.github.k1rakishou.chan.core.cache.downloader.FileCacheException.FileNotFoundOnTheServerException
-import com.github.k1rakishou.chan.core.di.*
-import com.github.k1rakishou.chan.core.manager.*
+import com.github.k1rakishou.chan.core.di.AppModule
+import com.github.k1rakishou.chan.core.di.ExecutorsModule
+import com.github.k1rakishou.chan.core.di.GsonModule
+import com.github.k1rakishou.chan.core.di.LoaderModule
+import com.github.k1rakishou.chan.core.di.ManagerModule
+import com.github.k1rakishou.chan.core.di.NetModule
+import com.github.k1rakishou.chan.core.di.ParserModule
+import com.github.k1rakishou.chan.core.di.RepositoryModule
+import com.github.k1rakishou.chan.core.di.RoomDatabaseModule
+import com.github.k1rakishou.chan.core.di.SiteModule
+import com.github.k1rakishou.chan.core.di.UseCaseModule
+import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.ChanFilterManager
+import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
+import com.github.k1rakishou.chan.core.manager.ReportManager
+import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.chan.core.net.DnsSelector
 import com.github.k1rakishou.chan.core.settings.ChanSettings
 import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkWatcherCoordinator
@@ -33,13 +52,18 @@ import com.github.k1rakishou.chan.ui.service.SavingNotification
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.ui.theme.ThemeEngine
 import com.github.k1rakishou.chan.utils.AndroidUtils
+import com.github.k1rakishou.chan.utils.AndroidUtils.getApplicationLabel
 import com.github.k1rakishou.chan.utils.Logger
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.feather2.Feather
 import com.github.k1rakishou.model.DatabaseModuleInjector.build
 import io.reactivex.exceptions.UndeliverableException
 import io.reactivex.plugins.RxJavaPlugins
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelChildren
 import okhttp3.Dns
 import okhttp3.Protocol
 import org.greenrobot.eventbus.EventBus
@@ -147,7 +171,15 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     job.cancelChildren()
     applicationScope = CoroutineScope(job + Dispatchers.Main + CoroutineName("Chan"))
 
-    val appConstants = AppConstants(applicationContext, isDev)
+    val kurobaExUserAgent = buildString {
+      append(getApplicationLabel())
+      append(" ")
+      append(BuildConfig.VERSION_NAME)
+      append(".")
+      append(BuildConfig.BUILD_NUMBER)
+    }
+
+    val appConstants = AppConstants(applicationContext, isDev, kurobaExUserAgent)
     logAppConstants(appConstants)
     SavingNotification.setupChannel()
 
@@ -266,6 +298,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     Logger.d(TAG, "maxAmountOfPostsInDatabase = " + appConstants.maxAmountOfPostsInDatabase)
     Logger.d(TAG, "maxAmountOfThreadsInDatabase = " + appConstants.maxAmountOfThreadsInDatabase)
     Logger.d(TAG, "userAgent = " + appConstants.userAgent)
+    Logger.d(TAG, "kurobaExUserAgent = " + appConstants.kurobaExUserAgent)
   }
 
   private fun exceptionToString(isCalledFromRxJavaHandler: Boolean, e: Throwable): String {

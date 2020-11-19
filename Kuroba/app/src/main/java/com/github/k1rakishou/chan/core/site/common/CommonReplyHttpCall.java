@@ -70,12 +70,13 @@ public abstract class CommonReplyHttpCall extends HttpCall {
 
         MultipartBody.Builder formBuilder = new MultipartBody.Builder();
         formBuilder.setType(MultipartBody.FORM);
-
         addParameters(formBuilder, progressListener);
 
         HttpUrl replyUrl = getSite().endpoints().reply(this.reply.chanDescriptor);
         requestBuilder.url(replyUrl);
         requestBuilder.addHeader("Referer", replyUrl.toString());
+
+        modifyRequestBuilder(requestBuilder);
         requestBuilder.post(formBuilder.build());
     }
 
@@ -114,4 +115,9 @@ public abstract class CommonReplyHttpCall extends HttpCall {
             MultipartBody.Builder builder,
             @Nullable ProgressRequestBody.ProgressRequestListener progressListener
     );
+
+    protected void modifyRequestBuilder(Request.Builder requestBuilder) {
+
+    }
+
 }

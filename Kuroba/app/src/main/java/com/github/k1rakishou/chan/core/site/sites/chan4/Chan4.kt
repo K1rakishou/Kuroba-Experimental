@@ -11,9 +11,19 @@ import com.github.k1rakishou.chan.core.settings.OptionSettingItem
 import com.github.k1rakishou.chan.core.settings.OptionsSetting
 import com.github.k1rakishou.chan.core.settings.SharedPreferencesSettingProvider
 import com.github.k1rakishou.chan.core.settings.StringSetting
-import com.github.k1rakishou.chan.core.site.*
+import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
+import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
+import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteActions
+import com.github.k1rakishou.chan.core.site.SiteAuthentication
+import com.github.k1rakishou.chan.core.site.SiteBase
+import com.github.k1rakishou.chan.core.site.SiteEndpoints
+import com.github.k1rakishou.chan.core.site.SiteIcon
+import com.github.k1rakishou.chan.core.site.SiteRequestModifier
+import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.SiteSetting.SiteOptionsSetting
 import com.github.k1rakishou.chan.core.site.SiteSetting.SiteStringSetting
+import com.github.k1rakishou.chan.core.site.SiteUrlHandler
 import com.github.k1rakishou.chan.core.site.common.FutabaChanReader
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.HttpCall
@@ -261,7 +271,7 @@ open class Chan4 : SiteBase() {
     }
 
     override suspend fun post(reply: Reply): Flow<SiteActions.PostResult> {
-      return httpCallManager.makePostHttpCallWithProgress(Chan4ReplyCall(this@Chan4, reply))
+      return httpCallManager.makePostHttpCallWithProgress(Chan4ReplyCall(boardManager, appConstants, this@Chan4, reply))
         .map { replyCallResult ->
           when (replyCallResult) {
             is HttpCall.HttpCallWithProgressResult.Success -> {
