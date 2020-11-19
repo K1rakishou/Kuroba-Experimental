@@ -20,10 +20,13 @@ import android.text.TextUtils;
 
 import androidx.annotation.Nullable;
 
+import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.common.CommonReplyHttpCall;
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody;
 import com.github.k1rakishou.chan.core.site.http.Reply;
+import com.github.k1rakishou.common.AppConstants;
+import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
 import java.io.File;
@@ -31,11 +34,18 @@ import java.util.Objects;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
+import okhttp3.Request;
 import okhttp3.RequestBody;
 
 public class Chan4ReplyCall extends CommonReplyHttpCall {
-    public Chan4ReplyCall(Site site, Reply reply) {
+    private final BoardManager boardManager;
+    private final AppConstants appConstants;
+
+    public Chan4ReplyCall(BoardManager boardManager, AppConstants appConstants, Site site, Reply reply) {
         super(site, reply);
+
+        this.boardManager = boardManager;
+        this.appConstants = appConstants;
     }
 
     @Override
@@ -92,6 +102,25 @@ public class Chan4ReplyCall extends CommonReplyHttpCall {
         if (reply.spoilerImage) {
             formBuilder.addFormDataPart("spoiler", "on");
         }
+    }
+
+    @Override
+    protected void modifyRequestBuilder(Request.Builder requestBuilder) {
+        ChanDescriptor chanDescriptor = reply.chanDescriptor;
+        if (chanDescriptor == null) {
+            return;
+        }
+
+        ChanBoard chanBoard = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor());
+        if (chanBoard == null || chanBoard.getWorkSafe()) {
+            return;
+        }
+
+        // We need to use some custom user agent on 4chan.org (not 4channel.org) because for some
+        // unknown reason it won't show the post you send in a thread if you use any of the existing
+        // user agents. This is really weird and seems like either a 4chan bug or it is done
+        // intentionally. And only NSFW boards belong to 4chan.org
+        requestBuilder.addHeader("User-Agent", appConstants.getKurobaExUserAgent());
     }
 
     private void attachFile(

@@ -273,7 +273,7 @@ open class Chan4 : SiteBase() {
     }
 
     override suspend fun post(reply: Reply): Flow<SiteActions.PostResult> {
-      return httpCallManager.makePostHttpCallWithProgress(Chan4ReplyCall(this@Chan4, reply))
+      return httpCallManager.makePostHttpCallWithProgress(Chan4ReplyCall(boardManager, appConstants, this@Chan4, reply))
         .map { replyCallResult ->
           when (replyCallResult) {
             is HttpCall.HttpCallWithProgressResult.Success -> {

@@ -60,6 +60,7 @@ import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.ui.settings.base_directory.SavedFilesBaseDirectory
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.AndroidUtils.getApplicationLabel
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
@@ -185,7 +186,15 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     val isDev = AppModuleAndroidUtils.isDevBuild()
     System.setProperty("kotlinx.coroutines.debug", if (isDev) "on" else "off")
 
-    val appConstants = AppConstants(applicationContext, AppModuleAndroidUtils.getFlavorType())
+    val kurobaExUserAgent = buildString {
+      append(getApplicationLabel())
+      append(" ")
+      append(BuildConfig.VERSION_NAME)
+      append(".")
+      append(BuildConfig.BUILD_NUMBER)
+    }
+
+    val appConstants = AppConstants(applicationContext, isDev, kurobaExUserAgent)
     logAppConstants(appConstants)
     SavingNotification.setupChannel()
 
@@ -325,6 +334,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     Logger.d(TAG, "maxAmountOfPostsInDatabase = " + appConstants.maxAmountOfPostsInDatabase)
     Logger.d(TAG, "maxAmountOfThreadsInDatabase = " + appConstants.maxAmountOfThreadsInDatabase)
     Logger.d(TAG, "userAgent = " + appConstants.userAgent)
+    Logger.d(TAG, "kurobaExUserAgent = " + appConstants.kurobaExUserAgent)
   }
 
   private fun exceptionToString(isCalledFromRxJavaHandler: Boolean, e: Throwable): String {

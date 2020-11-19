@@ -85,8 +85,8 @@ class HttpCallManager @Inject constructor(
   ): HttpCall.HttpCallResult<T> {
     return withContext(Dispatchers.IO) {
       val request = requestBuilder
-        .header("User-Agent", appConstants.userAgent)
         .build()
+        .setHeaderIfNotSetAlready("User-Agent", appConstants.userAgent)
 
       val response = Try { proxiedOkHttpClient.okHttpClient().suspendCall(request) }
         .safeUnwrap { error ->
@@ -107,6 +107,16 @@ class HttpCallManager @Inject constructor(
         return@use HttpCall.HttpCallResult.Success(httpCall)
       }
     }
+  }
+
+  private fun Request.setHeaderIfNotSetAlready(headerName: String, headerValue: String): Request {
+    if (header(headerName) == null) {
+      return newBuilder()
+        .header(headerName, headerValue)
+        .build()
+    }
+
+    return this
   }
   
   companion object {

@@ -64,6 +64,8 @@ abstract class SiteBase : Site, CoroutineScope {
   protected lateinit var postFilterManager: PostFilterManager
   @Inject
   protected lateinit var mockReplyManager: MockReplyManager
+  @Inject
+  protected lateinit var appConstants: AppConstants
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("SiteBase")

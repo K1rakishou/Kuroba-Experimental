@@ -6,7 +6,8 @@ import android.os.Build
 
 open class AppConstants(
   context: Context,
-  private val flavorType: AndroidUtils.FlavorType
+  private val flavorType: AndroidUtils.FlavorType,
+  val kurobaExUserAgent: String
 ) {
   val maxPostsCountInPostsCache: Int
   val maxAmountOfPostsInDatabase: Int
