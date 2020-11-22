@@ -59,8 +59,8 @@ import com.github.k1rakishou.chan.ui.controller.ViewThreadController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
-import com.github.k1rakishou.chan.ui.helper.ImagePickDelegate
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
+import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
@@ -125,9 +125,8 @@ class StartActivity : AppCompatActivity(),
   lateinit var chanThreadViewableInfoManager: ChanThreadViewableInfoManager
   @Inject
   lateinit var dialogFactory: DialogFactory
-
   @Inject
-  lateinit var imagePickDelegate: ImagePickDelegate
+  lateinit var imagePickHelper: ImagePickHelper
   @Inject
   lateinit var runtimePermissionsHelper: RuntimePermissionsHelper
   @Inject
@@ -178,6 +177,8 @@ class StartActivity : AppCompatActivity(),
     themeEngine.addListener(this)
     themeEngine.refreshViews()
 
+    imagePickHelper.onActivityCreated(this)
+
     lifecycleScope.launch {
       val initializeDepsTime = measureTime { initializeDependencies(this, savedInstanceState) }
       Logger.d(TAG, "initializeDependencies took $initializeDepsTime")
@@ -202,8 +203,8 @@ class StartActivity : AppCompatActivity(),
       updateManager.onDestroy()
     }
 
-    if (::imagePickDelegate.isInitialized) {
-      imagePickDelegate.onDestroy()
+    if (::imagePickHelper.isInitialized) {
+      imagePickHelper.onActivityDestroyed()
     }
 
     if (::fileChooser.isInitialized) {
@@ -861,7 +862,7 @@ class StartActivity : AppCompatActivity(),
       return
     }
 
-    imagePickDelegate.onActivityResult(requestCode, resultCode, data)
+    imagePickHelper.onActivityResult(requestCode, resultCode, data)
   }
 
   private fun intentMismatchWorkaround(): Boolean {

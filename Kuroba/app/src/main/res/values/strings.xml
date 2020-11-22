@@ -400,7 +400,13 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="reply_file_name">File name</string>
     <string name="reply_file_too_big">Warning: File size too big (%1$s / %2$s)</string>
     <string name="reply_webm_too_big">Warning: WebM size too big (%1$s / %2$s)</string>
-    <string name="reply_file_open_failed">Failed to open file</string>
+    <string name="reply_file_open_unknown_error">Failed to open file: unknown error</string>
+    <string name="reply_file_open_failed_to_copy_picked_file">Failed to open file: failed to copy picked file</string>
+    <string name="reply_file_open_reply_draft_not_found">Failed to open file: reply draft not found</string>
+    <string name="reply_file_open_no_file_pickers_found">Failed to open file: no file pickers found</string>
+    <string name="reply_file_open_filed_to_create_pick_file">Failed to open file: failed to create pick file</string>
+    <string name="reply_file_open_clipboard_error">Failed to open file: clipboard access error</string>
+    <string name="reply_file_open_failed_to_load_remote_file">Failed to open file: failed to load remote file</string>
     <string name="reply_spoiler_image">Spoiler image</string>
     <string name="reply_no_preview">No preview</string>
     <string name="reply_submit">Submit</string>
@@ -840,7 +846,6 @@ Don't have a 4chan Pass?<br>
     <string name="reencode_image_as_png">AS PNG</string>
     <string name="reencode_image_image_quality_100_default_text">Image quality: 100</string>
     <string name="reencode_image_reduce_default_text">Reduce: 0%</string>
-    <string name="click_image_for_extra_options">Click image for extra options</string>
 
     <string name="controller_bookmarks">Bookmarks</string>
     <string name="controller_bookmarks_with_stats">Bookmarks (%1$d/%2$d)</string>
@@ -1053,6 +1058,23 @@ Don't have a 4chan Pass?<br>
     <string name="report_controller_report_sent_message">Sent \;)</string>
     <string name="report_controller_error_while_trying_to_send_report">Error while trying to send report: %1$s</string>
 
+    <string name="theme_settings_controller_failed_to_open_output_file">Failed to open output file</string>
+    <string name="theme_settings_controller_failed_to_open_theme_file">Failed to open theme file</string>
+    <string name="theme_settings_controller_failed_to_export_theme">Failed to export theme: %1$s</string>
+    <string name="theme_settings_controller_failed_to_import_theme">Failed to import theme: %1$s</string>
+    <string name="theme_settings_controller_failed_to_parse_some_colors">Failed to parse some colors. Those colors were reset to default</string>
+    <string name="theme_settings_controller_failed_to_parse_bad_name">Bad theme name: \"%1$s\"</string>
+    <string name="theme_settings_controller_failed_to_reset_theme">Failed to reset theme</string>
+    <string name="theme_settings_controller_wrong_theme_type">You cannot import \"%1$s\" theme into \"%2$s\" theme slot</string>
+    <string name="theme_settings_controller_canceled">Canceled: %1$s</string>
+    <string name="theme_settings_controller_theme">%1$s theme</string>
+    <string name="theme_settings_controller_theme_light">Light</string>
+    <string name="theme_settings_controller_theme_dark">Dark</string>
+
+    <string name="layout_reply_files_area_too_many_attachables_text">Too many files to display them all at once (%1$d out of %2$d max). Upload or delete some of them to display the rest.</string>
+    <string name="layout_reply_files_area_open_in_editor_action">Open in editor</string>
+    <string name="layout_reply_files_area_delete_file_action">Delete file</string>
+
     <string name="reply_notifications_new_replies_total_stats">You have %1$d replies in %2$d thread(s)</string>
     <string name="reply_notifications_new_replies_in_thread">You have %1$d new replies in thread %2$d</string>
     <string name="reply_notifications_reply_format">Reply from %1$d to post %2$d</string>
@@ -1115,30 +1137,9 @@ Don't have a 4chan Pass?<br>
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
     <string name="file_has_exif_data">This file has exif data. Consider re-encoding it before posting.</string>
     <string name="image_from_archive">(From archive)</string>
-    <string name="epoxy_archive_setting_row_working">WORKING</string>
-    <string name="epoxy_archive_setting_row_experiencing_problems">EXPERIENCING PROBLEMS</string>
-    <string name="epoxy_archive_setting_row_not_working">NOT WORKING</string>
-    <string name="epoxy_archive_setting_row_disabled">DISABLED</string>
-    <string name="epoxy_archive_setting_row_supports_boards">Supports boards: %1$s</string>
-    <string name="epoxy_archive_setting_row_supports_media_on_boards">Supports media on boards: %1$s</string>
-    <string name="epoxy_fetch_history_result_template">Result: %1$s</string>
     <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>
-    <string name="archive_fetch_history_delete_error_message">Failed to delete fetch result</string>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
     <string name="updater_is_disabled_for_dev_builds">Updater is disabled for dev builds</string>
     <string name="updater_is_disabled_for_fdroid_builds">Updater is disabled for F-Droid builds</string>
-
-    <string name="theme_settings_controller_failed_to_open_output_file">Failed to open output file</string>
-    <string name="theme_settings_controller_failed_to_open_theme_file">Failed to open theme file</string>
-    <string name="theme_settings_controller_failed_to_export_theme">Failed to export theme: %1$s</string>
-    <string name="theme_settings_controller_failed_to_import_theme">Failed to import theme: %1$s</string>
-    <string name="theme_settings_controller_failed_to_parse_some_colors">Failed to parse some colors. Those colors were reset to default</string>
-    <string name="theme_settings_controller_failed_to_parse_bad_name">Bad theme name: \"%1$s\"</string>
-    <string name="theme_settings_controller_failed_to_reset_theme">Failed to reset theme</string>
-    <string name="theme_settings_controller_wrong_theme_type">You cannot import \"%1$s\" theme into \"%2$s\" theme slot</string>
-    <string name="theme_settings_controller_canceled">Canceled: %1$s</string>
-    <string name="theme_settings_controller_theme">%1$s theme</string>
-    <string name="theme_settings_controller_theme_light">Light</string>
-    <string name="theme_settings_controller_theme_dark">Dark</string>
 
 </resources>

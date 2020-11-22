@@ -18,22 +18,22 @@ package com.github.k1rakishou.chan.ui.helper;
 
 import android.text.TextUtils;
 
-import androidx.annotation.Nullable;
+import androidx.annotation.NonNull;
 
-import com.github.k1rakishou.chan.core.site.http.Reply;
+import com.github.k1rakishou.chan.features.reply.data.Reply;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
 public class PostHelper {
 
-    @Nullable
+    @NonNull
     public static String getTitle(Reply reply) {
-        if (!TextUtils.isEmpty(reply.subject)) {
-            return reply.subject;
-        } else if (!TextUtils.isEmpty(reply.comment)) {
-            int length = Math.min(reply.comment.length(), 200);
+        if (!TextUtils.isEmpty(reply.getSubject())) {
+            return reply.getSubject();
+        } else if (!TextUtils.isEmpty(reply.getComment())) {
+            int length = Math.min(reply.getComment().length(), 200);
             String boardCode = reply.chanDescriptor.boardCode();
 
-            return "/" + boardCode + "/ - " + reply.comment.subSequence(0, length);
+            return "/" + boardCode + "/ - " + reply.getComment().subSequence(0, length);
         } else {
             String boardCode = reply.chanDescriptor.boardCode();
             long threadNo = -1L;

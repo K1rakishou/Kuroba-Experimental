@@ -18,7 +18,6 @@ package com.github.k1rakishou.chan.core.presenter;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Point;
 
 import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
@@ -26,11 +25,9 @@ import androidx.core.util.Pair;
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
-import com.github.k1rakishou.chan.core.site.http.Reply;
+import com.github.k1rakishou.chan.features.reply.data.Reply;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
-import com.github.k1rakishou.chan.utils.BitmapUtils;
-import com.github.k1rakishou.chan.utils.ImageDecoder;
 import com.github.k1rakishou.common.DoNotStrip;
 import com.github.k1rakishou.common.StringUtils;
 import com.github.k1rakishou.core_logger.Logger;
@@ -45,8 +42,6 @@ import javax.inject.Inject;
 import static com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter.ReencodeType.AS_IS;
 import static com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter.ReencodeType.AS_JPEG;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
-import static com.github.k1rakishou.common.AndroidUtils.dp;
-import static com.github.k1rakishou.common.AndroidUtils.getDisplaySize;
 import static com.github.k1rakishou.common.AndroidUtils.getString;
 
 public class ImageReencodingPresenter {
@@ -94,38 +89,46 @@ public class ImageReencodingPresenter {
     }
 
     public void loadImagePreview() {
-        Reply reply = replyManager.getReply(chanDescriptor);
-        Point displaySize = getDisplaySize();
-
-        ImageDecoder.decodeFileOnBackgroundThread(
-                reply.file,
-                //decode to the device width/height, whatever is smaller
-                dp(Math.min(displaySize.x, displaySize.y)),
-                0,
-                bitmap -> {
-                    if (bitmap == null) {
-                        showToast(context, R.string.could_not_decode_image_bitmap);
-                        return;
-                    }
-
-                    callback.showImagePreview(bitmap);
-                }
-        );
+        // TODO(KurobaEx): reply layout refactoring
+//        Reply reply = replyManager.getReply(chanDescriptor);
+//        Point displaySize = getDisplaySize();
+//
+//        ImageDecoder.decodeFileOnBackgroundThread(
+//                reply.file,
+//                //decode to the device width/height, whatever is smaller
+//                dp(Math.min(displaySize.x, displaySize.y)),
+//                0,
+//                bitmap -> {
+//                    if (bitmap == null) {
+//                        showToast(context, R.string.could_not_decode_image_bitmap);
+//                        return;
+//                    }
+//
+//                    callback.showImagePreview(bitmap);
+//                }
+//        );
     }
 
     public boolean hasAttachedFile() {
-        return replyManager.getReply(chanDescriptor).file != null;
+        // TODO(KurobaEx): reply layout refactoring
+        return false; // replyManager.getReply(chanDescriptor).file != null;
     }
 
     @Nullable
     public Bitmap.CompressFormat getImageFormat() {
-        Reply reply = replyManager.getReply(chanDescriptor);
-        return BitmapUtils.getImageFormat(reply.file);
+//        Reply reply = replyManager.getReply(chanDescriptor);
+//        return BitmapUtils.getImageFormat(reply.file);
+
+        // TODO(KurobaEx): reply layout refactoring
+        return null;
     }
 
     public Pair<Integer, Integer> getImageDims() {
-        Reply reply = replyManager.getReply(chanDescriptor);
-        return BitmapUtils.getImageDims(reply.file);
+//        Reply reply = replyManager.getReply(chanDescriptor);
+//        return BitmapUtils.getImageDims(reply.file);
+
+        // TODO(KurobaEx): reply layout refactoring
+        return null;
     }
 
     public void setReencode(@Nullable ReencodeSettings reencodeSettings) {
@@ -160,23 +163,30 @@ public class ImageReencodingPresenter {
                 return;
             }
 
-            reply = replyManager.getReply(chanDescriptor);
+            reply = replyManager.getReplyOrCreateNew(chanDescriptor);
         }
 
         ChanSettings.lastImageOptions.set(gson.toJson(imageOptions));
         Logger.d(TAG, "imageOptions: [" + imageOptions.toString() + "]");
 
         //all options are default - do nothing
-        if (!imageOptions.getRemoveFilename() && !imageOptions.getFixExif() && !imageOptions.getRemoveMetadata()
-                && !imageOptions.getChangeImageChecksum() && imageOptions.getReencodeSettings() == null) {
+        if (!imageOptions.getRemoveFilename()
+                && !imageOptions.getFixExif()
+                && !imageOptions.getRemoveMetadata()
+                && !imageOptions.getChangeImageChecksum()
+                && imageOptions.getReencodeSettings() == null) {
             callback.onImageOptionsApplied(reply, false);
             return;
         }
 
         //only the "remove filename" option is selected
-        if (imageOptions.getRemoveFilename() && !imageOptions.getFixExif() && !imageOptions.getRemoveMetadata()
-                && !imageOptions.getChangeImageChecksum() && imageOptions.getReencodeSettings() == null) {
-            reply.fileName = getNewImageName(reply.fileName, AS_IS);
+        if (imageOptions.getRemoveFilename()
+                && !imageOptions.getFixExif()
+                && !imageOptions.getRemoveMetadata()
+                && !imageOptions.getChangeImageChecksum()
+                && imageOptions.getReencodeSettings() == null) {
+            // TODO(KurobaEx): reply layout refactoring
+//            reply.fileName = getNewImageName(reply.fileName, AS_IS);
             callback.onImageOptionsApplied(reply, true);
             return;
         }
@@ -186,18 +196,22 @@ public class ImageReencodingPresenter {
             try {
                 callback.disableOrEnableButtons(false);
 
-                if (imageOptions.getRemoveFilename()) {
-                    reply.fileName = getNewImageName(reply.fileName,
-                            imageOptions.reencodeSettings != null ? imageOptions.reencodeSettings.reencodeType : AS_IS
-                    );
-                }
-
-                reply.file = BitmapUtils.reencodeBitmapFile(reply.file,
-                        imageOptions.getFixExif(),
-                        imageOptions.getRemoveMetadata(),
-                        imageOptions.getChangeImageChecksum(),
-                        imageOptions.getReencodeSettings()
-                );
+                // TODO(KurobaEx): reply layout refactoring
+//                if (imageOptions.getRemoveFilename()) {
+//                    reply.fileName = getNewImageName(
+//                            reply.fileName,
+//                            imageOptions.reencodeSettings != null
+//                                    ? imageOptions.reencodeSettings.reencodeType
+//                                    : AS_IS
+//                    );
+//                }
+//
+//                reply.file = BitmapUtils.reencodeBitmapFile(reply.file,
+//                        imageOptions.getFixExif(),
+//                        imageOptions.getRemoveMetadata(),
+//                        imageOptions.getChangeImageChecksum(),
+//                        imageOptions.getReencodeSettings()
+//                );
             } catch (Throwable error) {
                 Logger.e(TAG, "Error while trying to re-encode bitmap file", error);
                 callback.disableOrEnableButtons(true);

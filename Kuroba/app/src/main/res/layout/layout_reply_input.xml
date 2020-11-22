@@ -246,58 +246,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
                 </LinearLayout>
 
-                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
-                    android:id="@+id/spoiler"
+                <com.github.k1rakishou.chan.features.reply.ReplyLayoutFilesArea
+                    android:id="@+id/reply_layout_files_area"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/reply_spoiler_image"
-                    android:textSize="14sp"
-                    android:visibility="gone"
-                    tools:visibility="visible" />
-
-                <LinearLayout
-                    android:id="@+id/preview_holder"
-                    android:layout_width="match_parent"
-                    android:layout_height="100dp"
-                    android:orientation="horizontal"
-                    android:visibility="gone"
-                    tools:visibility="visible">
-
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1" />
-
-                    <ImageView
-                        android:id="@+id/preview"
-                        android:layout_width="128dp"
-                        android:layout_height="match_parent"
-                        android:scaleType="fitCenter" />
-
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1" />
-
-                </LinearLayout>
-
-                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
-                    android:id="@+id/preview_message"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="12sp"
-                    android:visibility="gone"
-                    tools:visibility="visible" />
-
-                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
-                    android:id="@+id/file_name"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="@string/reply_file_name"
-                    android:singleLine="true"
-                    android:textSize="16sp"
-                    android:visibility="gone"
-                    tools:visibility="visible" />
+                    android:layout_height="wrap_content" />
 
             </LinearLayout>
 
@@ -316,15 +268,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:clickable="true"
                     android:focusable="true"
                     android:padding="10dp" />
-
-                <ImageView
-                    android:id="@+id/attach"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:padding="6dp" />
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/captcha_container"

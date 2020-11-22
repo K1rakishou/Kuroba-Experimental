@@ -15,6 +15,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.getLifecycleFromContext
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import java.io.File
 import java.util.concurrent.atomic.AtomicReference
 
 @DoNotStrip
@@ -238,6 +239,61 @@ class ImageLoaderV2(
     }
 
     return imageLoader.enqueue(request)
+  }
+
+  fun loadFromDisk(
+    context: Context,
+    file: File,
+    width: Int,
+    height: Int,
+    scale: Scale = Scale.FILL,
+    transformations: List<Transformation>,
+    listener: SimpleImageListener
+  ) {
+    require(width > 0) { "Bad width: $width" }
+    require(height > 0) { "Bad height: $height" }
+
+    val listenerRef = AtomicReference(listener)
+    val contextRef = AtomicReference(context)
+    val lifecycle = context.getLifecycleFromContext()
+
+    val request = with(ImageRequest.Builder(context)) {
+      data(file)
+      lifecycle(lifecycle)
+      transformations(transformations)
+      allowHardware(false)
+      scale(scale)
+      size(width, height)
+
+      listener(
+        onError = { _, throwable ->
+          contextRef.get()?.let { context ->
+            listenerRef.get()?.onResponse(getImageNotFoundDrawable(context))
+          }
+
+          listenerRef.set(null)
+          contextRef.set(null)
+        },
+        onCancel = {
+          listenerRef.set(null)
+          contextRef.set(null)
+        }
+      )
+      target(
+        onSuccess = { drawable ->
+          try {
+            listenerRef.get()?.onResponse(drawable as BitmapDrawable)
+          } finally {
+            listenerRef.set(null)
+            contextRef.set(null)
+          }
+        }
+      )
+
+      build()
+    }
+
+    imageLoader.enqueue(request)
   }
 
   @Synchronized

@@ -22,7 +22,6 @@ import com.github.k1rakishou.chan.core.site.SiteUrlHandler
 import com.github.k1rakishou.chan.core.site.common.FutabaChanReader
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.HttpCall
-import com.github.k1rakishou.chan.core.site.http.Reply
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginResponse
@@ -171,15 +170,24 @@ open class Chan4 : SiteBase() {
     }
 
     override fun pages(board: ChanBoard): HttpUrl {
-      return a.newBuilder().addPathSegment(board.boardCode()).addPathSegment("threads.json").build()
+      return a.newBuilder()
+        .addPathSegment(board.boardCode())
+        .addPathSegment("threads.json")
+        .build()
     }
 
     override fun archive(board: ChanBoard): HttpUrl {
-      return b.newBuilder().addPathSegment(board.boardCode()).addPathSegment("archive").build()
+      return b.newBuilder()
+        .addPathSegment(board.boardCode())
+        .addPathSegment("archive")
+        .build()
     }
 
     override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
-      return sys.newBuilder().addPathSegment(chanDescriptor.boardCode()).addPathSegment("post").build()
+      return sys.newBuilder()
+        .addPathSegment(chanDescriptor.boardCode())
+        .addPathSegment("post")
+        .build()
     }
 
     override fun delete(post: ChanPost): HttpUrl {
@@ -272,8 +280,16 @@ open class Chan4 : SiteBase() {
       ).execute()
     }
 
-    override suspend fun post(reply: Reply): Flow<SiteActions.PostResult> {
-      return httpCallManager.makePostHttpCallWithProgress(Chan4ReplyCall(boardManager, appConstants, this@Chan4, reply))
+    override suspend fun post(replyChanDescriptor: ChanDescriptor): Flow<SiteActions.PostResult> {
+      val replyCall = Chan4ReplyCall(
+        site = this@Chan4,
+        replyChanDescriptor = replyChanDescriptor,
+        replyManager = replyManager,
+        boardManager = boardManager,
+        appConstants = appConstants,
+      )
+
+      return httpCallManager.makePostHttpCallWithProgress(replyCall)
         .map { replyCallResult ->
           when (replyCallResult) {
             is HttpCall.HttpCallWithProgressResult.Success -> {

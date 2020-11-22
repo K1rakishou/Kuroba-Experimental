@@ -1,6 +1,7 @@
 package com.github.k1rakishou.common
 
 import java.util.*
+import java.util.concurrent.Callable
 import javax.annotation.CheckReturnValue
 
 @DoNotStrip
@@ -75,6 +76,13 @@ sealed class ModularResult<V : Any?> {
     }
   }
 
+  @CheckReturnValue
+  @Suppress("UNCHECKED_CAST")
+  inline fun finally(block: () -> Unit): ModularResult<V> {
+    block()
+    return this
+  }
+
   fun ignore() {
     // No-op. Just an indicator that we don't care about handling this result. This is just so
     // it's obvious that the original intention was to ignore handling the result not that it
@@ -130,6 +138,17 @@ sealed class ModularResult<V : Any?> {
     inline fun <T> Try(func: () -> T): ModularResult<T> {
       return try {
         value(func())
+      } catch (error: Throwable) {
+        error(error)
+      }
+    }
+
+    @CheckReturnValue
+    @JvmStatic
+    @Suppress("FunctionName")
+    inline fun <T> TryJava(func: Callable<T>): ModularResult<T> {
+      return try {
+        value(func.call())
       } catch (error: Throwable) {
         error(error)
       }

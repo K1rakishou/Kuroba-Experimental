@@ -18,6 +18,7 @@ package com.github.k1rakishou.chan.core.site.common.vichan
 
 import android.text.TextUtils
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.common.CommonClientException
@@ -26,48 +27,59 @@ import com.github.k1rakishou.chan.core.site.common.CommonSite.CommonActions
 import com.github.k1rakishou.chan.core.site.common.MultipartHttpCall
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.DeleteResponse
-import com.github.k1rakishou.chan.core.site.http.Reply
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
+import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Response
 import org.jsoup.Jsoup
+import java.io.IOException
 import java.util.regex.Pattern
 
 open class VichanActions(
   commonSite: CommonSite,
   private val proxiedOkHttpClient: ProxiedOkHttpClient,
-  private val siteManager: SiteManager
+  private val siteManager: SiteManager,
+  protected val replyManager: ReplyManager
 ) : CommonActions(commonSite) {
 
-  override fun setupPost(reply: Reply, call: MultipartHttpCall): ModularResult<Unit> {
+  override fun setupPost(replyChanDescriptor: ChanDescriptor, call: MultipartHttpCall): ModularResult<Unit> {
     return ModularResult.Try {
-      call.parameter("board", reply.chanDescriptor!!.boardCode())
+      replyManager.readReply(replyChanDescriptor) { reply ->
+        call.parameter("board", reply.chanDescriptor.boardCode())
 
-      if (reply.chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-        call.parameter("thread", (reply.chanDescriptor as ChanDescriptor.ThreadDescriptor).threadNo.toString())
-      }
+        if (reply.chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+          call.parameter("thread", reply.chanDescriptor.threadNo.toString())
+        }
 
-      // Added with VichanAntispam.
-      // call.parameter("post", "Post");
-      call.parameter("password", reply.password)
-      call.parameter("name", reply.name)
-      call.parameter("email", reply.options)
+        // Added with VichanAntispam.
+        // call.parameter("post", "Post");
+        call.parameter("password", reply.password)
+        call.parameter("name", reply.postName)
+        call.parameter("email", reply.options)
 
-      if (!TextUtils.isEmpty(reply.subject)) {
-        call.parameter("subject", reply.subject)
-      }
+        if (!TextUtils.isEmpty(reply.subject)) {
+          call.parameter("subject", reply.subject)
+        }
 
-      call.parameter("body", reply.comment)
+        call.parameter("body", reply.comment)
 
-      if (reply.file != null) {
-        call.fileParameter("file", reply.fileName, reply.file)
-      }
+        val replyFile = reply.firstFileOrNull()
+        if (replyFile != null) {
+          val replyFileMetaResult = replyFile.getReplyFileMeta()
+          if (replyFileMetaResult is ModularResult.Error<*>) {
+            throw IOException((replyFileMetaResult as ModularResult.Error<ReplyFileMeta>).error)
+          }
 
-      if (reply.spoilerImage) {
-        call.parameter("spoiler", "on")
+          val replyFileMetaInfo = (replyFileMetaResult as ModularResult.Value).value
+          call.fileParameter("file", replyFileMetaInfo.fileName, replyFile.fileOnDisk)
+
+          if (replyFileMetaInfo.spoiler) {
+            call.parameter("spoiler", "on")
+          }
+        }
       }
     }
   }
@@ -78,17 +90,17 @@ open class VichanActions(
 
   override suspend fun prepare(
     call: MultipartHttpCall,
-    reply: Reply,
+    replyChanDescriptor: ChanDescriptor,
     replyResponse: ReplyResponse
   ): ModularResult<Unit> {
-    val siteDescriptor = reply.chanDescriptor!!.siteDescriptor()
+    val siteDescriptor = replyChanDescriptor.siteDescriptor()
 
     val site = siteManager.bySiteDescriptor(siteDescriptor)
       ?: return ModularResult.error(CommonClientException("Site ${siteDescriptor} is disabled or not active"))
 
     val antispam = VichanAntispam(
       proxiedOkHttpClient,
-      site.resolvable().desktopUrl(reply.chanDescriptor!!, null).toHttpUrl()
+      site.resolvable().desktopUrl(replyChanDescriptor, null).toHttpUrl()
     )
 
     antispam.addDefaultIgnoreFields()

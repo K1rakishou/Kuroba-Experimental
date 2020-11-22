@@ -59,7 +59,7 @@ class Chan420 : CommonSite() {
     })
     
     setEndpoints(TaimabaEndpoints(this, "https://api.420chan.org", "https://boards.420chan.org"))
-    setActions(object : TaimabaActions(this@Chan420) {
+    setActions(object : TaimabaActions(this@Chan420, replyManager) {
       override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards> {
         return genericBoardsRequestResponseHandler(
           requestProvider = {

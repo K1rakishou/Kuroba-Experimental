@@ -6,6 +6,7 @@ import android.graphics.drawable.ColorDrawable
 import android.text.TextWatcher
 import android.view.View
 import androidx.appcompat.widget.AppCompatEditText
+import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.Lifecycle
 import com.airbnb.epoxy.AsyncEpoxyController
 import com.airbnb.epoxy.DiffResult
@@ -14,7 +15,6 @@ import com.airbnb.epoxy.EpoxyRecyclerView
 import com.airbnb.epoxy.OnModelBuildFinishedListener
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.controller.Controller
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -54,12 +54,9 @@ fun Context.getLifecycleFromContext(): Lifecycle? {
   }
 }
 
-suspend fun View.awaitUntilLaidOut(continueRendering: Boolean = true) {
+suspend fun View.awaitUntilPreDraw() {
   suspendCancellableCoroutine<Unit> { cancellableContinuation ->
-    waitForLayout(this) {
-      cancellableContinuation.resume(Unit)
-      return@waitForLayout continueRendering
-    }
+    doOnPreDraw { cancellableContinuation.resume(Unit) }
   }
 }
 

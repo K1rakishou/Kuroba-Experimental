@@ -19,17 +19,9 @@ package com.github.k1rakishou.chan.core.site.http;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.chan.core.site.SiteActions;
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor;
 
-import kotlin.coroutines.Continuation;
-
-/**
- * Generic response for
- * {@link SiteActions#post(Reply, Continuation)}  that the
- * reply layout uses.
- */
 public class ReplyResponse {
     /**
      * {@code true} if the post when through, {@code false} otherwise.

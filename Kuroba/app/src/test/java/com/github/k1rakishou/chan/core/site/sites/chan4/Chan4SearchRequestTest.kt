@@ -9,7 +9,6 @@ import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
-import com.github.k1rakishou.chan.core.site.http.Reply
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
@@ -20,6 +19,7 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_themes.DefaultDarkTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.nhaarman.mockitokotlin2.any
@@ -148,8 +148,9 @@ class Chan4SearchRequestTest {
     override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<Chan4PagesRequest.BoardPages>
       = JsonReaderRequest.JsonReaderResponse.UnknownServerError(NotImplementedError())
 
-    override suspend fun post(reply: Reply): Flow<SiteActions.PostResult>
-      = flowOf(SiteActions.PostResult.PostError(NotImplementedError()))
+    override suspend fun post(replyChanDescriptor: ChanDescriptor): Flow<SiteActions.PostResult> {
+      return flowOf(SiteActions.PostResult.PostError(NotImplementedError()))
+    }
 
     override suspend fun delete(deleteRequest: DeleteRequest): SiteActions.DeleteResult
       = SiteActions.DeleteResult.DeleteError(NotImplementedError())

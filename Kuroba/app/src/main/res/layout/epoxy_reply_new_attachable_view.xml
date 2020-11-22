@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/reply_new_attachable_button"
+    android:layout_width="@dimen/reply_file_view_width"
+    android:layout_height="@dimen/reply_file_view_height"
+    android:clickable="true"
+    android:focusable="true"
+    android:background="?attr/selectableItemBackgroundBorderless">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center"
+        android:clickable="false"
+        android:focusable="false"
+        android:src="@drawable/ic_add_white_24dp" />
+
+</FrameLayout>

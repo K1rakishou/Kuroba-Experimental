@@ -21,13 +21,13 @@ import androidx.annotation.Nullable;
 import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.http.HttpCall;
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody;
-import com.github.k1rakishou.chan.core.site.http.Reply;
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
 import org.jsoup.Jsoup;
 
+import java.io.IOException;
 import java.util.Objects;
 import java.util.Random;
 import java.util.regex.Matcher;
@@ -45,18 +45,18 @@ public abstract class CommonReplyHttpCall extends HttpCall {
     private static final Pattern ERROR_MESSAGE = Pattern.compile("\"errmsg\"[^>]*>(.*?)</span");
     private static final String PROBABLY_BANNED_TEXT = "banned";
 
-    public final Reply reply;
+    public final ChanDescriptor replyChanDescriptor;
     public final ReplyResponse replyResponse = new ReplyResponse();
 
-    public CommonReplyHttpCall(Site site, Reply reply) {
+    public CommonReplyHttpCall(Site site, ChanDescriptor replyChanDescriptor) {
         super(site);
 
         ChanDescriptor chanDescriptor = Objects.requireNonNull(
-                reply.chanDescriptor,
+                replyChanDescriptor,
                 "reply.chanDescriptor == null"
         );
 
-        this.reply = reply;
+        this.replyChanDescriptor = replyChanDescriptor;
         this.replyResponse.siteDescriptor = chanDescriptor.siteDescriptor();
         this.replyResponse.boardCode = chanDescriptor.boardCode();
     }
@@ -65,14 +65,14 @@ public abstract class CommonReplyHttpCall extends HttpCall {
     public void setup(
             Request.Builder requestBuilder,
             @Nullable ProgressRequestBody.ProgressRequestListener progressListener
-    ) {
+    ) throws IOException {
         replyResponse.password = Long.toHexString(RANDOM.nextLong());
 
         MultipartBody.Builder formBuilder = new MultipartBody.Builder();
         formBuilder.setType(MultipartBody.FORM);
         addParameters(formBuilder, progressListener);
 
-        HttpUrl replyUrl = getSite().endpoints().reply(this.reply.chanDescriptor);
+        HttpUrl replyUrl = getSite().endpoints().reply(this.replyChanDescriptor);
         requestBuilder.url(replyUrl);
         requestBuilder.addHeader("Referer", replyUrl.toString());
 
@@ -114,10 +114,9 @@ public abstract class CommonReplyHttpCall extends HttpCall {
     public abstract void addParameters(
             MultipartBody.Builder builder,
             @Nullable ProgressRequestBody.ProgressRequestListener progressListener
-    );
+    ) throws IOException;
 
     protected void modifyRequestBuilder(Request.Builder requestBuilder) {
 
     }
-
 }

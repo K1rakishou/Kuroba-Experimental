@@ -7,26 +7,26 @@ import com.github.k1rakishou.chan.core.site.common.CommonClientException
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.MultipartHttpCall
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
-import com.github.k1rakishou.chan.core.site.http.Reply
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
 
-  override suspend fun post(reply: Reply): Flow<SiteActions.PostResult> {
+  override suspend fun post(replyChanDescriptor: ChanDescriptor): Flow<SiteActions.PostResult> {
     return flow {
       val error = CommonClientException("Posting is not supported for site ${site.name()}")
       emit(SiteActions.PostResult.PostError(error))
     }
   }
 
-  override fun setupPost(reply: Reply, call: MultipartHttpCall): ModularResult<Unit> {
+  override fun setupPost(replyChanDescriptor: ChanDescriptor, call: MultipartHttpCall): ModularResult<Unit> {
     val error = CommonClientException("Posting is not supported for site ${site.name()}")
 
     return ModularResult.error(error)
@@ -46,7 +46,7 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
 
   override suspend fun prepare(
     call: MultipartHttpCall,
-    reply: Reply,
+    replyChanDescriptor: ChanDescriptor,
     replyResponse: ReplyResponse
   ): ModularResult<Unit> {
     val error = CommonClientException("Posting is not supported for site ${site.name()}")

@@ -14,12 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.core.presenter
+package com.github.k1rakishou.chan.features.reply
 
 import android.content.Context
-import android.text.TextUtils
-import android.widget.Toast
-import androidx.exifinterface.media.ExifInterface
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.Debouncer
@@ -34,17 +31,11 @@ import com.github.k1rakishou.chan.core.repository.LastReplyRepository
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
-import com.github.k1rakishou.chan.core.site.http.Reply
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
-import com.github.k1rakishou.chan.ui.helper.ImagePickDelegate
-import com.github.k1rakishou.chan.ui.helper.ImagePickDelegate.ImagePickCallback
 import com.github.k1rakishou.chan.ui.helper.PostHelper
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.BitmapUtils
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -52,7 +43,6 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanSavedReply
 import com.github.k1rakishou.model.util.ChanPostUtils
-import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,7 +52,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
+import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern
 import javax.inject.Inject
@@ -78,7 +68,6 @@ class ReplyPresenter @Inject constructor(
   private val bookmarksManager: BookmarksManager,
   private val chanThreadManager: ChanThreadManager
 ) : AuthenticationLayoutCallback,
-  ImagePickCallback,
   CoroutineScope,
   CommentEditingHistory.CommentEditingHistoryListener {
 
@@ -89,16 +78,13 @@ class ReplyPresenter @Inject constructor(
   var page = Page.INPUT
     private set
 
-  private var bound = false
-  private var chanDescriptor: ChanDescriptor? = null
+  private var currentChanDescriptor: ChanDescriptor? = null
   private var previewOpen = false
-  private var pickingFile = false
 
   private val job = SupervisorJob()
   private val commentEditingHistory = CommentEditingHistory(this)
 
   private lateinit var callback: ReplyPresenterCallback
-  private lateinit var draft: Reply
   private lateinit var chanBoard: ChanBoard
   private lateinit var site: Site
 
@@ -107,13 +93,6 @@ class ReplyPresenter @Inject constructor(
   var isExpanded = false
     private set
 
-  val isAttachedFileSupportedForReencoding: Boolean
-    get() = if (!::draft.isInitialized || draft.file == null) {
-      false
-    } else {
-      BitmapUtils.isFileSupportedForReencoding(draft.file)
-    }
-
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("ReplyPresenter")
 
@@ -121,11 +100,7 @@ class ReplyPresenter @Inject constructor(
     this.callback = callback
   }
 
-  fun bindChanDescriptor(chanDescriptor: ChanDescriptor): Boolean {
-    if (this.chanDescriptor != null) {
-      unbindChanDescriptor()
-    }
-
+  suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor): Boolean {
     val thisSite = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
     if (thisSite == null) {
       Logger.e(TAG, "bindChanDescriptor couldn't find ${chanDescriptor.siteDescriptor()}")
@@ -138,16 +113,15 @@ class ReplyPresenter @Inject constructor(
       return false
     }
 
+    if (currentChanDescriptor != null) {
+      unbindChanDescriptor()
+    }
+
     this.chanBoard = thisBoard
     this.site = thisSite
-    this.bound = true
-    this.chanDescriptor = chanDescriptor
+    this.currentChanDescriptor = chanDescriptor
 
-    draft = replyManager.getReply(chanDescriptor)
-
-    if (TextUtils.isEmpty(draft.name)) {
-      draft.name = ChanSettings.postDefaultName.get()
-    }
+    callback.bindReplyImages(chanDescriptor)
 
     val stringId = if (chanDescriptor.isThreadDescriptor()) {
       R.string.reply_comment_thread
@@ -155,7 +129,8 @@ class ReplyPresenter @Inject constructor(
       R.string.reply_comment_board
     }
 
-    callback.loadDraftIntoViews(draft)
+    replyManager.awaitUntilFilesAreLoaded()
+    callback.loadDraftIntoViews(chanDescriptor)
 
     if (thisBoard.maxCommentChars > 0) {
       callback.updateCommentCount(0, thisBoard.maxCommentChars, false)
@@ -164,36 +139,29 @@ class ReplyPresenter @Inject constructor(
     callback.setCommentHint(AndroidUtils.getString(stringId))
     callback.showCommentCounter(thisBoard.maxCommentChars > 0)
 
-    if (draft.file != null) {
-      showPreview(draft.fileName, draft.file)
-    }
-
     switchPage(Page.INPUT)
     return true
   }
 
-  fun unbindChanDescriptor() {
-    bound = false
-
-    job.cancelChildren()
-
-    if (::draft.isInitialized) {
-      draft.file = null
-      draft.fileName = ""
-
-      callback.loadViewsIntoDraft(draft)
-      replyManager.putReply(chanDescriptor, draft)
+  fun unbindReplyImages() {
+    currentChanDescriptor?.let { chanDescriptor ->
+      callback.unbindReplyImages(chanDescriptor)
     }
+  }
 
+  fun unbindChanDescriptor() {
+    job.cancelChildren()
     closeAll()
+
+    currentChanDescriptor = null
   }
 
   fun isCatalogReplyLayout(): Boolean? {
-    if (chanDescriptor == null) {
+    if (currentChanDescriptor == null) {
       return null
     }
 
-    return chanDescriptor is ChanDescriptor.CatalogDescriptor
+    return currentChanDescriptor is ChanDescriptor.CatalogDescriptor
   }
 
   fun onOpen(open: Boolean) {
@@ -203,20 +171,25 @@ class ReplyPresenter @Inject constructor(
   }
 
   fun onBack(): Boolean {
-    return when {
-      page == Page.LOADING -> {
-        true
-      }
-      page == Page.AUTHENTICATION -> {
-        switchPage(Page.INPUT)
-        true
-      }
-      isExpanded -> {
-        onMoreClicked()
-        true
-      }
-      else -> false
+    if (page == Page.LOADING) {
+      return true
     }
+
+    if (page == Page.AUTHENTICATION) {
+      switchPage(Page.INPUT)
+      return true
+    }
+
+    if (callback.filesAreaOnBackPressed()) {
+      return true
+    }
+
+    if (isExpanded) {
+      onMoreClicked()
+      return true
+    }
+
+    return false
   }
 
   fun onMoreClicked() {
@@ -225,15 +198,8 @@ class ReplyPresenter @Inject constructor(
     callback.setExpanded(isExpanded)
     callback.openNameOptions(isExpanded)
 
-    if (chanDescriptor!!.isCatalogDescriptor()) {
+    if (currentChanDescriptor!!.isCatalogDescriptor()) {
       callback.openSubject(isExpanded)
-    }
-
-    if (previewOpen) {
-      callback.openFileName(isExpanded)
-      if (chanBoard.spoilers) {
-        callback.openSpoiler(isExpanded, false)
-      }
     }
 
     val is4chan = chanBoard.boardDescriptor.siteDescriptor.is4chan()
@@ -261,31 +227,6 @@ class ReplyPresenter @Inject constructor(
     }
   }
 
-  fun onAttachClicked(longPressed: Boolean) {
-    if (pickingFile) {
-      return
-    }
-
-    if (previewOpen) {
-      callback.openPreview(false, null)
-
-      draft.file = null
-      draft.fileName = ""
-
-      if (isExpanded) {
-        callback.openFileName(false)
-        if (chanBoard.spoilers) {
-          callback.openSpoiler(show = false, setUnchecked = true)
-        }
-      }
-
-      previewOpen = false
-    } else {
-      pickingFile = true
-      callback.imagePickDelegate.pick(this, longPressed)
-    }
-  }
-
   fun onAuthenticateCalled() {
     if (!site.actions().postRequiresAuthentication()) {
       return
@@ -299,12 +240,12 @@ class ReplyPresenter @Inject constructor(
   }
 
   fun onSubmitClicked(longClicked: Boolean) {
+    val chanDescriptor = currentChanDescriptor
+      ?: return
+
     if (!onPrepareToSubmit(false)) {
       return
     }
-
-    val chanDescriptor = draft.chanDescriptor
-      ?: return
 
     // only 4chan seems to have the post delay, this is a hack for that
     if (!chanDescriptor.siteDescriptor().is4chan() || longClicked) {
@@ -313,9 +254,11 @@ class ReplyPresenter @Inject constructor(
     }
 
     if (chanDescriptor.isThreadDescriptor()) {
+      val hasAtLeastOneFile = replyManager.readReply(chanDescriptor) { reply -> reply.hasFiles() }
+
       val timeLeft = lastReplyRepository.getTimeUntilReply(
         chanDescriptor.boardDescriptor(),
-        draft.file != null
+        hasAtLeastOneFile
       )
 
       if (timeLeft < 0L) {
@@ -355,17 +298,20 @@ class ReplyPresenter @Inject constructor(
   }
 
   private fun onPrepareToSubmit(isAuthenticateOnly: Boolean): Boolean {
-    callback.loadViewsIntoDraft(draft)
+    val chanDescriptor = currentChanDescriptor
+      ?: return false
 
-    if (!isAuthenticateOnly && draft.file == null && draft.comment.trim().isEmpty()) {
-      callback.openMessage(AndroidUtils.getString(R.string.reply_comment_empty))
-      return false
+    return replyManager.readReply(chanDescriptor) { reply ->
+      callback.loadViewsIntoDraft(chanDescriptor)
+
+      if (!isAuthenticateOnly && !reply.hasFiles() && reply.isCommentEmpty()) {
+        callback.openMessage(AndroidUtils.getString(R.string.reply_comment_empty))
+        return@readReply false
+      }
+
+      reply.resetCaptchaResponse()
+      return@readReply true
     }
-
-    draft.chanDescriptor = chanDescriptor
-    draft.spoilerImage = draft.spoilerImage && chanBoard.spoilers
-    draft.captchaResponse = null
-    return true
   }
 
   override fun onAuthenticationComplete(
@@ -373,8 +319,12 @@ class ReplyPresenter @Inject constructor(
     response: String?,
     autoReply: Boolean
   ) {
-    draft.captchaChallenge = challenge
-    draft.captchaResponse = response
+    val chanDescriptor = currentChanDescriptor
+      ?: return
+
+    replyManager.readReply(chanDescriptor) { reply ->
+      reply.initCaptchaInfo(challenge, response)
+    }
 
     if (autoReply) {
       makeSubmitCall()
@@ -427,22 +377,11 @@ class ReplyPresenter @Inject constructor(
   }
 
   fun onSelectionChanged() {
-    callback.loadViewsIntoDraft(draft)
+    val chanDescriptor = currentChanDescriptor
+      ?: return
+
+    callback.loadViewsIntoDraft(chanDescriptor)
     highlightQuotes()
-  }
-
-  fun fileNameLongClicked(): Boolean {
-    var currentExt = StringUtils.extractFileNameExtension(draft.fileName)
-
-    currentExt = if (currentExt == null) {
-      ""
-    } else {
-      ".$currentExt"
-    }
-
-    draft.fileName = System.currentTimeMillis().toString() + currentExt
-    callback.loadDraftIntoViews(draft)
-    return true
   }
 
   fun quote(post: ChanPost, withText: Boolean) {
@@ -455,77 +394,24 @@ class ReplyPresenter @Inject constructor(
     handleQuote(post, comment)
   }
 
-  fun quote(post: ChanPost?, text: CharSequence) {
+  fun quote(post: ChanPost, text: CharSequence) {
     handleQuote(post, text.toString())
   }
 
-  private fun handleQuote(post: ChanPost?, textQuote: String?) {
-    callback.loadViewsIntoDraft(draft)
+  private fun handleQuote(post: ChanPost, textQuote: String?) {
+    val chanDescriptor = currentChanDescriptor
+      ?: return
 
-    val insert = StringBuilder()
+    callback.loadViewsIntoDraft(chanDescriptor)
     val selectStart = callback.selectionStart
 
-    if (selectStart - 1 >= 0
-      && selectStart - 1 < draft.comment.length
-      && draft.comment[selectStart - 1] != '\n'
-    ) {
-      insert
-        .append('\n')
-    }
-    if (post != null && !draft.comment.contains(">>" + post.postNo())) {
-      insert
-        .append(">>")
-        .append(post.postNo())
-        .append("\n")
+    val resultLength = replyManager.readReply(chanDescriptor) { reply ->
+      return@readReply reply.handleQuote(selectStart, post.postNo(), textQuote)
     }
 
-    if (textQuote != null) {
-      val lines = textQuote.split("\n+").toTypedArray()
-      for (line in lines) {
-        // do not include post no from quoted post
-        if (!QUOTE_PATTERN_COMPLEX.matcher(line).matches()) {
-          insert
-            .append(">")
-            .append(line)
-            .append("\n")
-        }
-      }
-    }
-
-    draft.comment = StringBuilder(draft.comment)
-      .insert(selectStart, insert)
-      .toString()
-
-    callback.loadDraftIntoViews(draft)
-    callback.adjustSelection(selectStart, insert.length)
+    callback.loadDraftIntoViews(chanDescriptor)
+    callback.adjustSelection(selectStart, resultLength)
     highlightQuotes()
-  }
-
-  override fun onFilePicked(name: String, file: File) {
-    pickingFile = false
-
-    draft.file = file
-    draft.fileName = name
-
-    try {
-      val exif = ExifInterface(file.absolutePath)
-      val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED)
-
-      if (orientation != ExifInterface.ORIENTATION_UNDEFINED) {
-        callback.openMessage(AndroidUtils.getString(R.string.file_has_exif_data))
-      }
-    } catch (ignored: Exception) {
-    }
-
-    showPreview(name, file)
-  }
-
-  override fun onFilePickError(canceled: Boolean) {
-    pickingFile = false
-
-    if (!canceled) {
-      showToast(context, R.string.reply_file_open_failed, Toast.LENGTH_LONG)
-    }
   }
 
   private fun closeAll() {
@@ -546,32 +432,42 @@ class ReplyPresenter @Inject constructor(
     callback.openCommentMathButton(false)
     callback.openCommentSJISButton(false)
     callback.openNameOptions(false)
-    callback.openFileName(false)
-    callback.openSpoiler(show = false, setUnchecked = true)
-    callback.openPreview(false, null)
-    callback.openPreviewMessage(false, null)
     callback.destroyCurrentAuthentication()
     callback.updateRevertChangeButtonVisibility(isBufferEmpty = true)
   }
 
   private fun makeSubmitCall() {
     launch {
-      switchPage(Page.LOADING)
-      Logger.d(TAG, "makeSubmitCall() chanDescriptor=${draft.chanDescriptor}")
+      val chanDescriptor = currentChanDescriptor
+        ?: return@launch
 
-      site.actions().post(draft)
-        .catch { error -> onPostError(error) }
+      switchPage(Page.LOADING)
+      Logger.d(TAG, "makeSubmitCall() chanDescriptor=${chanDescriptor}")
+
+      val takeFilesResult = replyManager.takeSelectedFiles(chanDescriptor)
+        .safeUnwrap { error ->
+          onPostError(chanDescriptor, error)
+          return@launch
+        }
+
+      if (!takeFilesResult) {
+        onPostError(chanDescriptor, IOException("Failed to move attached files into reply"))
+        return@launch
+      }
+
+      site.actions().post(chanDescriptor)
+        .catch { error -> onPostError(chanDescriptor, error) }
         .collect { postResult ->
           withContext(Dispatchers.Main) {
             when (postResult) {
               is SiteActions.PostResult.PostComplete -> {
-                onPostComplete(postResult.replyResponse)
+                onPostComplete(chanDescriptor, postResult.replyResponse)
               }
               is SiteActions.PostResult.UploadingProgress -> {
                 onUploadingProgress(postResult.percent)
               }
               is SiteActions.PostResult.PostError -> {
-                onPostError(postResult.error)
+                onPostError(chanDescriptor, postResult.error)
               }
             }
           }
@@ -579,11 +475,33 @@ class ReplyPresenter @Inject constructor(
     }
   }
 
-  private suspend fun onPostComplete(replyResponse: ReplyResponse) {
+  private fun onUploadingProgress(percent: Int) {
+    // called on a background thread!
+    BackgroundUtils.runOnMainThread { callback.onUploadingProgress(percent) }
+  }
+
+  private fun onPostError(chanDescriptor: ChanDescriptor, exception: Throwable?) {
+    Logger.e(TAG, "onPostError", exception)
+    switchPage(Page.INPUT)
+
+    replyManager.restoreFiles(chanDescriptor)
+
+    var errorMessage = AndroidUtils.getString(R.string.reply_error)
+    if (exception != null) {
+      val message = exception.message
+      if (message != null) {
+        errorMessage = AndroidUtils.getString(R.string.reply_error_message, message)
+      }
+    }
+
+    callback.openMessage(errorMessage)
+  }
+
+  private suspend fun onPostComplete(chanDescriptor: ChanDescriptor, replyResponse: ReplyResponse) {
     when {
       replyResponse.posted -> {
         Logger.d(TAG, "onPostComplete() replyResponse=$replyResponse")
-        onPostedSuccessfully(replyResponse)
+        onPostedSuccessfully(chanDescriptor, replyResponse)
       }
       replyResponse.requireAuthentication -> {
         Logger.d(TAG, "onPostComplete() requireAuthentication==true replyResponse=$replyResponse")
@@ -598,14 +516,22 @@ class ReplyPresenter @Inject constructor(
           )
         }
 
+        replyManager.restoreFiles(chanDescriptor)
+
         Logger.e(TAG, "onPostComplete() error: $errorMessage")
         switchPage(Page.INPUT)
+
         callback.openMessage(errorMessage)
       }
     }
   }
 
-  private suspend fun onPostedSuccessfully(replyResponse: ReplyResponse) {
+  private suspend fun onPostedSuccessfully(
+    prevChanDescriptor: ChanDescriptor,
+    replyResponse: ReplyResponse
+  ) {
+    replyManager.cleanupFiles(prevChanDescriptor)
+
     val siteDescriptor = replyResponse.siteDescriptor
       ?: return
 
@@ -633,8 +559,8 @@ class ReplyPresenter @Inject constructor(
 
     lastReplyRepository.putLastReply(newThreadDescriptor.boardDescriptor)
 
-    if (chanDescriptor!!.isCatalogDescriptor()) {
-      lastReplyRepository.putLastThread(chanDescriptor!!.boardDescriptor())
+    if (prevChanDescriptor != null && prevChanDescriptor.isCatalogDescriptor()) {
+      lastReplyRepository.putLastThread(prevChanDescriptor.boardDescriptor())
     }
 
     if (ChanSettings.postPinThread.get()) {
@@ -655,32 +581,34 @@ class ReplyPresenter @Inject constructor(
     }
 
     switchPage(Page.INPUT)
-
     closeAll()
     highlightQuotes()
 
-    draft = Reply()
-    draft.name = draft.name
+    replyManager.readReply(newThreadDescriptor) { newReply ->
+      replyManager.readReply(prevChanDescriptor) { prevReply ->
+        newReply.postName = prevReply.postName
+      }
+    }
 
-    replyManager.putReply(newThreadDescriptor, draft)
-
-    callback.loadDraftIntoViews(draft)
+    callback.loadDraftIntoViews(newThreadDescriptor)
     callback.onPosted()
 
-    if (bound && chanDescriptor!!.isCatalogDescriptor()) {
+    if (prevChanDescriptor.isCatalogDescriptor()) {
       callback.showThread(newThreadDescriptor)
     }
   }
 
-  private fun bookmarkThread(newThreadDescriptor: ChanDescriptor, threadNo: Long) {
-    val currentChanDescriptor = callback.chanDescriptor
-    if (currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
-      val thread = chanThreadManager.getChanThread(currentChanDescriptor)
+  private suspend fun bookmarkThread(newThreadDescriptor: ChanDescriptor, threadNo: Long) {
+    val chanDescriptor = currentChanDescriptor
+      ?: return
+
+    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      val thread = chanThreadManager.getChanThread(chanDescriptor)
 
       // reply
       if (thread != null) {
         val originalPost = thread.getOriginalPost()
-        val title = ChanPostUtils.getTitle(originalPost, chanDescriptor)
+        val title = ChanPostUtils.getTitle(originalPost, currentChanDescriptor)
         val thumbnail = originalPost.firstImage()?.actualThumbnailUrl
 
         bookmarksManager.createBookmark(newThreadDescriptor.toThreadDescriptor(threadNo), title, thumbnail)
@@ -688,35 +616,17 @@ class ReplyPresenter @Inject constructor(
         bookmarksManager.createBookmark(newThreadDescriptor.toThreadDescriptor(threadNo))
       }
     } else {
-      // new thread, use the new loadable
-      draft.chanDescriptor = newThreadDescriptor
-      val title = PostHelper.getTitle(draft)
+      val title = replyManager.readReply(chanDescriptor) { reply ->
+        PostHelper.getTitle(reply)
+      }
+
+      bindChanDescriptor(newThreadDescriptor)
 
       bookmarksManager.createBookmark(
         ChanDescriptor.ThreadDescriptor(newThreadDescriptor.boardDescriptor(), threadNo),
         title
       )
     }
-  }
-
-  private fun onUploadingProgress(percent: Int) {
-    // called on a background thread!
-    BackgroundUtils.runOnMainThread { callback.onUploadingProgress(percent) }
-  }
-
-  private fun onPostError(exception: Throwable?) {
-    Logger.e(TAG, "onPostError", exception)
-    switchPage(Page.INPUT)
-
-    var errorMessage = AndroidUtils.getString(R.string.reply_error)
-    if (exception != null) {
-      val message = exception.message
-      if (message != null) {
-        errorMessage = AndroidUtils.getString(R.string.reply_error_message, message)
-      }
-    }
-
-    callback.openMessage(errorMessage)
   }
 
   @JvmOverloads
@@ -758,82 +668,38 @@ class ReplyPresenter @Inject constructor(
 
   private fun highlightQuotes() {
     highlightQuotesDebouncer.post({
-      val matcher = QUOTE_PATTERN.matcher(draft.comment)
+      val chanDescriptor = currentChanDescriptor
+        ?: return@post
+
+      val matcher = replyManager.readReply(chanDescriptor) { reply ->
+        return@readReply QUOTE_PATTERN.matcher(reply.comment)
+      }
 
       // Find all occurrences of >>\d+ with start and end between selectionStart
       val selectedQuotes = mutableSetOf<Long>()
 
       while (matcher.find()) {
         val quote = matcher.group().substring(2)
-        selectedQuotes += quote.toLongOrNull() ?: continue
+        selectedQuotes += quote.toLongOrNull()
+          ?: continue
       }
 
       callback.highlightPostNos(selectedQuotes)
     }, 250)
   }
 
-  private fun showPreview(name: String, file: File?) {
-    callback.openPreview(true, file)
-
-    if (isExpanded) {
-      callback.openFileName(true)
-      if (chanBoard.spoilers) {
-        callback.openSpoiler(show = true, setUnchecked = false)
-      }
-    }
-
-    callback.setFileName(name)
-    previewOpen = true
-
-    val probablyWebm = "webm" == StringUtils.extractFileNameExtension(name)
-
-    val maxSize = if (probablyWebm) {
-      chanBoard.maxWebmSize
-    } else {
-      chanBoard.maxFileSize
-    }
-
-    // if the max size is undefined for the board, ignore this message
-    if (file != null && file.length() > maxSize && maxSize != -1) {
-      val fileSize = getReadableFileSize(file.length())
-      val stringResId = if (probablyWebm) {
-        R.string.reply_webm_too_big
-      } else {
-        R.string.reply_file_too_big
-      }
-
-      callback.openPreviewMessage(
-        true,
-        AndroidUtils.getString(stringResId, fileSize, getReadableFileSize(maxSize.toLong()))
-      )
-    } else {
-      callback.openPreviewMessage(false, null)
-    }
-  }
-
-  /**
-   * Applies the new file and filename if they have been changed. They may change when user
-   * re-encodes the picked image file (they may want to scale it down/remove metadata/change quality etc.)
-   */
-  fun onImageOptionsApplied(reply: Reply) {
-    draft.file = reply.file
-    draft.fileName = reply.fileName
-    showPreview(draft.fileName, draft.file)
-  }
-
   interface ReplyPresenterCallback {
-    val imagePickDelegate: ImagePickDelegate
     val chanDescriptor: ChanDescriptor?
     val selectionStart: Int
 
-    fun loadViewsIntoDraft(draft: Reply?)
-    fun loadDraftIntoViews(draft: Reply?)
+    fun loadViewsIntoDraft(chanDescriptor: ChanDescriptor)
+    fun loadDraftIntoViews(chanDescriptor: ChanDescriptor)
     fun adjustSelection(start: Int, amount: Int)
     fun setPage(page: Page)
     fun initializeAuthentication(
-      site: Site?,
-      authentication: SiteAuthentication?,
-      callback: AuthenticationLayoutCallback?,
+      site: Site,
+      authentication: SiteAuthentication,
+      callback: AuthenticationLayoutCallback,
       useV2NoJsCaptcha: Boolean,
       autoReply: Boolean
     )
@@ -854,29 +720,26 @@ class ReplyPresenter @Inject constructor(
     fun openCommentEqnButton(open: Boolean)
     fun openCommentMathButton(open: Boolean)
     fun openCommentSJISButton(open: Boolean)
-    fun openFileName(open: Boolean)
-    fun setFileName(fileName: String?)
     fun updateCommentCount(count: Int, maxCount: Int, over: Boolean)
-    fun openPreview(show: Boolean, previewFile: File?)
-    fun openPreviewMessage(show: Boolean, message: String?)
-    fun openSpoiler(show: Boolean, setUnchecked: Boolean)
     fun highlightPostNos(postNos: Set<Long>)
     fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     fun focusComment()
     fun onUploadingProgress(percent: Int)
     fun onFallbackToV1CaptchaView(autoReply: Boolean)
     fun destroyCurrentAuthentication()
-    fun showAuthenticationFailedError(error: Throwable?)
+    fun showAuthenticationFailedError(error: Throwable)
     fun getTokenOrNull(): String?
     fun updateRevertChangeButtonVisibility(isBufferEmpty: Boolean)
     fun restoreComment(prevCommentInputState: CommentEditingHistory.CommentInputState)
+    suspend fun bindReplyImages(chanDescriptor: ChanDescriptor)
+    fun unbindReplyImages(chanDescriptor: ChanDescriptor)
+    fun filesAreaOnBackPressed(): Boolean
   }
 
   companion object {
     private const val TAG = "ReplyPresenter"
-    private val QUOTE_PATTERN = Pattern.compile(">>\\d+")
     // matches for >>123, >>123 (text), >>>/fit/123
-    private val QUOTE_PATTERN_COMPLEX = Pattern.compile("^>>(>/[a-z0-9]+/)?\\d+.*$")
+    private val QUOTE_PATTERN = Pattern.compile(">>\\d+")
     private val UTF_8 = StandardCharsets.UTF_8
   }
 

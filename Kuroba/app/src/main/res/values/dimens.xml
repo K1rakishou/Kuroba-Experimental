@@ -34,4 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <dimen name="thread_grid_bookmark_view_default_width">112dp</dimen>
     <dimen name="thread_grid_bookmark_view_max_width">256dp</dimen>
     <dimen name="search_post_thumbnail_size">100dp</dimen>
+
+    <dimen name="reply_file_view_width">100dp</dimen>
+    <dimen name="reply_file_view_height">100dp</dimen>
 </resources>

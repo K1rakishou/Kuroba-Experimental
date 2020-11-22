@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/reply_attachment_root"
+    android:layout_width="@dimen/reply_file_view_width"
+    android:layout_height="@dimen/reply_file_view_height"
+    android:padding="2dp"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:clickable="true"
+    android:focusable="true"
+    android:longClickable="true">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/reply_attachment_image_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:src="@drawable/ic_baseline_wb_sunny_24" />
+
+    <com.github.k1rakishou.chan.ui.view.SelectionCheckView
+        android:id="@+id/reply_attachment_selection_check_view"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:clickable="false"
+        android:focusable="false"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <FrameLayout
+        android:id="@+id/reply_attachment_info_holder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#A0808080"
+        app:layout_constraintBottom_toBottomOf="@+id/reply_attachment_image_view"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <TextView
+            android:id="@+id/reply_attachment_file_name"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:ellipsize="middle"
+            android:padding="4dp"
+            android:singleLine="true"
+            android:textColor="#eeeeee"
+            android:textSize="12sp"
+            tools:text="Test image name (very very very very very very very long).png" />
+
+    </FrameLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

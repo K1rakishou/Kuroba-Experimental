@@ -3,6 +3,7 @@ package com.github.k1rakishou.common
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
+import java.io.File
 
 open class AppConstants(
   context: Context,
@@ -14,21 +15,40 @@ open class AppConstants(
   val maxAmountOfThreadsInDatabase: Int
   val userAgent: String
   val processorsCount: Int
-
   val proxiesFileName = PROXIES_FILE_NAME
-
   val bookmarkWatchWorkUniqueTag = "BookmarkWatcherController_${flavorType.name}"
+
+  val attachFilesDir: File
+    get() {
+      if (field.exists()) {
+        return field
+      }
+
+      check(field.mkdir()) { "Failed to create attach files directory! attachFilesDir=${field.absolutePath}" }
+      return field
+    }
+  val attachFilesMetaDir: File
+    get() {
+      if (field.exists()) {
+        return field
+      }
+
+      check(field.mkdir()) { "Failed to create attach files meta directory! attachFilesMetaDir=${field.absolutePath}" }
+      return field
+    }
 
   init {
     val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
 
     maxAmountOfPostsInDatabase = if (flavorType == AndroidUtils.FlavorType.Dev) {
+      // For easy testing
       5000
     } else {
       125_000
     }
 
     maxAmountOfThreadsInDatabase = if (flavorType == AndroidUtils.FlavorType.Dev) {
+      // For easy testing
       500
     } else {
       12_500
@@ -38,6 +58,9 @@ open class AppConstants(
     userAgent = String.format(USER_AGENT_FORMAT, Build.VERSION.RELEASE, Build.MODEL)
     processorsCount = Runtime.getRuntime().availableProcessors()
       .coerceAtLeast(2)
+
+    attachFilesDir = File(context.filesDir, ATTACH_FILES_DIR_NAME)
+    attachFilesMetaDir = File(context.filesDir, ATTACH_FILES_META_DIR_NAME)
   }
 
   private fun calculatePostsCountForPostsCacheDependingOnDeviceRam(activityManager: ActivityManager?): Int {
@@ -70,6 +93,8 @@ open class AppConstants(
       "Mozilla/5.0 (Linux; Android %s; %s) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.127 Mobile Safari/537.36"
 
     private const val PROXIES_FILE_NAME = "kuroba_proxies.json"
+    private const val ATTACH_FILES_DIR_NAME = "attach_files"
+    private const val ATTACH_FILES_META_DIR_NAME = "attach_files_meta"
 
     const val RESOURCES_ENDPOINT = "https://raw.githubusercontent.com/K1rakishou/Kuroba-Experimental/release/docs/"
   }

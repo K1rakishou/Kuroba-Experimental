@@ -48,21 +48,25 @@ class HttpCallManager @Inject constructor(
     httpCall: T
   ): Flow<HttpCall.HttpCallWithProgressResult<T>> {
     return channelFlow {
-      val requestBuilder = Request.Builder()
+      try {
+        val requestBuilder = Request.Builder()
 
-      httpCall.setup(requestBuilder) { percent ->
-        offer(HttpCall.HttpCallWithProgressResult.Progress(percent))
-      }
-
-      httpCall.site.requestModifier().modifyHttpCall(httpCall, requestBuilder)
-
-      when (val httpCallResult = makeHttpCallInternal(requestBuilder, httpCall)) {
-        is HttpCall.HttpCallResult.Success -> {
-          send(HttpCall.HttpCallWithProgressResult.Success(httpCallResult.httpCall))
+        httpCall.setup(requestBuilder) { percent ->
+          offer(HttpCall.HttpCallWithProgressResult.Progress(percent))
         }
-        is HttpCall.HttpCallResult.Fail -> {
-          send(HttpCall.HttpCallWithProgressResult.Fail(httpCallResult.httpCall, httpCallResult.error))
+
+        httpCall.site.requestModifier().modifyHttpCall(httpCall, requestBuilder)
+
+        when (val httpCallResult = makeHttpCallInternal(requestBuilder, httpCall)) {
+          is HttpCall.HttpCallResult.Success -> {
+            send(HttpCall.HttpCallWithProgressResult.Success(httpCallResult.httpCall))
+          }
+          is HttpCall.HttpCallResult.Fail -> {
+            send(HttpCall.HttpCallWithProgressResult.Fail(httpCallResult.httpCall, httpCallResult.error))
+          }
         }
+      } catch (error: Throwable) {
+        send(HttpCall.HttpCallWithProgressResult.Fail(httpCall, error))
       }
     }
   }

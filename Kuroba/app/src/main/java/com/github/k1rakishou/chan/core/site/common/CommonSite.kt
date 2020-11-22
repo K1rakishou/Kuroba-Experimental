@@ -33,7 +33,6 @@ import com.github.k1rakishou.chan.core.site.common.vichan.VichanReaderExtensions
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.DeleteResponse
 import com.github.k1rakishou.chan.core.site.http.HttpCall
-import com.github.k1rakishou.chan.core.site.http.Reply
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
@@ -407,14 +406,16 @@ abstract class CommonSite : SiteBase() {
   
   abstract class CommonActions(protected var site: CommonSite) : SiteActions {
     
-    override suspend fun post(reply: Reply): Flow<SiteActions.PostResult> {
+    override suspend fun post(replyChanDescriptor: ChanDescriptor): Flow<SiteActions.PostResult> {
       val replyResponse = ReplyResponse()
-      val chanDescriptor = reply.chanDescriptor!!
-      
-      reply.password = toHexString(secureRandom.nextLong())
-      replyResponse.password = reply.password
-      replyResponse.siteDescriptor = chanDescriptor.siteDescriptor()
-      replyResponse.boardCode = chanDescriptor.boardCode()
+
+      site.replyManager.readReply(replyChanDescriptor) { reply ->
+        reply.password = toHexString(secureRandom.nextLong())
+        replyResponse.password = reply.password
+      }
+
+      replyResponse.siteDescriptor = replyChanDescriptor.siteDescriptor()
+      replyResponse.boardCode = replyChanDescriptor.boardCode()
       
       val call: MultipartHttpCall = object : MultipartHttpCall(site) {
         override fun process(response: Response, result: String) {
@@ -422,25 +423,25 @@ abstract class CommonSite : SiteBase() {
         }
       }
       
-      call.url(site.endpoints().reply(chanDescriptor))
+      call.url(site.endpoints().reply(replyChanDescriptor))
       
       return flow {
         if (requirePrepare()) {
-          prepare(call, reply, replyResponse).safeUnwrap { error ->
+          prepare(call, replyChanDescriptor, replyResponse).safeUnwrap { error ->
             emit(SiteActions.PostResult.PostError(error))
             return@flow
           }
 
-          setupPost(reply, call)
+          setupPost(replyChanDescriptor, call)
           emit(makePostCall(call, replyResponse))
         } else {
-          setupPost(reply, call)
+          setupPost(replyChanDescriptor, call)
           emit(makePostCall(call, replyResponse))
         }
       }.flowOn(Dispatchers.IO)
     }
     
-    open fun setupPost(reply: Reply, call: MultipartHttpCall): ModularResult<Unit> {
+    open fun setupPost(replyChanDescriptor: ChanDescriptor, call: MultipartHttpCall): ModularResult<Unit> {
       return ModularResult.error(NotImplementedError("Not implemented"))
     }
     
@@ -471,7 +472,11 @@ abstract class CommonSite : SiteBase() {
       return false
     }
     
-    open suspend fun prepare(call: MultipartHttpCall, reply: Reply, replyResponse: ReplyResponse): ModularResult<Unit> {
+    open suspend fun prepare(
+      call: MultipartHttpCall,
+      replyChanDescriptor: ChanDescriptor,
+      replyResponse: ReplyResponse
+    ): ModularResult<Unit> {
       return ModularResult.error(NotImplementedError("Not implemented"))
     }
     

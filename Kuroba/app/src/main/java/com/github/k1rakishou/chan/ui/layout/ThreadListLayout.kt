@@ -39,6 +39,7 @@ import androidx.recyclerview.widget.RecyclerView.ItemDecoration
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
@@ -47,10 +48,12 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
-import com.github.k1rakishou.chan.core.presenter.ReplyPresenter
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
-import com.github.k1rakishou.chan.core.site.http.Reply
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase
+import com.github.k1rakishou.chan.features.reply.ReplyLayout
+import com.github.k1rakishou.chan.features.reply.ReplyLayout.ReplyLayoutCallback
+import com.github.k1rakishou.chan.features.reply.ReplyLayoutFilesArea
+import com.github.k1rakishou.chan.features.reply.ReplyPresenter
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
@@ -58,8 +61,8 @@ import com.github.k1rakishou.chan.ui.cell.PostCellInterface
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.PostStubCell
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
+import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.ThreadController
-import com.github.k1rakishou.chan.ui.layout.ReplyLayout.ReplyLayoutCallback
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.FastScroller
@@ -100,7 +103,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   Toolbar.ToolbarHeightUpdatesCallback,
   CoroutineScope,
   ThemeEngine.ThemeChangesListener,
-  FastScroller.ThumbDragListener {
+  FastScroller.ThumbDragListener,
+  ReplyLayoutFilesArea.ReplyLayoutFilesAreaCallbacks {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -159,13 +163,13 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private val scrollListener: RecyclerView.OnScrollListener = object : RecyclerView.OnScrollListener() {
     override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
       if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-        onRecyclerViewScrolled(recyclerView)
+        onRecyclerViewScrolled()
       }
     }
   }
 
   val replyPresenter: ReplyPresenter
-    get() = replyLayout.getPresenter()
+    get() = replyLayout.presenter
 
   val displayingPostDescriptors: List<PostDescriptor>
     get() = postAdapter.displayList
@@ -243,11 +247,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   private fun currentThreadDescriptorOrNull(): ThreadDescriptor? {
-    return currentChanDescriptor?.threadDescriptorOrNull()
+    return getCurrentChanDescriptor()?.threadDescriptorOrNull()
   }
 
   private fun currentChanDescriptorOrNull(): ChanDescriptor? {
-    return currentChanDescriptor
+    return getCurrentChanDescriptor()
   }
 
   private fun forceRecycleAllPostViews() {
@@ -294,9 +298,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     params.gravity = Gravity.BOTTOM
     replyLayout.layoutParams = params
 
-    // View setup
-    replyLayout.setCallback(this)
-
     onThemeChanged()
   }
 
@@ -318,6 +319,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       threadPresenter as PostCellCallback,
       threadPresenter as ThreadStatusCell.Callback
     )
+
+    replyLayout.onCreate(this, this)
 
     recyclerView.adapter = postAdapter
     // Man, fuck the RecycledViewPool. Sometimes when scrolling away from a view and the swiftly
@@ -343,7 +346,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     job.cancelChildren()
 
     threadListLayoutCallback?.toolbar?.removeToolbarHeightUpdatesCallback(this)
-    replyLayout.clearCaptchaHolderCallbacks()
+    replyLayout.onDestroy()
 
     forceRecycleAllPostViews()
     recyclerView.adapter = null
@@ -354,9 +357,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     setRecyclerViewPadding()
   }
 
-  private fun onRecyclerViewScrolled(recyclerView: RecyclerView) {
+  private fun onRecyclerViewScrolled() {
     // onScrolled can be called after cleanup()
-    if (currentChanDescriptor == null) {
+    if (getCurrentChanDescriptor() == null) {
       return
     }
 
@@ -1065,6 +1068,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     setRecyclerViewPadding()
   }
 
+  override fun presentController(controller: FloatingListMenuController) {
+    threadListLayoutCallback?.presentController(controller)
+  }
+
   private fun setRecyclerViewPadding() {
     val defaultPadding = if (postViewMode == PostViewMode.CARD) dp(1f) else 0
     var recyclerTop = defaultPadding + toolbarHeight()
@@ -1117,7 +1124,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   private fun party() {
-    val chanDescriptor = currentChanDescriptor
+    val chanDescriptor = getCurrentChanDescriptor()
       ?: return
 
     if (chanDescriptor.siteDescriptor().is4chan()) {
@@ -1130,14 +1137,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   private fun noParty() {
     recyclerView.removeItemDecoration(PARTY)
-  }
-
-  fun onImageOptionsApplied(modifiedReply: Reply?, filenameRemoved: Boolean) {
-    replyLayout.onImageOptionsApplied(modifiedReply, filenameRemoved)
-  }
-
-  fun onImageOptionsComplete() {
-    replyLayout.onImageOptionsComplete()
   }
 
   fun onPostUpdated(post: ChanPost) {
@@ -1167,6 +1166,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     fun showImageReencodingWindow(supportsReencode: Boolean)
     fun threadBackPressed(): Boolean
     fun threadBackLongPressed()
+    fun presentController(controller: Controller)
   }
 
   companion object {

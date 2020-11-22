@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager
@@ -65,6 +66,8 @@ abstract class SiteBase : Site, CoroutineScope {
   protected lateinit var postFilterManager: PostFilterManager
   @Inject
   protected lateinit var mockReplyManager: MockReplyManager
+  @Inject
+  protected lateinit var replyManager: ReplyManager
   @Inject
   protected lateinit var appConstants: AppConstants
 

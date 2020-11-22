@@ -13,7 +13,6 @@ import com.github.k1rakishou.chan.core.site.common.vichan.VichanActions
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
-import com.github.k1rakishou.chan.core.site.http.Reply
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
@@ -77,8 +76,7 @@ class Kun8 : CommonSite() {
       }
     })
 
-    setActions(object : VichanActions(this@Kun8, proxiedOkHttpClient, siteManager) {
-
+    setActions(object : VichanActions(this@Kun8, proxiedOkHttpClient, siteManager, replyManager) {
       override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards> {
         val request = Request.Builder()
           .url(endpoints().boards().toString())
@@ -93,10 +91,14 @@ class Kun8 : CommonSite() {
         ).execute()
       }
 
-      override fun setupPost(reply: Reply, call: MultipartHttpCall): ModularResult<Unit> {
-        return super.setupPost(reply, call)
+
+      override fun setupPost(
+        replyChanDescriptor: ChanDescriptor,
+        call: MultipartHttpCall
+      ): ModularResult<Unit> {
+        return super.setupPost(replyChanDescriptor, call)
           .mapValue {
-            if (reply.chanDescriptor is ThreadDescriptor) {
+            if (replyChanDescriptor is ThreadDescriptor) {
               // "thread" is already added in VichanActions.
               call.parameter("post", "New Reply")
             } else {

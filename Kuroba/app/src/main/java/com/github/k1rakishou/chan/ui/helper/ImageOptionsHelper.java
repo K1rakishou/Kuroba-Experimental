@@ -11,7 +11,7 @@ import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter;
-import com.github.k1rakishou.chan.core.site.http.Reply;
+import com.github.k1rakishou.chan.features.reply.data.Reply;
 import com.github.k1rakishou.chan.ui.controller.ImageOptionsController;
 import com.github.k1rakishou.chan.ui.controller.ImageReencodeOptionsController;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
@@ -82,7 +82,8 @@ public class ImageOptionsHelper
             imageOptionsController = null;
         }
 
-        callbacks.onImageOptionsComplete();
+        // TODO(KurobaEx): reply layout refactoring
+//        callbacks.onImageOptionsComplete();
     }
 
     @Override
@@ -113,7 +114,8 @@ public class ImageOptionsHelper
 
     @Override
     public void onImageOptionsApplied(Reply reply, boolean filenameRemoved) {
-        callbacks.onImageOptionsApplied(reply, filenameRemoved);
+        // TODO(KurobaEx): reply layout refactoring
+//        callbacks.onImageOptionsApplied(reply, filenameRemoved);
     }
 
     @Override
@@ -140,9 +142,5 @@ public class ImageOptionsHelper
 
     public interface ImageReencodingHelperCallback {
         void presentReencodeOptionsController(Controller controller);
-
-        void onImageOptionsApplied(Reply reply, boolean filenameRemoved);
-
-        void onImageOptionsComplete();
     }
 }

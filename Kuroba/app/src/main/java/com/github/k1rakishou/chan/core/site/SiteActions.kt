@@ -20,7 +20,6 @@ import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.DeleteResponse
-import com.github.k1rakishou.chan.core.site.http.Reply
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginResponse
@@ -29,13 +28,14 @@ import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import kotlinx.coroutines.flow.Flow
 
 interface SiteActions {
   suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards>
   suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<Chan4PagesRequest.BoardPages>
-  suspend fun post(reply: Reply): Flow<PostResult>
+  suspend fun post(replyChanDescriptor: ChanDescriptor): Flow<PostResult>
   suspend fun delete(deleteRequest: DeleteRequest): DeleteResult
   suspend fun <T : AbstractLoginRequest> login(loginRequest: T): LoginResult
   fun postRequiresAuthentication(): Boolean

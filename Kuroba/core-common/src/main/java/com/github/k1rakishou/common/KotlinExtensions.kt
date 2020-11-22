@@ -144,6 +144,15 @@ fun <T> MutableCollection<T>.removeIfKt(filter: (T) -> Boolean): Boolean {
   return removed
 }
 
+public val <T> List<T>.lastIndexOrNull: Int?
+  get() {
+    if (this.isEmpty()) {
+      return null
+    }
+
+    return this.size - 1
+  }
+
 @Suppress("RedundantAsync")
 suspend fun <T> CoroutineScope.myAsync(
   context: CoroutineContext = EmptyCoroutineContext,

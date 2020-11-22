@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:clipToPadding="false"
         android:scrollbars="vertical" />
 
-    <com.github.k1rakishou.chan.ui.layout.ReplyLayout
+    <com.github.k1rakishou.chan.features.reply.ReplyLayout
         android:id="@+id/reply"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

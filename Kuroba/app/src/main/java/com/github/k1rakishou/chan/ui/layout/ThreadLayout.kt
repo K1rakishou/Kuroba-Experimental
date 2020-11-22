@@ -48,7 +48,6 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter.ThreadPresenterCallback
 import com.github.k1rakishou.chan.core.site.Site
-import com.github.k1rakishou.chan.core.site.http.Reply
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
@@ -266,8 +265,7 @@ class ThreadLayout @JvmOverloads constructor(
       if (descriptor is ChanDescriptor.ThreadDescriptor) {
         callback.showAvailableArchivesList(descriptor)
       }
-    }
-    else if (v === replyButton) {
+    } else if (v === replyButton) {
       // Give some time for the keyboard to show up
       replyButton.postDelayed({ openReplyInternal(true) }, OPEN_REPLY_DELAY_MS)
     }
@@ -346,6 +344,10 @@ class ThreadLayout @JvmOverloads constructor(
 
   override fun threadBackLongPressed() {
     callback.threadBackLongPressed()
+  }
+
+  override fun presentController(controller: Controller) {
+    callback.presentController(controller, animated = true)
   }
 
   override suspend fun showPostsForChanDescriptor(
@@ -1006,14 +1008,6 @@ class ThreadLayout @JvmOverloads constructor(
 
   override fun presentReencodeOptionsController(controller: Controller) {
     callback.presentController(controller, true)
-  }
-
-  override fun onImageOptionsApplied(reply: Reply, filenameRemoved: Boolean) {
-    threadListLayout.onImageOptionsApplied(reply, filenameRemoved)
-  }
-
-  override fun onImageOptionsComplete() {
-    threadListLayout.onImageOptionsComplete()
   }
 
   override fun presentRemovedPostsController(controller: Controller) {

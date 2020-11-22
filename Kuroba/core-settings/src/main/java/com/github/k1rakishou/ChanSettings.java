@@ -336,7 +336,6 @@ public class ChanSettings {
     public static CounterSetting threadOpenCounter;
     public static IntegerSetting drawerAutoOpenCount;
     public static BooleanSetting reencodeHintShown;
-    public static CounterSetting replyOpenCounter;
     public static BooleanSetting scrollingTextForThreadTitles;
     public static OptionsSetting<BookmarksSortOrder> bookmarksSortOrder;
     public static BooleanSetting moveNotActiveBookmarksToBottom;
@@ -523,7 +522,6 @@ public class ChanSettings {
             threadOpenCounter = new CounterSetting(p, "counter_thread_open");
             drawerAutoOpenCount = new IntegerSetting(p, "drawer_auto_open_count", 0);
             reencodeHintShown = new BooleanSetting(p, "preference_reencode_hint_already_shown", false);
-            replyOpenCounter = new CounterSetting(p, "reply_open_counter");
             ignoreDarkNightMode = new BooleanSetting(p, "ignore_dark_night_mode", false);
 
             bookmarksSortOrder = new OptionsSetting<>(p,

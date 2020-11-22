@@ -22,6 +22,10 @@ import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10Gesture
 import com.github.k1rakishou.chan.features.proxies.ProxyEditorController;
 import com.github.k1rakishou.chan.features.proxies.ProxySetupController;
 import com.github.k1rakishou.chan.features.proxies.epoxy.EpoxyProxyView;
+import com.github.k1rakishou.chan.features.reply.ReplyLayout;
+import com.github.k1rakishou.chan.features.reply.ReplyLayoutFilesArea;
+import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyReplyFileView;
+import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyReplyNewAttachableView;
 import com.github.k1rakishou.chan.features.search.GlobalSearchController;
 import com.github.k1rakishou.chan.features.search.SearchResultsController;
 import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchEndOfResultsView;
@@ -91,13 +95,13 @@ import com.github.k1rakishou.chan.ui.epoxy.EpoxyDividerView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyErrorView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyExpandableGroupView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyTextView;
+import com.github.k1rakishou.chan.ui.epoxy.EpoxyTextViewWrapHeight;
 import com.github.k1rakishou.chan.ui.helper.HintPopup;
 import com.github.k1rakishou.chan.ui.helper.ImageOptionsHelper;
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
 import com.github.k1rakishou.chan.ui.layout.FilesLayout;
 import com.github.k1rakishou.chan.ui.layout.FilterLayout;
 import com.github.k1rakishou.chan.ui.layout.PostRepliesContainer;
-import com.github.k1rakishou.chan.ui.layout.ReplyLayout;
 import com.github.k1rakishou.chan.ui.layout.ReportProblemLayout;
 import com.github.k1rakishou.chan.ui.layout.SearchLayout;
 import com.github.k1rakishou.chan.ui.layout.SplitNavigationControllerLayout;
@@ -148,7 +152,8 @@ import dagger.Subcomponent;
 
 @PerActivity
 @Subcomponent(modules = {StartActivityModule.class})
-public interface StartActivityComponent {
+public interface
+StartActivityComponent {
     void inject(AlbumDownloadController albumDownloadController);
     void inject(AlbumViewController albumViewController);
     void inject(BrowseController browseController);
@@ -240,6 +245,9 @@ public interface StartActivityComponent {
     void inject(EpoxyCheckableFloatingListMenuRow epoxyCheckableFloatingListMenuRow);
     void inject(EpoxyFloatingListMenuRow epoxyFloatingListMenuRow);
     void inject(EpoxyHistoryHeaderView epoxyHistoryHeaderView);
+    void inject(EpoxyReplyFileView epoxyReplyFileView);
+    void inject(EpoxyReplyNewAttachableView epoxyReplyNewAttachableView);
+    void inject(EpoxyTextViewWrapHeight epoxyTextViewWrapHeight);
 
     void inject(StartActivity startActivity);
     void inject(CaptchaNoJsLayoutV2 captchaNoJsLayoutV2);
@@ -292,6 +300,7 @@ public interface StartActivityComponent {
     void inject(PostRepliesContainer postRepliesContainer);
     void inject(SearchLayout searchLayout);
     void inject(SplitNavigationControllerLayout splitNavigationControllerLayout);
+    void inject(ReplyLayoutFilesArea replyLayoutFilesArea);
 
     @Subcomponent.Builder
     interface Builder {

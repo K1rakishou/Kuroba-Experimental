@@ -285,12 +285,11 @@ class ThreadPresenter @Inject constructor(
 
     if (isDestroying) {
       job.cancelChildren()
+      postOptionsClickExecutor.stop()
+      serializedCoroutineExecutor.stop()
     }
 
-    postOptionsClickExecutor.stop()
-    serializedCoroutineExecutor.stop()
     compositeDisposable.clear()
-
     chanThreadLoadingState = ChanThreadLoadingState.Uninitialized
   }
 

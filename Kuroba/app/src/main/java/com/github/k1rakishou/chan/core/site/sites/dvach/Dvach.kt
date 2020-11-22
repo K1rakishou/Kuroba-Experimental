@@ -19,7 +19,6 @@ import com.github.k1rakishou.chan.core.site.common.vichan.VichanActions
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.HttpCall
-import com.github.k1rakishou.chan.core.site.http.Reply
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginResponse
@@ -146,11 +145,14 @@ class Dvach : CommonSite() {
       }
     })
 
-    setActions(object : VichanActions(this@Dvach, proxiedOkHttpClient, siteManager) {
-      override fun setupPost(reply: Reply, call: MultipartHttpCall): ModularResult<Unit> {
-        return super.setupPost(reply, call)
+    setActions(object : VichanActions(this@Dvach, proxiedOkHttpClient, siteManager, replyManager) {
+      override fun setupPost(
+        replyChanDescriptor: ChanDescriptor,
+        call: MultipartHttpCall
+      ): ModularResult<Unit> {
+        return super.setupPost(replyChanDescriptor, call)
           .mapValue {
-            if (reply.chanDescriptor!!.isThreadDescriptor()) {
+            if (replyChanDescriptor.isThreadDescriptor()) {
               // "thread" is already added in VichanActions.
               call.parameter("post", "New Reply")
             } else {
@@ -166,8 +168,14 @@ class Dvach : CommonSite() {
         return false
       }
 
-      override suspend fun post(reply: Reply): Flow<SiteActions.PostResult> {
-        return httpCallManager.makePostHttpCallWithProgress(DvachReplyCall(this@Dvach, reply))
+      override suspend fun post(replyChanDescriptor: ChanDescriptor): Flow<SiteActions.PostResult> {
+        val replyCall = DvachReplyCall(
+          this@Dvach,
+          replyChanDescriptor,
+          replyManager
+        )
+
+        return httpCallManager.makePostHttpCallWithProgress(replyCall)
           .map { replyCallResult ->
             when (replyCallResult) {
               is HttpCall.HttpCallWithProgressResult.Success -> {
@@ -307,6 +315,7 @@ class Dvach : CommonSite() {
   companion object {
     private const val TAG = "Dvach"
     const val SITE_NAME = "2ch.hk"
+    const val CAPTCHA_KEY = "6LeQYz4UAAAAAL8JCk35wHSv6cuEV5PyLhI6IxsM"
 
     @JvmField
     val URL_HANDLER: CommonSiteUrlHandler = object : CommonSiteUrlHandler() {
@@ -343,7 +352,6 @@ class Dvach : CommonSite() {
         }
       }
     }
-    const val CAPTCHA_KEY = "6LeQYz4UAAAAAL8JCk35wHSv6cuEV5PyLhI6IxsM"
   }
 
 }

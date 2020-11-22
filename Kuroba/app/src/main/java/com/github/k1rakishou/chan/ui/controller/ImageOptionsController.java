@@ -32,7 +32,7 @@ import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter;
-import com.github.k1rakishou.chan.core.site.http.Reply;
+import com.github.k1rakishou.chan.features.reply.data.Reply;
 import com.github.k1rakishou.chan.ui.helper.ImageOptionsHelper;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView;

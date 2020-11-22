@@ -4,6 +4,7 @@ import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
@@ -36,6 +37,10 @@ class SerializedCoroutineExecutor(private val scope: CoroutineScope) {
 
     val serializedAction = SerializedAction(func)
     channel.offer(serializedAction)
+  }
+
+  fun cancelChildren() {
+    job?.cancelChildren()
   }
 
   fun stop() {

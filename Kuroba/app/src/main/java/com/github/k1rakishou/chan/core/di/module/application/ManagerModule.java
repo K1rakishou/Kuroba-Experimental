@@ -150,9 +150,12 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public ReplyManager provideReplyManager(Context applicationContext) {
+    public ReplyManager provideReplyManager(
+            AppConstants appConstants,
+            Gson gson
+    ) {
         Logger.d(AppModule.DI_TAG, "Reply manager");
-        return new ReplyManager(applicationContext);
+        return new ReplyManager(appConstants, gson);
     }
 
     @Provides

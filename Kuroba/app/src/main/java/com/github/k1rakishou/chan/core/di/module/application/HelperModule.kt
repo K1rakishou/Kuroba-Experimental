@@ -2,17 +2,24 @@ package com.github.k1rakishou.chan.core.di.module.application
 
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
+import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
+import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
+import com.github.k1rakishou.chan.ui.helper.picker.RemoteFilePicker
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import dagger.Module
 import dagger.Provides
+import kotlinx.coroutines.CoroutineScope
 import javax.inject.Singleton
 
 @Module
@@ -42,6 +49,50 @@ class HelperModule {
       postFilterManager,
       ChanSettings.verboseLogs.get(),
       boardManager
+    )
+  }
+
+  @Provides
+  @Singleton
+  fun provideLocalFilePicker(
+    applicationScope: CoroutineScope,
+    appConstants: AppConstants,
+    replyManager: ReplyManager,
+    fileManager: FileManager
+  ): LocalFilePicker {
+    Logger.d(AppModule.DI_TAG, "LocalFilePicker")
+    return LocalFilePicker(
+      applicationScope,
+      appConstants,
+      replyManager,
+      fileManager
+    )
+  }
+
+  @Provides
+  @Singleton
+  fun provideRemoteFilePicker(): RemoteFilePicker {
+    Logger.d(AppModule.DI_TAG, "RemoteFilePicker")
+    return RemoteFilePicker()
+  }
+
+  @Provides
+  @Singleton
+  fun provideImagePickHelper(
+    replyManager: ReplyManager,
+    fileManager: FileManager,
+    fileCache: FileCacheV2,
+    localFilePicker: LocalFilePicker,
+    remoteFilePicker: RemoteFilePicker
+  ): ImagePickHelper {
+    Logger.d(AppModule.DI_TAG, "ImagePickHelper")
+
+    return ImagePickHelper(
+      replyManager,
+      fileManager,
+      fileCache,
+      localFilePicker,
+      remoteFilePicker
     )
   }
 

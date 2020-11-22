@@ -18,11 +18,6 @@ package com.github.k1rakishou.chan.utils;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Matrix;
-import android.media.MediaMetadataRetriever;
-
-import com.github.k1rakishou.chan.R;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -30,57 +25,55 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import static com.github.k1rakishou.common.AndroidUtils.getRes;
-
 /**
  * Simple ImageDecoder. Taken from Volley ImageRequest.
  */
 public class ImageDecoder {
 
-    public static void decodeFileOnBackgroundThread(
-            final File file, final int maxWidth, final int maxHeight, ImageDecoderCallback callback
-    ) {
-        Thread thread = new Thread(() -> {
-            final Bitmap bitmap = decodeFile(file, maxWidth, maxHeight);
-            Bitmap videoBitmap = null;
-            try {
-                MediaMetadataRetriever video = new MediaMetadataRetriever();
-                video.setDataSource(file.getAbsolutePath());
-                Bitmap frameBitmap = video.getFrameAtTime();
-                Bitmap audioIconBitmap = BitmapFactory.decodeResource(getRes(), R.drawable.ic_volume_up_white_24dp);
-                Bitmap audioBitmap = Bitmap.createScaledBitmap(audioIconBitmap,
-                        audioIconBitmap.getWidth() * 3,
-                        audioIconBitmap.getHeight() * 3,
-                        true
-                );
-                boolean hasAudio = "yes".equals(video.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO));
-                if (hasAudio && frameBitmap != null) {
-                    videoBitmap = Bitmap.createBitmap(frameBitmap.getWidth(),
-                            frameBitmap.getHeight(),
-                            frameBitmap.getConfig()
-                    );
-                    Canvas temp = new Canvas(videoBitmap);
-                    temp.drawBitmap(frameBitmap, new Matrix(), null);
-                    temp.drawBitmap(audioBitmap,
-                            frameBitmap.getWidth() - audioBitmap.getWidth(),
-                            frameBitmap.getHeight() - audioBitmap.getHeight(),
-                            null
-                    );
-                } else {
-                    videoBitmap = frameBitmap;
-                }
-            } catch (Exception ignored) {
-            }
-
-            final Bitmap finalVideoBitmap = videoBitmap;
-            BackgroundUtils.runOnMainThread(() -> callback.onImageBitmap(bitmap != null ? bitmap : finalVideoBitmap));
-        });
-        thread.start();
-    }
-
-    public interface ImageDecoderCallback {
-        void onImageBitmap(Bitmap bitmap);
-    }
+    // TODO(KurobaEx): reply layout refactoring
+//    public static void decodeFileOnBackgroundThread(
+//            final File file, final int maxWidth, final int maxHeight, ImageDecoderCallback callback
+//    ) {
+//        Thread thread = new Thread(() -> {
+//            final Bitmap bitmap = decodeFile(file, maxWidth, maxHeight);
+//            Bitmap videoBitmap = null;
+//            try {
+//                MediaMetadataRetriever video = new MediaMetadataRetriever();
+//                video.setDataSource(file.getAbsolutePath());
+//                Bitmap frameBitmap = video.getFrameAtTime();
+//                Bitmap audioIconBitmap = BitmapFactory.decodeResource(getRes(), R.drawable.ic_volume_up_white_24dp);
+//                Bitmap audioBitmap = Bitmap.createScaledBitmap(audioIconBitmap,
+//                        audioIconBitmap.getWidth() * 3,
+//                        audioIconBitmap.getHeight() * 3,
+//                        true
+//                );
+//                boolean hasAudio = "yes".equals(video.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO));
+//                if (hasAudio && frameBitmap != null) {
+//                    videoBitmap = Bitmap.createBitmap(frameBitmap.getWidth(),
+//                            frameBitmap.getHeight(),
+//                            frameBitmap.getConfig()
+//                    );
+//                    Canvas temp = new Canvas(videoBitmap);
+//                    temp.drawBitmap(frameBitmap, new Matrix(), null);
+//                    temp.drawBitmap(audioBitmap,
+//                            frameBitmap.getWidth() - audioBitmap.getWidth(),
+//                            frameBitmap.getHeight() - audioBitmap.getHeight(),
+//                            null
+//                    );
+//                } else {
+//                    videoBitmap = frameBitmap;
+//                }
+//            } catch (Exception ignored) {
+//            }
+//
+//            final Bitmap finalVideoBitmap = videoBitmap;
+//            BackgroundUtils.runOnMainThread(() -> {
+//
+//                callback.onImageBitmap(bitmap != null ? bitmap : finalVideoBitmap)
+//            });
+//        });
+//        thread.start();
+//    }
 
     public static Bitmap decodeFile(File file, int maxWidth, int maxHeight) {
         if (file == null || !file.exists()) return null;
