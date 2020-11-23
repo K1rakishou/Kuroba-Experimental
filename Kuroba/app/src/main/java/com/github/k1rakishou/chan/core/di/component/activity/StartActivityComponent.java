@@ -24,8 +24,9 @@ import com.github.k1rakishou.chan.features.proxies.ProxySetupController;
 import com.github.k1rakishou.chan.features.proxies.epoxy.EpoxyProxyView;
 import com.github.k1rakishou.chan.features.reply.ReplyLayout;
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutFilesArea;
+import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyAttachNewFileButtonView;
+import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyAttachNewFileButtonWideView;
 import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyReplyFileView;
-import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyReplyNewAttachableView;
 import com.github.k1rakishou.chan.features.search.GlobalSearchController;
 import com.github.k1rakishou.chan.features.search.SearchResultsController;
 import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchEndOfResultsView;
@@ -142,6 +143,7 @@ import com.github.k1rakishou.chan.ui.view.MultiImageView;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize;
+import com.github.k1rakishou.chan.ui.view.attach.AttachNewFileButton;
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanel;
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.EpoxyCheckableFloatingListMenuRow;
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.EpoxyFloatingListMenuRow;
@@ -246,7 +248,8 @@ StartActivityComponent {
     void inject(EpoxyFloatingListMenuRow epoxyFloatingListMenuRow);
     void inject(EpoxyHistoryHeaderView epoxyHistoryHeaderView);
     void inject(EpoxyReplyFileView epoxyReplyFileView);
-    void inject(EpoxyReplyNewAttachableView epoxyReplyNewAttachableView);
+    void inject(EpoxyAttachNewFileButtonView epoxyAttachNewFileButtonView);
+    void inject(EpoxyAttachNewFileButtonWideView epoxyAttachNewFileButtonWideView);
     void inject(EpoxyTextViewWrapHeight epoxyTextViewWrapHeight);
 
     void inject(StartActivity startActivity);
@@ -301,6 +304,7 @@ StartActivityComponent {
     void inject(SearchLayout searchLayout);
     void inject(SplitNavigationControllerLayout splitNavigationControllerLayout);
     void inject(ReplyLayoutFilesArea replyLayoutFilesArea);
+    void inject(AttachNewFileButton attachNewFileButton);
 
     @Subcomponent.Builder
     interface Builder {

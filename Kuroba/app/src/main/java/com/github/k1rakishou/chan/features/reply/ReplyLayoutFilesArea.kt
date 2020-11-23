@@ -15,8 +15,9 @@ import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyNewAttachable
 import com.github.k1rakishou.chan.features.reply.data.TooManyAttachables
+import com.github.k1rakishou.chan.features.reply.epoxy.epoxyAttachNewFileButtonView
+import com.github.k1rakishou.chan.features.reply.epoxy.epoxyAttachNewFileButtonWideView
 import com.github.k1rakishou.chan.features.reply.epoxy.epoxyReplyFileView
-import com.github.k1rakishou.chan.features.reply.epoxy.epoxyReplyNewAttachableView
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextViewWrapHeight
 import com.github.k1rakishou.chan.ui.helper.picker.IFilePicker
@@ -53,7 +54,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   private val controller = ReplyFilesEpoxyController()
   private val epoxyRecyclerView: ColorizableEpoxyRecyclerView
 
-  private var callbacks: ReplyLayoutFilesAreaCallbacks? = null
+  private var threadListLayoutCallbacks: ThreadListLayoutCallbacks? = null
+  private var replyLayoutCallbacks: ReplyLayoutCallbacks? = null
   private var scope: CoroutineScope? = null
 
   private val presenter by lazy {
@@ -112,7 +114,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
         else -> throw IllegalStateException("View is not measured!")
       }
 
-      val spanCount = (epoxyRecyclerViewWidth / AppModuleAndroidUtils.getDimen(R.dimen.reply_file_view_width))
+      val spanCount = (epoxyRecyclerViewWidth / AppModuleAndroidUtils.getDimen(R.dimen.attach_new_file_button_width))
         .coerceAtLeast(MIN_FILES_PER_ROW)
 
       epoxyRecyclerView.layoutManager = GridLayoutManager(context, spanCount).apply {
@@ -125,8 +127,13 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     presenter.onCreate(this@ReplyLayoutFilesArea)
   }
 
-  suspend fun onBind(chanDescriptor: ChanDescriptor, callbacks: ReplyLayoutFilesAreaCallbacks) {
-    this.callbacks = callbacks
+  suspend fun onBind(
+    chanDescriptor: ChanDescriptor,
+    threadListLayoutCallbacks: ThreadListLayoutCallbacks,
+    replyLayoutCallbacks: ReplyLayoutCallbacks
+  ) {
+    this.threadListLayoutCallbacks = threadListLayoutCallbacks
+    this.replyLayoutCallbacks = replyLayoutCallbacks
 
     this.scope?.cancel()
     this.scope = MainScope()
@@ -144,7 +151,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   }
 
   fun onUnbind() {
-    this.callbacks = null
+    this.threadListLayoutCallbacks = null
+    this.replyLayoutCallbacks = null
 
     this.scope?.cancel()
     this.scope = null
@@ -154,13 +162,23 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   }
 
   fun onWrappingModeChanged(matchParent: Boolean) {
-    val replyFileViewHeight = AppModuleAndroidUtils.getDimen(R.dimen.reply_file_view_height)
+    if (presenter.hasAttachedFiles()) {
+      val attachNewFileButtonHeight =
+        AppModuleAndroidUtils.getDimen(R.dimen.attach_new_file_button_height)
 
-    epoxyRecyclerView.updateLayoutParams<ConstraintLayout.LayoutParams> {
-      if (matchParent) {
-        matchConstraintMaxHeight = replyFileViewHeight * 3
-      } else {
-        matchConstraintMaxHeight = replyFileViewHeight
+      epoxyRecyclerView.updateLayoutParams<ConstraintLayout.LayoutParams> {
+        if (matchParent) {
+          matchConstraintMaxHeight = attachNewFileButtonHeight * 3
+        } else {
+          matchConstraintMaxHeight = attachNewFileButtonHeight
+        }
+      }
+    } else {
+      val attachNewFileButtonWideHeight =
+        AppModuleAndroidUtils.getDimen(R.dimen.attach_new_file_button_wide_height)
+
+      epoxyRecyclerView.updateLayoutParams<ConstraintLayout.LayoutParams> {
+        matchConstraintMaxHeight = attachNewFileButtonWideHeight
       }
     }
   }
@@ -180,7 +198,18 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     }
 
     controller.callback = stateRenderer@ {
-      state.attachables.forEach { replyAttachable ->
+      val attachables = state.attachables
+
+      if (attachables.size == 1 && attachables.first() is ReplyNewAttachable) {
+        epoxyAttachNewFileButtonWideView {
+          id("epoxy_attach_new_file_button_wide_view")
+          onClickListener { presenter.pickNewLocalFile() }
+        }
+
+        return@stateRenderer
+      }
+
+      attachables.forEach { replyAttachable ->
         when (replyAttachable) {
           is TooManyAttachables -> {
             val message = context.getString(
@@ -195,8 +224,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
             }
           }
           is ReplyNewAttachable -> {
-            epoxyReplyNewAttachableView {
-              id("epoxy_reply_new_attachable_view")
+            epoxyAttachNewFileButtonView {
+              id("epoxy_attach_new_file_button_view")
               onClickListener { presenter.pickNewLocalFile() }
             }
           }
@@ -244,7 +273,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
       itemClickListener = { item -> onItemClicked(item) }
     )
 
-    callbacks?.presentController(floatingListMenuController)
+    threadListLayoutCallbacks?.presentController(floatingListMenuController)
   }
 
   private fun onItemClicked(item: FloatingListMenuItem) {
@@ -255,7 +284,9 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
       ACTION_OPEN_IN_EDITOR -> {
         // TODO(KurobaEx): reply layout refactoring
       }
-      ACTION_DELETE_FILE -> presenter.deleteFiles(clickedFileUuid)
+      ACTION_DELETE_FILE -> {
+        presenter.deleteFiles(clickedFileUuid)
+      }
     }
   }
 
@@ -267,6 +298,10 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     showToast(context, errorMessage, Toast.LENGTH_LONG)
   }
 
+  override fun requestReplyLayoutWrappingModeUpdate() {
+    replyLayoutCallbacks?.requestWrappingModeUpdate()
+  }
+
   private inner class ReplyFilesEpoxyController : EpoxyController() {
     var callback: EpoxyController.() -> Unit = {}
 
@@ -276,8 +311,12 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
   }
 
-  interface ReplyLayoutFilesAreaCallbacks {
+  interface ThreadListLayoutCallbacks {
     fun presentController(controller: FloatingListMenuController)
+  }
+
+  interface ReplyLayoutCallbacks {
+    fun requestWrappingModeUpdate()
   }
 
   companion object {

@@ -75,6 +75,7 @@ import com.github.k1rakishou.chan.ui.view.LoadView
 import com.github.k1rakishou.chan.ui.view.SelectionListeningEditText
 import com.github.k1rakishou.chan.ui.view.SelectionListeningEditText.SelectionChangedListener
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.doIgnoringTextWatcher
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
@@ -101,7 +102,8 @@ class ReplyLayout @JvmOverloads constructor(
   SelectionChangedListener,
   CaptchaValidationListener,
   KeyboardStateListener,
-  ThemeChangesListener {
+  ThemeChangesListener,
+  ReplyLayoutFilesArea.ReplyLayoutCallbacks {
 
   @Inject
   lateinit var presenter: ReplyPresenter
@@ -121,7 +123,7 @@ class ReplyLayout @JvmOverloads constructor(
   lateinit var replyManager: ReplyManager
 
   private var replyLayoutCallback: ReplyLayoutCallback? = null
-  private var replyLayoutFilesCallback: ReplyLayoutFilesArea.ReplyLayoutFilesAreaCallbacks? = null
+  private var threadListLayoutFilesCallback: ReplyLayoutFilesArea.ThreadListLayoutCallbacks? = null
 
   private var authenticationLayout: AuthenticationLayoutInterface? = null
   private var blockSelectionChange = false
@@ -211,6 +213,7 @@ class ReplyLayout @JvmOverloads constructor(
 
   private fun updateWrappingMode() {
     val page = presenter.page
+
     val matchParent = when {
       page === ReplyPresenter.Page.INPUT -> presenter.isExpanded
       page === ReplyPresenter.Page.LOADING -> false
@@ -327,10 +330,10 @@ class ReplyLayout @JvmOverloads constructor(
 
   fun onCreate(
     replyLayoutCallback: ReplyLayoutCallback,
-    replyLayoutFilesAreaCallbacks: ReplyLayoutFilesArea.ReplyLayoutFilesAreaCallbacks
+    threadListLayoutCallbacks: ReplyLayoutFilesArea.ThreadListLayoutCallbacks
   ) {
     this.replyLayoutCallback = replyLayoutCallback
-    this.replyLayoutFilesCallback = replyLayoutFilesAreaCallbacks
+    this.threadListLayoutFilesCallback = threadListLayoutCallbacks
   }
 
   fun onOpen(open: Boolean) {
@@ -364,7 +367,7 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   override suspend fun bindReplyImages(chanDescriptor: ChanDescriptor) {
-    replyLayoutFilesArea.onBind(chanDescriptor, replyLayoutFilesCallback!!)
+    replyLayoutFilesArea.onBind(chanDescriptor, threadListLayoutFilesCallback!!, this)
   }
 
   override fun unbindReplyImages(chanDescriptor: ChanDescriptor) {
@@ -375,9 +378,14 @@ class ReplyLayout @JvmOverloads constructor(
     return replyLayoutFilesArea.onBackPressed()
   }
 
+  override fun requestWrappingModeUpdate() {
+    BackgroundUtils.ensureMainThread()
+    updateWrappingMode()
+  }
+
   fun onDestroy() {
     this.replyLayoutCallback = null
-    this.replyLayoutFilesCallback = null
+    this.threadListLayoutFilesCallback = null
 
     presenter.unbindReplyImages()
     captchaHolder.clearCallbacks()
@@ -425,7 +433,9 @@ class ReplyLayout @JvmOverloads constructor(
       && prevLayoutParams.gravity == newLayoutParams.gravity
       && paddingBottom == bottomPadding
       && matchParent
-      && getPaddingTop() == paddingTop) {
+      && getPaddingTop() == paddingTop
+    ) {
+      replyLayoutFilesArea.onWrappingModeChanged(matchParent)
       return
     }
 

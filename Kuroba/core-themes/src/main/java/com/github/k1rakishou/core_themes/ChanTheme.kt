@@ -42,6 +42,9 @@ abstract class ChanTheme {
   val isDarkTheme: Boolean
     get() = !isLightTheme
 
+  val isBackColorDark: Boolean
+    get() = ThemeEngine.isDarkColor(backColor)
+
   open val mainFont: Typeface = ROBOTO_MEDIUM
 
   val defaultColors by lazy { loadDefaultColors() }

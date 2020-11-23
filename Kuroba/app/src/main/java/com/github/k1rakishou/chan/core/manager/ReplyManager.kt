@@ -109,6 +109,12 @@ class ReplyManager @Inject constructor(
   }
 
   @Synchronized
+  fun totalFilesCount(): ModularResult<Int> {
+    ensureFilesLoaded()
+    return replyFilesStorage.totalFilesCount()
+  }
+
+  @Synchronized
   fun reloadFilesFromDisk(appConstants: AppConstants): ModularResult<Unit> {
     if (filesLoaded) {
       return ModularResult.value(Unit)

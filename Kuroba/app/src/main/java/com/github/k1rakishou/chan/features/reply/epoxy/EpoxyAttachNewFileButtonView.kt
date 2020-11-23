@@ -11,7 +11,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT, fullSpan = false)
-class EpoxyReplyNewAttachableView @JvmOverloads constructor(
+class EpoxyAttachNewFileButtonView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
@@ -23,7 +23,7 @@ class EpoxyReplyNewAttachableView @JvmOverloads constructor(
   private val newAttachableButton: FrameLayout
 
   init {
-    inflate(context, R.layout.epoxy_reply_new_attachable_view, this)
+    inflate(context, R.layout.epoxy_attach_new_file_button_view, this)
 
     AppModuleAndroidUtils.extractStartActivityComponent(context)
       .inject(this)

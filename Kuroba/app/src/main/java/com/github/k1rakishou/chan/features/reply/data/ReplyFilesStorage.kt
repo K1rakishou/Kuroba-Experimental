@@ -187,7 +187,32 @@ class ReplyFilesStorage(
 
   @Synchronized
   fun selectedFilesCount(): ModularResult<Int> {
-    return Try { replyFiles.count { replyFile -> replyFile.getReplyFileMeta().unwrap().selected } }
+    return Try {
+      return@Try replyFiles.count { replyFile ->
+        val replyMeta = replyFile.getReplyFileMeta().unwrap()
+
+        if (replyMeta.isTaken()) {
+          return@count false
+        }
+
+        return@count replyMeta.selected
+      }
+    }
+  }
+
+  @Synchronized
+  fun totalFilesCount(): ModularResult<Int> {
+    return Try {
+      return@Try replyFiles.count { replyFile ->
+        val replyMeta = replyFile.getReplyFileMeta().unwrap()
+
+        if (replyMeta.isTaken()) {
+          return@count false
+        }
+
+        return@count true
+      }
+    }
   }
 
   @Synchronized

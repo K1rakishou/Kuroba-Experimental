@@ -104,7 +104,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   CoroutineScope,
   ThemeEngine.ThemeChangesListener,
   FastScroller.ThumbDragListener,
-  ReplyLayoutFilesArea.ReplyLayoutFilesAreaCallbacks {
+  ReplyLayoutFilesArea.ThreadListLayoutCallbacks {
 
   @Inject
   lateinit var themeEngine: ThemeEngine

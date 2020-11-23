@@ -144,6 +144,10 @@ class ReplyLayoutFilesAreaPresenter(
     }
   }
 
+  fun hasAttachedFiles(): Boolean {
+    return state.value.attachables.any { replyAttachable -> replyAttachable is ReplyFileAttachable }
+  }
+
   private fun refreshAttachedFiles() {
     refreshFilesExecutor.post(250L) {
       handleStateUpdate {
@@ -151,7 +155,14 @@ class ReplyLayoutFilesAreaPresenter(
           ?: return@handleStateUpdate
 
         val attachables = enumerateReplyAttachables(chanDescriptor).unwrap()
-        state.value = ReplyLayoutFilesState(attachables)
+
+        val oldState = state.value
+        val newState = ReplyLayoutFilesState(attachables)
+        state.value = newState
+
+        if (oldState != newState) {
+          withView { requestReplyLayoutWrappingModeUpdate() }
+        }
       }
     }
   }
