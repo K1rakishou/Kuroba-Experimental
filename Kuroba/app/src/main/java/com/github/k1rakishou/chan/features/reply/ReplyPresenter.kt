@@ -193,7 +193,7 @@ class ReplyPresenter @Inject constructor(
   }
 
   fun onMoreClicked() {
-    isExpanded = !isExpanded
+    this.isExpanded = this.isExpanded.not()
 
     callback.setExpanded(isExpanded)
     callback.openNameOptions(isExpanded)

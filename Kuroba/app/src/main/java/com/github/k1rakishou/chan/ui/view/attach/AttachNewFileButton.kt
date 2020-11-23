@@ -9,7 +9,6 @@ import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.View
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.DrawableCompat
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.dp
@@ -27,7 +26,7 @@ class AttachNewFileButton @JvmOverloads constructor(
   lateinit var themeEngine: ThemeEngine
 
   private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-  private val addIconDrawable: Drawable
+  private var addIconDrawable: Drawable
 
   init {
     setWillNotDraw(false)
@@ -39,7 +38,6 @@ class AttachNewFileButton @JvmOverloads constructor(
         .inject(this)
 
       init(Color.RED, dp(4f).toFloat())
-      onThemeChanged()
     } else {
       init(Color.RED, 8f)
     }
@@ -47,7 +45,9 @@ class AttachNewFileButton @JvmOverloads constructor(
 
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
+
     themeEngine.addListener(this)
+    onThemeChanged()
   }
 
   override fun onDetachedFromWindow() {
@@ -59,7 +59,7 @@ class AttachNewFileButton @JvmOverloads constructor(
     val tintColor = themeEngine.resolveTintColor(themeEngine.chanTheme.isBackColorDark)
 
     paint.color = tintColor
-    DrawableCompat.setTint(addIconDrawable, tintColor)
+    addIconDrawable = themeEngine.tintDrawable(addIconDrawable, tintColor)
 
     invalidate()
   }

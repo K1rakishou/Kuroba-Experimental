@@ -148,7 +148,7 @@ class ReplyLayoutFilesAreaPresenter(
     return state.value.attachables.any { replyAttachable -> replyAttachable is ReplyFileAttachable }
   }
 
-  private fun refreshAttachedFiles() {
+  fun refreshAttachedFiles() {
     refreshFilesExecutor.post(250L) {
       handleStateUpdate {
         val chanDescriptor = boundChanDescriptor

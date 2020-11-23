@@ -51,7 +51,7 @@ import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase
 import com.github.k1rakishou.chan.features.reply.ReplyLayout
-import com.github.k1rakishou.chan.features.reply.ReplyLayout.ReplyLayoutCallback
+import com.github.k1rakishou.chan.features.reply.ReplyLayout.ThreadListLayoutCallbacks
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutFilesArea
 import com.github.k1rakishou.chan.features.reply.ReplyPresenter
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter
@@ -99,7 +99,7 @@ import kotlin.math.roundToInt
  */
 class ThreadListLayout(context: Context, attrs: AttributeSet?)
   : FrameLayout(context, attrs),
-  ReplyLayoutCallback,
+  ThreadListLayoutCallbacks,
   Toolbar.ToolbarHeightUpdatesCallback,
   CoroutineScope,
   ThemeEngine.ThemeChangesListener,
@@ -666,10 +666,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     val chanDescriptor = currentChanDescriptorOrNull()
     replyOpen = open
 
-    replyLayout.measure(
-      MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-      MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-    )
+    measureReplyLayout()
 
     fun notifyBottomNavBarVisibilityStateManager() {
       if (chanDescriptor != null) {
@@ -1068,23 +1065,31 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     setRecyclerViewPadding()
   }
 
+  override fun measureReplyLayout() {
+    replyLayout.measure(
+      MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
+      MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+    )
+  }
+
   override fun presentController(controller: FloatingListMenuController) {
     threadListLayoutCallback?.presentController(controller)
   }
 
   private fun setRecyclerViewPadding() {
-    val defaultPadding = if (postViewMode == PostViewMode.CARD) dp(1f) else 0
+    val defaultPadding = if (postViewMode == PostViewMode.CARD) {
+      dp(1f)
+    } else {
+      0
+    }
+
     var recyclerTop = defaultPadding + toolbarHeight()
     var recyclerBottom = defaultPadding
-
     val keyboardOpened = globalWindowInsetsManager.isKeyboardOpened
 
     // measurements
     if (replyOpen) {
-      replyLayout.measure(
-        MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-        MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-      )
+      measureReplyLayout()
 
       val bottomPadding = if (keyboardOpened) {
         replyLayout.paddingBottom
@@ -1112,7 +1117,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       recyclerTop -= toolbarHeight()
     }
 
-    recyclerView.setPadding(defaultPadding, recyclerTop, defaultPadding, recyclerBottom)
+    recyclerView.setPadding(
+      defaultPadding,
+      recyclerTop,
+      defaultPadding,
+      recyclerBottom
+    )
   }
 
   fun toolbarHeight(): Int {

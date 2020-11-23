@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/reply_new_attachable_button"
+    android:id="@+id/reply_new_attachable_button_wide"
     android:layout_width="match_parent"
     android:layout_height="@dimen/attach_new_file_button_wide_height"
     android:background="?attr/selectableItemBackgroundBorderless"

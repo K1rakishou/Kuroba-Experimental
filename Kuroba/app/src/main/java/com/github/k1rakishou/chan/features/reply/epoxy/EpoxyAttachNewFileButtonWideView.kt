@@ -28,7 +28,7 @@ class EpoxyAttachNewFileButtonWideView @JvmOverloads constructor(
     AppModuleAndroidUtils.extractStartActivityComponent(context)
       .inject(this)
 
-    newAttachableButton = findViewById(R.id.reply_new_attachable_button)
+    newAttachableButton = findViewById(R.id.reply_new_attachable_button_wide)
   }
 
   override fun onAttachedToWindow() {

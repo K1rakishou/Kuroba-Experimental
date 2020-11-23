@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.features.reply
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.Configuration
 import android.content.res.Resources
 import android.os.Build
 import android.text.Editable
@@ -75,13 +76,12 @@ import com.github.k1rakishou.chan.ui.view.LoadView
 import com.github.k1rakishou.chan.ui.view.SelectionListeningEditText
 import com.github.k1rakishou.chan.ui.view.SelectionListeningEditText.SelectionChangedListener
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.doIgnoringTextWatcher
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
-import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
-import com.github.k1rakishou.core_themes.ThemeEngine.Companion.updateAlphaForColor
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
@@ -122,18 +122,18 @@ class ReplyLayout @JvmOverloads constructor(
   @Inject
   lateinit var replyManager: ReplyManager
 
-  private var replyLayoutCallback: ReplyLayoutCallback? = null
+  private var threadListLayoutCallbacks: ThreadListLayoutCallbacks? = null
   private var threadListLayoutFilesCallback: ReplyLayoutFilesArea.ThreadListLayoutCallbacks? = null
 
   private var authenticationLayout: AuthenticationLayoutInterface? = null
   private var blockSelectionChange = false
+  private var currentOrientation: Int = Configuration.ORIENTATION_UNDEFINED
 
   // Progress view (when sending request to the server)
   private lateinit var progressLayout: View
   private lateinit var currentProgress: ColorizableTextView
 
   // Reply views:
-  private lateinit var replyLayoutTopDivider: View
   private lateinit var replyInputLayout: View
   private lateinit var message: TextView
   private lateinit var name: ColorizableEditText
@@ -187,19 +187,18 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun onThemeChanged() {
     commentCounter.setTextColor(themeEngine.chanTheme.textColorSecondary)
-    val isDarkColor = isDarkColor(themeEngine.chanTheme.backColor)
+    val tintColor = themeEngine.resolveTintColor(themeEngine.chanTheme.isBackColorDark)
 
-    replyLayoutTopDivider.setBackgroundColor(
-      updateAlphaForColor(
-        themeEngine.chanTheme.textColorHint,
-        (0.4f * 255f).toInt()
+    if (commentRevertChangeButton.drawable != null) {
+      commentRevertChangeButton.setImageDrawable(
+        themeEngine.tintDrawable(commentRevertChangeButton.drawable, tintColor)
       )
-    )
+    }
 
-    moreDropdown.updateColor(themeEngine.resolveTintColor(isDarkColor))
+    moreDropdown.updateColor(tintColor)
 
     if (submit.drawable != null) {
-      submit.setImageDrawable(themeEngine.tintDrawable(submit.drawable, isDarkColor))
+      submit.setImageDrawable(themeEngine.tintDrawable(submit.drawable, tintColor))
     }
 
     val textColor = if (isCounterOverflowed) {
@@ -222,19 +221,21 @@ class ReplyLayout @JvmOverloads constructor(
     }
 
     setWrappingMode(matchParent)
-    replyLayoutCallback?.updatePadding()
+    threadListLayoutCallbacks?.updatePadding()
   }
 
   override fun onFinishInflate() {
     super.onFinishInflate()
+
     if (!isInEditMode) {
       AppModuleAndroidUtils.extractStartActivityComponent(context)
         .inject(this)
     }
 
+    this.currentOrientation = resources.configuration.orientation
+
     // Inflate reply input
     replyInputLayout = AndroidUtils.inflate(context, R.layout.layout_reply_input, this, false)
-    replyLayoutTopDivider = replyInputLayout.findViewById(R.id.comment_top_divider)
     message = replyInputLayout.findViewById(R.id.message)
     name = replyInputLayout.findViewById(R.id.name)
     subject = replyInputLayout.findViewById(R.id.subject)
@@ -329,10 +330,10 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   fun onCreate(
-    replyLayoutCallback: ReplyLayoutCallback,
+    replyLayoutCallback: ThreadListLayoutCallbacks,
     threadListLayoutCallbacks: ReplyLayoutFilesArea.ThreadListLayoutCallbacks
   ) {
-    this.replyLayoutCallback = replyLayoutCallback
+    this.threadListLayoutCallbacks = replyLayoutCallback
     this.threadListLayoutFilesCallback = threadListLayoutCallbacks
   }
 
@@ -357,9 +358,13 @@ class ReplyLayout @JvmOverloads constructor(
       return
     }
 
-    if (site.actions().postRequiresAuthentication()) {
-      comment.minHeight = AndroidUtils.dp(144f)
+    if (isTablet()) {
+      comment.minHeight = REPLY_COMMENT_MIN_HEIGHT_TABLET
     } else {
+      comment.minHeight = REPLY_COMMENT_MIN_HEIGHT
+    }
+
+    if (!site.actions().postRequiresAuthentication()) {
       captcha.visibility = GONE
     }
 
@@ -384,7 +389,7 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   fun onDestroy() {
-    this.replyLayoutCallback = null
+    this.threadListLayoutCallbacks = null
     this.threadListLayoutFilesCallback = null
 
     presenter.unbindReplyImages()
@@ -426,27 +431,42 @@ class ReplyLayout @JvmOverloads constructor(
       bottomPadding = globalWindowInsetsManager.bottom()
     }
 
-    val paddingTop = (parent as ThreadListLayout).toolbarHeight()
+    val newPaddingTop = (parent as ThreadListLayout).toolbarHeight()
 
-    if (prevLayoutParams.width == newLayoutParams.width
-      && prevLayoutParams.height == newLayoutParams.height
-      && prevLayoutParams.gravity == newLayoutParams.gravity
-      && paddingBottom == bottomPadding
-      && matchParent
-      && getPaddingTop() == paddingTop
-    ) {
-      replyLayoutFilesArea.onWrappingModeChanged(matchParent)
-      return
+    val needUpdateLayoutParams = needUpdateLayoutParams(
+      prevLayoutParams = prevLayoutParams,
+      newLayoutParams = newLayoutParams,
+      bottomPadding = bottomPadding,
+      matchParent = matchParent,
+      paddingTop = newPaddingTop
+    )
+
+    if (needUpdateLayoutParams) {
+      if (matchParent) {
+        setPadding(0, newPaddingTop, 0, bottomPadding)
+      } else {
+        setPadding(0, 0, 0, bottomPadding)
+      }
+
+      layoutParams = newLayoutParams
     }
 
-    if (matchParent) {
-      setPadding(0, paddingTop, 0, bottomPadding)
-    } else {
-      setPadding(0, 0, 0, bottomPadding)
-    }
-
-    layoutParams = newLayoutParams
     replyLayoutFilesArea.onWrappingModeChanged(matchParent)
+  }
+
+  private fun needUpdateLayoutParams(
+    prevLayoutParams: LayoutParams,
+    newLayoutParams: LayoutParams,
+    bottomPadding: Int,
+    matchParent: Boolean,
+    paddingTop: Int
+  ): Boolean {
+    return prevLayoutParams.width != newLayoutParams.width
+      || prevLayoutParams.height != newLayoutParams.height
+      || prevLayoutParams.gravity != newLayoutParams.gravity
+      || paddingBottom != bottomPadding
+      || !matchParent
+      || getPaddingTop() != paddingTop
   }
 
   override fun onClick(v: View) {
@@ -593,20 +613,20 @@ class ReplyLayout @JvmOverloads constructor(
         //reset progress to 0 upon uploading start
         currentProgress.visibility = INVISIBLE
         destroyCurrentAuthentication()
-        replyLayoutCallback!!.updatePadding()
+        threadListLayoutCallbacks?.updatePadding()
       }
       ReplyPresenter.Page.INPUT -> {
         setView(replyInputLayout)
         setWrappingMode(presenter.isExpanded)
         destroyCurrentAuthentication()
-        replyLayoutCallback?.updatePadding()
+        threadListLayoutCallbacks?.updatePadding()
       }
       ReplyPresenter.Page.AUTHENTICATION -> {
         AndroidUtils.hideKeyboard(this)
         setView(captchaContainer)
         setWrappingMode(true)
         captchaContainer.requestFocus(FOCUS_DOWN)
-        replyLayoutCallback?.updatePadding()
+        threadListLayoutCallbacks?.updatePadding()
       }
     }
   }
@@ -737,8 +757,8 @@ class ReplyLayout @JvmOverloads constructor(
   override fun onPosted() {
     AppModuleAndroidUtils.showToast(context, R.string.reply_success)
 
-    replyLayoutCallback?.openReply(false)
-    replyLayoutCallback?.requestNewPostLoad()
+    threadListLayoutCallbacks?.openReply(false)
+    threadListLayoutCallbacks?.requestNewPostLoad()
   }
 
   override fun setCommentHint(hint: String?) {
@@ -760,7 +780,12 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun setExpanded(expanded: Boolean) {
     setWrappingMode(expanded)
-    comment.maxLines = if (expanded) 500 else 6
+
+    comment.maxLines = if (expanded) {
+      REPLY_LAYOUT_EXPANDED_MAX_LINES
+    } else {
+      REPLY_LAYOUT_COLLAPSED_NORMAL_MAX_LINES
+    }
 
     val startRotation = 1f
     val endRotation = 0f
@@ -778,12 +803,6 @@ class ReplyLayout @JvmOverloads constructor(
 
     more.setImageDrawable(moreDropdown)
     animator.start()
-
-    if (expanded) {
-      replyLayoutTopDivider.visibility = INVISIBLE
-    } else {
-      replyLayoutTopDivider.visibility = VISIBLE
-    }
   }
 
   override fun openNameOptions(open: Boolean) {
@@ -849,7 +868,7 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   override fun highlightPostNos(postNos: Set<Long>) {
-    replyLayoutCallback?.highlightPostNos(postNos)
+    threadListLayoutCallbacks?.highlightPostNos(postNos)
   }
 
   override fun onSelectionChanged() {
@@ -869,7 +888,7 @@ class ReplyLayout @JvmOverloads constructor(
       private var processed = false
 
       override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
-        val chanDescriptor = replyLayoutCallback?.getCurrentChanDescriptor()
+        val chanDescriptor = threadListLayoutCallbacks?.getCurrentChanDescriptor()
           ?: return true
 
         val chanBoard = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
@@ -980,6 +999,21 @@ class ReplyLayout @JvmOverloads constructor(
     }
   }
 
+  override fun onConfigurationChanged(newConfig: Configuration?) {
+    super.onConfigurationChanged(newConfig)
+
+    val newOrientation = newConfig?.orientation
+      ?: return
+
+    if (newOrientation == currentOrientation) {
+      return
+    }
+
+    currentOrientation = newOrientation
+
+    replyLayoutFilesArea.onOrientationChanged()
+  }
+
   override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
   override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
 
@@ -996,11 +1030,11 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   override fun showThread(threadDescriptor: ThreadDescriptor) {
-    replyLayoutCallback?.showThread(threadDescriptor)
+    threadListLayoutCallbacks?.showThread(threadDescriptor)
   }
 
   override val chanDescriptor: ChanDescriptor?
-    get() = replyLayoutCallback?.getCurrentChanDescriptor()
+    get() = threadListLayoutCallbacks?.getCurrentChanDescriptor()
 
   override fun onUploadingProgress(percent: Int) {
     if (::currentProgress.isInitialized) {
@@ -1025,7 +1059,7 @@ class ReplyLayout @JvmOverloads constructor(
     }
   }
 
-  interface ReplyLayoutCallback {
+  interface ThreadListLayoutCallbacks {
     fun highlightPostNos(postNos: Set<Long>)
     fun openReply(open: Boolean)
     fun showThread(threadDescriptor: ThreadDescriptor)
@@ -1033,9 +1067,15 @@ class ReplyLayout @JvmOverloads constructor(
     fun getCurrentChanDescriptor(): ChanDescriptor?
     fun showImageReencodingWindow(supportsReencode: Boolean)
     fun updatePadding()
+    fun measureReplyLayout()
   }
 
   companion object {
     private const val TAG = "ReplyLayout"
+    private val REPLY_COMMENT_MIN_HEIGHT = AndroidUtils.dp(100f)
+    private val REPLY_COMMENT_MIN_HEIGHT_TABLET = AndroidUtils.dp(128f)
+
+    private const val REPLY_LAYOUT_EXPANDED_MAX_LINES = 10
+    private const val REPLY_LAYOUT_COLLAPSED_NORMAL_MAX_LINES = 5
   }
 }

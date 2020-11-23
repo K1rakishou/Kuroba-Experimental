@@ -27,6 +27,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
+import com.github.k1rakishou.common.AndroidUtils.dp
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -107,24 +108,15 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     epoxyRecyclerView = findViewById(R.id.epoxy_recycler_view)
     epoxyRecyclerView.setController(controller)
 
-    epoxyRecyclerView.doOnLayout {
-      val epoxyRecyclerViewWidth = when {
-        epoxyRecyclerView.width > 0 -> epoxyRecyclerView.width
-        epoxyRecyclerView.measuredWidth > 0 -> epoxyRecyclerView.measuredWidth
-        else -> throw IllegalStateException("View is not measured!")
-      }
-
-      val spanCount = (epoxyRecyclerViewWidth / AppModuleAndroidUtils.getDimen(R.dimen.attach_new_file_button_width))
-        .coerceAtLeast(MIN_FILES_PER_ROW)
-
-      epoxyRecyclerView.layoutManager = GridLayoutManager(context, spanCount).apply {
-        spanSizeLookup = controller.spanSizeLookup
-      }
-    }
+    updateLayoutManager(context)
   }
 
   fun onCreate() {
     presenter.onCreate(this@ReplyLayoutFilesArea)
+  }
+
+  fun onOrientationChanged() {
+    updateLayoutManager(context)
   }
 
   suspend fun onBind(
@@ -168,9 +160,9 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
       epoxyRecyclerView.updateLayoutParams<ConstraintLayout.LayoutParams> {
         if (matchParent) {
-          matchConstraintMaxHeight = attachNewFileButtonHeight * 3
+          matchConstraintMaxHeight = (attachNewFileButtonHeight * 3) + BOTTOM_OFFSET
         } else {
-          matchConstraintMaxHeight = attachNewFileButtonHeight
+          matchConstraintMaxHeight = attachNewFileButtonHeight + BOTTOM_OFFSET
         }
       }
     } else {
@@ -251,6 +243,28 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     controller.requestModelBuild()
   }
 
+  private fun updateLayoutManager(context: Context) {
+    epoxyRecyclerView.requestLayout()
+
+    epoxyRecyclerView.doOnLayout {
+      val epoxyRecyclerViewWidth = when {
+        epoxyRecyclerView.width > 0 -> epoxyRecyclerView.width
+        epoxyRecyclerView.measuredWidth > 0 -> epoxyRecyclerView.measuredWidth
+        else -> throw IllegalStateException("View is not measured!")
+      }
+
+      val spanCount =
+        (epoxyRecyclerViewWidth / AppModuleAndroidUtils.getDimen(R.dimen.attach_new_file_button_width))
+          .coerceAtLeast(MIN_FILES_PER_ROW)
+
+      epoxyRecyclerView.layoutManager = GridLayoutManager(context, spanCount).apply {
+        spanSizeLookup = controller.spanSizeLookup
+      }
+
+      presenter.refreshAttachedFiles()
+    }
+  }
+
   private fun showOptionsController(selectedFileUuid: UUID) {
     val floatingListMenuItems = mutableListOf<FloatingListMenuItem>()
 
@@ -323,6 +337,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     private const val ACTION_OPEN_IN_EDITOR = 1
     private const val ACTION_DELETE_FILE = 2
 
-    private const val MIN_FILES_PER_ROW = 3
+    private const val MIN_FILES_PER_ROW = 2
+
+    private val BOTTOM_OFFSET = dp(24f)
   }
 }

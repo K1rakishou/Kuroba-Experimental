@@ -6,6 +6,7 @@ import android.graphics.drawable.Drawable
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.AttrRes
+import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
@@ -129,6 +130,13 @@ open class ThemeEngine(
   fun tintDrawable(drawable: Drawable, isCurrentColorDark: Boolean): Drawable {
     val drawableMutable = DrawableCompat.wrap(drawable).mutate()
     DrawableCompat.setTint(drawableMutable, resolveTintColor(isCurrentColorDark))
+
+    return drawableMutable
+  }
+
+  fun tintDrawable(drawable: Drawable, @ColorInt color: Int): Drawable {
+    val drawableMutable = DrawableCompat.wrap(drawable).mutate()
+    DrawableCompat.setTint(drawableMutable, color)
 
     return drawableMutable
   }

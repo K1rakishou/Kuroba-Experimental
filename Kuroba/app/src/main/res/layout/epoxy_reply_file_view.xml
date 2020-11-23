@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/reply_attachment_root"
-    android:layout_width="@dimen/attach_new_file_button_width"
+    android:layout_width="match_parent"
     android:layout_height="@dimen/attach_new_file_button_height"
     android:padding="2dp"
     android:background="?attr/selectableItemBackgroundBorderless"
