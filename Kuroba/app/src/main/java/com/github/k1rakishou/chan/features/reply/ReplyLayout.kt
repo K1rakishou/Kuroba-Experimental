@@ -342,6 +342,10 @@ class ReplyLayout @JvmOverloads constructor(
   fun onOpen(open: Boolean) {
     presenter.onOpen(open)
 
+    if (open) {
+      replyLayoutFilesArea.updateLayoutManager()
+    }
+
     if (open && proxyStorage.isDirty()) {
       openMessage(getString(R.string.reply_proxy_list_is_dirty_message), 10000)
     }
@@ -1012,8 +1016,7 @@ class ReplyLayout @JvmOverloads constructor(
     }
 
     currentOrientation = newOrientation
-
-    replyLayoutFilesArea.onOrientationChanged()
+    replyLayoutFilesArea.updateLayoutManager()
   }
 
   override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}

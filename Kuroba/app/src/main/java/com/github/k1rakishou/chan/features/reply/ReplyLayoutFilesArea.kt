@@ -118,7 +118,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     presenter.onCreate(this@ReplyLayoutFilesArea)
   }
 
-  fun onOrientationChanged() {
+  fun updateLayoutManager() {
     updateLayoutManager(context)
   }
 

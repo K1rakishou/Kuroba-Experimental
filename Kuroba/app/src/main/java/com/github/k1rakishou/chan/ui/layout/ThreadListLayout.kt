@@ -1076,10 +1076,13 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   override fun presentController(controller: FloatingListMenuController) {
+    BackgroundUtils.ensureMainThread()
     threadListLayoutCallback?.presentController(controller)
   }
 
   override fun showLoadingView() {
+    BackgroundUtils.ensureMainThread()
+
     val loadingViewController = LoadingViewController(
       context,
       true,
@@ -1090,6 +1093,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   override fun hideLoadingView() {
+    BackgroundUtils.ensureMainThread()
     threadListLayoutCallback?.unpresentController { controller -> controller is LoadingViewController }
   }
 
