@@ -51,8 +51,8 @@ class HttpCallManager @Inject constructor(
       try {
         val requestBuilder = Request.Builder()
 
-        httpCall.setup(requestBuilder) { percent ->
-          offer(HttpCall.HttpCallWithProgressResult.Progress(percent))
+        httpCall.setup(requestBuilder) { fileIndex, totalFiles, percent ->
+          offer(HttpCall.HttpCallWithProgressResult.Progress(fileIndex, totalFiles, percent))
         }
 
         httpCall.site.requestModifier().modifyHttpCall(httpCall, requestBuilder)

@@ -20,23 +20,32 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:clickable="true"
     android:focusable="true"
     android:layout_width="match_parent"
-    android:layout_height="100dp">
+    android:layout_height="128dp">
+
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+        android:id="@+id/current_file"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="invisible"
+        android:layout_marginTop="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Uploading file 1 out of 1"
+        tools:visibility="visible"/>
 
     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableProgressBar
         android:id="@+id/progress_bar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginLeft="8dp"
-        android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginRight="8dp"
-        android:layout_marginBottom="8dp"
+        android:layout_marginBottom="16dp"
         android:indeterminate="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/current_file" />
 
     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
         android:id="@+id/current_progress"
@@ -47,6 +56,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         app:layout_constraintEnd_toEndOf="@+id/progress_bar"
         app:layout_constraintStart_toStartOf="@+id/progress_bar"
         app:layout_constraintTop_toTopOf="@+id/progress_bar"
-        tools:text="100" />
+        tools:text="100"
+        tools:visibility="visible"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

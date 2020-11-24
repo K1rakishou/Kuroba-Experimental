@@ -136,6 +136,7 @@ class ReplyLayout @JvmOverloads constructor(
   // Progress view (when sending request to the server)
   private lateinit var progressLayout: View
   private lateinit var currentProgress: ColorizableTextView
+  private lateinit var currentFile: ColorizableTextView
 
   // Reply views:
   private lateinit var replyInputLayout: View
@@ -272,6 +273,7 @@ class ReplyLayout @JvmOverloads constructor(
 
     progressLayout = AppModuleAndroidUtils.inflate(context, R.layout.layout_reply_progress, this, false)
     currentProgress = progressLayout.findViewById(R.id.current_progress)
+    currentFile = progressLayout.findViewById(R.id.current_file)
 
     // Setup reply layout views
     commentQuoteButton.setOnClickListener(this)
@@ -1067,17 +1069,22 @@ class ReplyLayout @JvmOverloads constructor(
   override val chanDescriptor: ChanDescriptor?
     get() = threadListLayoutCallbacks?.getCurrentChanDescriptor()
 
-  override fun onUploadingProgress(percent: Int) {
-    if (::currentProgress.isInitialized) {
-      if (percent in 0..99) {
-        currentProgress.visibility = VISIBLE
-      }
+  override fun onUploadingProgress(fileIndex: Int, totalFiles: Int, percent: Int) {
+    if (!::currentProgress.isInitialized || !::currentFile.isInitialized) {
+      return
+    }
 
-      currentProgress.text = percent.toString()
+    if (percent in 0..99) {
+      currentProgress.visibility = VISIBLE
+      currentFile.visibility = VISIBLE
+    }
 
-      if (percent >= 100) {
-        currentProgress.visibility = View.INVISIBLE
-      }
+    currentFile.text = context.getString(R.string.upload_file_x_out_of_y, fileIndex, totalFiles)
+    currentProgress.text = percent.toString()
+
+    if (fileIndex >= totalFiles && percent >= 100) {
+      currentProgress.visibility = View.INVISIBLE
+      currentFile.visibility = INVISIBLE
     }
   }
 

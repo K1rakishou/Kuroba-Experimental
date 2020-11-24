@@ -54,7 +54,7 @@ interface SiteActions {
 
   sealed class PostResult {
     class PostComplete(val replyResponse: ReplyResponse) : PostResult()
-    class UploadingProgress(val percent: Int) : PostResult()
+    class UploadingProgress(val fileIndex: Int, val totalFiles: Int, val percent: Int) : PostResult()
     class PostError(val error: Throwable) : PostResult()
   }
 

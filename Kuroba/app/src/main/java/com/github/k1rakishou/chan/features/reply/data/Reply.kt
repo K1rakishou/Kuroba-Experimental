@@ -111,6 +111,13 @@ class Reply(
   }
 
   @Synchronized
+  fun iterateFilesOrThrowIfEmpty(iterator: (Int, ReplyFile) -> Unit) {
+    check(filesTakenForThisReply.isNotEmpty()) { "filesTakenForThisReply is empty!" }
+
+    filesTakenForThisReply.forEachIndexed { index, replyFile -> iterator(index, replyFile) }
+  }
+
+  @Synchronized
   fun putReplyFiles(files: List<ReplyFile>) {
     filesTakenForThisReply.addAll(files)
   }

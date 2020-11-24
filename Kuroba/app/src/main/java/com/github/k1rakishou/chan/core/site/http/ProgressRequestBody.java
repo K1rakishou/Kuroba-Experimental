@@ -26,8 +26,9 @@ import okio.ForwardingSink;
 import okio.Okio;
 import okio.Sink;
 
-public class ProgressRequestBody
-        extends RequestBody {
+public class ProgressRequestBody extends RequestBody {
+    private final int fileIndex;
+    private final int totalFiles;
     protected RequestBody delegate;
     protected ProgressRequestListener listener;
     protected ProgressSink progressSink;
@@ -35,7 +36,24 @@ public class ProgressRequestBody
     private static final int maxPercent = 100;
     private static final int percentStep = 2;
 
-    public ProgressRequestBody(RequestBody delegate, ProgressRequestListener listener) {
+    public ProgressRequestBody(
+            RequestBody delegate,
+            ProgressRequestListener listener
+    ) {
+        this.fileIndex = 1;
+        this.totalFiles = 1;
+        this.delegate = delegate;
+        this.listener = listener;
+    }
+
+    public ProgressRequestBody(
+            int fileIndex,
+            int totalFiles,
+            RequestBody delegate,
+            ProgressRequestListener listener
+    ) {
+        this.fileIndex = fileIndex;
+        this.totalFiles = totalFiles;
         this.delegate = delegate;
         this.listener = listener;
     }
@@ -78,22 +96,23 @@ public class ProgressRequestBody
 
             if (bytesWritten == 0) {
                 // so we can know that the uploading has just started
-                listener.onRequestProgress(0);
+                listener.onRequestProgress(fileIndex, totalFiles, 0);
             }
 
             bytesWritten += byteCount;
+
             if (contentLength() > 0) {
                 int percent = (int) (maxPercent * bytesWritten / contentLength());
 
                 if (percent - lastPercent >= percentStep) {
                     lastPercent = percent;
-                    listener.onRequestProgress(percent);
+                    listener.onRequestProgress(fileIndex, totalFiles, percent);
                 }
             }
         }
     }
 
     public interface ProgressRequestListener {
-        void onRequestProgress(int percent);
+        void onRequestProgress(int fileIndex, int totalFiles, int percent);
     }
 }

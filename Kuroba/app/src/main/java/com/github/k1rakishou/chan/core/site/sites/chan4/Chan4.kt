@@ -298,7 +298,11 @@ open class Chan4 : SiteBase() {
               )
             }
             is HttpCall.HttpCallWithProgressResult.Progress -> {
-              return@map SiteActions.PostResult.UploadingProgress(replyCallResult.percent)
+              return@map SiteActions.PostResult.UploadingProgress(
+                replyCallResult.fileIndex,
+                replyCallResult.totalFiles,
+                replyCallResult.percent
+              )
             }
             is HttpCall.HttpCallWithProgressResult.Fail -> {
               return@map SiteActions.PostResult.PostError(

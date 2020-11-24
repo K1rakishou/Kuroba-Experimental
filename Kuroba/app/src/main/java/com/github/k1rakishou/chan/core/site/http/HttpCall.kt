@@ -38,7 +38,7 @@ abstract class HttpCall(val site: Site) {
   
   sealed class HttpCallWithProgressResult<out T : HttpCall> {
     class Success<T: HttpCall>(val httpCall: T) : HttpCallWithProgressResult<T>()
-    class Progress(val percent: Int) : HttpCallWithProgressResult<Nothing>()
+    class Progress(val fileIndex: Int, val totalFiles: Int, val percent: Int) : HttpCallWithProgressResult<Nothing>()
     class Fail<T: HttpCall>(val httpCall: T, val error: Throwable) : HttpCallWithProgressResult<T>()
   }
   

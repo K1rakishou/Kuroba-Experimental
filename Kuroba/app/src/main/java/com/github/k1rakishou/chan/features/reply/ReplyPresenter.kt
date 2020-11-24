@@ -464,7 +464,11 @@ class ReplyPresenter @Inject constructor(
                 onPostComplete(chanDescriptor, postResult.replyResponse)
               }
               is SiteActions.PostResult.UploadingProgress -> {
-                onUploadingProgress(postResult.percent)
+                onUploadingProgress(
+                  postResult.fileIndex,
+                  postResult.totalFiles,
+                  postResult.percent
+                )
               }
               is SiteActions.PostResult.PostError -> {
                 onPostError(chanDescriptor, postResult.error)
@@ -475,9 +479,11 @@ class ReplyPresenter @Inject constructor(
     }
   }
 
-  private fun onUploadingProgress(percent: Int) {
+  private fun onUploadingProgress(fileIndex: Int, totalFiles: Int, percent: Int) {
     // called on a background thread!
-    BackgroundUtils.runOnMainThread { callback.onUploadingProgress(percent) }
+    BackgroundUtils.runOnMainThread {
+      callback.onUploadingProgress(fileIndex, totalFiles, percent)
+    }
   }
 
   private fun onPostError(chanDescriptor: ChanDescriptor, exception: Throwable?) {
@@ -724,7 +730,7 @@ class ReplyPresenter @Inject constructor(
     fun highlightPostNos(postNos: Set<Long>)
     fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     fun focusComment()
-    fun onUploadingProgress(percent: Int)
+    fun onUploadingProgress(fileIndex: Int, totalFiles: Int,percent: Int)
     fun onFallbackToV1CaptchaView(autoReply: Boolean)
     fun destroyCurrentAuthentication()
     fun showAuthenticationFailedError(error: Throwable)

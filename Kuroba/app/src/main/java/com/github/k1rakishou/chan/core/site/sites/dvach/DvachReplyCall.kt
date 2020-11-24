@@ -89,18 +89,25 @@ class DvachReplyCall internal constructor(
         }
       }
 
-      val replyFile = reply.firstFileOrNull()
-      if (replyFile != null) {
-        val replyFileMetaResult = replyFile.getReplyFileMeta()
-        if (replyFileMetaResult is ModularResult.Error<*>) {
-          throw IOException((replyFileMetaResult as ModularResult.Error<ReplyFileMeta>).error)
-        }
+      if (reply.hasFiles()) {
+        val filesCount = reply.filesCount()
 
-        val replyFileMetaInfo = (replyFileMetaResult as ModularResult.Value).value
-        attachFile(formBuilder, progressListener, replyFile, replyFileMetaInfo)
+        reply.iterateFilesOrThrowIfEmpty { fileIndex, replyFile ->
+          val replyFileMetaResult = replyFile.getReplyFileMeta()
+          if (replyFileMetaResult is ModularResult.Error<*>) {
+            throw IOException((replyFileMetaResult as ModularResult.Error<ReplyFileMeta>).error)
+          }
 
-        if (replyFileMetaInfo.spoiler) {
-          formBuilder.addFormDataPart("spoiler", "on")
+          val replyFileMetaInfo = (replyFileMetaResult as ModularResult.Value).value
+
+          attachFile(
+            formBuilder = formBuilder,
+            fileIndex = fileIndex + 1,
+            totalFiles = filesCount,
+            progressListener = progressListener,
+            replyFile = replyFile,
+            replyFileMeta = replyFileMetaInfo
+          )
         }
       }
     }
@@ -108,6 +115,8 @@ class DvachReplyCall internal constructor(
 
   private fun attachFile(
     formBuilder: MultipartBody.Builder,
+    fileIndex: Int,
+    totalFiles: Int,
     progressListener: ProgressRequestListener?,
     replyFile: ReplyFile,
     replyFileMeta: ReplyFileMeta
@@ -119,12 +128,14 @@ class DvachReplyCall internal constructor(
       replyFile.fileOnDisk.asRequestBody(mediaType)
     } else {
       ProgressRequestBody(
+        fileIndex,
+        totalFiles,
         fileOnDisk.asRequestBody(mediaType),
         progressListener
       )
     }
 
-    formBuilder.addFormDataPart("image", replyFileMeta.fileName, requestBody)
+    formBuilder.addFormDataPart("formimages[]", replyFileMeta.fileName, requestBody)
   }
 
   override fun process(response: Response, result: String) {
