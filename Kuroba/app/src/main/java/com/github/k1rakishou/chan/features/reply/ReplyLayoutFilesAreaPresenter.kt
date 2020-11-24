@@ -178,7 +178,15 @@ class ReplyLayoutFilesAreaPresenter(
         state.value = newState
 
         if (oldState != newState) {
-          withView { requestReplyLayoutWrappingModeUpdate() }
+          withView {
+            requestReplyLayoutWrappingModeUpdate()
+
+            val attachedSelectedFilesCount = state.value.attachables
+              .count { replyAttachable -> replyAttachable is ReplyFileAttachable && replyAttachable.selected }
+            val maxAllowedAttachedFilesCount = getMaxAllowedFilesPerPost(chanDescriptor)
+
+            updateSendButtonState(attachedSelectedFilesCount, maxAllowedAttachedFilesCount)
+          }
         }
       }
     }

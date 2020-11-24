@@ -21,6 +21,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Configuration
 import android.content.res.Resources
+import android.graphics.Color
 import android.os.Build
 import android.text.Editable
 import android.text.TextUtils
@@ -81,6 +82,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.doIgnoringTextWatcher
+import com.github.k1rakishou.chan.utils.setAlphaFast
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -152,7 +154,8 @@ class ReplyLayout @JvmOverloads constructor(
   private lateinit var comment: SelectionListeningEditText
   private lateinit var commentCounter: TextView
   private lateinit var commentRevertChangeButton: AppCompatImageView
-  private lateinit var captcha: ConstraintLayout
+  private lateinit var captchaButtonContainer: ConstraintLayout
+  private lateinit var captchaView: AppCompatImageView
   private lateinit var validCaptchasCount: TextView
   private lateinit var more: ImageView
   private lateinit var submit: ImageView
@@ -210,6 +213,14 @@ class ReplyLayout @JvmOverloads constructor(
     }
 
     commentCounter.setTextColor(textColor)
+
+    validCaptchasCount.background = themeEngine.tintDrawable(
+      context,
+      R.drawable.circle_background,
+      0xAA000000.toInt()
+    )
+
+    validCaptchasCount.setTextColor(Color.WHITE)
   }
 
   private fun updateWrappingMode() {
@@ -253,7 +264,7 @@ class ReplyLayout @JvmOverloads constructor(
     comment = replyInputLayout.findViewById(R.id.comment)
     commentCounter = replyInputLayout.findViewById(R.id.comment_counter)
     commentRevertChangeButton = replyInputLayout.findViewById(R.id.comment_revert_change_button)
-    captcha = replyInputLayout.findViewById(R.id.captcha_container)
+    captchaButtonContainer = replyInputLayout.findViewById(R.id.captcha_button_container)
     validCaptchasCount = replyInputLayout.findViewById(R.id.valid_captchas_count)
     more = replyInputLayout.findViewById(R.id.more)
     submit = replyInputLayout.findViewById(R.id.submit)
@@ -284,9 +295,9 @@ class ReplyLayout @JvmOverloads constructor(
     AndroidUtils.setBoundlessRoundRippleBackground(more)
     more.setOnClickListener(this)
 
-    val captchaImage = replyInputLayout.findViewById<ImageView>(R.id.captcha)
-    AndroidUtils.setBoundlessRoundRippleBackground(captchaImage)
-    captcha.setOnClickListener(this)
+    captchaView = replyInputLayout.findViewById(R.id.captcha_view)
+    AndroidUtils.setBoundlessRoundRippleBackground(captchaView)
+    captchaView.setOnClickListener(this)
 
     AndroidUtils.setBoundlessRoundRippleBackground(submit)
     submit.setOnClickListener(this)
@@ -371,7 +382,7 @@ class ReplyLayout @JvmOverloads constructor(
     }
 
     if (!site.actions().postRequiresAuthentication()) {
-      captcha.visibility = GONE
+      captchaButtonContainer.visibility = GONE
     }
 
     captchaHolder.setListener(chanDescriptor, this)
@@ -392,6 +403,32 @@ class ReplyLayout @JvmOverloads constructor(
   override fun requestWrappingModeUpdate() {
     BackgroundUtils.ensureMainThread()
     updateWrappingMode()
+  }
+
+  override fun disableSendButton() {
+    BackgroundUtils.ensureMainThread()
+
+    if (!submit.isEnabled) {
+      return
+    }
+
+    submit.isEnabled = false
+    submit.isClickable = false
+    submit.isFocusable = false
+    submit.setAlphaFast(.4f)
+  }
+
+  override fun enableSendButton() {
+    BackgroundUtils.ensureMainThread()
+
+    if (submit.isEnabled) {
+      return
+    }
+
+    submit.isEnabled = true
+    submit.isClickable = true
+    submit.isFocusable = true
+    submit.setAlphaFast(1f)
   }
 
   fun onDestroy() {
@@ -477,30 +514,18 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun onClick(v: View) {
     rendezvousCoroutineExecutor.post {
-      if (v === more) {
-        presenter.onMoreClicked()
-      } else if (v === captcha) {
-        presenter.onAuthenticateCalled()
-      } else if (v === submit) {
-        presenter.onSubmitClicked(false)
-      } else if (v === captchaHardReset) {
-        if (authenticationLayout != null) {
-          authenticationLayout!!.hardReset()
-        }
-      } else if (v === commentQuoteButton) {
-        insertQuote()
-      } else if (v === commentSpoilerButton) {
-        insertTags("[spoiler]", "[/spoiler]")
-      } else if (v === commentCodeButton) {
-        insertTags("[code]", "[/code]")
-      } else if (v === commentEqnButton) {
-        insertTags("[eqn]", "[/eqn]")
-      } else if (v === commentMathButton) {
-        insertTags("[math]", "[/math]")
-      } else if (v === commentSJISButton) {
-        insertTags("[sjis]", "[/sjis]")
-      } else if (v === commentRevertChangeButton) {
-        presenter.onRevertChangeButtonClicked()
+      when {
+        v === more -> presenter.onMoreClicked()
+        v === captchaView -> presenter.onAuthenticateCalled()
+        v === submit -> presenter.onSubmitClicked(false)
+        v === captchaHardReset -> authenticationLayout?.hardReset()
+        v === commentQuoteButton -> insertQuote()
+        v === commentSpoilerButton -> insertTags("[spoiler]", "[/spoiler]")
+        v === commentCodeButton -> insertTags("[code]", "[/code]")
+        v === commentEqnButton -> insertTags("[eqn]", "[/eqn]")
+        v === commentMathButton -> insertTags("[math]", "[/math]")
+        v === commentSJISButton -> insertTags("[sjis]", "[/sjis]")
+        v === commentRevertChangeButton -> presenter.onRevertChangeButtonClicked()
       }
     }
   }
@@ -611,6 +636,7 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun setPage(page: ReplyPresenter.Page) {
     Logger.d(TAG, "Switching to page " + page.name)
+
     when (page) {
       ReplyPresenter.Page.LOADING -> {
         setView(progressLayout)
@@ -629,7 +655,7 @@ class ReplyLayout @JvmOverloads constructor(
       }
       ReplyPresenter.Page.AUTHENTICATION -> {
         AndroidUtils.hideKeyboard(this)
-        setView(captchaContainer)
+        setView(captchaContainer, false)
         setWrappingMode(true)
         captchaContainer.requestFocus(FOCUS_DOWN)
         threadListLayoutCallbacks?.updatePadding()

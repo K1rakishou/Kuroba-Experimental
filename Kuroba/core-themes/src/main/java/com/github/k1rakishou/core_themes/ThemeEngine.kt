@@ -163,6 +163,16 @@ open class ThemeEngine(
     return drawableMutable
   }
 
+  fun tintDrawable(context: Context, @DrawableRes drawableId: Int, @ColorInt color: Int): Drawable {
+    val drawable = ContextCompat.getDrawable(context, drawableId)
+      ?: throw IllegalArgumentException("Couldn't find drawable with drawableId: $drawableId")
+
+    val drawableMutable = DrawableCompat.wrap(drawable).mutate()
+    DrawableCompat.setTint(drawableMutable, color)
+
+    return drawableMutable
+  }
+
   private fun getThemeInternal(isDarkTheme: Boolean): ChanTheme {
     return if (isDarkTheme) {
       actualDarkTheme ?: defaultDarkTheme

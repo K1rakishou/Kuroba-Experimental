@@ -28,6 +28,7 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
+import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -318,23 +319,38 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   }
 
   override fun showFilePickerErrorToast(filePickerError: IFilePicker.FilePickerError) {
+    BackgroundUtils.ensureMainThread()
     showToast(context, filePickerError.errorMessageOrClassName(), Toast.LENGTH_LONG)
   }
 
   override fun showGenericErrorToast(errorMessage: String) {
+    BackgroundUtils.ensureMainThread()
     showToast(context, errorMessage, Toast.LENGTH_LONG)
   }
 
   override fun requestReplyLayoutWrappingModeUpdate() {
+    BackgroundUtils.ensureMainThread()
     replyLayoutCallbacks?.requestWrappingModeUpdate()
   }
 
   override fun showLoadingView() {
+    BackgroundUtils.ensureMainThread()
     threadListLayoutCallbacks?.showLoadingView()
   }
 
   override fun hideLoadingView() {
+    BackgroundUtils.ensureMainThread()
     threadListLayoutCallbacks?.hideLoadingView()
+  }
+
+  override fun updateSendButtonState(attachedSelectedFilesCount: Int, maxAllowedAttachedFilesCount: Int) {
+    BackgroundUtils.ensureMainThread()
+
+    if (attachedSelectedFilesCount == 0 || attachedSelectedFilesCount <= maxAllowedAttachedFilesCount) {
+      replyLayoutCallbacks?.enableSendButton()
+    } else {
+      replyLayoutCallbacks?.disableSendButton()
+    }
   }
 
   private inner class ReplyFilesEpoxyController : EpoxyController() {
@@ -354,6 +370,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
   interface ReplyLayoutCallbacks {
     fun requestWrappingModeUpdate()
+    fun disableSendButton()
+    fun enableSendButton()
   }
 
   companion object {

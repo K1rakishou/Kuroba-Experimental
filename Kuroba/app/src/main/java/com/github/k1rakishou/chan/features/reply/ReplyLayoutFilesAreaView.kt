@@ -8,4 +8,5 @@ interface ReplyLayoutFilesAreaView {
   fun requestReplyLayoutWrappingModeUpdate()
   fun showLoadingView()
   fun hideLoadingView()
+  fun updateSendButtonState(attachedSelectedFilesCount: Int, maxAllowedAttachedFilesCount: Int)
 }

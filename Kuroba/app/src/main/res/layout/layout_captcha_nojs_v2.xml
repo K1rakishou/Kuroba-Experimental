@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <androidx.appcompat.widget.AppCompatTextView
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
         android:id="@+id/captcha_layout_v2_title"
         android:layout_width="match_parent"
         android:layout_height="40dp"
