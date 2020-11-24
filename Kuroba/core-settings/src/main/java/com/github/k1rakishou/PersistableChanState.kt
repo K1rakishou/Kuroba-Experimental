@@ -40,6 +40,9 @@ object PersistableChanState {
   @JvmStatic
   lateinit var proxyEditingNotificationShown: BooleanSetting
 
+  @JvmStatic
+  lateinit var lastRememberedFilePicker: StringSetting
+
   fun init(persistableChanStateInfo: PersistableChanStateInfo) {
     this.persistableChanStateInfo = persistableChanStateInfo
 
@@ -83,6 +86,12 @@ object PersistableChanState {
         p,
         "proxy_editing_notification_shown",
         false
+      )
+
+      lastRememberedFilePicker = StringSetting(
+        p,
+        "last_remembered_file_picker",
+        ""
       )
     } catch (e: Exception) {
       Logger.e(TAG, "Error while initializing the state", e)

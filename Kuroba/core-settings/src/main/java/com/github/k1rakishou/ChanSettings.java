@@ -278,7 +278,6 @@ public class ChanSettings {
 
     // Other options
     public static BooleanSetting fullUserRotationEnable;
-    public static BooleanSetting allowFilePickChooser;
     public static BooleanSetting showCopyApkUpdateDialog;
     //endregion
 
@@ -447,7 +446,6 @@ public class ChanSettings {
 
             // Other options
             fullUserRotationEnable = new BooleanSetting(p, "full_user_rotation_enable", true);
-            allowFilePickChooser = new BooleanSetting(p, "allow_file_picker_chooser", false);
             showCopyApkUpdateDialog = new BooleanSetting(p, "show_copy_apk_update_dialog", true);
             //endregion
 

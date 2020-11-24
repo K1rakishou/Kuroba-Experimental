@@ -60,14 +60,18 @@ class ReplyLayoutFilesAreaPresenter(
     this.boundChanDescriptor = null
   }
 
-  fun pickNewLocalFile() {
+  fun pickNewLocalFile(showFilePickerChooser: Boolean) {
     pickFilesExecutor.post {
       handleStateUpdate {
         val chanDescriptor = boundChanDescriptor
           ?: return@handleStateUpdate
 
-        val input = LocalFilePicker.LocalFilePickerInput(chanDescriptor)
         withView { showLoadingView() }
+
+        val input = LocalFilePicker.LocalFilePickerInput(
+          replyChanDescriptor = chanDescriptor,
+          clearLastRememberedFilePicker = showFilePickerChooser
+        )
 
         val pickedFileResult = imagePickHelper.pickLocalFile(input)
           .finally { withView { hideLoadingView() } }

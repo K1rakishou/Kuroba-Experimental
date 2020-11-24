@@ -8,6 +8,7 @@ import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
+import java.util.*
 import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT, fullSpan = false)
@@ -56,6 +57,19 @@ class EpoxyAttachNewFileButtonView @JvmOverloads constructor(
 
     newAttachableButton.setOnClickListener {
       listener.invoke()
+    }
+  }
+
+  @CallbackProp
+  fun setOnLongClickListener(listener: (() -> Unit)?) {
+    if (listener == null) {
+      newAttachableButton.setOnLongClickListener(null)
+      return
+    }
+
+    newAttachableButton.setOnLongClickListener {
+      listener.invoke()
+      return@setOnLongClickListener true
     }
   }
 

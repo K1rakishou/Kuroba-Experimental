@@ -59,4 +59,17 @@ class EpoxyAttachNewFileButtonWideView @JvmOverloads constructor(
     }
   }
 
+  @CallbackProp
+  fun setOnLongClickListener(listener: (() -> Unit)?) {
+    if (listener == null) {
+      newAttachableButton.setOnLongClickListener(null)
+      return
+    }
+
+    newAttachableButton.setOnLongClickListener {
+      listener.invoke()
+      return@setOnLongClickListener true
+    }
+  }
+
 }

@@ -1,10 +1,15 @@
 package com.github.k1rakishou.chan.ui.helper.picker
 
 import android.app.Activity
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.Uri
 import android.provider.OpenableColumns
-import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
@@ -14,6 +19,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.IOUtils
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils.isAndroidL_MR1
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -34,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
+
 class LocalFilePicker(
   private val appScope: CoroutineScope,
   private val appConstants: AppConstants,
@@ -44,6 +51,8 @@ class LocalFilePicker(
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
   private val requestCodeCounter = AtomicInteger(0)
   private val activityRef = AtomicReference<StartActivity>(null)
+
+  private val selectedFilePickerBroadcastReceiver = SelectedFilePickerBroadcastReceiver()
 
   fun onActivityCreated(activity: StartActivity) {
     BackgroundUtils.ensureMainThread()
@@ -62,6 +71,10 @@ class LocalFilePicker(
 
   override suspend fun pickFile(filePickerInput: LocalFilePickerInput): ModularResult<PickedFile> {
     BackgroundUtils.ensureMainThread()
+
+    if (filePickerInput.clearLastRememberedFilePicker) {
+      PersistableChanState.lastRememberedFilePicker.set("")
+    }
 
     val attachedActivity = activityRef.get()
     if (attachedActivity == null) {
@@ -85,6 +98,7 @@ class LocalFilePicker(
     )
     activeRequests[newRequestCode] = newRequest
 
+    check(intents.isNotEmpty()) { "intents is empty!" }
     runIntentChooser(attachedActivity, intents, newRequest.requestCode)
 
     return Try { completableDeferred.await() }
@@ -212,8 +226,10 @@ class LocalFilePicker(
 
         os.use { outputStream ->
           if (!IOUtils.copy(inputStream, outputStream, MAX_FILE_SIZE)) {
-            throw IOException("Failed to copy external file (uri='$uri') into reply file " +
-              "(filePath='${cacheFile.getFullPath()}')")
+            throw IOException(
+              "Failed to copy external file (uri='$uri') into reply file " +
+                "(filePath='${cacheFile.getFullPath()}')"
+            )
           }
         }
       }
@@ -221,12 +237,14 @@ class LocalFilePicker(
   }
 
   private fun finishWithResult(requestCode: Int, value: PickedFile.Result) {
-    Logger.d(TAG, "finishWithResult success, requestCode=$requestCode, value=${value.replyFile.shortState()}")
+    Logger.d(TAG, "finishWithResult success, requestCode=$requestCode, " +
+      "value=${value.replyFile.shortState()}")
     activeRequests[requestCode]?.completableDeferred?.complete(value)
   }
 
   private fun finishWithError(requestCode: Int, error: IFilePicker.FilePickerError) {
-    Logger.d(TAG, "finishWithError success, requestCode=$requestCode, error=${error.errorMessageOrClassName()}")
+    Logger.d(TAG, "finishWithError success, requestCode=$requestCode, " +
+        "error=${error.errorMessageOrClassName()}")
     activeRequests[requestCode]?.completableDeferred?.complete(PickedFile.Failure(error))
   }
 
@@ -272,12 +290,30 @@ class LocalFilePicker(
     val resolveInfos = pm.queryIntentActivities(intent, 0)
     val intents: MutableList<Intent> = ArrayList(resolveInfos.size)
 
+    val lastRememberedFilePicker = PersistableChanState.lastRememberedFilePicker.get()
+    if (lastRememberedFilePicker.isNotEmpty()) {
+      val lastRememberedFilePickerInfo = resolveInfos.firstOrNull { resolveInfo ->
+        resolveInfo.activityInfo.packageName == lastRememberedFilePicker
+      }
+
+      if (lastRememberedFilePickerInfo != null) {
+        val newIntent = Intent(Intent.ACTION_GET_CONTENT)
+        newIntent.addCategory(Intent.CATEGORY_OPENABLE)
+        newIntent.setPackage(lastRememberedFilePickerInfo.activityInfo.packageName)
+        newIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        newIntent.type = "*/*"
+
+        return listOf(newIntent)
+      }
+    }
+
     for (info in resolveInfos) {
       val newIntent = Intent(Intent.ACTION_GET_CONTENT)
       newIntent.addCategory(Intent.CATEGORY_OPENABLE)
       newIntent.setPackage(info.activityInfo.packageName)
       newIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
       newIntent.type = "*/*"
+
       intents.add(newIntent)
     }
 
@@ -285,22 +321,70 @@ class LocalFilePicker(
   }
 
   private fun runIntentChooser(activity: StartActivity, intents: List<Intent>, requestCode: Int) {
-    if (intents.size == 1 || !ChanSettings.allowFilePickChooser.get()) {
+    check(intents.isNotEmpty()) { "intents is empty!" }
+
+    if (intents.size == 1) {
       activity.startActivityForResult(intents[0], requestCode)
       return
     }
 
-    val chooser = Intent.createChooser(
-      intents.last(),
-      getString(R.string.image_pick_delegate_select_file_picker)
-    )
+    val chooser = if (isAndroidL_MR1()) {
+      val receiverIntent = Intent(
+        activity,
+        SelectedFilePickerBroadcastReceiver::class.java
+      )
+
+      val pendingIntent = PendingIntent.getBroadcast(
+        activity,
+        0,
+        receiverIntent,
+        PendingIntent.FLAG_UPDATE_CURRENT
+      )
+
+      activity.registerReceiver(
+        selectedFilePickerBroadcastReceiver,
+        IntentFilter(Intent.ACTION_GET_CONTENT)
+      )
+
+      Intent.createChooser(
+        intents.last(),
+        getString(R.string.image_pick_delegate_select_file_picker),
+        pendingIntent.intentSender
+      )
+    } else {
+      Intent.createChooser(
+        intents.last(),
+        getString(R.string.image_pick_delegate_select_file_picker)
+      )
+    }
 
     chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, intents.toTypedArray())
     activity.startActivityForResult(chooser, requestCode)
   }
 
+  class SelectedFilePickerBroadcastReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context?, intent: Intent?) {
+      if (context == null || intent == null) {
+        return
+      }
+
+      if (!isAndroidL_MR1()) {
+        return
+      }
+
+      val component = intent.getParcelableExtra<ComponentName>(Intent.EXTRA_CHOSEN_COMPONENT)
+        ?: return
+
+      Logger.d(TAG, "Setting lastRememberedFilePicker to " +
+        "(packageName=${component.packageName}, className=${component.className})")
+
+      PersistableChanState.lastRememberedFilePicker.set(component.packageName)
+    }
+  }
+
   data class LocalFilePickerInput(
-    val replyChanDescriptor: ChanDescriptor
+    val replyChanDescriptor: ChanDescriptor,
+    val clearLastRememberedFilePicker: Boolean = false
   )
 
   private data class EnqueuedRequest(

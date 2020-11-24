@@ -430,7 +430,6 @@ sealed class BehaviorScreen(
     BehaviorScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
     object FullUserRotationEnable : OtherSettingsGroup("full_user_rotation")
-    object AllowFilePickChooser : OtherSettingsGroup("allow_file_pick_chooser")
     object ShowCopyApkUpdateDialog : OtherSettingsGroup("show_copy_apk_update_dialog")
 
     companion object : IGroupIdentifier() {

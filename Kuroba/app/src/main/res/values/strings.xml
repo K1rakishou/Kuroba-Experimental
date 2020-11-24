@@ -630,8 +630,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <!-- Other settings group -->
     <string name="setting_other_settings_group">Other Options</string>
     <string name="setting_full_screen_rotation">Allow full sensor rotation</string>
-    <string name="setting_allow_alternate_file_pickers">Allow alternate file pickers</string>
-    <string name="setting_allow_alternate_file_pickers_description">If you\'d prefer to use a different file chooser, turn this on</string>
     <string name="settings_show_copy_apk_dialog_title">Show copy apk dialog when downloading an update</string>
     <string name="settings_show_copy_apk_dialog_message">Every time you download a new update a dialog with suggestion to copy that apk to some other directory will be shown</string>
 
@@ -1075,6 +1073,9 @@ Don't have a 4chan Pass?<br>
     <string name="layout_reply_files_area_open_in_editor_action">Open in editor</string>
     <string name="layout_reply_files_area_delete_file_action">Delete file</string>
     <string name="layout_reply_files_area_delete_selected_files_action">Delete selected files</string>
+
+    <string name="layout_reply_files_area_pick_local_file_show_pickers">Pick local file (show all file pickers)</string>
+    <string name="layout_reply_files_area_pick_remote_file">Pick remote file (by file url)</string>
 
     <string name="reply_notifications_new_replies_total_stats">You have %1$d replies in %2$d thread(s)</string>
     <string name="reply_notifications_new_replies_in_thread">You have %1$d new replies in thread %2$d</string>

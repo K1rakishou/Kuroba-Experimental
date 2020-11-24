@@ -58,14 +58,6 @@ class BehaviourSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
-          identifier = BehaviorScreen.OtherSettingsGroup.AllowFilePickChooser,
-          topDescriptionIdFunc = { R.string.setting_allow_alternate_file_pickers },
-          bottomDescriptionIdFunc = { R.string.setting_allow_alternate_file_pickers_description },
-          setting = ChanSettings.allowFilePickChooser
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
           identifier = BehaviorScreen.OtherSettingsGroup.ShowCopyApkUpdateDialog,
           topDescriptionIdFunc = { R.string.settings_show_copy_apk_dialog_title },
           bottomDescriptionIdFunc = { R.string.settings_show_copy_apk_dialog_message },

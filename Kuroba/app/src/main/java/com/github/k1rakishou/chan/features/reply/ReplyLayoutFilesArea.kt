@@ -199,7 +199,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
       if (attachables.size == 1 && attachables.first() is ReplyNewAttachable) {
         epoxyAttachNewFileButtonWideView {
           id("epoxy_attach_new_file_button_wide_view")
-          onClickListener { presenter.pickNewLocalFile() }
+          onClickListener { presenter.pickNewLocalFile(showFilePickerChooser = false) }
+          onLongClickListener { showPickFileOptions() }
         }
 
         return@stateRenderer
@@ -222,7 +223,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
           is ReplyNewAttachable -> {
             epoxyAttachNewFileButtonView {
               id("epoxy_attach_new_file_button_view")
-              onClickListener { presenter.pickNewLocalFile() }
+              onClickListener { presenter.pickNewLocalFile(showFilePickerChooser = false) }
+              onLongClickListener { showPickFileOptions() }
             }
           }
           is ReplyFileAttachable -> {
@@ -233,7 +235,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
               attachmentSelected(replyAttachable.selected)
               exceedsMaxFilesPerPostLimit(replyAttachable.exceedsMaxFilesLimit)
               onClickListener { fileUuid -> presenter.updateFileSelection(fileUuid) }
-              onLongClickListener { fileUuid -> showOptionsController(fileUuid) }
+              onLongClickListener { fileUuid -> showAttachFileOptions(fileUuid) }
             }
           }
           else -> throw IllegalStateException(
@@ -268,7 +270,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     }
   }
 
-  private fun showOptionsController(selectedFileUuid: UUID) {
+  private fun showAttachFileOptions(selectedFileUuid: UUID) {
     val floatingListMenuItems = mutableListOf<FloatingListMenuItem>()
 
     floatingListMenuItems += FloatingListMenuItem(
@@ -295,13 +297,13 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
       context = context,
       constraintLayoutBiasPair = ConstraintLayoutBiasPair.Bottom,
       items = floatingListMenuItems,
-      itemClickListener = { item -> onItemClicked(item) }
+      itemClickListener = { item -> onAttachFileItemClicked(item) }
     )
 
     threadListLayoutCallbacks?.presentController(floatingListMenuController)
   }
 
-  private fun onItemClicked(item: FloatingListMenuItem) {
+  private fun onAttachFileItemClicked(item: FloatingListMenuItem) {
     val id = item.key as Int
     val clickedFileUuid = item.value as UUID
 
@@ -314,6 +316,42 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
       }
       ACTION_DELETE_SELECTED_FILES -> {
         presenter.deleteSelectedFiles()
+      }
+    }
+  }
+
+  private fun showPickFileOptions() {
+    val floatingListMenuItems = mutableListOf<FloatingListMenuItem>()
+
+    floatingListMenuItems += FloatingListMenuItem(
+      key = ACTION_PICK_LOCAL_FILE_SHOW_ALL_FILE_PICKERS,
+      name = context.getString(R.string.layout_reply_files_area_pick_local_file_show_pickers)
+    )
+
+    floatingListMenuItems += FloatingListMenuItem(
+      key = ACTION_PICK_REMOTE_FILE,
+      name = context.getString(R.string.layout_reply_files_area_pick_remote_file)
+    )
+
+    val floatingListMenuController = FloatingListMenuController(
+      context = context,
+      constraintLayoutBiasPair = ConstraintLayoutBiasPair.Bottom,
+      items = floatingListMenuItems,
+      itemClickListener = { item -> onPickFileItemClicked(item) }
+    )
+
+    threadListLayoutCallbacks?.presentController(floatingListMenuController)
+  }
+
+  private fun onPickFileItemClicked(item: FloatingListMenuItem) {
+    val id = item.key as Int
+
+    when (id) {
+      ACTION_PICK_LOCAL_FILE_SHOW_ALL_FILE_PICKERS -> {
+        presenter.pickNewLocalFile(showFilePickerChooser = true)
+      }
+      ACTION_PICK_REMOTE_FILE -> {
+        // TODO(KurobaEx): reply layout refactoring
       }
     }
   }
@@ -378,6 +416,9 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     private const val ACTION_OPEN_IN_EDITOR = 1
     private const val ACTION_DELETE_FILE = 2
     private const val ACTION_DELETE_SELECTED_FILES = 3
+
+    private const val ACTION_PICK_LOCAL_FILE_SHOW_ALL_FILE_PICKERS = 100
+    private const val ACTION_PICK_REMOTE_FILE = 101
 
     private const val MIN_FILES_PER_ROW = 2
 

@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -39,7 +40,13 @@ class ImagePickHelper(
 
     val pickedFile = (result as ModularResult.Value).value
     if (pickedFile is PickedFile.Failure) {
-      Logger.e(TAG, "pickLocalFile() pickedFile is PickedFile.Failure", pickedFile.reason)
+      if (pickedFile.reason is IFilePicker.FilePickerError.BadResultCode) {
+        Logger.e(TAG, "pickLocalFile() pickedFile is " +
+          "PickedFile.BadResultCode: ${pickedFile.reason.errorMessageOrClassName()}")
+      } else {
+        Logger.e(TAG, "pickLocalFile() pickedFile is PickedFile.Failure", pickedFile.reason)
+      }
+
       return result
     }
 
