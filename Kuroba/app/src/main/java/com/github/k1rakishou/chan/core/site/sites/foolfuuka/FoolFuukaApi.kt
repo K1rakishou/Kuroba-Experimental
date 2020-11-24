@@ -3,6 +3,8 @@ package com.github.k1rakishou.chan.core.site.sites.foolfuuka
 import com.github.k1rakishou.chan.core.site.common.CommonClientException
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
+import com.github.k1rakishou.chan.utils.extractFileNameExtension
+import com.github.k1rakishou.chan.utils.removeExtensionIfPresent
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.jsonObject
 import com.github.k1rakishou.common.nextStringOrNull
@@ -13,8 +15,6 @@ import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.mapper.ArchiveThreadMapper
-import com.github.k1rakishou.model.util.extractFileNameExtension
-import com.github.k1rakishou.model.util.removeExtensionIfPresent
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 

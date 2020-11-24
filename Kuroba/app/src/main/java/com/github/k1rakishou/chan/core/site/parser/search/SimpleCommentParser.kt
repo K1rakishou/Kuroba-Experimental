@@ -5,7 +5,7 @@ import android.text.TextUtils
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParamsBuilder
-import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ChanThemeColorId
@@ -39,7 +39,7 @@ open class SimpleCommentParser {
     rule(StyleRule.tagRule("pre")
       .cssClass("prettyprint")
       .monospace()
-      .size(AndroidUtils.sp(12f))
+      .size(sp(12f))
       .backgroundColorId(ChanThemeColorId.BackColorSecondary)
     )
 

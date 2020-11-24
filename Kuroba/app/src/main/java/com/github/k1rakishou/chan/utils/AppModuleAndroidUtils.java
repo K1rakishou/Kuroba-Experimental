@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.pm.Signature;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
@@ -18,12 +19,16 @@ import android.net.Uri;
 import android.os.StatFs;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.Toast;
 
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.browser.customtabs.CustomTabsIntent;
+import androidx.core.content.ContextCompat;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.BuildConfig;
@@ -46,8 +51,6 @@ import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Debug;
 import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Release;
 import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Unknown;
 import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
-import static com.github.k1rakishou.common.AndroidUtils.getRes;
-import static com.github.k1rakishou.common.AndroidUtils.getString;
 import static com.github.k1rakishou.common.AndroidUtils.isAndroidP;
 
 public class AppModuleAndroidUtils {
@@ -257,6 +260,54 @@ public class AppModuleAndroidUtils {
         Drawable drawable = typedArray.getDrawable(0);
         typedArray.recycle();
         return drawable;
+    }
+
+    public static View inflate(Context context, int resId, ViewGroup root) {
+        return LayoutInflater.from(context).inflate(resId, root);
+    }
+
+    public static View inflate(Context context, int resId, ViewGroup root, boolean attachToRoot) {
+        return LayoutInflater.from(context).inflate(resId, root, attachToRoot);
+    }
+
+    public static ViewGroup inflate(Context context, int resId) {
+        return (ViewGroup) LayoutInflater.from(context).inflate(resId, null);
+    }
+
+    public static Resources getRes() {
+        return application.getResources();
+    }
+
+    public static int dp(float dp) {
+        return (int) (dp * getRes().getDisplayMetrics().density);
+    }
+
+    public static int sp(float sp) {
+        return (int) (sp * getRes().getDisplayMetrics().scaledDensity);
+    }
+
+    public static String getString(int res) {
+        try {
+            return getRes().getString(res);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    public static String getString(int res, Object... formatArgs) {
+        return getRes().getString(res, formatArgs);
+    }
+
+    public static String getQuantityString(int res, int quantity) {
+        return getRes().getQuantityString(res, quantity);
+    }
+
+    public static String getQuantityString(int res, int quantity, Object... formatArgs) {
+        return getRes().getQuantityString(res, quantity, formatArgs);
+    }
+
+    public static Drawable getDrawable(@DrawableRes int res) {
+        return ContextCompat.getDrawable(getAppContext(), res);
     }
 
     public static boolean isTablet() {

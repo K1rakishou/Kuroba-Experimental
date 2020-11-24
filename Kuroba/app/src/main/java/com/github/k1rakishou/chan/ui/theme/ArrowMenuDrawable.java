@@ -28,7 +28,7 @@ import android.text.TextUtils;
 
 import com.github.k1rakishou.chan.ui.helper.PinHelper;
 
-import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 
 public class ArrowMenuDrawable
         extends Drawable {

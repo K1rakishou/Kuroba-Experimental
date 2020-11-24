@@ -27,7 +27,18 @@ open class AppConstants(
       check(field.mkdir()) { "Failed to create attach files directory! attachFilesDir=${field.absolutePath}" }
       return field
     }
+
   val attachFilesMetaDir: File
+    get() {
+      if (field.exists()) {
+        return field
+      }
+
+      check(field.mkdir()) { "Failed to create attach files meta directory! attachFilesMetaDir=${field.absolutePath}" }
+      return field
+    }
+
+  val mediaPreviewsDir: File
     get() {
       if (field.exists()) {
         return field
@@ -61,6 +72,7 @@ open class AppConstants(
 
     attachFilesDir = File(context.filesDir, ATTACH_FILES_DIR_NAME)
     attachFilesMetaDir = File(context.filesDir, ATTACH_FILES_META_DIR_NAME)
+    mediaPreviewsDir = File(context.filesDir, MEDIA_PREVIEWS_DIR_NAME)
   }
 
   private fun calculatePostsCountForPostsCacheDependingOnDeviceRam(activityManager: ActivityManager?): Int {
@@ -95,6 +107,7 @@ open class AppConstants(
     private const val PROXIES_FILE_NAME = "kuroba_proxies.json"
     private const val ATTACH_FILES_DIR_NAME = "attach_files"
     private const val ATTACH_FILES_META_DIR_NAME = "attach_files_meta"
+    private const val MEDIA_PREVIEWS_DIR_NAME = "media_previews"
 
     const val RESOURCES_ENDPOINT = "https://raw.githubusercontent.com/K1rakishou/Kuroba-Experimental/release/docs/"
   }

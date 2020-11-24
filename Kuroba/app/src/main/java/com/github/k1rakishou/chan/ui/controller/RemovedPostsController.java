@@ -42,7 +42,7 @@ import okhttp3.HttpUrl;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.common.AndroidUtils.inflate;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 
 public class RemovedPostsController
         extends BaseFloatingController

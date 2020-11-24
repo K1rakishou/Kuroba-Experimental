@@ -55,8 +55,8 @@ import javax.inject.Inject;
 
 import coil.request.Disposable;
 
-import static com.github.k1rakishou.common.AndroidUtils.getString;
-import static com.github.k1rakishou.common.AndroidUtils.sp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp;
 
 public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
     private static final String TAG = "ThumbnailView";

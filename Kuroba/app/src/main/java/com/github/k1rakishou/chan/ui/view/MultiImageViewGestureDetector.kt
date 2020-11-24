@@ -4,7 +4,7 @@ import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.MotionEvent
 import android.view.View
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.common.AndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.google.android.exoplayer2.ui.PlayerView
 import pl.droidsonroids.gif.GifDrawable
 import pl.droidsonroids.gif.GifImageView

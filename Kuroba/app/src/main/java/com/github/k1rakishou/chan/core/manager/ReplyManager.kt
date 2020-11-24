@@ -53,7 +53,7 @@ class ReplyManager @Inject constructor(
     .create()
 
   private val drafts: MutableMap<ChanDescriptor, Reply> = HashMap()
-  private val replyFilesStorage by lazy { ReplyFilesStorage(gson = gson) }
+  private val replyFilesStorage by lazy { ReplyFilesStorage(gson, appConstants) }
 
   @OptIn(ExperimentalTime::class)
   suspend fun awaitUntilFilesAreLoaded() {
@@ -82,6 +82,12 @@ class ReplyManager @Inject constructor(
   fun deleteFile(fileUuid: UUID): ModularResult<Unit> {
     ensureFilesLoaded()
     return replyFilesStorage.deleteFile(fileUuid)
+  }
+
+  @Synchronized
+  fun deleteSelectedFiles(): ModularResult<Unit> {
+    ensureFilesLoaded()
+    return replyFilesStorage.deleteSelectedFiles()
   }
 
   @Synchronized
@@ -122,7 +128,8 @@ class ReplyManager @Inject constructor(
 
     val result = replyFilesStorage.reloadAllFilesFromDisk(
       appConstants.attachFilesDir,
-      appConstants.attachFilesMetaDir
+      appConstants.attachFilesMetaDir,
+      appConstants.mediaPreviewsDir
     )
 
     filesLoaded = true
@@ -168,6 +175,12 @@ class ReplyManager @Inject constructor(
   @Synchronized
   fun iterateFilesOrdered(iterator: (Int, ReplyFile) -> Unit) {
     replyFilesStorage.iterateFilesOrdered(iterator)
+  }
+
+  @Synchronized
+  fun getReplyFileByFileUuid(fileUuid: UUID): ModularResult<ReplyFile?> {
+    ensureFilesLoaded()
+    return replyFilesStorage.getReplyFileByFileUuid(fileUuid)
   }
 
   @Synchronized
@@ -234,7 +247,7 @@ class ReplyManager @Inject constructor(
   }
 
   @Synchronized
-  fun getAttachFile(uniqueFileName: UniqueFileName, originalFileName: String): ReplyFile? {
+  fun createNewEmptyAttachFile(uniqueFileName: UniqueFileName, originalFileName: String): ReplyFile? {
     val attachFile = File(
       appConstants.attachFilesDir,
       uniqueFileName.fullFileName
@@ -243,6 +256,11 @@ class ReplyManager @Inject constructor(
     val attachFileMeta = File(
       appConstants.attachFilesMetaDir,
       uniqueFileName.fullFileMetaName
+    )
+
+    val previewFile = File(
+      appConstants.mediaPreviewsDir,
+      uniqueFileName.previewFileName
     )
 
     try {
@@ -258,11 +276,18 @@ class ReplyManager @Inject constructor(
         }
       }
 
-      val replyFile = ReplyFile(gson, attachFile, attachFileMeta)
+      if (!previewFile.exists()) {
+        if (!previewFile.createNewFile()) {
+          throw IOException("Failed to create preview file: " + previewFile.absolutePath)
+        }
+      }
+
+      val replyFile = ReplyFile(gson, attachFile, attachFileMeta, previewFile)
 
       replyFile.storeFileMetaInfo(
         ReplyFileMeta(
           fileUuidStringNullable = uniqueFileName.fileUuid.toString(),
+          originalFileNameNullable = originalFileName,
           fileNameNullable = originalFileName,
           addedOnNullable = System.currentTimeMillis()
         )
@@ -270,7 +295,7 @@ class ReplyManager @Inject constructor(
 
       return replyFile
     } catch (error: Throwable) {
-      Logger.e(TAG, "Failed to get pick file ${uniqueFileName.fullFileName}", error)
+      Logger.e(TAG, "Failed to create new empty attach file ${uniqueFileName.fullFileName}", error)
 
       attachFile.delete()
       attachFileMeta.delete()
@@ -288,13 +313,14 @@ class ReplyManager @Inject constructor(
       val uuid = UUID.randomUUID()
       val fileName = getFileName(uuid.toString())
       val metaFileName = getMetaFileName(uuid.toString())
+      val previewFileName = getPreviewFileName(uuid.toString())
 
       val filesInDir = attachFilesDir.listFiles()
       val metaFilesInDir = attachFilesMetaDir.listFiles()
 
       if ((filesInDir == null || filesInDir.isEmpty())
         && (metaFilesInDir == null || metaFilesInDir.isEmpty())) {
-        return UniqueFileName(uuid, fileName, metaFileName)
+        return UniqueFileName(uuid, fileName, metaFileName, previewFileName)
       }
 
       val allFileNamesSet = filesInDir
@@ -315,7 +341,12 @@ class ReplyManager @Inject constructor(
         continue
       }
 
-      return UniqueFileName(uuid, fileName, metaFileName)
+      return UniqueFileName(
+        fileUuid = uuid,
+        fullFileName = fileName,
+        fullFileMetaName = metaFileName,
+        previewFileName = previewFileName
+      )
     }
   }
 
@@ -327,7 +358,8 @@ class ReplyManager @Inject constructor(
   data class UniqueFileName(
     val fileUuid: UUID,
     val fullFileName: String,
-    val fullFileMetaName: String
+    val fullFileMetaName: String,
+    val previewFileName: String
   )
 
   companion object {
@@ -336,9 +368,11 @@ class ReplyManager @Inject constructor(
 
     const val ATTACH_FILE_NAME = "attach_file"
     const val ATTACH_FILE_META_NAME = "attach_file_meta"
+    const val PREVIEW_FILE_NAME = "preview"
 
     fun getFileName(uuid: String) = "${ATTACH_FILE_NAME}_$uuid"
     fun getMetaFileName(uuid: String) = "${ATTACH_FILE_META_NAME}_$uuid"
+    fun getPreviewFileName(uuid: String) = "${PREVIEW_FILE_NAME}_$uuid"
 
     fun extractUuidOrNull(fileName: String): UUID? {
       val attachFileName = "${ATTACH_FILE_NAME}_"

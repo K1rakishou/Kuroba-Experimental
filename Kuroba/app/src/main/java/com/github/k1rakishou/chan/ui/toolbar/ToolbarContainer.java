@@ -59,7 +59,7 @@ import javax.inject.Inject;
 import static android.text.TextUtils.isEmpty;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.common.AndroidUtils.removeFromParentView;
 import static com.github.k1rakishou.common.AndroidUtils.updatePaddings;
 

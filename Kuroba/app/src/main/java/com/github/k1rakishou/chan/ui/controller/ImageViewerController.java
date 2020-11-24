@@ -89,15 +89,15 @@ import javax.inject.Inject;
 import static android.view.View.GONE;
 import static android.view.View.INVISIBLE;
 import static android.view.View.VISIBLE;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLinkInBrowser;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout;
-import static com.github.k1rakishou.common.AndroidUtils.dp;
-import static com.github.k1rakishou.common.AndroidUtils.getString;
 import static com.github.k1rakishou.common.AndroidUtils.getWindow;
-import static com.github.k1rakishou.common.AndroidUtils.inflate;
 
 public class ImageViewerController
         extends Controller

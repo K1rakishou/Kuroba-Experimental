@@ -51,8 +51,8 @@ import javax.inject.Inject;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen;
-import static com.github.k1rakishou.common.AndroidUtils.dp;
 import static com.github.k1rakishou.common.AndroidUtils.hideKeyboard;
 
 public class Toolbar

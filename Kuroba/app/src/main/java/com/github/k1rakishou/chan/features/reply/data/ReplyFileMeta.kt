@@ -23,6 +23,11 @@ data class ReplyFileMeta(
   var fileNameNullable: String?,
 
   @Since(1.0)
+  @SerializedName("original_file_name")
+  @Expose(serialize = true, deserialize = true)
+  val originalFileNameNullable: String?,
+
+  @Since(1.0)
   @SerializedName("spoiler")
   @Expose(serialize = true, deserialize = true)
   val spoiler: Boolean = false,
@@ -48,6 +53,8 @@ data class ReplyFileMeta(
     get() = fileUuidStringNullable!!
   val fileName: String
     get() = fileNameNullable!!
+  val originalFileName: String
+    get() = originalFileNameNullable!!
   val addedOn: Long
     get() = addedOnNullable!!
 
@@ -68,6 +75,7 @@ data class ReplyFileMeta(
     return metaVersion == CURRENT_REPLY_FILE_META_VERSION
       && fileUuidStringNullable != null
       && fileNameNullable != null
+      && originalFileNameNullable != null
       && addedOnNullable != null
       && fileTakenBy?.isValid() ?: true
   }

@@ -43,6 +43,7 @@ import com.github.k1rakishou.chan.core.net.update.ReleaseUpdateApiRequest
 import com.github.k1rakishou.chan.core.net.update.ReleaseUpdateApiRequest.ReleaseUpdateApiResponse
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getFlavorType
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isFdroidBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent
@@ -52,7 +53,6 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils.runOnMainThread
 import com.github.k1rakishou.common.AndroidUtils.FlavorType
 import com.github.k1rakishou.common.AndroidUtils.getAppFileProvider
 import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
-import com.github.k1rakishou.common.AndroidUtils.getString
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileChooser

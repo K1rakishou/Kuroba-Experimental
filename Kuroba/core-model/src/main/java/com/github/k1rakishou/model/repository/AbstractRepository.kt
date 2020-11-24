@@ -3,9 +3,9 @@ package com.github.k1rakishou.model.repository
 import androidx.room.withTransaction
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.util.errorMessageOrClassName
 
 abstract class AbstractRepository(
   private val database: KurobaDatabase

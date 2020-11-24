@@ -26,7 +26,7 @@ import com.github.k1rakishou.common.AndroidUtils;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 
 /**
  * The container view for the list of ToolbarMenuItems, a list of ImageViews.

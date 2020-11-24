@@ -51,11 +51,11 @@ import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLinkInBrowser
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink
-import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.AndroidUtils.getString
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
@@ -101,7 +101,7 @@ class BrowseController(
   override fun onCreate() {
     super.onCreate()
 
-    val navControllerContainerLayout = AndroidUtils.inflate(context, R.layout.controller_browse)
+    val navControllerContainerLayout = inflate(context, R.layout.controller_browse)
     val container = navControllerContainerLayout.findViewById<View>(R.id.container) as NavigationControllerContainerLayout
     container.initBrowseControllerTracker(this, navigationController!!)
     container.addView(view)

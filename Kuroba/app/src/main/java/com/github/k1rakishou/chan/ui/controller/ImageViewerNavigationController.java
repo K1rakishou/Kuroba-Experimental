@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static com.github.k1rakishou.common.AndroidUtils.inflate;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 
 public class ImageViewerNavigationController
         extends ToolbarNavigationController {

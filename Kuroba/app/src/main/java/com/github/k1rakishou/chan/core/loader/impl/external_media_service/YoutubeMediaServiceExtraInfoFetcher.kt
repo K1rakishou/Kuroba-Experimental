@@ -7,8 +7,8 @@ import com.github.k1rakishou.chan.core.loader.impl.post_comment.ExtraLinkInfo
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.LinkInfoRequest
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.SpanUpdateBatch
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getRes
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.model.data.media.GenericVideoId
@@ -97,6 +97,6 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
 
     private val youtubeLinkPattern =
       Pattern.compile("\\b\\w+://(?:youtu\\.be/|[\\w.]*youtube[\\w.]*/.*?(?:v=|\\bembed/|\\bv/))([\\w\\-]{11})(.*)\\b")
-    private val youtubeIcon = BitmapFactory.decodeResource(AndroidUtils.getRes(), R.drawable.youtube_icon)
+    private val youtubeIcon = BitmapFactory.decodeResource(getRes(), R.drawable.youtube_icon)
   }
 }

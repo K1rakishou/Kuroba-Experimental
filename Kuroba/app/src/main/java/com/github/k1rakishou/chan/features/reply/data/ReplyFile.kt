@@ -11,7 +11,8 @@ import java.io.IOException
 class ReplyFile(
   private val gson: Gson,
   val fileOnDisk: File,
-  val fileMetaOnDisk: File
+  val fileMetaOnDisk: File,
+  val previewFileOnDisk: File
 ) {
   private var replyFileMeta: ReplyFileMeta? = null
 
@@ -132,6 +133,10 @@ class ReplyFile(
 
     if (!fileMetaOnDisk.delete()) {
       Logger.e("ReplyFile", "Failed to delete: ${fileMetaOnDisk.absolutePath}")
+    }
+
+    if (!previewFileOnDisk.delete()) {
+      Logger.e("ReplyFile", "Failed to delete: ${previewFileOnDisk.absolutePath}")
     }
   }
 

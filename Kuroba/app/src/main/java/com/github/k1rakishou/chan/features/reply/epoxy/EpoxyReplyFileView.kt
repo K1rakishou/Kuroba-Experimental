@@ -18,7 +18,6 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.ui.view.SelectionCheckView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
-import java.io.File
 import java.util.*
 import javax.inject.Inject
 
@@ -34,7 +33,6 @@ class EpoxyReplyFileView @JvmOverloads constructor(
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
 
-  private var attachmentFilePath: String? = null
   private var attachmentFileUuid: UUID? = null
   private var exceedsMaxFilesPerPostLimit = false
 
@@ -73,7 +71,6 @@ class EpoxyReplyFileView @JvmOverloads constructor(
 
   @OnViewRecycled
   fun onRecycled() {
-    attachmentFilePath = null
     attachmentFileUuid = null
     replyAttachmentImageView.setImageBitmap(null)
   }
@@ -82,23 +79,21 @@ class EpoxyReplyFileView @JvmOverloads constructor(
   fun afterPropsSet() {
     replyAttachmentImageView.setImageBitmap(null)
 
-    val filePath = attachmentFilePath
-    if (filePath == null) {
+    val fileUuid = attachmentFileUuid
+    if (fileUuid == null) {
       return
     }
 
     replyAttachmentImageView.doOnLayout {
-      val file = File(filePath)
-
       val transformations = if (exceedsMaxFilesPerPostLimit) {
         listOf(GRAYSCALE)
       } else {
         emptyList()
       }
 
-      imageLoaderV2.loadFromDisk(
+      imageLoaderV2.loadRelyFilePreviewFromDisk(
         context = context,
-        file = file,
+        fileUuid = fileUuid,
         width = replyAttachmentImageView.width,
         height = replyAttachmentImageView.height,
         scale = Scale.FILL,
@@ -107,12 +102,6 @@ class EpoxyReplyFileView @JvmOverloads constructor(
         replyAttachmentImageView.setImageBitmap(bitmapDrawable.bitmap)
       }
     }
-  }
-
-  @ModelProp
-  fun attachmentFilePath(filePath: String) {
-    this.attachmentFilePath = filePath
-    replyAttachmentImageView.setImageBitmap(null)
   }
 
   @ModelProp

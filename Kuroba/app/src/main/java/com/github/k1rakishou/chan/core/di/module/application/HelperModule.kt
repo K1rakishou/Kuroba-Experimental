@@ -1,9 +1,10 @@
 package com.github.k1rakishou.chan.core.di.module.application
 
+import android.content.Context
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
-import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.helper.FilterEngine
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
@@ -79,18 +80,20 @@ class HelperModule {
   @Provides
   @Singleton
   fun provideImagePickHelper(
+    appContext: Context,
+    appConstants: AppConstants,
     replyManager: ReplyManager,
-    fileManager: FileManager,
-    fileCache: FileCacheV2,
+    imageLoaderV2: ImageLoaderV2,
     localFilePicker: LocalFilePicker,
     remoteFilePicker: RemoteFilePicker
   ): ImagePickHelper {
     Logger.d(AppModule.DI_TAG, "ImagePickHelper")
 
     return ImagePickHelper(
+      appContext,
+      appConstants,
       replyManager,
-      fileManager,
-      fileCache,
+      imageLoaderV2,
       localFilePicker,
       remoteFilePicker
     )

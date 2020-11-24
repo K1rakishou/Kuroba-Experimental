@@ -20,7 +20,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.FrameLayout;
 
-import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 
 public class PopupControllerContainer
         extends FrameLayout {

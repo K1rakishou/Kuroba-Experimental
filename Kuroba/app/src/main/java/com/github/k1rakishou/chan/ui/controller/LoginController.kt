@@ -35,6 +35,8 @@ import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.view.CrossfadeView
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -65,7 +67,7 @@ class LoginController(
     super.onCreate()
     navigation.setTitle(R.string.settings_screen_pass)
     
-    view = AndroidUtils.inflate(context, R.layout.controller_pass).also { view ->
+    view = inflate(context, R.layout.controller_pass).also { view ->
       crossfadeView = view.findViewById(R.id.crossfade)
       errors = view.findViewById(R.id.errors)
       button = view.findViewById(R.id.button)
@@ -143,7 +145,7 @@ class LoginController(
 
   private fun showBottomDescription() {
     if (site is Chan4) {
-      bottomDescription.text = AndroidUtils.getString(R.string.setting_pass_bottom_description).parseAsHtml()
+      bottomDescription.text = getString(R.string.setting_pass_bottom_description).parseAsHtml()
       bottomDescription.movementMethod = LinkMovementMethod.getInstance()
       return
     }
@@ -223,7 +225,7 @@ class LoginController(
   }
   
   private fun authFail(errorMessage: String?) {
-    val message = errorMessage ?: AndroidUtils.getString(R.string.setting_pass_error)
+    val message = errorMessage ?: getString(R.string.setting_pass_error)
     
     showError(message)
     button.setText(R.string.setting_pass_login)

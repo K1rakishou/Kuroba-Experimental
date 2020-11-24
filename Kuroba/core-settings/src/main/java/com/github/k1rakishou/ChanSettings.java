@@ -35,7 +35,6 @@ import java.io.IOException;
 import kotlin.Lazy;
 import kotlin.LazyKt;
 
-import static com.github.k1rakishou.common.AndroidUtils.dp;
 import static com.github.k1rakishou.common.AndroidUtils.getAppDir;
 import static com.github.k1rakishou.common.AndroidUtils.getPreferences;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -44,7 +43,6 @@ public class ChanSettings {
     private static final String TAG = "ChanSettings";
     public static final String EMPTY_JSON = "{}";
     public static final String NO_HASH_SET = "NO_HASH_SET";
-    public static final int HI_RES_THUMBNAIL_SIZE = dp(160);
 
     private static ChanSettingsInfo chanSettingsInfo;
     private static Lazy<String> sharedPrefsFile = LazyKt.lazy(() -> {

@@ -62,6 +62,7 @@ import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.PostStubCell
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
+import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.ThreadController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
@@ -70,10 +71,12 @@ import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
 import com.github.k1rakishou.chan.ui.view.PostInfoMapItemDecoration
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.AndroidUtils.dp
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -788,9 +791,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     if (query != null) {
       val size = displayingPostDescriptors.size
-      searchStatus.text = AndroidUtils.getString(
+      searchStatus.text = getString(
         R.string.search_results,
-        AndroidUtils.getQuantityString(R.plurals.posts, size, size),
+        getQuantityString(R.plurals.posts, size, size),
         query
       )
     }
@@ -1076,6 +1079,20 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     threadListLayoutCallback?.presentController(controller)
   }
 
+  override fun showLoadingView() {
+    val loadingViewController = LoadingViewController(
+      context,
+      true,
+      context.getString(R.string.decoding_reply_file_preview)
+    )
+
+    threadListLayoutCallback?.presentController(loadingViewController)
+  }
+
+  override fun hideLoadingView() {
+    threadListLayoutCallback?.unpresentController { controller -> controller is LoadingViewController }
+  }
+
   private fun setRecyclerViewPadding() {
     val defaultPadding = if (postViewMode == PostViewMode.CARD) {
       dp(1f)
@@ -1177,6 +1194,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     fun threadBackPressed(): Boolean
     fun threadBackLongPressed()
     fun presentController(controller: Controller)
+    fun unpresentController(predicate: (Controller) -> Boolean)
   }
 
   companion object {

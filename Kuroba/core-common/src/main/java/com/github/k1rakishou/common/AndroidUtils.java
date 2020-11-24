@@ -26,22 +26,17 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.graphics.Point;
-import android.graphics.drawable.Drawable;
 import android.media.AudioManager;
 import android.os.Build;
 import android.util.TypedValue;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 
-import androidx.annotation.DrawableRes;
 import androidx.core.app.NotificationManagerCompat;
-import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 
 import java.io.File;
@@ -73,44 +68,8 @@ public class AndroidUtils {
         return application.getFilesDir().getParentFile();
     }
 
-    public static Resources getRes() {
-        return application.getResources();
-    }
-
     public static Context getAppContext() {
         return application;
-    }
-
-    public static int dp(float dp) {
-        return (int) (dp * getRes().getDisplayMetrics().density);
-    }
-
-    public static int sp(float sp) {
-        return (int) (sp * getRes().getDisplayMetrics().scaledDensity);
-    }
-
-    public static String getString(int res) {
-        try {
-            return getRes().getString(res);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    public static String getString(int res, Object... formatArgs) {
-        return getRes().getString(res, formatArgs);
-    }
-
-    public static String getQuantityString(int res, int quantity) {
-        return getRes().getQuantityString(res, quantity);
-    }
-
-    public static String getQuantityString(int res, int quantity, Object... formatArgs) {
-        return getRes().getQuantityString(res, quantity, formatArgs);
-    }
-
-    public static Drawable getDrawable(@DrawableRes int res) {
-        return ContextCompat.getDrawable(getAppContext(), res);
     }
 
     public static CharSequence getApplicationLabel() {
@@ -287,18 +246,6 @@ public class AndroidUtils {
 
     public static AudioManager getAudioManager() {
         return (AudioManager) getAppContext().getSystemService(AUDIO_SERVICE);
-    }
-
-    public static View inflate(Context context, int resId, ViewGroup root) {
-        return LayoutInflater.from(context).inflate(resId, root);
-    }
-
-    public static View inflate(Context context, int resId, ViewGroup root, boolean attachToRoot) {
-        return LayoutInflater.from(context).inflate(resId, root, attachToRoot);
-    }
-
-    public static ViewGroup inflate(Context context, int resId) {
-        return (ViewGroup) LayoutInflater.from(context).inflate(resId, null);
     }
 
     public static boolean isAndroid10() {

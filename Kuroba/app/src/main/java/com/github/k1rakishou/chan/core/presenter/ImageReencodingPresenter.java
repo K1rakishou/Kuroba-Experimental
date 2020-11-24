@@ -41,8 +41,8 @@ import javax.inject.Inject;
 
 import static com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter.ReencodeType.AS_IS;
 import static com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter.ReencodeType.AS_JPEG;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
-import static com.github.k1rakishou.common.AndroidUtils.getString;
 
 public class ImageReencodingPresenter {
     private final static String TAG = "ImageReencodingPresenter";

@@ -6,7 +6,7 @@ import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.features.proxies.data.ProxyEntryView
 import com.github.k1rakishou.chan.features.proxies.data.ProxyEntryViewSelection
 import com.github.k1rakishou.chan.features.proxies.data.ProxySetupState
-import com.github.k1rakishou.common.AndroidUtils.getString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.Dispatchers

@@ -67,8 +67,10 @@ class ReplyLayoutFilesAreaPresenter(
           ?: return@handleStateUpdate
 
         val input = LocalFilePicker.LocalFilePickerInput(chanDescriptor)
+        withView { showLoadingView() }
 
         val pickedFileResult = imagePickHelper.pickLocalFile(input)
+          .finally { withView { hideLoadingView() } }
           .safeUnwrap { error ->
             Logger.e(TAG, "imagePickHelper.pickLocalFile($chanDescriptor) error", error)
             return@handleStateUpdate
@@ -102,6 +104,7 @@ class ReplyLayoutFilesAreaPresenter(
   }
 
   fun hasSelectedFiles(): Boolean = replyManager.hasSelectedFiles().unwrap()
+  fun selectedFilesCount(): Int = replyManager.selectedFilesCount().unwrap()
 
   fun clearSelection() {
     fileChangeExecutor.post {
@@ -136,6 +139,20 @@ class ReplyLayoutFilesAreaPresenter(
         replyManager.deleteFile(fileUuid)
           .safeUnwrap { error ->
             Logger.e(TAG, "deleteFile($fileUuid) error", error)
+            return@handleStateUpdate
+          }
+
+        refreshAttachedFiles()
+      }
+    }
+  }
+
+  fun deleteSelectedFiles() {
+    fileChangeExecutor.post {
+      handleStateUpdate {
+        replyManager.deleteSelectedFiles()
+          .safeUnwrap { error ->
+            Logger.e(TAG, "deleteSelectedFiles() error", error)
             return@handleStateUpdate
           }
 
@@ -215,7 +232,6 @@ class ReplyLayoutFilesAreaPresenter(
         return@mapOrderedNotNull ReplyFileAttachable(
           fileUuid = meta.fileUuid,
           fileName = meta.fileName,
-          fullPath = replyFile.fileOnDisk.absolutePath,
           spoiler = meta.spoiler,
           selected = isSelected,
           exceedsMaxFilesLimit = when {

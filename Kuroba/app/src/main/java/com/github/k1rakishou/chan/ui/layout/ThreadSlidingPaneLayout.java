@@ -30,8 +30,8 @@ import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import javax.inject.Inject;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout;
-import static com.github.k1rakishou.common.AndroidUtils.dp;
 
 public class ThreadSlidingPaneLayout extends SlidingPaneLayoutEx implements IColorizableWidget {
 

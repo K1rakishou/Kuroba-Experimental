@@ -55,7 +55,7 @@ import java.util.regex.Pattern;
 
 import kotlin.text.StringsKt;
 
-import static com.github.k1rakishou.common.AndroidUtils.sp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp;
 import static com.github.k1rakishou.core_themes.ThemeEngine.getComplementaryColor;
 
 public class DefaultPostParser implements PostParser {

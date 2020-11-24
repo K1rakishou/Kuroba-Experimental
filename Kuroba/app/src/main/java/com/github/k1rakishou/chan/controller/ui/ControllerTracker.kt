@@ -5,7 +5,7 @@ import android.view.MotionEvent
 import android.view.VelocityTracker
 import android.view.ViewConfiguration
 import android.view.ViewParent
-import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 
 abstract class ControllerTracker(
   protected val context: Context
@@ -25,7 +25,7 @@ abstract class ControllerTracker(
    * (The lower it is the easier it is to start moving the controller which may make it harder
    * to click other views)
    */
-  protected var minimalMovedPixels = AndroidUtils.dp(10f)
+  protected var minimalMovedPixels = dp(10f)
 
   // Is the top controller being tracked and moved
   protected var tracking = false

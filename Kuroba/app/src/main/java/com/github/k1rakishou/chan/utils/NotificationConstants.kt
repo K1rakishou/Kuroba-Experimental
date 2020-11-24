@@ -1,8 +1,8 @@
 package com.github.k1rakishou.chan.utils
 
 import com.github.k1rakishou.chan.BuildConfig
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getFlavorType
-import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -11,7 +11,7 @@ object NotificationConstants {
   // Android limitations
   const val MAX_VISIBLE_NOTIFICATIONS = 20
 
-  val NOTIFICATION_THUMBNAIL_SIZE = AndroidUtils.dp(96f)
+  val NOTIFICATION_THUMBNAIL_SIZE = dp(96f)
 
   const val REPLIES_SUMMARY_NOTIFICATION_ID = 0
   const val REPLIES_PRE_OREO_NOTIFICATION_ID = 1

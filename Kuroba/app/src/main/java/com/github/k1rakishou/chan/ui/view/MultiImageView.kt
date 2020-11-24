@@ -64,6 +64,8 @@ import com.github.k1rakishou.chan.ui.controller.ImageViewerController
 import com.github.k1rakishou.chan.ui.view.MultiImageViewGestureDetector.MultiImageViewGestureDetectorCallbacks
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getRes
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForMeasure
@@ -728,7 +730,7 @@ class MultiImageView @JvmOverloads constructor(
       exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
       exoVideoView.useArtwork = true
       exoVideoView.defaultArtwork = ResourcesCompat.getDrawable(
-        AndroidUtils.getRes(),
+        getRes(),
         R.drawable.ic_volume_up_white_24dp,
         null
       )
@@ -780,7 +782,7 @@ class MultiImageView @JvmOverloads constructor(
               exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
               exoVideoView.useArtwork = true
               exoVideoView.defaultArtwork = ResourcesCompat.getDrawable(
-                AndroidUtils.getRes(),
+                getRes(),
                 R.drawable.ic_volume_up_white_24dp,
                 null
               )
@@ -1129,7 +1131,7 @@ class MultiImageView @JvmOverloads constructor(
   private fun onError(exception: Throwable) {
     val message = String.format(Locale.ENGLISH,
       "%s: %s",
-      AndroidUtils.getString(R.string.image_preview_failed),
+      getString(R.string.image_preview_failed),
       exception.message
     )
 

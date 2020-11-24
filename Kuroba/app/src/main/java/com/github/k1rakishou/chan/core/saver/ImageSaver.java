@@ -68,8 +68,8 @@ import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledImageSaveR
 import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledImageSaveResult.NoWriteExternalStoragePermission;
 import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledImageSaveResult.Ok;
 import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledImageSaveResult.UnknownError;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
-import static com.github.k1rakishou.common.AndroidUtils.getString;
 
 public class ImageSaver {
     private static final String TAG = "ImageSaver";

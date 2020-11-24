@@ -42,10 +42,10 @@ import com.google.android.material.textview.MaterialTextView;
 import javax.inject.Inject;
 
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 import static com.github.k1rakishou.chan.utils.BackgroundUtils.runOnMainThread;
-import static com.github.k1rakishou.common.AndroidUtils.dp;
-import static com.github.k1rakishou.common.AndroidUtils.getString;
-import static com.github.k1rakishou.common.AndroidUtils.inflate;
 
 public class HintPopup {
     private static final TimeInterpolator WIGGLER

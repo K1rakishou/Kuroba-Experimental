@@ -29,7 +29,7 @@ import com.github.k1rakishou.chan.ui.controller.PopupController;
 
 import org.jetbrains.annotations.NotNull;
 
-import static com.github.k1rakishou.common.AndroidUtils.inflate;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 
 public class StyledToolbarNavigationController extends ToolbarNavigationController {
 

@@ -22,7 +22,7 @@ import com.google.android.material.slider.Slider;
 
 import org.jetbrains.annotations.NotNull;
 
-import static com.github.k1rakishou.common.AndroidUtils.getString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 
 public class ImageReencodeOptionsController
         extends BaseFloatingController

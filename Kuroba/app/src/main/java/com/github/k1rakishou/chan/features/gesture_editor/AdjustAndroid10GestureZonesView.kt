@@ -12,7 +12,7 @@ import android.widget.FrameLayout
 import androidx.annotation.RequiresApi
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.common.AndroidUtils.getRes
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getRes
 import javax.inject.Inject
 
 @RequiresApi(Build.VERSION_CODES.Q)

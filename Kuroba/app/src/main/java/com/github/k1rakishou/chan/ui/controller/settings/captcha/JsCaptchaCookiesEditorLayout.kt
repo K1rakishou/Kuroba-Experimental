@@ -9,8 +9,8 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
-import com.github.k1rakishou.common.AndroidUtils.getString
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.gson.Gson
 import javax.inject.Inject

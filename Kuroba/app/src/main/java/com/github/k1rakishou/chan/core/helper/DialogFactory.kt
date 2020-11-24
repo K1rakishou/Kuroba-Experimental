@@ -16,9 +16,9 @@ import androidx.appcompat.app.AlertDialog
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.ViewUtils.changeProgressColor
-import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.AndroidUtils.getString
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.core_themes.ThemeEngine
 
@@ -154,7 +154,7 @@ class DialogFactory(
     }
 
     val container = LinearLayout(context)
-    container.setPadding(AndroidUtils.dp(24f), AndroidUtils.dp(8f), AndroidUtils.dp(24f), 0)
+    container.setPadding(dp(24f), dp(8f), dp(24f), 0)
 
     val editText = ColorizableEditText(context)
     editText.imeOptions = EditorInfo.IME_FLAG_NO_FULLSCREEN

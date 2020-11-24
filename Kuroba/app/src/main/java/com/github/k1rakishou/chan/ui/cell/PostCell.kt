@@ -71,9 +71,14 @@ import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getRes
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent
-import com.github.k1rakishou.chan.utils.BitmapUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
+import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.chan.utils.ViewUtils.setEditTextCursorColor
 import com.github.k1rakishou.chan.utils.ViewUtils.setHandlesColors
 import com.github.k1rakishou.chan.utils.setAlphaFast
@@ -183,14 +188,14 @@ class PostCell : LinearLayout, PostCellInterface {
     options = findViewById(R.id.options)
     divider = findViewById(R.id.divider)
     postAttentionLabel = findViewById(R.id.post_attention_label)
-    paddingPx = AndroidUtils.dp(textSizeSp - 6.toFloat())
-    detailsSizePx = AndroidUtils.sp(textSizeSp - 4.toFloat())
+    paddingPx = dp(textSizeSp - 6.toFloat())
+    detailsSizePx = sp(textSizeSp - 4.toFloat())
     title.textSize = textSizeSp.toFloat()
-    title.setPadding(paddingPx, paddingPx, AndroidUtils.dp(16f), 0)
-    iconSizePx = AndroidUtils.sp(textSizeSp - 3.toFloat())
-    icons.height = AndroidUtils.sp(textSizeSp.toFloat())
-    icons.setSpacing(AndroidUtils.dp(4f))
-    icons.setPadding(paddingPx, AndroidUtils.dp(4f), paddingPx, 0)
+    title.setPadding(paddingPx, paddingPx, dp(16f), 0)
+    iconSizePx = sp(textSizeSp - 3.toFloat())
+    icons.height = sp(textSizeSp.toFloat())
+    icons.setSpacing(dp(4f))
+    icons.setPadding(paddingPx, dp(4f), paddingPx, 0)
 
     comment.textSize = textSizeSp.toFloat()
     comment.setPadding(paddingPx, paddingPx, paddingPx, 0)
@@ -594,9 +599,9 @@ class PostCell : LinearLayout, PostCellInterface {
 
     if (image.spoiler) {
       if (image.hidden) {
-        stringBuilder.append(AndroidUtils.getString(R.string.image_hidden_filename))
+        stringBuilder.append(getString(R.string.image_hidden_filename))
       } else {
-        stringBuilder.append(AndroidUtils.getString(R.string.image_spoiler_filename))
+        stringBuilder.append(getString(R.string.image_spoiler_filename))
       }
     } else {
       stringBuilder.append(image.filename)
@@ -666,10 +671,10 @@ class PostCell : LinearLayout, PostCellInterface {
       post.catalogRepliesCount
     }
 
-    var text = AndroidUtils.getQuantityString(R.plurals.reply, replyCount, replyCount)
+    var text = getQuantityString(R.plurals.reply, replyCount, replyCount)
 
     if (!threadMode && post.catalogImagesCount > 0) {
-      text += ", " + AndroidUtils.getQuantityString(R.plurals.image, post.catalogImagesCount, post.catalogImagesCount)
+      text += ", " + getQuantityString(R.plurals.image, post.catalogImagesCount, post.catalogImagesCount)
     }
 
     if (callback != null && !ChanSettings.neverShowPages.get()) {
@@ -1373,26 +1378,26 @@ class PostCell : LinearLayout, PostCellInterface {
     private const val TAG = "PostCell"
     private const val COMMENT_MAX_LENGTH_BOARD = 350
 
-    private val stickyIcon = BitmapUtils.bitmapToDrawable(
-      BitmapFactory.decodeResource(AndroidUtils.getRes(), R.drawable.sticky_icon)
+    private val stickyIcon = MediaUtils.bitmapToDrawable(
+      BitmapFactory.decodeResource(getRes(), R.drawable.sticky_icon)
     )
-    private val closedIcon = BitmapUtils.bitmapToDrawable(
-      BitmapFactory.decodeResource(AndroidUtils.getRes(), R.drawable.closed_icon)
+    private val closedIcon = MediaUtils.bitmapToDrawable(
+      BitmapFactory.decodeResource(getRes(), R.drawable.closed_icon)
     )
-    private val trashIcon = BitmapUtils.bitmapToDrawable(
-      BitmapFactory.decodeResource(AndroidUtils.getRes(), R.drawable.trash_icon)
+    private val trashIcon = MediaUtils.bitmapToDrawable(
+      BitmapFactory.decodeResource(getRes(), R.drawable.trash_icon)
     )
-    private val archivedIcon = BitmapUtils.bitmapToDrawable(
-      BitmapFactory.decodeResource(AndroidUtils.getRes(), R.drawable.archived_icon)
+    private val archivedIcon = MediaUtils.bitmapToDrawable(
+      BitmapFactory.decodeResource(getRes(), R.drawable.archived_icon)
     )
-    private val errorIcon = BitmapUtils.bitmapToDrawable(
-      BitmapFactory.decodeResource(AndroidUtils.getRes(), R.drawable.error_icon)
+    private val errorIcon = MediaUtils.bitmapToDrawable(
+      BitmapFactory.decodeResource(getRes(), R.drawable.error_icon)
     )
 
     private val CELL_POST_THUMBNAIL_SIZE = getDimen(R.dimen.cell_post_thumbnail_size)
-    private val THUMBNAIL_ROUNDING = AndroidUtils.dp(2f)
-    private val THUMBNAIL_BOTTOM_MARGIN = AndroidUtils.dp(5f)
-    private val THUMBNAIL_TOP_MARGIN = AndroidUtils.dp(4f)
-    private val THUMBNAIL_LEFT_MARGIN = AndroidUtils.dp(4f)
+    private val THUMBNAIL_ROUNDING = dp(2f)
+    private val THUMBNAIL_BOTTOM_MARGIN = dp(5f)
+    private val THUMBNAIL_TOP_MARGIN = dp(4f)
+    private val THUMBNAIL_LEFT_MARGIN = dp(4f)
   }
 }

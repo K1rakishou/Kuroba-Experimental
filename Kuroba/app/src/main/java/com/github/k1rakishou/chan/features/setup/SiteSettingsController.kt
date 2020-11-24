@@ -18,7 +18,7 @@ import com.github.k1rakishou.chan.features.settings.setting.SettingV2
 import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
-import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -52,7 +52,7 @@ class SiteSettingsController(
     super.onCreate()
     navigation.title = context.getString(R.string.controller_site_settings_title, siteDescriptor.siteName)
 
-    view = AndroidUtils.inflate(context, R.layout.controller_site_settings)
+    view = inflate(context, R.layout.controller_site_settings)
     recyclerView = view.findViewById(R.id.epoxy_recycler_view)
 
     presenter.onCreate(this)

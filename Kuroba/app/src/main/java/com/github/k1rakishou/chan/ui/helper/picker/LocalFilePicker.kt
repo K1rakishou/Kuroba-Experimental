@@ -10,10 +10,10 @@ import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.IOUtils
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.AndroidUtils.getString
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -25,25 +25,29 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.FileInputStream
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 class LocalFilePicker(
-  scope: CoroutineScope,
+  private val appScope: CoroutineScope,
   private val appConstants: AppConstants,
   private val replyManager: ReplyManager,
   private val fileManager: FileManager
 ) : IFilePicker<LocalFilePicker.LocalFilePickerInput> {
-  private val activeRequests = mutableMapOf<Int, EnqueuedRequest>()
-  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(scope)
+  private val activeRequests = ConcurrentHashMap<Int, EnqueuedRequest>()
+  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
   private val requestCodeCounter = AtomicInteger(0)
-  private var activity: StartActivity? = null
+  private val activityRef = AtomicReference<StartActivity>(null)
 
   fun onActivityCreated(activity: StartActivity) {
     BackgroundUtils.ensureMainThread()
-    this.activity = activity
+    activityRef.set(activity)
   }
 
   fun onActivityDestroyed() {
@@ -53,13 +57,13 @@ class LocalFilePicker(
     activeRequests.values.forEach { enqueuedRequest -> enqueuedRequest.completableDeferred.cancel() }
     activeRequests.clear()
 
-    this.activity = null
+    activityRef.set(null)
   }
 
   override suspend fun pickFile(filePickerInput: LocalFilePickerInput): ModularResult<PickedFile> {
     BackgroundUtils.ensureMainThread()
 
-    val attachedActivity = activity
+    val attachedActivity = activityRef.get()
     if (attachedActivity == null) {
       return error(IFilePicker.FilePickerError.ActivityIsNotSet())
     }
@@ -98,21 +102,25 @@ class LocalFilePicker(
     BackgroundUtils.ensureMainThread()
 
     serializedCoroutineExecutor.post {
-      try {
-        onActivityResultInternal(requestCode, resultCode, data)
-      } catch (error: Throwable) {
-        finishWithError(requestCode, IFilePicker.FilePickerError.UnknownError(error))
+      withContext(Dispatchers.IO) {
+        try {
+          onActivityResultInternal(requestCode, resultCode, data)
+        } catch (error: Throwable) {
+          finishWithError(requestCode, IFilePicker.FilePickerError.UnknownError(error))
+        }
       }
     }
   }
 
   private fun onActivityResultInternal(requestCode: Int, resultCode: Int, data: Intent?) {
+    BackgroundUtils.ensureBackgroundThread()
+
     val enqueuedRequest = activeRequests[requestCode]
     if (enqueuedRequest == null) {
       return
     }
 
-    val attachedActivity = activity
+    val attachedActivity = activityRef.get()
     if (attachedActivity == null) {
       return finishWithError(requestCode, IFilePicker.FilePickerError.ActivityIsNotSet())
     }
@@ -167,7 +175,7 @@ class LocalFilePicker(
 
       val uniqueFileName = replyManager.generateUniqueFileName(appConstants)
 
-      val replyFile = replyManager.getAttachFile(uniqueFileName, originalFileName)
+      val replyFile = replyManager.createNewEmptyAttachFile(uniqueFileName, originalFileName)
       if (replyFile == null) {
         return@Try PickedFile.Failure(IFilePicker.FilePickerError.FailedToGetAttachFile())
       }

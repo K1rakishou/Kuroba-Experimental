@@ -53,7 +53,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.github.k1rakishou.chan.core.site.parser.style.StyleRule.tagRule;
-import static com.github.k1rakishou.common.AndroidUtils.sp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp;
 
 @AnyThread
 public class CommentParser implements ICommentParser, HasQuotePatterns {

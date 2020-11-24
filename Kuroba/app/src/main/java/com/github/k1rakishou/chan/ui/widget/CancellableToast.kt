@@ -2,8 +2,8 @@ package com.github.k1rakishou.chan.ui.widget
 
 import android.content.Context
 import android.widget.Toast
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.common.AndroidUtils.getString
 
 class CancellableToast {
   private var toast: Toast? = null

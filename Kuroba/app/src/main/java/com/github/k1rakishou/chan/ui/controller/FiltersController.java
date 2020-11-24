@@ -65,11 +65,11 @@ import kotlin.Unit;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.postToEventBus;
-import static com.github.k1rakishou.common.AndroidUtils.getQuantityString;
-import static com.github.k1rakishou.common.AndroidUtils.getString;
-import static com.github.k1rakishou.common.AndroidUtils.inflate;
 
 public class FiltersController
         extends Controller

@@ -29,8 +29,8 @@ import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen;
-import static com.github.k1rakishou.common.AndroidUtils.dp;
 import static com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize;
 
 public class AlbumViewCell
@@ -67,8 +67,8 @@ public class AlbumViewCell
         thumbnailView.overrideShowPrefetchLoadingIndicator(false);
         thumbnailView.bindPostImage(
                 postImage,
-                ChanSettings.highResCells.get() ? ChanSettings.HI_RES_THUMBNAIL_SIZE : thumbnailSize,
-                ChanSettings.highResCells.get() ? ChanSettings.HI_RES_THUMBNAIL_SIZE : thumbnailSize
+                ChanSettings.highResCells.get() ? CardPostCell.HI_RES_THUMBNAIL_SIZE : thumbnailSize,
+                ChanSettings.highResCells.get() ? CardPostCell.HI_RES_THUMBNAIL_SIZE : thumbnailSize
         );
 
         String details = postImage.getExtension().toUpperCase()

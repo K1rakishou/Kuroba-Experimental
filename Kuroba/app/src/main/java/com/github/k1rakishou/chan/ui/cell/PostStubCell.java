@@ -45,7 +45,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 
 public class PostStubCell
         extends RelativeLayout

@@ -30,7 +30,6 @@ import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchState;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
-import com.github.k1rakishou.common.AndroidUtils;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 import com.github.k1rakishou.model.data.post.ChanPostImageType;
@@ -40,7 +39,8 @@ import javax.inject.Inject;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 
-import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDrawable;
 
 public class PostImageThumbnailView extends ThumbnailView {
     private static final String TAG = "PostImageThumbnailView";
@@ -78,7 +78,7 @@ public class PostImageThumbnailView extends ThumbnailView {
         AppModuleAndroidUtils.extractStartActivityComponent(getContext())
                 .inject(this);
 
-        this.playIcon = AndroidUtils.getDrawable(R.drawable.ic_play_circle_outline_white_24dp);
+        this.playIcon = getDrawable(R.drawable.ic_play_circle_outline_white_24dp);
         this.showPrefetchLoadingIndicator = ChanSettings.autoLoadThreadImages.get()
                 && ChanSettings.showPrefetchLoadingIndicator.get();
 

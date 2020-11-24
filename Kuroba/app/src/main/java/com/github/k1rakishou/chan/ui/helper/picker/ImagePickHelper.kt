@@ -1,21 +1,26 @@
 package com.github.k1rakishou.chan.ui.helper.picker
 
+import android.content.Context
 import android.content.Intent
+import coil.size.Scale
 import com.github.k1rakishou.chan.StartActivity
-import com.github.k1rakishou.chan.core.cache.FileCacheV2
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.ReplyManager
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.fsaf.FileManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.withContext
 import java.util.*
 
 class ImagePickHelper(
+  private val appContext: Context,
+  private val appConstants: AppConstants,
   private val replyManager: ReplyManager,
-  private val fileManager: FileManager,
-  private val fileCacheV2: FileCacheV2,
+  private val imageLoaderV2: ImageLoaderV2,
   private val localFilePicker: LocalFilePicker,
   private val remoteFilePicker: RemoteFilePicker
 ) {
@@ -62,6 +67,16 @@ class ImagePickHelper(
       return ModularResult.value(pickedFileFailure)
     }
 
+    withContext(Dispatchers.IO) {
+      imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
+        appContext,
+        replyFileMeta.fileUuid,
+        MAX_PREVIEW_WIDTH,
+        MAX_PREVIEW_HEIGHT,
+        Scale.FILL
+      )
+    }
+
     Logger.d(TAG, "pickLocalFile() success! Picked new file with UUID='${replyFileMeta.fileUuid}'")
     pickedFilesUpdatesState.emit(replyFileMeta.fileUuid)
 
@@ -87,6 +102,9 @@ class ImagePickHelper(
 
   companion object {
     private const val TAG = "ImagePickHelper"
+
+    private const val MAX_PREVIEW_WIDTH = 512
+    private const val MAX_PREVIEW_HEIGHT = 512
   }
 
 }

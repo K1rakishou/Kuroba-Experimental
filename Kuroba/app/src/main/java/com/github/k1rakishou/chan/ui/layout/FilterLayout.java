@@ -51,7 +51,6 @@ import com.github.k1rakishou.chan.ui.view.ColorPickerView;
 import com.github.k1rakishou.chan.ui.view.FloatingMenu;
 import com.github.k1rakishou.chan.ui.view.FloatingMenuItem;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
-import com.github.k1rakishou.common.AndroidUtils;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
@@ -66,8 +65,8 @@ import javax.inject.Inject;
 
 import kotlin.Unit;
 
-import static com.github.k1rakishou.common.AndroidUtils.dp;
-import static com.github.k1rakishou.common.AndroidUtils.getString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 
 public class FilterLayout extends LinearLayout implements View.OnClickListener {
     private ColorizableTextView typeText;
@@ -334,7 +333,7 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
         @SuppressLint("InflateParams")
         @SuppressWarnings("unchecked")
         final SelectLayout<ChanBoard> selectLayout =
-                (SelectLayout<ChanBoard>) AndroidUtils.inflate(getContext(), R.layout.layout_select, null);
+                (SelectLayout<ChanBoard>) AppModuleAndroidUtils.inflate(getContext(), R.layout.layout_select, null);
         selectLayout.init(themeEngine);
 
         List<SelectLayout.SelectItem<ChanBoard>> items = new ArrayList<>();
@@ -382,7 +381,7 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
     private void onTypeTextClicked() {
         @SuppressWarnings("unchecked")
         final SelectLayout<FilterType> selectLayout =
-                (SelectLayout<FilterType>) AndroidUtils.inflate(getContext(), R.layout.layout_select, null);
+                (SelectLayout<FilterType>) AppModuleAndroidUtils.inflate(getContext(), R.layout.layout_select, null);
         selectLayout.init(themeEngine);
 
         List<SelectLayout.SelectItem<FilterType>> items = new ArrayList<>();

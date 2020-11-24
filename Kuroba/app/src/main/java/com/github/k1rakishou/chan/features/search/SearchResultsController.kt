@@ -20,12 +20,12 @@ import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchPostGapView
 import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchPostView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.chan.utils.plusAssign
-import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.AndroidUtils.dp
-import com.github.k1rakishou.common.AndroidUtils.getString
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -63,7 +63,7 @@ class SearchResultsController(
     updateTitle(null)
     navigation.swipeable = false
 
-    view = AndroidUtils.inflate(context, R.layout.controller_search_results)
+    view = inflate(context, R.layout.controller_search_results)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
 
     compositeDisposable += presenter.listenForStateChanges()

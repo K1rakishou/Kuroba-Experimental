@@ -41,8 +41,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.common.AndroidUtils.dp;
-import static com.github.k1rakishou.common.AndroidUtils.inflate;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 
 public class ThreadSlideController
         extends Controller

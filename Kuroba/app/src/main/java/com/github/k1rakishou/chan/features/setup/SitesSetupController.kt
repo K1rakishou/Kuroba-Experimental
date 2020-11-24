@@ -26,8 +26,8 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyExpandableGroupView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.plusAssign
-import com.github.k1rakishou.common.AndroidUtils
 import javax.inject.Inject
 
 class SitesSetupController(context: Context) : Controller(context), SitesSetupView {
@@ -118,7 +118,7 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
   override fun onCreate() {
     super.onCreate()
 
-    view = AndroidUtils.inflate(context, R.layout.controller_sites_setup)
+    view = inflate(context, R.layout.controller_sites_setup)
     navigation.title = context.getString(R.string.controller_sites_title)
 
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)

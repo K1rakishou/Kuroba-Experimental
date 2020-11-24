@@ -289,6 +289,10 @@ abstract class Controller(@JvmField var context: Context) {
     return (context as StartActivity).isControllerAdded(predicate)
   }
 
+  fun getControllerOrNull(predicate: (Controller) -> Boolean): Controller? {
+    return (context as StartActivity).getControllerOrNull(predicate)
+  }
+
   open fun stopPresenting() {
     stopPresenting(true)
   }

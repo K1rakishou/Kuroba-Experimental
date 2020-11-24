@@ -61,10 +61,11 @@ import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.ViewPagerAdapter
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.ViewUtils.changeEdgeEffect
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.AndroidUtils.dp
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.exhaustive
@@ -188,7 +189,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
         .build()
     }
 
-    view = AndroidUtils.inflate(context, R.layout.controller_theme)
+    view = inflate(context, R.layout.controller_theme)
     pager = view.findViewById(R.id.pager)
     currentThemeIndicator = view.findViewById(R.id.current_theme_indicator)
     updateCurrentThemeIndicator(true)

@@ -15,8 +15,8 @@ import com.github.k1rakishou.chan.features.settings.ThreadWatcherScreen
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.PhoneWithBackgroundLimitationsHelper
-import com.github.k1rakishou.common.AndroidUtils.getString
 import com.github.k1rakishou.core_themes.ThemeEngine
 import java.util.concurrent.TimeUnit
 

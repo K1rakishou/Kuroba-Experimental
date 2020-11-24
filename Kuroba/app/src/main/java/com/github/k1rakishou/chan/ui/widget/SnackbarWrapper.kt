@@ -7,7 +7,7 @@ import com.github.k1rakishou.chan.ui.layout.DrawerWidthAdjustingLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.view.HidingBottomNavigationView
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
-import com.github.k1rakishou.common.AndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.common.findChild
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ChanTheme

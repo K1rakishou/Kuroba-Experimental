@@ -34,8 +34,8 @@ import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
 import com.github.k1rakishou.chan.ui.helper.PostHelper
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -136,7 +136,7 @@ class ReplyPresenter @Inject constructor(
       callback.updateCommentCount(0, thisBoard.maxCommentChars, false)
     }
 
-    callback.setCommentHint(AndroidUtils.getString(stringId))
+    callback.setCommentHint(getString(stringId))
     callback.showCommentCounter(thisBoard.maxCommentChars > 0)
 
     switchPage(Page.INPUT)
@@ -264,7 +264,7 @@ class ReplyPresenter @Inject constructor(
       if (timeLeft < 0L) {
         submitOrAuthenticate()
       } else {
-        val errorMessage = AndroidUtils.getString(R.string.reply_error_message_timer_reply, timeLeft)
+        val errorMessage = getString(R.string.reply_error_message_timer_reply, timeLeft)
         switchPage(Page.INPUT)
         callback.openMessage(errorMessage)
       }
@@ -276,7 +276,7 @@ class ReplyPresenter @Inject constructor(
     if (timeLeft < 0L) {
       submitOrAuthenticate()
     } else {
-      val errorMessage = AndroidUtils.getString(R.string.reply_error_message_timer_thread, timeLeft)
+      val errorMessage = getString(R.string.reply_error_message_timer_thread, timeLeft)
       switchPage(Page.INPUT)
       callback.openMessage(errorMessage)
     }
@@ -305,7 +305,7 @@ class ReplyPresenter @Inject constructor(
       callback.loadViewsIntoDraft(chanDescriptor)
 
       if (!isAuthenticateOnly && !reply.hasFiles() && reply.isCommentEmpty()) {
-        callback.openMessage(AndroidUtils.getString(R.string.reply_comment_empty))
+        callback.openMessage(getString(R.string.reply_comment_empty))
         return@readReply false
       }
 
@@ -486,11 +486,11 @@ class ReplyPresenter @Inject constructor(
 
     replyManager.restoreFiles(chanDescriptor)
 
-    var errorMessage = AndroidUtils.getString(R.string.reply_error)
+    var errorMessage = getString(R.string.reply_error)
     if (exception != null) {
       val message = exception.message
       if (message != null) {
-        errorMessage = AndroidUtils.getString(R.string.reply_error_message, message)
+        errorMessage = getString(R.string.reply_error_message, message)
       }
     }
 
@@ -508,9 +508,9 @@ class ReplyPresenter @Inject constructor(
         switchPage(Page.AUTHENTICATION)
       }
       else -> {
-        var errorMessage = AndroidUtils.getString(R.string.reply_error)
+        var errorMessage = getString(R.string.reply_error)
         if (replyResponse.errorMessage != null) {
-          errorMessage = AndroidUtils.getString(
+          errorMessage = getString(
             R.string.reply_error_message,
             replyResponse.errorMessage
           )

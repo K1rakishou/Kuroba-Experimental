@@ -39,9 +39,9 @@ import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
-import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.AndroidUtils.dp
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
@@ -91,7 +91,7 @@ abstract class ThreadController(
     EventBus.getDefault().register(this)
     navigation.handlesToolbarInset = true
 
-    threadLayout = AndroidUtils.inflate(context, R.layout.layout_thread, null) as ThreadLayout
+    threadLayout = inflate(context, R.layout.layout_thread, null) as ThreadLayout
     threadLayout.create(this)
     threadLayout.setDrawerCallbacks(drawerCallbacks)
 
@@ -239,6 +239,17 @@ abstract class ThreadController(
 
   override fun onShowError() {
     // no-op
+  }
+
+  override fun unpresentController(predicate: (Controller) -> Boolean) {
+    getControllerOrNull { controller ->
+      if (predicate(controller)) {
+        controller.stopPresenting()
+        return@getControllerOrNull true
+      }
+
+      return@getControllerOrNull false
+    }
   }
 
   override fun hideSwipeRefreshLayout() {

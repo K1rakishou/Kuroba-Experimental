@@ -36,8 +36,8 @@ import org.jetbrains.annotations.NotNull;
 
 import okhttp3.HttpUrl;
 
-import static com.github.k1rakishou.common.AndroidUtils.getString;
-import static com.github.k1rakishou.common.AndroidUtils.inflate;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 
 public class ReportController extends Controller implements RequiresNoBottomNavBar {
     private ChanPost post;

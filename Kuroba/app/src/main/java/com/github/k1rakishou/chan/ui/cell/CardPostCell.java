@@ -47,13 +47,14 @@ import java.util.List;
 import javax.inject.Inject;
 
 import static com.github.k1rakishou.chan.ui.adapter.PostsFilter.Order.isNotBumpOrder;
-import static com.github.k1rakishou.common.AndroidUtils.dp;
-import static com.github.k1rakishou.common.AndroidUtils.getString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 
 public class CardPostCell extends ColorizableCardView implements PostCellInterface,
         View.OnClickListener, View.OnLongClickListener {
 
     private static final int COMMENT_MAX_LENGTH = 200;
+    public static final int HI_RES_THUMBNAIL_SIZE = dp(160);
 
     @Inject
     ThemeEngine themeEngine;
@@ -220,11 +221,11 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
             thumbView.setVisibility(VISIBLE);
 
             int width = ChanSettings.highResCells.get()
-                    ? Math.max(ChanSettings.HI_RES_THUMBNAIL_SIZE, thumbView.getWidth())
+                    ? Math.max(HI_RES_THUMBNAIL_SIZE, thumbView.getWidth())
                     : thumbView.getWidth();
 
             int height =  ChanSettings.highResCells.get()
-                    ? Math.max(ChanSettings.HI_RES_THUMBNAIL_SIZE, thumbView.getHeight())
+                    ? Math.max(HI_RES_THUMBNAIL_SIZE, thumbView.getHeight())
                     : thumbView.getHeight();
 
             thumbView.bindPostImage(

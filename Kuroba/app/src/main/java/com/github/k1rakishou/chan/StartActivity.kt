@@ -62,6 +62,7 @@ import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigati
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -616,7 +617,7 @@ class StartActivity : AppCompatActivity(),
       ChanSettings.LayoutMode.SPLIT -> {
         val split = SplitNavigationController(
           this,
-          AndroidUtils.inflate(this, R.layout.layout_split_empty),
+          inflate(this, R.layout.layout_split_empty),
           drawerController
         )
 
@@ -635,7 +636,7 @@ class StartActivity : AppCompatActivity(),
     if (layoutMode == ChanSettings.LayoutMode.SLIDE) {
       val slideController = ThreadSlideController(
         this,
-        AndroidUtils.inflate(this, R.layout.layout_split_empty),
+        inflate(this, R.layout.layout_split_empty),
         drawerController
       )
 
@@ -795,8 +796,36 @@ class StartActivity : AppCompatActivity(),
   }
 
   fun isControllerAdded(predicate: Function1<Controller, Boolean>): Boolean {
-
     return stack.any { isControllerPresent(it, predicate) }
+  }
+
+  fun getControllerOrNull(predicate: (Controller) -> Boolean): Controller? {
+    for (controller in stack) {
+      val innerController = findController(controller, predicate)
+      if (innerController != null) {
+        return innerController
+      }
+    }
+
+    return null
+  }
+
+  private fun findController(
+    controller: Controller,
+    predicate: (Controller) -> Boolean
+  ): Controller? {
+    if (predicate(controller)) {
+      return controller
+    }
+
+    for (childController in controller.childControllers) {
+      val innerController = findController(childController, predicate)
+      if (innerController != null) {
+        return innerController
+      }
+    }
+
+    return null
   }
 
   fun popController(controller: Controller?) {

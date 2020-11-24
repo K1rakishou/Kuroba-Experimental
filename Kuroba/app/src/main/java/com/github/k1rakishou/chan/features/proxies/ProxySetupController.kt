@@ -16,8 +16,8 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
-import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.AndroidUtils.getString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -54,7 +54,7 @@ class ProxySetupController(
     super.onCreate()
     navigation.title = getString(R.string.controller_proxy_setup_title)
 
-    view = AndroidUtils.inflate(context, R.layout.controller_proxy_setup)
+    view = inflate(context, R.layout.controller_proxy_setup)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
     addProxyButton = view.findViewById(R.id.add_proxy_button)
 

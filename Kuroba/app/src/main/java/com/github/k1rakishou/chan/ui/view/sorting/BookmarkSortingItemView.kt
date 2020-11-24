@@ -10,6 +10,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.common.updatePaddings
@@ -182,9 +183,9 @@ class BookmarkSortingItemView @JvmOverloads constructor(
 
     private const val TEXT_SIZE_SP = 16f
 
-    private val IMAGE_SIZE = AndroidUtils.dp(32f)
-    private val IMAGE_PADDING = AndroidUtils.dp(4f)
-    private val TEXT_MARGIN = AndroidUtils.dp(8f)
+    private val IMAGE_SIZE = dp(32f)
+    private val IMAGE_PADDING = dp(4f)
+    private val TEXT_MARGIN = dp(8f)
   }
 
 }

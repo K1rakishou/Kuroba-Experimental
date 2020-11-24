@@ -16,7 +16,7 @@
  */
 package com.github.k1rakishou.chan.ui.view;
 
-import static com.github.k1rakishou.common.AndroidUtils.getString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 
 public class FloatingMenuItem {
     private Object id;

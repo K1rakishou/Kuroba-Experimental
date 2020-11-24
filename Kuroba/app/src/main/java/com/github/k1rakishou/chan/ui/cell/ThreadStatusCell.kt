@@ -34,7 +34,7 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest.BoardPage
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -172,12 +172,12 @@ class ThreadStatusCell(
 
     if (error != null) {
       statusCellText.text = buildString {
-        appendLine(AndroidUtils.getString(R.string.thread_refresh_error_text_title))
+        appendLine(getString(R.string.thread_refresh_error_text_title))
         append("\"")
         append(error)
         append("\"")
         appendLine()
-        appendLine(AndroidUtils.getString(R.string.thread_refresh_bar_inactive))
+        appendLine(getString(R.string.thread_refresh_bar_inactive))
       }
 
       return
@@ -266,7 +266,7 @@ class ThreadStatusCell(
 
       builder
         .append(" / ")
-        .append(AndroidUtils.getString(R.string.thread_page_no))
+        .append(getString(R.string.thread_page_no))
         .append(' ')
         .append(page)
     }
@@ -285,13 +285,13 @@ class ThreadStatusCell(
 
     when {
       callback?.isWatching() == false -> {
-        builder.append(AndroidUtils.getString(R.string.thread_refresh_bar_inactive))
+        builder.append(getString(R.string.thread_refresh_bar_inactive))
       }
       timeSeconds <= 0 -> {
-        builder.append(AndroidUtils.getString(R.string.loading))
+        builder.append(getString(R.string.loading))
       }
       else -> {
-        builder.append(AndroidUtils.getString(R.string.thread_refresh_countdown, timeSeconds))
+        builder.append(getString(R.string.thread_refresh_countdown, timeSeconds))
       }
     }
 
@@ -304,15 +304,15 @@ class ThreadStatusCell(
   ): Boolean {
     when {
       chanThread.isArchived() -> {
-        builder.append(AndroidUtils.getString(R.string.thread_archived))
+        builder.append(getString(R.string.thread_archived))
         return true
       }
       chanThread.isClosed() -> {
-        builder.append(AndroidUtils.getString(R.string.thread_closed))
+        builder.append(getString(R.string.thread_closed))
         return true
       }
       chanThread.isDeleted() -> {
-        builder.append(AndroidUtils.getString(R.string.thread_deleted))
+        builder.append(getString(R.string.thread_deleted))
         return true
       }
     }

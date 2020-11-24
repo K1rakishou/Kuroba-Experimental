@@ -5,7 +5,7 @@ import android.view.MotionEvent
 import android.view.ViewParent
 import com.github.k1rakishou.chan.ui.controller.BrowseController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
-import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -48,7 +48,7 @@ class BrowseControllerTracker(
         val x = event.x - interceptedEvent!!.x
         val y = event.y - interceptedEvent!!.y
 
-        if (abs(y) >= slopPixels || interceptedEvent!!.x < AndroidUtils.dp(20f)) {
+        if (abs(y) >= slopPixels || interceptedEvent!!.x < dp(20f)) {
           blockTracking = true
         }
 

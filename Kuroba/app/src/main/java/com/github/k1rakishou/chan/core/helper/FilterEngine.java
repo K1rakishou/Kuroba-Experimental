@@ -45,7 +45,7 @@ import javax.inject.Inject;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 
-import static com.github.k1rakishou.common.AndroidUtils.getString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 
 public class FilterEngine {
     private static final String TAG = "FilterEngine";

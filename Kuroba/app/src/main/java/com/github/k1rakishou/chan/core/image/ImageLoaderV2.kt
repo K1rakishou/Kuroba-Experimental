@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.image
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import androidx.annotation.DrawableRes
 import androidx.core.graphics.drawable.toBitmap
@@ -11,18 +12,36 @@ import coil.request.ImageRequest
 import coil.size.Scale
 import coil.transform.Transformation
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.manager.ReplyManager
+import com.github.k1rakishou.chan.features.reply.data.ReplyFile
+import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.chan.utils.getLifecycleFromContext
 import com.github.k1rakishou.common.DoNotStrip
+import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.common.StringUtils
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.google.android.exoplayer2.util.MimeTypes
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
+import java.io.FileOutputStream
+import java.util.*
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.resume
 
 @DoNotStrip
 class ImageLoaderV2(
+  private val appScope: CoroutineScope,
   private val imageLoader: ImageLoader,
   private val verboseLogsEnabled: Boolean,
-  private val themeEngine: com.github.k1rakishou.core_themes.ThemeEngine
+  private val replyManager: ReplyManager,
+  private val themeEngine: ThemeEngine
 ) {
   private var imageNotFoundDrawable: BitmapDrawable? = null
   private var imageErrorLoadingDrawable: BitmapDrawable? = null
@@ -241,9 +260,9 @@ class ImageLoaderV2(
     return imageLoader.enqueue(request)
   }
 
-  fun loadFromDisk(
+  fun loadRelyFilePreviewFromDisk(
     context: Context,
-    file: File,
+    fileUuid: UUID,
     width: Int,
     height: Int,
     scale: Scale = Scale.FILL,
@@ -253,30 +272,42 @@ class ImageLoaderV2(
     require(width > 0) { "Bad width: $width" }
     require(height > 0) { "Bad height: $height" }
 
+    val replyFileMaybe = replyManager.getReplyFileByFileUuid(fileUuid)
+    if (replyFileMaybe is ModularResult.Error) {
+      Logger.e(TAG, "loadRelyFilePreviewFromDisk() getReplyFileByFileUuid($fileUuid) error",
+        replyFileMaybe.error)
+      listener.onResponse(getImageErrorLoadingDrawable(context))
+      return
+    }
+
+    val replyFile = (replyFileMaybe as ModularResult.Value).value
+    if (replyFile == null) {
+      Logger.e(TAG, "loadRelyFilePreviewFromDisk() replyFile==null")
+      listener.onResponse(getImageErrorLoadingDrawable(context))
+      return
+    }
+
     val listenerRef = AtomicReference(listener)
-    val contextRef = AtomicReference(context)
     val lifecycle = context.getLifecycleFromContext()
 
     val request = with(ImageRequest.Builder(context)) {
-      data(file)
+      data(replyFile.previewFileOnDisk)
       lifecycle(lifecycle)
       transformations(transformations)
-      allowHardware(false)
+      allowHardware(true)
       scale(scale)
-      size(width, height)
+
+      if ((width > 0) && (height > 0)) {
+        size(width, height)
+      }
 
       listener(
-        onError = { _, throwable ->
-          contextRef.get()?.let { context ->
-            listenerRef.get()?.onResponse(getImageNotFoundDrawable(context))
-          }
-
+        onError = { _, _ ->
+          listenerRef.get()?.onResponse(getImageErrorLoadingDrawable(context))
           listenerRef.set(null)
-          contextRef.set(null)
         },
         onCancel = {
           listenerRef.set(null)
-          contextRef.set(null)
         }
       )
       target(
@@ -285,7 +316,6 @@ class ImageLoaderV2(
             listenerRef.get()?.onResponse(drawable as BitmapDrawable)
           } finally {
             listenerRef.set(null)
-            contextRef.set(null)
           }
         }
       )
@@ -294,6 +324,162 @@ class ImageLoaderV2(
     }
 
     imageLoader.enqueue(request)
+  }
+
+  @Suppress("BlockingMethodInNonBlockingContext")
+  suspend fun calculateFilePreviewAndStoreOnDisk(
+    context: Context,
+    fileUuid: UUID,
+    width: Int,
+    height: Int,
+    scale: Scale = Scale.FILL
+  ) {
+    BackgroundUtils.ensureBackgroundThread()
+
+    require(width > 0) { "Bad width: $width" }
+    require(height > 0) { "Bad height: $height" }
+
+    val replyFileMaybe = replyManager.getReplyFileByFileUuid(fileUuid)
+    if (replyFileMaybe is ModularResult.Error) {
+      Logger.e(TAG, "calculateFilePreviewAndStoreOnDisk() " +
+        "getReplyFileByFileUuid($fileUuid) error", replyFileMaybe.error)
+      return
+    }
+
+    val replyFile = (replyFileMaybe as ModularResult.Value).value
+    if (replyFile == null) {
+      Logger.e(TAG, "calculateFilePreviewAndStoreOnDisk() replyFile==null")
+      return
+    }
+
+    val replyFileMetaMaybe = replyFile.getReplyFileMeta()
+    if (replyFileMetaMaybe is ModularResult.Error) {
+      Logger.e(TAG, "calculateFilePreviewAndStoreOnDisk() replyFile.getReplyFileMeta() error",
+        replyFileMetaMaybe.error)
+      return
+    }
+
+    val replyFileMeta = (replyFileMetaMaybe as ModularResult.Value).value
+
+    val previewBitmap = calculateFilePreview(
+      replyFile,
+      replyFileMeta,
+      context,
+      width,
+      height,
+      scale
+    )
+
+    val previewFileOnDisk = replyFile.previewFileOnDisk
+
+    if (!previewFileOnDisk.exists()) {
+      check(previewFileOnDisk.createNewFile()) {
+        "Failed to create previewFileOnDisk, path=${previewFileOnDisk.absolutePath}"
+      }
+    }
+
+    FileOutputStream(previewFileOnDisk).use { fos ->
+      previewBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
+    }
+  }
+
+  private suspend fun calculateFilePreview(
+    replyFile: ReplyFile,
+    replyFileMeta: ReplyFileMeta,
+    context: Context,
+    width: Int,
+    height: Int,
+    scale: Scale
+  ): Bitmap {
+    val isProbablyVideo = StringUtils.extractFileNameExtension(replyFileMeta.originalFileName)
+      ?.let { extension -> extension == "mp4" || extension == "webm" }
+      ?: false
+
+    val isMostLikelyVideo = MediaUtils.decodeFileMimeType(replyFile.fileOnDisk)
+      ?.let { mimeType -> MimeTypes.isVideo(mimeType) }
+      ?: false
+
+    if (isProbablyVideo || isMostLikelyVideo) {
+      val videoFrameDecodeMaybe = Try {
+        return@Try MediaUtils.decodeVideoFilePreviewImage(
+          context,
+          replyFile.fileOnDisk,
+          width,
+          height,
+          true
+        )
+      }
+
+      if (videoFrameDecodeMaybe is ModularResult.Value) {
+        val videoFrame = videoFrameDecodeMaybe.value
+        if (videoFrame != null) {
+          return videoFrame.bitmap
+        }
+      }
+
+      // Failed to decode the file as video let's try decoding it as an image
+    }
+
+    val fileImagePreviewMaybe = getFileImagePreview(
+      context = context,
+      file = replyFile.fileOnDisk,
+      transformations = emptyList(),
+      scale = scale,
+      width = width,
+      height = height
+    )
+
+    if (fileImagePreviewMaybe is ModularResult.Value) {
+      return fileImagePreviewMaybe.value.bitmap
+    }
+
+    return getImageErrorLoadingDrawable(context).bitmap
+  }
+
+  suspend fun getFileImagePreview(
+    context: Context,
+    file: File,
+    transformations: List<Transformation>,
+    scale: Scale,
+    width: Int,
+    height: Int
+  ): ModularResult<BitmapDrawable> {
+    val lifecycle = context.getLifecycleFromContext()
+
+    return suspendCancellableCoroutine { cancellableContinuation ->
+      val request = with(ImageRequest.Builder(context)) {
+        data(file)
+        lifecycle(lifecycle)
+        transformations(transformations)
+        allowHardware(true)
+        scale(scale)
+        size(width, height)
+
+        listener(
+          onError = { _, throwable ->
+            cancellableContinuation.resume(ModularResult.error(throwable))
+          },
+          onCancel = {
+            cancellableContinuation.resume(ModularResult.error(CancellationException()))
+          }
+        )
+        target(
+          onSuccess = { drawable ->
+            cancellableContinuation.resume(ModularResult.value(drawable as BitmapDrawable))
+          }
+        )
+
+        build()
+      }
+
+      val disposable = imageLoader.enqueue(request)
+
+      cancellableContinuation.invokeOnCancellation {
+        if (!disposable.isDisposed) {
+          disposable.dispose()
+        }
+      }
+    }
   }
 
   @Synchronized

@@ -35,8 +35,8 @@ import com.github.k1rakishou.core_themes.ThemeEngine;
 import javax.inject.Inject;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-import static com.github.k1rakishou.common.AndroidUtils.dp;
-import static com.github.k1rakishou.common.AndroidUtils.getString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 import static com.github.k1rakishou.common.AndroidUtils.hideKeyboard;
 import static com.github.k1rakishou.common.AndroidUtils.requestKeyboardFocus;
 

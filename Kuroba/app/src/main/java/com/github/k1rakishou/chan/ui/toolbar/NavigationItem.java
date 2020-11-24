@@ -29,7 +29,7 @@ import java.util.List;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 
-import static com.github.k1rakishou.common.AndroidUtils.getString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 
 /**
  * The navigation properties for a Controller. Controls common properties that parent controllers

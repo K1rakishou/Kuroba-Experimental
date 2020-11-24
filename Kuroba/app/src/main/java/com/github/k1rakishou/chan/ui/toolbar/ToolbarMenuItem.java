@@ -43,7 +43,7 @@ import kotlin.jvm.functions.Function1;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.common.AndroidUtils.getRes;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getRes;
 import static com.github.k1rakishou.common.AndroidUtils.removeFromParentView;
 
 /**

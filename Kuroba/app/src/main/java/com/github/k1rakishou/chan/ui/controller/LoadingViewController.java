@@ -2,19 +2,23 @@ package com.github.k1rakishou.chan.ui.controller;
 
 import android.content.Context;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView;
 
 import org.jetbrains.annotations.NotNull;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 
 public class LoadingViewController extends BaseFloatingController {
-    private TextView textView;
+    private ColorizableTextView loadingControllerTitle;
+    private ColorizableTextView loadingControllerMessage;
     private ProgressBar progressBar;
+
+    private String title;
     private boolean indeterminate;
     private boolean backNotAllowed = true;
 
@@ -27,13 +31,24 @@ public class LoadingViewController extends BaseFloatingController {
         super(context);
 
         this.indeterminate = indeterminate;
+        this.title = getString(R.string.doing_heavy_lifting_please_wait);
+    }
+
+    public LoadingViewController(Context context, boolean indeterminate, String title) {
+        super(context);
+
+        this.indeterminate = indeterminate;
+        this.title = title;
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-        textView = view.findViewById(R.id.text);
+        loadingControllerTitle = view.findViewById(R.id.loading_controller_title);
+        loadingControllerTitle.setText(title);
+
+        loadingControllerMessage = view.findViewById(R.id.loading_controller_message);
         progressBar = view.findViewById(R.id.progress_bar);
     }
 
@@ -47,6 +62,7 @@ public class LoadingViewController extends BaseFloatingController {
         if (!backNotAllowed) {
             presentedByController.onBack();
         }
+
         return true;
     }
 
@@ -58,9 +74,9 @@ public class LoadingViewController extends BaseFloatingController {
             return;
         }
 
-        textView.setVisibility(VISIBLE);
+        loadingControllerMessage.setVisibility(VISIBLE);
         progressBar.setVisibility(VISIBLE);
-        textView.setText(String.valueOf(percent > 0 ? percent : "0"));
+        loadingControllerMessage.setText(String.valueOf(percent > 0 ? percent : "0"));
     }
 
     /**
@@ -72,9 +88,9 @@ public class LoadingViewController extends BaseFloatingController {
             return;
         }
 
-        textView.setVisibility(VISIBLE);
+        loadingControllerMessage.setVisibility(VISIBLE);
         progressBar.setVisibility(GONE);
-        textView.setText(text);
+        loadingControllerMessage.setText(text);
     }
 
     @Override

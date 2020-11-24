@@ -29,14 +29,14 @@ import com.github.k1rakishou.chan.ui.controller.ReportProblemController
 import com.github.k1rakishou.chan.ui.controller.crashlogs.ReviewCrashLogsController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getVerifiedBuildType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isFdroidBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
 import com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType
 import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
-import com.github.k1rakishou.common.AndroidUtils.getQuantityString
-import com.github.k1rakishou.common.AndroidUtils.getString
 
 class MainSettingsScreen(
   context: Context,

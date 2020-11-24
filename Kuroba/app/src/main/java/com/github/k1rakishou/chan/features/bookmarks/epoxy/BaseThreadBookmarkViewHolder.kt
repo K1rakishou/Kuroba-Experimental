@@ -23,9 +23,9 @@ import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkSelectio
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkStats
 import com.github.k1rakishou.chan.ui.view.SelectionCheckView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout
 import com.github.k1rakishou.chan.utils.setVisibilityFast
-import com.github.k1rakishou.common.AndroidUtils.dp
 import com.github.k1rakishou.common.resetClickListener
 import com.github.k1rakishou.common.resetLongClickListener
 import com.github.k1rakishou.common.updatePaddings

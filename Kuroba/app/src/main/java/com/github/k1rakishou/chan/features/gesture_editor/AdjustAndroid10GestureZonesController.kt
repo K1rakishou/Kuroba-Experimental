@@ -13,8 +13,8 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getScreenOrientation
-import com.github.k1rakishou.common.AndroidUtils.dp
 
 
 @RequiresApi(Build.VERSION_CODES.Q)

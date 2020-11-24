@@ -26,7 +26,7 @@ import com.github.k1rakishou.core_themes.ChanThemeColorId;
 
 import java.util.regex.Pattern;
 
-import static com.github.k1rakishou.common.AndroidUtils.sp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp;
 
 public class TaimabaCommentParser extends CommentParser implements ICommentParser {
     private static final Pattern QUOTE_PATTERN = Pattern.compile("#(\\d+)");

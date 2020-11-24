@@ -14,9 +14,9 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableChip
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
-import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.AndroidUtils.dp
-import com.github.k1rakishou.common.AndroidUtils.getString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.findChildren
@@ -61,7 +61,7 @@ class ProxyEditorController(
     super.onCreate()
 
     navigation.title = getString(R.string.controller_proxy_editor_title)
-    view = AndroidUtils.inflate(context, R.layout.controller_proxy_editor)
+    view = inflate(context, R.layout.controller_proxy_editor)
 
     proxyAddressTIL = view.findViewById(R.id.proxy_address_text_input_layout)
     proxyAddress = view.findViewById(R.id.proxy_address)

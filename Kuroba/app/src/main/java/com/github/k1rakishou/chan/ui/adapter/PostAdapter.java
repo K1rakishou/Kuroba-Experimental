@@ -51,7 +51,7 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.common.AndroidUtils.inflate;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 
 public class PostAdapter
         extends RecyclerView.Adapter<RecyclerView.ViewHolder> {

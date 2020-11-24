@@ -32,7 +32,7 @@ import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
-import com.github.k1rakishou.common.AndroidUtils;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import java.util.ArrayList;
@@ -143,7 +143,7 @@ public class SelectLayout<T>
 
         @Override
         public BoardSelectViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            return new BoardSelectViewHolder(AndroidUtils.inflate(parent.getContext(),
+            return new BoardSelectViewHolder(AppModuleAndroidUtils.inflate(parent.getContext(),
                     R.layout.cell_select,
                     parent,
                     false

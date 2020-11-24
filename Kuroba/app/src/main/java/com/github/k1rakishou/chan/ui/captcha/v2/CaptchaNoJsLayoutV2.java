@@ -57,8 +57,8 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2_NOJS;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
-import static com.github.k1rakishou.common.AndroidUtils.dp;
 import static com.github.k1rakishou.core_themes.ThemeEngine.isDarkColor;
 
 public class CaptchaNoJsLayoutV2

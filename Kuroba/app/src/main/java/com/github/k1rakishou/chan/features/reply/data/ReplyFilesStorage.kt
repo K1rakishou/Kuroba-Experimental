@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.reply.data
 
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.ModularResult.Companion.value
@@ -17,6 +18,7 @@ import java.util.*
 
 class ReplyFilesStorage(
   private val gson: Gson,
+  private val appConstants: AppConstants,
   private val replyFiles: MutableList<ReplyFile> = mutableListOf()
 ) {
   private val replyFilesUpdates = MutableSharedFlow<Unit>(
@@ -137,6 +139,29 @@ class ReplyFilesStorage(
   }
 
   @Synchronized
+  fun deleteSelectedFiles(): ModularResult<Unit> {
+    return Try {
+      val toDelete = mutableListOf<UUID>()
+
+      iterateFilesOrdered { _, replyFile ->
+        val replyFileMeta = replyFile.getReplyFileMeta().unwrap()
+
+        if (replyFileMeta.isTaken()) {
+          return@iterateFilesOrdered
+        }
+
+        if (!replyFileMeta.selected) {
+          return@iterateFilesOrdered
+        }
+
+        toDelete += replyFileMeta.fileUuid
+      }
+
+      deleteFiles(toDelete).unwrap()
+    }
+  }
+
+  @Synchronized
   fun deleteFiles(fileUuids: List<UUID>): ModularResult<Unit> {
     if (fileUuids.isEmpty()) {
       return value(Unit)
@@ -236,7 +261,21 @@ class ReplyFilesStorage(
   }
 
   @Synchronized
-  fun reloadAllFilesFromDisk(attachFilesDir: File, attachFilesMetaDir: File): ModularResult<Unit> {
+  fun getReplyFileByFileUuid(fileUuid: UUID): ModularResult<ReplyFile?> {
+    ensureFilesSorted()
+    return Try {
+      return@Try replyFiles.firstOrNull { replyFile ->
+        return@firstOrNull replyFile.getReplyFileMeta().unwrap().fileUuid == fileUuid
+      }
+    }
+  }
+
+  @Synchronized
+  fun reloadAllFilesFromDisk(
+    attachFilesDir: File,
+    attachFilesMetaDir: File,
+    mediaPreviewsCacheDir: File
+  ): ModularResult<Unit> {
     BackgroundUtils.ensureBackgroundThread()
 
     return Try {
@@ -251,13 +290,18 @@ class ReplyFilesStorage(
         ?.associateBy { file -> file.absolutePath }
         ?: emptyMap()
 
+      val previewFiles = mediaPreviewsCacheDir.listFiles()
+        ?.associateBy { file -> file.absolutePath }
+        ?: emptyMap()
+
       val newAttachFiles = try {
-        addAttachFiles(attachFiles, attachFileMetas).unwrap()
+        addAttachFiles(attachFiles, previewFiles, attachFileMetas).unwrap()
       } catch (error: Throwable) {
         Logger.e(TAG, "reloadAllFilesFromDisk() failure, removing all files", error)
 
         attachFilesDir.listFiles()?.forEach { attachFile -> attachFile.delete() }
         attachFilesMetaDir.listFiles()?.forEach { attachFilesMeta -> attachFilesMeta.delete() }
+        mediaPreviewsCacheDir.listFiles()?.forEach { mediaPreviewFile -> mediaPreviewFile.delete() }
 
         replyFiles.clear()
         throw error
@@ -273,6 +317,7 @@ class ReplyFilesStorage(
 
   private fun addAttachFiles(
     attachFiles: Array<out File>,
+    previewFiles: Map<String, File>,
     attachFileMetas: Map<String, File>
   ): ModularResult<List<ReplyFile>> {
     BackgroundUtils.ensureBackgroundThread()
@@ -280,6 +325,7 @@ class ReplyFilesStorage(
     return Try {
       val processedMetaFiles = mutableSetOf<String>()
       val newAttachFiles = mutableListOf<ReplyFile>()
+      val allPreviewFiles = previewFiles.toMutableMap()
 
       attachFiles.forEach { attachFile ->
         if (!attachFile.exists() || !attachFile.canRead()) {
@@ -297,9 +343,14 @@ class ReplyFilesStorage(
         }
 
         val fileMetaName = ReplyManager.getMetaFileName(uuid)
+        val previewFileName = ReplyManager.getPreviewFileName(uuid)
 
         val fileMeta = attachFileMetas.entries
           .firstOrNull { (fileMetaPath, _) -> fileMetaPath.endsWith(fileMetaName) }
+          ?.value
+
+        val previewFileMaybe = allPreviewFiles.entries
+          .firstOrNull { (previewFilePath, _) -> previewFilePath.endsWith(previewFileName) }
           ?.value
 
         if (fileMeta == null) {
@@ -307,6 +358,8 @@ class ReplyFilesStorage(
             "deleting files")
 
           attachFile.delete()
+          previewFileMaybe?.delete()
+
           return@forEach
         }
 
@@ -315,13 +368,23 @@ class ReplyFilesStorage(
 
           attachFile.delete()
           fileMeta.delete()
+          previewFileMaybe?.delete()
+
           return@forEach
+        }
+
+        val previewFile = previewFileMaybe
+          ?: File(appConstants.mediaPreviewsDir, previewFileName)
+
+        if (!previewFile.exists()) {
+          previewFile.createNewFile()
         }
 
         val replyFile = ReplyFile(
           gson,
           attachFile,
-          fileMeta
+          fileMeta,
+          previewFile
         )
 
         val replyFileMeta = replyFile.getReplyFileMeta()
@@ -330,6 +393,7 @@ class ReplyFilesStorage(
 
             attachFile.delete()
             fileMeta.delete()
+            previewFile.delete()
 
             return@forEach
           }
@@ -340,6 +404,7 @@ class ReplyFilesStorage(
 
           attachFile.delete()
           fileMeta.delete()
+          previewFile.delete()
 
           return@forEach
         }
@@ -349,12 +414,15 @@ class ReplyFilesStorage(
 
           attachFile.delete()
           fileMeta.delete()
+          previewFile?.delete()
 
           return@forEach
         }
 
         processedMetaFiles += fileMeta.absolutePath
         newAttachFiles += replyFile
+
+        previewFile?.let { previewFileOnDisk -> allPreviewFiles.remove(previewFileOnDisk.absolutePath) }
       }
 
       if (processedMetaFiles.isNotEmpty()) {
@@ -366,6 +434,14 @@ class ReplyFilesStorage(
           Logger.d(TAG, "Deleting metaFile='${metaFile.absolutePath}' " +
             "because it wasn't processed normally")
           metaFile.delete()
+        }
+      }
+
+      if (allPreviewFiles.isNotEmpty()) {
+        allPreviewFiles.entries.forEach { (previewFilePath, previewFile) ->
+          Logger.d(TAG, "Deleting previewFile='${previewFile.absolutePath}' " +
+            "because it wasn't processed normally")
+          previewFile.delete()
         }
       }
 

@@ -1074,6 +1074,7 @@ Don't have a 4chan Pass?<br>
     <string name="layout_reply_files_area_too_many_attachables_text">Too many files to display them all at once (%1$d out of %2$d max). Upload or delete some of them to display the rest.</string>
     <string name="layout_reply_files_area_open_in_editor_action">Open in editor</string>
     <string name="layout_reply_files_area_delete_file_action">Delete file</string>
+    <string name="layout_reply_files_area_delete_selected_files_action">Delete selected files</string>
 
     <string name="reply_notifications_new_replies_total_stats">You have %1$d replies in %2$d thread(s)</string>
     <string name="reply_notifications_new_replies_in_thread">You have %1$d new replies in thread %2$d</string>
@@ -1141,5 +1142,7 @@ Don't have a 4chan Pass?<br>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
     <string name="updater_is_disabled_for_dev_builds">Updater is disabled for dev builds</string>
     <string name="updater_is_disabled_for_fdroid_builds">Updater is disabled for F-Droid builds</string>
+    <string name="doing_heavy_lifting_please_wait">Doing heavy lifting, please wait…</string>
+    <string name="decoding_reply_file_preview">Decoding file preview, this may take some time</string>
 
 </resources>

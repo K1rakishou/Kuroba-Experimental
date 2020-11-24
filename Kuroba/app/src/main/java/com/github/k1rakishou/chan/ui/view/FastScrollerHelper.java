@@ -9,7 +9,7 @@ import com.github.k1rakishou.core_themes.ChanTheme;
 
 import org.jetbrains.annotations.Nullable;
 
-import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 
 /**
  * Helper for attaching a FastScroller with the correct theme colors and default values that

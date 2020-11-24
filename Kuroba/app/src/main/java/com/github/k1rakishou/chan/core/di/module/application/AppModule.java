@@ -25,6 +25,7 @@ import android.os.Environment;
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
+import com.github.k1rakishou.chan.core.manager.ReplyManager;
 import com.github.k1rakishou.chan.core.saver.ImageSaver;
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
@@ -42,6 +43,7 @@ import coil.ImageLoader;
 import coil.request.CachePolicy;
 import dagger.Module;
 import dagger.Provides;
+import kotlinx.coroutines.CoroutineScope;
 
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getAvailableSpaceInBytes;
 import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
@@ -105,11 +107,18 @@ public class AppModule {
 
     @Provides
     @Singleton
-    public ImageLoaderV2 provideImageLoaderV2(ImageLoader coilImageLoader, ThemeEngine themeEngine) {
+    public ImageLoaderV2 provideImageLoaderV2(
+            CoroutineScope appScope,
+            ImageLoader coilImageLoader,
+            ReplyManager replyManager,
+            ThemeEngine themeEngine
+    ) {
         Logger.d(DI_TAG, "Image loader v2");
         return new ImageLoaderV2(
+                appScope,
                 coilImageLoader,
                 ChanSettings.verboseLogs.get(),
+                replyManager,
                 themeEngine
         );
     }

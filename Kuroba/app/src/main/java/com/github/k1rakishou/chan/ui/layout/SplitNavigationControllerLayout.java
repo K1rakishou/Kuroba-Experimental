@@ -28,7 +28,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine;
 import javax.inject.Inject;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-import static com.github.k1rakishou.common.AndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 
 public class SplitNavigationControllerLayout extends LinearLayout implements ThemeEngine.ThemeChangesListener {
 

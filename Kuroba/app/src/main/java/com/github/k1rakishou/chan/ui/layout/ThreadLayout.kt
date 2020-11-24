@@ -68,6 +68,9 @@ import com.github.k1rakishou.chan.ui.view.LoadView
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.widget.SnackbarWrapper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLinkInBrowser
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -207,16 +210,16 @@ class ThreadLayout @JvmOverloads constructor(
     replyButton = findViewById(R.id.reply_button)
 
     // Inflate ThreadListLayout
-    threadListLayout = AndroidUtils.inflate(context, R.layout.layout_thread_list, this, false) as ThreadListLayout
+    threadListLayout = inflate(context, R.layout.layout_thread_list, this, false) as ThreadListLayout
 
     // Inflate error layout
-    errorLayout = AndroidUtils.inflate(context, R.layout.layout_thread_error, this, false) as LinearLayout
+    errorLayout = inflate(context, R.layout.layout_thread_error, this, false) as LinearLayout
     errorText = errorLayout.findViewById(R.id.text)
     errorRetryButton = errorLayout.findViewById(R.id.button)
     openThreadInArchiveButton = errorLayout.findViewById(R.id.open_in_archive_button)
 
     // Inflate thread loading layout
-    progressLayout = AndroidUtils.inflate(context, R.layout.layout_thread_progress, this, false)
+    progressLayout = inflate(context, R.layout.layout_thread_progress, this, false)
 
     // View setup
     presenter.create(context, this)
@@ -350,6 +353,10 @@ class ThreadLayout @JvmOverloads constructor(
     callback.presentController(controller, animated = true)
   }
 
+  override fun unpresentController(predicate: (Controller) -> Boolean) {
+    callback.unpresentController(predicate)
+  }
+
   override suspend fun showPostsForChanDescriptor(
     descriptor: ChanDescriptor?,
     filter: PostsFilter
@@ -388,7 +395,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     val errorMessage = error.cause?.message
-      ?: AndroidUtils.getString(error.errorMessage)
+      ?: getString(error.errorMessage)
 
     if (visible == Visible.THREAD) {
       // Hide the button so the user can see the full error message
@@ -664,7 +671,7 @@ class ThreadLayout @JvmOverloads constructor(
   @Suppress("MoveLambdaOutsideParentheses")
   override fun confirmPostDelete(post: ChanPost) {
     @SuppressLint("InflateParams")
-    val view = AndroidUtils.inflate(context, R.layout.dialog_post_delete, null)
+    val view = inflate(context, R.layout.dialog_post_delete, null)
     val checkBox = view.findViewById<CheckBox>(R.id.image_only)
 
     dialogFactory.createSimpleConfirmationDialog(
@@ -677,7 +684,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   override fun showDeleting() {
     if (deletingDialog == null) {
-      deletingDialog = ProgressDialog.show(context, null, AndroidUtils.getString(R.string.delete_wait))
+      deletingDialog = ProgressDialog.show(context, null, getString(R.string.delete_wait))
     }
   }
 
@@ -749,9 +756,9 @@ class ThreadLayout @JvmOverloads constructor(
       presenter.refreshUI()
 
       val formattedString = if (hide) {
-        AndroidUtils.getQuantityString(R.plurals.post_hidden, postDescriptors.size, postDescriptors.size)
+        getQuantityString(R.plurals.post_hidden, postDescriptors.size, postDescriptors.size)
       } else {
-        AndroidUtils.getQuantityString(R.plurals.post_removed, postDescriptors.size, postDescriptors.size)
+        getQuantityString(R.plurals.post_removed, postDescriptors.size, postDescriptors.size)
       }
 
       SnackbarWrapper.create(themeEngine.chanTheme, this, formattedString, Snackbar.LENGTH_LONG).apply {
@@ -793,7 +800,7 @@ class ThreadLayout @JvmOverloads constructor(
       SnackbarWrapper.create(
         themeEngine.chanTheme,
         this,
-        AndroidUtils.getString(R.string.restored_n_posts, selectedPosts.size),
+        getString(R.string.restored_n_posts, selectedPosts.size),
         Snackbar.LENGTH_LONG
       ).apply { show() }
     }
@@ -854,7 +861,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     if (!isReplyLayoutVisible) {
-      val text = AndroidUtils.getQuantityString(R.plurals.thread_new_posts, newPostsCount, newPostsCount)
+      val text = getQuantityString(R.plurals.thread_new_posts, newPostsCount, newPostsCount)
       dismissSnackbar()
 
       newPostsNotification = SnackbarWrapper.create(themeEngine.chanTheme, this, text, Snackbar.LENGTH_LONG).apply {
@@ -991,7 +998,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   @SuppressLint("InflateParams")
   private fun inflateEmptyView(): View {
-    val view = AndroidUtils.inflate(context, R.layout.layout_empty_setup, null)
+    val view = inflate(context, R.layout.layout_empty_setup, null)
     val tv = view.findViewById<TextView>(R.id.feature)
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -1017,21 +1024,21 @@ class ThreadLayout @JvmOverloads constructor(
   @Suppress("MoveLambdaOutsideParentheses")
   override fun showHideOrRemoveWholeChainDialog(hide: Boolean, post: ChanPost, threadNo: Long) {
     val positiveButtonText = if (hide) {
-      AndroidUtils.getString(R.string.thread_layout_hide_whole_chain)
+      getString(R.string.thread_layout_hide_whole_chain)
     } else {
-      AndroidUtils.getString(R.string.thread_layout_remove_whole_chain)
+      getString(R.string.thread_layout_remove_whole_chain)
     }
 
     val negativeButtonText = if (hide) {
-      AndroidUtils.getString(R.string.thread_layout_hide_post)
+      getString(R.string.thread_layout_hide_post)
     } else {
-      AndroidUtils.getString(R.string.thread_layout_remove_post)
+      getString(R.string.thread_layout_remove_post)
     }
 
     val message = if (hide) {
-      AndroidUtils.getString(R.string.thread_layout_hide_whole_chain_as_well)
+      getString(R.string.thread_layout_hide_whole_chain_as_well)
     } else {
-      AndroidUtils.getString(R.string.thread_layout_remove_whole_chain_as_well)
+      getString(R.string.thread_layout_remove_whole_chain_as_well)
     }
 
     dialogFactory.createSimpleConfirmationDialog(
@@ -1057,6 +1064,7 @@ class ThreadLayout @JvmOverloads constructor(
     fun onShowPosts()
     fun onShowError()
     fun presentController(controller: Controller, animated: Boolean)
+    fun unpresentController(predicate: (Controller) -> Boolean)
     fun openReportController(post: ChanPost)
     fun hideSwipeRefreshLayout()
     fun openFilterForType(type: FilterType, filterText: String?)

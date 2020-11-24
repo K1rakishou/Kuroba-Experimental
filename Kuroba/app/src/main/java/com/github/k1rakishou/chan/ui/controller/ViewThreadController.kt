@@ -21,6 +21,7 @@ import android.widget.Toast
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.R.string.action_reload
+import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
@@ -49,13 +50,13 @@ import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem.ToobarThreedotMenuCallback
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLinkInBrowser
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink
 import com.github.k1rakishou.chan.utils.SharingUtils.getUrlForSharing
 import com.github.k1rakishou.chan.utils.plusAssign
-import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.AndroidUtils.getString
 import com.github.k1rakishou.common.options.ChanLoadOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
@@ -699,11 +700,7 @@ open class ViewThreadController(
         val view = navigation.findItem(ToolbarMenu.OVERFLOW_ID)?.view
         if (view != null) {
           dismissHintPopup()
-          hintPopup = HintPopup.show(
-            context, view, getString(R.string.thread_up_down_hint), -AndroidUtils.dp(
-              1f
-            ), 0
-          )
+          hintPopup = HintPopup.show(context, view, getString(R.string.thread_up_down_hint), -dp(1f), 0)
         }
       }, 600)
     } else if (counter == 3) {
@@ -711,11 +708,7 @@ open class ViewThreadController(
         val view = navigation.findItem(ACTION_PIN)?.view
         if (view != null) {
           dismissHintPopup()
-          hintPopup = HintPopup.show(
-            context, view, getString(R.string.thread_pin_hint), -AndroidUtils.dp(
-              1f
-            ), 0
-          )
+          hintPopup = HintPopup.show(context, view, getString(R.string.thread_pin_hint), -dp(1f), 0)
         }
       }, 600)
     }
@@ -742,6 +735,17 @@ open class ViewThreadController(
 
     navigation.title = getString(R.string.thread_loading_error_title)
     requireNavController().requireToolbar().updateTitle(navigation)
+  }
+
+  override fun unpresentController(predicate: (Controller) -> Boolean) {
+    getControllerOrNull { controller ->
+      if (predicate(controller)) {
+        controller.stopPresenting()
+        return@getControllerOrNull true
+      }
+
+      return@getControllerOrNull false
+    }
   }
 
   private fun updateLeftPaneHighlighting(chanDescriptor: ChanDescriptor?) {

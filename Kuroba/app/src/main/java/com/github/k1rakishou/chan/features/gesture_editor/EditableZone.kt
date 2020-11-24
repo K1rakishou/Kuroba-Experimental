@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.features.gesture_editor
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.PointF
-import com.github.k1rakishou.common.AndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 
 class EditableZone {
   private var currentAttachSide = AttachSide.Left

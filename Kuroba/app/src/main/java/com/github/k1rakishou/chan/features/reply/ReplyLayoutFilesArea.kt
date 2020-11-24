@@ -26,11 +26,12 @@ import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
-import com.github.k1rakishou.common.AndroidUtils.dp
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import kotlinx.android.synthetic.main.layout_reply_input.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -67,6 +68,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     )
   }
 
+  // TODO(KurobaEx): reply layout refactoring: show file size
+  // TODO(KurobaEx): reply layout refactoring: show warning when trying to open unsupported file
   // TODO(KurobaEx): reply layout refactoring: reset reply state to default (delete comment text) after post.
   // TODO(KurobaEx): reply layout refactoring: mark/unmark image as spolier
   // TODO(KurobaEx): reply layout refactoring: image editing
@@ -223,9 +226,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
           }
           is ReplyFileAttachable -> {
             epoxyReplyFileView {
-              id("epoxy_reply_file_view_${replyAttachable.fullPath}")
+              id("epoxy_reply_file_view_${replyAttachable.fileUuid}")
               attachmentFileUuid(replyAttachable.fileUuid)
-              attachmentFilePath(replyAttachable.fullPath)
               attachmentFileName(replyAttachable.fileName)
               attachmentSelected(replyAttachable.selected)
               exceedsMaxFilesPerPostLimit(replyAttachable.exceedsMaxFilesLimit)
@@ -280,6 +282,14 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
       value = selectedFileUuid
     )
 
+    if (presenter.selectedFilesCount() > 1) {
+      floatingListMenuItems += FloatingListMenuItem(
+        key = ACTION_DELETE_SELECTED_FILES,
+        name = context.getString(R.string.layout_reply_files_area_delete_selected_files_action),
+        value = selectedFileUuid
+      )
+    }
+
     val floatingListMenuController = FloatingListMenuController(
       context = context,
       constraintLayoutBiasPair = ConstraintLayoutBiasPair.Bottom,
@@ -301,6 +311,9 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
       ACTION_DELETE_FILE -> {
         presenter.deleteFiles(clickedFileUuid)
       }
+      ACTION_DELETE_SELECTED_FILES -> {
+        presenter.deleteSelectedFiles()
+      }
     }
   }
 
@@ -316,6 +329,14 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     replyLayoutCallbacks?.requestWrappingModeUpdate()
   }
 
+  override fun showLoadingView() {
+    threadListLayoutCallbacks?.showLoadingView()
+  }
+
+  override fun hideLoadingView() {
+    threadListLayoutCallbacks?.hideLoadingView()
+  }
+
   private inner class ReplyFilesEpoxyController : EpoxyController() {
     var callback: EpoxyController.() -> Unit = {}
 
@@ -327,6 +348,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
   interface ThreadListLayoutCallbacks {
     fun presentController(controller: FloatingListMenuController)
+    fun showLoadingView()
+    fun hideLoadingView()
   }
 
   interface ReplyLayoutCallbacks {
@@ -336,6 +359,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   companion object {
     private const val ACTION_OPEN_IN_EDITOR = 1
     private const val ACTION_DELETE_FILE = 2
+    private const val ACTION_DELETE_SELECTED_FILES = 3
 
     private const val MIN_FILES_PER_ROW = 2
 

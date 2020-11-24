@@ -6,9 +6,9 @@ import android.text.Spanned
 import android.text.style.CharacterStyle
 import android.text.style.ImageSpan
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.AndroidUtils.sp
 import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.video_service.MediaServiceType

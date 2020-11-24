@@ -31,7 +31,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.common.AndroidUtils.inflate;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 import static com.github.k1rakishou.core_themes.ThemeEngine.isDarkColor;
 
 public class FilesAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {

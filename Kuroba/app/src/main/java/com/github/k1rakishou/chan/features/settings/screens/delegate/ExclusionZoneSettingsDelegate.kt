@@ -13,9 +13,9 @@ import com.github.k1rakishou.chan.features.gesture_editor.AttachSide
 import com.github.k1rakishou.chan.features.gesture_editor.ExclusionZone
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getScreenOrientation
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.AndroidUtils.getString
 
 class ExclusionZoneSettingsDelegate(
   private val context: Context,

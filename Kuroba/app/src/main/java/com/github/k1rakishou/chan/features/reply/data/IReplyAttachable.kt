@@ -11,7 +11,6 @@ class TooManyAttachables(val attachablesTotal: Int) : IReplyAttachable
 class ReplyFileAttachable(
   val fileUuid: UUID,
   val fileName: String,
-  val fullPath: String,
   val spoiler: Boolean,
   val selected: Boolean,
   val exceedsMaxFilesLimit: Boolean
@@ -25,7 +24,6 @@ class ReplyFileAttachable(
 
     if (fileUuid != other.fileUuid) return false
     if (fileName != other.fileName) return false
-    if (fullPath != other.fullPath) return false
     if (spoiler != other.spoiler) return false
     if (selected != other.selected) return false
     if (exceedsMaxFilesLimit != other.exceedsMaxFilesLimit) return false
@@ -43,7 +41,7 @@ class ReplyFileAttachable(
   }
 
   override fun toString(): String {
-    return "ReplyFileAttachable{fileUuid='$fileUuid', fileName='$fileName', fullPath='$fullPath', " +
+    return "ReplyFileAttachable{fileUuid='$fileUuid', fileName='$fileName', " +
       "selected='$selected', spoiler='$spoiler', exceedsMaxFilesLimit='$exceedsMaxFilesLimit'}"
   }
 }

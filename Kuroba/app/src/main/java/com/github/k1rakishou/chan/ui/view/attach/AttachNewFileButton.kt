@@ -11,7 +11,7 @@ import android.view.View
 import androidx.core.content.ContextCompat
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.common.AndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.core_themes.ThemeEngine
 import javax.inject.Inject
 

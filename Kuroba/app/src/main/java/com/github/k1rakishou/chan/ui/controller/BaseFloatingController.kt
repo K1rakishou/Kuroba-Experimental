@@ -4,6 +4,8 @@ import android.content.Context
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.common.AndroidUtils
 import javax.inject.Inject
 
@@ -18,7 +20,7 @@ abstract class BaseFloatingController(
   override fun onCreate() {
     super.onCreate()
 
-    view = AndroidUtils.inflate(context, getLayoutId())
+    view = inflate(context, getLayoutId())
     updatePaddings()
 
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
@@ -67,7 +69,7 @@ abstract class BaseFloatingController(
   protected abstract fun getLayoutId(): Int
 
   companion object {
-    private val HPADDING = AndroidUtils.dp(8f)
-    private val VPADDING = AndroidUtils.dp(16f)
+    private val HPADDING = dp(8f)
+    private val VPADDING = dp(16f)
   }
 }

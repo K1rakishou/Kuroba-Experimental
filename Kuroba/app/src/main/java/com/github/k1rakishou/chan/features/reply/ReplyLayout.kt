@@ -76,6 +76,8 @@ import com.github.k1rakishou.chan.ui.view.LoadView
 import com.github.k1rakishou.chan.ui.view.SelectionListeningEditText
 import com.github.k1rakishou.chan.ui.view.SelectionListeningEditText.SelectionChangedListener
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.doIgnoringTextWatcher
@@ -235,7 +237,7 @@ class ReplyLayout @JvmOverloads constructor(
     this.currentOrientation = resources.configuration.orientation
 
     // Inflate reply input
-    replyInputLayout = AndroidUtils.inflate(context, R.layout.layout_reply_input, this, false)
+    replyInputLayout = AppModuleAndroidUtils.inflate(context, R.layout.layout_reply_input, this, false)
     message = replyInputLayout.findViewById(R.id.message)
     name = replyInputLayout.findViewById(R.id.name)
     subject = replyInputLayout.findViewById(R.id.subject)
@@ -257,7 +259,7 @@ class ReplyLayout @JvmOverloads constructor(
     submit = replyInputLayout.findViewById(R.id.submit)
     replyLayoutFilesArea = replyInputLayout.findViewById(R.id.reply_layout_files_area)
 
-    progressLayout = AndroidUtils.inflate(context, R.layout.layout_reply_progress, this, false)
+    progressLayout = AppModuleAndroidUtils.inflate(context, R.layout.layout_reply_progress, this, false)
     currentProgress = progressLayout.findViewById(R.id.current_progress)
 
     // Setup reply layout views
@@ -294,7 +296,7 @@ class ReplyLayout @JvmOverloads constructor(
     })
 
     // Inflate captcha layout
-    captchaContainer = AndroidUtils.inflate(
+    captchaContainer = AppModuleAndroidUtils.inflate(
       context,
       R.layout.layout_reply_captcha,
       this,
@@ -311,8 +313,8 @@ class ReplyLayout @JvmOverloads constructor(
     AndroidUtils.setBoundlessRoundRippleBackground(captchaHardReset)
     captchaHardReset.setOnClickListener(this)
     moreDropdown = DropdownArrowDrawable(
-      AndroidUtils.dp(16f),
-      AndroidUtils.dp(16f),
+      dp(16f),
+      dp(16f),
       false
     )
 
@@ -321,7 +323,7 @@ class ReplyLayout @JvmOverloads constructor(
 
     captchaHardReset.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_refresh_white_24dp))
     setView(replyInputLayout)
-    elevation = AndroidUtils.dp(4f).toFloat()
+    elevation = dp(4f).toFloat()
 
     presenter.create(this)
     replyLayoutFilesArea.onCreate()
@@ -341,7 +343,7 @@ class ReplyLayout @JvmOverloads constructor(
     presenter.onOpen(open)
 
     if (open && proxyStorage.isDirty()) {
-      openMessage(AndroidUtils.getString(R.string.reply_proxy_list_is_dirty_message), 10000)
+      openMessage(getString(R.string.reply_proxy_list_is_dirty_message), 10000)
     }
   }
 
@@ -557,7 +559,7 @@ class ReplyLayout @JvmOverloads constructor(
   ): AuthenticationLayoutInterface {
     when (authentication.type) {
       SiteAuthentication.Type.CAPTCHA1 -> {
-        return AndroidUtils.inflate(
+        return AppModuleAndroidUtils.inflate(
           context,
           R.layout.layout_captcha_legacy,
           captchaContainer,
@@ -647,7 +649,7 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   override fun showAuthenticationFailedError(error: Throwable) {
-    val message = AndroidUtils.getString(R.string.could_not_initialized_captcha, getReason(error))
+    val message = getString(R.string.could_not_initialized_captcha, getReason(error))
     AppModuleAndroidUtils.showToast(context, message, Toast.LENGTH_LONG)
   }
 
@@ -678,12 +680,12 @@ class ReplyLayout @JvmOverloads constructor(
   private fun getReason(error: Throwable): String {
     if (error is AndroidRuntimeException && error.message != null) {
       if (error.message?.contains("MissingWebViewPackageException") == true) {
-        return AndroidUtils.getString(R.string.fail_reason_webview_is_not_installed)
+        return getString(R.string.fail_reason_webview_is_not_installed)
       }
 
       // Fallthrough
     } else if (error is Resources.NotFoundException) {
-      return AndroidUtils.getString(
+      return getString(
         R.string.fail_reason_some_part_of_webview_not_initialized,
         error.message
       )
@@ -1072,8 +1074,8 @@ class ReplyLayout @JvmOverloads constructor(
 
   companion object {
     private const val TAG = "ReplyLayout"
-    private val REPLY_COMMENT_MIN_HEIGHT = AndroidUtils.dp(100f)
-    private val REPLY_COMMENT_MIN_HEIGHT_TABLET = AndroidUtils.dp(128f)
+    private val REPLY_COMMENT_MIN_HEIGHT = dp(100f)
+    private val REPLY_COMMENT_MIN_HEIGHT_TABLET = dp(128f)
 
     private const val REPLY_LAYOUT_EXPANDED_MAX_LINES = 10
     private const val REPLY_LAYOUT_COLLAPSED_NORMAL_MAX_LINES = 5

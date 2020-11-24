@@ -26,8 +26,8 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.helper.BoardHelper
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.plusAssign
-import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -114,7 +114,7 @@ class BoardsSetupController(
     super.onCreate()
     navigation.title = context.getString(R.string.controller_boards_setup_title, siteDescriptor.siteName)
 
-    view = AndroidUtils.inflate(context, R.layout.controller_boards_setup)
+    view = inflate(context, R.layout.controller_boards_setup)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
     epoxyRecyclerView.setController(controller)
 

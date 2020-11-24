@@ -16,7 +16,7 @@
  */
 package com.github.k1rakishou.chan.ui.toolbar
 
-import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.DoNotStrip
 import java.util.*
 
@@ -50,7 +50,7 @@ open class ToolbarMenuSubItem {
     value: Any? = null
   ) {
     this.id = id
-    this.text = AndroidUtils.getString(textId)
+    this.text = getString(textId)
     this.visible = visible
     this.value = value
     this.clickCallback = clicked
