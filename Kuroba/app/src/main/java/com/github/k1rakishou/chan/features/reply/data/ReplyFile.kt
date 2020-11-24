@@ -127,15 +127,15 @@ class ReplyFile(
 
   @Synchronized
   fun deleteFromDisk() {
-    if (!fileOnDisk.delete()) {
+    if (fileOnDisk.exists() && !fileOnDisk.delete()) {
       Logger.e("ReplyFile", "Failed to delete: ${fileOnDisk.absolutePath}")
     }
 
-    if (!fileMetaOnDisk.delete()) {
+    if (fileMetaOnDisk.exists() && !fileMetaOnDisk.delete()) {
       Logger.e("ReplyFile", "Failed to delete: ${fileMetaOnDisk.absolutePath}")
     }
 
-    if (!previewFileOnDisk.delete()) {
+    if (previewFileOnDisk.exists() && !previewFileOnDisk.delete()) {
       Logger.e("ReplyFile", "Failed to delete: ${previewFileOnDisk.absolutePath}")
     }
   }
