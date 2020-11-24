@@ -27,10 +27,44 @@ public class SharedPreferencesSettingProvider implements SettingProvider {
         this.prefs = prefs;
     }
 
-    //region Integer
     @Override
     public int getInt(String key, int def) {
-        return prefs.getInt(key, def);
+        try {
+            return prefs.getInt(key, def);
+        } catch (Throwable error) {
+            prefs.edit().remove(key).commit();
+            return prefs.getInt(key, def);
+        }
+    }
+
+    @Override
+    public long getLong(String key, long def) {
+        try {
+            return prefs.getLong(key, def);
+        } catch (Throwable error) {
+            prefs.edit().remove(key).commit();
+            return prefs.getLong(key, def);
+        }
+    }
+
+    @Override
+    public boolean getBoolean(String key, boolean def) {
+        try {
+            return prefs.getBoolean(key, def);
+        } catch (Throwable error) {
+            prefs.edit().remove(key).commit();
+            return prefs.getBoolean(key, def);
+        }
+    }
+
+    @Override
+    public String getString(String key, String def) {
+        try {
+            return prefs.getString(key, def);
+        } catch (Throwable error) {
+            prefs.edit().remove(key).commit();
+            return prefs.getString(key, def);
+        }
     }
 
     @Override
@@ -43,13 +77,6 @@ public class SharedPreferencesSettingProvider implements SettingProvider {
         prefs.edit().putInt(key, value).commit();
     }
 
-    //endregion
-    //region Long
-    @Override
-    public long getLong(String key, long def) {
-        return prefs.getLong(key, def);
-    }
-
     @Override
     public void putLong(String key, long value) {
         prefs.edit().putLong(key, value).apply();
@@ -60,13 +87,6 @@ public class SharedPreferencesSettingProvider implements SettingProvider {
         prefs.edit().putLong(key, value).commit();
     }
 
-    //endregion
-    //region Boolean
-    @Override
-    public boolean getBoolean(String key, boolean def) {
-        return prefs.getBoolean(key, def);
-    }
-
     @Override
     public void putBoolean(String key, boolean value) {
         prefs.edit().putBoolean(key, value).apply();
@@ -75,13 +95,6 @@ public class SharedPreferencesSettingProvider implements SettingProvider {
     @Override
     public void putBooleanSync(String key, Boolean value) {
         prefs.edit().putBoolean(key, value).commit();
-    }
-
-    //endregion
-    //region String
-    @Override
-    public String getString(String key, String def) {
-        return prefs.getString(key, def);
     }
 
     @Override
