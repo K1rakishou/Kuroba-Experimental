@@ -94,6 +94,7 @@ class LocalFilePicker(
     val newRequest = EnqueuedRequest(
       newRequestCode,
       filePickerInput.replyChanDescriptor,
+      onGotSuccessResultFromActivity = filePickerInput.onGotSuccessResultFromActivity,
       completableDeferred
     )
     activeRequests[newRequestCode] = newRequest
@@ -126,7 +127,7 @@ class LocalFilePicker(
     }
   }
 
-  private fun onActivityResultInternal(requestCode: Int, resultCode: Int, data: Intent?) {
+  private suspend fun onActivityResultInternal(requestCode: Int, resultCode: Int, data: Intent?) {
     BackgroundUtils.ensureBackgroundThread()
 
     val enqueuedRequest = activeRequests[requestCode]
@@ -154,6 +155,8 @@ class LocalFilePicker(
       finishWithError(requestCode, IFilePicker.FilePickerError.FailedToExtractUri())
       return
     }
+
+    enqueuedRequest.onGotSuccessResultFromActivity.invoke()
 
     val fileName = tryExtractFileNameOrDefault(uri, attachedActivity)
 
@@ -384,12 +387,14 @@ class LocalFilePicker(
 
   data class LocalFilePickerInput(
     val replyChanDescriptor: ChanDescriptor,
-    val clearLastRememberedFilePicker: Boolean = false
+    val clearLastRememberedFilePicker: Boolean = false,
+    val onGotSuccessResultFromActivity: suspend () -> Unit
   )
 
   private data class EnqueuedRequest(
     val requestCode: Int,
     val replyChanDescriptor: ChanDescriptor,
+    val onGotSuccessResultFromActivity: suspend () -> Unit,
     val completableDeferred: CompletableDeferred<PickedFile>
   )
 

@@ -66,11 +66,10 @@ class ReplyLayoutFilesAreaPresenter(
         val chanDescriptor = boundChanDescriptor
           ?: return@handleStateUpdate
 
-        withView { showLoadingView() }
-
         val input = LocalFilePicker.LocalFilePickerInput(
           replyChanDescriptor = chanDescriptor,
-          clearLastRememberedFilePicker = showFilePickerChooser
+          clearLastRememberedFilePicker = showFilePickerChooser,
+          onGotSuccessResultFromActivity = { withView { showLoadingView() } }
         )
 
         val pickedFileResult = imagePickHelper.pickLocalFile(input)
