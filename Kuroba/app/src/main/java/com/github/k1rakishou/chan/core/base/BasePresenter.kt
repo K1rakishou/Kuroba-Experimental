@@ -4,7 +4,13 @@ import androidx.annotation.CallSuper
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
 import io.reactivex.disposables.CompositeDisposable
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.plus
+import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
 
 @DoNotStrip
@@ -58,7 +64,7 @@ abstract class BasePresenter<V> {
     }
 
     view?.let { v ->
-      withContext(scope.coroutineContext + Dispatchers.Main) {
+      withContext(scope.coroutineContext + Dispatchers.Main.immediate) {
         val result = ModularResult.Try { func(v) }
         handleResult(result)
       }

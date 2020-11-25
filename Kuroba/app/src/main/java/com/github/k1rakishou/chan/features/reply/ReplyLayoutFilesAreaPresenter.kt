@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.features.reply
 
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
@@ -12,6 +13,7 @@ import com.github.k1rakishou.chan.features.reply.data.TooManyAttachables
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.PickedFile
+import com.github.k1rakishou.chan.ui.helper.picker.RemoteFilePicker
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -19,6 +21,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -60,22 +63,27 @@ class ReplyLayoutFilesAreaPresenter(
     this.boundChanDescriptor = null
   }
 
-  fun pickNewLocalFile(showFilePickerChooser: Boolean) {
+  fun pickLocalFile(showFilePickerChooser: Boolean) {
     pickFilesExecutor.post {
       handleStateUpdate {
         val chanDescriptor = boundChanDescriptor
           ?: return@handleStateUpdate
 
+        val job = SupervisorJob()
+        val cancellationFunc = { job.cancel() }
+
         val input = LocalFilePicker.LocalFilePickerInput(
           replyChanDescriptor = chanDescriptor,
           clearLastRememberedFilePicker = showFilePickerChooser,
-          onGotSuccessResultFromActivity = { withView { showLoadingView() } }
+          showLoadingView = { withView { showLoadingView(cancellationFunc, R.string.decoding_reply_file_preview) } },
+          hideLoadingView = { withView { hideLoadingView() } }
         )
 
-        val pickedFileResult = imagePickHelper.pickLocalFile(input)
+        val pickedFileResult = withContext(job) { imagePickHelper.pickLocalFile(input) }
           .finally { withView { hideLoadingView() } }
           .safeUnwrap { error ->
             Logger.e(TAG, "imagePickHelper.pickLocalFile($chanDescriptor) error", error)
+            withView { showGenericErrorToast(error.errorMessageOrClassName()) }
             return@handleStateUpdate
           }
 
@@ -101,6 +109,57 @@ class ReplyLayoutFilesAreaPresenter(
         }
 
         Logger.d(TAG, "pickNewLocalFile() success")
+        refreshAttachedFiles()
+      }
+    }
+  }
+
+  fun pickRemoteFile(url: String) {
+    pickFilesExecutor.post {
+      handleStateUpdate {
+        val chanDescriptor = boundChanDescriptor
+          ?: return@handleStateUpdate
+
+        val job = SupervisorJob()
+        val cancellationFunc = { job.cancel() }
+
+        val input = RemoteFilePicker.RemoteFilePickerInput(
+          replyChanDescriptor = chanDescriptor,
+          imageUrl = url,
+          showLoadingView = { textId -> withView { showLoadingView(cancellationFunc, textId) } },
+          hideLoadingView = { withView { hideLoadingView() } }
+        )
+
+        val pickedFileResult = withContext(job) { imagePickHelper.pickRemoteFile(input) }
+          .finally { withView { hideLoadingView() } }
+          .safeUnwrap { error ->
+            Logger.e(TAG, "imagePickHelper.pickRemoteFile($chanDescriptor) error", error)
+            withView { showGenericErrorToast(error.errorMessageOrClassName()) }
+            return@handleStateUpdate
+          }
+
+        if (pickedFileResult is PickedFile.Failure) {
+          Logger.e(TAG, "pickRemoteFile() error, " +
+            "pickedFileResult=${pickedFileResult.reason.errorMessageOrClassName()}"
+          )
+
+          withView { showFilePickerErrorToast(pickedFileResult.reason) }
+          return@handleStateUpdate
+        }
+
+        val replyFile = (pickedFileResult as PickedFile.Result).replyFile
+
+        val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
+          Logger.e(TAG, "imagePickHelper.pickRemoteFile($chanDescriptor) getReplyFileMeta() error", error)
+          return@handleStateUpdate
+        }
+
+        val maxAllowedFilesPerPost = getMaxAllowedFilesPerPost(chanDescriptor)
+        if (canAutoSelectFile(maxAllowedFilesPerPost).unwrap()) {
+          replyManager.updateFileSelection(replyFileMeta.fileUuid, true)
+        }
+
+        Logger.d(TAG, "pickRemoteFile() success")
         refreshAttachedFiles()
       }
     }
@@ -184,11 +243,11 @@ class ReplyLayoutFilesAreaPresenter(
           withView {
             requestReplyLayoutWrappingModeUpdate()
 
-            val attachedSelectedFilesCount = state.value.attachables
+            val selectedFilesCount = state.value.attachables
               .count { replyAttachable -> replyAttachable is ReplyFileAttachable && replyAttachable.selected }
-            val maxAllowedAttachedFilesCount = getMaxAllowedFilesPerPost(chanDescriptor)
+            val maxAllowedFilesPerPost = getMaxAllowedFilesPerPost(chanDescriptor)
 
-            updateSendButtonState(attachedSelectedFilesCount, maxAllowedAttachedFilesCount)
+            updateSendButtonState(selectedFilesCount, maxAllowedFilesPerPost)
           }
         }
       }
@@ -202,7 +261,6 @@ class ReplyLayoutFilesAreaPresenter(
 
       replyManager.iterateFilesOrdered { _, replyFile ->
         val replyFileMeta = replyFile.getReplyFileMeta().unwrap()
-
         if (replyFileMeta.selected) {
           replyManager.updateFileSelection(replyFileMeta.fileUuid, true)
         }

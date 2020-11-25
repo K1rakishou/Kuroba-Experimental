@@ -1145,6 +1145,8 @@ Don't have a 4chan Pass?<br>
     <string name="updater_is_disabled_for_fdroid_builds">Updater is disabled for F-Droid builds</string>
     <string name="doing_heavy_lifting_please_wait">Doing heavy lifting, please wait…</string>
     <string name="decoding_reply_file_preview">Decoding file preview, this may take some time</string>
+    <string name="downloading_file">Downloading file, this may take some time</string>
     <string name="upload_file_x_out_of_y">Uploading file %1$d out of %2$d</string>
+    <string name="enter_image_video_url">Enter image/video url</string>
 
 </resources>

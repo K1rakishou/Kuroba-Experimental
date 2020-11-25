@@ -8,6 +8,10 @@ import com.github.k1rakishou.chan.core.di.component.activity.StartActivityCompon
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import kotlin.Unit;
+import kotlin.jvm.functions.Function0;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
@@ -20,7 +24,8 @@ public class LoadingViewController extends BaseFloatingController {
 
     private String title;
     private boolean indeterminate;
-    private boolean backNotAllowed = true;
+    private boolean backAllowed = false;
+    private @Nullable Function0<Unit> cancellationFunc;
 
     @Override
     protected void injectDependencies(@NotNull StartActivityComponent component) {
@@ -52,15 +57,31 @@ public class LoadingViewController extends BaseFloatingController {
         progressBar = view.findViewById(R.id.progress_bar);
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        cancellationFunc = null;
+    }
+
     public void enableBack() {
-        backNotAllowed = false;
+        backAllowed = true;
+    }
+
+    public void enableBack(@NotNull Function0<Unit> cancellationFunc) {
+        backAllowed = true;
+        this.cancellationFunc = cancellationFunc;
     }
 
     // Disable the back button for this controller unless otherwise requested by the above
     @Override
     public boolean onBack() {
-        if (!backNotAllowed) {
+        if (backAllowed) {
             presentedByController.onBack();
+        }
+
+        if (cancellationFunc != null) {
+            cancellationFunc.invoke();
+            cancellationFunc = null;
         }
 
         return true;
@@ -97,4 +118,5 @@ public class LoadingViewController extends BaseFloatingController {
     protected int getLayoutId() {
         return R.layout.controller_loading_view;
     }
+
 }

@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.ui.helper.picker
 import android.content.Context
 import android.content.Intent
 import coil.size.Scale
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.ReplyManager
@@ -74,25 +75,91 @@ class ImagePickHelper(
       return ModularResult.value(pickedFileFailure)
     }
 
-    withContext(Dispatchers.IO) {
-      imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
-        appContext,
-        replyFileMeta.fileUuid,
-        MAX_PREVIEW_WIDTH,
-        MAX_PREVIEW_HEIGHT,
-        Scale.FILL
-      )
+    filePickerInput.showLoadingView()
+
+    try {
+      withContext(Dispatchers.IO) {
+        imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
+          appContext,
+          replyFileMeta.fileUuid,
+          MAX_PREVIEW_WIDTH,
+          MAX_PREVIEW_HEIGHT,
+          Scale.FILL
+        )
+      }
+    } finally {
+      filePickerInput.hideLoadingView()
     }
 
-    Logger.d(TAG, "pickLocalFile() success! Picked new file with UUID='${replyFileMeta.fileUuid}'")
+    Logger.d(TAG, "pickLocalFile() success! Picked new local file with UUID='${replyFileMeta.fileUuid}'")
     pickedFilesUpdatesState.emit(replyFileMeta.fileUuid)
 
     return result
   }
 
-  suspend fun pickRemoteFile(): ModularResult<PickedFile> {
-    // TODO(KurobaEx): reply layout refactoring
-    return ModularResult.value(PickedFile.Failure(IFilePicker.FilePickerError.NotImplemented()))
+  suspend fun pickRemoteFile(filePickerInput: RemoteFilePicker.RemoteFilePickerInput): ModularResult<PickedFile> {
+    val result = remoteFilePicker.pickFile(filePickerInput)
+    if (result is ModularResult.Error) {
+      Logger.e(TAG, "pickRemoteFile() error", result.error)
+      return result
+    }
+
+    val pickedFile = (result as ModularResult.Value).value
+    if (pickedFile is PickedFile.Failure) {
+      if (pickedFile.reason is IFilePicker.FilePickerError.BadResultCode) {
+        Logger.e(TAG, "pickRemoteFile() pickedFile is " +
+          "PickedFile.BadResultCode: ${pickedFile.reason.errorMessageOrClassName()}")
+      } else {
+        Logger.e(TAG, "pickRemoteFile() pickedFile is PickedFile.Failure", pickedFile.reason)
+      }
+
+      return result
+    }
+
+    val replyFile = (pickedFile as PickedFile.Result).replyFile
+
+    val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
+      Logger.e(TAG, "pickRemoteFile() replyFile.getReplyFileMeta() error", error)
+
+      replyFile.deleteFromDisk()
+
+      val pickedFileFailure =
+        PickedFile.Failure(IFilePicker.FilePickerError.FailedToReadFileMeta())
+
+      return ModularResult.value(pickedFileFailure)
+    }
+
+    if (!replyManager.addNewReplyFileIntoStorage(replyFile)) {
+      Logger.e(TAG, "pickRemoteFile() addNewReplyFileIntoStorage() failure")
+
+      replyFile.deleteFromDisk()
+
+      val pickedFileFailure =
+        PickedFile.Failure(IFilePicker.FilePickerError.FailedToAddNewReplyFileIntoStorage())
+
+      return ModularResult.value(pickedFileFailure)
+    }
+
+    filePickerInput.showLoadingView(R.string.decoding_reply_file_preview)
+
+    try {
+      withContext(Dispatchers.IO) {
+        imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
+          appContext,
+          replyFileMeta.fileUuid,
+          MAX_PREVIEW_WIDTH,
+          MAX_PREVIEW_HEIGHT,
+          Scale.FILL
+        )
+      }
+    } finally {
+      filePickerInput.hideLoadingView()
+    }
+
+    Logger.d(TAG, "pickRemoteFile() success! Picked new remote file with UUID='${replyFileMeta.fileUuid}'")
+    pickedFilesUpdatesState.emit(replyFileMeta.fileUuid)
+
+    return result
   }
 
   fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

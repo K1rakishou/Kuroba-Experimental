@@ -3,6 +3,8 @@ package com.github.k1rakishou.chan.core.di.module.application
 import android.content.Context
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.cache.CacheHandler
+import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -72,9 +74,23 @@ class HelperModule {
 
   @Provides
   @Singleton
-  fun provideRemoteFilePicker(): RemoteFilePicker {
+  fun provideRemoteFilePicker(
+    applicationScope: CoroutineScope,
+    appConstants: AppConstants,
+    fileCacheV2: FileCacheV2,
+    fileManager: FileManager,
+    replyManager: ReplyManager,
+    cacheHandler: CacheHandler
+  ): RemoteFilePicker {
     Logger.d(AppModule.DI_TAG, "RemoteFilePicker")
-    return RemoteFilePicker()
+    return RemoteFilePicker(
+      applicationScope,
+      appConstants,
+      fileCacheV2,
+      fileManager,
+      cacheHandler,
+      replyManager
+    )
   }
 
   @Provides

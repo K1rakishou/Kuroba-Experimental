@@ -11,6 +11,7 @@ import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.GridLayoutManager
 import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyNewAttachable
@@ -53,6 +54,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   lateinit var replyManager: ReplyManager
   @Inject
   lateinit var imagePickHelper: ImagePickHelper
+  @Inject
+  lateinit var dialogFactory: DialogFactory
 
   private val controller = ReplyFilesEpoxyController()
   private val epoxyRecyclerView: ColorizableEpoxyRecyclerView
@@ -147,6 +150,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   }
 
   fun onUnbind() {
+    this.threadListLayoutCallbacks?.hideLoadingView()
+
     this.threadListLayoutCallbacks = null
     this.replyLayoutCallbacks = null
 
@@ -199,7 +204,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
       if (attachables.size == 1 && attachables.first() is ReplyNewAttachable) {
         epoxyAttachNewFileButtonWideView {
           id("epoxy_attach_new_file_button_wide_view")
-          onClickListener { presenter.pickNewLocalFile(showFilePickerChooser = false) }
+          onClickListener { presenter.pickLocalFile(showFilePickerChooser = false) }
           onLongClickListener { showPickFileOptions() }
         }
 
@@ -223,7 +228,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
           is ReplyNewAttachable -> {
             epoxyAttachNewFileButtonView {
               id("epoxy_attach_new_file_button_view")
-              onClickListener { presenter.pickNewLocalFile(showFilePickerChooser = false) }
+              onClickListener { presenter.pickLocalFile(showFilePickerChooser = false) }
               onLongClickListener { showPickFileOptions() }
             }
           }
@@ -344,14 +349,17 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   }
 
   private fun onPickFileItemClicked(item: FloatingListMenuItem) {
-    val id = item.key as Int
-
-    when (id) {
+    when (item.key as Int) {
       ACTION_PICK_LOCAL_FILE_SHOW_ALL_FILE_PICKERS -> {
-        presenter.pickNewLocalFile(showFilePickerChooser = true)
+        presenter.pickLocalFile(showFilePickerChooser = true)
       }
       ACTION_PICK_REMOTE_FILE -> {
-        // TODO(KurobaEx): reply layout refactoring
+        dialogFactory.createSimpleDialogWithInput(
+          context = context,
+          titleTextId = R.string.enter_image_video_url,
+          inputType = DialogFactory.DialogInputType.String,
+          onValueEntered = { url -> presenter.pickRemoteFile(url) }
+        )
       }
     }
   }
@@ -371,9 +379,9 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     replyLayoutCallbacks?.requestWrappingModeUpdate()
   }
 
-  override fun showLoadingView() {
+  override fun showLoadingView(cancellationFunc: () -> Unit, titleTextId: Int) {
     BackgroundUtils.ensureMainThread()
-    threadListLayoutCallbacks?.showLoadingView()
+    threadListLayoutCallbacks?.showLoadingView(cancellationFunc, titleTextId)
   }
 
   override fun hideLoadingView() {
@@ -381,10 +389,10 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     threadListLayoutCallbacks?.hideLoadingView()
   }
 
-  override fun updateSendButtonState(attachedSelectedFilesCount: Int, maxAllowedAttachedFilesCount: Int) {
+  override fun updateSendButtonState(selectedFilesCount: Int, maxAllowedSelectedFilesCount: Int) {
     BackgroundUtils.ensureMainThread()
 
-    if (attachedSelectedFilesCount == 0 || attachedSelectedFilesCount <= maxAllowedAttachedFilesCount) {
+    if (selectedFilesCount == 0 || selectedFilesCount <= maxAllowedSelectedFilesCount) {
       replyLayoutCallbacks?.enableSendButton()
     } else {
       replyLayoutCallbacks?.disableSendButton()
@@ -402,7 +410,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
   interface ThreadListLayoutCallbacks {
     fun presentController(controller: FloatingListMenuController)
-    fun showLoadingView()
+    fun showLoadingView(cancellationFunc: () -> Unit, titleTextId: Int)
     fun hideLoadingView()
   }
 

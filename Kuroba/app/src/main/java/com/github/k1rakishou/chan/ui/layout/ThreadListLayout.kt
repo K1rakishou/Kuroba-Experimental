@@ -1080,20 +1080,21 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     threadListLayoutCallback?.presentController(controller)
   }
 
-  override fun showLoadingView() {
+  override fun showLoadingView(cancellationFunc: () -> Unit, titleTextId: Int) {
     BackgroundUtils.ensureMainThread()
 
     val loadingViewController = LoadingViewController(
       context,
       true,
-      context.getString(R.string.decoding_reply_file_preview)
-    )
+      context.getString(titleTextId)
+    ).apply { enableBack(cancellationFunc) }
 
     threadListLayoutCallback?.presentController(loadingViewController)
   }
 
   override fun hideLoadingView() {
     BackgroundUtils.ensureMainThread()
+
     threadListLayoutCallback?.unpresentController { controller -> controller is LoadingViewController }
   }
 

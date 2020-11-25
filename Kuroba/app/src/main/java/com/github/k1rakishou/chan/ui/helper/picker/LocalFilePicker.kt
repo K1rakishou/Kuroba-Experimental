@@ -94,7 +94,6 @@ class LocalFilePicker(
     val newRequest = EnqueuedRequest(
       newRequestCode,
       filePickerInput.replyChanDescriptor,
-      onGotSuccessResultFromActivity = filePickerInput.onGotSuccessResultFromActivity,
       completableDeferred
     )
     activeRequests[newRequestCode] = newRequest
@@ -155,8 +154,6 @@ class LocalFilePicker(
       finishWithError(requestCode, IFilePicker.FilePickerError.FailedToExtractUri())
       return
     }
-
-    enqueuedRequest.onGotSuccessResultFromActivity.invoke()
 
     val fileName = tryExtractFileNameOrDefault(uri, attachedActivity)
 
@@ -228,7 +225,7 @@ class LocalFilePicker(
         }
 
         os.use { outputStream ->
-          if (!IOUtils.copy(inputStream, outputStream, MAX_FILE_SIZE)) {
+          if (!IOUtils.copy(inputStream, outputStream, IFilePicker.MAX_FILE_SIZE)) {
             throw IOException(
               "Failed to copy external file (uri='$uri') into reply file " +
                 "(filePath='${cacheFile.getFullPath()}')"
@@ -278,7 +275,7 @@ class LocalFilePicker(
       // As per the comment on OpenableColumns.DISPLAY_NAME:
       // If this is not provided then the name should default to the last segment
       // of the file's URI.
-      fileName = uri.lastPathSegment ?: DEFAULT_FILE_NAME
+      fileName = uri.lastPathSegment ?: IFilePicker.DEFAULT_FILE_NAME
     }
 
     return fileName
@@ -388,21 +385,18 @@ class LocalFilePicker(
   data class LocalFilePickerInput(
     val replyChanDescriptor: ChanDescriptor,
     val clearLastRememberedFilePicker: Boolean = false,
-    val onGotSuccessResultFromActivity: suspend () -> Unit
+    val showLoadingView: suspend () -> Unit,
+    val hideLoadingView: suspend () -> Unit
   )
 
   private data class EnqueuedRequest(
     val requestCode: Int,
     val replyChanDescriptor: ChanDescriptor,
-    val onGotSuccessResultFromActivity: suspend () -> Unit,
     val completableDeferred: CompletableDeferred<PickedFile>
   )
 
   companion object {
     private const val TAG = "LocalFilePicker"
-
-    private const val DEFAULT_FILE_NAME = "attach_file"
-    private const val MAX_FILE_SIZE = 50 * 1024 * 1024.toLong()
   }
 
 }

@@ -6,7 +6,7 @@ interface ReplyLayoutFilesAreaView {
   fun showFilePickerErrorToast(filePickerError: IFilePicker.FilePickerError)
   fun showGenericErrorToast(errorMessage: String)
   fun requestReplyLayoutWrappingModeUpdate()
-  fun showLoadingView()
+  fun showLoadingView(cancellationFunc: () -> Unit, titleTextId: Int)
   fun hideLoadingView()
-  fun updateSendButtonState(attachedSelectedFilesCount: Int, maxAllowedAttachedFilesCount: Int)
+  fun updateSendButtonState(selectedFilesCount: Int, maxAllowedSelectedFilesCount: Int)
 }
