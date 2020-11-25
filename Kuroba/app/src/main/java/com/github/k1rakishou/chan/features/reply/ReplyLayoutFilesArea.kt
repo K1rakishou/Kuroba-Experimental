@@ -77,7 +77,6 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   // TODO(KurobaEx): reply layout refactoring: reset reply state to default (delete comment text) after post.
   // TODO(KurobaEx): reply layout refactoring: mark/unmark image as spolier
   // TODO(KurobaEx): reply layout refactoring: image editing
-  // TODO(KurobaEx): reply layout refactoring: load image by url
 
   // TODO(KurobaEx): reply layout refactoring: warn when attach file exceeds size limits
   //  val probablyWebm = "webm" == StringUtils.extractFileNameExtension(name)
@@ -164,12 +163,12 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
   fun onWrappingModeChanged(matchParent: Boolean) {
     if (presenter.hasAttachedFiles()) {
-      val attachNewFileButtonHeight =
-        AppModuleAndroidUtils.getDimen(R.dimen.attach_new_file_button_height)
+      val attachNewFileButtonHeight = AppModuleAndroidUtils.getDimen(R.dimen.attach_new_file_button_height)
 
       epoxyRecyclerView.updateLayoutParams<ConstraintLayout.LayoutParams> {
         if (matchParent) {
-          matchConstraintMaxHeight = (attachNewFileButtonHeight * 3) + BOTTOM_OFFSET
+          // Use full height
+          matchConstraintMaxHeight = 0
         } else {
           matchConstraintMaxHeight = attachNewFileButtonHeight + BOTTOM_OFFSET
         }
@@ -428,7 +427,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     private const val ACTION_PICK_LOCAL_FILE_SHOW_ALL_FILE_PICKERS = 100
     private const val ACTION_PICK_REMOTE_FILE = 101
 
-    private const val MIN_FILES_PER_ROW = 2
+    private const val MIN_FILES_PER_ROW = 1
 
     private val BOTTOM_OFFSET = dp(24f)
   }
