@@ -74,7 +74,7 @@ class DvachBoardsRequest internal constructor(
         }
       }
   
-      board.maxFileSize = MAX_FILE_SIZE
+      board.maxFileSize = Dvach.DEFAULT_MAX_FILE_SIZE
   
       if (board.hasMissingInfo()) {
         // Invalid data, ignore
@@ -87,6 +87,5 @@ class DvachBoardsRequest internal constructor(
 
   companion object {
     private const val TAG = "DvachBoardsRequest"
-    private const val MAX_FILE_SIZE = 20480 * 1024 //20MB
   }
 }

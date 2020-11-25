@@ -19,8 +19,7 @@ package com.github.k1rakishou.prefs;
 import com.github.k1rakishou.Setting;
 import com.github.k1rakishou.SettingProvider;
 
-public class StringSetting
-        extends Setting<String> {
+public class StringSetting extends Setting<String> {
     private boolean hasCached = false;
     private String cached;
 

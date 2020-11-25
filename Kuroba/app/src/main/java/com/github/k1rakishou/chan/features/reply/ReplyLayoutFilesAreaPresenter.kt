@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.features.reply.data.IReplyAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
@@ -33,6 +34,7 @@ import java.util.*
 class ReplyLayoutFilesAreaPresenter(
   private val appConstants: AppConstants,
   private val replyManager: ReplyManager,
+  private val postingLimitationsInfoManager: PostingLimitationsInfoManager,
   private val imagePickHelper: ImagePickHelper
 ) : BasePresenter<ReplyLayoutFilesAreaView>() {
   private val pickFilesExecutor = RendezvousCoroutineExecutor(scope)
@@ -104,7 +106,7 @@ class ReplyLayoutFilesAreaPresenter(
         }
 
         val maxAllowedFilesPerPost = getMaxAllowedFilesPerPost(chanDescriptor)
-        if (canAutoSelectFile(maxAllowedFilesPerPost).unwrap()) {
+        if (maxAllowedFilesPerPost != null && canAutoSelectFile(maxAllowedFilesPerPost).unwrap()) {
           replyManager.updateFileSelection(replyFileMeta.fileUuid, true)
         }
 
@@ -155,7 +157,7 @@ class ReplyLayoutFilesAreaPresenter(
         }
 
         val maxAllowedFilesPerPost = getMaxAllowedFilesPerPost(chanDescriptor)
-        if (canAutoSelectFile(maxAllowedFilesPerPost).unwrap()) {
+        if (maxAllowedFilesPerPost != null && canAutoSelectFile(maxAllowedFilesPerPost).unwrap()) {
           replyManager.updateFileSelection(replyFileMeta.fileUuid, true)
         }
 
@@ -247,7 +249,9 @@ class ReplyLayoutFilesAreaPresenter(
               .count { replyAttachable -> replyAttachable is ReplyFileAttachable && replyAttachable.selected }
             val maxAllowedFilesPerPost = getMaxAllowedFilesPerPost(chanDescriptor)
 
-            updateSendButtonState(selectedFilesCount, maxAllowedFilesPerPost)
+            if (maxAllowedFilesPerPost != null) {
+              updateSendButtonState(selectedFilesCount, maxAllowedFilesPerPost)
+            }
           }
         }
       }
@@ -304,6 +308,7 @@ class ReplyLayoutFilesAreaPresenter(
           spoiler = meta.spoiler,
           selected = isSelected,
           exceedsMaxFilesLimit = when {
+            maxAllowedFilesPerPost == null -> false
             selectedFilesCount < maxAllowedFilesPerPost -> false
             selectedFilesCount == maxAllowedFilesPerPost -> !isSelected
             else -> true
@@ -329,9 +334,10 @@ class ReplyLayoutFilesAreaPresenter(
     return Try { replyManager.selectedFilesCount().unwrap() < maxAllowedFilesPerPost }
   }
 
-  private suspend fun getMaxAllowedFilesPerPost(chanDescriptor: ChanDescriptor): Int {
-    // TODO(KurobaEx): reply layout refactoring
-    return 1
+  private suspend fun getMaxAllowedFilesPerPost(chanDescriptor: ChanDescriptor): Int? {
+    return postingLimitationsInfoManager.getMaxAllowedFilesPerPost(
+      chanDescriptor.boardDescriptor()
+    )
   }
 
   private suspend inline fun handleStateUpdate(updater: () -> Unit) {

@@ -28,8 +28,7 @@ import java.util.Map;
 
 import okhttp3.HttpUrl;
 
-public class VichanEndpoints
-        extends CommonSite.CommonEndpoints {
+public class VichanEndpoints extends CommonSite.CommonEndpoints {
     protected final CommonSite.SimpleHttpUrl root;
     protected final CommonSite.SimpleHttpUrl sys;
 
@@ -56,13 +55,26 @@ public class VichanEndpoints
     }
 
     @Override
-    public HttpUrl thumbnailUrl(ChanPostBuilder post, boolean spoiler, int customSpoilter, Map<String, String> arg) {
-        return root.builder().s(post.boardDescriptor.getBoardCode()).s("thumb").s(arg.get("tim") + ".png").url();
+    public HttpUrl thumbnailUrl(
+            ChanPostBuilder post,
+            boolean spoiler,
+            int customSpoilter,
+            Map<String, String> arg
+    ) {
+        return root.builder()
+                .s(post.boardDescriptor.getBoardCode())
+                .s("thumb")
+                .s(arg.get("tim") + ".png")
+                .url();
     }
 
     @Override
     public HttpUrl imageUrl(ChanPostBuilder post, Map<String, String> arg) {
-        return root.builder().s(post.boardDescriptor.getBoardCode()).s("src").s(arg.get("tim") + "." + arg.get("ext")).url();
+        return root.builder()
+                .s(post.boardDescriptor.getBoardCode())
+                .s("src")
+                .s(arg.get("tim") + "." + arg.get("ext"))
+                .url();
     }
 
     @Override
@@ -90,4 +102,6 @@ public class VichanEndpoints
     public HttpUrl delete(ChanPost post) {
         return sys.builder().s("post.php").url();
     }
+
+
 }

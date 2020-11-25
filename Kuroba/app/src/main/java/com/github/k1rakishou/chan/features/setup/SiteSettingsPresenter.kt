@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteSetting
+import com.github.k1rakishou.chan.features.login.LoginController
 import com.github.k1rakishou.chan.features.settings.BuildOptions
 import com.github.k1rakishou.chan.features.settings.GroupIdentifier
 import com.github.k1rakishou.chan.features.settings.IGroup
@@ -23,7 +24,6 @@ import com.github.k1rakishou.chan.features.settings.SettingsIdentifier
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
-import com.github.k1rakishou.chan.ui.controller.LoginController
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

@@ -73,7 +73,7 @@ class Chan420BoardsRequest(
             if (FILE_SIZE_LIMIT_MAP.containsKey(board.code)) {
               board.maxFileSize = FILE_SIZE_LIMIT_MAP[board.code]!!
             } else {
-              board.maxFileSize = DEFAULT_MAX_FILE_SIZE
+              board.maxFileSize = Chan420.DEFAULT_MAX_FILE_SIZE
             }
           }
           "title" -> board.name = nextString()
@@ -95,7 +95,6 @@ class Chan420BoardsRequest(
 
   companion object {
     private const val TAG = "Chan420BoardsRequest"
-    private const val DEFAULT_MAX_FILE_SIZE = 20480 * 1024
 
     private val FILE_SIZE_LIMIT_MAP = HashMap<String, Int>().apply {
       this["f"] = 40960 * 1024

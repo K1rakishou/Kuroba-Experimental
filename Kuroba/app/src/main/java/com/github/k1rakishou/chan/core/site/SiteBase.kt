@@ -36,6 +36,7 @@ import com.github.k1rakishou.json.JsonSettingsProvider
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
+import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -70,6 +71,8 @@ abstract class SiteBase : Site, CoroutineScope {
   protected lateinit var replyManager: ReplyManager
   @Inject
   protected lateinit var appConstants: AppConstants
+  @Inject
+  protected lateinit var gson: Gson
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("SiteBase")

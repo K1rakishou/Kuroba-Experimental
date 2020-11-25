@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.core.site
 
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
+import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInfo
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
@@ -160,4 +161,6 @@ interface Site {
    * This site supports global search of type [SiteGlobalSearchType]
    * */
   fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.SearchNotSupported
+
+  fun postingLimitationInfo(): SitePostingLimitationInfo
 }

@@ -83,6 +83,7 @@ class HttpCallManager @Inject constructor(
     return makeHttpCallInternal(requestBuilder, httpCall)
   }
   
+  @Suppress("BlockingMethodInNonBlockingContext")
   private suspend fun <T : HttpCall> makeHttpCallInternal(
     requestBuilder: Request.Builder,
     httpCall: T
@@ -104,11 +105,14 @@ class HttpCallManager @Inject constructor(
           IOException("Response body is null, status = ${response.code}")
         )
 
-      return@withContext body.use {
-        val responseString = it.string()
-        httpCall.process(response, responseString)
-
-        return@use HttpCall.HttpCallResult.Success(httpCall)
+      return@withContext body.use { responseBody ->
+        try {
+          val responseString = responseBody.string()
+          httpCall.process(response, responseString)
+          return@use HttpCall.HttpCallResult.Success(httpCall)
+        } catch (error: Throwable) {
+          return@use HttpCall.HttpCallResult.Fail(httpCall, error)
+        }
       }
     }
   }

@@ -19,6 +19,7 @@ import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryEntryView;
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryHeaderView;
 import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10GestureZonesController;
 import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10GestureZonesView;
+import com.github.k1rakishou.chan.features.login.LoginController;
 import com.github.k1rakishou.chan.features.proxies.ProxyEditorController;
 import com.github.k1rakishou.chan.features.proxies.ProxySetupController;
 import com.github.k1rakishou.chan.features.proxies.epoxy.EpoxyProxyView;
@@ -73,7 +74,6 @@ import com.github.k1rakishou.chan.ui.controller.ImageViewerGesturesSettingsContr
 import com.github.k1rakishou.chan.ui.controller.ImageViewerNavigationController;
 import com.github.k1rakishou.chan.ui.controller.LicensesController;
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController;
-import com.github.k1rakishou.chan.ui.controller.LoginController;
 import com.github.k1rakishou.chan.ui.controller.LogsController;
 import com.github.k1rakishou.chan.ui.controller.PopupController;
 import com.github.k1rakishou.chan.ui.controller.PostRepliesController;

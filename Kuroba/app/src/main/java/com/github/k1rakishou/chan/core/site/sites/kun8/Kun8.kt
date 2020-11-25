@@ -91,7 +91,6 @@ class Kun8 : CommonSite() {
         ).execute()
       }
 
-
       override fun setupPost(
         replyChanDescriptor: ChanDescriptor,
         call: MultipartHttpCall

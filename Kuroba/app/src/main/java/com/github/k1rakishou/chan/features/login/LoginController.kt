@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.ui.controller
+package com.github.k1rakishou.chan.features.login
 
 import android.content.Context
 import android.text.method.LinkMovementMethod
@@ -24,6 +24,7 @@ import androidx.core.text.parseAsHtml
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
+import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
@@ -39,6 +40,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_themes.ThemeEngine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -46,18 +48,24 @@ import javax.inject.Inject
 class LoginController(
   context: Context,
   private val site: Site
-) : Controller(context), View.OnClickListener, ThemeEngine.ThemeChangesListener {
+) : Controller(context), View.OnClickListener, ThemeEngine.ThemeChangesListener, LoginView {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var postingLimitationsInfoManager: PostingLimitationsInfoManager
   
   private lateinit var crossfadeView: CrossfadeView
   private lateinit var errors: TextView
-  private lateinit var button: ColorizableButton
-  private lateinit var inputToken: ColorizableEditText
-  private lateinit var inputPin: ColorizableEditText
   private lateinit var authenticated: TextView
   private lateinit var bottomDescription: TextView
+
+  private lateinit var button: ColorizableButton
+  private lateinit var refreshPostingLimitsInfoButton: ColorizableButton
+  private lateinit var inputToken: ColorizableEditText
+  private lateinit var inputPin: ColorizableEditText
+
+  private val loginPresenter by lazy { LoginPresenter(postingLimitationsInfoManager) }
 
   override fun injectDependencies(component: StartActivityComponent) {
     component.inject(this)
@@ -65,12 +73,14 @@ class LoginController(
 
   override fun onCreate() {
     super.onCreate()
-    navigation.setTitle(R.string.settings_screen_pass)
+
+    navigation.setTitle(getString(R.string.settings_screen_pass_title, site.name()))
     
     view = inflate(context, R.layout.controller_pass).also { view ->
       crossfadeView = view.findViewById(R.id.crossfade)
       errors = view.findViewById(R.id.errors)
       button = view.findViewById(R.id.button)
+      refreshPostingLimitsInfoButton = view.findViewById(R.id.refresh_posting_limits_info)
       inputToken = view.findViewById(R.id.input_token)
       inputPin = view.findViewById(R.id.input_pin)
       authenticated = view.findViewById(R.id.authenticated)
@@ -104,11 +114,14 @@ class LoginController(
 
     themeEngine.addListener(this)
     onThemeChanged()
+
+    loginPresenter.onCreate(this)
   }
 
   override fun onDestroy() {
     super.onDestroy()
 
+    loginPresenter.onDestroy()
     themeEngine.removeListener(this)
   }
 
@@ -118,6 +131,22 @@ class LoginController(
 
     bottomDescription.setTextColor(themeEngine.chanTheme.textColorPrimary)
     bottomDescription.setLinkTextColor(themeEngine.chanTheme.postLinkColor)
+  }
+
+  override fun onRefreshPostingLimitsInfoError(error: Throwable) {
+    showToast(error.errorMessageOrClassName())
+
+    enableDisableControls(enable = true)
+  }
+
+  override fun onRefreshPostingLimitsInfoResult(refreshed: Boolean) {
+    if (refreshed) {
+      showToast(R.string.setting_posting_limits_info_refresh_success)
+    } else {
+      showToast(R.string.setting_posting_limits_info_refresh_failure)
+    }
+
+    enableDisableControls(enable = true)
   }
 
   private fun applyLoginDetails() {
@@ -141,6 +170,26 @@ class LoginController(
         inputToken.setHint(R.string.setting_passcode)
       }
     }
+
+    if (loginDetails.loginOverridesPostLimitations) {
+      refreshPostingLimitsInfoButton.visibility = View.VISIBLE
+      refreshPostingLimitsInfoButton.setOnClickListener {
+        if (!loggedIn()) {
+          showToast(context.getString(R.string.must_be_logged_in))
+          return@setOnClickListener
+        }
+
+        enableDisableControls(enable = false)
+        loginPresenter.refreshPostingLimitsInfo(site.siteDescriptor())
+      }
+    }
+  }
+
+  private fun enableDisableControls(enable: Boolean) {
+    button.isEnabled = enable
+    refreshPostingLimitsInfoButton.isEnabled = enable
+    inputToken.isEnabled = enable
+    inputPin.isEnabled = enable
   }
 
   private fun showBottomDescription() {

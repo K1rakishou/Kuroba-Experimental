@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyNewAttachable
@@ -56,6 +57,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   lateinit var imagePickHelper: ImagePickHelper
   @Inject
   lateinit var dialogFactory: DialogFactory
+  @Inject
+  lateinit var postingLimitationsInfoManager: PostingLimitationsInfoManager
 
   private val controller = ReplyFilesEpoxyController()
   private val epoxyRecyclerView: ColorizableEpoxyRecyclerView
@@ -68,6 +71,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     return@lazy ReplyLayoutFilesAreaPresenter(
       appConstants,
       replyManager,
+      postingLimitationsInfoManager,
       imagePickHelper
     )
   }

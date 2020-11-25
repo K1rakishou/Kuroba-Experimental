@@ -4,4 +4,7 @@ import com.github.k1rakishou.chan.core.site.SiteActions
 
 data class DvachLoginRequest(
   val passcode: String
-) : AbstractLoginRequest(SiteActions.LoginType.Passcode)
+) : AbstractLoginRequest(
+  type = SiteActions.LoginType.Passcode,
+  loginOverridesPostLimitations = true
+)

@@ -22,6 +22,10 @@ import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginResponse
+import com.github.k1rakishou.chan.core.site.limitations.BoardDependantMaxAttachablesTotalSize
+import com.github.k1rakishou.chan.core.site.limitations.PasscodePostingLimitationsInfo
+import com.github.k1rakishou.chan.core.site.limitations.SiteDependantAttachablesCount
+import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInfo
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
@@ -34,6 +38,7 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.site.SiteBoards
+import com.github.k1rakishou.prefs.JsonSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import kotlinx.coroutines.flow.Flow
@@ -45,29 +50,29 @@ import java.util.*
 
 @DoNotStrip
 class Dvach : CommonSite() {
-  private val chunkDownloaderSiteProperties: ChunkDownloaderSiteProperties
+  private val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
+    // 2ch.hk sends file size in KB
+    siteSendsCorrectFileSizeInBytes = false,
+    // 2ch.hk sometimes sends an incorrect file hash
+    canFileHashBeTrusted = false
+  )
 
   private var captchaType: OptionsSetting<Chan4.CaptchaType>? = null
 
-  // What you send to the server to get the cookie
-  private var passCode: StringSetting
-  // What you use to post without captcha
-  private var passCookie: StringSetting
+  private val prefs by lazy { SharedPreferencesSettingProvider(AndroidUtils.getPreferences()) }
+  private val passCode by lazy { StringSetting(prefs, "preference_pass_code", "") }
+  private val passCookie by lazy { StringSetting(prefs, "preference_pass_cookie", "") }
 
-  init {
-    val prefs =
-      SharedPreferencesSettingProvider(AndroidUtils.getPreferences())
-
-    passCode = StringSetting(prefs, "preference_pass_code", "")
-    passCookie = StringSetting(prefs, "preference_pass_cookie", "")
-
-    chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
-      // 2ch.hk sends file size in KB
-      siteSendsCorrectFileSizeInBytes = false,
-      // 2ch.hk sometimes sends an incorrect file hash
-      canFileHashBeTrusted = false
+  private val passCodeInfo by lazy {
+    return@lazy JsonSetting(
+      gson,
+      DvachPasscodeInfo::class.java,
+      prefs,
+      "preference_pass_code_info",
+      DvachPasscodeInfo()
     )
   }
+
 
   override fun initializeSettings() {
     super.initializeSettings()
@@ -100,7 +105,6 @@ class Dvach : CommonSite() {
     setIcon(SiteIcon.fromFavicon(imageLoaderV2, "https://2ch.hk/favicon.ico".toHttpUrl()))
     setBoardsType(BoardsType.DYNAMIC)
     setResolvable(URL_HANDLER)
-
     setConfig(object : CommonConfig() {
       override fun siteFeature(siteFeature: SiteFeature): Boolean {
         return super.siteFeature(siteFeature)
@@ -115,14 +119,23 @@ class Dvach : CommonSite() {
         return root.builder().s(path).url()
       }
 
-      override fun thumbnailUrl(post: ChanPostBuilder, spoiler: Boolean, customSpoilers: Int, arg: Map<String, String>): HttpUrl {
+      override fun thumbnailUrl(
+        post: ChanPostBuilder,
+        spoiler: Boolean,
+        customSpoilers: Int,
+        arg: Map<String, String>
+      ): HttpUrl {
         val thumbnail = requireNotNull(arg["thumbnail"]) { "\"thumbnail\" parameter not found" }
 
         return root.builder().s(thumbnail).url()
       }
 
       override fun boards(): HttpUrl {
-        return HttpUrl.Builder().scheme("https").host("2ch.hk").addPathSegment("boards.json").build()
+        return HttpUrl.Builder()
+          .scheme("https")
+          .host("2ch.hk")
+          .addPathSegment("boards.json")
+          .build()
       }
 
       override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
@@ -143,8 +156,28 @@ class Dvach : CommonSite() {
           .addPathSegment("makaba.fcgi")
           .build()
       }
-    })
 
+      override fun passCodeInfo(): HttpUrl? {
+        if (!actions().isLoggedIn()) {
+          return null
+        }
+
+        val passcode = passCode.get()
+        if (passcode.isEmpty()) {
+          return null
+        }
+
+        return HttpUrl.Builder()
+          .scheme("https")
+          .host("2ch.hk")
+          .addPathSegment("makaba")
+          .addPathSegment("makaba.fcgi")
+          .addQueryParameter("task", "auth")
+          .addQueryParameter("usercode", passcode)
+          .addQueryParameter("json", "1")
+          .build()
+      }
+    })
     setActions(object : VichanActions(this@Dvach, proxiedOkHttpClient, siteManager, replyManager) {
       override fun setupPost(
         replyChanDescriptor: ChanDescriptor,
@@ -219,9 +252,19 @@ class Dvach : CommonSite() {
           defaultBoardsProvider = {
             ArrayList<ChanBoard>().apply {
               add(ChanBoard.create(BoardDescriptor.create(siteDescriptor(), "b"), "бред"))
-              add(ChanBoard.create(BoardDescriptor.create(siteDescriptor(), "vg"), "Видеоигры, general, официальные треды"))
+              add(
+                ChanBoard.create(
+                  BoardDescriptor.create(siteDescriptor(), "vg"),
+                  "Видеоигры, general, официальные треды"
+                )
+              )
               add(ChanBoard.create(BoardDescriptor.create(siteDescriptor(), "news"), "новости"))
-              add(ChanBoard.create(BoardDescriptor.create(siteDescriptor(), "po"), "политика, новости, ольгинцы, хохлы, либерахи, рептилоиды.. oh shi"))
+              add(
+                ChanBoard.create(
+                  BoardDescriptor.create(siteDescriptor(), "po"),
+                  "политика, новости, ольгинцы, хохлы, либерахи, рептилоиды.. oh shi"
+                )
+              )
             }.shuffled()
           }
         )
@@ -238,7 +281,8 @@ class Dvach : CommonSite() {
 
         when (loginResult) {
           is HttpCall.HttpCallResult.Success -> {
-            val loginResponse = requireNotNull(loginResult.httpCall.loginResponse) { "loginResponse is null" }
+            val loginResponse =
+              requireNotNull(loginResult.httpCall.loginResponse) { "loginResponse is null" }
 
             return when (loginResponse) {
               is DvachLoginResponse.Success -> {
@@ -256,6 +300,56 @@ class Dvach : CommonSite() {
         }
       }
 
+      override suspend fun getOrRefreshPasscodeInfo(resetCached: Boolean): SiteActions.GetPasscodeInfoResult {
+        if (!isLoggedIn()) {
+          return SiteActions.GetPasscodeInfoResult.NotLoggedIn
+        }
+
+        if (!resetCached && passCodeInfo.isNotDefault()) {
+          val dvachPasscodeInfo = passCodeInfo.get()
+
+          val maxAttachedFilesPerPost = dvachPasscodeInfo.files
+          val maxTotalAttachablesSize = dvachPasscodeInfo.filesSize
+
+          if (maxAttachedFilesPerPost != null && maxTotalAttachablesSize != null) {
+            val passcodePostingLimitationsInfo = PasscodePostingLimitationsInfo(
+              maxAttachedFilesPerPost,
+              maxTotalAttachablesSize
+            )
+
+            return SiteActions.GetPasscodeInfoResult.Success(passcodePostingLimitationsInfo)
+          }
+
+          // fallthrough
+        }
+
+        val passcodeInfoCall = DvachGetPasscodeInfoHttpCall(this@Dvach, gson)
+
+        val passcodeInfoCallResult = httpCallManager.makeHttpCall(passcodeInfoCall)
+        if (passcodeInfoCallResult is HttpCall.HttpCallResult.Fail) {
+          return SiteActions.GetPasscodeInfoResult.Failure(passcodeInfoCallResult.error)
+        }
+
+        val passcodePostingLimitationsInfoResult = (passcodeInfoCallResult as HttpCall.HttpCallResult.Success)
+          .httpCall.passcodePostingLimitationsInfoResult
+
+        if (passcodePostingLimitationsInfoResult is ModularResult.Error) {
+          return SiteActions.GetPasscodeInfoResult.Failure(passcodePostingLimitationsInfoResult.error)
+        }
+
+        val passcodePostingLimitationsInfo =
+          (passcodePostingLimitationsInfoResult as ModularResult.Value).value
+
+        val dvachPasscodeInfo = DvachPasscodeInfo(
+          files = passcodePostingLimitationsInfo.maxAttachedFilesPerPost,
+          filesSize = passcodePostingLimitationsInfo.maxTotalAttachablesSize
+        )
+
+        passCodeInfo.set(dvachPasscodeInfo)
+
+        return SiteActions.GetPasscodeInfoResult.Success(passcodePostingLimitationsInfo)
+      }
+
       override fun postRequiresAuthentication(): Boolean {
         return !isLoggedIn()
       }
@@ -265,10 +359,12 @@ class Dvach : CommonSite() {
           SiteAuthentication.fromNone()
         } else {
           when (captchaType!!.get()) {
-            Chan4.CaptchaType.V2JS -> SiteAuthentication.fromCaptcha2(CAPTCHA_KEY,
+            Chan4.CaptchaType.V2JS -> SiteAuthentication.fromCaptcha2(
+              CAPTCHA_KEY,
               "https://2ch.hk/api/captcha/recaptcha/mobile"
             )
-            Chan4.CaptchaType.V2NOJS -> SiteAuthentication.fromCaptcha2nojs(CAPTCHA_KEY,
+            Chan4.CaptchaType.V2NOJS -> SiteAuthentication.fromCaptcha2nojs(
+              CAPTCHA_KEY,
               "https://2ch.hk/api/captcha/recaptcha/mobile"
             )
             else -> throw IllegalArgumentException()
@@ -278,6 +374,7 @@ class Dvach : CommonSite() {
 
       override fun logout() {
         passCookie.set("")
+        passCodeInfo.reset()
       }
 
       override fun isLoggedIn(): Boolean {
@@ -289,10 +386,19 @@ class Dvach : CommonSite() {
       }
 
     })
-
     setRequestModifier(siteRequestModifier)
     setApi(DvachApi(siteManager, boardManager, this))
     setParser(DvachCommentParser(mockReplyManager))
+
+    setPostingLimitationInfo(
+      SitePostingLimitationInfo(
+        postMaxAttachables = SiteDependantAttachablesCount(siteManager, 4),
+        postMaxAttachablesTotalSize = BoardDependantMaxAttachablesTotalSize(
+          siteManager = siteManager,
+          boardManager = boardManager
+        )
+      )
+    )
   }
 
   override fun commentParserType(): CommentParserType {
@@ -320,6 +426,7 @@ class Dvach : CommonSite() {
     private const val TAG = "Dvach"
     const val SITE_NAME = "2ch.hk"
     const val CAPTCHA_KEY = "6LeQYz4UAAAAAL8JCk35wHSv6cuEV5PyLhI6IxsM"
+    const val DEFAULT_MAX_FILE_SIZE = 20480 * 1024 // 20MB
 
     @JvmField
     val URL_HANDLER: CommonSiteUrlHandler = object : CommonSiteUrlHandler() {
@@ -341,7 +448,9 @@ class Dvach : CommonSite() {
       override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String {
         return when (chanDescriptor) {
           is ChanDescriptor.CatalogDescriptor -> {
-            url.newBuilder().addPathSegment(chanDescriptor.boardCode()).toString()
+            url.newBuilder()
+              .addPathSegment(chanDescriptor.boardCode())
+              .toString()
           }
           is ChanDescriptor.ThreadDescriptor -> {
             url.newBuilder()
@@ -350,9 +459,7 @@ class Dvach : CommonSite() {
               .addPathSegment(chanDescriptor.threadNo.toString() + ".html")
               .toString()
           }
-          else -> {
-            url.toString()
-          }
+          else -> url.toString()
         }
       }
     }

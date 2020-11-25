@@ -752,7 +752,7 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="import_settings_from_kuroba">Import Bookmarks/Filters/Filters/Hidden posts and threads/Added sites and boards and some other stuff from Kuroba (the settings file must be exported on 4.13.X-release version of Kuroba, other versions probably won\'t work). Settings are not imported since they differ too much. You need to clear the app data beforehand.</string>
 
     <string name="settings_logs_copied_to_clipboard">Copied to clipboard</string>
-    <string name="settings_screen_pass">4chan pass</string>
+    <string name="settings_screen_pass_title">%1$s pass</string>
     <string name="setting_pass_token">Token</string>
     <string name="setting_pass_pin">PIN</string>
     <string name="setting_passcode">Passcode</string>
@@ -760,6 +760,8 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="setting_pass_login">Submit</string>
     <string name="setting_pass_logout">Logout</string>
     <string name="setting_pass_error">Connection error</string>
+    <string name="setting_posting_limits_info_refresh_success">Posting limits info refreshed</string>
+    <string name="setting_posting_limits_info_refresh_failure">Failed to refresh posting limits info</string>
 
     <string name="setting_pass_bottom_description">"
 <![CDATA[
@@ -1148,5 +1150,7 @@ Don't have a 4chan Pass?<br>
     <string name="downloading_file">Downloading file, this may take some time</string>
     <string name="upload_file_x_out_of_y">Uploading file %1$d out of %2$d</string>
     <string name="enter_image_video_url">Enter image/video url</string>
+    <string name="refresh_posting_limits_info">Refresh posting limits info</string>
+    <string name="must_be_logged_in">Must be logged in</string>
 
 </resources>

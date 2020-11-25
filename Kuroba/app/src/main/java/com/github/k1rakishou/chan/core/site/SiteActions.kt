@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.core.site.http.DeleteResponse
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginResponse
+import com.github.k1rakishou.chan.core.site.limitations.PasscodePostingLimitationsInfo
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
@@ -47,6 +48,8 @@ interface SiteActions {
   suspend fun search(searchParams: SearchParams): HtmlReaderRequest.HtmlReaderResponse<SearchResult> =
     HtmlReaderRequest.HtmlReaderResponse.Success(SearchResult.Failure(SearchError.NotImplemented))
 
+  suspend fun getOrRefreshPasscodeInfo(resetCached: Boolean): GetPasscodeInfoResult? = null
+
   enum class LoginType {
     Passcode,
     TokenAndPass
@@ -66,5 +69,11 @@ interface SiteActions {
   sealed class LoginResult {
     class LoginComplete(val loginResponse: AbstractLoginResponse) : LoginResult()
     class LoginError(val errorMessage: String) : LoginResult()
+  }
+
+  sealed class GetPasscodeInfoResult {
+    object NotLoggedIn : GetPasscodeInfoResult()
+    class Success(val postingLimitationsInfo: PasscodePostingLimitationsInfo) : GetPasscodeInfoResult()
+    class Failure(val error: Throwable) : GetPasscodeInfoResult()
   }
 }

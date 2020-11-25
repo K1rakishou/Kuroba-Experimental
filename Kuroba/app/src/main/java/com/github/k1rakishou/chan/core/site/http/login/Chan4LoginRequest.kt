@@ -21,4 +21,7 @@ import com.github.k1rakishou.chan.core.site.SiteActions
 class Chan4LoginRequest(
   val user: String,
   val pass: String
-) : AbstractLoginRequest(SiteActions.LoginType.TokenAndPass)
+) : AbstractLoginRequest(
+  type = SiteActions.LoginType.TokenAndPass,
+  loginOverridesPostLimitations = false
+)

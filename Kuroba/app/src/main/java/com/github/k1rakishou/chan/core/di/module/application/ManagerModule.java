@@ -50,6 +50,7 @@ import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.k1rakishou.chan.core.manager.PageRequestManager;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
 import com.github.k1rakishou.chan.core.manager.PostHideManager;
+import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
 import com.github.k1rakishou.chan.core.manager.ReportManager;
@@ -646,6 +647,16 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "ThreadFollowHistoryManager");
 
         return new ThreadFollowHistoryManager();
+    }
+
+    @Singleton
+    @Provides
+    public PostingLimitationsInfoManager providePostingLimitationsInfoManager(
+            SiteManager siteManager
+    ) {
+        Logger.d(AppModule.DI_TAG, "PostingLimitationsInfoManager");
+
+        return new PostingLimitationsInfoManager(siteManager);
     }
 
 }

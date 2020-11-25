@@ -16,7 +16,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <com.github.k1rakishou.chan.ui.theme.widget.ColorizableScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <LinearLayout
         android:id="@+id/container"
@@ -80,8 +81,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
             android:id="@+id/button"
-            android:layout_width="130dp"
+            android:layout_width="180dp"
             android:layout_height="wrap_content" />
+
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
+            android:id="@+id/refresh_posting_limits_info"
+            android:layout_width="180dp"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:text="@string/refresh_posting_limits_info"
+            android:visibility="gone"
+            tools:visibility="visible"/>
 
         <TextView
             android:id="@+id/bottom_description"

@@ -35,6 +35,9 @@ import com.github.k1rakishou.chan.core.site.http.DeleteResponse
 import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
+import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
+import com.github.k1rakishou.chan.core.site.limitations.ConstantMaxTotalSizeInfo
+import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInfo
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.PostParser
@@ -73,6 +76,7 @@ abstract class CommonSite : SiteBase() {
   private var actions: CommonActions? = null
   private var api: CommonApi? = null
   private var requestModifier: SiteRequestModifier? = null
+  private var postingLimitationInfo: SitePostingLimitationInfo? = null
   
   @JvmField
   var postParser: PostParser? = null
@@ -114,6 +118,12 @@ abstract class CommonSite : SiteBase() {
       requestModifier = object : CommonRequestModifier() {
         // No-op implementation.
       }
+    }
+    if (postingLimitationInfo == null) {
+      postingLimitationInfo = SitePostingLimitationInfo(
+        postMaxAttachables = ConstantAttachablesCount(DEFAULT_ATTACHABLES_PER_POST_COUNT),
+        postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(DEFAULT_MAX_ATTACHABLES_SIZE)
+      )
     }
   }
   
@@ -163,7 +173,11 @@ abstract class CommonSite : SiteBase() {
   fun setRequestModifier(requestModifier: SiteRequestModifier?) {
     this.requestModifier = requestModifier
   }
-  
+
+  fun setPostingLimitationInfo(postingLimitationInfo: SitePostingLimitationInfo) {
+    this.postingLimitationInfo = postingLimitationInfo
+  }
+
   open fun setParser(commentParser: CommentParser) {
     postParser = DefaultPostParser(commentParser, postFilterManager, archivesManager)
   }
@@ -218,7 +232,11 @@ abstract class CommonSite : SiteBase() {
   override fun chanReader(): ChanReader {
     return api!!
   }
-  
+
+  override fun postingLimitationInfo(): SitePostingLimitationInfo {
+    return postingLimitationInfo!!
+  }
+
   abstract inner class CommonConfig {
     
     @CallSuper
@@ -373,7 +391,6 @@ abstract class CommonSite : SiteBase() {
     override fun login(): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
-
   }
   
   class SimpleHttpUrl {
@@ -590,6 +607,9 @@ abstract class CommonSite : SiteBase() {
   
   companion object {
     private const val TAG = "CommonSite"
+
+    const val DEFAULT_ATTACHABLES_PER_POST_COUNT = 1
+    const val DEFAULT_MAX_ATTACHABLES_SIZE = 4 * 1024 * 1024 // 4 MB
 
     private val BOARD_PATTERN = Pattern.compile("/(\\w+)")
     private val THREAD_PATTERN = Pattern.compile("/(\\w+)/(\\w+)/(\\d+).*")

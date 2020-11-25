@@ -47,6 +47,10 @@ abstract class HttpCall(val site: Site) {
     class Fail<T: HttpCall>(val httpCall: T, val error: Throwable) : HttpCallResult<T>()
   }
 
+  class HttpCallNotCalledException : Exception("Http call was not called first")
+  class BadResponseCodeException(code: Int) : Exception("Bad response code: $code")
+  class BadResponseBodyException(details: String) : Exception("Bad response body: $details")
+
   companion object {
     private const val TAG = "HttpCall"
   }

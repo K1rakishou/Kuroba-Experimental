@@ -25,6 +25,9 @@ import com.github.k1rakishou.chan.core.site.common.taimaba.TaimabaActions
 import com.github.k1rakishou.chan.core.site.common.taimaba.TaimabaApi
 import com.github.k1rakishou.chan.core.site.common.taimaba.TaimabaCommentParser
 import com.github.k1rakishou.chan.core.site.common.taimaba.TaimabaEndpoints
+import com.github.k1rakishou.chan.core.site.limitations.BoardDependantMaxAttachablesTotalSize
+import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
+import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInfo
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.model.data.board.ChanBoard
@@ -88,6 +91,16 @@ class Chan420 : CommonSite() {
     })
     setApi(TaimabaApi(siteManager, boardManager, this))
     setParser(TaimabaCommentParser(mockReplyManager))
+
+    setPostingLimitationInfo(
+      SitePostingLimitationInfo(
+        postMaxAttachables = ConstantAttachablesCount(1),
+        postMaxAttachablesTotalSize = BoardDependantMaxAttachablesTotalSize(
+          siteManager = siteManager,
+          boardManager = boardManager
+        )
+      )
+    )
   }
 
   override fun commentParserType(): CommentParserType {
@@ -101,6 +114,7 @@ class Chan420 : CommonSite() {
   companion object {
     private const val TAG = "420Chan"
     const val SITE_NAME = "420Chan"
+    const val DEFAULT_MAX_FILE_SIZE = 20480 * 1024
 
     @JvmStatic
     val URL_HANDLER: CommonSiteUrlHandler = object : CommonSiteUrlHandler() {
