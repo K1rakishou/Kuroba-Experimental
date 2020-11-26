@@ -168,6 +168,11 @@ class Reply(
   }
 
   @Synchronized
+  fun resetAfterPosting() {
+    basicReplyInfo.resetAfterPosting()
+  }
+
+  @Synchronized
   fun handleQuote(selectStart: Int, postNo: Long, textQuote: String?): Int {
     val stringBuilder = StringBuilder()
     val comment = basicReplyInfo.comment
@@ -220,7 +225,14 @@ class Reply(
     var comment: String = "",
     @JvmField
     var password: String = "",
-  )
+  ) {
+
+    @Synchronized
+    fun resetAfterPosting() {
+      comment = ""
+    }
+
+  }
 
   data class CaptchaInfo(
     /**

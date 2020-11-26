@@ -8,16 +8,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
-import android.provider.OpenableColumns
 import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ReplyManager
-import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.IOUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.isAndroidL_MR1
 import com.github.k1rakishou.common.AppConstants
@@ -33,8 +30,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.FileInputStream
-import java.io.IOException
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -42,11 +37,11 @@ import java.util.concurrent.atomic.AtomicReference
 
 
 class LocalFilePicker(
-  private val appScope: CoroutineScope,
-  private val appConstants: AppConstants,
-  private val replyManager: ReplyManager,
-  private val fileManager: FileManager
-) : IFilePicker<LocalFilePicker.LocalFilePickerInput> {
+  appConstants: AppConstants,
+  fileManager: FileManager,
+  replyManager: ReplyManager,
+  private val appScope: CoroutineScope
+) : AbstractFilePicker<LocalFilePicker.LocalFilePickerInput>(appConstants, replyManager, fileManager) {
   private val activeRequests = ConcurrentHashMap<Int, EnqueuedRequest>()
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
   private val requestCodeCounter = AtomicInteger(0)
@@ -78,12 +73,12 @@ class LocalFilePicker(
 
     val attachedActivity = activityRef.get()
     if (attachedActivity == null) {
-      return error(IFilePicker.FilePickerError.ActivityIsNotSet())
+      return error(FilePickerError.ActivityIsNotSet())
     }
 
     val intents = collectIntents()
     if (intents.isEmpty()) {
-      return error(IFilePicker.FilePickerError.NoFilePickersFound())
+      return error(FilePickerError.NoFilePickersFound())
     }
 
     val completableDeferred = CompletableDeferred<PickedFile>()
@@ -105,7 +100,7 @@ class LocalFilePicker(
       .finally { activeRequests.remove(newRequest.requestCode) }
       .mapError { error ->
         if (error is CancellationException) {
-          return@mapError IFilePicker.FilePickerError.Canceled()
+          return@mapError FilePickerError.Canceled()
         }
 
         return@mapError error
@@ -120,7 +115,7 @@ class LocalFilePicker(
         try {
           onActivityResultInternal(requestCode, resultCode, data)
         } catch (error: Throwable) {
-          finishWithError(requestCode, IFilePicker.FilePickerError.UnknownError(error))
+          finishWithError(requestCode, FilePickerError.UnknownError(error))
         }
       }
     }
@@ -136,113 +131,47 @@ class LocalFilePicker(
 
     val attachedActivity = activityRef.get()
     if (attachedActivity == null) {
-      return finishWithError(requestCode, IFilePicker.FilePickerError.ActivityIsNotSet())
+      return finishWithError(requestCode, FilePickerError.ActivityIsNotSet())
     }
 
     if (resultCode != Activity.RESULT_OK) {
-      finishWithError(requestCode, IFilePicker.FilePickerError.BadResultCode(resultCode))
+      finishWithError(requestCode, FilePickerError.BadResultCode(resultCode))
       return
     }
 
     if (data == null) {
-      finishWithError(requestCode, IFilePicker.FilePickerError.NoDataReturned())
+      finishWithError(requestCode, FilePickerError.NoDataReturned())
       return
     }
 
     val uri = getUriOrNull(data)
     if (uri == null) {
-      finishWithError(requestCode, IFilePicker.FilePickerError.FailedToExtractUri())
+      finishWithError(requestCode, FilePickerError.FailedToExtractUri())
       return
     }
-
-    val fileName = tryExtractFileNameOrDefault(uri, attachedActivity)
 
     val copyResult = copyExternalFileToReplyFileStorage(
       attachedActivity,
       uri,
-      fileName,
-      enqueuedRequest.replyChanDescriptor
+      System.currentTimeMillis()
     )
 
     if (copyResult is ModularResult.Error) {
-      finishWithError(requestCode, IFilePicker.FilePickerError.UnknownError(copyResult.error))
+      finishWithError(requestCode, FilePickerError.UnknownError(copyResult.error))
       return
     }
 
-    when (val pickedFile = (copyResult as ModularResult.Value).value) {
-      is PickedFile.Result -> finishWithResult(requestCode, pickedFile)
-      is PickedFile.Failure -> finishWithError(requestCode, pickedFile.reason)
-    }
-  }
-
-  private fun copyExternalFileToReplyFileStorage(
-    attachedActivity: StartActivity,
-    uri: Uri,
-    originalFileName: String,
-    replyChanDescriptor: ChanDescriptor
-  ): ModularResult<PickedFile> {
-    return Try {
-      val reply = replyManager.getReplyOrNull(replyChanDescriptor)
-      if (reply == null) {
-        return@Try PickedFile.Failure(IFilePicker.FilePickerError.NoReplyFound(replyChanDescriptor))
-      }
-
-      val uniqueFileName = replyManager.generateUniqueFileName(appConstants)
-
-      val replyFile = replyManager.createNewEmptyAttachFile(uniqueFileName, originalFileName)
-      if (replyFile == null) {
-        return@Try PickedFile.Failure(IFilePicker.FilePickerError.FailedToGetAttachFile())
-      }
-
-      val fileUuid = replyFile.getReplyFileMeta().valueOrNull()?.fileUuid
-      if (fileUuid == null) {
-        return@Try PickedFile.Failure(IFilePicker.FilePickerError.FailedToCreateFileMeta())
-      }
-
-      copyExternalFileIntoReplyFile(attachedActivity, uri, replyFile)
-
-      return@Try PickedFile.Result(replyFile)
-    }
-  }
-
-  private fun copyExternalFileIntoReplyFile(
-    attachedActivity: StartActivity,
-    uri: Uri,
-    replyFile: ReplyFile
-  ) {
-    val cacheFile = fileManager.fromRawFile(replyFile.fileOnDisk)
-    val contentResolver = attachedActivity.contentResolver
-
-    contentResolver.openFileDescriptor(uri, "r").use { fileDescriptor ->
-      if (fileDescriptor == null) {
-        throw IOException("Couldn't open file descriptor for uri = $uri")
-      }
-
-      FileInputStream(fileDescriptor.fileDescriptor).use { inputStream ->
-        val os = fileManager.getOutputStream(cacheFile)
-        if (os == null) {
-          throw IOException("Failed to get output stream (filePath='${cacheFile.getFullPath()}')")
-        }
-
-        os.use { outputStream ->
-          if (!IOUtils.copy(inputStream, outputStream, IFilePicker.MAX_FILE_SIZE)) {
-            throw IOException(
-              "Failed to copy external file (uri='$uri') into reply file " +
-                "(filePath='${cacheFile.getFullPath()}')"
-            )
-          }
-        }
-      }
-    }
+    val pickedFile = (copyResult as ModularResult.Value).value
+    finishWithResult(requestCode, PickedFile.Result(listOf(pickedFile)))
   }
 
   private fun finishWithResult(requestCode: Int, value: PickedFile.Result) {
     Logger.d(TAG, "finishWithResult success, requestCode=$requestCode, " +
-      "value=${value.replyFile.shortState()}")
+      "value=${value.replyFiles.first().shortState()}")
     activeRequests[requestCode]?.completableDeferred?.complete(value)
   }
 
-  private fun finishWithError(requestCode: Int, error: IFilePicker.FilePickerError) {
+  private fun finishWithError(requestCode: Int, error: FilePickerError) {
     Logger.d(TAG, "finishWithError success, requestCode=$requestCode, " +
         "error=${error.errorMessageOrClassName()}")
     activeRequests[requestCode]?.completableDeferred?.complete(PickedFile.Failure(error))
@@ -259,26 +188,6 @@ class LocalFilePicker(
     }
 
     return null
-  }
-
-  private fun tryExtractFileNameOrDefault(uri: Uri, activity: StartActivity): String {
-    var fileName = activity.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-      val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-      if (nameIndex > -1 && cursor.moveToFirst()) {
-        return@use cursor.getString(nameIndex)
-      }
-
-      return@use null
-    }
-
-    if (fileName == null) {
-      // As per the comment on OpenableColumns.DISPLAY_NAME:
-      // If this is not provided then the name should default to the last segment
-      // of the file's URI.
-      fileName = uri.lastPathSegment ?: IFilePicker.DEFAULT_FILE_NAME
-    }
-
-    return fileName
   }
 
   private fun collectIntents(): List<Intent> {

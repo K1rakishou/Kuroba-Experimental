@@ -35,6 +35,7 @@ import com.github.k1rakishou.chan.BuildConfig;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.StartActivity;
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
+import com.github.k1rakishou.chan.ui.widget.CancellableToast;
 import com.github.k1rakishou.common.AndroidUtils;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ChanTheme;
@@ -55,6 +56,7 @@ import static com.github.k1rakishou.common.AndroidUtils.isAndroidP;
 
 public class AppModuleAndroidUtils {
     private static final String TAG = "AppModuleAndroidUtils";
+    private static CancellableToast cancellableToast = new CancellableToast();
 
     @SuppressLint("StaticFieldLeak")
     private static Application application;
@@ -514,7 +516,7 @@ public class AppModuleAndroidUtils {
     }
 
     public static void showToast(Context context, String message, int duration) {
-        BackgroundUtils.runOnMainThread(() -> Toast.makeText(context, message, duration).show());
+        BackgroundUtils.runOnMainThread(() -> cancellableToast.showToast(context, message, duration));
     }
 
     public static void showToast(Context context, String message) {

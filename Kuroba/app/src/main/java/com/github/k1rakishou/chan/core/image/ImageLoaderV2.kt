@@ -538,6 +538,9 @@ class ImageLoaderV2(
 
   companion object {
     private const val TAG = "ImageLoaderV2"
+
+    const val MAX_PREVIEW_WIDTH = 512
+    const val MAX_PREVIEW_HEIGHT = 512
   }
 
 }

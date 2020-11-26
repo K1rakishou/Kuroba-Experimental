@@ -98,7 +98,7 @@ class ReplyLayoutFilesAreaPresenter(
           return@handleStateUpdate
         }
 
-        val replyFile = (pickedFileResult as PickedFile.Result).replyFile
+        val replyFile = (pickedFileResult as PickedFile.Result).replyFiles.first()
 
         val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
           Logger.e(TAG, "imagePickHelper.pickLocalFile($chanDescriptor) getReplyFileMeta() error", error)
@@ -149,7 +149,7 @@ class ReplyLayoutFilesAreaPresenter(
           return@handleStateUpdate
         }
 
-        val replyFile = (pickedFileResult as PickedFile.Result).replyFile
+        val replyFile = (pickedFileResult as PickedFile.Result).replyFiles.first()
 
         val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
           Logger.e(TAG, "imagePickHelper.pickRemoteFile($chanDescriptor) getReplyFileMeta() error", error)

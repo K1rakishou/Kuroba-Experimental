@@ -446,6 +446,7 @@ class ReplyPresenter @Inject constructor(
 
       val takeFilesResult = replyManager.takeSelectedFiles(chanDescriptor)
         .safeUnwrap { error ->
+          Logger.e(TAG, "makeSubmitCall() takeSelectedFiles(${chanDescriptor}) error")
           onPostError(chanDescriptor, error)
           return@launch
         }
@@ -592,7 +593,10 @@ class ReplyPresenter @Inject constructor(
 
     replyManager.readReply(newThreadDescriptor) { newReply ->
       replyManager.readReply(prevChanDescriptor) { prevReply ->
-        newReply.postName = prevReply.postName
+        val prevName = prevReply.postName
+
+        newReply.resetAfterPosting()
+        newReply.postName = prevName
       }
     }
 

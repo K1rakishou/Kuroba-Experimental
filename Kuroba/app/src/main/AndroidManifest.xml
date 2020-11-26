@@ -60,11 +60,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         <activity
             android:name="com.github.k1rakishou.chan.StartActivity"
+            android:launchMode="singleTask"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="image/*"/>
+                <data android:mimeType="video/*"/>
             </intent-filter>
 
             <intent-filter>

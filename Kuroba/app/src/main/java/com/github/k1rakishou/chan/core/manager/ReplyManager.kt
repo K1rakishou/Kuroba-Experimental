@@ -150,8 +150,12 @@ class ReplyManager @Inject constructor(
 
     return Try {
       return@Try readReply(chanDescriptor) { reply ->
+        val selectedFiles = replyFilesStorage.selectedFilesCount().unwrap()
         val takenFiles = replyFilesStorage.takeSelectedFiles(chanDescriptor).unwrap()
-        if (takenFiles.isEmpty()) {
+
+        if (takenFiles.size != selectedFiles) {
+          Logger.e(TAG, "takeSelectedFiles($chanDescriptor) failed to take some of selected files, " +
+            "takenFiles.size=${takenFiles.size}, selectedFiles=$selectedFiles")
           return@readReply false
         }
 
@@ -247,7 +251,7 @@ class ReplyManager @Inject constructor(
   }
 
   @Synchronized
-  fun createNewEmptyAttachFile(uniqueFileName: UniqueFileName, originalFileName: String): ReplyFile? {
+  fun createNewEmptyAttachFile(uniqueFileName: UniqueFileName, originalFileName: String, addedOn: Long): ReplyFile? {
     val attachFile = File(
       appConstants.attachFilesDir,
       uniqueFileName.fullFileName
@@ -289,7 +293,7 @@ class ReplyManager @Inject constructor(
           fileUuidStringNullable = uniqueFileName.fileUuid.toString(),
           originalFileNameNullable = originalFileName,
           fileNameNullable = originalFileName,
-          addedOnNullable = System.currentTimeMillis()
+          addedOnNullable = addedOn
         )
       ).unwrap()
 

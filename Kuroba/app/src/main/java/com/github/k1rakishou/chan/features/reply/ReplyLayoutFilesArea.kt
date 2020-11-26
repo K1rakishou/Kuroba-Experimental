@@ -22,7 +22,7 @@ import com.github.k1rakishou.chan.features.reply.epoxy.epoxyAttachNewFileButtonW
 import com.github.k1rakishou.chan.features.reply.epoxy.epoxyReplyFileView
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextViewWrapHeight
-import com.github.k1rakishou.chan.ui.helper.picker.IFilePicker
+import com.github.k1rakishou.chan.ui.helper.picker.AbstractFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
@@ -367,7 +367,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     }
   }
 
-  override fun showFilePickerErrorToast(filePickerError: IFilePicker.FilePickerError) {
+  override fun showFilePickerErrorToast(filePickerError: AbstractFilePicker.FilePickerError) {
     BackgroundUtils.ensureMainThread()
     showToast(context, filePickerError.errorMessageOrClassName(), Toast.LENGTH_LONG)
   }

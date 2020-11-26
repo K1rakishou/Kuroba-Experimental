@@ -15,6 +15,7 @@ import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.RemoteFilePicker
+import com.github.k1rakishou.chan.ui.helper.picker.ShareFilePicker
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
@@ -57,18 +58,34 @@ class HelperModule {
 
   @Provides
   @Singleton
-  fun provideLocalFilePicker(
-    applicationScope: CoroutineScope,
+  fun provideShareFilePicker(
     appConstants: AppConstants,
+    appContext: Context,
+    fileManager: FileManager,
+    replyManager: ReplyManager
+  ): ShareFilePicker {
+    return ShareFilePicker(
+      appConstants,
+      fileManager,
+      replyManager,
+      appContext
+    )
+  }
+
+  @Provides
+  @Singleton
+  fun provideLocalFilePicker(
+    appConstants: AppConstants,
+    fileManager: FileManager,
     replyManager: ReplyManager,
-    fileManager: FileManager
+    applicationScope: CoroutineScope
   ): LocalFilePicker {
     Logger.d(AppModule.DI_TAG, "LocalFilePicker")
     return LocalFilePicker(
-      applicationScope,
       appConstants,
+      fileManager,
       replyManager,
-      fileManager
+      applicationScope
     )
   }
 
@@ -84,12 +101,12 @@ class HelperModule {
   ): RemoteFilePicker {
     Logger.d(AppModule.DI_TAG, "RemoteFilePicker")
     return RemoteFilePicker(
-      applicationScope,
       appConstants,
-      fileCacheV2,
       fileManager,
-      cacheHandler,
-      replyManager
+      replyManager,
+      applicationScope,
+      fileCacheV2,
+      cacheHandler
     )
   }
 
@@ -97,9 +114,9 @@ class HelperModule {
   @Singleton
   fun provideImagePickHelper(
     appContext: Context,
-    appConstants: AppConstants,
     replyManager: ReplyManager,
     imageLoaderV2: ImageLoaderV2,
+    shareFilePicker: ShareFilePicker,
     localFilePicker: LocalFilePicker,
     remoteFilePicker: RemoteFilePicker
   ): ImagePickHelper {
@@ -107,9 +124,9 @@ class HelperModule {
 
     return ImagePickHelper(
       appContext,
-      appConstants,
       replyManager,
       imageLoaderV2,
+      shareFilePicker,
       localFilePicker,
       remoteFilePicker
     )

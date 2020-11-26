@@ -61,6 +61,8 @@ import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationContro
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
+import com.github.k1rakishou.chan.ui.helper.picker.PickedFile
+import com.github.k1rakishou.chan.ui.helper.picker.ShareFilePicker
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
@@ -73,6 +75,7 @@ import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.DoNotStrip
+import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ChanTheme
@@ -155,15 +158,17 @@ class StartActivity : AppCompatActivity(),
   @OptIn(ExperimentalTime::class)
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    Logger.d(TAG, "onCreate() start savedInstanceState==null: ${savedInstanceState == null}")
+
+    val isNullSavedInstanceState = savedInstanceState == null
 
     if (intentMismatchWorkaround()) {
-      Logger.d(
-        TAG,
-        "onCreate() intentMismatchWorkaround()==true, savedInstanceState==null: ${savedInstanceState == null}"
-      )
+      Logger.d(TAG, "onCreate() intentMismatchWorkaround()==true, " +
+        "savedInstanceState == null: $isNullSavedInstanceState")
       return
     }
+
+    Logger.d(TAG, "onCreate() start savedInstanceState == null: $isNullSavedInstanceState, " +
+      "initializing everything")
 
     startActivityComponent = Chan.getComponent()
       .activityComponentBuilder()
@@ -185,7 +190,7 @@ class StartActivity : AppCompatActivity(),
       Logger.d(TAG, "initializeDependencies took $initializeDepsTime")
     }
 
-    Logger.d(TAG, "onCreate() end savedInstanceState==null: ${savedInstanceState == null}")
+    Logger.d(TAG, "onCreate() end savedInstanceState == null: $isNullSavedInstanceState")
   }
 
   override fun onDestroy() {
@@ -332,7 +337,11 @@ class StartActivity : AppCompatActivity(),
     onNewIntentInternal(intent)
   }
 
-  private fun onNewIntentInternal(intent: Intent) {
+  private fun onNewIntentInternal(intent: Intent?) {
+    if (intent == null) {
+      return
+    }
+
     val extras = intent.extras
       ?: return
     val action = intent.action
@@ -342,9 +351,14 @@ class StartActivity : AppCompatActivity(),
       return
     }
 
-    Logger.d(TAG, "onNewIntentInternal called")
-
     lifecycleScope.launch {
+      Logger.d(TAG, "onNewIntentInternal called, action=${action}")
+
+      if (action == Intent.ACTION_SEND) {
+        onShareIntentReceived(intent)
+        return@launch
+      }
+
       bookmarksManager.awaitUntilInitialized()
 
       when {
@@ -357,6 +371,45 @@ class StartActivity : AppCompatActivity(),
         intent.hasExtra(NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
           lastPageNotificationClicked(extras)
         }
+      }
+    }
+  }
+
+  private suspend fun onShareIntentReceived(intent: Intent) {
+    showToast(this@StartActivity, getString(R.string.share_success_start))
+
+    val shareResult = imagePickHelper.pickFilesFromIntent(
+      ShareFilePicker.ShareFilePickerInput(intent)
+    )
+
+    when (shareResult) {
+      is ModularResult.Value -> {
+        when (val pickedFile = shareResult.value) {
+          is PickedFile.Result -> {
+            val sharedFilesCount = pickedFile.replyFiles.size
+
+            if (sharedFilesCount > 0) {
+              showToast(
+                this@StartActivity,
+                getString(R.string.share_success_message, sharedFilesCount)
+              )
+            } else {
+              showToast(this@StartActivity, R.string.share_error_message)
+            }
+          }
+          is PickedFile.Failure -> {
+            Logger.e(
+              TAG,
+              "imagePickHelper.pickFilesFromIntent() -> PickedFile.Failure",
+              pickedFile.reason
+            )
+            showToast(this@StartActivity, R.string.share_error_message)
+          }
+        }
+      }
+      is ModularResult.Error -> {
+        Logger.e(TAG, "imagePickHelper.pickFilesFromIntent() -> MR.Error", shareResult.error)
+        showToast(this@StartActivity, R.string.share_error_message)
       }
     }
   }
@@ -651,6 +704,7 @@ class StartActivity : AppCompatActivity(),
     return when (action) {
       NotificationConstants.LAST_PAGE_NOTIFICATION_ACTION -> true
       NotificationConstants.REPLY_NOTIFICATION_ACTION -> true
+      Intent.ACTION_SEND -> true
       else -> false
     }
   }

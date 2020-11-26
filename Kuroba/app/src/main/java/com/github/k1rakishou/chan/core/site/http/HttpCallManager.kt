@@ -30,6 +30,8 @@ import kotlinx.coroutines.withContext
 import okhttp3.Request
 import java.io.IOException
 import javax.inject.Inject
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
 /**
  * Manages the [HttpCall] executions.
@@ -83,6 +85,7 @@ class HttpCallManager @Inject constructor(
     return makeHttpCallInternal(requestBuilder, httpCall)
   }
   
+  @OptIn(ExperimentalTime::class)
   @Suppress("BlockingMethodInNonBlockingContext")
   private suspend fun <T : HttpCall> makeHttpCallInternal(
     requestBuilder: Request.Builder,
@@ -93,11 +96,14 @@ class HttpCallManager @Inject constructor(
         .build()
         .setHeaderIfNotSetAlready("User-Agent", appConstants.userAgent)
 
-      val response = Try { proxiedOkHttpClient.okHttpClient().suspendCall(request) }
-        .safeUnwrap { error ->
-          Logger.e(TAG, "Error while trying to execute request", error)
-          return@withContext HttpCall.HttpCallResult.Fail(httpCall, error)
-        }
+      val (response, duration) = Try {
+        return@Try measureTimedValue { proxiedOkHttpClient.okHttpClient().suspendCall(request) }
+      }.safeUnwrap { error ->
+        Logger.e(TAG, "Error while trying to execute request (${httpCall.javaClass.simpleName})", error)
+        return@withContext HttpCall.HttpCallResult.Fail(httpCall, error)
+      }
+
+      Logger.d(TAG, "Request (${httpCall.javaClass.simpleName}) execution success, took $duration")
 
       val body = response.body
         ?: return@withContext HttpCall.HttpCallResult.Fail(

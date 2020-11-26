@@ -23,23 +23,23 @@ import java.io.IOException
 import kotlin.coroutines.resume
 
 class RemoteFilePicker(
+  appConstants: AppConstants,
+  fileManager: FileManager,
+  replyManager: ReplyManager,
   private val appScope: CoroutineScope,
-  private val appConstants: AppConstants,
   private val fileCacheV2: FileCacheV2,
-  private val fileManager: FileManager,
-  private val cacheHandler: CacheHandler,
-  private val replyManager: ReplyManager
-) : IFilePicker<RemoteFilePicker.RemoteFilePickerInput> {
+  private val cacheHandler: CacheHandler
+) : AbstractFilePicker<RemoteFilePicker.RemoteFilePickerInput>(appConstants, replyManager, fileManager) {
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
   override suspend fun pickFile(filePickerInput: RemoteFilePickerInput): ModularResult<PickedFile> {
     if (filePickerInput.imageUrl.isEmpty()) {
-      return ModularResult.error(IFilePicker.FilePickerError.BadUrl(filePickerInput.imageUrl))
+      return ModularResult.error(FilePickerError.BadUrl(filePickerInput.imageUrl))
     }
 
     val imageUrl = filePickerInput.imageUrl.toHttpUrlOrNull()
     if (imageUrl == null) {
-      return ModularResult.error(IFilePicker.FilePickerError.BadUrl(filePickerInput.imageUrl))
+      return ModularResult.error(FilePickerError.BadUrl(filePickerInput.imageUrl))
     }
 
     return withContext(Dispatchers.IO) {
@@ -50,7 +50,7 @@ class RemoteFilePicker(
       )
 
       if (downloadedFileMaybe is ModularResult.Error) {
-        val error = IFilePicker.FilePickerError.FailedToDownloadFile(
+        val error = FilePickerError.FailedToDownloadFile(
           filePickerInput.imageUrl,
           downloadedFileMaybe.error
         )
@@ -61,7 +61,7 @@ class RemoteFilePicker(
       val downloadedFile = (downloadedFileMaybe as ModularResult.Value).value
 
       val fileName = imageUrl.pathSegments.lastOrNull()
-        ?: IFilePicker.DEFAULT_FILE_NAME
+        ?: DEFAULT_FILE_NAME
 
       val copyResult = copyDownloadedFileToReplyFileStorage(
         downloadedFile,
@@ -70,7 +70,7 @@ class RemoteFilePicker(
       )
 
       if (copyResult is ModularResult.Error) {
-        return@withContext ModularResult.error(IFilePicker.FilePickerError.UnknownError(copyResult.error))
+        return@withContext ModularResult.error(FilePickerError.UnknownError(copyResult.error))
       }
 
       return@withContext copyResult
@@ -85,25 +85,30 @@ class RemoteFilePicker(
     return ModularResult.Try {
       val reply = replyManager.getReplyOrNull(replyChanDescriptor)
       if (reply == null) {
-        return@Try PickedFile.Failure(IFilePicker.FilePickerError.NoReplyFound(replyChanDescriptor))
+        return@Try PickedFile.Failure(FilePickerError.NoReplyFound(replyChanDescriptor))
       }
 
       val uniqueFileName = replyManager.generateUniqueFileName(appConstants)
 
-      val replyFile = replyManager.createNewEmptyAttachFile(uniqueFileName, originalFileName)
+      val replyFile = replyManager.createNewEmptyAttachFile(
+        uniqueFileName,
+        originalFileName,
+        System.currentTimeMillis()
+      )
+
       if (replyFile == null) {
-        return@Try PickedFile.Failure(IFilePicker.FilePickerError.FailedToGetAttachFile())
+        return@Try PickedFile.Failure(FilePickerError.FailedToGetAttachFile())
       }
 
       val fileUuid = replyFile.getReplyFileMeta().valueOrNull()?.fileUuid
       if (fileUuid == null) {
-        return@Try PickedFile.Failure(IFilePicker.FilePickerError.FailedToCreateFileMeta())
+        return@Try PickedFile.Failure(FilePickerError.FailedToCreateFileMeta())
       }
 
       copyDownloadedFileIntoReplyFile(downloadedFile, replyFile)
       cacheHandler.deleteCacheFile(downloadedFile)
 
-      return@Try PickedFile.Result(replyFile)
+      return@Try PickedFile.Result(listOf(replyFile))
     }
   }
 
@@ -125,7 +130,7 @@ class RemoteFilePicker(
 
     input.use { inputStream ->
       output.use { outputStream ->
-        if (!IOUtils.copy(inputStream, outputStream, IFilePicker.MAX_FILE_SIZE)) {
+        if (!IOUtils.copy(inputStream, outputStream, MAX_FILE_SIZE)) {
           throw IOException(
             "Failed to copy downloaded file (downloadedFile='${downloadedFile.getFullPath()}') " +
               "into reply file (filePath='${cacheFile.getFullPath()}')"
@@ -159,19 +164,19 @@ class RemoteFilePicker(
           override fun onNotFound() {
             super.onNotFound()
 
-            onError(IFilePicker.FilePickerError.FileNotFound(urlString))
+            onError(FilePickerError.FileNotFound(urlString))
           }
 
           override fun onFail(exception: Exception) {
             super.onFail(exception)
 
-            onError(IFilePicker.FilePickerError.UnknownError(exception))
+            onError(FilePickerError.UnknownError(exception))
           }
 
           override fun onCancel() {
             super.onCancel()
 
-            onError(IFilePicker.FilePickerError.Canceled())
+            onError(FilePickerError.Canceled())
           }
 
           override fun onEnd() {
@@ -182,7 +187,7 @@ class RemoteFilePicker(
             }
           }
 
-          private fun onError(error: IFilePicker.FilePickerError) {
+          private fun onError(error: FilePickerError) {
             cancellableContinuation.resume(ModularResult.error(error))
           }
         })
