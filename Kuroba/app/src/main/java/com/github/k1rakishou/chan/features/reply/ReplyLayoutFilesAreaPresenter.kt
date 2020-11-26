@@ -27,6 +27,7 @@ import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
@@ -333,7 +334,7 @@ class ReplyLayoutFilesAreaPresenter(
 
           ++attachableCounter
 
-          if (attachableCounter > MAX_ATTACHABLES_COUNT) {
+          if (attachableCounter > MAX_VISIBLE_ATTACHABLES_COUNT) {
             return@mapOrderedNotNull null
           }
 
@@ -343,6 +344,7 @@ class ReplyLayoutFilesAreaPresenter(
 
         if (replyFiles.isNotEmpty()) {
           val maxAllowedTotalFilesSizePerPost = getMaxAllowedTotalFilesSizePerPost(chanDescriptor)
+            ?: -1
           val totalFileSizeSum = fileFileSizeMap.values.sum()
 
           val replyFileAttachables = replyFiles.map { replyFile ->
@@ -351,10 +353,9 @@ class ReplyLayoutFilesAreaPresenter(
             val isSelected = replyManager.isSelected(replyFileMeta.fileUuid).unwrap()
             val selectedFilesCount = replyManager.selectedFilesCount().unwrap()
             val fileExifStatus = getFileExifInfoStatus(replyFile.fileOnDisk)
-            val exceedsMaxFileSize =
-              fileExceedsMaxFileSize(replyFile, replyFileMeta, chanDescriptor)
+            val exceedsMaxFileSize = fileExceedsMaxFileSize(replyFile, replyFileMeta, chanDescriptor)
 
-            val totalFileSizeExceeded = if (maxAllowedTotalFilesSizePerPost == null || maxAllowedTotalFilesSizePerPost <= 0) {
+            val totalFileSizeExceeded = if (maxAllowedTotalFilesSizePerPost <= 0) {
               false
             } else {
               totalFileSizeSum > maxAllowedTotalFilesSizePerPost
@@ -383,8 +384,8 @@ class ReplyLayoutFilesAreaPresenter(
           newAttachFiles.addAll(replyFileAttachables)
         }
 
-        if (attachableCounter != MAX_ATTACHABLES_COUNT) {
-          if (attachableCounter > MAX_ATTACHABLES_COUNT) {
+        if (attachableCounter != MAX_VISIBLE_ATTACHABLES_COUNT) {
+          if (attachableCounter > MAX_VISIBLE_ATTACHABLES_COUNT) {
             newAttachFiles.add(TooManyAttachables(attachableCounter))
           } else {
             newAttachFiles.add(ReplyNewAttachable())
@@ -418,8 +419,9 @@ class ReplyLayoutFilesAreaPresenter(
     return false
   }
 
-  private fun getFileExifInfoStatus(fileOnDisk: File): FileExifInfoStatus {
+  private fun getFileExifInfoStatus(fileOnDisk: File): Set<FileExifInfoStatus> {
     try {
+      val resultSet = hashSetOf<FileExifInfoStatus>()
       val exif = ExifInterface(fileOnDisk.absolutePath)
 
       val orientation = exif.getAttributeInt(
@@ -428,12 +430,19 @@ class ReplyLayoutFilesAreaPresenter(
       )
 
       if (orientation != ExifInterface.ORIENTATION_UNDEFINED) {
-        return FileExifInfoStatus.OrientationExifFound
+        resultSet += FileExifInfoStatus.OrientationExifFound
       }
 
-      return FileExifInfoStatus.ExifFound
+      if (exif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE) != null
+        || exif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF) != null
+        || exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE) != null
+        || exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE_REF) != null) {
+        resultSet += FileExifInfoStatus.GpsExifFound
+      }
+
+      return resultSet
     } catch (ignored: Exception) {
-      return FileExifInfoStatus.NoExifFound
+      return emptySet()
     }
   }
 
@@ -463,19 +472,63 @@ class ReplyLayoutFilesAreaPresenter(
     }
   }
 
-  fun onFileStatusRequested(fileUuid: UUID?) {
-    TODO("Not yet implemented")
+  fun onFileStatusRequested(fileUuid: UUID) {
+    scope.launch {
+      val chanDescriptor = boundChanDescriptor
+        ?: return@launch
+
+      val clickedFile = state.value.attachables.firstOrNull { replyAttachable ->
+        replyAttachable is ReplyFileAttachable && replyAttachable.fileUuid == fileUuid
+      } as? ReplyFileAttachable
+
+      if (clickedFile == null) {
+        return@launch
+      }
+
+      val chanBoard = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
+
+      val maxBoardFileSize = chanBoard?.maxFileSize
+        ?.takeIf { maxFileSize -> maxFileSize > 0 }
+        ?.let { maxFileSize -> getReadableFileSize(maxFileSize.toLong()) }
+        ?: "???"
+
+      val maxWebmSize = chanBoard?.maxWebmSize
+        ?.takeIf { maxWebmSize -> maxWebmSize > 0 }
+        ?.let { maxWebmSize -> getReadableFileSize(maxWebmSize.toLong()) }
+        ?: "???"
+
+      val maxFileSizeTotal = getMaxAllowedTotalFilesSizePerPost(chanDescriptor)
+      val attachAdditionalInfo = clickedFile.attachAdditionalInfo
+
+      val fileStatusString = buildString {
+        appendLine("File name: \"${clickedFile.fileName}\"")
+        appendLine("Marked as spoiler: ${clickedFile.spoiler}")
+        appendLine("File size: ${getReadableFileSize(clickedFile.fileSize)}")
+        appendLine("Board max file size: $maxBoardFileSize")
+        appendLine("Board max webm size: $maxWebmSize")
+        appendLine("Max file size exceeded: ${attachAdditionalInfo.fileMaxSizeExceeded}")
+
+        if (maxFileSizeTotal != null && maxFileSizeTotal > 0) {
+          appendLine("Total file size sum per post: ${maxFileSizeTotal}, " +
+            "exceeded: ${attachAdditionalInfo.totalFileSizeExceeded}")
+        }
+
+        appendLine("Contains GPS exif data: ${attachAdditionalInfo.hasGspExifData()}")
+        appendLine("Contains orientation exif data: ${attachAdditionalInfo.hasOrientationExifData()}")
+      }
+
+      withView { showFileStatusMessage(fileStatusString) }
+    }
   }
 
   enum class FileExifInfoStatus {
-    NoExifFound,
-    ExifFound,
+    GpsExifFound,
     OrientationExifFound
   }
 
   companion object {
     private const val TAG = "ReplyLayoutFilesAreaPresenter"
-    const val MAX_ATTACHABLES_COUNT = 32
+    const val MAX_VISIBLE_ATTACHABLES_COUNT = 32
 
     private const val REFRESH_FILES_DEBOUNCE_TIME = 250L
     private const val FILE_SELECTION_UPDATE_DEBOUNCE_TIME = 25L

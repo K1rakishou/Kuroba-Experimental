@@ -225,7 +225,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
             val message = context.getString(
               R.string.layout_reply_files_area_too_many_attachables_text,
               replyAttachable.attachablesTotal,
-              ReplyLayoutFilesAreaPresenter.MAX_ATTACHABLES_COUNT
+              ReplyLayoutFilesAreaPresenter.MAX_VISIBLE_ATTACHABLES_COUNT
             )
 
             epoxyTextViewWrapHeight {
@@ -421,6 +421,14 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
   override fun updateFilesStatusTextView(newStatus: String) {
     replyLayoutCallbacks?.showReplyLayoutMessage(newStatus)
+  }
+
+  override fun showFileStatusMessage(fileStatusString: String) {
+    dialogFactory.createSimpleInformationDialog(
+      context,
+      titleText = context.getString(R.string.attached_file_info),
+      descriptionText = fileStatusString
+    )
   }
 
   private inner class ReplyFilesEpoxyController : EpoxyController() {

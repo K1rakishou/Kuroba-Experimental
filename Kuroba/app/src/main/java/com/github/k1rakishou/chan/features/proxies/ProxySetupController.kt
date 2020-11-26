@@ -216,8 +216,8 @@ class ProxySetupController(
 
     dialogFactory.createSimpleInformationDialog(
       context = context,
-      titleTextId = R.string.controller_proxy_setup_title,
-      descriptionTextId = R.string.controller_proxy_setup_proxy_editing_notification
+      titleText = getString(R.string.controller_proxy_setup_title),
+      descriptionText = getString(R.string.controller_proxy_setup_proxy_editing_notification)
     )
   }
 

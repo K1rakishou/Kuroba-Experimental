@@ -147,9 +147,12 @@ class EpoxyReplyFileView @JvmOverloads constructor(
 
     replyAttachmentStatusView.visibility = View.VISIBLE
 
-    val color = if (attachAdditionalInfo.fileMaxSizeExceeded || attachAdditionalInfo.totalFileSizeExceeded) {
+    val color = if (attachAdditionalInfo.fileMaxSizeExceeded
+      || attachAdditionalInfo.totalFileSizeExceeded
+      || attachAdditionalInfo.hasGspExifData()
+    ) {
       ICON_COLOR_ERROR
-    } else if (attachAdditionalInfo.fileExifStatus != ReplyLayoutFilesAreaPresenter.FileExifInfoStatus.NoExifFound) {
+    } else if (attachAdditionalInfo.hasOrientationExifData()) {
       ICON_COLOR_WARNING
     } else {
       ICON_COLOR_INFO
@@ -204,10 +207,15 @@ class EpoxyReplyFileView @JvmOverloads constructor(
   }
 
   data class AttachAdditionalInfo(
-    val fileExifStatus: ReplyLayoutFilesAreaPresenter.FileExifInfoStatus,
+    val fileExifStatus: Set<ReplyLayoutFilesAreaPresenter.FileExifInfoStatus>,
     val totalFileSizeExceeded: Boolean,
     val fileMaxSizeExceeded: Boolean,
-  )
+  ) {
+    fun hasGspExifData(): Boolean =
+      fileExifStatus.contains(ReplyLayoutFilesAreaPresenter.FileExifInfoStatus.GpsExifFound)
+    fun hasOrientationExifData(): Boolean =
+      fileExifStatus.contains(ReplyLayoutFilesAreaPresenter.FileExifInfoStatus.OrientationExifFound)
+  }
 
   companion object {
     private val GRAYSCALE = GrayscaleTransformation()

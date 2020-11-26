@@ -31,8 +31,8 @@ class DialogFactory(
   @JvmOverloads
   fun createSimpleInformationDialog(
     context: Context,
-    titleTextId: Int,
-    descriptionTextId: Int? = null,
+    titleText: String,
+    descriptionText: String? = null,
     onPositiveButtonClickListener: (() -> Unit) = { },
     positiveButtonTextId: Int = R.string.ok
   ) {
@@ -41,14 +41,14 @@ class DialogFactory(
     }
 
     val builder = AlertDialog.Builder(context)
-      .setTitle(titleTextId)
+      .setTitle(titleText)
       .setPositiveButton(positiveButtonTextId) { _, _ ->
         onPositiveButtonClickListener.invoke()
       }
       .setCancelable(true)
 
-    if (descriptionTextId != null) {
-      builder.setMessage(descriptionTextId)
+    if (descriptionText != null) {
+      builder.setMessage(descriptionText)
     }
 
     builder
