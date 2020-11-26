@@ -23,6 +23,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -230,7 +231,7 @@ class ReplyLayoutFilesAreaPresenter(
   }
 
   fun refreshAttachedFiles() {
-    refreshFilesExecutor.post(250L) {
+    refreshFilesExecutor.post(REFRESH_FILES_DEBOUNCE_TIME) {
       handleStateUpdate {
         val chanDescriptor = boundChanDescriptor
           ?: return@handleStateUpdate
@@ -243,15 +244,23 @@ class ReplyLayoutFilesAreaPresenter(
 
         if (oldState != newState) {
           withView {
-            requestReplyLayoutWrappingModeUpdate()
-
-            val selectedFilesCount = state.value.attachables
-              .count { replyAttachable -> replyAttachable is ReplyFileAttachable && replyAttachable.selected }
+            val selectedFilesCount = state.value.attachables.count { replyAttachable ->
+              replyAttachable is ReplyFileAttachable && replyAttachable.selected
+            }
             val maxAllowedFilesPerPost = getMaxAllowedFilesPerPost(chanDescriptor)
 
             if (maxAllowedFilesPerPost != null) {
               updateSendButtonState(selectedFilesCount, maxAllowedFilesPerPost)
             }
+          }
+
+          scope.launch {
+            // Wait some time for the reply files recycler to get laid out, otherwise reply layout
+            // will have outdated height and requestReplyLayoutWrappingModeUpdate won't apply
+            // correct paddings.
+            delay(REFRESH_FILES_APPROX_DURATION)
+
+            withView { requestReplyLayoutWrappingModeUpdate() }
           }
         }
       }
@@ -353,6 +362,9 @@ class ReplyLayoutFilesAreaPresenter(
   companion object {
     private const val TAG = "ReplyLayoutFilesAreaPresenter"
     const val MAX_ATTACHABLES_COUNT = 32
+
+    private const val REFRESH_FILES_DEBOUNCE_TIME = 250L
+    private const val REFRESH_FILES_APPROX_DURATION = 125L
   }
 
 }

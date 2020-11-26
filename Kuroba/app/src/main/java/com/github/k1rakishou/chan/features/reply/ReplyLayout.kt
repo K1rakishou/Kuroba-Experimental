@@ -43,6 +43,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.animation.doOnEnd
 import androidx.core.content.ContextCompat
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
@@ -833,6 +834,12 @@ class ReplyLayout @JvmOverloads constructor(
     animator.duration = 400
     animator.addUpdateListener { animation ->
       moreDropdown.setRotation(animation.animatedValue as Float)
+    }
+
+    if (!expanded) {
+      // Update the recycler view's paddings after the animation has ended to make sure it has
+      // proper paddings
+      animator.doOnEnd { threadListLayoutCallbacks?.updatePadding() }
     }
 
     more.setImageDrawable(moreDropdown)
