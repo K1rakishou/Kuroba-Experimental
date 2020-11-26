@@ -12,6 +12,8 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
@@ -59,6 +61,10 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var postingLimitationsInfoManager: PostingLimitationsInfoManager
+  @Inject
+  lateinit var boardManager: BoardManager
+  @Inject
+  lateinit var imageLoaderV2: ImageLoaderV2
 
   private val controller = ReplyFilesEpoxyController()
   private val epoxyRecyclerView: ColorizableEpoxyRecyclerView
@@ -71,14 +77,14 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     return@lazy ReplyLayoutFilesAreaPresenter(
       appConstants,
       replyManager,
+      boardManager,
+      imageLoaderV2,
       postingLimitationsInfoManager,
       imagePickHelper
     )
   }
 
-  // TODO(KurobaEx): reply layout refactoring: show file size
   // TODO(KurobaEx): reply layout refactoring: show warning when trying to open unsupported file
-  // TODO(KurobaEx): reply layout refactoring: reset reply state to default (delete comment text) after post.
   // TODO(KurobaEx): reply layout refactoring: mark/unmark image as spolier
   // TODO(KurobaEx): reply layout refactoring: image editing
 
@@ -142,9 +148,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
     presenter.bindChanDescriptor(chanDescriptor)
 
-    epoxyRecyclerView.layoutManager = GridLayoutManager(context, MIN_FILES_PER_ROW).apply {
-      spanSizeLookup = controller.spanSizeLookup
-    }
+    epoxyRecyclerView.layoutManager = GridLayoutManager(context, MIN_FILES_PER_ROW)
+      .apply { spanSizeLookup = controller.spanSizeLookup }
 
     scope!!.launch {
       presenter.listenForStateUpdates()
@@ -241,9 +246,12 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
               attachmentFileUuid(replyAttachable.fileUuid)
               attachmentFileName(replyAttachable.fileName)
               attachmentSelected(replyAttachable.selected)
-              exceedsMaxFilesPerPostLimit(replyAttachable.exceedsMaxFilesLimit)
+              fileSize(replyAttachable.fileSize)
+              attachAdditionalInfo(replyAttachable.attachAdditionalInfo)
+              exceedsMaxFilesPerPostLimit(replyAttachable.maxAttachedFilesCountExceeded)
               onClickListener { fileUuid -> presenter.updateFileSelection(fileUuid) }
               onLongClickListener { fileUuid -> showAttachFileOptions(fileUuid) }
+              onStatusIconClickListener { fileUuid -> presenter.onFileStatusRequested(fileUuid) }
             }
           }
           else -> throw IllegalStateException(
@@ -266,13 +274,22 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
         else -> throw IllegalStateException("View is not measured!")
       }
 
-      val spanCount =
-        (epoxyRecyclerViewWidth / AppModuleAndroidUtils.getDimen(R.dimen.attach_new_file_button_width))
-          .coerceAtLeast(MIN_FILES_PER_ROW)
+      val attachNewFileButtonWidth =
+        AppModuleAndroidUtils.getDimen(R.dimen.attach_new_file_button_width)
 
-      epoxyRecyclerView.layoutManager = GridLayoutManager(context, spanCount).apply {
-        spanSizeLookup = controller.spanSizeLookup
+      val spanCount = (epoxyRecyclerViewWidth / attachNewFileButtonWidth)
+        .coerceAtLeast(MIN_FILES_PER_ROW)
+
+      val prevSpanCount = (epoxyRecyclerView.layoutManager as? GridLayoutManager)
+        ?.spanCount
+        ?: -1
+
+      if (prevSpanCount == spanCount) {
+        return@doOnLayout
       }
+
+      epoxyRecyclerView.layoutManager = GridLayoutManager(context, spanCount)
+        .apply { spanSizeLookup = controller.spanSizeLookup }
 
       presenter.refreshAttachedFiles()
     }
@@ -402,6 +419,10 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     }
   }
 
+  override fun updateFilesStatusTextView(newStatus: String) {
+    replyLayoutCallbacks?.showReplyLayoutMessage(newStatus)
+  }
+
   private inner class ReplyFilesEpoxyController : EpoxyController() {
     var callback: EpoxyController.() -> Unit = {}
 
@@ -421,6 +442,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     fun requestWrappingModeUpdate()
     fun disableSendButton()
     fun enableSendButton()
+    fun showReplyLayoutMessage(message: String, duration: Int = 5000)
   }
 
   companion object {

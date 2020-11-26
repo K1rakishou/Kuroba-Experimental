@@ -1,16 +1,22 @@
 package com.github.k1rakishou.chan.features.reply
 
+import androidx.exifinterface.media.ExifInterface
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.features.reply.data.IReplyAttachable
+import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
+import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.features.reply.data.ReplyNewAttachable
 import com.github.k1rakishou.chan.features.reply.data.TooManyAttachables
+import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyReplyFileView
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.PickedFile
@@ -30,11 +36,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.*
 
 class ReplyLayoutFilesAreaPresenter(
   private val appConstants: AppConstants,
   private val replyManager: ReplyManager,
+  private val boardManager: BoardManager,
+  private val imageLoaderV2: ImageLoaderV2,
   private val postingLimitationsInfoManager: PostingLimitationsInfoManager,
   private val imagePickHelper: ImagePickHelper
 ) : BasePresenter<ReplyLayoutFilesAreaView>() {
@@ -78,7 +87,14 @@ class ReplyLayoutFilesAreaPresenter(
         val input = LocalFilePicker.LocalFilePickerInput(
           replyChanDescriptor = chanDescriptor,
           clearLastRememberedFilePicker = showFilePickerChooser,
-          showLoadingView = { withView { showLoadingView(cancellationFunc, R.string.decoding_reply_file_preview) } },
+          showLoadingView = {
+            withView {
+              showLoadingView(
+                cancellationFunc,
+                R.string.decoding_reply_file_preview
+              )
+            }
+          },
           hideLoadingView = { withView { hideLoadingView() } }
         )
 
@@ -91,8 +107,9 @@ class ReplyLayoutFilesAreaPresenter(
           }
 
         if (pickedFileResult is PickedFile.Failure) {
-          Logger.e(TAG, "pickNewLocalFile() error, " +
-            "pickedFileResult=${pickedFileResult.reason.errorMessageOrClassName()}"
+          Logger.e(
+            TAG, "pickNewLocalFile() error, " +
+              "pickedFileResult=${pickedFileResult.reason.errorMessageOrClassName()}"
           )
 
           withView { showFilePickerErrorToast(pickedFileResult.reason) }
@@ -102,7 +119,11 @@ class ReplyLayoutFilesAreaPresenter(
         val replyFile = (pickedFileResult as PickedFile.Result).replyFiles.first()
 
         val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
-          Logger.e(TAG, "imagePickHelper.pickLocalFile($chanDescriptor) getReplyFileMeta() error", error)
+          Logger.e(
+            TAG,
+            "imagePickHelper.pickLocalFile($chanDescriptor) getReplyFileMeta() error",
+            error
+          )
           return@handleStateUpdate
         }
 
@@ -142,8 +163,9 @@ class ReplyLayoutFilesAreaPresenter(
           }
 
         if (pickedFileResult is PickedFile.Failure) {
-          Logger.e(TAG, "pickRemoteFile() error, " +
-            "pickedFileResult=${pickedFileResult.reason.errorMessageOrClassName()}"
+          Logger.e(
+            TAG, "pickRemoteFile() error, " +
+              "pickedFileResult=${pickedFileResult.reason.errorMessageOrClassName()}"
           )
 
           withView { showFilePickerErrorToast(pickedFileResult.reason) }
@@ -153,7 +175,11 @@ class ReplyLayoutFilesAreaPresenter(
         val replyFile = (pickedFileResult as PickedFile.Result).replyFiles.first()
 
         val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
-          Logger.e(TAG, "imagePickHelper.pickRemoteFile($chanDescriptor) getReplyFileMeta() error", error)
+          Logger.e(
+            TAG,
+            "imagePickHelper.pickRemoteFile($chanDescriptor) getReplyFileMeta() error",
+            error
+          )
           return@handleStateUpdate
         }
 
@@ -193,7 +219,7 @@ class ReplyLayoutFilesAreaPresenter(
             return@handleStateUpdate
           }
 
-        refreshAttachedFiles()
+        refreshAttachedFiles(debounceTime = FILE_SELECTION_UPDATE_DEBOUNCE_TIME)
       }
     }
   }
@@ -230,8 +256,8 @@ class ReplyLayoutFilesAreaPresenter(
     return state.value.attachables.any { replyAttachable -> replyAttachable is ReplyFileAttachable }
   }
 
-  fun refreshAttachedFiles() {
-    refreshFilesExecutor.post(REFRESH_FILES_DEBOUNCE_TIME) {
+  fun refreshAttachedFiles(debounceTime: Long = REFRESH_FILES_DEBOUNCE_TIME) {
+    refreshFilesExecutor.post(debounceTime) {
       handleStateUpdate {
         val chanDescriptor = boundChanDescriptor
           ?: return@handleStateUpdate
@@ -284,58 +310,130 @@ class ReplyLayoutFilesAreaPresenter(
     }
   }
 
-  private suspend fun enumerateReplyAttachables(
+  suspend fun enumerateReplyAttachables(
     chanDescriptor: ChanDescriptor
   ): ModularResult<MutableList<IReplyAttachable>> {
-    return Try {
-      val newAttachFiles = mutableListOf<IReplyAttachable>()
-      val maxAllowedFilesPerPost = getMaxAllowedFilesPerPost(chanDescriptor)
-      var attachableCounter = 0
+    return withContext(Dispatchers.IO) {
+      return@withContext Try {
+        val newAttachFiles = mutableListOf<IReplyAttachable>()
+        val maxAllowedFilesPerPost = getMaxAllowedFilesPerPost(chanDescriptor)
+        val fileFileSizeMap = mutableMapOf<String, Long>()
 
-      val replyFileAttachables = replyManager.mapOrderedNotNull { _, replyFile ->
-        val meta = replyFile.getReplyFileMeta().safeUnwrap { error ->
-          Logger.e(TAG, "getReplyFileMeta() error", error)
-          return@mapOrderedNotNull null
-        }
+        var attachableCounter = 0
 
-        if (meta.isTaken()) {
-          return@mapOrderedNotNull null
-        }
-
-        ++attachableCounter
-
-        if (attachableCounter > MAX_ATTACHABLES_COUNT) {
-          return@mapOrderedNotNull null
-        }
-
-        val isSelected = replyManager.isSelected(meta.fileUuid).unwrap()
-        val selectedFilesCount = replyManager.selectedFilesCount().unwrap()
-
-        return@mapOrderedNotNull ReplyFileAttachable(
-          fileUuid = meta.fileUuid,
-          fileName = meta.fileName,
-          spoiler = meta.spoiler,
-          selected = isSelected,
-          exceedsMaxFilesLimit = when {
-            maxAllowedFilesPerPost == null -> false
-            selectedFilesCount < maxAllowedFilesPerPost -> false
-            selectedFilesCount == maxAllowedFilesPerPost -> !isSelected
-            else -> true
+        val replyFiles = replyManager.mapOrderedNotNull { _, replyFile ->
+          val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
+            Logger.e(TAG, "getReplyFileMeta() error", error)
+            return@mapOrderedNotNull null
           }
-        )
-      }
 
-      newAttachFiles.addAll(replyFileAttachables)
+          if (replyFileMeta.isTaken()) {
+            return@mapOrderedNotNull null
+          }
 
-      if (attachableCounter != MAX_ATTACHABLES_COUNT) {
-        if (attachableCounter > MAX_ATTACHABLES_COUNT) {
-          newAttachFiles.add(TooManyAttachables(attachableCounter))
-        } else {
-          newAttachFiles.add(ReplyNewAttachable())
+          ++attachableCounter
+
+          if (attachableCounter > MAX_ATTACHABLES_COUNT) {
+            return@mapOrderedNotNull null
+          }
+
+          fileFileSizeMap[replyFile.fileOnDisk.absolutePath] = replyFile.fileOnDisk.length()
+          return@mapOrderedNotNull replyFile
         }
+
+        if (replyFiles.isNotEmpty()) {
+          val maxAllowedTotalFilesSizePerPost = getMaxAllowedTotalFilesSizePerPost(chanDescriptor)
+          val totalFileSizeSum = fileFileSizeMap.values.sum()
+
+          val replyFileAttachables = replyFiles.map { replyFile ->
+            val replyFileMeta = replyFile.getReplyFileMeta().unwrap()
+
+            val isSelected = replyManager.isSelected(replyFileMeta.fileUuid).unwrap()
+            val selectedFilesCount = replyManager.selectedFilesCount().unwrap()
+            val fileExifStatus = getFileExifInfoStatus(replyFile.fileOnDisk)
+            val exceedsMaxFileSize =
+              fileExceedsMaxFileSize(replyFile, replyFileMeta, chanDescriptor)
+
+            val totalFileSizeExceeded = if (maxAllowedTotalFilesSizePerPost == null || maxAllowedTotalFilesSizePerPost <= 0) {
+              false
+            } else {
+              totalFileSizeSum > maxAllowedTotalFilesSizePerPost
+            }
+
+            return@map ReplyFileAttachable(
+              fileUuid = replyFileMeta.fileUuid,
+              fileName = replyFileMeta.fileName,
+              spoiler = replyFileMeta.spoiler,
+              selected = isSelected,
+              fileSize = fileFileSizeMap[replyFile.fileOnDisk.absolutePath]!!,
+              attachAdditionalInfo = EpoxyReplyFileView.AttachAdditionalInfo(
+                fileExifStatus = fileExifStatus,
+                totalFileSizeExceeded = totalFileSizeExceeded,
+                fileMaxSizeExceeded = exceedsMaxFileSize,
+              ),
+              maxAttachedFilesCountExceeded = when {
+                maxAllowedFilesPerPost == null -> false
+                selectedFilesCount < maxAllowedFilesPerPost -> false
+                selectedFilesCount == maxAllowedFilesPerPost -> !isSelected
+                else -> true
+              }
+            )
+          }
+
+          newAttachFiles.addAll(replyFileAttachables)
+        }
+
+        if (attachableCounter != MAX_ATTACHABLES_COUNT) {
+          if (attachableCounter > MAX_ATTACHABLES_COUNT) {
+            newAttachFiles.add(TooManyAttachables(attachableCounter))
+          } else {
+            newAttachFiles.add(ReplyNewAttachable())
+          }
+        }
+
+        return@Try newAttachFiles
+      }
+    }
+  }
+
+  private fun fileExceedsMaxFileSize(
+    replyFile: ReplyFile,
+    replyFileMeta: ReplyFileMeta,
+    chanDescriptor: ChanDescriptor
+  ): Boolean {
+    val chanBoard = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
+      ?: return false
+
+    val isProbablyVideo = imageLoaderV2.replyFileIsProbablyVideo(replyFile, replyFileMeta)
+    val fileOnDiskSize = replyFile.fileOnDisk.length()
+
+    if (chanBoard.maxWebmSize > 0 && isProbablyVideo) {
+      return fileOnDiskSize > chanBoard.maxWebmSize
+    }
+
+    if (chanBoard.maxFileSize > 0 && !isProbablyVideo) {
+      return fileOnDiskSize > chanBoard.maxFileSize
+    }
+
+    return false
+  }
+
+  private fun getFileExifInfoStatus(fileOnDisk: File): FileExifInfoStatus {
+    try {
+      val exif = ExifInterface(fileOnDisk.absolutePath)
+
+      val orientation = exif.getAttributeInt(
+        ExifInterface.TAG_ORIENTATION,
+        ExifInterface.ORIENTATION_UNDEFINED
+      )
+
+      if (orientation != ExifInterface.ORIENTATION_UNDEFINED) {
+        return FileExifInfoStatus.OrientationExifFound
       }
 
-      return@Try newAttachFiles
+      return FileExifInfoStatus.ExifFound
+    } catch (ignored: Exception) {
+      return FileExifInfoStatus.NoExifFound
     }
   }
 
@@ -345,6 +443,12 @@ class ReplyLayoutFilesAreaPresenter(
 
   private suspend fun getMaxAllowedFilesPerPost(chanDescriptor: ChanDescriptor): Int? {
     return postingLimitationsInfoManager.getMaxAllowedFilesPerPost(
+      chanDescriptor.boardDescriptor()
+    )
+  }
+
+  private suspend fun getMaxAllowedTotalFilesSizePerPost(chanDescriptor: ChanDescriptor): Long? {
+    return postingLimitationsInfoManager.getMaxAllowedTotalFilesSizePerPost(
       chanDescriptor.boardDescriptor()
     )
   }
@@ -359,11 +463,22 @@ class ReplyLayoutFilesAreaPresenter(
     }
   }
 
+  fun onFileStatusRequested(fileUuid: UUID?) {
+    TODO("Not yet implemented")
+  }
+
+  enum class FileExifInfoStatus {
+    NoExifFound,
+    ExifFound,
+    OrientationExifFound
+  }
+
   companion object {
     private const val TAG = "ReplyLayoutFilesAreaPresenter"
     const val MAX_ATTACHABLES_COUNT = 32
 
     private const val REFRESH_FILES_DEBOUNCE_TIME = 250L
+    private const val FILE_SELECTION_UPDATE_DEBOUNCE_TIME = 25L
     private const val REFRESH_FILES_APPROX_DURATION = 125L
   }
 

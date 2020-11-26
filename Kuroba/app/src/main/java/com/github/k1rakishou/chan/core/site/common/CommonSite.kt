@@ -609,7 +609,7 @@ abstract class CommonSite : SiteBase() {
     private const val TAG = "CommonSite"
 
     const val DEFAULT_ATTACHABLES_PER_POST_COUNT = 1
-    const val DEFAULT_MAX_ATTACHABLES_SIZE = 4 * 1024 * 1024 // 4 MB
+    const val DEFAULT_MAX_ATTACHABLES_SIZE = 4L * 1024 * 1024 // 4 MB
 
     private val BOARD_PATTERN = Pattern.compile("/(\\w+)")
     private val THREAD_PATTERN = Pattern.compile("/(\\w+)/(\\w+)/(\\d+).*")

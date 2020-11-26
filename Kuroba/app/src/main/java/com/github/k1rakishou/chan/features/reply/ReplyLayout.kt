@@ -24,7 +24,6 @@ import android.content.res.Resources
 import android.graphics.Color
 import android.os.Build
 import android.text.Editable
-import android.text.TextUtils
 import android.text.TextWatcher
 import android.util.AndroidRuntimeException
 import android.util.AttributeSet
@@ -78,6 +77,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.ui.view.LoadView
 import com.github.k1rakishou.chan.ui.view.SelectionListeningEditText
 import com.github.k1rakishou.chan.ui.view.SelectionListeningEditText.SelectionChangedListener
+import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
@@ -142,7 +142,6 @@ class ReplyLayout @JvmOverloads constructor(
 
   // Reply views:
   private lateinit var replyInputLayout: View
-  private lateinit var message: TextView
   private lateinit var name: ColorizableEditText
   private lateinit var subject: ColorizableEditText
   private lateinit var flag: ColorizableEditText
@@ -173,9 +172,8 @@ class ReplyLayout @JvmOverloads constructor(
 
   private val coroutineScope = KurobaCoroutineScope()
   private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(coroutineScope)
-  private val closeMessageRunnable = Runnable { message.visibility = GONE }
-
   private val wrappingModeUpdateDebouncer = Debouncer(false)
+  private val replyLayoutMessageToast = CancellableToast()
 
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
@@ -254,7 +252,6 @@ class ReplyLayout @JvmOverloads constructor(
 
     // Inflate reply input
     replyInputLayout = AppModuleAndroidUtils.inflate(context, R.layout.layout_reply_input, this, false)
-    message = replyInputLayout.findViewById(R.id.message)
     name = replyInputLayout.findViewById(R.id.name)
     subject = replyInputLayout.findViewById(R.id.subject)
     flag = replyInputLayout.findViewById(R.id.flag)
@@ -440,6 +437,10 @@ class ReplyLayout @JvmOverloads constructor(
     submit.setAlphaFast(1f)
   }
 
+  override fun showReplyLayoutMessage(message: String, duration: Int) {
+    openMessage(message, duration)
+  }
+
   fun onDestroy() {
     this.threadListLayoutCallbacks = null
     this.threadListLayoutFilesCallback = null
@@ -454,7 +455,6 @@ class ReplyLayout @JvmOverloads constructor(
 
   fun cleanup() {
     presenter.unbindChanDescriptor()
-    removeCallbacks(closeMessageRunnable)
   }
 
   fun onBack(): Boolean {
@@ -779,20 +779,11 @@ class ReplyLayout @JvmOverloads constructor(
   override fun openMessage(message: String?, hideDelayMs: Int) {
     require(hideDelayMs > 0) { "Bad hideDelayMs: $hideDelayMs" }
 
-    val text = message ?: ""
-    removeCallbacks(closeMessageRunnable)
-
-    this.message.text = text
-
-    this.message.visibility = if (TextUtils.isEmpty(text)) {
-      GONE
-    } else {
-      VISIBLE
+    if (message.isNullOrEmpty()) {
+      return
     }
 
-    if (!TextUtils.isEmpty(text)) {
-      postDelayed(closeMessageRunnable, hideDelayMs.toLong())
-    }
+    replyLayoutMessageToast.showToast(context, message, hideDelayMs)
   }
 
   override fun onPosted() {

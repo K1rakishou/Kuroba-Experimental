@@ -1,7 +1,10 @@
 package com.github.k1rakishou.chan.features.reply.epoxy
 
 import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.util.AttributeSet
+import android.view.View
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -15,9 +18,11 @@ import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.features.reply.ReplyLayoutFilesAreaPresenter
 import com.github.k1rakishou.chan.ui.view.SelectionCheckView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
 import java.util.*
 import javax.inject.Inject
 
@@ -39,7 +44,9 @@ class EpoxyReplyFileView @JvmOverloads constructor(
   private val replyAttachmentRoot: ConstraintLayout
   private val replyAttachmentImageView: AppCompatImageView
   private val replyAttachmentFileName: TextView
+  private val replyAttachmentFileSize: TextView
   private val replyAttachmentSelectionView: SelectionCheckView
+  private val replyAttachmentStatusView: AppCompatImageView
 
   init {
     inflate(context, R.layout.epoxy_reply_file_view, this)
@@ -50,7 +57,9 @@ class EpoxyReplyFileView @JvmOverloads constructor(
     replyAttachmentRoot = findViewById(R.id.reply_attachment_root)
     replyAttachmentImageView = findViewById(R.id.reply_attachment_image_view)
     replyAttachmentFileName = findViewById(R.id.reply_attachment_file_name)
+    replyAttachmentFileSize = findViewById(R.id.reply_attachment_file_size)
     replyAttachmentSelectionView = findViewById(R.id.reply_attachment_selection_check_view)
+    replyAttachmentStatusView = findViewById(R.id.reply_attachment_status_icon)
   }
 
   override fun onAttachedToWindow() {
@@ -124,6 +133,31 @@ class EpoxyReplyFileView @JvmOverloads constructor(
     this.exceedsMaxFilesPerPostLimit = exceedsLimit
   }
 
+  @ModelProp
+  fun setFileSize(size: Long) {
+    replyAttachmentFileSize.text = getReadableFileSize(size)
+  }
+
+  @ModelProp
+  fun setAttachAdditionalInfo(attachAdditionalInfo: AttachAdditionalInfo?) {
+    if (attachAdditionalInfo == null) {
+      replyAttachmentStatusView.visibility = View.GONE
+      return
+    }
+
+    replyAttachmentStatusView.visibility = View.VISIBLE
+
+    val color = if (attachAdditionalInfo.fileMaxSizeExceeded || attachAdditionalInfo.totalFileSizeExceeded) {
+      ICON_COLOR_ERROR
+    } else if (attachAdditionalInfo.fileExifStatus != ReplyLayoutFilesAreaPresenter.FileExifInfoStatus.NoExifFound) {
+      ICON_COLOR_WARNING
+    } else {
+      ICON_COLOR_INFO
+    }
+
+    replyAttachmentStatusView.imageTintList = ColorStateList.valueOf(color)
+  }
+
   @CallbackProp
   fun setOnClickListener(listener: ((UUID) -> Unit)?) {
     if (listener == null) {
@@ -132,6 +166,20 @@ class EpoxyReplyFileView @JvmOverloads constructor(
     }
 
     replyAttachmentRoot.setOnClickListener {
+      if (attachmentFileUuid != null) {
+        listener.invoke(attachmentFileUuid!!)
+      }
+    }
+  }
+
+  @CallbackProp
+  fun setOnStatusIconClickListener(listener: ((UUID) -> Unit)?) {
+    if (listener == null) {
+      replyAttachmentStatusView.setOnClickListener(null)
+      return
+    }
+
+    replyAttachmentStatusView.setOnClickListener {
       if (attachmentFileUuid != null) {
         listener.invoke(attachmentFileUuid!!)
       }
@@ -155,8 +203,18 @@ class EpoxyReplyFileView @JvmOverloads constructor(
     }
   }
 
+  data class AttachAdditionalInfo(
+    val fileExifStatus: ReplyLayoutFilesAreaPresenter.FileExifInfoStatus,
+    val totalFileSizeExceeded: Boolean,
+    val fileMaxSizeExceeded: Boolean,
+  )
+
   companion object {
     private val GRAYSCALE = GrayscaleTransformation()
+
+    private const val ICON_COLOR_ERROR = Color.RED
+    private const val ICON_COLOR_WARNING = Color.YELLOW
+    private const val ICON_COLOR_INFO = Color.WHITE
   }
 
 }

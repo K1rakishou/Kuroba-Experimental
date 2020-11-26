@@ -278,9 +278,7 @@ object MediaUtils {
       val metadataRetriever = MediaMetadataRetriever()
       metadataRetriever.setDataSource(file.absolutePath)
       return metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
-    } catch (error: Throwable) {
-      val errorMsg = error.errorMessageOrClassName()
-      Logger.e(TAG, "decodeFileMimeType() error: $errorMsg")
+    } catch (ignored: Throwable) {
       return null
     }
   }

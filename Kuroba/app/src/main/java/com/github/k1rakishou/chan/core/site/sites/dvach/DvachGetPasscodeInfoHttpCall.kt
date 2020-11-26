@@ -45,15 +45,15 @@ class DvachGetPasscodeInfoHttpCall(
         throw BadResponseBodyException("Failed to parse \"files\", result = '$result'")
       }
 
-      val filesSize = dvachPasscodeInfoResponse.filesSize
-      if (filesSize == null || filesSize <= 0) {
+      val filesSizeKb = dvachPasscodeInfoResponse.filesSizeKb
+      if (filesSizeKb == null || filesSizeKb <= 0) {
         throw BadResponseBodyException("Failed to parse \"filesSize\", result = '$result'")
       }
 
       passcodePostingLimitationsInfoResult = ModularResult.value(
         PasscodePostingLimitationsInfo(
           maxAttachedFilesPerPost = files,
-          maxTotalAttachablesSize = filesSize
+          maxTotalAttachablesSize = filesSizeKb * 1024L
         )
       )
     } catch (error: Throwable) {
@@ -65,7 +65,7 @@ class DvachGetPasscodeInfoHttpCall(
     @SerializedName("files")
     val files: Int? = null,
     @SerializedName("files_size")
-    val filesSize: Int? = null,
+    val filesSizeKb: Long? = null,
   )
 
 }

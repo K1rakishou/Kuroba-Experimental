@@ -391,15 +391,9 @@ class ImageLoaderV2(
     height: Int,
     scale: Scale
   ): Bitmap {
-    val isProbablyVideo = StringUtils.extractFileNameExtension(replyFileMeta.originalFileName)
-      ?.let { extension -> extension == "mp4" || extension == "webm" }
-      ?: false
+    val isProbablyVideo = replyFileIsProbablyVideo(replyFile, replyFileMeta)
 
-    val isMostLikelyVideo = MediaUtils.decodeFileMimeType(replyFile.fileOnDisk)
-      ?.let { mimeType -> MimeTypes.isVideo(mimeType) }
-      ?: false
-
-    if (isProbablyVideo || isMostLikelyVideo) {
+    if (isProbablyVideo) {
       val videoFrameDecodeMaybe = Try {
         return@Try MediaUtils.decodeVideoFilePreviewImage(
           context,
@@ -434,6 +428,22 @@ class ImageLoaderV2(
     }
 
     return getImageErrorLoadingDrawable(context).bitmap
+  }
+
+  fun replyFileIsProbablyVideo(replyFile: ReplyFile, replyFileMeta: ReplyFileMeta): Boolean {
+    val hasVideoExtension = StringUtils.extractFileNameExtension(replyFileMeta.originalFileName)
+      ?.let { extension -> extension == "mp4" || extension == "webm" }
+      ?: false
+
+    if (hasVideoExtension) {
+      return true
+    }
+
+    val hasVideoMimeType = MediaUtils.decodeFileMimeType(replyFile.fileOnDisk)
+      ?.let { mimeType -> MimeTypes.isVideo(mimeType) }
+      ?: false
+
+    return hasVideoMimeType
   }
 
   suspend fun getFileImagePreview(

@@ -6,5 +6,5 @@ data class DvachPasscodeInfo(
   @SerializedName("files")
   val files: Int? = null,
   @SerializedName("files_size")
-  val filesSize: Int? = null,
+  val filesSize: Long? = null,
 )

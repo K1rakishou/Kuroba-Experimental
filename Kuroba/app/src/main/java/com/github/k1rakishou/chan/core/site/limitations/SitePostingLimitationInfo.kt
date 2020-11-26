@@ -1,8 +1,6 @@
 package com.github.k1rakishou.chan.core.site.limitations
 
-import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -14,7 +12,7 @@ class SitePostingLimitationInfo(
 )
 
 interface PostAttachableLimitationInfo {
-  suspend fun getMaxAllowedAttachablesPerPost(params: Params): Int
+  suspend fun getMaxAllowedAttachablesPerPost(params: Params): Int?
 
   data class Params(
     val siteDescriptor: SiteDescriptor
@@ -22,12 +20,10 @@ interface PostAttachableLimitationInfo {
 }
 
 interface PostAttachlesMaxTotalSizeInfo {
-  suspend fun getMaxTotalAttachablesSize(params: Params): Int
+  suspend fun getMaxTotalAttachablesSize(params: Params): Long?
 
   data class Params(
-    val boardDescriptor: BoardDescriptor,
-    val maxAttachablesPerPost: Int,
-    val isWebm: Boolean
+    val boardDescriptor: BoardDescriptor
   )
 }
 
@@ -37,59 +33,30 @@ class ConstantAttachablesCount(val count: Int) : PostAttachableLimitationInfo {
   }
 }
 
-class ConstantMaxTotalSizeInfo(val maxSize: Int) : PostAttachlesMaxTotalSizeInfo {
-  override suspend fun getMaxTotalAttachablesSize(params: PostAttachlesMaxTotalSizeInfo.Params): Int {
+class ConstantMaxTotalSizeInfo(val maxSize: Long) : PostAttachlesMaxTotalSizeInfo {
+  override suspend fun getMaxTotalAttachablesSize(params: PostAttachlesMaxTotalSizeInfo.Params): Long {
     return maxSize
   }
 }
 
-class BoardDependantMaxAttachablesTotalSize(
-  private val siteManager: SiteManager,
-  private val boardManager: BoardManager
+class PasscodeDependantMaxAttachablesTotalSize(
+  private val siteManager: SiteManager
 ) : PostAttachlesMaxTotalSizeInfo {
-  private val unknownMaxSize = Int.MAX_VALUE
 
-  override suspend fun getMaxTotalAttachablesSize(params: PostAttachlesMaxTotalSizeInfo.Params): Int {
+  override suspend fun getMaxTotalAttachablesSize(params: PostAttachlesMaxTotalSizeInfo.Params): Long? {
     val boardDescriptor = params.boardDescriptor
 
     val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
     if (site != null && site.actions().isLoggedIn()) {
-      val maxSize = checkByPasscodeInfo(site)
-      if (maxSize != null) {
-        return maxSize
+      val getPasscodeInfoResult = site.actions().getOrRefreshPasscodeInfo(resetCached = false)
+      if (getPasscodeInfoResult !is SiteActions.GetPasscodeInfoResult.Success) {
+        return null
       }
 
-      // fallthrough
+      return getPasscodeInfoResult.postingLimitationsInfo.maxTotalAttachablesSize
     }
 
-    val chanBoard = boardManager.byBoardDescriptor(boardDescriptor)
-    if (chanBoard == null) {
-      return unknownMaxSize
-    }
-
-    val isWebm = params.isWebm
-    val maxAttachablesPerPost = params.maxAttachablesPerPost
-
-    val maxSize = if (isWebm) {
-      chanBoard.maxWebmSize
-    } else {
-      chanBoard.maxFileSize
-    }
-
-    if (maxSize <= 0) {
-      return unknownMaxSize
-    }
-
-    return maxSize * maxAttachablesPerPost
-  }
-
-  private suspend fun checkByPasscodeInfo(site: Site): Int? {
-    val getPasscodeInfoResult = site.actions().getOrRefreshPasscodeInfo(resetCached = false)
-    if (getPasscodeInfoResult !is SiteActions.GetPasscodeInfoResult.Success) {
-      return null
-    }
-
-    return getPasscodeInfoResult.postingLimitationsInfo.maxTotalAttachablesSize
+    return null
   }
 
 }

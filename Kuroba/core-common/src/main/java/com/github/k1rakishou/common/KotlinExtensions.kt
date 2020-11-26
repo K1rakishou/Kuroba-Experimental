@@ -525,3 +525,11 @@ inline fun <T> hashSetWithCap(initialCapacity: Int): HashSet<T> {
 inline fun <T> hashSetWithCap(collection: Collection<*>): HashSet<T> {
   return HashSet(safeCapacity(collection.size))
 }
+
+public inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long): Long {
+  var sum = 0L
+  for (element in this) {
+    sum += selector(element)
+  }
+  return sum
+}

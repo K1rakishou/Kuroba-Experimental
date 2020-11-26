@@ -22,7 +22,7 @@ import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginResponse
-import com.github.k1rakishou.chan.core.site.limitations.BoardDependantMaxAttachablesTotalSize
+import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantMaxAttachablesTotalSize
 import com.github.k1rakishou.chan.core.site.limitations.PasscodePostingLimitationsInfo
 import com.github.k1rakishou.chan.core.site.limitations.SiteDependantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInfo
@@ -393,9 +393,8 @@ class Dvach : CommonSite() {
     setPostingLimitationInfo(
       SitePostingLimitationInfo(
         postMaxAttachables = SiteDependantAttachablesCount(siteManager, 4),
-        postMaxAttachablesTotalSize = BoardDependantMaxAttachablesTotalSize(
-          siteManager = siteManager,
-          boardManager = boardManager
+        postMaxAttachablesTotalSize = PasscodeDependantMaxAttachablesTotalSize(
+          siteManager = siteManager
         )
       )
     )

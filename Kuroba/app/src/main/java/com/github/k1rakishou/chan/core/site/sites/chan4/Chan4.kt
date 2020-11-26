@@ -25,8 +25,8 @@ import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginResponse
-import com.github.k1rakishou.chan.core.site.limitations.BoardDependantMaxAttachablesTotalSize
 import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
+import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantMaxAttachablesTotalSize
 import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInfo
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
@@ -512,9 +512,8 @@ open class Chan4 : SiteBase() {
   override fun postingLimitationInfo(): SitePostingLimitationInfo {
     return SitePostingLimitationInfo(
       postMaxAttachables = ConstantAttachablesCount(count = 1),
-      postMaxAttachablesTotalSize = BoardDependantMaxAttachablesTotalSize(
-        siteManager = siteManager,
-        boardManager = boardManager
+      postMaxAttachablesTotalSize = PasscodeDependantMaxAttachablesTotalSize(
+        siteManager = siteManager
       )
     )
   }

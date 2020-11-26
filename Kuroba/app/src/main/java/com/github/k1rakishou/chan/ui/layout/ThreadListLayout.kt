@@ -359,7 +359,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   override fun onToolbarHeightKnown(heightChanged: Boolean) {
-    setRecyclerViewPaddings()
+    setRecyclerViewPadding()
   }
 
   private fun onRecyclerViewScrolled() {
@@ -468,7 +468,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
           }
         }
 
-        setRecyclerViewPaddings()
+        setRecyclerViewPadding()
 
         recyclerView.layoutManager = linearLayoutManager
         layoutManager = linearLayoutManager
@@ -493,7 +493,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
           }
         }
 
-        setRecyclerViewPaddings()
+        setRecyclerViewPadding()
 
         recyclerView.layoutManager = gridLayoutManager
         layoutManager = gridLayoutManager
@@ -720,7 +720,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
 
     replyLayout.onOpen(open)
-    setRecyclerViewPaddings()
+    setRecyclerViewPadding()
 
     if (!open) {
       AndroidUtils.hideKeyboard(replyLayout)
@@ -769,7 +769,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       })
     }
 
-    setRecyclerViewPaddings()
+    setRecyclerViewPadding()
 
     if (open) {
       searchStatus.setText(R.string.search_empty)
@@ -1067,7 +1067,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   override fun updateRecyclerViewPaddings() {
-    updateRecyclerPaddingsDebouncer.post({ setRecyclerViewPaddings() }, 250L)
+    updateRecyclerPaddingsDebouncer.post({ setRecyclerViewPadding() }, 250L)
   }
 
   override fun measureReplyLayout() {
@@ -1100,7 +1100,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     threadListLayoutCallback?.unpresentController { controller -> controller is LoadingViewController }
   }
 
-  private fun setRecyclerViewPaddings() {
+  private fun setRecyclerViewPadding() {
     val defaultPadding = if (postViewMode == PostViewMode.CARD) {
       dp(1f)
     } else {

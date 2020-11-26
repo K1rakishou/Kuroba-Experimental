@@ -5,11 +5,11 @@
     android:id="@+id/reply_attachment_root"
     android:layout_width="match_parent"
     android:layout_height="@dimen/attach_new_file_button_height"
-    android:padding="2dp"
     android:background="?attr/selectableItemBackgroundBorderless"
     android:clickable="true"
     android:focusable="true"
-    android:longClickable="true">
+    android:longClickable="true"
+    android:padding="2dp">
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/reply_attachment_image_view"
@@ -22,35 +22,66 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:src="@drawable/ic_baseline_wb_sunny_24" />
 
-    <com.github.k1rakishou.chan.ui.view.SelectionCheckView
-        android:id="@+id/reply_attachment_selection_check_view"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
-        android:clickable="false"
-        android:focusable="false"
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="32dp"
+        android:background="#60000000"
+        android:orientation="horizontal"
+        android:paddingStart="4dp"
+        android:paddingTop="2dp"
+        android:paddingEnd="4dp"
+        android:paddingBottom="2dp"
+        android:gravity="center_vertical"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
 
-    <FrameLayout
-        android:id="@+id/reply_attachment_info_holder"
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/reply_attachment_status_icon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginEnd="8dp"
+            android:src="@drawable/ic_alert" />
+
+        <com.github.k1rakishou.chan.ui.view.SelectionCheckView
+            android:id="@+id/reply_attachment_selection_check_view"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:clickable="false"
+            android:focusable="false" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/reply_attachment_file_size"
+        android:layout_width="wrap_content"
+        android:layout_height="32dp"
+        android:background="#60000000"
+        android:ellipsize="middle"
+        android:padding="4dp"
+        android:singleLine="true"
+        android:textColor="#fff"
+        android:textSize="14sp"
+        android:gravity="center_vertical"
+        app:layout_constraintStart_toStartOf="@+id/reply_attachment_image_view"
+        app:layout_constraintTop_toTopOf="@+id/reply_attachment_image_view"
+        tools:text="128MB" />
+
+    <TextView
+        android:id="@+id/reply_attachment_file_name"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#A0808080"
+        android:background="#60000000"
+        android:ellipsize="middle"
+        android:padding="4dp"
+        android:singleLine="true"
+        android:textColor="#fff"
+        android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="@+id/reply_attachment_image_view"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
-
-        <TextView
-            android:id="@+id/reply_attachment_file_name"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:ellipsize="middle"
-            android:padding="4dp"
-            android:singleLine="true"
-            android:textColor="#eeeeee"
-            android:textSize="12sp"
-            tools:text="Test image name (very very very very very very very long).png" />
-
-    </FrameLayout>
+        app:layout_constraintEnd_toEndOf="@+id/reply_attachment_image_view"
+        app:layout_constraintStart_toStartOf="@+id/reply_attachment_image_view"
+        tools:text="Test image name (very very very very very very very long).png" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

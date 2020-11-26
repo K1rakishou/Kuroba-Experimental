@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.features.reply.data
 
+import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyReplyFileView
 import java.util.*
 
 interface IReplyAttachable
@@ -13,7 +14,9 @@ class ReplyFileAttachable(
   val fileName: String,
   val spoiler: Boolean,
   val selected: Boolean,
-  val exceedsMaxFilesLimit: Boolean
+  val fileSize: Long,
+  val attachAdditionalInfo: EpoxyReplyFileView.AttachAdditionalInfo,
+  val maxAttachedFilesCountExceeded: Boolean
 ) : IReplyAttachable {
 
   override fun equals(other: Any?): Boolean {
@@ -26,22 +29,28 @@ class ReplyFileAttachable(
     if (fileName != other.fileName) return false
     if (spoiler != other.spoiler) return false
     if (selected != other.selected) return false
-    if (exceedsMaxFilesLimit != other.exceedsMaxFilesLimit) return false
+    if (fileSize != other.fileSize) return false
+    if (attachAdditionalInfo != other.attachAdditionalInfo) return false
+    if (maxAttachedFilesCountExceeded != other.maxAttachedFilesCountExceeded) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    var result = fileName.hashCode()
-    result = 31 * result + fileUuid.hashCode()
+    var result = fileUuid.hashCode()
+    result = 31 * result + fileName.hashCode()
     result = 31 * result + spoiler.hashCode()
     result = 31 * result + selected.hashCode()
-    result = 31 * result + exceedsMaxFilesLimit.hashCode()
+    result = 31 * result + fileSize.hashCode()
+    result = 31 * result + attachAdditionalInfo.hashCode()
+    result = 31 * result + maxAttachedFilesCountExceeded.hashCode()
     return result
   }
 
   override fun toString(): String {
-    return "ReplyFileAttachable{fileUuid='$fileUuid', fileName='$fileName', " +
-      "selected='$selected', spoiler='$spoiler', exceedsMaxFilesLimit='$exceedsMaxFilesLimit'}"
+    return "ReplyFileAttachable(fileUuid=$fileUuid, fileName='$fileName', spoiler=$spoiler, " +
+      "selected=$selected, fileSize=$fileSize, attachAdditionalInfo=$attachAdditionalInfo, " +
+      "maxAttachedFilesCountExceeded=$maxAttachedFilesCountExceeded)"
   }
+
 }

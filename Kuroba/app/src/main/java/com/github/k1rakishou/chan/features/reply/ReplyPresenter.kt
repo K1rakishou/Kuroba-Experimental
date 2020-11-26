@@ -180,12 +180,12 @@ class ReplyPresenter @Inject constructor(
       return true
     }
 
-    if (callback.filesAreaOnBackPressed()) {
+    if (isExpanded) {
+      onMoreClicked()
       return true
     }
 
-    if (isExpanded) {
-      onMoreClicked()
+    if (callback.filesAreaOnBackPressed()) {
       return true
     }
 
