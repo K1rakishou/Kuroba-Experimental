@@ -46,6 +46,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.animation.doOnEnd
 import androidx.core.content.ContextCompat
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.CommentEditingHistory.CommentInputState
@@ -174,6 +175,8 @@ class ReplyLayout @JvmOverloads constructor(
   private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(coroutineScope)
   private val closeMessageRunnable = Runnable { message.visibility = GONE }
 
+  private val wrappingModeUpdateDebouncer = Debouncer(false)
+
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
     EventBus.getDefault().register(this)
@@ -236,7 +239,7 @@ class ReplyLayout @JvmOverloads constructor(
     }
 
     setWrappingMode(matchParent)
-    threadListLayoutCallbacks?.updatePadding()
+    threadListLayoutCallbacks?.updateRecyclerViewPaddings()
   }
 
   override fun onFinishInflate() {
@@ -386,6 +389,8 @@ class ReplyLayout @JvmOverloads constructor(
 
     if (!site.actions().postRequiresAuthentication()) {
       captchaButtonContainer.visibility = GONE
+    } else {
+      captchaButtonContainer.visibility = VISIBLE
     }
 
     captchaHolder.setListener(chanDescriptor, this)
@@ -405,7 +410,8 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun requestWrappingModeUpdate() {
     BackgroundUtils.ensureMainThread()
-    updateWrappingMode()
+
+    wrappingModeUpdateDebouncer.post({ updateWrappingMode() }, 250L)
   }
 
   override fun disableSendButton() {
@@ -648,20 +654,20 @@ class ReplyLayout @JvmOverloads constructor(
         //reset progress to 0 upon uploading start
         currentProgress.visibility = INVISIBLE
         destroyCurrentAuthentication()
-        threadListLayoutCallbacks?.updatePadding()
+        threadListLayoutCallbacks?.updateRecyclerViewPaddings()
       }
       ReplyPresenter.Page.INPUT -> {
         setView(replyInputLayout)
         setWrappingMode(presenter.isExpanded)
         destroyCurrentAuthentication()
-        threadListLayoutCallbacks?.updatePadding()
+        threadListLayoutCallbacks?.updateRecyclerViewPaddings()
       }
       ReplyPresenter.Page.AUTHENTICATION -> {
         AndroidUtils.hideKeyboard(this)
         setView(captchaContainer, false)
         setWrappingMode(true)
         captchaContainer.requestFocus(FOCUS_DOWN)
-        threadListLayoutCallbacks?.updatePadding()
+        threadListLayoutCallbacks?.updateRecyclerViewPaddings()
       }
     }
   }
@@ -839,7 +845,7 @@ class ReplyLayout @JvmOverloads constructor(
     if (!expanded) {
       // Update the recycler view's paddings after the animation has ended to make sure it has
       // proper paddings
-      animator.doOnEnd { threadListLayoutCallbacks?.updatePadding() }
+      animator.doOnEnd { threadListLayoutCallbacks?.updateRecyclerViewPaddings() }
     }
 
     more.setImageDrawable(moreDropdown)
@@ -1111,7 +1117,7 @@ class ReplyLayout @JvmOverloads constructor(
     fun requestNewPostLoad()
     fun getCurrentChanDescriptor(): ChanDescriptor?
     fun showImageReencodingWindow(supportsReencode: Boolean)
-    fun updatePadding()
+    fun updateRecyclerViewPaddings()
     fun measureReplyLayout()
   }
 

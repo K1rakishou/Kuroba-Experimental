@@ -40,6 +40,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
@@ -222,6 +223,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   private val compositeDisposable = CompositeDisposable()
   private val job = SupervisorJob()
+  private val updateRecyclerPaddingsDebouncer = Debouncer(false)
 
   private lateinit var listScrollToBottomExecutor: RendezvousCoroutineExecutor
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
@@ -357,7 +359,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   override fun onToolbarHeightKnown(heightChanged: Boolean) {
-    setRecyclerViewPadding()
+    setRecyclerViewPaddings()
   }
 
   private fun onRecyclerViewScrolled() {
@@ -466,7 +468,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
           }
         }
 
-        setRecyclerViewPadding()
+        setRecyclerViewPaddings()
 
         recyclerView.layoutManager = linearLayoutManager
         layoutManager = linearLayoutManager
@@ -491,7 +493,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
           }
         }
 
-        setRecyclerViewPadding()
+        setRecyclerViewPaddings()
 
         recyclerView.layoutManager = gridLayoutManager
         layoutManager = gridLayoutManager
@@ -718,7 +720,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
 
     replyLayout.onOpen(open)
-    setRecyclerViewPadding()
+    setRecyclerViewPaddings()
 
     if (!open) {
       AndroidUtils.hideKeyboard(replyLayout)
@@ -767,7 +769,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       })
     }
 
-    setRecyclerViewPadding()
+    setRecyclerViewPaddings()
 
     if (open) {
       searchStatus.setText(R.string.search_empty)
@@ -1064,8 +1066,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     toolbar.collapseShow(true)
   }
 
-  override fun updatePadding() {
-    setRecyclerViewPadding()
+  override fun updateRecyclerViewPaddings() {
+    updateRecyclerPaddingsDebouncer.post({ setRecyclerViewPaddings() }, 250L)
   }
 
   override fun measureReplyLayout() {
@@ -1098,7 +1100,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     threadListLayoutCallback?.unpresentController { controller -> controller is LoadingViewController }
   }
 
-  private fun setRecyclerViewPadding() {
+  private fun setRecyclerViewPaddings() {
     val defaultPadding = if (postViewMode == PostViewMode.CARD) {
       dp(1f)
     } else {
