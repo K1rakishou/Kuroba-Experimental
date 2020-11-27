@@ -119,6 +119,26 @@ class ReplyFilesStorage(
   }
 
   @Synchronized
+  fun updateFileSpoilerFlag(fileUuid: UUID, spoiler: Boolean): ModularResult<Boolean> {
+    return Try {
+      val replyFile = replyFiles
+        .firstOrNull { replyFile -> replyFile.getReplyFileMeta().unwrap().fileUuid == fileUuid }
+
+      if (replyFile == null) {
+        return@Try false
+      }
+
+      if (replyFile.getReplyFileMeta().unwrap().isTaken()) {
+        return@Try false
+      }
+
+      onReplyFilesChanged()
+
+      return@Try replyFile.updateFileSpoilerFlag(spoiler).unwrap()
+    }
+  }
+
+  @Synchronized
   fun clearSelection(): ModularResult<Unit> {
     return Try {
       replyFiles.forEach { replyFile ->
@@ -202,7 +222,30 @@ class ReplyFilesStorage(
         val meta = replyFile.getReplyFileMeta().unwrap()
 
         if (meta.fileUuid == fileUuid) {
+          if (meta.isTaken()) {
+            return@Try false
+          }
+
           return@Try meta.selected
+        }
+      }
+
+      return@Try false
+    }
+  }
+
+  @Synchronized
+  fun isMarkedAsSpoiler(fileUuid: UUID): ModularResult<Boolean> {
+    return Try {
+      for (replyFile in replyFiles) {
+        val meta = replyFile.getReplyFileMeta().unwrap()
+
+        if (meta.fileUuid == fileUuid) {
+          if (meta.isTaken()) {
+            return@Try false
+          }
+
+          return@Try meta.spoiler
         }
       }
 

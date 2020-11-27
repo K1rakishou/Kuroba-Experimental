@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.util.AttributeSet
+import android.view.View
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -48,6 +49,7 @@ class EpoxyReplyFileView @JvmOverloads constructor(
   private val replyAttachmentFileSize: TextView
   private val replyAttachmentSelectionView: SelectionCheckView
   private val replyAttachmentStatusView: AppCompatImageView
+  private val replyAttachmentSpoiler: TextView
 
   init {
     inflate(context, R.layout.epoxy_reply_file_view, this)
@@ -61,6 +63,7 @@ class EpoxyReplyFileView @JvmOverloads constructor(
     replyAttachmentFileSize = findViewById(R.id.reply_attachment_file_size)
     replyAttachmentSelectionView = findViewById(R.id.reply_attachment_selection_check_view)
     replyAttachmentStatusView = findViewById(R.id.reply_attachment_status_icon)
+    replyAttachmentSpoiler = findViewById(R.id.reply_attachment_file_spoiler)
   }
 
   override fun onAttachedToWindow() {
@@ -133,12 +136,36 @@ class EpoxyReplyFileView @JvmOverloads constructor(
   }
 
   @ModelProp
+  fun attachmentSpoiler(spoilerInfo: SpoilerInfo?) {
+    if (spoilerInfo == null) {
+      replyAttachmentSpoiler.visibility = View.GONE
+      return
+    }
+
+    replyAttachmentSpoiler.visibility = View.VISIBLE
+    replyAttachmentSpoiler.text = "(S)"
+
+    val markedAsSpoiler = spoilerInfo.markedAsSpoiler
+    val boardSupportsSpoilers = spoilerInfo.boardSupportsSpoilers
+
+    if (markedAsSpoiler) {
+      if (boardSupportsSpoilers) {
+        replyAttachmentSpoiler.setTextColor(SELECTED_SPOILER_COLOR)
+      } else {
+        replyAttachmentSpoiler.setTextColor(ERROR_SPOILER_COLOR)
+      }
+    } else {
+      replyAttachmentSpoiler.setTextColor(NORMAL_SPOILER_COLOR)
+    }
+  }
+
+  @ModelProp
   fun exceedsMaxFilesPerPostLimit(exceedsLimit: Boolean) {
     this.exceedsMaxFilesPerPostLimit = exceedsLimit
   }
 
   @ModelProp
-  fun setFileSize(size: Long) {
+  fun attachmentFileSize(size: Long) {
     replyAttachmentFileSize.text = getReadableFileSize(size)
   }
 
@@ -147,7 +174,8 @@ class EpoxyReplyFileView @JvmOverloads constructor(
     val color = when {
       attachAdditionalInfo.hasGspExifData() -> ICON_COLOR_CAUTION
       attachAdditionalInfo.fileMaxSizeExceeded
-        || attachAdditionalInfo.totalFileSizeExceeded -> ICON_COLOR_ERROR
+        || attachAdditionalInfo.totalFileSizeExceeded
+        || attachAdditionalInfo.markedAsSpoilerOnNonSpoilerBoard -> ICON_COLOR_ERROR
       attachAdditionalInfo.hasOrientationExifData() -> ICON_COLOR_WARNING
       else -> ICON_COLOR_INFO
     }
@@ -191,6 +219,20 @@ class EpoxyReplyFileView @JvmOverloads constructor(
   }
 
   @CallbackProp
+  fun setOnSpoilerMarkClickListener(listener: ((UUID) -> Unit)?) {
+    if (listener == null) {
+      replyAttachmentSpoiler.setOnClickListener(null)
+      return
+    }
+
+    replyAttachmentSpoiler.setOnClickListener {
+      if (attachmentFileUuid != null) {
+        listener.invoke(attachmentFileUuid!!)
+      }
+    }
+  }
+
+  @CallbackProp
   fun setOnLongClickListener(listener: ((UUID) -> Unit)?) {
     if (listener == null) {
       replyAttachmentRoot.setOnLongClickListener(null)
@@ -207,10 +249,16 @@ class EpoxyReplyFileView @JvmOverloads constructor(
     }
   }
 
+  data class SpoilerInfo(
+    val markedAsSpoiler: Boolean,
+    val boardSupportsSpoilers: Boolean
+  )
+
   data class AttachAdditionalInfo(
     val fileExifStatus: Set<ReplyLayoutFilesAreaPresenter.FileExifInfoStatus>,
     val totalFileSizeExceeded: Boolean,
     val fileMaxSizeExceeded: Boolean,
+    val markedAsSpoilerOnNonSpoilerBoard: Boolean
   ) {
 
     fun getGspExifDataOrNull(): ReplyLayoutFilesAreaPresenter.FileExifInfoStatus.GpsExifFound? {
@@ -237,6 +285,10 @@ class EpoxyReplyFileView @JvmOverloads constructor(
     private val ICON_COLOR_ERROR = Color.parseColor("#FFA500")
     private const val ICON_COLOR_WARNING = Color.YELLOW
     private const val ICON_COLOR_INFO = Color.WHITE
+
+    private val SELECTED_SPOILER_COLOR = Color.parseColor("#00b3ff")
+    private val ERROR_SPOILER_COLOR = Color.parseColor("#ff0048")
+    private const val NORMAL_SPOILER_COLOR = Color.WHITE
   }
 
 }

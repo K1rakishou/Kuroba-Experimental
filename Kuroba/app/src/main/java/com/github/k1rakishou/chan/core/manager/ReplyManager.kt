@@ -79,6 +79,12 @@ class ReplyManager @Inject constructor(
   }
 
   @Synchronized
+  fun updateFileSpoilerFlag(fileUuid: UUID, spoiler: Boolean): ModularResult<Boolean> {
+    ensureFilesLoaded()
+    return replyFilesStorage.updateFileSpoilerFlag(fileUuid, spoiler)
+  }
+
+  @Synchronized
   fun deleteFile(fileUuid: UUID): ModularResult<Unit> {
     ensureFilesLoaded()
     return replyFilesStorage.deleteFile(fileUuid)
@@ -106,6 +112,12 @@ class ReplyManager @Inject constructor(
   fun isSelected(fileUuid: UUID): ModularResult<Boolean> {
     ensureFilesLoaded()
     return replyFilesStorage.isSelected(fileUuid)
+  }
+
+  @Synchronized
+  fun isMarkedAsSpoiler(fileUuid: UUID): ModularResult<Boolean> {
+    ensureFilesLoaded()
+    return replyFilesStorage.isMarkedAsSpoiler(fileUuid)
   }
 
   @Synchronized

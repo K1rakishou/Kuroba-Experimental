@@ -12,7 +12,7 @@ class TooManyAttachables(val attachablesTotal: Int) : IReplyAttachable
 class ReplyFileAttachable(
   val fileUuid: UUID,
   val fileName: String,
-  val spoiler: Boolean,
+  val spoilerInfo: EpoxyReplyFileView.SpoilerInfo?,
   val selected: Boolean,
   val fileSize: Long,
   val attachAdditionalInfo: EpoxyReplyFileView.AttachAdditionalInfo,
@@ -27,7 +27,7 @@ class ReplyFileAttachable(
 
     if (fileUuid != other.fileUuid) return false
     if (fileName != other.fileName) return false
-    if (spoiler != other.spoiler) return false
+    if (spoilerInfo != other.spoilerInfo) return false
     if (selected != other.selected) return false
     if (fileSize != other.fileSize) return false
     if (attachAdditionalInfo != other.attachAdditionalInfo) return false
@@ -39,7 +39,7 @@ class ReplyFileAttachable(
   override fun hashCode(): Int {
     var result = fileUuid.hashCode()
     result = 31 * result + fileName.hashCode()
-    result = 31 * result + spoiler.hashCode()
+    result = 31 * result + spoilerInfo.hashCode()
     result = 31 * result + selected.hashCode()
     result = 31 * result + fileSize.hashCode()
     result = 31 * result + attachAdditionalInfo.hashCode()
@@ -48,7 +48,7 @@ class ReplyFileAttachable(
   }
 
   override fun toString(): String {
-    return "ReplyFileAttachable(fileUuid=$fileUuid, fileName='$fileName', spoiler=$spoiler, " +
+    return "ReplyFileAttachable(fileUuid=$fileUuid, fileName='$fileName', spoilerInfo=$spoilerInfo, " +
       "selected=$selected, fileSize=$fileSize, attachAdditionalInfo=$attachAdditionalInfo, " +
       "maxAttachedFilesCountExceeded=$maxAttachedFilesCountExceeded)"
   }

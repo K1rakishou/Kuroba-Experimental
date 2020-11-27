@@ -30,7 +30,7 @@ data class ReplyFileMeta(
   @Since(1.0)
   @SerializedName("spoiler")
   @Expose(serialize = true, deserialize = true)
-  val spoiler: Boolean = false,
+  var spoiler: Boolean = false,
 
   @Since(1.0)
   @SerializedName("selected")

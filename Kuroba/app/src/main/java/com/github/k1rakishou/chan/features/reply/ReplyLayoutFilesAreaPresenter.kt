@@ -198,6 +198,15 @@ class ReplyLayoutFilesAreaPresenter(
   fun hasSelectedFiles(): Boolean = replyManager.hasSelectedFiles().unwrap()
   fun selectedFilesCount(): Int = replyManager.selectedFilesCount().unwrap()
 
+  private fun boardSupportsSpoilers(): Boolean {
+    val chanDescriptor = boundChanDescriptor
+      ?: return false
+
+    return boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
+      ?.spoilers
+      ?: return false
+  }
+
   fun clearSelection() {
     fileChangeExecutor.post {
       replyManager.clearFilesSelection().safeUnwrap { error ->
@@ -221,6 +230,22 @@ class ReplyLayoutFilesAreaPresenter(
           }
 
         refreshAttachedFiles(debounceTime = FILE_SELECTION_UPDATE_DEBOUNCE_TIME)
+      }
+    }
+  }
+
+  fun updateFileSpoilerFlag(fileUuid: UUID) {
+    fileChangeExecutor.post {
+      handleStateUpdate {
+        val nowMarkedAsSpoiler = replyManager.isMarkedAsSpoiler(fileUuid).unwrap().not()
+
+        replyManager.updateFileSpoilerFlag(fileUuid, nowMarkedAsSpoiler)
+          .safeUnwrap { error ->
+            Logger.e(TAG, "updateFileSpoilerFlag($fileUuid, $nowMarkedAsSpoiler) error", error)
+            return@handleStateUpdate
+          }
+
+        refreshAttachedFiles()
       }
     }
   }
@@ -311,7 +336,7 @@ class ReplyLayoutFilesAreaPresenter(
     }
   }
 
-  suspend fun enumerateReplyAttachables(
+  private suspend fun enumerateReplyAttachables(
     chanDescriptor: ChanDescriptor
   ): ModularResult<MutableList<IReplyAttachable>> {
     return withContext(Dispatchers.IO) {
@@ -346,6 +371,7 @@ class ReplyLayoutFilesAreaPresenter(
           val maxAllowedTotalFilesSizePerPost = getMaxAllowedTotalFilesSizePerPost(chanDescriptor)
             ?: -1
           val totalFileSizeSum = fileFileSizeMap.values.sum()
+          val boardSupportsSpoilers = boardSupportsSpoilers()
 
           val replyFileAttachables = replyFiles.map { replyFile ->
             val replyFileMeta = replyFile.getReplyFileMeta().unwrap()
@@ -355,6 +381,8 @@ class ReplyLayoutFilesAreaPresenter(
             val fileExifStatus = getFileExifInfoStatus(replyFile.fileOnDisk)
             val exceedsMaxFileSize =
               fileExceedsMaxFileSize(replyFile, replyFileMeta, chanDescriptor)
+            val markedAsSpoilerOnNonSpoilerBoard =
+              isSelected && replyFileMeta.spoiler && !boardSupportsSpoilers
 
             val totalFileSizeExceeded = if (maxAllowedTotalFilesSizePerPost <= 0) {
               false
@@ -362,16 +390,23 @@ class ReplyLayoutFilesAreaPresenter(
               totalFileSizeSum > maxAllowedTotalFilesSizePerPost
             }
 
+            val spoilerInfo = if (!boardSupportsSpoilers && !replyFileMeta.spoiler) {
+              null
+            } else {
+              EpoxyReplyFileView.SpoilerInfo(replyFileMeta.spoiler, boardSupportsSpoilers)
+            }
+
             return@map ReplyFileAttachable(
               fileUuid = replyFileMeta.fileUuid,
               fileName = replyFileMeta.fileName,
-              spoiler = replyFileMeta.spoiler,
+              spoilerInfo = spoilerInfo,
               selected = isSelected,
               fileSize = fileFileSizeMap[replyFile.fileOnDisk.absolutePath]!!,
               attachAdditionalInfo = EpoxyReplyFileView.AttachAdditionalInfo(
                 fileExifStatus = fileExifStatus,
                 totalFileSizeExceeded = totalFileSizeExceeded,
                 fileMaxSizeExceeded = exceedsMaxFileSize,
+                markedAsSpoilerOnNonSpoilerBoard = markedAsSpoilerOnNonSpoilerBoard
               ),
               maxAttachedFilesCountExceeded = when {
                 maxAllowedFilesPerPost == null -> false
@@ -482,7 +517,6 @@ class ReplyLayoutFilesAreaPresenter(
     } catch (error: Throwable) {
       Logger.e(TAG, "handleStateUpdate() error", error)
       withView { showGenericErrorToast(error.errorMessageOrClassName()) }
-      state.value = ReplyLayoutFilesState(listOf(ReplyNewAttachable()))
     }
   }
 
@@ -501,11 +535,13 @@ class ReplyLayoutFilesAreaPresenter(
 
       val chanBoard = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
 
+      val maxBoardFileSizeRaw = chanBoard?.maxFileSize ?: -1
       val maxBoardFileSize = chanBoard?.maxFileSize
         ?.takeIf { maxFileSize -> maxFileSize > 0 }
         ?.let { maxFileSize -> getReadableFileSize(maxFileSize.toLong()) }
         ?: "???"
 
+      val maxBoardWebmSizeRaw = chanBoard?.maxWebmSize ?: -1
       val maxBoardWebmSize = chanBoard?.maxWebmSize
         ?.takeIf { maxWebmSize -> maxWebmSize > 0 }
         ?.let { maxWebmSize -> getReadableFileSize(maxWebmSize.toLong()) }
@@ -516,11 +552,21 @@ class ReplyLayoutFilesAreaPresenter(
 
       val fileStatusString = buildString {
         appendLine("File name: \"${clickedFile.fileName}\"")
-        appendLine("Marked as spoiler: ${clickedFile.spoiler}")
+
+        clickedFile.spoilerInfo?.let { spoilerInfo ->
+          appendLine("Marked as spoiler: ${spoilerInfo.markedAsSpoiler}, " +
+            "(Board supports spoilers: ${spoilerInfo.boardSupportsSpoilers})")
+        }
+
         appendLine("File size: ${getReadableFileSize(clickedFile.fileSize)}")
-        appendLine("Board max file size: $maxBoardFileSize")
-        appendLine("Board max webm size: $maxBoardWebmSize")
-        appendLine("Max file size exceeded: ${attachAdditionalInfo.fileMaxSizeExceeded}")
+
+        if (maxBoardFileSizeRaw > 0 && clickedFile.fileSize > maxBoardFileSizeRaw) {
+          appendLine("Exceeds max board file size: true, board max file size: $maxBoardFileSize")
+        }
+
+        if (maxBoardWebmSizeRaw > 0 && clickedFile.fileSize > maxBoardWebmSizeRaw) {
+          appendLine("Exceeds max board webm size: true, Board max webm size: $maxBoardWebmSize")
+        }
 
         if (maxFileSizeTotal != null && maxFileSizeTotal > 0) {
           appendLine(
@@ -529,34 +575,22 @@ class ReplyLayoutFilesAreaPresenter(
           )
         }
 
-        appendLine(
-          buildString {
-            val gpsExifData = attachAdditionalInfo.getGspExifDataOrNull()
-            append("Contains GPS exif data: ${gpsExifData != null}")
+        val gpsExifData = attachAdditionalInfo.getGspExifDataOrNull()
+        if (gpsExifData != null) {
+          appendLine("GPS exif data='${gpsExifData.value}'")
+        }
 
-            if (gpsExifData != null) {
-              append(", value='${gpsExifData.value}'")
-            }
-          }
-        )
-
-        appendLine(
-          buildString {
-            val orientationExifData = attachAdditionalInfo.getOrientationExifData()
-            append("Contains orientation exif data: ${orientationExifData != null}")
-
-            if (orientationExifData != null) {
-              append(", value='${orientationExifData.value}'")
-            }
-          }
-        )
+        val orientationExifData = attachAdditionalInfo.getOrientationExifData()
+        if (orientationExifData != null) {
+          appendLine("Orientation exif data='${orientationExifData.value}'")
+        }
       }
 
       withView { showFileStatusMessage(fileStatusString) }
     }
   }
 
-  sealed class FileExifInfoStatus() {
+  sealed class FileExifInfoStatus {
     data class GpsExifFound(val value: String) : FileExifInfoStatus()
     data class OrientationExifFound(val value: String) : FileExifInfoStatus()
   }

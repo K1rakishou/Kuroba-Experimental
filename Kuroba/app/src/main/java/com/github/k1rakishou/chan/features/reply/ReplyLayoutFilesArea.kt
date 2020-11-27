@@ -84,37 +84,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     )
   }
 
-  // TODO(KurobaEx): reply layout refactoring: show warning when trying to open unsupported file
-  // TODO(KurobaEx): reply layout refactoring: mark/unmark image as spolier
   // TODO(KurobaEx): reply layout refactoring: image editing
-
-  // TODO(KurobaEx): reply layout refactoring: warn when attach file exceeds size limits
-  //  val probablyWebm = "webm" == StringUtils.extractFileNameExtension(name)
-  //
-  //  val maxSize = if (probablyWebm) {
-  //    chanBoard.maxWebmSize
-  //  } else {
-  //    chanBoard.maxFileSize
-  //  }
-  //
-  //  // if the max size is undefined for the board, ignore this message
-  //  if (file != null && file.length() > maxSize && maxSize != -1) {
-  //    val fileSize = ChanPostUtils.getReadableFileSize(file.length())
-  //    val stringResId = if (probablyWebm) {
-  //      R.string.reply_webm_too_big
-  //    } else {
-  //      R.string.reply_file_too_big
-  //    }
-  //
-  //    callback.openPreviewMessage(
-  //      true,
-  //      AndroidUtils.getString(stringResId, fileSize,
-  //        ChanPostUtils.getReadableFileSize(maxSize.toLong())
-  //      )
-  //    )
-  //  } else {
-  //    callback.openPreviewMessage(false, null)
-  //  }
 
   init {
     AppModuleAndroidUtils.extractStartActivityComponent(context)
@@ -246,12 +216,14 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
               attachmentFileUuid(replyAttachable.fileUuid)
               attachmentFileName(replyAttachable.fileName)
               attachmentSelected(replyAttachable.selected)
-              fileSize(replyAttachable.fileSize)
+              attachmentSpoiler(replyAttachable.spoilerInfo)
+              attachmentFileSize(replyAttachable.fileSize)
               attachAdditionalInfo(replyAttachable.attachAdditionalInfo)
               exceedsMaxFilesPerPostLimit(replyAttachable.maxAttachedFilesCountExceeded)
               onClickListener { fileUuid -> presenter.updateFileSelection(fileUuid) }
               onLongClickListener { fileUuid -> showAttachFileOptions(fileUuid) }
               onStatusIconClickListener { fileUuid -> presenter.onFileStatusRequested(fileUuid) }
+              onSpoilerMarkClickListener { fileUuid -> presenter.updateFileSpoilerFlag(fileUuid) }
             }
           }
           else -> throw IllegalStateException(

@@ -100,6 +100,21 @@ class ReplyFile(
   }
 
   @Synchronized
+  fun updateFileSpoilerFlag(spoiler: Boolean): ModularResult<Boolean> {
+    return Try {
+      val replyFileMeta = getReplyFileMeta().unwrap()
+      if (replyFileMeta.spoiler == spoiler) {
+        return@Try true
+      }
+
+      replyFileMeta.spoiler = spoiler
+      storeFileMetaInfo().unwrap()
+
+      return@Try true
+    }
+  }
+
+  @Synchronized
   fun clearSelection(): ModularResult<Unit> {
     return Try {
       val replyFileMeta = getReplyFileMeta().unwrap()
