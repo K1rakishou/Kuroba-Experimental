@@ -492,7 +492,7 @@ class ReplyLayoutFilesAreaPresenter(
         ?.let { maxFileSize -> getReadableFileSize(maxFileSize.toLong()) }
         ?: "???"
 
-      val maxWebmSize = chanBoard?.maxWebmSize
+      val maxBoardWebmSize = chanBoard?.maxWebmSize
         ?.takeIf { maxWebmSize -> maxWebmSize > 0 }
         ?.let { maxWebmSize -> getReadableFileSize(maxWebmSize.toLong()) }
         ?: "???"
@@ -505,7 +505,7 @@ class ReplyLayoutFilesAreaPresenter(
         appendLine("Marked as spoiler: ${clickedFile.spoiler}")
         appendLine("File size: ${getReadableFileSize(clickedFile.fileSize)}")
         appendLine("Board max file size: $maxBoardFileSize")
-        appendLine("Board max webm size: $maxWebmSize")
+        appendLine("Board max webm size: $maxBoardWebmSize")
         appendLine("Max file size exceeded: ${attachAdditionalInfo.fileMaxSizeExceeded}")
 
         if (maxFileSizeTotal != null && maxFileSizeTotal > 0) {
