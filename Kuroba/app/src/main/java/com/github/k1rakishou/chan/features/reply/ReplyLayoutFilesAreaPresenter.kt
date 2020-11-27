@@ -353,7 +353,8 @@ class ReplyLayoutFilesAreaPresenter(
             val isSelected = replyManager.isSelected(replyFileMeta.fileUuid).unwrap()
             val selectedFilesCount = replyManager.selectedFilesCount().unwrap()
             val fileExifStatus = getFileExifInfoStatus(replyFile.fileOnDisk)
-            val exceedsMaxFileSize = fileExceedsMaxFileSize(replyFile, replyFileMeta, chanDescriptor)
+            val exceedsMaxFileSize =
+              fileExceedsMaxFileSize(replyFile, replyFileMeta, chanDescriptor)
 
             val totalFileSizeExceeded = if (maxAllowedTotalFilesSizePerPost <= 0) {
               false
@@ -424,20 +425,33 @@ class ReplyLayoutFilesAreaPresenter(
       val resultSet = hashSetOf<FileExifInfoStatus>()
       val exif = ExifInterface(fileOnDisk.absolutePath)
 
-      val orientation = exif.getAttributeInt(
-        ExifInterface.TAG_ORIENTATION,
-        ExifInterface.ORIENTATION_UNDEFINED
-      )
+      val orientation =
+        exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED)
 
       if (orientation != ExifInterface.ORIENTATION_UNDEFINED) {
-        resultSet += FileExifInfoStatus.OrientationExifFound
+        val orientationString = when (orientation) {
+          ExifInterface.ORIENTATION_NORMAL -> "orientation_normal"
+          ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> "orientation_flip_horizontal"
+          ExifInterface.ORIENTATION_ROTATE_180 -> "orientation_rotate_180"
+          ExifInterface.ORIENTATION_FLIP_VERTICAL -> "orientation_flip_vertical"
+          ExifInterface.ORIENTATION_TRANSPOSE -> "orientation_transpose"
+          ExifInterface.ORIENTATION_ROTATE_90 -> "orientation_rotate_90"
+          ExifInterface.ORIENTATION_TRANSVERSE -> "orientation_transverse"
+          ExifInterface.ORIENTATION_ROTATE_270 -> "orientation_rotate_270"
+          else -> "orientation_undefined"
+        }
+
+        resultSet += FileExifInfoStatus.OrientationExifFound(orientationString)
       }
 
       if (exif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE) != null
-        || exif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF) != null
-        || exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE) != null
-        || exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE_REF) != null) {
-        resultSet += FileExifInfoStatus.GpsExifFound
+        || exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE) != null) {
+        val fullString = buildString {
+          append("GPS_LONGITUDE='${exif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE)}', ")
+          append("GPS_LATITUDE='${exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE)}'")
+        }
+
+        resultSet += FileExifInfoStatus.GpsExifFound(fullString)
       }
 
       return resultSet
@@ -509,21 +523,42 @@ class ReplyLayoutFilesAreaPresenter(
         appendLine("Max file size exceeded: ${attachAdditionalInfo.fileMaxSizeExceeded}")
 
         if (maxFileSizeTotal != null && maxFileSizeTotal > 0) {
-          appendLine("Total file size sum per post: ${maxFileSizeTotal}, " +
-            "exceeded: ${attachAdditionalInfo.totalFileSizeExceeded}")
+          appendLine(
+            "Total file size sum per post: ${maxFileSizeTotal}, " +
+              "exceeded: ${attachAdditionalInfo.totalFileSizeExceeded}"
+          )
         }
 
-        appendLine("Contains GPS exif data: ${attachAdditionalInfo.hasGspExifData()}")
-        appendLine("Contains orientation exif data: ${attachAdditionalInfo.hasOrientationExifData()}")
+        appendLine(
+          buildString {
+            val gpsExifData = attachAdditionalInfo.getGspExifDataOrNull()
+            append("Contains GPS exif data: ${gpsExifData != null}")
+
+            if (gpsExifData != null) {
+              append(", value='${gpsExifData.value}'")
+            }
+          }
+        )
+
+        appendLine(
+          buildString {
+            val orientationExifData = attachAdditionalInfo.getOrientationExifData()
+            append("Contains orientation exif data: ${orientationExifData != null}")
+
+            if (orientationExifData != null) {
+              append(", value='${orientationExifData.value}'")
+            }
+          }
+        )
       }
 
       withView { showFileStatusMessage(fileStatusString) }
     }
   }
 
-  enum class FileExifInfoStatus {
-    GpsExifFound,
-    OrientationExifFound
+  sealed class FileExifInfoStatus() {
+    data class GpsExifFound(val value: String) : FileExifInfoStatus()
+    data class OrientationExifFound(val value: String) : FileExifInfoStatus()
   }
 
   companion object {

@@ -30,23 +30,6 @@ android {
         minSdkVersion 21
         targetSdkVersion 29
 
-        /**
-         * ------------------------------------------------------------
-         *
-         *              CHANGE PER RELEASE BUILD
-         *              SEE docs/release.txt FOR INFO
-         *
-         * ------------------------------------------------------------
-         */
-
-        /**
-         * ------------------------------------------------------------
-         *
-         *              CHANGE PER NEW FORK MODIFICATION
-         *              IF AND ONLY IF NECESSARY
-         *
-         * ------------------------------------------------------------
-         */
         // if you change this, also change the AndroidManifest package
         applicationId "com.github.k1rakishou.chan"
         // ALL ENDPOINTS SHOULD BE HTTPS
@@ -67,16 +50,6 @@ android {
         buildConfigField "String", "COMMIT_HASH", "\"" + getCommitHash() + "\""
         buildConfigField "String", "BUILD_NUMBER", "\"" + getCurrentBuildNumber() + "\""
 
-        /**
-         * ------------------------------------------------------------
-         *
-         *              DON'T CHANGE THESE AUTO-CALCULATIONS
-         *              USED FOR VERSION CODE GENERATION
-         *              USED FOR VERSION NAME GENERATION
-         *              USED FOR AUTO UPDATER NAMING CONSISTENCY
-         *
-         * ------------------------------------------------------------
-         */
         versionCode 303
         versionName "v0.3.3"
 
