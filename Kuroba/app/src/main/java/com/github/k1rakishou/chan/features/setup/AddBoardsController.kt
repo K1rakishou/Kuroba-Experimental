@@ -114,6 +114,7 @@ class AddBoardsController(
   override fun onDestroy() {
     super.onDestroy()
 
+    epoxyRecyclerView.swapAdapter(null, true)
     presenter.onDestroy()
   }
 

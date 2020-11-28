@@ -307,6 +307,7 @@ class DrawerController(
   override fun onDestroy() {
     super.onDestroy()
 
+    epoxyRecyclerView.swapAdapter(null, true)
     themeEngine.removeListener(this)
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     drawerPresenter.onDestroy()

@@ -14,7 +14,7 @@ class FloatingListMenu @JvmOverloads constructor(
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
-  private val recycler: ColorizableEpoxyRecyclerView
+  private val epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private val menuItems = mutableListOf<FloatingListMenuItem>()
 
   private var itemClickListener: ((item: FloatingListMenuItem) -> Unit)? = null
@@ -23,7 +23,7 @@ class FloatingListMenu @JvmOverloads constructor(
   init {
     inflate(context, R.layout.floating_list_menu, this)
 
-    recycler = findViewById(R.id.floating_list_menu_recycler)
+    epoxyRecyclerView = findViewById(R.id.floating_list_menu_recycler)
   }
 
   fun setClickListener(listener: ((item: FloatingListMenuItem) -> Unit)?) {
@@ -43,8 +43,12 @@ class FloatingListMenu @JvmOverloads constructor(
     rebuild(menuItems)
   }
 
+  fun onDestroy() {
+    epoxyRecyclerView.swapAdapter(null, true)
+  }
+
   private fun rebuild(items: List<FloatingListMenuItem>) {
-    recycler.withModels {
+    epoxyRecyclerView.withModels {
       items.forEachIndexed { index, item ->
         if (item.visible) {
           when (item) {
@@ -90,4 +94,5 @@ class FloatingListMenu @JvmOverloads constructor(
       }
     }
   }
+
 }

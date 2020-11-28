@@ -64,6 +64,7 @@ import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.PickedFile
 import com.github.k1rakishou.chan.ui.helper.picker.ShareFilePicker
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
@@ -74,6 +75,7 @@ import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColo
 import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AndroidUtils.isAndroid11
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.updateMargins
@@ -159,43 +161,49 @@ class StartActivity : AppCompatActivity(),
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-    val isNullSavedInstanceState = savedInstanceState == null
+    val isFreshStart = savedInstanceState == null
 
     if (intentMismatchWorkaround()) {
       Logger.d(TAG, "onCreate() intentMismatchWorkaround()==true, " +
-        "savedInstanceState == null: $isNullSavedInstanceState")
+        "savedInstanceState == null: $isFreshStart")
       return
     }
 
-    Logger.d(TAG, "onCreate() start savedInstanceState == null: $isNullSavedInstanceState, " +
-      "initializing everything")
+    if (isFreshStart) {
+      Logger.d(TAG, "onCreate() start isFreshStart: $isFreshStart, initializing everything")
 
-    startActivityComponent = Chan.getComponent()
-      .activityComponentBuilder()
-      .startActivity(this)
-      .startActivityModule(StartActivityModule())
-      .build()
-      .also { component -> component.inject(this) }
+      startActivityComponent = Chan.getComponent()
+        .activityComponentBuilder()
+        .startActivity(this)
+        .startActivityModule(StartActivityModule())
+        .build()
+        .also { component -> component.inject(this) }
 
-    val createUiTime = measureTime { createUi() }
-    Logger.d(TAG, "createUi took $createUiTime")
+      val createUiTime = measureTime { createUi() }
+      Logger.d(TAG, "createUi took $createUiTime")
 
-    themeEngine.addListener(this)
-    themeEngine.refreshViews()
+      themeEngine.addListener(this)
+      themeEngine.refreshViews()
 
-    imagePickHelper.onActivityCreated(this)
+      imagePickHelper.onActivityCreated(this)
 
-    lifecycleScope.launch {
-      val initializeDepsTime = measureTime { initializeDependencies(this, savedInstanceState) }
-      Logger.d(TAG, "initializeDependencies took $initializeDepsTime")
+      lifecycleScope.launch {
+        val initializeDepsTime = measureTime { initializeDependencies(this, savedInstanceState) }
+        Logger.d(TAG, "initializeDependencies took $initializeDepsTime")
+      }
+
+      Logger.d(TAG, "onCreate() end isFreshStart: $isFreshStart")
+      return
     }
 
-    Logger.d(TAG, "onCreate() end savedInstanceState == null: $isNullSavedInstanceState")
+    onNewIntentInternal(intent)
   }
 
   override fun onDestroy() {
     super.onDestroy()
     Logger.d(TAG, "onDestroy()")
+
+    AppModuleAndroidUtils.cancelLastToast()
 
     compositeDisposable.clear()
     job.cancel()
@@ -355,7 +363,17 @@ class StartActivity : AppCompatActivity(),
       Logger.d(TAG, "onNewIntentInternal called, action=${action}")
 
       if (action == Intent.ACTION_SEND) {
-        onShareIntentReceived(intent)
+        if (onShareIntentReceived(intent)) {
+          setResult(Activity.RESULT_OK)
+        } else {
+          setResult(Activity.RESULT_CANCELED)
+        }
+
+        if (isAndroid11() && !isTaskRoot) {
+          Logger.d(TAG, "Current task is not root, finishing...")
+          finish()
+        }
+
         return@launch
       }
 
@@ -375,7 +393,7 @@ class StartActivity : AppCompatActivity(),
     }
   }
 
-  private suspend fun onShareIntentReceived(intent: Intent) {
+  private suspend fun onShareIntentReceived(intent: Intent): Boolean {
     showToast(this@StartActivity, getString(R.string.share_success_start))
 
     val shareResult = imagePickHelper.pickFilesFromIntent(
@@ -396,6 +414,8 @@ class StartActivity : AppCompatActivity(),
             } else {
               showToast(this@StartActivity, R.string.share_error_message)
             }
+
+            return true
           }
           is PickedFile.Failure -> {
             Logger.e(
@@ -403,13 +423,16 @@ class StartActivity : AppCompatActivity(),
               "imagePickHelper.pickFilesFromIntent() -> PickedFile.Failure",
               pickedFile.reason
             )
+
             showToast(this@StartActivity, R.string.share_error_message)
+            return false
           }
         }
       }
       is ModularResult.Error -> {
         Logger.e(TAG, "imagePickHelper.pickFilesFromIntent() -> MR.Error", shareResult.error)
         showToast(this@StartActivity, R.string.share_error_message)
+        return false
       }
     }
   }
@@ -932,7 +955,9 @@ class StartActivity : AppCompatActivity(),
   }
 
   override fun onRequestPermissionsResult(
-    requestCode: Int, permissions: Array<String>, grantResults: IntArray
+    requestCode: Int,
+    permissions: Array<String>,
+    grantResults: IntArray
   ) {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     runtimePermissionsHelper.onRequestPermissionsResult(requestCode, permissions, grantResults)

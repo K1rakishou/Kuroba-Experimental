@@ -42,7 +42,7 @@ class MainSettingsControllerV2(
   @Inject
   lateinit var settingsNotificationManager: SettingsNotificationManager
 
-  lateinit var recyclerView: ColorizableEpoxyRecyclerView
+  lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   lateinit var settingsCoordinator: SettingsCoordinator
 
   private val defaultScreen = MainScreen
@@ -69,7 +69,7 @@ class MainSettingsControllerV2(
     super.onCreate()
 
     view = inflate(context, R.layout.controller_settings_main)
-    recyclerView = view.findViewById(R.id.settings_recycler_view)
+    epoxyRecyclerView = view.findViewById(R.id.settings_recycler_view)
 
     navigation.buildMenu(ConstraintLayoutBiasPair.TopRight)
       .withItem(R.drawable.ic_search_white_24dp) {
@@ -88,7 +88,7 @@ class MainSettingsControllerV2(
       isFirstRebuild = true
     )
 
-    recyclerView.addOnScrollListener(scrollListener)
+    epoxyRecyclerView.addOnScrollListener(scrollListener)
 
     compositeDisposable += settingsCoordinator.listenForRenderScreenActions()
       .subscribe { renderAction -> renderScreen(renderAction) }
@@ -100,7 +100,9 @@ class MainSettingsControllerV2(
     drawerCallbacks?.hideBottomPanel()
     drawerCallbacks = null
 
-    recyclerView.removeOnScrollListener(scrollListener)
+    epoxyRecyclerView.removeOnScrollListener(scrollListener)
+    epoxyRecyclerView.swapAdapter(null, true)
+
     settingsCoordinator.onDestroy()
     restartAppOrRefreshUiIfNecessary()
   }
@@ -120,7 +122,7 @@ class MainSettingsControllerV2(
   }
 
   private fun renderScreen(renderAction: SettingsCoordinator.RenderAction) {
-    recyclerView.withModels {
+    epoxyRecyclerView.withModels {
       addOneshotModelBuildListener {
         if (renderAction !is SettingsCoordinator.RenderAction.RenderScreen) {
           return@addOneshotModelBuildListener
@@ -129,7 +131,7 @@ class MainSettingsControllerV2(
         val indexAndTop = settingsCoordinator.getCurrentIndexAndTopOrNull()
           ?: return@addOneshotModelBuildListener
 
-        (recyclerView.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
+        (epoxyRecyclerView.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
           indexAndTop.index,
           indexAndTop.top
         )
@@ -403,7 +405,7 @@ class MainSettingsControllerV2(
   }
 
   private fun storeRecyclerPositionForCurrentScreen() {
-    settingsCoordinator.storeRecyclerPositionForCurrentScreen(recyclerView)
+    settingsCoordinator.storeRecyclerPositionForCurrentScreen(epoxyRecyclerView)
   }
 
   companion object {

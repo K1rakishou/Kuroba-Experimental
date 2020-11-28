@@ -4,9 +4,10 @@ import android.content.Context
 import android.widget.Toast
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import java.lang.ref.WeakReference
 
 class CancellableToast {
-  private var toast: Toast? = null
+  private var toastRef: WeakReference<Toast> = WeakReference(null)
 
   fun showToast(context: Context, message: String) {
     showToast(context, message, Toast.LENGTH_SHORT)
@@ -23,11 +24,17 @@ class CancellableToast {
   fun showToast(context: Context, message: String, duration: Int) {
     BackgroundUtils.ensureMainThread()
 
-    if (toast != null) {
-      toast!!.cancel()
-      toast = null
-    }
+    toastRef.get()?.cancel()
+    toastRef.clear()
 
-    toast = Toast.makeText(context, message, duration).apply { show() }
+    val newToast = Toast.makeText(context, message, duration)
+      .apply { show() }
+
+    toastRef = WeakReference(newToast)
+  }
+
+  fun cancel() {
+    toastRef.get()?.cancel()
+    toastRef.clear()
   }
 }

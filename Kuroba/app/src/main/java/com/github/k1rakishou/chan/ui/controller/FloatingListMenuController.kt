@@ -59,6 +59,8 @@ open class FloatingListMenuController @JvmOverloads constructor(
     super.onDestroy()
 
     menuDismissListener?.invoke()
+    floatingListMenu.onDestroy()
+
     floatingListMenu.setClickListener(null)
     floatingListMenu.setStackCallback(null)
   }

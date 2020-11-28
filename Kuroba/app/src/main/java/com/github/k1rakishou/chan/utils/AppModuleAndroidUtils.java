@@ -531,6 +531,10 @@ public class AppModuleAndroidUtils {
         showToast(context, getString(resId));
     }
 
+    public static void cancelLastToast() {
+        cancellableToast.cancel();
+    }
+
     public static StartActivityComponent extractStartActivityComponent(Context context) {
         if (context instanceof StartActivity) {
             return ((StartActivity) context).getComponent();

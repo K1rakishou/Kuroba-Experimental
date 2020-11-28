@@ -75,6 +75,7 @@ class SearchResultsController(
   override fun onDestroy() {
     super.onDestroy()
 
+    epoxyRecyclerView.swapAdapter(null, true)
     presenter.onDestroy()
   }
 

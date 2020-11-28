@@ -336,6 +336,8 @@ class BookmarksController(
     drawerCallbacks?.hideBottomPanel()
     drawerCallbacks = null
 
+    epoxyRecyclerView.swapAdapter(null, true)
+
     epoxyRecyclerView.removeOnScrollListener(onScrollListener)
     bookmarksPresenter.onDestroy()
   }

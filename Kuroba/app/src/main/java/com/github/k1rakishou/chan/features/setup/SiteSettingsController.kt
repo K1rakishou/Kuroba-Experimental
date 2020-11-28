@@ -42,7 +42,7 @@ class SiteSettingsController(
     )
   }
 
-  private lateinit var recyclerView: ColorizableEpoxyRecyclerView
+  private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
 
   override fun injectDependencies(component: StartActivityComponent) {
     component.inject(this)
@@ -53,7 +53,7 @@ class SiteSettingsController(
     navigation.title = context.getString(R.string.controller_site_settings_title, siteDescriptor.siteName)
 
     view = inflate(context, R.layout.controller_site_settings)
-    recyclerView = view.findViewById(R.id.epoxy_recycler_view)
+    epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
 
     presenter.onCreate(this)
   }
@@ -66,6 +66,7 @@ class SiteSettingsController(
   override fun onDestroy() {
     super.onDestroy()
 
+    epoxyRecyclerView.swapAdapter(null, true)
     presenter.onDestroy()
   }
 
@@ -77,7 +78,7 @@ class SiteSettingsController(
   }
 
   private fun renderSettingGroups(groups: List<SettingsGroup>) {
-    recyclerView.withModels {
+    epoxyRecyclerView.withModels {
       var globalSettingIndex = 0
 
       groups.forEach { settingsGroup ->
