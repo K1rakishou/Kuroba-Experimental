@@ -137,15 +137,9 @@ class Chan4ReplyCall(
   }
 
   override fun modifyRequestBuilder(requestBuilder: Request.Builder) {
-    val chanBoard = boardManager.byBoardDescriptor(replyChanDescriptor.boardDescriptor())
-    if (chanBoard == null || chanBoard.workSafe) {
-      return
-    }
-
-    // We need to use some custom user agent on 4chan.org (not 4channel.org) because for some
-    // unknown reason it won't show the post you send in a thread if you use any of the existing
-    // user agents. This is really weird and seems like either a 4chan bug or it is done
-    // intentionally. And only NSFW boards belong to 4chan.org
+    // Use different user-agent for 4chan because it has some weird bug where a post with an image
+    // won't show up in a thread if one of "real" user agents in used. This only happens on 4chan
+    // boards but for easiness sake we use this for both 4chan and 4channel boards.
     requestBuilder.addHeader("User-Agent", appConstants.kurobaExUserAgent)
   }
 }
