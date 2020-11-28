@@ -242,26 +242,26 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    if (chanThreadTicker.currentChanDescriptor != null) {
-      unbindChanDescriptor(false)
-    }
+    threadPresenterCallback?.showLoading()
 
     postOptionsClickExecutor = RendezvousCoroutineExecutor(this)
     serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
 
-    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-      bookmarksManager.setCurrentOpenThreadDescriptor(chanDescriptor)
+    if (chanThreadTicker.currentChanDescriptor != null) {
+      unbindChanDescriptor(false)
     }
 
     chanThreadManager.bindChanDescriptor(chanDescriptor)
+
+    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      bookmarksManager.setCurrentOpenThreadDescriptor(chanDescriptor)
+    }
 
     compositeDisposable += onDemandContentLoaderManager.listenPostContentUpdates()
       .subscribe(
         { batchResult -> onPostUpdatedWithNewContent(batchResult) },
         { error -> Logger.e(TAG, "Post content updates error", error) }
       )
-
-    threadPresenterCallback?.showLoading()
 
     Logger.d(TAG, "chanThreadTicker.startTicker($chanDescriptor)")
     chanThreadTicker.startTicker(chanDescriptor)

@@ -175,6 +175,12 @@ class ReplyLayout @JvmOverloads constructor(
   private val wrappingModeUpdateDebouncer = Debouncer(false)
   private val replyLayoutMessageToast = CancellableToast()
 
+  override val chanDescriptor: ChanDescriptor?
+    get() = threadListLayoutCallbacks?.getCurrentChanDescriptor()
+
+  override val selectionStart: Int
+    get() = comment.selectionStart
+
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
     EventBus.getDefault().register(this)
@@ -284,6 +290,7 @@ class ReplyLayout @JvmOverloads constructor(
     commentEqnButton.setOnClickListener(this)
     commentSJISButton.setOnClickListener(this)
     commentRevertChangeButton.setOnClickListener(this)
+
     comment.addTextChangedListener(this)
     comment.setSelectionChangedListener(this)
     comment.setOnFocusChangeListener({ _, focused: Boolean ->
@@ -760,9 +767,6 @@ class ReplyLayout @JvmOverloads constructor(
     }
   }
 
-  override val selectionStart: Int
-    get() = comment.selectionStart
-
   override fun adjustSelection(start: Int, amount: Int) {
     try {
       comment.setSelection(start + amount)
@@ -810,7 +814,7 @@ class ReplyLayout @JvmOverloads constructor(
     setWrappingMode(presenter.isExpanded)
   }
 
-  override fun setExpanded(expanded: Boolean) {
+  override fun setExpanded(expanded: Boolean, isCleaningUp: Boolean) {
     setWrappingMode(expanded)
 
     comment.maxLines = if (expanded) {
@@ -833,7 +837,7 @@ class ReplyLayout @JvmOverloads constructor(
       moreDropdown.setRotation(animation.animatedValue as Float)
     }
 
-    if (!expanded) {
+    if (!isCleaningUp && !expanded) {
       // Update the recycler view's paddings after the animation has ended to make sure it has
       // proper paddings
       animator.doOnEnd { threadListLayoutCallbacks?.updateRecyclerViewPaddings() }
@@ -1069,9 +1073,6 @@ class ReplyLayout @JvmOverloads constructor(
   override fun showThread(threadDescriptor: ThreadDescriptor) {
     threadListLayoutCallbacks?.showThread(threadDescriptor)
   }
-
-  override val chanDescriptor: ChanDescriptor?
-    get() = threadListLayoutCallbacks?.getCurrentChanDescriptor()
 
   override fun onUploadingProgress(fileIndex: Int, totalFiles: Int, percent: Int) {
     if (!::currentProgress.isInitialized || !::currentFile.isInitialized) {

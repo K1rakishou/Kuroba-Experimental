@@ -150,10 +150,10 @@ class ReplyPresenter @Inject constructor(
   }
 
   fun unbindChanDescriptor() {
-    job.cancelChildren()
     closeAll()
-
     currentChanDescriptor = null
+
+    job.cancelChildren()
   }
 
   fun isCatalogReplyLayout(): Boolean? {
@@ -195,7 +195,7 @@ class ReplyPresenter @Inject constructor(
   fun onMoreClicked() {
     this.isExpanded = this.isExpanded.not()
 
-    callback.setExpanded(isExpanded)
+    callback.setExpanded(expanded = isExpanded, isCleaningUp = false)
     callback.openNameOptions(isExpanded)
 
     if (currentChanDescriptor!!.isCatalogDescriptor()) {
@@ -422,7 +422,7 @@ class ReplyPresenter @Inject constructor(
 
     callback.highlightPostNos(emptySet())
     callback.openMessage(null)
-    callback.setExpanded(false)
+    callback.setExpanded(expanded = false, isCleaningUp = true)
     callback.openSubject(false)
     callback.openFlag(false)
     callback.openCommentQuoteButton(false)
@@ -720,7 +720,7 @@ class ReplyPresenter @Inject constructor(
     fun onPosted()
     fun setCommentHint(hint: String?)
     fun showCommentCounter(show: Boolean)
-    fun setExpanded(expanded: Boolean)
+    fun setExpanded(expanded: Boolean, isCleaningUp: Boolean)
     fun openNameOptions(open: Boolean)
     fun openSubject(open: Boolean)
     fun openFlag(open: Boolean)
