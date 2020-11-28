@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.settings.screens.delegate.base_direc
 
 import android.content.Context
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
@@ -25,6 +26,25 @@ class SaveLocationSetupDelegate(
     }
 
     return ChanSettings.saveLocation.fileApiBaseDir.get()
+  }
+
+  fun useSAFLocationPicker() {
+    if (!PersistableChanState.safExplanationMessageShown.get()) {
+      dialogFactory.createSimpleInformationDialog(
+        context = context,
+        titleText = getString(R.string.media_settings_saf_explanation_title),
+        descriptionText = getString(R.string.media_settings_saf_explanation_message),
+        onPositiveButtonClickListener = {
+          PersistableChanState.safExplanationMessageShown.set(true)
+          presenter.onSaveLocationUseSAFClicked()
+        },
+        cancelable = false
+      )
+
+      return
+    }
+
+    presenter.onSaveLocationUseSAFClicked()
   }
 
   fun showUseSAFOrOldAPIForSaveLocationDialog() {

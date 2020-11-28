@@ -28,6 +28,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.GET_CONTENT" />
+            <data android:mimeType="*/*"/>
+        </intent>
+    </queries>
+
     <application
         android:name="com.github.k1rakishou.chan.Chan"
         android:allowBackup="true"

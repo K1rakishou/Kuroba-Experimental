@@ -34,7 +34,8 @@ class DialogFactory(
     titleText: String,
     descriptionText: String? = null,
     onPositiveButtonClickListener: (() -> Unit) = { },
-    positiveButtonTextId: Int = R.string.ok
+    positiveButtonTextId: Int = R.string.ok,
+    cancelable: Boolean = true
   ) {
     if (!applicationVisibilityManager.isAppInForeground()) {
       return
@@ -45,7 +46,7 @@ class DialogFactory(
       .setPositiveButton(positiveButtonTextId) { _, _ ->
         onPositiveButtonClickListener.invoke()
       }
-      .setCancelable(true)
+      .setCancelable(cancelable)
 
     if (descriptionText != null) {
       builder.setMessage(descriptionText)

@@ -22,10 +22,12 @@ import android.net.Uri;
 
 import androidx.annotation.Nullable;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.cache.FileCacheListener;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
+import com.github.k1rakishou.common.ModularResult;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.fsaf.file.AbstractFile;
@@ -40,11 +42,13 @@ import io.reactivex.Single;
 import io.reactivex.functions.Action;
 import io.reactivex.subjects.SingleSubject;
 import kotlin.NotImplementedError;
+import kotlin.Unit;
 
 import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledDownloadResult.Failure;
 import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledDownloadResult.Success;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent;
 import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
+import static com.github.k1rakishou.common.AndroidUtils.isAndroid11;
 
 public class ImageSaveTask
         extends FileCacheListener {
@@ -154,11 +158,24 @@ public class ImageSaveTask
     @Override
     public void onSuccess(RawFile file) {
         BackgroundUtils.ensureMainThread();
+        ModularResult<Unit> result = copyToDestination(file);
 
-        if (copyToDestination(file)) {
+        if (result instanceof ModularResult.Value) {
             onDestination();
         } else {
             deleteDestination();
+
+            if (ChanSettings.saveLocation.isFileDirActive() && isAndroid11()) {
+                IOException exception = new IOException("You are using old file API on Android 11 " +
+                        "(or above) which is forbidden now. You have to go to " +
+                        "Settings -> Media Settings -> Save location and update it");
+
+                imageSaveTaskAsyncResult.onError(exception);
+                return;
+            }
+
+            Throwable error = ((ModularResult.Error<?>) result).getError();
+            imageSaveTaskAsyncResult.onError(error);
         }
     }
 
@@ -184,6 +201,7 @@ public class ImageSaveTask
 
     private void onDestination() {
         success = true;
+
         if (destination instanceof RawFile) {
             String[] paths = {destination.getFullPath()};
 
@@ -200,9 +218,7 @@ public class ImageSaveTask
         }
     }
 
-    private boolean copyToDestination(RawFile source) {
-        boolean result = false;
-
+    private ModularResult<Unit> copyToDestination(RawFile source) {
         try {
             AbstractFile createdDestinationFile = fileManager.create(destination);
             if (createdDestinationFile == null) {
@@ -217,19 +233,17 @@ public class ImageSaveTask
                 throw new IOException("Could not copy source file into destination");
             }
 
-            result = true;
         } catch (Throwable e) {
             boolean exists = fileManager.exists(destination);
             boolean canWrite = fileManager.canWrite(destination);
 
-            Logger.e(TAG,
-                    "Error writing to file: (" + destination.getFullPath() + "), " + "exists = " + exists
-                            + ", canWrite = " + canWrite,
-                    e
-            );
+            Logger.e(TAG, "Error writing to file: (" + destination.getFullPath() + "), " +
+                    "exists = " + exists + ", canWrite = " + canWrite, e);
+
+            return ModularResult.error(e);
         }
 
-        return result;
+        return ModularResult.value(Unit.INSTANCE);
     }
 
     private void afterScan(final Uri uri) {

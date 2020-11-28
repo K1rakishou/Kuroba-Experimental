@@ -39,9 +39,10 @@ object PersistableChanState {
   lateinit var bookmarksRecyclerIndexAndTop: StringSetting
   @JvmStatic
   lateinit var proxyEditingNotificationShown: BooleanSetting
-
   @JvmStatic
   lateinit var lastRememberedFilePicker: StringSetting
+  @JvmStatic
+  lateinit var safExplanationMessageShown: BooleanSetting
 
   fun init(persistableChanStateInfo: PersistableChanStateInfo) {
     this.persistableChanStateInfo = persistableChanStateInfo
@@ -92,6 +93,12 @@ object PersistableChanState {
         p,
         "last_remembered_file_picker",
         ""
+      )
+
+      safExplanationMessageShown = BooleanSetting(
+        p,
+        "saf_explanation_message_shown",
+        false
       )
     } catch (e: Exception) {
       Logger.e(TAG, "Error while initializing the state", e)

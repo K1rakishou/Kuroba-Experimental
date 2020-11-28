@@ -463,8 +463,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     activityEnteredBackground()
   }
 
-  override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle?) {}
   override fun onActivityDestroyed(activity: Activity) {}
+  override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
 
   class OkHttpProtocols(val protocols: List<Protocol>)
 

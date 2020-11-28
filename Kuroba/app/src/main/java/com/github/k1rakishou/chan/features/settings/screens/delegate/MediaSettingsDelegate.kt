@@ -16,6 +16,7 @@ import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
 
@@ -125,7 +126,11 @@ class MediaSettingsDelegate(
   }
 
   fun showUseSAFOrOldAPIForSaveLocationDialog() {
-    saveLocationSetupDelegate.showUseSAFOrOldAPIForSaveLocationDialog()
+    if (AndroidUtils.isAndroid11()) {
+      saveLocationSetupDelegate.useSAFLocationPicker()
+    } else {
+      saveLocationSetupDelegate.showUseSAFOrOldAPIForSaveLocationDialog()
+    }
   }
 
 }
