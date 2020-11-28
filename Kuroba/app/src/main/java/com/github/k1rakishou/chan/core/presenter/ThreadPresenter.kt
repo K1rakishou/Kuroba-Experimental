@@ -1788,14 +1788,14 @@ class ThreadPresenter @Inject constructor(
     )
   }
 
-  fun showImageReencodingWindow(supportsReencode: Boolean) {
+  fun showImageReencodingWindow(fileUuid: UUID, supportsReencode: Boolean) {
     val chanDescriptor = currentChanDescriptor
     if (chanDescriptor == null) {
       Logger.e(TAG, "showImageReencodingWindow() chanDescriptor==null")
       return
     }
 
-    threadPresenterCallback?.showImageReencodingWindow(chanDescriptor, supportsReencode)
+    threadPresenterCallback?.showImageReencodingWindow(fileUuid, chanDescriptor, supportsReencode)
   }
 
   fun hideOrRemovePosts(hide: Boolean, wholeChain: Boolean, post: ChanPost, threadNo: Long) {
@@ -1910,7 +1910,7 @@ class ThreadPresenter @Inject constructor(
     fun hideDeleting(message: String)
     fun hideThread(post: ChanPost, threadNo: Long, hide: Boolean)
     fun showNewPostsNotification(show: Boolean, newPostsCount: Int)
-    fun showImageReencodingWindow(chanDescriptor: ChanDescriptor, supportsReencode: Boolean)
+    fun showImageReencodingWindow(fileUuid: UUID, chanDescriptor: ChanDescriptor, supportsReencode: Boolean)
     fun showHideOrRemoveWholeChainDialog(hide: Boolean, post: ChanPost, threadNo: Long)
     fun hideOrRemovePosts(hide: Boolean, wholeChain: Boolean, postDescriptors: Set<PostDescriptor>, threadNo: Long)
     fun unhideOrUnremovePost(post: ChanPost)

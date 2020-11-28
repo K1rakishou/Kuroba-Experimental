@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.ui.helper;
+package com.github.k1rakishou.chan.features.reencoding;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -10,13 +10,12 @@ import androidx.core.util.Pair;
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
-import com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter;
-import com.github.k1rakishou.chan.features.reply.data.Reply;
-import com.github.k1rakishou.chan.ui.controller.ImageOptionsController;
-import com.github.k1rakishou.chan.ui.controller.ImageReencodeOptionsController;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
+import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.google.gson.Gson;
+
+import java.util.UUID;
 
 import javax.inject.Inject;
 
@@ -43,30 +42,33 @@ public class ImageOptionsHelper
                 .inject(this);
     }
 
-    public void showController(ChanDescriptor chanDescriptor, boolean supportsReencode) {
-        if (imageOptionsController == null) {
-            try {
-                // load up the last image options every time this controller is created
-                lastImageOptions = gson.fromJson(
-                        ChanSettings.lastImageOptions.get(),
-                        ImageReencodingPresenter.ImageOptions.class
-                );
+    public void showController(UUID fileUuid, ChanDescriptor chanDescriptor, boolean supportsReencode) {
+        if (imageOptionsController != null) {
+            return;
+        }
 
-            } catch (Exception ignored) {
-                lastImageOptions = null;
-            }
-
-            imageOptionsController = new ImageOptionsController(
-                    context,
-                    this,
-                    this,
-                    chanDescriptor,
-                    lastImageOptions,
-                    supportsReencode
+        try {
+            // load up the last image options every time this controller is created
+            lastImageOptions = gson.fromJson(
+                    ChanSettings.lastImageOptions.get(),
+                    ImageReencodingPresenter.ImageOptions.class
             );
 
-            callbacks.presentReencodeOptionsController(imageOptionsController);
+        } catch (Exception ignored) {
+            lastImageOptions = null;
         }
+
+        imageOptionsController = new ImageOptionsController(
+                context,
+                this,
+                this,
+                fileUuid,
+                chanDescriptor,
+                lastImageOptions,
+                supportsReencode
+        );
+
+        callbacks.presentReencodeOptionsController(imageOptionsController);
     }
 
     public void pop() {
@@ -82,8 +84,7 @@ public class ImageOptionsHelper
             imageOptionsController = null;
         }
 
-        // TODO(KurobaEx): reply layout refactoring
-//        callbacks.onImageOptionsComplete();
+        callbacks.onImageOptionsComplete();
     }
 
     @Override
@@ -113,9 +114,10 @@ public class ImageOptionsHelper
     }
 
     @Override
-    public void onImageOptionsApplied(Reply reply, boolean filenameRemoved) {
-        // TODO(KurobaEx): reply layout refactoring
-//        callbacks.onImageOptionsApplied(reply, filenameRemoved);
+    public void onImageOptionsApplied() {
+        BackgroundUtils.ensureMainThread();
+
+        callbacks.onImageOptionsComplete();
     }
 
     @Override
@@ -142,5 +144,6 @@ public class ImageOptionsHelper
 
     public interface ImageReencodingHelperCallback {
         void presentReencodeOptionsController(Controller controller);
+        void onImageOptionsComplete();
     }
 }

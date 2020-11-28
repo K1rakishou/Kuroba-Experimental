@@ -1,12 +1,16 @@
 package com.github.k1rakishou.chan.features.reply.data
 
+import com.github.k1rakishou.chan.utils.IOUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.google.gson.Gson
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.IOException
+import java.util.*
 
 class ReplyFile(
   private val gson: Gson,
@@ -96,6 +100,32 @@ class ReplyFile(
       storeFileMetaInfo().unwrap()
 
       return@Try true
+    }
+  }
+
+  @Synchronized
+  fun updateFileName(newFileName: String): ModularResult<Boolean> {
+    return Try {
+      val replyFileMeta = getReplyFileMeta().unwrap()
+      if (replyFileMeta.fileName == newFileName) {
+        return@Try true
+      }
+
+      replyFileMeta.fileNameNullable = newFileName
+      storeFileMetaInfo().unwrap()
+
+      return@Try true
+    }
+  }
+
+  @Synchronized
+  fun overwriteFileOnDisk(newFile: File): ModularResult<Unit> {
+    return Try {
+      FileOutputStream(fileOnDisk).use { fos ->
+        FileInputStream(newFile).use { fis ->
+          IOUtils.copy(fis, fos)
+        }
+      }
     }
   }
 

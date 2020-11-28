@@ -1102,13 +1102,16 @@ class ReplyLayout @JvmOverloads constructor(
     }
   }
 
+  fun onImageOptionsComplete() {
+    replyLayoutFilesArea.onImageOptionsComplete()
+  }
+
   interface ThreadListLayoutCallbacks {
     fun highlightPostNos(postNos: Set<Long>)
     fun openReply(open: Boolean)
     fun showThread(threadDescriptor: ThreadDescriptor)
     fun requestNewPostLoad()
     fun getCurrentChanDescriptor(): ChanDescriptor?
-    fun showImageReencodingWindow(supportsReencode: Boolean)
     fun updateRecyclerViewPaddings()
     fun measureReplyLayout()
   }

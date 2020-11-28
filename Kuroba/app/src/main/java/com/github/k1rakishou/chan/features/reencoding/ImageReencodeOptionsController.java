@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.ui.controller;
+package com.github.k1rakishou.chan.features.reencoding;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -13,8 +13,7 @@ import androidx.core.util.Pair;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
-import com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter;
-import com.github.k1rakishou.chan.ui.helper.ImageOptionsHelper;
+import com.github.k1rakishou.chan.ui.controller.BaseFloatingController;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableSlider;
@@ -133,6 +132,8 @@ public class ImageReencodeOptionsController
             reencodeImageAsPng.setEnabled(false);
         } else if (imageFormat == Bitmap.CompressFormat.JPEG) {
             reencodeImageAsJpeg.setEnabled(false);
+        } else if (imageFormat == Bitmap.CompressFormat.WEBP) {
+            reencodeImageAsIs.setEnabled(false);
         }
 
         currentImageReduce.setText(getString(R.string.scale_reduce,
@@ -148,6 +149,7 @@ public class ImageReencodeOptionsController
             ignoreSetup = true;
             quality.setValue(lastSettings.getReencodeQuality());
             reduce.setValue(lastSettings.getReducePercent());
+
             switch (lastSettings.getReencodeType()) {
                 case AS_JPEG:
                     reencodeImageAsJpeg.setChecked(true);
@@ -159,6 +161,7 @@ public class ImageReencodeOptionsController
                     reencodeImageAsIs.setChecked(true);
                     break;
             }
+
             ignoreSetup = false;
         }
     }

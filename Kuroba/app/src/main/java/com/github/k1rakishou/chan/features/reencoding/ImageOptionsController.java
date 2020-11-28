@@ -14,33 +14,41 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.ui.controller;
+package com.github.k1rakishou.chan.features.reencoding;
 
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Point;
+import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.AppCompatImageView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.util.Pair;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
-import com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter;
-import com.github.k1rakishou.chan.features.reply.data.Reply;
-import com.github.k1rakishou.chan.ui.helper.ImageOptionsHelper;
+import com.github.k1rakishou.chan.ui.controller.BaseFloatingController;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Locale;
+import java.util.UUID;
+
+import javax.inject.Inject;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
@@ -55,7 +63,8 @@ public class ImageOptionsController
         implements View.OnClickListener,
         CompoundButton.OnCheckedChangeListener,
         ImageReencodingPresenter.ImageReencodingPresenterCallback,
-        RequiresNoBottomNavBar {
+        RequiresNoBottomNavBar,
+        ThemeEngine.ThemeChangesListener {
     private final static String TAG = "ImageOptionsController";
 
     private ImageReencodingPresenter presenter;
@@ -68,15 +77,19 @@ public class ImageOptionsController
     private ImageView preview;
     private ColorizableCheckBox fixExif;
     private ColorizableCheckBox removeMetadata;
-    private ColorizableCheckBox removeFilename;
+    private ColorizableEditText imageFileName;
+    private AppCompatImageView generateNewFileName;
     private ColorizableCheckBox changeImageChecksum;
     private ColorizableCheckBox reencode;
-    private ColorizableBarButton cancel;
-    private ColorizableBarButton ok;
+    private ColorizableBarButton imageOptionsCancel;
+    private ColorizableBarButton imageOptionsApply;
 
     private ImageReencodingPresenter.ImageOptions lastSettings;
     private boolean ignoreSetup;
     private boolean reencodeEnabled;
+
+    @Inject
+    ThemeEngine themeEngine;
 
     @Override
     protected void injectDependencies(@NotNull StartActivityComponent component) {
@@ -87,6 +100,7 @@ public class ImageOptionsController
             Context context,
             ImageOptionsHelper imageReencodingHelper,
             ImageOptionsControllerCallbacks callbacks,
+            UUID fileUuid,
             ChanDescriptor chanDescriptor,
             ImageReencodingPresenter.ImageOptions lastOptions,
             boolean supportsReencode
@@ -95,10 +109,11 @@ public class ImageOptionsController
 
         this.imageReencodingHelper = imageReencodingHelper;
         this.callbacks = callbacks;
+
         lastSettings = lastOptions;
         reencodeEnabled = supportsReencode;
 
-        presenter = new ImageReencodingPresenter(context, this, chanDescriptor, lastOptions);
+        presenter = new ImageReencodingPresenter(context, this, fileUuid, chanDescriptor, lastOptions);
     }
 
     @Override
@@ -117,21 +132,22 @@ public class ImageOptionsController
         fixExif = view.findViewById(R.id.image_options_fix_exif);
         removeMetadata = view.findViewById(R.id.image_options_remove_metadata);
         changeImageChecksum = view.findViewById(R.id.image_options_change_image_checksum);
-        removeFilename = view.findViewById(R.id.image_options_remove_filename);
+        imageFileName = view.findViewById(R.id.image_options_filename);
+        generateNewFileName = view.findViewById(R.id.image_option_generate_new_name);
         reencode = view.findViewById(R.id.image_options_reencode);
-        cancel = view.findViewById(R.id.image_options_cancel);
-        ok = view.findViewById(R.id.image_options_ok);
+        imageOptionsCancel = view.findViewById(R.id.image_options_cancel);
+        imageOptionsApply = view.findViewById(R.id.image_options_ok);
 
         fixExif.setOnCheckedChangeListener(this);
         removeMetadata.setOnCheckedChangeListener(this);
-        removeFilename.setOnCheckedChangeListener(this);
         reencode.setOnCheckedChangeListener(this);
         changeImageChecksum.setOnCheckedChangeListener(this);
 
-        //setup last settings first before checking other conditions to enable/disable stuff
+        // setup last settings first before checking other conditions to enable/disable stuff
         if (lastSettings != null) {
-            ignoreSetup = true; //this variable is to ignore any side effects of checking all these boxes
-            removeFilename.setChecked(lastSettings.getRemoveFilename());
+            // this variable is to ignore any side effects of checking all these boxes
+            ignoreSetup = true;
+
             changeImageChecksum.setChecked(lastSettings.getChangeImageChecksum());
             fixExif.setChecked(lastSettings.getFixExif());
 
@@ -140,13 +156,20 @@ public class ImageOptionsController
                 removeMetadata.setChecked(!lastReencode.isDefault());
                 removeMetadata.setEnabled(!lastReencode.isDefault());
                 reencode.setChecked(!lastReencode.isDefault());
-                reencode.setText(String.format("Re-encode %s", lastReencode.prettyPrint(presenter.getImageFormat())));
+
+                reencode.setText(getReencodeCheckBoxText(lastReencode));
             } else {
                 removeMetadata.setChecked(lastSettings.getRemoveMetadata());
             }
 
             ignoreSetup = false;
         }
+
+        imageFileName.setText(presenter.getCurrentFileName());
+
+        generateNewFileName.setOnClickListener(v -> {
+            imageFileName.setText(presenter.getGenerateNewFileName());
+        });
 
         if (presenter.getImageFormat() != Bitmap.CompressFormat.JPEG) {
             fixExif.setChecked(false);
@@ -179,10 +202,32 @@ public class ImageOptionsController
             container.setLayoutParams(params);
         });
 
-        cancel.setOnClickListener(this);
-        ok.setOnClickListener(this);
+        imageOptionsCancel.setOnClickListener(this);
+        imageOptionsApply.setOnClickListener(this);
 
         presenter.loadImagePreview();
+        themeEngine.addListener(this);
+
+        onThemeChanged();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        themeEngine.removeListener(this);
+    }
+
+    @Override
+    public void onThemeChanged() {
+        int color = themeEngine.resolveTintColor(themeEngine.chanTheme.isBackColorDark());
+
+        Drawable tintedDrawable = themeEngine.tintDrawable(
+                context,
+                R.drawable.ic_refresh_white_24dp,
+                color
+        );
+
+        generateNewFileName.setImageDrawable(tintedDrawable);
     }
 
     @Override
@@ -193,10 +238,14 @@ public class ImageOptionsController
 
     @Override
     public void onClick(View v) {
-        if (v == cancel) {
+        if (v == imageOptionsCancel) {
             imageReencodingHelper.pop();
-        } else if (v == ok) {
-            presenter.applyImageOptions();
+        } else if (v == imageOptionsApply) {
+            String newFileName = imageFileName.getText() == null
+                    ? null
+                    : imageFileName.getText().toString();
+
+            presenter.applyImageOptions(newFileName);
         } else if (v == viewHolder) {
             imageReencodingHelper.pop();
         }
@@ -210,17 +259,21 @@ public class ImageOptionsController
             presenter.fixExif(isChecked);
         } else if (buttonView == removeMetadata) {
             presenter.removeMetadata(isChecked);
-        } else if (buttonView == removeFilename) {
-            presenter.removeFilename(isChecked);
         } else if (buttonView == reencode) {
-            //isChecked here means whether the current click has made the button checked
-            if (!ignoreSetup) {
-                //this variable is to ignore any side effects of checking boxes when last settings are being put in
-                if (!isChecked) {
-                    onReencodingCanceled();
-                } else {
-                    callbacks.onReencodeOptionClicked(presenter.getImageFormat(), presenter.getImageDims());
-                }
+            // isChecked here means whether the current click has made the button checked
+            if (ignoreSetup) {
+                return;
+            }
+
+            // this variable is to ignore any side effects of checking boxes when last settings
+            // are being put in
+            if (isChecked) {
+                callbacks.onReencodeOptionClicked(
+                        presenter.getImageFormat(),
+                        presenter.getImageDims()
+                );
+            } else {
+                onReencodingCanceled();
             }
         }
     }
@@ -239,46 +292,55 @@ public class ImageOptionsController
         removeMetadata.setChecked(true);
         removeMetadata.setEnabled(false);
 
-        reencode.setText(String.format("Re-encode %s", reencodeSettings.prettyPrint(presenter.getImageFormat())));
+        reencode.setText(getReencodeCheckBoxText(reencodeSettings));
         presenter.setReencode(reencodeSettings);
     }
 
+    @NonNull
+    private String getReencodeCheckBoxText(ImageReencodingPresenter.ReencodeSettings reencodeSettings) {
+        return String.format(
+                    Locale.ENGLISH,
+                    "Re-encode %s",
+                    reencodeSettings.prettyPrint(presenter.getImageFormat())
+            );
+    }
+
     @Override
-    public void showImagePreview(Bitmap bitmap) {
+    public void showImagePreview(@NonNull Bitmap bitmap) {
         preview.setImageBitmap(bitmap);
     }
 
     @Override
-    public void onImageOptionsApplied(Reply reply, boolean filenameRemoved) {
-        //called on the background thread!
-
+    public void onImageOptionsApplied() {
+        // called on the background thread!
         BackgroundUtils.runOnMainThread(() -> {
             imageReencodingHelper.pop();
-            callbacks.onImageOptionsApplied(reply, filenameRemoved);
+            callbacks.onImageOptionsApplied();
         });
     }
 
     @Override
     public void disableOrEnableButtons(boolean enabled) {
-        //called on the background thread!
-
+        // called on the background thread!
         BackgroundUtils.runOnMainThread(() -> {
             fixExif.setEnabled(enabled);
             removeMetadata.setEnabled(enabled);
-            removeFilename.setEnabled(enabled);
+            generateNewFileName.setEnabled(enabled);
+            imageFileName.setEnabled(enabled);
             changeImageChecksum.setEnabled(enabled);
             reencode.setEnabled(enabled);
             viewHolder.setEnabled(enabled);
-            cancel.setEnabled(enabled);
-            ok.setEnabled(enabled);
+            imageOptionsCancel.setEnabled(enabled);
+            imageOptionsApply.setEnabled(enabled);
         });
     }
 
     public interface ImageOptionsControllerCallbacks {
         void onReencodeOptionClicked(
-                @Nullable Bitmap.CompressFormat imageFormat, @Nullable Pair<Integer, Integer> dims
+                @Nullable Bitmap.CompressFormat imageFormat,
+                @Nullable Pair<Integer, Integer> dims
         );
 
-        void onImageOptionsApplied(Reply reply, boolean filenameRemoved);
+        void onImageOptionsApplied();
     }
 }

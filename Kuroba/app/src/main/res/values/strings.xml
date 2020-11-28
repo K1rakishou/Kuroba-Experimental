@@ -835,7 +835,7 @@ Don't have a 4chan Pass?<br>
     <string name="scale_reduce">Reduce: %1$dx%2$d to %3$dx%4$d (%5$d%%)</string>
     <string name="could_not_decode_image_bitmap">Could not decode image bitmap</string>
     <string name="could_not_apply_image_options">Could not apply new image options (error message is %1$s)</string>
-    <string name="image_options_remove_filename">Remove filename</string>
+    <string name="could_not_reencode_image">Could not reencode image</string>
     <string name="image_options_change_image_checksum">Change image checksum</string>
     <string name="image_options_fix_exif">Fix EXIF orientation</string>
     <string name="image_options_remove_metadata">Remove metadata</string>

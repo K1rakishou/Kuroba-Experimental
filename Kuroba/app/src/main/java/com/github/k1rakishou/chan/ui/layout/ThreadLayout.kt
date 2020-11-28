@@ -42,6 +42,7 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -50,11 +51,11 @@ import com.github.k1rakishou.chan.core.presenter.ThreadPresenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
+import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper
+import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper.ImageReencodingHelperCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.ThreadController
-import com.github.k1rakishou.chan.ui.helper.ImageOptionsHelper
-import com.github.k1rakishou.chan.ui.helper.ImageOptionsHelper.ImageReencodingHelperCallback
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper.PostPopupHelperCallback
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper
@@ -135,6 +136,8 @@ class ThreadLayout @JvmOverloads constructor(
   lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var chanThreadManager: ChanThreadManager
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private lateinit var callback: ThreadLayoutCallback
   private lateinit var progressLayout: View
@@ -225,7 +228,11 @@ class ThreadLayout @JvmOverloads constructor(
     presenter.create(context, this)
     threadListLayout.onCreate(presenter, this)
     postPopupHelper = PostPopupHelper(context, presenter, chanThreadManager, this)
-    imageReencodingHelper = ImageOptionsHelper(context, this)
+    imageReencodingHelper =
+      ImageOptionsHelper(
+        context,
+        this
+      )
     removedPostsHelper = RemovedPostsHelper(context, presenter, this)
     errorText.typeface = themeEngine.chanTheme.mainFont
     errorRetryButton.setOnClickListener(this)
@@ -337,8 +344,8 @@ class ThreadLayout @JvmOverloads constructor(
     showReplyButton(!open)
   }
 
-  override fun showImageReencodingWindow(supportsReencode: Boolean) {
-    presenter.showImageReencodingWindow(supportsReencode)
+  override fun showImageReencodingWindow(fileUuid: UUID, supportsReencode: Boolean) {
+    presenter.showImageReencodingWindow(fileUuid, supportsReencode)
   }
 
   override fun threadBackPressed(): Boolean {
@@ -734,7 +741,12 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
-  override fun hideOrRemovePosts(hide: Boolean, wholeChain: Boolean, postDescriptors: Set<PostDescriptor>, threadNo: Long) {
+  override fun hideOrRemovePosts(
+    hide: Boolean,
+    wholeChain: Boolean,
+    postDescriptors: Set<PostDescriptor>,
+    threadNo: Long
+  ) {
     serializedCoroutineExecutor.post {
       val hideList: MutableList<ChanPostHide> = ArrayList()
       for (postDescriptor in postDescriptors) {
@@ -792,7 +804,10 @@ class ThreadLayout @JvmOverloads constructor(
     removedPostsHelper.showPosts(threadPosts, threadDescriptor)
   }
 
-  override fun onRestoreRemovedPostsClicked(chanDescriptor: ChanDescriptor, selectedPosts: List<PostDescriptor>) {
+  override fun onRestoreRemovedPostsClicked(
+    chanDescriptor: ChanDescriptor,
+    selectedPosts: List<PostDescriptor>
+  ) {
     serializedCoroutineExecutor.post {
       postHideManager.removeManyChanPostHides(selectedPosts)
       presenter.refreshUI()
@@ -816,7 +831,10 @@ class ThreadLayout @JvmOverloads constructor(
     threadListLayout.onPostUpdated(post)
   }
 
-  override fun presentController(floatingListMenuController: FloatingListMenuController, animate: Boolean) {
+  override fun presentController(
+    floatingListMenuController: FloatingListMenuController,
+    animate: Boolean
+  ) {
     callback.presentController(floatingListMenuController, animate)
   }
 
@@ -864,7 +882,12 @@ class ThreadLayout @JvmOverloads constructor(
       val text = getQuantityString(R.plurals.thread_new_posts, newPostsCount, newPostsCount)
       dismissSnackbar()
 
-      newPostsNotification = SnackbarWrapper.create(themeEngine.chanTheme, this, text, Snackbar.LENGTH_LONG).apply {
+      newPostsNotification = SnackbarWrapper.create(
+        themeEngine.chanTheme,
+        this,
+        text,
+        Snackbar.LENGTH_LONG
+      ).apply {
         setAction(R.string.thread_new_posts_goto) {
           presenter.onNewPostsViewClicked()
           dismissSnackbar()
@@ -885,14 +908,20 @@ class ThreadLayout @JvmOverloads constructor(
     super.onDetachedFromWindow()
   }
 
-  override fun showImageReencodingWindow(chanDescriptor: ChanDescriptor, supportsReencode: Boolean) {
+  override fun showImageReencodingWindow(
+    fileUuid: UUID,
+    chanDescriptor: ChanDescriptor,
+    supportsReencode: Boolean
+  ) {
     if (this.focusedChild != null) {
       val currentFocus = this.focusedChild
       AndroidUtils.hideKeyboard(currentFocus)
       currentFocus.clearFocus()
     }
 
-    imageReencodingHelper.showController(chanDescriptor, supportsReencode)
+    globalWindowInsetsManager.runWhenKeyboardIsHidden {
+      imageReencodingHelper.showController(fileUuid, chanDescriptor, supportsReencode)
+    }
   }
 
   fun isReplyLayoutOpen(): Boolean = threadListLayout.replyOpen
@@ -1014,7 +1043,13 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun presentReencodeOptionsController(controller: Controller) {
+    BackgroundUtils.ensureMainThread()
     callback.presentController(controller, true)
+  }
+
+  override fun onImageOptionsComplete() {
+    BackgroundUtils.ensureMainThread()
+    threadListLayout.onImageOptionsComplete()
   }
 
   override fun presentRemovedPostsController(controller: Controller) {
@@ -1059,7 +1094,12 @@ class ThreadLayout @JvmOverloads constructor(
     suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean)
     suspend fun setBoard(descriptor: BoardDescriptor, animated: Boolean)
 
-    fun showImages(images: @JvmSuppressWildcards List<ChanPostImage>, index: Int, chanDescriptor: ChanDescriptor, thumbnail: ThumbnailView)
+    fun showImages(
+      images: @JvmSuppressWildcards List<ChanPostImage>,
+      index: Int,
+      chanDescriptor: ChanDescriptor,
+      thumbnail: ThumbnailView
+    )
     fun showAlbum(images: @JvmSuppressWildcards List<ChanPostImage>, index: Int)
     fun onShowPosts()
     fun onShowError()

@@ -18,6 +18,7 @@ import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.chan.utils.getLifecycleFromContext
+import com.github.k1rakishou.common.AndroidUtils.getDisplaySize
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -330,14 +331,12 @@ class ImageLoaderV2(
   suspend fun calculateFilePreviewAndStoreOnDisk(
     context: Context,
     fileUuid: UUID,
-    width: Int,
-    height: Int,
     scale: Scale = Scale.FILL
   ) {
     BackgroundUtils.ensureBackgroundThread()
 
-    require(width > 0) { "Bad width: $width" }
-    require(height > 0) { "Bad height: $height" }
+    val displaySize = getDisplaySize()
+    val size = Math.max(displaySize.x, displaySize.y)
 
     val replyFileMaybe = replyManager.getReplyFileByFileUuid(fileUuid)
     if (replyFileMaybe is ModularResult.Error) {
@@ -365,8 +364,8 @@ class ImageLoaderV2(
       replyFile,
       replyFileMeta,
       context,
-      width,
-      height,
+      size,
+      size,
       scale
     )
 
@@ -548,9 +547,6 @@ class ImageLoaderV2(
 
   companion object {
     private const val TAG = "ImageLoaderV2"
-
-    const val MAX_PREVIEW_WIDTH = 512
-    const val MAX_PREVIEW_HEIGHT = 512
   }
 
 }

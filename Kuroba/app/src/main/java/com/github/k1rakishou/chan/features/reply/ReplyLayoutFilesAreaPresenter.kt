@@ -21,6 +21,7 @@ import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.PickedFile
 import com.github.k1rakishou.chan.ui.helper.picker.RemoteFilePicker
+import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -588,6 +589,13 @@ class ReplyLayoutFilesAreaPresenter(
 
       withView { showFileStatusMessage(fileStatusString) }
     }
+  }
+
+  fun isFileSupportedForReencoding(clickedFileUuid: UUID): Boolean {
+    val replyFile = replyManager.getReplyFileByFileUuid(clickedFileUuid).valueOrNull()
+      ?: return false
+
+    return MediaUtils.isFileSupportedForReencoding(replyFile.fileOnDisk)
   }
 
   sealed class FileExifInfoStatus {

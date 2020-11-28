@@ -951,8 +951,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     callback?.requestNewPostLoad()
   }
 
-  override fun showImageReencodingWindow(supportsReencode: Boolean) {
-    threadListLayoutCallback?.showImageReencodingWindow(supportsReencode)
+  override fun showImageReencodingWindow(fileUuid: UUID, supportsReencode: Boolean) {
+    threadListLayoutCallback?.showImageReencodingWindow(fileUuid, supportsReencode)
   }
 
   private fun canToolbarCollapse(): Boolean {
@@ -1183,6 +1183,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     return postAdapter.isErrorShown()
   }
 
+  fun onImageOptionsComplete() {
+    replyLayout.onImageOptionsComplete()
+  }
+
   interface ThreadListLayoutPresenterCallback {
     suspend fun showThread(threadDescriptor: ThreadDescriptor)
     fun requestNewPostLoad()
@@ -1197,7 +1201,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     fun showBottomNavBar(unlockTranslation: Boolean, unlockCollapse: Boolean)
     fun showToolbar()
     fun replyLayoutOpen(open: Boolean)
-    fun showImageReencodingWindow(supportsReencode: Boolean)
+    fun showImageReencodingWindow(fileUuid: UUID, supportsReencode: Boolean)
     fun threadBackPressed(): Boolean
     fun threadBackLongPressed()
     fun presentController(controller: Controller)

@@ -72,8 +72,6 @@ class ImagePickHelper(
         imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
           appContext,
           replyFileMeta.fileUuid,
-          ImageLoaderV2.MAX_PREVIEW_WIDTH,
-          ImageLoaderV2.MAX_PREVIEW_HEIGHT,
           Scale.FILL
         )
       }
@@ -140,8 +138,6 @@ class ImagePickHelper(
         imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
           appContext,
           replyFileMeta.fileUuid,
-          ImageLoaderV2.MAX_PREVIEW_WIDTH,
-          ImageLoaderV2.MAX_PREVIEW_HEIGHT,
           Scale.FILL
         )
       }
@@ -209,8 +205,6 @@ class ImagePickHelper(
         imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
           appContext,
           replyFileMeta.fileUuid,
-          ImageLoaderV2.MAX_PREVIEW_WIDTH,
-          ImageLoaderV2.MAX_PREVIEW_HEIGHT,
           Scale.FILL
         )
       }

@@ -308,7 +308,10 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
     when (id) {
       ACTION_OPEN_IN_EDITOR -> {
-        // TODO(KurobaEx): reply layout refactoring
+        threadListLayoutCallbacks?.showImageReencodingWindow(
+          clickedFileUuid,
+          presenter.isFileSupportedForReencoding(clickedFileUuid)
+        )
       }
       ACTION_DELETE_FILE -> {
         presenter.deleteFiles(clickedFileUuid)
@@ -405,6 +408,10 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     )
   }
 
+  fun onImageOptionsComplete() {
+    presenter.refreshAttachedFiles()
+  }
+
   private inner class ReplyFilesEpoxyController : EpoxyController() {
     var callback: EpoxyController.() -> Unit = {}
 
@@ -416,6 +423,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
   interface ThreadListLayoutCallbacks {
     fun presentController(controller: FloatingListMenuController)
+    fun showImageReencodingWindow(fileUUID: UUID, supportsReencode: Boolean)
     fun showLoadingView(cancellationFunc: () -> Unit, titleTextId: Int)
     fun hideLoadingView()
   }

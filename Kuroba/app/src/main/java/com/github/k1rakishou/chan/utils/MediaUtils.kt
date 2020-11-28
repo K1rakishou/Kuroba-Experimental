@@ -14,8 +14,8 @@ import androidx.core.math.MathUtils
 import androidx.core.util.Pair
 import androidx.exifinterface.media.ExifInterface
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter.ReencodeSettings
-import com.github.k1rakishou.chan.core.presenter.ImageReencodingPresenter.ReencodeType
+import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter.ReencodeSettings
+import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter.ReencodeType
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import java.io.File
@@ -38,6 +38,11 @@ object MediaUtils {
 
   private val PNG_HEADER = byteArrayOf(-119, 80, 78, 71, 13, 10, 26, 10)
   private val JPEG_HEADER = byteArrayOf(-1, -40)
+  private val WEBP_HEADER = arrayOf(
+    byteArrayOf(0x52, 0x49, 0x46, 0x46),
+    byteArrayOf(0x57, 0x45, 0x42, 0x50)
+  )
+
   private val random = Random()
 
   @Throws(IOException::class)
@@ -71,7 +76,7 @@ object MediaUtils {
       && !removeMetadata
       && !changeImageChecksum
     ) {
-      return inputBitmapFile
+      return null
     }
 
     var bitmap: Bitmap? = null
@@ -83,7 +88,7 @@ object MediaUtils {
       compressFormat = CompressFormat.PNG
     }
 
-    return try {
+    try {
       val opt = BitmapFactory.Options()
       opt.inMutable = true
 
@@ -132,7 +137,7 @@ object MediaUtils {
       var tempFile: File? = null
 
       try {
-        tempFile = tempFilename
+        tempFile = this.tempFile
 
         FileOutputStream(tempFile).use { output ->
           newBitmap!!.compress(
@@ -142,13 +147,14 @@ object MediaUtils {
           )
         }
 
-        tempFile
+        return tempFile
       } catch (error: Throwable) {
         if (tempFile != null) {
           if (!tempFile.delete()) {
             Logger.w(TAG, "Could not delete temp image file: " + tempFile.absolutePath)
           }
         }
+
         throw error
       } finally {
         if (newBitmap != null && !newBitmap.isRecycled) {
@@ -163,10 +169,11 @@ object MediaUtils {
   }
 
   @get:Throws(IOException::class)
-  private val tempFilename: File
+  private val tempFile: File
     private get() {
       val outputDir = AndroidUtils.getAppContext().cacheDir
       deleteOldTempFiles(outputDir.listFiles())
+
       return File.createTempFile(TEMP_FILE_NAME, TEMP_FILE_EXTENSION, outputDir)
     }
 
@@ -205,7 +212,10 @@ object MediaUtils {
 
   fun isFileSupportedForReencoding(file: File): Boolean {
     val imageFormat = getImageFormat(file)
-    return imageFormat == CompressFormat.JPEG || imageFormat == CompressFormat.PNG
+
+    return imageFormat == CompressFormat.JPEG
+      || imageFormat == CompressFormat.PNG
+      || imageFormat == CompressFormat.WEBP
   }
 
   fun getImageFormat(file: File): CompressFormat? {
@@ -214,39 +224,71 @@ object MediaUtils {
         val header = ByteArray(16)
         raf.read(header)
 
-        run {
-          var isPngHeader = true
-          val size = Math.min(PNG_HEADER.size, header.size)
-          for (i in 0 until size) {
-            if (header[i] != PNG_HEADER[i]) {
-              isPngHeader = false
-              break
-            }
-          }
-          if (isPngHeader) {
-            return CompressFormat.PNG
-          }
+        if (isPngHeader(header)) {
+          return CompressFormat.PNG
         }
 
-        var isJpegHeader = true
-        val size = Math.min(JPEG_HEADER.size, header.size)
-
-        for (i in 0 until size) {
-          if (header[i] != JPEG_HEADER[i]) {
-            isJpegHeader = false
-            break
-          }
-        }
-
-        if (isJpegHeader) {
+        if (isJpegHeader(header)) {
           return CompressFormat.JPEG
-        } else {
-          return null
         }
+
+        if (isWebpHeader(header)) {
+          return CompressFormat.WEBP
+        }
+
+        return null
       }
     } catch (e: Exception) {
       return null
     }
+  }
+
+  private fun isWebpHeader(header: ByteArray): Boolean {
+    if (!header.sliceArray(0..3).contentEquals(WEBP_HEADER[0])) {
+      return false
+    }
+
+    if (!header.sliceArray(8..11).contentEquals(WEBP_HEADER[1])) {
+      return false
+    }
+
+    return true
+  }
+
+  private fun isJpegHeader(header: ByteArray): Boolean {
+    var isJpegHeader = true
+    val size = Math.min(JPEG_HEADER.size, header.size)
+
+    for (i in 0 until size) {
+      if (header[i] != JPEG_HEADER[i]) {
+        isJpegHeader = false
+        break
+      }
+    }
+
+    if (isJpegHeader) {
+      return true
+    }
+
+    return false
+  }
+
+  private fun isPngHeader(header: ByteArray): Boolean {
+    var isPngHeader = true
+    val size = Math.min(PNG_HEADER.size, header.size)
+
+    for (i in 0 until size) {
+      if (header[i] != PNG_HEADER[i]) {
+        isPngHeader = false
+        break
+      }
+    }
+
+    if (isPngHeader) {
+      return true
+    }
+
+    return false
   }
 
   /**
@@ -255,19 +297,19 @@ object MediaUtils {
    * @param file image
    * @return a pair of dimensions, in WIDTH then HEIGHT order; -1, -1 if not determinable
    */
-  fun getImageDims(file: File): Pair<Int, Int> {
-    return try {
+  fun getImageDims(file: File): Pair<Int, Int>? {
+    try {
       val bitmap = BitmapFactory.decodeStream(FileInputStream(file))
 
       try {
-        Pair(bitmap.width, bitmap.height)
+        return Pair(bitmap.width, bitmap.height)
       } finally {
         if (bitmap != null && !bitmap.isRecycled) {
           bitmap.recycle()
         }
       }
     } catch (e: Exception) {
-      Pair(-1, -1)
+      return null
     }
   }
 
