@@ -86,7 +86,7 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
     }
 
     if (res == null) {
-      throw RuntimeException("SuspendableInitializer awaitUntilInitialized() TIMEOUT!!! time=$time")
+      throw RuntimeException("SuspendableInitializer awaitUntilInitialized() TIMEOUT!!! tag=$tag, time=$time")
     }
 
     if (logStates) {
