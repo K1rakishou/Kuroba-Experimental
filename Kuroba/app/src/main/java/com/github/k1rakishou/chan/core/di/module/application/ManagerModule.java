@@ -21,7 +21,6 @@ import android.content.Context;
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
-import com.github.k1rakishou.chan.core.helper.DialogFactory;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
 import com.github.k1rakishou.chan.core.helper.LastPageNotificationsHelper;
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder;
@@ -37,15 +36,12 @@ import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager;
 import com.github.k1rakishou.chan.core.manager.ArchivesManager;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.BookmarksManager;
-import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager;
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager;
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager;
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager;
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
-import com.github.k1rakishou.chan.core.manager.LocalSearchManager;
 import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.k1rakishou.chan.core.manager.PageRequestManager;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
@@ -227,13 +223,13 @@ public class ManagerModule {
             PrefetchLoader prefetchLoader,
             PostExtraContentLoader postExtraContentLoader,
             InlinedFileInfoLoader inlinedFileInfoLoader,
-            Chan4CloudFlareImagePreloader сhan4CloudFlareImagePreloader,
+            Chan4CloudFlareImagePreloader chan4CloudFlareImagePreloader,
             @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
         Logger.d(AppModule.DI_TAG, "OnDemandContentLoaderManager");
 
         HashSet<OnDemandContentLoader> loaders = new HashSet<>();
-        loaders.add(сhan4CloudFlareImagePreloader);
+        loaders.add(chan4CloudFlareImagePreloader);
         loaders.add(prefetchLoader);
         loaders.add(postExtraContentLoader);
         loaders.add(inlinedFileInfoLoader);
@@ -265,14 +261,6 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "PrefetchIndicatorAnimationManager");
 
         return new PrefetchImageDownloadIndicatorManager();
-    }
-
-    @Provides
-    @Singleton
-    public GlobalWindowInsetsManager provideGlobalWindowInsetsManager() {
-        Logger.d(AppModule.DI_TAG, "GlobalWindowInsetsManager");
-
-        return new GlobalWindowInsetsManager();
     }
 
     @Provides
@@ -313,14 +301,6 @@ public class ManagerModule {
         Logger.d(AppModule.DI_TAG, "PostFilterManager");
 
         return new PostFilterManager();
-    }
-
-    @Provides
-    @Singleton
-    public BottomNavBarVisibilityStateManager provideReplyViewStateManager() {
-        Logger.d(AppModule.DI_TAG, "ReplyViewStateManager");
-
-        return new BottomNavBarVisibilityStateManager();
     }
 
     @Provides
@@ -549,14 +529,6 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public LocalSearchManager provideLocalSearchManager() {
-        Logger.d(AppModule.DI_TAG, "LocalSearchManager");
-
-        return new LocalSearchManager();
-    }
-
-    @Singleton
-    @Provides
     public PostHideHelper providePostHideHelper(
             PostHideManager postHideManager,
             PostFilterManager postFilterManager
@@ -569,22 +541,8 @@ public class ManagerModule {
         );
     }
 
-    @Singleton
     @Provides
-    public DialogFactory provideDialogFactory(
-            ApplicationVisibilityManager applicationVisibilityManager,
-            ThemeEngine themeEngine
-    ) {
-        Logger.d(AppModule.DI_TAG, "DialogFactory");
-
-        return new DialogFactory(
-                applicationVisibilityManager,
-                themeEngine
-        );
-    }
-
     @Singleton
-    @Provides
     public ThreadBookmarkGroupManager provideThreadBookmarkGroupEntryManager(
             CoroutineScope appScope,
             ThreadBookmarkGroupRepository threadBookmarkGroupEntryRepository,
@@ -600,8 +558,8 @@ public class ManagerModule {
         );
     }
 
-    @Singleton
     @Provides
+    @Singleton
     public Chan4CloudFlareImagePreloaderManager provideChan4CloudFlareImagePreloaderManager(
             CoroutineScope appScope,
             RealProxiedOkHttpClient realProxiedOkHttpClient,
@@ -617,8 +575,8 @@ public class ManagerModule {
         );
     }
 
-    @Singleton
     @Provides
+    @Singleton
     public ChanThreadManager provideChanThreadManager(
             SiteManager siteManager,
             BookmarksManager bookmarksManager,
@@ -641,16 +599,16 @@ public class ManagerModule {
         );
     }
 
-    @Singleton
     @Provides
+    @Singleton
     public ThreadFollowHistoryManager provideThreadFollowHistoryManager() {
         Logger.d(AppModule.DI_TAG, "ThreadFollowHistoryManager");
 
         return new ThreadFollowHistoryManager();
     }
 
-    @Singleton
     @Provides
+    @Singleton
     public PostingLimitationsInfoManager providePostingLimitationsInfoManager(
             SiteManager siteManager
     ) {

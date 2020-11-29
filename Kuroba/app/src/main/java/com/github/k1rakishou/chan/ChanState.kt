@@ -17,11 +17,12 @@
 package com.github.k1rakishou.chan
 
 import android.os.Parcelable
-import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
+import com.github.k1rakishou.model.data.descriptor.IDescriptorParcelable
 import kotlinx.android.parcel.Parcelize
+import kotlinx.android.parcel.RawValue
 
 @Parcelize
 data class ChanState(
-  val board: DescriptorParcelable,
-  val thread: DescriptorParcelable
+  val board: @RawValue IDescriptorParcelable,
+  val thread: @RawValue IDescriptorParcelable
 ) : Parcelable

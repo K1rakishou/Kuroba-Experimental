@@ -27,7 +27,6 @@ import android.view.KeyEvent
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.util.Pair
 import androidx.core.view.ViewCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
@@ -87,6 +86,8 @@ import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
+import com.github.k1rakishou.model.data.descriptor.EmptyDescriptorParcelable
+import com.github.k1rakishou.model.data.descriptor.IDescriptorParcelable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
@@ -631,55 +632,6 @@ class StartActivity : AppCompatActivity(),
     return true
   }
 
-  private suspend fun restoreFromSavedState(savedInstanceState: Bundle): Boolean {
-    Logger.d(TAG, "restoreFromSavedState()")
-
-    // Restore the activity state from the previously saved state.
-    val chanState = savedInstanceState.getParcelable<ChanState>(STATE_KEY)
-    if (chanState == null) {
-      Logger.w(TAG, "savedInstanceState was not null, but no ChanState was found!")
-      return false
-    }
-
-    val boardThreadPair = resolveChanState(chanState)
-    if (boardThreadPair.first == null) {
-      return false
-    }
-
-    browseController?.setBoard(boardThreadPair.first!!)
-
-    if (boardThreadPair.second != null) {
-      browseController?.showThread(boardThreadPair.second!!, false)
-    }
-
-    return true
-  }
-
-  private fun resolveChanState(state: ChanState): Pair<BoardDescriptor?, ChanDescriptor.ThreadDescriptor?> {
-    val boardDescriptor =
-      (resolveChanDescriptor(state.board) as? ChanDescriptor.CatalogDescriptor)?.boardDescriptor
-    val threadDescriptor =
-      resolveChanDescriptor(state.thread) as? ChanDescriptor.ThreadDescriptor
-
-    return Pair(boardDescriptor, threadDescriptor)
-  }
-
-  private fun resolveChanDescriptor(descriptorParcelable: DescriptorParcelable): ChanDescriptor? {
-    val chanDescriptor = if (descriptorParcelable.isThreadDescriptor()) {
-      ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(descriptorParcelable)
-    } else {
-      ChanDescriptor.CatalogDescriptor.fromDescriptorParcelable(descriptorParcelable)
-    }
-
-    siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-      ?: return null
-
-    boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
-      ?: return null
-
-    return chanDescriptor
-  }
-
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   private fun setupLayout() {
     val layoutMode = ChanSettings.getCurrentLayoutMode()
@@ -813,10 +765,11 @@ class StartActivity : AppCompatActivity(),
 
   override fun onSaveInstanceState(outState: Bundle) {
     super.onSaveInstanceState(outState)
+    Logger.d(TAG, "onSaveInstanceState() called")
 
     val boardDescriptor = browseController?.chanDescriptor
     if (boardDescriptor == null) {
-      Logger.w(TAG, "Can not save instance state, the board loadable is null")
+      Logger.e(TAG, "Can not save instance state, the board loadable is null")
       return
     }
 
@@ -851,16 +804,76 @@ class StartActivity : AppCompatActivity(),
       }
     }
 
-    if (threadDescriptor == null) {
-      return
+    val threadDescriptorParcelable = if (threadDescriptor == null) {
+      EmptyDescriptorParcelable(IDescriptorParcelable.THREAD)
+    } else {
+      DescriptorParcelable.fromDescriptor(threadDescriptor)
     }
 
     val chanState = ChanState(
       DescriptorParcelable.fromDescriptor(boardDescriptor),
-      DescriptorParcelable.fromDescriptor(threadDescriptor)
+      threadDescriptorParcelable
     )
 
     outState.putParcelable(STATE_KEY, chanState)
+    Logger.d(TAG, "onSaveInstanceState() end, chanState=$chanState")
+  }
+
+  private suspend fun restoreFromSavedState(savedInstanceState: Bundle): Boolean {
+    Logger.d(TAG, "restoreFromSavedState() called")
+
+    // Restore the activity state from the previously saved state.
+    val chanState = savedInstanceState.getParcelable<ChanState>(STATE_KEY)
+    if (chanState == null) {
+      Logger.e(TAG, "restoreFromSavedState() savedInstanceState was not null, but no ChanState was found!")
+      return false
+    }
+
+    val boardThreadPair = resolveChanState(chanState)
+    if (boardThreadPair.first == null) {
+      Logger.d(TAG, "restoreFromSavedState() boardDescriptor is null, boardThreadPair=${boardThreadPair}")
+      return false
+    }
+
+    Logger.d(TAG, "restoreFromSavedState() boardThreadPair=${boardThreadPair}")
+    browseController?.setBoard(boardThreadPair.first!!)
+
+    if (boardThreadPair.second != null) {
+      browseController?.showThread(boardThreadPair.second!!, false)
+    }
+
+    return true
+  }
+
+  private fun resolveChanState(state: ChanState): Pair<BoardDescriptor?, ChanDescriptor.ThreadDescriptor?> {
+    val boardDescriptor =
+      (resolveChanDescriptor(state.board) as? ChanDescriptor.CatalogDescriptor)?.boardDescriptor
+    val threadDescriptor =
+      resolveChanDescriptor(state.thread) as? ChanDescriptor.ThreadDescriptor
+
+    return Pair(boardDescriptor, threadDescriptor)
+  }
+
+  private fun resolveChanDescriptor(descriptorParcelable: IDescriptorParcelable): ChanDescriptor? {
+    if (descriptorParcelable is EmptyDescriptorParcelable) {
+      return null
+    }
+
+    descriptorParcelable as DescriptorParcelable
+
+    val chanDescriptor = if (descriptorParcelable.isThreadDescriptor()) {
+      ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(descriptorParcelable)
+    } else {
+      ChanDescriptor.CatalogDescriptor.fromDescriptorParcelable(descriptorParcelable)
+    }
+
+    siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      ?: return null
+
+    boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
+      ?: return null
+
+    return chanDescriptor
   }
 
   fun pushController(controller: Controller) {
