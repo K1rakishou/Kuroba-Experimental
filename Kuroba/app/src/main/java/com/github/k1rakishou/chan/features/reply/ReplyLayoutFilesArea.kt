@@ -31,6 +31,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
@@ -142,7 +143,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
   fun onWrappingModeChanged(matchParent: Boolean) {
     if (presenter.hasAttachedFiles()) {
-      val attachNewFileButtonHeight = AppModuleAndroidUtils.getDimen(R.dimen.attach_new_file_button_height)
+      val attachNewFileButtonHeight = getDimen(R.dimen.attach_new_file_button_height)
 
       epoxyRecyclerView.updateLayoutParams<ConstraintLayout.LayoutParams> {
         if (matchParent) {
@@ -153,22 +154,13 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
         }
       }
     } else {
-      val attachNewFileButtonWideHeight =
-        AppModuleAndroidUtils.getDimen(R.dimen.attach_new_file_button_wide_height)
+      val attachNewFileButtonWideHeight = getDimen(R.dimen.attach_new_file_button_wide_height)
+      val buttonMargins = getDimen(R.dimen.attach_new_file_button_vertical_margin) * 2
 
       epoxyRecyclerView.updateLayoutParams<ConstraintLayout.LayoutParams> {
-        matchConstraintMaxHeight = attachNewFileButtonWideHeight
+        matchConstraintMaxHeight = attachNewFileButtonWideHeight + buttonMargins
       }
     }
-  }
-
-  fun onBackPressed(): Boolean {
-    if (presenter.hasSelectedFiles()) {
-      presenter.clearSelection()
-      return true
-    }
-
-    return false
   }
 
   private fun renderState(state: ReplyLayoutFilesState) {
@@ -248,7 +240,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
       }
 
       val attachNewFileButtonWidth =
-        AppModuleAndroidUtils.getDimen(R.dimen.attach_new_file_button_width)
+        getDimen(R.dimen.attach_new_file_button_width)
 
       val spanCount = (epoxyRecyclerViewWidth / attachNewFileButtonWidth)
         .coerceAtLeast(MIN_FILES_PER_ROW)

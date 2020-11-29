@@ -148,6 +148,7 @@ class ReplyLayout @JvmOverloads constructor(
   private lateinit var flag: ColorizableEditText
   private lateinit var options: ColorizableEditText
   private lateinit var nameOptions: LinearLayout
+  private lateinit var commentButtonsHolder: LinearLayout
   private lateinit var commentQuoteButton: ColorizableBarButton
   private lateinit var commentSpoilerButton: ColorizableBarButton
   private lateinit var commentCodeButton: ColorizableBarButton
@@ -264,6 +265,7 @@ class ReplyLayout @JvmOverloads constructor(
     flag = replyInputLayout.findViewById(R.id.flag)
     options = replyInputLayout.findViewById(R.id.options)
     nameOptions = replyInputLayout.findViewById(R.id.name_options)
+    commentButtonsHolder = replyInputLayout.findViewById(R.id.comment_buttons)
     commentQuoteButton = replyInputLayout.findViewById(R.id.comment_quote)
     commentSpoilerButton = replyInputLayout.findViewById(R.id.comment_spoiler)
     commentCodeButton = replyInputLayout.findViewById(R.id.comment_code)
@@ -378,6 +380,7 @@ class ReplyLayout @JvmOverloads constructor(
 
     if (open) {
       replyLayoutFilesArea.updateLayoutManager()
+      updateCommentButtonsHolderVisibility()
     }
 
     if (open && proxyStorage.isDirty()) {
@@ -419,10 +422,6 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun unbindReplyImages(chanDescriptor: ChanDescriptor) {
     replyLayoutFilesArea.onUnbind()
-  }
-
-  override fun filesAreaOnBackPressed(): Boolean {
-    return replyLayoutFilesArea.onBackPressed()
   }
 
   override fun requestWrappingModeUpdate() {
@@ -874,26 +873,52 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun openCommentQuoteButton(open: Boolean) {
     commentQuoteButton.visibility = if (open) VISIBLE else GONE
+    updateCommentButtonsHolderVisibility()
   }
 
   override fun openCommentSpoilerButton(open: Boolean) {
     commentSpoilerButton.visibility = if (open) VISIBLE else GONE
+    updateCommentButtonsHolderVisibility()
   }
 
   override fun openCommentCodeButton(open: Boolean) {
     commentCodeButton.visibility = if (open) VISIBLE else GONE
+    updateCommentButtonsHolderVisibility()
   }
 
   override fun openCommentEqnButton(open: Boolean) {
     commentEqnButton.visibility = if (open) VISIBLE else GONE
+    updateCommentButtonsHolderVisibility()
   }
 
   override fun openCommentMathButton(open: Boolean) {
     commentMathButton.visibility = if (open) VISIBLE else GONE
+    updateCommentButtonsHolderVisibility()
   }
 
   override fun openCommentSJISButton(open: Boolean) {
     commentSJISButton.visibility = if (open) VISIBLE else GONE
+    updateCommentButtonsHolderVisibility()
+  }
+
+  private fun updateCommentButtonsHolderVisibility() {
+    if (commentQuoteButton.visibility == View.VISIBLE ||
+      commentSpoilerButton.visibility == View.VISIBLE ||
+      commentCodeButton.visibility == View.VISIBLE ||
+      commentEqnButton.visibility == View.VISIBLE ||
+      commentMathButton.visibility == View.VISIBLE ||
+      commentSJISButton.visibility == View.VISIBLE
+    ) {
+      if (commentButtonsHolder.visibility != View.VISIBLE) {
+        commentButtonsHolder.visibility = View.VISIBLE
+      }
+
+      return
+    }
+
+    if (commentButtonsHolder.visibility != View.GONE) {
+      commentButtonsHolder.visibility = View.GONE
+    }
   }
 
   @SuppressLint("SetTextI18n")
@@ -1065,6 +1090,8 @@ class ReplyLayout @JvmOverloads constructor(
     }
 
     currentOrientation = newOrientation
+
+    updateCommentButtonsHolderVisibility()
     replyLayoutFilesArea.updateLayoutManager()
   }
 

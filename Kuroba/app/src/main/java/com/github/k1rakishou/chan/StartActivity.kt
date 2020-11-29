@@ -169,34 +169,29 @@ class StartActivity : AppCompatActivity(),
       return
     }
 
-    if (isFreshStart) {
-      Logger.d(TAG, "onCreate() start isFreshStart: $isFreshStart, initializing everything")
+    Logger.d(TAG, "onCreate() start isFreshStart: $isFreshStart, initializing everything")
 
-      startActivityComponent = Chan.getComponent()
-        .activityComponentBuilder()
-        .startActivity(this)
-        .startActivityModule(StartActivityModule())
-        .build()
-        .also { component -> component.inject(this) }
+    startActivityComponent = Chan.getComponent()
+      .activityComponentBuilder()
+      .startActivity(this)
+      .startActivityModule(StartActivityModule())
+      .build()
+      .also { component -> component.inject(this) }
 
-      val createUiTime = measureTime { createUi() }
-      Logger.d(TAG, "createUi took $createUiTime")
+    val createUiTime = measureTime { createUi() }
+    Logger.d(TAG, "createUi took $createUiTime")
 
-      themeEngine.addListener(this)
-      themeEngine.refreshViews()
+    themeEngine.addListener(this)
+    themeEngine.refreshViews()
 
-      imagePickHelper.onActivityCreated(this)
+    imagePickHelper.onActivityCreated(this)
 
-      lifecycleScope.launch {
-        val initializeDepsTime = measureTime { initializeDependencies(this, savedInstanceState) }
-        Logger.d(TAG, "initializeDependencies took $initializeDepsTime")
-      }
-
-      Logger.d(TAG, "onCreate() end isFreshStart: $isFreshStart")
-      return
+    lifecycleScope.launch {
+      val initializeDepsTime = measureTime { initializeDependencies(this, savedInstanceState) }
+      Logger.d(TAG, "initializeDependencies took $initializeDepsTime")
     }
 
-    onNewIntentInternal(intent)
+    Logger.d(TAG, "onCreate() end isFreshStart: $isFreshStart")
   }
 
   override fun onDestroy() {

@@ -180,10 +180,6 @@ class ReplyPresenter @Inject constructor(
       return true
     }
 
-    if (callback.filesAreaOnBackPressed()) {
-      return true
-    }
-
     if (isExpanded) {
       onMoreClicked()
       return true
@@ -198,7 +194,7 @@ class ReplyPresenter @Inject constructor(
     callback.setExpanded(expanded = isExpanded, isCleaningUp = false)
     callback.openNameOptions(isExpanded)
 
-    if (currentChanDescriptor!!.isCatalogDescriptor()) {
+    if (currentChanDescriptor?.isCatalogDescriptor() == true) {
       callback.openSubject(isExpanded)
     }
 
@@ -598,9 +594,11 @@ class ReplyPresenter @Inject constructor(
     replyManager.readReply(newThreadDescriptor) { newReply ->
       replyManager.readReply(prevChanDescriptor) { prevReply ->
         val prevName = prevReply.postName
+        val prevFlag = prevReply.flag
 
         newReply.resetAfterPosting()
         newReply.postName = prevName
+        newReply.flag = prevFlag
       }
     }
 
@@ -747,7 +745,6 @@ class ReplyPresenter @Inject constructor(
     fun restoreComment(prevCommentInputState: CommentEditingHistory.CommentInputState)
     suspend fun bindReplyImages(chanDescriptor: ChanDescriptor)
     fun unbindReplyImages(chanDescriptor: ChanDescriptor)
-    fun filesAreaOnBackPressed(): Boolean
   }
 
   companion object {

@@ -5,7 +5,7 @@
     android:id="@+id/reply_attachment_root"
     android:layout_width="match_parent"
     android:layout_height="@dimen/attach_new_file_button_height"
-    android:layout_margin="4dp"
+    android:layout_margin="@dimen/attach_new_file_button_vertical_margin"
     android:background="?attr/selectableItemBackgroundBorderless"
     android:clickable="true"
     android:focusable="true"
@@ -39,7 +39,8 @@
             android:layout_marginEnd="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
-            android:focusable="true" />
+            android:focusable="true"
+            tools:src="@drawable/ic_help_outline_white_24dp"/>
 
         <com.github.k1rakishou.chan.ui.view.SelectionCheckView
             android:id="@+id/reply_attachment_selection_check_view"
@@ -62,9 +63,8 @@
         <TextView
             android:id="@+id/reply_attachment_file_size"
             android:layout_width="wrap_content"
-            android:layout_height="20dp"
+            android:layout_height="wrap_content"
             android:ellipsize="middle"
-            android:gravity="center_vertical"
             android:singleLine="true"
             android:textColor="#fff"
             android:textSize="14sp"
@@ -73,9 +73,8 @@
         <TextView
             android:id="@+id/reply_attachment_file_dimensions"
             android:layout_width="wrap_content"
-            android:layout_height="20dp"
+            android:layout_height="wrap_content"
             android:ellipsize="middle"
-            android:gravity="center_vertical"
             android:singleLine="true"
             android:textColor="#fff"
             android:textSize="14sp"

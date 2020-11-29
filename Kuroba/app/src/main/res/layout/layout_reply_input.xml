@@ -38,7 +38,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_height="wrap_content"
             android:animateLayoutChanges="true"
             android:baselineAligned="false"
-            android:minHeight="124dp"
             android:orientation="horizontal"
             tools:ignore="ContentDescription,RtlHardcoded,RtlSymmetry">
 
@@ -233,10 +232,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
             <LinearLayout
                 android:id="@+id/buttons"
-                android:layout_width="52dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="8dp">
+                android:padding="4dp">
 
                 <ImageView
                     android:id="@+id/more"
@@ -245,7 +244,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:background="?attr/selectableItemBackgroundBorderless"
                     android:clickable="true"
                     android:focusable="true"
-                    android:padding="10dp" />
+                    android:padding="8dp" />
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:id="@+id/captcha_button_container"

@@ -34,6 +34,7 @@ import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout;
 
 public class ThreadSlidingPaneLayout extends SlidingPaneLayoutEx implements IColorizableWidget {
+    private static final int SLIDE_PANE_OVERHANG_SIZE = dp(20);
 
     @Inject
     ThemeEngine themeEngine;
@@ -70,6 +71,8 @@ public class ThreadSlidingPaneLayout extends SlidingPaneLayoutEx implements ICol
         super.onFinishInflate();
         leftPane = findViewById(R.id.left_pane);
         rightPane = findViewById(R.id.right_pane);
+
+        setOverhangSize(SLIDE_PANE_OVERHANG_SIZE);
     }
 
     @Override
@@ -110,13 +113,8 @@ public class ThreadSlidingPaneLayout extends SlidingPaneLayoutEx implements ICol
         ViewGroup.LayoutParams leftParams = leftPane.getLayoutParams();
         ViewGroup.LayoutParams rightParams = rightPane.getLayoutParams();
 
-        if (width < dp(500)) {
-            leftParams.width = width - dp(30);
-            rightParams.width = width;
-        } else {
-            leftParams.width = width - dp(60);
-            rightParams.width = width;
-        }
+        leftParams.width = width - SLIDE_PANE_OVERHANG_SIZE;
+        rightParams.width = width;
 
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
