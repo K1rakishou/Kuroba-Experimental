@@ -45,7 +45,12 @@ abstract class AbstractFilePicker<T>(
         throw IOException("Failed to get file meta")
       }
 
-      copyExternalFileIntoReplyFile(appContext, externalFileUri, replyFile)
+      try {
+        copyExternalFileIntoReplyFile(appContext, externalFileUri, replyFile)
+      } catch (error: Throwable) {
+        replyFile.deleteFromDisk()
+        throw error
+      }
 
       return@Try replyFile
     }

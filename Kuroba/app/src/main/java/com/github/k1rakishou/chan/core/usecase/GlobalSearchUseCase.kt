@@ -37,7 +37,7 @@ class GlobalSearchUseCase(
 
     val site = siteManager.bySiteDescriptor(parameter.siteDescriptor)
     if (site == null) {
-      Logger.e(TAG, "Failed to find ${parameter.siteDescriptor}")
+      Logger.e(TAG, "doSearch() Failed to find ${parameter.siteDescriptor}")
       return SearchResult.Failure(SearchError.SiteNotFound(parameter.siteDescriptor))
     }
 

@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParamsBuilder
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ChanThemeColorId
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
@@ -31,7 +32,7 @@ open class SimpleCommentParser {
     rule(StyleRule.tagRule("br").just("\n"))
     rule(StyleRule.tagRule("wbr").nullify())
 
-    rule(StyleRule.tagRule("s").link(com.github.k1rakishou.core_spannable.PostLinkable.Type.SPOILER))
+    rule(StyleRule.tagRule("s").link(PostLinkable.Type.SPOILER))
     rule(StyleRule.tagRule("b").bold())
     rule(StyleRule.tagRule("i").italic())
     rule(StyleRule.tagRule("em").italic())
@@ -45,7 +46,7 @@ open class SimpleCommentParser {
 
     rule(StyleRule.tagRule("span")
       .cssClass("spoiler")
-      .link(com.github.k1rakishou.core_spannable.PostLinkable.Type.SPOILER)
+      .link(PostLinkable.Type.SPOILER)
     )
 
     rule(StyleRule.tagRule("span").cssClass("abbr").nullify())

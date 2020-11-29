@@ -82,6 +82,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.doIgnoringTextWatcher
 import com.github.k1rakishou.chan.utils.setAlphaFast
@@ -289,7 +290,19 @@ class ReplyLayout @JvmOverloads constructor(
     commentMathButton.setOnClickListener(this)
     commentEqnButton.setOnClickListener(this)
     commentSJISButton.setOnClickListener(this)
+
     commentRevertChangeButton.setOnClickListener(this)
+    commentRevertChangeButton.setOnLongClickListener {
+      val lastCommentState = CommentInputState(
+        comment.text?.toString() ?: "",
+        comment.selectionStart,
+        comment.selectionEnd
+      )
+
+      presenter.clearCommentChangeHistory(lastCommentState)
+      showToast(context, context.getString(R.string.reply_layout_comment_change_history_cleared))
+      return@setOnLongClickListener true
+    }
 
     comment.addTextChangedListener(this)
     comment.setSelectionChangedListener(this)

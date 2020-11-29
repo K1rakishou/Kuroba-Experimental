@@ -397,12 +397,16 @@ class ReplyLayoutFilesAreaPresenter(
               EpoxyReplyFileView.SpoilerInfo(replyFileMeta.spoiler, boardSupportsSpoilers)
             }
 
+            val imageDimensions = MediaUtils.getImageDims(replyFile.fileOnDisk)
+              ?.let { dimensions -> ReplyFileAttachable.ImageDimensions(dimensions.first!!, dimensions.second!!) }
+
             return@map ReplyFileAttachable(
               fileUuid = replyFileMeta.fileUuid,
               fileName = replyFileMeta.fileName,
               spoilerInfo = spoilerInfo,
               selected = isSelected,
               fileSize = fileFileSizeMap[replyFile.fileOnDisk.absolutePath]!!,
+              imageDimensions = imageDimensions,
               attachAdditionalInfo = EpoxyReplyFileView.AttachAdditionalInfo(
                 fileExifStatus = fileExifStatus,
                 totalFileSizeExceeded = totalFileSizeExceeded,
@@ -560,6 +564,10 @@ class ReplyLayoutFilesAreaPresenter(
         }
 
         appendLine("File size: ${getReadableFileSize(clickedFile.fileSize)}")
+
+        clickedFile.imageDimensions?.let { imageDimensions ->
+          appendLine("Image dimensions: ${imageDimensions.width}x${imageDimensions.height}")
+        }
 
         if (maxBoardFileSizeRaw > 0 && clickedFile.fileSize > maxBoardFileSizeRaw) {
           appendLine("Exceeds max board file size: true, board max file size: $maxBoardFileSize")

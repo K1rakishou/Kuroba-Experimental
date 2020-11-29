@@ -3,6 +3,7 @@
     android:id="@+id/reply_new_attachable_button"
     android:layout_width="match_parent"
     android:layout_height="@dimen/attach_new_file_button_height"
+    android:layout_margin="4dp"
     android:background="?attr/selectableItemBackgroundBorderless"
     android:clickable="true"
     android:focusable="true">

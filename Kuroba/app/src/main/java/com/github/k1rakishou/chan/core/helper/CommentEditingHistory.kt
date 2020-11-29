@@ -62,6 +62,13 @@ class CommentEditingHistory(
     buffer.clear()
   }
 
+  fun clear(lastCommentState: CommentInputState) {
+    buffer.clear()
+    buffer.push(lastCommentState)
+
+    callback.updateRevertChangeButtonVisibility(isBufferEmpty = true)
+  }
+
   private fun isHistoryActuallyEmpty(): Boolean {
     if (buffer.isEmpty()) {
       return true

@@ -20,9 +20,11 @@ import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutFilesAreaPresenter
+import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
 import com.github.k1rakishou.chan.ui.view.SelectionCheckView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDrawable
+import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
 import java.util.*
@@ -47,6 +49,7 @@ class EpoxyReplyFileView @JvmOverloads constructor(
   private val replyAttachmentImageView: AppCompatImageView
   private val replyAttachmentFileName: TextView
   private val replyAttachmentFileSize: TextView
+  private val replyAttachmentFileDimensions: TextView
   private val replyAttachmentSelectionView: SelectionCheckView
   private val replyAttachmentStatusView: AppCompatImageView
   private val replyAttachmentSpoiler: TextView
@@ -61,6 +64,7 @@ class EpoxyReplyFileView @JvmOverloads constructor(
     replyAttachmentImageView = findViewById(R.id.reply_attachment_image_view)
     replyAttachmentFileName = findViewById(R.id.reply_attachment_file_name)
     replyAttachmentFileSize = findViewById(R.id.reply_attachment_file_size)
+    replyAttachmentFileDimensions = findViewById(R.id.reply_attachment_file_dimensions)
     replyAttachmentSelectionView = findViewById(R.id.reply_attachment_selection_check_view)
     replyAttachmentStatusView = findViewById(R.id.reply_attachment_status_icon)
     replyAttachmentSpoiler = findViewById(R.id.reply_attachment_file_spoiler)
@@ -115,6 +119,10 @@ class EpoxyReplyFileView @JvmOverloads constructor(
         scale = Scale.FILL,
         transformations = transformations
       ) { bitmapDrawable ->
+        if (attachmentFileUuid == null || attachmentFileUuid != fileUuid) {
+          return@loadRelyFilePreviewFromDisk
+        }
+
         replyAttachmentImageView.setImageBitmap(bitmapDrawable.bitmap)
       }
     }
@@ -138,11 +146,11 @@ class EpoxyReplyFileView @JvmOverloads constructor(
   @ModelProp
   fun attachmentSpoiler(spoilerInfo: SpoilerInfo?) {
     if (spoilerInfo == null) {
-      replyAttachmentSpoiler.visibility = View.GONE
+      replyAttachmentSpoiler.setVisibilityFast(View.GONE)
       return
     }
 
-    replyAttachmentSpoiler.visibility = View.VISIBLE
+    replyAttachmentSpoiler.setVisibilityFast(View.VISIBLE)
     replyAttachmentSpoiler.text = "(S)"
 
     val markedAsSpoiler = spoilerInfo.markedAsSpoiler
@@ -167,6 +175,17 @@ class EpoxyReplyFileView @JvmOverloads constructor(
   @ModelProp
   fun attachmentFileSize(size: Long) {
     replyAttachmentFileSize.text = getReadableFileSize(size)
+  }
+
+  @ModelProp
+  fun attachmentFileDimensions(imageDimensions: ReplyFileAttachable.ImageDimensions?) {
+    if (imageDimensions == null) {
+      replyAttachmentFileDimensions.setVisibilityFast(View.GONE)
+      return
+    }
+
+    replyAttachmentFileDimensions.setVisibilityFast(View.VISIBLE)
+    replyAttachmentFileDimensions.text = "${imageDimensions.width}x${imageDimensions.height}"
   }
 
   @ModelProp

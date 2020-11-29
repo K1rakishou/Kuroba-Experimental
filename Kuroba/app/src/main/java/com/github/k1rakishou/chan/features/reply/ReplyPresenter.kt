@@ -180,12 +180,12 @@ class ReplyPresenter @Inject constructor(
       return true
     }
 
-    if (isExpanded) {
-      onMoreClicked()
+    if (callback.filesAreaOnBackPressed()) {
       return true
     }
 
-    if (callback.filesAreaOnBackPressed()) {
+    if (isExpanded) {
+      onMoreClicked()
       return true
     }
 
@@ -348,6 +348,10 @@ class ReplyPresenter @Inject constructor(
 
   fun onRevertChangeButtonClicked() {
     commentEditingHistory.onRevertChangeButtonClicked()
+  }
+
+  fun clearCommentChangeHistory(lastCommentState: CommentEditingHistory.CommentInputState) {
+    commentEditingHistory.clear(lastCommentState)
   }
 
   override fun updateRevertChangeButtonVisibility(isBufferEmpty: Boolean) {

@@ -84,8 +84,6 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     )
   }
 
-  // TODO(KurobaEx): reply layout refactoring: image editing
-
   init {
     AppModuleAndroidUtils.extractStartActivityComponent(context)
       .inject(this)
@@ -220,6 +218,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
               attachmentSelected(replyAttachable.selected)
               attachmentSpoiler(replyAttachable.spoilerInfo)
               attachmentFileSize(replyAttachable.fileSize)
+              attachmentFileDimensions(replyAttachable.imageDimensions)
               attachAdditionalInfo(replyAttachable.attachAdditionalInfo)
               exceedsMaxFilesPerPostLimit(replyAttachable.maxAttachedFilesCountExceeded)
               onClickListener { fileUuid -> presenter.updateFileSelection(fileUuid) }

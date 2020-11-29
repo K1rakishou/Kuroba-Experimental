@@ -1159,5 +1159,6 @@ Don't have a 4chan Pass?<br>
     <string name="share_success_message">Added %1$d new file(s) to reply file storage</string>
     <string name="share_error_message">Failed to add new file(s), see logs for more info</string>
     <string name="attached_file_info">Attached file info</string>
+    <string name="reply_layout_comment_change_history_cleared">Comment change history cleared</string>
 
 </resources>
