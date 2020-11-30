@@ -52,6 +52,7 @@ class DrawerPresenter(
 
     scope.launch {
       setState(HistoryControllerState.Loading)
+      reloadNavigationHistory()
 
       historyNavigationManager.listenForNavigationStackChanges()
         .asFlow()
