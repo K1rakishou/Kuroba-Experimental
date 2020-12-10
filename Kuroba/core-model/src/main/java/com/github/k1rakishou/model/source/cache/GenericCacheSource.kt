@@ -65,13 +65,9 @@ open class GenericCacheSource<Key, Value>(
 
   override fun firstOrNull(predicate: (Value) -> Boolean): Value? {
     return lock.read {
-      for (value in actualCache.values) {
-        if (predicate(value)) {
-          return@read value
-        }
+      return@read actualCache.values.firstOrNull {
+        predicate(it)
       }
-
-      return@read null
     }
   }
 

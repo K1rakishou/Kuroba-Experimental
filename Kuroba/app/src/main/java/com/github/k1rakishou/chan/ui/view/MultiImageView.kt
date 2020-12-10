@@ -28,7 +28,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.drawable.BitmapDrawable
-import android.net.Uri
 import android.util.AttributeSet
 import android.view.GestureDetector
 import android.view.MotionEvent
@@ -505,7 +504,7 @@ class MultiImageView @JvmOverloads constructor(
     }
 
     val extraInfo = DownloadRequestExtraInfo(
-      postImage!!.size,
+      postImage.size,
       postImage.fileHash
     )
 
@@ -637,7 +636,7 @@ class MultiImageView @JvmOverloads constructor(
     }
 
     val extraInfo = DownloadRequestExtraInfo(
-      postImage!!.size,
+      postImage.size,
       postImage.fileHash
     )
 

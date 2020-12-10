@@ -750,7 +750,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
     }
 
     public interface ThumbDragListener {
-        public void onDragStarted();
-        public void onDragEnded();
+        void onDragStarted();
+        void onDragEnded();
     }
 }

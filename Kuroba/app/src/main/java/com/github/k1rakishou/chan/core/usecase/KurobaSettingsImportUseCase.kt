@@ -591,7 +591,7 @@ class KurobaSettingsImportUseCase(
         val databaseSiteId = split[0].toIntOrNull()
         val boardCode = split[1]
 
-        if (databaseSiteId == null || boardCode.isNullOrEmpty()) {
+        if (databaseSiteId == null || boardCode.isEmpty()) {
           throw KurobaSettingsImportException.ParsingException(
             "Bad databaseSiteId=($databaseSiteId) or boardCode=($boardCode), split=$split, " +
               "siteIdMap=${siteIdMapToString(siteIdMap)}"

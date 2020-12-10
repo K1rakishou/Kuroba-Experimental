@@ -50,7 +50,7 @@ class SaveLocationSetupDelegate(
   fun showUseSAFOrOldAPIForSaveLocationDialog() {
     BackgroundUtils.ensureMainThread()
 
-    callbacks.runWithWritePermissionsOrShowErrorToast({
+    callbacks.runWithWritePermissionsOrShowErrorToast {
       dialogFactory.createSimpleConfirmationDialog(
         context = context,
         titleTextId = R.string.media_settings_use_saf_for_save_location_dialog_title,
@@ -73,7 +73,7 @@ class SaveLocationSetupDelegate(
         negativeButtonText = getString(R.string.media_settings_use_saf_dialog_negative_button_text),
         onNegativeButtonClickListener = { onSaveLocationUseOldApiClicked() }
       )
-    })
+    }
   }
 
   /**
@@ -84,9 +84,8 @@ class SaveLocationSetupDelegate(
 
     val saveLocationController = SaveLocationController(
       context,
-      SaveLocationController.SaveLocationControllerMode.ImageSaveLocation,
-      { dirPath -> presenter.onSaveLocationChosen(dirPath) }
-    )
+      SaveLocationController.SaveLocationControllerMode.ImageSaveLocation
+    ) { dirPath -> presenter.onSaveLocationChosen(dirPath) }
 
     callbacks.pushController(saveLocationController)
   }

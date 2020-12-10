@@ -13,7 +13,7 @@ class RingBuffer<T>(
   init {
     require(maxSize > 0) { "Bad maxSize: $maxSize" }
 
-    array = Array<Any?>(maxSize, { null }) as Array<T?>
+    array = Array<Any?>(maxSize) { null } as Array<T?>
   }
 
   fun push(element: T) {

@@ -45,11 +45,10 @@ public class ChanSettings {
     public static final String NO_HASH_SET = "NO_HASH_SET";
 
     private static ChanSettingsInfo chanSettingsInfo;
-    private static Lazy<String> sharedPrefsFile = LazyKt.lazy(() -> {
-        return "shared_prefs/"
-                + chanSettingsInfo.getApplicationId()
-                + "_preferences.xml";
-    });
+    private static Lazy<String> sharedPrefsFile = LazyKt.lazy(() ->
+            "shared_prefs/"
+            + chanSettingsInfo.getApplicationId()
+            + "_preferences.xml");
 
     public static void init(ChanSettingsInfo info) {
         chanSettingsInfo = info;

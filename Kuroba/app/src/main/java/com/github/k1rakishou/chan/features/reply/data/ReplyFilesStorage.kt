@@ -457,7 +457,7 @@ class ReplyFilesStorage(
 
           attachFile.delete()
           fileMeta.delete()
-          previewFile?.delete()
+          previewFile.delete()
 
           return@forEach
         }
@@ -465,7 +465,7 @@ class ReplyFilesStorage(
         processedMetaFiles += fileMeta.absolutePath
         newAttachFiles += replyFile
 
-        previewFile?.let { previewFileOnDisk -> allPreviewFiles.remove(previewFileOnDisk.absolutePath) }
+        previewFile.let { previewFileOnDisk -> allPreviewFiles.remove(previewFileOnDisk.absolutePath) }
       }
 
       if (processedMetaFiles.isNotEmpty()) {

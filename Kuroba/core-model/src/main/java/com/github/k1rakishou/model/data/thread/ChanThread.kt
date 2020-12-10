@@ -575,7 +575,7 @@ class ChanThread(
   }
 
   companion object {
-    private var POSTS_COMPARATOR = compareBy<ChanPost>({ chanPost -> chanPost.postDescriptor.postNo })
+    private var POSTS_COMPARATOR = compareBy<ChanPost> { chanPost -> chanPost.postDescriptor.postNo }
       .thenBy { chanPost -> chanPost.postDescriptor.postSubNo }
   }
 }

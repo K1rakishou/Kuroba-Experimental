@@ -309,11 +309,11 @@ class ReplyLayout @JvmOverloads constructor(
 
     comment.addTextChangedListener(this)
     comment.setSelectionChangedListener(this)
-    comment.setOnFocusChangeListener({ _, focused: Boolean ->
+    comment.setOnFocusChangeListener { _, focused: Boolean ->
       if (!focused) {
         AndroidUtils.hideKeyboard(comment)
       }
-    })
+    }
 
     comment.setPlainTextPaste(true)
     setupCommentContextMenu()
@@ -327,10 +327,10 @@ class ReplyLayout @JvmOverloads constructor(
 
     AndroidUtils.setBoundlessRoundRippleBackground(submit)
     submit.setOnClickListener(this)
-    submit.setOnLongClickListener({
+    submit.setOnLongClickListener {
       presenter.onSubmitClicked(true)
       true
-    })
+    }
 
     // Inflate captcha layout
     captchaContainer = AppModuleAndroidUtils.inflate(

@@ -319,19 +319,15 @@ class PostCell : LinearLayout, PostCellInterface {
 
     val isTextOnly = ChanSettings.textOnly.get()
 
-    for (i in post!!.postImages.indices) {
-      if (!post!!.postImages[i].equalUrl(postImage)) {
-        continue
+    return post!!.postImages.indices
+      .firstOrNull { post!!.postImages[it].equalUrl(postImage) }
+      ?.let {
+        if (isTextOnly) {
+          null
+        } else {
+          thumbnailViews[it]
+        }
       }
-
-      return if (isTextOnly) {
-        null
-      } else {
-        thumbnailViews[i]
-      }
-    }
-
-    return null
   }
 
   override fun hasOverlappingRendering(): Boolean {

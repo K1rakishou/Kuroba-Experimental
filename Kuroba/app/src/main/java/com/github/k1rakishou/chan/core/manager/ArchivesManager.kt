@@ -128,13 +128,9 @@ open class ArchivesManager(
 
   fun extractArchiveTypeFromLinkOrNull(link: String): ArchiveType? {
     return lock.read {
-      for (archiveDescriptor in allArchiveDescriptors) {
-        if (link.contains(archiveDescriptor.domain, ignoreCase = true)) {
-          return@read archiveDescriptor.archiveType
-        }
-      }
-
-      return@read null
+      return@read allArchiveDescriptors
+        .firstOrNull { link.contains(it.domain, ignoreCase = true) }
+        ?.archiveType
     }
   }
 

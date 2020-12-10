@@ -167,9 +167,8 @@ public class ImageOptionsController
 
         imageFileName.setText(presenter.getCurrentFileName());
 
-        generateNewFileName.setOnClickListener(v -> {
-            imageFileName.setText(presenter.getGenerateNewFileName());
-        });
+        generateNewFileName.setOnClickListener(v ->
+                imageFileName.setText(presenter.getGenerateNewFileName()));
 
         if (presenter.getImageFormat() != Bitmap.CompressFormat.JPEG) {
             fixExif.setChecked(false);

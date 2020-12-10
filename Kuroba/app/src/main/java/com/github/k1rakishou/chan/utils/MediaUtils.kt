@@ -25,6 +25,8 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.io.RandomAccessFile
 import java.util.*
+import kotlin.math.abs
+import kotlin.math.min
 
 object MediaUtils {
   private const val TAG = "BitmapUtils"
@@ -193,8 +195,8 @@ object MediaUtils {
   }
 
   private fun changeBitmapChecksum(bitmap: Bitmap) {
-    val randomX = Math.abs(random.nextInt()) % bitmap.width
-    val randomY = Math.abs(random.nextInt()) % bitmap.height
+    val randomX = abs(random.nextInt()) % bitmap.width
+    val randomY = abs(random.nextInt()) % bitmap.height
 
     // one pixel is enough to change the checksum of an image
     var pixel = bitmap.getPixel(randomX, randomY)
@@ -257,14 +259,10 @@ object MediaUtils {
   }
 
   private fun isJpegHeader(header: ByteArray): Boolean {
-    var isJpegHeader = true
-    val size = Math.min(JPEG_HEADER.size, header.size)
+    val size = min(JPEG_HEADER.size, header.size)
 
-    for (i in 0 until size) {
-      if (header[i] != JPEG_HEADER[i]) {
-        isJpegHeader = false
-        break
-      }
+    val isJpegHeader = (0 until size).none {
+      header[it] != JPEG_HEADER[it]
     }
 
     if (isJpegHeader) {
@@ -275,14 +273,10 @@ object MediaUtils {
   }
 
   private fun isPngHeader(header: ByteArray): Boolean {
-    var isPngHeader = true
-    val size = Math.min(PNG_HEADER.size, header.size)
+    val size = min(PNG_HEADER.size, header.size)
 
-    for (i in 0 until size) {
-      if (header[i] != PNG_HEADER[i]) {
-        isPngHeader = false
-        break
-      }
+    val isPngHeader = (0 until size).none {
+      header[it] != PNG_HEADER[it]
     }
 
     if (isPngHeader) {
@@ -356,8 +350,8 @@ object MediaUtils {
           filter = true
         )
 
-        val newWidth = Math.min(frameBitmap.width, maxWidth)
-        val newHeight = Math.min(frameBitmap.height, maxHeight)
+        val newWidth = min(frameBitmap.width, maxWidth)
+        val newHeight = min(frameBitmap.height, maxHeight)
 
         try {
           result = Bitmap.createBitmap(

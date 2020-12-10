@@ -35,6 +35,7 @@ import java.io.FileOutputStream
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
+import kotlin.math.max
 
 @DoNotStrip
 class ImageLoaderV2(
@@ -336,7 +337,7 @@ class ImageLoaderV2(
     BackgroundUtils.ensureBackgroundThread()
 
     val displaySize = getDisplaySize()
-    val size = Math.max(displaySize.x, displaySize.y)
+    val size = max(displaySize.x, displaySize.y)
 
     val replyFileMaybe = replyManager.getReplyFileByFileUuid(fileUuid)
     if (replyFileMaybe is ModularResult.Error) {
@@ -438,11 +439,9 @@ class ImageLoaderV2(
       return true
     }
 
-    val hasVideoMimeType = MediaUtils.decodeFileMimeType(replyFile.fileOnDisk)
+    return MediaUtils.decodeFileMimeType(replyFile.fileOnDisk)
       ?.let { mimeType -> MimeTypes.isVideo(mimeType) }
       ?: false
-
-    return hasVideoMimeType
   }
 
   suspend fun getFileImagePreview(
