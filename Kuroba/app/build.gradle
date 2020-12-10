@@ -10,7 +10,7 @@ android {
     // don't forget to also update travis.yml config
     // !!! IMPORTANT !!!
 
-    buildToolsVersion "29.0.3"
+    buildToolsVersion "30.0.3"
     compileSdkVersion 30
 
     def getCommitHash = { ->
@@ -269,17 +269,18 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.2.0"
     implementation "com.google.android.material:material:${versions.material}"
 
-    implementation "com.google.android.exoplayer:exoplayer:${versions.exoplayer}"
+    implementation "com.google.android.exoplayer:exoplayer-core:${versions.exoplayer}"
+    implementation "com.google.android.exoplayer:exoplayer-ui:${versions.exoplayer}"
     implementation "com.squareup.okhttp3:okhttp:${versions.okhttp}"
     implementation "com.squareup.okhttp3:logging-interceptor:${versions.okhttp}"
     implementation "org.jsoup:jsoup:${versions.jsoup}"
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.21'
-    implementation 'com.davemorrissey.labs:subsampling-scale-image-view:3.10.0'
+    implementation 'com.github.davemorrissey:subsampling-scale-image-view:ebce8e0'
     implementation 'org.greenrobot:eventbus:3.2.0'
     implementation 'org.nibor.autolink:autolink:0.10.0'
     implementation "com.google.code.gson:gson:${versions.gson}"
     // noinspection GradleDependency we want to get rid of this dependency eventually.
-    implementation 'com.vladsch.flexmark:flexmark:0.60.2'
+    implementation 'com.vladsch.flexmark:flexmark:0.62.2'
     implementation "io.reactivex.rxjava2:rxjava:${versions.rxjava}"
     implementation "io.reactivex.rxjava2:rxandroid:${versions.rxandroid}"
     implementation "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin_version}"

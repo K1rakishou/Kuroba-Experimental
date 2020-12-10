@@ -82,7 +82,7 @@ class WebmStreamingSource(
           // The webm file is already completely downloaded, just use it from the disk
           callback.onMediaSourceReady(
             ProgressiveMediaSource.Factory { fileCacheSource }
-              .createMediaSource(MediaItem.Builder().setUri(uri).build())
+              .createMediaSource(MediaItem.fromUri(uri))
           )
         }
 
@@ -163,7 +163,7 @@ class WebmStreamingSource(
 
     callback.onMediaSourceReady(
       ProgressiveMediaSource.Factory { fileCacheSource }
-        .createMediaSource(MediaItem.Builder().setUri(uri).build())
+        .createMediaSource(MediaItem.fromUri(uri))
     )
   }
 
@@ -173,7 +173,7 @@ class WebmStreamingSource(
 
     callback.onMediaSourceReady(
       ProgressiveMediaSource.Factory { FileDataSource() }
-        .createMediaSource(MediaItem.Builder().setUri(fileUri).build())
+        .createMediaSource(MediaItem.fromUri(fileUri))
     )
   }
 

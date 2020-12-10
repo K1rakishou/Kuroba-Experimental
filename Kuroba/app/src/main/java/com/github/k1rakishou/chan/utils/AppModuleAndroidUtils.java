@@ -27,6 +27,7 @@ import android.widget.Toast;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
+import androidx.browser.customtabs.CustomTabColorSchemeParams;
 import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.core.content.ContextCompat;
 
@@ -222,7 +223,8 @@ public class AppModuleAndroidUtils {
         }
 
         CustomTabsIntent tabsIntent = new CustomTabsIntent.Builder()
-                .setToolbarColor(theme.getBackColor())
+                .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder()
+                        .setToolbarColor(theme.getBackColor()).build())
                 .build();
 
         try {

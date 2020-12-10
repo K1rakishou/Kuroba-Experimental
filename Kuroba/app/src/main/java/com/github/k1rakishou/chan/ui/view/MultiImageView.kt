@@ -711,8 +711,7 @@ class MultiImageView @JvmOverloads constructor(
     } else {
       val dataSourceFactory: DataSource.Factory = DefaultDataSourceFactory(context, appConstants.userAgent)
       val progressiveFactory = ProgressiveMediaSource.Factory(dataSourceFactory)
-      val videoSource = progressiveFactory.createMediaSource(
-              MediaItem.Builder().setUri(Uri.fromFile(file)).build())
+      val videoSource = progressiveFactory.createMediaSource(MediaItem.fromUri(Uri.fromFile(file)))
 
       exoPlayer = createExoPlayer(videoSource)
 
