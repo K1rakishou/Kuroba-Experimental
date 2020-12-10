@@ -10,6 +10,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.media.MediaMetadataRetriever
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.graphics.scale
 import androidx.core.math.MathUtils
 import androidx.core.util.Pair
 import androidx.exifinterface.media.ExifInterface
@@ -349,11 +350,10 @@ object MediaUtils {
           ?.toBitmap(maxWidth, maxHeight)
           ?: return null
 
-        val audioBitmap = Bitmap.createScaledBitmap(
-          audioIconBitmap,
+        val audioBitmap = audioIconBitmap.scale(
           audioIconBitmap.width / 3,
           audioIconBitmap.height / 3,
-          true
+          filter = true
         )
 
         val newWidth = Math.min(frameBitmap.width, maxWidth)

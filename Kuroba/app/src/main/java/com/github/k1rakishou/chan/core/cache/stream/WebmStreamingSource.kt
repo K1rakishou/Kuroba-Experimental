@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.cache.stream
 
 import android.net.Uri
+import androidx.core.net.toUri
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
@@ -41,7 +42,7 @@ class WebmStreamingSource(
 
     val fileLengthInBytes = getFileLengthIfPossible(postImage)
     val videoUrl = imageUrl.toString()
-    val uri = Uri.parse(videoUrl)
+    val uri = videoUrl.toUri()
     val alreadyExists = cacheHandler.cacheFileExists(videoUrl)
     val rawFile = cacheHandler.getOrCreateCacheFile(videoUrl)
 
@@ -169,7 +170,7 @@ class WebmStreamingSource(
 
   private fun loadFromCacheFile(rawFile: RawFile, callback: MediaSourceCallback) {
     Logger.d(TAG, "createMediaSource() Loading already downloaded file from the disk")
-    val fileUri = Uri.parse(rawFile.getFullPath())
+    val fileUri = rawFile.getFullPath().toUri()
 
     callback.onMediaSourceReady(
       ProgressiveMediaSource.Factory { FileDataSource() }

@@ -540,7 +540,7 @@ class ThreadPresenter @Inject constructor(
 
     showPosts()
 
-    if (TextUtils.isEmpty(query)) {
+    if (query.isNullOrEmpty()) {
       threadPresenterCallback?.setSearchStatus(
         query = null,
         setEmptyText = true,

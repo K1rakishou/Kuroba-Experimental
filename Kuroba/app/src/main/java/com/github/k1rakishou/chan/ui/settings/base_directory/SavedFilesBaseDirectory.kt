@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.ui.settings.base_directory
 
 import android.net.Uri
+import androidx.core.net.toUri
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.fsaf.manager.base_directory.BaseDirectory
@@ -24,7 +25,7 @@ class SavedFilesBaseDirectory : BaseDirectory() {
       return null
     }
 
-    return Uri.parse(path)
+    return path.toUri()
   }
 
   override fun currentActiveBaseDirType(): ActiveBaseDirType {

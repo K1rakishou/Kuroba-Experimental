@@ -1,6 +1,5 @@
 package com.github.k1rakishou.model.data.board
 
-import android.text.TextUtils
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 
@@ -33,7 +32,7 @@ class BoardBuilder(
   var archive: Boolean = false
 
   fun hasMissingInfo(): Boolean {
-    return TextUtils.isEmpty(name) || TextUtils.isEmpty(code) || perPage < 0 || pages < 0
+    return name.isNullOrEmpty() || code.isNullOrEmpty() || perPage < 0 || pages < 0
   }
 
   fun boardDescriptor(): BoardDescriptor = BoardDescriptor.create(siteDescriptor, code!!)

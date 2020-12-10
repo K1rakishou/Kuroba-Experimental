@@ -39,6 +39,7 @@ import android.widget.FrameLayout
 import android.widget.ProgressBar
 import androidx.core.content.FileProvider
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.net.toUri
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
@@ -711,7 +712,7 @@ class MultiImageView @JvmOverloads constructor(
     } else {
       val dataSourceFactory: DataSource.Factory = DefaultDataSourceFactory(context, appConstants.userAgent)
       val progressiveFactory = ProgressiveMediaSource.Factory(dataSourceFactory)
-      val videoSource = progressiveFactory.createMediaSource(MediaItem.fromUri(Uri.fromFile(file)))
+      val videoSource = progressiveFactory.createMediaSource(MediaItem.fromUri(file.toUri()))
 
       exoPlayer = createExoPlayer(videoSource)
 

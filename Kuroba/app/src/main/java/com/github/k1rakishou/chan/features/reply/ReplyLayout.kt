@@ -44,6 +44,7 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.animation.doOnEnd
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
@@ -407,11 +408,7 @@ class ReplyLayout @JvmOverloads constructor(
       comment.minHeight = REPLY_COMMENT_MIN_HEIGHT
     }
 
-    if (!site.actions().postRequiresAuthentication()) {
-      captchaButtonContainer.visibility = GONE
-    } else {
-      captchaButtonContainer.visibility = VISIBLE
-    }
+    captchaButtonContainer.isVisible = site.actions().postRequiresAuthentication()
 
     captchaHolder.setListener(chanDescriptor, this)
   }
