@@ -259,10 +259,14 @@ object MediaUtils {
   }
 
   private fun isJpegHeader(header: ByteArray): Boolean {
+    var isJpegHeader = true
     val size = min(JPEG_HEADER.size, header.size)
 
-    val isJpegHeader = (0 until size).none {
-      header[it] != JPEG_HEADER[it]
+    for (i in 0 until size) {
+      if (header[i] != JPEG_HEADER[i]) {
+        isJpegHeader = false
+        break
+      }
     }
 
     if (isJpegHeader) {
@@ -273,10 +277,14 @@ object MediaUtils {
   }
 
   private fun isPngHeader(header: ByteArray): Boolean {
+    var isPngHeader = true
     val size = min(PNG_HEADER.size, header.size)
 
-    val isPngHeader = (0 until size).none {
-      header[it] != PNG_HEADER[it]
+    for (i in 0 until size) {
+      if (header[i] != PNG_HEADER[i]) {
+        isPngHeader = false
+        break
+      }
     }
 
     if (isPngHeader) {
