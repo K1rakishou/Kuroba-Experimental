@@ -620,7 +620,7 @@ public class ToolbarContainer extends FrameLayout {
 
             // Title
             final TextView titleView = menu.findViewById(R.id.title);
-            titleView.setTypeface(theme != null ? theme.getMainFont() : themeEngine.getChanTheme().getMainFont());
+            titleView.setTypeface((theme != null ? theme : themeEngine.getChanTheme()).getMainFont());
             titleView.setText(item.title);
             titleView.setTextColor(Color.WHITE);
 

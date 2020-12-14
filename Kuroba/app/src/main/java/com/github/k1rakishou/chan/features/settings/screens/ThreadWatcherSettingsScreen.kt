@@ -5,6 +5,7 @@ import android.text.SpannableString
 import android.text.method.LinkMovementMethod
 import android.text.util.Linkify
 import android.widget.TextView
+import androidx.core.text.util.LinkifyCompat
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.R
@@ -181,7 +182,7 @@ class ThreadWatcherSettingsScreen(
       )
     )
 
-    Linkify.addLinks(descriptionText, Linkify.WEB_URLS)
+    LinkifyCompat.addLinks(descriptionText, Linkify.WEB_URLS)
 
     dialogFactory.createSimpleConfirmationDialog(
       context = context,

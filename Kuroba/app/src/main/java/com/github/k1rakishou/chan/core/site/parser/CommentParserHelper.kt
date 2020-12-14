@@ -154,13 +154,7 @@ object CommentParserHelper {
 
   private fun extractListOfLinks(text: String): List<LinkSpan> {
     val linkSpans = LINK_EXTRACTOR.extractLinks(text)
-    val listSpanList: MutableList<LinkSpan> = ArrayList()
-
-    for (linkSpan in linkSpans) {
-      listSpanList.add(linkSpan)
-    }
-
-    return listSpanList
+    return linkSpans.toMutableList()
   }
 
   @JvmStatic

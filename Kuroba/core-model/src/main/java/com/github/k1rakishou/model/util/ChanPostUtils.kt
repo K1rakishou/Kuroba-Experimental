@@ -14,6 +14,7 @@ import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.abs
+import kotlin.math.min
 
 object ChanPostUtils {
   private val dateFormat = SimpleDateFormat.getDateTimeInstance(
@@ -61,7 +62,7 @@ object ChanPostUtils {
       val comment = post.postComment.comment
 
       if (!TextUtils.isEmpty(comment)) {
-        val length = Math.min(comment.length, 200)
+        val length = min(comment.length, 200)
         return "/" + post.boardDescriptor.boardCode + "/ - " + comment.subSequence(0, length)
       }
 

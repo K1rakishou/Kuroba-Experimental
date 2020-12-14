@@ -17,7 +17,6 @@
 package com.github.k1rakishou.chan.core.cache
 
 import android.os.Environment
-import android.text.TextUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.ConversionUtils.charArrayToInt
@@ -366,7 +365,7 @@ class CacheHandler(
   private fun deleteCacheFile(fileName: String): Boolean {
     val originalFileName = StringUtils.removeExtensionFromFileName(fileName)
 
-    if (TextUtils.isEmpty(originalFileName)) {
+    if (originalFileName.isEmpty()) {
       Logger.e(TAG, "Couldn't parse original file name, fileName = $fileName")
       return false
     }

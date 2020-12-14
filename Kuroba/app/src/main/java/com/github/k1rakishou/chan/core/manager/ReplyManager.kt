@@ -16,7 +16,6 @@
  */
 package com.github.k1rakishou.chan.core.manager
 
-import android.text.TextUtils
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.features.reply.data.Reply
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
@@ -237,7 +236,7 @@ class ReplyManager @Inject constructor(
       drafts[chanDescriptor] = reply
     }
 
-    if (TextUtils.isEmpty(reply.postName)) {
+    if (reply.postName.isEmpty()) {
       reply.postName = ChanSettings.postDefaultName.get()
     }
 

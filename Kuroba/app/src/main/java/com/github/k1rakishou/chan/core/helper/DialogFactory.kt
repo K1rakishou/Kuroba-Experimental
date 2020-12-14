@@ -126,7 +126,7 @@ class DialogFactory(
     AlertDialog.Builder(context)
       .setTitleInternal(titleTextId, titleText)
       .setDescriptionInternal(descriptionTextId, descriptionText)
-      .setAdapter(adapter, { dialog, selectedIndex -> clickListener(dialog, selectedIndex) })
+      .setAdapter(adapter) { dialog, selectedIndex -> clickListener(dialog, selectedIndex) }
       .create()
       .apply {
         setOnShowListener { dialogInterface -> dialogInterface.applyColors() }
@@ -207,7 +207,7 @@ class DialogFactory(
     }
 
     AlertDialog.Builder(context)
-      .setItems(keys, { _, which -> onClickListener.invoke(which) })
+      .setItems(keys) { _, which -> onClickListener.invoke(which) }
       .create()
       .apply { setOnShowListener { dialogInterface -> dialogInterface.applyColors() } }
       .show()

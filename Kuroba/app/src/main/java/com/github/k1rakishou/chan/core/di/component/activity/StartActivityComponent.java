@@ -153,7 +153,7 @@ import dagger.BindsInstance;
 import dagger.Subcomponent;
 
 @PerActivity
-@Subcomponent(modules = {StartActivityModule.class})
+@Subcomponent(modules = StartActivityModule.class)
 public interface
 StartActivityComponent {
     void inject(AlbumDownloadController albumDownloadController);

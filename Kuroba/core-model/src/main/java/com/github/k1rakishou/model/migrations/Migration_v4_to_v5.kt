@@ -2,6 +2,7 @@ package com.github.k1rakishou.model.migrations
 
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
+import androidx.core.content.contentValuesOf
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.github.k1rakishou.common.putIfNotContains
@@ -65,10 +66,11 @@ class Migration_v4_to_v5 : Migration(4, 5) {
     var groupOrder = 0
 
     bookmarksGrouped.forEach { (groupId, tempBookmarkGroupEntryInfoList) ->
-      val groupContentValues = ContentValues()
-      groupContentValues.put("group_id", groupId)
-      groupContentValues.put("group_name", groupId)
-      groupContentValues.put("group_order", groupOrder)
+      val groupContentValues = contentValuesOf(
+          "group_id" to groupId,
+          "group_name" to groupId,
+          "group_order" to groupOrder
+      )
 
       val insertedGroupId = database.insert("thread_bookmark_group", SQLiteDatabase.CONFLICT_ROLLBACK, groupContentValues)
       if (insertedGroupId < 0) {

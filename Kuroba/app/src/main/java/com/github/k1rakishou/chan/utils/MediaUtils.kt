@@ -10,6 +10,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.media.MediaMetadataRetriever
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.graphics.scale
 import androidx.core.math.MathUtils
 import androidx.core.util.Pair
 import androidx.exifinterface.media.ExifInterface
@@ -24,6 +25,8 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.io.RandomAccessFile
 import java.util.*
+import kotlin.math.abs
+import kotlin.math.min
 
 object MediaUtils {
   private const val TAG = "BitmapUtils"
@@ -192,8 +195,8 @@ object MediaUtils {
   }
 
   private fun changeBitmapChecksum(bitmap: Bitmap) {
-    val randomX = Math.abs(random.nextInt()) % bitmap.width
-    val randomY = Math.abs(random.nextInt()) % bitmap.height
+    val randomX = abs(random.nextInt()) % bitmap.width
+    val randomY = abs(random.nextInt()) % bitmap.height
 
     // one pixel is enough to change the checksum of an image
     var pixel = bitmap.getPixel(randomX, randomY)
@@ -257,7 +260,7 @@ object MediaUtils {
 
   private fun isJpegHeader(header: ByteArray): Boolean {
     var isJpegHeader = true
-    val size = Math.min(JPEG_HEADER.size, header.size)
+    val size = min(JPEG_HEADER.size, header.size)
 
     for (i in 0 until size) {
       if (header[i] != JPEG_HEADER[i]) {
@@ -275,7 +278,7 @@ object MediaUtils {
 
   private fun isPngHeader(header: ByteArray): Boolean {
     var isPngHeader = true
-    val size = Math.min(PNG_HEADER.size, header.size)
+    val size = min(PNG_HEADER.size, header.size)
 
     for (i in 0 until size) {
       if (header[i] != PNG_HEADER[i]) {
@@ -349,15 +352,14 @@ object MediaUtils {
           ?.toBitmap(maxWidth, maxHeight)
           ?: return null
 
-        val audioBitmap = Bitmap.createScaledBitmap(
-          audioIconBitmap,
+        val audioBitmap = audioIconBitmap.scale(
           audioIconBitmap.width / 3,
           audioIconBitmap.height / 3,
-          true
+          filter = true
         )
 
-        val newWidth = Math.min(frameBitmap.width, maxWidth)
-        val newHeight = Math.min(frameBitmap.height, maxHeight)
+        val newWidth = min(frameBitmap.width, maxWidth)
+        val newHeight = min(frameBitmap.height, maxHeight)
 
         try {
           result = Bitmap.createBitmap(

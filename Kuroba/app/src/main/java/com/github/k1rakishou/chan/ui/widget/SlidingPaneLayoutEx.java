@@ -723,8 +723,7 @@ public class SlidingPaneLayoutEx extends ViewGroup {
                 childRight = childLeft + childWidth;
             }
 
-            final int childTop = paddingTop;
-            final int childBottom = childTop + child.getMeasuredHeight();
+            final int childBottom = paddingTop + child.getMeasuredHeight();
             child.layout(childLeft, paddingTop, childRight, childBottom);
 
             nextXStart += child.getWidth();
@@ -1032,7 +1031,6 @@ public class SlidingPaneLayoutEx extends ViewGroup {
     @Override
     protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
         final LayoutParams lp = (LayoutParams) child.getLayoutParams();
-        boolean result;
         final int save = canvas.save();
 
         if (mCanSlide && !lp.slideable && mSlideableView != null) {
@@ -1046,7 +1044,7 @@ public class SlidingPaneLayoutEx extends ViewGroup {
             canvas.clipRect(mTmpRect);
         }
 
-        result = super.drawChild(canvas, child, drawingTime);
+        boolean result = super.drawChild(canvas, child, drawingTime);
 
         canvas.restoreToCount(save);
 

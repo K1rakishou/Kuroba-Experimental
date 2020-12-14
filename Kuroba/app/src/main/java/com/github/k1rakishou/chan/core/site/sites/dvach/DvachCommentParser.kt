@@ -151,11 +151,11 @@ class DvachCommentParser(
   private fun extractPostIdOrReplaceWithThreadId(externalMatcher: Matcher, threadId: Long, group: Int): Long {
     val postIdGroup = externalMatcher.groupOrNull(group)
 
-    if (TextUtils.isEmpty(postIdGroup)) {
+    if (postIdGroup.isNullOrEmpty()) {
       return threadId
     }
 
-    return postIdGroup!!.toLong()
+    return postIdGroup.toLong()
   }
 
   companion object {

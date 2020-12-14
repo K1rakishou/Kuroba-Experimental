@@ -4,17 +4,18 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
 import androidx.core.content.ContextCompat
+import kotlin.math.roundToInt
 
 class ThemeDrawable(val drawable: Int, alpha: Float) {
   var intAlpha = 0
   var tint = -1
 
   init {
-    intAlpha = Math.round(alpha * 0xff)
+    intAlpha = (alpha * 0xff).roundToInt()
   }
 
   fun setAlpha(alpha: Float) {
-    intAlpha = Math.round(alpha * 0xff)
+    intAlpha = (alpha * 0xff).roundToInt()
   }
 
   fun apply(imageView: ImageView) {

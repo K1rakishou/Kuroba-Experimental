@@ -84,7 +84,7 @@ class ImageReencodingPresenter(
         return null
       }
 
-      return getImageDims(replyFile.fileOnDisk);
+      return getImageDims(replyFile.fileOnDisk)
     }
 
   init {
@@ -106,7 +106,7 @@ class ImageReencodingPresenter(
   }
 
   fun loadImagePreview() {
-    val displaySize = getDisplaySize();
+    val displaySize = getDisplaySize()
 
     imageLoaderV2.loadRelyFilePreviewFromDisk(
       context,

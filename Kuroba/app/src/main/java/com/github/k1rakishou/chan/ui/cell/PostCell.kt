@@ -622,7 +622,7 @@ class PostCell : LinearLayout, PostCellInterface {
     comment.typeface = Typeface.DEFAULT
     comment.setTextColor(theme.textColorPrimary)
 
-    val newVisibility = if (TextUtils.isEmpty(commentText) && post.postImagesCount == 0) {
+    val newVisibility = if (commentText.isEmpty() && post.postImagesCount == 0) {
       View.GONE
     } else {
       View.VISIBLE

@@ -94,13 +94,9 @@ open class ChanPost(
 
   @Synchronized
   open fun allLoadersCompletedLoading(): Boolean {
-    for (loaderContentLoadState in onDemandContentLoadedMap.values) {
-      if (loaderContentLoadState.everythingLoaded()) {
-        return false
-      }
+    return onDemandContentLoadedMap.values.all { loaderContentLoadState ->
+      loaderContentLoadState.everythingLoaded()
     }
-
-    return true
   }
 
   @Synchronized

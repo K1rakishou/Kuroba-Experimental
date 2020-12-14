@@ -64,8 +64,8 @@ public class ImageReencodeOptionsController
                     currentImageReduce.setText(getString(R.string.scale_reduce,
                             dims.first,
                             dims.second,
-                            (int) (dims.first * ((100f - (float) value) / 100f)),
-                            (int) (dims.second * ((100f - (float) value) / 100f)),
+                            (int) (dims.first * ((100f - value) / 100f)),
+                            (int) (dims.second * ((100f - value) / 100f)),
                             100 - (int) value
                     ));
                 }

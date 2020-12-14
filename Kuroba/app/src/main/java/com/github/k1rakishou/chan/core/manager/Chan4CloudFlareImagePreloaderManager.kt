@@ -411,7 +411,7 @@ class Chan4CloudFlareImagePreloaderManager(
     }
   }
 
-  private class CancellableImagePreload() {
+  private class CancellableImagePreload {
     private val callbacks = mutableListOf<() -> Unit>()
     private val canceled = AtomicBoolean(false)
 
