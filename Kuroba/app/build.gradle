@@ -275,7 +275,7 @@ dependencies {
     implementation "com.squareup.okhttp3:logging-interceptor:${versions.okhttp}"
     implementation "org.jsoup:jsoup:${versions.jsoup}"
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.21'
-    implementation 'com.github.davemorrissey:subsampling-scale-image-view:ebce8e0'
+    implementation 'com.davemorrissey.labs:subsampling-scale-image-view:3.10.0'
     implementation 'org.greenrobot:eventbus:3.2.0'
     implementation 'org.nibor.autolink:autolink:0.10.0'
     implementation "com.google.code.gson:gson:${versions.gson}"
