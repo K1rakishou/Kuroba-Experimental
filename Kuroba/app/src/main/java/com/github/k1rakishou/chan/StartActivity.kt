@@ -695,7 +695,6 @@ class StartActivity : AppCompatActivity(),
         drawerController.pushChildController(split)
         split.setLeftController(mainNavigationController, false)
       }
-      ChanSettings.LayoutMode.PHONE,
       ChanSettings.LayoutMode.SLIDE -> {
         drawerController.pushChildController(mainNavigationController)
       }

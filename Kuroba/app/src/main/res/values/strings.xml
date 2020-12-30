@@ -540,7 +540,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_layout_mode_auto">Auto</string>
 
     <!-- Appearance layout group -->
-    <string name="setting_layout_mode_phone">Phone layout</string>
     <string name="setting_layout_mode_slide">Slide mode</string>
     <string name="setting_layout_mode_split">Split mode</string>
     <string name="setting_board_grid_span_count">Catalog mode column count</string>

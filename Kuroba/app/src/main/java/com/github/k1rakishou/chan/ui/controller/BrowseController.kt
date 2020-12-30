@@ -132,12 +132,6 @@ class BrowseController(
         drawerCallbacks!!.showBottomNavBar(unlockTranslation = false, unlockCollapse = false)
       }
     }
-
-    if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.PHONE) {
-      if (chanDescriptor != null) {
-        historyNavigationManager.moveNavElementToTop(chanDescriptor!!)
-      }
-    }
   }
 
   override fun onDestroy() {

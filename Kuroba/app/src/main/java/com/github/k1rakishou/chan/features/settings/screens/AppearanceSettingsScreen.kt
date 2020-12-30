@@ -302,7 +302,6 @@ class AppearanceSettingsScreen(
           itemNameMapper = { layoutMode ->
             when (layoutMode) {
               ChanSettings.LayoutMode.AUTO -> context.getString(R.string.setting_layout_mode_auto)
-              ChanSettings.LayoutMode.PHONE -> context.getString(R.string.setting_layout_mode_phone)
               ChanSettings.LayoutMode.SLIDE -> context.getString(R.string.setting_layout_mode_slide)
               ChanSettings.LayoutMode.SPLIT -> context.getString(R.string.setting_layout_mode_split)
             }

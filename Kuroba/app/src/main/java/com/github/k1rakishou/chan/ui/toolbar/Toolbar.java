@@ -414,10 +414,6 @@ public class Toolbar
         return presenter.closeSearch();
     }
 
-    public void closeSearchPhoneMode() {
-        presenter.closeSearchPhoneMode();
-    }
-
     public void enterSelectionMode(String text) {
         presenter.enterSelectionMode(text);
     }

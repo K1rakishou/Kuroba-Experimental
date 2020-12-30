@@ -53,11 +53,9 @@ import com.github.k1rakishou.chan.features.drawer.epoxy.epoxyHistoryEntryView
 import com.github.k1rakishou.chan.features.drawer.epoxy.epoxyHistoryHeaderView
 import com.github.k1rakishou.chan.features.search.GlobalSearchController
 import com.github.k1rakishou.chan.features.settings.MainSettingsControllerV2
-import com.github.k1rakishou.chan.ui.controller.BrowseController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.ThreadController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
-import com.github.k1rakishou.chan.ui.controller.ViewThreadController
 import com.github.k1rakishou.chan.ui.controller.navigation.BottomNavBarAwareNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
@@ -473,7 +471,6 @@ class DrawerController(
   fun closeAllNonMainControllers() {
     var currentNavController = top
       ?: return
-    val isPhoneMode = ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.PHONE
 
     while (true) {
       if (currentNavController is BottomNavBarAwareNavigationController) {
@@ -492,11 +489,6 @@ class DrawerController(
       closeAllFloatingControllers(topController.childControllers)
 
       if (topController is HasNavigation) {
-        return
-      }
-
-      if (isPhoneMode && (topController is BrowseController || topController is ViewThreadController)) {
-        // If we pop BrowseController when in PHONE mode we will soft-lock the app
         return
       }
 

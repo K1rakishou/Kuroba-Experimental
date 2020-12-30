@@ -774,7 +774,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     if (open) {
       searchStatus.setText(R.string.search_empty)
     } else {
-      threadListLayoutCallback!!.toolbar!!.closeSearchPhoneMode()
+      threadListLayoutCallback!!.toolbar!!.closeSearch()
     }
 
     attachToolbarScroll(!(open || replyOpen))

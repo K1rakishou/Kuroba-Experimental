@@ -20,7 +20,6 @@ package com.github.k1rakishou.chan.ui.toolbar;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.core_themes.ChanTheme;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 
@@ -193,14 +192,6 @@ public class ToolbarPresenter {
             return true;
         }
         return false;
-    }
-
-    public void closeSearchPhoneMode() {
-        if (ChanSettings.layoutMode.get() == ChanSettings.LayoutMode.PHONE) {
-            closeSearchIfNeeded();
-        } else {
-            closeSearch();
-        }
     }
 
     void searchInput(@NonNull String input) {
