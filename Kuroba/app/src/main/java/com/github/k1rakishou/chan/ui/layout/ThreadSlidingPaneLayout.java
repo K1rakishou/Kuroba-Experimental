@@ -21,6 +21,7 @@ import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.view.ViewGroup;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController;
 import com.github.k1rakishou.chan.ui.widget.SlidingPaneLayoutEx;
@@ -72,7 +73,15 @@ public class ThreadSlidingPaneLayout extends SlidingPaneLayoutEx implements ICol
         leftPane = findViewById(R.id.left_pane);
         rightPane = findViewById(R.id.right_pane);
 
-        setOverhangSize(SLIDE_PANE_OVERHANG_SIZE);
+        setOverhangSize(currentOverhangSize());
+    }
+
+    private int currentOverhangSize() {
+        if (ChanSettings.slidePaneLayoutShowOverhang.get()) {
+            return SLIDE_PANE_OVERHANG_SIZE;
+        }
+
+        return 0;
     }
 
     @Override
@@ -113,7 +122,7 @@ public class ThreadSlidingPaneLayout extends SlidingPaneLayoutEx implements ICol
         ViewGroup.LayoutParams leftParams = leftPane.getLayoutParams();
         ViewGroup.LayoutParams rightParams = rightPane.getLayoutParams();
 
-        leftParams.width = width - SLIDE_PANE_OVERHANG_SIZE;
+        leftParams.width = width - currentOverhangSize();
         rightParams.width = width;
 
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);

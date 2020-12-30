@@ -23,6 +23,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.controller.transition.ControllerTransition;
@@ -92,8 +93,13 @@ public class ThreadSlideController
         slidingPaneLayout.setThreadSlideController(this);
         slidingPaneLayout.setPanelSlideListener(this);
         slidingPaneLayout.setParallaxDistance(dp(100));
-        slidingPaneLayout.setShadowResourceLeft(R.drawable.panel_shadow);
+
+        if (ChanSettings.slidePaneLayoutShowOverhang.get()) {
+            slidingPaneLayout.setShadowResourceLeft(R.drawable.panel_shadow);
+        }
+
         slidingPaneLayout.openPane();
+
         setLeftController(null, false);
         setRightController(null, false);
 

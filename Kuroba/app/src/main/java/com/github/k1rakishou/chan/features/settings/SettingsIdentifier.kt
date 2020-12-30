@@ -282,6 +282,7 @@ sealed class AppearanceScreen(
     AppearanceScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
     object LayoutMode : LayoutGroup("layout_mode")
+    object SlideLayoutModeOverhang : LayoutGroup("slide_layout_mode_overhang")
     object CatalogColumnsCount : LayoutGroup("catalog_columns_count")
     object NeverHideToolbar : LayoutGroup("never_hide_toolbar")
     object EnableReplyFAB : LayoutGroup("enable_reply_fab")

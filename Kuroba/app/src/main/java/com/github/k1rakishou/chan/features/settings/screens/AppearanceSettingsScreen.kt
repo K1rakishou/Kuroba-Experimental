@@ -310,6 +310,15 @@ class AppearanceSettingsScreen(
           setting = ChanSettings.layoutMode
         )
 
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = AppearanceScreen.LayoutGroup.SlideLayoutModeOverhang,
+          topDescriptionIdFunc = { R.string.setting_slide_mode_enable_overhang },
+          bottomDescriptionIdFunc = { R.string.setting_slide_mode_enable_overhang_descriptor },
+          requiresRestart = true,
+          setting = ChanSettings.slidePaneLayoutShowOverhang
+        )
+
         group += ListSettingV2.createBuilder<Int>(
           context = context,
           identifier = AppearanceScreen.LayoutGroup.CatalogColumnsCount,
