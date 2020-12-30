@@ -369,7 +369,7 @@ class ReplyLayoutFilesAreaPresenter(
         }
 
         if (replyFiles.isNotEmpty()) {
-          val maxAllowedTotalFilesSizePerPost = getMaxAllowedTotalFilesSizePerPost(chanDescriptor)
+          val maxAllowedTotalFilesSizePerPost = getTotalFileSizeSumPerPost(chanDescriptor)
             ?: -1
           val totalFileSizeSum = fileFileSizeMap.values.sum()
           val boardSupportsSpoilers = boardSupportsSpoilers()
@@ -510,7 +510,7 @@ class ReplyLayoutFilesAreaPresenter(
     )
   }
 
-  private suspend fun getMaxAllowedTotalFilesSizePerPost(chanDescriptor: ChanDescriptor): Long? {
+  private suspend fun getTotalFileSizeSumPerPost(chanDescriptor: ChanDescriptor): Long? {
     return postingLimitationsInfoManager.getMaxAllowedTotalFilesSizePerPost(
       chanDescriptor.boardDescriptor()
     )
@@ -552,7 +552,7 @@ class ReplyLayoutFilesAreaPresenter(
         ?.let { maxWebmSize -> getReadableFileSize(maxWebmSize.toLong()) }
         ?: "???"
 
-      val maxFileSizeTotal = getMaxAllowedTotalFilesSizePerPost(chanDescriptor)
+      val totalFileSizeSum = getTotalFileSizeSumPerPost(chanDescriptor)
       val attachAdditionalInfo = clickedFile.attachAdditionalInfo
 
       val fileStatusString = buildString {
@@ -577,9 +577,11 @@ class ReplyLayoutFilesAreaPresenter(
           appendLine("Exceeds max board webm size: true, Board max webm size: $maxBoardWebmSize")
         }
 
-        if (maxFileSizeTotal != null && maxFileSizeTotal > 0) {
+        if (totalFileSizeSum != null && totalFileSizeSum > 0) {
+          val totalFileSizeSumFormatted = getReadableFileSize(totalFileSizeSum)
+
           appendLine(
-            "Total file size sum per post: ${maxFileSizeTotal}, " +
+            "Total file size sum per post: ${totalFileSizeSumFormatted}, " +
               "exceeded: ${attachAdditionalInfo.totalFileSizeExceeded}"
           )
         }

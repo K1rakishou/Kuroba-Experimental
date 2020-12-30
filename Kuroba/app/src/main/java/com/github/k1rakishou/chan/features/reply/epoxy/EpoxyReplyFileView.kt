@@ -8,7 +8,6 @@ import android.view.View
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.view.doOnLayout
 import androidx.core.widget.ImageViewCompat
 import coil.size.Scale
 import coil.transform.GrayscaleTransformation
@@ -22,6 +21,7 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutFilesAreaPresenter
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
 import com.github.k1rakishou.chan.ui.view.SelectionCheckView
+import com.github.k1rakishou.chan.ui.widget.FixedViewSizeResolver
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDrawable
 import com.github.k1rakishou.chan.utils.setVisibilityFast
@@ -97,34 +97,35 @@ class EpoxyReplyFileView @JvmOverloads constructor(
 
   @AfterPropsSet
   fun afterPropsSet() {
-    replyAttachmentImageView.setImageBitmap(null)
-
     val fileUuid = attachmentFileUuid
     if (fileUuid == null) {
       return
     }
 
-    replyAttachmentImageView.doOnLayout {
-      val transformations = if (exceedsMaxFilesPerPostLimit) {
-        listOf(GRAYSCALE)
-      } else {
-        emptyList()
+    replyAttachmentImageView.setImageBitmap(null)
+
+    val imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize(
+      FixedViewSizeResolver(replyAttachmentImageView)
+    )
+
+    val transformations = if (exceedsMaxFilesPerPostLimit) {
+      listOf(GRAYSCALE)
+    } else {
+      emptyList()
+    }
+
+    imageLoaderV2.loadRelyFilePreviewFromDisk(
+      context = context,
+      fileUuid = fileUuid,
+      imageSize = imageSize,
+      scale = Scale.FILL,
+      transformations = transformations
+    ) { bitmapDrawable ->
+      if (attachmentFileUuid == null || attachmentFileUuid != fileUuid) {
+        return@loadRelyFilePreviewFromDisk
       }
 
-      imageLoaderV2.loadRelyFilePreviewFromDisk(
-        context = context,
-        fileUuid = fileUuid,
-        width = replyAttachmentImageView.width,
-        height = replyAttachmentImageView.height,
-        scale = Scale.FILL,
-        transformations = transformations
-      ) { bitmapDrawable ->
-        if (attachmentFileUuid == null || attachmentFileUuid != fileUuid) {
-          return@loadRelyFilePreviewFromDisk
-        }
-
-        replyAttachmentImageView.setImageBitmap(bitmapDrawable.bitmap)
-      }
+      replyAttachmentImageView.setImageBitmap(bitmapDrawable.bitmap)
     }
   }
 

@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.core.image
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
+import android.widget.ImageView
 import androidx.annotation.DrawableRes
 import androidx.core.graphics.drawable.toBitmap
 import coil.ImageLoader
@@ -10,6 +11,7 @@ import coil.network.HttpException
 import coil.request.Disposable
 import coil.request.ImageRequest
 import coil.size.Scale
+import coil.size.ViewSizeResolver
 import coil.transform.Transformation
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ReplyManager
@@ -265,15 +267,11 @@ class ImageLoaderV2(
   fun loadRelyFilePreviewFromDisk(
     context: Context,
     fileUuid: UUID,
-    width: Int,
-    height: Int,
+    imageSize: ImageSize,
     scale: Scale = Scale.FILL,
     transformations: List<Transformation>,
     listener: SimpleImageListener
   ) {
-    require(width > 0) { "Bad width: $width" }
-    require(height > 0) { "Bad height: $height" }
-
     val replyFileMaybe = replyManager.getReplyFileByFileUuid(fileUuid)
     if (replyFileMaybe is ModularResult.Error) {
       Logger.e(TAG, "loadRelyFilePreviewFromDisk() getReplyFileByFileUuid($fileUuid) error",
@@ -299,8 +297,18 @@ class ImageLoaderV2(
       allowHardware(true)
       scale(scale)
 
-      if ((width > 0) && (height > 0)) {
-        size(width, height)
+      when (imageSize) {
+        is ImageSize.FixedImageSize -> {
+          val width = imageSize.width
+          val height = imageSize.height
+
+          if ((width > 0) && (height > 0)) {
+            size(width, height)
+          }
+        }
+        is ImageSize.MeasurableImageSize -> {
+          size(imageSize.sizeResolver)
+        }
       }
 
       listener(
@@ -542,6 +550,11 @@ class ImageLoaderV2(
     fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean)
     fun onNotFound()
     fun onResponseError(error: Throwable)
+  }
+
+  sealed class ImageSize {
+    data class FixedImageSize(val width: Int, val height: Int) : ImageSize()
+    data class MeasurableImageSize(val sizeResolver: ViewSizeResolver<ImageView>) : ImageSize()
   }
 
   companion object {

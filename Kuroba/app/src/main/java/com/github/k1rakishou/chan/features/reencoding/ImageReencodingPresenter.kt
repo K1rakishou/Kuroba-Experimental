@@ -108,13 +108,17 @@ class ImageReencodingPresenter(
   fun loadImagePreview() {
     val displaySize = getDisplaySize()
 
+    val imageSize = ImageLoaderV2.ImageSize.FixedImageSize(
+      width = displaySize.x,
+      height = displaySize.y,
+    )
+
     imageLoaderV2.loadRelyFilePreviewFromDisk(
-      context,
-      fileUuid,
-      displaySize.x,
-      displaySize.y,
-      Scale.FILL,
-      emptyList()
+      context = context,
+      fileUuid = fileUuid,
+      imageSize = imageSize,
+      scale = Scale.FILL,
+      transformations = emptyList()
     ) { bitmapDrawable -> callback.showImagePreview(bitmapDrawable.bitmap) }
   }
 
