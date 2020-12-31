@@ -442,7 +442,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     if (postViewMode == PostViewMode.CARD) {
       postAdapter.setCompact(compactMode)
-      (layoutManager as GridLayoutManager?)!!.spanCount = spanCount
+      (layoutManager as GridLayoutManager).spanCount = spanCount
     }
   }
 
@@ -777,7 +777,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       threadListLayoutCallback!!.toolbar!!.closeSearch()
     }
 
-    attachToolbarScroll(!(open || replyOpen))
+    attachToolbarScroll(!open && !replyOpen)
   }
 
   @SuppressLint("StringFormatMatches")

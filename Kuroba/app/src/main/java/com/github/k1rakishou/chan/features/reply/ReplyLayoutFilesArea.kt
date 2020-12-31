@@ -414,7 +414,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
   interface ThreadListLayoutCallbacks {
     fun presentController(controller: FloatingListMenuController)
-    fun showImageReencodingWindow(fileUUID: UUID, supportsReencode: Boolean)
+    fun showImageReencodingWindow(fileUuid: UUID, supportsReencode: Boolean)
     fun showLoadingView(cancellationFunc: () -> Unit, titleTextId: Int)
     fun hideLoadingView()
   }

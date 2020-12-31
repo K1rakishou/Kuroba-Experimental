@@ -18,6 +18,7 @@ package com.github.k1rakishou.chan.ui.controller
 
 import android.content.Context
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.R.string.action_reload
@@ -796,8 +797,8 @@ open class ViewThreadController(
 
     pinItemPinned = pinned
 
-    val outline = context.getDrawable(R.drawable.ic_bookmark_border_white_24dp)
-    val white = context.getDrawable(R.drawable.ic_bookmark_white_24dp)
+    val outline = ContextCompat.getDrawable(context, R.drawable.ic_bookmark_border_white_24dp)
+    val white = ContextCompat.getDrawable(context, R.drawable.ic_bookmark_white_24dp)
     val drawable = if (pinned) white else outline
 
     menuItem.setImage(drawable, animated)
