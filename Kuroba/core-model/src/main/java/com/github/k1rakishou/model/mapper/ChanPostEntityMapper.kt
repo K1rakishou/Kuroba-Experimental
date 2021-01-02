@@ -1,5 +1,6 @@
 package com.github.k1rakishou.model.mapper
 
+import android.text.SpannableString
 import androidx.core.text.toSpanned
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_spannable.SpannableStringMapper
@@ -173,8 +174,8 @@ object ChanPostEntityMapper {
     ).toList()
 
     return PostComment(
-      comment,
-      postLinkables
+      originalComment = SpannableString(comment),
+      linkables = postLinkables
     )
   }
 

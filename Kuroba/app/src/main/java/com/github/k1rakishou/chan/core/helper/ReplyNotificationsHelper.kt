@@ -563,7 +563,7 @@ class ReplyNotificationsHelper(
     var title = originalPosts[threadDescriptor]?.subject?.toString()
 
     if (title.isNullOrBlank()) {
-      title = originalPosts[threadDescriptor]?.postComment?.comment?.toString()
+      title = originalPosts[threadDescriptor]?.postComment?.comment()?.toString()
     }
 
     if (title.isNullOrBlank()) {

@@ -28,13 +28,14 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
+import com.github.k1rakishou.chan.core.base.ThrottlingCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest.BoardPage
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -55,7 +56,7 @@ class ThreadStatusCell(
 ) : LinearLayout(context, attrs), View.OnClickListener {
 
   @Inject
-  lateinit var themeEngine: com.github.k1rakishou.core_themes.ThemeEngine
+  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var boardManager: BoardManager
   @Inject
@@ -66,10 +67,10 @@ class ThreadStatusCell(
   private var callback: Callback? = null
   private var error: String? = null
 
-  private val clickDebouncer = Debouncer(eagerInitialization = false)
   private val job = SupervisorJob()
   private val scope = CoroutineScope(job + Dispatchers.Main)
   private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(scope)
+  private val clickThrottler = ThrottlingCoroutineExecutor(scope)
 
   private var updateJob: Job? = null
 
@@ -114,7 +115,7 @@ class ThreadStatusCell(
   }
 
   override fun onClick(v: View) {
-    clickDebouncer.post({
+    clickThrottler.post(1_000L, {
       error = null
 
       if (callback?.getCurrentChanDescriptor() != null) {
@@ -122,7 +123,7 @@ class ThreadStatusCell(
       }
 
       update()
-    }, 1_000L)
+    })
   }
 
   override fun onFinishInflate() {

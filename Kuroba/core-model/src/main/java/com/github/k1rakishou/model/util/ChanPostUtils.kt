@@ -59,7 +59,7 @@ object ChanPostUtils {
         return "/" + post.boardDescriptor.boardCode + "/ - " + post.subject.toString()
       }
 
-      val comment = post.postComment.comment
+      val comment = post.postComment.originalComment()
 
       if (!TextUtils.isEmpty(comment)) {
         val length = min(comment.length, 200)

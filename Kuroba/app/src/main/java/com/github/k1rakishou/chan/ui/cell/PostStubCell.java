@@ -194,7 +194,7 @@ public class PostStubCell
         if (!TextUtils.isEmpty(post.getSubject())) {
             title.setText(post.getSubject());
         } else {
-            CharSequence titleText = post.getPostComment().getComment();
+            CharSequence titleText = post.getPostComment().comment();
             if (titleText.length() > TITLE_MAX_LENGTH) {
                 titleText = titleText.subSequence(0, TITLE_MAX_LENGTH);
             }

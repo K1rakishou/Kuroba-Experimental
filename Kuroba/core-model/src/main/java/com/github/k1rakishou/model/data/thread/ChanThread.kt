@@ -3,6 +3,7 @@ package com.github.k1rakishou.model.data.thread
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.common.MurmurHashUtils
 import com.github.k1rakishou.common.mutableListWithCap
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
@@ -69,6 +70,9 @@ class ChanThread(
 
       var addedOrUpdatedPosts = false
 
+      var addedPostsCount = 0
+      var updatedPostsCount = 0
+
       newChanPosts.forEach { newChanPost ->
         require(newChanPost.postDescriptor.descriptor is ChanDescriptor.ThreadDescriptor) {
           "postDescriptor.descriptor must be thread ThreadDescriptor"
@@ -80,6 +84,8 @@ class ChanThread(
           postsByPostDescriptors[newChanPost.postDescriptor] = newChanPost
 
           addedOrUpdatedPosts = true
+          addedPostsCount++
+
           return@forEach
         }
 
@@ -99,6 +105,7 @@ class ChanThread(
         postsByPostDescriptors[newChanPost.postDescriptor] = mergedPost
 
         addedOrUpdatedPosts = true
+        ++updatedPostsCount
       }
 
       if (addedOrUpdatedPosts) {
@@ -107,6 +114,9 @@ class ChanThread(
       }
 
       checkPostsConsistency()
+
+      Logger.d(TAG, "Thread cache (${threadDescriptor}) Added ${addedPostsCount} new posts, " +
+        "updated ${updatedPostsCount} posts")
 
       return@write addedOrUpdatedPosts
     }
@@ -575,6 +585,8 @@ class ChanThread(
   }
 
   companion object {
+    private const val TAG = "ChanThread"
+
     private var POSTS_COMPARATOR = compareBy<ChanPost> { chanPost -> chanPost.postDescriptor.postNo }
       .thenBy { chanPost -> chanPost.postDescriptor.postSubNo }
   }

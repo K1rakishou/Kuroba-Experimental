@@ -632,10 +632,10 @@ class PostCell : LinearLayout, PostCellInterface {
   }
 
   private fun getCommentText(post: ChanPost): CharSequence {
-    return if (!threadMode && post.postComment.comment.length > COMMENT_MAX_LENGTH_BOARD) {
+    return if (!threadMode && post.postComment.comment().length > COMMENT_MAX_LENGTH_BOARD) {
       truncatePostComment(post)
     } else {
-      post.postComment.comment
+      post.postComment.comment()
     }
   }
 
@@ -861,7 +861,7 @@ class PostCell : LinearLayout, PostCellInterface {
   }
 
   private fun setPostLinkableListener(post: ChanPost, bind: Boolean) {
-    val postComment = post.postComment.comment
+    val postComment = post.postComment.comment()
     if (postComment !is Spanned) {
       return
     }
@@ -886,7 +886,7 @@ class PostCell : LinearLayout, PostCellInterface {
   }
 
   private fun truncatePostComment(post: ChanPost): CharSequence {
-    val postComment = post.postComment.comment
+    val postComment = post.postComment.comment()
     val bi = BreakIterator.getWordInstance()
 
     bi.setText(postComment.toString())

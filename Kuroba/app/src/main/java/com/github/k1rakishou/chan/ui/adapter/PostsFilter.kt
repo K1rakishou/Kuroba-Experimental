@@ -88,7 +88,7 @@ class PostsFilter(
       val chanPost = iterator.next()
       add = false
 
-      if (chanPost.postComment.comment.toString().toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
+      if (chanPost.postComment.originalComment().toString().toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
         add = true
       } else if (chanPost.subject.toString().toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
         add = true

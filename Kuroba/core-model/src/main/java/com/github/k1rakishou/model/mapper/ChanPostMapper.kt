@@ -1,5 +1,6 @@
 package com.github.k1rakishou.model.mapper
 
+import android.text.SpannableString
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
@@ -14,8 +15,8 @@ object ChanPostMapper {
     val postDescriptor = chanPostBuilder.postDescriptor
 
     val postComment = PostComment(
-      chanPostBuilder.postCommentBuilder.getComment(),
-      chanPostBuilder.postCommentBuilder.getAllLinkables()
+      originalComment = SpannableString(chanPostBuilder.postCommentBuilder.getComment()),
+      linkables = chanPostBuilder.postCommentBuilder.getAllLinkables()
     )
 
     if (chanPostBuilder.op) {

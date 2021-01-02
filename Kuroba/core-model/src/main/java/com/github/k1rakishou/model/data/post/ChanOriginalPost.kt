@@ -87,7 +87,7 @@ class ChanOriginalPost(
       ", deleted=" + deleted +
       ", postImages=" + postImages.size +
       ", subject='" + subject + '\'' +
-      ", postComment=" + postComment.comment.take(64) +
+      ", postComment=" + postComment.originalComment().take(64) +
       '}'
   }
 

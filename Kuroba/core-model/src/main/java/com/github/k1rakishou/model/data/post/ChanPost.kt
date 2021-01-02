@@ -69,7 +69,10 @@ open class ChanPost(
     onDemandContentLoadedMap.clear()
 
     for (loaderType in LoaderType.values()) {
-      onDemandContentLoadedMap[loaderType] = LoaderContentLoadState()
+      onDemandContentLoadedMap[loaderType] = when (isOP()) {
+        true -> OriginalPostContentLoadState()
+        false -> PostContentLoadState()
+      }
     }
 
     repliesFrom?.let { replies -> this.repliesFrom.addAll(replies) }
@@ -153,9 +156,6 @@ open class ChanPost(
     if (postDescriptor != other.postDescriptor) {
       return false
     }
-    if (!areRepliesToTheSame(other)) {
-      return false
-    }
     if (!arePostImagesTheSame(other)) {
       return false
     }
@@ -181,18 +181,6 @@ open class ChanPost(
     return true
   }
 
-  private fun areRepliesToTheSame(other: ChanPost): Boolean {
-    if (repliesTo.size != other.repliesTo.size) {
-      return false
-    }
-
-    if (repliesFrom.size != other.repliesFrom.size) {
-      return false
-    }
-
-    return repliesTo == other.repliesTo && repliesFrom == other.repliesFrom
-  }
-
   private fun arePostImagesTheSame(other: ChanPost): Boolean {
     if (postImages.size != other.postImages.size) {
       return false
@@ -205,7 +193,6 @@ open class ChanPost(
     var result = chanPostId.hashCode()
     result = 31 * result + postDescriptor.hashCode()
     result = 31 * result + repliesTo.hashCode()
-    result = 31 * result + repliesFrom.hashCode()
     result = 31 * result + postImages.hashCode()
     result = 31 * result + postComment.hashCode()
     result = 31 * result + subject.hashCode()
@@ -223,7 +210,7 @@ open class ChanPost(
       ", postDescriptor=" + postDescriptor +
       ", postImages=" + postImages.size +
       ", subject='" + subject + '\'' +
-      ", postComment=" + postComment.comment.take(64) +
+      ", postComment=" + postComment.originalComment().take(64) +
       '}'
   }
 

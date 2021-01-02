@@ -257,7 +257,7 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
             title.setText(null);
         }
 
-        CharSequence commentText = post.getPostComment().getComment();
+        CharSequence commentText = post.getPostComment().comment();
         if (commentText.length() > COMMENT_MAX_LENGTH) {
             commentText = commentText.subSequence(0, COMMENT_MAX_LENGTH);
         }

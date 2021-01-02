@@ -127,7 +127,7 @@ public class RemovedPostsController
             removedPostsArray[i] = new RemovedPost(
                     post.getPostImages(),
                     post.getPostDescriptor(),
-                    post.getPostComment().getComment(),
+                    post.getPostComment().comment(),
                     false
             );
         }

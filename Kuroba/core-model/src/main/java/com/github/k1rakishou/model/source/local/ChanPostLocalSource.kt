@@ -201,7 +201,7 @@ class ChanPostLocalSource(
 
       val serializeSpannableString = SpannableStringMapper.serializeSpannableString(
         gson,
-        chanPost.postComment.comment
+        chanPost.postComment.originalComment()
       ) ?: return@mapIndexedNotNull null
 
       return@mapIndexedNotNull TextSpanMapper.toEntity(

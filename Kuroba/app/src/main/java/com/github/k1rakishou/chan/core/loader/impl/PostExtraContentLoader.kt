@@ -49,7 +49,7 @@ internal class PostExtraContentLoader(
   }
 
   private fun extractVideoIds(postLoaderData: PostLoaderData): List<GenericVideoId> {
-    val comment = postLoaderData.post.postComment.comment
+    val comment = postLoaderData.post.postComment.originalComment()
     if (comment.isEmpty() || comment !is Spanned) {
       return emptyList()
     }
@@ -70,7 +70,7 @@ internal class PostExtraContentLoader(
       return rejected()
     }
 
-    val comment = postLoaderData.post.postComment.comment
+    val comment = postLoaderData.post.postComment.originalComment()
     if (comment.isEmpty() || comment !is Spanned) {
       return rejected()
     }

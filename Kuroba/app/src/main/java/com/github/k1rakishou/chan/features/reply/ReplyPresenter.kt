@@ -386,7 +386,7 @@ class ReplyPresenter @Inject constructor(
 
   fun quote(post: ChanPost, withText: Boolean) {
     val comment = if (withText) {
-      post.postComment.comment.toString()
+      post.postComment.comment().toString()
     } else {
       null
     }

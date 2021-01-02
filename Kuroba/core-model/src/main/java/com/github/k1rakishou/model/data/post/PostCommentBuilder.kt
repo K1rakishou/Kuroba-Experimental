@@ -1,6 +1,7 @@
 package com.github.k1rakishou.model.data.post
 
 import android.text.Spannable
+import android.text.SpannableString
 import com.github.k1rakishou.core_spannable.PostLinkable
 
 // Thread safe
@@ -51,7 +52,10 @@ class PostCommentBuilder(
     val c = checkNotNull(comment) { "Comment is null!" }
     require(c is Spannable) { "Comment is not instance of Spannable! comment=${c::class.java.simpleName}" }
 
-    return PostComment(c, postLinkables.toList())
+    return PostComment(
+      originalComment = SpannableString(c),
+      linkables = postLinkables.toList()
+    )
   }
 
   override fun toString(): String {

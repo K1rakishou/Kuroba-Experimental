@@ -465,7 +465,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun clipboardPost(post: ChanPost) {
-    AndroidUtils.setClipboardContent("Post text", post.postComment.comment.toString())
+    AndroidUtils.setClipboardContent("Post text", post.postComment.comment().toString())
     showToast(context, R.string.post_text_copied)
   }
 

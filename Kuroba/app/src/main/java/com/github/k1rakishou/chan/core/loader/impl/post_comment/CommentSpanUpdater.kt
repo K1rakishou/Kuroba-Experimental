@@ -55,7 +55,7 @@ internal object CommentSpanUpdater {
   ): Boolean {
     BackgroundUtils.ensureBackgroundThread()
 
-    val ssb = SpannableStringBuilder(post.postComment.comment)
+    val ssb = SpannableStringBuilder(post.postComment.originalComment())
     val groupedSpanUpdates = groupSpanUpdatesByOldSpans(spanUpdateBatchList)
 
     // Since we are inserting new text, old spans will become incorrect right after the first
@@ -116,7 +116,7 @@ internal object CommentSpanUpdater {
       }
     }
 
-    post.postComment.comment = ssb
+    post.postComment.updateComment(ssb)
     return updated
   }
 
