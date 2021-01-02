@@ -41,17 +41,14 @@ import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.settings.RangeSettingUpdaterController
-import com.github.k1rakishou.chan.ui.helper.HintPopup
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
-import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenu
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem.ToobarThreedotMenuCallback
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLinkInBrowser
@@ -95,8 +92,6 @@ open class ViewThreadController(
   lateinit var threadFollowHistoryManager: ThreadFollowHistoryManager
 
   private var pinItemPinned = false
-
-  private var hintPopup: HintPopup? = null
   private var threadDescriptor: ThreadDescriptor = startingThreadDescriptor
 
   override val threadControllerType: ThreadControllerType
@@ -167,7 +162,6 @@ open class ViewThreadController(
 
   override fun onDestroy() {
     super.onDestroy()
-    dismissHintPopup()
     updateLeftPaneHighlighting(null)
   }
 
@@ -340,7 +334,7 @@ open class ViewThreadController(
 
   private fun showAvailableArchives(descriptor: ThreadDescriptor) {
     Logger.d(TAG, "showAvailableArchives($descriptor)")
-    
+
     val supportedArchiveDescriptors = archivesManager.getSupportedArchiveDescriptors(descriptor)
       .filter { archiveDescriptor ->
         return@filter siteManager.bySiteDescriptor(archiveDescriptor.siteDescriptor)?.enabled()
@@ -551,7 +545,7 @@ open class ViewThreadController(
       onPositiveButtonClickListener = {
         mainScope.launch(Dispatchers.Main.immediate) {
           Logger.d(TAG, "showExternalThread() loading external thread $threadToOpenDescriptor " +
-            "from opened thread $threadDescriptor")
+              "from opened thread $threadDescriptor")
 
           threadFollowHistoryManager.pushThreadDescriptor(threadDescriptor)
           loadThread(threadToOpenDescriptor, openingExternalThread = true)
@@ -577,7 +571,7 @@ open class ViewThreadController(
   }
 
   override suspend fun setBoard(descriptor: BoardDescriptor, animated: Boolean) {
-    mainScope.launch(Dispatchers.Main.immediate){
+    mainScope.launch(Dispatchers.Main.immediate) {
       Logger.d(TAG, "setBoard($descriptor, $animated)")
       showBoardInternal(descriptor, animated)
     }
@@ -599,7 +593,8 @@ open class ViewThreadController(
 
     if (doubleNavigationController != null && doubleNavigationController?.leftController is StyledToolbarNavigationController) {
       // split layout
-      val browseController = doubleNavigationController!!.leftController.childControllers[0] as BrowseController
+      val browseController =
+        doubleNavigationController!!.leftController.childControllers[0] as BrowseController
       browseController.setBoard(boardDescriptor)
 
       val searchQuery = localSearchManager.getSearchQuery(LocalSearchType.CatalogSearch)
@@ -670,7 +665,6 @@ open class ViewThreadController(
 
     setPinIconState(false)
     updateLeftPaneHighlighting(newThreadDescriptor)
-    showHints()
   }
 
   private fun updateNavigationTitle(
@@ -698,34 +692,6 @@ open class ViewThreadController(
   private fun updateMenuItems() {
     navigation.findSubItem(ACTION_OPEN_THREAD_IN_ARCHIVE)?.let { retrieveDeletedPostsItem ->
       retrieveDeletedPostsItem.visible = threadDescriptor.siteDescriptor().is4chan()
-    }
-  }
-
-  private fun showHints() {
-    val counter = ChanSettings.threadOpenCounter.increase()
-    if (counter == 2) {
-      view.postDelayed({
-        val view = navigation.findItem(ToolbarMenu.OVERFLOW_ID)?.view
-        if (view != null) {
-          dismissHintPopup()
-          hintPopup = HintPopup.show(context, view, getString(R.string.thread_up_down_hint), -dp(1f), 0)
-        }
-      }, 600)
-    } else if (counter == 3) {
-      view.postDelayed({
-        val view = navigation.findItem(ACTION_PIN)?.view
-        if (view != null) {
-          dismissHintPopup()
-          hintPopup = HintPopup.show(context, view, getString(R.string.thread_pin_hint), -dp(1f), 0)
-        }
-      }, 600)
-    }
-  }
-
-  private fun dismissHintPopup() {
-    if (hintPopup != null) {
-      hintPopup!!.dismiss()
-      hintPopup = null
     }
   }
 

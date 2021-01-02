@@ -98,7 +98,6 @@ import com.github.k1rakishou.chan.ui.epoxy.EpoxyErrorView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyExpandableGroupView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyTextView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyTextViewWrapHeight;
-import com.github.k1rakishou.chan.ui.helper.HintPopup;
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
 import com.github.k1rakishou.chan.ui.layout.FilesLayout;
 import com.github.k1rakishou.chan.ui.layout.FilterLayout;
@@ -298,7 +297,6 @@ StartActivityComponent {
     void inject(FilesLayout filesLayout);
     void inject(LoadingBar loadingBar);
     void inject(ThreadSlidingPaneLayout threadSlidingPaneLayout);
-    void inject(HintPopup hintPopup);
     void inject(PostStubCell postStubCell);
     void inject(PostRepliesContainer postRepliesContainer);
     void inject(SearchLayout searchLayout);

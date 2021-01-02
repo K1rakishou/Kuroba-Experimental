@@ -44,7 +44,6 @@ import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChang
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
-import com.github.k1rakishou.chan.ui.helper.HintPopup
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem
@@ -87,7 +86,6 @@ class BrowseController(
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
   private var order: PostsFilter.Order = PostsFilter.Order.BUMP
-  private var hint: HintPopup? = null
   private var initialized = false
   private var menuBuiltOnce = false
 
@@ -137,30 +135,12 @@ class BrowseController(
   override fun onDestroy() {
     super.onDestroy()
 
-    if (hint != null) {
-      hint!!.dismiss()
-      hint = null
-    }
-
     drawerCallbacks = null
     presenter.destroy()
   }
 
   override suspend fun showSitesNotSetup() {
     super.showSitesNotSetup()
-
-    if (shown) {
-      if (hint != null) {
-        hint!!.dismiss()
-        hint = null
-      }
-
-      val hintView: View = requireToolbar().findViewById(R.id.title_container)
-      hint = HintPopup.show(context, hintView, R.string.thread_empty_setup_hint).apply {
-        alignCenter()
-        wiggle()
-      }
-    }
 
     // this controller is used for catalog views; displaying things on two rows for them middle
     // menu is how we want it done these need to be setup before the view is rendered,
