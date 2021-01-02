@@ -541,9 +541,8 @@ Note that for country code filtering, troll country codes should be prepended wi
 
     <!-- Appearance layout group -->
     <string name="setting_layout_mode_slide">Slide mode</string>
+    <string name="setting_layout_mode_phone">Phone mode</string>
     <string name="setting_layout_mode_split">Split mode</string>
-    <string name="setting_slide_mode_enable_overhang">Enable sliding pane layout overhang</string>
-    <string name="setting_slide_mode_enable_overhang_descriptor">Disabling overhang will make the Slide layout appear similar to Phone layout</string>
     <string name="setting_board_grid_span_count">Catalog mode column count</string>
     <string name="setting_board_grid_span_count_default">Auto</string>
     <string name="setting_board_grid_span_count_item">%1$d columns</string>

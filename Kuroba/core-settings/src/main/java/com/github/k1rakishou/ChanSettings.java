@@ -144,6 +144,7 @@ public class ChanSettings {
     public enum LayoutMode implements OptionSettingItem {
         AUTO("auto"),
         SLIDE("slide"),
+        PHONE("phone"),
         SPLIT("split");
 
         String name;
@@ -215,7 +216,6 @@ public class ChanSettings {
 
     // Layout
     public static OptionsSetting<LayoutMode> layoutMode;
-    public static BooleanSetting slidePaneLayoutShowOverhang;
     public static IntegerSetting boardGridSpanCount;
     public static BooleanSetting neverHideToolbar;
     public static BooleanSetting enableReplyFab;
@@ -369,7 +369,6 @@ public class ChanSettings {
 
             //Layout
             layoutMode = new OptionsSetting<>(p, "preference_layout_mode", LayoutMode.class, LayoutMode.AUTO);
-            slidePaneLayoutShowOverhang = new BooleanSetting(p, "slide_pane_layout_shown_overhang", true);
             boardGridSpanCount = new IntegerSetting(p, "preference_board_grid_span_count", 0);
             neverHideToolbar = new BooleanSetting(p, "preference_never_hide_toolbar", false);
             enableReplyFab = new BooleanSetting(p, "preference_enable_reply_fab", true);
@@ -687,5 +686,13 @@ public class ChanSettings {
         }
 
         return layoutMode;
+    }
+
+    public static boolean isSlideLayoutMode() {
+        return getCurrentLayoutMode() == LayoutMode.SLIDE;
+    }
+
+    public static boolean isSplitLayoutMode() {
+        return getCurrentLayoutMode() == LayoutMode.SPLIT;
     }
 }

@@ -695,6 +695,7 @@ class StartActivity : AppCompatActivity(),
         drawerController.pushChildController(split)
         split.setLeftController(mainNavigationController, false)
       }
+      ChanSettings.LayoutMode.PHONE,
       ChanSettings.LayoutMode.SLIDE -> {
         drawerController.pushChildController(mainNavigationController)
       }
@@ -703,7 +704,7 @@ class StartActivity : AppCompatActivity(),
 
     browseController = BrowseController(this, drawerController)
 
-    if (layoutMode == ChanSettings.LayoutMode.SLIDE) {
+    if (layoutMode == ChanSettings.LayoutMode.PHONE || layoutMode == ChanSettings.LayoutMode.SLIDE) {
       val slideController = ThreadSlideController(
         this,
         inflate(this, R.layout.layout_split_empty),

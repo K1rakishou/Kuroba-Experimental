@@ -303,20 +303,12 @@ class AppearanceSettingsScreen(
             when (layoutMode) {
               ChanSettings.LayoutMode.AUTO -> context.getString(R.string.setting_layout_mode_auto)
               ChanSettings.LayoutMode.SLIDE -> context.getString(R.string.setting_layout_mode_slide)
+              ChanSettings.LayoutMode.PHONE -> context.getString(R.string.setting_layout_mode_phone)
               ChanSettings.LayoutMode.SPLIT -> context.getString(R.string.setting_layout_mode_split)
             }
           },
           requiresRestart = true,
           setting = ChanSettings.layoutMode
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = AppearanceScreen.LayoutGroup.SlideLayoutModeOverhang,
-          topDescriptionIdFunc = { R.string.setting_slide_mode_enable_overhang },
-          bottomDescriptionIdFunc = { R.string.setting_slide_mode_enable_overhang_descriptor },
-          requiresRestart = true,
-          setting = ChanSettings.slidePaneLayoutShowOverhang
         )
 
         group += ListSettingV2.createBuilder<Int>(

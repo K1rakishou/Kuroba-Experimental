@@ -77,7 +77,7 @@ public class ThreadSlidingPaneLayout extends SlidingPaneLayoutEx implements ICol
     }
 
     private int currentOverhangSize() {
-        if (ChanSettings.slidePaneLayoutShowOverhang.get()) {
+        if (ChanSettings.isSlideLayoutMode()) {
             return SLIDE_PANE_OVERHANG_SIZE;
         }
 

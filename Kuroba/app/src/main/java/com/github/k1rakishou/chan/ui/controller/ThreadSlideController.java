@@ -94,7 +94,7 @@ public class ThreadSlideController
         slidingPaneLayout.setPanelSlideListener(this);
         slidingPaneLayout.setParallaxDistance(dp(100));
 
-        if (ChanSettings.slidePaneLayoutShowOverhang.get()) {
+        if (ChanSettings.isSlideLayoutMode()) {
             slidingPaneLayout.setShadowResourceLeft(R.drawable.panel_shadow);
         }
 
