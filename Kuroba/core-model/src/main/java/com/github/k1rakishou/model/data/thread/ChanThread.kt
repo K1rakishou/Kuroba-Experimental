@@ -9,6 +9,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.data.post.LoaderType
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.collections.ArrayList
@@ -452,7 +453,9 @@ class ChanThread(
       return mergeOriginalPosts(oldChanPost, newPost)
     }
 
-    check(oldChanPost.postDescriptor == newPost.postDescriptor) { "Post descriptors differ!" }
+    check(oldChanPost.postDescriptor == newPost.postDescriptor) {
+      "Post descriptors differ!"
+    }
 
     val mergedPost = ChanPost(
       chanPostId = oldChanPost.chanPostId,
@@ -471,7 +474,7 @@ class ChanThread(
       isSavedReply = newPost.isSavedReply
     )
 
-    mergedPost.replaceOnDemandContentLoadedMap(oldChanPost.copyOnDemandContentLoadedMap())
+    handlePostContentLoadedMap(mergedPost, oldChanPost)
     mergedPost.setPostDeleted(oldChanPost.deleted)
     return mergedPost
   }
@@ -486,7 +489,10 @@ class ChanThread(
     val oldChanOriginalPost = oldChanPost as ChanOriginalPost
     val newChanOriginalPost = newPost as ChanOriginalPost
 
-    check(oldChanOriginalPost.postDescriptor == newChanOriginalPost.postDescriptor) { "Post descriptors differ!" }
+    check(oldChanOriginalPost.postDescriptor == newChanOriginalPost.postDescriptor) {
+      "Post descriptors differ!"
+    }
+    val descriptor = newPost.postDescriptor.descriptor
 
     val mergedOriginalPost = ChanOriginalPost(
       chanPostId = oldChanOriginalPost.chanPostId,
@@ -512,9 +518,20 @@ class ChanThread(
       archived = newChanOriginalPost.archived
     )
 
-    mergedOriginalPost.replaceOnDemandContentLoadedMap(oldChanOriginalPost.copyOnDemandContentLoadedMap())
+    handlePostContentLoadedMap(mergedOriginalPost, oldChanOriginalPost)
     mergedOriginalPost.setPostDeleted(oldChanOriginalPost.deleted)
     return mergedOriginalPost
+  }
+
+  private fun handlePostContentLoadedMap(
+    mergedPost: ChanPost,
+    oldChanPost: ChanPost
+  ) {
+    mergedPost.replaceOnDemandContentLoadedMap(oldChanPost.copyOnDemandContentLoadedMap())
+
+    // Reset PostExtraContentLoader because since post has changed, the comment might have changed
+    // too, so we need to reload extra content for this post
+    mergedPost.setContentLoadedForLoader(LoaderType.PostExtraContentLoader, false)
   }
 
   private fun recalculatePostReplies() {

@@ -23,6 +23,7 @@ class PostComment(
     this.comment = newComment
   }
 
+  @Synchronized
   fun comment(): CharSequence {
     if (comment == null) {
       return originalComment

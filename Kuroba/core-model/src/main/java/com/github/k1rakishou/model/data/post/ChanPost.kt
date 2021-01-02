@@ -1,7 +1,6 @@
 package com.github.k1rakishou.model.data.post
 
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import java.util.*
 
@@ -69,30 +68,25 @@ open class ChanPost(
     onDemandContentLoadedMap.clear()
 
     for (loaderType in LoaderType.values()) {
-      onDemandContentLoadedMap[loaderType] = when (isOP()) {
-        true -> OriginalPostContentLoadState()
-        false -> PostContentLoadState()
-      }
+      onDemandContentLoadedMap[loaderType] = LoaderContentLoadState()
     }
 
     repliesFrom?.let { replies -> this.repliesFrom.addAll(replies) }
   }
 
   @Synchronized
-  open fun isContentLoadedForLoader(chanDescriptor: ChanDescriptor, loaderType: LoaderType): Boolean {
+  open fun isContentLoadedForLoader(loaderType: LoaderType): Boolean {
     return onDemandContentLoadedMap[loaderType]
-      ?.isContentLoadedFor(chanDescriptor)
+      ?.isContentLoadedFor()
       ?: false
   }
 
   @Synchronized
-  open fun setContentLoadedForLoader(chanDescriptor: ChanDescriptor, loaderType: LoaderType) {
-    onDemandContentLoadedMap[loaderType]?.setContentLoadedFor(chanDescriptor)
-  }
-
-  @Synchronized
-  fun setContentLoaded(loaderType: LoaderType) {
-    onDemandContentLoadedMap[loaderType]?.setContentLoaded()
+  open fun setContentLoadedForLoader(
+    loaderType: LoaderType,
+    loaded: Boolean = true
+  ) {
+    onDemandContentLoadedMap[loaderType]?.setContentLoadedFor(loaded)
   }
 
   @Synchronized

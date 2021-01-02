@@ -66,7 +66,7 @@ internal class PostExtraContentLoader(
   override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
     BackgroundUtils.ensureBackgroundThread()
 
-    if (postLoaderData.post.isContentLoadedForLoader(postLoaderData.chanDescriptor, loaderType)) {
+    if (postLoaderData.post.isContentLoadedForLoader(loaderType)) {
       return rejected()
     }
 
@@ -137,7 +137,7 @@ internal class PostExtraContentLoader(
       return rejected()
     }
 
-    postLoaderData.post.setContentLoadedForLoader(postLoaderData.chanDescriptor, loaderType)
+    postLoaderData.post.setContentLoadedForLoader(loaderType)
     // Something was updated we need to redraw the post, so return success
     return succeeded(true)
   }
