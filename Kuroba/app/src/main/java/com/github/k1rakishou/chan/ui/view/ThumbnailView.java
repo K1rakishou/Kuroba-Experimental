@@ -109,7 +109,7 @@ public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
     }
 
     private void init() {
-        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractActivityComponent(getContext())
                 .inject(this);
 
         textPaint.setColor(themeEngine.getChanTheme().getTextColorPrimary());

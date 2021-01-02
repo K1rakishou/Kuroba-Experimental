@@ -58,7 +58,7 @@ class NavigationControllerContainerLayout : FrameLayout {
   }
 
   private fun preInit() {
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
   }
 

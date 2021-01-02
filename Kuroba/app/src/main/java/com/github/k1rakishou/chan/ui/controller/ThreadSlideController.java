@@ -27,7 +27,7 @@ import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.controller.transition.ControllerTransition;
-import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks;
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController;
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController;
@@ -66,7 +66,7 @@ public class ThreadSlideController
     private ThreadSlidingPaneLayout slidingPaneLayout;
 
     @Override
-    protected void injectDependencies(@NotNull StartActivityComponent component) {
+    protected void injectDependencies(@NotNull ActivityComponent component) {
         component.inject(this);
     }
 

@@ -48,7 +48,7 @@ class EpoxyProxyView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_proxy_entry_view, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     proxyEntryViewHolder = findViewById(R.id.proxy_entry_view_holder)

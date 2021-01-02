@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan
+package com.github.k1rakishou.chan.activity
 
 import com.github.k1rakishou.chan.controller.Controller
 

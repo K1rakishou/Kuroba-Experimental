@@ -54,7 +54,7 @@ public class SplitNavigationControllerLayout extends LinearLayout implements The
     public SplitNavigationControllerLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
 
-        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractActivityComponent(getContext())
                 .inject(this);
 
         setOrientation(LinearLayout.HORIZONTAL);

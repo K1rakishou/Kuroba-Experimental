@@ -24,7 +24,7 @@ import android.widget.TextView;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
-import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +36,7 @@ public class LicensesController extends Controller {
     private String url;
 
     @Override
-    protected void injectDependencies(@NotNull StartActivityComponent component) {
+    protected void injectDependencies(@NotNull ActivityComponent component) {
         component.inject(this);
     }
 

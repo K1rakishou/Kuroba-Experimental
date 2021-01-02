@@ -5,6 +5,7 @@ import android.content.ContextWrapper
 import android.graphics.drawable.ColorDrawable
 import android.text.TextWatcher
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.Lifecycle
@@ -13,7 +14,8 @@ import com.airbnb.epoxy.DiffResult
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.airbnb.epoxy.OnModelBuildFinishedListener
-import com.github.k1rakishou.chan.StartActivity
+import com.github.k1rakishou.chan.activity.SharingActivity
+import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.controller.Controller
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
@@ -75,7 +77,8 @@ fun EpoxyController.addOneshotModelBuildListener(callback: () -> Unit) {
 fun Context.getLifecycleFromContext(): Lifecycle? {
   return when (this) {
     is StartActivity -> this.lifecycle
-    is ContextWrapper -> (this.baseContext as? StartActivity)?.lifecycle
+    is SharingActivity -> this.lifecycle
+    is ContextWrapper -> (this.baseContext as? AppCompatActivity)?.getLifecycleFromContext()
     else -> null
   }
 }

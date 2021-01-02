@@ -5,7 +5,7 @@ import android.widget.FrameLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
-import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.setup.data.AddBoardsControllerState
@@ -63,7 +63,7 @@ class AddBoardsController(
 
   override fun getLayoutId(): Int = R.layout.controller_add_boards
 
-  override fun injectDependencies(component: StartActivityComponent) {
+  override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
   }
 

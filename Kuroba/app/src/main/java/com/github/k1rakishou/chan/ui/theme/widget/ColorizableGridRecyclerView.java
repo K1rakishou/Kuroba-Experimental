@@ -56,7 +56,7 @@ public class ColorizableGridRecyclerView extends ColorizableRecyclerView {
 
     private void init() {
         if (!isInEditMode()) {
-            AppModuleAndroidUtils.extractStartActivityComponent(getContext())
+            AppModuleAndroidUtils.extractActivityComponent(getContext())
                     .inject(this);
         }
     }

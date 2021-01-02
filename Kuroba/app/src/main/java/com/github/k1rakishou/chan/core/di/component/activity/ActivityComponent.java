@@ -1,8 +1,11 @@
 package com.github.k1rakishou.chan.core.di.component.activity;
 
-import com.github.k1rakishou.chan.StartActivity;
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.github.k1rakishou.chan.activity.SharingActivity;
+import com.github.k1rakishou.chan.activity.StartActivity;
 import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout;
-import com.github.k1rakishou.chan.core.di.module.activity.StartActivityModule;
+import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule;
 import com.github.k1rakishou.chan.core.di.scope.PerActivity;
 import com.github.k1rakishou.chan.core.presenter.ImageViewerPresenter;
 import com.github.k1rakishou.chan.core.presenter.ImportExportSettingsPresenter;
@@ -152,9 +155,11 @@ import dagger.BindsInstance;
 import dagger.Subcomponent;
 
 @PerActivity
-@Subcomponent(modules = StartActivityModule.class)
-public interface
-StartActivityComponent {
+@Subcomponent(modules = ActivityModule.class)
+public interface ActivityComponent {
+    void inject(StartActivity startActivity);
+    void inject(SharingActivity sharingActivity);
+
     void inject(AlbumDownloadController albumDownloadController);
     void inject(AlbumViewController albumViewController);
     void inject(BrowseController browseController);
@@ -251,7 +256,6 @@ StartActivityComponent {
     void inject(EpoxyAttachNewFileButtonWideView epoxyAttachNewFileButtonWideView);
     void inject(EpoxyTextViewWrapHeight epoxyTextViewWrapHeight);
 
-    void inject(StartActivity startActivity);
     void inject(CaptchaNoJsLayoutV2 captchaNoJsLayoutV2);
     void inject(CaptchaNojsLayoutV1 captchaNojsLayoutV1);
     void inject(ThumbnailView thumbnailView);
@@ -307,10 +311,10 @@ StartActivityComponent {
     @Subcomponent.Builder
     interface Builder {
         @BindsInstance
-        Builder startActivity(StartActivity activity);
+        Builder activity(AppCompatActivity activity);
         @BindsInstance
-        Builder startActivityModule(StartActivityModule module);
+        Builder activityModule(ActivityModule module);
 
-        StartActivityComponent build();
+        ActivityComponent build();
     }
 }

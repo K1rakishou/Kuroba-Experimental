@@ -62,7 +62,7 @@ public class ThreadSlidingPaneLayout extends SlidingPaneLayoutEx implements ICol
 
     private void init() {
         if (!isInEditMode()) {
-            AppModuleAndroidUtils.extractStartActivityComponent(getContext())
+            AppModuleAndroidUtils.extractActivityComponent(getContext())
                     .inject(this);
         }
     }

@@ -23,7 +23,7 @@ class EpoxySearchPostGapView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_search_post_gap_view, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     onThemeChanged()

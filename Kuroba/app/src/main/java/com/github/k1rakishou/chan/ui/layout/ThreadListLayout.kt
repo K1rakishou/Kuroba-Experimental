@@ -291,7 +291,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   override fun onFinishInflate() {
     super.onFinishInflate()
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     // View binding

@@ -83,7 +83,7 @@ public class FilesLayout
 
     private void init() {
         if (!isInEditMode()) {
-            AppModuleAndroidUtils.extractStartActivityComponent(getContext())
+            AppModuleAndroidUtils.extractActivityComponent(getContext())
                     .inject(this);
         }
     }

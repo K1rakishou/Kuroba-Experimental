@@ -3,14 +3,14 @@ package com.github.k1rakishou.chan.ui.controller
 import android.content.Context
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
-import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.ui.layout.ReportProblemLayout
 
 class ReportProblemController(context: Context)
   : Controller(context), ReportProblemLayout.ReportProblemControllerCallbacks {
   private var loadingViewController: LoadingViewController? = null
 
-  override fun injectDependencies(component: StartActivityComponent) {
+  override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
   }
 

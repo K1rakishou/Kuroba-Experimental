@@ -5,7 +5,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.StartActivity
+import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.features.settings.DatabaseSummaryScreen

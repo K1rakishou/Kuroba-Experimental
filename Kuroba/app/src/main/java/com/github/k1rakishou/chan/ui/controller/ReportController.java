@@ -25,7 +25,7 @@ import android.widget.TextView;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
-import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier;
@@ -44,7 +44,7 @@ public class ReportController extends Controller implements RequiresNoBottomNavB
     private Site site;
 
     @Override
-    protected void injectDependencies(@NotNull StartActivityComponent component) {
+    protected void injectDependencies(@NotNull ActivityComponent component) {
         component.inject(this);
     }
 

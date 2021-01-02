@@ -29,7 +29,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter;
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface;
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper;
@@ -77,7 +77,7 @@ public class PostRepliesController
     }
 
     @Override
-    protected void injectDependencies(@NotNull StartActivityComponent component) {
+    protected void injectDependencies(@NotNull ActivityComponent component) {
         component.inject(this);
     }
 

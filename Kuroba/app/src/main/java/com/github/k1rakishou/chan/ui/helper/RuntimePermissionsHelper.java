@@ -71,7 +71,11 @@ public class RuntimePermissionsHelper {
         }
     }
 
-    public void onRequestPermissionsResult(int reqCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(
+            int reqCode,
+            @NonNull String[] permissions,
+            @NonNull int[] grantResults
+    ) {
         if (reqCode == RUNTIME_PERMISSION_RESULT_ID && pendingCallback != null) {
             boolean granted = false;
 

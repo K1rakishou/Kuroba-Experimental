@@ -46,7 +46,7 @@ public class RemovedPostsHelper {
         this.presenter = presenter;
         this.callbacks = callbacks;
 
-        AppModuleAndroidUtils.extractStartActivityComponent(context)
+        AppModuleAndroidUtils.extractActivityComponent(context)
                 .inject(this);
     }
 

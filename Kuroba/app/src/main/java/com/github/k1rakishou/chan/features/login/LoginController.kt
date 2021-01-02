@@ -23,7 +23,7 @@ import android.widget.TextView
 import androidx.core.text.parseAsHtml
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
-import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
@@ -67,7 +67,7 @@ class LoginController(
 
   private val loginPresenter by lazy { LoginPresenter(postingLimitationsInfoManager) }
 
-  override fun injectDependencies(component: StartActivityComponent) {
+  override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
   }
 

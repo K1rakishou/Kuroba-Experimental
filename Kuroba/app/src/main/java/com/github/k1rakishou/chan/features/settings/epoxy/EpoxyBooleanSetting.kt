@@ -40,7 +40,7 @@ class EpoxyBooleanSetting @JvmOverloads constructor(
   init {
     View.inflate(context, R.layout.epoxy_setting_boolean, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     topDescriptor = findViewById(R.id.top)

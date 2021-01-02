@@ -79,7 +79,7 @@ public class LegacyCaptchaLayout
     }
 
     private void init() {
-        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractActivityComponent(getContext())
                 .inject(this);
     }
 

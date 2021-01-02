@@ -40,7 +40,7 @@ import androidx.viewpager.widget.ViewPager
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
-import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
@@ -164,7 +164,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
   private lateinit var currentThemeIndicator: TextView
   private var currentItemIndex = 0
 
-  override fun injectDependencies(component: StartActivityComponent) {
+  override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
   }
 

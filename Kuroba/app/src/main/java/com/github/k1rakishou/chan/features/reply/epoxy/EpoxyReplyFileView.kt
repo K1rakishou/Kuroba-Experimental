@@ -57,7 +57,7 @@ class EpoxyReplyFileView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_reply_file_view, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     replyAttachmentRoot = findViewById(R.id.reply_attachment_root)

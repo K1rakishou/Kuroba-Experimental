@@ -28,7 +28,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
-import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.ui.cell.AlbumViewCell;
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController;
@@ -60,7 +60,7 @@ public class AlbumViewController
     private ChanDescriptor chanDescriptor;
 
     @Override
-    protected void injectDependencies(@NotNull StartActivityComponent component) {
+    protected void injectDependencies(@NotNull ActivityComponent component) {
         component.inject(this);
     }
 

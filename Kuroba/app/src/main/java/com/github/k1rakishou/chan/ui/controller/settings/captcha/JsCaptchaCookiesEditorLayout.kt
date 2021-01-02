@@ -34,7 +34,7 @@ class JsCaptchaCookiesEditorLayout(context: Context) : FrameLayout(context) {
   private val resetButton: ColorizableBarButton
 
   init {
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     inflate(context, R.layout.js_captcha_cookies_editor, this).apply {

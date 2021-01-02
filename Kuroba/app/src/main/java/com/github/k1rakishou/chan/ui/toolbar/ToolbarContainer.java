@@ -115,7 +115,7 @@ public class ToolbarContainer extends FrameLayout {
     }
 
     private void init() {
-        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractActivityComponent(getContext())
                 .inject(this);
     }
 

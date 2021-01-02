@@ -5,7 +5,7 @@ import android.net.Uri
 import android.widget.Toast
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.StartActivity
+import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.presenter.ImportExportSettingsPresenter
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository

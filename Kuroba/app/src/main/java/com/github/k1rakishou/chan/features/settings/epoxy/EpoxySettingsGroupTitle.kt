@@ -27,7 +27,7 @@ class EpoxySettingsGroupTitle  @JvmOverloads constructor(
   init {
     View.inflate(context, R.layout.epoxy_settings_group_title, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     groupTitle = findViewById(R.id.group_title)

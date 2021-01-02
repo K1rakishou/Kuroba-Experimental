@@ -86,7 +86,7 @@ public class FloatingMenu {
     }
 
     private void init() {
-        AppModuleAndroidUtils.extractStartActivityComponent(context)
+        AppModuleAndroidUtils.extractActivityComponent(context)
                 .inject(this);
     }
 

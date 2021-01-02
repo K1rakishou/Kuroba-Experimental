@@ -34,7 +34,7 @@ class AttachNewFileButton @JvmOverloads constructor(
     addIconDrawable = ContextCompat.getDrawable(context, R.drawable.ic_add_white_24dp)!!
 
     if (!isInEditMode) {
-      AppModuleAndroidUtils.extractStartActivityComponent(context)
+      AppModuleAndroidUtils.extractActivityComponent(context)
         .inject(this)
 
       init(Color.RED, dp(4f).toFloat())

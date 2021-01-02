@@ -28,7 +28,7 @@ class EpoxyHistoryHeaderView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_history_header_view, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     themeSwitchButton = findViewById(R.id.drawer_header_theme_switch)

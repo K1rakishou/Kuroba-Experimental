@@ -51,7 +51,7 @@ class AdjustAndroid10GestureZonesView @JvmOverloads constructor(
   init {
     setWillNotDraw(false)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     gestureZoneEditorTouchHandler = GestureZoneEditorTouchHandler(this)

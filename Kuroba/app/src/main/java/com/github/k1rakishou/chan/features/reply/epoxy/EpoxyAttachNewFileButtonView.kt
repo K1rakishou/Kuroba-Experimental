@@ -26,7 +26,7 @@ class EpoxyAttachNewFileButtonView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_attach_new_file_button_view, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     newAttachableButton = findViewById(R.id.reply_new_attachable_button)

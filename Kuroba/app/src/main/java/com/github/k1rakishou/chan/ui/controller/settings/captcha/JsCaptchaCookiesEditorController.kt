@@ -3,12 +3,12 @@ package com.github.k1rakishou.chan.ui.controller.settings.captcha
 import android.content.Context
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
-import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 
 class JsCaptchaCookiesEditorController(context: Context) :
   Controller(context), JsCaptchaCookiesEditorLayout.JsCaptchaCookiesEditorControllerCallbacks {
 
-  override fun injectDependencies(component: StartActivityComponent) {
+  override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
   }
 

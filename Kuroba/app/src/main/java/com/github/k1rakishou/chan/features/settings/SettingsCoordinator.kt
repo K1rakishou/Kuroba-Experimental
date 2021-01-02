@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.features.settings
 import android.content.Context
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.PersistableChanState
-import com.github.k1rakishou.chan.StartActivity
+import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.helper.DialogFactory
@@ -222,7 +222,7 @@ class SettingsCoordinator(
     get() = job + Dispatchers.Main + CoroutineName("SettingsCoordinator")
 
   fun onCreate() {
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     launch {

@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan
+package com.github.k1rakishou.chan.activity
 
 import android.app.Activity
 import android.app.ActivityManager
@@ -34,9 +34,11 @@ import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.lifecycleScope
 import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.Chan
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
-import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
-import com.github.k1rakishou.chan.core.di.module.activity.StartActivityModule
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -61,8 +63,6 @@ import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationContro
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
-import com.github.k1rakishou.chan.ui.helper.picker.PickedFile
-import com.github.k1rakishou.chan.ui.helper.picker.ShareFilePicker
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
@@ -75,9 +75,7 @@ import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColo
 import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.AndroidUtils.isAndroid11
 import com.github.k1rakishou.common.DoNotStrip
-import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ChanTheme
@@ -148,13 +146,13 @@ class StartActivity : AppCompatActivity(),
 
   lateinit var contentView: ViewGroup
 
-  private lateinit var startActivityComponent: StartActivityComponent
+  private lateinit var activityComponent: ActivityComponent
   private lateinit var mainRootLayoutMargins: TouchBlockingFrameLayout
   private lateinit var mainNavigationController: NavigationController
   private lateinit var drawerController: DrawerController
 
-  fun getComponent(): StartActivityComponent {
-    return startActivityComponent
+  fun getComponent(): ActivityComponent {
+    return activityComponent
   }
 
   @OptIn(ExperimentalTime::class)
@@ -164,17 +162,18 @@ class StartActivity : AppCompatActivity(),
     val isFreshStart = savedInstanceState == null
 
     if (intentMismatchWorkaround()) {
-      Logger.d(TAG, "onCreate() intentMismatchWorkaround()==true, " +
+      Logger.d(
+        TAG, "onCreate() intentMismatchWorkaround()==true, " +
         "savedInstanceState == null: $isFreshStart")
       return
     }
 
     Logger.d(TAG, "onCreate() start isFreshStart: $isFreshStart, initializing everything")
 
-    startActivityComponent = Chan.getComponent()
+    activityComponent = Chan.getComponent()
       .activityComponentBuilder()
-      .startActivity(this)
-      .startActivityModule(StartActivityModule())
+      .activity(this)
+      .activityModule(ActivityModule())
       .build()
       .also { component -> component.inject(this) }
 
@@ -357,21 +356,6 @@ class StartActivity : AppCompatActivity(),
     lifecycleScope.launch {
       Logger.d(TAG, "onNewIntentInternal called, action=${action}")
 
-      if (action == Intent.ACTION_SEND) {
-        if (onShareIntentReceived(intent)) {
-          setResult(Activity.RESULT_OK)
-        } else {
-          setResult(Activity.RESULT_CANCELED)
-        }
-
-        if (isAndroid11() && !isTaskRoot) {
-          Logger.d(TAG, "Current task is not root, finishing...")
-          finish()
-        }
-
-        return@launch
-      }
-
       bookmarksManager.awaitUntilInitialized()
 
       when {
@@ -384,50 +368,6 @@ class StartActivity : AppCompatActivity(),
         intent.hasExtra(NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
           lastPageNotificationClicked(extras)
         }
-      }
-    }
-  }
-
-  private suspend fun onShareIntentReceived(intent: Intent): Boolean {
-    showToast(this@StartActivity, getString(R.string.share_success_start))
-
-    val shareResult = imagePickHelper.pickFilesFromIntent(
-      ShareFilePicker.ShareFilePickerInput(intent)
-    )
-
-    when (shareResult) {
-      is ModularResult.Value -> {
-        when (val pickedFile = shareResult.value) {
-          is PickedFile.Result -> {
-            val sharedFilesCount = pickedFile.replyFiles.size
-
-            if (sharedFilesCount > 0) {
-              showToast(
-                this@StartActivity,
-                getString(R.string.share_success_message, sharedFilesCount)
-              )
-            } else {
-              showToast(this@StartActivity, R.string.share_error_message)
-            }
-
-            return true
-          }
-          is PickedFile.Failure -> {
-            Logger.e(
-              TAG,
-              "imagePickHelper.pickFilesFromIntent() -> PickedFile.Failure",
-              pickedFile.reason
-            )
-
-            showToast(this@StartActivity, R.string.share_error_message)
-            return false
-          }
-        }
-      }
-      is ModularResult.Error -> {
-        Logger.e(TAG, "imagePickHelper.pickFilesFromIntent() -> MR.Error", shareResult.error)
-        showToast(this@StartActivity, R.string.share_error_message)
-        return false
       }
     }
   }
@@ -513,7 +453,8 @@ class StartActivity : AppCompatActivity(),
     val boardToOpen = getBoardToOpen()
     val threadToOpen = getThreadToOpen()
 
-    Logger.d(TAG, "restoreFresh() getBoardToOpen returned ${boardToOpen}, " +
+    Logger.d(
+      TAG, "restoreFresh() getBoardToOpen returned ${boardToOpen}, " +
       "getThreadToOpen returned ${threadToOpen}")
 
     if (boardToOpen != null) {
@@ -716,7 +657,6 @@ class StartActivity : AppCompatActivity(),
     return when (action) {
       NotificationConstants.LAST_PAGE_NOTIFICATION_ACTION -> true
       NotificationConstants.REPLY_NOTIFICATION_ACTION -> true
-      Intent.ACTION_SEND -> true
       else -> false
     }
   }

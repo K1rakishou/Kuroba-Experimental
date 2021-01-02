@@ -8,9 +8,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
+import androidx.appcompat.app.AppCompatActivity
 import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
@@ -45,11 +45,11 @@ class LocalFilePicker(
   private val activeRequests = ConcurrentHashMap<Int, EnqueuedRequest>()
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
   private val requestCodeCounter = AtomicInteger(0)
-  private val activityRef = AtomicReference<StartActivity>(null)
+  private val activityRef = AtomicReference<AppCompatActivity>(null)
 
   private val selectedFilePickerBroadcastReceiver = SelectedFilePickerBroadcastReceiver()
 
-  fun onActivityCreated(activity: StartActivity) {
+  fun onActivityCreated(activity: AppCompatActivity) {
     BackgroundUtils.ensureMainThread()
     activityRef.set(activity)
   }
@@ -229,7 +229,7 @@ class LocalFilePicker(
     return intents
   }
 
-  private fun runIntentChooser(activity: StartActivity, intents: List<Intent>, requestCode: Int) {
+  private fun runIntentChooser(activity: AppCompatActivity, intents: List<Intent>, requestCode: Int) {
     check(intents.isNotEmpty()) { "intents is empty!" }
 
     if (intents.size == 1) {

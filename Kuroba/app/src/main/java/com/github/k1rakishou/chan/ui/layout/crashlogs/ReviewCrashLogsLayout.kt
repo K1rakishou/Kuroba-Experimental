@@ -31,7 +31,7 @@ internal class ReviewCrashLogsLayout(context: Context) : FrameLayout(context), C
   private val sendCrashLogsButton: ColorizableBarButton
 
   init {
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     inflate(context, R.layout.controller_review_crashlogs, this).apply {

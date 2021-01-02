@@ -30,7 +30,7 @@ class EpoxySearchErrorView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_search_error_view, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     errorTitle = findViewById(R.id.search_post_error_title)

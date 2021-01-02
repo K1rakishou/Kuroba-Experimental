@@ -26,7 +26,7 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
   var maxHeight: Int = 0
 
   init {
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
   }
 

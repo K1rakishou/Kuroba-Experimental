@@ -56,7 +56,7 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_history_entry_view, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     viewHolder = findViewById(R.id.history_entry_view_holder)

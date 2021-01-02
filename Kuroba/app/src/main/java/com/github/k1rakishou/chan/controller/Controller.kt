@@ -24,11 +24,11 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.annotation.CallSuper
 import androidx.annotation.StringRes
-import com.github.k1rakishou.chan.StartActivity
-import com.github.k1rakishou.chan.StartActivityCallbacks
+import com.github.k1rakishou.chan.activity.StartActivity
+import com.github.k1rakishou.chan.activity.StartActivityCallbacks
 import com.github.k1rakishou.chan.controller.transition.FadeInTransition
 import com.github.k1rakishou.chan.controller.transition.FadeOutTransition
-import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
@@ -125,10 +125,10 @@ abstract class Controller(@JvmField var context: Context) {
   }
 
   init {
-    injectDependencies(AppModuleAndroidUtils.extractStartActivityComponent(context))
+    injectDependencies(AppModuleAndroidUtils.extractActivityComponent(context))
   }
 
-  protected abstract fun injectDependencies(component: StartActivityComponent)
+  protected abstract fun injectDependencies(component: ActivityComponent)
 
   @CallSuper
   open fun onCreate() {

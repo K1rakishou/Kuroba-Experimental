@@ -26,7 +26,7 @@ class EpoxySearchEndOfResultsView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_search_end_of_results_view, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     textView = findViewById(R.id.text_view)

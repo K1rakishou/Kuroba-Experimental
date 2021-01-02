@@ -75,7 +75,7 @@ public class PostImageThumbnailView extends ThumbnailView {
     public PostImageThumbnailView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
-        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractActivityComponent(getContext())
                 .inject(this);
 
         this.playIcon = getDrawable(R.drawable.ic_play_circle_outline_white_24dp);

@@ -90,7 +90,7 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
     }
 
     private void init() {
-        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractActivityComponent(getContext())
                 .inject(this);
     }
 

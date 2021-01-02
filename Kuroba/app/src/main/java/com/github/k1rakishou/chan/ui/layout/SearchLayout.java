@@ -66,7 +66,7 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
 
     private void init() {
         if (!isInEditMode()) {
-            AppModuleAndroidUtils.extractStartActivityComponent(getContext())
+            AppModuleAndroidUtils.extractActivityComponent(getContext())
                     .inject(this);
         }
     }

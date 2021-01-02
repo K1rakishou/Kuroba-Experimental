@@ -78,7 +78,7 @@ class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarColla
 
   private fun init() {
     if (!isInEditMode) {
-      AppModuleAndroidUtils.extractStartActivityComponent(context)
+      AppModuleAndroidUtils.extractActivityComponent(context)
         .inject(this)
 
       // We apply the bottom paddings directly in SplitNavigationController when we are in SPLIT

@@ -38,7 +38,7 @@ public class ImageOptionsHelper
         this.context = context;
         this.callbacks = callbacks;
 
-        AppModuleAndroidUtils.extractStartActivityComponent(context)
+        AppModuleAndroidUtils.extractActivityComponent(context)
                 .inject(this);
     }
 

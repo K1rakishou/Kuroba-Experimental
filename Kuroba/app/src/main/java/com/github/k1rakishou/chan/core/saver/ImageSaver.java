@@ -30,7 +30,7 @@ import androidx.core.content.ContextCompat;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.StartActivity;
+import com.github.k1rakishou.chan.activity.StartActivity;
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper;
 import com.github.k1rakishou.chan.ui.service.SavingNotification;
 import com.github.k1rakishou.chan.ui.settings.base_directory.SavedFilesBaseDirectory;

@@ -38,7 +38,7 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_site_selection_view, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     siteIcon = findViewById(R.id.site_icon)

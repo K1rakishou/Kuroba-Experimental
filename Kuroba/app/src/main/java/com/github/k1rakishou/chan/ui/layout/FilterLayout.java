@@ -113,7 +113,7 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
         super.onFinishInflate();
 
         if (!isInEditMode()) {
-            AppModuleAndroidUtils.extractStartActivityComponent(getContext())
+            AppModuleAndroidUtils.extractActivityComponent(getContext())
                     .inject(this);
         }
 

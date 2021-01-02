@@ -22,7 +22,7 @@ class ViewFullCrashLogLayout(context: Context, private val crashLog: CrashLog) :
   private val save: ColorizableBarButton
 
   init {
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     inflate(context, R.layout.layout_view_full_crashlog, this).apply {

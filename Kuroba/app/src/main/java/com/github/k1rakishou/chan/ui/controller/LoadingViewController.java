@@ -4,7 +4,7 @@ import android.content.Context;
 import android.widget.ProgressBar;
 
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView;
 
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +28,7 @@ public class LoadingViewController extends BaseFloatingController {
     private @Nullable Function0<Unit> cancellationFunc;
 
     @Override
-    protected void injectDependencies(@NotNull StartActivityComponent component) {
+    protected void injectDependencies(@NotNull ActivityComponent component) {
         component.inject(this);
     }
 

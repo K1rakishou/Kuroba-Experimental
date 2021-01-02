@@ -27,7 +27,7 @@ class EpoxyBoardSelectionView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_board_selection_view, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     boardName = findViewById(R.id.board_name)

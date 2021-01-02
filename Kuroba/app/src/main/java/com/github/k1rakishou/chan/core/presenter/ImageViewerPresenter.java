@@ -120,7 +120,7 @@ public class ImageViewerPresenter
         this.context = context;
         this.callback = callback;
 
-        AppModuleAndroidUtils.extractStartActivityComponent(context)
+        AppModuleAndroidUtils.extractActivityComponent(context)
                 .inject(this);
     }
 

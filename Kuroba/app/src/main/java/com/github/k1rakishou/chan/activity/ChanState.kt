@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan
+package com.github.k1rakishou.chan.activity
 
 import android.os.Parcelable
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable

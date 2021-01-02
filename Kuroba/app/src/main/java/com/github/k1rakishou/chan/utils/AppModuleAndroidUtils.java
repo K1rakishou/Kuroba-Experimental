@@ -34,8 +34,9 @@ import androidx.core.content.ContextCompat;
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.BuildConfig;
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.StartActivity;
-import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
+import com.github.k1rakishou.chan.activity.SharingActivity;
+import com.github.k1rakishou.chan.activity.StartActivity;
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.ui.widget.CancellableToast;
 import com.github.k1rakishou.common.AndroidUtils;
 import com.github.k1rakishou.core_logger.Logger;
@@ -537,17 +538,20 @@ public class AppModuleAndroidUtils {
         cancellableToast.cancel();
     }
 
-    public static StartActivityComponent extractStartActivityComponent(Context context) {
+    public static ActivityComponent extractActivityComponent(Context context) {
         if (context instanceof StartActivity) {
             return ((StartActivity) context).getComponent();
+        } else if (context instanceof SharingActivity) {
+            return ((SharingActivity) context).getComponent();
         } else if (context instanceof ContextWrapper) {
-            return ((StartActivity) ((ContextWrapper) context)
-                    .getBaseContext())
-                    .getComponent();
-        } else {
-            throw new IllegalStateException(
-                    "Unknown context wrapper " + context.getClass().getName());
+            Context baseContext = ((ContextWrapper) context).getBaseContext();
+            if (baseContext != null) {
+                return extractActivityComponent(baseContext);
+            }
         }
+
+        throw new IllegalStateException(
+                "Unknown context wrapper " + context.getClass().getName());
     }
 
     public interface OnMeasuredCallback {

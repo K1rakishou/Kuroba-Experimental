@@ -23,7 +23,7 @@ class EpoxyDividerView @JvmOverloads constructor(
   init {
     View.inflate(context, R.layout.epoxy_divider_view, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
   }
 

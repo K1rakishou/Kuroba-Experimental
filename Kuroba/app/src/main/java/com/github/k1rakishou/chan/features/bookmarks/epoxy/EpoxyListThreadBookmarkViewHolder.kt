@@ -58,7 +58,7 @@ abstract class EpoxyListThreadBookmarkViewHolder
   override fun getBookmarkDescriptor(): ChanDescriptor.ThreadDescriptor? = threadDescriptor
 
   override fun bind(holder: BaseThreadBookmarkViewHolder) {
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     super.bind(holder)

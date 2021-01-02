@@ -56,7 +56,7 @@ import coil.request.Disposable
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.StartActivity
+import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2.ImageListener
@@ -174,7 +174,7 @@ class PostCell : LinearLayout, PostCellInterface {
   override fun onFinishInflate() {
     super.onFinishInflate()
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     val textSizeSp = ChanSettings.fontSize.get().toInt()

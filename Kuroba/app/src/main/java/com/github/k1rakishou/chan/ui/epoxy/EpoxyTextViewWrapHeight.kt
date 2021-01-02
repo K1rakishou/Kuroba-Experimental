@@ -26,7 +26,7 @@ class EpoxyTextViewWrapHeight @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_text_view_wrap_height, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     textView = findViewById(R.id.text_view)

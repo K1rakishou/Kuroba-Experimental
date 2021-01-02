@@ -101,7 +101,7 @@ public class PostAdapter
             PostCellInterface.PostCellCallback postCellCallback,
             ThreadStatusCell.Callback statusCellCallback
     ) {
-        AppModuleAndroidUtils.extractStartActivityComponent(recyclerView.getContext())
+        AppModuleAndroidUtils.extractActivityComponent(recyclerView.getContext())
                 .inject(this);
 
         this.postFilterManager = postFilterManager;

@@ -149,7 +149,7 @@ public class Toolbar
             return;
         }
 
-        AppModuleAndroidUtils.extractStartActivityComponent(context)
+        AppModuleAndroidUtils.extractActivityComponent(context)
                 .inject(this);
 
         presenter = new ToolbarPresenter(this, themeEngine);

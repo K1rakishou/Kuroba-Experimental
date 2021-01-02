@@ -28,7 +28,7 @@ class EpoxySearchPostDividerView @JvmOverloads constructor(
   init {
     View.inflate(context, R.layout.epoxy_divider_view, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     divider = findViewById(R.id.divider)

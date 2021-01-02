@@ -66,20 +66,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:value="598.0dip" />
 
         <activity
-            android:name="com.github.k1rakishou.chan.StartActivity"
+            android:name="com.github.k1rakishou.chan.activity.StartActivity"
             android:launchMode="singleTask"
-            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode">
+            android:configChanges="keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
+            android:theme="${appTheme}">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.SEND"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="image/*"/>
-                <data android:mimeType="video/*"/>
             </intent-filter>
 
             <intent-filter>
@@ -99,6 +93,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
                 <data android:host="2ch.hk" />
                 <data android:host="www.2ch.hk" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".activity.SharingActivity"
+            android:launchMode="singleTask"
+            android:autoRemoveFromRecents="true"
+            android:excludeFromRecents="true"
+            android:theme="@style/Chan.SharingActivityTheme">
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="image/*"/>
+                <data android:mimeType="video/*"/>
             </intent-filter>
 
         </activity>

@@ -31,7 +31,7 @@ class EpoxyFloatingListMenuRow @JvmOverloads constructor(
   init {
     View.inflate(context, R.layout.epoxy_floating_list_menu_row, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     holder = findViewById(R.id.holder)

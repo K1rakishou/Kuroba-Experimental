@@ -86,7 +86,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   }
 
   init {
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     View.inflate(context, R.layout.layout_reply_files_area, this)

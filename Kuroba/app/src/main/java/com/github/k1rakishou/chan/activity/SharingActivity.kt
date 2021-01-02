@@ -1,0 +1,184 @@
+package com.github.k1rakishou.chan.activity
+
+import android.app.Activity
+import android.content.Intent
+import android.os.Bundle
+import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import com.github.k1rakishou.chan.Chan
+import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
+import com.github.k1rakishou.chan.core.manager.ReplyManager
+import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
+import com.github.k1rakishou.chan.ui.helper.picker.PickedFile
+import com.github.k1rakishou.chan.ui.helper.picker.ShareFilePicker
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.core_logger.Logger
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import javax.inject.Inject
+
+class SharingActivity : AppCompatActivity() {
+
+  @Inject
+  lateinit var imagePickHelper: ImagePickHelper
+  @Inject
+  lateinit var replyManager: ReplyManager
+  @Inject
+  lateinit var appConstants: AppConstants
+
+  private lateinit var activityComponent: ActivityComponent
+
+  fun getComponent(): ActivityComponent {
+    return activityComponent
+  }
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+
+    activityComponent = Chan.getComponent()
+      .activityComponentBuilder()
+      .activity(this)
+      .activityModule(ActivityModule())
+      .build()
+      .also { component -> component.inject(this) }
+
+    imagePickHelper.onActivityCreated(this)
+
+    GlobalScope.launch(Dispatchers.Main.immediate) { handleNewIntent(intent) }
+  }
+
+  override fun onNewIntent(intent: Intent?) {
+    super.onNewIntent(intent)
+
+    GlobalScope.launch(Dispatchers.Main.immediate) { handleNewIntent(intent) }
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+
+    if (::imagePickHelper.isInitialized) {
+      imagePickHelper.onActivityDestroyed()
+    }
+
+    AppModuleAndroidUtils.cancelLastToast()
+  }
+
+  private suspend fun handleNewIntent(intent: Intent?) {
+    if (intent == null) {
+      return
+    }
+
+    val action = intent.action
+
+    if (action != null && isKnownAction(action)) {
+      Logger.d(TAG, "onNewIntentInternal called, action=${action}")
+
+      if (action == Intent.ACTION_SEND) {
+        if (onShareIntentReceived(intent)) {
+          setResult(Activity.RESULT_OK)
+        } else {
+          setResult(Activity.RESULT_CANCELED)
+        }
+
+        // Add a little bit of delay to show the Toast.
+        delay(500L)
+      }
+    }
+
+    finishAndRemoveTask()
+  }
+
+  private suspend fun onShareIntentReceived(intent: Intent): Boolean {
+    AppModuleAndroidUtils.showToast(this, getString(R.string.share_success_start))
+
+    val reloadResult = withContext(Dispatchers.IO) {
+      replyManager.reloadFilesFromDisk(appConstants)
+        .safeUnwrap { error ->
+          Logger.e(TAG, "replyManager.reloadFilesFromDisk() -> MR.Error", error)
+          return@withContext false
+        }
+
+      return@withContext true
+    }
+
+    if (!reloadResult) {
+      AppModuleAndroidUtils.showToast(
+        this,
+        R.string.share_error_message,
+        Toast.LENGTH_LONG
+      )
+      return false
+    }
+
+    val shareResult = imagePickHelper.pickFilesFromIntent(
+      ShareFilePicker.ShareFilePickerInput(intent)
+    )
+
+    when (shareResult) {
+      is ModularResult.Value -> {
+        when (val pickedFile = shareResult.value) {
+          is PickedFile.Result -> {
+            val sharedFilesCount = pickedFile.replyFiles.size
+
+            if (sharedFilesCount > 0) {
+              AppModuleAndroidUtils.showToast(
+                this,
+                getString(R.string.share_success_message, sharedFilesCount)
+              )
+            } else {
+              AppModuleAndroidUtils.showToast(
+                this,
+                R.string.share_error_message,
+                Toast.LENGTH_LONG
+              )
+            }
+
+            Logger.d(TAG, "imagePickHelper.pickFilesFromIntent() -> PickedFile.Result, " +
+              "sharedFilesCount=$sharedFilesCount")
+
+            return true
+          }
+          is PickedFile.Failure -> {
+            Logger.e(TAG, "imagePickHelper.pickFilesFromIntent() -> PickedFile.Failure",
+              pickedFile.reason)
+
+            AppModuleAndroidUtils.showToast(
+              this,
+              R.string.share_error_message,
+              Toast.LENGTH_LONG
+            )
+            return false
+          }
+        }
+      }
+      is ModularResult.Error -> {
+        Logger.e(TAG, "imagePickHelper.pickFilesFromIntent() -> MR.Error", shareResult.error)
+
+        AppModuleAndroidUtils.showToast(
+          this,
+          R.string.share_error_message,
+          Toast.LENGTH_LONG
+        )
+        return false
+      }
+    }
+  }
+
+  private fun isKnownAction(action: String): Boolean {
+    return when (action) {
+      Intent.ACTION_SEND -> true
+      else -> false
+    }
+  }
+
+  companion object {
+    private const val TAG = "SharingActivity"
+  }
+}

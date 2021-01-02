@@ -36,7 +36,7 @@ class ReportProblemLayout(context: Context) : FrameLayout(context), ReportProble
   private val reportActivitySendReport: ColorizableBarButton
 
   init {
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     inflate(context, R.layout.layout_report, this).apply {

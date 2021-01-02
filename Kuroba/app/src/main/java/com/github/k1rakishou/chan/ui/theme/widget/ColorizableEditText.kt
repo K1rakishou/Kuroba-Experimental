@@ -26,7 +26,7 @@ open class ColorizableEditText @JvmOverloads constructor(
 
   init {
     if (!isInEditMode) {
-      AppModuleAndroidUtils.extractStartActivityComponent(context)
+      AppModuleAndroidUtils.extractActivityComponent(context)
         .inject(this)
     }
   }

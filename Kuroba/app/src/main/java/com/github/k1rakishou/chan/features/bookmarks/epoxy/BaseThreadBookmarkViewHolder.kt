@@ -61,7 +61,7 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
   private var bookmarkStatsHolder: LinearLayout? = null
 
   override fun bindView(itemView: View) {
-    AppModuleAndroidUtils.extractStartActivityComponent(itemView.context)
+    AppModuleAndroidUtils.extractActivityComponent(itemView.context)
       .inject(this)
 
     viewRoot = itemView.findViewById(R.id.thread_bookmark_view_root)

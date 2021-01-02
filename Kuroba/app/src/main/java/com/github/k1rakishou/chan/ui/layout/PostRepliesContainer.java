@@ -48,7 +48,7 @@ public class PostRepliesContainer extends LinearLayout implements ThemeEngine.Th
     }
 
     private void init() {
-        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractActivityComponent(getContext())
                 .inject(this);
     }
 

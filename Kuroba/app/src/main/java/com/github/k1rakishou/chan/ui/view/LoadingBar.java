@@ -56,7 +56,7 @@ public class LoadingBar extends View implements ThemeEngine.ThemeChangesListener
     }
 
     private void init() {
-        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractActivityComponent(getContext())
                 .inject(this);
 
         paint = new Paint(Paint.ANTI_ALIAS_FLAG);

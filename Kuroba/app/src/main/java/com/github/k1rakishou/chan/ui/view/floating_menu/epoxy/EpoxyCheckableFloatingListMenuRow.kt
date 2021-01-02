@@ -33,7 +33,7 @@ class EpoxyCheckableFloatingListMenuRow @JvmOverloads constructor(
   init {
     View.inflate(context, R.layout.epoxy_checkable_floating_list_menu_row, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     holder = findViewById(R.id.holder)

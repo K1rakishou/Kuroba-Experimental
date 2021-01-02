@@ -49,7 +49,7 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_search_post_view, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     searchPostRootContainer = findViewById(R.id.search_post_root_container)

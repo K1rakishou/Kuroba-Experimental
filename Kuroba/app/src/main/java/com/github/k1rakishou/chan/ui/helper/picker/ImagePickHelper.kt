@@ -2,9 +2,9 @@ package com.github.k1rakishou.chan.ui.helper.picker
 
 import android.content.Context
 import android.content.Intent
+import androidx.appcompat.app.AppCompatActivity
 import coil.size.Scale
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.StartActivity
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.common.ModularResult
@@ -222,7 +222,7 @@ class ImagePickHelper(
     localFilePicker.onActivityResult(requestCode, resultCode, data)
   }
 
-  fun onActivityCreated(activity: StartActivity) {
+  fun onActivityCreated(activity: AppCompatActivity) {
     localFilePicker.onActivityCreated(activity)
   }
 

@@ -2,7 +2,8 @@ package com.github.k1rakishou.chan.core.di.module.activity;
 
 import android.content.Context;
 
-import com.github.k1rakishou.chan.StartActivity;
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.di.scope.PerActivity;
@@ -19,7 +20,7 @@ import dagger.Module;
 import dagger.Provides;
 
 @Module
-public class StartActivityModule {
+public class ActivityModule {
 
     @Provides
     @PerActivity
@@ -50,7 +51,7 @@ public class StartActivityModule {
     @Provides
     @PerActivity
     public RuntimePermissionsHelper provideRuntimePermissionHelper(
-            StartActivity activity,
+            AppCompatActivity activity,
             DialogFactory dialogFactory
     ) {
         return new RuntimePermissionsHelper(

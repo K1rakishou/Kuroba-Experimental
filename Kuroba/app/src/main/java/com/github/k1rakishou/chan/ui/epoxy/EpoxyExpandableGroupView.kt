@@ -34,7 +34,7 @@ class EpoxyExpandableGroupView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_expandable_group_view, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     toggleIndicator = findViewById(R.id.toggle_indicator_view)

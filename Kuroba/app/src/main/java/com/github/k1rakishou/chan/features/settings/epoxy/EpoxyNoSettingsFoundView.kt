@@ -41,7 +41,7 @@ class EpoxyNoSettingsFoundView @JvmOverloads constructor(
   init {
     View.inflate(context, R.layout.epoxy_no_settings_found, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     messageView = findViewById(R.id.message_view)

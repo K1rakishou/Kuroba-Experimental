@@ -88,7 +88,7 @@ class ImageReencodingPresenter(
     }
 
   init {
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     this.context = context

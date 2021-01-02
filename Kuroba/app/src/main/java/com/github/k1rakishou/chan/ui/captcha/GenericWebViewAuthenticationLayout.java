@@ -65,7 +65,7 @@ public class GenericWebViewAuthenticationLayout
     }
 
     private void init() {
-        AppModuleAndroidUtils.extractStartActivityComponent(getContext())
+        AppModuleAndroidUtils.extractActivityComponent(getContext())
                 .inject(this);
     }
 

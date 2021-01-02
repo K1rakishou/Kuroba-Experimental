@@ -26,7 +26,7 @@ class EpoxyErrorView @JvmOverloads constructor(
   init {
     inflate(context, R.layout.epoxy_error_view, this)
 
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     errorTextView = findViewById(R.id.error_text)

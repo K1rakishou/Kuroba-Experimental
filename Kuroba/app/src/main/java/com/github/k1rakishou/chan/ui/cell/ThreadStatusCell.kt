@@ -75,7 +75,7 @@ class ThreadStatusCell(
   private var updateJob: Job? = null
 
   init {
-    AppModuleAndroidUtils.extractStartActivityComponent(context)
+    AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     setBackgroundResource(R.drawable.item_background)

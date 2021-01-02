@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.core.di.component.application;
 import android.content.Context;
 
 import com.github.k1rakishou.chan.Chan;
-import com.github.k1rakishou.chan.core.di.component.activity.StartActivityComponent;
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.di.module.application.AppModule;
 import com.github.k1rakishou.chan.core.di.module.application.ExecutorsModule;
 import com.github.k1rakishou.chan.core.di.module.application.GsonModule;
@@ -50,7 +50,7 @@ import okhttp3.Dns;
 })
 public interface ApplicationComponent {
     Chan getApplication();
-    StartActivityComponent.Builder activityComponentBuilder();
+    ActivityComponent.Builder activityComponentBuilder();
 
     void inject(@NotNull Chan application);
     void inject(@NotNull BookmarkBackgroundWatcherWorker bookmarkBackgroundWatcherWorker);
