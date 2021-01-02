@@ -460,7 +460,7 @@ class ThreadPresenter @Inject constructor(
         }
       }
 
-      threadPresenterCallback?.showThread(archiveThreadDescriptor)
+      threadPresenterCallback?.openThreadInArchive(archiveThreadDescriptor)
     }
   }
 

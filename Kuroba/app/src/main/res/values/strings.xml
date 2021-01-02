@@ -183,7 +183,6 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_mark_cross_thread_quotes_on_scrollbar">Highlight cross-thread replies</string>
     <string name="action_use_scrolling_text_for_thread_title">Use scrolling text for thread title</string>
     <string name="action_set_thread_max_displayed_posts_capacity">Set max displayed posts capacity (%1$s)</string>
-    <string name="action_remember_thread_navigation_history">Remember thread navigation history</string>
 
     <string name="action_scroll_to_top">Top</string>
     <string name="action_scroll_to_bottom">Bottom</string>

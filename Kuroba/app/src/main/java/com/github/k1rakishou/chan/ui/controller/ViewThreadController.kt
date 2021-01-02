@@ -287,13 +287,6 @@ open class ViewThreadController(
         true,
         null
       ) { item -> onChangeThreadMaxPostsCapacityOptionClicked(item) }
-      .addNestedCheckableItem(
-        ACTION_REMEMBER_THREAD_NAVIGATION_HISTORY,
-        R.string.action_remember_thread_navigation_history,
-        true,
-        ChanSettings.rememberThreadNavigationHistory.get(),
-        null
-      ) { item -> onRememberThreadNavHistoryOptionClicked(item) }
       .build()
   }
 
@@ -458,11 +451,6 @@ open class ViewThreadController(
     }
   }
 
-  private fun onRememberThreadNavHistoryOptionClicked(item: ToolbarMenuSubItem) {
-    item as CheckableToolbarMenuSubItem
-    item.isChecked = ChanSettings.rememberThreadNavigationHistory.toggle()
-  }
-
   private fun onChangeThreadMaxPostsCapacityOptionClicked(item: ToolbarMenuSubItem) {
     val minPostsCap = ChanSettings.threadMaxPostCapacity.min
     val maxPostsCap = ChanSettings.threadMaxPostCapacity.max
@@ -548,7 +536,7 @@ open class ViewThreadController(
   }
 
   override suspend fun showExternalThread(threadToOpenDescriptor: ThreadDescriptor) {
-    Logger.d(TAG, "showExternalThread($threadToOpenDescriptor)")
+    Logger.d(TAG, "showExternalThread($threadDescriptor, $threadToOpenDescriptor)")
 
     val fullThreadName = threadToOpenDescriptor.siteName() + "/" +
       threadToOpenDescriptor.boardCode() + "/" +
@@ -560,8 +548,25 @@ open class ViewThreadController(
       descriptionText = fullThreadName,
       negativeButtonText = getString(R.string.cancel),
       positiveButtonText = getString(R.string.ok),
-      onPositiveButtonClickListener = { showExternalThreadInternal(threadToOpenDescriptor) }
+      onPositiveButtonClickListener = {
+        mainScope.launch(Dispatchers.Main.immediate) {
+          Logger.d(TAG, "showExternalThread() loading external thread $threadToOpenDescriptor " +
+            "from opened thread $threadDescriptor")
+
+          threadFollowHistoryManager.pushThreadDescriptor(threadDescriptor)
+          loadThread(threadToOpenDescriptor, openingExternalThread = true)
+        }
+      }
     )
+  }
+
+  override suspend fun openThreadInArchive(threadToOpenDescriptor: ThreadDescriptor) {
+    mainScope.launch(Dispatchers.Main.immediate) {
+      Logger.d(TAG, "openThreadInArchive($threadToOpenDescriptor)")
+
+      threadFollowHistoryManager.pushThreadDescriptor(threadDescriptor)
+      loadThread(threadToOpenDescriptor, openingExternalThread = true)
+    }
   }
 
   override suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean) {
@@ -575,14 +580,6 @@ open class ViewThreadController(
     mainScope.launch(Dispatchers.Main.immediate){
       Logger.d(TAG, "setBoard($descriptor, $animated)")
       showBoardInternal(descriptor, animated)
-    }
-  }
-
-  private fun showExternalThreadInternal(threadToOpenDescriptor: ThreadDescriptor) {
-    mainScope.launch(Dispatchers.Main.immediate) {
-      Logger.d(TAG, "showExternalThreadInternal($threadToOpenDescriptor)")
-
-      loadThread(threadToOpenDescriptor)
     }
   }
 
@@ -638,17 +635,29 @@ open class ViewThreadController(
     }
   }
 
-  suspend fun loadThread(threadDescriptor: ThreadDescriptor) {
+  suspend fun loadThread(
+    threadDescriptor: ThreadDescriptor,
+    openingExternalThread: Boolean = false,
+    openingPreviousThread: Boolean = false
+  ) {
     Logger.d(TAG, "loadThread($threadDescriptor)")
     historyNavigationManager.moveNavElementToTop(threadDescriptor)
 
     val presenter = threadLayout.presenter
     if (threadDescriptor != presenter.currentChanDescriptor) {
-      loadThreadInternal(threadDescriptor)
+      loadThreadInternal(threadDescriptor, openingExternalThread, openingPreviousThread)
     }
   }
 
-  private suspend fun loadThreadInternal(newThreadDescriptor: ThreadDescriptor) {
+  private suspend fun loadThreadInternal(
+    newThreadDescriptor: ThreadDescriptor,
+    openingExternalThread: Boolean,
+    openingPreviousThread: Boolean
+  ) {
+    if (!openingExternalThread && !openingPreviousThread) {
+      threadFollowHistoryManager.clear()
+    }
+
     val presenter = threadLayout.presenter
     val oldThreadDescriptor = threadLayout.presenter.currentChanDescriptor as? ThreadDescriptor
 
@@ -662,8 +671,6 @@ open class ViewThreadController(
     setPinIconState(false)
     updateLeftPaneHighlighting(newThreadDescriptor)
     showHints()
-
-    threadFollowHistoryManager.pushThreadDescriptor(newThreadDescriptor)
   }
 
   private fun updateNavigationTitle(
@@ -805,12 +812,13 @@ open class ViewThreadController(
   }
 
   override fun threadBackPressed(): Boolean {
-    threadFollowHistoryManager.removeTop()
-
-    val threadDescriptor = threadFollowHistoryManager.peek()
+    val threadDescriptor = threadFollowHistoryManager.removeTop()
       ?: return false
 
-    mainScope.launch(Dispatchers.Main.immediate) { loadThread(threadDescriptor) }
+    mainScope.launch(Dispatchers.Main.immediate) {
+      loadThread(threadDescriptor, openingPreviousThread = true)
+    }
+
     return true
   }
 
@@ -859,6 +867,5 @@ open class ViewThreadController(
     private const val ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR = 9102
     private const val ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR = 9103
     private const val ACTION_SET_THREAD_MAX_POSTS_CAP = 9104
-    private const val ACTION_REMEMBER_THREAD_NAVIGATION_HISTORY = 9105
   }
 }

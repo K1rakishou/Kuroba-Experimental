@@ -563,7 +563,7 @@ class BrowseController(
           input.toLong()
         )
 
-        showExternalThread(threadDescriptor)
+        showThread(threadDescriptor, true)
       } catch (e: NumberFormatException) {
         showToast(context.getString(R.string.browse_controller_error_parsing_thread_id))
       }
@@ -648,8 +648,12 @@ class BrowseController(
   }
 
   override suspend fun showExternalThread(threadToOpenDescriptor: ThreadDescriptor) {
-    Logger.d(TAG, "showExternalThread($threadToOpenDescriptor)")
-    showThread(threadToOpenDescriptor, true)
+    // no-op, we shouldn't be able to open external threads from catalog because we can't click
+    // links when in catalog and stuff.
+  }
+
+  override suspend fun openThreadInArchive(threadDescriptor: ThreadDescriptor) {
+    // no-op
   }
 
   override suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean) {
@@ -666,6 +670,7 @@ class BrowseController(
       Logger.d(TAG, "setBoard($descriptor, $animated)")
 
       setBoard(descriptor)
+      initialized = true
     }
   }
 
