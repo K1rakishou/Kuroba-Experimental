@@ -511,16 +511,16 @@ class StartActivity : AppCompatActivity(),
     }
 
     val boardToOpen = getBoardToOpen()
-    Logger.d(TAG, "restoreFresh() getBoardToOpen returned ${boardToOpen}")
+    val threadToOpen = getThreadToOpen()
+
+    Logger.d(TAG, "restoreFresh() getBoardToOpen returned ${boardToOpen}, " +
+      "getThreadToOpen returned ${threadToOpen}")
 
     if (boardToOpen != null) {
       browseController?.showBoard(boardToOpen, false)
     } else {
       browseController?.loadWithDefaultBoard()
     }
-
-    val threadToOpen = getThreadToOpen()
-    Logger.d(TAG, "restoreFresh() getThreadToOpen returned ${threadToOpen}")
 
     if (threadToOpen != null) {
       loadThread(threadToOpen, animated = false)
@@ -529,10 +529,7 @@ class StartActivity : AppCompatActivity(),
 
   private fun getThreadToOpen(): ChanDescriptor.ThreadDescriptor? {
     val loadLastOpenedThreadUponAppStart = ChanSettings.loadLastOpenedThreadUponAppStart.get()
-    Logger.d(
-      TAG,
-      "getThreadToOpen, loadLastOpenedThreadUponAppStart=$loadLastOpenedThreadUponAppStart"
-    )
+    Logger.d(TAG, "getThreadToOpen, loadLastOpenedThreadUponAppStart=$loadLastOpenedThreadUponAppStart")
 
     if (loadLastOpenedThreadUponAppStart) {
       return historyNavigationManager.getNavElementAtTop()?.descriptor()?.threadDescriptorOrNull()
@@ -543,10 +540,7 @@ class StartActivity : AppCompatActivity(),
 
   private fun getBoardToOpen(): BoardDescriptor? {
     val loadLastOpenedBoardUponAppStart = ChanSettings.loadLastOpenedBoardUponAppStart.get()
-    Logger.d(
-      TAG,
-      "getBoardToOpen, loadLastOpenedBoardUponAppStart=$loadLastOpenedBoardUponAppStart"
-    )
+    Logger.d(TAG, "getBoardToOpen, loadLastOpenedBoardUponAppStart=$loadLastOpenedBoardUponAppStart")
 
     if (loadLastOpenedBoardUponAppStart) {
       return historyNavigationManager.getFirstCatalogNavElement()?.descriptor()?.boardDescriptor()
