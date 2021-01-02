@@ -70,10 +70,15 @@ abstract class AbstractFilePicker<T>(
       // As per the comment on OpenableColumns.DISPLAY_NAME:
       // If this is not provided then the name should default to the last segment
       // of the file's URI.
-      fileName = uri.lastPathSegment ?: DEFAULT_FILE_NAME
+      fileName = uri.lastPathSegment
+        ?: getDefaultFileName()
     }
 
     return fileName
+  }
+
+  protected fun getDefaultFileName(): String {
+    return System.currentTimeMillis().toString()
   }
 
   private fun copyExternalFileIntoReplyFile(
@@ -136,7 +141,6 @@ abstract class AbstractFilePicker<T>(
   }
 
   companion object {
-    const val DEFAULT_FILE_NAME = "attach_file"
     const val MAX_FILE_SIZE = 50 * 1024 * 1024.toLong()
   }
 }

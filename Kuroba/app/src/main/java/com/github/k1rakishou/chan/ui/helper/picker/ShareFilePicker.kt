@@ -1,8 +1,9 @@
 package com.github.k1rakishou.chan.ui.helper.picker
 
+import android.content.ClipData
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
+import androidx.core.view.inputmethod.InputContentInfoCompat
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.common.AppConstants
@@ -20,25 +21,18 @@ class ShareFilePicker(
 ) : AbstractFilePicker<ShareFilePicker.ShareFilePickerInput>(appConstants, replyManager, fileManager) {
 
   override suspend fun pickFile(filePickerInput: ShareFilePickerInput): ModularResult<PickedFile> {
-    val intent = filePickerInput.intent
-    val action = intent.action
-
     return withContext(Dispatchers.IO) {
       replyManager.awaitUntilFilesAreLoaded()
 
-      if (action == Intent.ACTION_SEND) {
-        return@withContext handleActionSend(appContext, intent)
-      }
-
-      return@withContext ModularResult.error(FilePickerError.UnknownIntent())
+      return@withContext handleActionSend(appContext, filePickerInput)
     }
   }
 
   private suspend fun handleActionSend(
     appContext: Context,
-    intent: Intent
+    shareFilePickerInput: ShareFilePickerInput
   ): ModularResult<PickedFile> {
-    val uris = extractUris(intent)
+    val uris = extractUris(shareFilePickerInput)
     if (uris.isEmpty()) {
       return ModularResult.error(FilePickerError.NoUrisFoundInIntent())
     }
@@ -65,24 +59,32 @@ class ShareFilePicker(
     }
   }
 
-  private fun extractUris(intent: Intent): List<Uri> {
+  private fun extractUris(shareFilePickerInput: ShareFilePickerInput): List<Uri> {
     val uris = mutableListOf<Uri>()
 
-    intent.data?.let { dataUri ->
+    shareFilePickerInput.dataUri?.let { dataUri ->
       uris += dataUri
     }
 
-    intent.clipData?.let { clipData ->
+    shareFilePickerInput.clipData?.let { clipData ->
       for (i in 0 until clipData.itemCount) {
         val item = clipData.getItemAt(i)
         uris += item.uri
       }
     }
 
+    shareFilePickerInput.inputContentInfo?.let { inputContentInfo ->
+      uris += inputContentInfo.contentUri
+    }
+
     return uris
   }
 
-  data class ShareFilePickerInput(val intent: Intent)
+  data class ShareFilePickerInput(
+    val dataUri: Uri?,
+    val clipData: ClipData?,
+    val inputContentInfo: InputContentInfoCompat?
+  )
 
   companion object {
     private const val TAG = "ShareFilePicker"

@@ -273,6 +273,10 @@ public class AndroidUtils {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
     }
 
+    public static boolean isAndroidNMR1() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1;
+    }
+
     public enum FlavorType {
         Stable,
         Beta,

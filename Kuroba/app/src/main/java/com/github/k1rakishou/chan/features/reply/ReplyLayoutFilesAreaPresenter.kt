@@ -3,9 +3,9 @@ package com.github.k1rakishou.chan.features.reply
 import androidx.exifinterface.media.ExifInterface
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BasePresenter
-import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.base.ThrottlingCoroutineExecutor
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
@@ -50,7 +50,7 @@ class ReplyLayoutFilesAreaPresenter(
   private val imagePickHelper: ImagePickHelper
 ) : BasePresenter<ReplyLayoutFilesAreaView>() {
   private val pickFilesExecutor = RendezvousCoroutineExecutor(scope)
-  private val refreshFilesExecutor = DebouncingCoroutineExecutor(scope)
+  private val refreshFilesExecutor = ThrottlingCoroutineExecutor(scope)
   private val fileChangeExecutor = SerializedCoroutineExecutor(scope)
   private val state = MutableStateFlow(ReplyLayoutFilesState())
   private var boundChanDescriptor: ChanDescriptor? = null
