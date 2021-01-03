@@ -18,15 +18,11 @@ package com.github.k1rakishou.chan.ui.captcha.v2;
 
 import android.content.Context;
 import android.content.res.Configuration;
-import android.graphics.Color;
 import android.graphics.Typeface;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.style.StyleSpan;
-import android.util.AttributeSet;
-import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.GridView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -34,7 +30,9 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.view.ViewKt;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.site.Site;
@@ -56,10 +54,10 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
+import kotlin.Unit;
+
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2_NOJS;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
-import static com.github.k1rakishou.core_themes.ThemeEngine.isDarkColor;
 
 public class CaptchaNoJsLayoutV2
         extends TouchBlockingFrameLayout
@@ -76,11 +74,16 @@ public class CaptchaNoJsLayoutV2
     private CaptchaNoJsV2Adapter adapter;
     private CaptchaNoJsPresenterV2 presenter;
     private AuthenticationLayoutCallback callback;
+    @Nullable
     private ConstraintLayout captchaButtonsHolder;
+    @Nullable
+    private LinearLayout controlsHolder;
     private ColorizableBarButton useOldCaptchaButton;
     private ColorizableBarButton reloadCaptchaButton;
 
     private boolean isAutoReply = true;
+    private boolean isSplitLayoutMode;
+    private int prevOrientation = 0;
 
     @Inject
     CaptchaHolder captchaHolder;
@@ -92,32 +95,39 @@ public class CaptchaNoJsLayoutV2
     AppConstants appConstants;
 
     public CaptchaNoJsLayoutV2(@NonNull Context context) {
-        this(context, null, 0);
-    }
-
-    public CaptchaNoJsLayoutV2(@NonNull Context context, @Nullable AttributeSet attrs) {
-        this(context, attrs, 0);
-    }
-
-    public CaptchaNoJsLayoutV2(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
+        super(context, null, 0);
 
         AppModuleAndroidUtils.extractActivityComponent(getContext())
                 .inject(this);
 
+        this.isSplitLayoutMode = ChanSettings.isSplitLayoutMode();
         this.presenter = new CaptchaNoJsPresenterV2(this, proxiedOkHttpClient, appConstants, context);
         this.adapter = new CaptchaNoJsV2Adapter();
 
-        View view = inflate(context, R.layout.layout_captcha_nojs_v2, this);
+        initViewInternal(context);
+    }
 
-        LinearLayout topLevel = findViewById(R.id.captcha_layout_v2_top_level);
-        topLevel.setGravity(Gravity.BOTTOM);
+    private void initViewInternal(@NonNull Context context) {
+        int currentOrientation = AppModuleAndroidUtils.getScreenOrientation();
+        if (currentOrientation == prevOrientation) {
+            return;
+        }
+
+        View view;
+        removeAllViews();
+
+        if (!isSplitLayoutMode && currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
+            view = inflate(context, R.layout.layout_captcha_nojs_v2_landscape, this);
+        } else {
+            view = inflate(context, R.layout.layout_captcha_nojs_v2_portrait, this);
+        }
 
         captchaChallengeTitle = view.findViewById(R.id.captcha_layout_v2_title);
         captchaImagesGrid = view.findViewById(R.id.captcha_layout_v2_images_grid);
         captchaVerifyButton = view.findViewById(R.id.captcha_layout_v2_verify_button);
         useOldCaptchaButton = view.findViewById(R.id.captcha_layout_v2_use_old_captcha_button);
         reloadCaptchaButton = view.findViewById(R.id.captcha_layout_v2_reload_button);
+        controlsHolder = view.findViewById(R.id.captcha_layout_v2_controls_holder);
         captchaButtonsHolder = view.findViewById(R.id.captcha_layout_v2_buttons);
 
         captchaVerifyButton.setOnClickListener(v -> sendVerificationResponse());
@@ -125,6 +135,7 @@ public class CaptchaNoJsLayoutV2
         reloadCaptchaButton.setOnClickListener(v -> reset());
 
         onThemeChanged();
+        prevOrientation = currentOrientation;
     }
 
     @Override
@@ -143,25 +154,21 @@ public class CaptchaNoJsLayoutV2
     public void onThemeChanged() {
         int primaryColor = themeEngine.getChanTheme().getPrimaryColor();
 
-        captchaButtonsHolder.setBackgroundColor(primaryColor);
         captchaChallengeTitle.setBackgroundColor(primaryColor);
 
-        int textColor = Color.LTGRAY;
-        if (!isDarkColor(primaryColor)) {
-            textColor = Color.DKGRAY;
+        if (captchaButtonsHolder != null) {
+            captchaButtonsHolder.setBackgroundColor(primaryColor);
         }
 
-        captchaChallengeTitle.setTextColor(textColor);
-        captchaVerifyButton.setTextColor(textColor);
-        useOldCaptchaButton.setTextColor(textColor);
-        reloadCaptchaButton.setTextColor(textColor);
+        if (controlsHolder != null) {
+            controlsHolder.setBackgroundColor(primaryColor);
+        }
     }
 
     @Override
     public void onConfigurationChanged(Configuration configuration) {
-        // note: this is here because if we kept the captcha images on rotate, a bunch of recycled
-        // bitmap errors are thrown instead of dealing with that, just get a new, fresh captcha
-        reset();
+        initViewInternal(getContext());
+        requestCaptchaInfoInternal(true);
     }
 
     @Override
@@ -190,7 +197,12 @@ public class CaptchaNoJsLayoutV2
 
     @Override
     public void hardReset() {
-        CaptchaNoJsPresenterV2.RequestCaptchaInfoError captchaInfoError = presenter.requestCaptchaInfo();
+        requestCaptchaInfoInternal(false);
+    }
+
+    private void requestCaptchaInfoInternal(boolean ignoreThrottling) {
+        CaptchaNoJsPresenterV2.RequestCaptchaInfoError captchaInfoError =
+                presenter.requestCaptchaInfo(ignoreThrottling);
 
         switch (captchaInfoError) {
             case OK:
@@ -216,8 +228,12 @@ public class CaptchaNoJsLayoutV2
     @Override
     public void onCaptchaInfoParsed(CaptchaInfo captchaInfo) {
         BackgroundUtils.runOnMainThread(() -> {
-            captchaVerifyButton.setEnabled(true);
-            renderCaptchaWindow(captchaInfo);
+            ViewKt.doOnPreDraw(this, view -> {
+                captchaVerifyButton.setEnabled(true);
+                renderCaptchaWindow(captchaInfo);
+
+                return Unit.INSTANCE;
+            });
         });
     }
 
@@ -254,15 +270,14 @@ public class CaptchaNoJsLayoutV2
     private void renderCaptchaWindow(CaptchaInfo captchaInfo) {
         try {
             setCaptchaTitle(captchaInfo);
-
             captchaImagesGrid.setAdapter(adapter);
+
+            int imageSize = Math.min(
+                    captchaImagesGrid.getWidth(),
+                    captchaImagesGrid.getHeight()
+            );
+
             int columnsCount;
-            int imageSize = Math.min(getWidth(), getHeight() - dp(104));
-            //40 + 64dp from layout xml; width for left-right full span, height minus for top-bottom full span inc buttons and titlebar
-            ViewGroup.LayoutParams layoutParams = captchaImagesGrid.getLayoutParams();
-            layoutParams.height = imageSize;
-            layoutParams.width = imageSize;
-            captchaImagesGrid.setLayoutParams(layoutParams);
             switch (captchaInfo.getCaptchaType()) {
                 case CANONICAL:
                     columnsCount = 3;
@@ -273,6 +288,7 @@ public class CaptchaNoJsLayoutV2
                 default:
                     throw new IllegalStateException("Unknown captcha type");
             }
+
             imageSize /= columnsCount;
             captchaImagesGrid.setNumColumns(columnsCount);
 
@@ -280,7 +296,6 @@ public class CaptchaNoJsLayoutV2
             adapter.setImages(captchaInfo.challengeImages);
 
             captchaImagesGrid.postInvalidate();
-
             captchaVerifyButton.setEnabled(true);
         } catch (Throwable error) {
             if (callback != null) {
@@ -290,21 +305,27 @@ public class CaptchaNoJsLayoutV2
     }
 
     private void setCaptchaTitle(CaptchaInfo captchaInfo) {
-        if (captchaInfo.getCaptchaTitle() != null) {
-            if (captchaInfo.getCaptchaTitle().hasBold()) {
-                SpannableString spannableString = new SpannableString(captchaInfo.getCaptchaTitle().getTitle());
-                spannableString.setSpan(
-                        new StyleSpan(Typeface.BOLD),
-                        captchaInfo.getCaptchaTitle().getBoldStart(),
-                        captchaInfo.getCaptchaTitle().getBoldEnd(),
-                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                );
-
-                captchaChallengeTitle.setText(spannableString);
-            } else {
-                captchaChallengeTitle.setText(captchaInfo.getCaptchaTitle().getTitle());
-            }
+        if (captchaInfo.getCaptchaTitle() == null) {
+            return;
         }
+
+        if (!captchaInfo.getCaptchaTitle().hasBold()) {
+            captchaChallengeTitle.setText(captchaInfo.getCaptchaTitle().getTitle());
+            return;
+        }
+
+        SpannableString spannableString = new SpannableString(
+                captchaInfo.getCaptchaTitle().getTitle()
+        );
+
+        spannableString.setSpan(
+                new StyleSpan(Typeface.BOLD),
+                captchaInfo.getCaptchaTitle().getBoldStart(),
+                captchaInfo.getCaptchaTitle().getBoldEnd(),
+                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        );
+
+        captchaChallengeTitle.setText(spannableString);
     }
 
     private void sendVerificationResponse() {

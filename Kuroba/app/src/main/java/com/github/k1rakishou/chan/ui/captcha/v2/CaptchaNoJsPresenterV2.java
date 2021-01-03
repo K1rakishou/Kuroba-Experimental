@@ -165,7 +165,7 @@ public class CaptchaNoJsPresenterV2 {
     /**
      * Requests captcha data, parses it and then passes it to the render function
      */
-    public RequestCaptchaInfoError requestCaptchaInfo() {
+    public RequestCaptchaInfoError requestCaptchaInfo(boolean ignoreThrottling) {
         if (!captchaRequestInProgress.compareAndSet(false, true)) {
             Logger.d(TAG, "Request captcha request is already in progress");
             return RequestCaptchaInfoError.ALREADY_IN_PROGRESS;
@@ -173,7 +173,9 @@ public class CaptchaNoJsPresenterV2 {
 
         try {
             // recaptcha may become very angry at you if your are fetching it too fast
-            if (System.currentTimeMillis() - lastTimeCaptchaRequest < CAPTCHA_REQUEST_THROTTLE_MS) {
+            if (!ignoreThrottling
+                    && System.currentTimeMillis() - lastTimeCaptchaRequest < CAPTCHA_REQUEST_THROTTLE_MS
+            ) {
                 captchaRequestInProgress.set(false);
                 Logger.d(TAG, "Requesting captcha info too fast");
                 return RequestCaptchaInfoError.HOLD_YOUR_HORSES;

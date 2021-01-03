@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/captcha_layout_v2_top_level"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:gravity="bottom"
     android:orientation="vertical">
 
     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
@@ -17,27 +18,31 @@
         android:singleLine="true"
         android:text=""
         android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         tools:text="Select all images with something" />
 
-    <!--
-        The layout_width and height here don't actually matter because they're programatically set for the orientation of the device
-        Also the numColumns is set here only for the design view in the editor, as it is also programatically changed
-     -->
     <GridView
         android:id="@+id/captcha_layout_v2_images_grid"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:gravity="center"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:numColumns="3"
-        app:layout_constraintEnd_toStartOf="@id/captcha_layout_v2_buttons"
-        app:layout_constraintStart_toEndOf="@id/captcha_layout_v2_title" />
+        app:layout_constraintBottom_toTopOf="@+id/captcha_layout_v2_buttons"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/captcha_layout_v2_title"
+        app:layout_constraintVertical_weight="1" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/captcha_layout_v2_buttons"
         android:layout_width="match_parent"
         android:layout_height="64dp"
-        tools:layout_editor_absoluteY="40dp">
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
         <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
             android:id="@+id/captcha_layout_v2_use_old_captcha_button"
@@ -78,4 +83,5 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-</com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout>
+
+</com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingConstraintLayout>

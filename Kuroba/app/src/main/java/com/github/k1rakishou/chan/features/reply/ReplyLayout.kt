@@ -56,6 +56,7 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.KeyboardStateListener
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.features.reply.ReplyPresenter.ReplyPresenterCallback
@@ -110,6 +111,7 @@ class ReplyLayout @JvmOverloads constructor(
   SelectionChangedListener,
   CaptchaValidationListener,
   KeyboardStateListener,
+  WindowInsetsListener,
   ThemeChangesListener,
   ReplyLayoutFilesArea.ReplyLayoutCallbacks {
 
@@ -187,7 +189,9 @@ class ReplyLayout @JvmOverloads constructor(
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
     EventBus.getDefault().register(this)
+
     globalWindowInsetsManager.addKeyboardUpdatesListener(this)
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
     themeEngine.addListener(this)
   }
 
@@ -195,11 +199,17 @@ class ReplyLayout @JvmOverloads constructor(
     updateWrappingMode()
   }
 
+  override fun onInsetsChanged() {
+    updateWrappingMode()
+  }
+
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
-    themeEngine.removeListener(this)
     EventBus.getDefault().unregister(this)
+
+    themeEngine.removeListener(this)
     globalWindowInsetsManager.removeKeyboardUpdatesListener(this)
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
   }
 
   override fun onThemeChanged() {
@@ -322,6 +332,7 @@ class ReplyLayout @JvmOverloads constructor(
     comment.setHideLoadingViewFunc {
       threadListLayoutFilesCallback?.hideLoadingView()
     }
+
 
     setupCommentContextMenu()
 
@@ -655,8 +666,11 @@ class ReplyLayout @JvmOverloads constructor(
       }
       SiteAuthentication.Type.GENERIC_WEBVIEW -> {
         val view = GenericWebViewAuthenticationLayout(context)
-        val params =
-          LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+        val params = LayoutParams(
+          ViewGroup.LayoutParams.MATCH_PARENT,
+          ViewGroup.LayoutParams.MATCH_PARENT
+        )
+
         view.layoutParams = params
         return view
       }
@@ -1098,6 +1112,7 @@ class ReplyLayout @JvmOverloads constructor(
 
     updateCommentButtonsHolderVisibility()
     replyLayoutFilesArea.updateLayoutManager()
+    updateWrappingMode()
   }
 
   override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
