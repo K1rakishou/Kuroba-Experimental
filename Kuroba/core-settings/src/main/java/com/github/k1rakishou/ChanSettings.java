@@ -203,6 +203,8 @@ public class ChanSettings {
     public static BooleanSetting watchEnabled;
     public static BooleanSetting watchBackground;
     public static IntegerSetting watchBackgroundInterval;
+    public static IntegerSetting watchForegroundInterval;
+    public static BooleanSetting watchForegroundAdaptiveInterval;
     public static BooleanSetting replyNotifications;
     public static BooleanSetting useSoundForReplyNotifications;
     public static BooleanSetting watchLastPageNotify;
@@ -355,6 +357,8 @@ public class ChanSettings {
             watchEnabled = new BooleanSetting(p, "preference_watch_enabled", false);
             watchBackground = new BooleanSetting(p, "preference_watch_background_enabled", false);
             watchBackgroundInterval = new IntegerSetting(p, "preference_watch_background_interval", (int) MINUTES.toMillis(30));
+            watchForegroundInterval = new IntegerSetting(p, "preference_watch_foreground_interval", (int) MINUTES.toMillis(1));
+            watchForegroundAdaptiveInterval = new BooleanSetting(p, "preference_watch_foreground_adaptive_interval", true);
             replyNotifications = new BooleanSetting(p, "reply_notifications", true);
             useSoundForReplyNotifications = new BooleanSetting(p, "use_sound_for_reply_notifications", false);
             watchLastPageNotify = new BooleanSetting(p, "preference_watch_last_page_notify", false);

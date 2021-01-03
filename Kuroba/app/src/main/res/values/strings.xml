@@ -148,6 +148,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Re-enable this permission in the app settings if you permanently disabled it."</string>
 
     <string name="minutes">%d minutes</string>
+    <string name="seconds">%d seconds</string>
     <string name="card_stats">%1$dR %2$dI</string>
     <string name="action_reload">Reload</string>
     <string name="action_force_reload">Force reload</string>
@@ -493,7 +494,11 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_watch_enable_background">Enable background thread watcher</string>
     <string name="setting_watch_enable_background_description">Watch bookmarks when app is either in foreground or background</string>
     <string name="setting_watch_background_timeout">Background update interval</string>
-    <string name="setting_watch_background_timeout_description">The interval between updates when placed in the background</string>
+    <string name="setting_watch_background_timeout_description">The interval between updates when the app is in the background</string>
+    <string name="setting_watch_foreground_timeout">Foreground update interval</string>
+    <string name="setting_watch_foreground_timeout_description">The interval between updates when the app is in the foreground</string>
+    <string name="setting_watch_foreground_adaptive_timer">Use adaptive interval for foreground watcher</string>
+    <string name="setting_watch_foreground_adaptive_timer_description">When turned on additional %1$d seconds will be added to foreground update interval for every 10 active bookmarks you have meaning the more active bookmarks you have the less often the bookmark updates will become (which is good for battery)</string>
     <string name="setting_background_watcher_test_option">%1$s (Option for testing. You are not supposed to see this)</string>
     <string name="setting_background_watcher_very_bad_option">%1$s (Terrible for battery. Don\'t tell me I didn\'t warn you!)</string>
     <string name="setting_background_watcher_non_optimal_option">%1$s (More frequent updates, bad for battery)</string>

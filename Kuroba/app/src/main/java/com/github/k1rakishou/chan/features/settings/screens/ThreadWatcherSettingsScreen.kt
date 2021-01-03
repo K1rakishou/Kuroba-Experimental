@@ -11,6 +11,7 @@ import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
+import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkForegroundWatcher
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.ThreadWatcherScreen
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
@@ -56,21 +57,39 @@ class ThreadWatcherSettingsScreen(
           setting = ChanSettings.watchEnabled
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += ListSettingV2.createBuilder<Int>(
           context = context,
-          identifier = ThreadWatcherScreen.MainGroup.ReplyNotifications,
-          topDescriptionIdFunc = { R.string.setting_reply_notifications },
-          bottomDescriptionIdFunc = { R.string.setting_reply_notifications_description },
-          setting = ChanSettings.replyNotifications,
+          identifier = ThreadWatcherScreen.MainGroup.ThreadWatcherForegroundUpdateInterval,
+          topDescriptionIdFunc = { R.string.setting_watch_foreground_timeout },
+          bottomDescriptionStringFunc = { itemName ->
+            getString(R.string.setting_watch_foreground_timeout_description).toString() + "\n\n" + itemName
+          },
+          items = FOREGROUND_INTERVALS,
+          itemNameMapper = { timeout ->
+            return@createBuilder getString(
+              R.string.seconds,
+              TimeUnit.MILLISECONDS.toSeconds(timeout.toLong()).toInt()
+            )
+          },
+          setting = ChanSettings.watchForegroundInterval,
           dependsOnSetting = ChanSettings.watchEnabled
         )
 
         group += BooleanSettingV2.createBuilder(
           context = context,
-          identifier = ThreadWatcherScreen.MainGroup.UseSoundForReplyNotifications,
-          topDescriptionIdFunc = { R.string.setting_reply_notifications_use_sound },
-          setting = ChanSettings.useSoundForReplyNotifications,
-          dependsOnSetting = ChanSettings.replyNotifications
+          identifier = ThreadWatcherScreen.MainGroup.AdaptiveForegroundWatcherInterval,
+          topDescriptionIdFunc = { R.string.setting_watch_foreground_adaptive_timer },
+          bottomDescriptionStringFunc = {
+            val seconds = TimeUnit.MILLISECONDS.toSeconds(
+              BookmarkForegroundWatcher.ADDITIONAL_INTERVAL_INCREMENT_MS
+            )
+            return@createBuilder getString(
+              R.string.setting_watch_foreground_adaptive_timer_description,
+              seconds
+            )
+          },
+          setting = ChanSettings.watchForegroundAdaptiveInterval,
+          dependsOnSetting =  ChanSettings.watchEnabled
         )
 
         group += BooleanSettingV2.createBuilder(
@@ -78,40 +97,27 @@ class ThreadWatcherSettingsScreen(
           identifier = ThreadWatcherScreen.MainGroup.EnableBackgroundThreadWatcher,
           topDescriptionIdFunc = { R.string.setting_watch_enable_background },
           bottomDescriptionIdFunc = { R.string.setting_watch_enable_background_description },
-          checkChangedCallback = { checked -> showShittyPhonesBackgroundLimitationsExplanationDialog(checked) },
+          checkChangedCallback = { checked ->
+            showShittyPhonesBackgroundLimitationsExplanationDialog(
+              checked
+            )
+          },
           setting = ChanSettings.watchBackground,
           dependsOnSetting = ChanSettings.watchEnabled
         )
 
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = ThreadWatcherScreen.MainGroup.WatchLastPageNotify,
-          topDescriptionIdFunc = { R.string.setting_thread_page_limit_notify },
-          bottomDescriptionIdFunc = { R.string.setting_thread_page_limit_notify_description },
-          setting = ChanSettings.watchLastPageNotify,
-          dependsOnSetting = ChanSettings.watchBackground
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = ThreadWatcherScreen.MainGroup.UseSoundForLastPageNotifications,
-          topDescriptionIdFunc = { R.string.setting_thread_page_limit_notify_use_sound },
-          setting = ChanSettings.useSoundForLastPageNotifications,
-          dependsOnSetting = ChanSettings.watchLastPageNotify
-        )
-
         group += ListSettingV2.createBuilder<Int>(
           context = context,
-          identifier = ThreadWatcherScreen.MainGroup.ThreadWatcherTimeout,
+          identifier = ThreadWatcherScreen.MainGroup.ThreadWatcherBackgroundUpdateInterval,
           topDescriptionIdFunc = { R.string.setting_watch_background_timeout },
           bottomDescriptionStringFunc = { itemName ->
             getString(R.string.setting_watch_background_timeout_description).toString() + "\n\n" + itemName
           },
           items = kotlin.run {
             if (AppModuleAndroidUtils.isDevBuild()) {
-              INTERVALS
+              BACKGROUND_INTERVALS
             } else {
-              INTERVALS.drop(1)
+              BACKGROUND_INTERVALS.drop(1)
             }
           },
           itemNameMapper = { timeout ->
@@ -151,6 +157,40 @@ class ThreadWatcherSettingsScreen(
           },
           setting = ChanSettings.watchBackgroundInterval,
           dependsOnSetting = ChanSettings.watchBackground
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = ThreadWatcherScreen.MainGroup.ReplyNotifications,
+          topDescriptionIdFunc = { R.string.setting_reply_notifications },
+          bottomDescriptionIdFunc = { R.string.setting_reply_notifications_description },
+          setting = ChanSettings.replyNotifications,
+          dependsOnSetting = ChanSettings.watchEnabled
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = ThreadWatcherScreen.MainGroup.UseSoundForReplyNotifications,
+          topDescriptionIdFunc = { R.string.setting_reply_notifications_use_sound },
+          setting = ChanSettings.useSoundForReplyNotifications,
+          dependsOnSetting = ChanSettings.replyNotifications
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = ThreadWatcherScreen.MainGroup.WatchLastPageNotify,
+          topDescriptionIdFunc = { R.string.setting_thread_page_limit_notify },
+          bottomDescriptionIdFunc = { R.string.setting_thread_page_limit_notify_description },
+          setting = ChanSettings.watchLastPageNotify,
+          dependsOnSetting = ChanSettings.watchBackground
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = ThreadWatcherScreen.MainGroup.UseSoundForLastPageNotifications,
+          topDescriptionIdFunc = { R.string.setting_thread_page_limit_notify_use_sound },
+          setting = ChanSettings.useSoundForLastPageNotifications,
+          dependsOnSetting = ChanSettings.watchLastPageNotify
         )
 
         return group
@@ -200,7 +240,7 @@ class ThreadWatcherSettingsScreen(
   }
 
   companion object {
-    private val INTERVALS = listOf(
+    private val BACKGROUND_INTERVALS = listOf(
       TimeUnit.MINUTES.toMillis(1).toInt(),
       TimeUnit.MINUTES.toMillis(5).toInt(),
       TimeUnit.MINUTES.toMillis(10).toInt(),
@@ -210,6 +250,14 @@ class ThreadWatcherSettingsScreen(
       TimeUnit.MINUTES.toMillis(60).toInt(),
       TimeUnit.MINUTES.toMillis(90).toInt(),
       TimeUnit.MINUTES.toMillis(120).toInt()
+    )
+
+    private val FOREGROUND_INTERVALS = listOf(
+      TimeUnit.SECONDS.toMillis(30).toInt(),
+      TimeUnit.MINUTES.toMillis(1).toInt(),
+      TimeUnit.MINUTES.toMillis(2).toInt(),
+      TimeUnit.MINUTES.toMillis(5).toInt(),
+      TimeUnit.MINUTES.toMillis(10).toInt(),
     )
   }
 }

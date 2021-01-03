@@ -24,6 +24,8 @@ class BookmarkBackgroundWatcherWorker(
   @Inject
   lateinit var bookmarkWatcherDelegate: BookmarkWatcherDelegate
   @Inject
+  lateinit var bookmarkForegroundWatcher: BookmarkForegroundWatcher
+  @Inject
   lateinit var applicationVisibilityManager: ApplicationVisibilityManager
 
   override suspend fun doWork(): Result {
@@ -52,7 +54,9 @@ class BookmarkBackgroundWatcherWorker(
     if (applicationVisibilityManager.isAppInForeground()) {
       Logger.d(TAG, "BookmarkBackgroundWatcherWorker.doWork() Cannot start BookmarkWatcherDelegate, " +
         "app is in foreground")
+      bookmarkForegroundWatcher.startWatchingIfNotWatchingYet()
       BookmarkWatcherCoordinator.restartBackgroundWork(appConstants, applicationContext)
+
       return Result.success()
     }
 

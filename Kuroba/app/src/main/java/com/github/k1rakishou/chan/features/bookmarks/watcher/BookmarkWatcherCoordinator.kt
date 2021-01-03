@@ -187,10 +187,10 @@ class BookmarkWatcherCoordinator(
 
     suspend fun restartBackgroundWork(appConstants: AppConstants, appContext: Context) {
       val tag = appConstants.bookmarkWatchWorkUniqueTag
-      Logger.d(TAG, "restartBackgroundJob() called tag=$tag")
+      Logger.d(TAG, "restartBackgroundWork() called tag=$tag")
 
       if (!ChanSettings.watchEnabled.get() || !ChanSettings.watchBackground.get()) {
-        Logger.d(TAG, "restartBackgroundJob() cannot restart watcher because one of the required " +
+        Logger.d(TAG, "restartBackgroundWork() cannot restart watcher because one of the required " +
           "settings is turned off (watchEnabled=${ChanSettings.watchEnabled.get()}, " +
           "watchBackground=${ChanSettings.watchBackground.get()})")
 
@@ -216,7 +216,7 @@ class BookmarkWatcherCoordinator(
         .result
         .await()
 
-      Logger.d(TAG, "restartBackgroundJob() enqueued work with tag $tag")
+      Logger.d(TAG, "restartBackgroundWork() enqueued work with tag $tag")
     }
 
     suspend fun cancelBackgroundBookmarkWatching(

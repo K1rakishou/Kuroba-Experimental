@@ -231,7 +231,9 @@ sealed class ThreadWatcherScreen(
 
     object EnableThreadWatcher : MainGroup("enable_thread_watcher")
     object EnableBackgroundThreadWatcher : MainGroup("enable_background_thread_watcher")
-    object ThreadWatcherTimeout : MainGroup("thread_watcher_timeout")
+    object ThreadWatcherBackgroundUpdateInterval : MainGroup("thread_watcher_background_update_interval")
+    object ThreadWatcherForegroundUpdateInterval : MainGroup("thread_watcher_foreground_update_interval")
+    object AdaptiveForegroundWatcherInterval : MainGroup("adaptive_foreground_watcher_interval")
     object ReplyNotifications : MainGroup("reply_notifications")
     object UseSoundForReplyNotifications : MainGroup("use_sound_for_reply_notifications")
     object WatchLastPageNotify : MainGroup("watch_last_page_notify")

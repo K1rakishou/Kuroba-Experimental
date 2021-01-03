@@ -180,7 +180,7 @@ class BookmarkForegroundWatcher(
         return
       }
 
-      delay(FOREGROUND_INITIAL_INTERVAL_MS + calculateAndLogAdditionalInterval())
+      delay(foregroundWatchIntervalMs() + calculateAndLogAdditionalInterval())
 
       if (!isActive) {
         Logger.d(TAG, "updateBookmarksWorkerLoop() not active anymore (after delay), exiting")
@@ -190,21 +190,35 @@ class BookmarkForegroundWatcher(
   }
 
   private fun calculateAndLogAdditionalInterval(): Long {
+    val foregroundWatchAdditionalIntervalMs = foregroundWatchAdditionalIntervalMs()
     val activeBookmarksCount = bookmarksManager.activeBookmarksCount()
 
     // Increment the interval for every 10 bookmarks by ADDITIONAL_INTERVAL_INCREMENT_MS. This way
     // if we have 100 active bookmarks we will be waiting 30secs + (10 * 5)secs = 80secs. This is
     // needed to not kill the battery with constant network request spam.
-    val additionalInterval = (activeBookmarksCount / 10) * ADDITIONAL_INTERVAL_INCREMENT_MS
+    val additionalInterval = (activeBookmarksCount / 10) * foregroundWatchAdditionalIntervalMs()
 
     if (verboseLogsEnabled) {
+      val foregroundInterval = foregroundWatchIntervalMs()
+
       Logger.d(TAG, "bookmarkWatcherDelegate.doWork() completed, waiting for " +
-        "${FOREGROUND_INITIAL_INTERVAL_MS}ms + ${additionalInterval}ms " +
-        "(activeBookmarksCount: $activeBookmarksCount, " +
-        "total wait time: ${FOREGROUND_INITIAL_INTERVAL_MS + additionalInterval}ms)")
+        "${foregroundInterval}ms + (${(activeBookmarksCount / 10)} bookmarks * ${foregroundWatchAdditionalIntervalMs}ms) " +
+        "(total wait time: ${foregroundInterval + additionalInterval}ms)")
     }
 
     return additionalInterval
+  }
+
+  private fun foregroundWatchIntervalMs(): Int {
+    return ChanSettings.watchForegroundInterval.get()
+  }
+
+  private fun foregroundWatchAdditionalIntervalMs(): Long {
+    if (!ChanSettings.watchForegroundAdaptiveInterval.get()) {
+      return 0
+    }
+
+    return ADDITIONAL_INTERVAL_INCREMENT_MS
   }
 
   private fun logErrorIfNeeded(error: Throwable) {
@@ -221,7 +235,6 @@ class BookmarkForegroundWatcher(
 
   companion object {
     private const val TAG = "BookmarkForegroundWatcher"
-    private const val FOREGROUND_INITIAL_INTERVAL_MS = 30L * 1000L
-    private const val ADDITIONAL_INTERVAL_INCREMENT_MS = 5L * 1000L
+    const val ADDITIONAL_INTERVAL_INCREMENT_MS = 5L * 1000L
   }
 }
