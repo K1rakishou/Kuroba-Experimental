@@ -90,6 +90,7 @@ import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.github.k1rakishou.model.data.post.PostIndexed
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -559,6 +560,30 @@ class ThemeSettingsController(context: Context) : Controller(context),
     adapter.setPostViewMode(ChanSettings.PostViewMode.LIST)
     postsView.adapter = adapter
 
+    val bottomNavView = BottomNavigationView(context)
+    bottomNavView.menu.clear()
+    bottomNavView.inflateMenu(R.menu.bottom_navigation_menu)
+    bottomNavView.selectedItemId = R.id.action_browse
+    bottomNavView.setBackgroundColor(theme.primaryColor)
+
+    val uncheckedColorNormal = if (isDarkColor(theme.primaryColor)) {
+      Color.LTGRAY
+    } else {
+      Color.DKGRAY
+    }
+
+    val uncheckedColorDarkened = ThemeEngine.manipulateColor(uncheckedColorNormal, .7f)
+
+    bottomNavView.itemIconTintList = ColorStateList(
+      arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
+      intArrayOf(Color.WHITE, uncheckedColorDarkened)
+    )
+
+    bottomNavView.itemTextColor = ColorStateList(
+      arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
+      intArrayOf(Color.WHITE, uncheckedColorDarkened)
+    )
+
     val toolbar = Toolbar(context)
     toolbar.setBackgroundColor(theme.primaryColor)
 
@@ -590,23 +615,32 @@ class ThemeSettingsController(context: Context) : Controller(context),
       postsView,
       LinearLayout.LayoutParams(
         ViewGroup.LayoutParams.MATCH_PARENT,
-        ViewGroup.LayoutParams.WRAP_CONTENT
+        0,
+        1f
+      )
+    )
+    linearLayout.addView(
+      bottomNavView,
+      LinearLayout.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        getDimen(R.dimen.bottom_nav_view_height)
       )
     )
 
     val coordinatorLayout = CoordinatorLayout(context)
     coordinatorLayout.addView(linearLayout)
 
-    val params = CoordinatorLayout.LayoutParams(
-      CoordinatorLayout.LayoutParams.WRAP_CONTENT,
-      CoordinatorLayout.LayoutParams.WRAP_CONTENT
-    ).apply {
-      gravity = Gravity.END or Gravity.BOTTOM
-      bottomMargin = dp(16f)
-      marginEnd = dp(16f)
-    }
-
-    coordinatorLayout.addView(fab, params)
+    coordinatorLayout.addView(
+      fab,
+      CoordinatorLayout.LayoutParams(
+        CoordinatorLayout.LayoutParams.WRAP_CONTENT,
+        CoordinatorLayout.LayoutParams.WRAP_CONTENT
+      ).apply {
+        gravity = Gravity.END or Gravity.BOTTOM
+        bottomMargin = dp(16f) + getDimen(R.dimen.bottom_nav_view_height)
+        marginEnd = dp(16f)
+      }
+    )
 
     return coordinatorLayout
   }
