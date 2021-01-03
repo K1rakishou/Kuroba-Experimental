@@ -150,10 +150,13 @@ class PostFilterManager {
 
   fun hasFilterParameters(postDescriptor: PostDescriptor): Boolean {
     return lock.read {
-      return@read filterStorage[postDescriptor]?.filterSaved ?: false
-        || filterStorage[postDescriptor]?.filterHighlightedColor != 0
-        || filterStorage[postDescriptor]?.filterReplies ?: false
-        || filterStorage[postDescriptor]?.filterStub ?: false
+      val postFilter = filterStorage[postDescriptor]
+        ?: return@read false
+
+      return@read postFilter.filterHighlightedColor != 0
+        || postFilter.filterStub
+        || postFilter.filterSaved
+        || postFilter.filterReplies
     }
   }
 

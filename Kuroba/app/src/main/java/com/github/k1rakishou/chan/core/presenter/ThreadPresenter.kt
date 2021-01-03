@@ -618,11 +618,12 @@ class ThreadPresenter @Inject constructor(
 
   private suspend fun onFiltersChanged() {
     chanPostRepository.awaitUntilInitialized()
-    Logger.d(TAG, "onFiltersChanged() clearing posts cache")
+    Logger.d(TAG, "onFiltersChanged($currentChanDescriptor) clearing posts cache")
 
     var shouldShowLoadingIndicator = false
 
-    chanThreadManager.currentCatalogDescriptor?.let { catalogDescriptor ->
+    val catalogDescriptor = chanThreadManager.currentCatalogDescriptor
+    if (catalogDescriptor != null) {
       if (catalogDescriptor == currentChanDescriptor) {
         shouldShowLoadingIndicator = true
       }
@@ -630,7 +631,8 @@ class ThreadPresenter @Inject constructor(
       normalLoad(showLoading = false)
     }
 
-    chanThreadManager.currentThreadDescriptor?.let { threadDescriptor ->
+    val threadDescriptor = chanThreadManager.currentThreadDescriptor
+    if (threadDescriptor != null) {
       if (threadDescriptor == currentChanDescriptor) {
         shouldShowLoadingIndicator = true
       }

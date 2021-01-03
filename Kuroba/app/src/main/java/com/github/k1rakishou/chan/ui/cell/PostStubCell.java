@@ -29,6 +29,7 @@ import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.core.manager.PostFilterManager;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
@@ -54,6 +55,8 @@ public class PostStubCell
 
     @Inject
     ThemeEngine themeEngine;
+    @Inject
+    PostFilterManager postFilterManager;
 
     private ChanTheme theme;
     private ChanPost post;
@@ -61,6 +64,7 @@ public class PostStubCell
     private boolean showDivider;
     @Nullable
     private PostCellInterface.PostCellCallback callback;
+    private int filterHash = -1;
 
     private TextView title;
     private ColorizableDivider divider;
@@ -159,7 +163,12 @@ public class PostStubCell
             boolean compact,
             ChanTheme theme
     ) {
-        if (post.equals(this.post) && theme.equals(this.theme)) {
+        int filterHash = postFilterManager.getFilterHash(post.getPostDescriptor());
+
+        if (post.equals(this.post)
+                && theme.equals(this.theme)
+                && this.filterHash == filterHash
+        ) {
             return;
         }
 
@@ -169,6 +178,7 @@ public class PostStubCell
         this.callback = callback;
         this.postViewMode = postViewMode;
         this.showDivider = showDivider;
+        this.filterHash = filterHash;
 
         bindPost(post);
     }

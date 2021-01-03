@@ -48,6 +48,12 @@ class ChanThreadsCache(
     return lock.read { chanThreads[postDescriptor.threadDescriptor()]?.getPostHash(postDescriptor) }
   }
 
+  fun clearPostHashes() {
+    lock.write {
+      chanThreads.values.forEach { chanThread -> chanThread.clearPostHashes() }
+    }
+  }
+
   fun putManyCatalogPostsIntoCache(originalPosts: List<ChanOriginalPost>) {
     if (originalPosts.isEmpty()) {
       return

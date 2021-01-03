@@ -163,6 +163,12 @@ class ChanPostRepository(
     return chanThreadsCache.getPostHash(postDescriptor)
   }
 
+  fun clearPostHashes() {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+
+    chanThreadsCache.clearPostHashes()
+  }
+
   fun markThreadAsDeleted(threadDescriptor: ChanDescriptor.ThreadDescriptor, deleted: Boolean) {
     chanThreadsCache.markThreadAsDeleted(threadDescriptor, deleted)
   }

@@ -8,13 +8,14 @@ import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.filter.ChanFilter
 import com.github.k1rakishou.model.repository.ChanFilterRepository
+import com.github.k1rakishou.model.repository.ChanPostRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -26,9 +27,14 @@ import kotlin.time.measureTime
 class ChanFilterManager(
   private val appScope: CoroutineScope,
   private val chanFilterRepository: ChanFilterRepository,
+  private val chanPostRepository: ChanPostRepository,
   private val postFilterManager: PostFilterManager
 ) {
-  private val filtersChangedChannel = Channel<Unit>(Channel.RENDEZVOUS)
+  private val filtersChangedChannel = MutableSharedFlow<Unit>(
+    replay = 1,
+    extraBufferCapacity = 1,
+    onBufferOverflow = BufferOverflow.DROP_OLDEST
+  )
 
   private val suspendableInitializer = SuspendableInitializer<Unit>("ChanFilterManager")
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
@@ -50,8 +56,7 @@ class ChanFilterManager(
 
   fun listenForFiltersChanges(): Flow<Unit> {
     return filtersChangedChannel
-      .receiveAsFlow()
-      .flowOn(Dispatchers.Main)
+      .asSharedFlow()
       .catch { error -> Logger.e(TAG, "Error while listening for filtersChangedSubject updates", error) }
   }
 
@@ -97,10 +102,10 @@ class ChanFilterManager(
       }
 
       if (success) {
-        postFilterManager.clear()
+        clearFiltersAndPostHashes()
       }
 
-      filtersChangedChannel.offer(Unit)
+      filtersChangedChannel.tryEmit(Unit)
       onUpdated()
     }
   }
@@ -152,8 +157,9 @@ class ChanFilterManager(
         .peekError { error -> Logger.e(TAG, "Failed to update filters in database", error) }
         .ignore()
 
-      filtersChangedChannel.offer(Unit)
-      postFilterManager.clear()
+      clearFiltersAndPostHashes()
+
+      filtersChangedChannel.tryEmit(Unit)
       onUpdated()
     }
   }
@@ -191,8 +197,9 @@ class ChanFilterManager(
         .peekError { error -> Logger.e(TAG, "Failed to update filters in database", error) }
         .ignore()
 
-      filtersChangedChannel.offer(Unit)
-      postFilterManager.clear()
+      clearFiltersAndPostHashes()
+
+      filtersChangedChannel.tryEmit(Unit)
       onUpdated()
     }
   }
@@ -210,6 +217,11 @@ class ChanFilterManager(
       return@read filters.filter { filter -> filter.enabled }
         .map { filter -> filter.copy() }
     }
+  }
+
+  private fun clearFiltersAndPostHashes() {
+    postFilterManager.clear()
+    chanPostRepository.clearPostHashes()
   }
 
   private suspend fun updateOldFilterInternal(indexOfThisFilter: Int, newChanFilter: ChanFilter): Boolean {

@@ -535,6 +535,7 @@ public class ManagerModule {
     @Singleton
     public ChanFilterManager provideChanFilterManager(
             ChanFilterRepository chanFilterRepository,
+            ChanPostRepository chanPostRepository,
             CoroutineScope appScope,
             PostFilterManager postFilterManager
     ) {
@@ -543,6 +544,7 @@ public class ManagerModule {
         return new ChanFilterManager(
                 appScope,
                 chanFilterRepository,
+                chanPostRepository,
                 postFilterManager
         );
     }

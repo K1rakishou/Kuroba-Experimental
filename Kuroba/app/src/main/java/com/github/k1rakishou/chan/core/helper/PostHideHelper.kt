@@ -81,7 +81,7 @@ class PostHideHelper(
     }
   }
 
-  private suspend fun hideRepliesToAlreadyHiddenPosts(
+  private fun hideRepliesToAlreadyHiddenPosts(
     postsFastLookupMap: Map<Long, ChanPost>,
     hiddenPostsLookupMap: MutableMap<Long, ChanPostHide>
   ) {
@@ -185,7 +185,7 @@ class PostHideHelper(
       }
 
       val childPost = postsFastLookupMap[no]
-      // cross-thread post
+        // cross-thread post
         ?: continue
 
       val hasFilterParameters = postFilterManager.hasFilterParameters(childPost.postDescriptor)

@@ -62,6 +62,10 @@ class ChanThread(
     return lock.read { rawPostHashesMap[postDescriptor] }
   }
 
+  fun clearPostHashes() {
+    lock.write { rawPostHashesMap.clear() }
+  }
+
   fun addOrUpdatePosts(newChanPosts: List<ChanPost>): Boolean {
     return lock.write {
       require(newChanPosts.isNotEmpty()) { "newPosts are empty!" }
