@@ -78,7 +78,7 @@ abstract class AbstractFilePicker<T>(
   }
 
   protected fun getDefaultFileName(): String {
-    return System.currentTimeMillis().toString()
+    return System.nanoTime().toString()
   }
 
   private fun copyExternalFileIntoReplyFile(

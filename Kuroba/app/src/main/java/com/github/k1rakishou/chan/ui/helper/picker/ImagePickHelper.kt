@@ -31,7 +31,7 @@ class ImagePickHelper(
     return pickedFilesUpdatesState.asSharedFlow()
   }
 
-  suspend fun pickFilesFromIncomingSharing(
+  suspend fun pickFilesFromIncomingShare(
     filePickerInput: ShareFilePicker.ShareFilePickerInput
   ): ModularResult<PickedFile> {
     val result = shareFilePicker.pickFile(filePickerInput)
@@ -61,36 +61,36 @@ class ImagePickHelper(
       filePickerInput.showLoadingViewFunc?.invoke(R.string.decoding_reply_file_preview)
     }
 
-    sharedFiles.forEach { sharedFile ->
-      val replyFileMeta = sharedFile.getReplyFileMeta().safeUnwrap { error ->
-        Logger.e(TAG, "pickFilesFromIntent() replyFile.getReplyFileMeta() error", error)
-        sharedFile.deleteFromDisk()
-        return@forEach
+    try {
+      sharedFiles.forEach { sharedFile ->
+        val replyFileMeta = sharedFile.getReplyFileMeta().safeUnwrap { error ->
+          Logger.e(TAG, "pickFilesFromIntent() replyFile.getReplyFileMeta() error", error)
+          sharedFile.deleteFromDisk()
+          return@forEach
+        }
+
+        if (!replyManager.addNewReplyFileIntoStorage(sharedFile)) {
+          Logger.e(TAG, "pickFilesFromIntent() addNewReplyFileIntoStorage() failure")
+          sharedFile.deleteFromDisk()
+          return@forEach
+        }
+
+        withContext(Dispatchers.IO) {
+          imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
+            appContext,
+            replyFileMeta.fileUuid,
+            Scale.FILL
+          )
+        }
+
+        Logger.d(TAG, "pickFilesFromIntent() success! Picked new local file " +
+          "with UUID='${replyFileMeta.fileUuid}'")
+        pickedFilesUpdatesState.emit(replyFileMeta.fileUuid)
       }
-
-      if (!replyManager.addNewReplyFileIntoStorage(sharedFile)) {
-        Logger.e(TAG, "pickFilesFromIntent() addNewReplyFileIntoStorage() failure")
-        sharedFile.deleteFromDisk()
-
-        return@forEach
+    } finally {
+      withContext(Dispatchers.Main) {
+        filePickerInput.hideLoadingViewFunc?.invoke()
       }
-
-      withContext(Dispatchers.IO) {
-        imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
-          appContext,
-          replyFileMeta.fileUuid,
-          Scale.FILL
-        )
-      }
-
-      Logger.d(TAG, "pickFilesFromIntent() success! Picked new local file " +
-        "with UUID='${replyFileMeta.fileUuid}'")
-
-      pickedFilesUpdatesState.emit(replyFileMeta.fileUuid)
-    }
-
-    withContext(Dispatchers.Main) {
-      filePickerInput.hideLoadingViewFunc?.invoke()
     }
 
     return result
@@ -124,9 +124,9 @@ class ImagePickHelper(
       Logger.e(TAG, "pickLocalFile() replyFile.getReplyFileMeta() error", error)
 
       replyFile.deleteFromDisk()
-
-      val pickedFileFailure =
-        PickedFile.Failure(AbstractFilePicker.FilePickerError.FailedToReadFileMeta())
+      val pickedFileFailure = PickedFile.Failure(
+        AbstractFilePicker.FilePickerError.FailedToReadFileMeta()
+      )
 
       return ModularResult.value(pickedFileFailure)
     }
@@ -135,14 +135,16 @@ class ImagePickHelper(
       Logger.e(TAG, "pickLocalFile() addNewReplyFileIntoStorage() failure")
 
       replyFile.deleteFromDisk()
-
-      val pickedFileFailure =
-        PickedFile.Failure(AbstractFilePicker.FilePickerError.FailedToAddNewReplyFileIntoStorage())
+      val pickedFileFailure = PickedFile.Failure(
+        AbstractFilePicker.FilePickerError.FailedToAddNewReplyFileIntoStorage()
+      )
 
       return ModularResult.value(pickedFileFailure)
     }
 
-    filePickerInput.showLoadingView()
+    withContext(Dispatchers.Main) {
+      filePickerInput.showLoadingView()
+    }
 
     try {
       withContext(Dispatchers.IO) {
@@ -153,12 +155,13 @@ class ImagePickHelper(
         )
       }
     } finally {
-      filePickerInput.hideLoadingView()
+      withContext(Dispatchers.Main) {
+        filePickerInput.hideLoadingView()
+      }
     }
 
     Logger.d(TAG, "pickLocalFile() success! Picked new local file " +
       "with UUID='${replyFileMeta.fileUuid}'")
-
     pickedFilesUpdatesState.emit(replyFileMeta.fileUuid)
 
     return result
@@ -191,9 +194,9 @@ class ImagePickHelper(
       Logger.e(TAG, "pickRemoteFile() replyFile.getReplyFileMeta() error", error)
 
       replyFile.deleteFromDisk()
-
-      val pickedFileFailure =
-        PickedFile.Failure(AbstractFilePicker.FilePickerError.FailedToReadFileMeta())
+      val pickedFileFailure = PickedFile.Failure(
+        AbstractFilePicker.FilePickerError.FailedToReadFileMeta()
+      )
 
       return ModularResult.value(pickedFileFailure)
     }
@@ -202,14 +205,16 @@ class ImagePickHelper(
       Logger.e(TAG, "pickRemoteFile() addNewReplyFileIntoStorage() failure")
 
       replyFile.deleteFromDisk()
-
-      val pickedFileFailure =
-        PickedFile.Failure(AbstractFilePicker.FilePickerError.FailedToAddNewReplyFileIntoStorage())
+      val pickedFileFailure = PickedFile.Failure(
+        AbstractFilePicker.FilePickerError.FailedToAddNewReplyFileIntoStorage()
+      )
 
       return ModularResult.value(pickedFileFailure)
     }
 
-    filePickerInput.showLoadingView(R.string.decoding_reply_file_preview)
+    withContext(Dispatchers.Main) {
+      filePickerInput.showLoadingView(R.string.decoding_reply_file_preview)
+    }
 
     try {
       withContext(Dispatchers.IO) {
@@ -220,10 +225,13 @@ class ImagePickHelper(
         )
       }
     } finally {
-      filePickerInput.hideLoadingView()
+      withContext(Dispatchers.Main) {
+        filePickerInput.hideLoadingView()
+      }
     }
 
-    Logger.d(TAG, "pickRemoteFile() success! Picked new remote file with UUID='${replyFileMeta.fileUuid}'")
+    Logger.d(TAG, "pickRemoteFile() success! Picked new remote file " +
+      "with UUID='${replyFileMeta.fileUuid}'")
     pickedFilesUpdatesState.emit(replyFileMeta.fileUuid)
 
     return result

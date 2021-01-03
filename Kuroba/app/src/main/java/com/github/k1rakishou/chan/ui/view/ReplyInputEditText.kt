@@ -28,6 +28,7 @@ import androidx.core.view.inputmethod.InputContentInfoCompat
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
+import com.github.k1rakishou.chan.ui.helper.picker.PickedFile
 import com.github.k1rakishou.chan.ui.helper.picker.ShareFilePicker
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -201,13 +202,21 @@ class ReplyInputEditText @JvmOverloads constructor(
                 hideLoadingViewFunc = hideLoadingViewFunc
               )
 
-              imagePickHelper.pickFilesFromIncomingSharing(shareFilePickerInput)
+              val pickedFile = imagePickHelper.pickFilesFromIncomingShare(shareFilePickerInput)
                 .unwrap()
 
-              AppModuleAndroidUtils.showToast(context, getString(R.string.share_success_message, 1))
+              if (pickedFile is PickedFile.Failure) {
+                throw pickedFile.reason
+              }
+
+              val replyFiles = (pickedFile as PickedFile.Result).replyFiles
+
+              AppModuleAndroidUtils.showToast(
+                context,
+                getString(R.string.share_success_message, replyFiles.size)
+              )
             } catch (error: Throwable) {
               Logger.e(TAG, "imagePickHelper.pickFilesFromIntent() failure", error)
-
               AppModuleAndroidUtils.showToast(context, R.string.share_error_message)
             } finally {
               try {
