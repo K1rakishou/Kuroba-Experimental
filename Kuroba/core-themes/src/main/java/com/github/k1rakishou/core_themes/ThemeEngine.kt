@@ -1,6 +1,7 @@
 package com.github.k1rakishou.core_themes
 
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.view.View
@@ -47,10 +48,19 @@ open class ThemeEngine(
     actualDarkTheme = themeParser.readThemeFromDisk(defaultDarkTheme)
     actualLightTheme = themeParser.readThemeFromDisk(defaultLightTheme)
 
-    chanTheme = if (ChanSettings.isCurrentThemeDark.get()) {
-      actualDarkTheme ?: defaultDarkTheme
+    val nightModeFlag = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
+    if (nightModeFlag == Configuration.UI_MODE_NIGHT_UNDEFINED || ChanSettings.ignoreDarkNightMode.get()) {
+      chanTheme = if (ChanSettings.isCurrentThemeDark.get()) {
+        actualDarkTheme ?: defaultDarkTheme
+      } else {
+        actualLightTheme ?: defaultLightTheme
+      }
     } else {
-      actualLightTheme ?: defaultLightTheme
+      chanTheme = when (nightModeFlag) {
+        Configuration.UI_MODE_NIGHT_NO -> defaultLightTheme
+        Configuration.UI_MODE_NIGHT_YES -> defaultDarkTheme
+        else -> defaultDarkTheme
+      }
     }
   }
 

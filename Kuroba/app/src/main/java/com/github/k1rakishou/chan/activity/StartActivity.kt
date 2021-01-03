@@ -177,11 +177,11 @@ class StartActivity : AppCompatActivity(),
       .build()
       .also { component -> component.inject(this) }
 
-    val createUiTime = measureTime { createUi() }
-    Logger.d(TAG, "createUi took $createUiTime")
-
     themeEngine.addListener(this)
     themeEngine.refreshViews()
+
+    val createUiTime = measureTime { createUi() }
+    Logger.d(TAG, "createUi took $createUiTime")
 
     imagePickHelper.onActivityCreated(this)
 
