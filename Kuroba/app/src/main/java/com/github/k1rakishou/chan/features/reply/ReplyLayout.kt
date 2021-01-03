@@ -76,8 +76,8 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.ui.view.LoadView
-import com.github.k1rakishou.chan.ui.view.SelectionListeningEditText
-import com.github.k1rakishou.chan.ui.view.SelectionListeningEditText.SelectionChangedListener
+import com.github.k1rakishou.chan.ui.view.ReplyInputEditText
+import com.github.k1rakishou.chan.ui.view.ReplyInputEditText.SelectionChangedListener
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
@@ -156,7 +156,7 @@ class ReplyLayout @JvmOverloads constructor(
   private lateinit var commentEqnButton: ColorizableBarButton
   private lateinit var commentMathButton: ColorizableBarButton
   private lateinit var commentSJISButton: ColorizableBarButton
-  private lateinit var comment: SelectionListeningEditText
+  private lateinit var comment: ReplyInputEditText
   private lateinit var commentCounter: TextView
   private lateinit var commentRevertChangeButton: AppCompatImageView
   private lateinit var captchaButtonContainer: ConstraintLayout
@@ -316,6 +316,13 @@ class ReplyLayout @JvmOverloads constructor(
     }
 
     comment.setPlainTextPaste(true)
+    comment.setShowLoadingViewFunc { textId ->
+      threadListLayoutFilesCallback?.showLoadingView({}, textId)
+    }
+    comment.setHideLoadingViewFunc {
+      threadListLayoutFilesCallback?.hideLoadingView()
+    }
+
     setupCommentContextMenu()
 
     AndroidUtils.setBoundlessRoundRippleBackground(more)
@@ -461,6 +468,7 @@ class ReplyLayout @JvmOverloads constructor(
     this.threadListLayoutCallbacks = null
     this.threadListLayoutFilesCallback = null
 
+    comment.cleanup()
     presenter.unbindReplyImages()
     captchaHolder.clearCallbacks()
     coroutineScope.cancelChildren()

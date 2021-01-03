@@ -38,7 +38,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class SelectionListeningEditText @JvmOverloads constructor(
+class ReplyInputEditText @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null
 ) : ColorizableEditText(context, attrs) {
@@ -48,6 +48,8 @@ class SelectionListeningEditText @JvmOverloads constructor(
 
   private var listener: SelectionChangedListener? = null
   private var plainTextPaste = false
+  private var showLoadingViewFunc: ((Int) -> Unit)? = null
+  private var hideLoadingViewFunc: (() -> Unit)? = null
 
   private val kurobaScope = KurobaCoroutineScope()
   private var activeJob: Job? = null
@@ -63,6 +65,14 @@ class SelectionListeningEditText @JvmOverloads constructor(
 
   fun setPlainTextPaste(plainTextPaste: Boolean) {
     this.plainTextPaste = plainTextPaste
+  }
+
+  fun setShowLoadingViewFunc(showLoadingViewFunc: (Int) -> Unit) {
+    this.showLoadingViewFunc = showLoadingViewFunc
+  }
+
+  fun setHideLoadingViewFunc(hideLoadingViewFunc: () -> Unit) {
+    this.hideLoadingViewFunc = hideLoadingViewFunc
   }
 
   override fun onDetachedFromWindow() {
@@ -92,16 +102,12 @@ class SelectionListeningEditText @JvmOverloads constructor(
 
   override fun onSelectionChanged(selStart: Int, selEnd: Int) {
     super.onSelectionChanged(selStart, selEnd)
-    if (listener != null) {
-      listener!!.onSelectionChanged()
-    }
+    listener?.onSelectionChanged()
   }
 
   override fun onTextContextMenuItem(id: Int): Boolean {
-    if (text == null) {
-      return false
-    }
-
+    val currentText = text
+      ?: return false
     val start = selectionStart
     val end = selectionEnd
 
@@ -114,7 +120,7 @@ class SelectionListeningEditText @JvmOverloads constructor(
     val max = if (isFocused) {
       Math.max(0, Math.max(start, end))
     } else {
-      text!!.length
+      currentText.length
     }
 
     if (id == android.R.id.paste && plainTextPaste) {
@@ -130,11 +136,11 @@ class SelectionListeningEditText @JvmOverloads constructor(
           if (paste != null) {
             if (!didFirst) {
               setSelection(max)
-              getText()!!.replace(min, max, paste)
+              currentText.replace(min, max, paste)
               didFirst = true
             } else {
-              getText()!!.insert(selectionEnd, "\n")
-              getText()!!.insert(selectionEnd, paste)
+              currentText.insert(selectionEnd, "\n")
+              currentText.insert(selectionEnd, paste)
             }
           }
         }
@@ -160,10 +166,13 @@ class SelectionListeningEditText @JvmOverloads constructor(
           opts: Bundle?
         ): Boolean {
           if (!AndroidUtils.isAndroidNMR1()) {
+            AppModuleAndroidUtils.showToast(context, "Unsupported Android version (Must be >= N_MR1)")
             return false
           }
 
           if (flags and InputConnectionCompat.INPUT_CONTENT_GRANT_READ_URI_PERMISSION == 0) {
+            AppModuleAndroidUtils.showToast(context, "No INPUT_CONTENT_GRANT_READ_URI_PERMISSION " +
+              "flag present")
             return false
           }
 
@@ -176,6 +185,7 @@ class SelectionListeningEditText @JvmOverloads constructor(
             inputContentInfo.requestPermission()
           } catch (e: Exception) {
             Logger.e(TAG, "inputContentInfo.requestPermission() error", e)
+            AppModuleAndroidUtils.showToast(context, "requestPermission() failed")
             return false
           }
 
@@ -186,10 +196,12 @@ class SelectionListeningEditText @JvmOverloads constructor(
               val shareFilePickerInput = ShareFilePicker.ShareFilePickerInput(
                 dataUri = null,
                 clipData = null,
-                inputContentInfo = inputContentInfo
+                inputContentInfo = inputContentInfo,
+                showLoadingViewFunc = showLoadingViewFunc,
+                hideLoadingViewFunc = hideLoadingViewFunc
               )
 
-              imagePickHelper.pickFilesFromIntent(shareFilePickerInput)
+              imagePickHelper.pickFilesFromIncomingSharing(shareFilePickerInput)
                 .unwrap()
 
               AppModuleAndroidUtils.showToast(context, getString(R.string.share_success_message, 1))
@@ -213,6 +225,17 @@ class SelectionListeningEditText @JvmOverloads constructor(
       }
 
     return InputConnectionCompat.createWrapper(ic, editorInfo, callback)
+  }
+
+  fun cleanup() {
+    if (activeJob != null) {
+      activeJob?.cancel()
+      activeJob = null
+    }
+
+    this.listener = null
+    this.showLoadingViewFunc = null
+    this.hideLoadingViewFunc = null
   }
 
   interface SelectionChangedListener {

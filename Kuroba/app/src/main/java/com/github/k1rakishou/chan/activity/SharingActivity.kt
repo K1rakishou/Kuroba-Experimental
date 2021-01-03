@@ -117,7 +117,7 @@ class SharingActivity : AppCompatActivity() {
       return false
     }
 
-    val shareResult = imagePickHelper.pickFilesFromIntent(
+    val shareResult = imagePickHelper.pickFilesFromIncomingSharing(
       ShareFilePicker.ShareFilePickerInput(
         dataUri = intent.data,
         clipData = intent.clipData,

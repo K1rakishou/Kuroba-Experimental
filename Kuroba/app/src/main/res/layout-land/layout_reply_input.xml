@@ -115,7 +115,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                         app:layout_constraintTop_toTopOf="parent"
                         app:layout_constraintVertical_bias="0">
 
-                        <com.github.k1rakishou.chan.ui.view.SelectionListeningEditText
+                        <com.github.k1rakishou.chan.ui.view.ReplyInputEditText
                             android:id="@+id/comment"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"

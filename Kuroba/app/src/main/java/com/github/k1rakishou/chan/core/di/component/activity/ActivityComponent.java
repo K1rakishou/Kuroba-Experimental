@@ -143,7 +143,7 @@ import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton;
 import com.github.k1rakishou.chan.ui.view.LoadingBar;
 import com.github.k1rakishou.chan.ui.view.MultiImageView;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
-import com.github.k1rakishou.chan.ui.view.SelectionListeningEditText;
+import com.github.k1rakishou.chan.ui.view.ReplyInputEditText;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize;
 import com.github.k1rakishou.chan.ui.view.attach.AttachNewFileButton;
@@ -225,7 +225,7 @@ public interface ActivityComponent {
     void inject(ColorizableSwitchMaterial colorizableSwitchMaterial);
     void inject(ColorizableTextInputLayout colorizableTextInputLayout);
     void inject(ColorizableTextView colorizableTextView);
-    void inject(SelectionListeningEditText selectionListeningEditText);
+    void inject(ReplyInputEditText replyInputEditText);
 
     void inject(EpoxyGridThreadBookmarkViewHolder epoxyGridThreadBookmarkViewHolder);
     void inject(EpoxyListThreadBookmarkViewHolder epoxyListThreadBookmarkViewHolder);

@@ -31,7 +31,7 @@ class ImagePickHelper(
     return pickedFilesUpdatesState.asSharedFlow()
   }
 
-  suspend fun pickFilesFromIntent(
+  suspend fun pickFilesFromIncomingSharing(
     filePickerInput: ShareFilePicker.ShareFilePickerInput
   ): ModularResult<PickedFile> {
     val result = shareFilePicker.pickFile(filePickerInput)
@@ -53,6 +53,13 @@ class ImagePickHelper(
     }
 
     val sharedFiles = (pickedFile as PickedFile.Result).replyFiles
+    if (sharedFiles.isEmpty()) {
+      return result
+    }
+
+    withContext(Dispatchers.Main) {
+      filePickerInput.showLoadingViewFunc?.invoke(R.string.decoding_reply_file_preview)
+    }
 
     sharedFiles.forEach { sharedFile ->
       val replyFileMeta = sharedFile.getReplyFileMeta().safeUnwrap { error ->
@@ -80,6 +87,10 @@ class ImagePickHelper(
         "with UUID='${replyFileMeta.fileUuid}'")
 
       pickedFilesUpdatesState.emit(replyFileMeta.fileUuid)
+    }
+
+    withContext(Dispatchers.Main) {
+      filePickerInput.hideLoadingViewFunc?.invoke()
     }
 
     return result
