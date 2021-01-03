@@ -171,6 +171,9 @@ open class ChanPost(
     if (moderatorCapcode != other.moderatorCapcode) {
       return false
     }
+    if (isSavedReply != other.isSavedReply) {
+      return false
+    }
 
     return true
   }

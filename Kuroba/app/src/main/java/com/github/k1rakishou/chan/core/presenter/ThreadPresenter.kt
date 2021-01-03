@@ -1604,10 +1604,11 @@ class ThreadPresenter @Inject constructor(
       savedReplyManager.savePost(post.postDescriptor)
     }
 
-    // TODO(KurobaEx): refactoring (maybe I should reload everything from the database instead?)
-
     // force reload for reply highlighting
-    normalLoad(showLoading = true, chanLoadOptions = ChanLoadOptions.ClearMemoryCache)
+    normalLoad(
+      showLoading = false,
+      chanLoadOptions = ChanLoadOptions.ClearMemoryCache
+    )
   }
 
   private fun requestDeletePost(post: ChanPost) {
