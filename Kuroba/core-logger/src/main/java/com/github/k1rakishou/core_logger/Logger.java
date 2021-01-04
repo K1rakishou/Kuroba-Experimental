@@ -20,7 +20,12 @@ import android.util.Log;
 
 public class Logger {
     private static boolean isDebugBuild = false;
+    private static boolean verboseLogsEnabled = false;
     private static String tagPrefix;
+
+    public static void verboseLogsEnabled(boolean verboseLogs) {
+        verboseLogsEnabled = verboseLogs;
+    }
 
     public static void init(boolean debugBuild, String prefix) {
         isDebugBuild = debugBuild;
@@ -29,13 +34,13 @@ public class Logger {
 
     //region VERBOSE
     public static void v(String tag, String message) {
-        if (isDebugBuild) {
+        if (canLog()) {
             Log.v(tagPrefix + tag, message);
         }
     }
 
     public static void v(String tag, String message, Throwable throwable) {
-        if (isDebugBuild) {
+        if (canLog()) {
             Log.v(tagPrefix + tag, message, throwable);
         }
     }
@@ -43,13 +48,13 @@ public class Logger {
 
     //region DEBUG
     public static void d(String tag, String message) {
-        if (isDebugBuild) {
+        if (canLog()) {
             Log.d(tagPrefix + tag, message);
         }
     }
 
     public static void d(String tag, String message, Throwable throwable) {
-        if (isDebugBuild) {
+        if (canLog()) {
             Log.d(tagPrefix + tag, message, throwable);
         }
     }
@@ -99,15 +104,19 @@ public class Logger {
 
     //region TEST
     public static void test(String message) {
-        if (isDebugBuild) {
+        if (canLog()) {
             Log.i(tagPrefix + "test", message);
         }
     }
 
     public static void test(String message, Throwable throwable) {
-        if (isDebugBuild) {
+        if (canLog()) {
             Log.i(tagPrefix + "test", message, throwable);
         }
     }
     //endregion TEST
+
+    private static boolean canLog() {
+        return isDebugBuild || verboseLogsEnabled;
+    }
 }
