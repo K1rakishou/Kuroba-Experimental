@@ -148,6 +148,12 @@ class DrawerPresenter(
   }
 
   fun onNavElementSwipedAway(descriptor: ChanDescriptor) {
+    if (descriptor is ChanDescriptor.ThreadDescriptor) {
+      if (bookmarksManager.exists(descriptor)) {
+        bookmarksManager.deleteBookmark(descriptor)
+      }
+    }
+
     historyNavigationManager.onNavElementSwipedAway(descriptor)
   }
 

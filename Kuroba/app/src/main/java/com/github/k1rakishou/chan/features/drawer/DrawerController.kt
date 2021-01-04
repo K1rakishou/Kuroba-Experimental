@@ -697,9 +697,7 @@ class DrawerController(
               imageLoaderRequestData(requestData)
               title(navHistoryEntry.title)
               bindNavHistoryBookmarkAdditionalInfo(navHistoryEntry.additionalInfo)
-              clickListener {
-                onHistoryEntryViewClicked(navHistoryEntry)
-              }
+              clickListener { onHistoryEntryViewClicked(navHistoryEntry) }
             }
           }
         }
