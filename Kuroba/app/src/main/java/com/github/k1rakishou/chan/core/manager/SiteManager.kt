@@ -10,7 +10,6 @@ import com.github.k1rakishou.common.SuspendableInitializer
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.json.JsonSettings
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.ChanSiteData
 import com.github.k1rakishou.model.repository.SiteRepository
@@ -334,34 +333,6 @@ open class SiteManager(
     sitesChanged()
   }
 
-  fun updateUserSettings(siteDescriptor: SiteDescriptor, userSettings: JsonSettings) {
-    check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
-    ensureSitesAndOrdersConsistency()
-
-    if (!isSiteActive(siteDescriptor)) {
-      return
-    }
-
-    val shouldPersist = lock.write {
-      val chanSiteData = siteDataMap[siteDescriptor]
-        ?: return@write false
-
-      if (chanSiteData.siteUserSettings == userSettings) {
-        return@write false
-      }
-
-      chanSiteData.siteUserSettings = userSettings
-      return@write true
-    }
-
-    if (!shouldPersist) {
-      return
-    }
-
-    debouncer.post(DEBOUNCE_TIME_MS) { siteRepository.persist(getSitesOrdered()) }
-    sitesChanged()
-  }
-
   @OptIn(ExperimentalTime::class)
   open suspend fun awaitUntilInitialized() {
     if (isReady()) {
@@ -399,11 +370,7 @@ open class SiteManager(
       ?: throw IllegalStateException("Couldn't instantiate site: ${clazz::class.java.simpleName}")
 
     // TODO(KurobaEx): make initialization lazy
-    val settings = chanSiteData.siteUserSettings
-      ?: JsonSettings(hashMapOf())
-    
-    // TODO(KurobaEx): make initialization lazy
-    site.initialize(settings)
+    site.initialize()
     return site
   }
 

@@ -33,7 +33,7 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
-import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getPreferencesForSite
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -70,12 +70,24 @@ open class Chan4 : SiteBase() {
   var flagType: StringSetting? = null
 
   init {
-    val prefs =
-      SharedPreferencesSettingProvider(AndroidUtils.getPreferences())
+    val prefs = SharedPreferencesSettingProvider(getPreferencesForSite(siteDescriptor()))
 
     passUser = StringSetting(prefs, "preference_pass_token", "")
     passPass = StringSetting(prefs, "preference_pass_pin", "")
     passToken = StringSetting(prefs, "preference_pass_id", "")
+
+    captchaType = OptionsSetting(
+      prefs,
+      "preference_captcha_type_chan4",
+      CaptchaType::class.java,
+      CaptchaType.V2NOJS
+    )
+
+    flagType = StringSetting(
+      prefs,
+      "preference_flag_chan4",
+      "0"
+    )
 
     chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
       siteSendsCorrectFileSizeInBytes = true,
@@ -385,7 +397,9 @@ open class Chan4 : SiteBase() {
     }
 
     override fun logout() {
-      passToken.set("")
+      passToken.remove()
+      passUser.remove()
+      passPass.remove()
     }
 
     override fun isLoggedIn(): Boolean {
@@ -421,23 +435,6 @@ open class Chan4 : SiteBase() {
         searchParams.page
       ).execute()
     }
-  }
-
-  override fun initializeSettings() {
-    super.initializeSettings()
-
-    captchaType = OptionsSetting(
-      settingsProvider,
-      "preference_captcha_type_chan4",
-      CaptchaType::class.java,
-      CaptchaType.V2NOJS
-    )
-
-    flagType = StringSetting(
-      settingsProvider,
-      "preference_flag_chan4",
-      "0"
-    )
   }
 
   override fun enabled(): Boolean {

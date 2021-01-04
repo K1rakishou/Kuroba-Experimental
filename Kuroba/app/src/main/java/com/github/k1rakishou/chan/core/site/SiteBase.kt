@@ -16,7 +16,6 @@
  */
 package com.github.k1rakishou.chan.core.site
 
-import com.github.k1rakishou.SettingProvider
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
@@ -31,8 +30,6 @@ import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.json.JsonSettings
-import com.github.k1rakishou.json.JsonSettingsProvider
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
@@ -77,26 +74,15 @@ abstract class SiteBase : Site, CoroutineScope {
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("SiteBase")
 
-  @JvmField
-  protected var settingsProvider: SettingProvider? = null
-  private var userSettings: JsonSettings? = null
   private var initialized = false
 
-  override fun initialize(userSettings: JsonSettings) {
+  override fun initialize() {
     if (initialized) {
       throw IllegalStateException("Already initialized")
     }
 
     Chan.getComponent()
       .inject(this)
-
-    this.userSettings = userSettings
-
-    settingsProvider = JsonSettingsProvider(userSettings) {
-      siteManager.updateUserSettings(this@SiteBase.siteDescriptor(), userSettings)
-    }
-
-    initializeSettings()
 
     initialized = true
   }
@@ -161,10 +147,6 @@ abstract class SiteBase : Site, CoroutineScope {
 
   override fun settings(): List<SiteSetting> {
     return ArrayList()
-  }
-
-  open fun initializeSettings() {
-    // no-op
   }
 
   override suspend fun createBoard(boardName: String, boardCode: String): ModularResult<ChanBoard?> {

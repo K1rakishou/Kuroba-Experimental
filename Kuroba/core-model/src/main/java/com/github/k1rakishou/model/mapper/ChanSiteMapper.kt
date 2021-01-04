@@ -3,15 +3,14 @@ package com.github.k1rakishou.model.mapper
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.ChanSiteData
 import com.github.k1rakishou.model.entity.chan.site.ChanSiteEntity
-import com.github.k1rakishou.model.entity.chan.site.ChanSiteWithSettings
+import com.github.k1rakishou.model.entity.chan.site.ChanSiteFull
 
 object ChanSiteMapper {
 
-  fun fromChanSiteEntity(chanSiteWithSettings: ChanSiteWithSettings): ChanSiteData {
+  fun fromChanSiteEntity(chanSiteFull: ChanSiteFull): ChanSiteData {
     return ChanSiteData(
-      SiteDescriptor(chanSiteWithSettings.chanSiteIdEntity.siteName),
-      chanSiteWithSettings.chanSiteEntity.siteActive,
-      chanSiteWithSettings.chanSiteSettingsEntity?.userSettings
+      SiteDescriptor(chanSiteFull.chanSiteIdEntity.siteName),
+      chanSiteFull.chanSiteEntity.siteActive
     )
   }
 

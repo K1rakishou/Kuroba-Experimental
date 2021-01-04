@@ -80,7 +80,7 @@ public class AndroidUtils {
         return application.getPackageName() + ".fileprovider";
     }
 
-    public static SharedPreferences getPreferences() {
+    public static SharedPreferences getAppMainPreferences() {
         return PreferenceManager.getDefaultSharedPreferences(application);
     }
 

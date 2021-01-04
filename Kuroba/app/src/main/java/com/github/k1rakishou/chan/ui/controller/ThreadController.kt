@@ -208,9 +208,9 @@ abstract class ThreadController(
 
     // Just ignore the showImages request when the image is not loaded
     if (thumbnail.bitmap != null && !isAlreadyPresenting) {
-      val imagerViewer = ImageViewerNavigationController(context)
-      presentController(imagerViewer, false)
-      imagerViewer.showImages(images, index, chanDescriptor, this)
+      val imageViewer = ImageViewerNavigationController(context)
+      presentController(imageViewer, false)
+      imageViewer.showImages(images, index, chanDescriptor, this)
     }
   }
 

@@ -1,11 +1,14 @@
 package com.github.k1rakishou.model.dao
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.entity.chan.site.ChanSiteEntity
+import com.github.k1rakishou.model.entity.chan.site.ChanSiteFull
 import com.github.k1rakishou.model.entity.chan.site.ChanSiteIdEntity
-import com.github.k1rakishou.model.entity.chan.site.ChanSiteSettingsEntity
-import com.github.k1rakishou.model.entity.chan.site.ChanSiteWithSettings
 
 @Dao
 abstract class ChanSiteDao {
@@ -19,9 +22,6 @@ abstract class ChanSiteDao {
   @Update(onConflict = OnConflictStrategy.IGNORE)
   abstract suspend fun updateManySites(entities: List<ChanSiteEntity>)
 
-  @Insert(onConflict = OnConflictStrategy.REPLACE)
-  abstract suspend fun updateManySettings(settings: List<ChanSiteSettingsEntity>)
-
   @Query("SELECT * FROM ${ChanSiteIdEntity.TABLE_NAME}")
   abstract suspend fun selectAllSiteIdEntities(): List<ChanSiteIdEntity>
 
@@ -30,11 +30,9 @@ abstract class ChanSiteDao {
     FROM ${ChanSiteIdEntity.TABLE_NAME} csie
     INNER JOIN ${ChanSiteEntity.TABLE_NAME} cse
         ON csie.${ChanSiteIdEntity.SITE_NAME_COLUMN_NAME} = cse.${ChanSiteEntity.OWNER_CHAN_SITE_NAME_COLUMN_NAME}
-    LEFT JOIN ${ChanSiteSettingsEntity.TABLE_NAME} csse
-        ON csie.${ChanSiteIdEntity.SITE_NAME_COLUMN_NAME} = csse.${ChanSiteSettingsEntity.OWNER_CHAN_SITE_NAME_COLUMN_NAME}
     ORDER BY ${ChanSiteEntity.SITE_ORDER_COLUMN_NAME} DESC
   """)
-  abstract suspend fun selectAllOrderedDescWithSettings(): List<ChanSiteWithSettings>
+  abstract suspend fun selectAllOrderedDescWithSettings(): List<ChanSiteFull>
 
   suspend fun createDefaultsIfNecessary(allSiteDescriptors: Collection<SiteDescriptor>) {
     val existingSiteDescriptors = selectAllSiteIdEntities()

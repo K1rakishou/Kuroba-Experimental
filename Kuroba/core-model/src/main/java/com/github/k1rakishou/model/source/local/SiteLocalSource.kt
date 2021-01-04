@@ -3,7 +3,6 @@ package com.github.k1rakishou.model.source.local
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.ChanSiteData
-import com.github.k1rakishou.model.entity.chan.site.ChanSiteSettingsEntity
 import com.github.k1rakishou.model.mapper.ChanSiteMapper
 import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
 
@@ -36,19 +35,6 @@ class SiteLocalSource(
     }
 
     chanSiteDao.updateManySites(entities)
-
-    val settings = chanSiteDataList.mapNotNull { chanSiteData ->
-      if (chanSiteData.siteUserSettings == null) {
-        return@mapNotNull null
-      }
-
-      return@mapNotNull ChanSiteSettingsEntity(
-        chanSiteData.siteDescriptor.siteName,
-        chanSiteData.siteUserSettings
-      )
-    }
-
-    chanSiteDao.updateManySettings(settings)
   }
 
 }

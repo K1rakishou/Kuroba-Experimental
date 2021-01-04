@@ -44,7 +44,6 @@ import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.json.JsonSettings
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -83,8 +82,8 @@ abstract class CommonSite : SiteBase() {
 
   private val staticBoards: MutableList<ChanBoard> = ArrayList()
   
-  override fun initialize(userSettings: JsonSettings) {
-    super.initialize(userSettings)
+  override fun initialize() {
+    super.initialize()
     setup()
     
     if (name == null) {

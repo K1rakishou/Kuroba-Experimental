@@ -7,6 +7,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.pm.Signature;
@@ -41,6 +42,7 @@ import com.github.k1rakishou.chan.ui.widget.CancellableToast;
 import com.github.k1rakishou.common.AndroidUtils;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ChanTheme;
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -536,6 +538,15 @@ public class AppModuleAndroidUtils {
 
     public static void cancelLastToast() {
         cancellableToast.cancel();
+    }
+
+    public static SharedPreferences getPreferencesForSite(SiteDescriptor siteDescriptor) {
+        String preferencesFileName = "site_preferences_" + siteDescriptor.getSiteName();
+
+        return application.getSharedPreferences(
+                preferencesFileName,
+                Context.MODE_PRIVATE
+        );
     }
 
     public static ActivityComponent extractActivityComponent(Context context) {

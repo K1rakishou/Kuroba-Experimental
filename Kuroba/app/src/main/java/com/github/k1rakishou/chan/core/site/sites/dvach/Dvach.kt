@@ -29,7 +29,7 @@ import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInf
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
-import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getPreferencesForSite
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -57,11 +57,18 @@ class Dvach : CommonSite() {
     canFileHashBeTrusted = false
   )
 
-  private var captchaType: OptionsSetting<Chan4.CaptchaType>? = null
-
-  private val prefs by lazy { SharedPreferencesSettingProvider(AndroidUtils.getPreferences()) }
+  private val prefs by lazy { SharedPreferencesSettingProvider(getPreferencesForSite(siteDescriptor())) }
   private val passCode by lazy { StringSetting(prefs, "preference_pass_code", "") }
   private val passCookie by lazy { StringSetting(prefs, "preference_pass_cookie", "") }
+
+  private val captchaType by lazy {
+    OptionsSetting(
+      prefs,
+      "preference_captcha_type_dvach",
+      Chan4.CaptchaType::class.java,
+      Chan4.CaptchaType.V2NOJS
+    )
+  }
 
   private val passCodeInfo by lazy {
     return@lazy JsonSetting(
@@ -73,23 +80,11 @@ class Dvach : CommonSite() {
     )
   }
 
-
-  override fun initializeSettings() {
-    super.initializeSettings()
-
-    captchaType = OptionsSetting(
-      settingsProvider,
-      "preference_captcha_type_dvach",
-      Chan4.CaptchaType::class.java,
-      Chan4.CaptchaType.V2JS
-    )
-  }
-
   override fun settings(): List<SiteSetting> {
     return listOf(
       SiteOptionsSetting(
         "Captcha type",
-        captchaType!!,
+        captchaType,
         mutableListOf("Javascript", "Noscript")
       )
     )
@@ -373,7 +368,8 @@ class Dvach : CommonSite() {
       }
 
       override fun logout() {
-        passCookie.set("")
+        passCode.remove()
+        passCookie.remove()
         passCodeInfo.reset()
       }
 

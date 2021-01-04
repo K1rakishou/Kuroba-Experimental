@@ -3,7 +3,7 @@ package com.github.k1rakishou.model.entity.chan.site
 import androidx.room.Embedded
 import androidx.room.Relation
 
-data class ChanSiteWithSettings(
+data class ChanSiteFull(
   @Embedded
   val chanSiteIdEntity: ChanSiteIdEntity,
   @Relation(
@@ -12,10 +12,4 @@ data class ChanSiteWithSettings(
     entityColumn = ChanSiteEntity.OWNER_CHAN_SITE_NAME_COLUMN_NAME
   )
   val chanSiteEntity: ChanSiteEntity,
-  @Relation(
-    entity = ChanSiteSettingsEntity::class,
-    parentColumn = ChanSiteIdEntity.SITE_NAME_COLUMN_NAME,
-    entityColumn = ChanSiteSettingsEntity.OWNER_CHAN_SITE_NAME_COLUMN_NAME
-  )
-  val chanSiteSettingsEntity: ChanSiteSettingsEntity?
 )

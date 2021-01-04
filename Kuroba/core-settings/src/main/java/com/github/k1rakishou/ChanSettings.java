@@ -36,7 +36,7 @@ import kotlin.Lazy;
 import kotlin.LazyKt;
 
 import static com.github.k1rakishou.common.AndroidUtils.getAppDir;
-import static com.github.k1rakishou.common.AndroidUtils.getPreferences;
+import static com.github.k1rakishou.common.AndroidUtils.getAppMainPreferences;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 public class ChanSettings {
@@ -328,8 +328,8 @@ public class ChanSettings {
     // While not a setting, the last image options selected should be persisted even after import.
     public static StringSetting lastImageOptions;
 
-    // While these are not "settings", they are here instead of in PersistableChanState because they control the appearance of hints.
-    // Hints should not be shown if re-imported.
+    // While these are not "settings", they are here instead of in PersistableChanState because they
+    // control the appearance of hints. Hints should not be shown if re-imported.
     public static CounterSetting historyOpenCounter;
     public static CounterSetting threadOpenCounter;
     public static IntegerSetting drawerAutoOpenCount;
@@ -351,163 +351,163 @@ public class ChanSettings {
 
     private static void initInternal() {
         try {
-            SettingProvider p = new SharedPreferencesSettingProvider(getPreferences());
+            SettingProvider provider = new SharedPreferencesSettingProvider(getAppMainPreferences());
 
             //region THREAD WATCHER
-            watchEnabled = new BooleanSetting(p, "preference_watch_enabled", false);
-            watchBackground = new BooleanSetting(p, "preference_watch_background_enabled", false);
-            watchBackgroundInterval = new IntegerSetting(p, "preference_watch_background_interval", (int) MINUTES.toMillis(30));
-            watchForegroundInterval = new IntegerSetting(p, "preference_watch_foreground_interval", (int) MINUTES.toMillis(1));
-            watchForegroundAdaptiveInterval = new BooleanSetting(p, "preference_watch_foreground_adaptive_interval", true);
-            replyNotifications = new BooleanSetting(p, "reply_notifications", true);
-            useSoundForReplyNotifications = new BooleanSetting(p, "use_sound_for_reply_notifications", false);
-            watchLastPageNotify = new BooleanSetting(p, "preference_watch_last_page_notify", false);
-            useSoundForLastPageNotifications = new BooleanSetting(p, "use_sound_for_last_page_notifications", false);
+            watchEnabled = new BooleanSetting(provider, "preference_watch_enabled", false);
+            watchBackground = new BooleanSetting(provider, "preference_watch_background_enabled", false);
+            watchBackgroundInterval = new IntegerSetting(provider, "preference_watch_background_interval", (int) MINUTES.toMillis(30));
+            watchForegroundInterval = new IntegerSetting(provider, "preference_watch_foreground_interval", (int) MINUTES.toMillis(1));
+            watchForegroundAdaptiveInterval = new BooleanSetting(provider, "preference_watch_foreground_adaptive_interval", true);
+            replyNotifications = new BooleanSetting(provider, "reply_notifications", true);
+            useSoundForReplyNotifications = new BooleanSetting(provider, "use_sound_for_reply_notifications", false);
+            watchLastPageNotify = new BooleanSetting(provider, "preference_watch_last_page_notify", false);
+            useSoundForLastPageNotifications = new BooleanSetting(provider, "use_sound_for_last_page_notifications", false);
             //endregion
 
             //region APPEARANCE
             // Theme
-            imageViewerFullscreenMode = new BooleanSetting(p, "image_viewer_fullscreen_mode", true);
-            isCurrentThemeDark = new BooleanSetting(p, "is_current_theme_dark", true);
+            imageViewerFullscreenMode = new BooleanSetting(provider, "image_viewer_fullscreen_mode", true);
+            isCurrentThemeDark = new BooleanSetting(provider, "is_current_theme_dark", true);
 
             //Layout
-            layoutMode = new OptionsSetting<>(p, "preference_layout_mode", LayoutMode.class, LayoutMode.AUTO);
-            boardGridSpanCount = new IntegerSetting(p, "preference_board_grid_span_count", 0);
-            neverHideToolbar = new BooleanSetting(p, "preference_never_hide_toolbar", false);
-            enableReplyFab = new BooleanSetting(p, "preference_enable_reply_fab", true);
-            captchaOnBottom = new BooleanSetting(p, "captcha_on_bottom", true);
-            neverShowPages = new BooleanSetting(p, "never_show_page_number", false);
+            layoutMode = new OptionsSetting<>(provider, "preference_layout_mode", LayoutMode.class, LayoutMode.AUTO);
+            boardGridSpanCount = new IntegerSetting(provider, "preference_board_grid_span_count", 0);
+            neverHideToolbar = new BooleanSetting(provider, "preference_never_hide_toolbar", false);
+            enableReplyFab = new BooleanSetting(provider, "preference_enable_reply_fab", true);
+            captchaOnBottom = new BooleanSetting(provider, "captcha_on_bottom", true);
+            neverShowPages = new BooleanSetting(provider, "never_show_page_number", false);
 
             // Post
-            fontSize = new StringSetting(p, "preference_font", chanSettingsInfo.isTablet() ? "16" : "14");
-            postFullDate = new BooleanSetting(p, "preference_post_full_date", false);
-            postFileInfo = new BooleanSetting(p, "preference_post_file_info", true);
-            postFilename = new BooleanSetting(p, "preference_post_filename", true);
-            textOnly = new BooleanSetting(p, "preference_text_only", false);
-            revealTextSpoilers = new BooleanSetting(p, "preference_reveal_text_spoilers", false);
-            anonymize = new BooleanSetting(p, "preference_anonymize", false);
-            showAnonymousName = new BooleanSetting(p, "preference_show_anonymous_name", false);
-            anonymizeIds = new BooleanSetting(p, "preference_anonymize_ids", false);
-            markYourPostsOnScrollbar = new BooleanSetting(p, "mark_your_posts_on_scrollbar", true);
-            markRepliesToYourPostOnScrollbar = new BooleanSetting(p, "mark_replies_to_your_posts_on_scrollbar", true);
-            markCrossThreadQuotesOnScrollbar = new BooleanSetting(p, "mark_cross_thread_quotes_on_scrollbar", false);
+            fontSize = new StringSetting(provider, "preference_font", chanSettingsInfo.isTablet() ? "16" : "14");
+            postFullDate = new BooleanSetting(provider, "preference_post_full_date", false);
+            postFileInfo = new BooleanSetting(provider, "preference_post_file_info", true);
+            postFilename = new BooleanSetting(provider, "preference_post_filename", true);
+            textOnly = new BooleanSetting(provider, "preference_text_only", false);
+            revealTextSpoilers = new BooleanSetting(provider, "preference_reveal_text_spoilers", false);
+            anonymize = new BooleanSetting(provider, "preference_anonymize", false);
+            showAnonymousName = new BooleanSetting(provider, "preference_show_anonymous_name", false);
+            anonymizeIds = new BooleanSetting(provider, "preference_anonymize_ids", false);
+            markYourPostsOnScrollbar = new BooleanSetting(provider, "mark_your_posts_on_scrollbar", true);
+            markRepliesToYourPostOnScrollbar = new BooleanSetting(provider, "mark_replies_to_your_posts_on_scrollbar", true);
+            markCrossThreadQuotesOnScrollbar = new BooleanSetting(provider, "mark_cross_thread_quotes_on_scrollbar", false);
 
             // Post links parsing
             parseYoutubeTitlesAndDuration = new OptionsSetting<>(
-                    p,
+                    provider,
                     "parse_youtube_titles_and_duration_v2",
                     NetworkContentAutoLoadMode.class,
                     NetworkContentAutoLoadMode.WIFI
             );
             parseSoundCloudTitlesAndDuration = new OptionsSetting<>(
-                    p,
+                    provider,
                     "parse_soundcloud_titles_and_duration",
                     NetworkContentAutoLoadMode.class,
                     NetworkContentAutoLoadMode.WIFI
             );
             parseStreamableTitlesAndDuration = new OptionsSetting<>(
-                    p,
+                    provider,
                     "parse_streamable_titles_and_duration",
                     NetworkContentAutoLoadMode.class,
                     NetworkContentAutoLoadMode.WIFI
             );
-            showLinkAlongWithTitleAndDuration = new BooleanSetting(p, "show_link_along_with_title_and_duration", true);
+            showLinkAlongWithTitleAndDuration = new BooleanSetting(provider, "show_link_along_with_title_and_duration", true);
 
             // Images
-            hideImages = new BooleanSetting(p, "preference_hide_images", false);
-            removeImageSpoilers = new BooleanSetting(p, "preference_reveal_image_spoilers", false);
-            revealImageSpoilers = new BooleanSetting(p, "preference_auto_unspoil_images", true);
-            highResCells = new BooleanSetting(p, "high_res_cells", false);
-            parsePostImageLinks = new BooleanSetting(p, "parse_post_image_links", true);
-            fetchInlinedFileSizes = new BooleanSetting(p, "fetch_inlined_file_size", false);
-            transparencyOn = new BooleanSetting(p, "image_transparency_on", false);
+            hideImages = new BooleanSetting(provider, "preference_hide_images", false);
+            removeImageSpoilers = new BooleanSetting(provider, "preference_reveal_image_spoilers", false);
+            revealImageSpoilers = new BooleanSetting(provider, "preference_auto_unspoil_images", true);
+            highResCells = new BooleanSetting(provider, "high_res_cells", false);
+            parsePostImageLinks = new BooleanSetting(provider, "parse_post_image_links", true);
+            fetchInlinedFileSizes = new BooleanSetting(provider, "fetch_inlined_file_size", false);
+            transparencyOn = new BooleanSetting(provider, "image_transparency_on", false);
 
             //Elsewhere
-            boardViewMode = new OptionsSetting<>(p, "preference_board_view_mode", PostViewMode.class, PostViewMode.LIST);
-            boardOrder = new StringSetting(p, "preference_board_order", chanSettingsInfo.getDefaultFilterOrderName());
+            boardViewMode = new OptionsSetting<>(provider, "preference_board_view_mode", PostViewMode.class, PostViewMode.LIST);
+            boardOrder = new StringSetting(provider, "preference_board_order", chanSettingsInfo.getDefaultFilterOrderName());
             //endregion
 
             //region BEHAVIOUR
             // General
-            autoRefreshThread = new BooleanSetting(p, "preference_auto_refresh_thread", true);
-            controllerSwipeable = new BooleanSetting(p, "preference_controller_swipeable", true);
-            openLinkConfirmation = new BooleanSetting(p, "preference_open_link_confirmation", false);
-            openLinkBrowser = new BooleanSetting(p, "preference_open_link_browser", false);
-            jsCaptchaCookies = new StringSetting(p, "js_captcha_cookies", EMPTY_JSON);
-            loadLastOpenedBoardUponAppStart = new BooleanSetting(p, "load_last_opened_board_upon_app_start", true);
-            loadLastOpenedThreadUponAppStart = new BooleanSetting(p, "load_last_opened_thread_upon_app_start", true);
+            autoRefreshThread = new BooleanSetting(provider, "preference_auto_refresh_thread", true);
+            controllerSwipeable = new BooleanSetting(provider, "preference_controller_swipeable", true);
+            openLinkConfirmation = new BooleanSetting(provider, "preference_open_link_confirmation", false);
+            openLinkBrowser = new BooleanSetting(provider, "preference_open_link_browser", false);
+            jsCaptchaCookies = new StringSetting(provider, "js_captcha_cookies", EMPTY_JSON);
+            loadLastOpenedBoardUponAppStart = new BooleanSetting(provider, "load_last_opened_board_upon_app_start", true);
+            loadLastOpenedThreadUponAppStart = new BooleanSetting(provider, "load_last_opened_thread_upon_app_start", true);
 
             // Reply
-            postPinThread = new BooleanSetting(p, "preference_pin_on_post", false);
-            postDefaultName = new StringSetting(p, "preference_default_name", "");
+            postPinThread = new BooleanSetting(provider, "preference_pin_on_post", false);
+            postDefaultName = new StringSetting(provider, "preference_default_name", "");
 
             // Post
-            volumeKeysScrolling = new BooleanSetting(p, "preference_volume_key_scrolling", false);
-            tapNoReply = new BooleanSetting(p, "preference_tap_no_reply", false);
-            markUnseenPosts = new BooleanSetting(p, "preference_mark_unseen_posts", true);
+            volumeKeysScrolling = new BooleanSetting(provider, "preference_volume_key_scrolling", false);
+            tapNoReply = new BooleanSetting(provider, "preference_tap_no_reply", false);
+            markUnseenPosts = new BooleanSetting(provider, "preference_mark_unseen_posts", true);
 
             // Other options
-            fullUserRotationEnable = new BooleanSetting(p, "full_user_rotation_enable", true);
-            showCopyApkUpdateDialog = new BooleanSetting(p, "show_copy_apk_update_dialog", true);
+            fullUserRotationEnable = new BooleanSetting(provider, "full_user_rotation_enable", true);
+            showCopyApkUpdateDialog = new BooleanSetting(provider, "show_copy_apk_update_dialog", true);
             //endregion
 
             //region MEDIA
             // Saving
-            saveLocation = new SavedFilesBaseDirSetting(p);
-            saveBoardFolder = new BooleanSetting(p, "preference_save_subboard", false);
-            saveThreadFolder = new BooleanSetting(p, "preference_save_subthread", false);
-            saveAlbumBoardFolder = new BooleanSetting(p, "preference_save_album_subboard", false);
-            saveAlbumThreadFolder = new BooleanSetting(p, "preference_save_album_subthread", false);
-            saveServerFilename = new BooleanSetting(p, "preference_image_save_original", false);
+            saveLocation = new SavedFilesBaseDirSetting(provider);
+            saveBoardFolder = new BooleanSetting(provider, "preference_save_subboard", false);
+            saveThreadFolder = new BooleanSetting(provider, "preference_save_subthread", false);
+            saveAlbumBoardFolder = new BooleanSetting(provider, "preference_save_album_subboard", false);
+            saveAlbumThreadFolder = new BooleanSetting(provider, "preference_save_album_subthread", false);
+            saveServerFilename = new BooleanSetting(provider, "preference_image_save_original", false);
 
             // Video Settings
-            videoAutoLoop = new BooleanSetting(p, "preference_video_loop", true);
-            videoDefaultMuted = new BooleanSetting(p, "preference_video_default_muted", true);
-            headsetDefaultMuted = new BooleanSetting(p, "preference_headset_default_muted", true);
-            videoOpenExternal = new BooleanSetting(p, "preference_video_external", false);
-            videoStream = new BooleanSetting(p, "preference_video_stream", false);
+            videoAutoLoop = new BooleanSetting(provider, "preference_video_loop", true);
+            videoDefaultMuted = new BooleanSetting(provider, "preference_video_default_muted", true);
+            headsetDefaultMuted = new BooleanSetting(provider, "preference_headset_default_muted", true);
+            videoOpenExternal = new BooleanSetting(provider, "preference_video_external", false);
+            videoStream = new BooleanSetting(provider, "preference_video_stream", false);
 
             // Media loading
-            imageAutoLoadNetwork = new OptionsSetting<>(p,
+            imageAutoLoadNetwork = new OptionsSetting<>(provider,
                     "preference_image_auto_load_network",
                     NetworkContentAutoLoadMode.class,
                     NetworkContentAutoLoadMode.WIFI
             );
-            videoAutoLoadNetwork = new OptionsSetting<>(p,
+            videoAutoLoadNetwork = new OptionsSetting<>(provider,
                     "preference_video_auto_load_network",
                     NetworkContentAutoLoadMode.class,
                     NetworkContentAutoLoadMode.WIFI
             );
-            imageClickPreloadStrategy = new OptionsSetting<>(p,
+            imageClickPreloadStrategy = new OptionsSetting<>(provider,
                     "image_click_preload_strategy",
                     ImageClickPreloadStrategy.class,
                     ImageClickPreloadStrategy.PreloadNext
             );
-            autoLoadThreadImages = new BooleanSetting(p, "preference_auto_load_thread", false);
-            showPrefetchLoadingIndicator = new BooleanSetting(p, "show_prefetch_loading_indicator", false);
-            cloudflareForcePreload = new BooleanSetting(p, "cloudflare_force_preload", false);
+            autoLoadThreadImages = new BooleanSetting(provider, "preference_auto_load_thread", false);
+            showPrefetchLoadingIndicator = new BooleanSetting(provider, "show_prefetch_loading_indicator", false);
+            cloudflareForcePreload = new BooleanSetting(provider, "cloudflare_force_preload", false);
             //endregion
 
             //region EXPERIMENTAL
-            concurrentDownloadChunkCount = new OptionsSetting<>(p,
+            concurrentDownloadChunkCount = new OptionsSetting<>(provider,
                     "concurrent_file_downloading_chunks_count",
                     ConcurrentFileDownloadingChunks.class,
                     ConcurrentFileDownloadingChunks.Two
             );
-            androidTenGestureZones = new StringSetting(p, "android_ten_gesture_zones", EMPTY_JSON);
-            okHttpAllowHttp2 = new BooleanSetting(p, "ok_http_allow_http_2", true);
-            okHttpAllowIpv6 = new BooleanSetting(p, "ok_http_allow_ipv6", false);
+            androidTenGestureZones = new StringSetting(provider, "android_ten_gesture_zones", EMPTY_JSON);
+            okHttpAllowHttp2 = new BooleanSetting(provider, "ok_http_allow_http_2", true);
+            okHttpAllowIpv6 = new BooleanSetting(provider, "ok_http_allow_ipv6", false);
             //endregion
 
             //region OTHER
-            historyEnabled = new BooleanSetting(p, "preference_history_enabled", true);
-            collectCrashLogs = new BooleanSetting(p, "collect_crash_logs", true);
+            historyEnabled = new BooleanSetting(provider, "preference_history_enabled", true);
+            collectCrashLogs = new BooleanSetting(provider, "collect_crash_logs", true);
             //endregion
 
             //region DEVELOPER
-            crashOnSafeThrow = new BooleanSetting(p, "crash_on_safe_throw", true);
+            crashOnSafeThrow = new BooleanSetting(provider, "crash_on_safe_throw", true);
             verboseLogs = new BooleanSetting(
-                    p,
+                    provider,
                     "verbose_logs",
                     // Always true by default for dev flavor
                     chanSettingsInfo.isDevBuild()
@@ -515,27 +515,27 @@ public class ChanSettings {
             //endregion
 
             //region DATA
-            lastImageOptions = new StringSetting(p, "last_image_options", "");
-            historyOpenCounter = new CounterSetting(p, "counter_history_open");
-            threadOpenCounter = new CounterSetting(p, "counter_thread_open");
-            drawerAutoOpenCount = new IntegerSetting(p, "drawer_auto_open_count", 0);
-            reencodeHintShown = new BooleanSetting(p, "preference_reencode_hint_already_shown", false);
-            ignoreDarkNightMode = new BooleanSetting(p, "ignore_dark_night_mode", false);
+            lastImageOptions = new StringSetting(provider, "last_image_options", "");
+            historyOpenCounter = new CounterSetting(provider, "counter_history_open");
+            threadOpenCounter = new CounterSetting(provider, "counter_thread_open");
+            drawerAutoOpenCount = new IntegerSetting(provider, "drawer_auto_open_count", 0);
+            reencodeHintShown = new BooleanSetting(provider, "preference_reencode_hint_already_shown", false);
+            ignoreDarkNightMode = new BooleanSetting(provider, "ignore_dark_night_mode", false);
 
-            bookmarksSortOrder = new OptionsSetting<>(p,
+            bookmarksSortOrder = new OptionsSetting<>(provider,
                     "bookmarks_comparator",
                     BookmarksSortOrder.class,
                     BookmarksSortOrder.defaultOrder()
             );
 
-            moveNotActiveBookmarksToBottom = new BooleanSetting(p, "move_not_active_bookmarks_to_bottom", false);
-            moveBookmarksWithUnreadRepliesToTop = new BooleanSetting(p, "move_bookmarks_with_unread_replies_to_top", false);
+            moveNotActiveBookmarksToBottom = new BooleanSetting(provider, "move_not_active_bookmarks_to_bottom", false);
+            moveBookmarksWithUnreadRepliesToTop = new BooleanSetting(provider, "move_bookmarks_with_unread_replies_to_top", false);
             //endregion
 
-            scrollingTextForThreadTitles = new BooleanSetting(p, "scrolling_text_for_thread_titles", true);
+            scrollingTextForThreadTitles = new BooleanSetting(provider, "scrolling_text_for_thread_titles", true);
 
             bookmarkGridViewWidth = new RangeSetting(
-                    p,
+                    provider,
                     "bookmark_grid_view_width",
                     chanSettingsInfo.getBookmarkGridViewInfo().getDefaultWidth(),
                     chanSettingsInfo.getBookmarkGridViewInfo().getMinWidth(),
@@ -543,36 +543,36 @@ public class ChanSettings {
             );
 
             imageSwipeUpGesture = new OptionsSetting<>(
-                    p,
+                    provider,
                     "image_swipe_up_gesture",
                     ImageGestureActionType.class,
                     ImageGestureActionType.CloseImage
             );
             imageSwipeDownGesture = new OptionsSetting<>(
-                    p,
+                    provider,
                     "image_swipe_down_gesture",
                     ImageGestureActionType.class,
                     ImageGestureActionType.SaveImage
             );
             threadMaxPostCapacity = new RangeSetting(
-                    p,
+                    provider,
                     "thread_max_post_capacity",
                     0,
                     0,
                     1000
             );
             drawerMoveLastAccessedThreadToTop = new BooleanSetting(
-                    p,
+                    provider,
                     "drawer_move_last_accessed_thread_to_top",
                     true
             );
             drawerShowBookmarkedThreads = new BooleanSetting(
-                    p,
+                    provider,
                     "drawer_show_bookmarked_threads",
                     true
             );
             drawerShowNavigationHistory = new BooleanSetting(
-                    p,
+                    provider,
                     "drawer_show_navigation_history",
                     true
             );

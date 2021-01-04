@@ -23,7 +23,6 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.json.JsonSettings
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
@@ -111,7 +110,7 @@ interface Site {
   }
 
   fun enabled(): Boolean
-  fun initialize(userSettings: JsonSettings)
+  fun initialize()
   fun loadBoardInfo(callback: ((ModularResult<JsonReaderRequest.JsonReaderResponse<SiteBoards>>) -> Unit)? = null)
 
   /**
