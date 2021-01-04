@@ -73,11 +73,12 @@ class BookmarkBackgroundWatcherWorker(
       updateCurrentlyOpenedThread = false
     )
 
-    if (bookmarksManager.hasActiveBookmarks()) {
+    val activeBookmarks = bookmarksManager.activeBookmarksCount()
+    if (activeBookmarks > 0) {
       BookmarkWatcherCoordinator.restartBackgroundWork(appConstants, applicationContext)
 
       Logger.d(TAG, "BookmarkBackgroundWatcherWorker.doWork() work done. " +
-        "There are active bookmarks left, work restarted")
+        "There are $activeBookmarks active bookmarks left, work restarted")
     } else {
       Logger.d(TAG, "BookmarkBackgroundWatcherWorker.doWork() work done. " +
         "No active bookmarks left, exiting without restarting the work")

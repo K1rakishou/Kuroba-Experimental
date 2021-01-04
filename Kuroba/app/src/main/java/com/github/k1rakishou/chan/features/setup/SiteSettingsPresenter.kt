@@ -6,6 +6,7 @@ import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
@@ -30,7 +31,8 @@ import kotlinx.coroutines.withContext
 
 class SiteSettingsPresenter(
   private val siteManager: SiteManager,
-  private val boardManager: BoardManager
+  private val boardManager: BoardManager,
+  private val archivesManager: ArchivesManager
 ) : BasePresenter<SiteSettingsView>() {
 
   suspend fun showSiteSettings(context: Context, siteDescriptor: SiteDescriptor): List<SettingsGroup> {
@@ -69,10 +71,13 @@ class SiteSettingsPresenter(
 
   private fun collectGroupBuilders(context: Context, site: Site): List<SettingsGroup.SettingsGroupBuilder> {
     val groups = mutableListOf<SettingsGroup.SettingsGroupBuilder>()
-    groups += buildGeneralGroup(context, site.siteDescriptor())
 
-    if (site.siteFeature(Site.SiteFeature.LOGIN)) {
-      groups += buildAuthenticationGroup(context, site)
+    if (!archivesManager.isSiteArchive(site.siteDescriptor())) {
+      groups += buildGeneralGroup(context, site.siteDescriptor())
+
+      if (site.siteFeature(Site.SiteFeature.LOGIN)) {
+        groups += buildAuthenticationGroup(context, site)
+      }
     }
 
     if (site.settings().isNotEmpty()) {
@@ -94,8 +99,10 @@ class SiteSettingsPresenter(
           groupIdentifier = SiteSettingsScreen.AdditionalSettingsGroup
         )
 
+        val groupId = SiteSettingsScreen.AdditionalSettingsGroup.getGroupIdentifier().id
+
         site.settings().forEach { siteSetting ->
-          val settingId = SiteSettingsScreen.AdditionalSettingsGroup.getGroupIdentifier().id + "_" + siteSetting.name
+          val settingId = groupId + "_" + siteSetting.settingTitle
           val identifier = SiteSettingsScreen.AdditionalSettingsGroup(settingId)
 
           when (siteSetting) {
@@ -106,8 +113,16 @@ class SiteSettingsPresenter(
                 setting = siteSetting.options as Setting<OptionSettingItem>,
                 items = siteSetting.options.items.toList(),
                 itemNameMapper = { item -> item.key },
-                topDescriptionStringFunc = { siteSetting.name },
-                bottomDescriptionStringFunc = { siteSetting.options.get().name }
+                topDescriptionStringFunc = { siteSetting.settingTitle },
+                bottomDescriptionStringFunc = {
+                  buildString {
+                    if (siteSetting.settingDescription != null) {
+                      appendLine(siteSetting.settingDescription)
+                    }
+
+                    appendLine(siteSetting.options.get().name)
+                  }
+                }
               )
             }
             is SiteSetting.SiteStringSetting -> {
@@ -116,8 +131,16 @@ class SiteSettingsPresenter(
                 identifier = identifier,
                 setting = siteSetting.setting,
                 inputType = DialogFactory.DialogInputType.String,
-                topDescriptionStringFunc = { siteSetting.name },
-                bottomDescriptionStringFunc = { siteSetting.setting.get() }
+                topDescriptionStringFunc = { siteSetting.settingTitle },
+                bottomDescriptionStringFunc = {
+                  buildString {
+                    if (siteSetting.settingDescription != null) {
+                      appendLine(siteSetting.settingDescription)
+                    }
+
+                    appendLine(siteSetting.setting.get())
+                  }
+                }
               )
             }
           }

@@ -7,9 +7,6 @@ import java.util.concurrent.atomic.AtomicLong
 
 internal open class FileDownloadRequest(
   val url: String,
-  // A file will be split into [chunksCount] chunks which will be downloaded in parallel.
-  // Must be 1 or greater than 1.
-  val chunksCount: AtomicInteger,
   // How many bytes were downloaded across all chunks
   val downloaded: AtomicLong,
   // How many bytes a file we download takes in total
@@ -22,10 +19,11 @@ internal open class FileDownloadRequest(
 ) {
   private var output: RawFile? = null
 
-  init {
-    check(chunksCount.get() >= 1) {
-      "chunksCount is zero or less than zero! chunksCount = $chunksCount"
-    }
+  private var chunksCount = AtomicInteger(-1)
+
+  @Synchronized
+  fun chunksCount(count: Int) {
+    chunksCount.set(count)
   }
 
   @Synchronized

@@ -19,17 +19,19 @@ package com.github.k1rakishou.chan.core.site
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 
-sealed class SiteSetting(val name: String) {
+sealed class SiteSetting(val settingTitle: String, var settingDescription: String?) {
 
   class SiteOptionsSetting(
-    name: String,
+    settingName: String,
+    settingDescription: String?,
     val options: OptionsSetting<*>,
     val optionNames: List<String>
-  ) : SiteSetting(name)
+  ) : SiteSetting(settingName, settingDescription)
 
   class SiteStringSetting(
-    name: String,
+    settingName: String,
+    settingDescription: String?,
     val setting: StringSetting
-  ) : SiteSetting(name)
+  ) : SiteSetting(settingName, settingDescription)
 
 }

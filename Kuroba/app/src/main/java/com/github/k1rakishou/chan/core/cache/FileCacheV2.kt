@@ -50,7 +50,6 @@ class FileCacheV2(
   private val activeDownloads = ActiveDownloads()
 
   private val normalRequestQueue = PublishProcessor.create<String>().toSerialized()
-  private val chunksCount = ChanSettings.concurrentDownloadChunkCount.get().toInt()
   private val threadsCount = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(4)
   private val requestCancellationThread = Executors.newSingleThreadExecutor()
   private val verboseLogs = ChanSettings.verboseLogs.get()
@@ -100,6 +99,7 @@ class FileCacheV2(
   )
 
   private val concurrentChunkedFileDownloader = ConcurrentChunkedFileDownloader(
+    siteResolver,
     fileManager,
     chunkDownloader,
     chunkReader,
@@ -111,9 +111,6 @@ class FileCacheV2(
   )
 
   init {
-    require(chunksCount > 0) { "Chunks count is zero or less ${chunksCount}" }
-    log(TAG, "chunksCount = $chunksCount")
-
     initNormalRxWorkerQueue()
   }
 
@@ -173,8 +170,6 @@ class FileCacheV2(
     val (alreadyActive, cancelableDownload) = getOrCreateCancelableDownload(
       url = url,
       callback = null,
-      // Always 1 for media prefetching
-      chunksCount = 1,
       isGalleryBatchDownload = true,
       isPrefetchDownload = true,
       // Prefetch downloads always have default extra info (no file size, no file hash)
@@ -197,7 +192,6 @@ class FileCacheV2(
     return enqueueDownloadFileRequest(
       postImage = postImage,
       extraInfo = extraInfo,
-      chunksCount = chunksCount,
       isBatchDownload = false,
       callback = callback
     )
@@ -213,7 +207,6 @@ class FileCacheV2(
       // Normal downloads (not chunked) always have default extra info
       // (no file size, no file hash)
       extraInfo = DownloadRequestExtraInfo(),
-      chunksCount = 1,
       isBatchDownload = isBatchDownload,
       callback = callback
     )
@@ -222,11 +215,10 @@ class FileCacheV2(
   fun enqueueNormalDownloadFileRequest(
     url: String,
     callback: FileCacheListener?
-  ): CancelableDownload? {
+  ): CancelableDownload {
     // Normal downloads (not chunked) always have default extra info (no file size, no file hash)
     return enqueueDownloadFileRequestInternal(
       url = url,
-      chunksCount = 1,
       isBatchDownload = false,
       extraInfo = DownloadRequestExtraInfo(),
       callback = callback
@@ -237,7 +229,6 @@ class FileCacheV2(
   private fun enqueueDownloadFileRequest(
     postImage: ChanPostImage,
     extraInfo: DownloadRequestExtraInfo,
-    chunksCount: Int,
     isBatchDownload: Boolean,
     callback: FileCacheListener?
   ): CancelableDownload? {
@@ -246,7 +237,6 @@ class FileCacheV2(
 
     return enqueueDownloadFileRequestInternal(
       url = url,
-      chunksCount = chunksCount,
       isBatchDownload = isBatchDownload,
       extraInfo = extraInfo,
       callback = callback
@@ -255,15 +245,13 @@ class FileCacheV2(
 
   private fun enqueueDownloadFileRequestInternal(
     url: String,
-    chunksCount: Int,
     isBatchDownload: Boolean,
     extraInfo: DownloadRequestExtraInfo,
     callback: FileCacheListener?
-  ): CancelableDownload? {
+  ): CancelableDownload {
     val (alreadyActive, cancelableDownload) = getOrCreateCancelableDownload(
       url = url,
       callback = callback,
-      chunksCount = chunksCount,
       isGalleryBatchDownload = isBatchDownload,
       isPrefetchDownload = false,
       extraInfo = extraInfo
@@ -287,16 +275,10 @@ class FileCacheV2(
   private fun getOrCreateCancelableDownload(
     url: String,
     callback: FileCacheListener?,
-    chunksCount: Int,
     isGalleryBatchDownload: Boolean,
     isPrefetchDownload: Boolean,
     extraInfo: DownloadRequestExtraInfo
   ): Pair<Boolean, CancelableDownload> {
-    if (chunksCount > 1 && (isGalleryBatchDownload || isPrefetchDownload)) {
-      throw IllegalArgumentException("Cannot download file in chunks for media " +
-        "prefetching or gallery downloading!")
-    }
-
     return synchronized(activeDownloads) {
       val prevRequest = activeDownloads.get(url)
       if (prevRequest != null) {
@@ -316,8 +298,8 @@ class FileCacheV2(
         url = url,
         requestCancellationThread = requestCancellationThread,
         downloadType = CancelableDownload.DownloadType(
-          isPrefetchDownload,
-          isGalleryBatchDownload
+          isPrefetchDownload = isPrefetchDownload,
+          isGalleryBatchDownload = isGalleryBatchDownload
         )
       )
 
@@ -327,7 +309,6 @@ class FileCacheV2(
 
       val request = FileDownloadRequest(
         url = url,
-        chunksCount = AtomicInteger(chunksCount),
         downloaded = AtomicLong(0L),
         total = AtomicLong(0L),
         cancelableDownload = cancelableDownload,

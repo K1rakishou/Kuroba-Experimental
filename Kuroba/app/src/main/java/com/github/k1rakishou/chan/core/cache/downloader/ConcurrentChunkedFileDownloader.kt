@@ -2,17 +2,21 @@ package com.github.k1rakishou.chan.core.cache.downloader
 
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
+import com.github.k1rakishou.chan.core.site.SiteBase
+import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.RawFile
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 
 internal class ConcurrentChunkedFileDownloader @Inject constructor(
+  private val siteResolver: SiteResolver,
   private val fileManager: FileManager,
   private val chunkDownloader: ChunkDownloader,
   private val chunkPersister: ChunkPersister,
@@ -26,7 +30,7 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
   override fun download(
     partialContentCheckResult: PartialContentCheckResult,
     url: String,
-    chunked: Boolean
+    supportsPartialContentDownload: Boolean
   ): Flowable<FileDownloadResult> {
     val output = activeDownloads.get(url)
       ?.getOutputFile()
@@ -37,18 +41,7 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
     }
 
     // We can't use Partial Content if we don't know the file size
-    val chunksCount = if (chunked && partialContentCheckResult.couldDetermineFileSize()) {
-      activeDownloads.get(url)
-        ?.chunksCount
-        ?.get()
-        ?: activeDownloads.throwCancellationException(url)
-    } else {
-      // Update the chunksCount because it changed due to HEAD request failure or some other
-      // kind of problem
-      activeDownloads.get(url)?.chunksCount?.set(1)
-      1
-    }
-
+    val chunksCount = getChunksCount(supportsPartialContentDownload, partialContentCheckResult, url)
     check(chunksCount >= 1) { "Chunks count is less than 1 = $chunksCount" }
 
     // Split the whole file size into chunks
@@ -90,6 +83,43 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
         }
         .subscribeOn(workerScheduler)
     )
+  }
+
+  private fun getChunksCount(
+    supportsPartialContentDownload: Boolean,
+    partialContentCheckResult: PartialContentCheckResult,
+    url: String
+  ): Int {
+    val activeDownload = activeDownloads.get(url)
+      ?: activeDownloads.throwCancellationException(url)
+
+    if (!supportsPartialContentDownload || !partialContentCheckResult.couldDetermineFileSize()) {
+      activeDownload.chunksCount(1)
+      return 1
+    }
+
+    val downloadType = activeDownload.cancelableDownload.downloadType
+    if (downloadType.isAnyKindOfMultiFileDownload()) {
+      activeDownload.chunksCount(1)
+      return 1
+    }
+
+    val host = url.toHttpUrlOrNull()?.host
+    if (host == null) {
+      activeDownload.chunksCount(1)
+      return 1
+    }
+
+    val site = siteResolver.findSiteForUrl(host)
+    if (site == null) {
+      activeDownload.chunksCount(1)
+      return 1
+    }
+
+    val chunksCount = (site as SiteBase).concurrentFileDownloadingChunks.get().chunksCount()
+
+    activeDownload.chunksCount(chunksCount)
+    return chunksCount
   }
 
   private fun removeChunksFromDisk(url: String) {

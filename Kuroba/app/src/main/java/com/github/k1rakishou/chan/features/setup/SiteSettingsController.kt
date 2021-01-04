@@ -5,6 +5,7 @@ import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.settings.BaseSettingsController
@@ -34,11 +35,14 @@ class SiteSettingsController(
   lateinit var siteManager: SiteManager
   @Inject
   lateinit var boardManager: BoardManager
+  @Inject
+  lateinit var archivesManager: ArchivesManager
 
   private val presenter by lazy {
     SiteSettingsPresenter(
       siteManager = siteManager,
-      boardManager = boardManager
+      boardManager = boardManager,
+      archivesManager = archivesManager
     )
   }
 

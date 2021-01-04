@@ -5,6 +5,7 @@ import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.cache.downloader.DownloaderUtils.isCancellationError
+import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
@@ -50,13 +51,19 @@ internal class PartialContentSupportChecker(
       return Single.just(PartialContentCheckResult(supportsPartialContentDownload = false))
     }
 
-    val site = siteResolver.findSiteForUrl(host)
+    val site = siteResolver.findSiteForUrl(host) as? SiteBase
 
     val enabled = site?.getChunkDownloaderSiteProperties()
       ?.enabled
       ?: false
 
     if (!enabled) {
+      // Disabled for this site
+      return Single.just(PartialContentCheckResult(supportsPartialContentDownload = false))
+    }
+
+    if (site?.concurrentFileDownloadingChunks?.get()?.chunksCount() == 1) {
+      // The setting is set to only use 1 chunk per download
       return Single.just(PartialContentCheckResult(supportsPartialContentDownload = false))
     }
 
@@ -88,11 +95,11 @@ internal class PartialContentSupportChecker(
             // chan supports Partial Content. So we don't need to send HEAD request.
             Single.just(
               PartialContentCheckResult(
-                      supportsPartialContentDownload = true,
-                      // We are not sure about this one but it doesn't matter
-                      // because we have another similar check in the downloader.
-                      notFoundOnServer = false,
-                      length = fileSize
+                supportsPartialContentDownload = true,
+                // We are not sure about this one but it doesn't matter
+                // because we have another similar check in the downloader.
+                notFoundOnServer = false,
+                length = fileSize
               )
             )
           } else {
@@ -189,7 +196,7 @@ internal class PartialContentSupportChecker(
       .doOnError { error ->
         val diff = System.currentTimeMillis() - startTime
         Logger.e(TAG, "HEAD request to url ($url) has failed " +
-          "because of \"${error.javaClass.simpleName}\" exception, time = ${diff}ms")
+            "because of \"${error.javaClass.simpleName}\" exception, time = ${diff}ms")
       }
       .onErrorResumeNext { error ->
         if (error !is TimeoutException) {
@@ -198,7 +205,7 @@ internal class PartialContentSupportChecker(
 
         val diff = System.currentTimeMillis() - startTime
         log(TAG, "HEAD request took for url ($url) too much time, " +
-          "canceled by timeout() operator, took = ${diff}ms")
+            "canceled by timeout() operator, took = ${diff}ms")
 
         // Do not cache this result because after this request the file should be cached by the
         // cloudflare, so the next time we open it, it should load way faster
@@ -239,7 +246,7 @@ internal class PartialContentSupportChecker(
 
     if (!acceptsRangesValue.equals(ACCEPT_RANGES_HEADER_VALUE, true)) {
       log(TAG, "($url) does not support partial content " +
-        "(bad ACCEPT_RANGES_HEADER = ${acceptsRangesValue})")
+          "(bad ACCEPT_RANGES_HEADER = ${acceptsRangesValue})")
       emitter.onSuccess(cache(url, PartialContentCheckResult(false)))
       return
     }
@@ -264,7 +271,7 @@ internal class PartialContentSupportChecker(
 
     if (length == null || length <= 0) {
       log(TAG, "($url) does not support partial content " +
-        "(bad CONTENT_LENGTH_HEADER = ${contentLengthValue})")
+          "(bad CONTENT_LENGTH_HEADER = ${contentLengthValue})")
       emitter.onSuccess(cache(url, PartialContentCheckResult(false)))
       return
     }
@@ -280,7 +287,7 @@ internal class PartialContentSupportChecker(
     val diff = System.currentTimeMillis() - startTime
 
     log(TAG, "url = $url, fileSize = $length, " +
-      "cfCacheStatusHeader = $cfCacheStatusHeader, took = ${diff}ms")
+        "cfCacheStatusHeader = $cfCacheStatusHeader, took = ${diff}ms")
 
     val host = url.toHttpUrlOrNull()?.host
     if (host != null) {

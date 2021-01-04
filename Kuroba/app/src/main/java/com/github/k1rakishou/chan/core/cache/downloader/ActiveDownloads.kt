@@ -44,7 +44,7 @@ internal open class ActiveDownloads {
       return@synchronized activeDownloads[url]
         ?.cancelableDownload
         ?.downloadType
-        ?.isAnyKindOfMultiDownload()
+        ?.isAnyKindOfMultiFileDownload()
         ?: false
     }
   }

@@ -85,7 +85,7 @@ abstract class CommonSite : SiteBase() {
   override fun initialize() {
     super.initialize()
     setup()
-    
+
     if (name == null) {
       throw NullPointerException("setName not called")
     }

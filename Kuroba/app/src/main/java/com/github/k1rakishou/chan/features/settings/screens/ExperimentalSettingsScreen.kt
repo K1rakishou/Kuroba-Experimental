@@ -10,7 +10,6 @@ import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.screens.delegate.ExclusionZoneSettingsDelegate
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.common.AndroidUtils.isAndroid10
@@ -49,19 +48,6 @@ class ExperimentalSettingsScreen(
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.experimental_settings_group),
           groupIdentifier = identifier
-        )
-
-        group += ListSettingV2.createBuilder<ChanSettings.ConcurrentFileDownloadingChunks>(
-          context = context,
-          identifier = ExperimentalScreen.MainSettingsGroup.ConcurrentDownloadChunkCount,
-          topDescriptionIdFunc = { R.string.settings_concurrent_file_downloading_name },
-          bottomDescriptionStringFunc = { itemName ->
-            context.getString(R.string.settings_concurrent_file_downloading_description) + "\n\n" + itemName
-          },
-          items = ChanSettings.ConcurrentFileDownloadingChunks.values().toList(),
-          itemNameMapper = { concurrentDownloadChunkCount -> concurrentDownloadChunkCount.name },
-          setting = ChanSettings.concurrentDownloadChunkCount,
-          requiresRestart = true
         )
 
         group += LinkSettingV2.createBuilder(

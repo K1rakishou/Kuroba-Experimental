@@ -57,7 +57,7 @@ class ImageViewerNavigationController(context: Context) : ToolbarNavigationContr
   fun showImages(
     images: List<ChanPostImage>,
     index: Int,
-    chanDescriptor: ChanDescriptor?,
+    chanDescriptor: ChanDescriptor,
     imageViewerCallback: ImageViewerCallback?,
     goPostCallback: GoPostCallback? = null
   ) {

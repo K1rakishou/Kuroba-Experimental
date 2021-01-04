@@ -613,7 +613,6 @@ sealed class ExperimentalScreen(
   ) : IGroup,
     ExperimentalScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
-    object ConcurrentDownloadChunkCount : MainSettingsGroup("concurrent_download_chunk_count")
     object GesturesExclusionZonesEditor : MainSettingsGroup("gestures_exclusion_zones_editor")
     object ResetExclusionZones : MainSettingsGroup("reset_exclusion_zones")
     object OkHttpAllowHttp2 : MainSettingsGroup("ok_http_allow_http_2")

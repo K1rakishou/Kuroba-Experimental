@@ -106,11 +106,9 @@ class EpoxySiteView @JvmOverloads constructor(
     this.isArchiveSite = isArchive
 
     if (this.isArchiveSite) {
-      siteSettings.setVisibilityFast(View.GONE)
       siteReorder.setVisibilityFast(View.GONE)
       siteIcon.updateMargins(left = ARCHIVE_SITE_ICON_LEFT_MARGIN)
     } else {
-      siteSettings.setVisibilityFast(View.VISIBLE)
       siteReorder.setVisibilityFast(View.VISIBLE)
       siteIcon.updateMargins(left = 0)
     }

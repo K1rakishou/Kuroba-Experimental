@@ -453,12 +453,7 @@ class BookmarksManager(
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     return lock.read {
-      return@read bookmarks.values.count { threadBookmark ->
-        val siteDescriptor = threadBookmark.threadDescriptor.siteDescriptor()
-        val isArchiveBookmark = archivesManager.isSiteArchive(siteDescriptor)
-
-        return@count !isArchiveBookmark && threadBookmark.isActive()
-      }
+      return@read bookmarks.values.count { threadBookmark -> activeBookmarkPredicate(threadBookmark) }
     }
   }
 
@@ -466,12 +461,7 @@ class BookmarksManager(
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     return lock.read {
-      return@read bookmarks.any { (_, threadBookmark) ->
-        val siteDescriptor = threadBookmark.threadDescriptor.siteDescriptor()
-        val isArchiveBookmark = archivesManager.isSiteArchive(siteDescriptor)
-
-        return@any !isArchiveBookmark && threadBookmark.isActive()
-      }
+      return@read bookmarks.any { (_, threadBookmark) -> activeBookmarkPredicate(threadBookmark) }
     }
   }
 
@@ -609,6 +599,13 @@ class BookmarksManager(
 
   private fun getAllBookmarks(): List<ThreadBookmark> {
     return lock.read { bookmarks.values.map { bookmark -> bookmark.deepCopy() } }
+  }
+
+  private fun activeBookmarkPredicate(threadBookmark: ThreadBookmark): Boolean {
+    val siteDescriptor = threadBookmark.threadDescriptor.siteDescriptor()
+    val isArchiveBookmark = archivesManager.isSiteArchive(siteDescriptor)
+
+    return !isArchiveBookmark && threadBookmark.isActive()
   }
 
   data class SimpleThreadBookmark(

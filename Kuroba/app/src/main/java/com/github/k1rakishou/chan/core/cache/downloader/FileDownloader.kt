@@ -11,7 +11,7 @@ internal abstract class FileDownloader(
   abstract fun download(
     partialContentCheckResult: PartialContentCheckResult,
     url: String,
-    chunked: Boolean
+    supportsPartialContentDownload: Boolean
   ): Flowable<FileDownloadResult>
 
   protected fun isRequestStoppedOrCanceled(url: String): Boolean {

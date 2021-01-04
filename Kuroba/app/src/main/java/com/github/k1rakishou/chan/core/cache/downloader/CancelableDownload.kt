@@ -99,7 +99,7 @@ class CancelableDownload(
       return
     }
 
-    if (downloadType.isAnyKindOfMultiDownload() && !canStopBatchDownloads) {
+    if (downloadType.isAnyKindOfMultiFileDownload() && !canStopBatchDownloads) {
       // Do not stop the request in case of it being prefetch/batch download. Just wait until
       // it downloads normally.
       return
@@ -114,7 +114,7 @@ class CancelableDownload(
       return
     }
 
-    if (downloadType.isAnyKindOfMultiDownload() && !canCancelBatchDownloads) {
+    if (downloadType.isAnyKindOfMultiFileDownload() && !canCancelBatchDownloads) {
       // When prefetching media in a thread and viewing images in the same thread at the
       // same time we may accidentally cancel a prefetch download which we don't want.
       // We only want to cancel prefetch downloads when exiting a thread, not when swiping
@@ -182,7 +182,7 @@ class CancelableDownload(
     val isPrefetchDownload: Boolean,
     val isGalleryBatchDownload: Boolean
   ) {
-    fun isAnyKindOfMultiDownload(): Boolean = isPrefetchDownload || isGalleryBatchDownload
+    fun isAnyKindOfMultiFileDownload(): Boolean = isPrefetchDownload || isGalleryBatchDownload
   }
 
   companion object {

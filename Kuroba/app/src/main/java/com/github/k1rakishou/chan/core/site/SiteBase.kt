@@ -16,7 +16,10 @@
  */
 package com.github.k1rakishou.chan.core.site
 
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.SharedPreferencesSettingProvider
 import com.github.k1rakishou.chan.Chan
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
@@ -27,12 +30,15 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
+import com.github.k1rakishou.prefs.OptionsSetting
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -74,6 +80,13 @@ abstract class SiteBase : Site, CoroutineScope {
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("SiteBase")
 
+  protected val prefs by lazy {
+    val sharedPrefs = AppModuleAndroidUtils.getPreferencesForSite(siteDescriptor())
+    return@lazy SharedPreferencesSettingProvider(sharedPrefs)
+  }
+
+  lateinit var concurrentFileDownloadingChunks: OptionsSetting<ChanSettings.ConcurrentFileDownloadingChunks>
+
   private var initialized = false
 
   override fun initialize() {
@@ -85,6 +98,15 @@ abstract class SiteBase : Site, CoroutineScope {
       .inject(this)
 
     initialized = true
+  }
+
+  override fun postInitialize() {
+    concurrentFileDownloadingChunks = OptionsSetting(
+      prefs,
+      "concurrent_download_chunk_count",
+      ChanSettings.ConcurrentFileDownloadingChunks::class.java,
+      ChanSettings.ConcurrentFileDownloadingChunks.Two
+    )
   }
 
   override fun loadBoardInfo(callback: ((ModularResult<JsonReaderRequest.JsonReaderResponse<SiteBoards>>) -> Unit)?) {
@@ -146,7 +168,14 @@ abstract class SiteBase : Site, CoroutineScope {
   }
 
   override fun settings(): List<SiteSetting> {
-    return ArrayList()
+    return listOf<SiteSetting>(
+      SiteSetting.SiteOptionsSetting(
+        getString(R.string.settings_concurrent_file_downloading_name),
+        getString(R.string.settings_concurrent_file_downloading_description),
+        concurrentFileDownloadingChunks,
+        ChanSettings.ConcurrentFileDownloadingChunks.values().map { it.name }
+      )
+    )
   }
 
   override suspend fun createBoard(boardName: String, boardCode: String): ModularResult<ChanBoard?> {

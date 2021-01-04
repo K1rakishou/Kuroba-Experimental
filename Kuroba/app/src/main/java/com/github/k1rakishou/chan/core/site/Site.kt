@@ -111,6 +111,7 @@ interface Site {
 
   fun enabled(): Boolean
   fun initialize()
+  fun postInitialize()
   fun loadBoardInfo(callback: ((ModularResult<JsonReaderRequest.JsonReaderResponse<SiteBoards>>) -> Unit)? = null)
 
   /**
@@ -152,7 +153,6 @@ interface Site {
    * @return the created board.
    */
   suspend fun createBoard(boardName: String, boardCode: String): ModularResult<ChanBoard?>
-
 
   fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties
 

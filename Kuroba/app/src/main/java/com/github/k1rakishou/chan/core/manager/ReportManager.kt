@@ -301,7 +301,6 @@ class ReportManager(
       appendLine("Prefetching enabled: ${ChanSettings.autoLoadThreadImages.get()}")
       appendLine("Hi-res thumbnails enabled: ${ChanSettings.highResCells.get()}")
       appendLine("Youtube titles and durations parsing enabled: ${ChanSettings.parseYoutubeTitlesAndDuration.get()}")
-      appendLine("Concurrent file loading chunks count: ${ChanSettings.concurrentDownloadChunkCount.get().toInt()}")
       appendLine("WEBM streaming enabled: ${ChanSettings.videoStream.get()}")
       appendLine("Saved files base dir info: ${getFilesLocationInfo()}")
       appendLine("Phone layout mode: ${ChanSettings.getCurrentLayoutMode().name}")

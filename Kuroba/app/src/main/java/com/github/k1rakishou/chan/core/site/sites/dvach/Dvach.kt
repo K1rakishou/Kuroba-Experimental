@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import android.webkit.WebView
-import com.github.k1rakishou.SharedPreferencesSettingProvider
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
 import com.github.k1rakishou.chan.core.site.Site
@@ -29,7 +28,6 @@ import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInf
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getPreferencesForSite
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -57,21 +55,25 @@ class Dvach : CommonSite() {
     canFileHashBeTrusted = false
   )
 
-  private val prefs by lazy { SharedPreferencesSettingProvider(getPreferencesForSite(siteDescriptor())) }
-  private val passCode by lazy { StringSetting(prefs, "preference_pass_code", "") }
-  private val passCookie by lazy { StringSetting(prefs, "preference_pass_cookie", "") }
+  private lateinit var passCode: StringSetting
+  private lateinit var passCookie: StringSetting
+  private lateinit var captchaType: OptionsSetting<Chan4.CaptchaType>
+  private lateinit var passCodeInfo: JsonSetting<DvachPasscodeInfo>
 
-  private val captchaType by lazy {
-    OptionsSetting(
+  override fun initialize() {
+    super.initialize()
+
+    passCode = StringSetting(prefs, "preference_pass_code", "")
+    passCookie = StringSetting(prefs, "preference_pass_cookie", "")
+
+    captchaType = OptionsSetting(
       prefs,
       "preference_captcha_type_dvach",
       Chan4.CaptchaType::class.java,
       Chan4.CaptchaType.V2NOJS
     )
-  }
 
-  private val passCodeInfo by lazy {
-    return@lazy JsonSetting(
+    passCodeInfo = JsonSetting(
       gson,
       DvachPasscodeInfo::class.java,
       prefs,
@@ -81,13 +83,22 @@ class Dvach : CommonSite() {
   }
 
   override fun settings(): List<SiteSetting> {
-    return listOf(
+    val settings = ArrayList<SiteSetting>()
+
+    settings.add(
       SiteOptionsSetting(
         "Captcha type",
+        null,
         captchaType,
         mutableListOf("Javascript", "Noscript")
       )
     )
+
+    settings.addAll(
+      super.settings()
+    )
+
+    return settings
   }
 
   override fun setParser(commentParser: CommentParser) {
@@ -353,7 +364,7 @@ class Dvach : CommonSite() {
         return if (isLoggedIn()) {
           SiteAuthentication.fromNone()
         } else {
-          when (captchaType!!.get()) {
+          when (captchaType.get()) {
             Chan4.CaptchaType.V2JS -> SiteAuthentication.fromCaptcha2(
               CAPTCHA_KEY,
               "https://2ch.hk/api/captcha/recaptcha/mobile"

@@ -160,14 +160,16 @@ public class ChanSettings {
     }
 
     public enum ConcurrentFileDownloadingChunks implements OptionSettingItem {
-        One("One chunk"),
-        Two("Two chunks"),
-        Four("Four chunks");
+        One("One chunk", 1),
+        Two("Two chunks", 2),
+        Four("Four chunks", 4);
 
         String name;
+        int chunksCount;
 
-        ConcurrentFileDownloadingChunks(String name) {
+        ConcurrentFileDownloadingChunks(String name, int chunksCount) {
             this.name = name;
+            this.chunksCount = chunksCount;
         }
 
         @Override
@@ -175,8 +177,8 @@ public class ChanSettings {
             return name;
         }
 
-        public int toInt() {
-            return (int) Math.pow(2, ordinal());
+        public int chunksCount() {
+            return chunksCount;
         }
     }
 
@@ -307,7 +309,6 @@ public class ChanSettings {
     //endregion
 
     //region EXPERIMENTAL
-    public static OptionsSetting<ConcurrentFileDownloadingChunks> concurrentDownloadChunkCount;
     public static StringSetting androidTenGestureZones;
     public static BooleanSetting okHttpAllowHttp2;
     public static BooleanSetting okHttpAllowIpv6;
@@ -489,11 +490,6 @@ public class ChanSettings {
             //endregion
 
             //region EXPERIMENTAL
-            concurrentDownloadChunkCount = new OptionsSetting<>(provider,
-                    "concurrent_file_downloading_chunks_count",
-                    ConcurrentFileDownloadingChunks.class,
-                    ConcurrentFileDownloadingChunks.Two
-            );
             androidTenGestureZones = new StringSetting(provider, "android_ten_gesture_zones", EMPTY_JSON);
             okHttpAllowHttp2 = new BooleanSetting(provider, "ok_http_allow_http_2", true);
             okHttpAllowIpv6 = new BooleanSetting(provider, "ok_http_allow_ipv6", false);

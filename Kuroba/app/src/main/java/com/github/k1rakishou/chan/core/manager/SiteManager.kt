@@ -371,6 +371,7 @@ open class SiteManager(
 
     // TODO(KurobaEx): make initialization lazy
     site.initialize()
+    site.postInitialize()
     return site
   }
 

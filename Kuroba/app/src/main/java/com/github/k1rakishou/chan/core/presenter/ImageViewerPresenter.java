@@ -125,25 +125,15 @@ public class ImageViewerPresenter
     }
 
     @SuppressLint("UseSparseArrays")
-    public void showImages(List<ChanPostImage> images, int position, ChanDescriptor chanDescriptor) {
+    public void showImages(
+            List<ChanPostImage> images,
+            int position,
+            ChanDescriptor chanDescriptor
+    ) {
         this.images = images;
         this.chanDescriptor = chanDescriptor;
         this.selectedPosition = Math.max(0, Math.min(images.size() - 1, position));
         this.progress = new HashMap<>(images.size());
-
-        int chunksCount = ChanSettings.concurrentDownloadChunkCount.get().toInt();
-
-        for (int i = 0; i < images.size(); ++i) {
-            List<Float> initialProgress = new ArrayList<>(chunksCount);
-
-            for (int j = 0; j < chunksCount; ++j) {
-                initialProgress.add(.1f);
-            }
-
-            // Always use a little bit of progress so it's obvious that we have started downloading
-            // the image
-            progress.put(i, initialProgress);
-        }
 
         // Do this before the view is measured, to avoid it to always loading the first two pages
         callback.setPagerItems(chanDescriptor, images, selectedPosition);

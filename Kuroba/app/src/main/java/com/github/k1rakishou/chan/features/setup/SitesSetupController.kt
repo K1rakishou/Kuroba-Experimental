@@ -16,6 +16,7 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.features.setup.data.SiteCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
 import com.github.k1rakishou.chan.features.setup.data.SitesSetupControllerState
 import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteView
@@ -164,33 +165,7 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
             val siteCellArchiveGroupInfo = siteCellData.siteCellArchiveGroupInfo
 
             // Render sites
-            epoxySiteView {
-              id("sites_setup_site_view_${siteCellData.siteDescriptor}")
-              bindIcon(Pair(siteCellData.siteIcon, siteCellData.siteEnableState))
-              bindSiteName(siteCellData.siteName)
-              bindSwitch(siteCellData.siteEnableState)
-              siteDescriptor(siteCellData.siteDescriptor)
-              isArchiveSite(false)
-
-              val callback = fun(enabled: Boolean) {
-                if (siteCellData.siteEnableState == SiteEnableState.Disabled) {
-                  showToast("Site is temporary or permanently disabled. It cannot be used.")
-                  return
-                }
-
-                sitesPresenter.onSiteEnableStateChanged(siteCellData.siteDescriptor, enabled)
-              }
-
-              bindRowClickCallback(Pair(callback, siteCellData.siteEnableState))
-              bindSettingClickCallback {
-                navigationController!!.pushController(
-                  SiteSettingsController(
-                    context,
-                    siteCellData.siteDescriptor
-                  )
-                )
-              }
-            }
+            renderSite(siteCellData)
 
             if (siteCellArchiveGroupInfo != null) {
               val archivesInfoText = context.getString(
@@ -209,33 +184,7 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
 
               if (siteCellArchiveGroupInfo.isGroupExpanded) {
                 siteCellArchiveGroupInfo.archives.forEach { siteArchiveCellData ->
-                  epoxySiteView {
-                    id("sites_setup_site_view_${siteArchiveCellData.siteDescriptor}")
-                    bindIcon(
-                      Pair(
-                        siteArchiveCellData.siteIcon,
-                        siteArchiveCellData.siteEnableState
-                      )
-                    )
-                    bindSiteName(siteArchiveCellData.siteName)
-                    bindSwitch(siteArchiveCellData.siteEnableState)
-                    siteDescriptor(siteArchiveCellData.siteDescriptor)
-                    isArchiveSite(true)
-
-                    val callback = fun(enabled: Boolean) {
-                      if (siteArchiveCellData.siteEnableState == SiteEnableState.Disabled) {
-                        showToast("Site is temporary or permanently disabled. It cannot be used.")
-                        return
-                      }
-
-                      sitesPresenter.onSiteEnableStateChanged(
-                        siteArchiveCellData.siteDescriptor,
-                        enabled
-                      )
-                    }
-
-                    bindRowClickCallback(Pair(callback, siteArchiveCellData.siteEnableState))
-                  }
+                  renderArchiveSite(siteArchiveCellData)
                 }
               }
             }
@@ -245,6 +194,74 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
     }
 
     controller.requestModelBuild()
+  }
+
+  private fun EpoxyController.renderSite(siteCellData: SiteCellData) {
+    epoxySiteView {
+      id("sites_setup_site_view_${siteCellData.siteDescriptor}")
+      bindIcon(Pair(siteCellData.siteIcon, siteCellData.siteEnableState))
+      bindSiteName(siteCellData.siteName)
+      bindSwitch(siteCellData.siteEnableState)
+      siteDescriptor(siteCellData.siteDescriptor)
+      isArchiveSite(false)
+
+      val callback = fun(enabled: Boolean) {
+        if (siteCellData.siteEnableState == SiteEnableState.Disabled) {
+          showToast("Site is temporary or permanently disabled. It cannot be used.")
+          return
+        }
+
+        sitesPresenter.onSiteEnableStateChanged(siteCellData.siteDescriptor, enabled)
+      }
+
+      bindRowClickCallback(Pair(callback, siteCellData.siteEnableState))
+      bindSettingClickCallback {
+        navigationController!!.pushController(
+          SiteSettingsController(
+            context,
+            siteCellData.siteDescriptor
+          )
+        )
+      }
+    }
+  }
+
+  private fun EpoxyController.renderArchiveSite(siteArchiveCellData: SiteCellData) {
+    epoxySiteView {
+      id("sites_setup_site_view_${siteArchiveCellData.siteDescriptor}")
+      bindIcon(
+        Pair(
+          siteArchiveCellData.siteIcon,
+          siteArchiveCellData.siteEnableState
+        )
+      )
+      bindSiteName(siteArchiveCellData.siteName)
+      bindSwitch(siteArchiveCellData.siteEnableState)
+      siteDescriptor(siteArchiveCellData.siteDescriptor)
+      isArchiveSite(true)
+
+      val callback = fun(enabled: Boolean) {
+        if (siteArchiveCellData.siteEnableState == SiteEnableState.Disabled) {
+          showToast("Site is temporary or permanently disabled. It cannot be used.")
+          return
+        }
+
+        sitesPresenter.onSiteEnableStateChanged(
+          siteArchiveCellData.siteDescriptor,
+          enabled
+        )
+      }
+
+      bindRowClickCallback(Pair(callback, siteArchiveCellData.siteEnableState))
+      bindSettingClickCallback {
+        navigationController!!.pushController(
+          SiteSettingsController(
+            context,
+            siteArchiveCellData.siteDescriptor
+          )
+        )
+      }
+    }
   }
 
   private inner class SitesEpoxyController : EpoxyController() {

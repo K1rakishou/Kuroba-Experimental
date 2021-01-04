@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.site.sites.chan4
 import android.webkit.CookieManager
 import android.webkit.WebView
 import com.github.k1rakishou.OptionSettingItem
-import com.github.k1rakishou.SharedPreferencesSettingProvider
 import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
@@ -33,7 +32,6 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getPreferencesForSite
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -57,20 +55,19 @@ import java.util.*
 @Suppress("PropertyName")
 @DoNotStrip
 open class Chan4 : SiteBase() {
-  private val chunkDownloaderSiteProperties: ChunkDownloaderSiteProperties
 
   private val TAG = "Chan4"
   private val CAPTCHA_KEY = "6Ldp2bsSAAAAAAJ5uyx_lx34lJeEpTLVkP5k04qc"
 
-  // Legacy settings that were global before
-  private var passUser: StringSetting
-  private var passPass: StringSetting
-  private var passToken: StringSetting
-  private var captchaType: OptionsSetting<CaptchaType>? = null
-  var flagType: StringSetting? = null
+  private lateinit var chunkDownloaderSiteProperties: ChunkDownloaderSiteProperties
+  private lateinit var passUser: StringSetting
+  private lateinit var passPass: StringSetting
+  private lateinit var passToken: StringSetting
+  private lateinit var captchaType: OptionsSetting<CaptchaType>
+  lateinit var  flagType: StringSetting
 
-  init {
-    val prefs = SharedPreferencesSettingProvider(getPreferencesForSite(siteDescriptor()))
+  override fun initialize() {
+    super.initialize()
 
     passUser = StringSetting(prefs, "preference_pass_token", "")
     passPass = StringSetting(prefs, "preference_pass_pin", "")
@@ -517,10 +514,12 @@ open class Chan4 : SiteBase() {
 
   override fun settings(): MutableList<SiteSetting> {
     val settings = ArrayList<SiteSetting>()
+
     settings.add(
       SiteOptionsSetting(
         "Captcha type",
-        captchaType!!,
+        null,
+        captchaType,
         listOf("Javascript", "Noscript")
       )
     )
@@ -528,8 +527,13 @@ open class Chan4 : SiteBase() {
     settings.add(
       SiteStringSetting(
         "Country flag code",
-        flagType!!
+        null,
+        flagType
       )
+    )
+
+    settings.addAll(
+      super.settings()
     )
 
     return settings
