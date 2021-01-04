@@ -71,8 +71,6 @@ class EpoxySiteView @JvmOverloads constructor(
     super.onAttachedToWindow()
     themeEngine.addListener(this)
 
-    siteIcon.setImageBitmap(null)
-
     siteSettings.setImageDrawable(
       themeEngine.getDrawableTinted(
         context,
@@ -241,6 +239,8 @@ class EpoxySiteView @JvmOverloads constructor(
   fun unbind() {
     this.requestDisposable?.dispose()
     this.requestDisposable = null
+
+    siteIcon.setImageBitmap(null)
   }
 
   private fun updateReorderTint() {
