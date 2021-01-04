@@ -6,25 +6,26 @@ import com.github.k1rakishou.common.datastructure.RingBuffer
 class CommentEditingHistory(
   private val callback: CommentEditingHistoryListener
 ) {
-  private var firstTextWatcherEventSkipped = false
-
   private val buffer = RingBuffer<CommentInputState>(128)
   private val debouncer = Debouncer(false)
 
-  fun updateCommentEditingHistory(commentInputState: CommentInputState) {
-    if (!firstTextWatcherEventSkipped) {
-      firstTextWatcherEventSkipped = true
-      return
+  private var initialCommentInputState: CommentInputState? = null
+
+  fun updateInitialCommentEditingHistory(commentInputState: CommentInputState) {
+    if (buffer.isEmpty()) {
+      buffer.push(commentInputState)
     }
 
+    if (initialCommentInputState == null) {
+      initialCommentInputState = commentInputState
+    }
+  }
+
+  fun updateCommentEditingHistory(commentInputState: CommentInputState) {
     debouncer.post({
       val last = buffer.peek()
       if (last != null && last == commentInputState) {
         return@post
-      }
-
-      if (buffer.isEmpty()) {
-        buffer.push(INITIAL_COMMENT_INPUT_STATE)
       }
 
       buffer.push(commentInputState)
@@ -41,41 +42,28 @@ class CommentEditingHistory(
     buffer.pop()
 
     val prevCommentInputState = buffer.peek()
-    if (prevCommentInputState == null || prevCommentInputState === INITIAL_COMMENT_INPUT_STATE) {
-      if (prevCommentInputState != null) {
-        callback.restoreComment(prevCommentInputState)
-      }
-
+    if (prevCommentInputState == null) {
       callback.updateRevertChangeButtonVisibility(isBufferEmpty = true)
       return
     }
 
     callback.restoreComment(prevCommentInputState)
 
-    if (buffer.isEmpty()) {
+    if (buffer.isEmpty() || prevCommentInputState == initialCommentInputState) {
+      initialCommentInputState = null
       callback.updateRevertChangeButtonVisibility(isBufferEmpty = true)
     }
   }
 
-  fun reset() {
-    firstTextWatcherEventSkipped = false
+  fun clear() {
     buffer.clear()
-  }
-
-  fun clear(lastCommentState: CommentInputState) {
-    buffer.clear()
-    buffer.push(lastCommentState)
+    initialCommentInputState = null
 
     callback.updateRevertChangeButtonVisibility(isBufferEmpty = true)
   }
 
   private fun isHistoryActuallyEmpty(): Boolean {
     if (buffer.isEmpty()) {
-      return true
-    }
-
-    if (buffer.size() == 1
-      && buffer.peek() === INITIAL_COMMENT_INPUT_STATE) {
       return true
     }
 
@@ -95,7 +83,5 @@ class CommentEditingHistory(
 
   companion object {
     private const val DEBOUNCE_TIME = 150L
-
-    private val INITIAL_COMMENT_INPUT_STATE = CommentInputState("", 0, 0)
   }
 }

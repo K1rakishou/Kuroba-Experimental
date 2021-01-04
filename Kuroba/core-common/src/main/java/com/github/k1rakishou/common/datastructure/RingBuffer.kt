@@ -19,7 +19,7 @@ class RingBuffer<T>(
   fun push(element: T) {
     array[++headIndex % maxSize] = element
 
-    if (headIndex > maxSize) {
+    if ((headIndex - tailIndex) > maxSize) {
       ++tailIndex
     }
   }

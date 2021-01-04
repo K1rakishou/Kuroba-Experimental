@@ -306,13 +306,7 @@ class ReplyLayout @JvmOverloads constructor(
 
     commentRevertChangeButton.setOnClickListener(this)
     commentRevertChangeButton.setOnLongClickListener {
-      val lastCommentState = CommentInputState(
-        comment.text?.toString() ?: "",
-        comment.selectionStart,
-        comment.selectionEnd
-      )
-
-      presenter.clearCommentChangeHistory(lastCommentState)
+      presenter.clearCommentChangeHistory()
       showToast(context, context.getString(R.string.reply_layout_comment_change_history_cleared))
       return@setOnLongClickListener true
     }
@@ -332,7 +326,6 @@ class ReplyLayout @JvmOverloads constructor(
     comment.setHideLoadingViewFunc {
       threadListLayoutFilesCallback?.hideLoadingView()
     }
-
 
     setupCommentContextMenu()
 
@@ -1115,7 +1108,16 @@ class ReplyLayout @JvmOverloads constructor(
     updateWrappingMode()
   }
 
-  override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {}
+  override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
+    val commentInputState = CommentInputState(
+      comment.text.toString(),
+      comment.selectionStart,
+      comment.selectionEnd
+    )
+
+    presenter.updateInitialCommentEditingHistory(commentInputState)
+  }
+
   override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
 
   override fun afterTextChanged(s: Editable) {

@@ -338,6 +338,10 @@ class ReplyPresenter @Inject constructor(
     callback.onFallbackToV1CaptchaView(autoReply)
   }
 
+  fun updateInitialCommentEditingHistory(commentInputState: CommentEditingHistory.CommentInputState) {
+    commentEditingHistory.updateInitialCommentEditingHistory(commentInputState)
+  }
+
   fun updateCommentEditingHistory(commentInputState: CommentEditingHistory.CommentInputState) {
     commentEditingHistory.updateCommentEditingHistory(commentInputState)
   }
@@ -346,8 +350,8 @@ class ReplyPresenter @Inject constructor(
     commentEditingHistory.onRevertChangeButtonClicked()
   }
 
-  fun clearCommentChangeHistory(lastCommentState: CommentEditingHistory.CommentInputState) {
-    commentEditingHistory.clear(lastCommentState)
+  fun clearCommentChangeHistory() {
+    commentEditingHistory.clear()
   }
 
   override fun updateRevertChangeButtonVisibility(isBufferEmpty: Boolean) {
@@ -418,7 +422,7 @@ class ReplyPresenter @Inject constructor(
     isExpanded = false
     previewOpen = false
 
-    commentEditingHistory.reset()
+    commentEditingHistory.clear()
 
     callback.highlightPostNos(emptySet())
     callback.openMessage(null)
