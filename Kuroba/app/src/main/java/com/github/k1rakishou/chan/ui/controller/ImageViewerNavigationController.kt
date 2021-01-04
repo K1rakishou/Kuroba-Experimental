@@ -14,78 +14,69 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.ui.controller;
+package com.github.k1rakishou.chan.ui.controller
 
-import android.content.Context;
+import android.content.Context
+import android.view.View
+import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
+import com.github.k1rakishou.chan.ui.controller.ImageViewerController.GoPostCallback
+import com.github.k1rakishou.chan.ui.controller.ImageViewerController.ImageViewerCallback
+import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.post.ChanPostImage
+import javax.inject.Inject
 
-import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout;
-import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
-import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController;
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
-import com.github.k1rakishou.model.data.post.ChanPostImage;
+class ImageViewerNavigationController(context: Context) : ToolbarNavigationController(context) {
+  @Inject
+  lateinit var filterOutHiddenImagesUseCase: FilterOutHiddenImagesUseCase
 
-import org.jetbrains.annotations.NotNull;
+  override fun injectDependencies(component: ActivityComponent) {
+    component.inject(this)
+  }
 
-import java.util.List;
+  override fun onCreate() {
+    super.onCreate()
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
+    view = AppModuleAndroidUtils.inflate(context, R.layout.controller_navigation_image_viewer)
+    container = view.findViewById<View>(R.id.container) as NavigationControllerContainerLayout
 
-public class ImageViewerNavigationController
-        extends ToolbarNavigationController {
+    setToolbar(view.findViewById(R.id.toolbar))
+    requireToolbar().setCallback(this)
+  }
 
-    @Override
-    protected void injectDependencies(@NotNull ActivityComponent component) {
-        component.inject(this);
+  override fun onDestroy() {
+    super.onDestroy()
+    requireToolbar().removeCallback()
+  }
+
+  @JvmOverloads
+  fun showImages(
+    images: List<ChanPostImage>,
+    index: Int,
+    chanDescriptor: ChanDescriptor?,
+    imageViewerCallback: ImageViewerCallback?,
+    goPostCallback: GoPostCallback? = null
+  ) {
+    val filteredImages = filterOutHiddenImagesUseCase.execute(images)
+    if (filteredImages.isEmpty()) {
+      showToast("No images left to show after filtering out images of hidden/removed posts");
+      return
     }
 
-    public ImageViewerNavigationController(Context context) {
-        super(context);
-    }
+    val imageViewerController = ImageViewerController(
+      chanDescriptor,
+      context,
+      requireToolbar()
+    )
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
+    imageViewerController.setGoPostCallback(goPostCallback)
+    pushController(imageViewerController, false)
+    imageViewerController.setImageViewerCallback(imageViewerCallback)
+    imageViewerController.presenter.showImages(filteredImages, index, chanDescriptor)
+  }
 
-        view = inflate(context, R.layout.controller_navigation_image_viewer);
-        container = (NavigationControllerContainerLayout) view.findViewById(R.id.container);
-
-        setToolbar(view.findViewById(R.id.toolbar));
-        requireToolbar().setCallback(this);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        requireToolbar().removeCallback();
-    }
-
-    public void showImages(
-            final List<ChanPostImage> images,
-            final int index,
-            final ChanDescriptor chanDescriptor,
-            ImageViewerController.ImageViewerCallback imageViewerCallback
-    ) {
-        showImages(images, index, chanDescriptor, imageViewerCallback, null);
-    }
-
-    public void showImages(
-            final List<ChanPostImage> images,
-            final int index,
-            final ChanDescriptor chanDescriptor,
-            ImageViewerController.ImageViewerCallback imageViewerCallback,
-            ImageViewerController.GoPostCallback goPostCallback
-    ) {
-        ImageViewerController imageViewerController = new ImageViewerController(
-                chanDescriptor,
-                context,
-                requireToolbar()
-        );
-
-        imageViewerController.setGoPostCallback(goPostCallback);
-        pushController(imageViewerController, false);
-        imageViewerController.setImageViewerCallback(imageViewerCallback);
-        imageViewerController.getPresenter().showImages(images, index, chanDescriptor);
-    }
 }

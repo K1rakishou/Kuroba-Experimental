@@ -51,10 +51,6 @@ public class RemovedPostsHelper {
     }
 
     public void showPosts(List<PostDescriptor> threadPosts, ChanDescriptor.ThreadDescriptor threadDescriptor) {
-        if (controller == null) {
-            return;
-        }
-
         List<PostDescriptor> removedPosts = getRemovedPosts(threadPosts, threadDescriptor);
         if (removedPosts.isEmpty()) {
             showToast(context, R.string.no_removed_posts_for_current_thread);
@@ -75,8 +71,9 @@ public class RemovedPostsHelper {
             return;
         }
 
-        // controller should not be null here, thus no null check
-        controller.showRemovePosts(resultPosts);
+        if (controller != null) {
+            controller.showRemovePosts(resultPosts);
+        }
     }
 
     private List<PostDescriptor> getRemovedPosts(

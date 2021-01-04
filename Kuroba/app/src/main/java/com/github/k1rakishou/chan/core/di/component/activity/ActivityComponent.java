@@ -142,6 +142,7 @@ import com.github.k1rakishou.chan.ui.view.FloatingMenu;
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton;
 import com.github.k1rakishou.chan.ui.view.LoadingBar;
 import com.github.k1rakishou.chan.ui.view.MultiImageView;
+import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ReplyInputEditText;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
@@ -309,6 +310,7 @@ public interface ActivityComponent {
     void inject(SplitNavigationControllerLayout splitNavigationControllerLayout);
     void inject(ReplyLayoutFilesArea replyLayoutFilesArea);
     void inject(AttachNewFileButton attachNewFileButton);
+    void inject(OptionalSwipeViewPager optionalSwipeViewPager);
 
     @Subcomponent.Builder
     interface Builder {

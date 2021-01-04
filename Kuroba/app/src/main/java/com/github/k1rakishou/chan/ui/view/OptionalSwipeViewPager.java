@@ -22,16 +22,33 @@ import android.view.MotionEvent;
 
 import androidx.viewpager.widget.ViewPager;
 
-public class OptionalSwipeViewPager
-        extends ViewPager {
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
+import com.github.k1rakishou.chan.utils.ViewUtils;
+import com.github.k1rakishou.core_themes.ThemeEngine;
+
+import javax.inject.Inject;
+
+public class OptionalSwipeViewPager extends ViewPager {
     private boolean swipingEnabled;
+
+    @Inject
+    ThemeEngine themeEngine;
 
     public OptionalSwipeViewPager(Context context) {
         super(context);
+        init();
     }
 
     public OptionalSwipeViewPager(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init();
+    }
+
+    private void init() {
+        AppModuleAndroidUtils.extractActivityComponent(getContext())
+                .inject(this);
+
+        ViewUtils.changeEdgeEffect(this, themeEngine.chanTheme);
     }
 
     @Override

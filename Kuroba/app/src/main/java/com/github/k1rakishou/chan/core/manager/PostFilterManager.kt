@@ -82,6 +82,25 @@ class PostFilterManager {
     }
   }
 
+  fun getFilterStubOrRemove(postDescriptor: PostDescriptor): Boolean {
+    return lock.read {
+      val enabled = filterStorage[postDescriptor]?.enabled ?: false
+      if (!enabled) {
+        return@read false
+      }
+
+      if (filterStorage[postDescriptor]?.filterStub == true) {
+        return@read true
+      }
+
+      if (filterStorage[postDescriptor]?.filterRemove == true) {
+        return@read true
+      }
+
+      return@read false
+    }
+  }
+
   fun getFilterStub(postDescriptor: PostDescriptor): Boolean {
     return lock.read {
       val enabled = filterStorage[postDescriptor]?.enabled ?: false

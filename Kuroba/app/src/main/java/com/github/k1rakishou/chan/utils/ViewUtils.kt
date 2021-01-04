@@ -163,6 +163,7 @@ object ViewUtils {
     }
   }
 
+  @JvmStatic
   fun ViewPager.changeEdgeEffect(theme: ChanTheme) {
     val color = theme.accentColor
 

@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityListener
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.manager.LocalSearchManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.controller.ImageViewerController.ImageViewerCallback
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
@@ -72,6 +73,8 @@ abstract class ThreadController(
   lateinit var localSearchManager: LocalSearchManager
   @Inject
   lateinit var applicationVisibilityManager: ApplicationVisibilityManager
+  @Inject
+  lateinit var filterOutHiddenImagesUseCase: FilterOutHiddenImagesUseCase
 
   protected lateinit var threadLayout: ThreadLayout
   private lateinit var swipeRefreshLayout: SwipeRefreshLayout
@@ -200,7 +203,8 @@ abstract class ThreadController(
     chanDescriptor: ChanDescriptor,
     thumbnail: ThumbnailView
   ) {
-    val isAlreadyPresenting = isAlreadyPresenting { controller -> controller is ImageViewerNavigationController }
+    val isAlreadyPresenting =
+      isAlreadyPresenting { controller -> controller is ImageViewerNavigationController }
 
     // Just ignore the showImages request when the image is not loaded
     if (thumbnail.bitmap != null && !isAlreadyPresenting) {
@@ -223,8 +227,13 @@ abstract class ThreadController(
       return
     }
 
+    val filteredImages = filterOutHiddenImagesUseCase.execute(images)
+    if (filteredImages.isEmpty()) {
+      return
+    }
+
     val albumViewController = AlbumViewController(context)
-    albumViewController.setImages(chanDescriptor, images, index, navigation.title)
+    albumViewController.setImages(chanDescriptor, filteredImages, index, navigation.title)
 
     if (doubleNavigationController != null) {
       doubleNavigationController!!.pushController(albumViewController)

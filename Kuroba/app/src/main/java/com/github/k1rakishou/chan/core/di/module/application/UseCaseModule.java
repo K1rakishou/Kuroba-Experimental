@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.BookmarksManager;
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
+import com.github.k1rakishou.chan.core.manager.PostFilterManager;
 import com.github.k1rakishou.chan.core.manager.PostHideManager;
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
@@ -13,6 +14,7 @@ import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
+import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase;
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
@@ -127,6 +129,20 @@ public class UseCaseModule {
                 siteManager,
                 themeEngine,
                 simpleCommentParser
+        );
+    }
+
+    @Provides
+    @Singleton
+    public FilterOutHiddenImagesUseCase provideFilterOutHiddenImagesUseCase(
+            PostHideManager postHideManager,
+            PostFilterManager postFilterManager
+    ) {
+        Logger.d(AppModule.DI_TAG, "FilterOutHiddenImagesUseCase");
+
+        return new FilterOutHiddenImagesUseCase(
+                postHideManager,
+                postFilterManager
         );
     }
 
