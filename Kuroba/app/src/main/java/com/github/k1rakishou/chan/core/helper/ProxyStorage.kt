@@ -45,7 +45,7 @@ class ProxyStorage(
   private val proxiesLoaded = AtomicBoolean(false)
 
   // ProxyStorage is dirty when the user has added/update or removed a proxy(ies) and haven't
-  // restarted the phone yet
+  // restarted the app yet
   private val isProxyStorageDirty = AtomicBoolean(false)
 
   @GuardedBy("this")

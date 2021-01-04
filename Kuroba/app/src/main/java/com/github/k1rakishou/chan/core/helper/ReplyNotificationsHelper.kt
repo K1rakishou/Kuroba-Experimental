@@ -120,7 +120,8 @@ class ReplyNotificationsHelper(
     chanPostRepository.awaitUntilInitialized()
     bookmarksManager.awaitUntilInitialized()
 
-    val unreadNotificationsGrouped = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableSet<ThreadBookmarkReplyView>>()
+    val unreadNotificationsGrouped =
+      mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableSet<ThreadBookmarkReplyView>>()
 
     bookmarksManager.mapAllBookmarks { threadBookmarkView ->
       val threadDescriptor = threadBookmarkView.threadDescriptor
@@ -149,6 +150,7 @@ class ReplyNotificationsHelper(
         threadBookmark.threadBookmarkReplies[threadBookmarkReplyView.postDescriptor]?.alreadyNotified = true
       }
     }
+
     bookmarksManager.persistBookmarksManually(updatedBookmarkDescriptors)
   }
 
@@ -429,6 +431,10 @@ class ReplyNotificationsHelper(
     Logger.d(TAG, "Loaded ${thumbnailBitmaps.size} thumbnail bitmaps")
 
     for ((threadDescriptor, threadBookmarkReplies) in unreadNotificationsGrouped) {
+      if (threadBookmarkReplies.isEmpty()) {
+        continue
+      }
+
       val hasUnseenReplies = threadBookmarkReplies.any { threadBookmarkReplyView ->
         !threadBookmarkReplyView.alreadySeen
       }
@@ -695,9 +701,6 @@ class ReplyNotificationsHelper(
     titleText: String,
     threadBookmarkReplyViewSet: Collection<ThreadBookmarkReplyView>
   ): NotificationCompat.Builder {
-    val notificationStyle = NotificationCompat.InboxStyle(this)
-      .setSummaryText(titleText)
-
     val repliesSorted = threadBookmarkReplyViewSet
       .filter { threadBookmarkReplyView -> !threadBookmarkReplyView.alreadySeen }
       .sortedWith(REPLIES_COMPARATOR)
@@ -707,9 +710,9 @@ class ReplyNotificationsHelper(
       return@withContext repliesSorted.map { threadBookmarkReplyView ->
         val commentRaw = threadBookmarkReplyView.commentRaw
         if (commentRaw != null) {
-          val parsedComment = simpleCommentParser.parseComment(
-            commentRaw
-          )
+          // Convert to string to get rid of spans
+          val parsedComment = simpleCommentParser.parseComment(commentRaw)
+            ?.toString()
 
           if (!parsedComment.isNullOrEmpty()) {
             return@map parsedComment
@@ -718,6 +721,7 @@ class ReplyNotificationsHelper(
           // fallthrough
         }
 
+        // Default reply in case we failed to parse the reply comment
         return@map appContext.resources.getString(
           R.string.reply_notifications_reply_format,
           threadBookmarkReplyView.postDescriptor.postNo,
@@ -726,11 +730,28 @@ class ReplyNotificationsHelper(
       }
     }
 
-    parsedReplyComments.forEach { replyComment ->
-      notificationStyle.addLine(replyComment.take(MAX_NOTIFICATION_LINE_LENGTH))
+    if (parsedReplyComments.size > 1) {
+      // If there are more than one notification to show - use InboxStyle
+      val notificationStyle = NotificationCompat.InboxStyle(this)
+        .setSummaryText(titleText)
+
+      parsedReplyComments.forEach { replyComment ->
+        notificationStyle.addLine(replyComment.take(MAX_NOTIFICATION_LINE_LENGTH))
+      }
+
+      setStyle(notificationStyle)
+    } else {
+      // If there is only one notification to show - use BigTextStyle
+      check(parsedReplyComments.isNotEmpty()) { "parsedReplyComments is empty!" }
+      val replyComment = parsedReplyComments.first()
+
+      val notificationStyle = NotificationCompat.BigTextStyle(this)
+        .setSummaryText(titleText)
+        .bigText(replyComment)
+
+      setStyle(notificationStyle)
     }
 
-    setStyle(notificationStyle)
     return this
   }
 

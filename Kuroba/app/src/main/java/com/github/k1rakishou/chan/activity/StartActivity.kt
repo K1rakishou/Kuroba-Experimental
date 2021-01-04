@@ -25,9 +25,7 @@ import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.util.Pair
 import androidx.core.view.ViewCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
@@ -40,6 +38,7 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
@@ -72,7 +71,6 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.FullScreenUtils
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupFullscreen
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
-import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.DoNotStrip
@@ -82,7 +80,6 @@ import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -99,6 +96,7 @@ import kotlin.time.measureTime
 class StartActivity : AppCompatActivity(),
   FSAFActivityCallbacks,
   StartActivityCallbacks,
+  StartActivityStartupHandlerHelper.StartActivityCallbacks,
   ThemeEngine.ThemeChangesListener {
 
   @Inject
@@ -135,6 +133,8 @@ class StartActivity : AppCompatActivity(),
   lateinit var runtimePermissionsHelper: RuntimePermissionsHelper
   @Inject
   lateinit var updateManager: UpdateManager
+  @Inject
+  lateinit var startActivityStartupHandlerHelper: StartActivityStartupHandlerHelper
 
   private val stack = Stack<Controller>()
   private val job = SupervisorJob()
@@ -162,8 +162,7 @@ class StartActivity : AppCompatActivity(),
     val isFreshStart = savedInstanceState == null
 
     if (intentMismatchWorkaround()) {
-      Logger.d(
-        TAG, "onCreate() intentMismatchWorkaround()==true, " +
+      Logger.d(TAG, "onCreate() intentMismatchWorkaround()==true, " +
         "savedInstanceState == null: $isFreshStart")
       return
     }
@@ -184,6 +183,13 @@ class StartActivity : AppCompatActivity(),
     Logger.d(TAG, "createUi took $createUiTime")
 
     imagePickHelper.onActivityCreated(this)
+
+    startActivityStartupHandlerHelper.onCreate(
+      context = this,
+      browseController = browseController!!,
+      drawerController = drawerController,
+      startActivityCallbacks = this
+    )
 
     lifecycleScope.launch {
       val initializeDepsTime = measureTime { initializeDependencies(this, savedInstanceState) }
@@ -217,6 +223,10 @@ class StartActivity : AppCompatActivity(),
 
     if (::fileChooser.isInitialized) {
       fileChooser.removeCallbacks()
+    }
+
+    if (::startActivityStartupHandlerHelper.isInitialized) {
+      startActivityStartupHandlerHelper.onDestroy()
     }
 
     while (!stack.isEmpty()) {
@@ -281,7 +291,7 @@ class StartActivity : AppCompatActivity(),
     updateManager.autoUpdateCheck()
 
     coroutineScope.launch {
-      setupFromStateOrFreshLaunch(savedInstanceState)
+      startActivityStartupHandlerHelper.setupFromStateOrFreshLaunch(intent, savedInstanceState)
     }
 
     if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
@@ -291,8 +301,6 @@ class StartActivity : AppCompatActivity(),
       compositeDisposable += controllerNavigationManager.listenForControllerNavigationChanges()
         .subscribe { change -> updateBottomNavBarIfNeeded(change) }
     }
-
-    onNewIntentInternal(intent)
   }
 
   private fun listenForWindowInsetsChanges() {
@@ -336,39 +344,9 @@ class StartActivity : AppCompatActivity(),
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
 
-    onNewIntentInternal(intent)
-  }
-
-  private fun onNewIntentInternal(intent: Intent?) {
-    if (intent == null) {
-      return
-    }
-
-    val extras = intent.extras
-      ?: return
-    val action = intent.action
-      ?: return
-
-    if (!isKnownAction(action)) {
-      return
-    }
-
     lifecycleScope.launch {
-      Logger.d(TAG, "onNewIntentInternal called, action=${action}")
-
-      bookmarksManager.awaitUntilInitialized()
-
-      when {
-        intent.hasExtra(NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
-          replyNotificationClicked(extras)
-        }
-        intent.hasExtra(NotificationConstants.ReplyNotifications.R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY) -> {
-          replyNotificationSwipedAway(extras)
-        }
-        intent.hasExtra(NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
-          lastPageNotificationClicked(extras)
-        }
-      }
+      val result = startActivityStartupHandlerHelper.onNewIntentInternal(intent)
+      Logger.d(TAG, "onNewIntent() -> $result")
     }
   }
 
@@ -421,77 +399,6 @@ class StartActivity : AppCompatActivity(),
     return controller.childControllers.any { isControllerPresent(it, predicate) }
   }
 
-  private suspend fun setupFromStateOrFreshLaunch(savedInstanceState: Bundle?) {
-    historyNavigationManager.awaitUntilInitialized()
-    siteManager.awaitUntilInitialized()
-    boardManager.awaitUntilInitialized()
-    bookmarksManager.awaitUntilInitialized()
-    chanFilterManager.awaitUntilInitialized()
-
-    val handled = if (savedInstanceState != null) {
-      restoreFromSavedState(savedInstanceState)
-    } else {
-      restoreFromUrl()
-    }
-
-    // Not from a state or from an url, launch the setup controller if no boards are setup up yet,
-    // otherwise load the default saved board.
-    if (!handled) {
-      restoreFresh()
-    }
-  }
-
-  private suspend fun restoreFresh() {
-    Logger.d(TAG, "restoreFresh()")
-
-    if (!siteManager.areSitesSetup()) {
-      Logger.d(TAG, "restoreFresh() Sites are not setup, showSitesNotSetup()")
-      browseController?.showSitesNotSetup()
-      return
-    }
-
-    val boardToOpen = getBoardToOpen()
-    val threadToOpen = getThreadToOpen()
-
-    Logger.d(
-      TAG, "restoreFresh() getBoardToOpen returned ${boardToOpen}, " +
-      "getThreadToOpen returned ${threadToOpen}")
-
-    if (boardToOpen != null) {
-      browseController?.showBoard(boardToOpen, false)
-    } else {
-      browseController?.loadWithDefaultBoard()
-    }
-
-    if (threadToOpen != null) {
-      loadThread(threadToOpen, animated = false)
-    }
-  }
-
-  private fun getThreadToOpen(): ChanDescriptor.ThreadDescriptor? {
-    val loadLastOpenedThreadUponAppStart = ChanSettings.loadLastOpenedThreadUponAppStart.get()
-    Logger.d(TAG, "getThreadToOpen, loadLastOpenedThreadUponAppStart=$loadLastOpenedThreadUponAppStart")
-
-    if (loadLastOpenedThreadUponAppStart) {
-      return historyNavigationManager.getNavElementAtTop()?.descriptor()?.threadDescriptorOrNull()
-    }
-
-    return null
-  }
-
-  private fun getBoardToOpen(): BoardDescriptor? {
-    val loadLastOpenedBoardUponAppStart = ChanSettings.loadLastOpenedBoardUponAppStart.get()
-    Logger.d(TAG, "getBoardToOpen, loadLastOpenedBoardUponAppStart=$loadLastOpenedBoardUponAppStart")
-
-    if (loadLastOpenedBoardUponAppStart) {
-      return historyNavigationManager.getFirstCatalogNavElement()?.descriptor()?.boardDescriptor()
-    }
-
-    return siteManager.firstSiteDescriptor()?.let { firstSiteDescriptor ->
-      return@let boardManager.firstBoardDescriptor(firstSiteDescriptor)
-    }
-  }
-
   fun loadThread(postDescriptor: PostDescriptor) {
     lifecycleScope.launch {
       drawerController.closeAllNonMainControllers()
@@ -506,7 +413,7 @@ class StartActivity : AppCompatActivity(),
     }
   }
 
-  suspend fun loadThread(threadDescriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean) {
+  override suspend fun loadThread(threadDescriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean) {
     drawerController.loadThread(
       threadDescriptor,
       closeAllNonMainControllers = true,
@@ -524,95 +431,6 @@ class StartActivity : AppCompatActivity(),
 
   override fun setBookmarksMenuItemSelected() {
     drawerController.setBookmarksMenuItemSelected()
-  }
-
-  private suspend fun restoreFromUrl(): Boolean {
-    val data = intent.data
-      ?: return false
-
-    Logger.d(TAG, "restoreFromUrl(), url = $data")
-
-    val chanDescriptorResult = siteResolver.resolveChanDescriptorForUrl(data.toString())
-    if (chanDescriptorResult == null) {
-      Toast.makeText(
-        this,
-        getString(R.string.open_link_not_matched, AndroidUtils.getApplicationLabel()),
-        Toast.LENGTH_LONG
-      ).show()
-
-      Logger.d(TAG, "restoreFromUrl() failure")
-      return false
-    }
-
-    Logger.d(
-      TAG, "chanDescriptorResult.descriptor = ${chanDescriptorResult.chanDescriptor}, " +
-        "markedPostNo = ${chanDescriptorResult.markedPostNo}"
-    )
-
-    val chanDescriptor = chanDescriptorResult.chanDescriptor
-    browseController?.setBoard(chanDescriptor.boardDescriptor())
-
-    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-      if (chanDescriptorResult.markedPostNo > 0L) {
-        chanThreadViewableInfoManager.update(chanDescriptor, true) { chanThreadViewableInfo ->
-          chanThreadViewableInfo.markedPostNo = chanDescriptorResult.markedPostNo
-        }
-      }
-
-      browseController?.showThread(chanDescriptor, false)
-    }
-
-    Logger.d(TAG, "restoreFromUrl() success")
-    return true
-  }
-
-  private suspend fun restoreFromSavedState(savedInstanceState: Bundle): Boolean {
-    Logger.d(TAG, "restoreFromSavedState()")
-
-    // Restore the activity state from the previously saved state.
-    val chanState = savedInstanceState.getParcelable<ChanState>(STATE_KEY)
-    if (chanState == null) {
-      Logger.w(TAG, "savedInstanceState was not null, but no ChanState was found!")
-      return false
-    }
-
-    val boardThreadPair = resolveChanState(chanState)
-    if (boardThreadPair.first == null) {
-      return false
-    }
-
-    browseController?.setBoard(boardThreadPair.first!!)
-
-    if (boardThreadPair.second != null) {
-      browseController?.showThread(boardThreadPair.second!!, false)
-    }
-
-    return true
-  }
-
-  private fun resolveChanState(state: ChanState): Pair<BoardDescriptor?, ChanDescriptor.ThreadDescriptor?> {
-    val boardDescriptor =
-      (resolveChanDescriptor(state.board) as? ChanDescriptor.CatalogDescriptor)?.boardDescriptor
-    val threadDescriptor =
-      resolveChanDescriptor(state.thread) as? ChanDescriptor.ThreadDescriptor
-
-    return Pair(boardDescriptor, threadDescriptor)
-  }
-
-  private fun resolveChanDescriptor(descriptorParcelable: DescriptorParcelable): ChanDescriptor? {
-    val chanDescriptor = if (descriptorParcelable.isThreadDescriptor()) {
-      ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(descriptorParcelable)
-    } else {
-      ChanDescriptor.CatalogDescriptor.fromDescriptorParcelable(descriptorParcelable)
-    }
-
-    siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-      ?: return null
-
-    boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
-      ?: return null
-
-    return chanDescriptor
   }
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
@@ -653,88 +471,6 @@ class StartActivity : AppCompatActivity(),
     }
   }
 
-  private fun isKnownAction(action: String): Boolean {
-    return when (action) {
-      NotificationConstants.LAST_PAGE_NOTIFICATION_ACTION -> true
-      NotificationConstants.REPLY_NOTIFICATION_ACTION -> true
-      else -> false
-    }
-  }
-
-  private suspend fun lastPageNotificationClicked(extras: Bundle) {
-    val threadDescriptors = extras.getParcelableArrayList<DescriptorParcelable>(
-      NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
-    )?.map { it -> ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(it) }
-
-    if (threadDescriptors.isNullOrEmpty()) {
-      return
-    }
-
-    Logger.d(
-      TAG,
-      "onNewIntent() last page notification clicked, threads count = ${threadDescriptors.size}"
-    )
-
-    if (threadDescriptors.size == 1) {
-      drawerController.loadThread(
-        threadDescriptors.first(),
-        closeAllNonMainControllers = true,
-        animated = false
-      )
-    } else {
-      drawerController.openBookmarksController(threadDescriptors)
-    }
-  }
-
-  private suspend fun replyNotificationSwipedAway(extras: Bundle) {
-    val threadDescriptors = extras.getParcelableArrayList<DescriptorParcelable>(
-      NotificationConstants.ReplyNotifications.R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY
-    )?.map { it -> ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(it) }
-
-    if (threadDescriptors.isNullOrEmpty()) {
-      return
-    }
-
-    Logger.d(
-      TAG, "onNewIntent() reply notification swiped away, " +
-        "marking as seen ${threadDescriptors.size} bookmarks"
-    )
-
-    val updatedBookmarkDescriptors = bookmarksManager.updateBookmarks(threadDescriptors) { threadBookmark ->
-      threadBookmark.markAsSeenAllReplies()
-    }
-    bookmarksManager.persistBookmarksManually(updatedBookmarkDescriptors)
-  }
-
-  private suspend fun replyNotificationClicked(extras: Bundle) {
-    val threadDescriptors = extras.getParcelableArrayList<DescriptorParcelable>(
-      NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
-    )?.map { it -> ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(it) }
-
-    if (threadDescriptors.isNullOrEmpty()) {
-      return
-    }
-
-    Logger.d(
-      TAG, "onNewIntent() reply notification clicked, " +
-        "marking as seen ${threadDescriptors.size} bookmarks"
-    )
-
-    if (threadDescriptors.size == 1) {
-      drawerController.loadThread(
-        threadDescriptors.first(),
-        closeAllNonMainControllers = true,
-        animated = false
-      )
-    } else {
-      drawerController.openBookmarksController(threadDescriptors)
-    }
-
-    val updatedBookmarkDescriptors = bookmarksManager.updateBookmarks(threadDescriptors) { threadBookmark ->
-      threadBookmark.markAsSeenAllReplies()
-    }
-    bookmarksManager.persistBookmarksManually(updatedBookmarkDescriptors)
-  }
 
   override fun dispatchKeyEvent(event: KeyEvent): Boolean {
     if (event.keyCode == KeyEvent.KEYCODE_MENU && event.action == KeyEvent.ACTION_DOWN) {
@@ -973,6 +709,6 @@ class StartActivity : AppCompatActivity(),
 
   companion object {
     private const val TAG = "StartActivity"
-    private const val STATE_KEY = "chan_state"
+    const val STATE_KEY = "chan_state"
   }
 }

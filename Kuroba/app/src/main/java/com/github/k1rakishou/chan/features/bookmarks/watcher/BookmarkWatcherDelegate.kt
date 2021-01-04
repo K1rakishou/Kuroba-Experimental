@@ -100,8 +100,10 @@ class BookmarkWatcherDelegate(
 
     if (watchingBookmarkDescriptors.isEmpty()
       && bookmarksManager.activeBookmarksCount() == 0
-      && currentThreadDescriptor == null) {
-      Logger.d(TAG, "BookmarkWatcherDelegate.doWorkInternal() no bookmarks left after filtering, updating notifications")
+      && currentThreadDescriptor == null
+    ) {
+      Logger.d(TAG, "BookmarkWatcherDelegate.doWorkInternal() no bookmarks left after filtering, " +
+        "updating notifications")
       replyNotificationsHelper.showOrUpdateNotifications()
       return
     }
@@ -124,7 +126,7 @@ class BookmarkWatcherDelegate(
             Logger.e(TAG, "fetchThreadBookmarkInfoUseCase.execute() error: ${error.errorMessageOrClassName()}")
           }
 
-          return
+          return@measureTime
         }
 
       printDebugLogs(fetchResults)
@@ -132,7 +134,7 @@ class BookmarkWatcherDelegate(
       if (fetchResults.isEmpty()) {
         Logger.d(TAG, "fetchThreadBookmarkInfoUseCase.execute() returned no fetch results")
         replyNotificationsHelper.showOrUpdateNotifications()
-        return
+        return@measureTime
       }
 
       val successFetchResults = fetchResults.filterIsInstance<ThreadBookmarkFetchResult.Success>()
@@ -150,8 +152,8 @@ class BookmarkWatcherDelegate(
         "activeBookmarksCount=$activeBookmarksCount")
 
       // Do not show notifications for the thread we are currently watching
-      if (currentThreadDescriptor != null) {
-        return
+      if (updateCurrentlyOpenedThread) {
+        return@measureTime
       }
 
       try {
