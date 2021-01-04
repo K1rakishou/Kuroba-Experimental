@@ -24,6 +24,7 @@ import android.content.res.Resources
 import android.graphics.Color
 import android.os.Build
 import android.text.Editable
+import android.text.TextUtils
 import android.text.TextWatcher
 import android.util.AndroidRuntimeException
 import android.util.AttributeSet
@@ -43,6 +44,7 @@ import android.widget.Toast
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.animation.doOnEnd
+import androidx.core.animation.doOnStart
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import com.github.k1rakishou.chan.R
@@ -84,16 +86,17 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.doIgnoringTextWatcher
 import com.github.k1rakishou.chan.utils.setAlphaFast
+import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import com.google.android.material.textview.MaterialTextView
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import javax.inject.Inject
@@ -146,6 +149,8 @@ class ReplyLayout @JvmOverloads constructor(
 
   // Reply views:
   private lateinit var replyInputLayout: View
+  private lateinit var replyInputMessage: MaterialTextView
+  private lateinit var replyInputHolder: FrameLayout
   private lateinit var name: ColorizableEditText
   private lateinit var subject: ColorizableEditText
   private lateinit var flag: ColorizableEditText
@@ -179,6 +184,9 @@ class ReplyLayout @JvmOverloads constructor(
   private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(coroutineScope)
   private val wrappingModeUpdateDebouncer = Debouncer(false)
   private val replyLayoutMessageToast = CancellableToast()
+  private val closeMessageRunnable = Runnable {
+    animateReplyInputMessage(appearance = false)
+  }
 
   override val chanDescriptor: ChanDescriptor?
     get() = threadListLayoutCallbacks?.getCurrentChanDescriptor()
@@ -213,6 +221,8 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   override fun onThemeChanged() {
+    replyInputHolder.setBackgroundColor(themeEngine.chanTheme.backColor)
+
     commentCounter.setTextColor(themeEngine.chanTheme.textColorSecondary)
     val tintColor = themeEngine.resolveTintColor(themeEngine.chanTheme.isBackColorDark)
 
@@ -271,6 +281,8 @@ class ReplyLayout @JvmOverloads constructor(
 
     // Inflate reply input
     replyInputLayout = AppModuleAndroidUtils.inflate(context, R.layout.layout_reply_input, this, false)
+    replyInputMessage = replyInputLayout.findViewById(R.id.reply_input_message)
+    replyInputHolder = replyInputLayout.findViewById(R.id.reply_input_holder)
     name = replyInputLayout.findViewById(R.id.name)
     subject = replyInputLayout.findViewById(R.id.subject)
     flag = replyInputLayout.findViewById(R.id.flag)
@@ -304,10 +316,19 @@ class ReplyLayout @JvmOverloads constructor(
     commentEqnButton.setOnClickListener(this)
     commentSJISButton.setOnClickListener(this)
 
+    replyInputMessage.setOnClickListener {
+      removeCallbacks(closeMessageRunnable)
+      animateReplyInputMessage(appearance = false)
+    }
+
     commentRevertChangeButton.setOnClickListener(this)
     commentRevertChangeButton.setOnLongClickListener {
       presenter.clearCommentChangeHistory()
-      showToast(context, context.getString(R.string.reply_layout_comment_change_history_cleared))
+
+      replyLayoutMessageToast.showToast(
+        context,
+        context.getString(R.string.reply_layout_comment_change_history_cleared)
+      )
       return@setOnLongClickListener true
     }
 
@@ -483,6 +504,7 @@ class ReplyLayout @JvmOverloads constructor(
 
   fun cleanup() {
     presenter.unbindChanDescriptor()
+    removeCallbacks(closeMessageRunnable)
   }
 
   fun onBack(): Boolean {
@@ -720,7 +742,7 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun showAuthenticationFailedError(error: Throwable) {
     val message = getString(R.string.could_not_initialized_captcha, getReason(error))
-    AppModuleAndroidUtils.showToast(context, message, Toast.LENGTH_LONG)
+    replyLayoutMessageToast.showToast(context, message, Toast.LENGTH_LONG)
   }
 
   override fun getTokenOrNull(): String? {
@@ -806,16 +828,42 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun openMessage(message: String?, hideDelayMs: Int) {
     require(hideDelayMs > 0) { "Bad hideDelayMs: $hideDelayMs" }
+    removeCallbacks(closeMessageRunnable)
 
-    if (message.isNullOrEmpty()) {
-      return
+    replyInputMessage.text = message
+
+    if (!TextUtils.isEmpty(message)) {
+      animateReplyInputMessage(appearance = true)
+      postDelayed(closeMessageRunnable, hideDelayMs.toLong())
+    }
+  }
+
+  private fun animateReplyInputMessage(appearance: Boolean) {
+    val valueAnimator = if (appearance) {
+      ValueAnimator.ofFloat(0f, 1f).apply {
+        doOnStart {
+          replyInputHolder.setAlphaFast(0f)
+          replyInputHolder.setVisibilityFast(View.VISIBLE)
+        }
+      }
+    } else {
+      ValueAnimator.ofFloat(1f, 0f).apply {
+        doOnEnd {
+          replyInputHolder.setVisibilityFast(View.GONE)
+        }
+      }
     }
 
-    replyLayoutMessageToast.showToast(context, message, hideDelayMs)
+    valueAnimator.setDuration(200)
+    valueAnimator.addUpdateListener { animator ->
+      val alpha = animator.animatedValue as Float
+      replyInputHolder.alpha = alpha
+    }
+    valueAnimator.start()
   }
 
   override fun onPosted() {
-    AppModuleAndroidUtils.showToast(context, R.string.reply_success)
+    replyLayoutMessageToast.showToast(context, R.string.reply_success)
 
     threadListLayoutCallbacks?.openReply(false)
     threadListLayoutCallbacks?.requestNewPostLoad()
