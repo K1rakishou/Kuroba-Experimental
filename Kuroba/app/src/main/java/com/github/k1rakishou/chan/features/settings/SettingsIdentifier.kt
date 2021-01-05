@@ -117,6 +117,7 @@ sealed class MainScreen(
     MainScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
     object AppVersion : AboutAppGroup("app_version")
+    object Changelog : AboutAppGroup("changelog")
     object Reports : AboutAppGroup("reports")
     object CollectCrashReport : AboutAppGroup("collect_crash_reports")
     object FindAppOnGithub : AboutAppGroup("find_app_on_github")

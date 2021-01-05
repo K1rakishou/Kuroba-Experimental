@@ -212,6 +212,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="open_link_confirmation">Open this link?</string>
     <string name="open_thread_confirmation">Open this thread?</string>
     <string name="open_link_failed">No applications were found to open this link</string>
+    <string name="open_link_failed_url">No applications were found to open link \"%1$s\"</string>
     <string name="open_file_picker_failed">No file picker applications were found</string>
     <string name="image_pick_delegate_select_file_picker">Select a file picker to open a file…</string>
     <string name="action_confirm_exit">Tap back again to exit</string>
@@ -1149,6 +1150,7 @@ Don't have a 4chan Pass?<br>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
     <string name="updater_is_disabled_for_dev_builds">Updater is disabled for dev builds</string>
     <string name="updater_is_disabled_for_fdroid_builds">Updater is disabled for F-Droid builds</string>
+    <string name="see_changelog_for_this_version">Changelog</string>
     <string name="doing_heavy_lifting_please_wait">Doing heavy lifting, please wait…</string>
     <string name="decoding_reply_file_preview">Decoding file preview, this may take some time</string>
     <string name="downloading_file">Downloading file, this may take some time</string>

@@ -163,47 +163,61 @@ public class AppModuleAndroidUtils {
      */
     public static void openLink(String link) {
         if (TextUtils.isEmpty(link)) {
-            showToast(application, R.string.open_link_failed, Toast.LENGTH_LONG);
+            showToast(application, getString(R.string.open_link_failed_url, link), Toast.LENGTH_LONG);
             return;
         }
-        PackageManager pm = application.getPackageManager();
 
+        PackageManager pm = application.getPackageManager();
         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
 
         ComponentName resolvedActivity = intent.resolveActivity(pm);
         if (resolvedActivity == null) {
-            showToast(application, R.string.open_link_failed, Toast.LENGTH_LONG);
-        } else {
-            boolean thisAppIsDefault = resolvedActivity.getPackageName().equals(application.getPackageName());
-            if (!thisAppIsDefault) {
-                openIntent(intent);
-            } else {
-                // Get all intents that match, and filter out this app
-                List<ResolveInfo> resolveInfos = pm.queryIntentActivities(intent, 0);
-                List<Intent> filteredIntents = new ArrayList<>(resolveInfos.size());
-                for (ResolveInfo info : resolveInfos) {
-                    if (!info.activityInfo.packageName.equals(application.getPackageName())) {
-                        Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
-                        i.setPackage(info.activityInfo.packageName);
-                        filteredIntents.add(i);
-                    }
-                }
+            showToast(application, getString(R.string.open_link_failed_url, link), Toast.LENGTH_LONG);
+            return;
+        }
 
-                if (filteredIntents.size() > 0) {
-                    // Create a chooser for the last app in the list, and add the rest with EXTRA_INITIAL_INTENTS that get placed above
-                    Intent chooser = Intent.createChooser(filteredIntents.remove(filteredIntents.size() - 1), null);
-                    chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, filteredIntents.toArray(new Intent[0]));
-                    openIntent(chooser);
-                } else {
-                    showToast(application, R.string.open_link_failed, Toast.LENGTH_LONG);
-                }
+        boolean thisAppIsDefault = resolvedActivity.getPackageName()
+                .equals(application.getPackageName());
+
+        if (!thisAppIsDefault) {
+            openIntent(intent);
+            return;
+        }
+
+        // Get all intents that match, and filter out this app
+        List<ResolveInfo> resolveInfos = pm.queryIntentActivities(intent, 0);
+        List<Intent> filteredIntents = new ArrayList<>(resolveInfos.size());
+
+        for (ResolveInfo info : resolveInfos) {
+            if (!info.activityInfo.packageName.equals(application.getPackageName())) {
+                Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
+                i.setPackage(info.activityInfo.packageName);
+                filteredIntents.add(i);
             }
+        }
+
+        if (filteredIntents.size() > 0) {
+            // Create a chooser for the last app in the list, and add the rest with
+            // EXTRA_INITIAL_INTENTS that get placed above
+            Intent chooser = Intent.createChooser(
+                    filteredIntents.remove(filteredIntents.size() - 1),
+                    null
+            );
+
+            chooser.putExtra(
+                    Intent.EXTRA_INITIAL_INTENTS,
+                    filteredIntents.toArray(new Intent[0])
+            );
+
+            openIntent(chooser);
+        } else {
+            showToast(application, getString(R.string.open_link_failed_url, link), Toast.LENGTH_LONG);
         }
     }
 
     public static void openLinkInBrowser(Context context, String link, ChanTheme theme) {
         if (TextUtils.isEmpty(link)) {
-            showToast(context, R.string.open_link_failed);
+            showToast(context, getString(R.string.open_link_failed_url, link));
             return;
         }
 
@@ -226,15 +240,19 @@ public class AppModuleAndroidUtils {
         }
 
         CustomTabsIntent tabsIntent = new CustomTabsIntent.Builder()
-                .setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder()
-                        .setToolbarColor(theme.getBackColor()).build())
+                .setDefaultColorSchemeParams(
+                        new CustomTabColorSchemeParams.Builder()
+                                .setToolbarColor(theme.getBackColor())
+                                .setNavigationBarColor(theme.getBackColor())
+                                .build()
+                )
                 .build();
 
         try {
             tabsIntent.launchUrl(context, Uri.parse(link));
         } catch (ActivityNotFoundException e) {
             // Can't check it beforehand so catch the exception
-            showToast(context, R.string.open_link_failed, Toast.LENGTH_LONG);
+            showToast(context, getString(R.string.open_link_failed_url, link), Toast.LENGTH_LONG);
         }
     }
 

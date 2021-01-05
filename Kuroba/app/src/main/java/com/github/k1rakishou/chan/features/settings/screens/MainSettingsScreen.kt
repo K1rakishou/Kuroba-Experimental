@@ -96,6 +96,16 @@ class MainSettingsScreen(
 
         group += LinkSettingV2.createBuilder(
           context = context,
+          identifier = MainScreen.AboutAppGroup.Changelog,
+          topDescriptionIdFunc = { R.string.see_changelog_for_this_version },
+          callback = {
+            val changelogUrl = BuildConfig.GITHUB_CHANGELOGS_ENDPOINT + BuildConfig.VERSION_CODE + ".txt"
+            openLink(changelogUrl)
+          }
+        )
+
+        group += LinkSettingV2.createBuilder(
+          context = context,
           identifier = MainScreen.AboutAppGroup.Reports,
           topDescriptionIdFunc = { R.string.settings_report },
           bottomDescriptionIdFunc = { R.string.settings_report_description },
