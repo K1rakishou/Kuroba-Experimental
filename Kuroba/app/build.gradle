@@ -5,12 +5,6 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'de.undercouch.download'
 
 android {
-    // !!! IMPORTANT !!!
-    // When changing any of the following: compileSdkVersion, targetSdkVersion
-    // don't forget to also update travis.yml config
-    // !!! IMPORTANT !!!
-
-    buildToolsVersion "29.0.3"
     compileSdkVersion 30
 
     def getCommitHash = { ->
