@@ -16,8 +16,8 @@ android:
     - platform-tools
     - tools
     - extra-android-m2repository
-    - build-tools-29.0.3
-    - android-29
+    - build-tools-30.0.3
+    - android-30
 install:
   - sudo apt-get update
   - sudo apt-get install python3
