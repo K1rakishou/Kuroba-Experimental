@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.ui.view;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.RectF;
 
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
@@ -24,8 +25,7 @@ import com.github.k1rakishou.common.DoNotStrip;
 import com.github.k1rakishou.core_logger.Logger;
 
 @DoNotStrip
-public class CustomScaleImageView
-        extends SubsamplingScaleImageView {
+public class CustomScaleImageView extends SubsamplingScaleImageView {
     private static final String TAG = "CustomScaleImageView";
     private static final float EPSILON = 0.00001f;
 
@@ -34,6 +34,7 @@ public class CustomScaleImageView
 
     public CustomScaleImageView(Context context) {
         super(context);
+        setPreferredBitmapConfig(Bitmap.Config.ARGB_8888);
         setOnImageEventListener(new DefaultOnImageEventListener() {
             @Override
             public void onReady() {
