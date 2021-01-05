@@ -35,4 +35,4 @@ for different sites could have the same name.
 use it too for threads with thousands of replies that are not rolling sticky threads).
 - Fix a bug where current scroll position was not saved after using fast scroller.
 
-The toolbar search is still broken is will be fixed in v0.4.1
+The toolbar search is still broken is will be fixed in v0.4.1 (or later)

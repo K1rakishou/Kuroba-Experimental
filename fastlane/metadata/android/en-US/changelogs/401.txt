@@ -1,3 +1,42 @@
+v0.4.0-beta
+
+Important! Due to a possibility of a really nasty bug happening all site settings have been reset
+to defaults (captcha type/passcode/pol flag/etc.). Unfortunately, you will have to re-enter them
+manually.
+
+- TargetSdk 30. For people using Android 10 and below nothing should change.
+But if you are already using Android 11 then you will notice that you can't use "Java File API"
+anymore when selecting a directory for downloaded files and can only use SAF API.
+This is due to Android limitation and new Scoped Storage feature which is forced upon everyone and
+there is no way to avoid it. You will probably also notice that all file operations
+(like downloading multiple files) are now slow as hell. This is because of SAF/Scope Storage too.
+Say your thanks too Google for this wonderful "feature".
+- New reply layout attach files section. It is now possible to attach multiple files per post
+(depends on site). It is now possible to share external media into the app (including sharing media
+via keyboard).
+- (2ch.hk) It's now possible to load passcode information (like max allowed images per post or
+max total file size per post) which will be used to figure out whether you can post or not.
+To do that you need to click "Refresh posting limits info" after logging in with your passcode.
+If you ever change your passcode you will have to refresh it that again.
+- When selecting an external file picker it will now be remembered (you can change it by long
+pressing the "Attach new file" button and selecting a different file picker).
+- Fix a bug where a theme is not applied on app start if "Ignore system Day/Night mode" is disabled.
+- Add interval setting for foreground thread watcher (also add a setting to enable/disable adaptive
+foreground thread info refresh interval).
+- Add BigTextStyle notification style for reply notifications (when there is currently only one
+active reply notification).
+- Images of hidden/removed posts will not show up in image viewer/gallery anymore.
+- Site settings were extracted into their own separate files to avoid nasty bugs where two settings
+for different sites could have the same name.
+- Chunked downloading setting can now be applied separately for each site (including archives).
+- It's now possible to hide thread history in the drawer and only leave bookmarks or vice versa.
+- Release builds can now show logs (When "Verbose logs" setting is enabled).
+- Add ability to manually set thread posts cap (it's more like a debug setting but you can
+use it too for threads with thousands of replies that are not rolling sticky threads).
+- Fix a bug where current scroll position was not saved after using fast scroller.
+
+The toolbar search is still broken is will be fixed in v0.4.1 (or later)
+
 v0.4.1-beta
 
 - Fix a crash that is caused by wrong Context object used for dialogs creation in UpdateManager.
