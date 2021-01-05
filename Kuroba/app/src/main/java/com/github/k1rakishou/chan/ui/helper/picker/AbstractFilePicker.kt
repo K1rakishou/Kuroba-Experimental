@@ -131,9 +131,9 @@ abstract class AbstractFilePicker<T>(
     class FailedToAddNewReplyFileIntoStorage : FilePickerError("Failed to add new reply file into reply storage")
 
     // Remote errors
-    class BadUrl(url: String) : FilePickerError("Bad url '$url'")
-    class FileNotFound(url: String) : FilePickerError("Remote file '$url' not found")
-    class FailedToDownloadFile(url: String, reason: Throwable) : FilePickerError("Failed to download file '$url', reason: ${reason.errorMessageOrClassName()}")
+    class BadUrl(url: String) : FilePickerError("Bad url \"$url\"")
+    class FileNotFound(url: String) : FilePickerError("Remote file \"$url\" not found")
+    class FailedToDownloadFile(url: String, reason: Throwable) : FilePickerError("Failed to download file \"$url\", reason: ${reason.errorMessageOrClassName()}")
 
     // Sharing errors
     class UnknownIntent : FilePickerError("Unknown intent")
