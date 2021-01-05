@@ -1,7 +1,5 @@
 package com.github.k1rakishou.chan.core.di.module.activity;
 
-import android.content.Context;
-
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
@@ -31,7 +29,7 @@ public class ActivityModule {
     @Provides
     @PerActivity
     public UpdateManager provideUpdateManager(
-            Context appContext,
+            AppCompatActivity activity,
             FileCacheV2 fileCacheV2,
             FileManager fileManager,
             SettingsNotificationManager settingsNotificationManager,
@@ -42,7 +40,7 @@ public class ActivityModule {
             BoardManager boardManager
     ) {
         return new UpdateManager(
-                appContext,
+                activity,
                 fileCacheV2,
                 fileManager,
                 settingsNotificationManager,
