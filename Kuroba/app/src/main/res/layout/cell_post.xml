@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_height="match_parent"
         android:layout_marginTop="2dp"
         android:layout_marginBottom="2dp"
-        android:visibility="gone" />
+        android:visibility="invisible" />
 
     <RelativeLayout
         android:id="@+id/relative_layout_container"

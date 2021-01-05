@@ -481,7 +481,7 @@ class PostCell : LinearLayout, PostCellInterface {
     }
 
     // No filters for this post and the user has already seen it
-    postAttentionLabel.setVisibilityFast(View.GONE)
+    postAttentionLabel.setVisibilityFast(View.INVISIBLE)
   }
 
   private fun bindBackgroundColor(theme: ChanTheme, post: ChanPost) {
