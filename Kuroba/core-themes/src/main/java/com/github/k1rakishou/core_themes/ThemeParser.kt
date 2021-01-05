@@ -45,6 +45,7 @@ class ThemeParser(
     return withContext(Dispatchers.Default) {
       val result = Try { exportThemeInternal(file, theme) }
       if (result is ModularResult.Error) {
+        fileManager.delete(file)
         return@withContext ThemeExportResult.Error(result.error)
       }
 
