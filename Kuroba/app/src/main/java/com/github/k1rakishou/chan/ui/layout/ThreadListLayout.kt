@@ -1055,6 +1055,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   override fun onDragEnded() {
+    // Fast scroller does not trigger RecyclerView's onScrollStateChanged() so we need to call it
+    //  manually after we are down scrolling via Fast scroller.
+    onRecyclerViewScrolled()
+
     if (!canToolbarCollapse()) {
       return
     }
