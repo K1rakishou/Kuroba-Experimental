@@ -1,0 +1,3 @@
+v0.4.1-beta
+
+- Fix a crash that is caused by wrong Context object used for dialogs creation in UpdateManager.
