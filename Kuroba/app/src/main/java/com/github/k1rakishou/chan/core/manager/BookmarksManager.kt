@@ -144,7 +144,9 @@ class BookmarksManager(
     if (threadDescriptor == currentlyOpenedThread()) {
       val isActive = lock.read { bookmarks[threadDescriptor]?.isActive() ?: false }
       if (isActive) {
-        threadIsFetchingEventsSubject.onNext(threadDescriptor)
+        synchronized(this) {
+          threadIsFetchingEventsSubject.onNext(threadDescriptor)
+        }
       }
     }
   }

@@ -500,9 +500,18 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         } else {
             Matcher quoteMatcher = matchInternalQuote(href, post);
             if (quoteMatcher.matches()) {
-                // link to post backup???
-                type = PostLinkable.Type.QUOTE;
-                value = new PostLinkable.Value.IntegerValue(Integer.parseInt(quoteMatcher.group(1)));
+                long postId = Long.parseLong(quoteMatcher.group(1));
+
+                if (callback.isInternal(postId)) {
+                    // Normal post quote
+                    type = PostLinkable.Type.QUOTE;
+                } else {
+                    // Most likely a quote to a deleted post (Or any other post that we don't have
+                    // in the cache).
+                    type = PostLinkable.Type.DEAD;
+                }
+
+                value = new PostLinkable.Value.LongValue(postId);
             } else {
                 Matcher boardLinkMatcher = matchBoardLink(href, post);
                 Matcher boardSearchMatcher = matchBoardSearch(href, post);

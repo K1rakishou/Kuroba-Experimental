@@ -290,10 +290,8 @@ class ChanThreadManager(
       // Do not load new posts from the network, just refresh memory caches with data from the
       //  database
       return when (chanDescriptor) {
-        is ChanDescriptor.ThreadDescriptor ->
-          chanThreadLoaderCoordinator.reloadThreadFromDatabase(chanDescriptor)
-        is ChanDescriptor.CatalogDescriptor ->
-          chanThreadLoaderCoordinator.reloadCatalogFromDatabase(chanDescriptor)
+        is ChanDescriptor.ThreadDescriptor -> chanThreadLoaderCoordinator.reloadThreadFromDatabase(chanDescriptor)
+        is ChanDescriptor.CatalogDescriptor -> chanThreadLoaderCoordinator.reloadCatalogFromDatabase(chanDescriptor)
       }
     }
 

@@ -71,7 +71,6 @@ open class PostLinkable(
       Type.ARCHIVE -> {
         if (type == Type.QUOTE) {
           val value = when (linkableValue) {
-            is Value.IntegerValue -> linkableValue.value.toLong()
             is Value.LongValue -> linkableValue.value
             else -> throw IllegalArgumentException(
               "Unsupported value type: ${linkableValue::class.java.simpleName}"
@@ -156,7 +155,6 @@ open class PostLinkable(
 
     fun extractLongOrNull(): Long? {
       return when (this) {
-        is IntegerValue -> value.toLong()
         is LongValue -> value
         is StringValue,
         is ThreadLink,
@@ -167,7 +165,6 @@ open class PostLinkable(
     }
 
     object NoValue : Value()
-    data class IntegerValue(val value: Int) : Value()
     data class LongValue(val value: Long) : Value()
     data class StringValue(val value: CharSequence) : Value()
     data class ThreadLink(var board: String, var threadId: Long, var postId: Long) : Value()

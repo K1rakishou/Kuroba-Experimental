@@ -1606,7 +1606,7 @@ class ThreadPresenter @Inject constructor(
 
     // force reload for reply highlighting
     normalLoad(
-      showLoading = false,
+      showLoading = true,
       chanLoadOptions = ChanLoadOptions.ClearMemoryCache
     )
   }
