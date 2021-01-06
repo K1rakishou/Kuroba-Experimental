@@ -38,9 +38,11 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager.widget.ViewPager
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
@@ -53,6 +55,7 @@ import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
 import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
@@ -113,6 +116,8 @@ class ThemeSettingsController(context: Context) : Controller(context),
   lateinit var fileManager: FileManager
   @Inject
   lateinit var fileChooser: FileChooser
+  @Inject
+  lateinit var dialogFactory: DialogFactory
 
   private val dummyBoardDescriptor =
     BoardDescriptor.create("test_site", "test_board")
@@ -163,6 +168,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
 
   private lateinit var pager: ViewPager
   private lateinit var currentThemeIndicator: TextView
+  private lateinit var applyThemeFab: ColorizableFloatingActionButton
   private var currentItemIndex = 0
 
   override fun injectDependencies(component: ActivityComponent) {
@@ -193,9 +199,43 @@ class ThemeSettingsController(context: Context) : Controller(context),
     view = inflate(context, R.layout.controller_theme)
     pager = view.findViewById(R.id.pager)
     currentThemeIndicator = view.findViewById(R.id.current_theme_indicator)
-    updateCurrentThemeIndicator(true)
+    applyThemeFab = view.findViewById(R.id.apply_theme_button)
 
+    applyThemeFab.setOnClickListener {
+      val switchToDark = currentItemIndex != 0
+      themeEngine.switchTheme(switchToDarkTheme = switchToDark)
+    }
+
+    currentItemIndex = if (themeEngine.chanTheme.isLightTheme) {
+      0
+    } else {
+      1
+    }
+
+    updateCurrentThemeIndicator(true)
     reload()
+
+    if (AndroidUtils.isAndroid10()) {
+      showIgnoreDayNightModeDialog()
+    }
+  }
+
+  private fun showIgnoreDayNightModeDialog() {
+    if (ChanSettings.ignoreDarkNightMode.get()) {
+      return
+    }
+
+    if (PersistableChanState.themesIgnoreSystemDayNightModeMessageShown.get()) {
+      return
+    }
+
+    dialogFactory.createSimpleInformationDialog(
+      context = context,
+      titleText = context.getString(R.string.android_day_night_mode_dialog_title),
+      descriptionText = context.getString(R.string.android_day_night_mode_dialog_description)
+    )
+
+    PersistableChanState.themesIgnoreSystemDayNightModeMessageShown.set(true)
   }
 
   private fun onIgnoreDarkNightModeClick(item: ToolbarMenuSubItem) {
@@ -585,6 +625,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
     )
 
     val toolbar = Toolbar(context)
+    toolbar.setIgnoreThemeChanges()
     toolbar.setBackgroundColor(theme.primaryColor)
 
     val item = NavigationItem()

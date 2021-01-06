@@ -15,9 +15,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingCoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical">
 
     <LinearLayout
@@ -31,11 +31,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
-            android:textSize="20sp"
-            android:textColor="#000"
             android:paddingTop="4dp"
             android:paddingBottom="4dp"
-            tools:text="Current theme: Light"/>
+            android:textColor="#000"
+            android:textSize="20sp"
+            tools:text="Current theme: Light" />
 
         <androidx.viewpager.widget.ViewPager
             android:id="@+id/pager"
@@ -46,8 +46,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:paddingLeft="16dp"
             android:paddingTop="16dp"
             android:paddingRight="16dp"
-            android:paddingBottom="32dp" />
+            android:paddingBottom="48dp" />
 
     </LinearLayout>
+
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
+        android:id="@+id/apply_theme_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:src="@drawable/ic_done_white_24dp"/>
 
 </com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingCoordinatorLayout>

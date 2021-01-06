@@ -43,6 +43,8 @@ object PersistableChanState {
   lateinit var lastRememberedFilePicker: StringSetting
   @JvmStatic
   lateinit var safExplanationMessageShown: BooleanSetting
+  @JvmStatic
+  lateinit var themesIgnoreSystemDayNightModeMessageShown: BooleanSetting
 
   fun init(persistableChanStateInfo: PersistableChanStateInfo) {
     this.persistableChanStateInfo = persistableChanStateInfo
@@ -52,52 +54,57 @@ object PersistableChanState {
 
   private fun initInternal() {
     try {
-      val p = SharedPreferencesSettingProvider(AndroidUtils.getAppState())
-      watchLastCount = IntegerSetting(p, "watch_last_count", 0)
+      val provider = SharedPreferencesSettingProvider(AndroidUtils.getAppState())
+      watchLastCount = IntegerSetting(provider, "watch_last_count", 0)
       hasNewApkUpdate =
         BooleanSetting(
-          p,
+          provider,
           "has_new_apk_update",
           false
         )
-      previousVersion = IntegerSetting(p, "previous_version", persistableChanStateInfo.versionCode)
-      updateCheckTime =
-        LongSetting(p, "update_check_time", 0L)
-      previousDevHash = StringSetting(p, "previous_dev_hash", persistableChanStateInfo.commitHash)
+      previousVersion = IntegerSetting(provider, "previous_version", persistableChanStateInfo.versionCode)
+      updateCheckTime = LongSetting(provider, "update_check_time", 0L)
+      previousDevHash = StringSetting(provider, "previous_dev_hash", persistableChanStateInfo.commitHash)
       viewThreadBookmarksGridMode = BooleanSetting(
-        p,
+        provider,
         "view_thread_bookmarks_grid_mode",
         true
       )
 
       shittyPhonesBackgroundLimitationsExplanationDialogShown =
         BooleanSetting(
-          p,
+          provider,
           "shitty_phones_background_limitations_explanation_dialog_shown",
           false
         )
 
       bookmarksRecyclerIndexAndTop = StringSetting(
-        p,
+        provider,
         "bookmarks_recycler_index_and_top",
         BookmarksRecyclerIndexAndTopInfo.defaultJson(viewThreadBookmarksGridMode)
       )
 
       proxyEditingNotificationShown = BooleanSetting(
-        p,
+        provider,
         "proxy_editing_notification_shown",
         false
       )
 
       lastRememberedFilePicker = StringSetting(
-        p,
+        provider,
         "last_remembered_file_picker",
         ""
       )
 
       safExplanationMessageShown = BooleanSetting(
-        p,
+        provider,
         "saf_explanation_message_shown",
+        false
+      )
+
+      themesIgnoreSystemDayNightModeMessageShown = BooleanSetting(
+        provider,
+        "themes_ignore_system_day_night_mode_message_shown",
         false
       )
     } catch (e: Exception) {

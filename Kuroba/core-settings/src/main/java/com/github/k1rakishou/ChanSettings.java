@@ -516,7 +516,7 @@ public class ChanSettings {
             threadOpenCounter = new CounterSetting(provider, "counter_thread_open");
             drawerAutoOpenCount = new IntegerSetting(provider, "drawer_auto_open_count", 0);
             reencodeHintShown = new BooleanSetting(provider, "preference_reencode_hint_already_shown", false);
-            ignoreDarkNightMode = new BooleanSetting(provider, "ignore_dark_night_mode", false);
+            ignoreDarkNightMode = new BooleanSetting(provider, "ignore_dark_night_mode", true);
 
             bookmarksSortOrder = new OptionsSetting<>(provider,
                     "bookmarks_comparator",

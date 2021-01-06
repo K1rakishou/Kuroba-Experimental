@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.DrawableCompat
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.file.ExternalFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -51,16 +52,24 @@ open class ThemeEngine(
     val nightModeFlag = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
     if (nightModeFlag == Configuration.UI_MODE_NIGHT_UNDEFINED || ChanSettings.ignoreDarkNightMode.get()) {
       chanTheme = if (ChanSettings.isCurrentThemeDark.get()) {
-        actualDarkTheme ?: defaultDarkTheme
+        darkTheme()
       } else {
-        actualLightTheme ?: defaultLightTheme
+        lightTheme()
       }
-    } else {
-      chanTheme = when (nightModeFlag) {
-        Configuration.UI_MODE_NIGHT_NO -> defaultLightTheme
-        Configuration.UI_MODE_NIGHT_YES -> defaultDarkTheme
-        else -> defaultDarkTheme
+
+      return
+    }
+
+    chanTheme = when (nightModeFlag) {
+      Configuration.UI_MODE_NIGHT_NO -> {
+        ChanSettings.isCurrentThemeDark.set(false)
+        lightTheme()
       }
+      Configuration.UI_MODE_NIGHT_YES -> {
+        ChanSettings.isCurrentThemeDark.set(true)
+        darkTheme()
+      }
+      else -> defaultDarkTheme
     }
   }
 
@@ -187,21 +196,22 @@ open class ThemeEngine(
 
   private fun getThemeInternal(isDarkTheme: Boolean): ChanTheme {
     return if (isDarkTheme) {
-      actualDarkTheme ?: defaultDarkTheme
+      darkTheme()
     } else {
-      actualLightTheme ?: defaultLightTheme
+      lightTheme()
     }
   }
 
   suspend fun tryParseAndApplyTheme(file: ExternalFile, isDarkTheme: Boolean): ThemeParser.ThemeParseResult {
     val defaultTheme = if (isDarkTheme) {
-      defaultDarkTheme
+      darkTheme()
     } else {
-      defaultLightTheme
+      lightTheme()
     }
 
     val themeParseResult = themeParser.parseTheme(file, defaultTheme)
     if (themeParseResult !is ThemeParser.ThemeParseResult.Success) {
+      Logger.e(TAG, "themeParser.parseTheme() error=${themeParseResult}")
       return themeParseResult
     }
 
@@ -211,6 +221,7 @@ open class ThemeEngine(
       actualLightTheme = themeParseResult.chanTheme
     }
 
+    ChanSettings.isCurrentThemeDark.set(isDarkTheme)
     chanTheme = themeParseResult.chanTheme
     refreshViews()
 
@@ -218,7 +229,13 @@ open class ThemeEngine(
   }
 
   suspend fun exportTheme(file: ExternalFile, darkTheme: Boolean): ThemeParser.ThemeExportResult {
-    return themeParser.exportTheme(file, getThemeInternal(darkTheme))
+    val result = themeParser.exportTheme(file, getThemeInternal(darkTheme))
+
+    if (result !is ThemeParser.ThemeExportResult.Success) {
+      Logger.e(TAG, "themeParser.parseTheme() error=${result}")
+    }
+
+    return result
   }
 
   fun resetTheme(darkTheme: Boolean): Boolean {
@@ -268,6 +285,8 @@ open class ThemeEngine(
   }
 
   companion object {
+    private const val TAG = "ThemeEngine"
+
     val LIGHT_DRAWABLE_TINT = Color.parseColor("#EEEEEE")
     val DARK_DRAWABLE_TINT = Color.parseColor("#7E7E7E")
 

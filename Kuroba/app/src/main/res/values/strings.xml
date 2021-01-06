@@ -1165,5 +1165,7 @@ Don't have a 4chan Pass?<br>
     <string name="share_error_message">Failed to add new file(s), see logs for more info</string>
     <string name="attached_file_info">Attached file info</string>
     <string name="reply_layout_comment_change_history_cleared">Comment change history cleared</string>
+    <string name="android_day_night_mode_dialog_title">Android 10 Day/Night mode</string>
+    <string name="android_day_night_mode_dialog_description">On Android 10 (and above) you may want to enable "Ignore system Day/Night mode" setting. Otherwise the app theme will be based on your system Day/Night mode which may seem as an unexpected behavior.</string>
 
 </resources>

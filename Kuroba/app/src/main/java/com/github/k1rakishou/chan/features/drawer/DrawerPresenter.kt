@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
+import okhttp3.HttpUrl
 import kotlin.time.ExperimentalTime
 import kotlin.time.seconds
 
@@ -103,28 +104,34 @@ class DrawerPresenter(
     val chanOriginalPost = chanThreadManager.getChanThread(threadDescriptor)
       ?.getOriginalPost()
 
-    if (chanOriginalPost == null) {
-      return null
+    var opThumbnailUrl: HttpUrl? = null
+    var title: String? = null
+
+    if (chanOriginalPost != null) {
+      opThumbnailUrl = chanThreadManager.getChanThread(threadDescriptor)
+        ?.getOriginalPost()
+        ?.firstImage()
+        ?.actualThumbnailUrl
+
+      title = ChanPostUtils.getTitle(
+        chanOriginalPost,
+        threadDescriptor
+      )
+    } else {
+      bookmarksManager.viewBookmark(threadDescriptor) { threadBookmarkView ->
+        opThumbnailUrl = threadBookmarkView.thumbnailUrl
+        title = threadBookmarkView.title
+      }
     }
 
-    val opThumbnailUrl = chanThreadManager.getChanThread(threadDescriptor)
-      ?.getOriginalPost()
-      ?.firstImage()
-      ?.actualThumbnailUrl
-
-    val title = ChanPostUtils.getTitle(
-      chanOriginalPost,
-      threadDescriptor
-    )
-
-    if (opThumbnailUrl == null || title.isEmpty()) {
+    if (opThumbnailUrl == null || title.isNullOrEmpty()) {
       return null
     }
 
     return HistoryNavigationManager.NewNavigationElement(
       threadDescriptor,
-      opThumbnailUrl,
-      title
+      opThumbnailUrl!!,
+      title!!
     )
   }
 

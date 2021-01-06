@@ -130,6 +130,7 @@ public class Toolbar
     private ToolbarContainer navigationItemContainer;
     private int lastScrollDeltaOffset;
     private int scrollOffset;
+    private boolean ignoreThemeChanges = false;
     private List<ToolbarCollapseCallback> collapseCallbacks = new ArrayList<>();
     private List<ToolbarHeightUpdatesCallback> heightUpdatesCallbacks = new ArrayList<>();
 
@@ -213,6 +214,10 @@ public class Toolbar
 
     @Override
     public void onThemeChanged() {
+        if (ignoreThemeChanges) {
+            return;
+        }
+
         setBackgroundColor(themeEngine.getChanTheme().getPrimaryColor());
     }
 
@@ -245,6 +250,10 @@ public class Toolbar
         );
 
         return true;
+    }
+
+    public void setIgnoreThemeChanges() {
+        ignoreThemeChanges = true;
     }
 
     public void setInImmersiveMode(boolean inImmersiveMode) {
