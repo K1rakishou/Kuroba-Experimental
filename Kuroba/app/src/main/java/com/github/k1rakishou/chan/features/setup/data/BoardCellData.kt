@@ -23,4 +23,8 @@ class BoardCellData(
     return boardDescriptor.hashCode()
   }
 
+  override fun toString(): String {
+    return "BoardCellData(boardDescriptor=$boardDescriptor, name='$name', description='$description')"
+  }
+
 }

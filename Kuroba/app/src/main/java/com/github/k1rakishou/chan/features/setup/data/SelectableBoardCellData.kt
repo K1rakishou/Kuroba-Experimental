@@ -20,4 +20,8 @@ class SelectableBoardCellData(
     return boardCellData.hashCode()
   }
 
+  override fun toString(): String {
+    return "SelectableBoardCellData(boardCellData=$boardCellData, selected=$selected)"
+  }
+
 }

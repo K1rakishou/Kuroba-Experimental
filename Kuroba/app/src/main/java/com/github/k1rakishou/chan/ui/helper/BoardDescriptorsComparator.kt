@@ -19,11 +19,25 @@ class BoardDescriptorsComparator<T>(
     val (maxOccurrenceLen1, position1) = queryOccurrenceLengthAndPosition(query, boardCode1)
     val (maxOccurrenceLen2, position2) = queryOccurrenceLengthAndPosition(query, boardCode2)
 
-    val occurrencesResult = maxOccurrenceLen1.compareTo(maxOccurrenceLen2)
-    val positionsResult = position1.compareTo(position2)
-    val boardCodeLengthsResult = boardCode1.length.compareTo(boardCode2.length)
+    if (position1 < position2) {
+      return -1
+    } else if (position1 > position2) {
+      return 1
+    }
 
-    return occurrencesResult + positionsResult + boardCodeLengthsResult
+    if (maxOccurrenceLen1 < maxOccurrenceLen2) {
+      return -1
+    } else if (maxOccurrenceLen1 > maxOccurrenceLen2) {
+      return 1
+    }
+
+    if (boardCode1.length < boardCode2.length) {
+      return -1
+    } else if (boardCode1.length > boardCode2.length) {
+      return 1
+    }
+
+    return boardCode1.compareTo(boardCode2)
   }
 
   private fun queryOccurrenceLengthAndPosition(query: String, boardCode: String): Pair<Int, Int> {
