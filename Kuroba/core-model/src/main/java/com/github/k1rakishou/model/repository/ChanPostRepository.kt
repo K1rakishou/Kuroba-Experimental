@@ -479,24 +479,6 @@ class ChanPostRepository(
     return postsThatDifferWithCache.size
   }
 
-  suspend fun cleanupPostsInRollingStickyThread(
-    threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    threadCap: Int
-  ): ModularResult<Unit> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
-        val chanThread = chanThreadsCache.getThread(threadDescriptor)
-          ?: return@tryWithTransaction
-
-        val postDescriptors = chanThread.cleanupPostsInRollingStickyThread(threadCap)
-        localSource.deletePosts(postDescriptors)
-
-        Logger.d(TAG, "cleanupPostsInRollingStickyThread() deleted ${postDescriptors.size} " +
-          "posts from cache and database")
-      }
-    }
-  }
-
   @OptIn(ExperimentalTime::class)
   suspend fun deleteOldPostsIfNeeded(forced: Boolean = false): ModularResult<ChanPostLocalSource.DeleteResult> {
     return applicationScope.myAsync {

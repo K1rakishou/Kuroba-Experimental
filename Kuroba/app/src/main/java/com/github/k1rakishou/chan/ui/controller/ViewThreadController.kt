@@ -40,7 +40,6 @@ import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoC
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
-import com.github.k1rakishou.chan.ui.controller.settings.RangeSettingUpdaterController
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem
@@ -240,8 +239,6 @@ open class ViewThreadController(
   }
 
   private fun NavigationItem.MenuOverflowBuilder.withThreadOptions(): NavigationItem.MenuOverflowBuilder {
-    val maxDisplayedPostsCapString = getMaxDisplayedPostsCapString()
-
     return withNestedOverflow(
       ACTION_THREAD_OPTIONS,
       R.string.action_thread_options,
@@ -275,23 +272,7 @@ open class ViewThreadController(
         ChanSettings.markCrossThreadQuotesOnScrollbar.get(),
         ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR
       ) { item -> onScrollbarLabelingOptionClicked(item) }
-      .addNestedItem(
-        ACTION_SET_THREAD_MAX_POSTS_CAP,
-        maxDisplayedPostsCapString,
-        true,
-        null
-      ) { item -> onChangeThreadMaxPostsCapacityOptionClicked(item) }
       .build()
-  }
-
-  private fun getMaxDisplayedPostsCapString(): String? {
-    val current = if (ChanSettings.threadMaxPostCapacity.isDefault) {
-      "disabled"
-    } else {
-      ChanSettings.threadMaxPostCapacity.get()
-    }
-
-    return getString(R.string.action_set_thread_max_displayed_posts_capacity, current)
   }
 
   private fun albumClicked(item: ToolbarMenuItem) {
@@ -443,46 +424,6 @@ open class ViewThreadController(
     } else {
       throw IllegalStateException("Unknown clickedItemId $clickedItemId")
     }
-  }
-
-  private fun onChangeThreadMaxPostsCapacityOptionClicked(item: ToolbarMenuSubItem) {
-    val minPostsCap = ChanSettings.threadMaxPostCapacity.min
-    val maxPostsCap = ChanSettings.threadMaxPostCapacity.max
-    val currentPostsCap = ChanSettings.threadMaxPostCapacity.get()
-    val defaultPostsCap = ChanSettings.threadMaxPostCapacity.default
-    val title = getString(R.string.view_thread_controller_max_posts_cap)
-
-    fun applyThreadMaxPostCapacity(oldValue: Int, newValue: Int) {
-      if (oldValue == newValue) {
-        return
-      }
-
-      ChanSettings.threadMaxPostCapacity.set(newValue)
-
-      val subItem = navigation.findNestedSubItem(ACTION_SET_THREAD_MAX_POSTS_CAP)
-      if (subItem != null) {
-        subItem.text = getMaxDisplayedPostsCapString()
-      }
-
-      threadLayout.presenter.normalLoad(
-        showLoading = true,
-        requestNewPostsFromServer = true,
-        chanLoadOptions = ChanLoadOptions.ClearMemoryAndDatabaseCaches
-      )
-    }
-
-    val rangeSettingUpdaterController = RangeSettingUpdaterController(
-      context = context,
-      constraintLayoutBiasPair = ConstraintLayoutBiasPair.TopRight,
-      title = title,
-      minValue = minPostsCap.toFloat(),
-      maxValue = maxPostsCap.toFloat(),
-      currentValue = currentPostsCap.toFloat(),
-      resetClickedFunc = { applyThreadMaxPostCapacity(currentPostsCap, defaultPostsCap) },
-      applyClickedFunc = { newCap -> applyThreadMaxPostCapacity(currentPostsCap, newCap) }
-    )
-
-    requireNavController().presentController(rangeSettingUpdaterController)
   }
 
   private fun onScrollbarLabelingOptionClicked(item: ToolbarMenuSubItem) {
@@ -832,6 +773,5 @@ open class ViewThreadController(
     private const val ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR = 9101
     private const val ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR = 9102
     private const val ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR = 9103
-    private const val ACTION_SET_THREAD_MAX_POSTS_CAP = 9104
   }
 }

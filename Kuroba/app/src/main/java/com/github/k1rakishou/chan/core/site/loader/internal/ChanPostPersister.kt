@@ -7,7 +7,6 @@ import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsIn
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.options.ChanCacheOptions
 import com.github.k1rakishou.core_logger.Logger
@@ -17,7 +16,6 @@ import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 internal class ChanPostPersister(
@@ -74,11 +72,6 @@ internal class ChanPostPersister(
         )
       }
 
-      val cleanupDuration = runRollingStickyThreadCleanupRoutineIfNeeded(
-        chanDescriptor,
-        chanReaderProcessor
-      )
-
       checkNotNull(chanReaderProcessor.getOp()) { "OP is null" }
 
       val loadTimeInfo = LoadTimeInfo(
@@ -87,8 +80,7 @@ internal class ChanPostPersister(
         storedPostsCount = storedPostsCount,
         parsingDuration = parsingDuration,
         parsedPostsCount = parsedPosts.size,
-        postsInChanReaderProcessor = chanReaderProcessor.getTotalPostsCount(),
-        cleanupDuration = cleanupDuration
+        postsInChanReaderProcessor = chanReaderProcessor.getTotalPostsCount()
       )
 
       return@Try ThreadResultWithTimeInfo(
@@ -103,36 +95,6 @@ internal class ChanPostPersister(
     }
   }
 
-  @OptIn(ExperimentalTime::class)
-  private suspend fun runRollingStickyThreadCleanupRoutineIfNeeded(
-    chanDescriptor: ChanDescriptor,
-    chanReaderProcessor: ChanReaderProcessor
-  ): Duration? {
-    val threadCap = chanReaderProcessor.getThreadCap()
-
-    val needCleanupThread = (threadCap != null && threadCap > 0)
-      && chanDescriptor is ChanDescriptor.ThreadDescriptor
-
-    if (!needCleanupThread) {
-      return null
-    }
-
-    Logger.d(TAG, "runRollingStickyThreadCleanupRoutineIfNeeded() " +
-      "chanDescriptor=$chanDescriptor, threadCap=$threadCap")
-
-    return measureTime {
-      val deleteResult = chanPostRepository.cleanupPostsInRollingStickyThread(
-        chanDescriptor as ChanDescriptor.ThreadDescriptor,
-        threadCap!!
-      )
-
-      if (deleteResult is ModularResult.Error) {
-        val errorMsg = "cleanupPostsInRollingStickyThread(${chanDescriptor}, $threadCap) error"
-        Logger.e(TAG, errorMsg, deleteResult.error)
-      }
-    }
-  }
-
   data class ThreadResultWithTimeInfo(
     val threadLoadResult: ThreadLoadResult,
     val timeInfo: LoadTimeInfo?
@@ -144,8 +106,7 @@ internal class ChanPostPersister(
     val storedPostsCount: Int,
     val parsingDuration: Duration,
     val parsedPostsCount: Int,
-    val postsInChanReaderProcessor: Int,
-    val cleanupDuration: Duration?
+    val postsInChanReaderProcessor: Int
   )
 
   companion object {

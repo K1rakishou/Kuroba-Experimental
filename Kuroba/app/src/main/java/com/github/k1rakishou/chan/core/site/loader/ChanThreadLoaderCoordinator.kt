@@ -202,7 +202,6 @@ class ChanThreadLoaderCoordinator(
     val parsingDuration = loadTimeInfo.parsingDuration
     val parsedPostsCount = loadTimeInfo.parsedPostsCount
     val postsInChanReaderProcessor = loadTimeInfo.postsInChanReaderProcessor
-    val cleanupDuration = loadTimeInfo.cleanupDuration
 
     val cachedPostsCount = chanPostRepository.getTotalCachedPostsCount()
     val cachedThreadsCount = chanPostRepository.getTotalCachedThreadCount()
@@ -230,10 +229,6 @@ class ChanThreadLoaderCoordinator(
       appendLine("Threads with more than one post " +
         "count = ($threadsWithMoreThanOnePostCount/${ChanThreadsCache.IMMUNE_THREADS_COUNT}), " +
         "total cached threads count = ${cachedThreadsCount}.")
-
-      if (cleanupDuration != null) {
-        appendLine("Sticky thread old post clean up routine took ${cleanupDuration}.")
-      }
     }
 
     Logger.d(TAG, logString)

@@ -183,7 +183,6 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_mark_replies_to_your_posts_on_scrollbar">Highlight (You)s</string>
     <string name="action_mark_cross_thread_quotes_on_scrollbar">Highlight cross-thread replies</string>
     <string name="action_use_scrolling_text_for_thread_title">Use scrolling text for thread title</string>
-    <string name="action_set_thread_max_displayed_posts_capacity">Set max displayed posts capacity (%1$s)</string>
 
     <string name="action_scroll_to_top">Top</string>
     <string name="action_scroll_to_bottom">Bottom</string>
@@ -987,7 +986,6 @@ Don't have a 4chan Pass?<br>
 
     <string name="view_thread_controller_thread_downloading_requires_write_permission">Thread downloading requires the WRITE_EXTERNAL_STORAGE permission</string>
     <string name="view_thread_controller_enter_post_id">Enter post id to scroll to</string>
-    <string name="view_thread_controller_max_posts_cap">Thread max posts capacity (set 0 for default behavior)</string>
 
     <string name="warning">Warning</string>
 

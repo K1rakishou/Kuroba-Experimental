@@ -388,7 +388,7 @@ class ThreadPresenter @Inject constructor(
     requestNewPostsFromServer: Boolean = true,
     chanLoadOptions: ChanLoadOptions = ChanLoadOptions.RetainAll,
     chanCacheOptions: ChanCacheOptions = ChanCacheOptions.StoreEverywhere,
-    chanReadOptions: ChanReadOptions = ChanReadOptions.default(ChanSettings.threadMaxPostCapacity.get())
+    chanReadOptions: ChanReadOptions = ChanReadOptions.default()
   ) {
     BackgroundUtils.ensureMainThread()
 

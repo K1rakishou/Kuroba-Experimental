@@ -343,7 +343,6 @@ public class ChanSettings {
     public static RangeSetting bookmarkGridViewWidth;
     public static OptionsSetting<ImageGestureActionType> imageSwipeUpGesture;
     public static OptionsSetting<ImageGestureActionType> imageSwipeDownGesture;
-    public static RangeSetting threadMaxPostCapacity;
     public static BooleanSetting drawerMoveLastAccessedThreadToTop;
     public static BooleanSetting drawerShowBookmarkedThreads;
     public static BooleanSetting drawerShowNavigationHistory;
@@ -549,13 +548,6 @@ public class ChanSettings {
                     "image_swipe_down_gesture",
                     ImageGestureActionType.class,
                     ImageGestureActionType.SaveImage
-            );
-            threadMaxPostCapacity = new RangeSetting(
-                    provider,
-                    "thread_max_post_capacity",
-                    0,
-                    0,
-                    1000
             );
             drawerMoveLastAccessedThreadToTop = new BooleanSetting(
                     provider,

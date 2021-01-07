@@ -47,16 +47,6 @@ class ChanReaderProcessor(
     return lock.withLock { this.op }
   }
 
-  suspend fun getThreadCap(): Int? {
-    return lock.withLock {
-      if (chanReadOptions.threadMaxPostsCapacity > 0) {
-        return@withLock chanReadOptions.threadMaxPostsCapacity
-      }
-
-      return@withLock op?.stickyCap
-    }
-  }
-
   suspend fun addPost(postBuilder: ChanPostBuilder) {
     lock.withLock {
       if (differsFromCached(postBuilder)) {

@@ -594,6 +594,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
           }
         }
       }
+
+      return
     }
   }
 

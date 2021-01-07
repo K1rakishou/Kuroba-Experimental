@@ -205,48 +205,6 @@ class ChanThread(
     }
   }
 
-  fun cleanupPostsInRollingStickyThread(threadCap: Int): List<PostDescriptor> {
-    if (threadCap <= 0) {
-      return emptyList()
-    }
-
-    return lock.write {
-      if (threadPosts.size <= threadCap) {
-        return@write emptyList()
-      }
-
-      val toDeleteCount = threadPosts.size - threadCap
-      if (toDeleteCount <= 0) {
-        return@write emptyList()
-      }
-
-      require(threadPosts.first() is ChanOriginalPost) {
-        "First post is not an original post! post=${threadPosts.first()}"
-      }
-
-      // Never delete the original post
-      val postsToDelete = threadPosts.subList(1, toDeleteCount).toList()
-      if (postsToDelete.isEmpty()) {
-        return@write emptyList()
-      }
-
-      threadPosts.removeAll(postsToDelete)
-
-      postsToDelete.forEach { chanPost ->
-        postsByPostDescriptors.remove(chanPost.postDescriptor)
-        rawPostHashesMap.remove(chanPost.postDescriptor)
-      }
-
-      require(threadPosts.first() is ChanOriginalPost) {
-        "First post is not an original post! post=${threadPosts.first()}"
-      }
-
-      checkPostsConsistency()
-
-      return@write postsToDelete.map { chanPost -> chanPost.postDescriptor }
-    }
-  }
-
   fun canUpdateThread(): Boolean {
     return lock.read {
       val originalPost = getOriginalPost()
