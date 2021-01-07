@@ -20,7 +20,6 @@ import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.chan.utils.getLifecycleFromContext
-import com.github.k1rakishou.common.AndroidUtils.getDisplaySize
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -37,7 +36,8 @@ import java.io.FileOutputStream
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
-import kotlin.math.max
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
 @DoNotStrip
 class ImageLoaderV2(
@@ -344,9 +344,6 @@ class ImageLoaderV2(
   ) {
     BackgroundUtils.ensureBackgroundThread()
 
-    val displaySize = getDisplaySize()
-    val size = max(displaySize.x, displaySize.y)
-
     val replyFileMaybe = replyManager.getReplyFileByFileUuid(fileUuid)
     if (replyFileMaybe is ModularResult.Error) {
       Logger.e(TAG, "calculateFilePreviewAndStoreOnDisk() " +
@@ -369,73 +366,102 @@ class ImageLoaderV2(
 
     val replyFileMeta = (replyFileMetaMaybe as ModularResult.Value).value
 
-    val previewBitmap = calculateFilePreview(
+    doWithDecodedFilePreview(
       replyFile,
       replyFileMeta,
       context,
-      size,
-      size,
+      PREVIEW_SIZE,
+      PREVIEW_SIZE,
       scale
-    )
+    ) { previewBitmap ->
+      val previewFileOnDisk = replyFile.previewFileOnDisk
 
-    val previewFileOnDisk = replyFile.previewFileOnDisk
-
-    if (!previewFileOnDisk.exists()) {
-      check(previewFileOnDisk.createNewFile()) {
-        "Failed to create previewFileOnDisk, path=${previewFileOnDisk.absolutePath}"
+      if (!previewFileOnDisk.exists()) {
+        check(previewFileOnDisk.createNewFile()) {
+          "Failed to create previewFileOnDisk, path=${previewFileOnDisk.absolutePath}"
+        }
       }
-    }
 
-    FileOutputStream(previewFileOnDisk).use { fos ->
-      previewBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
+      FileOutputStream(previewFileOnDisk).use { fos ->
+        previewBitmap.compress(Bitmap.CompressFormat.JPEG, 95, fos)
+      }
     }
   }
 
-  private suspend fun calculateFilePreview(
+  @OptIn(ExperimentalTime::class)
+  private suspend fun doWithDecodedFilePreview(
     replyFile: ReplyFile,
     replyFileMeta: ReplyFileMeta,
     context: Context,
     width: Int,
     height: Int,
-    scale: Scale
-  ): Bitmap {
+    scale: Scale,
+    func: (Bitmap) -> Unit
+  ) {
     val isProbablyVideo = replyFileIsProbablyVideo(replyFile, replyFileMeta)
+
+    fun recycleBitmap(bitmap: Bitmap) {
+      if (!bitmap.isRecycled) {
+        bitmap.recycle()
+      }
+    }
 
     if (isProbablyVideo) {
       val videoFrameDecodeMaybe = Try {
-        return@Try MediaUtils.decodeVideoFilePreviewImage(
-          context,
-          replyFile.fileOnDisk,
-          width,
-          height,
-          true
-        )
+        return@Try measureTimedValue {
+          return@measureTimedValue MediaUtils.decodeVideoFilePreviewImage(
+            context,
+            replyFile.fileOnDisk,
+            width,
+            height,
+            true
+          )
+        }
       }
 
       if (videoFrameDecodeMaybe is ModularResult.Value) {
-        val videoFrame = videoFrameDecodeMaybe.value
+        val (videoFrame, decodeVideoFilePreviewImageDuration) = videoFrameDecodeMaybe.value
+        Logger.d(TAG, "decodeVideoFilePreviewImage duration=$decodeVideoFilePreviewImageDuration")
+
         if (videoFrame != null) {
-          return videoFrame.bitmap
+          try {
+            func(videoFrame.bitmap)
+          } finally {
+            recycleBitmap(videoFrame.bitmap)
+          }
+
+          return
         }
       }
 
       // Failed to decode the file as video let's try decoding it as an image
     }
 
-    val fileImagePreviewMaybe = getFileImagePreview(
-      context = context,
-      file = replyFile.fileOnDisk,
-      transformations = emptyList(),
-      scale = scale,
-      width = width,
-      height = height
-    )
-
-    if (fileImagePreviewMaybe is ModularResult.Value) {
-      return fileImagePreviewMaybe.value.bitmap
+    val (fileImagePreviewMaybe, getFileImagePreviewDuration) = measureTimedValue {
+      return@measureTimedValue getFileImagePreview(
+        context = context,
+        file = replyFile.fileOnDisk,
+        transformations = emptyList(),
+        scale = scale,
+        width = width,
+        height = height
+      )
     }
 
-    return getImageErrorLoadingDrawable(context).bitmap
+    Logger.d(TAG, "getFileImagePreviewDuration=$getFileImagePreviewDuration")
+
+    if (fileImagePreviewMaybe is ModularResult.Value) {
+      try {
+        func(fileImagePreviewMaybe.value.bitmap)
+      } finally {
+        recycleBitmap(fileImagePreviewMaybe.value.bitmap)
+      }
+
+      return
+    }
+
+    // Do not recycle bitmaps that are supposed to always stay in memory
+    func(getImageErrorLoadingDrawable(context).bitmap)
   }
 
   fun replyFileIsProbablyVideo(replyFile: ReplyFile, replyFileMeta: ReplyFileMeta): Boolean {
@@ -452,7 +478,7 @@ class ImageLoaderV2(
       ?: false
   }
 
-  suspend fun getFileImagePreview(
+  private suspend fun getFileImagePreview(
     context: Context,
     file: File,
     transformations: List<Transformation>,
@@ -559,6 +585,7 @@ class ImageLoaderV2(
 
   companion object {
     private const val TAG = "ImageLoaderV2"
+    private const val PREVIEW_SIZE = 1024
   }
 
 }

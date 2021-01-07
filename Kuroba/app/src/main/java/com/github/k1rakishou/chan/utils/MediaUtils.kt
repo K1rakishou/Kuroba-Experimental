@@ -10,13 +10,13 @@ import android.graphics.drawable.BitmapDrawable
 import android.media.MediaMetadataRetriever
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.graphics.drawable.toBitmap
-import androidx.core.graphics.scale
 import androidx.core.math.MathUtils
 import androidx.core.util.Pair
 import androidx.exifinterface.media.ExifInterface
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter.ReencodeSettings
 import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter.ReencodeType
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import java.io.File
@@ -343,20 +343,16 @@ object MediaUtils {
       metadataRetriever.setDataSource(file.absolutePath)
       val frameBitmap = metadataRetriever.frameAtTime
 
-      val audioMetaResult =
-        metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO)
+      val audioMetaResult = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO)
       val hasAudio = "yes" == audioMetaResult
 
       if (hasAudio && frameBitmap != null && addAudioIcon) {
-        val audioIconBitmap = AppCompatResources.getDrawable(context, R.drawable.ic_volume_up_white_24dp)
-          ?.toBitmap(maxWidth, maxHeight)
-          ?: return null
+        val audioIconBitmapWidth = (maxWidth / 5).coerceAtLeast(dp(32f))
+        val audioIconBitmapHeight = (maxHeight / 5).coerceAtLeast(dp(32f))
 
-        val audioBitmap = audioIconBitmap.scale(
-          audioIconBitmap.width / 3,
-          audioIconBitmap.height / 3,
-          filter = true
-        )
+        val audioIconBitmap = AppCompatResources.getDrawable(context, R.drawable.ic_volume_up_white_24dp)
+          ?.toBitmap(audioIconBitmapWidth, audioIconBitmapHeight)
+          ?: return null
 
         val newWidth = min(frameBitmap.width, maxWidth)
         val newHeight = min(frameBitmap.height, maxHeight)
@@ -372,17 +368,14 @@ object MediaUtils {
           canvas.drawBitmap(frameBitmap, Matrix(), null)
 
           canvas.drawBitmap(
-            audioBitmap,
-            (newWidth - audioBitmap.width).toFloat() / 2f,
-            (newHeight - audioBitmap.height).toFloat() / 2f,
+            audioIconBitmap,
+            (newWidth - audioIconBitmap.width).toFloat() / 2f,
+            (newHeight - audioIconBitmap.height).toFloat() / 2f,
             null
           )
-
-          println()
-
         } finally {
-          if (audioBitmap != null && !audioBitmap.isRecycled) {
-            audioBitmap.recycle()
+          if (audioIconBitmap != null && !audioIconBitmap.isRecycled) {
+            audioIconBitmap.recycle()
           }
           if (frameBitmap != null && !frameBitmap.isRecycled) {
             frameBitmap.recycle()
