@@ -44,6 +44,7 @@ public abstract class CommonReplyHttpCall extends HttpCall {
     private static final Pattern THREAD_NO_PATTERN = Pattern.compile("<!-- thread:([0-9]+),no:([0-9]+) -->");
     private static final Pattern ERROR_MESSAGE = Pattern.compile("\"errmsg\"[^>]*>(.*?)</span");
     private static final String PROBABLY_BANNED_TEXT = "banned";
+    private static final String PROBABLY_IP_BLOCKED = "Posting from your IP range has been blocked due to abuse";
 
     public final ChanDescriptor replyChanDescriptor;
     public final ReplyResponse replyResponse = new ReplyResponse();
@@ -85,7 +86,7 @@ public abstract class CommonReplyHttpCall extends HttpCall {
         Matcher errorMessageMatcher = ERROR_MESSAGE.matcher(result);
         if (errorMessageMatcher.find()) {
             replyResponse.errorMessage = Jsoup.parse(errorMessageMatcher.group(1)).body().text();
-            replyResponse.probablyBanned = replyResponse.errorMessage.contains(PROBABLY_BANNED_TEXT);
+            replyResponse.probablyBanned = checkIfBanned();
             return;
         }
 
@@ -109,6 +110,19 @@ public abstract class CommonReplyHttpCall extends HttpCall {
         }
 
         Logger.e(TAG, "Couldn't handle server response! response = \"" + result + "\"");
+    }
+
+    private boolean checkIfBanned() {
+        boolean isBannedFound = replyResponse.errorMessage.contains(PROBABLY_BANNED_TEXT);
+        if (isBannedFound) {
+            return true;
+        }
+
+        if (!replyChanDescriptor.siteDescriptor().is4chan()) {
+            return false;
+        }
+
+        return replyResponse.errorMessage.contains(PROBABLY_IP_BLOCKED);
     }
 
     public abstract void addParameters(

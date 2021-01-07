@@ -32,6 +32,8 @@ import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
+import com.github.k1rakishou.chan.features.reply.floating_message_actions.Chan4OpenBannedUrlClickAction
+import com.github.k1rakishou.chan.features.reply.floating_message_actions.IFloatingReplyMessageClickAction
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
 import com.github.k1rakishou.chan.ui.helper.PostHelper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
@@ -80,6 +82,7 @@ class ReplyPresenter @Inject constructor(
 
   private var currentChanDescriptor: ChanDescriptor? = null
   private var previewOpen = false
+  private var floatingReplyMessageClickAction: IFloatingReplyMessageClickAction? = null
 
   private val job = SupervisorJob()
   private val commentEditingHistory = CommentEditingHistory(this)
@@ -460,6 +463,8 @@ class ReplyPresenter @Inject constructor(
         return@launch
       }
 
+      this@ReplyPresenter.floatingReplyMessageClickAction = null
+
       site.actions().post(chanDescriptor)
         .catch { error -> onPostError(chanDescriptor, error) }
         .collect { postResult ->
@@ -519,6 +524,8 @@ class ReplyPresenter @Inject constructor(
         switchPage(Page.AUTHENTICATION)
       }
       else -> {
+        updateFloatingReplyMessageClickAction(replyResponse)
+
         var errorMessage = getString(R.string.reply_error)
         if (replyResponse.errorMessage != null) {
           errorMessage = getString(
@@ -535,6 +542,15 @@ class ReplyPresenter @Inject constructor(
         callback.openMessage(errorMessage)
       }
     }
+  }
+
+  private fun updateFloatingReplyMessageClickAction(replyResponse: ReplyResponse) {
+    if (replyResponse.siteDescriptor?.is4chan() == true && replyResponse.probablyBanned) {
+      this.floatingReplyMessageClickAction = Chan4OpenBannedUrlClickAction()
+      return
+    }
+
+    this.floatingReplyMessageClickAction = null
   }
 
   private suspend fun onPostedSuccessfully(
@@ -702,6 +718,15 @@ class ReplyPresenter @Inject constructor(
 
       callback.highlightPostNos(selectedQuotes)
     }, 250)
+  }
+
+  fun executeFloatingReplyMessageClickAction() {
+    floatingReplyMessageClickAction?.execute()
+    floatingReplyMessageClickAction = null
+  }
+
+  fun removeFloatingReplyMessageClickAction() {
+    floatingReplyMessageClickAction = null
   }
 
   interface ReplyPresenterCallback {

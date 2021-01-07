@@ -319,6 +319,8 @@ class ReplyLayout @JvmOverloads constructor(
     replyInputMessage.setOnClickListener {
       removeCallbacks(closeMessageRunnable)
       animateReplyInputMessage(appearance = false)
+
+      presenter.executeFloatingReplyMessageClickAction()
     }
 
     commentRevertChangeButton.setOnClickListener(this)
@@ -850,6 +852,7 @@ class ReplyLayout @JvmOverloads constructor(
       ValueAnimator.ofFloat(1f, 0f).apply {
         doOnEnd {
           replyInputHolder.setVisibilityFast(View.GONE)
+          presenter.removeFloatingReplyMessageClickAction()
         }
       }
     }

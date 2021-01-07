@@ -92,7 +92,7 @@ class Chan4ReplyCall(
         if (reply.flag.isNotEmpty()) {
           formBuilder.addFormDataPart("flag", reply.flag)
         } else {
-          formBuilder.addFormDataPart("flag", site.flagType!!.get())
+          formBuilder.addFormDataPart("flag", site.flagType.get())
         }
       }
 
