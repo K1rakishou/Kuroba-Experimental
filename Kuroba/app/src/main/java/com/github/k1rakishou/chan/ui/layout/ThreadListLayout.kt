@@ -963,16 +963,18 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   private fun attachToolbarScroll(attach: Boolean) {
-    if (canToolbarCollapse()) {
-      val toolbar = threadListLayoutCallback?.toolbar
-        ?: return
+    if (!canToolbarCollapse()) {
+      return
+    }
 
-      if (attach) {
-        toolbar.attachRecyclerViewScrollStateListener(recyclerView)
-      } else {
-        toolbar.detachRecyclerViewScrollStateListener(recyclerView)
-        toolbar.collapseShow(true)
-      }
+    val toolbar = threadListLayoutCallback?.toolbar
+      ?: return
+
+    if (attach && !searchOpen && !replyOpen) {
+      toolbar.attachRecyclerViewScrollStateListener(recyclerView)
+    } else {
+      toolbar.detachRecyclerViewScrollStateListener(recyclerView)
+      toolbar.collapseShow(true)
     }
   }
 
@@ -1045,7 +1047,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   override fun onDragStarted() {
-    if (!canToolbarCollapse()) {
+    if (!canToolbarCollapse() || replyOpen || searchOpen) {
       return
     }
 
@@ -1061,7 +1063,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     //  manually after we are down scrolling via Fast scroller.
     onRecyclerViewScrolled()
 
-    if (!canToolbarCollapse()) {
+    if (!canToolbarCollapse() || replyOpen || searchOpen) {
       return
     }
 

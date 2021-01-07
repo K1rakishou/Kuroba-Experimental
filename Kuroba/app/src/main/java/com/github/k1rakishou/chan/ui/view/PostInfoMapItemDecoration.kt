@@ -52,8 +52,7 @@ class PostInfoMapItemDecoration(
     recyclerTopPadding: Float,
     recyclerBottomPadding: Float,
     recyclerViewHeight: Int,
-    recyclerViewWidth: Int,
-    toolbarPaddingTop: Int
+    recyclerViewWidth: Int
   ) {
     var labelWidth = DEFAULT_LABEL_WIDTH
 
@@ -66,7 +65,6 @@ class PostInfoMapItemDecoration(
       recyclerViewHeight,
       recyclerViewWidth,
       labelWidth,
-      toolbarPaddingTop,
       myPostsPaint
     )
     labelWidth += LABEL_WIDTH_INC
@@ -80,7 +78,6 @@ class PostInfoMapItemDecoration(
       recyclerViewHeight,
       recyclerViewWidth,
       labelWidth,
-      toolbarPaddingTop,
       yousPaint
     )
     labelWidth += LABEL_WIDTH_INC
@@ -94,7 +91,6 @@ class PostInfoMapItemDecoration(
       recyclerViewHeight,
       recyclerViewWidth,
       labelWidth,
-      toolbarPaddingTop,
       crossThreadRepliesPaint
     )
     labelWidth += LABEL_WIDTH_INC
@@ -109,7 +105,6 @@ class PostInfoMapItemDecoration(
     recyclerViewHeight: Int,
     recyclerViewWidth: Int,
     labelWidth: Float,
-    toolbarPaddingTop: Int,
     paint: Paint
   ) {
     if (ranges.isEmpty() || postsTotal <= 0) {
@@ -123,11 +118,7 @@ class PostInfoMapItemDecoration(
     val unit = ((recyclerHeight / recyclerView.computeVerticalScrollRange()) * onePostHeightRaw).coerceAtLeast(MIN_LABEL_HEIGHT)
     val halfUnit = unit / 2f
 
-    val topOffset = if (isSplitMode) {
-      recyclerTopPadding
-    } else {
-      ((recyclerTopPadding + recyclerBottomPadding) / 2f) - (toolbarPaddingTop / 2f)
-    }
+    val topOffset = recyclerTopPadding
 
     canvas.withTranslation(y = topOffset + halfUnit) {
       ranges.forEach { positionRange ->

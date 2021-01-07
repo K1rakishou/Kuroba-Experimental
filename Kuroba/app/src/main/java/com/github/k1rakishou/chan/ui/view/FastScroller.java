@@ -376,8 +376,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
                     mRecyclerView.getPaddingTop(),
                     mRecyclerView.getPaddingBottom(),
                     recyclerHeight,
-                    recyclerWidth,
-                    toolbarPaddingTop
+                    recyclerWidth
             );
         }
 
@@ -476,13 +475,14 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
     void updateScrollPosition(int offsetX, int offsetY) {
         int verticalContentLength = mRecyclerView.computeVerticalScrollRange();
         int verticalVisibleLength = mRecyclerViewHeight;
-        mNeedVerticalScrollbar =
-                verticalContentLength - verticalVisibleLength > 0 && mRecyclerViewHeight >= mScrollbarMinimumRange;
+
+        mNeedVerticalScrollbar = verticalContentLength - (verticalVisibleLength * 3) > 0
+                && mRecyclerViewHeight >= mScrollbarMinimumRange;
 
         int horizontalContentLength = mRecyclerView.computeHorizontalScrollRange();
         int horizontalVisibleLength = mRecyclerViewWidth;
-        mNeedHorizontalScrollbar =
-                horizontalContentLength - horizontalVisibleLength > 0 && mRecyclerViewWidth >= mScrollbarMinimumRange;
+        mNeedHorizontalScrollbar = horizontalContentLength - (horizontalVisibleLength * 3) > 0
+                && mRecyclerViewWidth >= mScrollbarMinimumRange;
 
         if (!mNeedVerticalScrollbar && !mNeedHorizontalScrollbar) {
             if (mState != STATE_HIDDEN) {
