@@ -98,8 +98,8 @@ internal object CommentSpanUpdater {
 
           ssb.setSpan(
             oldSpan,
-            oldSpanStart,
-            oldSpanEnd + formattedLinkUrl.length,
+            oldSpanStart.coerceAtLeast(0),
+            (oldSpanEnd + formattedLinkUrl.length).coerceAtMost(ssb.lastIndex),
             ssb.getSpanFlags(oldSpan)
           )
         }
