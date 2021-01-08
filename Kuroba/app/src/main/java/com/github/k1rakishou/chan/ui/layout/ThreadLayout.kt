@@ -357,7 +357,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun presentController(controller: Controller) {
-    callback.presentController(controller, animated = true)
+    callback.presentController(controller, animated = false)
   }
 
   override fun unpresentController(predicate: (Controller) -> Boolean) {
