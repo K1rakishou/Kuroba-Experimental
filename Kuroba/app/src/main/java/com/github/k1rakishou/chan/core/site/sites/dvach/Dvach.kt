@@ -32,7 +32,7 @@ import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.board.ChanBoard
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.site.SiteBoards
@@ -118,72 +118,7 @@ class Dvach : CommonSite() {
           || siteFeature == SiteFeature.LOGIN
       }
     })
-    setEndpoints(object : VichanEndpoints(this, "https://2ch.hk", "https://2ch.hk") {
-      override fun imageUrl(post: ChanPostBuilder, arg: Map<String, String>): HttpUrl {
-        val path = requireNotNull(arg["path"]) { "\"path\" parameter not found" }
-
-        return root.builder().s(path).url()
-      }
-
-      override fun thumbnailUrl(
-        post: ChanPostBuilder,
-        spoiler: Boolean,
-        customSpoilers: Int,
-        arg: Map<String, String>
-      ): HttpUrl {
-        val thumbnail = requireNotNull(arg["thumbnail"]) { "\"thumbnail\" parameter not found" }
-
-        return root.builder().s(thumbnail).url()
-      }
-
-      override fun boards(): HttpUrl {
-        return HttpUrl.Builder()
-          .scheme("https")
-          .host("2ch.hk")
-          .addPathSegment("boards.json")
-          .build()
-      }
-
-      override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
-        return HttpUrl.Builder()
-          .scheme("https")
-          .host("2ch.hk")
-          .addPathSegment("makaba")
-          .addPathSegment("posting.fcgi")
-          .addQueryParameter("json", "1")
-          .build()
-      }
-
-      override fun login(): HttpUrl {
-        return HttpUrl.Builder()
-          .scheme("https")
-          .host("2ch.hk")
-          .addPathSegment("makaba")
-          .addPathSegment("makaba.fcgi")
-          .build()
-      }
-
-      override fun passCodeInfo(): HttpUrl? {
-        if (!actions().isLoggedIn()) {
-          return null
-        }
-
-        val passcode = passCode.get()
-        if (passcode.isEmpty()) {
-          return null
-        }
-
-        return HttpUrl.Builder()
-          .scheme("https")
-          .host("2ch.hk")
-          .addPathSegment("makaba")
-          .addPathSegment("makaba.fcgi")
-          .addQueryParameter("task", "auth")
-          .addQueryParameter("usercode", passcode)
-          .addQueryParameter("json", "1")
-          .build()
-      }
-    })
+    setEndpoints(DvachEndpoints(this))
     setActions(object : VichanActions(this@Dvach, proxiedOkHttpClient, siteManager, replyManager) {
       override fun setupPost(
         replyChanDescriptor: ChanDescriptor,
@@ -241,39 +176,15 @@ class Dvach : CommonSite() {
       }
 
       override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards> {
-        return genericBoardsRequestResponseHandler(
-          requestProvider = {
-            val request = Request.Builder()
-              .url(endpoints().boards().toString())
-              .get()
-              .build()
+        val dvachEndpoints = endpoints() as DvachEndpoints
 
-            DvachBoardsRequest(
-              siteDescriptor(),
-              boardManager,
-              request,
-              proxiedOkHttpClient
-            )
-          },
-          defaultBoardsProvider = {
-            ArrayList<ChanBoard>().apply {
-              add(ChanBoard.create(BoardDescriptor.create(siteDescriptor(), "b"), "бред"))
-              add(
-                ChanBoard.create(
-                  BoardDescriptor.create(siteDescriptor(), "vg"),
-                  "Видеоигры, general, официальные треды"
-                )
-              )
-              add(ChanBoard.create(BoardDescriptor.create(siteDescriptor(), "news"), "новости"))
-              add(
-                ChanBoard.create(
-                  BoardDescriptor.create(siteDescriptor(), "po"),
-                  "политика, новости, ольгинцы, хохлы, либерахи, рептилоиды.. oh shi"
-                )
-              )
-            }.shuffled()
-          }
-        )
+        return DvachBoardsRequest(
+          siteDescriptor(),
+          boardManager,
+          proxiedOkHttpClient,
+          dvachEndpoints.boards(),
+          dvachEndpoints.dvachGetBoards()
+        ).execute()
       }
 
       @Suppress("MoveVariableDeclarationIntoWhen")
@@ -392,6 +303,21 @@ class Dvach : CommonSite() {
         return DvachLoginRequest(passCode.get())
       }
 
+      override suspend fun pages(
+        board: ChanBoard
+      ): JsonReaderRequest.JsonReaderResponse<BoardPages> {
+        val request = Request.Builder()
+          .url(endpoints().pages(board))
+          .get()
+          .build()
+
+        return DvachPagesRequest(
+          board,
+          request,
+          proxiedOkHttpClient
+        ).execute()
+      }
+
     })
     setRequestModifier(siteRequestModifier)
     setApi(DvachApi(siteManager, boardManager, this))
@@ -413,6 +339,92 @@ class Dvach : CommonSite() {
 
   override fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties {
     return chunkDownloaderSiteProperties
+  }
+
+  inner class DvachEndpoints(commonSite: CommonSite) : VichanEndpoints(commonSite, "https://2ch.hk", "https://2ch.hk") {
+    override fun imageUrl(post: ChanPostBuilder, arg: Map<String, String>): HttpUrl {
+      val path = requireNotNull(arg["path"]) { "\"path\" parameter not found" }
+
+      return root.builder().s(path).url()
+    }
+
+    override fun thumbnailUrl(
+      post: ChanPostBuilder,
+      spoiler: Boolean,
+      customSpoilers: Int,
+      arg: Map<String, String>
+    ): HttpUrl {
+      val thumbnail = requireNotNull(arg["thumbnail"]) { "\"thumbnail\" parameter not found" }
+
+      return root.builder().s(thumbnail).url()
+    }
+
+    fun dvachGetBoards(): HttpUrl {
+      return HttpUrl.Builder()
+        .scheme("https")
+        .host("2ch.hk")
+        .addPathSegment("makaba")
+        .addPathSegment("mobile.fcgi")
+        .addQueryParameter("task", "get_boards")
+        .build()
+    }
+
+    override fun boards(): HttpUrl {
+      return HttpUrl.Builder()
+        .scheme("https")
+        .host("2ch.hk")
+        .addPathSegment("boards.json")
+        .build()
+    }
+
+    override fun pages(board: ChanBoard): HttpUrl {
+      return HttpUrl.Builder()
+        .scheme("https")
+        .host("2ch.hk")
+        .addPathSegment(board.boardCode())
+        .addPathSegment("threads.json")
+        .build()
+    }
+
+    override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
+      return HttpUrl.Builder()
+        .scheme("https")
+        .host("2ch.hk")
+        .addPathSegment("makaba")
+        .addPathSegment("posting.fcgi")
+        .addQueryParameter("json", "1")
+        .build()
+    }
+
+    override fun login(): HttpUrl {
+      return HttpUrl.Builder()
+        .scheme("https")
+        .host("2ch.hk")
+        .addPathSegment("makaba")
+        .addPathSegment("makaba.fcgi")
+        .build()
+    }
+
+    override fun passCodeInfo(): HttpUrl? {
+      if (!actions().isLoggedIn()) {
+        return null
+      }
+
+      val passcode = passCode.get()
+      if (passcode.isEmpty()) {
+        return null
+      }
+
+      return HttpUrl.Builder()
+        .scheme("https")
+        .host("2ch.hk")
+        .addPathSegment("makaba")
+        .addPathSegment("makaba.fcgi")
+        .addQueryParameter("task", "auth")
+        .addQueryParameter("usercode", passcode)
+        .addQueryParameter("json", "1")
+        .build()
+    }
   }
 
   private val siteRequestModifier = object : SiteRequestModifier {

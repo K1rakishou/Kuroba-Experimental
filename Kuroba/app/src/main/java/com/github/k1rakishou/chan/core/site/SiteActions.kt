@@ -24,18 +24,18 @@ import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginResponse
 import com.github.k1rakishou.chan.core.site.limitations.PasscodePostingLimitationsInfo
-import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import kotlinx.coroutines.flow.Flow
 
 interface SiteActions {
   suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards>
-  suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<Chan4PagesRequest.BoardPages>
+  suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages>
   suspend fun post(replyChanDescriptor: ChanDescriptor): Flow<PostResult>
   suspend fun delete(deleteRequest: DeleteRequest): DeleteResult
   suspend fun <T : AbstractLoginRequest> login(loginRequest: T): LoginResult

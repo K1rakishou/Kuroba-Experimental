@@ -17,9 +17,10 @@
 package com.github.k1rakishou.chan.core.manager
 
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
-import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest
-import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest.BoardPage
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.board.pages.BoardPage
+import com.github.k1rakishou.model.data.board.pages.BoardPages
+import com.github.k1rakishou.model.data.board.pages.ThreadNoTimeModPair
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -45,7 +46,7 @@ class PageRequestManager(
 ) : CoroutineScope {
   private val requestedBoards = Collections.synchronizedSet(HashSet<String>())
   private val savedBoards = Collections.synchronizedSet(HashSet<String>())
-  private val boardPagesMap: ConcurrentMap<String, Chan4PagesRequest.BoardPages> = ConcurrentHashMap()
+  private val boardPagesMap: ConcurrentMap<String, BoardPages> = ConcurrentHashMap()
   private val boardTimeMap: ConcurrentMap<String, Long> = ConcurrentHashMap()
   private val notifyIntervals = ConcurrentHashMap<ChanDescriptor.ThreadDescriptor, Long>()
 
@@ -87,8 +88,8 @@ class PageRequestManager(
 
   fun getThreadNoTimeModPairList(
     threadDescriptorsToFind: Set<ChanDescriptor.ThreadDescriptor>
-  ): Set<Chan4PagesRequest.ThreadNoTimeModPair> {
-    val threadNoTimeModPairSet = mutableSetOf<Chan4PagesRequest.ThreadNoTimeModPair>()
+  ): Set<ThreadNoTimeModPair> {
+    val threadNoTimeModPairSet = mutableSetOf<ThreadNoTimeModPair>()
     val threadDescriptorsToFindCopy = HashSet(threadDescriptorsToFind)
 
     for (threadDescriptor in threadDescriptorsToFind) {
@@ -158,7 +159,7 @@ class PageRequestManager(
     return null
   }
 
-  private fun getPages(boardDescriptor: BoardDescriptor): Chan4PagesRequest.BoardPages? {
+  private fun getPages(boardDescriptor: BoardDescriptor): BoardPages? {
     if (savedBoards.contains(boardDescriptor.boardCode)) {
       // If we have it stored already, return the pages for it
       // also issue a new request if 3 minutes have passed
@@ -202,7 +203,6 @@ class PageRequestManager(
         return@launch
       }
 
-      // Had some null issues for some reason? arisuchan in particular?
       val lastUpdate = boardTimeMap[board.boardCode()]
       val lastUpdateTime = lastUpdate ?: 0L
 
@@ -264,7 +264,7 @@ class PageRequestManager(
   @Synchronized
   private fun onPagesReceived(
     boardDescriptor: BoardDescriptor,
-    pages: Chan4PagesRequest.BoardPages
+    pages: BoardPages
   ) {
     Logger.d(TAG, "Got pages for ${boardDescriptor.siteName()}/${boardDescriptor.boardCode}/")
 
@@ -277,7 +277,7 @@ class PageRequestManager(
   }
 
   private fun pagesRequestsSupported(siteDescriptor: SiteDescriptor): Boolean {
-    return siteDescriptor.is4chan()
+    return siteDescriptor.is4chan() || siteDescriptor.isDvach()
   }
 
   companion object {

@@ -17,11 +17,11 @@
 package com.github.k1rakishou.chan.ui.cell
 
 import com.github.k1rakishou.ChanSettings.PostViewMode
-import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest.BoardPage
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ChanTheme
+import com.github.k1rakishou.model.data.board.pages.BoardPage
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost

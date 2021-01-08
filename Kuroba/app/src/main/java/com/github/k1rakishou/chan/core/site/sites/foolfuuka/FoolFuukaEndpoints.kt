@@ -51,7 +51,7 @@ class FoolFuukaEndpoints(
     throw NotImplementedError("boards")
   }
 
-  override fun pages(board: ChanBoard?): HttpUrl {
+  override fun pages(board: ChanBoard): HttpUrl {
     throw NotImplementedError("pages")
   }
 

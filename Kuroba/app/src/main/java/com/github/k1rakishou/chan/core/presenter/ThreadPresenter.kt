@@ -52,7 +52,6 @@ import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
-import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest.BoardPage
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
@@ -78,6 +77,7 @@ import com.github.k1rakishou.common.options.ChanLoadOptions
 import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
+import com.github.k1rakishou.model.data.board.pages.BoardPage
 import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -1572,6 +1572,9 @@ class ThreadPresenter @Inject constructor(
     val canRequestMore = !currentThread.isArchived() && !currentThread.isDeleted()
     if (canRequestMore) {
       chanThreadTicker.resetEverythingAndKickTicker()
+
+      // put in a "request" for a page update whenever the next set of data comes in
+      forcePageUpdate = true
     }
 
     threadPresenterCallback?.showToolbar()
@@ -1588,6 +1591,7 @@ class ThreadPresenter @Inject constructor(
   override fun requestNewPostLoad() {
     if (isBound && currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
       chanThreadTicker.resetEverythingAndKickTicker()
+
       // put in a "request" for a page update whenever the next set of data comes in
       forcePageUpdate = true
     }

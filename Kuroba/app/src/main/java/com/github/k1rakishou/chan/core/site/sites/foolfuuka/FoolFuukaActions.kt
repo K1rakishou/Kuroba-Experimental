@@ -9,9 +9,9 @@ import com.github.k1rakishou.chan.core.site.common.MultipartHttpCall
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
-import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import kotlinx.coroutines.flow.Flow
@@ -66,7 +66,7 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
     return JsonReaderRequest.JsonReaderResponse.UnknownServerError(error)
   }
 
-  override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<Chan4PagesRequest.BoardPages> {
+  override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages> {
     val error = CommonClientException("Pages are not supported for site ${site.name()}")
 
     return JsonReaderRequest.JsonReaderResponse.UnknownServerError(error)

@@ -41,10 +41,10 @@ import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInf
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.PostParser
-import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -367,7 +367,7 @@ abstract class CommonSite : SiteBase() {
       throw IllegalStateException("Attempt to call abstract method")
     }
 
-    override fun pages(board: ChanBoard?): HttpUrl {
+    override fun pages(board: ChanBoard): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
 
@@ -565,12 +565,13 @@ abstract class CommonSite : SiteBase() {
       }
     }
     
-    override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<Chan4PagesRequest.BoardPages> {
+    override suspend fun pages(
+      board: ChanBoard
+    ): JsonReaderRequest.JsonReaderResponse<BoardPages> {
       return JsonReaderRequest.JsonReaderResponse.Success(
-        Chan4PagesRequest.BoardPages(board.boardDescriptor, listOf())
+        BoardPages(board.boardDescriptor, listOf())
       )
     }
-
 
     override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {
       throw NotImplementedError("Should this even get called?")

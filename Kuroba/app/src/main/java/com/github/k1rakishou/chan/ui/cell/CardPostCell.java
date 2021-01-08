@@ -27,7 +27,6 @@ import android.widget.TextView;
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
-import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4PagesRequest;
 import com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
@@ -37,6 +36,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.common.AndroidUtils;
 import com.github.k1rakishou.core_themes.ChanTheme;
 import com.github.k1rakishou.core_themes.ThemeEngine;
+import com.github.k1rakishou.model.data.board.pages.BoardPage;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPost;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
@@ -272,7 +272,7 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
         );
 
         if (!ChanSettings.neverShowPages.get()) {
-            Chan4PagesRequest.BoardPage boardPage = callback.getPage(post.getPostDescriptor());
+            BoardPage boardPage = callback.getPage(post.getPostDescriptor());
             if (boardPage != null && isNotBumpOrder(ChanSettings.boardOrder.get())) {
                 status += " Pg " + boardPage.getCurrentPage();
             }

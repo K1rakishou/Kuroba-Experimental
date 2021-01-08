@@ -20,6 +20,9 @@ import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.common.jsonArray
 import com.github.k1rakishou.common.jsonObject
+import com.github.k1rakishou.model.data.board.pages.BoardPage
+import com.github.k1rakishou.model.data.board.pages.BoardPages
+import com.github.k1rakishou.model.data.board.pages.ThreadNoTimeModPair
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.google.gson.stream.JsonReader
@@ -31,8 +34,10 @@ class Chan4PagesRequest(
   private val boardTotalPagesCount: Int,
   request: Request,
   proxiedOkHttpClient: ProxiedOkHttpClient
-) : JsonReaderRequest<Chan4PagesRequest.BoardPages>(
-  JsonRequestType.Chan4PagesJsonRequest, request, proxiedOkHttpClient
+) : JsonReaderRequest<BoardPages>(
+  JsonRequestType.Chan4PagesJsonRequest,
+  request,
+  proxiedOkHttpClient
 ) {
   
   override suspend fun readJson(reader: JsonReader): BoardPages {
@@ -95,25 +100,7 @@ class Chan4PagesRequest(
     
     return ThreadNoTimeModPair(ChanDescriptor.ThreadDescriptor(boardDescriptor, no), modified)
   }
-  
-  data class BoardPages(
-    val boardDescriptor: BoardDescriptor,
-    val boardPages: List<BoardPage>
-  )
 
-  data class BoardPage(
-    val currentPage: Int,
-    val totalPages: Int,
-    val threads: List<ThreadNoTimeModPair>
-  ) {
-    fun isLastPage(): Boolean = currentPage >= totalPages
-  }
-
-  data class ThreadNoTimeModPair(
-    val threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    val modified: Long
-  )
-  
   companion object {
     private const val TAG = "Chan4PagesRequest"
   }

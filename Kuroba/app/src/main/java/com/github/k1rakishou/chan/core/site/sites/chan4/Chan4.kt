@@ -36,6 +36,7 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -278,7 +279,7 @@ open class Chan4 : SiteBase() {
       ).execute()
     }
 
-    override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<Chan4PagesRequest.BoardPages> {
+    override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages> {
       val request = Request.Builder()
         .url(endpoints().pages(board))
         .get()

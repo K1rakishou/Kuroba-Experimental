@@ -9,6 +9,10 @@ class SiteDescriptor(
     return siteName.equals("4chan", ignoreCase = true)
   }
 
+  fun isDvach(): Boolean {
+    return siteName.equals("2ch.hk", ignoreCase = true)
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is SiteDescriptor) return false
