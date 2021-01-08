@@ -5,13 +5,13 @@ v0.4.2-beta
 - Remove "Thread max posts cap" setting because it didn't work correctly (it was causing thread scroll
 position getting reset due to how RecyclerView works). This feature will be implemented differently in
 one of the future updates.
-- Fix a bug where toolbar will be unlocked after using fastscroller even with reply layout/search opened.
-- (4chan) Add ability to open "4chan.org/banned" page the server says that we are banned (You need to click the
+- Fix a bug where toolbar would get unlocked after using fastscroller even with reply layout/search opened.
+- (4chan) Add ability to open "4chan.org/banned" page if the server says that we are banned (You need to click the
 floating error message that appears above the reply input to open that page).
 - Fix a bug in BoardDescriptorsComparator that was causing crashes when searching for some boards on 8kun.
 - Fix a silent crash that happens when trying to update spans for a string with a youtube link that is inside
 of a quote span.
-- Reduce the size of attach previews which makes preview decoding faster.
+- Reduce the size of attach previews which should make preview decoding faster.
 
 v0.4.1-beta
 
