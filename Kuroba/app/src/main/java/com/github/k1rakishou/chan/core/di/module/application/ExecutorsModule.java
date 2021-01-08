@@ -1,8 +1,6 @@
 package com.github.k1rakishou.chan.core.di.module.application;
 
 
-import com.github.k1rakishou.core_logger.Logger;
-
 import java.util.Locale;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -23,8 +21,6 @@ public class ExecutorsModule {
     @Singleton
     @Named(onDemandContentLoaderExecutorName)
     public Executor provideOnDemandContentLoaderExecutor() {
-        Logger.d(AppModule.DI_TAG, "OnDemandContentLoaderExecutor");
-
         return createExecutor(
                 onDemandContentLoaderExecutorName,
                 1,

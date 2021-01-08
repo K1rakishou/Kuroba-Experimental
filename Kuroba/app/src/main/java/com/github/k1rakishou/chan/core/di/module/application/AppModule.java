@@ -75,8 +75,6 @@ public class AppModule {
     @Provides
     @Singleton
     public ConnectivityManager provideConnectivityManager(Context appContext) {
-        Logger.d(DI_TAG, "Connectivity Manager");
-
         ConnectivityManager connectivityManager =
                 (ConnectivityManager) appContext.getSystemService(Context.CONNECTIVITY_SERVICE);
 
@@ -94,8 +92,6 @@ public class AppModule {
             Context applicationContext,
             CoilOkHttpClient coilOkHttpClient
     ) {
-        Logger.d(DI_TAG, "Coil Image loader");
-
         return new ImageLoader.Builder(applicationContext)
                 .allowHardware(true)
                 .memoryCachePolicy(CachePolicy.ENABLED)
@@ -113,7 +109,6 @@ public class AppModule {
             ReplyManager replyManager,
             ThemeEngine themeEngine
     ) {
-        Logger.d(DI_TAG, "Image loader v2");
         return new ImageLoaderV2(
                 appScope,
                 coilImageLoader,
@@ -126,14 +121,12 @@ public class AppModule {
     @Provides
     @Singleton
     public ImageSaver provideImageSaver(FileManager fileManager) {
-        Logger.d(DI_TAG, "Image saver");
         return new ImageSaver(fileManager);
     }
 
     @Provides
     @Singleton
     public CaptchaHolder provideCaptchaHolder() {
-        Logger.d(DI_TAG, "Captcha holder");
         return new CaptchaHolder();
     }
 
@@ -146,8 +139,6 @@ public class AppModule {
     @Provides
     @Singleton
     public Android10GesturesExclusionZonesHolder provideAndroid10GesturesHolder(Gson gson) {
-        Logger.d(DI_TAG, "Android10GesturesExclusionZonesHolder");
-
         return new Android10GesturesExclusionZonesHolder(gson, getMinScreenSize(), getMaxScreenSize());
     }
 

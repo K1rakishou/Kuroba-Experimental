@@ -17,7 +17,6 @@ import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.RemoteFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.ShareFilePicker
 import com.github.k1rakishou.common.AppConstants
-import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
@@ -41,8 +40,6 @@ class HelperModule {
     postFilterManager: PostFilterManager,
     boardManager: BoardManager
   ): ChanThreadLoaderCoordinator {
-    Logger.d(AppModule.DI_TAG, "ChanThreadLoaderCoordinator")
-
     return ChanThreadLoaderCoordinator(
       proxiedOkHttpClient,
       savedReplyManager,
@@ -80,7 +77,6 @@ class HelperModule {
     replyManager: ReplyManager,
     applicationScope: CoroutineScope
   ): LocalFilePicker {
-    Logger.d(AppModule.DI_TAG, "LocalFilePicker")
     return LocalFilePicker(
       appConstants,
       fileManager,
@@ -99,7 +95,6 @@ class HelperModule {
     replyManager: ReplyManager,
     cacheHandler: CacheHandler
   ): RemoteFilePicker {
-    Logger.d(AppModule.DI_TAG, "RemoteFilePicker")
     return RemoteFilePicker(
       appConstants,
       fileManager,
@@ -120,8 +115,6 @@ class HelperModule {
     localFilePicker: LocalFilePicker,
     remoteFilePicker: RemoteFilePicker
   ): ImagePickHelper {
-    Logger.d(AppModule.DI_TAG, "ImagePickHelper")
-
     return ImagePickHelper(
       appContext,
       replyManager,

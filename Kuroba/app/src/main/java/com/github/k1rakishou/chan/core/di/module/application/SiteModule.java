@@ -18,7 +18,6 @@ package com.github.k1rakishou.chan.core.di.module.application;
 
 import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
-import com.github.k1rakishou.core_logger.Logger;
 
 import javax.inject.Singleton;
 
@@ -31,7 +30,6 @@ public class SiteModule {
     @Provides
     @Singleton
     public SiteResolver provideSiteResolver(SiteManager siteManager) {
-        Logger.d(AppModule.DI_TAG, "Site resolver");
         return new SiteResolver(siteManager);
     }
 }

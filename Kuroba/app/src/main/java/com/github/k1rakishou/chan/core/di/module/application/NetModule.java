@@ -34,7 +34,6 @@ import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager;
 import com.github.k1rakishou.common.AppConstants;
-import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.fsaf.file.RawFile;
 import com.google.gson.Gson;
@@ -70,7 +69,6 @@ public class NetModule {
             SiteResolver siteResolver,
             Gson gson
     ) {
-        Logger.d(AppModule.DI_TAG, "ProxyStorage");
         return new ProxyStorage(
                 appScope,
                 appContext,
@@ -86,13 +84,16 @@ public class NetModule {
     public CacheHandler provideCacheHandler(
             FileManager fileManager
     ) {
-        Logger.d(AppModule.DI_TAG, "Cache handler");
-
         File cacheDir = getCacheDir();
         RawFile cacheDirFile = fileManager.fromRawFile(new File(cacheDir, FILE_CACHE_DIR));
         RawFile chunksCacheDirFile = fileManager.fromRawFile(new File(cacheDir, FILE_CHUNKS_CACHE_DIR));
 
-        return new CacheHandler(fileManager, cacheDirFile, chunksCacheDirFile, ChanSettings.autoLoadThreadImages.get());
+        return new CacheHandler(
+                fileManager,
+                cacheDirFile,
+                chunksCacheDirFile,
+                ChanSettings.autoLoadThreadImages.get()
+        );
     }
 
     @Provides
@@ -105,7 +106,6 @@ public class NetModule {
             RealDownloaderOkHttpClient realDownloaderOkHttpClient,
             AppConstants appConstants
     ) {
-        Logger.d(AppModule.DI_TAG, "File cache V2");
         return new FileCacheV2(
                 fileManager,
                 cacheHandler,
@@ -125,7 +125,6 @@ public class NetModule {
             CacheHandler cacheHandler,
             AppConstants appConstants
     ) {
-        Logger.d(AppModule.DI_TAG, "WebmStreamingSource");
         return new WebmStreamingSource(
                 siteManager,
                 fileManager,
@@ -141,7 +140,6 @@ public class NetModule {
             ProxiedOkHttpClient okHttpClient,
             AppConstants appConstants
     ) {
-        Logger.d(AppModule.DI_TAG, "Http call manager");
         return new HttpCallManager(okHttpClient, appConstants);
     }
 
@@ -156,8 +154,6 @@ public class NetModule {
             ProxyStorage proxyStorage,
             HttpLoggingInterceptorLazy httpLoggingInterceptorLazy
     ) {
-        Logger.d(AppModule.DI_TAG, "RealProxiedOkHttpClient");
-
         return new RealProxiedOkHttpClient(
                 okHttpDns,
                 okHttpProtocols,
@@ -178,8 +174,6 @@ public class NetModule {
             ProxyStorage proxyStorage,
             HttpLoggingInterceptorLazy httpLoggingInterceptorLazy
     ) {
-        Logger.d(AppModule.DI_TAG, "CoilOkHttpClient");
-
         return new CoilOkHttpClient(
                 applicationContext,
                 okHttpDns,
@@ -200,8 +194,6 @@ public class NetModule {
             ProxyStorage proxyStorage,
             HttpLoggingInterceptorLazy httpLoggingInterceptorLazy
     ) {
-        Logger.d(AppModule.DI_TAG, "DownloaderOkHttp client");
-
         return new RealDownloaderOkHttpClient(
                 okHttpDns,
                 okHttpProtocols,

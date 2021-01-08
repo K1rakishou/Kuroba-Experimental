@@ -12,7 +12,6 @@ import com.github.k1rakishou.chan.core.loader.impl.external_media_service.Stream
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.YoutubeMediaServiceExtraInfoFetcher;
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager;
-import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.model.repository.InlinedFileInfoRepository;
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository;
 
@@ -38,8 +37,6 @@ public class LoaderModule {
             PrefetchImageDownloadIndicatorManager prefetchImageDownloadIndicatorManager,
             @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
-        Logger.d(AppModule.DI_TAG, "PrefetchLoader");
-
         return new PrefetchLoader(
                 Schedulers.from(onDemandContentLoaderExecutor),
                 fileCacheV2,
@@ -54,8 +51,6 @@ public class LoaderModule {
             InlinedFileInfoRepository inlinedFileInfoRepository,
             @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
-        Logger.d(AppModule.DI_TAG, "InlinedFileInfoLoader");
-
         return new InlinedFileInfoLoader(
                 Schedulers.from(onDemandContentLoaderExecutor),
                 inlinedFileInfoRepository
@@ -67,8 +62,6 @@ public class LoaderModule {
     public Chan4CloudFlareImagePreloader provideChan4CloudFlareImagePreloader(
             Chan4CloudFlareImagePreloaderManager chan4CloudFlareImagePreloaderManager
     ) {
-        Logger.d(AppModule.DI_TAG, "Chan4CloudFlareImagePreloader");
-
         return new Chan4CloudFlareImagePreloader(
                 chan4CloudFlareImagePreloaderManager
         );
@@ -79,8 +72,6 @@ public class LoaderModule {
     public YoutubeMediaServiceExtraInfoFetcher provideYoutubeMediaServiceExtraInfoFetcher(
             MediaServiceLinkExtraContentRepository mediaServiceLinkExtraContentRepository
     ) {
-        Logger.d(AppModule.DI_TAG, "YoutubeMediaServiceExtraInfoFetcher");
-
         return new YoutubeMediaServiceExtraInfoFetcher(mediaServiceLinkExtraContentRepository);
     }
 
@@ -89,8 +80,6 @@ public class LoaderModule {
     public SoundCloudMediaServiceExtraInfoFetcher provideSoundCloudMediaServiceExtraInfoFetcher(
             MediaServiceLinkExtraContentRepository mediaServiceLinkExtraContentRepository
     ) {
-        Logger.d(AppModule.DI_TAG, "SoundCloudMediaServiceExtraInfoFetcher");
-
         return new SoundCloudMediaServiceExtraInfoFetcher(mediaServiceLinkExtraContentRepository);
     }
 
@@ -99,8 +88,6 @@ public class LoaderModule {
     public StreamableMediaServiceExtraInfoFetcher provideStreamableMediaServiceExtraInfoFetcher(
             MediaServiceLinkExtraContentRepository mediaServiceLinkExtraContentRepository
     ) {
-        Logger.d(AppModule.DI_TAG, "StreamableMediaServiceExtraInfoFetcher");
-
         return new StreamableMediaServiceExtraInfoFetcher(mediaServiceLinkExtraContentRepository);
     }
 
@@ -112,8 +99,6 @@ public class LoaderModule {
             StreamableMediaServiceExtraInfoFetcher streamableMediaServiceExtraInfoFetcher,
             @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
-        Logger.d(AppModule.DI_TAG, "PostExtraContentLoader");
-
         List<ExternalMediaServiceExtraInfoFetcher> fetchers = new ArrayList<>();
         fetchers.add(youtubeMediaServiceExtraInfoFetcher);
         fetchers.add(soundCloudMediaServiceExtraInfoFetcher);

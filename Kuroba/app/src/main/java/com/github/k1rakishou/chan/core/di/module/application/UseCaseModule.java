@@ -19,7 +19,6 @@ import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
 import com.github.k1rakishou.common.AppConstants;
-import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.repository.ChanPostRepository;
@@ -42,8 +41,6 @@ public class UseCaseModule {
             SiteManager siteManager,
             ChanThreadManager chanThreadManager
     ) {
-        Logger.d(AppModule.DI_TAG, "ExtractPostMapInfoHolderUseCase");
-
         return new ExtractPostMapInfoHolderUseCase(
                 savedReplyManager,
                 siteManager,
@@ -61,8 +58,6 @@ public class UseCaseModule {
             AppConstants appConstants
 
     ) {
-        Logger.d(AppModule.DI_TAG, "FetchThreadBookmarkInfoUseCase");
-
         return new FetchThreadBookmarkInfoUseCase(
                 isDevBuild(),
                 ChanSettings.verboseLogs.get(),
@@ -82,8 +77,6 @@ public class UseCaseModule {
             SiteManager siteManager,
             SavedReplyManager savedReplyManager
     ) {
-        Logger.d(AppModule.DI_TAG, "ParsePostRepliesUseCase");
-
         return new ParsePostRepliesUseCase(
                 appScope,
                 replyParser,
@@ -103,8 +96,6 @@ public class UseCaseModule {
             BookmarksManager bookmarksManager,
             ChanPostRepository chanPostRepository
     ) {
-        Logger.d(AppModule.DI_TAG, "KurobaSettingsImportUseCase");
-
         return new KurobaSettingsImportUseCase(
                 fileManager,
                 siteManager,
@@ -123,8 +114,6 @@ public class UseCaseModule {
             ThemeEngine themeEngine,
             SimpleCommentParser simpleCommentParser
     ) {
-        Logger.d(AppModule.DI_TAG, "GlobalSearchUseCase");
-
         return new GlobalSearchUseCase(
                 siteManager,
                 themeEngine,
@@ -138,8 +127,6 @@ public class UseCaseModule {
             PostHideManager postHideManager,
             PostFilterManager postFilterManager
     ) {
-        Logger.d(AppModule.DI_TAG, "FilterOutHiddenImagesUseCase");
-
         return new FilterOutHiddenImagesUseCase(
                 postHideManager,
                 postFilterManager

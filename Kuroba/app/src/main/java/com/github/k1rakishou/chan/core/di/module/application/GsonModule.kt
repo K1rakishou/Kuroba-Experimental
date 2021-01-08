@@ -18,7 +18,6 @@ package com.github.k1rakishou.chan.core.di.module.application
 
 import com.github.k1rakishou.common.jsonObject
 import com.github.k1rakishou.common.nextStringOrNull
-import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.json.BooleanJsonSetting
 import com.github.k1rakishou.json.IntegerJsonSetting
 import com.github.k1rakishou.json.JsonSetting
@@ -41,8 +40,6 @@ class GsonModule {
   @Provides
   @Singleton
   fun provideGson(): Gson {
-    Logger.d(AppModule.DI_TAG, "Gson module")
-
     val userSettingAdapter = RuntimeTypeAdapterFactory.of(JsonSetting::class.java, "type")
       .registerSubtype(StringJsonSetting::class.java, "string")
       .registerSubtype(IntegerJsonSetting::class.java, "integer")

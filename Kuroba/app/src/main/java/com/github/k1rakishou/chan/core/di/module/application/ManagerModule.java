@@ -73,7 +73,6 @@ import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkWatcherCoor
 import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkWatcherDelegate;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.common.AppConstants;
-import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.repository.BoardRepository;
 import com.github.k1rakishou.model.repository.BookmarksRepository;
@@ -115,8 +114,6 @@ public class ManagerModule {
             CoroutineScope appScope,
             SiteRepository siteRepository
     ) {
-        Logger.d(AppModule.DI_TAG, "Site manager");
-
         return new SiteManager(
                 appScope,
                 AppModuleAndroidUtils.isDevBuild(),
@@ -133,7 +130,6 @@ public class ManagerModule {
             SiteRepository siteRepository,
             BoardRepository boardRepository
     ) {
-        Logger.d(AppModule.DI_TAG, "Board manager");
         return new BoardManager(
                 appScope,
                 AppModuleAndroidUtils.isDevBuild(),
@@ -145,7 +141,6 @@ public class ManagerModule {
     @Provides
     @Singleton
     public FilterEngine provideFilterEngine(ChanFilterManager chanFilterManager) {
-        Logger.d(AppModule.DI_TAG, "Filter engine");
         return new FilterEngine(chanFilterManager);
     }
 
@@ -155,7 +150,6 @@ public class ManagerModule {
             AppConstants appConstants,
             Gson gson
     ) {
-        Logger.d(AppModule.DI_TAG, "Reply manager");
         return new ReplyManager(appConstants, gson);
     }
 
@@ -165,7 +159,6 @@ public class ManagerModule {
             SiteManager siteManager,
             BoardManager boardManager
     ) {
-        Logger.d(AppModule.DI_TAG, "Page request manager");
         return new PageRequestManager(
                 siteManager,
                 boardManager
@@ -180,7 +173,6 @@ public class ManagerModule {
             AppConstants appConstants,
             CoroutineScope appScope
     ) {
-        Logger.d(AppModule.DI_TAG, "Archives manager");
         return new ArchivesManager(
                 gson,
                 appContext,
@@ -193,7 +185,6 @@ public class ManagerModule {
     @Provides
     @Singleton
     public MockReplyManager provideMockReplyManager() {
-        Logger.d(AppModule.DI_TAG, "Mock reply manager");
         return new MockReplyManager();
     }
 
@@ -204,7 +195,6 @@ public class ManagerModule {
             Gson gson,
             SettingsNotificationManager settingsNotificationManager
     ) {
-        Logger.d(AppModule.DI_TAG, "Report manager");
         File cacheDir = getCacheDir();
 
         return new ReportManager(
@@ -227,13 +217,11 @@ public class ManagerModule {
             PrefetchLoader prefetchLoader,
             PostExtraContentLoader postExtraContentLoader,
             InlinedFileInfoLoader inlinedFileInfoLoader,
-            Chan4CloudFlareImagePreloader сhan4CloudFlareImagePreloader,
+            Chan4CloudFlareImagePreloader chan4CloudFlareImagePreloader,
             @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
-        Logger.d(AppModule.DI_TAG, "OnDemandContentLoaderManager");
-
         HashSet<OnDemandContentLoader> loaders = new HashSet<>();
-        loaders.add(сhan4CloudFlareImagePreloader);
+        loaders.add(chan4CloudFlareImagePreloader);
         loaders.add(prefetchLoader);
         loaders.add(postExtraContentLoader);
         loaders.add(inlinedFileInfoLoader);
@@ -250,8 +238,6 @@ public class ManagerModule {
             CoroutineScope appScope,
             SeenPostRepository seenPostRepository
     ) {
-        Logger.d(AppModule.DI_TAG, "SeenPostsManager");
-
         return new SeenPostsManager(
                 appScope,
                 ChanSettings.verboseLogs.get(),
@@ -262,24 +248,18 @@ public class ManagerModule {
     @Provides
     @Singleton
     public PrefetchImageDownloadIndicatorManager providePrefetchIndicatorAnimationManager() {
-        Logger.d(AppModule.DI_TAG, "PrefetchIndicatorAnimationManager");
-
         return new PrefetchImageDownloadIndicatorManager();
     }
 
     @Provides
     @Singleton
     public GlobalWindowInsetsManager provideGlobalWindowInsetsManager() {
-        Logger.d(AppModule.DI_TAG, "GlobalWindowInsetsManager");
-
         return new GlobalWindowInsetsManager();
     }
 
     @Provides
     @Singleton
     public ApplicationVisibilityManager provideApplicationVisibilityManager() {
-        Logger.d(AppModule.DI_TAG, "ApplicationVisibilityManager");
-
         return new ApplicationVisibilityManager();
     }
 
@@ -290,8 +270,6 @@ public class ManagerModule {
             HistoryNavigationRepository historyNavigationRepository,
             ApplicationVisibilityManager applicationVisibilityManager
     ) {
-        Logger.d(AppModule.DI_TAG, "HistoryNavigationManager");
-
         return new HistoryNavigationManager(
                 appScope,
                 historyNavigationRepository,
@@ -302,24 +280,18 @@ public class ManagerModule {
     @Provides
     @Singleton
     public ControllerNavigationManager provideControllerNavigationManager() {
-        Logger.d(AppModule.DI_TAG, "ControllerNavigationManager");
-
         return new ControllerNavigationManager();
     }
 
     @Provides
     @Singleton
     public PostFilterManager providePostFilterManager() {
-        Logger.d(AppModule.DI_TAG, "PostFilterManager");
-
         return new PostFilterManager();
     }
 
     @Provides
     @Singleton
     public BottomNavBarVisibilityStateManager provideReplyViewStateManager() {
-        Logger.d(AppModule.DI_TAG, "ReplyViewStateManager");
-
         return new BottomNavBarVisibilityStateManager();
     }
 
@@ -331,8 +303,6 @@ public class ManagerModule {
             ArchivesManager archivesManager,
             BookmarksRepository bookmarksRepository
     ) {
-        Logger.d(AppModule.DI_TAG, "BookmarksManager");
-
         return new BookmarksManager(
                 AppModuleAndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
@@ -350,8 +320,6 @@ public class ManagerModule {
             SiteManager siteManager,
             ParserRepository parserRepository
     ) {
-        Logger.d(AppModule.DI_TAG, "ReplyParser");
-
         return new ReplyParser(
                 siteManager,
                 parserRepository
@@ -370,8 +338,6 @@ public class ManagerModule {
             ReplyNotificationsHelper replyNotificationsHelper,
             LastPageNotificationsHelper lastPageNotificationsHelper
     ) {
-        Logger.d(AppModule.DI_TAG, "BookmarkWatcherDelegate");
-
         return new BookmarkWatcherDelegate(
                 AppModuleAndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
@@ -397,8 +363,6 @@ public class ManagerModule {
             BookmarkWatcherDelegate bookmarkWatcherDelegate,
             ApplicationVisibilityManager applicationVisibilityManager
     ) {
-        Logger.d(AppModule.DI_TAG, "BookmarkForegroundWatcher");
-
         return new BookmarkForegroundWatcher(
                 ChanSettings.verboseLogs.get(),
                 appScope,
@@ -420,8 +384,6 @@ public class ManagerModule {
             BookmarksManager bookmarksManager,
             BookmarkForegroundWatcher bookmarkForegroundWatcher
     ) {
-        Logger.d(AppModule.DI_TAG, "BookmarkWatcherController");
-
         return new BookmarkWatcherCoordinator(
                 ChanSettings.verboseLogs.get(),
                 appContext,
@@ -435,8 +397,6 @@ public class ManagerModule {
     @Provides
     @Singleton
     public LastViewedPostNoInfoHolder provideLastViewedPostNoInfoHolder() {
-        Logger.d(AppModule.DI_TAG, "LastViewedPostNoInfoHolder");
-
         return new LastViewedPostNoInfoHolder();
     }
 
@@ -451,8 +411,6 @@ public class ManagerModule {
             ThemeEngine themeEngine,
             SimpleCommentParser simpleCommentParser
     ) {
-        Logger.d(AppModule.DI_TAG, "ReplyNotificationsHelper");
-
         return new ReplyNotificationsHelper(
                 AppModuleAndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
@@ -476,8 +434,6 @@ public class ManagerModule {
             BookmarksManager bookmarksManager,
             ThemeEngine themeEngine
     ) {
-        Logger.d(AppModule.DI_TAG, "LastPageNotificationsHelper");
-
         return new LastPageNotificationsHelper(
                 AppModuleAndroidUtils.isDevBuild(),
                 appContext,
@@ -494,8 +450,6 @@ public class ManagerModule {
             ChanThreadViewableInfoRepository chanThreadViewableInfoRepository,
             CoroutineScope appScope
     ) {
-        Logger.d(AppModule.DI_TAG, "ChanThreadViewableInfoManager");
-
         return new ChanThreadViewableInfoManager(
                 ChanSettings.verboseLogs.get(),
                 appScope,
@@ -508,8 +462,6 @@ public class ManagerModule {
     public SavedReplyManager provideSavedReplyManager(
             ChanSavedReplyRepository chanSavedReplyRepository
     ) {
-        Logger.d(AppModule.DI_TAG, "SavedReplyManager");
-
         return new SavedReplyManager(
                 ChanSettings.verboseLogs.get(),
                 chanSavedReplyRepository
@@ -522,8 +474,6 @@ public class ManagerModule {
         ChanPostHideRepository chanPostHideRepository,
         CoroutineScope appScope
     ) {
-        Logger.d(AppModule.DI_TAG, "PostHideManager");
-
         return new PostHideManager(
                 ChanSettings.verboseLogs.get(),
                 appScope,
@@ -539,8 +489,6 @@ public class ManagerModule {
             CoroutineScope appScope,
             PostFilterManager postFilterManager
     ) {
-        Logger.d(AppModule.DI_TAG, "ChanFilterManager");
-
         return new ChanFilterManager(
                 appScope,
                 chanFilterRepository,
@@ -552,8 +500,6 @@ public class ManagerModule {
     @Provides
     @Singleton
     public LocalSearchManager provideLocalSearchManager() {
-        Logger.d(AppModule.DI_TAG, "LocalSearchManager");
-
         return new LocalSearchManager();
     }
 
@@ -563,8 +509,6 @@ public class ManagerModule {
             PostHideManager postHideManager,
             PostFilterManager postFilterManager
     ) {
-        Logger.d(AppModule.DI_TAG, "PostHideHelper");
-
         return new PostHideHelper(
                 postHideManager,
                 postFilterManager
@@ -577,8 +521,6 @@ public class ManagerModule {
             ApplicationVisibilityManager applicationVisibilityManager,
             ThemeEngine themeEngine
     ) {
-        Logger.d(AppModule.DI_TAG, "DialogFactory");
-
         return new DialogFactory(
                 applicationVisibilityManager,
                 themeEngine
@@ -592,8 +534,6 @@ public class ManagerModule {
             ThreadBookmarkGroupRepository threadBookmarkGroupEntryRepository,
             BookmarksManager bookmarksManager
     ) {
-        Logger.d(AppModule.DI_TAG, "ThreadBookmarkGroupEntryManager");
-
         return new ThreadBookmarkGroupManager(
                 appScope,
                 ChanSettings.verboseLogs.get(),
@@ -609,8 +549,6 @@ public class ManagerModule {
             RealProxiedOkHttpClient realProxiedOkHttpClient,
             ChanThreadManager chanThreadManager
     ) {
-        Logger.d(AppModule.DI_TAG, "Chan4CloudFlareImagePreloaderManager");
-
         return new Chan4CloudFlareImagePreloaderManager(
                 appScope,
                 ChanSettings.verboseLogs.get(),
@@ -630,8 +568,6 @@ public class ManagerModule {
             ChanPostRepository chanPostRepository,
             ChanThreadLoaderCoordinator chanThreadLoaderCoordinator
     ) {
-        Logger.d(AppModule.DI_TAG, "ChanThreadManager");
-
         return new ChanThreadManager(
                 siteManager,
                 bookmarksManager,
@@ -646,8 +582,6 @@ public class ManagerModule {
     @Singleton
     @Provides
     public ThreadFollowHistoryManager provideThreadFollowHistoryManager() {
-        Logger.d(AppModule.DI_TAG, "ThreadFollowHistoryManager");
-
         return new ThreadFollowHistoryManager();
     }
 
@@ -656,8 +590,6 @@ public class ManagerModule {
     public PostingLimitationsInfoManager providePostingLimitationsInfoManager(
             SiteManager siteManager
     ) {
-        Logger.d(AppModule.DI_TAG, "PostingLimitationsInfoManager");
-
         return new PostingLimitationsInfoManager(siteManager);
     }
 
