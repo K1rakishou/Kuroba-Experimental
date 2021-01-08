@@ -7,6 +7,7 @@ import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.core_themes.ThemeEngine
 import java.util.*
 import javax.inject.Inject
@@ -34,6 +35,16 @@ class EpoxyAttachNewFileButtonView @JvmOverloads constructor(
 
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
+
+    val margin = context.resources.getDimension(R.dimen.attach_new_file_button_vertical_margin).toInt()
+    updateMargins(
+      left = margin,
+      right = margin,
+      start = margin,
+      end = margin,
+      top = margin,
+      bottom = margin
+    )
 
     themeEngine.addListener(this)
   }

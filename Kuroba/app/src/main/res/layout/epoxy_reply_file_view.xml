@@ -5,7 +5,6 @@
     android:id="@+id/reply_attachment_root"
     android:layout_width="match_parent"
     android:layout_height="@dimen/attach_new_file_button_height"
-    android:layout_margin="@dimen/attach_new_file_button_vertical_margin"
     android:background="?attr/selectableItemBackgroundBorderless"
     android:clickable="true"
     android:focusable="true"
