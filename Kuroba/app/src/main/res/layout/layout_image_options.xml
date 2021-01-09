@@ -33,105 +33,111 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <LinearLayout
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clickable="true"
-            android:focusable="true"
-            android:orientation="vertical">
+            android:layout_height="match_parent">
 
-            <ImageView
-                android:id="@+id/image_options_preview"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="300dp"
-                android:scaleType="fitCenter" />
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:focusable="true"
+                android:orientation="vertical">
 
-            <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout
-                android:id="@+id/reencode_options_group"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="vertical"
-                android:padding="4dp">
-
-                <LinearLayout
+                <ImageView
+                    android:id="@+id/image_options_preview"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:layout_height="300dp"
+                    android:scaleType="fitCenter" />
 
-                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
-                        android:id="@+id/image_options_filename"
-                        android:layout_width="0dp"
+                <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout
+                    android:id="@+id/reencode_options_group"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    android:padding="4dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1" />
+                        android:orientation="horizontal">
 
-                    <androidx.appcompat.widget.AppCompatImageView
-                        android:id="@+id/image_option_generate_new_name"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:layout_gravity="center_vertical"
-                        android:layout_marginStart="8dp"
-                        android:layout_marginEnd="8dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:clickable="true"
-                        android:focusable="true"
-                        tools:src="@drawable/ic_refresh_white_24dp" />
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
+                            android:id="@+id/image_options_filename"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1" />
 
-                </LinearLayout>
+                        <androidx.appcompat.widget.AppCompatImageView
+                            android:id="@+id/image_option_generate_new_name"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginStart="8dp"
+                            android:layout_marginEnd="8dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:clickable="true"
+                            android:focusable="true"
+                            tools:src="@drawable/ic_refresh_white_24dp" />
 
-                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
-                    android:id="@+id/image_options_change_image_checksum"
-                    android:layout_width="match_parent"
-                    android:layout_height="36dp"
-                    android:text="@string/image_options_change_image_checksum" />
+                    </LinearLayout>
 
-                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
-                    android:id="@+id/image_options_fix_exif"
-                    android:layout_width="match_parent"
-                    android:layout_height="36dp"
-                    android:text="@string/image_options_fix_exif" />
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
+                        android:id="@+id/image_options_change_image_checksum"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:text="@string/image_options_change_image_checksum" />
 
-                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
-                    android:id="@+id/image_options_remove_metadata"
-                    android:layout_width="match_parent"
-                    android:layout_height="36dp"
-                    android:text="@string/image_options_remove_metadata" />
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
+                        android:id="@+id/image_options_fix_exif"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:text="@string/image_options_fix_exif" />
 
-                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
-                    android:id="@+id/image_options_reencode"
-                    android:layout_width="match_parent"
-                    android:layout_height="36dp"
-                    android:text="@string/image_options_re_encode" />
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
+                        android:id="@+id/image_options_remove_metadata"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:text="@string/image_options_remove_metadata" />
 
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent">
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
+                        android:id="@+id/image_options_reencode"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:text="@string/image_options_re_encode" />
 
-                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
-                        android:id="@+id/image_options_cancel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:layout_marginRight="8dp"
-                        android:text="@string/cancel"
-                        app:layout_constraintBottom_toBottomOf="@+id/image_options_ok"
-                        app:layout_constraintEnd_toStartOf="@+id/image_options_ok"
-                        app:layout_constraintTop_toTopOf="@+id/image_options_ok" />
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
 
-                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
-                        android:id="@+id/image_options_ok"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:layout_marginRight="8dp"
-                        android:text="@string/apply"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+                            android:id="@+id/image_options_cancel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:layout_marginRight="8dp"
+                            android:text="@string/cancel"
+                            app:layout_constraintBottom_toBottomOf="@+id/image_options_ok"
+                            app:layout_constraintEnd_toStartOf="@+id/image_options_ok"
+                            app:layout_constraintTop_toTopOf="@+id/image_options_ok" />
 
-                </androidx.constraintlayout.widget.ConstraintLayout>
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+                            android:id="@+id/image_options_ok"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:layout_marginRight="8dp"
+                            android:text="@string/apply"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
 
-            </com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout>
+                    </androidx.constraintlayout.widget.ConstraintLayout>
 
-        </LinearLayout>
+                </com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout>
+
+            </LinearLayout>
+
+        </ScrollView>
 
     </com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView>
 

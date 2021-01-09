@@ -193,7 +193,7 @@ class ImageReencodingPresenter(
 
     // only the "remove filename" option is selected
     if (onlyRemoveFileNameSelected()) {
-      updateFileName()
+      updateFileName(imageOptions.newFileName)
       callback.onImageOptionsApplied()
       return
     }
