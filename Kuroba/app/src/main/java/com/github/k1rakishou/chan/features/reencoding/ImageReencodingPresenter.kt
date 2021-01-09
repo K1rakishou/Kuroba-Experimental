@@ -172,10 +172,6 @@ class ImageReencodingPresenter(
       fileName
     }
 
-    applyImageOptionsInternal()
-  }
-
-  private fun applyImageOptionsInternal() {
     val replyFile = replyManager.getReplyFileByFileUuid(fileUuid).valueOrNull()
     if (replyFile == null) {
       callback.onImageOptionsApplied()
