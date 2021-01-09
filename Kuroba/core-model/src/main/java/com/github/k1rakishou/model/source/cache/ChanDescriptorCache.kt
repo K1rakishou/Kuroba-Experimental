@@ -68,6 +68,14 @@ class ChanDescriptorCache(
     }
   }
 
+  suspend fun putThreadDescriptor(threadId: Long, threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    require(threadId >= 0L) { "Bad threadId: $threadId, threadDescriptor: $threadDescriptor" }
+
+    mutex.withLock {
+      threadIdCache[threadDescriptor] = threadId
+    }
+  }
+
   suspend fun getBoardIdByBoardDescriptor(boardDescriptor: BoardDescriptor): Long? {
     database.ensureInTransaction()
 
@@ -83,6 +91,12 @@ class ChanDescriptorCache(
 
     mutex.withLock { boardIdCache[boardDescriptor] = fromDatabase }
     return fromDatabase
+  }
+
+  suspend fun getThreadIdByThreadDescriptorFromCache(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): Long? {
+    return mutex.withLock { threadIdCache[threadDescriptor] }
   }
 
   suspend fun getThreadIdByThreadDescriptor(threadDescriptor: ChanDescriptor.ThreadDescriptor): Long? {

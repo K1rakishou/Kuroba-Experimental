@@ -221,7 +221,7 @@ class ThreadStatusCell(
     val hasReplies = chanThread.repliesCount > 0
     val hasImages = chanThread.imagesCount > 0
 
-    if (hasReplies && hasImages) {
+    if (hasReplies || hasImages) {
       val hasBumpLimit = board.bumpLimit > 0
       val hasImageLimit = board.imageLimit > 0
 
@@ -243,11 +243,11 @@ class ThreadStatusCell(
         .append(replies)
         .append(" / ")
         .append(images)
+    }
 
-      if (op.uniqueIps >= 0) {
-        val ips = op.uniqueIps.toString() + "P"
-        builder.append(" / ").append(ips)
-      }
+    if (op.uniqueIps >= 0) {
+      val ips = op.uniqueIps.toString() + "P"
+      builder.append(" / ").append(ips)
     }
 
     val boardPage = callback?.getPage(op.postDescriptor)

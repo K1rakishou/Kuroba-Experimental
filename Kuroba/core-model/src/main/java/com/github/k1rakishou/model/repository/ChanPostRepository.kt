@@ -3,6 +3,7 @@ package com.github.k1rakishou.model.repository
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.common.ModularResult.Companion.value
 import com.github.k1rakishou.common.MurmurHashUtils
 import com.github.k1rakishou.common.SuspendableInitializer
 import com.github.k1rakishou.common.linkedMapWithCap
@@ -15,6 +16,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import com.github.k1rakishou.model.source.local.ChanPostLocalSource
 import com.github.k1rakishou.model.util.ensureBackgroundThread
@@ -32,7 +34,8 @@ class ChanPostRepository(
   private val applicationScope: CoroutineScope,
   private val appConstants: AppConstants,
   private val localSource: ChanPostLocalSource,
-  private val chanThreadsCache: ChanThreadsCache
+  private val chanThreadsCache: ChanThreadsCache,
+  private val chanDescriptorCache: ChanDescriptorCache
 ) : AbstractRepository(database) {
   private val TAG = "ChanPostRepository"
   private val suspendableInitializer = SuspendableInitializer<Unit>("ChanPostRepository")
@@ -89,9 +92,19 @@ class ChanPostRepository(
   suspend fun createEmptyThreadIfNotExists(descriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Long?> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
+    val fromCache = chanDescriptorCache.getThreadIdByThreadDescriptorFromCache(descriptor)
+    if (fromCache != null) {
+      return value(fromCache)
+    }
+
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
-        return@tryWithTransaction localSource.insertEmptyThread(descriptor)
+        val createdThreadDatabaseId = localSource.insertEmptyThread(descriptor)
+        if (createdThreadDatabaseId != null && createdThreadDatabaseId >= 0L) {
+          chanDescriptorCache.putThreadDescriptor(createdThreadDatabaseId, descriptor)
+        }
+
+        return@tryWithTransaction createdThreadDatabaseId
       }
     }
   }

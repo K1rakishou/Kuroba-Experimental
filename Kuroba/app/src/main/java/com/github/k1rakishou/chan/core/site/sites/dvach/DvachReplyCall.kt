@@ -58,9 +58,10 @@ class DvachReplyCall internal constructor(
     }
 
     replyManager.readReply(chanDescriptor) { reply ->
-      var threadNo = -1L
-      if (chanDescriptor is ThreadDescriptor) {
-        threadNo = chanDescriptor.threadNo
+      val threadNo = if (chanDescriptor is ThreadDescriptor) {
+        chanDescriptor.threadNo
+      } else {
+        0L
       }
 
       formBuilder.addFormDataPart("task", "post")

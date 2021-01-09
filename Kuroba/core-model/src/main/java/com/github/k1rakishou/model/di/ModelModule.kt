@@ -362,7 +362,8 @@ class ModelModule {
     dependencies: ModelComponent.Dependencies,
     database: KurobaDatabase,
     chanPostLocalSource: ChanPostLocalSource,
-    chanThreadsCache: ChanThreadsCache
+    chanThreadsCache: ChanThreadsCache,
+    chanDescriptorCache: ChanDescriptorCache
   ): ChanPostRepository {
     return ChanPostRepository(
       database,
@@ -370,7 +371,8 @@ class ModelModule {
       dependencies.coroutineScope,
       dependencies.appConstants,
       chanPostLocalSource,
-      chanThreadsCache
+      chanThreadsCache,
+      chanDescriptorCache
     )
   }
 

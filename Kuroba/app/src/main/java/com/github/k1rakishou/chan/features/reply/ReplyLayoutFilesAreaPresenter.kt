@@ -29,6 +29,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
@@ -520,6 +521,10 @@ class ReplyLayoutFilesAreaPresenter(
     try {
       updater()
     } catch (error: Throwable) {
+      if (error is CancellationException) {
+        return
+      }
+
       Logger.e(TAG, "handleStateUpdate() error", error)
       withView { showGenericErrorToast(error.errorMessageOrClassName()) }
     }

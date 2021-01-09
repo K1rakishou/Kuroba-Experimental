@@ -139,6 +139,10 @@ class ThreadBookmarkGroupManager(
           return@iterateEntriesOrderedWhile true
         }
 
+        if (threadBookmarkItemViews.isEmpty()) {
+          return@forEach
+        }
+
         listOfGroups += GroupOfThreadBookmarkItemViews(
           groupId = threadBookmarkGroup.groupId,
           groupInfoText = createGroupInfoText(threadBookmarkGroup, threadBookmarkItemViews),

@@ -99,12 +99,15 @@ public abstract class CommonReplyHttpCall extends HttpCall {
         try {
             replyResponse.threadNo = Integer.parseInt(threadNoMatcher.group(1));
             replyResponse.postNo = Integer.parseInt(threadNoMatcher.group(2));
+
+            if (replyResponse.threadNo == 0) {
+                replyResponse.threadNo = replyResponse.postNo;
+            }
         } catch (NumberFormatException error) {
             Logger.e(TAG, "ReplyResponse parsing error", error);
         }
 
-        // threadNo can be 0 if this is a new thread
-        if (replyResponse.threadNo >= 0 && replyResponse.postNo > 0) {
+        if (replyResponse.threadNo > 0 && replyResponse.postNo > 0) {
             replyResponse.posted = true;
             return;
         }

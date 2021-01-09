@@ -44,6 +44,7 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanSavedReply
+import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -68,7 +69,8 @@ class ReplyPresenter @Inject constructor(
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
   private val bookmarksManager: BookmarksManager,
-  private val chanThreadManager: ChanThreadManager
+  private val chanThreadManager: ChanThreadManager,
+  private val chanPostRepository: ChanPostRepository
 ) : AuthenticationLayoutCallback,
   CoroutineScope,
   CommentEditingHistory.CommentEditingHistoryListener {
@@ -101,6 +103,10 @@ class ReplyPresenter @Inject constructor(
 
   fun create(callback: ReplyPresenterCallback) {
     this.callback = callback
+  }
+
+  fun destroy() {
+    job.cancelChildren()
   }
 
   suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor): Boolean {
@@ -155,8 +161,6 @@ class ReplyPresenter @Inject constructor(
   fun unbindChanDescriptor() {
     closeAll()
     currentChanDescriptor = null
-
-    job.cancelChildren()
   }
 
   fun isCatalogReplyLayout(): Boolean? {
@@ -557,20 +561,34 @@ class ReplyPresenter @Inject constructor(
     prevChanDescriptor: ChanDescriptor,
     replyResponse: ReplyResponse
   ) {
+    val siteDescriptor = replyResponse.siteDescriptor
+
+    Logger.d(TAG, "prevChanDescriptor() prevChanDescriptor=$prevChanDescriptor, " +
+      "siteDescriptor=$siteDescriptor, replyResponse=$replyResponse")
+
     replyManager.cleanupFiles(prevChanDescriptor)
 
-    val siteDescriptor = replyResponse.siteDescriptor
-      ?: return
+    if (siteDescriptor == null) {
+      Logger.e(TAG, "onPostedSuccessfully() siteDescriptor==null")
+      return
+    }
 
     // if the thread being presented has changed in the time waiting for this call to
     // complete, the loadable field in ReplyPresenter will be incorrect; reconstruct
     // the loadable (local to this method) from the reply response
     val localSite = siteManager.bySiteDescriptor(siteDescriptor)
-      ?: return
+    if (localSite == null) {
+      Logger.e(TAG, "onPostedSuccessfully() localSite==null")
+      return
+    }
 
     val boardDescriptor = BoardDescriptor(siteDescriptor, replyResponse.boardCode)
+
     val localBoard = boardManager.byBoardDescriptor(boardDescriptor)
-      ?: return
+    if (localBoard == null) {
+      Logger.e(TAG, "onPostedSuccessfully() localBoard==null")
+      return
+    }
 
     val threadNo = if (replyResponse.threadNo <= 0L) {
       replyResponse.postNo
@@ -586,11 +604,17 @@ class ReplyPresenter @Inject constructor(
 
     lastReplyRepository.putLastReply(newThreadDescriptor.boardDescriptor)
 
-    if (prevChanDescriptor != null && prevChanDescriptor.isCatalogDescriptor()) {
+    if (prevChanDescriptor.isCatalogDescriptor()) {
       lastReplyRepository.putLastThread(prevChanDescriptor.boardDescriptor())
     }
 
-    if (ChanSettings.postPinThread.get()) {
+    val createThreadSuccess = chanPostRepository.createEmptyThreadIfNotExists(newThreadDescriptor)
+      .peekError { error ->
+        Logger.e(TAG, "Failed to create empty thread in the database for $newThreadDescriptor", error)
+      }
+      .isValue()
+
+    if (createThreadSuccess && ChanSettings.postPinThread.get()) {
       bookmarkThread(newThreadDescriptor, threadNo)
     }
 
@@ -636,28 +660,48 @@ class ReplyPresenter @Inject constructor(
 
     if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
       val thread = chanThreadManager.getChanThread(chanDescriptor)
+      val bookmarkThreadDescriptor = newThreadDescriptor.toThreadDescriptor(threadNo)
 
       // reply
-      if (thread != null) {
+      val createBookmarkResult = if (thread != null) {
         val originalPost = thread.getOriginalPost()
         val title = ChanPostUtils.getTitle(originalPost, currentChanDescriptor)
         val thumbnail = originalPost.firstImage()?.actualThumbnailUrl
 
-        bookmarksManager.createBookmark(newThreadDescriptor.toThreadDescriptor(threadNo), title, thumbnail)
+        bookmarksManager.createBookmark(bookmarkThreadDescriptor, title, thumbnail)
       } else {
-        bookmarksManager.createBookmark(newThreadDescriptor.toThreadDescriptor(threadNo))
-      }
-    } else {
-      val title = replyManager.readReply(chanDescriptor) { reply ->
-        PostHelper.getTitle(reply)
+        bookmarksManager.createBookmark(bookmarkThreadDescriptor)
       }
 
-      bindChanDescriptor(newThreadDescriptor)
+      if (!createBookmarkResult) {
+        Logger.e(TAG, "bookmarkThread() Failed to create bookmark with chanDescriptor=$chanDescriptor, " +
+          "threadDescriptor: $bookmarkThreadDescriptor, newThreadDescriptor=$newThreadDescriptor, " +
+          "threadNo=$threadNo")
+      }
 
-      bookmarksManager.createBookmark(
-        ChanDescriptor.ThreadDescriptor(newThreadDescriptor.boardDescriptor(), threadNo),
-        title
-      )
+      return
+    }
+
+    val title = replyManager.readReply(chanDescriptor) { reply ->
+      PostHelper.getTitle(reply)
+    }
+
+    bindChanDescriptor(newThreadDescriptor)
+
+    val bookmarkThreadDescriptor = ChanDescriptor.ThreadDescriptor(
+      newThreadDescriptor.boardDescriptor(),
+      threadNo
+    )
+
+    val createBookmarkResult = bookmarksManager.createBookmark(
+      bookmarkThreadDescriptor,
+      title
+    )
+
+    if (!createBookmarkResult) {
+      Logger.e(TAG, "bookmarkThread() Failed to create bookmark with chanDescriptor=$chanDescriptor, " +
+        "threadDescriptor: $bookmarkThreadDescriptor, newThreadDescriptor=$newThreadDescriptor, " +
+        "threadNo=$threadNo")
     }
   }
 

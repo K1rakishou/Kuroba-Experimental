@@ -498,10 +498,11 @@ class ReplyLayout @JvmOverloads constructor(
     comment.cleanup()
     presenter.unbindReplyImages()
     captchaHolder.clearCallbacks()
+    cleanup()
+
     coroutineScope.cancelChildren()
     rendezvousCoroutineExecutor.stop()
-
-    cleanup()
+    presenter.destroy()
   }
 
   fun cleanup() {

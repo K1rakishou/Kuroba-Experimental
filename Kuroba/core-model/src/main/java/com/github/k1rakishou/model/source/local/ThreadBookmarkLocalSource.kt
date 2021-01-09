@@ -130,7 +130,10 @@ class ThreadBookmarkLocalSource(
     )
 
     val toInsertOrUpdateThreadBookmarkEntities = toInsertOrUpdateInDatabase.map { threadBookmark ->
-      val threadId = threadIdMap[threadBookmark.threadDescriptor] ?: -1L
+      val threadId = requireNotNull(threadIdMap[threadBookmark.threadDescriptor]) {
+        "chanDescriptorCache does not contain threadDatabaseId for " +
+          "threadDescriptor: ${threadBookmark.threadDescriptor}"
+      }
 
       return@map ThreadBookmarkMapper.toThreadBookmarkEntity(
         threadBookmark,
