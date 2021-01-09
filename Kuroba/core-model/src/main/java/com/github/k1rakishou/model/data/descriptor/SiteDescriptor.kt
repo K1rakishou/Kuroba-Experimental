@@ -13,6 +13,10 @@ class SiteDescriptor(
     return siteName.equals("2ch.hk", ignoreCase = true)
   }
 
+  fun isLainchan(): Boolean {
+    return siteName.equals("Lainchan", ignoreCase = true)
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is SiteDescriptor) return false

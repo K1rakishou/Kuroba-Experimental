@@ -123,7 +123,7 @@ class FetchThreadBookmarkInfoUseCase(
             jsonReader
           ).safeUnwrap { error -> return@use ThreadBookmarkFetchResult.Error(error, threadDescriptor) }
 
-          if (isDevFlavor) {
+          if (isDevFlavor && !threadDescriptor.siteDescriptor().isLainchan()) {
             ensureCorrectPostOrder(threadBookmarkInfoObject.simplePostObjects)
           }
 

@@ -12,6 +12,7 @@ import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.LoaderType
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.Comparator
 import kotlin.collections.ArrayList
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -557,7 +558,12 @@ class ChanThread(
             "descriptor=${chanPost2.postDescriptor.descriptor}"
         }
 
-        check(chanPost1.postNo() > prevPostNo) { "Posts are not sorted!" }
+        // Lainchan allows OPs have postNo being greater than any other post in a thread. This must be
+        //  considered a bug. On our side we have no other choice than to hack around it.
+        if (!threadDescriptor.siteDescriptor().isLainchan()) {
+          check(chanPost1.postNo() > prevPostNo) { "Posts are not sorted!" }
+        }
+
         prevPostNo = chanPost1.postNo()
       }
     }
@@ -566,7 +572,22 @@ class ChanThread(
   companion object {
     private const val TAG = "ChanThread"
 
-    private var POSTS_COMPARATOR = compareBy<ChanPost> { chanPost -> chanPost.postDescriptor.postNo }
-      .thenBy { chanPost -> chanPost.postDescriptor.postSubNo }
+    private var POSTS_COMPARATOR = Comparator<ChanPost> { chanPost1, chanPost2 ->
+      // Due to a strange thread on Lainchan where OP has postNo greater that the next post after it we
+      //  need to add a new step to this comparator which will force OP to be the very first post of
+      //  the thread. (https://lainchan.org/%CE%A9/res/36474.html)
+      if (chanPost1.isOP() && !chanPost2.isOP()) {
+        return@Comparator -1
+      } else if (!chanPost1.isOP() && chanPost2.isOP()) {
+        return@Comparator 1
+      }
+
+      val postNoResult = chanPost1.postDescriptor.postNo.compareTo(chanPost2.postDescriptor.postNo)
+      if (postNoResult != 0) {
+        return@Comparator postNoResult
+      }
+
+      return@Comparator chanPost1.postDescriptor.postSubNo.compareTo(chanPost2.postDescriptor.postSubNo)
+    }
   }
 }

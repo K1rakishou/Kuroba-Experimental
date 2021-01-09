@@ -121,32 +121,36 @@ open class VichanActions(
   }
 
   override fun handlePost(replyResponse: ReplyResponse, response: Response, result: String) {
-    val auth = Pattern.compile("\"captcha\": ?true").matcher(result)
-    val err = errorPattern().matcher(result)
+    val authMatcher = AUTH_PATTERN.matcher(result)
+    val errorMatcher = errorPattern().matcher(result)
 
     when {
-      auth.find() -> {
+      authMatcher.find() -> {
         replyResponse.requireAuthentication = true
         replyResponse.errorMessage = result
       }
-      err.find() -> {
-        replyResponse.errorMessage = Jsoup.parse(err.group(1)).body().text()
+      errorMatcher.find() -> {
+        replyResponse.errorMessage = Jsoup.parse(errorMatcher.group(1)).body().text()
       }
       else -> {
         val url = response.request.url
-        val m = Pattern.compile("/\\w+/\\w+/(\\d+).html").matcher(url.encodedPath)
+        val threadNoMatcher = THREAD_NO_PATTERN.matcher(url.encodedPath)
 
         try {
-          if (m.find()) {
-            replyResponse.threadNo = m.group(1).toLong()
-            val fragment = url.encodedFragment
-            if (fragment != null) {
-              replyResponse.postNo = fragment.toLong()
-            } else {
-              replyResponse.postNo = replyResponse.threadNo
-            }
-            replyResponse.posted = true
+          if (!threadNoMatcher.find()) {
+            replyResponse.errorMessage = "Failed to find threadNo pattern in server response"
+            return
           }
+
+          replyResponse.threadNo = threadNoMatcher.group(1).toLong()
+          val fragment = url.encodedFragment
+          if (fragment != null) {
+            replyResponse.postNo = fragment.toLong()
+          } else {
+            replyResponse.postNo = replyResponse.threadNo
+          }
+
+          replyResponse.posted = true
         } catch (ignored: NumberFormatException) {
           replyResponse.errorMessage = "Error posting: could not find posted thread."
         }
@@ -175,7 +179,7 @@ open class VichanActions(
   }
 
   fun errorPattern(): Pattern {
-    return Pattern.compile("<h1[^>]*>Error</h1>.*<h2[^>]*>(.*?)</h2>")
+    return ERROR_PATTERN
   }
 
   override fun postAuthenticate(): SiteAuthentication {
@@ -184,5 +188,9 @@ open class VichanActions(
 
   companion object {
     private const val TAG = "VichanActions"
+
+    private val AUTH_PATTERN = Pattern.compile("\"captcha\": ?true")
+    private val ERROR_PATTERN = Pattern.compile("<h1[^>]*>Error</h1>.*<h2[^>]*>(.*?)</h2>")
+    private val THREAD_NO_PATTERN = Pattern.compile("\\/res\\/(\\d+)\\.html")
   }
 }
