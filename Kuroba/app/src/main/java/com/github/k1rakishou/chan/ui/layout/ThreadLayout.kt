@@ -72,7 +72,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLinkInBrowser
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
@@ -485,9 +484,9 @@ class ThreadLayout @JvmOverloads constructor(
 
   private fun openLinkConfirmed(link: String) {
     if (ChanSettings.openLinkBrowser.get()) {
-      openLink(link)
+      AppModuleAndroidUtils.openLink(link)
     } else {
-      openLinkInBrowser(context, link, themeEngine.chanTheme)
+      AppModuleAndroidUtils.openLinkInBrowser(context, link, themeEngine.chanTheme)
     }
   }
 
