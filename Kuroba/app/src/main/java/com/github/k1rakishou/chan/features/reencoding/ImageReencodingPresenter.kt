@@ -166,16 +166,16 @@ class ImageReencodingPresenter(
       return
     }
 
-    imageOptions.newFileName = if (fileName.isEmpty()) {
-      null
-    } else {
-      fileName
-    }
-
     val replyFile = replyManager.getReplyFileByFileUuid(fileUuid).valueOrNull()
     if (replyFile == null) {
       callback.onImageOptionsApplied()
       return
+    }
+
+    imageOptions.newFileName = if (fileName.isEmpty()) {
+      null
+    } else {
+      fileName
     }
 
     ChanSettings.lastImageOptions.set(gson.toJson(imageOptions))
