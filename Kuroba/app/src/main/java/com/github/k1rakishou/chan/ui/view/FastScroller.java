@@ -603,7 +603,11 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
         final int[] scrollbarRange = getVerticalRange();
         float touchFraction = calculateTouchFraction(y, scrollbarRange);
 
-        int scrollPosition = (int) (mRecyclerView.getAdapter().getItemCount() * touchFraction);
+        int scrollPosition = (int) ((mRecyclerView.getAdapter().getItemCount() - 1) * touchFraction);
+        if (scrollPosition < 0) {
+            scrollPosition = 0;
+        }
+
         RecyclerView.LayoutManager layoutManager = mRecyclerView.getLayoutManager();
 
         if (layoutManager instanceof GridLayoutManager) {
