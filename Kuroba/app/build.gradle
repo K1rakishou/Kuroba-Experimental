@@ -133,7 +133,7 @@ android {
 
             manifestPlaceholders = [
                     appName              : "KurobaEx-fdroid",
-                    iconLoc              : "@mipmap/ic_launcher_release_fdroid",
+                    iconLoc              : "@mipmap/ic_launcher_release",
                     fileProviderAuthority: "${defaultConfig.applicationId}${applicationIdSuffix}.fileprovider",
                     appTheme             : "@style/Chan.DefaultTheme"
             ]
