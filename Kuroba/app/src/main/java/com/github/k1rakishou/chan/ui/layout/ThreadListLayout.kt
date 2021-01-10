@@ -757,6 +757,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     viewPropertyAnimator.interpolator = DecelerateInterpolator(2f)
     viewPropertyAnimator.duration = 600
 
+    val topPosition = topAdapterPosition
+
     if (open) {
       searchStatus.visibility = VISIBLE
       searchStatus.translationY = -height.toFloat()
@@ -769,8 +771,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
           searchStatus.setText(R.string.search_empty)
           attachToolbarScroll(!open && !replyOpen)
 
-          recyclerView.post {
-            recyclerView.scrollToPosition(0)
+          if (topPosition <= 0) {
+            recyclerView.post {
+              recyclerView.scrollToPosition(0)
+            }
           }
         }
       })
