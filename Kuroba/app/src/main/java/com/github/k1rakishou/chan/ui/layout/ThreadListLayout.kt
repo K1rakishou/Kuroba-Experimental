@@ -762,6 +762,18 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       searchStatus.translationY = -height.toFloat()
 
       viewPropertyAnimator.translationY(0f)
+      viewPropertyAnimator.setListener(object : AnimatorListenerAdapter() {
+        override fun onAnimationEnd(animation: Animator) {
+          setRecyclerViewPadding()
+
+          searchStatus.setText(R.string.search_empty)
+          attachToolbarScroll(!open && !replyOpen)
+
+          recyclerView.post {
+            recyclerView.scrollToPosition(0)
+          }
+        }
+      })
     } else {
       searchStatus.translationY = 0f
 
@@ -770,19 +782,14 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         override fun onAnimationEnd(animation: Animator) {
           viewPropertyAnimator.setListener(null)
           searchStatus.visibility = GONE
+
+          setRecyclerViewPadding()
+          threadListLayoutCallback?.toolbar?.closeSearch()
+
+          attachToolbarScroll(!open && !replyOpen)
         }
       })
     }
-
-    setRecyclerViewPadding()
-
-    if (open) {
-      searchStatus.setText(R.string.search_empty)
-    } else {
-      threadListLayoutCallback!!.toolbar!!.closeSearch()
-    }
-
-    attachToolbarScroll(!open && !replyOpen)
   }
 
   @SuppressLint("StringFormatMatches")
