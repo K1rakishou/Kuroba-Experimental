@@ -413,4 +413,22 @@ public class NavigationItem {
                     .addNestedItemsTo(menuSubItem.id, nestedMenuItems);
         }
     }
+
+    @Override
+    public String toString() {
+        return "NavigationItem{" +
+                "title='" + title + '\'' +
+                ", subtitle='" + subtitle + '\'' +
+                ", hasBack=" + hasBack +
+                ", hasDrawer=" + hasDrawer +
+                ", handlesToolbarInset=" + handlesToolbarInset +
+                ", swipeable=" + swipeable +
+                ", scrollableTitle=" + scrollableTitle +
+                ", searchText='" + searchText + '\'' +
+                ", search=" + search +
+                ", selectionMode=" + selectionMode +
+                ", selectionStateText='" + selectionStateText + '\'' +
+                '}';
+    }
+
 }

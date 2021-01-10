@@ -32,7 +32,6 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
-import com.github.k1rakishou.chan.core.manager.LocalSearchType
 import com.github.k1rakishou.chan.core.presenter.BrowsePresenter
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.features.setup.BoardSelectionController
@@ -89,8 +88,8 @@ class BrowseController(
   private var initialized = false
   private var menuBuiltOnce = false
 
-  override val threadControllerType: ThreadControllerType
-    get() = ThreadControllerType.Catalog
+  override val threadControllerType: ThreadSlideController.ThreadControllerType
+    get() = ThreadSlideController.ThreadControllerType.Catalog
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -242,26 +241,6 @@ class BrowseController(
 
   @Suppress("MoveLambdaOutsideParentheses")
   private fun buildMenu() {
-    // We need to build menu here at least once ignoring the current search state, otherwise the
-    // menu will appear empty
-    if (menuBuiltOnce) {
-      val hasSearchQuery = localSearchManager.isSearchOpened(LocalSearchType.CatalogSearch)
-      if (navigation.search == hasSearchQuery) {
-        return
-      }
-
-      val searchQuery = localSearchManager.getSearchQuery(LocalSearchType.CatalogSearch)
-      if (searchQuery != null) {
-        navigation.search = true
-        navigation.searchText = searchQuery
-      } else {
-        navigation.search = false
-        navigation.searchText = null
-      }
-    }
-
-    menuBuiltOnce = true
-
     val gravity = if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
       ConstraintLayoutBiasPair.TopLeft
     } else {
@@ -615,7 +594,10 @@ class BrowseController(
       navigation.title = "/" + boardDescriptor.boardCode + "/"
       navigation.subtitle = board.name ?: ""
 
-      buildMenu()
+      if (!menuBuiltOnce) {
+        menuBuiltOnce = true
+        buildMenu()
+      }
 
       val catalogDescriptor = CatalogDescriptor.create(
         boardDescriptor.siteName(),
@@ -736,16 +718,18 @@ class BrowseController(
 
     // The target ThreadViewController is in a split nav
     // (BrowseController -> ToolbarNavigationController -> SplitNavigationController)
-    var splitNav: SplitNavigationController? = null
+    val splitNav = if (doubleNavigationController is SplitNavigationController) {
+      doubleNavigationController as SplitNavigationController?
+    } else {
+      null
+    }
 
     // The target ThreadViewController is in a slide nav
     // (BrowseController -> SlideController -> ToolbarNavigationController)
-    var slideNav: ThreadSlideController? = null
-    if (doubleNavigationController is SplitNavigationController) {
-      splitNav = doubleNavigationController as SplitNavigationController?
-    }
-    if (doubleNavigationController is ThreadSlideController) {
-      slideNav = doubleNavigationController as ThreadSlideController?
+    val slideNav = if (doubleNavigationController is ThreadSlideController) {
+      doubleNavigationController as ThreadSlideController?
+    } else {
+      null
     }
 
     // Do nothing when split navigation is enabled because both controllers are always visible
@@ -766,14 +750,23 @@ class BrowseController(
     setBoard(boardDescriptor)
   }
 
-  override fun onSlideChanged(leftOpen: Boolean) {
-    super.onSlideChanged(leftOpen)
+  override fun onLostFocus(controllerType: ThreadSlideController.ThreadControllerType) {
+    super.onLostFocus(controllerType)
+    check(controllerType == threadControllerType) { "Unexpected controllerType: $controllerType" }
+  }
 
-    val searchQuery = localSearchManager.getSearchQuery(LocalSearchType.CatalogSearch)
+  override fun onGainedFocus(controllerType: ThreadSlideController.ThreadControllerType) {
+    super.onGainedFocus(controllerType)
+    check(controllerType == threadControllerType) { "Unexpected controllerType: $controllerType" }
+
+    check(threadLayout.presenter.currentChanDescriptor is CatalogDescriptor) {
+      "Bad descriptor: ${threadLayout.presenter.currentChanDescriptor}"
+    }
+
+    val searchQuery = threadLayout.presenter.searchQuery
     if (searchQuery != null) {
       toolbar!!.openSearchWithCallback {
         toolbar!!.searchInput(searchQuery)
-        localSearchManager.clearSearch(LocalSearchType.CatalogSearch)
       }
     }
 

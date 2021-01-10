@@ -41,6 +41,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.core.base.Debouncer;
 import com.github.k1rakishou.chan.ui.layout.SearchLayout;
 import com.github.k1rakishou.chan.ui.theme.ArrowMenuDrawable;
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowDrawable;
@@ -99,6 +100,7 @@ public class ToolbarContainer extends FrameLayout {
     @Nullable
     private ToolbarPresenter.TransitionAnimationStyle transitionAnimationStyle;
 
+    private Debouncer searchDebouncer = new Debouncer(false);
     private Map<View, Animator> animatorSet = new HashMap<>();
 
     public ToolbarContainer(Context context) {
@@ -685,7 +687,11 @@ public class ToolbarContainer extends FrameLayout {
         @NonNull
         private LinearLayout createSearchLayout(NavigationItem item) {
             SearchLayout searchLayout = new SearchLayout(getContext());
-            searchLayout.setCallback(input -> callback.searchInput(input));
+            searchLayout.setCallback(input -> {
+                searchDebouncer.post(() -> {
+                    callback.searchInput(input);
+                }, 250L);
+            });
 
             if (item.searchText != null) {
                 searchLayout.setText(item.searchText);

@@ -45,7 +45,6 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager;
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
-import com.github.k1rakishou.chan.core.manager.LocalSearchManager;
 import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.k1rakishou.chan.core.manager.PageRequestManager;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
@@ -495,12 +494,6 @@ public class ManagerModule {
                 chanPostRepository,
                 postFilterManager
         );
-    }
-
-    @Provides
-    @Singleton
-    public LocalSearchManager provideLocalSearchManager() {
-        return new LocalSearchManager();
     }
 
     @Singleton

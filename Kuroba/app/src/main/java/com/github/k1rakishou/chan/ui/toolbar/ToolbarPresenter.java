@@ -134,7 +134,12 @@ public class ToolbarPresenter {
     }
 
     boolean closeSearch() {
-        if (item == null || !item.search) {
+        if (item == null) {
+            return false;
+        }
+
+        if (!item.search) {
+            item.searchText = null;
             return false;
         }
 

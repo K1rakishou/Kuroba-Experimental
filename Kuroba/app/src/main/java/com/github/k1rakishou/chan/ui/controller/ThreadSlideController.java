@@ -56,8 +56,8 @@ public class ThreadSlideController
     @Inject
     ThemeEngine themeEngine;
 
-    public Controller leftController;
-    public Controller rightController;
+    public BrowseController leftController;
+    public ViewThreadController rightController;
 
     @Nullable
     private DrawerCallbacks drawerCallbacks;
@@ -148,11 +148,11 @@ public class ThreadSlideController
     }
 
     @Override
-    public void onPanelSlide(View panel, float slideOffset) {
+    public void onPanelSlide(@NonNull View panel, float slideOffset) {
     }
 
     @Override
-    public void onPanelOpened(View panel) {
+    public void onPanelOpened(@NonNull View panel) {
         if (this.leftOpen != leftOpen()) {
             this.leftOpen = leftOpen();
             slideStateChanged();
@@ -160,7 +160,7 @@ public class ThreadSlideController
     }
 
     @Override
-    public void onPanelClosed(View panel) {
+    public void onPanelClosed(@NonNull View panel) {
         if (this.leftOpen != leftOpen()) {
             this.leftOpen = leftOpen();
             slideStateChanged();
@@ -191,13 +191,13 @@ public class ThreadSlideController
         }
     }
 
-    public void setLeftController(Controller leftController, boolean animated) {
+    public void setLeftController(@Nullable Controller leftController, boolean animated) {
         if (this.leftController != null) {
             this.leftController.onHide();
             removeChildController(this.leftController);
         }
 
-        this.leftController = leftController;
+        this.leftController = (BrowseController) leftController;
 
         if (leftController != null) {
             addChildController(leftController);
@@ -209,7 +209,7 @@ public class ThreadSlideController
         }
     }
 
-    public void setRightController(Controller rightController, boolean animated) {
+    public void setRightController(@Nullable Controller rightController, boolean animated) {
         if (this.rightController != null) {
             this.rightController.onHide();
             removeChildController(this.rightController);
@@ -217,7 +217,7 @@ public class ThreadSlideController
             this.slidingPaneLayout.rightPane.removeAllViews();
         }
 
-        this.rightController = rightController;
+        this.rightController = (ViewThreadController) rightController;
 
         if (rightController != null) {
             addChildController(rightController);
@@ -296,24 +296,20 @@ public class ThreadSlideController
 
     @Override
     public void onSearchVisibilityChanged(boolean visible) {
-        if (leftOpen() && leftController != null
-                && leftController instanceof ToolbarNavigationController.ToolbarSearchCallback) {
+        if (leftOpen() && leftController != null) {
             ((ToolbarNavigationController.ToolbarSearchCallback) leftController).onSearchVisibilityChanged(visible);
         }
-        if (!leftOpen() && rightController != null
-                && rightController instanceof ToolbarNavigationController.ToolbarSearchCallback) {
+        if (!leftOpen() && rightController != null) {
             ((ToolbarNavigationController.ToolbarSearchCallback) rightController).onSearchVisibilityChanged(visible);
         }
     }
 
     @Override
     public void onSearchEntered(@NonNull String entered) {
-        if (leftOpen() && leftController != null
-                && leftController instanceof ToolbarNavigationController.ToolbarSearchCallback) {
+        if (leftOpen() && leftController != null) {
             ((ToolbarNavigationController.ToolbarSearchCallback) leftController).onSearchEntered(entered);
         }
-        if (!leftOpen() && rightController != null
-                && rightController instanceof ToolbarNavigationController.ToolbarSearchCallback) {
+        if (!leftOpen() && rightController != null) {
             ((ToolbarNavigationController.ToolbarSearchCallback) rightController).onSearchEntered(entered);
         }
     }
@@ -329,31 +325,49 @@ public class ThreadSlideController
     private void slideStateChanged(boolean animated) {
         setParentNavigationItem(leftOpen, animated);
 
-        if (leftOpen && rightController instanceof ReplyAutoCloseListener) {
+        if (leftOpen && rightController != null) {
             ((ReplyAutoCloseListener) rightController).onReplyViewShouldClose();
-        } else if (!leftOpen && leftController instanceof ReplyAutoCloseListener) {
+        } else if (!leftOpen && leftController != null) {
             ((ReplyAutoCloseListener) leftController).onReplyViewShouldClose();
         }
 
-        notifySlideChanged(leftOpen ? leftController : rightController);
+        notifyFocusLost(
+                leftOpen ? ThreadControllerType.Thread : ThreadControllerType.Catalog,
+                leftOpen ? rightController : leftController
+        );
+
+        notifyFocusGained(
+                leftOpen ? ThreadControllerType.Catalog : ThreadControllerType.Thread,
+                leftOpen ? leftController : rightController
+        );
     }
 
-    private void notifySlideChanged(Controller controller) {
+    private void notifyFocusLost(ThreadControllerType controllerType, Controller controller) {
         if (controller == null) {
             return;
         }
 
         if (controller instanceof SlideChangeListener) {
-            ((SlideChangeListener) controller).onSlideChanged(leftOpen);
+            ((SlideChangeListener) controller).onLostFocus(controllerType);
         }
 
         for (Controller childController : controller.childControllers) {
-            notifySlideChanged(childController);
+            notifyFocusGained(controllerType, childController);
         }
     }
 
-    private void setParentNavigationItem(boolean left) {
-        setParentNavigationItem(left, true);
+    private void notifyFocusGained(ThreadControllerType controllerType, Controller controller) {
+        if (controller == null) {
+            return;
+        }
+
+        if (controller instanceof SlideChangeListener) {
+            ((SlideChangeListener) controller).onGainedFocus(controllerType);
+        }
+
+        for (Controller childController : controller.childControllers) {
+            notifyFocusGained(controllerType, childController);
+        }
     }
 
     private void setParentNavigationItem(boolean left, boolean animate) {
@@ -364,10 +378,19 @@ public class ThreadSlideController
         if (left) {
             if (leftController != null) {
                 item = leftController.navigation;
+
+                // For catalogs we want to always restore the previous search state when switching
+                //  to it
+                item.search = leftController.threadLayout.presenter.getSearchVisible();
+                item.searchText = leftController.threadLayout.presenter.getSearchQuery();
             }
         } else {
             if (rightController != null) {
                 item = rightController.navigation;
+
+                // For threads we want to always close search when switching to catalog
+                item.search = false;
+                item.searchText = null;
             }
         }
 
@@ -375,6 +398,7 @@ public class ThreadSlideController
         navigation.swipeable = false;
         navigation.handlesToolbarInset = true;
         navigation.hasDrawer = true;
+
         toolbar.setNavigationItem(animate, true, navigation, null);
     }
 
@@ -383,6 +407,12 @@ public class ThreadSlideController
     }
 
     public interface SlideChangeListener {
-        void onSlideChanged(boolean leftOpen);
+        void onGainedFocus(@NonNull ThreadControllerType controllerType);
+        void onLostFocus(@NonNull ThreadControllerType controllerType);
+    }
+
+    public enum ThreadControllerType {
+        Catalog,
+        Thread
     }
 }

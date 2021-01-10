@@ -49,9 +49,12 @@ class PostsFilter(
         return emptyList()
       }
 
+    val searchQueryLog = query?.let { searchQuery -> "\"$searchQuery\"" } ?: "<null>"
+
     Logger.d(TAG, "originalPosts.size=${postsCount}, " +
       "retainedPosts.size=${retainedPosts.size}, " +
-      "query=\"$query\"")
+      "chanDescriptor=$chanDescriptor, " +
+      "query=$searchQueryLog")
 
     val indexedPosts: MutableList<PostIndexed> = ArrayList(retainedPosts.size)
 

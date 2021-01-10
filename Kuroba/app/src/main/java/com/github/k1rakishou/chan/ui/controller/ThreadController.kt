@@ -27,7 +27,6 @@ import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibility
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityListener
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
-import com.github.k1rakishou.chan.core.manager.LocalSearchManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
@@ -70,8 +69,6 @@ abstract class ThreadController(
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
-  lateinit var localSearchManager: LocalSearchManager
-  @Inject
   lateinit var applicationVisibilityManager: ApplicationVisibilityManager
   @Inject
   lateinit var filterOutHiddenImagesUseCase: FilterOutHiddenImagesUseCase
@@ -86,7 +83,7 @@ abstract class ThreadController(
   override val toolbar: Toolbar?
     get() = (navigationController as? ToolbarNavigationController)?.toolbar
 
-  abstract val threadControllerType: ThreadControllerType
+  abstract val threadControllerType: ThreadSlideController.ThreadControllerType
 
   override fun onCreate() {
     super.onCreate()
@@ -277,11 +274,7 @@ abstract class ThreadController(
 
   override fun onSearchEntered(entered: String) {
     serializedCoroutineExecutor.post {
-      val localSearchType = threadLayout.presenter.currentLocalSearchType
-        ?: return@post
-
-      localSearchManager.onSearchEntered(localSearchType, entered)
-      threadLayout.presenter.onSearchEntered()
+      threadLayout.presenter.onSearchEntered(entered)
     }
   }
 
@@ -301,22 +294,22 @@ abstract class ThreadController(
     filtersController.showFilterDialog(filter)
   }
 
-  override fun onSlideChanged(leftOpen: Boolean) {
-    val changedTo = if (leftOpen) {
-      ThreadControllerType.Catalog
-    } else {
-      ThreadControllerType.Thread
-    }
-
-    val current = threadControllerType
-
+  override fun onLostFocus(controllerType: ThreadSlideController.ThreadControllerType) {
     if (isDevBuild()) {
-      check(changedTo == current) {
-        "ThreadControllerTypes do not match! changedTo=$changedTo, current=$current"
+      check(controllerType == threadControllerType) {
+        "ThreadControllerTypes do not match! controllerType=$controllerType, current=$threadControllerType"
+      }
+    }
+  }
+
+  override fun onGainedFocus(controllerType: ThreadSlideController.ThreadControllerType) {
+    if (isDevBuild()) {
+      check(controllerType == threadControllerType) {
+        "ThreadControllerTypes do not match! controllerType=$controllerType, current=$threadControllerType"
       }
     }
 
-    threadLayout.gainedFocus(changedTo)
+    threadLayout.gainedFocus(controllerType)
   }
 
   override fun threadBackPressed(): Boolean {
@@ -329,11 +322,6 @@ abstract class ThreadController(
 
   override fun showAvailableArchivesList(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     // no-op
-  }
-
-  enum class ThreadControllerType {
-    Catalog,
-    Thread
   }
 
   companion object {

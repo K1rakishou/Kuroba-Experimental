@@ -36,8 +36,6 @@ import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
-import com.github.k1rakishou.chan.core.manager.LocalSearchManager
-import com.github.k1rakishou.chan.core.manager.LocalSearchType
 import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
@@ -57,7 +55,7 @@ import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
-import com.github.k1rakishou.chan.ui.controller.ThreadController
+import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutPresenterCallback
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
@@ -72,6 +70,7 @@ import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.options.ChanCacheOptions
 import com.github.k1rakishou.common.options.ChanLoadOptions
 import com.github.k1rakishou.common.options.ChanReadOptions
@@ -126,7 +125,6 @@ class ThreadPresenter @Inject constructor(
   private val chanFilterManager: ChanFilterManager,
   private val lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder,
   private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
-  private val localSearchManager: LocalSearchManager,
   private val postHideHelper: PostHideHelper,
   private val chanThreadManager: ChanThreadManager
 ) : PostAdapterCallback,
@@ -148,6 +146,11 @@ class ThreadPresenter @Inject constructor(
   private var forcePageUpdate = false
   private var order = PostsFilter.Order.BUMP
   private var currentFocusedController = CurrentFocusedController.None
+
+  var searchVisible = false
+    private set
+  var searchQuery: String? = null
+    private set
 
   var chanThreadLoadingState = ChanThreadLoadingState.Uninitialized
     private set
@@ -193,29 +196,6 @@ class ThreadPresenter @Inject constructor(
       return bookmarksManager.exists(threadDescriptor)
     }
 
-  val currentLocalSearchType: LocalSearchType?
-    get() {
-      if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SLIDE) {
-        // For slide we need to check the state of the SlidingPaneLayout is currently focused
-        return when (currentFocusedController) {
-          CurrentFocusedController.Catalog -> LocalSearchType.CatalogSearch
-          CurrentFocusedController.Thread -> LocalSearchType.ThreadSearch
-          CurrentFocusedController.None -> null
-        }
-      }
-
-      val currentChanDescriptor = chanThreadTicker.currentChanDescriptor
-      if (currentChanDescriptor == null) {
-        return null
-      }
-
-      return if (currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
-        LocalSearchType.ThreadSearch
-      } else {
-        LocalSearchType.CatalogSearch
-      }
-    }
-
   override fun getCurrentChanDescriptor(): ChanDescriptor? {
     return chanThreadTicker.currentChanDescriptor
   }
@@ -243,6 +223,9 @@ class ThreadPresenter @Inject constructor(
     }
 
     threadPresenterCallback?.showLoading()
+
+    this.searchQuery = null
+    this.searchVisible = false
 
     postOptionsClickExecutor = RendezvousCoroutineExecutor(this)
     serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
@@ -514,33 +497,38 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    val localSearchType = currentLocalSearchType
-      ?: return
+    if (searchVisible == visible) {
+      if (!visible) {
+        searchQuery = null
+      }
 
-    threadPresenterCallback?.showSearch(visible)
-
-    if (visible) {
-      localSearchManager.onSearchEntered(localSearchType, "")
-    } else {
-      localSearchManager.clearSearch(localSearchType)
-    }
-
-    showPosts()
-  }
-
-  suspend fun onSearchEntered() {
-    if (!isBound) {
-      Logger.d(TAG, "onSearchEntered() isBound==false")
       return
     }
 
-    val query = currentLocalSearchType?.let { localSearchType ->
-      localSearchManager.getSearchQuery(localSearchType)
+    searchVisible = visible
+
+    if (!visible) {
+      searchQuery = null
     }
+
+    threadPresenterCallback?.showSearch(visible)
+    showPosts()
+  }
+
+  suspend fun onSearchEntered(searchQuery: String?) {
+    if (!isBound) {
+      return
+    }
+
+    if (this.searchQuery == searchQuery) {
+      return
+    }
+
+    this.searchQuery = searchQuery
 
     showPosts()
 
-    if (query.isNullOrEmpty()) {
+    if (searchQuery.isNullOrEmpty()) {
       threadPresenterCallback?.setSearchStatus(
         query = null,
         setEmptyText = true,
@@ -548,7 +536,7 @@ class ThreadPresenter @Inject constructor(
       )
     } else {
       threadPresenterCallback?.setSearchStatus(
-        query = query,
+        query = searchQuery,
         setEmptyText = false,
         hideKeyboard = false
       )
@@ -698,8 +686,8 @@ class ThreadPresenter @Inject constructor(
     }
 
     // allow for search refreshes inside the catalog
-    if (loadedChanDescriptor is ChanDescriptor.CatalogDescriptor) {
-      onSearchEntered()
+    if (loadedChanDescriptor is ChanDescriptor.CatalogDescriptor && searchQuery.isNotNullNorEmpty()) {
+      onSearchEntered(searchQuery)
     } else {
       showPosts()
     }
@@ -901,11 +889,7 @@ class ThreadPresenter @Inject constructor(
   }
 
   fun scrollToImage(postImage: ChanPostImage, smooth: Boolean) {
-    val localSearchType = currentLocalSearchType
-      ?: return
-
-    val searchOpen = localSearchManager.isSearchOpened(localSearchType)
-    if (searchOpen) {
+    if (searchVisible) {
       return
     }
 
@@ -999,12 +983,8 @@ class ThreadPresenter @Inject constructor(
     }
 
     serializedCoroutineExecutor.post {
-      val localSearchType = currentLocalSearchType
-        ?: return@post
-
-      val searchOpen = localSearchManager.isSearchOpened(localSearchType)
-      if (searchOpen) {
-        localSearchManager.clearSearch(localSearchType)
+      if (searchVisible) {
+        this.searchQuery = null
 
         showPosts()
         threadPresenterCallback?.setSearchStatus(null, setEmptyText = false, hideKeyboard = true)
@@ -1785,10 +1765,6 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    val searchQuery = currentLocalSearchType?.let { localSearchType ->
-      localSearchManager.getSearchQuery(localSearchType)
-    }
-
     threadPresenterCallback?.showPostsForChanDescriptor(
       descriptor,
       PostsFilter(postHideHelper, order, searchQuery)
@@ -1852,7 +1828,7 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.onRestoreRemovedPostsClicked(currentChanDescriptor!!, selectedPosts)
   }
 
-  fun gainedFocus(threadControllerType: ThreadController.ThreadControllerType) {
+  fun gainedFocus(threadControllerType: ThreadSlideController.ThreadControllerType) {
     if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SLIDE) {
       // If we are not in SLIDE layout mode, then we don't need to check the state of SlidingPaneLayout
       currentFocusedController = CurrentFocusedController.None
@@ -1860,8 +1836,8 @@ class ThreadPresenter @Inject constructor(
     }
 
     currentFocusedController = when (threadControllerType) {
-      ThreadController.ThreadControllerType.Catalog -> CurrentFocusedController.Catalog
-      ThreadController.ThreadControllerType.Thread -> CurrentFocusedController.Thread
+      ThreadSlideController.ThreadControllerType.Catalog -> CurrentFocusedController.Catalog
+      ThreadSlideController.ThreadControllerType.Thread -> CurrentFocusedController.Thread
     }
   }
 

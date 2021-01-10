@@ -64,7 +64,7 @@ import com.github.k1rakishou.chan.ui.cell.PostStubCell
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
-import com.github.k1rakishou.chan.ui.controller.ThreadController
+import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.FastScroller
@@ -652,7 +652,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     return false
   }
 
-  fun gainedFocus(threadControllerType: ThreadController.ThreadControllerType, isThreadVisible: Boolean) {
+  fun gainedFocus(
+    threadControllerType: ThreadSlideController.ThreadControllerType,
+    isThreadVisible: Boolean
+  ) {
     threadPresenter?.gainedFocus(threadControllerType)
 
     if (isThreadVisible) {

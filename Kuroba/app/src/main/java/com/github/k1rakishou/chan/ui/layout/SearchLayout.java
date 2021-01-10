@@ -27,12 +27,17 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 
+import androidx.annotation.Nullable;
+
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
+import com.github.k1rakishou.chan.utils.KtExtensionsKt;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import javax.inject.Inject;
+
+import kotlin.Unit;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
@@ -48,6 +53,9 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
     private ColorizableEditText searchView;
     private ImageView clearButton;
     private boolean autoRequestFocus = true;
+
+    @Nullable
+    private TextWatcher textWatcher = null;
 
     public SearchLayout(Context context) {
         super(context);
@@ -105,7 +113,12 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
 
         clearButton = new ImageView(getContext());
 
-        searchView.addTextChangedListener(new TextWatcher() {
+        if (textWatcher != null) {
+            searchView.removeTextChangedListener(textWatcher);
+            textWatcher = null;
+        }
+
+        textWatcher = new TextWatcher() {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 clearButton.setAlpha(s.length() == 0 ? 0.0f : 1.0f);
@@ -119,7 +132,9 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
             @Override
             public void afterTextChanged(Editable s) {
             }
-        });
+        };
+
+        searchView.addTextChangedListener(textWatcher);
         searchView.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 hideKeyboard(searchView);
@@ -157,8 +172,18 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
         onThemeChanged();
     }
 
-    public void setText(String text) {
-        searchView.setText(text);
+    public void setText(String searchText) {
+        if (textWatcher != null) {
+            KtExtensionsKt.doIgnoringTextWatcher(
+                    searchView,
+                    textWatcher,
+                    appCompatEditText -> {
+                        appCompatEditText.setText(searchText);
+                        return Unit.INSTANCE;
+                    });
+        } else {
+            searchView.setText(searchText);
+        }
     }
 
     public String getText() {

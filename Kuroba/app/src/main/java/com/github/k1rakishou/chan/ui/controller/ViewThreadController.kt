@@ -33,7 +33,6 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.B
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.BookmarksInitialized
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
-import com.github.k1rakishou.chan.core.manager.LocalSearchType
 import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
@@ -93,8 +92,8 @@ open class ViewThreadController(
   private var pinItemPinned = false
   private var threadDescriptor: ThreadDescriptor = startingThreadDescriptor
 
-  override val threadControllerType: ThreadControllerType
-    get() = ThreadControllerType.Thread
+  override val threadControllerType: ThreadSlideController.ThreadControllerType
+    get() = ThreadSlideController.ThreadControllerType.Thread
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -522,8 +521,8 @@ open class ViewThreadController(
     Logger.d(TAG, "showBoardInternal($boardDescriptor, $animated)")
     historyNavigationManager.moveNavElementToTop(CatalogDescriptor(boardDescriptor))
 
-    if (doubleNavigationController != null && doubleNavigationController?.leftController is BrowseController) {
-      val browseController = doubleNavigationController!!.leftController as BrowseController
+    if (doubleNavigationController != null && doubleNavigationController?.getLeftController() is BrowseController) {
+      val browseController = doubleNavigationController!!.getLeftController() as BrowseController
       browseController.setBoard(boardDescriptor)
 
       // slide layout
@@ -532,19 +531,12 @@ open class ViewThreadController(
       return
     }
 
-    if (doubleNavigationController != null && doubleNavigationController?.leftController is StyledToolbarNavigationController) {
+    if (doubleNavigationController != null
+      && doubleNavigationController?.getLeftController() is StyledToolbarNavigationController) {
       // split layout
       val browseController =
-        doubleNavigationController!!.leftController.childControllers[0] as BrowseController
+        doubleNavigationController!!.getLeftController()!!.childControllers[0] as BrowseController
       browseController.setBoard(boardDescriptor)
-
-      val searchQuery = localSearchManager.getSearchQuery(LocalSearchType.CatalogSearch)
-      if (searchQuery != null) {
-        browseController.toolbar?.let { toolbar ->
-          toolbar.openSearchWithCallback { toolbar.searchInput(searchQuery) }
-        }
-      }
-
       return
     }
 
@@ -560,14 +552,6 @@ open class ViewThreadController(
     if (browseController != null) {
       browseController.setBoard(boardDescriptor)
       requireNavController().popController(animated)
-
-      // search after we're at the browse controller
-      val searchQuery = localSearchManager.getSearchQuery(LocalSearchType.CatalogSearch)
-      if (searchQuery != null) {
-        browseController.toolbar?.let { toolbar ->
-          toolbar.openSearchWithCallback { toolbar.searchInput(searchQuery) }
-        }
-      }
     }
   }
 
@@ -669,7 +653,7 @@ open class ViewThreadController(
     }
 
     var threadController: ThreadController? = null
-    val leftController = doubleNavigationController?.leftController
+    val leftController = doubleNavigationController?.getLeftController()
 
     if (leftController is ThreadController) {
       threadController = leftController
@@ -746,8 +730,16 @@ open class ViewThreadController(
     // no-op
   }
 
-  override fun onSlideChanged(leftOpen: Boolean) {
-    super.onSlideChanged(leftOpen)
+  override fun onLostFocus(controllerType: ThreadSlideController.ThreadControllerType) {
+    super.onLostFocus(controllerType)
+    check(controllerType == threadControllerType) { "Unexpected controllerType: $controllerType" }
+
+    super.onSearchVisibilityChanged(false)
+  }
+
+  override fun onGainedFocus(controllerType: ThreadSlideController.ThreadControllerType) {
+    super.onGainedFocus(controllerType)
+    check(controllerType == threadControllerType) { "Unexpected controllerType: $controllerType" }
 
     historyNavigationManager.moveNavElementToTop(threadDescriptor)
   }

@@ -55,7 +55,7 @@ import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper.ImageReencodingHelperCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
-import com.github.k1rakishou.chan.ui.controller.ThreadController
+import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper.PostPopupHelperCallback
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper
@@ -323,7 +323,7 @@ class ThreadLayout @JvmOverloads constructor(
     presenter.normalLoad(showLoading = true)
   }
 
-  fun gainedFocus(threadControllerType: ThreadController.ThreadControllerType) {
+  fun gainedFocus(threadControllerType: ThreadSlideController.ThreadControllerType) {
     threadListLayout.gainedFocus(threadControllerType, visible == Visible.THREAD)
   }
 

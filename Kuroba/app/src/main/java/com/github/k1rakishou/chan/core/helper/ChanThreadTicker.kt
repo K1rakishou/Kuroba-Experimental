@@ -301,11 +301,6 @@ class ChanThreadTicker(
 
   }
 
-  private data class TickerInput(
-    val currentDescriptor: ChanDescriptor.ThreadDescriptor,
-    val currentTimeoutIndex: Int = 0
-  )
-
   private sealed class TickerAction {
     class StartOrResetTicker(val chanDescriptor: ChanDescriptor.ThreadDescriptor): TickerAction()
     object StopTicker : TickerAction()
