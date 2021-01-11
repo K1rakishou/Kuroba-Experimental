@@ -90,10 +90,12 @@ import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
 import io.reactivex.disposables.CompositeDisposable
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -146,6 +148,7 @@ class ThreadPresenter @Inject constructor(
   private var forcePageUpdate = false
   private var order = PostsFilter.Order.BUMP
   private var currentFocusedController = CurrentFocusedController.None
+  private var currentLoadThreadJob: Job? = null
 
   var searchVisible = false
     private set
@@ -223,6 +226,9 @@ class ThreadPresenter @Inject constructor(
     }
 
     threadPresenterCallback?.showLoading()
+
+    this.currentLoadThreadJob?.cancel()
+    this.currentLoadThreadJob = null
 
     this.searchQuery = null
     this.searchVisible = false
@@ -386,7 +392,7 @@ class ThreadPresenter @Inject constructor(
 
     chanThreadLoadingState = ChanThreadLoadingState.Loading
 
-    launch {
+    currentLoadThreadJob = launch {
       if (showLoading) {
         threadPresenterCallback?.showLoading()
       }
@@ -402,7 +408,10 @@ class ThreadPresenter @Inject constructor(
 
         if (threadLoadResult is ThreadLoadResult.Error) {
           onChanLoaderError(threadLoadResult.exception)
+
           chanThreadLoadingState = ChanThreadLoadingState.Loaded
+          currentLoadThreadJob = null
+
           return@loadThreadOrCatalog
         }
 
@@ -415,6 +424,7 @@ class ThreadPresenter @Inject constructor(
         }
 
         chanThreadLoadingState = ChanThreadLoadingState.Loaded
+        currentLoadThreadJob = null
       }
     }
   }
@@ -647,6 +657,10 @@ class ThreadPresenter @Inject constructor(
 
   private suspend fun onChanLoaderError(error: ChanLoaderException) {
     BackgroundUtils.ensureMainThread()
+
+    if (error is CancellationException) {
+      return
+    }
 
     if (error is ClientException) {
       Logger.e(TAG, "onChanLoaderError() called, error=${error.errorMessageOrClassName()}")
