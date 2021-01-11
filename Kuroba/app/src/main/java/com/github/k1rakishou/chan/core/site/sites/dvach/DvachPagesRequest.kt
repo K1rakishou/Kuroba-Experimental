@@ -32,7 +32,7 @@ class DvachPagesRequest(
     reader.jsonObject {
       while (hasNext()) {
         when (nextName()) {
-          "board" -> {
+          "Board" -> {
             val actualBoardCode = nextStringOrNull()
 
             check(actualBoardCode == chanBoard.boardCode()) {

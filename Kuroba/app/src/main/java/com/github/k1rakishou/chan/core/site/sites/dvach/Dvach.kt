@@ -382,7 +382,7 @@ class Dvach : CommonSite() {
         .scheme("https")
         .host("2ch.hk")
         .addPathSegment(board.boardCode())
-        .addPathSegment("threads.json")
+        .addPathSegment("catalog.json")
         .build()
     }
 
