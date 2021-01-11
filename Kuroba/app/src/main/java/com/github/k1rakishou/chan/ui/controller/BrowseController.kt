@@ -759,10 +759,6 @@ class BrowseController(
     super.onGainedFocus(controllerType)
     check(controllerType == threadControllerType) { "Unexpected controllerType: $controllerType" }
 
-    check(threadLayout.presenter.currentChanDescriptor is CatalogDescriptor) {
-      "Bad descriptor: ${threadLayout.presenter.currentChanDescriptor}"
-    }
-
     val searchQuery = threadLayout.presenter.searchQuery
     if (searchQuery != null) {
       toolbar!!.openSearchWithCallback {
