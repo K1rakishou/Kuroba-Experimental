@@ -32,6 +32,7 @@ import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.SuspendableInitializer
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileChooser
@@ -218,6 +219,8 @@ class SettingsCoordinator(
   private val screenStack = Stack<IScreenIdentifier>()
   private val job = SupervisorJob()
 
+  private val screensBuiltOnce = SuspendableInitializer<Unit>("screensBuiltOnce")
+
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("SettingsCoordinator")
 
@@ -231,6 +234,8 @@ class SettingsCoordinator(
         .catch { error -> Logger.e(TAG, "Unknown error received from onSearchEnteredSubject", error) }
         .debounce(DEBOUNCE_TIME_MS)
         .collect { query ->
+          screensBuiltOnce.awaitUntilInitialized()
+
           if (query.length < MIN_QUERY_LENGTH) {
             rebuildCurrentScreen(BuildOptions.Default)
             return@collect
@@ -244,6 +249,8 @@ class SettingsCoordinator(
       settingsNotificationManager.listenForNotificationUpdates()
         .asFlow()
         .collect {
+          screensBuiltOnce.awaitUntilInitialized()
+
           rebuildCurrentScreen(BuildOptions.BuildWithNotificationType)
         }
     }
@@ -347,6 +354,8 @@ class SettingsCoordinator(
 
       pushScreen(screenIdentifier)
       rebuildScreenInternal(screenIdentifier, buildOptions)
+
+      screensBuiltOnce.initWithValue(Unit)
     }
   }
 
