@@ -418,9 +418,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     val threadDescriptor = currentThreadDescriptorOrNull()
     if (threadDescriptor != null) {
-      val postNo = postAdapter.getPostNo(last)
-      if (postNo >= 0L) {
-        lastViewedPostNoInfoHolder.setLastViewedPostNo(threadDescriptor, postNo)
+      // To avoid IOOB crashes when recyclerview recalculates it's children
+      recyclerView.post {
+        val postNo = postAdapter.getPostNo(last)
+        if (postNo >= 0L) {
+          lastViewedPostNoInfoHolder.setLastViewedPostNo(threadDescriptor, postNo)
+        }
       }
     }
   }
