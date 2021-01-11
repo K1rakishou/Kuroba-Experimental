@@ -169,6 +169,8 @@ public class AppModuleAndroidUtils {
 
         ComponentName resolvedActivity = intent.resolveActivity(pm);
         if (resolvedActivity == null) {
+            Logger.d(TAG, "openLink() resolvedActivity == null");
+
             String message = getString(
                     R.string.open_link_failed_url_additional_info,
                     link,
@@ -201,6 +203,7 @@ public class AppModuleAndroidUtils {
         }
 
         if (filteredIntents.size() <= 0) {
+            Logger.d(TAG, "openLink() filteredIntents.size() <= 0");
             String message = getString(
                     R.string.open_link_failed_url_additional_info,
                     link,
@@ -223,6 +226,7 @@ public class AppModuleAndroidUtils {
                 filteredIntents.toArray(new Intent[0])
         );
 
+        Logger.d(TAG, "openLink() success");
         openIntent(chooser);
     }
 
@@ -244,6 +248,7 @@ public class AppModuleAndroidUtils {
         }
 
         application.startActivity(intent);
+        Logger.d(TAG, "openIntent() success");
     }
 
     public static int getAttrColor(Context context, int attr) {
