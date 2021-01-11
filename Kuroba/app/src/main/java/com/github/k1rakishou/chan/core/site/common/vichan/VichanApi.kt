@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.core.site.common.CommonSite.CommonApi
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
@@ -230,7 +231,7 @@ class VichanApi(
 
     reader.endObject()
 
-    if (fileId != null && fileName != null && fileExt != null) {
+    if (fileId.isNotNullNorEmpty() && fileName.isNotNullNorEmpty() && fileExt.isNotNullNorEmpty()) {
       val args = SiteEndpoints.makeArgument("tim", fileId, "ext", fileExt)
       return ChanPostImageBuilder()
         .serverFilename(fileId)

@@ -432,10 +432,6 @@ fun String.ellipsizeEnd(maxLength: Int): String {
   return this.take(maxLength - threeDotsLength) + "..."
 }
 
-fun String?.isNotNullOrEmpty(): Boolean {
-  return this != null && this.isNotEmpty()
-}
-
 @Suppress("ReplaceSizeCheckWithIsNotEmpty", "NOTHING_TO_INLINE")
 @OptIn(ExperimentalContracts::class)
 inline fun CharSequence?.isNotNullNorEmpty(): Boolean {
