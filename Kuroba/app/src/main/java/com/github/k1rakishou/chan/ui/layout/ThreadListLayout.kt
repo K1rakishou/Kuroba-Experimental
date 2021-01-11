@@ -200,15 +200,24 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   private val topAdapterPosition: Int
     get() {
+      if (layoutManager == null) {
+        return -1
+      }
+
       when (postViewMode) {
         PostViewMode.LIST -> return (layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
         PostViewMode.CARD -> return (layoutManager as GridLayoutManager).findFirstVisibleItemPosition()
       }
+
       return -1
     }
 
   private val completeBottomAdapterPosition: Int
     get() {
+      if (layoutManager == null) {
+        return -1
+      }
+
       when (postViewMode) {
         PostViewMode.LIST -> return (layoutManager as LinearLayoutManager).findLastCompletelyVisibleItemPosition()
         PostViewMode.CARD -> return (layoutManager as GridLayoutManager).findLastCompletelyVisibleItemPosition()
