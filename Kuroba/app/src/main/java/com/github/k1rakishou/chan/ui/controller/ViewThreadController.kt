@@ -47,9 +47,9 @@ import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem.ToobarThreedotMenuCallback
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLinkInBrowser
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink
 import com.github.k1rakishou.chan.utils.SharingUtils.getUrlForSharing
 import com.github.k1rakishou.chan.utils.plusAssign
@@ -377,7 +377,7 @@ open class ViewThreadController(
       return
     }
 
-    openLinkInBrowser(context, url, themeEngine.chanTheme)
+    AppModuleAndroidUtils.openLink(url)
   }
 
   private fun shareClicked(item: ToolbarMenuSubItem) {
@@ -454,6 +454,7 @@ open class ViewThreadController(
 
   private fun downClicked(item: ToolbarMenuSubItem) {
     threadLayout.scrollTo(-1, false)
+
     val threadDescriptor = threadLayout.presenter.threadDescriptorOrNull()
     if (threadDescriptor != null) {
       // Force mark all posts in this thread as seen (because sometimes the very last post

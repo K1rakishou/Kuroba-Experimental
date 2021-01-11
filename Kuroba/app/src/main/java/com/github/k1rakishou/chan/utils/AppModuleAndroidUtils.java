@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.utils;
 
 import android.annotation.SuppressLint;
 import android.app.Application;
-import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -28,8 +27,6 @@ import android.widget.Toast;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
-import androidx.browser.customtabs.CustomTabColorSchemeParams;
-import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.core.content.ContextCompat;
 
 import com.github.k1rakishou.ChanSettings;
@@ -41,7 +38,6 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.ui.widget.CancellableToast;
 import com.github.k1rakishou.common.AndroidUtils;
 import com.github.k1rakishou.core_logger.Logger;
-import com.github.k1rakishou.core_themes.ChanTheme;
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor;
 
 import org.greenrobot.eventbus.EventBus;
@@ -163,6 +159,7 @@ public class AppModuleAndroidUtils {
      */
     public static void openLink(String link) {
         if (TextUtils.isEmpty(link)) {
+            Logger.d(TAG, "openLink() link is empty");
             showToast(application, getString(R.string.open_link_failed_url, link), Toast.LENGTH_LONG);
             return;
         }
@@ -172,7 +169,13 @@ public class AppModuleAndroidUtils {
 
         ComponentName resolvedActivity = intent.resolveActivity(pm);
         if (resolvedActivity == null) {
-            showToast(application, getString(R.string.open_link_failed_url, link), Toast.LENGTH_LONG);
+            String message = getString(
+                    R.string.open_link_failed_url_additional_info,
+                    link,
+                    "resolveActivity returned null"
+            );
+
+            showToast(application, message, Toast.LENGTH_LONG);
             return;
         }
 
@@ -180,6 +183,7 @@ public class AppModuleAndroidUtils {
                 .equals(application.getPackageName());
 
         if (!thisAppIsDefault) {
+            Logger.d(TAG, "openLink() thisAppIsDefault == false");
             openIntent(intent);
             return;
         }
@@ -196,64 +200,30 @@ public class AppModuleAndroidUtils {
             }
         }
 
-        if (filteredIntents.size() > 0) {
-            // Create a chooser for the last app in the list, and add the rest with
-            // EXTRA_INITIAL_INTENTS that get placed above
-            Intent chooser = Intent.createChooser(
-                    filteredIntents.remove(filteredIntents.size() - 1),
-                    null
+        if (filteredIntents.size() <= 0) {
+            String message = getString(
+                    R.string.open_link_failed_url_additional_info,
+                    link,
+                    "filteredIntents count <= 0"
             );
 
-            chooser.putExtra(
-                    Intent.EXTRA_INITIAL_INTENTS,
-                    filteredIntents.toArray(new Intent[0])
-            );
-
-            openIntent(chooser);
-        } else {
-            showToast(application, getString(R.string.open_link_failed_url, link), Toast.LENGTH_LONG);
-        }
-    }
-
-    public static void openLinkInBrowser(Context context, String link, ChanTheme theme) {
-        if (TextUtils.isEmpty(link)) {
-            showToast(context, getString(R.string.open_link_failed_url, link));
+            showToast(application, message, Toast.LENGTH_LONG);
             return;
         }
 
-        // Hack that's sort of the same as openLink
-        // The link won't be opened in a custom tab if this app is the default handler for that link.
-        // Manually check if this app opens it instead of a custom tab, and use the logic of
-        // openLink to avoid that and show a chooser instead.
-        boolean openWithCustomTabs = true;
-        Intent urlIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
-        PackageManager pm = application.getPackageManager();
-        ComponentName resolvedActivity = urlIntent.resolveActivity(pm);
+        // Create a chooser for the last app in the list, and add the rest with
+        // EXTRA_INITIAL_INTENTS that get placed above
+        Intent chooser = Intent.createChooser(
+                filteredIntents.remove(filteredIntents.size() - 1),
+                null
+        );
 
-        if (resolvedActivity != null) {
-            openWithCustomTabs = !resolvedActivity.getPackageName().equals(application.getPackageName());
-        }
+        chooser.putExtra(
+                Intent.EXTRA_INITIAL_INTENTS,
+                filteredIntents.toArray(new Intent[0])
+        );
 
-        if (!openWithCustomTabs) {
-            openLink(link);
-            return;
-        }
-
-        CustomTabsIntent tabsIntent = new CustomTabsIntent.Builder()
-                .setDefaultColorSchemeParams(
-                        new CustomTabColorSchemeParams.Builder()
-                                .setToolbarColor(theme.getBackColor())
-                                .setNavigationBarColor(theme.getBackColor())
-                                .build()
-                )
-                .build();
-
-        try {
-            tabsIntent.launchUrl(context, Uri.parse(link));
-        } catch (ActivityNotFoundException e) {
-            // Can't check it beforehand so catch the exception
-            showToast(context, getString(R.string.open_link_failed_url, link), Toast.LENGTH_LONG);
-        }
+        openIntent(chooser);
     }
 
     public static void shareLink(String link) {
@@ -266,11 +236,14 @@ public class AppModuleAndroidUtils {
 
     public static void openIntent(Intent intent) {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        if (intent.resolveActivity(application.getPackageManager()) != null) {
-            application.startActivity(intent);
-        } else {
+
+        if (intent.resolveActivity(application.getPackageManager()) == null) {
+            Logger.d(TAG, "openIntent() resolveActivity returned null, intent = " + intent);
             showToast(application, R.string.open_link_failed, Toast.LENGTH_LONG);
+            return;
         }
+
+        application.startActivity(intent);
     }
 
     public static int getAttrColor(Context context, int attr) {

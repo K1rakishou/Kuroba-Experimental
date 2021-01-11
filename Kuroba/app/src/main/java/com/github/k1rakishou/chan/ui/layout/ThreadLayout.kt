@@ -470,7 +470,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   override fun openLink(link: String) {
     if (!ChanSettings.openLinkConfirmation.get()) {
-      openLinkConfirmed(link)
+      AppModuleAndroidUtils.openLink(link)
       return
     }
 
@@ -478,16 +478,8 @@ class ThreadLayout @JvmOverloads constructor(
       context = context,
       titleTextId = R.string.open_link_confirmation,
       descriptionText = link,
-      onPositiveButtonClickListener = { openLinkConfirmed(link) }
+      onPositiveButtonClickListener = { AppModuleAndroidUtils.openLink(link) }
     )
-  }
-
-  private fun openLinkConfirmed(link: String) {
-    if (ChanSettings.openLinkBrowser.get()) {
-      AppModuleAndroidUtils.openLink(link)
-    } else {
-      AppModuleAndroidUtils.openLinkInBrowser(context, link, themeEngine.chanTheme)
-    }
   }
 
   override fun openReportView(post: ChanPost) {

@@ -212,6 +212,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="open_thread_confirmation">Open this thread?</string>
     <string name="open_link_failed">No applications were found to open this link</string>
     <string name="open_link_failed_url">No applications were found to open link \"%1$s\"</string>
+    <string name="open_link_failed_url_additional_info">No applications were found to open link \"%1$s\" (%2$s)</string>
     <string name="open_file_picker_failed">No file picker applications were found</string>
     <string name="image_pick_delegate_select_file_picker">Select a file picker to open a file…</string>
     <string name="action_confirm_exit">Tap back again to exit</string>
@@ -612,7 +613,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_auto_refresh_thread">Auto refresh threads</string>
     <string name="setting_controller_swipeable">Allow screens to be swiped away</string>
     <string name="setting_open_link_confirmation">Ask before opening links</string>
-    <string name="setting_open_link_browser">Always open links in external browser</string>
     <string name="setting_captcha_setup">Captcha Settings</string>
     <string name="setting_captcha_setup_description">Captcha settings are per-site configurable. Tap for site setup.</string>
     <string name="setting_js_captcha_cookies_title">JS captcha cookies</string>

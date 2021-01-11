@@ -254,7 +254,6 @@ dependencies {
     implementation project(':core-parser')
 
     implementation "androidx.appcompat:appcompat:${versions.appcompat}"
-    implementation "androidx.browser:browser:${versions.androidx_browser}"
     implementation "androidx.preference:preference-ktx:${versions.androidx_preferences_ktx}"
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation 'androidx.slidingpanelayout:slidingpanelayout:1.1.0'

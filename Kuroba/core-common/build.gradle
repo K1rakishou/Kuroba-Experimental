@@ -35,7 +35,6 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin_version}"
 
     implementation "androidx.appcompat:appcompat:${versions.appcompat}"
-    implementation "androidx.browser:browser:${versions.androidx_browser}"
     implementation "androidx.preference:preference-ktx:${versions.androidx_preferences_ktx}"
 
     implementation "com.squareup.okhttp3:okhttp:${versions.okhttp}"

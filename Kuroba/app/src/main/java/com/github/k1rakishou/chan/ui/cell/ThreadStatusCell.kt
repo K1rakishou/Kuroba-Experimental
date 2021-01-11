@@ -154,7 +154,7 @@ class ThreadStatusCell(
   }
 
   @SuppressLint("SetTextI18n")
-  private suspend fun updateInternal() {
+  suspend fun updateInternal() {
     val chanDescriptor = callback?.getCurrentChanDescriptor()
       ?: return
 

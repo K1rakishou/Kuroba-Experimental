@@ -31,11 +31,11 @@ import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.TextView
-import androidx.core.view.doOnPreDraw
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.R
@@ -363,50 +363,52 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   private fun onRecyclerViewScrolled() {
-    // onScrolled can be called after cleanup()
-    if (getCurrentChanDescriptor() == null) {
-      return
-    }
+    recyclerView.post {
+      // onScrolled can be called after cleanup()
+      if (getCurrentChanDescriptor() == null) {
+        return@post
+      }
 
-    val chanThreadLoadingState = threadPresenter?.chanThreadLoadingState
-      ?: ThreadPresenter.ChanThreadLoadingState.Uninitialized
+      val chanThreadLoadingState = threadPresenter?.chanThreadLoadingState
+        ?: ThreadPresenter.ChanThreadLoadingState.Uninitialized
 
-    if (chanThreadLoadingState != ThreadPresenter.ChanThreadLoadingState.Loaded) {
-      // When reloading a thread, this callback will be called immediately which will result in
-      //  "indexAndTop" being zeroes which will overwrite the old scroll position with incorrect
-      //  values.
-      return
-    }
+      if (chanThreadLoadingState != ThreadPresenter.ChanThreadLoadingState.Loaded) {
+        // When reloading a thread, this callback will be called immediately which will result in
+        //  "indexAndTop" being zeroes which will overwrite the old scroll position with incorrect
+        //  values.
+        return@post
+      }
 
-    val chanDescriptor = currentChanDescriptorOrNull()
-      ?: return
-    val indexTop = indexAndTop
-      ?: return
+      val chanDescriptor = currentChanDescriptorOrNull()
+        ?: return@post
+      val indexTop = indexAndTop
+        ?: return@post
 
-    chanThreadViewableInfoManager.update(chanDescriptor) { chanThreadViewableInfo ->
-      chanThreadViewableInfo.listViewIndex = indexTop[0]
-      chanThreadViewableInfo.listViewTop = indexTop[1]
-    }
+      chanThreadViewableInfoManager.update(chanDescriptor) { chanThreadViewableInfo ->
+        chanThreadViewableInfo.listViewIndex = indexTop[0]
+        chanThreadViewableInfo.listViewTop = indexTop[1]
+      }
 
-    val currentLastPostNo = postAdapter.lastPostNo
+      val currentLastPostNo = postAdapter.lastPostNo
 
-    val lastVisibleItemPosition = completeBottomAdapterPosition
-    if (lastVisibleItemPosition >= 0) {
-      updateLastViewedPostNo(lastVisibleItemPosition)
-    }
+      val lastVisibleItemPosition = completeBottomAdapterPosition
+      if (lastVisibleItemPosition >= 0) {
+        updateLastViewedPostNo(lastVisibleItemPosition)
+      }
 
-    if (lastVisibleItemPosition == postAdapter.itemCount - 1 && currentLastPostNo > prevLastPostNo) {
-      prevLastPostNo = currentLastPostNo
+      if (lastVisibleItemPosition == postAdapter.itemCount - 1 && currentLastPostNo > prevLastPostNo) {
+        prevLastPostNo = currentLastPostNo
 
-      // As requested by the RecyclerView, make sure that the adapter isn't changed
-      // while in a layout pass. Postpone to the next frame.
-      listScrollToBottomExecutor.post { callback?.onListScrolledToBottom() }
-    }
+        // As requested by the RecyclerView, make sure that the adapter isn't changed
+        // while in a layout pass. Postpone to the next frame.
+        listScrollToBottomExecutor.post { callback?.onListScrolledToBottom() }
+      }
 
-    if (lastVisibleItemPosition == postAdapter.itemCount - 1) {
-      val isDragging = fastScroller?.isDragging ?: false
-      if (!isDragging) {
-        threadListLayoutCallback?.showToolbar()
+      if (lastVisibleItemPosition == postAdapter.itemCount - 1) {
+        val isDragging = fastScroller?.isDragging ?: false
+        if (!isDragging) {
+          threadListLayoutCallback?.showToolbar()
+        }
       }
     }
   }
@@ -418,12 +420,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     val threadDescriptor = currentThreadDescriptorOrNull()
     if (threadDescriptor != null) {
-      // To avoid IOOB crashes when recyclerview recalculates it's children
-      recyclerView.post {
-        val postNo = postAdapter.getPostNo(last)
-        if (postNo >= 0L) {
-          lastViewedPostNoInfoHolder.setLastViewedPostNo(threadDescriptor, postNo)
-        }
+      val postNo = postAdapter.getPostNo(last)
+      if (postNo >= 0L) {
+        lastViewedPostNoInfoHolder.setLastViewedPostNo(threadDescriptor, postNo)
       }
     }
   }
@@ -928,16 +927,41 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       postAdapter.getScrollPosition(displayPosition)
     }
 
-    recyclerView.doOnPreDraw {
-      if (recyclerView.layoutManager is LinearLayoutManager) {
-        (recyclerView.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
-          scrollPosition,
-          SCROLL_OFFSET
-        )
-      } else {
-        recyclerView.scrollToPosition(scrollPosition)
-      }
+    recyclerView.post {
+      scrollToInternal(scrollPosition)
+      onRecyclerViewScrolled()
     }
+  }
+
+  private fun scrollToInternal(scrollPosition: Int) {
+    if (recyclerView.layoutManager is GridLayoutManager) {
+      (recyclerView.layoutManager as GridLayoutManager).scrollToPositionWithOffset(
+        scrollPosition,
+        SCROLL_OFFSET
+      )
+
+      return
+    }
+
+    if (recyclerView.layoutManager is StaggeredGridLayoutManager) {
+      (recyclerView.layoutManager as StaggeredGridLayoutManager).scrollToPositionWithOffset(
+        scrollPosition,
+        SCROLL_OFFSET
+      )
+
+      return
+    }
+
+    if (recyclerView.layoutManager is LinearLayoutManager) {
+      (recyclerView.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
+        scrollPosition,
+        SCROLL_OFFSET
+      )
+
+      return
+    }
+
+    recyclerView.scrollToPosition(scrollPosition)
   }
 
   fun highlightPost(postDescriptor: PostDescriptor?) {

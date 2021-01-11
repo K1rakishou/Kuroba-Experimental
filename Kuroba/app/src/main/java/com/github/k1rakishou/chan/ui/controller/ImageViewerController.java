@@ -94,7 +94,6 @@ import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLinkInBrowser;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout;
 import static com.github.k1rakishou.common.AndroidUtils.getWindow;
@@ -347,11 +346,7 @@ public class ImageViewerController
             return;
         }
 
-        if (ChanSettings.openLinkBrowser.get()) {
-            openLink(postImage.getImageUrl().toString());
-        } else {
-            openLinkInBrowser(context, postImage.getImageUrl().toString(), themeEngine.getChanTheme());
-        }
+        openLink(postImage.getImageUrl().toString());
     }
 
     private void shareUrlClicked(ToolbarMenuSubItem item) {

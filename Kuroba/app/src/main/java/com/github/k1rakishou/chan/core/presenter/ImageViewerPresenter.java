@@ -68,7 +68,6 @@ import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.GIFIMAGE;
 import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.LOWRES;
 import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.OTHER;
 import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.VIDEO;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLinkInBrowser;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
 import static com.github.k1rakishou.common.AndroidUtils.getAudioManager;
@@ -778,10 +777,8 @@ public class ImageViewerPresenter
                                 break;
                             }
 
-                            openLinkInBrowser(
-                                    context,
-                                    imageSearch.getUrl(searchImageUrl.toString()),
-                                    themeEngine.getChanTheme()
+                            AppModuleAndroidUtils.openLink(
+                                    imageSearch.getUrl(searchImageUrl.toString())
                             );
 
                             break;

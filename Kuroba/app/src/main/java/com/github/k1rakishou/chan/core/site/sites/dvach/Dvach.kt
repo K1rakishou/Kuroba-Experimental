@@ -464,20 +464,32 @@ class Dvach : CommonSite() {
         get() = arrayOf("dvach", "2ch")
 
       override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String {
-        return when (chanDescriptor) {
+        when (chanDescriptor) {
           is ChanDescriptor.CatalogDescriptor -> {
-            url.newBuilder()
+            val builtUrl = url.newBuilder()
               .addPathSegment(chanDescriptor.boardCode())
               .toString()
+
+            if (postNo == null) {
+              return builtUrl
+            }
+
+            return "${builtUrl}/res/${postNo}.html"
           }
           is ChanDescriptor.ThreadDescriptor -> {
-            url.newBuilder()
+            val builtUrl = url.newBuilder()
               .addPathSegment(chanDescriptor.boardCode())
               .addPathSegment("res")
               .addPathSegment(chanDescriptor.threadNo.toString() + ".html")
               .toString()
+
+            if (postNo == null) {
+              return builtUrl
+            }
+
+            return "${builtUrl}#${postNo}"
           }
-          else -> url.toString()
+          else -> return url.toString()
         }
       }
     }

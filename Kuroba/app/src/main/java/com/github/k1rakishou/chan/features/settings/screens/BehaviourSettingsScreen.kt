@@ -173,13 +173,6 @@ class BehaviourSettingsScreen(
           setting = ChanSettings.openLinkConfirmation
         )
 
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = BehaviorScreen.GeneralGroup.OpenLinkBrowser,
-          topDescriptionIdFunc = { R.string.setting_open_link_browser },
-          setting = ChanSettings.openLinkBrowser
-        )
-
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = BehaviorScreen.GeneralGroup.CaptchaSetup,

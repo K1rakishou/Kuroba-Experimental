@@ -265,7 +265,6 @@ public class ChanSettings {
     public static BooleanSetting autoRefreshThread;
     public static BooleanSetting controllerSwipeable;
     public static BooleanSetting openLinkConfirmation;
-    public static BooleanSetting openLinkBrowser;
     public static StringSetting jsCaptchaCookies;
     public static BooleanSetting loadLastOpenedBoardUponAppStart;
     public static BooleanSetting loadLastOpenedThreadUponAppStart;
@@ -432,7 +431,6 @@ public class ChanSettings {
             autoRefreshThread = new BooleanSetting(provider, "preference_auto_refresh_thread", true);
             controllerSwipeable = new BooleanSetting(provider, "preference_controller_swipeable", true);
             openLinkConfirmation = new BooleanSetting(provider, "preference_open_link_confirmation", false);
-            openLinkBrowser = new BooleanSetting(provider, "preference_open_link_browser", false);
             jsCaptchaCookies = new StringSetting(provider, "js_captcha_cookies", EMPTY_JSON);
             loadLastOpenedBoardUponAppStart = new BooleanSetting(provider, "load_last_opened_board_upon_app_start", true);
             loadLastOpenedThreadUponAppStart = new BooleanSetting(provider, "load_last_opened_thread_upon_app_start", true);
