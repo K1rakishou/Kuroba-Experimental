@@ -5,7 +5,7 @@ package com.github.k1rakishou.core_themes
  * Do not change the ids!
  * Do not remove old ids!
  * Only add new ids!
- * This thing will be serialized in the DB, changing it may cause unexpected results!
+ * This thing is serialized in the DB, changing it may cause unexpected results!
  * */
 enum class ChanThemeColorId(val id: Int) {
   PostSubjectColor(0),

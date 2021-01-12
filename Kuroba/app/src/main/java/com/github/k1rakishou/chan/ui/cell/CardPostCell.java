@@ -302,6 +302,6 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
 
         int optionsPadding = compact ? 0 : dp(5);
         options.setPadding(0, optionsPadding, optionsPadding, 0);
-        options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextColorSecondary()));
+        options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextColorHint()));
     }
 }
