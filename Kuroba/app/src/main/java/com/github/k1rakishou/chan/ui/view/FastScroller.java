@@ -134,10 +134,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
     private final OnScrollListener mOnScrollListener = new OnScrollListener() {
         @Override
         public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-            updateScrollPosition(
-                    recyclerView.computeHorizontalScrollOffset(),
-                    recyclerView.computeVerticalScrollOffset()
-            );
+            updateScrollPosition(recyclerView.computeVerticalScrollOffset());
         }
     };
 
@@ -420,14 +417,13 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
      * Notify the scroller of external change of the scroll, e.g. through dragging or flinging on
      * the view itself.
      *
-     * @param offsetX The new scroll X offset.
      * @param offsetY The new scroll Y offset.
      */
-    void updateScrollPosition(int offsetX, int offsetY) {
+    void updateScrollPosition(int offsetY) {
         int verticalContentLength = mRecyclerView.computeVerticalScrollRange();
         int verticalVisibleLength = mRecyclerViewHeight;
 
-        mNeedVerticalScrollbar = verticalContentLength - (verticalVisibleLength * 3) > 0
+        mNeedVerticalScrollbar = verticalContentLength - (verticalVisibleLength * 2) > 0
                 && mRecyclerViewHeight >= mScrollbarMinimumRange;
 
         if (mNeedVerticalScrollbar) {
