@@ -252,6 +252,10 @@ public class Toolbar
         return true;
     }
 
+    public void setCustomBackgroundColor(int color) {
+        setBackgroundColor(color);
+    }
+
     public void setIgnoreThemeChanges() {
         ignoreThemeChanges = true;
     }

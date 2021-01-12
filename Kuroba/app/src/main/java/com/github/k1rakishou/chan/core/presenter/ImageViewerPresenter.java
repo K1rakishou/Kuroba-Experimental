@@ -461,6 +461,13 @@ public class ImageViewerPresenter
 
         final FileCacheListener fileCacheListener = new FileCacheListener() {
             @Override
+            public void onStart(int chunksCount) {
+                BackgroundUtils.ensureMainThread();
+
+                onStartDownload(postImage, chunksCount);
+            }
+
+            @Override
             public void onEnd() {
                 BackgroundUtils.ensureMainThread();
 
@@ -599,8 +606,12 @@ public class ImageViewerPresenter
     }
 
     @Override
-    public void onStartDownload(MultiImageView multiImageView, int chunksCount) {
+    public void onStartDownload(@Nullable ChanPostImage chanPostImage, int chunksCount) {
         BackgroundUtils.ensureMainThread();
+
+        if (chanPostImage == null) {
+            return;
+        }
 
         if (chunksCount <= 0) {
             throw new IllegalArgumentException(
@@ -617,13 +628,13 @@ public class ImageViewerPresenter
 
         for (int i = 0; i < images.size(); i++) {
             ChanPostImage postImage = images.get(i);
-            if (postImage.equals(multiImageView.getPostImage())) {
+            if (postImage.equals(chanPostImage)) {
                 progress.put(i, initialProgress);
                 break;
             }
         }
 
-        if (multiImageView.getPostImage() == images.get(selectedPosition)) {
+        if (chanPostImage.equals(images.get(selectedPosition))) {
             callback.showProgress(true);
             callback.onLoadProgress(initialProgress);
         }

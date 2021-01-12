@@ -448,7 +448,7 @@ class MultiImageView @JvmOverloads constructor(
         object : FileCacheListener() {
           override fun onStart(chunksCount: Int) {
             BackgroundUtils.ensureMainThread()
-            callback?.onStartDownload(this@MultiImageView, chunksCount)
+            callback?.onStartDownload(this@MultiImageView.postImage, chunksCount)
           }
 
           override fun onProgress(chunkIndex: Int, downloaded: Long, total: Long) {
@@ -517,7 +517,7 @@ class MultiImageView @JvmOverloads constructor(
         object : FileCacheListener() {
           override fun onStart(chunksCount: Int) {
             BackgroundUtils.ensureMainThread()
-            callback?.onStartDownload(this@MultiImageView, chunksCount)
+            callback?.onStartDownload(this@MultiImageView.postImage, chunksCount)
           }
 
           override fun onProgress(chunkIndex: Int, downloaded: Long, total: Long) {
@@ -649,7 +649,7 @@ class MultiImageView @JvmOverloads constructor(
         object : FileCacheListener() {
           override fun onStart(chunksCount: Int) {
             BackgroundUtils.ensureMainThread()
-            callback?.onStartDownload(this@MultiImageView, chunksCount)
+            callback?.onStartDownload(this@MultiImageView.postImage, chunksCount)
           }
 
           override fun onProgress(chunkIndex: Int, downloaded: Long, total: Long) {
@@ -1247,7 +1247,7 @@ class MultiImageView @JvmOverloads constructor(
     fun resetImmersive()
     fun onSwipeToCloseImage()
     fun onSwipeToSaveImage()
-    fun onStartDownload(multiImageView: MultiImageView?, chunksCount: Int)
+    fun onStartDownload(postImage: ChanPostImage?, chunksCount: Int)
     fun onProgress(multiImageView: MultiImageView?, chunkIndex: Int, current: Long, total: Long)
     fun onDownloaded(postImage: ChanPostImage?)
     fun onVideoLoaded(multiImageView: MultiImageView?)

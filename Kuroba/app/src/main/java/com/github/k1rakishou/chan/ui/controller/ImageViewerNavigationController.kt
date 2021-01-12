@@ -46,6 +46,8 @@ class ImageViewerNavigationController(context: Context) : ToolbarNavigationContr
 
     setToolbar(view.findViewById(R.id.toolbar))
     requireToolbar().setCallback(this)
+    requireToolbar().setIgnoreThemeChanges()
+    requireToolbar().setCustomBackgroundColor(0x80000000L.toInt())
   }
 
   override fun onDestroy() {
