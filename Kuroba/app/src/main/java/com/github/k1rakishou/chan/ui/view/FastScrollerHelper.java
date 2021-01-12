@@ -27,8 +27,7 @@ public class FastScrollerHelper {
         StateListDrawable thumb = getThumb(currentTheme);
         StateListDrawable track = getTrack(currentTheme);
 
-        final int defaultThickness = dp(8);
-        final int targetWidth = dp(8);
+        final int defaultThickness = dp(12);
         final int minimumRange = dp(50);
         final int margin = 0;
         final int thumbMinLength = dp(32);
@@ -38,13 +37,10 @@ public class FastScrollerHelper {
                 postInfoMapItemDecoration,
                 thumb,
                 track,
-                thumb,
-                track,
                 defaultThickness,
                 minimumRange,
                 margin,
                 thumbMinLength,
-                targetWidth,
                 toolbarPaddingTop
         );
     }

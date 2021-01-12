@@ -92,7 +92,6 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
     private final int mScrollbarMinimumRange;
     private final int mMargin;
     private final int mThumbMinLength;
-    private final int mTargetWidth;
     private final int toolbarPaddingTop;
 
     // Final values for the vertical scroll bar
@@ -101,24 +100,12 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
     private final int mVerticalThumbWidth;
     private final int mVerticalTrackWidth;
 
-    // Final values for the horizontal scroll bar
-    private final StateListDrawable mHorizontalThumbDrawable;
-    private final Drawable mHorizontalTrackDrawable;
-    private final int mHorizontalThumbHeight;
-    private final int mHorizontalTrackHeight;
-
     // Dynamic values for the vertical scroll bar
     int verticalThumbHeight;
     int realVerticalThumbHeight;
     int mVerticalThumbCenterY;
     float mVerticalDragY;
     int mVerticalDragThumbHeight;
-
-    // Dynamic values for the horizontal scroll bar
-    int mHorizontalThumbWidth;
-    int mHorizontalThumbCenterX;
-    float mHorizontalDragX;
-    int mHorizontalDragThumbWidth;
 
     private int mRecyclerViewWidth = 0;
     private int mRecyclerViewHeight = 0;
@@ -134,14 +121,12 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
      * relevant scroller.
      */
     private boolean mNeedVerticalScrollbar = false;
-    private boolean mNeedHorizontalScrollbar = false;
     @State
     private int mState = STATE_HIDDEN;
     @DragState
     private int mDragState = DRAG_NONE;
 
     private final int[] mVerticalRange = new int[2];
-    private final int[] mHorizontalRange = new int[2];
     private final ValueAnimator mShowHideAnimator = ValueAnimator.ofFloat(0, 1);
     @AnimationState
     private int mAnimationState = ANIMATION_STATE_OUT;
@@ -162,28 +147,20 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
             PostInfoMapItemDecoration postInfoMapItemDecoration,
             StateListDrawable verticalThumbDrawable,
             Drawable verticalTrackDrawable,
-            StateListDrawable horizontalThumbDrawable,
-            Drawable horizontalTrackDrawable,
             int defaultWidth,
             int scrollbarMinimumRange,
             int margin,
             int thumbMinLength,
-            int targetWidth,
             int toolbarPaddingTop
     ) {
         mVerticalThumbDrawable = verticalThumbDrawable;
         mVerticalTrackDrawable = verticalTrackDrawable;
-        mHorizontalThumbDrawable = horizontalThumbDrawable;
-        mHorizontalTrackDrawable = horizontalTrackDrawable;
         mVerticalThumbWidth = Math.max(defaultWidth, verticalThumbDrawable.getIntrinsicWidth());
         mVerticalTrackWidth = Math.max(defaultWidth, verticalTrackDrawable.getIntrinsicWidth());
-        mHorizontalThumbHeight = Math.max(defaultWidth, horizontalThumbDrawable.getIntrinsicWidth());
-        mHorizontalTrackHeight = Math.max(defaultWidth, horizontalTrackDrawable.getIntrinsicWidth());
         mScrollbarMinimumRange = scrollbarMinimumRange;
 
         mMargin = margin;
         mThumbMinLength = thumbMinLength;
-        mTargetWidth = targetWidth;
 
         this.postInfoMapItemDecoration = postInfoMapItemDecoration;
         this.toolbarPaddingTop = toolbarPaddingTop;
@@ -384,9 +361,6 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
             if (mNeedVerticalScrollbar) {
                 drawVerticalScrollbar(canvas);
             }
-            if (mNeedHorizontalScrollbar) {
-                drawHorizontalScrollbar(canvas);
-            }
         }
     }
 
@@ -397,9 +371,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
     }
 
     private int getRecyclerViewHeight() {
-        return mNeedHorizontalScrollbar
-                ? mRecyclerView.getHeight()
-                : mRecyclerView.getHeight() - getRecyclerViewTopPadding() - getRecyclerViewBottomPadding();
+        return mRecyclerView.getHeight() - getRecyclerViewTopPadding() - getRecyclerViewBottomPadding();
     }
 
     private int getRecyclerViewLeftPadding() {
@@ -407,9 +379,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
     }
 
     private int getRecyclerViewTopPadding() {
-        return mNeedHorizontalScrollbar
-                ? 0
-                : mRecyclerView.getPaddingTop() + (toolbarPaddingTop / 2);
+        return mRecyclerView.getPaddingTop() + (toolbarPaddingTop / 2);
     }
 
     private int getRecyclerViewRightPadding() {
@@ -417,9 +387,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
     }
 
     private int getRecyclerViewBottomPadding() {
-        return mNeedHorizontalScrollbar
-                ? 0
-                : mRecyclerView.getPaddingBottom() + (toolbarPaddingTop / 2);
+        return mRecyclerView.getPaddingBottom() + (toolbarPaddingTop / 2);
     }
 
     private void drawVerticalScrollbar(Canvas canvas) {
@@ -448,23 +416,6 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
         }
     }
 
-    private void drawHorizontalScrollbar(Canvas canvas) {
-        int viewHeight = mRecyclerViewHeight;
-
-        int top = mRecyclerViewTopPadding + viewHeight - mHorizontalThumbHeight;
-        int left = mHorizontalThumbCenterX - mHorizontalThumbWidth / 2;
-        mHorizontalThumbDrawable.setBounds(0, 0, mHorizontalThumbWidth, mHorizontalThumbHeight);
-
-        int trackLength = mRecyclerViewWidth + mRecyclerViewLeftPadding + mRecyclerViewRightPadding;
-        mHorizontalTrackDrawable.setBounds(0, 0, trackLength, mHorizontalTrackHeight);
-
-        canvas.translate(0, top);
-        mHorizontalTrackDrawable.draw(canvas);
-        canvas.translate(left, 0);
-        mHorizontalThumbDrawable.draw(canvas);
-        canvas.translate(-left, -top);
-    }
-
     /**
      * Notify the scroller of external change of the scroll, e.g. through dragging or flinging on
      * the view itself.
@@ -478,18 +429,6 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
 
         mNeedVerticalScrollbar = verticalContentLength - (verticalVisibleLength * 3) > 0
                 && mRecyclerViewHeight >= mScrollbarMinimumRange;
-
-        int horizontalContentLength = mRecyclerView.computeHorizontalScrollRange();
-        int horizontalVisibleLength = mRecyclerViewWidth;
-        mNeedHorizontalScrollbar = horizontalContentLength - (horizontalVisibleLength * 3) > 0
-                && mRecyclerViewWidth >= mScrollbarMinimumRange;
-
-        if (!mNeedVerticalScrollbar && !mNeedHorizontalScrollbar) {
-            if (mState != STATE_HIDDEN) {
-                setState(STATE_HIDDEN);
-            }
-            return;
-        }
 
         if (mNeedVerticalScrollbar) {
             float middleScreenPos = offsetY + verticalVisibleLength / 2.0f;
@@ -505,16 +444,6 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
             realVerticalThumbHeight = length;
         }
 
-        if (mNeedHorizontalScrollbar) {
-            float middleScreenPos = offsetX + horizontalVisibleLength / 2.0f;
-            mHorizontalThumbCenterX = mRecyclerViewLeftPadding + (int) ((horizontalVisibleLength * middleScreenPos)
-                    / horizontalContentLength);
-            int length = Math.min(horizontalVisibleLength,
-                    (horizontalVisibleLength * horizontalVisibleLength) / horizontalContentLength
-            );
-            mHorizontalThumbWidth = Math.max(mThumbMinLength, length);
-        }
-
         if (mState == STATE_HIDDEN || mState == STATE_VISIBLE) {
             setState(STATE_VISIBLE);
         }
@@ -525,17 +454,10 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
         final boolean handled;
         if (mState == STATE_VISIBLE) {
             boolean insideVerticalThumb = isPointInsideVerticalThumb(ev.getX(), ev.getY());
-            boolean insideHorizontalThumb = isPointInsideHorizontalThumb(ev.getX(), ev.getY());
-            if (ev.getAction() == MotionEvent.ACTION_DOWN && (insideVerticalThumb || insideHorizontalThumb)) {
-                if (insideHorizontalThumb) {
-                    mDragState = DRAG_X;
-                    mHorizontalDragX = (int) ev.getX();
-                    mHorizontalDragThumbWidth = mHorizontalThumbWidth;
-                } else {
-                    mDragState = DRAG_Y;
-                    mVerticalDragY = (int) ev.getY();
-                    mVerticalDragThumbHeight = verticalThumbHeight;
-                }
+            if (ev.getAction() == MotionEvent.ACTION_DOWN && insideVerticalThumb) {
+                mDragState = DRAG_Y;
+                mVerticalDragY = (int) ev.getY();
+                mVerticalDragThumbHeight = verticalThumbHeight;
 
                 setState(STATE_DRAGGING);
                 handled = true;
@@ -556,27 +478,20 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
 
         if (me.getAction() == MotionEvent.ACTION_DOWN) {
             boolean insideVerticalThumb = isPointInsideVerticalThumb(me.getX(), me.getY());
-            boolean insideHorizontalThumb = isPointInsideHorizontalThumb(me.getX(), me.getY());
-            if (insideVerticalThumb || insideHorizontalThumb) {
-                if (insideHorizontalThumb) {
-                    mDragState = DRAG_X;
-                    mHorizontalDragX = (int) me.getX();
-                    mHorizontalDragThumbWidth = mHorizontalThumbWidth;
-                } else {
-                    mDragState = DRAG_Y;
-                    mVerticalDragY = (int) me.getY();
-                    mVerticalDragThumbHeight = verticalThumbHeight;
-                }
+            if (insideVerticalThumb) {
+                mDragState = DRAG_Y;
+                mVerticalDragY = (int) me.getY();
+                mVerticalDragThumbHeight = verticalThumbHeight;
 
                 if (thumbDragListener != null) {
                     thumbDragListener.onDragStarted();
                 }
 
                 setState(STATE_DRAGGING);
+                verticalScrollTo(me.getY());
             }
         } else if (me.getAction() == MotionEvent.ACTION_UP && mState == STATE_DRAGGING) {
             mVerticalDragY = 0;
-            mHorizontalDragX = 0;
             setState(STATE_VISIBLE);
             mDragState = DRAG_NONE;
 
@@ -585,9 +500,6 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
             }
         } else if (me.getAction() == MotionEvent.ACTION_MOVE && mState == STATE_DRAGGING) {
             show();
-            if (mDragState == DRAG_X) {
-                horizontalScrollTo(me.getX());
-            }
             if (mDragState == DRAG_Y) {
                 verticalScrollTo(me.getY());
             }
@@ -638,64 +550,11 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
         return convertedY / scrollbarHeight;
     }
 
-    private void horizontalScrollTo(float x) {
-        final int[] scrollbarRange = getHorizontalRange();
-        x = Math.max(scrollbarRange[0], Math.min(scrollbarRange[1], x));
-        if (Math.abs(mHorizontalThumbCenterX - x) < 2) {
-            return;
-        }
-
-        int scrollingBy = scrollTo(mHorizontalDragX,
-                x,
-                scrollbarRange,
-                mRecyclerView.computeHorizontalScrollRange(),
-                mRecyclerView.computeHorizontalScrollOffset(),
-                mRecyclerViewWidth,
-                mHorizontalDragThumbWidth
-        );
-        if (scrollingBy != 0) {
-            mRecyclerView.scrollBy(scrollingBy, 0);
-        }
-
-        mHorizontalDragX = x;
-    }
-
-    private int scrollTo(
-            float oldDragPos,
-            float newDragPos,
-            int[] scrollbarRange,
-            int scrollRange,
-            int scrollOffset,
-            int viewLength,
-            int dragThumbLength
-    ) {
-        int scrollbarLength = scrollbarRange[1] - scrollbarRange[0] - dragThumbLength;
-        if (scrollbarLength == 0) {
-            return 0;
-        }
-        float percentage = ((newDragPos - oldDragPos) / (float) scrollbarLength);
-        int totalPossibleOffset = scrollRange - viewLength;
-        int scrollingBy = (int) (percentage * totalPossibleOffset);
-        int absoluteOffset = scrollOffset + scrollingBy;
-        if (absoluteOffset < totalPossibleOffset && absoluteOffset >= 0) {
-            return scrollingBy;
-        } else {
-            return 0;
-        }
-    }
-
     @VisibleForTesting
     boolean isPointInsideVerticalThumb(float x, float y) {
         return isLayoutRTL()
-                ? x <= mRecyclerViewLeftPadding + mTargetWidth / 2.0f
-                : x >= mRecyclerViewLeftPadding + mRecyclerViewWidth - mTargetWidth;
-    }
-
-    @VisibleForTesting
-    boolean isPointInsideHorizontalThumb(float x, float y) {
-        return (y >= mRecyclerViewTopPadding + mRecyclerViewHeight - mTargetWidth)
-                && x >= mHorizontalThumbCenterX - mHorizontalThumbWidth / 2.0f - mTargetWidth
-                && x <= mHorizontalThumbCenterX + mHorizontalThumbWidth / 2.0f + mTargetWidth;
+                ? x <= mRecyclerViewLeftPadding + mVerticalThumbWidth / 2.0f
+                : x >= mRecyclerViewLeftPadding + mRecyclerViewWidth - mVerticalThumbWidth;
     }
 
     /**
@@ -705,15 +564,6 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
         mVerticalRange[0] = mRecyclerViewTopPadding + mMargin;
         mVerticalRange[1] = mRecyclerViewTopPadding + mRecyclerViewHeight - mMargin;
         return mVerticalRange;
-    }
-
-    /**
-     * Gets the (min, max) horizontal positions of the horizontal scroll bar.
-     */
-    private int[] getHorizontalRange() {
-        mHorizontalRange[0] = mRecyclerViewLeftPadding + mMargin;
-        mHorizontalRange[1] = mRecyclerViewLeftPadding + mRecyclerViewWidth - mMargin;
-        return mHorizontalRange;
     }
 
     private class AnimatorListener
