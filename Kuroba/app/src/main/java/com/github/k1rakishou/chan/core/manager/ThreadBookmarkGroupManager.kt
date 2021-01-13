@@ -197,7 +197,7 @@ class ThreadBookmarkGroupManager(
   /**
    * Creates new ThreadBookmarkGroupEntry for newly created ThreadBookmarks.
    * */
-  suspend fun createGroupEntries(bookmarkThreadDescriptors: List<ChanDescriptor.ThreadDescriptor>): Boolean {
+  private suspend fun createGroupEntries(bookmarkThreadDescriptors: List<ChanDescriptor.ThreadDescriptor>): Boolean {
     check(isReady()) { "ThreadBookmarkGroupEntryManager is not ready yet! Use awaitUntilInitialized()" }
     require(bookmarkThreadDescriptors.isNotEmpty()) { "bookmarkThreadDescriptors is empty!" }
 
@@ -223,7 +223,7 @@ class ThreadBookmarkGroupManager(
           groupsByGroupIdMap[groupId] = ThreadBookmarkGroup(
             groupId = groupId,
             groupName = groupId,
-            isExpanded = false,
+            isExpanded = true,
             groupOrder = groupOrder,
             entries = mutableMapOf(),
             orders = mutableListOf()
@@ -234,7 +234,7 @@ class ThreadBookmarkGroupManager(
           createTransaction.toCreate[groupId] = ThreadBookmarkGroupToCreate(
             groupId = groupId,
             groupName = groupId,
-            isExpanded = false,
+            isExpanded = true,
             needCreate = needCreateGroup,
             groupOrder = groupOrder,
             entries = mutableListOf()
@@ -333,7 +333,7 @@ class ThreadBookmarkGroupManager(
    * Deletes ThreadBookmarkGroupEntry from groupsByGroupIdMap and deletes them from the database
    * as well.
    * */
-  suspend fun deleteGroupEntries(bookmarkThreadDescriptors: List<ChanDescriptor.ThreadDescriptor>): Boolean {
+  private suspend fun deleteGroupEntries(bookmarkThreadDescriptors: List<ChanDescriptor.ThreadDescriptor>): Boolean {
     check(isReady()) { "ThreadBookmarkGroupEntryManager is not ready yet! Use awaitUntilInitialized()" }
     require(bookmarkThreadDescriptors.isNotEmpty()) { "bookmarkThreadDescriptors is empty!" }
 

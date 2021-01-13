@@ -50,7 +50,7 @@ public class BackgroundUtils {
         mainHandler.postDelayed(runnable, delay);
     }
 
-    private static boolean isMainThread() {
+    public static boolean isMainThread() {
         return Thread.currentThread() == Looper.getMainLooper().getThread();
     }
 

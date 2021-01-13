@@ -181,7 +181,7 @@ class DrawerController(
           navigationController = topController.getLeftController() as StyledToolbarNavigationController
         }
       } else if (topController is ThreadSlideController) {
-        navigationController = topController.leftController as StyledToolbarNavigationController
+        navigationController = topController.getLeftController() as StyledToolbarNavigationController
       }
 
       if (navigationController == null) {

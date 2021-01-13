@@ -20,6 +20,7 @@ import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.chan.utils.RequestCodes
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import java.util.*
@@ -30,7 +31,7 @@ class LastPageNotificationsHelper(
   private val notificationManagerCompat: NotificationManagerCompat,
   private val pageRequestManager: PageRequestManager,
   private val bookmarksManager: BookmarksManager,
-  private val themeEngine: com.github.k1rakishou.core_themes.ThemeEngine
+  private val themeEngine: ThemeEngine
 ) {
 
   fun showOrUpdateNotifications(watchingBookmarkDescriptors: List<ChanDescriptor.ThreadDescriptor>) {

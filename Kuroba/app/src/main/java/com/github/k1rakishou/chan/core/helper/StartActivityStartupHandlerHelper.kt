@@ -281,11 +281,7 @@ class StartActivityStartupHandlerHelper(
 
     Logger.d(TAG, "onNewIntent() last page notification clicked, threads count = ${threadDescriptors.size}")
 
-    if (threadDescriptors.size == 1) {
-      openBoardAndThreadFromNotification(threadDescriptors)
-    } else {
-      drawerController?.openBookmarksController(threadDescriptors)
-    }
+    openThreadFromNotificationOrBookmarksController(threadDescriptors)
 
     return true
   }
@@ -302,11 +298,7 @@ class StartActivityStartupHandlerHelper(
     Logger.d(TAG, "onNewIntent() reply notification clicked, " +
         "marking as seen ${threadDescriptors.size} bookmarks")
 
-    if (threadDescriptors.size == 1) {
-      openBoardAndThreadFromNotification(threadDescriptors)
-    } else {
-      drawerController?.openBookmarksController(threadDescriptors)
-    }
+    openThreadFromNotificationOrBookmarksController(threadDescriptors)
 
     val updatedBookmarkDescriptors = bookmarksManager.updateBookmarks(threadDescriptors) { threadBookmark ->
       threadBookmark.markAsSeenAllReplies()
@@ -316,7 +308,7 @@ class StartActivityStartupHandlerHelper(
     return true
   }
 
-  private suspend fun openBoardAndThreadFromNotification(
+  private suspend fun openThreadFromNotificationOrBookmarksController(
     threadDescriptors: List<ChanDescriptor.ThreadDescriptor>
   ) {
     val boardToOpen = getBoardToOpen()
@@ -326,7 +318,11 @@ class StartActivityStartupHandlerHelper(
       browseController?.loadWithDefaultBoard()
     }
 
-    startActivityCallbacks?.loadThread(threadDescriptors.first(), animated = false)
+    if (threadDescriptors.size == 1) {
+      startActivityCallbacks?.loadThread(threadDescriptors.first(), animated = false)
+    } else {
+      drawerController?.openBookmarksController(threadDescriptors)
+    }
   }
 
   interface StartActivityCallbacks {

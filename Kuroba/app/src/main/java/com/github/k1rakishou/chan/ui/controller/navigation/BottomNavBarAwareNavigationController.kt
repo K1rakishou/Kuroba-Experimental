@@ -54,10 +54,7 @@ class BottomNavBarAwareNavigationController(
     // Wait a little bit so that GlobalWindowInsetsManager have time to get initialized so we can
     // use the insets
     view.post {
-      container.updatePaddings(
-        bottom = bottomNavBarHeight + globalWindowInsetsManager.bottom()
-      )
-
+      onInsetsChanged()
       globalWindowInsetsManager.addInsetsUpdatesListener(this)
     }
   }

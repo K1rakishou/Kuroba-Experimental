@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.activity
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
@@ -19,7 +20,6 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -86,9 +86,6 @@ class SharingActivity : AppCompatActivity() {
         } else {
           setResult(Activity.RESULT_CANCELED)
         }
-
-        // Add a little bit of delay to show the Toast.
-        delay(500L)
       }
     }
 
@@ -96,7 +93,7 @@ class SharingActivity : AppCompatActivity() {
   }
 
   private suspend fun onShareIntentReceived(intent: Intent): Boolean {
-    AppModuleAndroidUtils.showToast(this, getString(R.string.share_success_start))
+    showToast(this, getString(R.string.share_success_start), Toast.LENGTH_SHORT)
 
     val reloadResult = withContext(Dispatchers.IO) {
       replyManager.reloadFilesFromDisk(appConstants)
@@ -109,7 +106,7 @@ class SharingActivity : AppCompatActivity() {
     }
 
     if (!reloadResult) {
-      AppModuleAndroidUtils.showToast(
+      showToast(
         this,
         R.string.share_error_message,
         Toast.LENGTH_LONG
@@ -132,28 +129,33 @@ class SharingActivity : AppCompatActivity() {
             val sharedFilesCount = pickedFile.replyFiles.size
 
             if (sharedFilesCount > 0) {
-              AppModuleAndroidUtils.showToast(
+              showToast(
                 this,
-                getString(R.string.share_success_message, sharedFilesCount)
+                getString(R.string.share_success_message, sharedFilesCount),
+                Toast.LENGTH_LONG
               )
             } else {
-              AppModuleAndroidUtils.showToast(
+              showToast(
                 this,
                 R.string.share_error_message,
                 Toast.LENGTH_LONG
               )
             }
 
-            Logger.d(TAG, "imagePickHelper.pickFilesFromIntent() -> PickedFile.Result, " +
-              "sharedFilesCount=$sharedFilesCount")
+            Logger.d(
+              TAG, "imagePickHelper.pickFilesFromIntent() -> PickedFile.Result, " +
+                "sharedFilesCount=$sharedFilesCount"
+            )
 
             return true
           }
           is PickedFile.Failure -> {
-            Logger.e(TAG, "imagePickHelper.pickFilesFromIntent() -> PickedFile.Failure",
-              pickedFile.reason)
+            Logger.e(
+              TAG, "imagePickHelper.pickFilesFromIntent() -> PickedFile.Failure",
+              pickedFile.reason
+            )
 
-            AppModuleAndroidUtils.showToast(
+            showToast(
               this,
               R.string.share_error_message,
               Toast.LENGTH_LONG
@@ -165,13 +167,25 @@ class SharingActivity : AppCompatActivity() {
       is ModularResult.Error -> {
         Logger.e(TAG, "imagePickHelper.pickFilesFromIntent() -> MR.Error", shareResult.error)
 
-        AppModuleAndroidUtils.showToast(
+        showToast(
           this,
           R.string.share_error_message,
           Toast.LENGTH_LONG
         )
         return false
       }
+    }
+  }
+
+  private suspend fun showToast(context: Context, message: String, duration: Int) {
+    withContext(Dispatchers.Main) {
+      Toast.makeText(context, message, duration).show()
+    }
+  }
+
+  private suspend fun showToast(context: Context, resId: Int, duration: Int) {
+    withContext(Dispatchers.Main) {
+      showToast(context, getString(resId), duration)
     }
   }
 
