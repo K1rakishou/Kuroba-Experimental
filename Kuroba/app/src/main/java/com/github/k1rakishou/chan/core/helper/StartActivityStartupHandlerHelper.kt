@@ -70,17 +70,12 @@ class StartActivityStartupHandlerHelper(
       "savedInstanceState==null: ${savedInstanceState == null})"
     )
 
-    val newIntentHandleResult = onNewIntentInternal(intent)
-    Logger.d(TAG, "onNewIntentInternal() -> $newIntentHandleResult")
+    val newIntentHandled = onNewIntentInternal(intent)
+    Logger.d(TAG, "onNewIntentInternal() -> $newIntentHandled")
 
-    // If we have some kind of intent then that intent may result in a thread being opened (like when
-    //  the user clicks reply notification which leads to opening a thread that reply is in). So in
-    //  case when we actually opened a thread we don't want to handle restoring from url/savedInstance
-    //  but we need to open a board because otherwise the BrowseController will get stuck in Loading
-    //  state.
-    if (newIntentHandleResult == NewIntentHandleResult.IntentHandledThreadOpened
-      || newIntentHandleResult == NewIntentHandleResult.IntentHandledBookmarksScreenOpened) {
-      restoreFresh(allowedToOpenThread = false)
+    if (newIntentHandled) {
+      //  This means that we handle the intent and either opened a thread from notification or opened
+      //  bookmark controller.
       return
     }
 
@@ -151,18 +146,18 @@ class StartActivityStartupHandlerHelper(
     }
   }
 
-  suspend fun onNewIntentInternal(intent: Intent?): NewIntentHandleResult {
+  suspend fun onNewIntentInternal(intent: Intent?): Boolean {
     if (intent == null) {
-      return NewIntentHandleResult.IntentNotHandled
+      return false
     }
 
     val extras = intent.extras
-      ?: return NewIntentHandleResult.IntentNotHandled
+      ?: return false
     val action = intent.action
-      ?: return NewIntentHandleResult.IntentNotHandled
+      ?: return false
 
     if (!isKnownAction(action)) {
-      return NewIntentHandleResult.IntentNotHandled
+      return false
     }
 
     Logger.d(TAG, "onNewIntentInternal called, action=${action}")
@@ -172,13 +167,10 @@ class StartActivityStartupHandlerHelper(
       intent.hasExtra(NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
         return replyNotificationClicked(extras)
       }
-      intent.hasExtra(NotificationConstants.ReplyNotifications.R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY) -> {
-        return replyNotificationSwipedAway(extras)
-      }
       intent.hasExtra(NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
         return lastPageNotificationClicked(extras)
       }
-      else -> return NewIntentHandleResult.IntentNotHandled
+      else -> return false
     }
   }
 
@@ -278,75 +270,42 @@ class StartActivityStartupHandlerHelper(
     }
   }
 
-  private suspend fun lastPageNotificationClicked(extras: Bundle): NewIntentHandleResult {
+  private suspend fun lastPageNotificationClicked(extras: Bundle): Boolean {
     val threadDescriptors = extras.getParcelableArrayList<DescriptorParcelable>(
       NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
     )?.map { it -> ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(it) }
 
     if (drawerController == null || threadDescriptors.isNullOrEmpty()) {
-      return NewIntentHandleResult.IntentNotHandled
+      return false
     }
 
     Logger.d(TAG, "onNewIntent() last page notification clicked, threads count = ${threadDescriptors.size}")
 
-    return if (threadDescriptors.size == 1) {
-      drawerController?.loadThread(
-        threadDescriptors.first(),
-        closeAllNonMainControllers = true,
-        animated = false
-      )
-
-      NewIntentHandleResult.IntentHandledThreadOpened
+    if (threadDescriptors.size == 1) {
+      openBoardAndThreadFromNotification(threadDescriptors)
     } else {
       drawerController?.openBookmarksController(threadDescriptors)
-
-      NewIntentHandleResult.IntentHandledBookmarksScreenOpened
-    }
-  }
-
-  private suspend fun replyNotificationSwipedAway(extras: Bundle): NewIntentHandleResult {
-    val threadDescriptors = extras.getParcelableArrayList<DescriptorParcelable>(
-      NotificationConstants.ReplyNotifications.R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY
-    )?.map { it -> ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(it) }
-
-    if (threadDescriptors.isNullOrEmpty()) {
-      return NewIntentHandleResult.IntentNotHandled
     }
 
-    Logger.d(TAG, "onNewIntent() reply notification swiped away, "
-      + "marking as seen ${threadDescriptors.size} bookmarks"
-    )
-
-    val updatedBookmarkDescriptors = bookmarksManager
-      .updateBookmarks(threadDescriptors) { threadBookmark -> threadBookmark.markAsSeenAllReplies() }
-    bookmarksManager.persistBookmarksManually(updatedBookmarkDescriptors)
-
-    return NewIntentHandleResult.IntentHandledThreadNotOpened
+    return true
   }
 
-  private suspend fun replyNotificationClicked(extras: Bundle): NewIntentHandleResult {
+  private suspend fun replyNotificationClicked(extras: Bundle): Boolean {
     val threadDescriptors = extras.getParcelableArrayList<DescriptorParcelable>(
       NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
     )?.map { it -> ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(it) }
 
     if (drawerController == null || threadDescriptors.isNullOrEmpty()) {
-      return NewIntentHandleResult.IntentNotHandled
+      return false
     }
 
     Logger.d(TAG, "onNewIntent() reply notification clicked, " +
         "marking as seen ${threadDescriptors.size} bookmarks")
 
-    val newIntentHandleResult = if (threadDescriptors.size == 1) {
-      drawerController?.loadThread(
-        threadDescriptors.first(),
-        closeAllNonMainControllers = true,
-        animated = false
-      )
-
-      NewIntentHandleResult.IntentHandledThreadOpened
+    if (threadDescriptors.size == 1) {
+      openBoardAndThreadFromNotification(threadDescriptors)
     } else {
       drawerController?.openBookmarksController(threadDescriptors)
-      NewIntentHandleResult.IntentHandledBookmarksScreenOpened
     }
 
     val updatedBookmarkDescriptors = bookmarksManager.updateBookmarks(threadDescriptors) { threadBookmark ->
@@ -354,18 +313,24 @@ class StartActivityStartupHandlerHelper(
     }
     bookmarksManager.persistBookmarksManually(updatedBookmarkDescriptors)
 
-    return newIntentHandleResult
+    return true
+  }
+
+  private suspend fun openBoardAndThreadFromNotification(
+    threadDescriptors: List<ChanDescriptor.ThreadDescriptor>
+  ) {
+    val boardToOpen = getBoardToOpen()
+    if (boardToOpen != null) {
+      browseController?.showBoard(boardToOpen, false)
+    } else {
+      browseController?.loadWithDefaultBoard()
+    }
+
+    startActivityCallbacks?.loadThread(threadDescriptors.first(), animated = false)
   }
 
   interface StartActivityCallbacks {
     suspend fun loadThread(threadDescriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
-  }
-
-  enum class NewIntentHandleResult {
-    IntentNotHandled,
-    IntentHandledThreadNotOpened,
-    IntentHandledThreadOpened,
-    IntentHandledBookmarksScreenOpened
   }
 
   companion object {

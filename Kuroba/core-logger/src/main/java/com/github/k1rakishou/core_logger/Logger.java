@@ -19,16 +19,9 @@ package com.github.k1rakishou.core_logger;
 import android.util.Log;
 
 public class Logger {
-    private static boolean isDebugBuild = false;
-    private static boolean verboseLogsEnabled = false;
     private static String tagPrefix;
 
-    public static void verboseLogsEnabled(boolean verboseLogs) {
-        verboseLogsEnabled = verboseLogs;
-    }
-
-    public static void init(boolean debugBuild, String prefix) {
-        isDebugBuild = debugBuild;
+    public static void init(String prefix) {
         tagPrefix = prefix;
     }
 
@@ -117,6 +110,6 @@ public class Logger {
     //endregion TEST
 
     private static boolean canLog() {
-        return isDebugBuild || verboseLogsEnabled;
+        return true;
     }
 }

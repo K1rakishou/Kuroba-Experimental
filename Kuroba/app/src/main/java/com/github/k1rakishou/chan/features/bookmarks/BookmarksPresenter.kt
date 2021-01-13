@@ -252,12 +252,14 @@ class BookmarksPresenter(
   }
 
   fun onBookmarkStatsClicked(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    val updatedBookmarkDescriptor = bookmarksManager.updateBookmark(threadDescriptor) { threadBookmark ->
-      threadBookmark.toggleWatching()
-    }
+    bookmarksManager.enqueuePersistFunc {
+      val updatedBookmarkDescriptor = bookmarksManager.updateBookmark(threadDescriptor) { threadBookmark ->
+        threadBookmark.toggleWatching()
+      }
 
-    if (updatedBookmarkDescriptor != null) {
-      bookmarksManager.persistBookmarkManually(threadDescriptor)
+      if (updatedBookmarkDescriptor != null) {
+        bookmarksManager.persistBookmarkManually(threadDescriptor)
+      }
     }
   }
 

@@ -527,21 +527,21 @@ class BookmarksManager(
     bookmarksChanged(BookmarkChange.BookmarksUpdated(null))
   }
 
-  fun persistBookmarkManually(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+  suspend fun persistBookmarkManually(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     persistBookmarksManually(listOf(threadDescriptor))
   }
 
-  fun persistBookmarksManually(threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) {
+  suspend fun persistBookmarksManually(threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) {
     if (threadDescriptors.isEmpty()) {
       return
     }
 
-    persistBookmarks(
-      blocking = false,
-      onBookmarksPersisted = {
-        val bookmarkChange = BookmarkChange.BookmarksUpdated(threadDescriptors)
-        bookmarksChangedSubject.onNext(bookmarkChange)
-      })
+    Logger.d(TAG, "persistBookmarksManually() persistBookmarksInternal called")
+    persistBookmarksInternal()
+    Logger.d(TAG, "persistBookmarksManually() persistBookmarksInternal finished")
+
+    val bookmarkChange = BookmarkChange.BookmarksUpdated(threadDescriptors)
+    bookmarksChangedSubject.onNext(bookmarkChange)
   }
 
   private fun bookmarksChanged(bookmarkChange: BookmarkChange) {
@@ -565,6 +565,16 @@ class BookmarksManager(
         bookmarksChangedSubject.onNext(bookmarkChange)
       }
     )
+  }
+
+  fun enqueuePersistFunc(func: suspend () -> Unit) {
+    persistBookmarksExecutor.post {
+      try {
+        func()
+      } catch (error: Throwable) {
+        Logger.e(TAG, "enqueuePersistCall() error", error)
+      }
+    }
   }
 
   private fun persistBookmarks(
@@ -593,10 +603,11 @@ class BookmarksManager(
   }
 
   private suspend fun persistBookmarksInternal() {
-    bookmarksRepository.persist(getAllBookmarks()).safeUnwrap { error ->
-      Logger.e(TAG, "Failed to persist bookmarks", error)
-      return
-    }
+    bookmarksRepository.persist(getAllBookmarks())
+      .safeUnwrap { error ->
+        Logger.e(TAG, "Failed to persist bookmarks", error)
+        return
+      }
   }
 
   private fun getAllBookmarks(): List<ThreadBookmark> {

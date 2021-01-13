@@ -98,6 +98,8 @@ class BookmarkWatcherCoordinator(
             }
           }
 
+          restartBackgroundWork(appConstants, appContext)
+
           val simpleBookmarkChangeInfo = SimpleBookmarkChangeInfo(
             hasNewlyCreatedBookmarkChange = false
           )
@@ -136,13 +138,6 @@ class BookmarkWatcherCoordinator(
         cancelBackgroundBookmarkWatching(appConstants, appContext)
 
         // fallthrough because we need to update the foreground watcher
-      }
-
-      val canRestartBackgroundWatcher =
-        ChanSettings.watchBackground.get() && ChanSettings.watchBackground.get()
-
-      if (hasCreateBookmarkChange && canRestartBackgroundWatcher) {
-        restartBackgroundWork(appConstants, appContext)
       }
 
       if (hasCreateBookmarkChange) {
@@ -216,7 +211,8 @@ class BookmarkWatcherCoordinator(
         .result
         .await()
 
-      Logger.d(TAG, "restartBackgroundWork() enqueued work with tag $tag")
+      Logger.d(TAG, "restartBackgroundWork() enqueued work with tag $tag, " +
+        "backgroundIntervalMillis=$backgroundIntervalMillis")
     }
 
     suspend fun cancelBackgroundBookmarkWatching(

@@ -2,9 +2,6 @@ package com.github.k1rakishou.chan.ui.helper.picker
 
 import android.app.Activity
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
@@ -13,8 +10,10 @@ import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ReplyManager
+import com.github.k1rakishou.chan.core.receiver.SelectedFilePickerBroadcastReceiver
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.RequestCodes
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.isAndroidL_MR1
 import com.github.k1rakishou.common.AppConstants
@@ -245,7 +244,7 @@ class LocalFilePicker(
 
       val pendingIntent = PendingIntent.getBroadcast(
         activity,
-        0,
+        RequestCodes.LOCAL_FILE_PICKER_LAST_SELECTION_REQUEST_CODE,
         receiverIntent,
         PendingIntent.FLAG_UPDATE_CURRENT
       )
@@ -269,26 +268,6 @@ class LocalFilePicker(
 
     chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, intents.toTypedArray())
     activity.startActivityForResult(chooser, requestCode)
-  }
-
-  class SelectedFilePickerBroadcastReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context?, intent: Intent?) {
-      if (context == null || intent == null) {
-        return
-      }
-
-      if (!isAndroidL_MR1()) {
-        return
-      }
-
-      val component = intent.getParcelableExtra<ComponentName>(Intent.EXTRA_CHOSEN_COMPONENT)
-        ?: return
-
-      Logger.d(TAG, "Setting lastRememberedFilePicker to " +
-        "(packageName=${component.packageName}, className=${component.className})")
-
-      PersistableChanState.lastRememberedFilePicker.set(component.packageName)
-    }
   }
 
   data class LocalFilePickerInput(

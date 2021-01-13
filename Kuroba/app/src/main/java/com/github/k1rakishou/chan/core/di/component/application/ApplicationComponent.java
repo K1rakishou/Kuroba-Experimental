@@ -16,6 +16,7 @@ import com.github.k1rakishou.chan.core.di.module.application.RepositoryModule;
 import com.github.k1rakishou.chan.core.di.module.application.RoomDatabaseModule;
 import com.github.k1rakishou.chan.core.di.module.application.SiteModule;
 import com.github.k1rakishou.chan.core.di.module.application.UseCaseModule;
+import com.github.k1rakishou.chan.core.receiver.ReplyNotificationDeleteIntentBroadcastReceiver;
 import com.github.k1rakishou.chan.core.site.SiteBase;
 import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkBackgroundWatcherWorker;
 import com.github.k1rakishou.chan.ui.widget.SnackbarWrapper;
@@ -56,6 +57,7 @@ public interface ApplicationComponent {
     void inject(@NotNull BookmarkBackgroundWatcherWorker bookmarkBackgroundWatcherWorker);
     void inject(@NotNull SiteBase siteBase);
     void inject(@NotNull SnackbarWrapper snackbarWrapper);
+    void inject(@NotNull ReplyNotificationDeleteIntentBroadcastReceiver replyNotificationDeleteIntentBroadcastReceiver);
 
     @Component.Builder
     interface Builder {

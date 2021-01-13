@@ -201,7 +201,7 @@ class BookmarkWatcherDelegate(
     }
   }
 
-  private fun processUnsuccessFetchResults(unsuccessFetchResults: List<ThreadBookmarkFetchResult>) {
+  private suspend fun processUnsuccessFetchResults(unsuccessFetchResults: List<ThreadBookmarkFetchResult>) {
     val updatedBookmarkDescriptors = unsuccessFetchResults.mapNotNull { unsuccessFetchResult ->
       val threadDescriptor = unsuccessFetchResult.threadDescriptor
 

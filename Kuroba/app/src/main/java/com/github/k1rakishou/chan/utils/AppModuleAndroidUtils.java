@@ -135,6 +135,7 @@ public class AppModuleAndroidUtils {
         return getFlavorType() == AndroidUtils.FlavorType.Fdroid;
     }
 
+    @SuppressWarnings("ConstantConditions")
     public static AndroidUtils.FlavorType getFlavorType() {
         switch (BuildConfig.FLAVOR_TYPE) {
             case 0:

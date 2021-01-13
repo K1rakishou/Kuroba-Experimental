@@ -18,6 +18,7 @@ import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.utils.NotificationConstants
+import com.github.k1rakishou.chan.utils.RequestCodes
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
@@ -171,7 +172,7 @@ class LastPageNotificationsHelper(
 
     val pendingIntent = PendingIntent.getActivity(
       appContext,
-      NotificationConstants.LAST_PAGE_ALL_NOTIFICATIONS_CLICK_REQUEST_CODE,
+      RequestCodes.LAST_PAGE_ALL_NOTIFICATIONS_CLICK_REQUEST_CODE,
       intent,
       PendingIntent.FLAG_UPDATE_CURRENT
     )

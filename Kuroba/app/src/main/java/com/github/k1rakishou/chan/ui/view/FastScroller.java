@@ -423,7 +423,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
         int verticalContentLength = mRecyclerView.computeVerticalScrollRange();
         int verticalVisibleLength = mRecyclerViewHeight;
 
-        mNeedVerticalScrollbar = verticalContentLength - (verticalVisibleLength * 2) > 0
+        mNeedVerticalScrollbar = verticalContentLength - verticalVisibleLength > 0
                 && mRecyclerViewHeight >= mScrollbarMinimumRange;
 
         if (mNeedVerticalScrollbar) {

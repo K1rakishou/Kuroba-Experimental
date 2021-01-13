@@ -23,12 +23,14 @@ import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.receiver.ReplyNotificationDeleteIntentBroadcastReceiver
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getFlavorType
 import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.chan.utils.NotificationConstants.MAX_LINES_IN_NOTIFICATION
 import com.github.k1rakishou.chan.utils.NotificationConstants.MAX_VISIBLE_NOTIFICATIONS
 import com.github.k1rakishou.chan.utils.NotificationConstants.NOTIFICATION_THUMBNAIL_SIZE
+import com.github.k1rakishou.chan.utils.RequestCodes
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
 import com.github.k1rakishou.common.ellipsizeEnd
@@ -88,8 +90,7 @@ class ReplyNotificationsHelper(
             || bookmarkChange is BookmarksManager.BookmarkChange.BookmarksDeleted
         }
         .collect { bookmarkChange ->
-          Logger.d(
-            TAG, "bookmarksManager.listenForBookmarksChanges(), " +
+          Logger.d(TAG, "bookmarksManager.listenForBookmarksChanges(), " +
             "bookmarkChange=${bookmarkChange.javaClass.simpleName}")
 
           showOrUpdateNotifications()
@@ -160,6 +161,8 @@ class ReplyNotificationsHelper(
     Logger.d(TAG, "showNotificationForReplies(${unreadNotificationsGrouped.size})")
 
     if (unreadNotificationsGrouped.isEmpty()) {
+      Logger.d(TAG, "showNotificationForReplies() unreadNotificationsGrouped are empty")
+
       closeAllNotifications()
       return emptyMap()
     }
@@ -185,8 +188,7 @@ class ReplyNotificationsHelper(
     )
 
     if (!hasUnseenReplies) {
-      Logger.d(
-        TAG, "showNotificationForReplies() showSummaryNotification() returned false, " +
+      Logger.d(TAG, "showNotificationForReplies() showSummaryNotification() returned false, " +
         "no unseen replies to show notifications for")
       return emptyMap()
     }
@@ -303,7 +305,7 @@ class ReplyNotificationsHelper(
       .setContentText(titleText)
       .setSmallIcon(iconId)
       .setupClickOnNotificationIntent(
-        NotificationConstants.REPLY_NORMAL_NOTIFICATION_CLICK_REQUEST_CODE,
+        RequestCodes.REPLY_NORMAL_NOTIFICATION_CLICK_REQUEST_CODE,
         unreadNotificationsGrouped.keys
       )
       .setupDeleteNotificationIntent(unreadNotificationsGrouped.keys)
@@ -395,7 +397,7 @@ class ReplyNotificationsHelper(
       .setupSoundAndVibration(hasNewReplies, useSoundForReplyNotifications)
       .setupSummaryNotificationsStyle(titleText)
       .setupClickOnNotificationIntent(
-        NotificationConstants.REPLY_SUMMARY_NOTIFICATION_CLICK_REQUEST_CODE,
+        RequestCodes.REPLY_SUMMARY_NOTIFICATION_CLICK_REQUEST_CODE,
         unreadNotificationsGrouped.keys
       )
       .setupDeleteNotificationIntent(unreadNotificationsGrouped.keys)
@@ -466,7 +468,7 @@ class ReplyNotificationsHelper(
         .setAutoCancel(true)
         .setupReplyNotificationsStyle(threadTitle, threadBookmarkReplies)
         .setupClickOnNotificationIntent(
-          NotificationConstants.REPLY_NORMAL_NOTIFICATION_CLICK_REQUEST_CODE,
+          RequestCodes.REPLY_NORMAL_NOTIFICATION_CLICK_REQUEST_CODE,
           listOf(threadDescriptor)
         )
         .setupDeleteNotificationIntent(listOf(threadDescriptor))
@@ -626,29 +628,21 @@ class ReplyNotificationsHelper(
   private fun NotificationCompat.Builder.setupDeleteNotificationIntent(
     threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
   ): NotificationCompat.Builder {
-    val intent = Intent(appContext, StartActivity::class.java)
+    val intent = Intent(appContext, ReplyNotificationDeleteIntentBroadcastReceiver::class.java)
 
     val threadDescriptorsParcelable = threadDescriptors.map { threadDescriptor ->
       DescriptorParcelable.fromDescriptor(threadDescriptor)
     }
 
     intent
-      .setAction(NotificationConstants.REPLY_NOTIFICATION_ACTION)
-      .addCategory(Intent.CATEGORY_LAUNCHER)
-      .setFlags(
-        Intent.FLAG_ACTIVITY_CLEAR_TOP
-          or Intent.FLAG_ACTIVITY_SINGLE_TOP
-          or Intent.FLAG_ACTIVITY_NEW_TASK
-          or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED
-      )
       .putParcelableArrayListExtra(
         NotificationConstants.ReplyNotifications.R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY,
         ArrayList(threadDescriptorsParcelable)
       )
 
-    val pendingIntent = PendingIntent.getActivity(
+    val pendingIntent = PendingIntent.getBroadcast(
       appContext,
-      NotificationConstants.REPLY_ALL_NOTIFICATIONS_SWIPE_REQUEST_CODE,
+      RequestCodes.REPLY_ALL_NOTIFICATIONS_SWIPE_REQUEST_CODE,
       intent,
       PendingIntent.FLAG_UPDATE_CURRENT
     )
@@ -876,6 +870,8 @@ class ReplyNotificationsHelper(
         NotificationConstants.ReplyNotifications.REPLIES_PRE_OREO_NOTIFICATION_TAG,
         NotificationConstants.REPLIES_PRE_OREO_NOTIFICATION_ID
       )
+
+      Logger.d(TAG, "closeAllNotifications() closed REPLIES_PRE_OREO_NOTIFICATION_ID notification")
       return
     }
 
@@ -883,6 +879,7 @@ class ReplyNotificationsHelper(
       .filter { statusBarNotification -> statusBarNotification.notification.group == notificationsGroup }
 
     if (visibleNotifications.isEmpty()) {
+      Logger.d(TAG, "closeAllNotifications() visibleNotifications are empty")
       return
     }
 

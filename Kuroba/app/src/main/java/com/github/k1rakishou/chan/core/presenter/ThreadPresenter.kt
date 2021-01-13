@@ -768,7 +768,7 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  private fun updateBookmarkInfoIfNecessary(localThreadDescriptor: ChanDescriptor.ThreadDescriptor) {
+  private suspend fun updateBookmarkInfoIfNecessary(localThreadDescriptor: ChanDescriptor.ThreadDescriptor) {
     val originalPost = chanThreadManager.getChanThread(localThreadDescriptor)
       ?.getOriginalPost()
 

@@ -17,11 +17,6 @@ object NotificationConstants {
   const val REPLIES_PRE_OREO_NOTIFICATION_ID = 1
   const val LAST_PAGE_NOTIFICATION_ID = 2
 
-  const val REPLY_NORMAL_NOTIFICATION_CLICK_REQUEST_CODE = 1
-  const val REPLY_SUMMARY_NOTIFICATION_CLICK_REQUEST_CODE = 2
-  const val REPLY_ALL_NOTIFICATIONS_SWIPE_REQUEST_CODE = 3
-  const val LAST_PAGE_ALL_NOTIFICATIONS_CLICK_REQUEST_CODE = 4
-
   const val REPLY_NOTIFICATION_ACTION = "${BuildConfig.APPLICATION_ID}_reply_notification_action"
   const val LAST_PAGE_NOTIFICATION_ACTION = "${BuildConfig.APPLICATION_ID}_last_page_notification_action"
 

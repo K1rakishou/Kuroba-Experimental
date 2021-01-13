@@ -152,13 +152,12 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
   override fun attachBaseContext(base: Context) {
     super.attachBaseContext(base)
+
     AndroidUtils.init(this)
     AppModuleAndroidUtils.init(this)
-    Logger.init(BuildConfig.DEBUG, tagPrefix)
+    Logger.init(tagPrefix)
     ChanSettings.init(createChanSettingsInfo())
     PersistableChanState.init(createPersistableChanStateInfo())
-
-    Logger.verboseLogsEnabled(ChanSettings.verboseLogs.get())
 
     AppModuleAndroidUtils.printApplicationSignatureHash()
 

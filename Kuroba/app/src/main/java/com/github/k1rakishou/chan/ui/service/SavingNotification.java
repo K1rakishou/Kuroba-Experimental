@@ -31,6 +31,7 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.utils.RequestCodes;
 import com.github.k1rakishou.common.DoNotStrip;
 
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.postToEventBus;
@@ -103,7 +104,13 @@ public class SavingNotification
     private Notification getNotification() {
         Intent intent = new Intent(this, SavingNotification.class);
         intent.putExtra(CANCEL_KEY, true);
-        PendingIntent pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        PendingIntent pendingIntent = PendingIntent.getService(
+                this,
+                RequestCodes.SAVING_NOTIFICATION_REQUEST_CODE,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT
+        );
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this, NOTIFICATION_ID_STR);
         builder.setSmallIcon(R.drawable.ic_stat_notify)
