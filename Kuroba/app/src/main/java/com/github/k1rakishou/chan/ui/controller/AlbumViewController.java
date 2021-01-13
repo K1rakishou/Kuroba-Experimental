@@ -29,20 +29,26 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.ui.cell.AlbumViewCell;
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController;
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView;
+import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
+import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+
+import javax.inject.Inject;
 
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString;
@@ -52,12 +58,17 @@ public class AlbumViewController
         extends Controller
         implements ImageViewerController.ImageViewerCallback,
         ImageViewerController.GoPostCallback,
-        RequiresNoBottomNavBar {
+        RequiresNoBottomNavBar,
+        WindowInsetsListener,
+        Toolbar.ToolbarHeightUpdatesCallback {
     private ColorizableGridRecyclerView recyclerView;
 
     private List<ChanPostImage> postImages;
     private int targetIndex = -1;
     private ChanDescriptor chanDescriptor;
+
+    @Inject
+    GlobalWindowInsetsManager globalWindowInsetsManager;
 
     @Override
     protected void injectDependencies(@NotNull ActivityComponent component) {
@@ -84,6 +95,39 @@ public class AlbumViewController
         AlbumAdapter albumAdapter = new AlbumAdapter(chanDescriptor);
         recyclerView.setAdapter(albumAdapter);
         recyclerView.scrollToPosition(targetIndex);
+
+        requireNavController().requireToolbar().addToolbarHeightUpdatesCallback(this);
+        globalWindowInsetsManager.addInsetsUpdatesListener(this);
+
+        onInsetsChanged();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        requireNavController().requireToolbar().removeToolbarHeightUpdatesCallback(this);
+        globalWindowInsetsManager.removeInsetsUpdatesListener(this);
+    }
+
+    @Override
+    public void onToolbarHeightKnown(boolean heightChanged) {
+        if (!heightChanged) {
+            return;
+        }
+
+        onInsetsChanged();
+    }
+
+    @Override
+    public void onInsetsChanged() {
+        KotlinExtensionsKt.updatePaddings(
+                recyclerView,
+                null,
+                null,
+                requireNavController().requireToolbar().getToolbarHeight(),
+                globalWindowInsetsManager.bottom()
+        );
     }
 
     public void setImages(ChanDescriptor chanDescriptor, List<ChanPostImage> postImages, int index, String title) {
@@ -93,8 +137,10 @@ public class AlbumViewController
         // Navigation
         Drawable downloadDrawable = context.getDrawable(R.drawable.ic_file_download_white_24dp);
         downloadDrawable.setTint(Color.WHITE);
+
         navigation.buildMenu()
-                .withItem(Integer.MAX_VALUE, downloadDrawable, this::downloadAlbumClicked).build();
+                .withItem(Integer.MAX_VALUE, downloadDrawable, this::downloadAlbumClicked)
+                .build();
 
         navigation.title = title;
         navigation.subtitle = getQuantityString(R.plurals.image, postImages.size(), postImages.size());

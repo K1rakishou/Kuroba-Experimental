@@ -62,7 +62,8 @@ abstract class ThreadController(
   ToolbarSearchCallback,
   SlideChangeListener,
   ApplicationVisibilityListener,
-  ThemeEngine.ThemeChangesListener {
+  ThemeEngine.ThemeChangesListener,
+  Toolbar.ToolbarHeightUpdatesCallback {
 
   @Inject
   lateinit var siteManager: SiteManager
@@ -89,7 +90,6 @@ abstract class ThreadController(
     super.onCreate()
 
     EventBus.getDefault().register(this)
-    navigation.handlesToolbarInset = true
 
     threadLayout = inflate(context, R.layout.layout_thread, null) as ThreadLayout
     threadLayout.create(this)
@@ -110,16 +110,7 @@ abstract class ThreadController(
     serializedCoroutineExecutor = SerializedCoroutineExecutor(mainScope)
     applicationVisibilityManager.addListener(this)
 
-    val toolbar = toolbar
-    toolbar?.addToolbarHeightUpdatesCallback {
-      val toolbarHeight = toolbar.toolbarHeight
-
-      swipeRefreshLayout.setProgressViewOffset(
-        false,
-        toolbarHeight - dp(40f),
-        toolbarHeight + dp(64 - 40.toFloat())
-      )
-    }
+    toolbar?.addToolbarHeightUpdatesCallback(this)
 
     onThemeChanged()
     themeEngine.addListener(this)
@@ -134,6 +125,7 @@ abstract class ThreadController(
   override fun onDestroy() {
     super.onDestroy()
 
+    toolbar?.removeToolbarHeightUpdatesCallback(this)
     drawerCallbacks = null
     threadLayout.destroy()
     applicationVisibilityManager.removeListener(this)
@@ -144,6 +136,17 @@ abstract class ThreadController(
 
   override fun onThemeChanged() {
     swipeRefreshLayout.setBackgroundColor(themeEngine.chanTheme.backColor)
+  }
+
+  override fun onToolbarHeightKnown(heightChanged: Boolean) {
+    val toolbarHeight = toolbar?.toolbarHeight
+      ?: return
+
+    swipeRefreshLayout.setProgressViewOffset(
+      false,
+      toolbarHeight - dp(40f),
+      toolbarHeight + dp(64 - 40.toFloat())
+    )
   }
 
   fun passMotionEventIntoDrawer(event: MotionEvent): Boolean {

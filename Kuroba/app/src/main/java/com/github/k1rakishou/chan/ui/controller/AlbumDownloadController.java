@@ -42,6 +42,7 @@ import com.github.k1rakishou.chan.core.saver.ImageSaveTask;
 import com.github.k1rakishou.chan.core.saver.ImageSaver;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView;
+import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
@@ -72,7 +73,11 @@ import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 
 public class AlbumDownloadController
         extends Controller
-        implements View.OnClickListener, ImageSaver.BundledDownloadTaskCallbacks, WindowInsetsListener {
+        implements View.OnClickListener,
+        ImageSaver.BundledDownloadTaskCallbacks,
+        WindowInsetsListener,
+        Toolbar.ToolbarHeightUpdatesCallback {
+
     private ColorizableGridRecyclerView recyclerView;
     private ColorizableFloatingActionButton download;
 
@@ -129,6 +134,8 @@ public class AlbumDownloadController
         imageSaver.setBundledTaskCallback(this);
 
         globalWindowInsetsManager.addInsetsUpdatesListener(this);
+        requireNavController().requireToolbar().addToolbarHeightUpdatesCallback(this);
+
         onInsetsChanged();
     }
 
@@ -137,6 +144,7 @@ public class AlbumDownloadController
         super.onDestroy();
 
         globalWindowInsetsManager.removeInsetsUpdatesListener(this);
+        requireNavController().requireToolbar().removeToolbarHeightUpdatesCallback(this);
         imageSaver.removeBundleTaskCallback();
     }
 
@@ -151,8 +159,33 @@ public class AlbumDownloadController
     }
 
     @Override
+    public void onToolbarHeightKnown(boolean heightChanged) {
+        if (!heightChanged) {
+            return;
+        }
+
+        onInsetsChanged();
+    }
+
+    @Override
     public void onInsetsChanged() {
-        KotlinExtensionsKt.updateMargins(download, null, null, null, null, null, globalWindowInsetsManager.bottom());
+        KotlinExtensionsKt.updatePaddings(
+                recyclerView,
+                null,
+                null,
+                requireNavController().requireToolbar().getToolbarHeight(),
+                globalWindowInsetsManager.bottom()
+        );
+
+        KotlinExtensionsKt.updateMargins(
+                download,
+                null,
+                null,
+                null,
+                null,
+                null,
+                globalWindowInsetsManager.bottom()
+        );
     }
 
     @Override

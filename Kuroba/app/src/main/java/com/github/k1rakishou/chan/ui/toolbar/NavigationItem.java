@@ -43,7 +43,6 @@ public class NavigationItem {
 
     public boolean hasBack = true;
     public boolean hasDrawer;
-    public boolean handlesToolbarInset;
     public boolean swipeable = true;
     public boolean scrollableTitle = false;
 
@@ -421,7 +420,6 @@ public class NavigationItem {
                 ", subtitle='" + subtitle + '\'' +
                 ", hasBack=" + hasBack +
                 ", hasDrawer=" + hasDrawer +
-                ", handlesToolbarInset=" + handlesToolbarInset +
                 ", swipeable=" + swipeable +
                 ", scrollableTitle=" + scrollableTitle +
                 ", searchText='" + searchText + '\'' +

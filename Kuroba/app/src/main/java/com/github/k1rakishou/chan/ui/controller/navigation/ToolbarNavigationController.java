@@ -17,7 +17,6 @@
 package com.github.k1rakishou.chan.ui.controller.navigation;
 
 import android.content.Context;
-import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
 
@@ -28,7 +27,6 @@ import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 
 public abstract class ToolbarNavigationController extends NavigationController implements Toolbar.ToolbarCallback {
     private Toolbar toolbar;
-    protected boolean requireSpaceForToolbar = true;
 
     public ToolbarNavigationController(Context context) {
         super(context);
@@ -123,12 +121,6 @@ public abstract class ToolbarNavigationController extends NavigationController i
     }
 
     protected void updateToolbarCollapse(Controller controller, boolean animate) {
-        if (requireSpaceForToolbar && !controller.navigation.handlesToolbarInset) {
-            FrameLayout.LayoutParams toViewParams = (FrameLayout.LayoutParams) controller.view.getLayoutParams();
-            toViewParams.topMargin = toolbar.getToolbarHeight();
-            controller.view.setLayoutParams(toViewParams);
-        }
-
         toolbar.processScrollCollapse(Toolbar.TOOLBAR_COLLAPSE_SHOW, animate);
     }
 

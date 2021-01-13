@@ -84,7 +84,6 @@ public class ThreadSlideController
         doubleNavigationController = this;
 
         navigation.swipeable = false;
-        navigation.handlesToolbarInset = true;
         navigation.hasDrawer = true;
 
         view = inflate(context, R.layout.controller_thread_slide);
@@ -373,7 +372,7 @@ public class ThreadSlideController
     private void setParentNavigationItem(boolean left, boolean animate) {
         Toolbar toolbar = requireNavController().requireToolbar();
 
-        //default, blank navigation item with no menus or titles, so other layouts don't mess up
+        // default, blank navigation item with no menus or titles, so other layouts don't mess up
         NavigationItem item = new NavigationItem();
         if (left) {
             if (leftController != null) {
@@ -396,7 +395,6 @@ public class ThreadSlideController
 
         navigation = item;
         navigation.swipeable = false;
-        navigation.handlesToolbarInset = true;
         navigation.hasDrawer = true;
 
         toolbar.setNavigationItem(animate, true, navigation, null);

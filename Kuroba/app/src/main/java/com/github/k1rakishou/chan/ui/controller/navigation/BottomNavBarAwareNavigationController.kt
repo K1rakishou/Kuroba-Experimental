@@ -24,7 +24,11 @@ import javax.inject.Inject
 class BottomNavBarAwareNavigationController(
   context: Context,
   private val listener: CloseBottomNavBarAwareNavigationControllerListener
-) : ToolbarNavigationController(context), AppModuleAndroidUtils.OnMeasuredCallback, WindowInsetsListener {
+) :
+  ToolbarNavigationController(context),
+  AppModuleAndroidUtils.OnMeasuredCallback,
+  WindowInsetsListener,
+  Toolbar.ToolbarHeightUpdatesCallback {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -50,6 +54,7 @@ class BottomNavBarAwareNavigationController(
 
     requireToolbar().setCallback(this)
     requireToolbar().hideArrowMenu()
+    requireToolbar().addToolbarHeightUpdatesCallback(this)
 
     // Wait a little bit so that GlobalWindowInsetsManager have time to get initialized so we can
     // use the insets
@@ -70,10 +75,20 @@ class BottomNavBarAwareNavigationController(
 
     requireToolbar().removeCallback()
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
+    requireToolbar().removeToolbarHeightUpdatesCallback(this)
+  }
+
+  override fun onToolbarHeightKnown(heightChanged: Boolean) {
+    if (!heightChanged) {
+      return
+    }
+
+    onInsetsChanged()
   }
 
   override fun onInsetsChanged() {
     container.updatePaddings(
+      top = requireToolbar().toolbarHeight,
       bottom = bottomNavBarHeight + globalWindowInsetsManager.bottom()
     )
   }

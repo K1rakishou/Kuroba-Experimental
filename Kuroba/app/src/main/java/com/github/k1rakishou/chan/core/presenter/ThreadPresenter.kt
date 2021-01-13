@@ -568,7 +568,6 @@ class ThreadPresenter @Inject constructor(
     showPosts()
   }
 
-  @Synchronized
   fun showAlbum() {
     val postDescriptors = threadPresenterCallback?.displayingPostDescriptors
     val position = threadPresenterCallback?.currentPosition
