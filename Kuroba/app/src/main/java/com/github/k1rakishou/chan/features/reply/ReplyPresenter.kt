@@ -304,10 +304,19 @@ class ReplyPresenter @Inject constructor(
     val chanDescriptor = currentChanDescriptor
       ?: return false
 
+    val hasSelectedFiles = replyManager.hasSelectedFiles()
+      .peekError { error -> Logger.e(TAG, "hasSelectedFiles() error", error) }
+      .valueOrNull()
+
+    if (hasSelectedFiles == null) {
+      callback.openMessage(getString(R.string.reply_failed_to_prepare_reply))
+      return false
+    }
+
     return replyManager.readReply(chanDescriptor) { reply ->
       callback.loadViewsIntoDraft(chanDescriptor)
 
-      if (!isAuthenticateOnly && !reply.hasFiles() && reply.isCommentEmpty()) {
+      if (!isAuthenticateOnly && !hasSelectedFiles && reply.isCommentEmpty()) {
         callback.openMessage(getString(R.string.reply_comment_empty))
         return@readReply false
       }

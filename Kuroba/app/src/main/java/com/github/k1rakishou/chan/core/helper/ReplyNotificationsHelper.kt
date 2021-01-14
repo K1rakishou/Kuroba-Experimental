@@ -82,8 +82,6 @@ class ReplyNotificationsHelper(
 
       bookmarksManager.listenForBookmarksChanges()
         .asFlow()
-        // We only care about bookmark updates here since we use this listener to close seen
-        // notifications
         .filter { bookmarkChange ->
           return@filter bookmarkChange is BookmarksManager.BookmarkChange.BookmarksUpdated
             || bookmarkChange is BookmarksManager.BookmarkChange.BookmarksInitialized

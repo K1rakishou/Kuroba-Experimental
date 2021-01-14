@@ -977,7 +977,8 @@ Don't have a 4chan Pass?<br>
 
     <string name="could_not_remove_site_error_message">Could not remove site %1$s (error message: %2$s)</string>
 
-    <string name="reply_comment_empty">Comment body is empty.</string>
+    <string name="reply_comment_empty">Reply is empty (no comment body, no files attached).</string>
+    <string name="reply_failed_to_prepare_reply">Failed to prepare reply.</string>
     <string name="image_reencode_format_error">Something is wrong with this file</string>
     <string name="filter_removed_undo">Removed filter %1$s</string>
     <string name="image_url_get_attempt">Getting image from clipboard URL…</string>
