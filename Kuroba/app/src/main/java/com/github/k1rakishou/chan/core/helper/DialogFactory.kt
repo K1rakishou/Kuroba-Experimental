@@ -199,7 +199,7 @@ class DialogFactory(
 
   fun createWithStringArray(
     context: Context,
-    keys: Array<String?>,
+    keys: Array<CharSequence?>,
     onClickListener: (Int) -> Unit
   ) {
     if (!applicationVisibilityManager.isAppInForeground()) {

@@ -379,8 +379,8 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
                 pl,
                 0,
                 res.length(),
-                (250 << Spanned.SPAN_PRIORITY_SHIFT) & Spanned.SPAN_PRIORITY)
-        ;
+                (250 << Spanned.SPAN_PRIORITY_SHIFT) & Spanned.SPAN_PRIORITY
+        );
 
         post.addLinkable(pl);
 

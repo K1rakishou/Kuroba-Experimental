@@ -80,6 +80,7 @@ import com.github.k1rakishou.chan.ui.controller.LicensesController;
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController;
 import com.github.k1rakishou.chan.ui.controller.LogsController;
 import com.github.k1rakishou.chan.ui.controller.PopupController;
+import com.github.k1rakishou.chan.ui.controller.PostLinksController;
 import com.github.k1rakishou.chan.ui.controller.PostRepliesController;
 import com.github.k1rakishou.chan.ui.controller.RemovedPostsController;
 import com.github.k1rakishou.chan.ui.controller.ReportController;
@@ -99,6 +100,7 @@ import com.github.k1rakishou.chan.ui.controller.settings.captcha.JsCaptchaCookie
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyDividerView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyErrorView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyExpandableGroupView;
+import com.github.k1rakishou.chan.ui.epoxy.EpoxyPostLink;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyTextView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyTextViewWrapHeight;
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
@@ -206,6 +208,7 @@ public interface ActivityComponent {
     void inject(JsCaptchaCookiesEditorController jsCaptchaCookiesEditorController);
     void inject(LoadingViewController loadingViewController);
     void inject(BoardSelectionController boardSelectionController);
+    void inject(PostLinksController postLinksController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);
@@ -258,6 +261,7 @@ public interface ActivityComponent {
     void inject(EpoxyAttachNewFileButtonView epoxyAttachNewFileButtonView);
     void inject(EpoxyAttachNewFileButtonWideView epoxyAttachNewFileButtonWideView);
     void inject(EpoxyTextViewWrapHeight epoxyTextViewWrapHeight);
+    void inject(EpoxyPostLink epoxyPostLink);
 
     void inject(CaptchaNoJsLayoutV2 captchaNoJsLayoutV2);
     void inject(CaptchaNojsLayoutV1 captchaNojsLayoutV1);

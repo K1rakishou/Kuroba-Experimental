@@ -55,6 +55,7 @@ import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper.ImageReencodingHelperCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
+import com.github.k1rakishou.chan.ui.controller.PostLinksController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper.PostPopupHelperCallback
@@ -77,6 +78,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -150,6 +152,7 @@ class ThreadLayout @JvmOverloads constructor(
   private lateinit var postPopupHelper: PostPopupHelper
   private lateinit var imageReencodingHelper: ImageOptionsHelper
   private lateinit var removedPostsHelper: RemovedPostsHelper
+  private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
   private var drawerCallbacks: DrawerCallbacks? = null
   private var newPostsNotification: SnackbarWrapper? = null
@@ -160,9 +163,7 @@ class ThreadLayout @JvmOverloads constructor(
   private var visible: Visible? = null
 
   private val scrollToBottomDebouncer = Debouncer(false)
-
   private val job = SupervisorJob()
-  private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("ThreadLayout")
@@ -227,11 +228,7 @@ class ThreadLayout @JvmOverloads constructor(
     presenter.create(context, this)
     threadListLayout.onCreate(presenter, this)
     postPopupHelper = PostPopupHelper(context, presenter, chanThreadManager, this)
-    imageReencodingHelper =
-      ImageOptionsHelper(
-        context,
-        this
-      )
+    imageReencodingHelper = ImageOptionsHelper(context, this)
     removedPostsHelper = RemovedPostsHelper(context, presenter, this)
     errorText.typeface = themeEngine.chanTheme.mainFont
     errorRetryButton.setOnClickListener(this)
@@ -275,7 +272,8 @@ class ThreadLayout @JvmOverloads constructor(
         callback.showAvailableArchivesList(descriptor)
       }
     } else if (v === replyButton) {
-      // Give some time for the keyboard to show up
+      // Give some time for the keyboard to show up because we need keyboards' insets for proper
+      // recycler view paddings
       replyButton.postDelayed({ openReplyInternal(true) }, OPEN_REPLY_DELAY_MS)
     }
   }
@@ -451,16 +449,20 @@ class ThreadLayout @JvmOverloads constructor(
   @Suppress("MoveLambdaOutsideParentheses")
   override fun showPostLinkables(post: ChanPost) {
     val linkables = post.postComment.linkables
-    val keys = arrayOfNulls<String>(linkables.size)
+      .filter { postLinkable -> postLinkable.type == PostLinkable.Type.LINK }
 
-    for (i in linkables.indices) {
-      keys[i] = linkables[i].key.toString()
+    if (linkables.isEmpty()) {
+      showToast(context, context.getString(R.string.no_links_found))
+      return
     }
 
-    dialogFactory.createWithStringArray(
-      context = context,
-      keys
-    ) { which -> presenter.onPostLinkableClicked(post, linkables[which]) }
+    val postLinksController = PostLinksController(
+      post,
+      { postLinkable -> presenter.onPostLinkableClicked(post, postLinkable) },
+      context
+    )
+
+    callback.presentController(postLinksController, animated = true)
   }
 
   override fun clipboardPost(post: ChanPost) {

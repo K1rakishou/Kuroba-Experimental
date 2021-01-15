@@ -75,7 +75,7 @@ object CommentParserHelper {
               postLinkable,
               0,
               newLink.length,
-              500 shl Spanned.SPAN_PRIORITY_SHIFT and Spanned.SPAN_PRIORITY
+              (500 shl Spanned.SPAN_PRIORITY_SHIFT) and Spanned.SPAN_PRIORITY
             )
 
             append(newLink)
@@ -101,7 +101,7 @@ object CommentParserHelper {
           postLinkable,
           0,
           newLink.length,
-          500 shl Spanned.SPAN_PRIORITY_SHIFT and Spanned.SPAN_PRIORITY
+          (500 shl Spanned.SPAN_PRIORITY_SHIFT) and Spanned.SPAN_PRIORITY
         )
 
         append(newLink)
@@ -180,7 +180,7 @@ object CommentParserHelper {
         pl,
         link.beginIndex,
         link.endIndex,
-        500 shl Spanned.SPAN_PRIORITY_SHIFT and Spanned.SPAN_PRIORITY
+        (500 shl Spanned.SPAN_PRIORITY_SHIFT) and Spanned.SPAN_PRIORITY
       )
 
       post.addLinkable(pl)
