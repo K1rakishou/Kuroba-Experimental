@@ -128,13 +128,15 @@ public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
         }
 
         if (!TextUtils.isEmpty(url)) {
-            debouncer.post(() -> requestDisposable = imageLoaderV2.loadFromNetwork(
-                    getContext(),
-                    url,
-                    maxWidth,
-                    maxHeight,
-                    this
-            ), 350);
+            debouncer.post(() -> {
+                requestDisposable = imageLoaderV2.loadFromNetwork(
+                        getContext(),
+                        url,
+                        maxWidth,
+                        maxHeight,
+                        this
+                );
+            }, 50);
         }
     }
 

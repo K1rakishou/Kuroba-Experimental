@@ -15,8 +15,7 @@ import com.github.k1rakishou.common.DoNotStrip;
 import com.github.k1rakishou.model.data.post.ChanPostImageType;
 
 @DoNotStrip
-public class ThumbnailImageView
-        extends AppCompatImageView {
+public class ThumbnailImageView extends AppCompatImageView {
 
     private ChanPostImageType type = ChanPostImageType.STATIC;
     private Drawable playIcon;
