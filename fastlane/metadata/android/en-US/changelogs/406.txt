@@ -1,8 +1,8 @@
 v0.4.6-release
-- Fix inability to post a reply with image attached by empty comment.
+- Fix inability to post a reply with image attached but an empty comment.
 - Implement a new view for post links with an ability to copy them.
-- Add alpha for AttachNewFileButton's boarder drawable.
-- Fix inability to open links when vieweing catalog thread links. 
+- Add alpha for AttachNewFileButton's border drawable.
+- Fix inability to open links when viewing catalog thread links. 
 
 v0.4.5-release
 - Change incorrect color of PostCell/CardPostCell options button.
