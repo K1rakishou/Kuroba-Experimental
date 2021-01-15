@@ -1313,7 +1313,7 @@ class ThreadPresenter @Inject constructor(
         return@post
       }
 
-      val currentThreadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
+      val currentThreadDescriptor = currentChanDescriptor
         ?: return@post
       val siteName = currentThreadDescriptor.siteName()
 
