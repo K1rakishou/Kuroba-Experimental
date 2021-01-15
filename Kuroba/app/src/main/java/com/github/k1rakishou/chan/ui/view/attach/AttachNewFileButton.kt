@@ -59,6 +59,7 @@ class AttachNewFileButton @JvmOverloads constructor(
     val tintColor = themeEngine.resolveTintColor(themeEngine.chanTheme.isBackColorDark)
 
     paint.color = tintColor
+    paint.alpha = 160
     addIconDrawable = themeEngine.tintDrawable(addIconDrawable, tintColor)
 
     invalidate()

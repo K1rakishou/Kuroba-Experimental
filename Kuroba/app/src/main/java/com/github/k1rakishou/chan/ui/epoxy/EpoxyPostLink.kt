@@ -37,8 +37,6 @@ class EpoxyPostLink @JvmOverloads constructor(
 
     postLinkView = findViewById(R.id.post_link_view)
     postLinkOpenButton = findViewById(R.id.post_link_open_button)
-
-    onThemeChanged()
   }
 
   override fun onAttachedToWindow() {
@@ -50,6 +48,8 @@ class EpoxyPostLink @JvmOverloads constructor(
     postLinkView.setTextIsSelectable(true)
 
     themeEngine.addListener(this)
+
+    onThemeChanged()
   }
 
   override fun onDetachedFromWindow() {
@@ -61,6 +61,14 @@ class EpoxyPostLink @JvmOverloads constructor(
   override fun onThemeChanged() {
     postLinkView.setEditTextCursorColor(themeEngine.chanTheme)
     postLinkView.setHandlesColors(themeEngine.chanTheme)
+
+    postLinkOpenButton.setImageDrawable(
+      themeEngine.getDrawableTinted(
+        context,
+        R.drawable.ic_baseline_navigate_next_24,
+        ThemeEngine.isDarkColor(themeEngine.chanTheme.backColor)
+      )
+    )
   }
 
   @ModelProp
