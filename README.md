@@ -41,7 +41,7 @@ Screenshots can be found [here](https://github.com/K1rakishou/Kuroba-Experimenta
 
 [All beta versions](https://kuroba.io:8443/apks/0) (or [here](https://github.com/K1rakishou/Kuroba-Experimental/releases) look for "Pre-release" versions)
 
-### [Latest release version (v0.4.5)](https://github.com/K1rakishou/Kuroba-Experimental/releases/tag/v0.4.5-release)
+### [Latest release version (v0.4.6)](https://github.com/K1rakishou/Kuroba-Experimental/releases/tag/v0.4.6-release)
 
 [F-Droid status](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/7450)
 
