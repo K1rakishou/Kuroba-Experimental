@@ -943,8 +943,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   private fun scrollToInternal(scrollPosition: Int) {
-    if (recyclerView.layoutManager is GridLayoutManager) {
-      (recyclerView.layoutManager as GridLayoutManager).scrollToPositionWithOffset(
+    if (layoutManager is GridLayoutManager) {
+      (layoutManager as GridLayoutManager).scrollToPositionWithOffset(
         scrollPosition,
         SCROLL_OFFSET
       )
@@ -952,8 +952,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       return
     }
 
-    if (recyclerView.layoutManager is StaggeredGridLayoutManager) {
-      (recyclerView.layoutManager as StaggeredGridLayoutManager).scrollToPositionWithOffset(
+    if (layoutManager is StaggeredGridLayoutManager) {
+      (layoutManager as StaggeredGridLayoutManager).scrollToPositionWithOffset(
         scrollPosition,
         SCROLL_OFFSET
       )
@@ -961,8 +961,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       return
     }
 
-    if (recyclerView.layoutManager is LinearLayoutManager) {
-      (recyclerView.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
+    if (layoutManager is LinearLayoutManager) {
+      (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
         scrollPosition,
         SCROLL_OFFSET
       )
@@ -1238,7 +1238,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   fun isErrorShown(): Boolean {
     BackgroundUtils.ensureMainThread()
-    return postAdapter.isErrorShown()
+    return postAdapter.isErrorShown
   }
 
   fun onImageOptionsComplete() {

@@ -843,7 +843,6 @@ class ThreadPresenter @Inject constructor(
     }
 
     val descriptor = currentChanDescriptor
-
     if (descriptor is ChanDescriptor.ThreadDescriptor) {
       if (chanThreadManager.getThreadPostsCount(descriptor) > 0) {
         val lastPostNo = chanThreadManager.getLastPost(descriptor)?.postNo()
@@ -854,6 +853,10 @@ class ThreadPresenter @Inject constructor(
 
           lastViewedPostNoInfoHolder.setLastViewedPostNo(descriptor, lastPostNo)
         }
+
+        // Force mark all posts in this thread as seen (because sometimes the very last post
+        // ends up staying unseen for some unknown reason).
+        bookmarksManager.readPostsAndNotificationsForThread(descriptor, lastPostNo)
       }
     }
 

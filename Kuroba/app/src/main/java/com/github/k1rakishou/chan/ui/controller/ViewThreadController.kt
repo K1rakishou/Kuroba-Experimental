@@ -454,13 +454,6 @@ open class ViewThreadController(
 
   private fun downClicked(item: ToolbarMenuSubItem) {
     threadLayout.scrollTo(-1, false)
-
-    val threadDescriptor = threadLayout.presenter.threadDescriptorOrNull()
-    if (threadDescriptor != null) {
-      // Force mark all posts in this thread as seen (because sometimes the very last post
-      // ends up staying unseen for some unknown reason).
-      bookmarksManager.readPostsAndNotificationsForThread(threadDescriptor)
-    }
   }
 
   override suspend fun showThread(descriptor: ThreadDescriptor, animated: Boolean) {

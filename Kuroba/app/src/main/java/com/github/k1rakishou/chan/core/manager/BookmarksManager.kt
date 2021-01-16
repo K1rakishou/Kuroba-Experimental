@@ -333,11 +333,22 @@ class BookmarksManager(
     }
   }
 
-  fun readPostsAndNotificationsForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+  fun readPostsAndNotificationsForThread(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    lastPostInThreadNo: Long?
+  ) {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     lock.write {
-      bookmarks[threadDescriptor]?.readAllPostsAndNotifications()
+      val threadBookmark = bookmarks[threadDescriptor]
+        ?: return@write
+
+      threadBookmark.readAllPostsAndNotifications()
+
+      if (lastPostInThreadNo != null) {
+        threadBookmark.updateLastViewedPostNo(lastPostInThreadNo)
+      }
+
       bookmarksChanged(BookmarkChange.BookmarksUpdated(listOf(threadDescriptor)))
     }
   }
