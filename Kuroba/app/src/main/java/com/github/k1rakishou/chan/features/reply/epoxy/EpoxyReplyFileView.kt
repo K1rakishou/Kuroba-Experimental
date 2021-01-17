@@ -280,11 +280,13 @@ class EpoxyReplyFileView @JvmOverloads constructor(
     }
   }
 
+  // TODO(KurobaEx / @Cleanup): this should be moved into IReplyAttachable.kt file
   data class SpoilerInfo(
     val markedAsSpoiler: Boolean,
     val boardSupportsSpoilers: Boolean
   )
 
+  // TODO(KurobaEx / @Cleanup): this should be moved into IReplyAttachable.kt file
   data class AttachAdditionalInfo(
     val fileExifStatus: Set<ReplyLayoutFilesAreaPresenter.FileExifInfoStatus>,
     val totalFileSizeExceeded: Boolean,

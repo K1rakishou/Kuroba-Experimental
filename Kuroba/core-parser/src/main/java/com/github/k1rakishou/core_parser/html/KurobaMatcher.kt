@@ -11,22 +11,22 @@ sealed class KurobaMatcher {
   }
 
   class KurobaStringEquals(val string: String) : KurobaMatcher() {
-    override fun matches(input: String): Boolean = string == input
+    override fun matches(input: String): Boolean = input == string
     override fun toString(): String = "KurobaStringEquals{string=${string}}"
   }
 
   class KurobaStringEqualsIgnoreCase(val string: String) : KurobaMatcher() {
-    override fun matches(input: String): Boolean = string.equals(input, ignoreCase = true)
+    override fun matches(input: String): Boolean = input.equals(string, ignoreCase = true)
     override fun toString(): String = "KurobaStringEqualsIgnoreCase{string=${string}}"
   }
 
   class KurobaStringContains(val string: String) : KurobaMatcher() {
-    override fun matches(input: String): Boolean = string.contains(input)
+    override fun matches(input: String): Boolean = input.contains(string)
     override fun toString(): String = "KurobaStringContains{string=${string}}"
   }
 
   class KurobaStringContainsIgnoreCase(val string: String) : KurobaMatcher() {
-    override fun matches(input: String): Boolean = string.contains(input, ignoreCase = true)
+    override fun matches(input: String): Boolean = input.contains(string, ignoreCase = true)
     override fun toString(): String = "KurobaStringContainsIgnoreCase{string=${string}}"
   }
 

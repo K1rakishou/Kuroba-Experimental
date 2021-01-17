@@ -5,8 +5,8 @@ import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCollector
 import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCommandBufferBuilder
 import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCommandExecutor
 import com.github.k1rakishou.core_parser.html.KurobaMatcher
-import junit.framework.Assert
 import org.jsoup.Jsoup
+import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,21 +18,27 @@ import org.powermock.modules.junit4.PowerMockRunner
 class KurobaStreamableHtmlParserTest : BaseHtmlParserTest() {
 
   private val kurobaHtmlParserCommandBuffer = KurobaHtmlParserCommandBufferBuilder<TestStreamableCollector>()
-    .group(groupName = "Main group") {
+    .start {
       htmlElement { html() }
-      htmlElement { body() }
-      htmlElement {
-        script(
-          attr = {
-            expectAttrWithValue("data-id", KurobaMatcher.stringEquals("player-instream"))
-            extractAttrValueByKey("data-duration")
-            extractAttrValueByKey("data-title")
-          },
-          extractor = { _, extractAttributeValues, collector ->
-            collector.title = extractAttributeValues.getAttrValue("data-title")
-            collector.duration = extractAttributeValues.getAttrValue("data-duration")
+
+      nest {
+        htmlElement { body() }
+
+        nest {
+          htmlElement {
+            script(
+              attr = {
+                expectAttrWithValue("data-id", KurobaMatcher.stringEquals("player-instream"))
+                extractAttrValueByKey("data-duration")
+                extractAttrValueByKey("data-title")
+              },
+              extractor = { _, extractAttributeValues, collector ->
+                collector.title = extractAttributeValues.getAttrValue("data-title")
+                collector.duration = extractAttributeValues.getAttrValue("data-duration")
+              }
+            )
           }
-        )
+        }
       }
     }
     .build()

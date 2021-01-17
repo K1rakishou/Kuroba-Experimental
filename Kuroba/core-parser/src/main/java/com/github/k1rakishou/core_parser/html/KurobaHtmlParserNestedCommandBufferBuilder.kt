@@ -1,33 +1,32 @@
 package com.github.k1rakishou.core_parser.html
 
-import com.github.k1rakishou.core_parser.html.commands.*
+import com.github.k1rakishou.core_parser.html.commands.KurobaBreakpointCommand
+import com.github.k1rakishou.core_parser.html.commands.KurobaCommandPopState
+import com.github.k1rakishou.core_parser.html.commands.KurobaCommandPushState
+import com.github.k1rakishou.core_parser.html.commands.KurobaParserCommand
+import com.github.k1rakishou.core_parser.html.commands.KurobaParserCommandGroup
+import com.github.k1rakishou.core_parser.html.commands.KurobaParserStepCommand
 
 class KurobaHtmlParserNestedCommandBufferBuilder<T : KurobaHtmlParserCollector>(
-  private val groupName: String
+  private val groupName: String?
 ) {
   private val parserCommands = mutableListOf<KurobaParserCommand<T>>()
 
-  fun breakpoint(): KurobaHtmlParserNestedCommandBufferBuilder<T> {
-    parserCommands += KurobaBreakpointCommand()
-    return this
-  }
-
-  fun preserveCommandIndex(
+  fun nest(
     builder: KurobaHtmlParserNestedCommandBufferBuilder<T>.() -> KurobaHtmlParserNestedCommandBufferBuilder<T>
   ): KurobaHtmlParserNestedCommandBufferBuilder<T> {
-    parserCommands += KurobaEnterPreserveIndexStateCommand<T>()
-    parserCommands += builder(KurobaHtmlParserNestedCommandBufferBuilder(groupName)).build()
-    parserCommands += KurobaExitPreserveIndexStateCommand<T>()
-    return this
+    return nest(null, builder)
   }
 
-  fun group(
-    groupName: String,
+  fun nest(
+    commandGroupName: String?,
     builder: KurobaHtmlParserNestedCommandBufferBuilder<T>.() -> KurobaHtmlParserNestedCommandBufferBuilder<T>
   ): KurobaHtmlParserNestedCommandBufferBuilder<T> {
-    parserCommands += KurobaParserPushStateCommand<T>()
-    parserCommands += builder(KurobaHtmlParserNestedCommandBufferBuilder(groupName)).build()
-    parserCommands += KurobaParserPopStateCommand<T>()
+    val commandGroup = builder(KurobaHtmlParserNestedCommandBufferBuilder(commandGroupName)).build()
+
+    parserCommands += KurobaCommandPushState(commandGroup.groupName)
+    parserCommands.addAll(commandGroup.innerCommands)
+    parserCommands += KurobaCommandPopState()
     return this
   }
 
@@ -38,6 +37,11 @@ class KurobaHtmlParserNestedCommandBufferBuilder<T : KurobaHtmlParserCollector>(
       builder.invoke(KurobaHtmlElementBuilder())
     )
 
+    return this
+  }
+
+  fun breakpoint(): KurobaHtmlParserNestedCommandBufferBuilder<T> {
+    parserCommands += KurobaBreakpointCommand<T>()
     return this
   }
 

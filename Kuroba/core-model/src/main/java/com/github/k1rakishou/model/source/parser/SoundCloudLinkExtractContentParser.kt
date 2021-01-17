@@ -126,81 +126,96 @@ object SoundCloudLinkExtractContentParser : IExtractContentParser {
     )
   }
 
+  // TODO(KurobaEx / @Testme!!!):
   private fun createAlbumParserCommandBuffer(): List<KurobaParserCommand<SoundCloudAlbumLinkContentCollector>> {
     return KurobaHtmlParserCommandBufferBuilder<SoundCloudAlbumLinkContentCollector>()
-      .group(groupName = "Main group") {
+      .start {
         htmlElement { html() }
-        htmlElement { head() }
-        htmlElement {
-          title(
-            attr = { extractText() },
-            extractor = { _, extractedAttributeValues, collector ->
-              collector.fullTitle = extractedAttributeValues.getText()
+
+        nest {
+          htmlElement { head() }
+
+          nest {
+            htmlElement {
+              title(
+                attr = { extractText() },
+                extractor = { _, extractedAttributeValues, collector ->
+                  collector.fullTitle = extractedAttributeValues.getText()
+                }
+              )
             }
-          )
+          }
         }
       }
       .build()
   }
 
+  // TODO(KurobaEx / @Testme!!!):
   private fun createNormalParserCommandBuffer(): List<KurobaParserCommand<SoundCloudNormalLinkContentCollector>> {
     return KurobaHtmlParserCommandBufferBuilder<SoundCloudNormalLinkContentCollector>()
-      .group(groupName = "Main group") {
+      .start {
         htmlElement { html() }
-        htmlElement { body() }
-        htmlElement { div(id = KurobaMatcher.stringEquals("app")) }
 
-        group(groupName = "Parse video title and duration") {
-          htmlElement { noscript() }
-          htmlElement { article() }
-          htmlElement { header() }
+        nest {
+          htmlElement { body() }
 
-          group(groupName = "Parse video track name and artist name") {
-            htmlElement {
-              heading(
-                headingNum = 1,
-                attr = { expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("name")) }
-              )
-            }
+          nest {
+            htmlElement { div(id = KurobaMatcher.stringEquals("app")) }
 
-            preserveCommandIndex {
-              group(groupName = "Parse track name") {
-                htmlElement {
-                  a(
-                    attr = { expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("url")) },
-                    extractor = { node, _, collector ->
-                      collector.titleTrackNamePart = (node as Element).text()
+            nest {
+              htmlElement { noscript() }
+
+              nest {
+                htmlElement { article() }
+
+                nest {
+                  htmlElement { header() }
+
+                  nest {
+                    htmlElement {
+                      heading(
+                        headingNum = 1,
+                        attr = { expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("name")) }
+                      )
                     }
-                  )
+
+                    nest {
+                      htmlElement {
+                        a(
+                          attr = { expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("url")) },
+                          extractor = { node, _, collector ->
+                            collector.titleTrackNamePart = (node as Element).text()
+                          }
+                        )
+                      }
+
+                      htmlElement {
+                        a(
+                          attr = {
+                            expectAttr("href")
+                            extractText()
+                          },
+                          extractor = { _, extractedAttrValues, collector ->
+                            collector.titleArtistPart = extractedAttrValues.getText()
+                          }
+                        )
+                      }
+                    }
+
+                    htmlElement {
+                      meta(
+                        attr = {
+                          expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("duration"))
+                          extractAttrValueByKey("content")
+                        },
+                        extractor = { _, extractedAttrValues, collector ->
+                          collector.videoDuration = extractedAttrValues.getAttrValue("content")
+                        }
+                      )
+                    }
+                  }
                 }
               }
-              group(groupName = "Parse video artist name") {
-                htmlElement {
-                  a(
-                    attr = {
-                      expectAttr("href")
-                      extractText()
-                    },
-                    extractor = { _, extractedAttrValues, collector ->
-                      collector.titleArtistPart = extractedAttrValues.getText()
-                    }
-                  )
-                }
-              }
-            }
-          }
-
-          group(groupName = "Parse video duration") {
-            htmlElement {
-              meta(
-                attr = {
-                  expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("duration"))
-                  extractAttrValueByKey("content")
-                },
-                extractor = { _, extractedAttrValues, collector ->
-                  collector.videoDuration = extractedAttrValues.getAttrValue("content")
-                }
-              )
             }
           }
         }

@@ -1,20 +1,22 @@
 package com.github.k1rakishou.core_parser.html
 
 import com.github.k1rakishou.core_parser.html.commands.KurobaParserCommand
-import com.github.k1rakishou.core_parser.html.commands.KurobaParserPopStateCommand
-import com.github.k1rakishou.core_parser.html.commands.KurobaParserPushStateCommand
 
 class KurobaHtmlParserCommandBufferBuilder<T : KurobaHtmlParserCollector> {
   private val parserCommands = mutableListOf<KurobaParserCommand<T>>()
 
-  fun group(
-    groupName: String,
+  fun start(
     builder: KurobaHtmlParserNestedCommandBufferBuilder<T>.() -> KurobaHtmlParserNestedCommandBufferBuilder<T>
   ): KurobaHtmlParserCommandBufferBuilder<T> {
+    return start(null, builder)
+  }
 
-    parserCommands += KurobaParserPushStateCommand<T>()
-    parserCommands += builder(KurobaHtmlParserNestedCommandBufferBuilder(groupName)).build()
-    parserCommands += KurobaParserPopStateCommand<T>()
+  fun start(
+    groupName: String?,
+    builder: KurobaHtmlParserNestedCommandBufferBuilder<T>.() -> KurobaHtmlParserNestedCommandBufferBuilder<T>
+  ): KurobaHtmlParserCommandBufferBuilder<T> {
+    val commandGroup = builder(KurobaHtmlParserNestedCommandBufferBuilder(groupName)).build()
+    parserCommands.addAll(commandGroup.innerCommands)
     return this
   }
 

@@ -324,6 +324,9 @@ class ReplyManager @Inject constructor(
     val attachFilesDir = appConstants.attachFilesDir
     val attachFilesMetaDir = appConstants.attachFilesMetaDir
 
+    // TODO(KurobaEx / @Speedup): we don't need to do listFiles() inside of the loop,
+    //  it can only be done once outside of the loop
+
     while (true) {
       val uuid = UUID.randomUUID()
       val fileName = getFileName(uuid.toString())

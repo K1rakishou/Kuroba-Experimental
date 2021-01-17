@@ -314,7 +314,6 @@ class KurobaParserStepCommand<T : KurobaHtmlParserCollector>(
     return matches
   }
 
-  override fun toString(): String =
-    "StepCommand{htmlElement=${kurobaHtmlElement.javaClass.simpleName}}"
+  override fun toString(): String = "StepCommand{htmlElement=${kurobaHtmlElement}}"
 
 }

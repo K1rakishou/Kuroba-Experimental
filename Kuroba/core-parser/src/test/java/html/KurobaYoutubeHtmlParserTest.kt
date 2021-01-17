@@ -20,36 +20,39 @@ class KurobaYoutubeHtmlParserTest : BaseHtmlParserTest() {
 
   private val kurobaHtmlParserCommandBuffer =
     KurobaHtmlParserCommandBufferBuilder<TestYoutubeCollector>()
-      .group(groupName = "Main group") {
+      .start {
         htmlElement { html() }
-        htmlElement { body() }
-        htmlElement { div(className = KurobaMatcher.stringEquals("watch-main-col")) }
 
-        preserveCommandIndex {
-          group(groupName = "Parse title") {
-            htmlElement {
-              meta(
-                attr = {
-                  expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("name"))
-                  extractAttrValueByKey("content")
-                },
-                extractor = { _, extractedAttrValues, collector ->
-                  collector.title = extractedAttrValues.getAttrValue("content")
-                }
-              )
-            }
-          }
-          group(groupName = "Parse duration") {
-            htmlElement {
-              meta(
-                attr = {
-                  expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("duration"))
-                  extractAttrValueByKey("content")
-                },
-                extractor = { _, extractedAttrValues, collector ->
-                  collector.duration = extractedAttrValues.getAttrValue("content")
-                }
-              )
+        nest {
+          htmlElement { body() }
+
+          nest {
+            htmlElement { div(className = KurobaMatcher.stringEquals("watch-main-col")) }
+
+            nest {
+              htmlElement {
+                meta(
+                  attr = {
+                    expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("name"))
+                    extractAttrValueByKey("content")
+                  },
+                  extractor = { _, extractedAttrValues, collector ->
+                    collector.title = extractedAttrValues.getAttrValue("content")
+                  }
+                )
+              }
+
+              htmlElement {
+                meta(
+                  attr = {
+                    expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("duration"))
+                    extractAttrValueByKey("content")
+                  },
+                  extractor = { _, extractedAttrValues, collector ->
+                    collector.duration = extractedAttrValues.getAttrValue("content")
+                  }
+                )
+              }
             }
           }
         }

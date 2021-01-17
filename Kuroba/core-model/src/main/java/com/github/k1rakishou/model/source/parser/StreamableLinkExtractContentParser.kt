@@ -54,23 +54,30 @@ object StreamableLinkExtractContentParser : IExtractContentParser {
     )
   }
 
+  // TODO(KurobaEx / @Testme!!!):
   private fun createParserCommandBuffer():  List<KurobaParserCommand<StreamableLinkContentCollector>> {
     return KurobaHtmlParserCommandBufferBuilder<StreamableLinkContentCollector>()
-      .group(groupName = "Main group") {
+      .start {
         htmlElement { html() }
-        htmlElement { body() }
-        htmlElement {
-          script(
-            attr = {
-              expectAttrWithValue("data-id", KurobaMatcher.stringEquals("player-instream"))
-              extractAttrValueByKey("data-duration")
-              extractAttrValueByKey("data-title")
-            },
-            extractor = { _, extractAttributeValues, collector ->
-              collector.videoTitle = extractAttributeValues.getAttrValue("data-title")
-              collector.videoDuration = extractAttributeValues.getAttrValue("data-duration")
+
+        nest {
+          htmlElement { body() }
+
+          nest {
+            htmlElement {
+              script(
+                attr = {
+                  expectAttrWithValue("data-id", KurobaMatcher.stringEquals("player-instream"))
+                  extractAttrValueByKey("data-duration")
+                  extractAttrValueByKey("data-title")
+                },
+                extractor = { _, extractAttributeValues, collector ->
+                  collector.videoTitle = extractAttributeValues.getAttrValue("data-title")
+                  collector.videoDuration = extractAttributeValues.getAttrValue("data-duration")
+                }
+              )
             }
-          )
+          }
         }
       }
       .build()

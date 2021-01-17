@@ -19,82 +19,90 @@ import org.powermock.modules.junit4.PowerMockRunner
 class KurobaSoundCloudHtmlParserTest : BaseHtmlParserTest() {
 
   private val kurobaNormalLinkHtmlParserCommandBuffer = KurobaHtmlParserCommandBufferBuilder<TestNormalSoundCloudCollector>()
-    .group(groupName = "Main group") {
+    .start {
       htmlElement { html() }
-      htmlElement { body() }
-      htmlElement { div(id = KurobaMatcher.stringEquals("app")) }
 
-      group(groupName = "Parse header text") {
-        htmlElement {
-          div(className = KurobaMatcher.stringEquals("header sc-selection-disabled show fixed g-dark g-z-index-header"))
-        }
-        htmlElement {
-          div(className = KurobaMatcher.stringEquals("header__inner l-container l-fullwidth"))
-        }
-        htmlElement {
-          div(className = KurobaMatcher.stringEquals("header__left left"))
-        }
-        htmlElement {
-          div(
-            className = KurobaMatcher.stringEquals("header__logo left"),
-            extractor = { node, collector ->
-              collector.headerLogoText = (node as Element).text()
-            }
-          )
-        }
-      }
+      nest {
+        htmlElement { body() }
 
-      group(groupName = "Parse video title and duration") {
-        htmlElement { noscript() }
-        htmlElement { article() }
-        htmlElement { header() }
+        nest {
+          htmlElement { div(id = KurobaMatcher.stringEquals("app")) }
 
-        group(groupName = "Parse video track name and artist name") {
-          htmlElement {
-            heading(
-              headingNum = 1,
-              attr = { expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("name")) }
-            )
-          }
+          nest {
+            htmlElement { div(className = KurobaMatcher.stringContains("header")) }
 
-          preserveCommandIndex {
-            group(groupName = "Parse track name") {
-              htmlElement {
-                a(
-                  attr = { expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("url")) },
-                  extractor = { node, _, collector ->
-                    collector.titleTrackNamePart = (node as Element).text()
+            nest {
+              htmlElement { div(className = KurobaMatcher.stringContains("header__inner")) }
+
+              nest {
+                htmlElement { div(className = KurobaMatcher.stringContains("header__left")) }
+
+                nest {
+                  htmlElement {
+                    div(
+                      className = KurobaMatcher.stringContains("header__logo"),
+                      extractor = { node, collector ->
+                        collector.headerLogoText = (node as Element).text()
+                      }
+                    )
                   }
-                )
+                }
               }
             }
-            group(groupName = "Parse video artist name") {
-              htmlElement {
-                a(
-                  attr = {
-                    expectAttr("href")
-                    extractText()
-                  },
-                  extractor = { _, extractedAttrValues, collector ->
-                    collector.titleArtistPart = extractedAttrValues.getText()
-                  }
-                )
-              }
-            }
-          }
-        }
 
-        group(groupName = "Parse video duration") {
-          htmlElement {
-            meta(
-              attr = {
-                expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("duration"))
-                extractAttrValueByKey("content")
-              },
-              extractor = { _, extractedAttrValues, collector ->
-                collector.duration = extractedAttrValues.getAttrValue("content")
+            htmlElement { noscript() }
+
+            nest {
+              htmlElement { article() }
+
+              nest {
+                htmlElement { header() }
+
+                nest {
+                  htmlElement {
+                    heading(
+                      headingNum = 1,
+                      attr = { expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("name")) }
+                    )
+                  }
+
+                  nest {
+                    htmlElement {
+                      a(
+                        attr = { expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("url")) },
+                        extractor = { node, _, collector ->
+                          collector.titleTrackNamePart = (node as Element).text()
+                        }
+                      )
+                    }
+
+                    htmlElement {
+                      a(
+                        attr = {
+                          expectAttr("href")
+                          extractText()
+                        },
+                        extractor = { _, extractedAttrValues, collector ->
+                          collector.titleArtistPart = extractedAttrValues.getText()
+                        }
+                      )
+                    }
+                  }
+
+                  htmlElement {
+                    meta(
+                      attr = {
+                        expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("duration"))
+                        extractAttrValueByKey("content")
+                      },
+                      extractor = { _, extractedAttrValues, collector ->
+                        collector.duration = extractedAttrValues.getAttrValue("content")
+                      }
+                    )
+                  }
+                }
               }
-            )
+            }
           }
         }
       }
@@ -102,16 +110,22 @@ class KurobaSoundCloudHtmlParserTest : BaseHtmlParserTest() {
     .build()
 
   private val kurobaAlbumLinkHtmlParserCommandBuffer = KurobaHtmlParserCommandBufferBuilder<TestAlbumSoundCloudCollector>()
-    .group(groupName = "Main group") {
+    .start {
       htmlElement { html() }
-      htmlElement { head() }
-      htmlElement {
-        title(
-          attr = { extractText() },
-          extractor = { _, extractedAttributeValues, collector ->
-            collector.titleFull = extractedAttributeValues.getText()
+
+      nest {
+        htmlElement { head() }
+
+        nest {
+          htmlElement {
+            title(
+              attr = { extractText() },
+              extractor = { _, extractedAttributeValues, collector ->
+                collector.titleFull = extractedAttributeValues.getText()
+              }
+            )
           }
-        )
+        }
       }
     }
     .build()

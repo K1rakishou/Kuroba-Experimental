@@ -2,11 +2,14 @@ package com.github.k1rakishou.core_parser.html
 
 import android.annotation.SuppressLint
 import android.util.Log
-import com.github.k1rakishou.core_parser.html.commands.*
+import com.github.k1rakishou.core_parser.html.commands.KurobaBreakpointCommand
+import com.github.k1rakishou.core_parser.html.commands.KurobaCommandPopState
+import com.github.k1rakishou.core_parser.html.commands.KurobaCommandPushState
+import com.github.k1rakishou.core_parser.html.commands.KurobaParserCommand
+import com.github.k1rakishou.core_parser.html.commands.KurobaParserStepCommand
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Node
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * This class is designed to be single threaded!
@@ -15,198 +18,77 @@ import java.util.concurrent.atomic.AtomicInteger
 class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
   private val debugMode: Boolean = false
 ) {
-  private val executionStack = Stack<ParserState>()
-  private val parserContextStack = Stack<ParserContext>()
+  private val parserStateStack = Stack<ParserState>()
 
+  @SuppressLint("LongLogTag")
   fun executeCommands(
     document: Document,
     kurobaParserCommands: List<KurobaParserCommand<T>>,
     collector: T
   ): Boolean {
+    parserStateStack.clear()
+
     if (kurobaParserCommands.isEmpty()) {
       return true
     }
 
-    resetParserState()
+    var commandIndex = 0
+    var nodeIndex = 0
+    var nodes = document.childNodes()
 
-    var childNodes = document.childNodes()
+    while (true) {
+      if (commandIndex >= kurobaParserCommands.size) {
+        break
+      }
 
-    for ((parsingStep, kurobaParserCommand) in kurobaParserCommands.withIndex()) {
-      val nodeIndex = AtomicInteger(0)
+      val command = kurobaParserCommands[commandIndex]
 
-      childNodes = executeKurobaParserCommand(
-        childNodes,
-        null,
-        kurobaParserCommand,
-        parsingStep,
-        kurobaParserCommands.lastIndex,
-        collector,
-        nodeIndex,
-        0
-      )
+      if (debugMode) {
+        Log.d(TAG, "executeCommand commandIndex=$commandIndex, nodeIndex=$nodeIndex, command=$command")
+      }
+
+      when (command) {
+        is KurobaBreakpointCommand<T> -> {
+          ++commandIndex
+        }
+        is KurobaParserStepCommand<T> -> {
+          val start = nodeIndex
+
+          for (index in start until nodes.size) {
+            ++nodeIndex
+            val node = nodes[index]
+
+            if (command.executeStep(node, collector)) {
+              break
+            }
+          }
+
+          ++commandIndex
+        }
+        is KurobaCommandPushState<T> -> {
+          parserStateStack.push(ParserState(nodeIndex, nodes))
+
+          ++commandIndex
+          nodes = nodes[nodeIndex - 1].childNodes()
+          nodeIndex = 0
+        }
+        is KurobaCommandPopState<T> -> {
+          val prevParserState = parserStateStack.pop()
+
+          nodeIndex = prevParserState.nodeIndex
+          nodes = prevParserState.nodes
+
+          ++commandIndex
+        }
+      }
     }
 
     return true
   }
 
-  private fun resetParserState() {
-    executionStack.clear()
-    parserContextStack.clear()
-  }
-
-  @SuppressLint("LongLogTag")
-  private fun executeKurobaParserCommand(
-    childNodes: List<Node>,
-    groupName: String?,
-    kurobaParserCommand: KurobaParserCommand<T>,
-    currentParsingStepIndex: Int,
-    lastParsingStepIndex: Int,
-    collector: T,
-    nodeIndex: AtomicInteger,
-    depth: Int
-  ): List<Node> {
-    if (debugMode) {
-      val depthIndicator = " ".repeat(depth)
-      Log.d(
-        TAG, "${depthIndicator}{$groupName} (${currentParsingStepIndex}/${lastParsingStepIndex}, " +
-          "nodes=${childNodes.size}) command=${kurobaParserCommand}"
-      )
-    }
-
-    when (kurobaParserCommand) {
-      is KurobaParserCommandGroup<*> -> {
-        kurobaParserCommand as KurobaParserCommandGroup<T>
-
-        check(kurobaParserCommand.commands.isNotEmpty()) {
-          "Commands in KurobaParserCommandGroup is empty!"
-        }
-
-        var innerNodes = childNodes
-        val innerNodeIndex = AtomicInteger(0)
-        val innerGroupName = kurobaParserCommand.groupName
-
-        if (getOrCreateCurrentParserContext().preserveIndex) {
-          innerNodeIndex.set(nodeIndex.get())
-        }
-
-        for ((innerStep, kurobaParserNestedCommand) in kurobaParserCommand.commands.withIndex()) {
-          innerNodes = executeKurobaParserCommand(
-            innerNodes,
-            innerGroupName,
-            kurobaParserNestedCommand,
-            innerStep,
-            kurobaParserCommand.commands.lastIndex,
-            collector,
-            innerNodeIndex,
-            depth + 1
-          )
-        }
-
-        if (getOrCreateCurrentParserContext().preserveIndex) {
-          nodeIndex.set(innerNodeIndex.get())
-        }
-
-        return innerNodes
-      }
-      is KurobaParserStepCommand<*> -> {
-        return executeStepCommand(
-          childNodes,
-          kurobaParserCommand,
-          currentParsingStepIndex,
-          lastParsingStepIndex,
-          nodeIndex,
-          collector
-        )
-      }
-      is KurobaParserPushStateCommand<*> -> {
-        val parserState = ParserState(childNodes)
-        executionStack.push(parserState)
-
-        return childNodes
-      }
-      is KurobaParserPopStateCommand<*> -> {
-        val prevParserState = executionStack.pop()
-        return prevParserState.childNodes
-      }
-      is KurobaEnterPreserveIndexStateCommand<*> -> {
-        val newContext = getCurrentParserContextOrNull()
-          ?.copy(preserveIndex = true)
-          ?: ParserContext(preserveIndex = true)
-
-        parserContextStack.push(newContext)
-        return childNodes
-      }
-      is KurobaExitPreserveIndexStateCommand<*> -> {
-        parserContextStack.pop()
-        return childNodes
-      }
-      is KurobaBreakpointCommand<*> -> {
-        return childNodes
-      }
-      else -> throw IllegalAccessException("Unknown command: $kurobaParserCommand")
-    }
-  }
-
-  @SuppressLint("LongLogTag")
-  @Suppress("UNCHECKED_CAST")
-  private fun executeStepCommand(
-    childNodes: List<Node>,
-    kurobaParserCommand: KurobaParserStepCommand<*>,
-    currentParsingStepIndex: Int,
-    lastParsingStepIndex: Int,
-    nodeIndex: AtomicInteger,
-    collector: T
-  ): List<Node> {
-    kurobaParserCommand as KurobaParserStepCommand<T>
-
-    while (true) {
-      val childNode = childNodes.getOrNull(nodeIndex.getAndIncrement())
-        ?: break
-
-      if (kurobaParserCommand.executeStep(childNode, collector)) {
-        val nextChildNodes = childNode.childNodes()
-
-        if (!getOrCreateCurrentParserContext().preserveIndex) {
-          nodeIndex.set(0)
-        }
-
-        if (nextChildNodes.isEmpty() && currentParsingStepIndex != lastParsingStepIndex) {
-          Log.e(
-            TAG, "Parser possible failure at step ${currentParsingStepIndex}, " +
-              "kurobaParserCommand ($kurobaParserCommand) returned empty child node list"
-          )
-          return emptyList()
-        }
-
-        return nextChildNodes
-      }
-    }
-
-    return emptyList()
-  }
-
-  private fun getOrCreateCurrentParserContext(): ParserContext {
-    if (parserContextStack.isEmpty()) {
-      parserContextStack.push(ParserContext())
-    }
-
-    return parserContextStack.peek()
-  }
-
-  private fun getCurrentParserContextOrNull(): ParserContext? {
-    if (parserContextStack.isEmpty()) {
-      return null
-    }
-
-    return parserContextStack.peek()
-  }
-
   data class ParserState(
-    val childNodes: List<Node>
-  )
-
-  data class ParserContext(
-    val preserveIndex: Boolean = false
+    var nodeIndex: Int,
+    val nodes: List<Node>
   )
 
   companion object {
