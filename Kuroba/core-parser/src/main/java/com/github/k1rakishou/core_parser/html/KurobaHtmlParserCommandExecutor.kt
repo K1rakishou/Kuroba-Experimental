@@ -2,13 +2,16 @@ package com.github.k1rakishou.core_parser.html
 
 import android.annotation.SuppressLint
 import android.util.Log
+import com.github.k1rakishou.core_parser.html.commands.KurobaBeginLoopCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaBreakpointCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaCommandPopState
 import com.github.k1rakishou.core_parser.html.commands.KurobaCommandPushState
+import com.github.k1rakishou.core_parser.html.commands.KurobaEndLoopCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaParserCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaParserStepCommand
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Node
+import org.jsoup.nodes.TextNode
 import java.util.*
 
 /**
@@ -18,7 +21,7 @@ import java.util.*
 class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
   private val debugMode: Boolean = false
 ) {
-  private val parserStateStack = Stack<ParserState>()
+  private val parserState = ParserState()
 
   @SuppressLint("LongLogTag")
   fun executeCommands(
@@ -26,7 +29,7 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
     kurobaParserCommands: List<KurobaParserCommand<T>>,
     collector: T
   ): Boolean {
-    parserStateStack.clear()
+    parserState.clear()
 
     if (kurobaParserCommands.isEmpty()) {
       return true
@@ -34,7 +37,7 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
 
     var commandIndex = 0
     var nodeIndex = 0
-    var nodes = document.childNodes()
+    var nodes = filterEmptyNodes(document.childNodes())
 
     while (true) {
       if (commandIndex >= kurobaParserCommands.size) {
@@ -66,19 +69,50 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
           ++commandIndex
         }
         is KurobaCommandPushState<T> -> {
-          parserStateStack.push(ParserState(nodeIndex, nodes))
+          parserState.parserStateStack.push(ParserNestingState(nodeIndex, nodes))
 
           ++commandIndex
-          nodes = nodes[nodeIndex - 1].childNodes()
+          nodes = filterEmptyNodes(nodes[nodeIndex - 1].childNodes())
           nodeIndex = 0
         }
         is KurobaCommandPopState<T> -> {
-          val prevParserState = parserStateStack.pop()
+          val prevParserState = parserState.parserStateStack.pop()
 
           nodeIndex = prevParserState.nodeIndex
           nodes = prevParserState.nodes
 
           ++commandIndex
+        }
+        is KurobaBeginLoopCommand<T> -> {
+          val parserLoopState = ParserLoopState(
+            // commandIndex + 1 because commandIndex is the KurobaBeginLoopCommand which we want
+            // to skip on the next iteration to avoid infinite loops
+            commandIndex + 1,
+            command.loopId,
+            command.predicate
+          )
+
+          parserState.parserLoopStack.push(parserLoopState)
+
+          ++commandIndex
+        }
+        is KurobaEndLoopCommand<T> -> {
+          val parserLoopState = parserState.parserLoopStack.peek()
+          checkNotNull(parserLoopState) { "Empty loop stack!" }
+          check(command.loopId == parserLoopState.loopId) {
+            "Bad loopId! Expected=${command.loopId}, actual=${parserLoopState.loopId}"
+          }
+
+          val node = nodes.getOrNull(nodeIndex)
+
+          if (node != null && parserLoopState.predicate(node)) {
+            // continue loop
+            commandIndex = parserLoopState.loopStartCommandIndex
+          } else {
+            // end loop
+            parserState.parserLoopStack.pop()
+            ++commandIndex
+          }
         }
       }
     }
@@ -86,10 +120,30 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
     return true
   }
 
-  data class ParserState(
+  private fun filterEmptyNodes(childNodes: List<Node>): List<Node> {
+    return childNodes.filter { node -> node !is TextNode || !node.isBlank }
+  }
+
+  data class ParserNestingState(
     var nodeIndex: Int,
     val nodes: List<Node>
   )
+
+  data class ParserLoopState(
+    val loopStartCommandIndex: Int,
+    val loopId: Int,
+    val predicate: (Node) -> Boolean
+  )
+
+  class ParserState(
+    val parserStateStack: Stack<ParserNestingState> = Stack<ParserNestingState>(),
+    val parserLoopStack: Stack<ParserLoopState> = Stack<ParserLoopState>()
+  ) {
+    fun clear() {
+      parserLoopStack.clear()
+      parserStateStack.clear()
+    }
+  }
 
   companion object {
     private const val TAG = "KurobaHtmlParserCommandExecutor"
