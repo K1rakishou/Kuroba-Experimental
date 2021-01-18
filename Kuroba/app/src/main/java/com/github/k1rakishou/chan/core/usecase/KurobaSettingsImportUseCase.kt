@@ -189,7 +189,13 @@ class KurobaSettingsImportUseCase(
   private suspend fun createBookmarks(bookmarks: MutableSet<BookmarksManager.SimpleThreadBookmark>) {
     bookmarks.forEach { simpleBookmark ->
       Logger.d(TAG, "Creating empty thread entity in the database for bookmark ${simpleBookmark}")
+
       chanPostRepository.createEmptyThreadIfNotExists(simpleBookmark.threadDescriptor)
+        .peekError { error ->
+          Logger.e(TAG, "createEmptyThreadIfNotExists() " +
+            "threadDescriptor=${simpleBookmark.threadDescriptor} error", error)
+        }
+        .ignore()
     }
 
     bookmarksManager.createBookmarks(bookmarks.toList())

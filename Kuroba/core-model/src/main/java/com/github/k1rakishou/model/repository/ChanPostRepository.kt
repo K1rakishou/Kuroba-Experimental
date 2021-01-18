@@ -89,22 +89,22 @@ class ChanPostRepository(
     }
   }
 
-  suspend fun createEmptyThreadIfNotExists(descriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Long?> {
+  suspend fun createEmptyThreadIfNotExists(descriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Boolean> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    val fromCache = chanDescriptorCache.getThreadIdByThreadDescriptorFromCache(descriptor)
-    if (fromCache != null) {
-      return value(fromCache)
+    val threadDatabaseIdFromCache = chanDescriptorCache.getThreadIdByThreadDescriptorFromCache(descriptor)
+    if (threadDatabaseIdFromCache != null) {
+      return value(threadDatabaseIdFromCache >= 0L)
     }
 
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
-        val createdThreadDatabaseId = localSource.insertEmptyThread(descriptor)
-        if (createdThreadDatabaseId != null && createdThreadDatabaseId >= 0L) {
+        val createdThreadDatabaseId = localSource.insertEmptyThread(descriptor) ?: -1L
+        if (createdThreadDatabaseId >= 0L) {
           chanDescriptorCache.putThreadDescriptor(createdThreadDatabaseId, descriptor)
         }
 
-        return@tryWithTransaction createdThreadDatabaseId
+        return@tryWithTransaction createdThreadDatabaseId >= 0
       }
     }
   }

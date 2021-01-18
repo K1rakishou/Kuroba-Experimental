@@ -621,7 +621,7 @@ class ReplyPresenter @Inject constructor(
       .peekError { error ->
         Logger.e(TAG, "Failed to create empty thread in the database for $newThreadDescriptor", error)
       }
-      .isValue()
+      .valueOrNull() == true
 
     if (createThreadSuccess && ChanSettings.postPinThread.get()) {
       bookmarkThread(newThreadDescriptor, threadNo)
