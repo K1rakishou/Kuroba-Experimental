@@ -21,38 +21,34 @@ class KurobaYoutubeHtmlParserTest : BaseHtmlParserTest() {
   private val kurobaHtmlParserCommandBuffer =
     KurobaHtmlParserCommandBufferBuilder<TestYoutubeCollector>()
       .start {
-        htmlElement { html() }
+        html()
 
         nest {
-          htmlElement { body() }
+          body()
 
           nest {
-            htmlElement { div(className = KurobaMatcher.stringEquals("watch-main-col")) }
+            div(className = KurobaMatcher.PatternMatcher.stringEquals("watch-main-col"))
 
             nest {
-              htmlElement {
-                meta(
-                  attr = {
-                    expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("name"))
-                    extractAttrValueByKey("content")
-                  },
-                  extractor = { _, extractedAttrValues, collector ->
-                    collector.title = extractedAttrValues.getAttrValue("content")
-                  }
-                )
-              }
+              meta(
+                attrExtractorBuilderFunc = {
+                  expectAttrWithValue("itemprop", KurobaMatcher.PatternMatcher.stringEquals("name"))
+                  extractAttrValueByKey("content")
+                },
+                extractorFunc = { _, extractedAttrValues, collector ->
+                  collector.title = extractedAttrValues.getAttrValue("content")
+                }
+              )
 
-              htmlElement {
-                meta(
-                  attr = {
-                    expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("duration"))
-                    extractAttrValueByKey("content")
-                  },
-                  extractor = { _, extractedAttrValues, collector ->
-                    collector.duration = extractedAttrValues.getAttrValue("content")
-                  }
-                )
-              }
+              meta(
+                attrExtractorBuilderFunc = {
+                  expectAttrWithValue("itemprop", KurobaMatcher.PatternMatcher.stringEquals("duration"))
+                  extractAttrValueByKey("content")
+                },
+                extractorFunc = { _, extractedAttrValues, collector ->
+                  collector.duration = extractedAttrValues.getAttrValue("content")
+                }
+              )
             }
           }
         }

@@ -5,7 +5,7 @@ import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
 
-class KurobaAttribute(
+class KurobaAttributeExtractorParams(
   private val checkAttributeKeysMap: Map<String, KurobaMatcher>,
   private val extractAttributeValues: Set<IExtractable>
 ) {
@@ -15,7 +15,14 @@ class KurobaAttribute(
 
   fun matches(element: Element): Boolean {
     return checkAttributeKeysMap.all { (attributeKey, expectedValueMatcher) ->
-      expectedValueMatcher.matches(element.attr(attributeKey))
+      when (expectedValueMatcher) {
+        is KurobaMatcher.TagMatcher -> {
+          return@all expectedValueMatcher.matches(element)
+        }
+        is KurobaMatcher.PatternMatcher -> {
+          return@all expectedValueMatcher.matches(element.attr(attributeKey))
+        }
+      }
     }
   }
 
@@ -67,5 +74,7 @@ class KurobaAttribute(
 
   companion object {
     private const val TAG = "KurobaAttribute"
+
+    fun empty() = KurobaAttributeExtractorParams(emptyMap(), emptySet())
   }
 }

@@ -1,144 +1,137 @@
 package com.github.k1rakishou.core_parser.html
 
-import org.jsoup.nodes.Node
-
 sealed class KurobaHtmlElement {
 
-  abstract class AbstractElementWithExtractor<T : KurobaHtmlParserCollector>(
-    val extractor: ((Node, T) -> Unit)?
-  ) : KurobaHtmlElement()
+  @Suppress("UNCHECKED_CAST")
+  open class Tag<T : KurobaHtmlParserCollector>(
+    val tagName: String,
+    val matchables: MutableList<Matchable> = mutableListOf(),
+    val extractor: Extractor<T>? = null
+  ) : KurobaHtmlElement() {
 
-  class Html<T : KurobaHtmlParserCollector>(
-    extractor: ((Node, T) -> Unit)?
-  ) : AbstractElementWithExtractor<T>(extractor) {
-    override fun toString(): String = "html"
-  }
+    fun <ChildTag : Tag<T>> withMatchable(matchable: Matchable): ChildTag {
+      matchables += matchable
+      return this as ChildTag
+    }
 
-  class Head<T : KurobaHtmlParserCollector>(
-    extractor: ((Node, T) -> Unit)?
-  ) : AbstractElementWithExtractor<T>(extractor) {
-    override fun toString(): String = "head"
-  }
+    fun <ChildTag : Tag<T>> withAttr(attrName: String, matcher: KurobaMatcher.PatternMatcher): ChildTag {
+      return withMatchable(PatternMatchable(attrName, matcher))
+    }
 
-  class Body<T : KurobaHtmlParserCollector>(
-    extractor: ((Node, T) -> Unit)?
-  ) : AbstractElementWithExtractor<T>(extractor) {
-    override fun toString(): String = "body"
-  }
+    fun <ChildTag : Tag<T>> withClass(matcher: KurobaMatcher.PatternMatcher): ChildTag {
+      return withAttr(KurobaHtmlParserCommandExecutor.CLASS_ATTR, matcher)
+    }
 
-  class Noscript<T : KurobaHtmlParserCollector>(
-    extractor: ((Node, T) -> Unit)?
-  ) : AbstractElementWithExtractor<T>(extractor) {
-    var className: KurobaMatcher? = null
-      private set
+    fun <ChildTag : Tag<T>> withStyle(matcher: KurobaMatcher.PatternMatcher): ChildTag {
+      return withAttr(KurobaHtmlParserCommandExecutor.STYLE_ATTR, matcher)
+    }
+
+    fun <ChildTag : Tag<T>> withId(matcher: KurobaMatcher.PatternMatcher): ChildTag {
+      return withAttr(KurobaHtmlParserCommandExecutor.ID_ATTR, matcher)
+    }
 
     fun isEmpty(): Boolean {
-      return className == null
+      return matchables.isEmpty() && extractor?.extractorParams?.hasAttributesToCheck() == false
     }
 
-    fun withClass(className: KurobaMatcher): Noscript<T> {
-      this.className = className
-      return this
-    }
-
-    override fun toString(): String = "noscript{empty=${className?.toString()}}"
+    override fun toString(): String = "$tagName{matchables=${matchables}, extractor=$extractor}"
   }
 
-  class Meta<T : KurobaHtmlParserCollector> : KurobaHtmlElement() {
-    var attr: KurobaAttribute? = null
-    var extractor: ((Node, ExtractedAttributeValues, T) -> Unit)? = null
+  class Html<T : KurobaHtmlParserCollector>(
+    extractor: Extractor<T>?
+  ) : Tag<T>(
+    tagName = KurobaHtmlParserCommandExecutor.HTML_TAG,
+    extractor = extractor
+  )
 
-    fun withAttr(attr: KurobaAttribute): Meta<T> {
-      this.attr = attr
-      return this
-    }
+  class Head<T : KurobaHtmlParserCollector>(
+    extractor: Extractor<T>?
+  ) : Tag<T>(
+    tagName = KurobaHtmlParserCommandExecutor.HEAD_TAG,
+    extractor = extractor
+  )
 
-    fun withExtractor(extractor: ((Node, ExtractedAttributeValues, T) -> Unit)? = null): Meta<T> {
-      this.extractor = extractor
-      return this
-    }
+  class Body<T : KurobaHtmlParserCollector>(
+    extractor: Extractor<T>?
+  ) : Tag<T>(
+    tagName = KurobaHtmlParserCommandExecutor.BODY_TAG,
+    extractor = extractor
+  )
 
-    override fun toString(): String {
-      return "meta{attr=${attr}}"
-    }
-  }
+  class Noscript<T : KurobaHtmlParserCollector>(
+    extractor: Extractor<T>?
+  ) : Tag<T>(
+    tagName = KurobaHtmlParserCommandExecutor.NOSCRIPT_TAG,
+    extractor = extractor
+  )
+
+  class Meta<T : KurobaHtmlParserCollector>(
+    extractor: Extractor<T>?
+  ) : Tag<T>(
+    tagName = KurobaHtmlParserCommandExecutor.META_TAG,
+    extractor = extractor
+  )
 
   class Article<T : KurobaHtmlParserCollector>(
-    extractor: ((Node, T) -> Unit)?
-  ) : AbstractElementWithExtractor<T>(extractor) {
-    override fun toString(): String = "article"
-  }
+    extractor: Extractor<T>?
+  ) : Tag<T>(
+    tagName = KurobaHtmlParserCommandExecutor.ARTICLE_TAG,
+    extractor = extractor
+  )
 
   class Header<T : KurobaHtmlParserCollector>(
-    extractor: ((Node, T) -> Unit)?
-  ) : AbstractElementWithExtractor<T>(extractor) {
-    override fun toString(): String = "header"
-  }
+    extractor: Extractor<T>?
+  ) : Tag<T>(
+    tagName = KurobaHtmlParserCommandExecutor.HEADER_TAG,
+    extractor = extractor
+  )
 
   class Heading<T : KurobaHtmlParserCollector>(
-    val headingNum: Int,
-    val attr: KurobaAttribute?,
-    val extractor: ((Node, ExtractedAttributeValues, T) -> Unit)? = null
-  ) : KurobaHtmlElement() {
-    override fun toString(): String = "h${headingNum}"
+    headingNum: Int,
+    extractor: Extractor<T>?
+  ) : Tag<T>(
+    tagName = headingTagName(headingNum),
+    extractor = extractor
+  ) {
+    companion object {
+      private fun headingTagName(headingNum: Int) =
+        KurobaHtmlParserCommandExecutor.HEADING_TAG + headingNum
+    }
   }
 
   class Div<T : KurobaHtmlParserCollector>(
-    extractor: ((Node, T) -> Unit)?
-  ) : AbstractElementWithExtractor<T>(extractor) {
-    var className: KurobaMatcher? = null
-      private set
-    var style: KurobaMatcher? = null
-      private set
-    var id: KurobaMatcher? = null
-      private set
-
-    fun withClass(className: KurobaMatcher): Div<T> {
-      this.className = className
-      return this
-    }
-
-    fun withStyle(style: KurobaMatcher): Div<T> {
-      this.style = style
-      return this
-    }
-
-    fun withId(id: KurobaMatcher): Div<T> {
-      this.id = id
-      return this
-    }
-
-    override fun toString(): String {
-      return "div{className=${className?.toString()}, style=${style?.toString()}, id=${id?.toString()}}"
-    }
-  }
+    extractor: Extractor<T>?
+  ) : Tag<T>(
+    tagName = KurobaHtmlParserCommandExecutor.DIV_TAG,
+    extractor = extractor
+  )
 
   class Span<T : KurobaHtmlParserCollector>(
-    val attr: KurobaAttribute,
-    val extractor: ((Node, ExtractedAttributeValues, T) -> Unit)? = null
-  ) : KurobaHtmlElement() {
-    override fun toString(): String = "span"
-  }
+    extractor: Extractor<T>?
+  ) : Tag<T>(
+    tagName = KurobaHtmlParserCommandExecutor.SPAN_TAG,
+    extractor = extractor
+  )
 
   class Script<T : KurobaHtmlParserCollector>(
-    val attr: KurobaAttribute,
-    val extractor: ((Node, ExtractedAttributeValues, T) -> Unit)? = null
-  ) : KurobaHtmlElement() {
-    override fun toString(): String = "script"
-  }
+    extractor: Extractor<T>?
+  ) : Tag<T>(
+    tagName = KurobaHtmlParserCommandExecutor.SCRIPT_TAG,
+    extractor = extractor
+  )
 
   class Title<T : KurobaHtmlParserCollector>(
-    val attr: KurobaAttribute,
-    val extractor: ((Node, ExtractedAttributeValues, T) -> Unit)? = null
-  ) : KurobaHtmlElement() {
-    override fun toString(): String = "title"
-  }
+    extractor: Extractor<T>?
+  ) : Tag<T>(
+    tagName = KurobaHtmlParserCommandExecutor.TITLE_TAG,
+    extractor = extractor
+  )
 
   class A<T : KurobaHtmlParserCollector>(
-    val attr: KurobaAttribute,
-    val extractor: ((Node, ExtractedAttributeValues, T) -> Unit)?
-  ) : KurobaHtmlElement() {
-    override fun toString(): String = "a"
-  }
+    extractor: Extractor<T>?
+  ) : Tag<T>(
+    tagName = KurobaHtmlParserCommandExecutor.A_TAG,
+    extractor = extractor
+  )
 
 }

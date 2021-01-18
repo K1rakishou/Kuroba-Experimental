@@ -7,7 +7,11 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import okhttp3.HttpUrl
 import org.joda.time.DateTime
 
-data class SearchParams(val siteDescriptor: SiteDescriptor, val query: String, val page: Int?)
+data class SearchParams(
+  val siteDescriptor: SiteDescriptor,
+  val query: String,
+  val page: Int?
+  )
 
 sealed class SearchResult {
   data class Success(
@@ -16,7 +20,10 @@ sealed class SearchResult {
     val nextPageCursor: PageCursor,
     val totalFoundEntries: Int?
   ) : SearchResult()
-  data class Failure(val searchError: SearchError) : SearchResult()
+
+  data class Failure(
+    val searchError: SearchError
+  ) : SearchResult()
 }
 
 sealed class PageCursor {
@@ -27,10 +34,10 @@ sealed class PageCursor {
 
 sealed class SearchError  {
   object NotImplemented : SearchError()
-  class SiteNotFound(val siteDescriptor: SiteDescriptor) : SearchError()
-  class ServerError(val statusCode: Int) : SearchError()
-  class UnknownError(val error: Throwable) : SearchError()
-  class HtmlParsingError(val message: String) : SearchError()
+  data class SiteNotFound(val siteDescriptor: SiteDescriptor) : SearchError()
+  data class ServerError(val statusCode: Int) : SearchError()
+  data class UnknownError(val error: Throwable) : SearchError()
+  data class HtmlParsingError(val message: String) : SearchError()
 }
 
 data class SearchEntryPost(

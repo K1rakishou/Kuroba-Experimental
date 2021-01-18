@@ -20,86 +20,80 @@ class KurobaSoundCloudHtmlParserTest : BaseHtmlParserTest() {
 
   private val kurobaNormalLinkHtmlParserCommandBuffer = KurobaHtmlParserCommandBufferBuilder<TestNormalSoundCloudCollector>()
     .start {
-      htmlElement { html() }
+      html()
 
       nest {
-        htmlElement { body() }
+        body()
 
         nest {
-          htmlElement { div(id = KurobaMatcher.stringEquals("app")) }
+          div(id = KurobaMatcher.PatternMatcher.stringEquals("app"))
 
           nest {
-            htmlElement { div(className = KurobaMatcher.stringContains("header")) }
+            div(className = KurobaMatcher.PatternMatcher.stringContains("header"))
 
             nest {
-              htmlElement { div(className = KurobaMatcher.stringContains("header__inner")) }
+              div(className = KurobaMatcher.PatternMatcher.stringContains("header__inner"))
 
               nest {
-                htmlElement { div(className = KurobaMatcher.stringContains("header__left")) }
+                div(className = KurobaMatcher.PatternMatcher.stringContains("header__left"))
 
                 nest {
-                  htmlElement {
-                    div(
-                      className = KurobaMatcher.stringContains("header__logo"),
-                      extractor = { node, collector ->
-                        collector.headerLogoText = (node as Element).text()
-                      }
-                    )
-                  }
+                  div(
+                    className = KurobaMatcher.PatternMatcher.stringContains("header__logo"),
+                    extractorFunc = { node, _, collector ->
+                      collector.headerLogoText = (node as Element).text()
+                    }
+                  )
                 }
               }
             }
 
-            htmlElement { noscript() }
+            noscript(matchableBuilderFunc = { emptyTag() })
 
             nest {
-              htmlElement { article() }
+              article()
 
               nest {
-                htmlElement { header() }
+                header()
 
                 nest {
-                  htmlElement {
-                    heading(
-                      headingNum = 1,
-                      attr = { expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("name")) }
-                    )
-                  }
+                  heading(
+                    headingNum = 1,
+                    attrExtractorBuilderFunc = {
+                      expectAttrWithValue("itemprop", KurobaMatcher.PatternMatcher.stringEquals("name"))
+                    }
+                  )
 
                   nest {
-                    htmlElement {
-                      a(
-                        attr = { expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("url")) },
-                        extractor = { node, _, collector ->
-                          collector.titleTrackNamePart = (node as Element).text()
-                        }
-                      )
-                    }
-
-                    htmlElement {
-                      a(
-                        attr = {
-                          expectAttr("href")
-                          extractText()
-                        },
-                        extractor = { _, extractedAttrValues, collector ->
-                          collector.titleArtistPart = extractedAttrValues.getText()
-                        }
-                      )
-                    }
-                  }
-
-                  htmlElement {
-                    meta(
-                      attr = {
-                        expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("duration"))
-                        extractAttrValueByKey("content")
+                    a(
+                      attrExtractorBuilderFunc = {
+                        expectAttrWithValue("itemprop", KurobaMatcher.PatternMatcher.stringEquals("url"))
                       },
-                      extractor = { _, extractedAttrValues, collector ->
-                        collector.duration = extractedAttrValues.getAttrValue("content")
+                      extractorFunc = { node, _, collector ->
+                        collector.titleTrackNamePart = (node as Element).text()
+                      }
+                    )
+
+                    a(
+                      attrExtractorBuilderFunc = {
+                        expectAttr("href")
+                        extractText()
+                      },
+                      extractorFunc = { _, extractedAttrValues, collector ->
+                        collector.titleArtistPart = extractedAttrValues.getText()
                       }
                     )
                   }
+
+                  meta(
+                    attrExtractorBuilderFunc = {
+                      expectAttrWithValue("itemprop", KurobaMatcher.PatternMatcher.stringEquals("duration"))
+                      extractAttrValueByKey("content")
+                    },
+                    extractorFunc = { _, extractedAttrValues, collector ->
+                      collector.duration = extractedAttrValues.getAttrValue("content")
+                    }
+                  )
                 }
               }
             }
@@ -111,20 +105,18 @@ class KurobaSoundCloudHtmlParserTest : BaseHtmlParserTest() {
 
   private val kurobaAlbumLinkHtmlParserCommandBuffer = KurobaHtmlParserCommandBufferBuilder<TestAlbumSoundCloudCollector>()
     .start {
-      htmlElement { html() }
+      html()
 
       nest {
-        htmlElement { head() }
+        head()
 
         nest {
-          htmlElement {
-            title(
-              attr = { extractText() },
-              extractor = { _, extractedAttributeValues, collector ->
-                collector.titleFull = extractedAttributeValues.getText()
-              }
-            )
-          }
+          title(
+            attrExtractorBuilderFunc = { extractText() },
+            extractorFunc = { _, extractedAttributeValues, collector ->
+              collector.titleFull = extractedAttributeValues.getText()
+            }
+          )
         }
       }
     }

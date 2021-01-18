@@ -19,29 +19,29 @@ import java.util.regex.Pattern
 class ParserLoopTest : BaseHtmlParserTest() {
   private val commandBuffer = KurobaHtmlParserCommandBufferBuilder<TestCollector>()
     .start {
-      htmlElement { html() }
+      html()
 
       nest {
-        htmlElement { body() }
+        body()
 
         nest {
-          htmlElement { div(id = KurobaMatcher.stringEquals("main")) }
+          div(id = KurobaMatcher.PatternMatcher.stringEquals("main"))
 
           nest {
-            htmlElement { div(id = KurobaMatcher.stringEquals("inner")) }
+            div(id = KurobaMatcher.PatternMatcher.stringEquals("inner"))
 
             nest {
               loop {
-                htmlElement { div(id = KurobaMatcher.patternFind(Pattern.compile("empty\\d+"))) }
-                htmlElement { div(id = KurobaMatcher.patternFind(Pattern.compile("d\\d+"))) }
+                div(id = KurobaMatcher.PatternMatcher.patternFind(Pattern.compile("empty\\d+")))
+                div(id = KurobaMatcher.PatternMatcher.patternFind(Pattern.compile("d\\d+")))
 
                 nest {
-                  htmlElement {
-                    span(
-                      attr = { expectAttrWithValue("class", KurobaMatcher.patternFind(Pattern.compile("test\\d+"))) },
-                      extractor = { node, _, collector -> collector.collectedSpanTags.add(node.wholeText()) }
-                    )
-                  }
+                  span(
+                    attrExtractorBuilderFunc = {
+                      expectAttrWithValue("class", KurobaMatcher.PatternMatcher.patternFind(Pattern.compile("test\\d+")))
+                    },
+                    extractorFunc = { node, _, collector -> collector.collectedSpanTags.add(node.wholeText()) }
+                  )
                 }
               }
             }

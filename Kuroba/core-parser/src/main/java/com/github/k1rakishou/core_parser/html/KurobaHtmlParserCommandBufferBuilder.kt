@@ -6,16 +6,16 @@ class KurobaHtmlParserCommandBufferBuilder<T : KurobaHtmlParserCollector> {
   private val parserCommands = mutableListOf<KurobaParserCommand<T>>()
 
   fun start(
-    builder: KurobaHtmlParserNestedCommandBufferBuilder<T>.() -> KurobaHtmlParserNestedCommandBufferBuilder<T>
+    builder: KurobaParserCommandBuilder<T>.() -> KurobaParserCommandBuilder<T>
   ): KurobaHtmlParserCommandBufferBuilder<T> {
     return start(null, builder)
   }
 
   fun start(
     groupName: String?,
-    builder: KurobaHtmlParserNestedCommandBufferBuilder<T>.() -> KurobaHtmlParserNestedCommandBufferBuilder<T>
+    builder: KurobaParserCommandBuilder<T>.() -> KurobaParserCommandBuilder<T>
   ): KurobaHtmlParserCommandBufferBuilder<T> {
-    val commandGroup = builder(KurobaHtmlParserNestedCommandBufferBuilder(groupName)).build()
+    val commandGroup = builder(KurobaParserCommandBuilder(groupName)).build()
     parserCommands.addAll(commandGroup.innerCommands)
     return this
   }

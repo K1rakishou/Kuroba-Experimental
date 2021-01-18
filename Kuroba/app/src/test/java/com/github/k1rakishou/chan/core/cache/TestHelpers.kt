@@ -7,7 +7,6 @@ import com.github.k1rakishou.fsaf.file.RawFile
 import com.nhaarman.mockitokotlin2.spy
 import okhttp3.mockwebserver.MockWebServer
 import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
 private val executor = Executors.newSingleThreadExecutor()
@@ -37,7 +36,6 @@ internal fun createFileDownloadRequest(
   return spy(
     FileDownloadRequest(
       url,
-      AtomicInteger(chunksCount),
       AtomicLong(0),
       AtomicLong(0),
       cancelableDownload,

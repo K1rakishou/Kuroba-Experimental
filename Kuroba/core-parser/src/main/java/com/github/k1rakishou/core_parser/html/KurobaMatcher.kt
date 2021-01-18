@@ -1,58 +1,76 @@
 package com.github.k1rakishou.core_parser.html
 
+import org.jsoup.nodes.Element
 import java.util.regex.Pattern
 
 sealed class KurobaMatcher {
-  abstract fun matches(input: String): Boolean
 
-  object KurobaAlwaysAcceptMatcher : KurobaMatcher() {
-    override fun matches(input: String): Boolean = true
-    override fun toString(): String = "DummyMatcher"
+  sealed class TagMatcher : KurobaMatcher() {
+    abstract fun matches(element: Element): Boolean
+
+    object KurobaEmptyTagMatcher : TagMatcher() {
+      override fun matches(element: Element): Boolean {
+        return element.attributes().isEmpty
+      }
+
+      override fun toString(): String = "KurobaEmptyTagMatcher"
+    }
+
+    companion object {
+      fun tagNoAttributesMatcher(): KurobaMatcher = KurobaEmptyTagMatcher
+    }
   }
 
-  class KurobaStringEquals(val string: String) : KurobaMatcher() {
-    override fun matches(input: String): Boolean = input == string
-    override fun toString(): String = "KurobaStringEquals{string=${string}}"
-  }
+  sealed class PatternMatcher : KurobaMatcher() {
+    abstract fun matches(input: String): Boolean
 
-  class KurobaStringEqualsIgnoreCase(val string: String) : KurobaMatcher() {
-    override fun matches(input: String): Boolean = input.equals(string, ignoreCase = true)
-    override fun toString(): String = "KurobaStringEqualsIgnoreCase{string=${string}}"
-  }
+    object KurobaAlwaysAcceptMatcher : PatternMatcher() {
+      override fun matches(input: String): Boolean = true
+      override fun toString(): String = "DummyMatcher"
+    }
 
-  class KurobaStringContains(val string: String) : KurobaMatcher() {
-    override fun matches(input: String): Boolean = input.contains(string)
-    override fun toString(): String = "KurobaStringContains{string=${string}}"
-  }
+    class KurobaStringEquals(val string: String) : PatternMatcher() {
+      override fun matches(input: String): Boolean = input == string
+      override fun toString(): String = "KurobaStringEquals{string=${string}}"
+    }
 
-  class KurobaStringContainsIgnoreCase(val string: String) : KurobaMatcher() {
-    override fun matches(input: String): Boolean = input.contains(string, ignoreCase = true)
-    override fun toString(): String = "KurobaStringContainsIgnoreCase{string=${string}}"
-  }
+    class KurobaStringEqualsIgnoreCase(val string: String) : PatternMatcher() {
+      override fun matches(input: String): Boolean = input.equals(string, ignoreCase = true)
+      override fun toString(): String = "KurobaStringEqualsIgnoreCase{string=${string}}"
+    }
 
-  class KurobaPatternMatch(val pattern: Pattern) : KurobaMatcher() {
-    override fun matches(input: String): Boolean = pattern.matcher(input).matches()
-    override fun toString(): String = "KurobaPatternMatch{pattern=${pattern.pattern()}}"
-  }
+    class KurobaStringContains(val string: String) : PatternMatcher() {
+      override fun matches(input: String): Boolean = input.contains(string)
+      override fun toString(): String = "KurobaStringContains{string=${string}}"
+    }
 
-  class KurobaPatternFind(val pattern: Pattern) : KurobaMatcher() {
-    override fun matches(input: String): Boolean = pattern.matcher(input).find()
-    override fun toString(): String = "KurobaPatternFind{pattern=${pattern.pattern()}}"
-  }
+    class KurobaStringContainsIgnoreCase(val string: String) : PatternMatcher() {
+      override fun matches(input: String): Boolean = input.contains(string, ignoreCase = true)
+      override fun toString(): String = "KurobaStringContainsIgnoreCase{string=${string}}"
+    }
 
-  companion object {
-    fun alwaysAccept(): KurobaMatcher = KurobaAlwaysAcceptMatcher
+    class KurobaPatternMatch(val pattern: Pattern) : PatternMatcher() {
+      override fun matches(input: String): Boolean = pattern.matcher(input).matches()
+      override fun toString(): String = "KurobaPatternMatch{pattern=${pattern.pattern()}}"
+    }
 
-    fun stringEquals(string: String): KurobaMatcher = KurobaStringEquals(string)
-    fun stringEqualsIgnoreCase(string: String): KurobaMatcher =
-      KurobaStringEqualsIgnoreCase(string)
+    class KurobaPatternFind(val pattern: Pattern) : PatternMatcher() {
+      override fun matches(input: String): Boolean = pattern.matcher(input).find()
+      override fun toString(): String = "KurobaPatternFind{pattern=${pattern.pattern()}}"
+    }
 
-    fun stringContains(string: String): KurobaMatcher = KurobaStringContains(string)
-    fun stringContainsIgnoreCase(string: String): KurobaMatcher =
-      KurobaStringContainsIgnoreCase(string)
+    companion object {
+      fun alwaysAccept(): PatternMatcher = KurobaAlwaysAcceptMatcher
 
-    fun patternMatch(pattern: Pattern): KurobaMatcher = KurobaPatternMatch(pattern)
-    fun patternFind(pattern: Pattern): KurobaMatcher = KurobaPatternFind(pattern)
+      fun stringEquals(string: String): PatternMatcher = KurobaStringEquals(string)
+      fun stringEqualsIgnoreCase(string: String): PatternMatcher = KurobaStringEqualsIgnoreCase(string)
+
+      fun stringContains(string: String): PatternMatcher = KurobaStringContains(string)
+      fun stringContainsIgnoreCase(string: String): PatternMatcher = KurobaStringContainsIgnoreCase(string)
+
+      fun patternMatch(pattern: Pattern): PatternMatcher = KurobaPatternMatch(pattern)
+      fun patternFind(pattern: Pattern): PatternMatcher = KurobaPatternFind(pattern)
+    }
   }
 
 }

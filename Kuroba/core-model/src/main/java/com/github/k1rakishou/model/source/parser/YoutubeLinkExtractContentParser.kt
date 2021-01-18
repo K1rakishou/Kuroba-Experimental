@@ -55,38 +55,34 @@ object YoutubeLinkExtractContentParser : IExtractContentParser {
   private fun createParserCommandBuffer():  List<KurobaParserCommand<YoutubeLinkContentCollector>> {
     return KurobaHtmlParserCommandBufferBuilder<YoutubeLinkContentCollector>()
       .start {
-        htmlElement { html() }
+        html()
 
         nest {
-          htmlElement { body() }
+          body()
 
           nest {
-            htmlElement { div(className = KurobaMatcher.stringEquals("watch-main-col")) }
+            div(matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("watch-main-col")) })
 
             nest {
-              htmlElement {
-                meta(
-                  attr = {
-                    expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("name"))
-                    extractAttrValueByKey("content")
-                  },
-                  extractor = { _, extractedAttrValues, collector ->
-                    collector.videoTitle = extractedAttrValues.getAttrValue("content")
-                  }
-                )
-              }
+              meta(
+                attrExtractorBuilderFunc = {
+                  expectAttrWithValue("itemprop", KurobaMatcher.PatternMatcher.stringEquals("name"))
+                  extractAttrValueByKey("content")
+                },
+                extractorFunc = { _, extractedAttrValues, collector ->
+                  collector.videoTitle = extractedAttrValues.getAttrValue("content")
+                }
+              )
 
-              htmlElement {
-                meta(
-                  attr = {
-                    expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("duration"))
-                    extractAttrValueByKey("content")
-                  },
-                  extractor = { _, extractedAttrValues, collector ->
-                    collector.videoDuration = extractedAttrValues.getAttrValue("content")
-                  }
-                )
-              }
+              meta(
+                attrExtractorBuilderFunc = {
+                  expectAttrWithValue("itemprop", KurobaMatcher.PatternMatcher.stringEquals("duration"))
+                  extractAttrValueByKey("content")
+                },
+                extractorFunc = { _, extractedAttrValues, collector ->
+                  collector.videoDuration = extractedAttrValues.getAttrValue("content")
+                }
+              )
             }
           }
         }

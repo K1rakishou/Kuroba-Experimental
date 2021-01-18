@@ -19,25 +19,23 @@ class KurobaStreamableHtmlParserTest : BaseHtmlParserTest() {
 
   private val kurobaHtmlParserCommandBuffer = KurobaHtmlParserCommandBufferBuilder<TestStreamableCollector>()
     .start {
-      htmlElement { html() }
+      html()
 
       nest {
-        htmlElement { body() }
+        body()
 
         nest {
-          htmlElement {
-            script(
-              attr = {
-                expectAttrWithValue("data-id", KurobaMatcher.stringEquals("player-instream"))
-                extractAttrValueByKey("data-duration")
-                extractAttrValueByKey("data-title")
-              },
-              extractor = { _, extractAttributeValues, collector ->
-                collector.title = extractAttributeValues.getAttrValue("data-title")
-                collector.duration = extractAttributeValues.getAttrValue("data-duration")
-              }
-            )
-          }
+          script(
+            attrExtractorBuilderFunc = {
+              expectAttrWithValue("data-id", KurobaMatcher.PatternMatcher.stringEquals("player-instream"))
+              extractAttrValueByKey("data-duration")
+              extractAttrValueByKey("data-title")
+            },
+            extractorFunc = { _, extractAttributeValues, collector ->
+              collector.title = extractAttributeValues.getAttrValue("data-title")
+              collector.duration = extractAttributeValues.getAttrValue("data-duration")
+            }
+          )
         }
       }
     }

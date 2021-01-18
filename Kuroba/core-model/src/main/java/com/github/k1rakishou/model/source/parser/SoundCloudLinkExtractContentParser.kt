@@ -130,20 +130,18 @@ object SoundCloudLinkExtractContentParser : IExtractContentParser {
   private fun createAlbumParserCommandBuffer(): List<KurobaParserCommand<SoundCloudAlbumLinkContentCollector>> {
     return KurobaHtmlParserCommandBufferBuilder<SoundCloudAlbumLinkContentCollector>()
       .start {
-        htmlElement { html() }
+        html()
 
         nest {
-          htmlElement { head() }
+          head()
 
           nest {
-            htmlElement {
-              title(
-                attr = { extractText() },
-                extractor = { _, extractedAttributeValues, collector ->
-                  collector.fullTitle = extractedAttributeValues.getText()
-                }
-              )
-            }
+            title(
+              attrExtractorBuilderFunc = { extractText() },
+              extractorFunc = { _, extractedAttributeValues, collector ->
+                collector.fullTitle = extractedAttributeValues.getText()
+              }
+            )
           }
         }
       }
@@ -154,65 +152,57 @@ object SoundCloudLinkExtractContentParser : IExtractContentParser {
   private fun createNormalParserCommandBuffer(): List<KurobaParserCommand<SoundCloudNormalLinkContentCollector>> {
     return KurobaHtmlParserCommandBufferBuilder<SoundCloudNormalLinkContentCollector>()
       .start {
-        htmlElement { html() }
+        html()
 
         nest {
-          htmlElement { body() }
+          body()
 
           nest {
-            htmlElement { div(id = KurobaMatcher.stringEquals("app")) }
+            div(matchableBuilderFunc = { id(KurobaMatcher.PatternMatcher.stringEquals("app")) })
 
             nest {
-              htmlElement { noscript() }
+              noscript()
 
               nest {
-                htmlElement { article() }
+                article()
 
                 nest {
-                  htmlElement { header() }
+                  header()
 
                   nest {
-                    htmlElement {
-                      heading(
-                        headingNum = 1,
-                        attr = { expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("name")) }
-                      )
-                    }
+                    heading(
+                      headingNum = 1,
+                      attrExtractorBuilderFunc = { expectAttrWithValue("itemprop", KurobaMatcher.PatternMatcher.stringEquals("name")) }
+                    )
 
                     nest {
-                      htmlElement {
-                        a(
-                          attr = { expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("url")) },
-                          extractor = { node, _, collector ->
-                            collector.titleTrackNamePart = (node as Element).text()
-                          }
-                        )
-                      }
+                      a(
+                        attrExtractorBuilderFunc = { expectAttrWithValue("itemprop", KurobaMatcher.PatternMatcher.stringEquals("url")) },
+                        extractorFunc = { node, _, collector ->
+                          collector.titleTrackNamePart = (node as Element).text()
+                        }
+                      )
 
-                      htmlElement {
-                        a(
-                          attr = {
-                            expectAttr("href")
-                            extractText()
-                          },
-                          extractor = { _, extractedAttrValues, collector ->
-                            collector.titleArtistPart = extractedAttrValues.getText()
-                          }
-                        )
-                      }
-                    }
-
-                    htmlElement {
-                      meta(
-                        attr = {
-                          expectAttrWithValue("itemprop", KurobaMatcher.stringEquals("duration"))
-                          extractAttrValueByKey("content")
+                      a(
+                        attrExtractorBuilderFunc = {
+                          expectAttr("href")
+                          extractText()
                         },
-                        extractor = { _, extractedAttrValues, collector ->
-                          collector.videoDuration = extractedAttrValues.getAttrValue("content")
+                        extractorFunc = { _, extractedAttrValues, collector ->
+                          collector.titleArtistPart = extractedAttrValues.getText()
                         }
                       )
                     }
+
+                    meta(
+                      attrExtractorBuilderFunc = {
+                        expectAttrWithValue("itemprop", KurobaMatcher.PatternMatcher.stringEquals("duration"))
+                        extractAttrValueByKey("content")
+                      },
+                      extractorFunc = { _, extractedAttrValues, collector ->
+                        collector.videoDuration = extractedAttrValues.getAttrValue("content")
+                      }
+                    )
                   }
                 }
               }

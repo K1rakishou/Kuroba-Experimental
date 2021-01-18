@@ -19,6 +19,7 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_themes.DefaultDarkTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
@@ -145,7 +146,7 @@ class Chan4SearchRequestTest {
     override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards>
       = JsonReaderRequest.JsonReaderResponse.UnknownServerError(NotImplementedError())
 
-    override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<Chan4PagesRequest.BoardPages>
+    override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages>
       = JsonReaderRequest.JsonReaderResponse.UnknownServerError(NotImplementedError())
 
     override suspend fun post(replyChanDescriptor: ChanDescriptor): Flow<SiteActions.PostResult> {

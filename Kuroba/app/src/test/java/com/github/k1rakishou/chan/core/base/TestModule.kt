@@ -3,7 +3,12 @@ package com.github.k1rakishou.chan.core.base
 import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
-import com.github.k1rakishou.chan.core.cache.downloader.*
+import com.github.k1rakishou.chan.core.cache.downloader.ActiveDownloads
+import com.github.k1rakishou.chan.core.cache.downloader.ChunkDownloader
+import com.github.k1rakishou.chan.core.cache.downloader.ChunkMerger
+import com.github.k1rakishou.chan.core.cache.downloader.ChunkPersister
+import com.github.k1rakishou.chan.core.cache.downloader.ConcurrentChunkedFileDownloader
+import com.github.k1rakishou.chan.core.cache.downloader.PartialContentSupportChecker
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy
@@ -99,6 +104,7 @@ class TestModule {
   internal fun provideConcurrentChunkDownloader(): ConcurrentChunkedFileDownloader {
     if (concurrentChunkedFileDownloader == null) {
       concurrentChunkedFileDownloader = ConcurrentChunkedFileDownloader(
+        provideSiteResolver(),
         provideFileManager(),
         provideChunkDownloader(),
         provideChunkReader(),

@@ -4,6 +4,7 @@ class KurobaAttributeBuilder {
   private val checkAttributeKeysMap = mutableMapOf<String, KurobaMatcher>()
   private val extractAttributeValues = mutableSetOf<IExtractable>()
 
+  @KurobaHtmlParserDsl
   fun expectAttrWithValue(attrKey: String, attrValue: KurobaMatcher): KurobaAttributeBuilder {
     check(!checkAttributeKeysMap.containsKey(attrKey)) {
       "checkAttributeKeysMap already contains attrKey: ${attrKey}"
@@ -13,15 +14,17 @@ class KurobaAttributeBuilder {
     return this
   }
 
+  @KurobaHtmlParserDsl
   fun expectAttr(attrKey: String): KurobaAttributeBuilder {
     check(!checkAttributeKeysMap.containsKey(attrKey)) {
       "checkAttributeKeysMap already contains attrKey: ${attrKey}"
     }
 
-    checkAttributeKeysMap[attrKey] = KurobaMatcher.alwaysAccept()
+    checkAttributeKeysMap[attrKey] = KurobaMatcher.PatternMatcher.alwaysAccept()
     return this
   }
 
+  @KurobaHtmlParserDsl
   fun extractAttrValueByKey(attrKey: String): KurobaAttributeBuilder {
     val extractable = ExtractAttribute(attrKey)
 
@@ -33,13 +36,14 @@ class KurobaAttributeBuilder {
     return this
   }
 
+  @KurobaHtmlParserDsl
   fun extractText(): KurobaAttributeBuilder {
     extractAttributeValues += ExtractText
     return this
   }
 
-  fun build(): KurobaAttribute {
-    return KurobaAttribute(
+  fun build(): KurobaAttributeExtractorParams {
+    return KurobaAttributeExtractorParams(
       checkAttributeKeysMap = checkAttributeKeysMap,
       extractAttributeValues = extractAttributeValues
     )
@@ -49,4 +53,9 @@ class KurobaAttributeBuilder {
 interface IExtractable
 
 data class ExtractAttribute(val attrKey: String) : IExtractable
-object ExtractText : IExtractable
+
+object ExtractText : IExtractable {
+  override fun toString(): String {
+    return "ExtractText"
+  }
+}
