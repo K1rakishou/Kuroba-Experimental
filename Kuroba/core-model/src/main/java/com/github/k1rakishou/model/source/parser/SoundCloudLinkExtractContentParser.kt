@@ -161,13 +161,13 @@ object SoundCloudLinkExtractContentParser : IExtractContentParser {
             div(matchableBuilderFunc = { id(KurobaMatcher.PatternMatcher.stringEquals("app")) })
 
             nest {
-              noscript()
+              noscript(matchableBuilderFunc = { emptyTag() })
 
               nest {
-                article()
+                article(matchableBuilderFunc = { emptyTag() })
 
                 nest {
-                  header()
+                  header(matchableBuilderFunc = { emptyTag() })
 
                   nest {
                     heading(

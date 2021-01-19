@@ -31,23 +31,28 @@ class KurobaAttributeExtractorParams(
       return ExtractedAttributeValues()
     }
 
-    val resultMap = mutableMapOf<String?, String>()
+    val resultMap = mutableMapOf<Extractable, String?>()
 
     extractAttributeValues.forEach { extractable ->
       when (extractable) {
         is ExtractAttribute -> {
-          resultMap[extractable.attrKey] = (childNode as Element).attr(extractable.attrKey)
+          resultMap[extractable.attrKey] = (childNode as Element).attr(extractable.attrKey.key)
         }
         ExtractText -> {
           if (childNode is TextNode) {
-            resultMap[null] = childNode.text()
+            resultMap[ExtractWholeText] = childNode.text()
             return@forEach
           }
 
           val childNodes = (childNode as Element).childNodes()
-          if (childNodes.size != 1) {
+          if (childNodes.isEmpty()) {
+            resultMap[ExtractWholeText] = null
+            return@forEach
+          }
+
+          if (childNodes.size > 1) {
             Log.e(TAG, "Failed to parse Text from node ${childNode.javaClass.simpleName} " +
-              "because children count != 1, childrenCount = ${childNode.childrenSize()} " +
+              "because children count > 1, childrenCount = ${childNode.childrenSize()} " +
               "nodeText = ${childNode.text()}")
             return@forEach
           }
@@ -59,7 +64,24 @@ class KurobaAttributeExtractorParams(
             return@forEach
           }
 
-          resultMap[null] = textNode.text()
+          resultMap[ExtractWholeText] = textNode.text()
+        }
+        ExtractHtmlAsText -> {
+          if (childNode is TextNode) {
+            resultMap[ExtractHtml] = childNode.outerHtml()
+            return@forEach
+          }
+
+          val childNodes = KurobaHtmlParserUtils.filterEmptyNodes((childNode as Element).childNodes())
+          if (childNodes.isEmpty()) {
+            resultMap[ExtractHtml] = null
+            return@forEach
+          }
+
+          resultMap[ExtractHtml] = childNodes.joinToString(
+            separator = "\n",
+            transform = { node -> node.outerHtml() }
+          )
         }
       }
     }

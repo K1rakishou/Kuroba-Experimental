@@ -175,13 +175,13 @@ class GenericParserTest : BaseHtmlParserTest() {
               }
             }
 
-            noscript()
+            noscript(matchableBuilderFunc = { emptyTag() })
 
             nest {
-              article()
+              article(matchableBuilderFunc = { emptyTag() })
 
               nest {
-                header()
+                header(matchableBuilderFunc = { emptyTag() })
 
                 nest {
                   heading(

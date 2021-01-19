@@ -1255,8 +1255,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     val toolbar: Toolbar?
     val chanDescriptor: ChanDescriptor?
 
-    fun hideBottomNavBar(lockTranslation: Boolean, lockCollapse: Boolean)
-    fun showBottomNavBar(unlockTranslation: Boolean, unlockCollapse: Boolean)
     fun showToolbar()
     fun replyLayoutOpen(open: Boolean)
     fun showImageReencodingWindow(fileUuid: UUID, supportsReencode: Boolean)

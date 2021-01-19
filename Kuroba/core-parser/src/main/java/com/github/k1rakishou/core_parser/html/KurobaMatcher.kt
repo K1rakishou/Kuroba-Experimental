@@ -16,8 +16,17 @@ sealed class KurobaMatcher {
       override fun toString(): String = "KurobaEmptyTagMatcher"
     }
 
+    object KurobaAnyTagMatcher : TagMatcher() {
+      override fun matches(element: Element): Boolean {
+        return true
+      }
+
+      override fun toString(): String = "KurobaAnyTagMatcher"
+    }
+
     companion object {
-      fun tagNoAttributesMatcher(): KurobaMatcher = KurobaEmptyTagMatcher
+      fun tagNoAttributesMatcher(): KurobaMatcher.TagMatcher = KurobaEmptyTagMatcher
+      fun tagAnyAttributeMatcher(): KurobaMatcher.TagMatcher = KurobaAnyTagMatcher
     }
   }
 

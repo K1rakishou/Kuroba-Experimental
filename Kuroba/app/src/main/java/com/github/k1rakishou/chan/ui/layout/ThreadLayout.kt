@@ -329,14 +329,6 @@ class ThreadLayout @JvmOverloads constructor(
     threadListLayout.setPostViewMode(postViewMode)
   }
 
-  override fun hideBottomNavBar(lockTranslation: Boolean, lockCollapse: Boolean) {
-    drawerCallbacks?.hideBottomNavBar(lockTranslation, lockCollapse)
-  }
-
-  override fun showBottomNavBar(unlockTranslation: Boolean, unlockCollapse: Boolean) {
-    drawerCallbacks?.showBottomNavBar(unlockTranslation, unlockCollapse)
-  }
-
   override fun replyLayoutOpen(open: Boolean) {
     showReplyButton(!open)
   }

@@ -1,9 +1,11 @@
 package com.github.k1rakishou.core_parser.html
 
+import com.github.k1rakishou.core_parser.html.commands.KurobaBeginConditionCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaBeginLoopCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaBreakpointCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaCommandPopState
 import com.github.k1rakishou.core_parser.html.commands.KurobaCommandPushState
+import com.github.k1rakishou.core_parser.html.commands.KurobaEndConditionCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaEndLoopCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaParserCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaParserCommandGroup
@@ -14,7 +16,7 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
   private val groupName: String?
 ) {
   private val parserCommands = mutableListOf<KurobaParserCommand<T>>()
-  private var loopIds = 0
+  private var commandIDs = 0
 
   @KurobaHtmlParserDsl
   fun nest(
@@ -41,6 +43,27 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
     return this
   }
 
+  /**
+   * A regular if condition. If [predicate] matches any of the nodes among nodes on the current
+   * tree node level then all commands produced by [builder] will be executed.
+   * Otherwise they will be skipped and the next command after the [executeIf] will be executed.
+   * */
+  @KurobaHtmlParserDsl
+  fun executeIf(
+    predicate: MatchableBuilder.() -> MatchableBuilder,
+    builder: KurobaParserCommandBuilder<T>.() -> KurobaParserCommandBuilder<T>
+  ): KurobaParserCommandBuilder<T> {
+    val commandGroup = builder(KurobaParserCommandBuilder(null)).build()
+    val conditionId = commandIDs++
+    val conditionMatchables = predicate.invoke(MatchableBuilder()).build()
+
+    parserCommands += KurobaBeginConditionCommand(conditionId, conditionMatchables)
+    parserCommands.addAll(commandGroup.innerCommands)
+    parserCommands += KurobaEndConditionCommand(conditionId)
+
+    return this
+  }
+
   @KurobaHtmlParserDsl
   fun loop(
     builder: KurobaParserCommandBuilder<T>.() -> KurobaParserCommandBuilder<T>
@@ -60,7 +83,7 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
     builder: KurobaParserCommandBuilder<T>.() -> KurobaParserCommandBuilder<T>
   ): KurobaParserCommandBuilder<T> {
     val commandGroup = builder(KurobaParserCommandBuilder(null)).build()
-    val loopId = loopIds++
+    val loopId = commandIDs++
 
     parserCommands += KurobaBeginLoopCommand(loopId, predicate)
     parserCommands.addAll(commandGroup.innerCommands)
@@ -79,6 +102,7 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
   fun tag(
     tagName: String,
     matchableBuilderFunc: MatchableBuilder.() -> MatchableBuilder,
+    attrExtractorBuilderFunc: (KurobaAttributeBuilder.() -> KurobaAttributeBuilder)? = null,
     extractorFunc: ((Node, ExtractedAttributeValues, T) -> Unit)? = null
   ): KurobaParserCommandBuilder<T> {
     val matchables = matchableBuilderFunc.invoke(MatchableBuilder()).build()
@@ -86,7 +110,7 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
 
     parserCommands += KurobaHtmlElement.Tag(
       tagName = tagName,
-      extractor = createSimpleExtractor(extractorFunc)
+      extractor = createExtractorWithAttr(attrExtractorBuilderFunc, extractorFunc)
     ).apply {
       matchables.forEach { matchable ->
         withMatchable<KurobaHtmlElement.Tag<T>>(matchable)
@@ -116,7 +140,7 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
 
   @KurobaHtmlParserDsl
   fun article(
-    matchableBuilderFunc: MatchableBuilder.() -> MatchableBuilder = { MatchableBuilder().emptyTag() },
+    matchableBuilderFunc: MatchableBuilder.() -> MatchableBuilder = { MatchableBuilder().anyTag() },
     attrExtractorBuilderFunc: (KurobaAttributeBuilder.() -> KurobaAttributeBuilder)? = null,
     extractorFunc: ((Node, ExtractedAttributeValues, T) -> Unit)? = null
   ): KurobaParserCommandBuilder<T> {
@@ -133,7 +157,7 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
 
   @KurobaHtmlParserDsl
   fun header(
-    matchableBuilderFunc: MatchableBuilder.() -> MatchableBuilder = { MatchableBuilder().emptyTag() },
+    matchableBuilderFunc: MatchableBuilder.() -> MatchableBuilder = { MatchableBuilder().anyTag() },
     extractorFunc: ((Node, ExtractedAttributeValues, T) -> Unit)? = null
   ): KurobaParserCommandBuilder<T> {
     parserCommands += KurobaHtmlElement.Header(createSimpleExtractor(extractorFunc)).apply {
@@ -150,23 +174,40 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
   @KurobaHtmlParserDsl
   fun heading(
     headingNum: Int,
+    matchableBuilderFunc: MatchableBuilder.() -> MatchableBuilder = { MatchableBuilder().anyTag() },
     attrExtractorBuilderFunc: (KurobaAttributeBuilder.() -> KurobaAttributeBuilder)? = null,
     extractorFunc: ((Node, ExtractedAttributeValues, T) -> Unit)? = null
   ): KurobaParserCommandBuilder<T> {
     parserCommands += KurobaHtmlElement.Heading(
       headingNum,
       createExtractorWithAttr(attrExtractorBuilderFunc, extractorFunc)
-    )
+    ).apply {
+      val matchables = matchableBuilderFunc.invoke(MatchableBuilder()).build()
+
+      matchables.forEach { matchable ->
+        withMatchable<KurobaHtmlElement.Article<T>>(matchable)
+      }
+    }
 
     return this
   }
 
   @KurobaHtmlParserDsl
   fun a(
-    attrExtractorBuilderFunc: KurobaAttributeBuilder.() -> KurobaAttributeBuilder,
+    matchableBuilderFunc: MatchableBuilder.() -> MatchableBuilder = { MatchableBuilder().anyTag() },
+    attrExtractorBuilderFunc: (KurobaAttributeBuilder.() -> KurobaAttributeBuilder)? = null,
     extractorFunc: ((Node, ExtractedAttributeValues, T) -> Unit)? = null
   ): KurobaParserCommandBuilder<T> {
-    parserCommands += KurobaHtmlElement.A(createExtractorWithAttr(attrExtractorBuilderFunc, extractorFunc))
+    parserCommands += KurobaHtmlElement.A(
+      createExtractorWithAttr(attrExtractorBuilderFunc, extractorFunc)
+    ).apply {
+      val matchables = matchableBuilderFunc.invoke(MatchableBuilder()).build()
+
+      matchables.forEach { matchable ->
+        withMatchable<KurobaHtmlElement.Div<T>>(matchable)
+      }
+    }
+
     return this
   }
 
@@ -181,7 +222,7 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
 
   @KurobaHtmlParserDsl
   fun noscript(
-    matchableBuilderFunc: MatchableBuilder.() -> MatchableBuilder = { MatchableBuilder().emptyTag() },
+    matchableBuilderFunc: MatchableBuilder.() -> MatchableBuilder = { MatchableBuilder().anyTag() },
     extractorFunc: ((Node, ExtractedAttributeValues, T) -> Unit)? = null
   ): KurobaParserCommandBuilder<T> {
     parserCommands += KurobaHtmlElement.Noscript(createSimpleExtractor(extractorFunc)).apply {
@@ -226,12 +267,15 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
 
   @KurobaHtmlParserDsl
   fun div(
-    matchableBuilderFunc: MatchableBuilder.() -> MatchableBuilder,
+    matchableBuilderFunc: MatchableBuilder.() -> MatchableBuilder = { MatchableBuilder().anyTag() },
+    attrExtractorBuilderFunc: (KurobaAttributeBuilder.() -> KurobaAttributeBuilder)? = null,
     extractorFunc: ((Node, ExtractedAttributeValues, T) -> Unit)? = null
   ): KurobaParserCommandBuilder<T> {
-    val matchables = matchableBuilderFunc.invoke(MatchableBuilder()).build()
+    parserCommands += KurobaHtmlElement.Div(
+      createExtractorWithAttr(attrExtractorBuilderFunc, extractorFunc)
+    ).apply {
+      val matchables = matchableBuilderFunc.invoke(MatchableBuilder()).build()
 
-    parserCommands += KurobaHtmlElement.Div(createSimpleExtractor(extractorFunc)).apply {
       matchables.forEach { matchable ->
         withMatchable<KurobaHtmlElement.Div<T>>(matchable)
       }
@@ -242,19 +286,38 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
 
   @KurobaHtmlParserDsl
   fun span(
-    attrExtractorBuilderFunc: (KurobaAttributeBuilder.() -> KurobaAttributeBuilder),
+    matchableBuilderFunc: MatchableBuilder.() -> MatchableBuilder = { MatchableBuilder().anyTag() },
+    attrExtractorBuilderFunc: (KurobaAttributeBuilder.() -> KurobaAttributeBuilder)? = null,
     extractorFunc: ((Node, ExtractedAttributeValues, T) -> Unit)? = null
   ): KurobaParserCommandBuilder<T> {
-    parserCommands += KurobaHtmlElement.Span<T>(createExtractorWithAttr(attrExtractorBuilderFunc, extractorFunc))
+    parserCommands += KurobaHtmlElement.Span<T>(
+      createExtractorWithAttr(attrExtractorBuilderFunc, extractorFunc)
+    ).apply {
+      val matchables = matchableBuilderFunc.invoke(MatchableBuilder()).build()
+
+      matchables.forEach { matchable ->
+        withMatchable<KurobaHtmlElement.Div<T>>(matchable)
+      }
+    }
+
     return this
   }
 
   @KurobaHtmlParserDsl
   fun script(
+    matchableBuilderFunc: MatchableBuilder.() -> MatchableBuilder = { MatchableBuilder().anyTag() },
     attrExtractorBuilderFunc: (KurobaAttributeBuilder.() -> KurobaAttributeBuilder),
     extractorFunc: ((Node, ExtractedAttributeValues, T) -> Unit)? = null
   ): KurobaParserCommandBuilder<T> {
-    parserCommands += KurobaHtmlElement.Script<T>(createExtractorWithAttr(attrExtractorBuilderFunc, extractorFunc))
+    parserCommands += KurobaHtmlElement.Script<T>(
+      createExtractorWithAttr(attrExtractorBuilderFunc, extractorFunc)
+    ).apply {
+      val matchables = matchableBuilderFunc.invoke(MatchableBuilder()).build()
+
+      matchables.forEach { matchable ->
+        withMatchable<KurobaHtmlElement.Div<T>>(matchable)
+      }
+    }
     return this
   }
 

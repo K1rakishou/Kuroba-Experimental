@@ -152,6 +152,7 @@ open class ViewThreadController(
 
     if (drawerCallbacks != null) {
       drawerCallbacks?.resetBottomNavViewCheckState()
+
       if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
         drawerCallbacks?.showBottomNavBar(unlockTranslation = false, unlockCollapse = false)
       }

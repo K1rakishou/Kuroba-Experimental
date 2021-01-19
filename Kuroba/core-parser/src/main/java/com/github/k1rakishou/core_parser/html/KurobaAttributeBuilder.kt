@@ -26,7 +26,7 @@ class KurobaAttributeBuilder {
 
   @KurobaHtmlParserDsl
   fun extractAttrValueByKey(attrKey: String): KurobaAttributeBuilder {
-    val extractable = ExtractAttribute(attrKey)
+    val extractable = ExtractAttribute(AttributeKey(attrKey))
 
     check(!extractAttributeValues.contains(extractable)) {
       "extractAttributeValues already contains attrKey: ${attrKey}"
@@ -42,6 +42,12 @@ class KurobaAttributeBuilder {
     return this
   }
 
+  @KurobaHtmlParserDsl
+  fun extractHtml(): KurobaAttributeBuilder {
+    extractAttributeValues += ExtractHtmlAsText
+    return this
+  }
+
   fun build(): KurobaAttributeExtractorParams {
     return KurobaAttributeExtractorParams(
       checkAttributeKeysMap = checkAttributeKeysMap,
@@ -52,10 +58,12 @@ class KurobaAttributeBuilder {
 
 interface IExtractable
 
-data class ExtractAttribute(val attrKey: String) : IExtractable
+data class ExtractAttribute(val attrKey: AttributeKey) : IExtractable
 
 object ExtractText : IExtractable {
-  override fun toString(): String {
-    return "ExtractText"
-  }
+  override fun toString(): String = "ExtractText"
+}
+
+object ExtractHtmlAsText : IExtractable {
+  override fun toString(): String = "ExtractHtmlAsText"
 }

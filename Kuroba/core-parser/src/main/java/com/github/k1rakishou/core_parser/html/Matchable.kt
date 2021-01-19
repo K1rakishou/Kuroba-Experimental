@@ -41,7 +41,12 @@ class MatchableBuilder {
 
   @KurobaHtmlParserDsl
   fun emptyTag(): MatchableBuilder {
-    return tag(KurobaMatcher.TagMatcher.KurobaEmptyTagMatcher)
+    return tag(KurobaMatcher.TagMatcher.tagNoAttributesMatcher())
+  }
+
+  @KurobaHtmlParserDsl
+  fun anyTag(): MatchableBuilder {
+    return tag(KurobaMatcher.TagMatcher.tagAnyAttributeMatcher())
   }
 
   fun build(): List<Matchable> {

@@ -2,16 +2,18 @@ package com.github.k1rakishou.core_parser.html
 
 import android.annotation.SuppressLint
 import android.util.Log
+import com.github.k1rakishou.core_parser.html.commands.KurobaBeginConditionCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaBeginLoopCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaBreakpointCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaCommandPopState
 import com.github.k1rakishou.core_parser.html.commands.KurobaCommandPushState
+import com.github.k1rakishou.core_parser.html.commands.KurobaEndConditionCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaEndLoopCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaParserCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaParserStepCommand
 import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
-import org.jsoup.nodes.TextNode
 import java.util.*
 
 /**
@@ -23,21 +25,31 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
 ) {
   private val parserState = ParserState()
 
-  @SuppressLint("LongLogTag")
+  // TODO(KurobaEx): this should return ModularResult instead of throwing an exception
+  @Throws(HtmlParsingException::class)
   fun executeCommands(
     document: Document,
     kurobaParserCommands: List<KurobaParserCommand<T>>,
     collector: T
-  ): Boolean {
+  ) {
     parserState.clear()
 
     if (kurobaParserCommands.isEmpty()) {
-      return true
+      return
     }
 
+    executeCommandsInternal(document, kurobaParserCommands, collector)
+  }
+
+  @SuppressLint("LongLogTag")
+  private fun executeCommandsInternal(
+    document: Document,
+    kurobaParserCommands: List<KurobaParserCommand<T>>,
+    collector: T
+  ) {
     var commandIndex = 0
     var nodeIndex = 0
-    var nodes = filterEmptyNodes(document.childNodes())
+    var nodes = KurobaHtmlParserUtils.filterEmptyNodes(document.childNodes())
 
     while (true) {
       if (commandIndex >= kurobaParserCommands.size) {
@@ -56,14 +68,27 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
         }
         is KurobaParserStepCommand<T> -> {
           val start = nodeIndex
+          var executed = false
 
           for (index in start until nodes.size) {
             ++nodeIndex
             val node = nodes[index]
 
             if (command.executeStep(node, collector)) {
+              executed = true
               break
             }
+          }
+
+          if (!executed) {
+            val nodesDumped = buildString {
+              appendLine()
+              appendLine("Nodes: ")
+              nodes.forEach { node -> appendLine(node.toString()) }
+            }
+
+            throw HtmlParsingException("Failed to execute command: $command, " +
+              "nodesCount: ${nodes.size}, startIndex=$start, commandIndex=$commandIndex, $nodesDumped")
           }
 
           ++commandIndex
@@ -72,7 +97,7 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
           parserState.parserStateStack.push(ParserNestingState(nodeIndex, nodes))
 
           ++commandIndex
-          nodes = filterEmptyNodes(nodes[nodeIndex - 1].childNodes())
+          nodes = KurobaHtmlParserUtils.filterEmptyNodes(nodes[nodeIndex - 1].childNodes())
           nodeIndex = 0
         }
         is KurobaCommandPopState<T> -> {
@@ -98,13 +123,13 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
         }
         is KurobaEndLoopCommand<T> -> {
           val parserLoopState = parserState.parserLoopStack.peek()
+
           checkNotNull(parserLoopState) { "Empty loop stack!" }
           check(command.loopId == parserLoopState.loopId) {
             "Bad loopId! Expected=${command.loopId}, actual=${parserLoopState.loopId}"
           }
 
           val node = nodes.getOrNull(nodeIndex)
-
           if (node != null && parserLoopState.predicate(node)) {
             // continue loop
             commandIndex = parserLoopState.loopStartCommandIndex
@@ -114,14 +139,84 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
             ++commandIndex
           }
         }
+        is KurobaBeginConditionCommand<T> -> {
+          val start = nodeIndex
+          var foundMatch = false
+
+          for (index in start until nodes.size) {
+            val node = nodes[index]
+
+            if (tryMatchConditionMatchableWithNode(command, node)) {
+              foundMatch = true
+              break
+            }
+
+            ++nodeIndex
+          }
+
+          if (foundMatch) {
+            ++commandIndex
+          } else {
+            nodeIndex = start
+
+            commandIndex = findEndOfConditionBlockOrThrow(
+              commandIndex,
+              kurobaParserCommands,
+              command.conditionId
+            )
+          }
+        }
+        is KurobaEndConditionCommand<T> -> {
+          ++commandIndex
+        }
+      }
+    }
+  }
+
+  private fun findEndOfConditionBlockOrThrow(
+    commandIndex: Int,
+    kurobaParserCommands: List<KurobaParserCommand<T>>,
+    conditionId: Int
+  ): Int {
+    for (index in commandIndex until kurobaParserCommands.size) {
+      val kurobaParserCommand = kurobaParserCommands[index]
+
+      if (kurobaParserCommand !is KurobaEndConditionCommand) {
+        continue
+      }
+
+      if (kurobaParserCommand.conditionId == conditionId) {
+        return index
       }
     }
 
-    return true
+    throw HtmlParsingException("Failed to find end of condition for conditionId=$conditionId")
   }
 
-  private fun filterEmptyNodes(childNodes: List<Node>): List<Node> {
-    return childNodes.filter { node -> node !is TextNode || !node.isBlank }
+  private fun tryMatchConditionMatchableWithNode(
+    command: KurobaBeginConditionCommand<T>,
+    node: Node
+  ): Boolean {
+    for (conditionMatchable in command.conditionMatchables) {
+      when (conditionMatchable) {
+        is PatternMatchable -> {
+          if (conditionMatchable.matcher.matches(node.attr(conditionMatchable.attrName))) {
+            return true
+          }
+        }
+        is TagMatchable -> {
+          if (node !is Element) {
+            continue
+          }
+
+          if (conditionMatchable.matcher.matches(node)) {
+            return true
+          }
+        }
+      }
+    }
+
+    return false
   }
 
   data class ParserNestingState(
@@ -144,6 +239,8 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
       parserStateStack.clear()
     }
   }
+
+  class HtmlParsingException(message: String) : Exception(message)
 
   companion object {
     private const val TAG = "KurobaHtmlParserCommandExecutor"
