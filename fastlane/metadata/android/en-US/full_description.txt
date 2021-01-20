@@ -9,4 +9,27 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan. It's a f
 * Edge-to-edge theme support.
 * New database.
 * 4chan global search support.
+* Fully dynamic themes with Android Q Day/Night mode support.
+* Per-site proxies.
+* Ability to attach multiple media files to reply, attach media files that was shared by external apps (event by some keyboards), attach remote media files by URL, etc.
 * Lots of other tiny improvements.
+
+The app uses some permissions that may be considered dangerous: 
+- RECEIVE_BOOT_COMPLETED. It is used to listen to reboots and reschedule BookmarkWatcher service.
+- FOREGROUND_SERVICE. It is used by the service that shows a notification when a file is
+downloaded (allows you cancel it).
+- WAKE_LOCK. It may be used on Android versions prior to API 23 to keep the device awake while
+BookmarkWatcher service is doing it's job.
+
+When making a reply on some sites the app may connect to Google's ReCaptcha services.
+The app supports JavaScript and non-JavaScript based captcha systems. 
+Whether to use a JS or no-JS captcha can be configured in the site settings (depends on the site).
+
+To make the final APK smaller some of the static resources are stored on Github servers and are
+loaded lazily, so the app may connect to Github services.
+
+The app uses it's own crash reporting system which is turned on by default.
+It collects crash logs and other logs (prior the crash), stores them, but does not upload them
+automatically. You have to do it manually. You can see what is being sent and even edit it
+(or delete crash logs). You can also completely disable collection of crash logs in the settings.
+(The server's source code can be found here https://github.com/K1rakishou/Kuroba-apk-server)
