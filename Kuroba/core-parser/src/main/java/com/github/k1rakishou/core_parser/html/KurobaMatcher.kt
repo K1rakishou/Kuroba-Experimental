@@ -25,8 +25,8 @@ sealed class KurobaMatcher {
     }
 
     companion object {
-      fun tagNoAttributesMatcher(): KurobaMatcher.TagMatcher = KurobaEmptyTagMatcher
-      fun tagAnyAttributeMatcher(): KurobaMatcher.TagMatcher = KurobaAnyTagMatcher
+      fun tagNoAttributesMatcher(): TagMatcher = KurobaEmptyTagMatcher
+      fun tagAnyAttributeMatcher(): TagMatcher = KurobaAnyTagMatcher
     }
   }
 

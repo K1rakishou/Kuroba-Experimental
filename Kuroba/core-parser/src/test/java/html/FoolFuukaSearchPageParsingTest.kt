@@ -8,6 +8,7 @@ import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCommandExecutor
 import com.github.k1rakishou.core_parser.html.KurobaMatcher
 import com.github.k1rakishou.core_parser.html.KurobaParserCommandBuilder
 import junit.framework.Assert.assertEquals
+import junit.framework.Assert.assertFalse
 import junit.framework.Assert.assertTrue
 import org.joda.time.DateTime
 import org.jsoup.Jsoup
@@ -56,20 +57,8 @@ class FoolFuukaSearchPageParsingTest : BaseHtmlParserTest() {
     }.build()
 
   private fun KurobaParserCommandBuilder<TestCollector>.parseSinglePost(): KurobaParserCommandBuilder<TestCollector> {
-    div(matchableBuilderFunc = {
-      attr(
-        "class",
-        KurobaMatcher.PatternMatcher.stringContains("post stub")
-      )
-    })
-
     article(
-      matchableBuilderFunc = {
-        attr(
-          "class",
-          KurobaMatcher.PatternMatcher.stringContains("post doc_id")
-        )
-      },
+      matchableBuilderFunc = { attr("class", KurobaMatcher.PatternMatcher.stringContains("post doc_id")) },
       attrExtractorBuilderFunc = {
         extractAttrValueByKey("id")
         extractAttrValueByKey("data-board")
@@ -83,6 +72,7 @@ class FoolFuukaSearchPageParsingTest : BaseHtmlParserTest() {
       div(matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("post_wrapper")) })
 
       nest {
+        // post_file may not exist if a post has no images
         executeIf(predicate = { className(KurobaMatcher.PatternMatcher.stringEquals("post_file")) }) {
           div(matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("post_file")) })
 
@@ -105,16 +95,19 @@ class FoolFuukaSearchPageParsingTest : BaseHtmlParserTest() {
           div(matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("post_data")) })
 
           nest {
-            heading(
-              headingNum = 2,
-              matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("post_title")) },
-              attrExtractorBuilderFunc = { extractText() },
-              extractorFunc = { _, extractedAttributeValues, testCollector ->
-                testCollector.lastOrNull()?.let { postBuilder ->
-                  postBuilder.subject = extractedAttributeValues.getText()
+            // post_title exists on archived.moe when the h2 tag is empty but does not exist on fireden.net
+            executeIf(predicate = { className(KurobaMatcher.PatternMatcher.stringEquals("post_title")) }) {
+              heading(
+                headingNum = 2,
+                matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("post_title")) },
+                attrExtractorBuilderFunc = { extractText() },
+                extractorFunc = { _, extractedAttributeValues, testCollector ->
+                  testCollector.lastOrNull()?.let { postBuilder ->
+                    postBuilder.subject = extractedAttributeValues.getText()
+                  }
                 }
-              }
-            )
+              )
+            }
 
             span(matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("post_poster_data")) })
 
@@ -177,14 +170,19 @@ class FoolFuukaSearchPageParsingTest : BaseHtmlParserTest() {
   ) {
     val postId = extractedAttributeValues.getAttrValue("id")?.toLongOrNull()
     val boardCode = extractedAttributeValues.getAttrValue("data-board")
+      ?: collector.defaultBoardCode
 
     val simpleThreadDescriptor = SimpleThreadDescriptor(
       boardCode = boardCode,
       postNo = postId
     )
 
+    check(!collector.searchResults.contains(simpleThreadDescriptor)) {
+      "Search results already contain ${simpleThreadDescriptor}"
+    }
+
     collector.searchResults[simpleThreadDescriptor] = FoolFuukaSearchEntryPostBuilder()
-    collector.searchResults[simpleThreadDescriptor]!!.postNo = postId
+    collector.searchResults[simpleThreadDescriptor]!!.postNo = requireNotNull(postId)
     collector.searchResults[simpleThreadDescriptor]!!.boardCode = boardCode
   }
 
@@ -222,11 +220,11 @@ class FoolFuukaSearchPageParsingTest : BaseHtmlParserTest() {
 
   @Test
   fun `test parse archived moe search results page`() {
-    val fileBytes = javaClass.classLoader!!.getResourceAsStream("parsing/archived_moe_search_results_page.html")
+    val fileBytes = javaClass.classLoader!!.getResourceAsStream("parsing/foolfuuka_search/archived_moe_search.html")
       .readBytes()
     val fileString = String(fileBytes)
 
-    val collector = TestCollector()
+    val collector = TestCollector(defaultBoardCode = "c")
     val parserCommandExecutor = KurobaHtmlParserCommandExecutor<TestCollector>(debugMode = true)
 
     parserCommandExecutor.executeCommands(
@@ -273,6 +271,118 @@ class FoolFuukaSearchPageParsingTest : BaseHtmlParserTest() {
     }
   }
 
+  @Test
+  fun `test parse fireden search results page`() {
+    val fileBytes =
+      javaClass.classLoader!!.getResourceAsStream("parsing/foolfuuka_search/fireden_search.html")
+        .readBytes()
+    val fileString = String(fileBytes)
+
+    val collector = TestCollector(defaultBoardCode = "sci")
+    val parserCommandExecutor = KurobaHtmlParserCommandExecutor<TestCollector>(debugMode = true)
+
+    parserCommandExecutor.executeCommands(
+      Jsoup.parse(fileString),
+      commandBuffer,
+      collector
+    )
+
+    assertEquals(25, collector.searchResults.size)
+
+    kotlin.run {
+      val expectedComment = """
+        <span class="greentext"><a href="https://boards.fireden.net/sci/thread/12602942/#12604463" class="backlink" data-function="highlight" data-backlink="true" data-board="sci" data-post="12604463">&gt;&gt;12604463</a></span>
+        <br>
+        <br>
+        P4 final
+        <br>
+        <br>
+        Also, the Flynn effect follows the same patter, there is a slight negative correlation between test performance overtime, and the g loading of the subtests (more g loaded subtest actually indicate we are becoming less intelligent for genetic reasons, that is seen in decreased frequencies of alleles associated with intelligence, and less intelligent people having more kids.
+        <br>
+        <br>
+        If you are wondering why IQ do not automatically siphon out the less g loaded subtests that are pretty much determined from environmental is, actually confounding them makes the tests more useful. The WAIS-IV can help diagnosing Autism, ADHD, depression and even brain dammage as a score profile with underperformance within the Memory and processing speed Indexes indicates (less g loaded) imply that the person may have a condition inhibiting performance, whist general intelligence is still unaffected. 
+        <br>
+        <br>
+        Also, Physical brain damage that lowers IQ test scores, is not deleterious to general intelligence (probably, this is confounded with the fact that stupid people, in regard to general intelligence get into more accidents) If brain damage does not affect g, I don’t think environmental differences would either. (Study titled: Preservation of General Intelligence following Traumatic Brain Injury: Contributions of the Met66 Brain-Derived Neurotrophic Factor) 
+      """.trimIndent()
+
+      val firstPost = collector.searchResults.values.first()
+      assertEquals(12604467L, firstPost.postNo)
+      assertEquals("sci", firstPost.boardCode)
+      assertEquals(expectedComment, firstPost.commentRaw)
+      assertEquals("Anonymous", firstPost.name)
+      assertEquals("2021-01-20T10:12:09.000Z", firstPost.dateTime!!.toString())
+
+      assertFalse(firstPost.postImageUrlRawList.isEmpty())
+    }
+
+    kotlin.run {
+      val expectedComment = "\n they just test them a shit ton, with robust enough testing you can get good enough results to ensure reliability. you also setup the device to monitor itself "
+
+      val lastPost = collector.searchResults.values.last()
+      assertEquals(12603137L, lastPost.postNo)
+      assertEquals("sci", lastPost.boardCode)
+      assertEquals(expectedComment, lastPost.commentRaw)
+      assertEquals("Anonymous", lastPost.name)
+      assertEquals("2021-01-20T02:10:16.000Z", lastPost.dateTime!!.toString())
+
+      assertTrue(lastPost.postImageUrlRawList.isEmpty())
+    }
+  }
+
+  @Test
+  fun `test parse arch b4k co search results page`() {
+    val fileBytes =
+      javaClass.classLoader!!.getResourceAsStream("parsing/foolfuuka_search/arch_b4k_co_search.html")
+        .readBytes()
+    val fileString = String(fileBytes)
+
+    val collector = TestCollector(defaultBoardCode = "v")
+    val parserCommandExecutor = KurobaHtmlParserCommandExecutor<TestCollector>(debugMode = true)
+
+    parserCommandExecutor.executeCommands(
+      Jsoup.parse(fileString),
+      commandBuffer,
+      collector
+    )
+
+    assertEquals(25, collector.searchResults.size)
+
+    kotlin.run {
+      val expectedComment = """
+        <span class="greentext"><a href="https://arch.b4k.co/v/post/541180168/" class="backlink" data-function="highlight" data-backlink="true" data-board="v" data-post="541180168">&gt;&gt;541180168</a></span>
+        <br>
+        She hadn't actually aborted anything from what I remember, the unedited version starts with her getting a pregnancy test and she tells him that she wants an abortion and it escalates into the slap. 
+      """.trimIndent()
+
+      val firstPost = collector.searchResults.values.first()
+      assertEquals(541180556L, firstPost.postNo)
+      assertEquals("v", firstPost.boardCode)
+      assertEquals(expectedComment, firstPost.commentRaw)
+      assertEquals("Anonymous", firstPost.name)
+      assertEquals("2021-01-20T15:10:17.000Z", firstPost.dateTime!!.toString())
+
+      assertTrue(firstPost.postImageUrlRawList.isEmpty())
+    }
+
+    kotlin.run {
+      val expectedComment = """
+        <span class="greentext"><a href="https://arch.b4k.co/v/post/541166351/" class="backlink" data-function="highlight" data-backlink="true" data-board="v" data-post="541166351">&gt;&gt;541166351</a></span>
+        <br>
+        Test 
+      """.trimIndent()
+
+      val lastPost = collector.searchResults.values.last()
+      assertEquals(541166676L, lastPost.postNo)
+      assertEquals("v", lastPost.boardCode)
+      assertEquals(expectedComment, lastPost.commentRaw)
+      assertEquals("Anonymous", lastPost.name)
+      assertEquals("2021-01-20T12:10:04.000Z", lastPost.dateTime!!.toString())
+
+      assertTrue(lastPost.postImageUrlRawList.isEmpty())
+    }
+  }
+
   class FoolFuukaSearchEntryPostBuilder {
     var isOp: Boolean? = null
     var name: String? = null
@@ -291,6 +401,7 @@ class FoolFuukaSearchPageParsingTest : BaseHtmlParserTest() {
   )
 
   data class TestCollector(
+    val defaultBoardCode: String,
     val searchResults: LinkedHashMap<SimpleThreadDescriptor, FoolFuukaSearchEntryPostBuilder> = linkedMapOf()
   ) : KurobaHtmlParserCollector {
     fun lastOrNull(): FoolFuukaSearchEntryPostBuilder? = searchResults.values.lastOrNull()

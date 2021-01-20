@@ -36,7 +36,7 @@ class KurobaAttributeExtractorParams(
     extractAttributeValues.forEach { extractable ->
       when (extractable) {
         is ExtractAttribute -> {
-          resultMap[extractable.attrKey] = (childNode as Element).attr(extractable.attrKey.key)
+          resultMap[extractable.attrKey] = childNode.attrOrNull(extractable.attrKey.key)
         }
         ExtractText -> {
           if (childNode is TextNode) {
@@ -87,6 +87,14 @@ class KurobaAttributeExtractorParams(
     }
 
     return ExtractedAttributeValues(resultMap)
+  }
+
+  private fun Node.attrOrNull(attrKey: String): String? {
+    if (!hasAttr(attrKey)) {
+      return null
+    }
+
+    return attr(attrKey)
   }
 
   override fun toString(): String {
