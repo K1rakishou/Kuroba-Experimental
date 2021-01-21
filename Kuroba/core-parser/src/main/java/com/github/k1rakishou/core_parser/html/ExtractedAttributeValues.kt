@@ -8,10 +8,22 @@ data class ExtractedAttributeValues(
   fun getHtml(): String? = extractAttributeValues[ExtractHtml]
   fun getAttrValue(attrKey: String): String? = extractAttributeValues[AttributeKey(attrKey)]
 
+  fun getAnyAttrValue(attrKeys: List<String>): String? {
+    for (attrKey in attrKeys) {
+      val attrValue = getAttrValue(attrKey)
+      if (attrValue != null) {
+        return attrValue
+      }
+    }
+
+    return null
+  }
+
 }
 
 interface Extractable
 
 data class AttributeKey(val key: String) : Extractable
+data class AnyOfAttributeKeys(val keys: List<String>) : Extractable
 object ExtractWholeText : Extractable
 object ExtractHtml : Extractable

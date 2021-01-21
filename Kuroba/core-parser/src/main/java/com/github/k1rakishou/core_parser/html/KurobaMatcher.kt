@@ -24,9 +24,33 @@ sealed class KurobaMatcher {
       override fun toString(): String = "KurobaAnyTagMatcher"
     }
 
+    class KurobaHasAttributeMatcher(val attributeKey: String) : TagMatcher() {
+      override fun matches(element: Element): Boolean {
+        return element.hasAttr(attributeKey) && element.attr(attributeKey).isNotEmpty()
+      }
+
+      override fun toString(): String = "KurobaHasAttributeMatcher"
+    }
+
+    class KurobaHasAnyAttributeMatcher(val attributeKeys: List<String>) : TagMatcher() {
+      override fun matches(element: Element): Boolean {
+        for (attributeKey in attributeKeys) {
+          if (element.hasAttr(attributeKey) && element.attr(attributeKey).isNotEmpty()) {
+            return true
+          }
+        }
+
+        return false
+      }
+
+      override fun toString(): String = "KurobaHasAttributeMatcher"
+    }
+
     companion object {
       fun tagNoAttributesMatcher(): TagMatcher = KurobaEmptyTagMatcher
       fun tagAnyAttributeMatcher(): TagMatcher = KurobaAnyTagMatcher
+      fun tagHasAttribute(attributeKey: String): TagMatcher = KurobaHasAttributeMatcher(attributeKey)
+      fun tagHasAnyOfAttributes(attributeKeys: List<String>) = KurobaHasAnyAttributeMatcher(attributeKeys)
     }
   }
 
@@ -35,7 +59,7 @@ sealed class KurobaMatcher {
 
     object KurobaAlwaysAcceptMatcher : PatternMatcher() {
       override fun matches(input: String): Boolean = true
-      override fun toString(): String = "DummyMatcher"
+      override fun toString(): String = "KurobaAlwaysAcceptMatcher"
     }
 
     class KurobaStringEquals(val string: String) : PatternMatcher() {

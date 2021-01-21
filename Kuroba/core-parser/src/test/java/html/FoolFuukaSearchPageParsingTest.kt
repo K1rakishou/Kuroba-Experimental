@@ -8,7 +8,6 @@ import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCommandExecutor
 import com.github.k1rakishou.core_parser.html.KurobaMatcher
 import com.github.k1rakishou.core_parser.html.KurobaParserCommandBuilder
 import junit.framework.Assert.assertEquals
-import junit.framework.Assert.assertFalse
 import junit.framework.Assert.assertTrue
 import org.joda.time.DateTime
 import org.jsoup.Jsoup
@@ -50,6 +49,8 @@ class FoolFuukaSearchPageParsingTest : BaseHtmlParserTest() {
                   }
                 }
               }
+
+              parsePages()
             }
           }
         }
@@ -72,20 +73,28 @@ class FoolFuukaSearchPageParsingTest : BaseHtmlParserTest() {
       div(matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("post_wrapper")) })
 
       nest {
-        // post_file may not exist if a post has no images
-        executeIf(predicate = { className(KurobaMatcher.PatternMatcher.stringEquals("post_file")) }) {
-          div(matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("post_file")) })
+        // thread_image_box may not exist if a post has no images
+        executeIf(predicate = { className(KurobaMatcher.PatternMatcher.stringEquals("thread_image_box")) }) {
+          div(matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("thread_image_box")) })
 
           nest {
-            a(
-              matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("post_file_filename")) },
-              attrExtractorBuilderFunc = { extractAttrValueByKey("href") },
-              extractorFunc = { _, extractedAttributeValues, testCollector ->
-                testCollector.lastOrNull()?.let { postBuilder ->
-                  postBuilder.postImageUrlRawList += requireNotNull(extractedAttributeValues.getAttrValue("href"))
+            a(matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("thread_image_link")) })
+
+            nest {
+              // Different archives use different tags for thumbnail url
+              val imgTagAttrKeys = listOf("src", "data-src")
+
+              tag(
+                tagName = "img",
+                matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagHasAnyOfAttributes(imgTagAttrKeys)) },
+                attrExtractorBuilderFunc = { extractAttrValueByAnyKey(imgTagAttrKeys) },
+                extractorFunc = { _, extractedAttributeValues, testCollector ->
+                  testCollector.lastOrNull()?.let { postBuilder ->
+                    postBuilder.postImageUrlRawList += requireNotNull(extractedAttributeValues.getAnyAttrValue(imgTagAttrKeys))
+                  }
                 }
-              }
-            )
+              )
+            }
           }
         }
 
@@ -164,6 +173,63 @@ class FoolFuukaSearchPageParsingTest : BaseHtmlParserTest() {
     return this
   }
 
+  private fun KurobaParserCommandBuilder<TestCollector>.parsePages(): KurobaParserCommandBuilder<TestCollector> {
+    div(matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("paginate")) })
+
+    return nest {
+      tag(
+        tagName = "ul",
+        matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagNoAttributesMatcher()) }
+      )
+
+      nest {
+        loop {
+          tag(
+            tagName = "li",
+            matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagAnyAttributeMatcher()) }
+          )
+
+          nest {
+            executeIf(predicate = { attr("href", KurobaMatcher.PatternMatcher.patternFind(PAGE_URL_PATTERN)) }) {
+
+              a(
+                matchableBuilderFunc = { attr("href", KurobaMatcher.PatternMatcher.patternFind(PAGE_URL_PATTERN)) },
+                attrExtractorBuilderFunc = {
+                  extractText()
+                  extractAttrValueByKey("href")
+                },
+                extractorFunc = { _, extractedAttributeValues, testCollector ->
+                  extractPages(extractedAttributeValues, testCollector)
+                }
+              )
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private fun extractPages(
+    extractedAttributeValues: ExtractedAttributeValues,
+    testCollector: TestCollector
+  ) {
+    val pageUrl = extractedAttributeValues.getAttrValue("href")
+    val tagText = extractedAttributeValues.getText()
+
+    if (pageUrl != null && tagText != null) {
+      val pageUrlMatcher = PAGE_URL_PATTERN.matcher(pageUrl)
+      if (pageUrlMatcher.find()) {
+        val pageNumberMatcher = NUMBER_PATTERN.matcher(tagText)
+        if (pageNumberMatcher.matches()) {
+          val possiblePage = pageUrlMatcher.group(1)?.toIntOrNull()
+          if (possiblePage != null) {
+            testCollector.pages += possiblePage
+          }
+        }
+      }
+    }
+  }
+
   private fun extractPostNoAndBoardCode(
     extractedAttributeValues: ExtractedAttributeValues,
     collector: TestCollector
@@ -234,6 +300,7 @@ class FoolFuukaSearchPageParsingTest : BaseHtmlParserTest() {
     )
 
     assertEquals(25, collector.searchResults.size)
+    assertEquals(15, collector.pages.size)
 
     kotlin.run {
       val firstPost = collector.searchResults.values.first()
@@ -267,7 +334,7 @@ class FoolFuukaSearchPageParsingTest : BaseHtmlParserTest() {
       assertEquals("2020-10-19T20:30:15.000Z", post.dateTime!!.toString())
 
       assertEquals(1, post.postImageUrlRawList.size)
-      assertEquals("https://archive.nyafuu.org/c/full_image/1603139415719.png", post.postImageUrlRawList.first())
+      assertEquals("https://archived.moe/files/c/thumb/1595/81/1595817713296s.jpg", post.postImageUrlRawList.first())
     }
   }
 
@@ -288,6 +355,7 @@ class FoolFuukaSearchPageParsingTest : BaseHtmlParserTest() {
     )
 
     assertEquals(25, collector.searchResults.size)
+    assertEquals(15, collector.pages.size)
 
     kotlin.run {
       val expectedComment = """
@@ -313,7 +381,8 @@ class FoolFuukaSearchPageParsingTest : BaseHtmlParserTest() {
       assertEquals("Anonymous", firstPost.name)
       assertEquals("2021-01-20T10:12:09.000Z", firstPost.dateTime!!.toString())
 
-      assertFalse(firstPost.postImageUrlRawList.isEmpty())
+      assertEquals(1, firstPost.postImageUrlRawList.size)
+      assertEquals("https://img.fireden.net/sci/thumb/1609/80/1609801902509s.jpg", firstPost.postImageUrlRawList.first())
     }
 
     kotlin.run {
@@ -347,6 +416,7 @@ class FoolFuukaSearchPageParsingTest : BaseHtmlParserTest() {
     )
 
     assertEquals(25, collector.searchResults.size)
+    assertEquals(15, collector.pages.size)
 
     kotlin.run {
       val expectedComment = """
@@ -402,12 +472,15 @@ class FoolFuukaSearchPageParsingTest : BaseHtmlParserTest() {
 
   data class TestCollector(
     val defaultBoardCode: String,
-    val searchResults: LinkedHashMap<SimpleThreadDescriptor, FoolFuukaSearchEntryPostBuilder> = linkedMapOf()
+    val searchResults: LinkedHashMap<SimpleThreadDescriptor, FoolFuukaSearchEntryPostBuilder> = linkedMapOf(),
+    val pages: MutableList<Int> = mutableListOf()
   ) : KurobaHtmlParserCollector {
     fun lastOrNull(): FoolFuukaSearchEntryPostBuilder? = searchResults.values.lastOrNull()
   }
 
   companion object {
     private val POST_LINK_PATTERN = Pattern.compile("thread\\/(\\d+)\\/#q(\\d+)")
+    private val PAGE_URL_PATTERN = Pattern.compile("/page/(\\d+)/$")
+    private val NUMBER_PATTERN = Pattern.compile("\\d+")
   }
 }

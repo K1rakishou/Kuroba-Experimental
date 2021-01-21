@@ -38,6 +38,16 @@ class KurobaAttributeExtractorParams(
         is ExtractAttribute -> {
           resultMap[extractable.attrKey] = childNode.attrOrNull(extractable.attrKey.key)
         }
+        is ExtractAnyAttributeOf -> {
+          for (attrKey in extractable.attrKeys) {
+            val attrValue = childNode.attrOrNull(attrKey.key)
+
+            if (attrValue != null) {
+              resultMap[attrKey] = attrValue
+              break
+            }
+          }
+        }
         ExtractText -> {
           if (childNode is TextNode) {
             resultMap[ExtractWholeText] = childNode.text()
