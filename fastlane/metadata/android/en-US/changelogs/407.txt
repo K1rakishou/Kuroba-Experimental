@@ -1,0 +1,90 @@
+v0.4.7-release
+- Update some stuff (AndroidManifest/description/changelog) as well as remove some unnecessary permissions for FDroid release.
+
+v0.4.6-release
+- Fix inability to post a reply with image attached but an empty comment.
+- Implement a new view for post links with an ability to copy them.
+- Add alpha for AttachNewFileButton's border drawable.
+- Fix inability to open links when viewing catalog thread links. 
+
+v0.4.5-release
+- Change incorrect color of PostCell/CardPostCell options button.
+- Make fast scroller a little bit thicker.
+- Fix some bugs related to opening threads by clicking reply notification or swiping them away.
+- Fix incorrect padding of BookmarksController when opening it by clicking a reply summary notification. 
+
+v0.4.4-beta
+- Fix a rare crash that may occur in rare cases when trying to store current catalog/thread scroll position after stopping dragging fast scroller's scrollbar.
+- Remove ChromeCustomTabs, all links will now be opened via intent chooser.
+- Fix an error that occurs on Lainchan in some threads where there is an image with empty serverFileName which results in silent crashes. Now such images will be filtered out.
+- Fix a rare crash when trying to search for a setting before settings screen was fully initialized.
+- Use "/catalog.json" endpoint instead of "/threads.json" for 2ch.hk "thread current page" feature because "/threads.json" filters out threads that are still alive but reached bump limit.
+
+v0.4.3-beta
+- Fix a bug where LoadingViewController sometimes wouldn't be hidden when picking a file via file picker.
+- Fix attachment views losing their margins when selecting/unselecting any of them.
+- Add "Thread current page" information support for 2ch.hk. You need to update boards list for this feature to work correctly (You need to open "Add boards" screen and wait until "Boards updated" message is shown). Otherwise incorrect board page info (default value, which is 15) will be used.
+- Fix inability to open some (buggy?) threads on Lainchan where the OP has postId greater than other posts in that thread (This seems like a Lainchan bug).
+- Fix buggy posting on Lainchan (A post would be sent but an error message would be shown).
+- Fix a bug where it was impossible to change file name of attached files.
+- Fix a bug where image options view's cancel/apply buttons would disappear after opening keyboard.
+- Fix a bug where post links couldn't be opened (and if "Always ask before opening links" setting was turned on the dialog would keep appearing indefinitely).
+- Fix a bug where it was impossible to create new threads on 2ch.hk
+- Fix a bug where after creating a thread it wasn't marked as own.
+- Fix a bug where after creating a thread it wouldn't be automatically bookmarked (if the setting was turned on).
+- Fix a toolbar search bug where old search query could be applied to thread posts while the toolbar would not be showing that the search is currently active, thus resulting in threads seemingly having less posts (sometimes even being empty) than they should have.
+- Fix searchStatus slightly covering the first post after opening toolbar search.
+- Fix fast scroller sometimes not being able to scroll to the very bottom of a thread in threads with lots of posts.
+
+v0.4.2-beta
+- Add a button to the main settings to see the current app version changelog.
+- Fix a bug where custom theme would be reset to default upon app start.
+- Remove "Thread max posts cap" setting because it didn't work correctly (it was causing thread scroll
+position getting reset due to how RecyclerView works). This feature will be implemented differently in
+one of the future updates.
+- Fix a bug where toolbar would get unlocked after using fastscroller even with reply layout/search opened.
+- (4chan) Add ability to open "4chan.org/banned" page if the server says that we are banned (You need to click the
+floating error message that appears above the reply input to open that page).
+- Fix a bug in BoardDescriptorsComparator that was causing crashes when searching for some boards on 8kun.
+- Fix a silent crash that happens when trying to update spans for a string with a youtube link that is inside
+of a quote span.
+- Reduce the size of attach previews which should make preview decoding faster.
+
+v0.4.1-beta
+- Fix a crash that is caused by wrong Context object used for dialogs creation in UpdateManager.
+
+v0.4.0-beta
+Important! Due to a possibility of a really nasty bug happening all site settings have been reset
+to defaults (captcha type/passcode/pol flag/etc.). Unfortunately, you will have to re-enter them
+manually.
+
+- TargetSdk 30. For people using Android 10 and below nothing should change.
+But if you are already using Android 11 then you will notice that you can't use "Java File API"
+anymore when selecting a directory for downloaded files and can only use SAF API.
+This is due to Android limitation and new Scoped Storage feature which is forced upon everyone and
+there is no way to avoid it. You will probably also notice that all file operations
+(like downloading multiple files) are now slow as hell. This is because of SAF/Scope Storage too.
+Say your thanks to Google for this wonderful "feature".
+- New reply layout attach files section. It is now possible to attach multiple files per post
+(depends on site). It is now possible to share external media into the app (including sharing media
+via keyboard).
+- (2ch.hk) It's now possible to load passcode information (like max allowed images per post or
+max total file size per post) which will be used to figure out whether you can post or not.
+To do that you need to click "Refresh posting limits info" after logging in with your passcode.
+If you ever change your passcode you will have to refresh it that again.
+- When selecting an external file picker it will now be remembered (you can change it by long
+pressing the "Attach new file" button and selecting a different file picker).
+- Fix a bug where a theme is not applied on app start if "Ignore system Day/Night mode" is disabled.
+- Add interval setting for foreground thread watcher (also add a setting to enable/disable adaptive
+foreground thread info refresh interval).
+- Add BigTextStyle notification style for reply notifications (when there is currently only one
+active reply notification).
+- Images of hidden/removed posts will not show up in image viewer/gallery anymore.
+- Site settings were extracted into their own separate files to avoid nasty bugs where two settings
+for different sites could have the same name.
+- Chunked downloading setting can now be applied separately for each site (including archives).
+- It's now possible to hide thread history in the drawer and only leave bookmarks or vice versa.
+- Release builds can now show logs (When "Verbose logs" setting is enabled).
+- Add ability to manually set thread posts cap (it's more like a debug setting but you can
+use it too for threads with thousands of replies that are not rolling sticky threads).
+- Fix a bug where current scroll position was not saved after using fast scroller.
