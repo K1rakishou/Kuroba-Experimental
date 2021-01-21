@@ -369,7 +369,6 @@ open class SiteManager(
     val site = instantiateSiteClass(clazz)
       ?: throw IllegalStateException("Couldn't instantiate site: ${clazz::class.java.simpleName}")
 
-    // TODO(KurobaEx): make initialization lazy
     site.initialize()
     site.postInitialize()
     return site

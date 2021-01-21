@@ -29,7 +29,7 @@ class Chan4SearchRequest(
   proxiedOkHttpClient: ProxiedOkHttpClient,
   private val query: String,
   private val currentPage: Int?
-) : HtmlReaderRequest<SearchResult>(HtmlRequestType.Chan4SearchRequest, request, proxiedOkHttpClient) {
+) : HtmlReaderRequest<SearchResult>(request, proxiedOkHttpClient) {
 
   override suspend fun readHtml(document: Document): SearchResult {
     BackgroundUtils.ensureBackgroundThread()

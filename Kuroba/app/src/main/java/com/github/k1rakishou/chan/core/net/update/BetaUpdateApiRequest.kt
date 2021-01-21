@@ -26,7 +26,6 @@ class BetaUpdateApiRequest(
   request: Request,
   proxiedOkHttpClient: ProxiedOkHttpClient
 ) : JsonReaderRequest<BetaUpdateApiRequest.DevUpdateApiResponse>(
-  JsonRequestType.BetaUpdateApiJsonRequest,
   request,
   proxiedOkHttpClient
 ) {

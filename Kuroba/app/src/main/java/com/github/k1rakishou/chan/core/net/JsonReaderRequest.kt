@@ -31,7 +31,6 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
 abstract class JsonReaderRequest<T>(
-  protected val jsonRequestType: JsonRequestType,
   protected val request: Request,
   private val proxiedOkHttpClient: ProxiedOkHttpClient
 ) {
@@ -44,7 +43,7 @@ abstract class JsonReaderRequest<T>(
           proxiedOkHttpClient.okHttpClient().suspendCall(request)
         }
 
-        Logger.d(TAG, "Request \"${jsonRequestType.requestTag}\" to \"${request.url}\" " +
+        Logger.d(TAG, "Request \"${this@JsonReaderRequest.javaClass.simpleName}\" to \"${request.url}\" " +
           "took ${timedValue.duration.inMilliseconds}ms")
 
         return@Try timedValue.value
@@ -82,16 +81,6 @@ abstract class JsonReaderRequest<T>(
     class ServerError(val statusCode: Int) : JsonReaderResponse<Nothing>()
     class UnknownServerError(val error: Throwable) : JsonReaderResponse<Nothing>()
     class ParsingError(val error: Throwable) : JsonReaderResponse<Nothing>()
-  }
-
-  enum class JsonRequestType(val requestTag: String) {
-    Chan420BoardsJsonRequest("Chan420Boards"),
-    Chan4BoardsJsonRequest("Chan4Boards"),
-    Kun8BoardsJsonRequest("Kun8Boards"),
-    Chan4PagesJsonRequest("Chan4Pages"),
-    DvachPagesRequest("DvachPagesRequest"),
-    BetaUpdateApiJsonRequest("BetaUpdateApi"),
-    ReleaseUpdateApiJsonRequest("ReleaseUpdateApi")
   }
 
   companion object {

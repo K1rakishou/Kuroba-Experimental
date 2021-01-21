@@ -19,7 +19,6 @@ class DvachPagesRequest(
   request: Request,
   proxiedOkHttpClient: ProxiedOkHttpClient
 ) : JsonReaderRequest<BoardPages>(
-  JsonRequestType.DvachPagesRequest,
   request,
   proxiedOkHttpClient
 ) {

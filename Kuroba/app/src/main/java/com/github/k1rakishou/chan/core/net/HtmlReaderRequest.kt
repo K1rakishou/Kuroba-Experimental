@@ -15,7 +15,6 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
 abstract class HtmlReaderRequest<T>(
-  protected val htmlRequestType: HtmlRequestType,
   protected val request: Request,
   private val proxiedOkHttpClient: ProxiedOkHttpClient
 ) {
@@ -29,7 +28,7 @@ abstract class HtmlReaderRequest<T>(
           proxiedOkHttpClient.okHttpClient().suspendCall(request)
         }
 
-        Logger.d(TAG, "Request \"${htmlRequestType.requestTag}\" to \"${request.url}\" " +
+        Logger.d(TAG, "Request \"${this@HtmlReaderRequest.javaClass.simpleName}\" to \"${request.url}\" " +
           "took ${timedValue.duration.inMilliseconds}ms")
 
         return@Try timedValue.value
@@ -61,10 +60,6 @@ abstract class HtmlReaderRequest<T>(
   }
 
   protected abstract suspend fun readHtml(document: Document): T
-
-  enum class HtmlRequestType(val requestTag: String) {
-    Chan4SearchRequest("Chan4Search")
-  }
 
   sealed class HtmlReaderResponse<out T> {
     class Success<out T>(val result: T) : HtmlReaderResponse<T>()

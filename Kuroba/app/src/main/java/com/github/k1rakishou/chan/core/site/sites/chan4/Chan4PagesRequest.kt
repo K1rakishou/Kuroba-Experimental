@@ -35,7 +35,6 @@ class Chan4PagesRequest(
   request: Request,
   proxiedOkHttpClient: ProxiedOkHttpClient
 ) : JsonReaderRequest<BoardPages>(
-  JsonRequestType.Chan4PagesJsonRequest,
   request,
   proxiedOkHttpClient
 ) {
