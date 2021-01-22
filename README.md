@@ -43,7 +43,7 @@ Screenshots can be found [here](https://github.com/K1rakishou/Kuroba-Experimenta
 
 ### [Latest release version (v0.4.6)](https://github.com/K1rakishou/Kuroba-Experimental/releases/tag/v0.4.6-release)
 
-[F-Droid status](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/7450)
+[F-Droid status (Merged!)](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/7450)
 
 ##### Currently supported sites
 - 4Chan
