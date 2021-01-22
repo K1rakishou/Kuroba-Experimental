@@ -1,6 +1,8 @@
 package com.github.k1rakishou.chan.features.search.data
 
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
+import com.github.k1rakishou.chan.features.search.GlobalSearchPresenter
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 
 internal sealed class GlobalSearchControllerState {
@@ -20,22 +22,36 @@ internal data class SelectedSite(
 internal data class SitesWithSearch(
   val sites: List<SiteDescriptor>,
   val selectedSite: SelectedSite
-) {
+)
 
-  fun selectedItemIndex(): Int? {
-    val index = sites.indexOfFirst { siteDescriptor -> siteDescriptor == selectedSite.siteDescriptor }
-    if (index < 0 || index > sites.lastIndex) {
-      return null
+internal data class GlobalSearchControllerStateData(
+  val sitesWithSearch: SitesWithSearch,
+  val searchParameters: SearchParameters
+)
+
+sealed class SearchParameters {
+  abstract val query: String
+  abstract fun checkValid()
+
+  data class SimpleQuerySearchParameters(
+    override val query: String
+  ) : SearchParameters() {
+
+    override fun checkValid() {
+      check(query.length >= GlobalSearchPresenter.MIN_SEARCH_QUERY_LENGTH) { "Bad query: $query" }
     }
 
-    return index
   }
 
-}
+  data class FoolFuukaSearchParameters(
+    override val query: String,
+    val boardDescriptor: BoardDescriptor?
+  ) : SearchParameters() {
 
-internal sealed class GlobalSearchControllerStateData(
-  val sitesWithSearch: SitesWithSearch
-) {
-  class SitesSupportingSearchLoaded(sitesWithSearch: SitesWithSearch) : GlobalSearchControllerStateData(sitesWithSearch)
-  class SearchQueryEntered(sitesWithSearch: SitesWithSearch, val query: String) : GlobalSearchControllerStateData(sitesWithSearch)
+    override fun checkValid() {
+      check(query.length >= GlobalSearchPresenter.MIN_SEARCH_QUERY_LENGTH) { "Bad query: $query" }
+      checkNotNull(boardDescriptor) { "boardDescriptor is null" }
+    }
+
+  }
 }

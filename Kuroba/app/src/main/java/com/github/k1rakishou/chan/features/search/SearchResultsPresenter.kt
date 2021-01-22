@@ -6,21 +6,24 @@ import android.text.style.StyleSpan
 import androidx.core.text.buildSpannedString
 import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.core.base.BasePresenter
+import com.github.k1rakishou.chan.core.site.sites.search.Chan4SearchParams
+import com.github.k1rakishou.chan.core.site.sites.search.FoolFuukaSearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.site.sites.search.SearchEntryPost
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
-import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
 import com.github.k1rakishou.chan.features.search.data.CharSequenceMurMur
 import com.github.k1rakishou.chan.features.search.data.CurrentQueryInfo
 import com.github.k1rakishou.chan.features.search.data.ErrorInfo
+import com.github.k1rakishou.chan.features.search.data.SearchParameters
 import com.github.k1rakishou.chan.features.search.data.SearchPostInfo
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerState
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerStateData
 import com.github.k1rakishou.chan.features.search.data.ThumbnailInfo
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan
 import com.github.k1rakishou.core_themes.ChanThemeColorId
@@ -39,7 +42,7 @@ import java.util.*
 
 internal class SearchResultsPresenter(
   private val siteDescriptor: SiteDescriptor,
-  private val query: String,
+  private val searchParameters: SearchParameters,
   private val globalSearchUseCase: GlobalSearchUseCase,
   private val themeEngine: ThemeEngine
 ) : BasePresenter<SearchResultsView>(), ThemeEngine.ThemeChangesListener {
@@ -54,7 +57,7 @@ internal class SearchResultsPresenter(
 
   override fun onCreate(view: SearchResultsView) {
     super.onCreate(view)
-    require(query.length >= GlobalSearchPresenter.MIN_SEARCH_QUERY_LENGTH) { "Bad query length: \"$query\"" }
+    searchParameters.checkValid()
 
     scope.launch {
       if (searchResultsStateStorage.searchResultsState != null) {
@@ -147,12 +150,12 @@ internal class SearchResultsPresenter(
   private suspend fun doSearch() {
     withContext(Dispatchers.Default) {
       BackgroundUtils.ensureBackgroundThread()
-      Logger.d(TAG, "doSearch() siteDescriptor=$siteDescriptor, query=$query, currentPage=$currentPage")
+      Logger.d(TAG, "doSearch() siteDescriptor=$siteDescriptor, searchParameters=$searchParameters, currentPage=$currentPage")
 
       val prevState = requireNotNull(searchResultsControllerStateSubject.value) { "Initial state was not set!" }
       val prevStateData = (prevState as? SearchResultsControllerState.Data)?.data
 
-      val searchResult = globalSearchUseCase.execute(SearchParams(siteDescriptor, query, currentPage))
+      val searchResult = executeRequest()
       if (searchResult is SearchResult.Failure) {
         if (prevStateData == null) {
           setState(SearchResultsControllerState.Data(errorState(searchFailureToErrorText(searchResult))))
@@ -181,6 +184,19 @@ internal class SearchResultsPresenter(
     }
   }
 
+  private suspend fun executeRequest(): SearchResult {
+    val requestSearchParams = when (val params = searchParameters) {
+      is SearchParameters.SimpleQuerySearchParameters -> {
+        Chan4SearchParams(siteDescriptor, params.query, currentPage)
+      }
+      is SearchParameters.FoolFuukaSearchParameters -> {
+        FoolFuukaSearchParams(params.boardDescriptor!!, params.query, currentPage)
+      }
+    }.exhaustive
+
+    return globalSearchUseCase.execute(requestSearchParams)
+  }
+
   private fun createNewDataState(
     prevStateData: SearchResultsControllerStateData?,
     searchResult: SearchResult.Success
@@ -195,7 +211,7 @@ internal class SearchResultsPresenter(
     val themeHash = themeEngine.chanTheme.hashCode()
 
     searchResult.searchEntries.forEach { searchEntry ->
-      searchEntry.thread.posts.forEach { searchEntryPost ->
+      searchEntry.posts.forEach { searchEntryPost ->
         if (searchEntryPost.postDescriptor in postDescriptorsSet) {
           // 4chan can show the same post multiple times so we need to filter out duplicates to avoid
           // crashes

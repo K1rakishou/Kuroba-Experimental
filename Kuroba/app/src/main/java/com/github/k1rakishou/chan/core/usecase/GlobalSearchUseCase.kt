@@ -80,7 +80,7 @@ class GlobalSearchUseCase(
     val theme = themeEngine.chanTheme
 
     searchResult.searchEntries.forEach { searchEntry ->
-      searchEntry.thread.posts.forEach { searchEntryPost ->
+      searchEntry.posts.forEach { searchEntryPost ->
         searchEntryPost.commentRaw?.let { commentRaw ->
           val parsedComment = simpleCommentParser.parseComment(commentRaw.toString()) ?: ""
           val spannedComment = SpannableString(parsedComment)

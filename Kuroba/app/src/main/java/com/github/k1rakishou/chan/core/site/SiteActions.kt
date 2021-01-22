@@ -45,7 +45,7 @@ interface SiteActions {
   fun isLoggedIn(): Boolean
   fun loginDetails(): AbstractLoginRequest?
 
-  suspend fun search(searchParams: SearchParams): HtmlReaderRequest.HtmlReaderResponse<SearchResult> =
+  suspend fun <T : SearchParams> search(searchParams: T): HtmlReaderRequest.HtmlReaderResponse<SearchResult> =
     HtmlReaderRequest.HtmlReaderResponse.Success(SearchResult.Failure(SearchError.NotImplemented))
 
   suspend fun getOrRefreshPasscodeInfo(resetCached: Boolean): GetPasscodeInfoResult? = null

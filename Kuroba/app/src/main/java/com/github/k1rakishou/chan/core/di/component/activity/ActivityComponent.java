@@ -36,12 +36,14 @@ import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyAttachNewFileButtonW
 import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyReplyFileView;
 import com.github.k1rakishou.chan.features.search.GlobalSearchController;
 import com.github.k1rakishou.chan.features.search.SearchResultsController;
+import com.github.k1rakishou.chan.features.search.SelectSiteForSearchController;
+import com.github.k1rakishou.chan.features.search.epoxy.EpoxyBoardSelectionButtonView;
 import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchEndOfResultsView;
 import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchErrorView;
 import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchPostDividerView;
 import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchPostGapView;
 import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchPostView;
-import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchSelectedSiteView;
+import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchSiteView;
 import com.github.k1rakishou.chan.features.settings.MainSettingsControllerV2;
 import com.github.k1rakishou.chan.features.settings.SettingsCoordinator;
 import com.github.k1rakishou.chan.features.settings.epoxy.EpoxyBooleanSetting;
@@ -209,6 +211,7 @@ public interface ActivityComponent {
     void inject(LoadingViewController loadingViewController);
     void inject(BoardSelectionController boardSelectionController);
     void inject(PostLinksController postLinksController);
+    void inject(SelectSiteForSearchController selectSiteForSearchController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);
@@ -240,7 +243,7 @@ public interface ActivityComponent {
     void inject(EpoxySearchPostDividerView epoxySearchPostDividerView);
     void inject(EpoxySearchPostGapView epoxySearchPostGapView);
     void inject(EpoxySearchPostView epoxySearchPostView);
-    void inject(EpoxySearchSelectedSiteView epoxySearchSelectedSiteView);
+    void inject(EpoxySearchSiteView epoxySearchSiteView);
     void inject(EpoxyBooleanSetting epoxyBooleanSetting);
     void inject(EpoxyLinkSetting epoxyLinkSetting);
     void inject(EpoxyNoSettingsFoundView epoxyNoSettingsFoundView);
@@ -262,6 +265,7 @@ public interface ActivityComponent {
     void inject(EpoxyAttachNewFileButtonWideView epoxyAttachNewFileButtonWideView);
     void inject(EpoxyTextViewWrapHeight epoxyTextViewWrapHeight);
     void inject(EpoxyPostLink epoxyPostLink);
+    void inject(EpoxyBoardSelectionButtonView epoxyBoardSelectionButtonView);
 
     void inject(CaptchaNoJsLayoutV2 captchaNoJsLayoutV2);
     void inject(CaptchaNojsLayoutV1 captchaNojsLayoutV1);

@@ -55,7 +55,7 @@ abstract class SiteBase : Site, CoroutineScope {
   private val job = SupervisorJob()
 
   @Inject
-  protected lateinit var proxiedOkHttpClient: RealProxiedOkHttpClient
+  lateinit var proxiedOkHttpClient: RealProxiedOkHttpClient
   @Inject
   protected lateinit var httpCallManager: HttpCallManager
   @Inject

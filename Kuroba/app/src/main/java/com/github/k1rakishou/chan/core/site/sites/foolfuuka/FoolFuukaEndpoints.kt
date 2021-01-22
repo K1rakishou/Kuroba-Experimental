@@ -43,6 +43,10 @@ class FoolFuukaEndpoints(
       .build()
   }
 
+  override fun search(): HttpUrl {
+    return rootUrl
+  }
+
   override fun icon(icon: String, arg: Map<String, String>?): HttpUrl {
     throw NotImplementedError("icon")
   }

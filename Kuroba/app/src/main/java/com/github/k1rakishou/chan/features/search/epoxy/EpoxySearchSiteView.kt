@@ -6,20 +6,21 @@ import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.view.doOnPreDraw
 import coil.request.Disposable
-import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.setBackgroundColorFast
+import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.android.material.textview.MaterialTextView
 import java.lang.ref.WeakReference
 import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
-internal class EpoxySearchSelectedSiteView @JvmOverloads constructor(
+internal class EpoxySearchSiteView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
@@ -36,7 +37,7 @@ internal class EpoxySearchSelectedSiteView @JvmOverloads constructor(
   private var requestDisposable: Disposable? = null
 
   init {
-    inflate(context, R.layout.epoxy_search_selected_site_view, this)
+    inflate(context, R.layout.epoxy_search_site_view, this)
 
     AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
@@ -49,6 +50,15 @@ internal class EpoxySearchSelectedSiteView @JvmOverloads constructor(
   fun unbind() {
     this.requestDisposable?.dispose()
     this.requestDisposable = null
+  }
+
+  @ModelProp
+  fun itemBackgroundColor(color: Int?) {
+    if (color == null) {
+      return
+    }
+
+    setBackgroundColorFast(color)
   }
 
   @ModelProp
@@ -87,14 +97,14 @@ internal class EpoxySearchSelectedSiteView @JvmOverloads constructor(
     }
   }
 
-  @CallbackProp
+  @ModelProp(options = [ModelProp.Option.IgnoreRequireHashCode])
   fun bindClickCallback(callback: (() -> Unit)?) {
     if (callback == null) {
-      setOnClickListener(null)
+      setOnThrottlingClickListener(null)
       return
     }
 
-    setOnClickListener { callback.invoke() }
+    setOnThrottlingClickListener { callback.invoke() }
   }
 
 }

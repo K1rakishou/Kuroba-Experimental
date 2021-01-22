@@ -1,17 +1,37 @@
 package com.github.k1rakishou.chan.core.site.sites.search
 
 import android.text.SpannableStringBuilder
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import okhttp3.HttpUrl
 import org.joda.time.DateTime
 
-data class SearchParams(
-  val siteDescriptor: SiteDescriptor,
+interface SearchParams {
+  val siteDescriptor: SiteDescriptor
+}
+
+data class Chan4SearchParams(
+  override val siteDescriptor: SiteDescriptor,
   val query: String,
   val page: Int?
-  )
+) : SearchParams {
+
+  fun getCurrentPage(): Int = page ?: 0
+
+}
+
+data class FoolFuukaSearchParams(
+  val boardDescriptor: BoardDescriptor,
+  val query: String,
+  val page: Int?
+) : SearchParams {
+
+  fun getCurrentPage(): Int = page ?: 1
+
+  override val siteDescriptor: SiteDescriptor
+    get() = boardDescriptor.siteDescriptor
+}
 
 sealed class SearchResult {
   data class Success(
@@ -50,60 +70,6 @@ data class SearchEntryPost(
   val commentRaw: SpannableStringBuilder?
 )
 
-data class SearchEntryThread(
-  val threadDescriptor: ChanDescriptor.ThreadDescriptor,
+data class SearchEntry(
   val posts: List<SearchEntryPost>
 )
-
-data class SearchEntry(
-  val thread: SearchEntryThread
-)
-
-class SearchEntryPostBuilder {
-  var isOp: Boolean? = null
-  var name: String? = null
-  var subject: String? = null
-  var postDescriptor: PostDescriptor? = null
-  var dateTime: DateTime? = null
-  val postImageUrlRawList = mutableListOf<HttpUrl>()
-  var commentRaw: String? = null
-
-  fun threadDescriptor(): ChanDescriptor.ThreadDescriptor {
-    checkNotNull(isOp) { "isOp is null!" }
-    checkNotNull(postDescriptor) { "postDescriptor is null!" }
-    check(isOp!!) { "Must be OP!" }
-
-    return postDescriptor!!.threadDescriptor()
-  }
-
-  fun hasMissingInfo(): Boolean {
-    return isOp == null || postDescriptor == null || dateTime == null
-  }
-
-  fun hasPostDescriptor(): Boolean = postDescriptor != null
-  fun hasDateTime(): Boolean = dateTime != null
-  fun hasNameAndSubject(): Boolean = name != null && !subject.isNullOrBlank()
-
-  fun toSearchEntryPost(): SearchEntryPost {
-    if (hasMissingInfo()) {
-      throw IllegalStateException("Some info is missing! isOp=$isOp, postDescriptor=$postDescriptor, " +
-        "dateTime=$dateTime, commentRaw=$commentRaw")
-    }
-
-    return SearchEntryPost(
-      isOp!!,
-      name?.let { SpannableStringBuilder(it) },
-      subject?.let { SpannableStringBuilder(it) },
-      postDescriptor!!,
-      dateTime!!,
-      postImageUrlRawList,
-      commentRaw?.let { SpannableStringBuilder(it) }
-    )
-  }
-
-  override fun toString(): String {
-    return "SearchEntryPostBuilder(isOp=$isOp, postDescriptor=$postDescriptor, dateTime=${dateTime?.millis}, " +
-      "postImageUrlRawList=$postImageUrlRawList, commentRaw=$commentRaw)"
-  }
-
-}

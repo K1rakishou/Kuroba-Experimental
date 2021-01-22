@@ -150,6 +150,24 @@ open class ArchivesManager(
     )
   }
 
+  fun getBoardsSupportingSearch(siteDescriptor: SiteDescriptor): Set<BoardDescriptor> {
+    return lock.read {
+      val archiveData = allArchivesData.firstOrNull { archiveData ->
+        val archiveDescriptor = archiveData.getArchiveDescriptor()
+
+        return@firstOrNull archiveDescriptor.siteDescriptor == siteDescriptor
+      }
+
+      if (archiveData == null) {
+        return@read emptySet()
+      }
+
+      return@read archiveData.boardsSupporingSearch.map { boardCode ->
+        return@map BoardDescriptor.create(siteDescriptor, boardCode)
+      }.toSet()
+    }
+  }
+
   private fun getArchiveDataByArchiveDescriptor(archiveDescriptor: ArchiveDescriptor): ArchiveData? {
     return lock.read {
       return@read allArchivesData.firstOrNull { archiveData ->
@@ -237,7 +255,10 @@ open class ArchivesManager(
     val supportedBoards: Set<String>,
     @Expose
     @SerializedName("files")
-    val supportedFiles: Set<String>
+    val supportedFiles: Set<String>,
+    @Expose
+    @SerializedName("search")
+    val boardsSupporingSearch: Set<String>
   ) {
     @Expose(serialize = false, deserialize = false)
     private var archiveDescriptor: ArchiveDescriptor? = null

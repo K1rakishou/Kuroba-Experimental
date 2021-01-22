@@ -5,7 +5,6 @@ import android.text.TextWatcher
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import androidx.core.widget.doAfterTextChanged
-import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.R
@@ -28,11 +27,7 @@ class EpoxySearchInputView @JvmOverloads constructor(
   }
 
   @ModelProp(ModelProp.Option.DoNotHash)
-  fun setInitialQuery(query: String?) {
-    if (query == null) {
-      return
-    }
-
+  fun setInitialQuery(query: String) {
     val editable = inputEditText.text
       ?: return
 
@@ -50,13 +45,16 @@ class EpoxySearchInputView @JvmOverloads constructor(
     inputEditText.addTextChangedListener(textWatcher)
   }
 
-  @CallbackProp
+  @ModelProp(ModelProp.Option.IgnoreRequireHashCode)
   fun setOnTextEnteredListener(listener: ((String) -> Unit)?) {
     if (listener == null) {
       textWatcher?.let { tw -> inputEditText.removeTextChangedListener(tw) }
       inputEditText.text = null
       return
     }
+
+    textWatcher?.let { tw -> inputEditText.removeTextChangedListener(tw) }
+    textWatcher = null
 
     textWatcher = inputEditText.doAfterTextChanged {
       inputEditText.text?.let { editable -> listener.invoke(editable.toString()) }

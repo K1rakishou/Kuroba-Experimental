@@ -26,6 +26,10 @@ class ThrottlingCoroutineExecutor(
     }
   }
 
+  // TODO(KurobaEx): throttleFirst has an unpleasant side-effect that occurs when trying to post
+  //  a new function when the previous one has already been executed but it's job hasn't been nulled
+  //  out yet so in this case the new function won't be executed (but it should be because the data
+  //  becomes stale in this case).
   private fun throttleFirst(timeout: Long, func: suspend () -> Unit) {
     val alreadyEnqueued = synchronized(this) { job != null }
     if (alreadyEnqueued) {
@@ -38,7 +42,9 @@ class ThrottlingCoroutineExecutor(
 
       delay(timeout)
 
-      this@ThrottlingCoroutineExecutor.job = null
+      synchronized(this@ThrottlingCoroutineExecutor) {
+        this@ThrottlingCoroutineExecutor.job = null
+      }
     }
 
     synchronized(this) {
@@ -66,7 +72,10 @@ class ThrottlingCoroutineExecutor(
 
       this@ThrottlingCoroutineExecutor.func?.invoke()
       this@ThrottlingCoroutineExecutor.func = null
-      this@ThrottlingCoroutineExecutor.job = null
+
+      synchronized(this@ThrottlingCoroutineExecutor) {
+        this@ThrottlingCoroutineExecutor.job = null
+      }
     }
 
     synchronized(this) {

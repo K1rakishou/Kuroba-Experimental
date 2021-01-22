@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
+import com.github.k1rakishou.chan.features.search.data.SearchParameters
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerState
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerStateData
 import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchPostDividerView
@@ -34,7 +35,7 @@ import javax.inject.Inject
 class SearchResultsController(
   context: Context,
   private val siteDescriptor: SiteDescriptor,
-  private val query: String
+  private val searchParameters: SearchParameters
 ) : Controller(context), SearchResultsView {
 
   @Inject
@@ -45,7 +46,7 @@ class SearchResultsController(
   private val presenter by lazy {
     SearchResultsPresenter(
       siteDescriptor = siteDescriptor,
-      query = query,
+      searchParameters = searchParameters,
       globalSearchUseCase = globalSearchUseCase,
       themeEngine = themeEngine
     )
@@ -189,13 +190,13 @@ class SearchResultsController(
       navigation.title = getString(
         R.string.controller_search_searching,
         siteDescriptor.siteName,
-        query
+        searchParameters.query
       )
     } else {
       navigation.title = getString(
         R.string.controller_search_results,
         siteDescriptor.siteName,
-        query,
+        searchParameters.query,
         totalFound
       )
     }

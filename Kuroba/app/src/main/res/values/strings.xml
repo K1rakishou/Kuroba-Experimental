@@ -1167,5 +1167,6 @@ Don't have a 4chan Pass?<br>
     <string name="android_day_night_mode_dialog_title">Android 10 Day/Night mode</string>
     <string name="android_day_night_mode_dialog_description">On Android 10 (and above) you may want to enable "Ignore system Day/Night mode" setting. Otherwise the app theme will be based on your system Day/Night mode which may seem as an unexpected behavior.</string>
     <string name="no_links_found">No links found in post</string>
+    <string name="click_to_select_board">Click here to select board</string>
 
 </resources>

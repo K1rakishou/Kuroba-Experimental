@@ -1,19 +1,21 @@
 package com.github.k1rakishou.chan.core.site.sites.chan4
 
+import android.text.SpannableStringBuilder
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.site.sites.search.SearchEntry
-import com.github.k1rakishou.chan.core.site.sites.search.SearchEntryPostBuilder
-import com.github.k1rakishou.chan.core.site.sites.search.SearchEntryThread
+import com.github.k1rakishou.chan.core.site.sites.search.SearchEntryPost
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.flatMapNotNull
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import org.joda.time.DateTime
@@ -48,10 +50,7 @@ class Chan4SearchRequest(
       }
 
       searchEntries += SearchEntry(
-        SearchEntryThread(
-          threadDescriptor,
-          postBuilders.map { postBuilder -> postBuilder.toSearchEntryPost() }
-        )
+        postBuilders.map { postBuilder -> postBuilder.toSearchEntryPost() }
       )
     }, { page ->
       pageCursor = page
@@ -507,6 +506,55 @@ class Chan4SearchRequest(
         )
       }
     }
+  }
+
+  private class SearchEntryPostBuilder {
+    var isOp: Boolean? = null
+    var name: String? = null
+    var subject: String? = null
+    var postDescriptor: PostDescriptor? = null
+    var dateTime: DateTime? = null
+    val postImageUrlRawList = mutableListOf<HttpUrl>()
+    var commentRaw: String? = null
+
+    fun threadDescriptor(): ChanDescriptor.ThreadDescriptor {
+      checkNotNull(isOp) { "isOp is null!" }
+      checkNotNull(postDescriptor) { "postDescriptor is null!" }
+      check(isOp!!) { "Must be OP!" }
+
+      return postDescriptor!!.threadDescriptor()
+    }
+
+    fun hasMissingInfo(): Boolean {
+      return isOp == null || postDescriptor == null || dateTime == null
+    }
+
+    fun hasPostDescriptor(): Boolean = postDescriptor != null
+    fun hasDateTime(): Boolean = dateTime != null
+    fun hasNameAndSubject(): Boolean = name != null && !subject.isNullOrBlank()
+
+    fun toSearchEntryPost(): SearchEntryPost {
+      if (hasMissingInfo()) {
+        throw IllegalStateException("Some info is missing! isOp=$isOp, postDescriptor=$postDescriptor, " +
+          "dateTime=$dateTime, commentRaw=$commentRaw")
+      }
+
+      return SearchEntryPost(
+        isOp!!,
+        name?.let { SpannableStringBuilder(it) },
+        subject?.let { SpannableStringBuilder(it) },
+        postDescriptor!!,
+        dateTime!!,
+        postImageUrlRawList,
+        commentRaw?.let { SpannableStringBuilder(it) }
+      )
+    }
+
+    override fun toString(): String {
+      return "SearchEntryPostBuilder(isOp=$isOp, postDescriptor=$postDescriptor, dateTime=${dateTime?.millis}, " +
+        "postImageUrlRawList=$postImageUrlRawList, commentRaw=$commentRaw)"
+    }
+
   }
 
   companion object {

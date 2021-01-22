@@ -1,11 +1,12 @@
 package com.github.k1rakishou.chan.features.search
 
 import com.github.k1rakishou.chan.core.base.BasePresenter
-import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
+import com.github.k1rakishou.chan.core.base.ThrottlingCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerState
 import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerStateData
+import com.github.k1rakishou.chan.features.search.data.SearchParameters
 import com.github.k1rakishou.chan.features.search.data.SelectedSite
 import com.github.k1rakishou.chan.features.search.data.SitesWithSearch
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -14,11 +15,9 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 internal class GlobalSearchPresenter(
   private val siteManager: SiteManager
@@ -28,7 +27,10 @@ internal class GlobalSearchPresenter(
     BehaviorProcessor.createDefault<GlobalSearchControllerState>(GlobalSearchControllerState.Uninitialized)
   private val searchResultsStateStorage = SearchResultsStateStorage
 
-  private val queryEnterDebouncer = DebouncingCoroutineExecutor(scope)
+  private val queryEnterThrottler = ThrottlingCoroutineExecutor(
+    scope = scope,
+    mode = ThrottlingCoroutineExecutor.Mode.ThrottleLast
+  )
 
   override fun onCreate(view: GlobalSearchView) {
     super.onCreate(view)
@@ -48,29 +50,22 @@ internal class GlobalSearchPresenter(
       }
 
       siteManager.awaitUntilInitialized()
-      loadDefaultSearchState(loadingStateCancellationJob)
+      reloadSearchState(loadingStateCancellationJob)
     }
   }
 
   private fun tryRestorePrevState(): Boolean {
     val searchInputState = searchResultsStateStorage.searchInputState!!
-
-    val isQueryOk = if (searchInputState is GlobalSearchControllerStateData.SearchQueryEntered) {
-      searchInputState.query.length >= MIN_SEARCH_QUERY_LENGTH
-    } else {
-      true
-    }
+    val isQueryOk = searchInputState.searchParameters.query.length >= MIN_SEARCH_QUERY_LENGTH
 
     if (isQueryOk) {
       setState(GlobalSearchControllerState.Data(searchInputState))
 
       withViewNormal {
-        if (searchInputState is GlobalSearchControllerStateData.SearchQueryEntered) {
-          restoreSearchResultsController(
-            searchInputState.sitesWithSearch.selectedSite.siteDescriptor,
-            searchInputState.query
-          )
-        }
+        restoreSearchResultsController(
+          searchInputState.sitesWithSearch.selectedSite.siteDescriptor,
+          searchInputState.searchParameters
+        )
       }
 
       return true
@@ -98,28 +93,27 @@ internal class GlobalSearchPresenter(
     searchResultsStateStorage.resetSearchResultState()
   }
 
-  fun reloadWithSearchQuery(query: String, sitesWithSearch: SitesWithSearch) {
-    val prevDataState = (globalSearchControllerStateSubject.value as? GlobalSearchControllerState.Data)?.data
-    if (prevDataState is GlobalSearchControllerStateData.SearchQueryEntered) {
-      if (prevDataState.query == query) {
-        return
-      }
-    }
-
-    queryEnterDebouncer.post(DEBOUNCE_TIMEOUT_MS) {
-      val dataState = GlobalSearchControllerStateData.SearchQueryEntered(
+  fun reloadWithSearchParameters(searchParameters: SearchParameters, sitesWithSearch: SitesWithSearch) {
+    queryEnterThrottler.post(DEBOUNCE_TIMEOUT_MS) {
+      val dataState = GlobalSearchControllerStateData(
         sitesWithSearch,
-        query
+        searchParameters
       )
 
       setState(GlobalSearchControllerState.Data(dataState))
       searchResultsStateStorage.updateSearchInputState(dataState)
 
-      withView { withContext(Dispatchers.Main) { setNeedSetInitialQueryFlag() } }
+      withView { setNeedSetInitialQueryFlag() }
     }
   }
 
-  private fun loadDefaultSearchState(loadingStateCancellationJob: Job) {
+  fun onSearchSiteSelected(newSelectedSiteDescriptor: SiteDescriptor) {
+    selectedSiteDescriptor = newSelectedSiteDescriptor
+
+    reloadSearchState(null)
+  }
+
+  private fun reloadSearchState(loadingStateCancellationJob: Job?) {
     val sitesSupportingSearch = mutableListOf<SiteDescriptor>()
 
     siteManager.viewActiveSitesOrderedWhile { chanSiteData, site ->
@@ -130,7 +124,7 @@ internal class GlobalSearchPresenter(
       return@viewActiveSitesOrderedWhile true
     }
 
-    if (!loadingStateCancellationJob.isCancelled) {
+    if (loadingStateCancellationJob != null && !loadingStateCancellationJob.isCancelled) {
       loadingStateCancellationJob.cancel()
     }
 
@@ -139,28 +133,38 @@ internal class GlobalSearchPresenter(
       return
     }
 
-    val selectedSiteDescriptor = sitesSupportingSearch.first()
+    val selectedSiteDescriptor = selectedSiteDescriptor
+      ?: sitesSupportingSearch.first()
 
     val site = siteManager.bySiteDescriptor(selectedSiteDescriptor)!!
     val siteIcon = site.icon().url.toString()
     val searchType = site.siteGlobalSearchType()
 
-    val dataState = GlobalSearchControllerStateData.SitesSupportingSearchLoaded(
-      SitesWithSearch(
+    val dataState = GlobalSearchControllerStateData(
+      sitesWithSearch = SitesWithSearch(
         sitesSupportingSearch,
         SelectedSite(selectedSiteDescriptor, siteIcon, searchType)
-      )
+      ),
+      searchParameters = getDefaultSearchParameters(selectedSiteDescriptor)
     )
 
     setState(GlobalSearchControllerState.Data(dataState))
+  }
+
+  private fun getDefaultSearchParameters(selectedSiteDescriptor: SiteDescriptor): SearchParameters {
+    if (selectedSiteDescriptor.is4chan()) {
+      return SearchParameters.SimpleQuerySearchParameters(query = "")
+    }
+
+    return SearchParameters.FoolFuukaSearchParameters(query = "", boardDescriptor = null)
   }
 
   private fun setState(state: GlobalSearchControllerState) {
     globalSearchControllerStateSubject.onNext(state)
   }
 
-  fun onSearchButtonClicked(selectedSite: SelectedSite, query: String) {
-    withViewNormal { openSearchResultsController(selectedSite.siteDescriptor, query) }
+  fun onSearchButtonClicked(selectedSite: SelectedSite, searchParameters: SearchParameters) {
+    withViewNormal { openSearchResultsController(selectedSite.siteDescriptor, searchParameters) }
   }
 
   companion object {
@@ -168,5 +172,7 @@ internal class GlobalSearchPresenter(
 
     const val MIN_SEARCH_QUERY_LENGTH = 2
     private const val DEBOUNCE_TIMEOUT_MS = 150L
+
+    private var selectedSiteDescriptor: SiteDescriptor? = null
   }
 }

@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.foolfuuka
 
+import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
@@ -9,6 +10,9 @@ import com.github.k1rakishou.chan.core.site.common.MultipartHttpCall
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
+import com.github.k1rakishou.chan.core.site.sites.search.FoolFuukaSearchParams
+import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
+import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
@@ -16,6 +20,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import okhttp3.Request
 
 class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
 
@@ -76,5 +81,33 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
     return SiteActions.LoginResult.LoginError(
       "Login is not supported for site ${site.name()}"
     )
+  }
+
+  override suspend fun <T : SearchParams> search(
+    searchParams: T
+  ): HtmlReaderRequest.HtmlReaderResponse<SearchResult> {
+    searchParams as FoolFuukaSearchParams
+
+    // https://boards.fireden.net/sci/search/text/test/page/1/
+    val searchUrl = requireNotNull(site.endpoints().search())
+      .newBuilder()
+      .addEncodedPathSegment(searchParams.boardDescriptor.boardCode)
+      .addEncodedPathSegment("search")
+      .addEncodedPathSegment("text")
+      .addEncodedPathSegment(searchParams.query)
+      .addEncodedPathSegment("page")
+      .addEncodedPathSegment(searchParams.getCurrentPage().toString())
+      .build()
+
+    val request = Request.Builder()
+      .url(searchUrl)
+      .get()
+      .build()
+
+    return FoolFuukaSearchRequest(
+      searchParams,
+      request,
+      site.proxiedOkHttpClient
+    ).execute()
   }
 }

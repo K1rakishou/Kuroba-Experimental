@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantMaxAtta
 import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInfo
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
+import com.github.k1rakishou.chan.core.site.sites.search.Chan4SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
@@ -227,7 +228,7 @@ open class Chan4 : SiteBase() {
       return sys.newBuilder().addPathSegment("auth").build()
     }
 
-    override fun search(): HttpUrl? {
+    override fun search(): HttpUrl {
       return search
     }
   }
@@ -411,8 +412,9 @@ open class Chan4 : SiteBase() {
       )
     }
 
-    override suspend fun search(searchParams: SearchParams): HtmlReaderRequest.HtmlReaderResponse<SearchResult> {
-      val page = searchParams.page ?: 0
+    override suspend fun <T : SearchParams> search(searchParams: T): HtmlReaderRequest.HtmlReaderResponse<SearchResult> {
+      searchParams as Chan4SearchParams
+      val page = searchParams.getCurrentPage()
 
       // https://find.4chan.org/?q=test&o=0
       val searchUrl = requireNotNull(endpoints().search())
