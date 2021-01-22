@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.core.site.sites.search.SearchEntryPost
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.chan.utils.errorMessageOrClassName
+import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_parser.html.ExtractedAttributeValues
 import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCollector
@@ -44,23 +45,41 @@ class FoolFuukaSearchRequest(
           nest {
             div(matchableBuilderFunc = { attr("role", KurobaMatcher.PatternMatcher.stringEquals("main")) })
 
-            nest {
-              article(matchableBuilderFunc = { attr("class", KurobaMatcher.PatternMatcher.stringEquals("clearfix thread")) })
 
-              nest {
-                tag(
-                  tagName = "aside",
-                  matchableBuilderFunc = { attr("class", KurobaMatcher.PatternMatcher.stringEquals("posts")) }
+            nest {
+              // <article class="clearfix thread"> ... </article> may not exist when there are no
+              // entries for a query
+              executeIf(
+                predicate = { tag(KurobaMatcher.TagMatcher.tagWithAttributeMatcher("article", "class", "clearfix thread")) },
+                resetNodeIndexToStart = true
+              ) {
+                heading(
+                  headingNum = 3,
+                  matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("section_title")) },
+                  attrExtractorBuilderFunc = { extractHtml() },
+                  extractorFunc = { node, extractedAttributeValues, foolFuukaSearchPageCollector ->
+                    foolFuukaSearchPageCollector.foundEntriesRaw =
+                      extractedAttributeValues.getHtml()
+                  }
                 )
 
+                article(matchableBuilderFunc = { attr("class", KurobaMatcher.PatternMatcher.stringEquals("clearfix thread")) })
+
                 nest {
-                  loop {
-                    parseSinglePost()
+                  tag(
+                    tagName = "aside",
+                    matchableBuilderFunc = { attr("class", KurobaMatcher.PatternMatcher.stringEquals("posts")) }
+                  )
+
+                  nest {
+                    loop {
+                      parseSinglePost()
+                    }
                   }
                 }
-              }
 
-              parsePages()
+                parsePages()
+              }
             }
           }
         }
@@ -335,12 +354,45 @@ class FoolFuukaSearchRequest(
       collector
     )
 
-    return SearchResult.Success(
+    val entriesCount = parseFoundEntries(collector.foundEntriesRaw)
+
+    val successResult = SearchResult.Success(
       searchParams.query,
       searchEntries,
       nextPageCursor,
-      10000 // TODO(KurobaEx):
+      entriesCount
     )
+
+    Logger.d(TAG, "query=${successResult.query}, foundEntriesPage=${successResult.searchEntries.size}, " +
+      "pageCursor=${successResult.nextPageCursor}, totalFoundEntries=${successResult.totalFoundEntries}")
+
+    return successResult
+  }
+
+  private fun parseFoundEntries(foundEntriesRaw: String?): Int? {
+    if (foundEntriesRaw == null) {
+      return null
+    }
+
+    val matcher = ACTUAL_ENTRIES_PATTERN.matcher(foundEntriesRaw)
+    if (!matcher.find()) {
+      return null
+    }
+
+    val actualEntriesString = matcher.groupOrNull(1)
+      ?: return null
+
+    val matcher1 = TOO_MANY_ENTRIES_FOUND_AMOUNT_PATTERN.matcher(actualEntriesString)
+    if (matcher1.find()) {
+      return matcher1.groupOrNull(1)?.toIntOrNull()
+    }
+
+    val matcher2 = REGULAR_ENTRIES_FOUND_AMOUNT_PATTERN.matcher(actualEntriesString)
+    if (matcher2.find()) {
+      return matcher2.groupOrNull(1)?.toIntOrNull()
+    }
+
+    return null
   }
 
   private fun getNextPageCursor(currentPage: Int?, collector: FoolFuukaSearchPageCollector): PageCursor {
@@ -362,7 +414,8 @@ class FoolFuukaSearchRequest(
 
   internal data class FoolFuukaSearchPageCollector(
     val searchResults: MutableList<SearchEntryPostBuilder> = mutableListOf(),
-    val pages: MutableList<Int> = mutableListOf()
+    val pages: MutableList<Int> = mutableListOf(),
+    var foundEntriesRaw: String? = null
   ) : KurobaHtmlParserCollector {
     fun lastOrNull(): SearchEntryPostBuilder? = searchResults.lastOrNull()
   }
@@ -432,6 +485,10 @@ class FoolFuukaSearchRequest(
     private val POST_LINK_PATTERN = Pattern.compile("thread\\/(\\d+)\\/#q(\\d+)")
     private val PAGE_URL_PATTERN = Pattern.compile("/page/(\\d+)/$")
     private val NUMBER_PATTERN = Pattern.compile("\\d+")
+    private val ACTUAL_ENTRIES_PATTERN = Pattern.compile("<small>(.*)<\\/small>")
+
+    private val TOO_MANY_ENTRIES_FOUND_AMOUNT_PATTERN = Pattern.compile("(\\d+) of \\d+")
+    private val REGULAR_ENTRIES_FOUND_AMOUNT_PATTERN = Pattern.compile("(\\d+) results found.\$")
   }
 
 }

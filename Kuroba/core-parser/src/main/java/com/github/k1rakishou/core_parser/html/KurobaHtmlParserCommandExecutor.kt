@@ -156,6 +156,10 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
 
           if (foundMatch) {
             ++commandIndex
+
+            if (command.resetNodeIndexToStart) {
+              nodeIndex = start
+            }
           } else {
             nodeIndex = start
 

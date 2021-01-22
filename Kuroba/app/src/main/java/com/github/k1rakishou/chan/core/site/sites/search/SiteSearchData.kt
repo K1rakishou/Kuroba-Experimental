@@ -47,9 +47,15 @@ sealed class SearchResult {
 }
 
 sealed class PageCursor {
-  object Empty : PageCursor()
-  class Page(val value: Int) : PageCursor()
-  object End : PageCursor()
+  object Empty : PageCursor() {
+    override fun toString(): String = "Empty"
+  }
+
+  data class Page(val value: Int) : PageCursor()
+
+  object End : PageCursor() {
+    override fun toString(): String = "End"
+  }
 }
 
 sealed class SearchError  {

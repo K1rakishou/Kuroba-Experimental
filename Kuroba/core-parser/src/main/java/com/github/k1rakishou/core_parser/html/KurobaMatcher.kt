@@ -46,11 +46,38 @@ sealed class KurobaMatcher {
       override fun toString(): String = "KurobaHasAttributeMatcher"
     }
 
+    class KurobaTagWithAttributeMatcher(
+      val tagName: String,
+      val attributeClass: String,
+      val attributeValue: String
+    ) : TagMatcher() {
+
+      override fun matches(element: Element): Boolean {
+        if (tagName != element.tagName()) {
+          return false
+        }
+
+        if (element.attr(attributeClass) != attributeValue) {
+          return false
+        }
+
+        return true
+      }
+
+      override fun toString(): String = "KurobaTagWithAttributeMatcher{tagName='$tagName', " +
+        "attributeClass='$attributeClass', attributeValue='$attributeValue'}"
+
+    }
+
     companion object {
       fun tagNoAttributesMatcher(): TagMatcher = KurobaEmptyTagMatcher
       fun tagAnyAttributeMatcher(): TagMatcher = KurobaAnyTagMatcher
       fun tagHasAttribute(attributeKey: String): TagMatcher = KurobaHasAttributeMatcher(attributeKey)
       fun tagHasAnyOfAttributes(attributeKeys: List<String>) = KurobaHasAnyAttributeMatcher(attributeKeys)
+
+      fun tagWithAttributeMatcher(tagName: String, attributeClass: String, attributeValue: String): TagMatcher {
+        return KurobaTagWithAttributeMatcher(tagName, attributeClass, attributeValue)
+      }
     }
   }
 

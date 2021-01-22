@@ -11,12 +11,12 @@ import com.github.k1rakishou.core_parser.html.commands.KurobaParserCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaParserCommandGroup
 import com.github.k1rakishou.core_parser.html.commands.KurobaParserStepCommand
 import org.jsoup.nodes.Node
+import java.util.concurrent.atomic.AtomicInteger
 
 class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
   private val groupName: String?
 ) {
   private val parserCommands = mutableListOf<KurobaParserCommand<T>>()
-  private var commandIDs = 0
 
   @KurobaHtmlParserDsl
   fun nest(
@@ -47,17 +47,22 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
    * A regular if condition. If [predicate] matches any of the nodes among nodes on the current
    * tree node level then all commands produced by [builder] will be executed.
    * Otherwise they will be skipped and the next command after the [executeIf] will be executed.
+   *
+   * [resetNodeIndexToStart] When true, after finding a node that matches [predicate] the node index
+   * will be reset to the beginning of the current node list. The default behavior will continue with
+   * the node that comes the next after the matched node.
    * */
   @KurobaHtmlParserDsl
   fun executeIf(
     predicate: MatchableBuilder.() -> MatchableBuilder,
+    resetNodeIndexToStart: Boolean = false,
     builder: KurobaParserCommandBuilder<T>.() -> KurobaParserCommandBuilder<T>
   ): KurobaParserCommandBuilder<T> {
     val commandGroup = builder(KurobaParserCommandBuilder(null)).build()
-    val conditionId = commandIDs++
+    val conditionId = nextCommandId()
     val conditionMatchables = predicate.invoke(MatchableBuilder()).build()
 
-    parserCommands += KurobaBeginConditionCommand(conditionId, conditionMatchables)
+    parserCommands += KurobaBeginConditionCommand(conditionId, conditionMatchables, resetNodeIndexToStart)
     parserCommands.addAll(commandGroup.innerCommands)
     parserCommands += KurobaEndConditionCommand(conditionId)
 
@@ -83,7 +88,7 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
     builder: KurobaParserCommandBuilder<T>.() -> KurobaParserCommandBuilder<T>
   ): KurobaParserCommandBuilder<T> {
     val commandGroup = builder(KurobaParserCommandBuilder(null)).build()
-    val loopId = commandIDs++
+    val loopId = nextCommandId()
 
     parserCommands += KurobaBeginLoopCommand(loopId, predicate)
     parserCommands.addAll(commandGroup.innerCommands)
@@ -334,6 +339,8 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
     return KurobaParserCommandGroup(groupName, parserCommands)
   }
 
+  private fun nextCommandId() = commandIDs.getAndIncrement()
+
   private operator fun List<KurobaParserCommand<T>>.plusAssign(kurobaHtmlElement: KurobaHtmlElement) {
     parserCommands += KurobaParserStepCommand<T>(kurobaHtmlElement)
   }
@@ -362,6 +369,10 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
         extractionFunc = ef
       )
     }
+  }
+
+  companion object {
+    private var commandIDs = AtomicInteger(0)
   }
 
 }
