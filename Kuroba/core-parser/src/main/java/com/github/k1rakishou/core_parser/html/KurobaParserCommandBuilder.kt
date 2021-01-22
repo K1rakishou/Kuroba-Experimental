@@ -48,21 +48,21 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
    * tree node level then all commands produced by [builder] will be executed.
    * Otherwise they will be skipped and the next command after the [executeIf] will be executed.
    *
-   * [resetNodeIndexToStart] When true, after finding a node that matches [predicate] the node index
+   * [resetNodeIndex] When true, after finding a node that matches [predicate] the node index
    * will be reset to the beginning of the current node list. The default behavior will continue with
    * the node that comes the next after the matched node.
    * */
   @KurobaHtmlParserDsl
   fun executeIf(
     predicate: MatchableBuilder.() -> MatchableBuilder,
-    resetNodeIndexToStart: Boolean = false,
+    resetNodeIndex: Boolean = false,
     builder: KurobaParserCommandBuilder<T>.() -> KurobaParserCommandBuilder<T>
   ): KurobaParserCommandBuilder<T> {
     val commandGroup = builder(KurobaParserCommandBuilder(null)).build()
     val conditionId = nextCommandId()
     val conditionMatchables = predicate.invoke(MatchableBuilder()).build()
 
-    parserCommands += KurobaBeginConditionCommand(conditionId, conditionMatchables, resetNodeIndexToStart)
+    parserCommands += KurobaBeginConditionCommand(conditionId, conditionMatchables, resetNodeIndex)
     parserCommands.addAll(commandGroup.innerCommands)
     parserCommands += KurobaEndConditionCommand(conditionId)
 

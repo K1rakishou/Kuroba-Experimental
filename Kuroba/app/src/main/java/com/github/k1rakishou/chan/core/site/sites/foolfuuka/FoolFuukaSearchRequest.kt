@@ -51,7 +51,7 @@ class FoolFuukaSearchRequest(
               // entries for a query
               executeIf(
                 predicate = { tag(KurobaMatcher.TagMatcher.tagWithAttributeMatcher("article", "class", "clearfix thread")) },
-                resetNodeIndexToStart = true
+                resetNodeIndex = true
               ) {
                 heading(
                   headingNum = 3,
