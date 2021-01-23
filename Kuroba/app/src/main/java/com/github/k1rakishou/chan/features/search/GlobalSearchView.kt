@@ -6,5 +6,5 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 interface GlobalSearchView {
   fun openSearchResultsController(siteDescriptor: SiteDescriptor, searchParameters: SearchParameters)
   fun restoreSearchResultsController(siteDescriptor: SiteDescriptor, searchParameters: SearchParameters)
-  fun setNeedSetInitialQueryFlag()
+  fun updateResetSearchParametersFlag(reset: Boolean)
 }

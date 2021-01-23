@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
+import com.github.k1rakishou.chan.core.site.sites.search.Chan4SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
@@ -89,41 +90,41 @@ class Chan4SearchRequestTest {
     whenever(simpleCommentParser.parseComment(any()))
       .then { answer -> answer.getArgument(1, CharSequence::class.java) }
 
-    val searchResult = globalSearchUseCase.execute(SearchParams(siteDescriptor, "test", null))
+    val searchResult = globalSearchUseCase.execute(Chan4SearchParams(siteDescriptor, "test", null))
     assertThat(searchResult, instanceOf(SearchResult.Success::class.java))
 
     searchResult as SearchResult.Success
     assertEquals(5, searchResult.searchEntries.size)
 
-    assertEquals(siteDescriptor, searchResult.searchEntries[0].thread.threadDescriptor.siteDescriptor())
-    assertEquals(siteDescriptor, searchResult.searchEntries[1].thread.threadDescriptor.siteDescriptor())
-    assertEquals(siteDescriptor, searchResult.searchEntries[2].thread.threadDescriptor.siteDescriptor())
-    assertEquals(siteDescriptor, searchResult.searchEntries[3].thread.threadDescriptor.siteDescriptor())
-    assertEquals(siteDescriptor, searchResult.searchEntries[4].thread.threadDescriptor.siteDescriptor())
+    assertEquals(siteDescriptor, searchResult.searchEntries[0].posts.first().postDescriptor.threadDescriptor().siteDescriptor())
+    assertEquals(siteDescriptor, searchResult.searchEntries[1].posts.first().postDescriptor.threadDescriptor().siteDescriptor())
+    assertEquals(siteDescriptor, searchResult.searchEntries[2].posts.first().postDescriptor.threadDescriptor().siteDescriptor())
+    assertEquals(siteDescriptor, searchResult.searchEntries[3].posts.first().postDescriptor.threadDescriptor().siteDescriptor())
+    assertEquals(siteDescriptor, searchResult.searchEntries[4].posts.first().postDescriptor.threadDescriptor().siteDescriptor())
 
-    assertEquals("int", searchResult.searchEntries[0].thread.threadDescriptor.boardDescriptor.boardCode)
-    assertEquals("int", searchResult.searchEntries[1].thread.threadDescriptor.boardDescriptor.boardCode)
-    assertEquals("int", searchResult.searchEntries[2].thread.threadDescriptor.boardDescriptor.boardCode)
-    assertEquals("int", searchResult.searchEntries[3].thread.threadDescriptor.boardDescriptor.boardCode)
-    assertEquals("pol", searchResult.searchEntries[4].thread.threadDescriptor.boardDescriptor.boardCode)
+    assertEquals("int", searchResult.searchEntries[0].posts.first().postDescriptor.threadDescriptor().boardDescriptor.boardCode)
+    assertEquals("int", searchResult.searchEntries[1].posts.first().postDescriptor.threadDescriptor().boardDescriptor.boardCode)
+    assertEquals("int", searchResult.searchEntries[2].posts.first().postDescriptor.threadDescriptor().boardDescriptor.boardCode)
+    assertEquals("int", searchResult.searchEntries[3].posts.first().postDescriptor.threadDescriptor().boardDescriptor.boardCode)
+    assertEquals("pol", searchResult.searchEntries[4].posts.first().postDescriptor.threadDescriptor().boardDescriptor.boardCode)
 
-    assertEquals(130661539, searchResult.searchEntries[0].thread.threadDescriptor.threadNo)
-    assertEquals(130667221, searchResult.searchEntries[1].thread.threadDescriptor.threadNo)
-    assertEquals(130667737, searchResult.searchEntries[2].thread.threadDescriptor.threadNo)
-    assertEquals(130639481, searchResult.searchEntries[3].thread.threadDescriptor.threadNo)
-    assertEquals(277880206, searchResult.searchEntries[4].thread.threadDescriptor.threadNo)
+    assertEquals(130661539, searchResult.searchEntries[0].posts.first().postDescriptor.threadDescriptor().threadNo)
+    assertEquals(130667221, searchResult.searchEntries[1].posts.first().postDescriptor.threadDescriptor().threadNo)
+    assertEquals(130667737, searchResult.searchEntries[2].posts.first().postDescriptor.threadDescriptor().threadNo)
+    assertEquals(130639481, searchResult.searchEntries[3].posts.first().postDescriptor.threadDescriptor().threadNo)
+    assertEquals(277880206, searchResult.searchEntries[4].posts.first().postDescriptor.threadDescriptor().threadNo)
 
-    assertTrue(searchResult.searchEntries[0].thread.posts.first().isOp)
-    assertTrue(searchResult.searchEntries[1].thread.posts.first().isOp)
-    assertTrue(searchResult.searchEntries[2].thread.posts.first().isOp)
-    assertTrue(searchResult.searchEntries[3].thread.posts.first().isOp)
-    assertTrue(searchResult.searchEntries[4].thread.posts.first().isOp)
+    assertTrue(searchResult.searchEntries[0].posts.first().isOp)
+    assertTrue(searchResult.searchEntries[1].posts.first().isOp)
+    assertTrue(searchResult.searchEntries[2].posts.first().isOp)
+    assertTrue(searchResult.searchEntries[3].posts.first().isOp)
+    assertTrue(searchResult.searchEntries[4].posts.first().isOp)
 
-    assertEquals(3, searchResult.searchEntries[0].thread.posts.size)
-    assertEquals(5, searchResult.searchEntries[1].thread.posts.size)
-    assertEquals(3, searchResult.searchEntries[2].thread.posts.size)
-    assertEquals(2, searchResult.searchEntries[3].thread.posts.size)
-    assertEquals(2, searchResult.searchEntries[4].thread.posts.size)
+    assertEquals(3, searchResult.searchEntries[0].posts.size)
+    assertEquals(5, searchResult.searchEntries[1].posts.size)
+    assertEquals(3, searchResult.searchEntries[2].posts.size)
+    assertEquals(2, searchResult.searchEntries[3].posts.size)
+    assertEquals(2, searchResult.searchEntries[4].posts.size)
 
     assertThat(searchResult.nextPageCursor, instanceOf(PageCursor.Page::class.java))
     assertEquals(10, (searchResult.nextPageCursor as PageCursor.Page).value)
@@ -165,7 +166,9 @@ class Chan4SearchRequestTest {
     override fun isLoggedIn(): Boolean = false
     override fun loginDetails(): AbstractLoginRequest? = null
 
-    override suspend fun search(searchParams: SearchParams): HtmlReaderRequest.HtmlReaderResponse<SearchResult> {
+    override suspend fun <T : SearchParams> search(searchParams: T): HtmlReaderRequest.HtmlReaderResponse<SearchResult> {
+      searchParams as Chan4SearchParams
+
       val request = Request.Builder()
         .url(mockUrl)
         .get()
@@ -174,8 +177,7 @@ class Chan4SearchRequestTest {
       return Chan4SearchRequest(
         request,
         proxiedOkHttpClient,
-        searchParams.query,
-        searchParams.page
+        searchParams
       ).execute()
     }
   }

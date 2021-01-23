@@ -26,7 +26,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import java.util.concurrent.atomic.AtomicReference
+import java.lang.ref.WeakReference
 import javax.inject.Inject
 
 class GlobalSearchController(context: Context)
@@ -44,8 +44,8 @@ class GlobalSearchController(context: Context)
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
 
-  private val inputViewRef = AtomicReference<View>(null)
-  private var needSetInitialSearchParameters = true
+  private val inputViewRefSet = mutableListOf<WeakReference<View>>()
+  private var resetSearchParameters = false
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -70,25 +70,25 @@ class GlobalSearchController(context: Context)
     super.onDestroy()
 
     epoxyRecyclerView.swapAdapter(null, true)
-    inputViewRef.set(null)
+    inputViewRefSet.clear()
     presenter.onDestroy()
   }
 
   override fun onBack(): Boolean {
-    needSetInitialSearchParameters = false
+    resetSearchParameters = true
     presenter.resetSavedState()
     return super.onBack()
   }
 
-  override fun setNeedSetInitialQueryFlag() {
-    needSetInitialSearchParameters = true
+  override fun updateResetSearchParametersFlag(reset: Boolean) {
+    resetSearchParameters = reset
   }
 
   override fun restoreSearchResultsController(
     siteDescriptor: SiteDescriptor,
     searchParameters: SearchParameters
   ) {
-    inputViewRef.get()?.let { inputView -> AndroidUtils.hideKeyboard(inputView) }
+    hideKeyboard()
 
     requireNavController().pushController(
       SearchResultsController(context, siteDescriptor, searchParameters),
@@ -100,7 +100,7 @@ class GlobalSearchController(context: Context)
     siteDescriptor: SiteDescriptor,
     searchParameters: SearchParameters
   ) {
-    inputViewRef.get()?.let { inputView -> AndroidUtils.hideKeyboard(inputView) }
+    hideKeyboard()
 
     presenter.resetSearchResultsSavedState()
     requireNavController().pushController(
@@ -184,18 +184,25 @@ class GlobalSearchController(context: Context)
     val searchParameters = dataState.searchParameters as SearchParameters.FoolFuukaSearchParameters
     val selectedSiteDescriptor = sitesWithSearch.selectedSite.siteDescriptor
 
+    // When site selection changes with want to redraw all epoxySearchInputViews with new initialQueries
+    val selectedSiteName = selectedSiteDescriptor.siteName
+
     var initialQuery = searchParameters.query
+    var initialSubjectQuery = searchParameters.subject
     var selectedBoard = searchParameters.boardDescriptor
     var selectedBoardCode = selectedBoard?.boardCode
 
-    if (!needSetInitialSearchParameters) {
+    if (resetSearchParameters) {
       initialQuery = ""
+      initialSubjectQuery = ""
       selectedBoard = null
       selectedBoardCode = null
+
+      resetSearchParameters = false
     }
 
     epoxyBoardSelectionButtonView {
-      id("global_search_board_selection_button_view")
+      id("global_search_board_selection_button_view_$selectedSiteName")
       boardCode(selectedBoardCode)
       bindClickCallback {
         val boardsSupportingSearch = archivesManager.getBoardsSupportingSearch(selectedSiteDescriptor)
@@ -203,33 +210,64 @@ class GlobalSearchController(context: Context)
           return@bindClickCallback
         }
 
-        // TODO(KurobaEx): show board selection menu
-        val updatedSearchParameters = SearchParameters.FoolFuukaSearchParameters(
-          query = initialQuery,
-          boardDescriptor = boardsSupportingSearch.first()
+        val controller = SelectBoardForSearchController(
+          context = context,
+          prevSelectedBoard = searchParameters.boardDescriptor,
+          siteDescriptor = selectedSiteDescriptor,
+          onBoardSelected = { boardDescriptor ->
+            val updatedSearchParameters = SearchParameters.FoolFuukaSearchParameters(
+              query = initialQuery,
+              subject = initialSubjectQuery,
+              boardDescriptor = boardDescriptor
+            )
+
+            presenter.reloadWithSearchParameters(updatedSearchParameters, sitesWithSearch)
+          }
         )
 
-        presenter.reloadWithSearchParameters(updatedSearchParameters, sitesWithSearch)
+        requireNavController().presentController(controller)
       }
     }
 
     epoxySearchInputView {
-      id("global_search_fool_fuuka_search_input_view")
-      initialQuery(initialQuery)
-      onTextEnteredListener { query ->
+      id("global_search_fool_fuuka_search_input_comment_subject_view_$selectedSiteName")
+      initialQuery(initialSubjectQuery)
+      hint(context.getString(R.string.post_subject_search_query_hint))
+      onTextEnteredListener { subjectQuery ->
         val updatedSearchParameters = SearchParameters.FoolFuukaSearchParameters(
-          query = query,
+          query = initialQuery,
+          subject = subjectQuery,
           boardDescriptor = selectedBoard
         )
 
         presenter.reloadWithSearchParameters(updatedSearchParameters, sitesWithSearch)
       }
-      onBind { _, view, _ -> inputViewRef.set(view) }
-      onUnbind { _, _ -> inputViewRef.set(null) }
+      onBind { _, view, _ -> addViewToInputViewRefSet(view) }
+      onUnbind { _, view -> removeViewFromInputViewRefSet(view) }
     }
 
-    return initialQuery.length >= GlobalSearchPresenter.MIN_SEARCH_QUERY_LENGTH
-      && selectedBoard != null
+    epoxySearchInputView {
+      id("global_search_fool_fuuka_search_input_comment_query_view_$selectedSiteName")
+      initialQuery(initialQuery)
+      hint(context.getString(R.string.post_comment_search_query_hint))
+      onTextEnteredListener { commentQuery ->
+        val updatedSearchParameters = SearchParameters.FoolFuukaSearchParameters(
+          query = commentQuery,
+          subject = initialSubjectQuery,
+          boardDescriptor = selectedBoard
+        )
+
+        presenter.reloadWithSearchParameters(updatedSearchParameters, sitesWithSearch)
+      }
+      onBind { _, view, _ -> addViewToInputViewRefSet(view) }
+      onUnbind { _, view -> removeViewFromInputViewRefSet(view) }
+    }
+
+    return SearchParameters.FoolFuukaSearchParameters(
+      query = initialQuery,
+      subject = initialSubjectQuery,
+      boardDescriptor = selectedBoard
+    ).isValid()
   }
 
   private fun EpoxyController.renderSimpleQuerySearch(dataState: GlobalSearchControllerStateData): Boolean {
@@ -237,21 +275,55 @@ class GlobalSearchController(context: Context)
     val searchParameters = dataState.searchParameters as SearchParameters.SimpleQuerySearchParameters
     var initialQuery = searchParameters.query
 
-    if (!needSetInitialSearchParameters) {
+    // When site selection changes with want to redraw epoxySearchInputView with new initialQuery
+    val selectedSiteName = sitesWithSearch.selectedSite.siteDescriptor.siteName
+
+    if (resetSearchParameters) {
       initialQuery = ""
+
+      resetSearchParameters = false
     }
 
     epoxySearchInputView {
-      id("global_search_simple_query_search_view")
+      id("global_search_simple_query_search_view_$selectedSiteName")
       initialQuery(initialQuery)
+      hint(context.getString(R.string.post_comment_search_query_hint))
       onTextEnteredListener { query ->
         val updatedSearchParameters = SearchParameters.SimpleQuerySearchParameters(query)
         presenter.reloadWithSearchParameters(updatedSearchParameters, sitesWithSearch)
       }
-      onBind { _, view, _ -> inputViewRef.set(view) }
-      onUnbind { _, _ -> inputViewRef.set(null) }
+      onBind { _, view, _ -> addViewToInputViewRefSet(view) }
+      onUnbind { _, view -> removeViewFromInputViewRefSet(view) }
     }
 
-    return initialQuery.length >= GlobalSearchPresenter.MIN_SEARCH_QUERY_LENGTH
+    return SearchParameters.SimpleQuerySearchParameters(
+      query = initialQuery
+    ).isValid()
+  }
+
+  private fun addViewToInputViewRefSet(view: View) {
+    val alreadyAdded = inputViewRefSet.any { viewRef ->
+      return@any viewRef.get() === view
+    }
+
+    if (alreadyAdded) {
+      return
+    }
+
+    inputViewRefSet.add(WeakReference(view))
+  }
+
+  private fun removeViewFromInputViewRefSet(view: View) {
+    inputViewRefSet.removeAll { viewRef -> viewRef.get() === view }
+  }
+
+  private fun hideKeyboard() {
+    inputViewRefSet.forEach { viewRef ->
+      viewRef.get()?.let { inputView ->
+        if (inputView.hasFocus()) {
+          AndroidUtils.hideKeyboard(inputView)
+        }
+      }
+    }
   }
 }

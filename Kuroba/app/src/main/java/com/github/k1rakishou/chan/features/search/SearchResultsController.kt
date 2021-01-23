@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.search
 
 import android.content.Context
+import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.chan.R
@@ -17,8 +18,8 @@ import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchEndOfResultsV
 import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchErrorView
 import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchLoadingView
 import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchPostDividerView
-import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchPostGapView
 import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchPostView
+import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
@@ -63,9 +64,11 @@ class SearchResultsController(
 
     updateTitle(null)
     navigation.swipeable = false
+    navigation.scrollableTitle = true
 
     view = inflate(context, R.layout.controller_search_results)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
+    epoxyRecyclerView.descendantFocusability = ViewGroup.FOCUS_BEFORE_DESCENDANTS
 
     compositeDisposable += presenter.listenForStateChanges()
       .subscribe { state -> onStateChanged(state) }
@@ -90,12 +93,14 @@ class SearchResultsController(
     epoxyRecyclerView.withModels {
       when (state) {
         SearchResultsControllerState.Uninitialized -> {
-          // no-op
+          epoxyLoadingView {
+            id("epoxy_loading_view")
+          }
         }
         is SearchResultsControllerState.NothingFound -> {
           epoxyTextView {
             id("search_result_controller_empty_view")
-            message("Nothing was found by query \"${state.query}\"")
+            message("Nothing was found by query \"${state.searchParameters.getCurrentQuery()}\"")
           }
         }
         is SearchResultsControllerState.Data -> renderDataState(state.data)
@@ -107,12 +112,6 @@ class SearchResultsController(
     addOneshotModelBuildListener { tryRestorePreviousPosition() }
 
     data.searchPostInfoList.forEachIndexed { index, searchPostInfo ->
-      if (index != 0 && searchPostInfo.opInfo != null) {
-        epoxySearchPostGapView {
-          id("epoxy_search_post_gap_view_${searchPostInfo.postDescriptor.serializeToString()}")
-        }
-      }
-
       epoxySearchPostView {
         id("epoxy_search_post_view_${searchPostInfo.postDescriptor.serializeToString()}}")
         postDescriptor(searchPostInfo.postDescriptor)
@@ -129,10 +128,10 @@ class SearchResultsController(
         }
       }
 
-      val isNextPostOP = data.searchPostInfoList.getOrNull(index + 1)?.opInfo != null
+      val isNextPostOP = data.searchPostInfoList.getOrNull(index + 1)?.postDescriptor?.isOP() == true
       if (!isNextPostOP) {
         epoxySearchPostDividerView {
-          id("epoxy_divider_view_$index")
+          id("epoxy_divider_view_${searchPostInfo.postDescriptor.serializeToString()}")
           updateMargins(NEW_MARGINS)
         }
       }
@@ -190,13 +189,13 @@ class SearchResultsController(
       navigation.title = getString(
         R.string.controller_search_searching,
         siteDescriptor.siteName,
-        searchParameters.query
+        searchParameters.getCurrentQuery()
       )
     } else {
       navigation.title = getString(
         R.string.controller_search_results,
         siteDescriptor.siteName,
-        searchParameters.query,
+        searchParameters.getCurrentQuery(),
         totalFound
       )
     }

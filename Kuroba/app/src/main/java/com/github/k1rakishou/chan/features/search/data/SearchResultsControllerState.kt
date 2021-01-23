@@ -7,7 +7,7 @@ import okhttp3.HttpUrl
 
 internal sealed class SearchResultsControllerState {
   object Uninitialized : SearchResultsControllerState()
-  class NothingFound(val query: String) : SearchResultsControllerState()
+  class NothingFound(val searchParameters: SearchParameters) : SearchResultsControllerState()
   data class Data(val data: SearchResultsControllerStateData) : SearchResultsControllerState()
 }
 
@@ -23,7 +23,7 @@ internal data class ErrorInfo(
 )
 
 internal data class CurrentQueryInfo(
-  val query: String,
+  val searchParameters: SearchParameters,
   val totalFoundEntries: Int?
 )
 

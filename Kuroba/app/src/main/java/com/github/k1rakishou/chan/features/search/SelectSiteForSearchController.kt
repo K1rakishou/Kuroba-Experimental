@@ -2,12 +2,12 @@ package com.github.k1rakishou.chan.features.search
 
 import android.content.Context
 import androidx.constraintlayout.widget.ConstraintLayout
-import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchSiteView
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import javax.inject.Inject
@@ -23,19 +23,19 @@ internal class SelectSiteForSearchController(
   @Inject
   lateinit var siteManager: SiteManager
 
-  private lateinit var sitesRecyclerView: EpoxyRecyclerView
+  private lateinit var sitesRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var clickableArea: ConstraintLayout
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
   }
 
-  override fun getLayoutId(): Int = R.layout.controller_select_site_for_search
+  override fun getLayoutId(): Int = R.layout.controller_generic_floating_with_recycler_view
 
   override fun onCreate() {
     super.onCreate()
 
-    sitesRecyclerView = view.findViewById(R.id.sites_supporting_search_recycler_view)
+    sitesRecyclerView = view.findViewById(R.id.recycler_view)
 
     clickableArea = view.findViewById(R.id.clickable_area)
     clickableArea.setOnClickListener { pop() }

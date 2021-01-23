@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.features.search.data
 
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
-import com.github.k1rakishou.chan.features.search.GlobalSearchPresenter
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 
@@ -31,27 +30,93 @@ internal data class GlobalSearchControllerStateData(
 
 sealed class SearchParameters {
   abstract val query: String
-  abstract fun checkValid()
+
+  abstract fun isValid(): Boolean
+  abstract fun assertValid()
+
+  abstract fun getCurrentQuery(): String
 
   data class SimpleQuerySearchParameters(
     override val query: String
   ) : SearchParameters() {
 
-    override fun checkValid() {
-      check(query.length >= GlobalSearchPresenter.MIN_SEARCH_QUERY_LENGTH) { "Bad query: $query" }
+    override fun getCurrentQuery(): String {
+      return query
+    }
+
+    override fun isValid(): Boolean {
+      if (query.length >= MIN_SEARCH_QUERY_LENGTH) {
+        return true
+      }
+
+      return false
+    }
+
+    override fun assertValid() {
+      if (isValid()) {
+        return
+      }
+
+      throw IllegalStateException("SimpleQuerySearchParameters are not valid! query='$query'")
     }
 
   }
 
   data class FoolFuukaSearchParameters(
     override val query: String,
+    val subject: String,
     val boardDescriptor: BoardDescriptor?
   ) : SearchParameters() {
 
-    override fun checkValid() {
-      check(query.length >= GlobalSearchPresenter.MIN_SEARCH_QUERY_LENGTH) { "Bad query: $query" }
-      checkNotNull(boardDescriptor) { "boardDescriptor is null" }
+    override fun getCurrentQuery(): String {
+      return buildString {
+        if (boardDescriptor != null) {
+          append("/${boardDescriptor.boardCode}/")
+        }
+
+        if (subject.isNotEmpty()) {
+          if (isNotEmpty()) {
+            append(" ")
+          }
+
+          append("Subject: '$subject'")
+        }
+
+        if (query.isNotEmpty()) {
+          if (isNotEmpty()) {
+            append(" ")
+          }
+
+          append("Comment: '$query'")
+        }
+      }
     }
 
+    override fun isValid(): Boolean {
+      if (boardDescriptor == null) {
+        return false
+      }
+
+      var valid = false
+
+      valid = valid or (query.length >= MIN_SEARCH_QUERY_LENGTH)
+      valid = valid or (subject.length >= MIN_SEARCH_QUERY_LENGTH)
+
+      return valid
+    }
+
+    override fun assertValid() {
+      if (isValid()) {
+        return
+      }
+
+      throw IllegalStateException("FoolFuukaSearchParameters are not valid! " +
+        "query='$query', subject='$subject', boardDescriptor='$boardDescriptor'")
+    }
+
+  }
+
+  companion object {
+    const val MIN_SEARCH_QUERY_LENGTH = 2
   }
 }

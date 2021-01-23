@@ -8,51 +8,48 @@ import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
-import com.github.k1rakishou.core_themes.ThemeEngine
-import javax.inject.Inject
 
-@ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
-class EpoxyBoardSelectionButtonView @JvmOverloads constructor(
+@ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT, fullSpan = false)
+class EpoxySelectableBoardItemView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
-
-  @Inject
-  lateinit var themeEngine: ThemeEngine
-
-  private val textView: ColorizableTextView
-  private val rootView: FrameLayout
+  private val boardName: ColorizableTextView
 
   init {
-    inflate(context, R.layout.epoxy_board_selection_button, this)
+    inflate(context, R.layout.epoxy_selectable_board_item_view, this)
 
     AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
-    textView = findViewById(R.id.text_view)
-    rootView = findViewById(R.id.root_view)
+    boardName = findViewById(R.id.board_name)
   }
 
   @ModelProp
-  fun setBoardCode(boardCode: String?) {
-    if (boardCode == null) {
-      textView.text = context.getString(R.string.click_to_select_board)
+  fun itemBackgroundColor(color: Int?) {
+    if (color == null) {
       return
     }
 
-    textView.text = context.getString(R.string.selected_board_code, boardCode)
+    setBackgroundColorFast(color)
+  }
+
+  @ModelProp
+  fun bindBoardName(name: String) {
+    boardName.text = "/$name/"
   }
 
   @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.IgnoreRequireHashCode])
   fun bindClickCallback(callback: (() -> Unit)?) {
     if (callback == null) {
-      rootView.setOnThrottlingClickListener(null)
+      boardName.setOnThrottlingClickListener(null)
       return
     }
 
-    rootView.setOnThrottlingClickListener { callback.invoke() }
+    boardName.setOnThrottlingClickListener { callback.invoke() }
   }
 
 }

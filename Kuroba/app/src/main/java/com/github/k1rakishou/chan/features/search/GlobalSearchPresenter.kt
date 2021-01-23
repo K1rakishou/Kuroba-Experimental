@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.features.search
 
 import com.github.k1rakishou.chan.core.base.BasePresenter
-import com.github.k1rakishou.chan.core.base.ThrottlingCoroutineExecutor
+import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerState
@@ -27,10 +27,7 @@ internal class GlobalSearchPresenter(
     BehaviorProcessor.createDefault<GlobalSearchControllerState>(GlobalSearchControllerState.Uninitialized)
   private val searchResultsStateStorage = SearchResultsStateStorage
 
-  private val queryEnterThrottler = ThrottlingCoroutineExecutor(
-    scope = scope,
-    mode = ThrottlingCoroutineExecutor.Mode.ThrottleLast
-  )
+  private val searchUpdateExecutor = RendezvousCoroutineExecutor(scope = scope,)
 
   override fun onCreate(view: GlobalSearchView) {
     super.onCreate(view)
@@ -56,9 +53,8 @@ internal class GlobalSearchPresenter(
 
   private fun tryRestorePrevState(): Boolean {
     val searchInputState = searchResultsStateStorage.searchInputState!!
-    val isQueryOk = searchInputState.searchParameters.query.length >= MIN_SEARCH_QUERY_LENGTH
 
-    if (isQueryOk) {
+    if (searchInputState.searchParameters.isValid()) {
       setState(GlobalSearchControllerState.Data(searchInputState))
 
       withViewNormal {
@@ -94,7 +90,7 @@ internal class GlobalSearchPresenter(
   }
 
   fun reloadWithSearchParameters(searchParameters: SearchParameters, sitesWithSearch: SitesWithSearch) {
-    queryEnterThrottler.post(DEBOUNCE_TIMEOUT_MS) {
+    searchUpdateExecutor.post {
       val dataState = GlobalSearchControllerStateData(
         sitesWithSearch,
         searchParameters
@@ -103,14 +99,19 @@ internal class GlobalSearchPresenter(
       setState(GlobalSearchControllerState.Data(dataState))
       searchResultsStateStorage.updateSearchInputState(dataState)
 
-      withView { setNeedSetInitialQueryFlag() }
+      withView { updateResetSearchParametersFlag(false) }
     }
   }
 
   fun onSearchSiteSelected(newSelectedSiteDescriptor: SiteDescriptor) {
-    selectedSiteDescriptor = newSelectedSiteDescriptor
+    searchUpdateExecutor.post {
+      selectedSiteDescriptor = newSelectedSiteDescriptor
 
-    reloadSearchState(null)
+      searchResultsStateStorage.resetSearchInputState()
+      withView { updateResetSearchParametersFlag(true) }
+
+      reloadSearchState(null)
+    }
   }
 
   private fun reloadSearchState(loadingStateCancellationJob: Job?) {
@@ -156,7 +157,7 @@ internal class GlobalSearchPresenter(
       return SearchParameters.SimpleQuerySearchParameters(query = "")
     }
 
-    return SearchParameters.FoolFuukaSearchParameters(query = "", boardDescriptor = null)
+    return SearchParameters.FoolFuukaSearchParameters(query = "", subject = "", boardDescriptor = null)
   }
 
   private fun setState(state: GlobalSearchControllerState) {
@@ -169,9 +170,6 @@ internal class GlobalSearchPresenter(
 
   companion object {
     private const val TAG = "GlobalSearchPresenter"
-
-    const val MIN_SEARCH_QUERY_LENGTH = 2
-    private const val DEBOUNCE_TIMEOUT_MS = 150L
 
     private var selectedSiteDescriptor: SiteDescriptor? = null
   }

@@ -9,11 +9,12 @@ import org.joda.time.DateTime
 
 interface SearchParams {
   val siteDescriptor: SiteDescriptor
+  val query: String
 }
 
 data class Chan4SearchParams(
   override val siteDescriptor: SiteDescriptor,
-  val query: String,
+  override val query: String,
   val page: Int?
 ) : SearchParams {
 
@@ -23,7 +24,8 @@ data class Chan4SearchParams(
 
 data class FoolFuukaSearchParams(
   val boardDescriptor: BoardDescriptor,
-  val query: String,
+  override val query: String,
+  val subject: String,
   val page: Int?
 ) : SearchParams {
 
@@ -35,7 +37,7 @@ data class FoolFuukaSearchParams(
 
 sealed class SearchResult {
   data class Success(
-    val query: String,
+    val searchParams: SearchParams,
     val searchEntries: List<SearchEntry>,
     val nextPageCursor: PageCursor,
     val totalFoundEntries: Int?

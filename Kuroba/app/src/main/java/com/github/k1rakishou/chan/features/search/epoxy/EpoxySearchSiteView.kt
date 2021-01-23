@@ -97,7 +97,7 @@ internal class EpoxySearchSiteView @JvmOverloads constructor(
     }
   }
 
-  @ModelProp(options = [ModelProp.Option.IgnoreRequireHashCode])
+  @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.IgnoreRequireHashCode])
   fun bindClickCallback(callback: (() -> Unit)?) {
     if (callback == null) {
       setOnThrottlingClickListener(null)

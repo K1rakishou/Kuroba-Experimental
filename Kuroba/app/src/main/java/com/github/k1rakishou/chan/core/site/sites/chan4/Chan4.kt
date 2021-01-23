@@ -431,8 +431,7 @@ open class Chan4 : SiteBase() {
       return Chan4SearchRequest(
         request,
         proxiedOkHttpClient,
-        searchParams.query,
-        searchParams.page
+        searchParams
       ).execute()
     }
   }

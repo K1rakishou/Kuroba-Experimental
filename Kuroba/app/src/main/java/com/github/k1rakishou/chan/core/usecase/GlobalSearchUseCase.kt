@@ -4,6 +4,8 @@ import android.text.SpannableString
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
+import com.github.k1rakishou.chan.core.site.sites.search.Chan4SearchParams
+import com.github.k1rakishou.chan.core.site.sites.search.FoolFuukaSearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
@@ -53,8 +55,15 @@ class GlobalSearchUseCase(
 
     when (htmlReaderResponse) {
       is HtmlReaderRequest.HtmlReaderResponse.Success -> {
+        if (htmlReaderResponse.result is SearchResult.Failure) {
+          val searchError = htmlReaderResponse.result.searchError
+          Logger.d(TAG, "doSearch() Failure, searchError=$searchError")
+
+          return htmlReaderResponse.result
+        }
+
         Logger.d(TAG, "doSearch() Success")
-        return parseComments(htmlReaderResponse.result)
+        return processFoundSearchEntries(htmlReaderResponse.result as SearchResult.Success)
       }
       is HtmlReaderRequest.HtmlReaderResponse.ServerError -> {
         Logger.e(TAG, "doSearch() ServerError: ${htmlReaderResponse.statusCode}")
@@ -71,12 +80,7 @@ class GlobalSearchUseCase(
     }
   }
 
-  private fun parseComments(searchResult: SearchResult): SearchResult {
-    if (searchResult is SearchResult.Failure) {
-      return searchResult
-    }
-
-    searchResult as SearchResult.Success
+  private fun processFoundSearchEntries(searchResult: SearchResult.Success): SearchResult {
     val theme = themeEngine.chanTheme
 
     searchResult.searchEntries.forEach { searchEntry ->
@@ -85,11 +89,35 @@ class GlobalSearchUseCase(
           val parsedComment = simpleCommentParser.parseComment(commentRaw.toString()) ?: ""
           val spannedComment = SpannableString(parsedComment)
 
-          findAllQueryEntriesInsideCommentAndMarkThem(searchResult.query, spannedComment, theme)
-          findAllQuotesAndMarkThem(spannedComment, theme)
+          var found = false
 
-          commentRaw.clear()
-          commentRaw.append(spannedComment)
+          found = found or findAllQueryEntriesInsideSpannableStringAndMarkThem(
+            inputQueries = getAllQueries(searchResult.searchParams),
+            spannableString = spannedComment,
+            theme = theme
+          )
+
+          found = found or findAllQuotesAndMarkThem(spannedComment, theme)
+
+          if (found) {
+            commentRaw.clear()
+            commentRaw.append(spannedComment)
+          }
+        }
+
+        searchEntryPost.subject?.let { subject ->
+          val spannedSubject = SpannableString(subject)
+
+          val found = findAllQueryEntriesInsideSpannableStringAndMarkThem(
+            inputQueries = getAllQueries(searchResult.searchParams),
+            spannableString = spannedSubject,
+            theme = theme
+          )
+
+          if (found) {
+            subject.clear()
+            subject.append(spannedSubject)
+          }
         }
       }
     }
@@ -97,54 +125,92 @@ class GlobalSearchUseCase(
     return searchResult
   }
 
-  private fun findAllQuotesAndMarkThem(spannedComment: SpannableString, theme: ChanTheme) {
+  private fun findAllQuotesAndMarkThem(spannedComment: SpannableString, theme: ChanTheme): Boolean {
     val matcher = SIMPLE_QUOTE_PATTERN.matcher(spannedComment)
+    var found = false
 
     while (matcher.find()) {
       val span = ForegroundColorSpanHashed(theme.postLinkColor)
       spannedComment.setSpan(span, matcher.start(), matcher.end(), 0)
+
+      found = true
     }
+
+    return found
   }
 
-  private fun findAllQueryEntriesInsideCommentAndMarkThem(
-    query: String,
-    parsedComment: SpannableString,
-    theme: ChanTheme
-  ) {
-    if (parsedComment.length < query.length) {
-      return
+  private fun getAllQueries(searchParams: SearchParams): Set<String> {
+    val queries = mutableSetOf<String>()
+
+    when (searchParams) {
+      is Chan4SearchParams -> {
+        queries += searchParams.query
+      }
+      is FoolFuukaSearchParams -> {
+        if (searchParams.query.isNotEmpty()) {
+          queries += searchParams.query
+        }
+
+        if (searchParams.subject.isNotEmpty()) {
+          queries += searchParams.subject
+        }
+      }
     }
 
-    var offset = 0
-    val spans = mutableListOf<SpanToAdd>()
+    return queries
+  }
 
-    while (offset < parsedComment.length) {
-      if (query[0].equals(parsedComment[offset], ignoreCase = true)) {
-        val compared = compare(query, parsedComment, offset)
+  private fun findAllQueryEntriesInsideSpannableStringAndMarkThem(
+    inputQueries: Collection<String>,
+    spannableString: SpannableString,
+    theme: ChanTheme
+  ): Boolean {
+    val queries = inputQueries
+      .filter { query -> query.isNotEmpty() && query.length <= spannableString.length }
 
-        if (compared < 0) {
-          break
+    if (queries.isEmpty()) {
+      return false
+    }
+
+    var found = false
+
+    for (query in queries) {
+      var offset = 0
+      val spans = mutableListOf<SpanToAdd>()
+
+      while (offset < spannableString.length) {
+        if (query[0].equals(spannableString[offset], ignoreCase = true)) {
+          val compared = compare(query, spannableString, offset)
+          if (compared < 0) {
+            break
+          }
+
+          if (compared == query.length) {
+            spans += SpanToAdd(offset, query.length, BackgroundColorSpanHashed(theme.accentColor))
+          }
+
+          offset += compared
+          continue
         }
 
-        if (compared == query.length) {
-          spans += SpanToAdd(offset, query.length, BackgroundColorSpanHashed(theme.accentColor))
-        }
-
-        offset += compared
-        continue
+        ++offset
       }
 
-      ++offset
+      spans.forEach { spanToAdd ->
+        spannableString.setSpan(
+          spanToAdd.span,
+          spanToAdd.position,
+          spanToAdd.position + spanToAdd.length,
+          0
+        )
+      }
+
+      if (spans.isNotEmpty()) {
+        found = true
+      }
     }
 
-    spans.forEach { spanToAdd ->
-      parsedComment.setSpan(
-        spanToAdd.span,
-        spanToAdd.position,
-        spanToAdd.position + spanToAdd.length,
-        0
-      )
-    }
+    return found
   }
 
   private fun compare(query: String, parsedComment: CharSequence, currentPosition: Int): Int {

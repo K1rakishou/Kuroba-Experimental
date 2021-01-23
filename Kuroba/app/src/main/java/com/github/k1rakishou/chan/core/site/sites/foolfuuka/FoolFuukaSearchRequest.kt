@@ -169,15 +169,39 @@ class FoolFuukaSearchRequest(
             span(matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("post_poster_data")) })
 
             nest {
-              span(
-                matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("post_author")) },
-                attrExtractorBuilderFunc = { extractText() },
-                extractorFunc = { _, extractedAttributeValues, testCollector ->
-                  testCollector.lastOrNull()?.let { postBuilder ->
-                    postBuilder.name = requireNotNull(extractedAttributeValues.getText())
+              executeIf(predicate = { className(KurobaMatcher.PatternMatcher.stringEquals("post_author")) }) {
+                span(
+                  matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("post_author")) },
+                  attrExtractorBuilderFunc = { extractText() },
+                  extractorFunc = { _, extractedAttributeValues, testCollector ->
+                    testCollector.lastOrNull()?.let { postBuilder ->
+                      val name = extractedAttributeValues.getText()
+                      if (name.isNullOrEmpty()) {
+                        return@let
+                      }
+
+                      postBuilder.name = name
+                    }
                   }
-                }
-              )
+                )
+              }
+
+              executeIf(predicate = { className(KurobaMatcher.PatternMatcher.stringEquals("post_tripcode")) }) {
+                span(
+                  matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("post_tripcode")) },
+                  attrExtractorBuilderFunc = { extractText() },
+                  extractorFunc = { _, extractedAttributeValues, testCollector ->
+                    testCollector.lastOrNull()?.let { postBuilder ->
+                      val tripcode = extractedAttributeValues.getText()
+                      if (tripcode.isNullOrEmpty()) {
+                        return@let
+                      }
+
+                      postBuilder.tripcode = tripcode
+                    }
+                  }
+                )
+              }
             }
 
             span(matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("time_wrap")) })
@@ -357,13 +381,13 @@ class FoolFuukaSearchRequest(
     val entriesCount = parseFoundEntries(collector.foundEntriesRaw)
 
     val successResult = SearchResult.Success(
-      searchParams.query,
+      searchParams,
       searchEntries,
       nextPageCursor,
       entriesCount
     )
 
-    Logger.d(TAG, "query=${successResult.query}, foundEntriesPage=${successResult.searchEntries.size}, " +
+    Logger.d(TAG, "searchParams=${searchParams}, foundEntriesPage=${successResult.searchEntries.size}, " +
       "pageCursor=${successResult.nextPageCursor}, totalFoundEntries=${successResult.totalFoundEntries}")
 
     return successResult
@@ -428,6 +452,7 @@ class FoolFuukaSearchRequest(
 
     var isOp: Boolean? = null
     var name: String? = null
+    var tripcode: String? = null
     var subject: String? = null
     var dateTime: DateTime? = null
     var commentRaw: String? = null
@@ -463,13 +488,37 @@ class FoolFuukaSearchRequest(
 
       return SearchEntryPost(
         isOp!!,
-        name?.let { SpannableStringBuilder(it) },
+        buildFullName(name, tripcode),
         subject?.let { SpannableStringBuilder(it) },
         postDescriptor!!,
         dateTime!!,
         postImageUrlRawList,
         commentRaw?.let { SpannableStringBuilder(it) }
       )
+    }
+
+    private fun buildFullName(name: String?, tripcode: String?): SpannableStringBuilder? {
+      if (name.isNullOrEmpty() && tripcode.isNullOrEmpty()) {
+        return null
+      }
+
+      val ssb = SpannableStringBuilder()
+
+      if (name != null) {
+        ssb.append(name)
+      }
+
+      if (tripcode != null) {
+        if (ssb.isNotEmpty()) {
+          ssb.append(" ")
+        }
+
+        ssb.append("'")
+          .append(tripcode)
+          .append("'")
+      }
+
+      return ssb
     }
 
     override fun toString(): String {

@@ -84,7 +84,10 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
             val nodesDumped = buildString {
               appendLine()
               appendLine("Nodes: ")
+
+              append("\"")
               nodes.forEach { node -> appendLine(node.toString()) }
+              append("\"")
             }
 
             throw HtmlParsingException("Failed to execute command: $command, " +

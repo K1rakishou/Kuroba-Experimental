@@ -57,7 +57,7 @@ internal class SearchResultsPresenter(
 
   override fun onCreate(view: SearchResultsView) {
     super.onCreate(view)
-    searchParameters.checkValid()
+    searchParameters.assertValid()
 
     scope.launch {
       if (searchResultsStateStorage.searchResultsState != null) {
@@ -172,8 +172,8 @@ internal class SearchResultsPresenter(
       searchResult as SearchResult.Success
 
       if (searchResult.totalFoundEntries == null || searchResult.totalFoundEntries <= 0) {
-        Logger.d(TAG, "doSearch() nothing found, query = ${searchResult.query}")
-        setState(SearchResultsControllerState.NothingFound(searchResult.query))
+        Logger.d(TAG, "doSearch() nothing found, searchParameters = ${searchParameters}")
+        setState(SearchResultsControllerState.NothingFound(searchParameters))
         return@withContext
       }
 
@@ -197,12 +197,14 @@ internal class SearchResultsPresenter(
   }
 
   private suspend fun executeRequest(): SearchResult {
+    searchParameters.assertValid()
+
     val requestSearchParams = when (val params = searchParameters) {
       is SearchParameters.SimpleQuerySearchParameters -> {
         Chan4SearchParams(siteDescriptor, params.query, currentPage)
       }
       is SearchParameters.FoolFuukaSearchParameters -> {
-        FoolFuukaSearchParams(params.boardDescriptor!!, params.query, currentPage)
+        FoolFuukaSearchParams(params.boardDescriptor!!, params.query, params.subject, currentPage)
       }
     }.exhaustive
 
@@ -232,7 +234,7 @@ internal class SearchResultsPresenter(
 
         combinedSearchPostInfoList += SearchPostInfo(
           postDescriptor = searchEntryPost.postDescriptor,
-          opInfo = createOpInfo(searchEntryPost),
+          opInfo = createHeaderInfo(searchEntryPost),
           postInfo = createPostInfo(searchEntryPost),
           thumbnail = createThumbnailInfo(searchEntryPost),
           postComment = createPostComment(searchEntryPost),
@@ -245,7 +247,7 @@ internal class SearchResultsPresenter(
       searchPostInfoList = combinedSearchPostInfoList,
       nextPageCursor = searchResult.nextPageCursor,
       errorInfo = null,
-      currentQueryInfo = CurrentQueryInfo(searchResult.query, searchResult.totalFoundEntries)
+      currentQueryInfo = CurrentQueryInfo(searchParameters, searchResult.totalFoundEntries)
     )
   }
 
@@ -274,11 +276,7 @@ internal class SearchResultsPresenter(
     return CharSequenceMurMur.create(text)
   }
 
-  private fun createOpInfo(searchEntryPost: SearchEntryPost): CharSequenceMurMur? {
-    if (!searchEntryPost.isOp) {
-      return null
-    }
-
+  private fun createHeaderInfo(searchEntryPost: SearchEntryPost): CharSequenceMurMur {
     val boardCode = searchEntryPost.postDescriptor.boardDescriptor().boardCode
     val threadNo = searchEntryPost.postDescriptor.getThreadNo()
     val subject = searchEntryPost.subject?.trim()

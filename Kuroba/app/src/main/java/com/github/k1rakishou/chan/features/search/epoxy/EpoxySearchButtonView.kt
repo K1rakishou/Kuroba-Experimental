@@ -22,7 +22,7 @@ class EpoxySearchButtonView @JvmOverloads constructor(
     searchButton = findViewById(R.id.search_button)
   }
 
-  @ModelProp(options = [ModelProp.Option.IgnoreRequireHashCode])
+  @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.IgnoreRequireHashCode])
   fun setOnButtonClickListener(listener: (() -> Unit)?) {
     if (listener == null) {
       searchButton.setOnClickListener(null)

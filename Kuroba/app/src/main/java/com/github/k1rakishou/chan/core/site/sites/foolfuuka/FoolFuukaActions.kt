@@ -20,6 +20,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import okhttp3.HttpUrl
 import okhttp3.Request
 
 class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
@@ -88,13 +89,12 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
   ): HtmlReaderRequest.HtmlReaderResponse<SearchResult> {
     searchParams as FoolFuukaSearchParams
 
-    // https://boards.fireden.net/sci/search/text/test/page/1/
     val searchUrl = requireNotNull(site.endpoints().search())
       .newBuilder()
       .addEncodedPathSegment(searchParams.boardDescriptor.boardCode)
       .addEncodedPathSegment("search")
-      .addEncodedPathSegment("text")
-      .addEncodedPathSegment(searchParams.query)
+      .tryAddSearchParam("text", searchParams.query)
+      .tryAddSearchParam("subject", searchParams.subject)
       .addEncodedPathSegment("page")
       .addEncodedPathSegment(searchParams.getCurrentPage().toString())
       .build()
@@ -110,4 +110,14 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
       site.proxiedOkHttpClient
     ).execute()
   }
+
+  private fun HttpUrl.Builder.tryAddSearchParam(paramName: String, paramValue: String): HttpUrl.Builder {
+    if (paramValue.isEmpty()) {
+      return this
+    }
+
+    return this.addEncodedPathSegment(paramName)
+      .addEncodedPathSegment(paramValue)
+  }
+
 }

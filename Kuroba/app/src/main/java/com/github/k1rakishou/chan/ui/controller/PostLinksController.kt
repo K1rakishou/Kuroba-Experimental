@@ -4,10 +4,10 @@ import android.content.Context
 import android.text.SpannableString
 import android.text.Spanned
 import androidx.constraintlayout.widget.ConstraintLayout
-import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.ui.epoxy.epoxyPostLink
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -23,19 +23,19 @@ class PostLinksController(
   @Inject
   lateinit var themeEngine: ThemeEngine
 
-  private lateinit var recyclerView: EpoxyRecyclerView
+  private lateinit var recyclerView: ColorizableEpoxyRecyclerView
   private lateinit var clickableArea: ConstraintLayout
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
   }
 
-  override fun getLayoutId(): Int = R.layout.controller_post_links
+  override fun getLayoutId(): Int = R.layout.controller_generic_floating_with_recycler_view
 
   override fun onCreate() {
     super.onCreate()
 
-    recyclerView = view.findViewById(R.id.epoxy_recycler_view)
+    recyclerView = view.findViewById(R.id.recycler_view)
 
     clickableArea = view.findViewById(R.id.clickable_area)
     clickableArea.setOnClickListener { pop() }

@@ -1169,5 +1169,7 @@ Don't have a 4chan Pass?<br>
     <string name="no_links_found">No links found in post</string>
     <string name="click_to_select_board">Click to select a board</string>
     <string name="selected_board_code">Selected board: /%1$s/</string>
+    <string name="post_subject_search_query_hint">Post subject search query</string>
+    <string name="post_comment_search_query_hint">Post comment search query</string>
 
 </resources>

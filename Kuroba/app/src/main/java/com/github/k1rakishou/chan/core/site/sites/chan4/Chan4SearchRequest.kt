@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.core.site.sites.chan4
 import android.text.SpannableStringBuilder
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
+import com.github.k1rakishou.chan.core.site.sites.search.Chan4SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.site.sites.search.SearchEntry
 import com.github.k1rakishou.chan.core.site.sites.search.SearchEntryPost
@@ -29,8 +30,7 @@ import java.util.regex.Pattern
 class Chan4SearchRequest(
   request: Request,
   proxiedOkHttpClient: ProxiedOkHttpClient,
-  private val query: String,
-  private val currentPage: Int?
+  private val searchParams: Chan4SearchParams
 ) : HtmlReaderRequest<SearchResult>(request, proxiedOkHttpClient) {
 
   override suspend fun readHtml(document: Document): SearchResult {
@@ -62,7 +62,7 @@ class Chan4SearchRequest(
       return error
     }
 
-    return SearchResult.Success(query, searchEntries, pageCursor, totalFoundEntries)
+    return SearchResult.Success(searchParams, searchEntries, pageCursor, totalFoundEntries)
   }
 
   private fun iteratePostBuilders(
@@ -157,10 +157,10 @@ class Chan4SearchRequest(
       return
     }
 
-    val currentPageIndex = if (currentPage == null) {
+    val currentPageIndex = if (searchParams.page == null) {
       0
     } else {
-      allPages.indexOfFirst { page -> page == currentPage }
+      allPages.indexOfFirst { page -> page == searchParams.page }
     }
 
     if (currentPageIndex >= 0) {
@@ -171,7 +171,7 @@ class Chan4SearchRequest(
       }
     }
 
-    Logger.e(TAG, "Failed to find current page: allPages=${allPages}, currentPage=$currentPage")
+    Logger.e(TAG, "Failed to find current page: allPages=${allPages}, currentPage=${searchParams.page}")
     nextPageFunc(PageCursor.End)
   }
 
