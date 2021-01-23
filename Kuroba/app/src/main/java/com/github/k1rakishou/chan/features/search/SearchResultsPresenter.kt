@@ -157,6 +157,8 @@ internal class SearchResultsPresenter(
 
       val searchResult = executeRequest()
       if (searchResult is SearchResult.Failure) {
+        logSearchError(searchResult)
+
         if (prevStateData == null) {
           setState(SearchResultsControllerState.Data(errorState(searchFailureToErrorText(searchResult))))
           return@withContext
@@ -181,6 +183,16 @@ internal class SearchResultsPresenter(
 
       setState(SearchResultsControllerState.Data(newStateData))
       searchResultsStateStorage.updateSearchResultsState(newStateData)
+    }
+  }
+
+  private fun logSearchError(searchResult: SearchResult.Failure) {
+    when (searchResult.searchError) {
+      SearchError.NotImplemented -> Logger.e(TAG, "NotImplemented")
+      is SearchError.SiteNotFound -> Logger.e(TAG, "${searchResult.searchError}")
+      is SearchError.ServerError -> Logger.e(TAG, "${searchResult.searchError}")
+      is SearchError.HtmlParsingError -> Logger.e(TAG, "${searchResult.searchError}")
+      is SearchError.UnknownError -> Logger.e(TAG, "Unknown error", searchResult.searchError.error)
     }
   }
 

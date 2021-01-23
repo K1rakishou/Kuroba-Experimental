@@ -121,6 +121,11 @@ class GlobalSearchUseCase(
     while (offset < parsedComment.length) {
       if (query[0].equals(parsedComment[offset], ignoreCase = true)) {
         val compared = compare(query, parsedComment, offset)
+
+        if (compared < 0) {
+          break
+        }
+
         if (compared == query.length) {
           spans += SpanToAdd(offset, query.length, BackgroundColorSpanHashed(theme.accentColor))
         }
@@ -145,15 +150,18 @@ class GlobalSearchUseCase(
   private fun compare(query: String, parsedComment: CharSequence, currentPosition: Int): Int {
     var compared = 0
 
-    for (index in 1 until query.length) {
-      if (!query[index].equals(parsedComment[currentPosition + index], ignoreCase = true)) {
-        return compared + 1
+    for (index in query.indices) {
+      val ch = parsedComment.getOrNull(currentPosition + index)
+        ?: return -1
+
+      if (!query[index].equals(ch, ignoreCase = true)) {
+        return compared
       }
 
       ++compared
     }
 
-    return compared + 1
+    return compared
   }
 
   private data class SpanToAdd(

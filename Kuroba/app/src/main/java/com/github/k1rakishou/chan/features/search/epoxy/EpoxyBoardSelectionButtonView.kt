@@ -42,7 +42,7 @@ class EpoxyBoardSelectionButtonView @JvmOverloads constructor(
       return
     }
 
-    textView.text = boardCode
+    textView.text = context.getString(R.string.selected_board_code, boardCode)
   }
 
   @ModelProp(options = [ModelProp.Option.IgnoreRequireHashCode])
