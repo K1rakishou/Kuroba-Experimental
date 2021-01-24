@@ -6,7 +6,6 @@ import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
-import com.github.k1rakishou.chan.core.site.parser.ChanReader.Companion.DEFAULT_POST_LIST_CAPACITY
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
@@ -25,6 +24,8 @@ import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.google.gson.stream.JsonReader
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import okhttp3.Request
+import okhttp3.ResponseBody
 import org.jsoup.parser.Parser
 import java.io.IOException
 import kotlin.math.max
@@ -36,7 +37,7 @@ class FutabaChanReader(
   private val mockReplyManager: MockReplyManager,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager
-) : ChanReader {
+) : ChanReader() {
   private val mutex = Mutex()
   private var parser: PostParser? = null
 
@@ -61,20 +62,29 @@ class FutabaChanReader(
 
   @Throws(Exception::class)
   override suspend fun loadThread(
-    reader: JsonReader,
+    request: Request,
+    responseBody: ResponseBody,
     chanReaderProcessor: ChanReaderProcessor
   ) {
-    iteratePostsInThread(reader) { reader ->
-      readPostObject(reader, chanReaderProcessor)
-    }
+    readBodyJson(responseBody) { jsonReader ->
+      iteratePostsInThread(jsonReader) { reader ->
+        readPostObject(reader, chanReaderProcessor)
+      }
 
-    chanReaderProcessor.applyChanReadOptions()
+      chanReaderProcessor.applyChanReadOptions()
+    }
   }
 
   @Throws(Exception::class)
-  override suspend fun loadCatalog(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
-    iterateThreadsInCatalog(reader) { reader ->
-      readPostObject(reader, chanReaderProcessor)
+  override suspend fun loadCatalog(
+    request: Request,
+    responseBody: ResponseBody,
+    chanReaderProcessor: ChanReaderProcessor
+  ) {
+    readBodyJson(responseBody) { jsonReader ->
+      iterateThreadsInCatalog(jsonReader) { reader ->
+        readPostObject(reader, chanReaderProcessor)
+      }
     }
   }
 

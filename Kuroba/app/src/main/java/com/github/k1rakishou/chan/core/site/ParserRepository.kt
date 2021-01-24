@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.site
 
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.site.common.FoolFuukaCommentParser
+import com.github.k1rakishou.chan.core.site.common.FuukaCommentParser
 import com.github.k1rakishou.chan.core.site.common.taimaba.TaimabaCommentParser
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
@@ -19,6 +20,7 @@ class ParserRepository(
   init {
     parsers[CommentParserType.Default] = CommentParser(mockReplyManager)
     parsers[CommentParserType.DvachParser] = DvachCommentParser(mockReplyManager)
+    parsers[CommentParserType.FuukaParser] = FuukaCommentParser(mockReplyManager)
     parsers[CommentParserType.FoolFuukaParser] = FoolFuukaCommentParser(mockReplyManager, archivesManager)
     parsers[CommentParserType.TaimabaParser] = TaimabaCommentParser(mockReplyManager)
     parsers[CommentParserType.VichanParser] = VichanCommentParser(mockReplyManager)

@@ -4,6 +4,7 @@ import com.github.k1rakishou.chan.core.site.common.CommonClientException
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
 import com.github.k1rakishou.chan.utils.extractFileNameExtension
+import com.github.k1rakishou.chan.utils.fixImageUrlIfNecessary
 import com.github.k1rakishou.chan.utils.removeExtensionIfPresent
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.jsonObject
@@ -17,50 +18,55 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.mapper.ArchiveThreadMapper
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
+import okhttp3.Request
+import okhttp3.ResponseBody
 
 class FoolFuukaApi(
   site: CommonSite
 ) : CommonSite.CommonApi(site) {
 
   override suspend fun loadThread(
-    reader: JsonReader,
+    request: Request,
+    responseBody: ResponseBody,
     chanReaderProcessor: ChanReaderProcessor
   ) {
-    val chanDescriptor = chanReaderProcessor.chanDescriptor
+    readBodyJson(responseBody) { jsonReader ->
+      val chanDescriptor = chanReaderProcessor.chanDescriptor
 
-    val threadDescriptor = chanDescriptor.threadDescriptorOrNull()
-      ?: throw CommonClientException("chanDescriptor is not thread descriptor: ${chanDescriptor}")
+      val threadDescriptor = chanDescriptor.threadDescriptorOrNull()
+        ?: throw CommonClientException("chanDescriptor is not thread descriptor: ${chanDescriptor}")
 
-    reader.jsonObject {
-      if (!hasNext()) {
-        return@jsonObject
-      }
+      jsonReader.jsonObject {
+        if (!hasNext()) {
+          return@jsonObject
+        }
 
-      val jsonKey = nextName()
-      if (jsonKey == "error") {
-        val errorMessage = nextStringOrNull()
-          ?: "No error message"
-        throw ArchivesApiException(errorMessage)
-      }
+        val jsonKey = nextName()
+        if (jsonKey == "error") {
+          val errorMessage = nextStringOrNull()
+            ?: "No error message"
+          throw ArchivesApiException(errorMessage)
+        }
 
-      val parsedThreadNo = jsonKey.toLongOrNull()
-      if (parsedThreadNo == null || parsedThreadNo != threadDescriptor.threadNo) {
-        Logger.e(TAG, "Bad parsedThreadNo: ${parsedThreadNo}, expected ${threadDescriptor.threadNo}")
-        return@jsonObject
-      }
+        val parsedThreadNo = jsonKey.toLongOrNull()
+        if (parsedThreadNo == null || parsedThreadNo != threadDescriptor.threadNo) {
+          Logger.e(TAG, "Bad parsedThreadNo: ${parsedThreadNo}, expected ${threadDescriptor.threadNo}")
+          return@jsonObject
+        }
 
-      jsonObject {
-        while (hasNext()) {
-          when (nextName()) {
-            "op" -> readOriginalPost(this, chanReaderProcessor)
-            "posts" -> readRegularPosts(this, chanReaderProcessor)
-            else -> skipValue()
+        jsonObject {
+          while (hasNext()) {
+            when (nextName()) {
+              "op" -> readOriginalPost(this, chanReaderProcessor)
+              "posts" -> readRegularPosts(this, chanReaderProcessor)
+              else -> skipValue()
+            }
           }
         }
       }
-    }
 
-    chanReaderProcessor.applyChanReadOptions()
+      chanReaderProcessor.applyChanReadOptions()
+    }
   }
 
   private suspend fun readOriginalPost(
@@ -214,30 +220,11 @@ class FoolFuukaApi(
     return archivePostMedia
   }
 
-  private fun fixImageUrlIfNecessary(imageUrl: String?): String? {
-    if (imageUrl == null) {
-      return imageUrl
-    }
-
-    // arch.b4k.co was caught red-handed sending broken links (without http/https schema but
-    // with both forward slashes, e.g. "//arch.b4k.co/..."  instead of "https://arch.b4k.co/...".
-    // We gotta fix this by ourselves for now.
-    // https://arch.b4k.co/meta/thread/357/
-    //
-    // UPD: it was fixed, but let's still leave this hack in case it happens again
-    if (imageUrl.startsWith("https://") || imageUrl.startsWith("http://")) {
-      return imageUrl
-    }
-
-    if (imageUrl.startsWith("//")) {
-      return "https:$imageUrl"
-    }
-
-    Logger.e(TAG, "Unknown kind of broken image url: \"$imageUrl\". If you see this report it to devs!")
-    return null
-  }
-
-  override suspend fun loadCatalog(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
+  override suspend fun loadCatalog(
+    request: Request,
+    responseBody: ResponseBody,
+    chanReaderProcessor: ChanReaderProcessor
+  ) {
     throw CommonClientException("Catalog is not supported for site ${site.name()}")
   }
 

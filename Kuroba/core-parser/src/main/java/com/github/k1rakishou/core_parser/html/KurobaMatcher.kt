@@ -69,7 +69,30 @@ sealed class KurobaMatcher {
 
     }
 
+    class KurobaTagPredicateMatcher(
+      val predicate: (Element) -> Boolean
+    ) : TagMatcher() {
+
+      override fun matches(element: Element): Boolean {
+        return predicate(element)
+      }
+
+      override fun toString(): String = "KurobaTagPredicateMatcher"
+    }
+
+    class KurobaTagWithNameMatcher(
+      val tagName: String
+    ) : TagMatcher() {
+
+      override fun matches(element: Element): Boolean {
+        return element.tagName() == tagName
+      }
+
+      override fun toString(): String = "KurobaTagWithNameMatcher{tagName='$tagName'}"
+    }
+
     companion object {
+      fun tagWithNameAttributeMatcher(tagName: String): TagMatcher = KurobaTagWithNameMatcher(tagName)
       fun tagNoAttributesMatcher(): TagMatcher = KurobaEmptyTagMatcher
       fun tagAnyAttributeMatcher(): TagMatcher = KurobaAnyTagMatcher
       fun tagHasAttribute(attributeKey: String): TagMatcher = KurobaHasAttributeMatcher(attributeKey)
@@ -77,6 +100,10 @@ sealed class KurobaMatcher {
 
       fun tagWithAttributeMatcher(tagName: String, attributeClass: String, attributeValue: String): TagMatcher {
         return KurobaTagWithAttributeMatcher(tagName, attributeClass, attributeValue)
+      }
+
+      fun tagPredicateMatcher(predicate: (Element) -> Boolean): TagMatcher {
+        return KurobaTagPredicateMatcher(predicate)
       }
     }
   }

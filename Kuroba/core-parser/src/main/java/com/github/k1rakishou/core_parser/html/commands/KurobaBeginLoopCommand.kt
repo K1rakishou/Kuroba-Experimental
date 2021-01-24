@@ -1,11 +1,11 @@
 package com.github.k1rakishou.core_parser.html.commands
 
 import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCollector
-import org.jsoup.nodes.Node
+import com.github.k1rakishou.core_parser.html.Matchable
 
 class KurobaBeginLoopCommand<T : KurobaHtmlParserCollector>(
   val loopId: Int,
-  val predicate: (Node) -> Boolean
+  val matchables: List<Matchable>
 ) : KurobaParserCommand<T> {
-  override fun toString(): String = "KurobaBeginLoopCommand(loopId=$loopId)"
+  override fun toString(): String = "KurobaBeginLoopCommand(loopId=$loopId, matchables.size=${matchables.size})"
 }

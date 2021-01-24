@@ -54,6 +54,7 @@ import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper.ImageReencodingHelperCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
+import com.github.k1rakishou.chan.ui.controller.CloudFlareBypassController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.PostLinksController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
@@ -75,6 +76,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.errorMessageOrClassName
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
@@ -218,7 +220,7 @@ class ThreadLayout @JvmOverloads constructor(
     // Inflate error layout
     errorLayout = inflate(context, R.layout.layout_thread_error, this, false) as LinearLayout
     errorText = errorLayout.findViewById(R.id.text)
-    errorRetryButton = errorLayout.findViewById(R.id.button)
+    errorRetryButton = errorLayout.findViewById(R.id.retry_button)
     openThreadInArchiveButton = errorLayout.findViewById(R.id.open_in_archive_button)
 
     // Inflate thread loading layout
@@ -384,7 +386,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun showError(error: ChanLoaderException) {
-    if (hasSupportedActiveArchives()) {
+    if (hasSupportedActiveArchives() && !error.isCloudFlareError()) {
       openThreadInArchiveButton.setVisibilityFast(View.VISIBLE)
     } else {
       openThreadInArchiveButton.setVisibilityFast(View.GONE)
@@ -403,6 +405,45 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     callback.onShowError()
+
+    if (error.isCloudFlareError()) {
+      openCloudFlareBypassControllerAndHandleResult(error)
+    }
+  }
+
+  private fun openCloudFlareBypassControllerAndHandleResult(error: ChanLoaderException) {
+    val presenting = callback
+      .isAlreadyPresentingController { controller -> controller is CloudFlareBypassController }
+
+    if (presenting) {
+      return
+    }
+
+    val controller = CloudFlareBypassController(
+      context = context,
+      originalRequestUrlHost = error.getOriginalRequestHost(),
+      onResult = { cookieResult ->
+        when (cookieResult) {
+          is CloudFlareBypassController.CookieResult.CookieValue -> {
+            showToast(context, "Successfully passed CloudFlare checks!")
+            presenter.normalLoad()
+
+            return@CloudFlareBypassController
+          }
+          is CloudFlareBypassController.CookieResult.Error -> {
+            showToast(
+              context,
+              "Failed to pass CloudFlare checks, reason: ${cookieResult.exception.errorMessageOrClassName()}"
+            )
+          }
+          CloudFlareBypassController.CookieResult.Canceled -> {
+            showToast(context, "Failed to pass CloudFlare checks, reason: Canceled")
+          }
+        }
+      }
+    )
+
+    callback.presentController(controller, animated = true)
   }
 
   private fun hasSupportedActiveArchives(): Boolean {
@@ -1091,6 +1132,7 @@ class ThreadLayout @JvmOverloads constructor(
     fun onShowError()
     fun presentController(controller: Controller, animated: Boolean)
     fun unpresentController(predicate: (Controller) -> Boolean)
+    fun isAlreadyPresentingController(predicate: (Controller) -> Boolean): Boolean
     fun openReportController(post: ChanPost)
     fun hideSwipeRefreshLayout()
     fun openFilterForType(type: FilterType, filterText: String?)

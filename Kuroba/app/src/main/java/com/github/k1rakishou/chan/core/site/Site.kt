@@ -16,6 +16,7 @@
  */
 package com.github.k1rakishou.chan.core.site
 
+import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInfo
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
@@ -162,4 +163,6 @@ interface Site {
   fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.SearchNotSupported
 
   fun postingLimitationInfo(): SitePostingLimitationInfo
+
+  fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T?
 }

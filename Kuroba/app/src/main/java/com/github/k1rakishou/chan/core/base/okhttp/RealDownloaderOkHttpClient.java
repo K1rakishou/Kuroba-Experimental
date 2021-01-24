@@ -3,12 +3,14 @@ package com.github.k1rakishou.chan.core.base.okhttp;
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.core.helper.ProxyStorage;
 import com.github.k1rakishou.chan.core.net.KurobaProxySelector;
+import com.github.k1rakishou.chan.core.site.SiteResolver;
 
 import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 
 import okhttp3.Dns;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -18,6 +20,7 @@ public class RealDownloaderOkHttpClient implements DownloaderOkHttpClient {
     private final Chan.OkHttpProtocols okHttpProtocols;
     private final HttpLoggingInterceptorLazy httpLoggingInterceptorLazy;
     private final ProxyStorage proxyStorage;
+    private final SiteResolver siteResolver;
 
     private OkHttpClient downloaderClient;
 
@@ -26,12 +29,14 @@ public class RealDownloaderOkHttpClient implements DownloaderOkHttpClient {
             Dns okHttpDns,
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
-            HttpLoggingInterceptorLazy httpLoggingInterceptorLazy
+            HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
+            SiteResolver siteResolver
     ) {
         this.okHttpDns = okHttpDns;
         this.okHttpProtocols = okHttpProtocols;
         this.proxyStorage = proxyStorage;
         this.httpLoggingInterceptorLazy = httpLoggingInterceptorLazy;
+        this.siteResolver = siteResolver;
     }
 
     @NotNull
@@ -45,11 +50,18 @@ public class RealDownloaderOkHttpClient implements DownloaderOkHttpClient {
                             ProxyStorage.ProxyActionType.SiteMediaFull
                     );
 
+                    Interceptor interceptor = new CloudFlareHandlerInterceptor(
+                            siteResolver,
+                            false,
+                            "Downloader"
+                    );
+
                     OkHttpClient.Builder builder = new OkHttpClient.Builder()
                             .readTimeout(5, SECONDS)
                             .writeTimeout(5, SECONDS)
                             .proxySelector(kurobaProxySelector)
                             .protocols(okHttpProtocols.getProtocols())
+                            .addNetworkInterceptor(interceptor)
                             .dns(okHttpDns);
 
                     HttpLoggingInterceptorInstaller.install(builder, httpLoggingInterceptorLazy);

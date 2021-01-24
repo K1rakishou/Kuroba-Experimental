@@ -85,9 +85,14 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
               appendLine()
               appendLine("Nodes: ")
 
-              append("\"")
-              nodes.forEach { node -> appendLine(node.toString()) }
-              append("\"")
+              appendLine("{")
+
+              for (index in start until nodes.size) {
+                val node = nodes[index]
+                appendLine(node.toString())
+              }
+
+              appendLine("}")
             }
 
             throw HtmlParsingException("Failed to execute command: $command, " +
@@ -117,7 +122,7 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
             // to skip on the next iteration to avoid infinite loops
             commandIndex + 1,
             command.loopId,
-            command.predicate
+            command.matchables
           )
 
           parserState.parserLoopStack.push(parserLoopState)
@@ -133,7 +138,8 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
           }
 
           val node = nodes.getOrNull(nodeIndex)
-          if (node != null && parserLoopState.predicate(node)) {
+
+          if (node != null && tryMatchConditionMatchableWithNode(parserLoopState.predicateMatchables, node)) {
             // continue loop
             commandIndex = parserLoopState.loopStartCommandIndex
           } else {
@@ -149,7 +155,7 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
           for (index in start until nodes.size) {
             val node = nodes[index]
 
-            if (tryMatchConditionMatchableWithNode(command, node)) {
+            if (tryMatchConditionMatchableWithNode(command.conditionMatchables, node)) {
               foundMatch = true
               break
             }
@@ -201,29 +207,29 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
   }
 
   private fun tryMatchConditionMatchableWithNode(
-    command: KurobaBeginConditionCommand<T>,
+    conditionMatchables: List<Matchable>,
     node: Node
   ): Boolean {
-    for (conditionMatchable in command.conditionMatchables) {
+    for (conditionMatchable in conditionMatchables) {
       when (conditionMatchable) {
         is PatternMatchable -> {
-          if (conditionMatchable.matcher.matches(node.attr(conditionMatchable.attrName))) {
-            return true
+          if (!conditionMatchable.matcher.matches(node.attr(conditionMatchable.attrName))) {
+            return false
           }
         }
         is TagMatchable -> {
           if (node !is Element) {
-            continue
+            return false
           }
 
-          if (conditionMatchable.matcher.matches(node)) {
-            return true
+          if (!conditionMatchable.matcher.matches(node)) {
+            return false
           }
         }
       }
     }
 
-    return false
+    return true
   }
 
   data class ParserNestingState(
@@ -234,7 +240,7 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
   data class ParserLoopState(
     val loopStartCommandIndex: Int,
     val loopId: Int,
-    val predicate: (Node) -> Boolean
+    val predicateMatchables: List<Matchable>
   )
 
   class ParserState(

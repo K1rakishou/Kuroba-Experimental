@@ -80,7 +80,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         </com.github.k1rakishou.chan.ui.view.CrossfadeView>
 
         <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
-            android:id="@+id/button"
+            android:id="@+id/retry_button"
             android:layout_width="180dp"
             android:layout_height="wrap_content" />
 

@@ -152,13 +152,15 @@ public class NetModule {
             Dns okHttpDns,
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
-            HttpLoggingInterceptorLazy httpLoggingInterceptorLazy
+            HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
+            SiteResolver siteResolver
     ) {
         return new RealProxiedOkHttpClient(
                 okHttpDns,
                 okHttpProtocols,
                 proxyStorage,
-                httpLoggingInterceptorLazy
+                httpLoggingInterceptorLazy,
+                siteResolver
         );
     }
 
@@ -172,14 +174,16 @@ public class NetModule {
             Dns okHttpDns,
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
-            HttpLoggingInterceptorLazy httpLoggingInterceptorLazy
+            HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
+            SiteResolver siteResolver
     ) {
         return new CoilOkHttpClient(
                 applicationContext,
                 okHttpDns,
                 okHttpProtocols,
                 proxyStorage,
-                httpLoggingInterceptorLazy
+                httpLoggingInterceptorLazy,
+                siteResolver
         );
     }
 
@@ -192,13 +196,15 @@ public class NetModule {
             Dns okHttpDns,
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
-            HttpLoggingInterceptorLazy httpLoggingInterceptorLazy
+            HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
+            SiteResolver siteResolver
     ) {
         return new RealDownloaderOkHttpClient(
                 okHttpDns,
                 okHttpProtocols,
                 proxyStorage,
-                httpLoggingInterceptorLazy
+                httpLoggingInterceptorLazy,
+                siteResolver
         );
     }
 }

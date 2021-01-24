@@ -73,7 +73,7 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
   fun loop(
     builder: KurobaParserCommandBuilder<T>.() -> KurobaParserCommandBuilder<T>
   ): KurobaParserCommandBuilder<T> {
-    return loopWhile(predicate = { true }, builder)
+    return loopWhile(predicate = { anyTag() }, builder)
   }
 
   /**
@@ -84,13 +84,14 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
    * */
   @KurobaHtmlParserDsl
   fun loopWhile(
-    predicate: (Node) -> Boolean,
+    predicate: MatchableBuilder.() -> MatchableBuilder,
     builder: KurobaParserCommandBuilder<T>.() -> KurobaParserCommandBuilder<T>
   ): KurobaParserCommandBuilder<T> {
     val commandGroup = builder(KurobaParserCommandBuilder(null)).build()
     val loopId = nextCommandId()
+    val predicateMatchables = predicate.invoke(MatchableBuilder()).build()
 
-    parserCommands += KurobaBeginLoopCommand(loopId, predicate)
+    parserCommands += KurobaBeginLoopCommand(loopId, predicateMatchables)
     parserCommands.addAll(commandGroup.innerCommands)
     parserCommands += KurobaEndLoopCommand(loopId)
 

@@ -22,7 +22,16 @@ import com.github.k1rakishou.chan.core.site.sites.Wired7
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan420.Chan420
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
-import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.*
+import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.ArchiveOfSins
+import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.ArchivedMoe
+import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.B4k
+import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.DesuArchive
+import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.Fireden
+import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.ForPlebs
+import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.Nyafuu
+import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.RebeccaBlackTech
+import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.TokyoChronos
+import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.Warosu
 import com.github.k1rakishou.chan.core.site.sites.kun8.Kun8
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import java.util.*
@@ -53,6 +62,7 @@ object SiteRegistry {
     URL_HANDLERS.add(B4k.URL_HANDLER)
     URL_HANDLERS.add(ArchiveOfSins.URL_HANDLER)
     URL_HANDLERS.add(TokyoChronos.URL_HANDLER)
+    URL_HANDLERS.add(Warosu.URL_HANDLER)
 
     addSiteToSiteClassesMap(Chan4.SITE_NAME, Chan4::class.java)
     addSiteToSiteClassesMap(Lainchan.SITE_NAME, Lainchan::class.java)
@@ -70,6 +80,7 @@ object SiteRegistry {
     addSiteToSiteClassesMap(B4k.SITE_NAME, B4k::class.java)
     addSiteToSiteClassesMap(ArchiveOfSins.SITE_NAME, ArchiveOfSins::class.java)
     addSiteToSiteClassesMap(TokyoChronos.SITE_NAME, TokyoChronos::class.java)
+    addSiteToSiteClassesMap(Warosu.SITE_NAME, Warosu::class.java)
   }
 
   private fun addSiteToSiteClassesMap(siteName: String, siteClass: Class<out Site>) {

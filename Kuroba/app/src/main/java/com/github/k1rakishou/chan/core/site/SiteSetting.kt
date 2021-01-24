@@ -19,7 +19,10 @@ package com.github.k1rakishou.chan.core.site
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 
-sealed class SiteSetting(val settingTitle: String, var settingDescription: String?) {
+sealed class SiteSetting(
+  val settingTitle: String,
+  val settingDescription: String?
+) {
 
   class SiteOptionsSetting(
     settingName: String,
@@ -33,5 +36,9 @@ sealed class SiteSetting(val settingTitle: String, var settingDescription: Strin
     settingDescription: String?,
     val setting: StringSetting
   ) : SiteSetting(settingName, settingDescription)
+
+  enum class SiteSettingId {
+    CloudFlareClearanceCookie
+  }
 
 }

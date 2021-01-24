@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.core.site
 
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.Setting
 import com.github.k1rakishou.SharedPreferencesSettingProvider
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
@@ -39,6 +40,7 @@ import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.prefs.OptionsSetting
+import com.github.k1rakishou.prefs.StringSetting
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -86,6 +88,7 @@ abstract class SiteBase : Site, CoroutineScope {
   }
 
   lateinit var concurrentFileDownloadingChunks: OptionsSetting<ChanSettings.ConcurrentFileDownloadingChunks>
+  lateinit var cloudFlareClearanceCookie: StringSetting
 
   private var initialized = false
 
@@ -106,6 +109,12 @@ abstract class SiteBase : Site, CoroutineScope {
       "concurrent_download_chunk_count",
       ChanSettings.ConcurrentFileDownloadingChunks::class.java,
       ChanSettings.ConcurrentFileDownloadingChunks.Two
+    )
+
+    cloudFlareClearanceCookie = StringSetting(
+      prefs,
+      "cloud_flare_clearance_cookie",
+      ""
     )
   }
 
@@ -167,6 +176,12 @@ abstract class SiteBase : Site, CoroutineScope {
     return boardManager.byBoardDescriptor(boardDescriptor)
   }
 
+  override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? {
+    return when (settingId) {
+      SiteSetting.SiteSettingId.CloudFlareClearanceCookie -> cloudFlareClearanceCookie as T
+    }
+  }
+
   override fun settings(): List<SiteSetting> {
     return listOf<SiteSetting>(
       SiteSetting.SiteOptionsSetting(
@@ -174,6 +189,11 @@ abstract class SiteBase : Site, CoroutineScope {
         getString(R.string.settings_concurrent_file_downloading_description),
         concurrentFileDownloadingChunks,
         ChanSettings.ConcurrentFileDownloadingChunks.values().map { it.name }
+      ),
+      SiteSetting.SiteStringSetting(
+        getString(R.string.cloud_flare_cookie_setting_title),
+        getString(R.string.cloud_flare_cookie_setting_description),
+        cloudFlareClearanceCookie
       )
     )
   }

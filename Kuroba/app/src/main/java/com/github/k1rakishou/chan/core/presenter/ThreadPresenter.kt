@@ -661,10 +661,16 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    if (error is ClientException) {
-      Logger.e(TAG, "onChanLoaderError() called, error=${error.errorMessageOrClassName()}")
-    } else {
-      Logger.e(TAG, "onChanLoaderError() called", error)
+    when {
+      error is ClientException -> {
+        Logger.e(TAG, "onChanLoaderError() called, error=${error.errorMessageOrClassName()}")
+      }
+      error.isCloudFlareError() -> {
+        Logger.e(TAG, "onChanLoaderError() called CloudFlareDetectedException")
+      }
+      else -> {
+        Logger.e(TAG, "onChanLoaderError() called", error)
+      }
     }
 
     threadPresenterCallback?.showError(error)

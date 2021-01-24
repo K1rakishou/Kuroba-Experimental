@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.core.manager.ReplyManager;
 import com.github.k1rakishou.chan.core.saver.ImageSaver;
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
+import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileChooser;
@@ -107,10 +108,12 @@ public class AppModule {
             CoroutineScope appScope,
             ImageLoader coilImageLoader,
             ReplyManager replyManager,
-            ThemeEngine themeEngine
+            ThemeEngine themeEngine,
+            AppConstants appConstants
     ) {
         return new ImageLoaderV2(
                 appScope,
+                appConstants,
                 coilImageLoader,
                 ChanSettings.verboseLogs.get(),
                 replyManager,

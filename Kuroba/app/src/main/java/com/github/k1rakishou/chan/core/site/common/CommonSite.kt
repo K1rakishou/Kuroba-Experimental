@@ -591,7 +591,7 @@ abstract class CommonSite : SiteBase() {
     
   }
   
-  abstract class CommonApi(protected var site: CommonSite) : ChanReader {
+  abstract class CommonApi(protected var site: CommonSite) : ChanReader() {
     val vichanReaderExtensions = VichanReaderExtensions()
 
     override suspend fun getParser(): PostParser? {

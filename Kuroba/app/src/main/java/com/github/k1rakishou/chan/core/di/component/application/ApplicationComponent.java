@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.core.di.component.application;
 import android.content.Context;
 
 import com.github.k1rakishou.chan.Chan;
+import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.di.module.application.AppModule;
 import com.github.k1rakishou.chan.core.di.module.application.ExecutorsModule;
@@ -24,8 +25,6 @@ import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.di.ModelComponent;
-
-import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Singleton;
 
@@ -53,11 +52,12 @@ public interface ApplicationComponent {
     Chan getApplication();
     ActivityComponent.Builder activityComponentBuilder();
 
-    void inject(@NotNull Chan application);
-    void inject(@NotNull BookmarkBackgroundWatcherWorker bookmarkBackgroundWatcherWorker);
-    void inject(@NotNull SiteBase siteBase);
-    void inject(@NotNull SnackbarWrapper snackbarWrapper);
-    void inject(@NotNull ReplyNotificationDeleteIntentBroadcastReceiver replyNotificationDeleteIntentBroadcastReceiver);
+    void inject(Chan application);
+    void inject(BookmarkBackgroundWatcherWorker bookmarkBackgroundWatcherWorker);
+    void inject(SiteBase siteBase);
+    void inject(SnackbarWrapper snackbarWrapper);
+    void inject(ReplyNotificationDeleteIntentBroadcastReceiver replyNotificationDeleteIntentBroadcastReceiver);
+    void inject(CloudFlareHandlerInterceptor cloudFlareHandlerInterceptor);
 
     @Component.Builder
     interface Builder {

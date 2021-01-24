@@ -64,6 +64,7 @@ Screenshots can be found [here](https://github.com/K1rakishou/Kuroba-Experimenta
 - Nyafuu 
 - RebeccaBlackTech
 - TokyoChronos
+- Warosu
 
 ## License
 [Kuroba is GPLv3](https://github.com/K1rakishou/Kuroba-Experimental/blob/develop/COPYING.txt), [licenses of the used libraries.](https://github.com/K1rakishou/Kuroba-Experimental/blob/develop/Kuroba/app/src/main/assets/html/licenses.html)

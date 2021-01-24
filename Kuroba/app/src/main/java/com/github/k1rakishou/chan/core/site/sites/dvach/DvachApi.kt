@@ -19,6 +19,8 @@ import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.google.gson.stream.JsonReader
+import okhttp3.Request
+import okhttp3.ResponseBody
 import org.jsoup.parser.Parser
 import java.io.IOException
 import java.util.*
@@ -33,11 +35,14 @@ class DvachApi internal constructor(
 
   @Throws(Exception::class)
   override suspend fun loadThread(
-    reader: JsonReader,
+    request: Request,
+    responseBody: ResponseBody,
     chanReaderProcessor: ChanReaderProcessor
   ) {
-    iteratePostsInThread(reader) { dvachExtraThreadInfo, jsonReader ->
-      readPostObject(jsonReader, dvachExtraThreadInfo, chanReaderProcessor)
+    readBodyJson(responseBody) { jsonReader ->
+      iteratePostsInThread(jsonReader) { dvachExtraThreadInfo, reader ->
+        readPostObject(reader, dvachExtraThreadInfo, chanReaderProcessor)
+      }
     }
 
     chanReaderProcessor.applyChanReadOptions()
@@ -45,12 +50,14 @@ class DvachApi internal constructor(
 
   @Throws(Exception::class)
   override suspend fun loadCatalog(
-    reader: JsonReader,
+    request: Request,
+    responseBody: ResponseBody,
     chanReaderProcessor: ChanReaderProcessor
   ) {
-
-    iterateThreadsInCatalog(reader) { jsonReader ->
-      readPostObject(jsonReader, null, chanReaderProcessor)
+    readBodyJson(responseBody) { jsonReader ->
+      iterateThreadsInCatalog(jsonReader) { reader ->
+        readPostObject(reader, null, chanReaderProcessor)
+      }
     }
   }
 

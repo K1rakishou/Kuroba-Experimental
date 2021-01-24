@@ -261,6 +261,10 @@ abstract class ThreadController(
     }
   }
 
+  override fun isAlreadyPresentingController(predicate: (Controller) -> Boolean): Boolean {
+    return super.isAlreadyPresenting(predicate)
+  }
+
   override fun hideSwipeRefreshLayout() {
     if (!::swipeRefreshLayout.isInitialized) {
       return

@@ -20,6 +20,7 @@ import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.chan.utils.getLifecycleFromContext
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -42,6 +43,7 @@ import kotlin.time.measureTimedValue
 @DoNotStrip
 class ImageLoaderV2(
   private val appScope: CoroutineScope,
+  private val appConstants: AppConstants,
   private val imageLoader: ImageLoader,
   private val verboseLogsEnabled: Boolean,
   private val replyManager: ReplyManager,
@@ -98,6 +100,7 @@ class ImageLoaderV2(
       transformations(transformations)
       allowHardware(true)
       scale(Scale.FIT)
+      addHeader("User-Agent", appConstants.userAgent)
 
       if ((width != null && width > 0) && (height != null && height > 0)) {
         size(width, height)
@@ -175,6 +178,7 @@ class ImageLoaderV2(
       scale(Scale.FIT)
       allowHardware(true)
       transformations(transformations)
+      addHeader("User-Agent", appConstants.userAgent)
 
       if ((width != null && width > 0) && (height != null && height > 0)) {
         size(width, height)

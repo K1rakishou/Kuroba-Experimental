@@ -1,7 +1,9 @@
 package com.github.k1rakishou.chan.core.site.loader
 
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.google.gson.JsonParseException
+import okhttp3.HttpUrl
 import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -34,12 +36,31 @@ open class ChanLoaderException(
         }
         exception is SSLException -> R.string.thread_load_failed_ssl
         exception is JsonParseException -> R.string.thread_load_failed_json_parsing
+        exception is CloudFlareHandlerInterceptor.CloudFlareDetectedException -> {
+          R.string.thread_load_failed_cloud_flare_detected
+        }
         else -> R.string.thread_load_failed_parsing
       }
     }
 
   private fun isServerErrorNotFound(exception: ServerException): Boolean {
     return exception.statusCode == 404
+  }
+
+  fun isCloudFlareError(): Boolean = exception is CloudFlareHandlerInterceptor.CloudFlareDetectedException
+
+  fun getOriginalRequestHost(): String {
+    if (!isCloudFlareError()) {
+      throw IllegalStateException("Not a CloudFlareDetectedException error!")
+    }
+
+    val fullUrl = (exception as CloudFlareHandlerInterceptor.CloudFlareDetectedException).requestUrl
+
+    return HttpUrl.Builder()
+      .scheme("https")
+      .host(fullUrl.host)
+      .build()
+      .toString()
   }
 
   fun isCoroutineCancellationError(): Boolean {

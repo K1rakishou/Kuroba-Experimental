@@ -20,24 +20,64 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.google.gson.stream.JsonReader
+import okhttp3.Request
+import okhttp3.ResponseBody
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
+import java.io.InputStreamReader
+import java.nio.charset.StandardCharsets
 
-interface ChanReader {
-  suspend fun getParser(): PostParser?
+abstract class ChanReader() {
+  abstract suspend fun getParser(): PostParser?
 
   @Throws(Exception::class)
-  suspend fun loadThread(
-    reader: JsonReader,
+  abstract suspend fun loadThread(
+    request: Request,
+    responseBody: ResponseBody,
     chanReaderProcessor: ChanReaderProcessor
   )
 
   @Throws(Exception::class)
-  suspend fun loadCatalog(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor)
+  abstract suspend fun loadCatalog(
+    request: Request,
+    responseBody: ResponseBody,
+    chanReaderProcessor: ChanReaderProcessor
+  )
 
-  suspend fun readThreadBookmarkInfoObject(
+  abstract suspend fun readThreadBookmarkInfoObject(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     expectedCapacity: Int,
     reader: JsonReader
   ): ModularResult<ThreadBookmarkInfoObject>
+
+  protected suspend fun readBodyJson(
+    responseBody: ResponseBody,
+    reader: suspend (JsonReader) -> Unit
+  ) {
+    responseBody.byteStream().use { inputStream ->
+      JsonReader(InputStreamReader(inputStream, StandardCharsets.UTF_8)).use { jsonReader ->
+        reader(jsonReader)
+      }
+    }
+  }
+
+  protected suspend fun readBodyHtml(
+    request: Request,
+    responseBody: ResponseBody,
+    reader: suspend (Document) -> Unit
+  ) {
+    responseBody.use { body ->
+      body.byteStream().use { inputStream ->
+        val htmlDocument = Jsoup.parse(
+          inputStream,
+          StandardCharsets.UTF_8.name(),
+          request.url.toString()
+        )
+
+        reader(htmlDocument)
+      }
+    }
+  }
 
   companion object {
     const val DEFAULT_POST_LIST_CAPACITY = 16

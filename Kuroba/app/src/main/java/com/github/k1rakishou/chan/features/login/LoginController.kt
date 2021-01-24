@@ -79,7 +79,7 @@ class LoginController(
     view = inflate(context, R.layout.controller_pass).also { view ->
       crossfadeView = view.findViewById(R.id.crossfade)
       errors = view.findViewById(R.id.errors)
-      button = view.findViewById(R.id.button)
+      button = view.findViewById(R.id.retry_button)
       refreshPostingLimitsInfoButton = view.findViewById(R.id.refresh_posting_limits_info)
       inputToken = view.findViewById(R.id.input_token)
       inputPin = view.findViewById(R.id.input_pin)

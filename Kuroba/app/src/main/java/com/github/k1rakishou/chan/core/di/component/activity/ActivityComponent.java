@@ -75,6 +75,7 @@ import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell;
 import com.github.k1rakishou.chan.ui.controller.AlbumDownloadController;
 import com.github.k1rakishou.chan.ui.controller.AlbumViewController;
 import com.github.k1rakishou.chan.ui.controller.BrowseController;
+import com.github.k1rakishou.chan.ui.controller.CloudFlareBypassController;
 import com.github.k1rakishou.chan.ui.controller.FiltersController;
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController;
 import com.github.k1rakishou.chan.ui.controller.ImageViewerController;
@@ -215,6 +216,7 @@ public interface ActivityComponent {
     void inject(PostLinksController postLinksController);
     void inject(SelectSiteForSearchController selectSiteForSearchController);
     void inject(SelectBoardForSearchController selectBoardForSearchController);
+    void inject(CloudFlareBypassController cloudFlareBypassController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

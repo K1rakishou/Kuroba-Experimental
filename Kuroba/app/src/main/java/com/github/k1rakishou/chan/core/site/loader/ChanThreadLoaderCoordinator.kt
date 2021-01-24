@@ -16,6 +16,7 @@
  */
 package com.github.k1rakishou.chan.core.site.loader
 
+import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -42,7 +43,6 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
-import com.google.gson.stream.JsonReader
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -54,8 +54,6 @@ import okhttp3.HttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
-import java.io.InputStreamReader
-import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
@@ -155,6 +153,10 @@ class ChanThreadLoaderCoordinator(
         val (response, requestDuration) = try {
           measureTimedValue { proxiedOkHttpClient.okHttpClient().suspendCall(request) }
         } catch (error: IOException) {
+          if (error is CloudFlareHandlerInterceptor.CloudFlareDetectedException) {
+            throw error
+          }
+
           return@Try fallbackPostLoadOnNetworkError(chanDescriptor, error)
         }
 
@@ -164,6 +166,7 @@ class ChanThreadLoaderCoordinator(
 
         val (chanReaderProcessor, readPostsDuration) = measureTimedValue {
           return@measureTimedValue readPostsFromResponse(
+            request,
             response,
             chanDescriptor,
             chanReadOptions,
@@ -281,6 +284,7 @@ class ChanThreadLoaderCoordinator(
   }
 
   private suspend fun readPostsFromResponse(
+    request: Request,
     response: Response,
     chanDescriptor: ChanDescriptor,
     chanReadOptions: ChanReadOptions,
@@ -292,24 +296,23 @@ class ChanThreadLoaderCoordinator(
       val body = response.body
         ?: throw IOException("Response has no body")
 
-      return@Try body.byteStream().use { inputStream ->
-        return@use JsonReader(InputStreamReader(inputStream, StandardCharsets.UTF_8))
-          .use { jsonReader ->
-            val chanReaderProcessor = ChanReaderProcessor(
-              chanPostRepository,
-              chanReadOptions,
-              chanDescriptor
-            )
+      val chanReaderProcessor = ChanReaderProcessor(
+        chanPostRepository,
+        chanReadOptions,
+        chanDescriptor
+      )
 
-            when (chanDescriptor) {
-              is ChanDescriptor.ThreadDescriptor -> chanReader.loadThread(jsonReader, chanReaderProcessor)
-              is ChanDescriptor.CatalogDescriptor -> chanReader.loadCatalog(jsonReader, chanReaderProcessor)
-              else -> throw IllegalArgumentException("Unknown mode")
-            }
-
-            return@use chanReaderProcessor
-          }
+      when (chanDescriptor) {
+        is ChanDescriptor.ThreadDescriptor -> {
+          chanReader.loadThread(request, body, chanReaderProcessor)
+        }
+        is ChanDescriptor.CatalogDescriptor -> {
+          chanReader.loadCatalog(request, body, chanReaderProcessor)
+        }
+        else -> throw IllegalArgumentException("Unknown mode")
       }
+
+      return@Try chanReaderProcessor
     }
   }
 

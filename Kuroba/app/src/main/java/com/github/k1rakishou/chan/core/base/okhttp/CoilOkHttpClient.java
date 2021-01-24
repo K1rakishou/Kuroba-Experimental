@@ -5,6 +5,7 @@ import android.content.Context;
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.core.helper.ProxyStorage;
 import com.github.k1rakishou.chan.core.net.KurobaProxySelector;
+import com.github.k1rakishou.chan.core.site.SiteResolver;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +15,7 @@ import javax.inject.Inject;
 
 import okhttp3.Cache;
 import okhttp3.Dns;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 
 
@@ -27,6 +29,7 @@ public class CoilOkHttpClient implements CustomOkHttpClient {
     private final Chan.OkHttpProtocols okHttpProtocols;
     private final HttpLoggingInterceptorLazy httpLoggingInterceptorLazy;
     private final ProxyStorage proxyStorage;
+    private final SiteResolver siteResolver;
 
     private OkHttpClient coilClient;
 
@@ -36,13 +39,15 @@ public class CoilOkHttpClient implements CustomOkHttpClient {
             Dns okHttpDns,
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
-            HttpLoggingInterceptorLazy httpLoggingInterceptorLazy
+            HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
+            SiteResolver siteResolver
     ) {
         this.applicationContext = applicationContext;
         this.okHttpDns = okHttpDns;
         this.okHttpProtocols = okHttpProtocols;
         this.proxyStorage = proxyStorage;
         this.httpLoggingInterceptorLazy = httpLoggingInterceptorLazy;
+        this.siteResolver = siteResolver;
     }
 
     @NotNull
@@ -63,10 +68,17 @@ public class CoilOkHttpClient implements CustomOkHttpClient {
                             ProxyStorage.ProxyActionType.SiteMediaPreviews
                     );
 
+                    Interceptor interceptor = new CloudFlareHandlerInterceptor(
+                            siteResolver,
+                            false,
+                            "Coil"
+                    );
+
                     OkHttpClient.Builder builder = new OkHttpClient.Builder()
                             .protocols(okHttpProtocols.getProtocols())
                             .proxySelector(kurobaProxySelector)
                             .cache(cache)
+                            .addNetworkInterceptor(interceptor)
                             .dns(okHttpDns);
 
                     HttpLoggingInterceptorInstaller.install(builder, httpLoggingInterceptorLazy);

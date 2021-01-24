@@ -55,7 +55,7 @@ class ArchivePost(
 
   fun isValid(): Boolean {
     if (postSubNo > 0L) {
-      // Skip all archive ghost posts because they will fuck up the database
+      // Skip all archive ghost posts because we don't support them yet
       return false
     }
 

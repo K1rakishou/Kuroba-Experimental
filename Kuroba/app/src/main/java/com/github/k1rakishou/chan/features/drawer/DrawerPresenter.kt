@@ -177,7 +177,9 @@ class DrawerPresenter(
 
   private suspend fun showNavigationHistoryInternal() {
     BackgroundUtils.ensureMainThread()
+
     historyNavigationManager.awaitUntilInitialized()
+    siteManager.awaitUntilInitialized()
 
     val isWatcherEnabled = ChanSettings.watchEnabled.get()
 

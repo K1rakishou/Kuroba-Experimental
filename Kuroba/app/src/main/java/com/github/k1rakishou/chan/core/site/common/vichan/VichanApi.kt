@@ -19,6 +19,8 @@ import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.google.gson.stream.JsonReader
+import okhttp3.Request
+import okhttp3.ResponseBody
 import org.jsoup.parser.Parser
 import java.io.IOException
 import java.util.*
@@ -33,20 +35,29 @@ class VichanApi(
 
   @Throws(Exception::class)
   override suspend fun loadThread(
-    reader: JsonReader,
+    request: Request,
+    responseBody: ResponseBody,
     chanReaderProcessor: ChanReaderProcessor
   ) {
-    vichanReaderExtensions.iteratePostsInThread(reader) { reader ->
-      readPostObject(reader, chanReaderProcessor)
-    }
+    readBodyJson(responseBody) { jsonReader ->
+      vichanReaderExtensions.iteratePostsInThread(jsonReader) { reader ->
+        readPostObject(reader, chanReaderProcessor)
+      }
 
-    chanReaderProcessor.applyChanReadOptions()
+      chanReaderProcessor.applyChanReadOptions()
+    }
   }
 
   @Throws(Exception::class)
-  override suspend fun loadCatalog(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
-    vichanReaderExtensions.iterateThreadsInCatalog(reader) { reader ->
-      readPostObject(reader, chanReaderProcessor)
+  override suspend fun loadCatalog(
+    request: Request,
+    responseBody: ResponseBody,
+    chanReaderProcessor: ChanReaderProcessor
+  ) {
+    readBodyJson(responseBody) { jsonReader ->
+      vichanReaderExtensions.iterateThreadsInCatalog(jsonReader) { reader ->
+        readPostObject(reader, chanReaderProcessor)
+      }
     }
   }
 

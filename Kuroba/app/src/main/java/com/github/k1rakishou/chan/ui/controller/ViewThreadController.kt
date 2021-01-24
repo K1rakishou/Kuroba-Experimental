@@ -22,7 +22,6 @@ import androidx.core.content.ContextCompat
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.R.string.action_reload
-import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
@@ -629,17 +628,6 @@ open class ViewThreadController(
 
     navigation.title = getString(R.string.thread_loading_error_title)
     requireNavController().requireToolbar().updateTitle(navigation)
-  }
-
-  override fun unpresentController(predicate: (Controller) -> Boolean) {
-    getControllerOrNull { controller ->
-      if (predicate(controller)) {
-        controller.stopPresenting()
-        return@getControllerOrNull true
-      }
-
-      return@getControllerOrNull false
-    }
   }
 
   private fun updateLeftPaneHighlighting(chanDescriptor: ChanDescriptor?) {

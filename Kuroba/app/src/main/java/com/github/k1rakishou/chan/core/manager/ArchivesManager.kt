@@ -312,11 +312,6 @@ open class ArchivesManager(
     private val disabledArchives = setOf(
       // Disabled because it's weird as hell. I can't even say whether it's working or not.
       "archive.b-stats.org",
-
-      // Disabled because it requires Cloudflare authentication which is not supported for
-      // now.
-      "warosu.org",
-
       // Disable because it always returns 403 when sending requests via the OkHttpClient,
       // but works normally when opening in the browser. Apparently some kind of
       // authentication is required.

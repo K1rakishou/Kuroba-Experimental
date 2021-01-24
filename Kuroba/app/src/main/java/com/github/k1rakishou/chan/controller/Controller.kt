@@ -285,7 +285,7 @@ abstract class Controller(@JvmField var context: Context) {
     controllerNavigationManager.onControllerPresented(controller)
   }
 
-  fun isAlreadyPresenting(predicate: Function1<Controller, Boolean>): Boolean {
+  fun isAlreadyPresenting(predicate: (Controller) -> Boolean): Boolean {
     return (context as StartActivity).isControllerAdded(predicate)
   }
 
