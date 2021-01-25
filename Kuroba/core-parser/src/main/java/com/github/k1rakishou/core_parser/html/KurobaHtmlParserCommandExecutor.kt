@@ -77,8 +77,8 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
           var executed = false
 
           for (index in start until nodes.size) {
-            ++nodeIndex
             val node = nodes[index]
+            ++nodeIndex
 
             if (command.executeStep(node, collector)) {
               executed = true
@@ -112,6 +112,7 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
 
           ++commandIndex
           nodes = KurobaHtmlParserUtils.filterEmptyNodes(nodes[nodeIndex - 1].childNodes())
+
           nodeIndex = 0
         }
         is KurobaCommandPopState<T> -> {

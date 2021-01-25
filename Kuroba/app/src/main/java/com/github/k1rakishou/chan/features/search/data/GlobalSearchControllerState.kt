@@ -62,7 +62,7 @@ sealed class SearchParameters {
 
   }
 
-  data class FoolFuukaSearchParameters(
+  abstract class AdvancedSearchParameters(
     override val query: String,
     val subject: String,
     val boardDescriptor: BoardDescriptor?
@@ -114,7 +114,44 @@ sealed class SearchParameters {
         "query='$query', subject='$subject', boardDescriptor='$boardDescriptor'")
     }
 
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (javaClass != other?.javaClass) return false
+
+      other as AdvancedSearchParameters
+
+      if (query != other.query) return false
+      if (subject != other.subject) return false
+      if (boardDescriptor != other.boardDescriptor) return false
+
+      return true
+    }
+
+    override fun hashCode(): Int {
+      var result = query.hashCode()
+      result = 31 * result + subject.hashCode()
+      result = 31 * result + (boardDescriptor?.hashCode() ?: 0)
+      return result
+    }
+
+    override fun toString(): String {
+      return "AdvancedSearchParameters(type='${this.javaClass.simpleName}', query='$query', " +
+        "subject='$subject', boardDescriptor=$boardDescriptor)"
+    }
+
   }
+
+  class FuukaSearchParameters(
+    query: String,
+    subject: String,
+    boardDescriptor: BoardDescriptor?
+  ) : AdvancedSearchParameters(query, subject, boardDescriptor)
+
+  class FoolFuukaSearchParameters(
+    query: String,
+    subject: String,
+    boardDescriptor: BoardDescriptor?
+  ) : AdvancedSearchParameters(query, subject, boardDescriptor)
 
   companion object {
     const val MIN_SEARCH_QUERY_LENGTH = 2

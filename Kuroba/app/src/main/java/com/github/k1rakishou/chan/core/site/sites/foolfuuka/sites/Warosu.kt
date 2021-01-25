@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.core.site.sites.fuuka.BaseFuukaSite
 import com.github.k1rakishou.chan.core.site.sites.fuuka.FuukaActions
 import com.github.k1rakishou.chan.core.site.sites.fuuka.FuukaApi
 import com.github.k1rakishou.chan.core.site.sites.fuuka.FuukaEndpoints
+import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.data.ArchiveType
 import okhttp3.HttpUrl
@@ -24,6 +25,8 @@ class Warosu : BaseFuukaSite() {
   override fun rootUrl(): HttpUrl = ROOT_URL
 
   override fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties = chunkDownloaderSiteProperties
+
+  override fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.FuukaSearch
 
   override fun setup() {
     setEnabled(true)

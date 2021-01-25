@@ -38,9 +38,14 @@ class ParserLoopTest : BaseHtmlParserTest() {
                 nest {
                   span(
                     attrExtractorBuilderFunc = {
-                      expectAttrWithValue("class", KurobaMatcher.PatternMatcher.patternFind(Pattern.compile("test\\d+")))
+                      expectAttrWithValue(
+                        "class",
+                        KurobaMatcher.PatternMatcher.patternFind(Pattern.compile("test\\d+"))
+                      )
                     },
-                    extractorFunc = { node, _, collector -> collector.collectedSpanTags.add(node.wholeText()) }
+                    extractorFunc = { node, _, collector ->
+                      collector.collectedSpanTags.add(node.wholeText())
+                    }
                   )
                 }
               }

@@ -7,7 +7,6 @@ import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCommandExecutor
 import com.github.k1rakishou.core_parser.html.KurobaMatcher
 import junit.framework.Assert
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Element
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -52,52 +51,64 @@ class GenericParserTest : BaseHtmlParserTest() {
         nest {
           div(
             id = KurobaMatcher.PatternMatcher.stringEquals("tag1"),
-            extractorFunc = { node, _, testCollector -> testCollector.collectedTags += node.attr("id") }
+            extractorFunc = { node, _, testCollector ->
+              testCollector.collectedTags += node.attr("id")
+            }
           )
 
           nest {
             div(
               id = KurobaMatcher.PatternMatcher.stringEquals("nested_tag1"),
-              extractorFunc = { node, _, testCollector -> testCollector.collectedTags += node.attr("id") }
+              extractorFunc = { node, _, testCollector ->
+                testCollector.collectedTags += node.attr("id")
+              }
             )
           }
-        }
 
-        nest {
           div(
             id = KurobaMatcher.PatternMatcher.stringEquals("tag2"),
-            extractorFunc = { node, _, testCollector -> testCollector.collectedTags += node.attr("id") }
+            extractorFunc = { node, _, testCollector ->
+              testCollector.collectedTags += node.attr("id")
+            }
           )
 
           nest {
             div(
               id = KurobaMatcher.PatternMatcher.stringEquals("nested_tag2"),
-              extractorFunc = { node, _, testCollector -> testCollector.collectedTags += node.attr("id") }
+              extractorFunc = { node, _, testCollector ->
+                testCollector.collectedTags += node.attr("id")
+              }
             )
           }
-        }
 
-        nest {
           div(
             id = KurobaMatcher.PatternMatcher.stringEquals("tag3"),
-            extractorFunc = { node, _, testCollector -> testCollector.collectedTags += node.attr("id") }
+            extractorFunc = { node, _, testCollector ->
+              testCollector.collectedTags += node.attr("id")
+            }
           )
 
           nest {
             div(
               id = KurobaMatcher.PatternMatcher.stringEquals("nested_tag3"),
-              extractorFunc = { node, _, testCollector -> testCollector.collectedTags += node.attr("id") }
+              extractorFunc = { node, _, testCollector ->
+                testCollector.collectedTags += node.attr("id")
+              }
             )
 
             div(
               id = KurobaMatcher.PatternMatcher.stringEquals("nested_tag4"),
-              extractorFunc = { node, _, testCollector -> testCollector.collectedTags += node.attr("id") }
+              extractorFunc = { node, _, testCollector ->
+                testCollector.collectedTags += node.attr("id")
+              }
             )
 
             nest {
               div(
                 id = KurobaMatcher.PatternMatcher.stringEquals("nested_tag5"),
-                extractorFunc = { node, _, testCollector -> testCollector.collectedTags += node.attr("id") }
+                extractorFunc = { node, _, testCollector ->
+                  testCollector.collectedTags += node.attr("id")
+                }
               )
             }
           }
@@ -119,18 +130,20 @@ class GenericParserTest : BaseHtmlParserTest() {
           nest {
             div(
               id = KurobaMatcher.PatternMatcher.stringEquals("nested_tag2"),
-              extractorFunc = { node, _, testCollector -> testCollector.nestedValue2 = node.wholeText() }
+              extractorFunc = { node, _, testCollector ->
+                testCollector.nestedValue2 = node.wholeText()
+              }
             )
           }
-        }
 
-        nest {
           div(id = KurobaMatcher.PatternMatcher.stringEquals("tag3"))
 
           nest {
             div(
               id = KurobaMatcher.PatternMatcher.stringEquals("nested_tag3"),
-              extractorFunc = { node, _, testCollector -> testCollector.nestedValue3 = node.wholeText() }
+              extractorFunc = { node, _, testCollector ->
+                testCollector.nestedValue3 = node.wholeText()
+              }
             )
           }
         }
@@ -178,7 +191,7 @@ class GenericParserTest : BaseHtmlParserTest() {
             noscript(matchableBuilderFunc = { emptyTag() })
 
             nest {
-              article(matchableBuilderFunc = { emptyTag() })
+              article(matchableBuilderFunc = { anyTag() })
 
               nest {
                 header(matchableBuilderFunc = { emptyTag() })
@@ -192,12 +205,15 @@ class GenericParserTest : BaseHtmlParserTest() {
                   )
 
                   nest {
+                    breakpoint()
+
                     a(
                       attrExtractorBuilderFunc = {
                         expectAttrWithValue("itemprop", KurobaMatcher.PatternMatcher.stringEquals("url"))
+                        extractText()
                       },
-                      extractorFunc = { node, _, collector ->
-                        collector.titleTrackNamePart = (node as Element).text()
+                      extractorFunc = { _, extractedAttrValues, collector ->
+                        collector.titleTrackNamePart = extractedAttrValues.getText()
                       }
                     )
 

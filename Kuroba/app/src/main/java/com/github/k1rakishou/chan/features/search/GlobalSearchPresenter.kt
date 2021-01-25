@@ -152,12 +152,32 @@ internal class GlobalSearchPresenter(
     setState(GlobalSearchControllerState.Data(dataState))
   }
 
-  private fun getDefaultSearchParameters(selectedSiteDescriptor: SiteDescriptor): SearchParameters {
-    if (selectedSiteDescriptor.is4chan()) {
-      return SearchParameters.SimpleQuerySearchParameters(query = "")
-    }
+  private fun getDefaultSearchParameters(siteDescriptor: SiteDescriptor): SearchParameters {
+    val searchType = siteManager.bySiteDescriptor(siteDescriptor)?.siteGlobalSearchType()
+    checkNotNull(searchType) { "searchType is null! siteDescriptor=${siteDescriptor}" }
 
-    return SearchParameters.FoolFuukaSearchParameters(query = "", subject = "", boardDescriptor = null)
+    when (searchType) {
+      SiteGlobalSearchType.SearchNotSupported -> {
+        throw IllegalStateException("Must not be used here")
+      }
+      SiteGlobalSearchType.SimpleQuerySearch -> {
+        return SearchParameters.SimpleQuerySearchParameters(query = "")
+      }
+      SiteGlobalSearchType.FuukaSearch -> {
+        return SearchParameters.FuukaSearchParameters(
+          query = "",
+          subject = "",
+          boardDescriptor = null
+        )
+      }
+      SiteGlobalSearchType.FoolFuukaSearch -> {
+        return SearchParameters.FoolFuukaSearchParameters(
+          query = "",
+          subject = "",
+          boardDescriptor = null
+        )
+      }
+    }
   }
 
   private fun setState(state: GlobalSearchControllerState) {

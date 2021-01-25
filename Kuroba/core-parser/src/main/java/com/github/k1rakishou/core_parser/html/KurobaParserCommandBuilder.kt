@@ -42,6 +42,43 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
     commandGroupName: String?,
     builder: KurobaParserCommandBuilder<T>.() -> KurobaParserCommandBuilder<T>
   ): KurobaParserCommandBuilder<T> {
+    if (parserCommands.isNotEmpty()) {
+      // This is not allowed! nest() command increases nodeIndex by 1 when pushing parser state into
+      // the parser state stack, meaning that when exiting nest() block (KurobaCommandPopState command)
+      // you will end up on the next HTML node which may be unexpected.
+      //
+      // ```
+      // nest {
+      //   command1()
+      //   command2()
+      // }
+      //
+      // nest {
+      //   command3()
+      //   command4()
+      // }
+      // ```
+      //
+      // Use a single nest() command instead
+      // ```
+      // nest {
+      //   command1()
+      //   command2()
+      //   command3()
+      //   command4()
+      // }
+      // ```
+
+      // TODO(KurobaEx): we need to skip meta commands (like breakpoint) here
+      check(parserCommands.last() !is KurobaCommandPopState) {
+        "It's is not allowed to have two nested blocks one after the other, " +
+          "you have to collapse them into a single block! See comment of nest() command builder"
+      }
+    } else if (parserCommands.isEmpty()) {
+      throw IllegalStateException("Cannot use nest command as the very first one! " +
+        "You need to match any of the tags first!")
+    }
+
     val commandGroup = builder(KurobaParserCommandBuilder(commandGroupName)).build()
 
     parserCommands += KurobaCommandPushState(commandGroup.groupName)

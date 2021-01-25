@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import java.lang.ref.WeakReference
 import javax.inject.Inject
@@ -156,6 +157,7 @@ class GlobalSearchController(context: Context)
 
     val canRenderSearchButton = when (selectedSite.siteGlobalSearchType) {
       SiteGlobalSearchType.SimpleQuerySearch -> renderSimpleQuerySearch(dataState)
+      SiteGlobalSearchType.FuukaSearch,
       SiteGlobalSearchType.FoolFuukaSearch -> renderFoolFuukaSearch(dataState)
       SiteGlobalSearchType.SearchNotSupported -> false
     }
@@ -181,7 +183,7 @@ class GlobalSearchController(context: Context)
 
   private fun EpoxyController.renderFoolFuukaSearch(dataState: GlobalSearchControllerStateData): Boolean {
     val sitesWithSearch = dataState.sitesWithSearch
-    val searchParameters = dataState.searchParameters as SearchParameters.FoolFuukaSearchParameters
+    val searchParameters = dataState.searchParameters as SearchParameters.AdvancedSearchParameters
     val selectedSiteDescriptor = sitesWithSearch.selectedSite.siteDescriptor
 
     // When site selection changes with want to redraw all epoxySearchInputViews with new initialQueries
@@ -215,7 +217,8 @@ class GlobalSearchController(context: Context)
           prevSelectedBoard = searchParameters.boardDescriptor,
           siteDescriptor = selectedSiteDescriptor,
           onBoardSelected = { boardDescriptor ->
-            val updatedSearchParameters = SearchParameters.FoolFuukaSearchParameters(
+            val updatedSearchParameters = createAdvancedSearchParamsBySite(
+              siteDescriptor = selectedSiteDescriptor,
               query = initialQuery,
               subject = initialSubjectQuery,
               boardDescriptor = boardDescriptor
@@ -234,7 +237,8 @@ class GlobalSearchController(context: Context)
       initialQuery(initialSubjectQuery)
       hint(context.getString(R.string.post_subject_search_query_hint))
       onTextEnteredListener { subjectQuery ->
-        val updatedSearchParameters = SearchParameters.FoolFuukaSearchParameters(
+        val updatedSearchParameters = createAdvancedSearchParamsBySite(
+          siteDescriptor = selectedSiteDescriptor,
           query = initialQuery,
           subject = subjectQuery,
           boardDescriptor = selectedBoard
@@ -251,7 +255,8 @@ class GlobalSearchController(context: Context)
       initialQuery(initialQuery)
       hint(context.getString(R.string.post_comment_search_query_hint))
       onTextEnteredListener { commentQuery ->
-        val updatedSearchParameters = SearchParameters.FoolFuukaSearchParameters(
+        val updatedSearchParameters = createAdvancedSearchParamsBySite(
+          siteDescriptor = selectedSiteDescriptor,
           query = commentQuery,
           subject = initialSubjectQuery,
           boardDescriptor = selectedBoard
@@ -263,7 +268,8 @@ class GlobalSearchController(context: Context)
       onUnbind { _, view -> removeViewFromInputViewRefSet(view) }
     }
 
-    return SearchParameters.FoolFuukaSearchParameters(
+    return createAdvancedSearchParamsBySite(
+      siteDescriptor = selectedSiteDescriptor,
       query = initialQuery,
       subject = initialSubjectQuery,
       boardDescriptor = selectedBoard
@@ -299,6 +305,37 @@ class GlobalSearchController(context: Context)
     return SearchParameters.SimpleQuerySearchParameters(
       query = initialQuery
     ).isValid()
+  }
+
+  private fun createAdvancedSearchParamsBySite(
+    siteDescriptor: SiteDescriptor,
+    query: String,
+    subject: String,
+    boardDescriptor: BoardDescriptor?,
+  ): SearchParameters.AdvancedSearchParameters {
+    val searchType = siteManager.bySiteDescriptor(siteDescriptor)?.siteGlobalSearchType()
+    checkNotNull(searchType) { "searchType is null! siteDescriptor=${siteDescriptor}" }
+
+    when (searchType) {
+      SiteGlobalSearchType.SearchNotSupported,
+      SiteGlobalSearchType.SimpleQuerySearch -> {
+        throw IllegalStateException("Only advanced search must be used here!")
+      }
+      SiteGlobalSearchType.FuukaSearch -> {
+        return SearchParameters.FuukaSearchParameters(
+          query = query,
+          subject = subject,
+          boardDescriptor = boardDescriptor
+        )
+      }
+      SiteGlobalSearchType.FoolFuukaSearch -> {
+        return SearchParameters.FoolFuukaSearchParameters(
+          query = query,
+          subject = subject,
+          boardDescriptor = boardDescriptor
+        )
+      }
+    }
   }
 
   private fun addViewToInputViewRefSet(view: View) {

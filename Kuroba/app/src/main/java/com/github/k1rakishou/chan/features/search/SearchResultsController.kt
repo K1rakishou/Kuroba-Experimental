@@ -185,19 +185,29 @@ class SearchResultsController(
   }
 
   private fun updateTitle(totalFound: Int?) {
-    if (totalFound == null) {
-      navigation.title = getString(
-        R.string.controller_search_searching,
-        siteDescriptor.siteName,
-        searchParameters.getCurrentQuery()
-      )
-    } else {
-      navigation.title = getString(
-        R.string.controller_search_results,
-        siteDescriptor.siteName,
-        searchParameters.getCurrentQuery(),
-        totalFound
-      )
+    when (totalFound) {
+      null -> {
+        navigation.title = getString(
+          R.string.controller_search_searching,
+          siteDescriptor.siteName,
+          searchParameters.getCurrentQuery()
+        )
+      }
+      Int.MAX_VALUE -> {
+        navigation.title = getString(
+          R.string.controller_search_results_unknown,
+          siteDescriptor.siteName,
+          searchParameters.getCurrentQuery()
+        )
+      }
+      else -> {
+        navigation.title = getString(
+          R.string.controller_search_results,
+          siteDescriptor.siteName,
+          searchParameters.getCurrentQuery(),
+          totalFound
+        )
+      }
     }
 
     requireNavController().requireToolbar().updateTitle(navigation)

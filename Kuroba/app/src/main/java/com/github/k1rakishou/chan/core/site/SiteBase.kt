@@ -58,6 +58,11 @@ abstract class SiteBase : Site, CoroutineScope {
 
   @Inject
   lateinit var proxiedOkHttpClient: RealProxiedOkHttpClient
+    protected set
+  @Inject
+  lateinit var appConstants: AppConstants
+    protected set
+
   @Inject
   protected lateinit var httpCallManager: HttpCallManager
   @Inject
@@ -74,8 +79,6 @@ abstract class SiteBase : Site, CoroutineScope {
   protected lateinit var mockReplyManager: MockReplyManager
   @Inject
   protected lateinit var replyManager: ReplyManager
-  @Inject
-  protected lateinit var appConstants: AppConstants
   @Inject
   protected lateinit var gson: Gson
 

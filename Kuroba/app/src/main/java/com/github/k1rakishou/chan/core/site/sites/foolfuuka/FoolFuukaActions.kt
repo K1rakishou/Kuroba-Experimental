@@ -101,6 +101,7 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
 
     val request = Request.Builder()
       .url(searchUrl)
+      .addHeader("User-Agent", site.appConstants.userAgent)
       .get()
       .build()
 

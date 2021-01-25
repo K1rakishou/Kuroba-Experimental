@@ -25,6 +25,7 @@ class GlobalSearchUseCase(
   private val themeEngine: ThemeEngine,
   private val simpleCommentParser: SimpleCommentParser
 ) : ISuspendUseCase<SearchParams, SearchResult> {
+
   override suspend fun execute(parameter: SearchParams): SearchResult {
     return try {
       withContext(Dispatchers.IO) { doSearch(parameter) }

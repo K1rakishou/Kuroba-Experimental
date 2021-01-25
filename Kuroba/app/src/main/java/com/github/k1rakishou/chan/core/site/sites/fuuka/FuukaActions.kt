@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.fuuka
 
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.SiteActions
@@ -10,6 +11,7 @@ import com.github.k1rakishou.chan.core.site.common.MultipartHttpCall
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
+import com.github.k1rakishou.chan.core.site.sites.search.FuukaSearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.common.ModularResult
@@ -20,6 +22,7 @@ import com.github.k1rakishou.model.data.site.SiteBoards
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import okhttp3.HttpUrl
+import okhttp3.Request
 
 class FuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
 
@@ -85,31 +88,32 @@ class FuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
   override suspend fun <T : SearchParams> search(
     searchParams: T
   ): HtmlReaderRequest.HtmlReaderResponse<SearchResult> {
-//    searchParams as FoolFuukaSearchParams
-//
-//    val searchUrl = requireNotNull(site.endpoints().search())
-//      .newBuilder()
-//      .addEncodedPathSegment(searchParams.boardDescriptor.boardCode)
-//      .addEncodedPathSegment("search")
-//      .tryAddSearchParam("text", searchParams.query)
-//      .tryAddSearchParam("subject", searchParams.subject)
-//      .addEncodedPathSegment("page")
-//      .addEncodedPathSegment(searchParams.getCurrentPage().toString())
-//      .build()
-//
-//    val request = Request.Builder()
-//      .url(searchUrl)
-//      .get()
-//      .build()
-//
-//    return FoolFuukaSearchRequest(
-//      searchParams,
-//      request,
-//      site.proxiedOkHttpClient
-//    ).execute()
+    searchParams as FuukaSearchParams
 
-    // TODO(KurobaEx): search
-    throw NotImplementedError("search")
+    // https://warosu.org/g/?offset=0&ghost=no&task=search&search_text=test&search_subject=test123
+    val searchUrl = requireNotNull(site.endpoints().search())
+      .newBuilder()
+      .addEncodedPathSegment(searchParams.boardDescriptor.boardCode)
+      .addQueryParameter("offset", (searchParams.getCurrentPage() * FUUKA_SEARCH_ENTRIES_PER_PAGE).toString())
+      // TODO(KurobaEx / @GhostPosts): ghost posts are not supported yet
+      .addQueryParameter("ghost", "no")
+      .addQueryParameter("task", "search")
+      .tryAddSearchParam("search_text", searchParams.query)
+      .tryAddSearchParam("search_subject", searchParams.subject)
+      .build()
+
+    val request = Request.Builder()
+      .url(searchUrl)
+      .addHeader("User-Agent", site.appConstants.userAgent)
+      .get()
+      .build()
+
+    return FuukaSearchRequest(
+      ChanSettings.verboseLogs.get(),
+      searchParams,
+      request,
+      site.proxiedOkHttpClient
+    ).execute()
   }
 
   private fun HttpUrl.Builder.tryAddSearchParam(paramName: String, paramValue: String): HttpUrl.Builder {
@@ -117,8 +121,11 @@ class FuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
       return this
     }
 
-    return this.addEncodedPathSegment(paramName)
-      .addEncodedPathSegment(paramValue)
+    return this.addQueryParameter(paramName, paramValue)
+  }
+
+  companion object {
+    private const val FUUKA_SEARCH_ENTRIES_PER_PAGE = 24
   }
 
 }

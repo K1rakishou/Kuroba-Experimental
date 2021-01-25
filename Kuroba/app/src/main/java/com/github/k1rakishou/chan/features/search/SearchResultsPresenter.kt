@@ -8,6 +8,7 @@ import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.site.sites.search.Chan4SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.FoolFuukaSearchParams
+import com.github.k1rakishou.chan.core.site.sites.search.FuukaSearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.site.sites.search.SearchEntryPost
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
@@ -171,7 +172,7 @@ internal class SearchResultsPresenter(
 
       searchResult as SearchResult.Success
 
-      if (searchResult.totalFoundEntries == null || searchResult.totalFoundEntries <= 0) {
+      if (searchResult.searchEntries.isEmpty()) {
         Logger.d(TAG, "doSearch() nothing found, searchParameters = ${searchParameters}")
         setState(SearchResultsControllerState.NothingFound(searchParameters))
         return@withContext
@@ -203,8 +204,16 @@ internal class SearchResultsPresenter(
       is SearchParameters.SimpleQuerySearchParameters -> {
         Chan4SearchParams(siteDescriptor, params.query, currentPage)
       }
-      is SearchParameters.FoolFuukaSearchParameters -> {
-        FoolFuukaSearchParams(params.boardDescriptor!!, params.query, params.subject, currentPage)
+      is SearchParameters.AdvancedSearchParameters -> {
+        when (params) {
+          is SearchParameters.FuukaSearchParameters -> {
+            FuukaSearchParams(params.boardDescriptor!!, params.query, params.subject, currentPage)
+          }
+          is SearchParameters.FoolFuukaSearchParameters -> {
+            FoolFuukaSearchParams(params.boardDescriptor!!, params.query, params.subject, currentPage)
+          }
+          else -> throw IllegalStateException("Unknown params: ${params.javaClass.simpleName}")
+        }
       }
     }.exhaustive
 

@@ -35,6 +35,19 @@ data class FoolFuukaSearchParams(
     get() = boardDescriptor.siteDescriptor
 }
 
+data class FuukaSearchParams(
+  val boardDescriptor: BoardDescriptor,
+  override val query: String,
+  val subject: String,
+  val page: Int?
+) : SearchParams {
+
+  fun getCurrentPage(): Int = page ?: 0
+
+  override val siteDescriptor: SiteDescriptor
+    get() = boardDescriptor.siteDescriptor
+}
+
 sealed class SearchResult {
   data class Success(
     val searchParams: SearchParams,

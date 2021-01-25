@@ -425,6 +425,7 @@ open class Chan4 : SiteBase() {
 
       val request = Request.Builder()
         .url(searchUrl)
+        .addHeader("User-Agent", appConstants.userAgent)
         .get()
         .build()
 

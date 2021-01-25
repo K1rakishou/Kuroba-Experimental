@@ -921,7 +921,8 @@ Don't have a 4chan Pass?<br>
     <string name="controller_search_search_input_hint">Enter search query</string>
 
     <string name="controller_search_searching">Searching %1$s for \"%2$s\"</string>
-    <string name="controller_search_results">%1$s \"%2$s\" found %3$d</string>
+    <string name="controller_search_results">%1$s \"%2$s\" found total: %3$d</string>
+    <string name="controller_search_results_unknown">%1$s \"%2$s\" found total: unknown</string>
     <string name="controller_search_results_end_of_list">End of results</string>
 
     <string name="successfully_exported_text">Exported successfully"</string>
