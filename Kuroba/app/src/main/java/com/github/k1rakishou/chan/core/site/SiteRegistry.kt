@@ -31,7 +31,7 @@ import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.ForPlebs
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.Nyafuu
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.RebeccaBlackTech
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.TokyoChronos
-import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.Warosu
+import com.github.k1rakishou.chan.core.site.sites.fuuka.sites.Warosu
 import com.github.k1rakishou.chan.core.site.sites.kun8.Kun8
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import java.util.*

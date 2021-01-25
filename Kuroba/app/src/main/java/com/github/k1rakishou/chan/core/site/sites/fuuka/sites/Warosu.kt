@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites
+package com.github.k1rakishou.chan.core.site.sites.fuuka.sites
 
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
 import com.github.k1rakishou.chan.core.site.Site
