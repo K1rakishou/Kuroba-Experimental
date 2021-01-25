@@ -5,11 +5,13 @@ import com.github.k1rakishou.core_parser.html.commands.KurobaBeginLoopCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaBreakpointCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaCommandPopState
 import com.github.k1rakishou.core_parser.html.commands.KurobaCommandPushState
+import com.github.k1rakishou.core_parser.html.commands.KurobaConditionElseBranchCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaEndConditionCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaEndLoopCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaParserCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaParserCommandGroup
 import com.github.k1rakishou.core_parser.html.commands.KurobaParserStepCommand
+import com.github.k1rakishou.core_parser.html.commands.KurobaPeekCollectorCommand
 import org.jsoup.nodes.Node
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -17,6 +19,12 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
   private val groupName: String?
 ) {
   private val parserCommands = mutableListOf<KurobaParserCommand<T>>()
+
+  @KurobaHtmlParserDsl
+  fun peekCollector(collectorAccessor: (T) -> Unit): KurobaParserCommandBuilder<T> {
+    parserCommands += KurobaPeekCollectorCommand(collectorAccessor)
+    return this
+  }
 
   @KurobaHtmlParserDsl
   fun nest(
@@ -64,6 +72,28 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
 
     parserCommands += KurobaBeginConditionCommand(conditionId, conditionMatchables, resetNodeIndex)
     parserCommands.addAll(commandGroup.innerCommands)
+    parserCommands += KurobaEndConditionCommand(conditionId)
+
+    return this
+  }
+
+  @KurobaHtmlParserDsl
+  fun executeIfElse(
+    predicate: MatchableBuilder.() -> MatchableBuilder,
+    resetNodeIndex: Boolean = false,
+    ifBranchBuilder: KurobaParserCommandBuilder<T>.() -> KurobaParserCommandBuilder<T>,
+    elseBranchBuilder: KurobaParserCommandBuilder<T>.() -> KurobaParserCommandBuilder<T>
+  ): KurobaParserCommandBuilder<T> {
+    val ifBranchCommandGroup = ifBranchBuilder(KurobaParserCommandBuilder(null)).build()
+    val elseBranchCommandGroup = elseBranchBuilder(KurobaParserCommandBuilder(null)).build()
+
+    val conditionId = nextCommandId()
+    val conditionMatchables = predicate.invoke(MatchableBuilder()).build()
+
+    parserCommands += KurobaBeginConditionCommand(conditionId, conditionMatchables, resetNodeIndex)
+    parserCommands.addAll(ifBranchCommandGroup.innerCommands)
+    parserCommands += KurobaConditionElseBranchCommand(conditionId, conditionMatchables)
+    parserCommands.addAll(elseBranchCommandGroup.innerCommands)
     parserCommands += KurobaEndConditionCommand(conditionId)
 
     return this

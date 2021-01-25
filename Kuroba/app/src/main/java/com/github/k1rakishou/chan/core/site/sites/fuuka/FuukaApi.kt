@@ -20,7 +20,6 @@ import com.github.k1rakishou.core_parser.html.KurobaParserCommandBuilder
 import com.github.k1rakishou.model.data.archive.ArchivePost
 import com.github.k1rakishou.model.data.archive.ArchivePostMedia
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.mapper.ArchiveThreadMapper
 import com.google.gson.stream.JsonReader
@@ -52,15 +51,35 @@ class FuukaApi(
             div(matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("content")) })
 
             nest {
-              div(matchableBuilderFunc = { attr("itemtype", KurobaMatcher.PatternMatcher.stringContains("http://schema.org/DiscussionForumPosting")) })
+              // Apparently warosu has a bug where the original post sometimes won't be shown at all
+              // (all the other posts seem to be fine). This is a hack to create a default original
+              // post in such cases.
+              executeIfElse(
+                predicate = { attr("itemtype", KurobaMatcher.PatternMatcher.stringContains(ORIGINAL_POST_TYPE)) },
+                resetNodeIndex = false,
+                ifBranchBuilder = {
+                  // Original post found. Parse it.
+                  div(matchableBuilderFunc = { attr("itemtype", KurobaMatcher.PatternMatcher.stringContains(ORIGINAL_POST_TYPE)) })
 
-              nest {
-                parseOriginalPost()
-              }
+                  nest {
+                    parseOriginalPost()
+                  }
+                },
+                elseBranchBuilder = {
+                  // Original post was not found. Create a custom one.
+                  peekCollector { archiveThreadPostCollector ->
+                    check(archiveThreadPostCollector.archivePosts.isEmpty()) { "archivePosts are not empty!" }
+
+                    archiveThreadPostCollector.archivePosts.add(
+                      createDefaultOriginalPost(archiveThreadPostCollector.threadDescriptor)
+                    )
+                  }
+                }
+              )
 
               loopWhile(predicate = {
                 tag(KurobaMatcher.TagMatcher.tagWithNameAttributeMatcher("table"))
-                attr("itemtype", KurobaMatcher.PatternMatcher.stringContains("http://schema.org/Comment"))
+                attr("itemtype", KurobaMatcher.PatternMatcher.stringContains(REGULAR_POST_TYPE))
               }) {
                 parseRegularPost()
               }
@@ -78,7 +97,7 @@ class FuukaApi(
       matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagNoAttributesMatcher()) },
       attrExtractorBuilderFunc = { extractText() },
       extractorFunc = { _, extractedAttributeValues, archiveThreadPostCollector ->
-        val archivePost = ArchivePost(archiveThreadPostCollector.boardDescriptor)
+        val archivePost = ArchivePost(archiveThreadPostCollector.threadDescriptor.boardDescriptor)
         extractFileInfoPart1(archivePost, extractedAttributeValues)
         archiveThreadPostCollector.archivePosts += archivePost
       }
@@ -168,10 +187,10 @@ class FuukaApi(
     tag(
       tagName = "table",
       matchableBuilderFunc = {
-        attr("itemtype", KurobaMatcher.PatternMatcher.stringContains("http://schema.org/Comment"))
+        attr("itemtype", KurobaMatcher.PatternMatcher.stringContains(REGULAR_POST_TYPE))
       },
       extractorFunc = { _, _, archiveThreadPostCollector ->
-        val archivePost = ArchivePost(archiveThreadPostCollector.boardDescriptor)
+        val archivePost = ArchivePost(archiveThreadPostCollector.threadDescriptor.boardDescriptor)
         archiveThreadPostCollector.archivePosts += archivePost
       }
     )
@@ -399,7 +418,7 @@ class FuukaApi(
               return@let
             }
 
-            archivePost.unixTimestampSeconds = timestamp
+            archivePost.unixTimestampSeconds = timestamp / 1000
           }
         }
       )
@@ -578,14 +597,29 @@ class FuukaApi(
     }
   }
 
+  private fun createDefaultOriginalPost(threadDescriptor: ChanDescriptor.ThreadDescriptor): ArchivePost {
+    return ArchivePost(
+      boardDescriptor = threadDescriptor.boardDescriptor,
+      threadNo = threadDescriptor.threadNo,
+      postNo = threadDescriptor.threadNo,
+      isOP = true,
+      unixTimestampSeconds = System.currentTimeMillis() / 1000L,
+      comment = "Failed to load Original Post (most likely warosu bug), using default post"
+    )
+  }
+
   override suspend fun loadThread(
     request: Request,
     responseBody: ResponseBody,
     chanReaderProcessor: ChanReaderProcessor
   ) {
     readBodyHtml(request, responseBody) { document ->
-      val boardDescriptor = chanReaderProcessor.chanDescriptor.boardDescriptor()
-      val collector = ArchiveThreadPostCollector(boardDescriptor)
+      require(chanReaderProcessor.chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+        "Cannot load catalogs here!"
+      }
+
+      val threadDescriptor = chanReaderProcessor.chanDescriptor
+      val collector = ArchiveThreadPostCollector(threadDescriptor)
       val parserCommandExecutor = KurobaHtmlParserCommandExecutor<ArchiveThreadPostCollector>()
 
       try {
@@ -600,7 +634,7 @@ class FuukaApi(
       }
 
       val postBuilders = collector.archivePosts.map { archivePost ->
-        return@map ArchiveThreadMapper.fromPost(boardDescriptor, archivePost)
+        return@map ArchiveThreadMapper.fromPost(threadDescriptor.boardDescriptor, archivePost)
       }
 
       val originalPost = postBuilders.firstOrNull()
@@ -633,7 +667,7 @@ class FuukaApi(
   }
 
   data class ArchiveThreadPostCollector(
-    val boardDescriptor: BoardDescriptor,
+    val threadDescriptor: ChanDescriptor.ThreadDescriptor,
     val archivePosts: MutableList<ArchivePost> = mutableListOf()
   ) : KurobaHtmlParserCollector {
 
@@ -661,5 +695,8 @@ class FuukaApi(
 //    https://warosu.org/jp/thread/32638291#p32638297
 //    https://warosu.org/jp/thread/32638291#p32638297_123
     private val POST_LINK_PATTERN = Pattern.compile("\\/(\\w+)\\/thread\\/(\\d+)(?:#p(\\d+))?(?:_(\\d+))?")
+
+    private const val ORIGINAL_POST_TYPE = "http://schema.org/DiscussionForumPosting"
+    private const val REGULAR_POST_TYPE = "http://schema.org/Comment"
   }
 }

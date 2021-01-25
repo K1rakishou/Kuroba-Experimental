@@ -7,10 +7,12 @@ import com.github.k1rakishou.core_parser.html.commands.KurobaBeginLoopCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaBreakpointCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaCommandPopState
 import com.github.k1rakishou.core_parser.html.commands.KurobaCommandPushState
+import com.github.k1rakishou.core_parser.html.commands.KurobaConditionElseBranchCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaEndConditionCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaEndLoopCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaParserCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaParserStepCommand
+import com.github.k1rakishou.core_parser.html.commands.KurobaPeekCollectorCommand
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
@@ -64,6 +66,10 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
 
       when (command) {
         is KurobaBreakpointCommand<T> -> {
+          ++commandIndex
+        }
+        is KurobaPeekCollectorCommand<T> -> {
+          command.collectorAccessor(collector)
           ++commandIndex
         }
         is KurobaParserStepCommand<T> -> {
@@ -179,6 +185,9 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
             )
           }
         }
+        is KurobaConditionElseBranchCommand<T> -> {
+          ++commandIndex
+        }
         is KurobaEndConditionCommand<T> -> {
           ++commandIndex
         }
@@ -186,6 +195,10 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
     }
   }
 
+  /**
+   * Searches for either KurobaConditionElseBranchCommand or KurobaEndConditionCommand and continues
+   * it's execution from there.
+   * */
   private fun findEndOfConditionBlockOrThrow(
     commandIndex: Int,
     kurobaParserCommands: List<KurobaParserCommand<T>>,
@@ -194,11 +207,15 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
     for (index in commandIndex until kurobaParserCommands.size) {
       val kurobaParserCommand = kurobaParserCommands[index]
 
-      if (kurobaParserCommand !is KurobaEndConditionCommand) {
-        continue
+      if (kurobaParserCommand is KurobaConditionElseBranchCommand
+        && kurobaParserCommand.conditionId == conditionId
+      ) {
+        return index
       }
 
-      if (kurobaParserCommand.conditionId == conditionId) {
+      if (kurobaParserCommand is KurobaEndConditionCommand
+        && kurobaParserCommand.conditionId == conditionId
+      ) {
         return index
       }
     }
