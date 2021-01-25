@@ -562,8 +562,8 @@ class FuukaApi(
         val fileSizeMultiplier = when (fileSizeType) {
           "MB" -> 1024 * 1024
           "KB" -> 1024
-          "B" -> 1024
-          else -> 1024
+          "B" -> 1
+          else -> 1
         }
 
         val actualFileSize = (fileSizeValue * fileSizeMultiplier.toFloat()).toLong()

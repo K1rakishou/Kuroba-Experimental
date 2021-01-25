@@ -19,6 +19,7 @@ abstract class BaseFloatingController(
 
   override fun onCreate() {
     super.onCreate()
+    presenting = true
 
     view = inflate(context, getLayoutId())
     updatePaddings()
@@ -32,7 +33,9 @@ abstract class BaseFloatingController(
 
   override fun onDestroy() {
     super.onDestroy()
+
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
+    presenting = false
   }
 
   private fun updatePaddings() {

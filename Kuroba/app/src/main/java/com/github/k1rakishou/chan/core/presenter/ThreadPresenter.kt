@@ -364,7 +364,7 @@ class ThreadPresenter @Inject constructor(
   /**
    * A very flexible method to load new posts or reload posts from database.
    * [chanLoadOptions] allows you to delete previous posts from in-memory cache or from database
-   * (for example when in case something goes wrong and some post data gets corrupted).
+   * (for example when something goes wrong and some post data gets corrupted).
    * [chanCacheOptions] allows you to select where posts will be stored (in in-memory cache or/and
    * in the database).
    * [chanReadOptions] allows you to configure how many posts to extract out of the posts list that

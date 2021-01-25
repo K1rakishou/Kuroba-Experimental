@@ -47,8 +47,29 @@ class CloudFlareBypassController(
   override fun getLayoutId(): Int = R.layout.controller_cloudflare_bypass
 
   override fun onCreate() {
-    super.onCreate()
+    try {
+      // Some users may have no WebView installed so this two methods may throw an exception
+      super.onCreate()
 
+      onCreateInternal()
+    } catch (error: Throwable) {
+      onResult(CookieResult.Error(CloudFlareBypassException(error.errorMessageOrClassName())))
+      pop()
+    }
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+
+    webView.stopLoading()
+
+    if (!cookieResultCompletableDeferred.isCompleted) {
+      cookieResultCompletableDeferred.complete(CookieResult.Canceled)
+      notifyAboutResult(CookieResult.Canceled)
+    }
+  }
+
+  private fun onCreateInternal() {
     webView = view.findViewById(R.id.web_view)
 
     val clickableArea = view.findViewById<ConstraintLayout>(R.id.clickable_area)
@@ -116,17 +137,6 @@ class CloudFlareBypassController(
 
     cloudFlareClearanceCookieSetting.set(cfClearanceValue)
     return true
-  }
-
-  override fun onDestroy() {
-    super.onDestroy()
-
-    webView.stopLoading()
-
-    if (!cookieResultCompletableDeferred.isCompleted) {
-      cookieResultCompletableDeferred.complete(CookieResult.Canceled)
-      notifyAboutResult(CookieResult.Canceled)
-    }
   }
 
   private fun notifyAboutResult(cookieResult: CookieResult) {
