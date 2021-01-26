@@ -1084,7 +1084,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         val scroller = FastScrollerHelper.create(
           recyclerView,
           postInfoMapItemDecoration,
-          themeEngine.chanTheme,
           toolbarPaddingTop()
         )
         scroller.setThumbDragListener(this)

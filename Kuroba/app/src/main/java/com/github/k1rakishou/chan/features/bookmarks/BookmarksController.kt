@@ -456,7 +456,6 @@ class BookmarksController(
     val scroller = FastScrollerHelper.create(
       epoxyRecyclerView,
       null,
-      themeEngine.chanTheme,
       0,
     )
 

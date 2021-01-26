@@ -20,6 +20,7 @@ import com.github.k1rakishou.chan.core.di.module.application.UseCaseModule;
 import com.github.k1rakishou.chan.core.receiver.ReplyNotificationDeleteIntentBroadcastReceiver;
 import com.github.k1rakishou.chan.core.site.SiteBase;
 import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkBackgroundWatcherWorker;
+import com.github.k1rakishou.chan.ui.view.FastScroller;
 import com.github.k1rakishou.chan.ui.widget.SnackbarWrapper;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_themes.ThemeEngine;
@@ -58,6 +59,7 @@ public interface ApplicationComponent {
     void inject(SnackbarWrapper snackbarWrapper);
     void inject(ReplyNotificationDeleteIntentBroadcastReceiver replyNotificationDeleteIntentBroadcastReceiver);
     void inject(CloudFlareHandlerInterceptor cloudFlareHandlerInterceptor);
+    void inject(FastScroller fastScroller);
 
     @Component.Builder
     interface Builder {

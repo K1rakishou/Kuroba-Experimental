@@ -21,6 +21,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
 import android.animation.ValueAnimator.AnimatorUpdateListener;
 import android.graphics.Canvas;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
 import android.view.MotionEvent;
@@ -37,8 +38,14 @@ import androidx.recyclerview.widget.RecyclerView.ItemDecoration;
 import androidx.recyclerview.widget.RecyclerView.OnItemTouchListener;
 import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
 
+import com.github.k1rakishou.chan.Chan;
+import com.github.k1rakishou.core_themes.ChanTheme;
+import com.github.k1rakishou.core_themes.ThemeEngine;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+
+import javax.inject.Inject;
 
 /**
  * Class responsible to animate and provide a fast scroller.
@@ -46,7 +53,7 @@ import java.lang.annotation.RetentionPolicy;
  * Clover changed: the original FastScroller didn't account for the recyclerview top padding we
  * require. A minimum thumb length parameter was also added.
  */
-public class FastScroller extends ItemDecoration implements OnItemTouchListener {
+public class FastScroller extends ItemDecoration implements OnItemTouchListener, ThemeEngine.ThemeChangesListener {
     @IntDef({STATE_HIDDEN, STATE_VISIBLE, STATE_DRAGGING})
     @Retention(RetentionPolicy.SOURCE)
     private @interface State {}
@@ -79,7 +86,8 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
     private static final int HIDE_DELAY_AFTER_VISIBLE_MS = 1500;
     private static final int HIDE_DELAY_AFTER_DRAGGING_MS = 1200;
     private static final int HIDE_DURATION_MS = 500;
-    private static final int SCROLLBAR_ALPHA = 192;
+    private static final int SCROLLBAR_THUMB_ALPHA = 222;
+    private static final int SCROLLBAR_TRACK_ALPHA = 160;
 
     private static final int[] PRESSED_STATE_SET = {android.R.attr.state_pressed};
     private static final int[] EMPTY_STATE_SET = {};
@@ -92,13 +100,14 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
     private final int mScrollbarMinimumRange;
     private final int mMargin;
     private final int mThumbMinLength;
+    private final int defaultWidth;
     private final int toolbarPaddingTop;
 
     // Final values for the vertical scroll bar
-    private final StateListDrawable mVerticalThumbDrawable;
-    private final Drawable mVerticalTrackDrawable;
-    private final int mVerticalThumbWidth;
-    private final int mVerticalTrackWidth;
+    private StateListDrawable mVerticalThumbDrawable;
+    private Drawable mVerticalTrackDrawable;
+    private int mVerticalThumbWidth;
+    private int mVerticalTrackWidth;
 
     // Dynamic values for the vertical scroll bar
     int verticalThumbHeight;
@@ -138,37 +147,61 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
         }
     };
 
+    @Inject
+    ThemeEngine themeEngine;
+
     public FastScroller(
             RecyclerView recyclerView,
             @Nullable
             PostInfoMapItemDecoration postInfoMapItemDecoration,
-            StateListDrawable verticalThumbDrawable,
-            Drawable verticalTrackDrawable,
             int defaultWidth,
             int scrollbarMinimumRange,
             int margin,
             int thumbMinLength,
             int toolbarPaddingTop
     ) {
-        mVerticalThumbDrawable = verticalThumbDrawable;
-        mVerticalTrackDrawable = verticalTrackDrawable;
-        mVerticalThumbWidth = Math.max(defaultWidth, verticalThumbDrawable.getIntrinsicWidth());
-        mVerticalTrackWidth = Math.max(defaultWidth, verticalTrackDrawable.getIntrinsicWidth());
-        mScrollbarMinimumRange = scrollbarMinimumRange;
+        Chan.getComponent().inject(this);
 
-        mMargin = margin;
-        mThumbMinLength = thumbMinLength;
-
+        this.mScrollbarMinimumRange = scrollbarMinimumRange;
+        this.defaultWidth = defaultWidth;
+        this.mMargin = margin;
+        this.mThumbMinLength = thumbMinLength;
         this.postInfoMapItemDecoration = postInfoMapItemDecoration;
         this.toolbarPaddingTop = toolbarPaddingTop;
 
-        mVerticalThumbDrawable.setAlpha(SCROLLBAR_ALPHA);
-        mVerticalTrackDrawable.setAlpha(SCROLLBAR_ALPHA);
+        onThemeChanged();
 
         mShowHideAnimator.addListener(new AnimatorListener());
         mShowHideAnimator.addUpdateListener(new AnimatorUpdater());
 
         attachToRecyclerView(recyclerView);
+        themeEngine.addListener(this);
+    }
+
+    @Override
+    public void onThemeChanged() {
+        mVerticalThumbDrawable = getThumb(themeEngine.chanTheme);
+        mVerticalTrackDrawable = getTrack(themeEngine.chanTheme);
+
+        mVerticalThumbWidth = Math.max(defaultWidth, mVerticalThumbDrawable.getIntrinsicWidth());
+        mVerticalTrackWidth = Math.max(defaultWidth, mVerticalTrackDrawable.getIntrinsicWidth());
+
+        mVerticalThumbDrawable.setAlpha(SCROLLBAR_THUMB_ALPHA);
+        mVerticalTrackDrawable.setAlpha(SCROLLBAR_TRACK_ALPHA);
+    }
+
+    private static StateListDrawable getThumb(ChanTheme curTheme) {
+        StateListDrawable list = new StateListDrawable();
+        list.addState(new int[]{android.R.attr.state_pressed}, new ColorDrawable(curTheme.getAccentColor()));
+        list.addState(new int[]{}, new ColorDrawable(curTheme.getTextColorSecondary()));
+        return list;
+    }
+
+    private static StateListDrawable getTrack(ChanTheme curTheme) {
+        StateListDrawable list = new StateListDrawable();
+        list.addState(new int[]{android.R.attr.state_pressed}, new ColorDrawable(curTheme.getTextColorHint()));
+        list.addState(new int[]{}, new ColorDrawable(0));
+        return list;
     }
 
     public void setThumbDragListener(@Nullable ThumbDragListener listener) {
@@ -176,6 +209,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
     }
 
     public void onCleanup() {
+        themeEngine.removeListener(this);
         thumbDragListener = null;
     }
 
@@ -592,9 +626,11 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener 
     private class AnimatorUpdater implements AnimatorUpdateListener {
         @Override
         public void onAnimationUpdate(ValueAnimator valueAnimator) {
-            int alpha = (int) (SCROLLBAR_ALPHA * ((float) valueAnimator.getAnimatedValue()));
-            mVerticalThumbDrawable.setAlpha(alpha);
-            mVerticalTrackDrawable.setAlpha(alpha);
+            int thumbAlpha = (int) (SCROLLBAR_THUMB_ALPHA * ((float) valueAnimator.getAnimatedValue()));
+            int trackAlpha = (int) (SCROLLBAR_TRACK_ALPHA * ((float) valueAnimator.getAnimatedValue()));
+
+            mVerticalThumbDrawable.setAlpha(thumbAlpha);
+            mVerticalTrackDrawable.setAlpha(trackAlpha);
             requestRedraw();
         }
     }
