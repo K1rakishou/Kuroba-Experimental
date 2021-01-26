@@ -52,7 +52,7 @@ import javax.inject.Inject
 class ThreadStatusCell(
   context: Context,
   attrs: AttributeSet
-) : LinearLayout(context, attrs), View.OnClickListener {
+) : LinearLayout(context, attrs), View.OnClickListener, ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -82,12 +82,30 @@ class ThreadStatusCell(
 
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
+
+    themeEngine.addListener(this)
     schedule()
   }
 
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
+
+    themeEngine.removeListener(this)
     unschedule()
+  }
+
+  override fun onFinishInflate() {
+    super.onFinishInflate()
+
+    statusCellText = findViewById(R.id.text)
+    statusCellText.typeface = themeEngine.chanTheme.mainFont
+
+    setOnClickListener(this)
+    onThemeChanged()
+  }
+
+  override fun onThemeChanged() {
+    statusCellText.setTextColor(themeEngine.chanTheme.textColorSecondary)
   }
 
   override fun onWindowFocusChanged(hasWindowFocus: Boolean) {
@@ -123,16 +141,6 @@ class ThreadStatusCell(
 
       update()
     })
-  }
-
-  override fun onFinishInflate() {
-    super.onFinishInflate()
-
-    statusCellText = findViewById(R.id.text)
-    statusCellText.typeface = themeEngine.chanTheme.mainFont
-    statusCellText.setTextColor(themeEngine.chanTheme.textColorSecondary)
-
-    setOnClickListener(this)
   }
 
   fun setCallback(callback: Callback?) {
