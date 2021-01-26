@@ -112,7 +112,7 @@ public class PostStubCell
         divider.setLayoutParams(dividerParams);
 
         setOnClickListener(this);
-        options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getTextColorSecondary()));
+        options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getPostDetailsColor()));
 
         options.setOnClickListener(v -> {
             List<FloatingListMenuItem> items = new ArrayList<>();

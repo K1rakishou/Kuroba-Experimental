@@ -14,92 +14,125 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.core.site;
+package com.github.k1rakishou.chan.core.site
 
-import android.content.Context;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
+import android.content.Context
+import android.graphics.drawable.BitmapDrawable
+import androidx.annotation.DrawableRes
+import androidx.core.graphics.drawable.toBitmap
+import coil.request.Disposable
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2.ImageListener
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.errorMessageOrClassName
+import com.github.k1rakishou.core_logger.Logger
+import okhttp3.HttpUrl
 
-import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
-import com.github.k1rakishou.core_logger.Logger;
+class SiteIcon private constructor(private val imageLoaderV2: ImageLoaderV2) {
+  var url: HttpUrl? = null
+  private var drawable: BitmapDrawable? = null
+  private var requestDisposable: Disposable? = null
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.io.IOException;
-
-import coil.request.Disposable;
-import okhttp3.HttpUrl;
-
-public class SiteIcon {
-    private static final String TAG = "SiteIcon";
-    private static final int FAVICON_SIZE = 64;
-
-    private ImageLoaderV2 imageLoaderV2;
-    private HttpUrl url;
-    private Drawable drawable;
-    @Nullable
-    private Disposable requestDisposable;
-
-    public static SiteIcon fromFavicon(ImageLoaderV2 imageLoaderV2, HttpUrl url) {
-        SiteIcon siteIcon = new SiteIcon(imageLoaderV2);
-        siteIcon.url = url;
-        return siteIcon;
+  fun getIcon(
+    context: Context,
+    resultFunc: (BitmapDrawable) -> Unit,
+    errorDrawableId: Int? = null,
+    errorFunc: ((BitmapDrawable) -> Unit)? = null
+  ) {
+    if (drawable != null) {
+      resultFunc(drawable!!)
+      return
     }
 
-    public static SiteIcon fromDrawable(ImageLoaderV2 imageLoaderV2, Drawable drawable) {
-        SiteIcon siteIcon = new SiteIcon(imageLoaderV2);
-        siteIcon.drawable = drawable;
-        return siteIcon;
+    if (url == null) {
+      return
     }
 
-    private SiteIcon(ImageLoaderV2 imageLoaderV2) {
-        this.imageLoaderV2 = imageLoaderV2;
-    }
+    requestDisposable?.dispose()
+    requestDisposable = null
 
-    public HttpUrl getUrl() {
-        return url;
-    }
-
-    public void get(Context context, SiteIconResult result) {
-        if (drawable != null) {
-            result.onSiteIcon(SiteIcon.this, drawable);
-            return;
+    requestDisposable = imageLoaderV2.loadFromNetwork(
+      context,
+      url.toString(),
+      FAVICON_SIZE,
+      FAVICON_SIZE,
+      object : ImageListener {
+        override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
+          resultFunc(drawable)
         }
 
-        if (url == null) {
-            return;
+        override fun onNotFound() {
+          if (errorFunc == null) {
+            Logger.e(TAG, "Image not found, url='$url'")
+            return
+          }
+
+          showErrorDrawable()
         }
 
-        if (requestDisposable != null) {
-            requestDisposable.dispose();
-            requestDisposable = null;
+        override fun onResponseError(error: Throwable) {
+          if (errorFunc == null) {
+            Logger.e(TAG, "Image load response error error=${error.errorMessageOrClassName()}")
+            return
+          }
+
+          requireNotNull(errorDrawableId) { "errorDrawableId is null!" }
+          showErrorDrawable()
         }
 
-        requestDisposable = imageLoaderV2.loadFromNetwork(
-                context,
-                url.toString(),
-                FAVICON_SIZE,
-                FAVICON_SIZE,
-                new ImageLoaderV2.ImageListener() {
-                    @Override
-                    public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
-                        result.onSiteIcon(SiteIcon.this, drawable);
-                    }
+        private fun showErrorDrawable() {
+          val drawable = AppModuleAndroidUtils.getDrawable(errorDrawableId!!)
 
-                    @Override
-                    public void onNotFound() {
-                        onResponseError(new IOException("Not found"));
-                    }
+          val errorDrawable = BitmapDrawable(
+            AppModuleAndroidUtils.getRes(),
+            drawable.toBitmap()
+          )
 
-                    @Override
-                    public void onResponseError(@NotNull Throwable error) {
-                        Logger.e(TAG, "Error loading favicon", error);
-                    }
-                });
+          errorFunc!!.invoke(errorDrawable)
+        }
+      })
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as SiteIcon
+
+    if (url != other.url) return false
+    if (drawable != other.drawable) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = url?.hashCode() ?: 0
+    result = 31 * result + (drawable?.hashCode() ?: 0)
+    return result
+  }
+
+
+  companion object {
+    private const val TAG = "SiteIcon"
+    private const val FAVICON_SIZE = 64
+
+    @JvmStatic
+    fun fromFavicon(imageLoaderV2: ImageLoaderV2, url: HttpUrl): SiteIcon {
+      val siteIcon = SiteIcon(imageLoaderV2)
+      siteIcon.url = url
+      return siteIcon
     }
 
-    public interface SiteIconResult {
-        void onSiteIcon(SiteIcon siteIcon, Drawable icon);
+    fun fromDrawable(imageLoaderV2: ImageLoaderV2, @DrawableRes drawableId: Int): SiteIcon {
+      val siteIcon = SiteIcon(imageLoaderV2)
+      val drawable = AppModuleAndroidUtils.getDrawable(drawableId)
+
+      siteIcon.drawable = BitmapDrawable(
+        AppModuleAndroidUtils.getRes(),
+        drawable.toBitmap()
+      )
+
+      return siteIcon
     }
+  }
 }

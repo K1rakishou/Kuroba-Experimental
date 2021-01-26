@@ -19,7 +19,7 @@ package com.github.k1rakishou.chan.core.site.sites.chan420
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
 import com.github.k1rakishou.chan.core.site.Site
-import com.github.k1rakishou.chan.core.site.SiteIcon.fromFavicon
+import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.taimaba.TaimabaActions
 import com.github.k1rakishou.chan.core.site.common.taimaba.TaimabaApi
@@ -49,7 +49,7 @@ class Chan420 : CommonSite() {
   override fun setup() {
     setEnabled(true)
     setName(SITE_NAME)
-    setIcon(fromFavicon(imageLoaderV2, "https://420chan.org/favicon.ico".toHttpUrl()))
+    setIcon(SiteIcon.fromFavicon(imageLoaderV2, "https://420chan.org/favicon.ico".toHttpUrl()))
     setBoardsType(Site.BoardsType.DYNAMIC)
     setResolvable(URL_HANDLER)
     

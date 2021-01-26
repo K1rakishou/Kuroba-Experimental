@@ -85,7 +85,7 @@
                 android:id="@+id/controller_range_setting_updater_slider"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:stepSize="1"
+                android:stepSize="0"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/controller_range_setting_updater_markers_holder" />

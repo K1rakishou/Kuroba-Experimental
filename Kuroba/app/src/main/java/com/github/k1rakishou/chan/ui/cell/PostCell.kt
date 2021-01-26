@@ -372,7 +372,7 @@ class PostCell : LinearLayout, PostCellInterface {
     setPostLinkableListener(post, true)
 
     repliesAdditionalArea.isClickable = threadMode
-    options.setColorFilter(theme.textColorHint)
+    options.setColorFilter(theme.postDetailsColor)
     replies.isClickable = threadMode
 
     val selectableItemBackgroundBorderless =

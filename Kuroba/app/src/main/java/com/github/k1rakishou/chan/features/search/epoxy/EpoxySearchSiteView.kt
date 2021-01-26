@@ -11,6 +11,7 @@ import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
@@ -68,8 +69,8 @@ internal class EpoxySearchSiteView @JvmOverloads constructor(
   }
 
   @ModelProp
-  fun bindIcon(iconUrl: String?) {
-    if (iconUrl == null) {
+  fun bindIcon(icon: SiteIcon?) {
+    if (icon == null) {
       this.requestDisposable?.dispose()
       this.requestDisposable = null
       this.siteIcon.setImageBitmap(null)
@@ -85,14 +86,11 @@ internal class EpoxySearchSiteView @JvmOverloads constructor(
 
       require(siteIcon.width > 0 && siteIcon.height > 0) { "View (siteIcon) has no size!" }
 
-      requestDisposable = imageLoaderV2.loadFromNetwork(
+      icon.getIcon(
         context,
-        iconUrl,
-        siteIcon.width,
-        siteIcon.height,
-        listOf(),
-        { drawable -> siteIconRef.get()?.setImageBitmap(drawable.bitmap) },
-        R.drawable.error_icon
+        { icon -> siteIconRef.get()?.setImageBitmap(icon.bitmap) },
+        R.drawable.error_icon,
+        { errorIcon -> siteIconRef.get()?.setImageBitmap(errorIcon.bitmap) }
       )
     }
   }

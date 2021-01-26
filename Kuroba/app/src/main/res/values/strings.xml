@@ -172,7 +172,9 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_switch_board">Board mode</string>
 
     <string name="action_import_light_theme">Import Light theme</string>
+    <string name="action_import_light_theme_from_clipboard">Import Light theme from clipboard</string>
     <string name="action_import_dark_theme">Import Dark theme</string>
+    <string name="action_import_dark_theme_from_clipboard">Import Dark theme from clipboard</string>
     <string name="action_export_light_theme">Export Light theme</string>
     <string name="action_export_dark_theme">Export Dark theme</string>
     <string name="action_reset_light_theme">Reset Light theme</string>

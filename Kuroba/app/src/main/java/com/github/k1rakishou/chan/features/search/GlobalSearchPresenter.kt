@@ -138,7 +138,7 @@ internal class GlobalSearchPresenter(
       ?: sitesSupportingSearch.first()
 
     val site = siteManager.bySiteDescriptor(selectedSiteDescriptor)!!
-    val siteIcon = site.icon().url.toString()
+    val siteIcon = site.icon()
     val searchType = site.siteGlobalSearchType()
 
     val dataState = GlobalSearchControllerStateData(

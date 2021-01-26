@@ -209,7 +209,29 @@ open class ThemeEngine(
       lightTheme()
     }
 
-    val themeParseResult = themeParser.parseTheme(file, defaultTheme)
+    return tryApplyTheme(
+      themeParser.parseTheme(file, defaultTheme),
+      isDarkTheme
+    )
+  }
+
+  suspend fun tryParseAndApplyTheme(input: String, isDarkTheme: Boolean): ThemeParser.ThemeParseResult {
+    val defaultTheme = if (isDarkTheme) {
+      darkTheme()
+    } else {
+      lightTheme()
+    }
+
+    return tryApplyTheme(
+      themeParser.parseTheme(input, defaultTheme),
+      isDarkTheme
+    )
+  }
+
+  private fun tryApplyTheme(
+    themeParseResult: ThemeParser.ThemeParseResult,
+    isDarkTheme: Boolean
+  ): ThemeParser.ThemeParseResult {
     if (themeParseResult !is ThemeParser.ThemeParseResult.Success) {
       Logger.e(TAG, "themeParser.parseTheme() error=${themeParseResult}")
       return themeParseResult
@@ -316,5 +338,11 @@ open class ThemeEngine(
     fun isDarkColor(color: Int): Boolean {
       return ColorUtils.calculateLuminance(color) < 0.5f
     }
+
+    @JvmStatic
+    fun isBlackOrAlmostBlackColor(color: Int): Boolean {
+      return ColorUtils.calculateLuminance(color) < 0.01f
+    }
+
   }
 }

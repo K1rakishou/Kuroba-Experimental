@@ -41,6 +41,19 @@ class ThemeParser(
     }
   }
 
+  suspend fun parseTheme(input: String, defaultTheme: ChanTheme): ThemeParseResult {
+    return withContext(Dispatchers.Default) {
+      val result = Try { parseThemeFromJsonString(input, defaultTheme) }
+      if (result is ModularResult.Error) {
+        return@withContext ThemeParseResult.Error(result.error)
+      }
+
+      result as ModularResult.Value
+
+      return@withContext result.value
+    }
+  }
+
   suspend fun exportTheme(file: ExternalFile, theme: ChanTheme): ThemeExportResult {
     return withContext(Dispatchers.Default) {
       val result = Try { exportThemeInternal(file, theme) }
@@ -142,6 +155,14 @@ class ThemeParser(
       ?: return ThemeParseResult.Error(IOException("Failed to open file to read"))
 
     val rawJson = FileReader(descriptor.fileDescriptor).readText()
+    return parseThemeFromJsonString(rawJson, defaultTheme)
+  }
+
+  @Synchronized
+  private fun parseThemeFromJsonString(
+    rawJson: String,
+    defaultTheme: ChanTheme
+  ): ThemeParseResult {
     val serializableTheme = gson.fromJson(rawJson, SerializableTheme::class.java)
 
     if (serializableTheme.name.isBlank()) {

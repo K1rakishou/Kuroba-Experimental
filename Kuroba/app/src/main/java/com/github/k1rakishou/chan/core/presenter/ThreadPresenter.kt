@@ -812,7 +812,7 @@ class ThreadPresenter @Inject constructor(
         val site = siteManager.bySiteDescriptor(localChanDescriptor.siteDescriptor())
           ?: return
 
-        val siteIconUrl = site.icon().url
+        val siteIconUrl = site.icon().url!!
         val title = String.format(Locale.ENGLISH, "%s/%s", site.name(), localChanDescriptor.boardCode())
 
         historyNavigationManager.createNewNavElement(localChanDescriptor, siteIconUrl, title)

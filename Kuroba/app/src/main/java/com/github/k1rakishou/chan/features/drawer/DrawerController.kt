@@ -87,7 +87,6 @@ import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
-import com.github.k1rakishou.core_themes.ThemeEngine.Companion.manipulateColor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.launch
 import java.util.*
@@ -283,22 +282,20 @@ class DrawerController(
     divider.setBackgroundColor(themeEngine.chanTheme.dividerColor)
     bottomNavView.setBackgroundColor(themeEngine.chanTheme.primaryColor)
 
-    val uncheckedColorNormal = if (isDarkColor(themeEngine.chanTheme.primaryColor)) {
-      Color.LTGRAY
-    } else {
+    val uncheckedColor = if (ThemeEngine.isBlackOrAlmostBlackColor(themeEngine.chanTheme.primaryColor)) {
       Color.DKGRAY
+    } else {
+      ThemeEngine.manipulateColor(themeEngine.chanTheme.primaryColor, .7f)
     }
-
-    val uncheckedColorDarkened = manipulateColor(uncheckedColorNormal, .7f)
 
     bottomNavView.itemIconTintList = ColorStateList(
       arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
-      intArrayOf(Color.WHITE, uncheckedColorDarkened)
+      intArrayOf(Color.WHITE, uncheckedColor)
     )
 
     bottomNavView.itemTextColor = ColorStateList(
       arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
-      intArrayOf(Color.WHITE, uncheckedColorDarkened)
+      intArrayOf(Color.WHITE, uncheckedColor)
     )
   }
 

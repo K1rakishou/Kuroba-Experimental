@@ -354,6 +354,29 @@ class ThemeSettingsController(context: Context) : Controller(context),
     }
   }
 
+  private fun importThemeFromClipboard(item: ToolbarMenuSubItem) {
+    val isDarkTheme = when (item.id) {
+      ACTION_IMPORT_DARK_THEME_FROM_CLIPBOARD -> true
+      ACTION_IMPORT_LIGHT_THEME_FROM_CLIPBOARD -> false
+      else -> throw IllegalStateException("Unknown action: ${item.id}")
+    }
+
+    val clipboardContent = AndroidUtils.getClipboardContent()
+    if (clipboardContent.isNullOrEmpty()) {
+      val message = context.getString(
+        R.string.theme_settings_controller_failed_to_import_theme,
+        "Clipboard is empty"
+      )
+
+      showToastLong(message)
+      return
+    }
+
+    mainScope.launch {
+      handleParseThemeResult(themeEngine.tryParseAndApplyTheme(clipboardContent, isDarkTheme))
+    }
+  }
+
   private fun onFileToImportSelected(uri: Uri, isDarkTheme: Boolean) {
     val file = fileManager.fromUri(uri)
     if (file == null) {
@@ -362,58 +385,62 @@ class ThemeSettingsController(context: Context) : Controller(context),
     }
 
     mainScope.launch {
-      when (val result = themeEngine.tryParseAndApplyTheme(file, isDarkTheme)) {
-        is ThemeParser.ThemeParseResult.Error -> {
-          val message = context.getString(
-            R.string.theme_settings_controller_failed_to_import_theme,
-            result.error.errorMessageOrClassName()
-          )
-
-          showToastLong(message)
-        }
-        is ThemeParser.ThemeParseResult.AttemptToImportWrongTheme -> {
-          val lightThemeText = context.getString(R.string.theme_settings_controller_theme_light)
-          val darkThemeText = context.getString(R.string.theme_settings_controller_theme_dark)
-
-          val themeTypeText = if (result.themeIsLight) {
-            lightThemeText
-          } else {
-            darkThemeText
-          }
-
-          val themeSlotTypeText = if (result.themeSlotIsLight) {
-            lightThemeText
-          } else {
-            darkThemeText
-          }
-
-          val message = context.getString(
-            R.string.theme_settings_controller_wrong_theme_type,
-            themeTypeText,
-            themeSlotTypeText
-          )
-
-          showToastLong(message)
-        }
-        is ThemeParser.ThemeParseResult.BadName -> {
-          val message = context.getString(
-            R.string.theme_settings_controller_failed_to_parse_bad_name,
-            result.name
-          )
-
-          showToastLong(message)
-        }
-        is ThemeParser.ThemeParseResult.Success -> {
-          if (result.hasUnparsedFields) {
-            showToastLong(context.getString(R.string.theme_settings_controller_failed_to_parse_some_colors))
-          } else {
-            showToastLong(context.getString(R.string.done))
-          }
-
-          reload()
-        }
-      }.exhaustive
+      handleParseThemeResult(themeEngine.tryParseAndApplyTheme(file, isDarkTheme))
     }
+  }
+
+  private fun handleParseThemeResult(result: ThemeParser.ThemeParseResult) {
+    when (result) {
+      is ThemeParser.ThemeParseResult.Error -> {
+        val message = context.getString(
+          R.string.theme_settings_controller_failed_to_import_theme,
+          result.error.errorMessageOrClassName()
+        )
+
+        showToastLong(message)
+      }
+      is ThemeParser.ThemeParseResult.AttemptToImportWrongTheme -> {
+        val lightThemeText = context.getString(R.string.theme_settings_controller_theme_light)
+        val darkThemeText = context.getString(R.string.theme_settings_controller_theme_dark)
+
+        val themeTypeText = if (result.themeIsLight) {
+          lightThemeText
+        } else {
+          darkThemeText
+        }
+
+        val themeSlotTypeText = if (result.themeSlotIsLight) {
+          lightThemeText
+        } else {
+          darkThemeText
+        }
+
+        val message = context.getString(
+          R.string.theme_settings_controller_wrong_theme_type,
+          themeTypeText,
+          themeSlotTypeText
+        )
+
+        showToastLong(message)
+      }
+      is ThemeParser.ThemeParseResult.BadName -> {
+        val message = context.getString(
+          R.string.theme_settings_controller_failed_to_parse_bad_name,
+          result.name
+        )
+
+        showToastLong(message)
+      }
+      is ThemeParser.ThemeParseResult.Success -> {
+        if (result.hasUnparsedFields) {
+          showToastLong(context.getString(R.string.theme_settings_controller_failed_to_parse_some_colors))
+        } else {
+          showToastLong(context.getString(R.string.done))
+        }
+
+        reload()
+      }
+    }.exhaustive
   }
 
   private fun showToastLong(message: String) {
@@ -606,22 +633,20 @@ class ThemeSettingsController(context: Context) : Controller(context),
     bottomNavView.selectedItemId = R.id.action_browse
     bottomNavView.setBackgroundColor(theme.primaryColor)
 
-    val uncheckedColorNormal = if (isDarkColor(theme.primaryColor)) {
-      Color.LTGRAY
-    } else {
+    val uncheckedColor = if (ThemeEngine.isBlackOrAlmostBlackColor(themeEngine.chanTheme.primaryColor)) {
       Color.DKGRAY
+    } else {
+      ThemeEngine.manipulateColor(themeEngine.chanTheme.primaryColor, .7f)
     }
-
-    val uncheckedColorDarkened = ThemeEngine.manipulateColor(uncheckedColorNormal, .7f)
 
     bottomNavView.itemIconTintList = ColorStateList(
       arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
-      intArrayOf(Color.WHITE, uncheckedColorDarkened)
+      intArrayOf(Color.WHITE, uncheckedColor)
     )
 
     bottomNavView.itemTextColor = ColorStateList(
       arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
-      intArrayOf(Color.WHITE, uncheckedColorDarkened)
+      intArrayOf(Color.WHITE, uncheckedColor)
     )
 
     val toolbar = Toolbar(context)
@@ -696,6 +721,11 @@ class ThemeSettingsController(context: Context) : Controller(context),
         { item -> importTheme(item) }
       )
         .withSubItem(
+          ACTION_IMPORT_DARK_THEME_FROM_CLIPBOARD,
+          R.string.action_import_dark_theme_from_clipboard,
+          { item -> importThemeFromClipboard(item) }
+        )
+        .withSubItem(
           ACTION_EXPORT_DARK_THEME,
           R.string.action_export_dark_theme,
           { item -> exportTheme(item) }
@@ -711,6 +741,11 @@ class ThemeSettingsController(context: Context) : Controller(context),
         R.string.action_import_light_theme,
         { item -> importTheme(item) }
       )
+        .withSubItem(
+          ACTION_IMPORT_LIGHT_THEME_FROM_CLIPBOARD,
+          R.string.action_import_light_theme_from_clipboard,
+          { item -> importThemeFromClipboard(item) }
+        )
         .withSubItem(
           ACTION_EXPORT_LIGHT_THEME,
           R.string.action_export_light_theme,
@@ -785,11 +820,13 @@ class ThemeSettingsController(context: Context) : Controller(context),
   companion object {
     private const val ACTION_IMPORT_LIGHT_THEME = 1
     private const val ACTION_IMPORT_DARK_THEME = 2
-    private const val ACTION_EXPORT_LIGHT_THEME = 3
-    private const val ACTION_EXPORT_DARK_THEME = 4
-    private const val ACTION_RESET_LIGHT_THEME = 5
-    private const val ACTION_RESET_DARK_THEME = 6
-    private const val ACTION_IGNORE_DARK_NIGHT_MODE = 7
+    private const val ACTION_IMPORT_LIGHT_THEME_FROM_CLIPBOARD = 3
+    private const val ACTION_IMPORT_DARK_THEME_FROM_CLIPBOARD = 4
+    private const val ACTION_EXPORT_LIGHT_THEME = 5
+    private const val ACTION_EXPORT_DARK_THEME = 6
+    private const val ACTION_RESET_LIGHT_THEME = 7
+    private const val ACTION_RESET_DARK_THEME = 8
+    private const val ACTION_IGNORE_DARK_NIGHT_MODE = 9
 
     private const val UPDATE_COLORS_DELAY_MS = 125L
   }

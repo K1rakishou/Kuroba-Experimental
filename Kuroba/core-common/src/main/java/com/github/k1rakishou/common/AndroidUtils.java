@@ -29,6 +29,7 @@ import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.media.AudioManager;
 import android.os.Build;
+import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
@@ -221,11 +222,14 @@ public class AndroidUtils {
 
     public static String getClipboardContent() {
         ClipData primary = getClipboardManager().getPrimaryClip();
-        if (primary != null) {
-            return primary.getItemAt(0).getText().toString();
-        } else {
-            return "";
+        if (primary != null && primary.getItemCount() > 0) {
+            CharSequence text = primary.getItemAt(0).getText();
+            if (!TextUtils.isEmpty(text)) {
+                return primary.getItemAt(0).getText().toString();
+            }
         }
+
+        return "";
     }
 
     public static void setClipboardContent(String label, String content) {
