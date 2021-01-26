@@ -154,13 +154,7 @@ internal class FuukaApiThreadPostParseCommandBufferBuilder(
         attrExtractorBuilderFunc = { extractHtml() },
         extractorFunc = { node, extractedAttributeValues, archiveThreadPostCollector ->
           archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
-            val comment = extractedAttributeValues.getHtml()
-            if (comment == null) {
-              Logger.e(TAG, "Failed to extract comment")
-              return@let
-            }
-
-            archivePost.comment = comment
+            archivePost.comment = extractedAttributeValues.getHtml() ?: ""
           }
         }
       )
@@ -244,13 +238,7 @@ internal class FuukaApiThreadPostParseCommandBufferBuilder(
                 attrExtractorBuilderFunc = { extractHtml() },
                 extractorFunc = { node, extractedAttributeValues, archiveThreadPostCollector ->
                   archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
-                    val comment = extractedAttributeValues.getHtml()
-                    if (comment == null) {
-                      Logger.e(TAG, "Failed to extract comment")
-                      return@let
-                    }
-
-                    archivePost.comment = comment
+                    archivePost.comment = extractedAttributeValues.getHtml() ?: ""
                   }
                 }
               )

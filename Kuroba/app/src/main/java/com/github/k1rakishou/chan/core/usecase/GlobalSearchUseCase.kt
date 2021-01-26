@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.chan.core.site.sites.search.Chan4SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.FoolFuukaSearchParams
+import com.github.k1rakishou.chan.core.site.sites.search.FuukaSearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
@@ -147,6 +148,15 @@ class GlobalSearchUseCase(
       is Chan4SearchParams -> {
         queries += searchParams.query
       }
+      is FuukaSearchParams -> {
+        if (searchParams.query.isNotEmpty()) {
+          queries += searchParams.query
+        }
+
+        if (searchParams.subject.isNotEmpty()) {
+          queries += searchParams.subject
+        }
+      }
       is FoolFuukaSearchParams -> {
         if (searchParams.query.isNotEmpty()) {
           queries += searchParams.query
@@ -156,6 +166,7 @@ class GlobalSearchUseCase(
           queries += searchParams.subject
         }
       }
+      else -> throw IllegalStateException("Unknown searchParams type: ${searchParams.javaClass.simpleName}")
     }
 
     return queries

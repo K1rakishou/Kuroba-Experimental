@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets
 class CloudFlareHandlerInterceptor(
   private val siteResolver: SiteResolver,
   private val isOkHttpClientForSiteRequests: Boolean,
+  private val verboseLogs: Boolean,
   private val okHttpType: String
 ) : Interceptor {
 
@@ -29,11 +30,15 @@ class CloudFlareHandlerInterceptor(
     val host = request.url.host
 
     if (requireCloudFlareCookie(request)) {
-      Logger.d(TAG, "[$okHttpType] requireCloudFlareCookie() returned true for $host")
+      if (verboseLogs) {
+        Logger.d(TAG, "[$okHttpType] requireCloudFlareCookie() returned true for $host")
+      }
 
       val updatedRequest = addCloudFlareCookie(chain.request())
       if (updatedRequest != null) {
-        Logger.d(TAG, "[$okHttpType] Updated request to host: '$host' with cfClearance cookie")
+        if (verboseLogs) {
+          Logger.d(TAG, "[$okHttpType] Updated request to host: '$host' with cfClearance cookie")
+        }
 
         request = updatedRequest
         addedCookie = true
@@ -46,10 +51,15 @@ class CloudFlareHandlerInterceptor(
       val body = response.body
       if (body != null) {
         if (tryDetectCloudFlareNeedle(body)) {
-          Logger.d(TAG, "[$okHttpType] Found CloudFlare needle in the page's body")
+          if (verboseLogs) {
+            Logger.d(TAG, "[$okHttpType] Found CloudFlare needle in the page's body")
+          }
 
           if (addedCookie && isOkHttpClientForSiteRequests) {
-            Logger.d(TAG, "[$okHttpType] Cookie was already added and we still failed, removing the old cookie")
+            if (verboseLogs) {
+              Logger.d(TAG, "[$okHttpType] Cookie was already added and we still failed, " +
+                "removing the old cookie")
+            }
 
             // For some reason CloudFlare still rejected our request even though we added the cookie.
             // This may happen because of many reasons like the cookie expired or it was somehow
@@ -151,7 +161,9 @@ class CloudFlareHandlerInterceptor(
       return null
     }
 
-    Logger.d(TAG, "[$okHttpType] cookieValue=$cookieValue")
+    if (verboseLogs) {
+      Logger.d(TAG, "[$okHttpType] cookieValue=$cookieValue")
+    }
 
     return prevRequest.newBuilder()
       .addHeader("Cookie", "$CF_CLEARANCE=$cookieValue")

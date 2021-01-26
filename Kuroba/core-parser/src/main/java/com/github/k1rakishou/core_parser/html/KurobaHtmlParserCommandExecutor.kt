@@ -159,6 +159,8 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
           val start = nodeIndex
           var foundMatch = false
 
+          parserState.successfullyExecutedConditions.remove(command.conditionId)
+
           for (index in start until nodes.size) {
             val node = nodes[index]
 
@@ -172,6 +174,7 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
 
           if (foundMatch) {
             ++commandIndex
+            parserState.successfullyExecutedConditions.add(command.conditionId)
 
             if (command.resetNodeIndex) {
               nodeIndex = start
@@ -187,7 +190,24 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
           }
         }
         is KurobaConditionElseBranchCommand<T> -> {
+          val shouldRunElseBranch = parserState.successfullyExecutedConditions.contains(
+            command.conditionId
+          ).not()
+
+          // Increase commandIndex to skip current KurobaConditionElseBranchCommand. We need to do
+          // this is both cases when executing the else branch and when not.
+          // 1. When executing it we simply need to move to the next command.
+          // 2. When not executing, we need to increment it so that findEndOfConditionBlockOrThrow()
+          // won't return us the very same command we are currently at.
           ++commandIndex
+
+          if (!shouldRunElseBranch) {
+            commandIndex = findEndOfConditionBlockOrThrow(
+              commandIndex,
+              kurobaParserCommands,
+              command.conditionId
+            )
+          }
         }
         is KurobaEndConditionCommand<T> -> {
           ++commandIndex
@@ -263,11 +283,13 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
 
   class ParserState(
     val parserStateStack: Stack<ParserNestingState> = Stack<ParserNestingState>(),
-    val parserLoopStack: Stack<ParserLoopState> = Stack<ParserLoopState>()
+    val parserLoopStack: Stack<ParserLoopState> = Stack<ParserLoopState>(),
+    val successfullyExecutedConditions: MutableSet<Int> = mutableSetOf()
   ) {
     fun clear() {
       parserLoopStack.clear()
       parserStateStack.clear()
+      successfullyExecutedConditions.clear()
     }
   }
 

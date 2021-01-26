@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.base.okhttp;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.core.helper.ProxyStorage;
 import com.github.k1rakishou.chan.core.net.KurobaProxySelector;
@@ -54,6 +55,7 @@ public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
                     Interceptor interceptor = new CloudFlareHandlerInterceptor(
                             siteResolver,
                             true,
+                            ChanSettings.verboseLogs.get(),
                             "Generic"
                     );
 
