@@ -1,6 +1,9 @@
 
 # Kuroba Experimental (Temp name)
 
+<p align="left"><a href="https://f-droid.org/packages/com.github.k1rakishou.chan.fdroid/"><img src="https://f-droid.org/assets/fdroid-logo-text.svg" width="250"></a></p> 
+
+
 KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan. It's a fork of Kuroba. This fork provides lots of new features:
 
 - New technological stack (Kotlin, RxJava/Coroutines, Room etc).
@@ -42,8 +45,6 @@ Screenshots can be found [here](https://github.com/K1rakishou/Kuroba-Experimenta
 [All beta versions](https://kuroba.io:8443/apks/0) (or [here](https://github.com/K1rakishou/Kuroba-Experimental/releases) look for "Pre-release" versions)
 
 ### [Latest release version (v0.4.6)](https://github.com/K1rakishou/Kuroba-Experimental/releases/tag/v0.4.6-release)
-
-[F-Droid status (Merged!)](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/7450)
 
 ##### Currently supported sites
 - 4Chan
