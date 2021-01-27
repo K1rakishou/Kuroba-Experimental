@@ -760,7 +760,13 @@ class ThreadLayout @JvmOverloads constructor(
         R.string.thread_removed
       }
 
-      SnackbarWrapper.create(themeEngine.chanTheme, this, snackbarStringId, Snackbar.LENGTH_LONG).apply {
+      SnackbarWrapper.create(
+        globalWindowInsetsManager,
+        themeEngine.chanTheme,
+        this,
+        snackbarStringId,
+        Snackbar.LENGTH_LONG
+      ).apply {
         setAction(R.string.undo, {
           serializedCoroutineExecutor.post {
             postFilterManager.remove(post.postDescriptor)
@@ -805,7 +811,13 @@ class ThreadLayout @JvmOverloads constructor(
         getQuantityString(R.plurals.post_removed, postDescriptors.size, postDescriptors.size)
       }
 
-      SnackbarWrapper.create(themeEngine.chanTheme, this, formattedString, Snackbar.LENGTH_LONG).apply {
+      SnackbarWrapper.create(
+        globalWindowInsetsManager,
+        themeEngine.chanTheme,
+        this,
+        formattedString,
+        Snackbar.LENGTH_LONG
+      ).apply {
         setAction(R.string.undo) {
           serializedCoroutineExecutor.post {
             postFilterManager.removeMany(postDescriptors)
@@ -845,6 +857,7 @@ class ThreadLayout @JvmOverloads constructor(
       presenter.refreshUI()
 
       SnackbarWrapper.create(
+        globalWindowInsetsManager,
         themeEngine.chanTheme,
         this,
         getString(R.string.restored_n_posts, selectedPosts.size),
@@ -911,6 +924,7 @@ class ThreadLayout @JvmOverloads constructor(
       dismissSnackbar()
 
       newPostsNotification = SnackbarWrapper.create(
+        globalWindowInsetsManager,
         themeEngine.chanTheme,
         this,
         text,

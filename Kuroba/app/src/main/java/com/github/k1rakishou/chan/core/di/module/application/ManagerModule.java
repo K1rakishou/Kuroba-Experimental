@@ -21,7 +21,6 @@ import android.content.Context;
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
-import com.github.k1rakishou.chan.core.helper.DialogFactory;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
 import com.github.k1rakishou.chan.core.helper.LastPageNotificationsHelper;
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder;
@@ -37,13 +36,10 @@ import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager;
 import com.github.k1rakishou.chan.core.manager.ArchivesManager;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.BookmarksManager;
-import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager;
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager;
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager;
-import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager;
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
 import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.k1rakishou.chan.core.manager.PageRequestManager;
@@ -58,7 +54,6 @@ import com.github.k1rakishou.chan.core.manager.SeenPostsManager;
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager;
-import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager;
 import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.SiteRegistry;
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator;
@@ -252,12 +247,6 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public GlobalWindowInsetsManager provideGlobalWindowInsetsManager() {
-        return new GlobalWindowInsetsManager();
-    }
-
-    @Provides
-    @Singleton
     public ApplicationVisibilityManager provideApplicationVisibilityManager() {
         return new ApplicationVisibilityManager();
     }
@@ -278,20 +267,8 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public ControllerNavigationManager provideControllerNavigationManager() {
-        return new ControllerNavigationManager();
-    }
-
-    @Provides
-    @Singleton
     public PostFilterManager providePostFilterManager() {
         return new PostFilterManager();
-    }
-
-    @Provides
-    @Singleton
-    public BottomNavBarVisibilityStateManager provideReplyViewStateManager() {
-        return new BottomNavBarVisibilityStateManager();
     }
 
     @Provides
@@ -510,18 +487,6 @@ public class ManagerModule {
 
     @Singleton
     @Provides
-    public DialogFactory provideDialogFactory(
-            ApplicationVisibilityManager applicationVisibilityManager,
-            ThemeEngine themeEngine
-    ) {
-        return new DialogFactory(
-                applicationVisibilityManager,
-                themeEngine
-        );
-    }
-
-    @Singleton
-    @Provides
     public ThreadBookmarkGroupManager provideThreadBookmarkGroupEntryManager(
             CoroutineScope appScope,
             ThreadBookmarkGroupRepository threadBookmarkGroupEntryRepository,
@@ -570,12 +535,6 @@ public class ManagerModule {
                 chanPostRepository,
                 chanThreadLoaderCoordinator
         );
-    }
-
-    @Singleton
-    @Provides
-    public ThreadFollowHistoryManager provideThreadFollowHistoryManager() {
-        return new ThreadFollowHistoryManager();
     }
 
     @Singleton

@@ -19,13 +19,12 @@ import com.google.android.material.snackbar.Snackbar
 import javax.inject.Inject
 
 class SnackbarWrapper private constructor(
+  private val globalWindowInsetsManager: GlobalWindowInsetsManager,
   private var snackbar: Snackbar? = null
 ) {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
-  @Inject
-  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   init {
     Chan.getComponent().inject(this)
@@ -158,7 +157,13 @@ class SnackbarWrapper private constructor(
     )
 
     @JvmStatic
-    fun create(theme: ChanTheme, view: View, textId: Int, duration: Int): SnackbarWrapper {
+    fun create(
+      globalWindowInsetsManager: GlobalWindowInsetsManager,
+      theme: ChanTheme,
+      view: View,
+      textId: Int,
+      duration: Int
+    ): SnackbarWrapper {
       require(duration in allowedDurations) { "Bad duration" }
 
       val snackbar = Snackbar.make(view, textId, duration)
@@ -166,11 +171,17 @@ class SnackbarWrapper private constructor(
       snackbar.animationMode = Snackbar.ANIMATION_MODE_FADE
 
       fixSnackbarColors(theme, snackbar)
-      return SnackbarWrapper(snackbar)
+      return SnackbarWrapper(globalWindowInsetsManager, snackbar)
     }
 
     @JvmStatic
-    fun create(theme: ChanTheme, view: View, text: String, duration: Int): SnackbarWrapper {
+    fun create(
+      globalWindowInsetsManager: GlobalWindowInsetsManager,
+      theme: ChanTheme,
+      view: View,
+      text: String,
+      duration: Int
+    ): SnackbarWrapper {
       require(duration in allowedDurations) { "Bad duration" }
 
       val snackbar = Snackbar.make(view, text, duration)
@@ -178,7 +189,7 @@ class SnackbarWrapper private constructor(
       snackbar.animationMode = Snackbar.ANIMATION_MODE_FADE
 
       fixSnackbarColors(theme, snackbar)
-      return SnackbarWrapper(snackbar)
+      return SnackbarWrapper(globalWindowInsetsManager, snackbar)
     }
 
     private fun fixSnackbarColors(theme: ChanTheme, snackbar: Snackbar) {

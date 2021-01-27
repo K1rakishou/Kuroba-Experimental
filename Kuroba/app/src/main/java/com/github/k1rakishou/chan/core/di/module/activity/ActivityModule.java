@@ -7,16 +7,22 @@ import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.di.scope.PerActivity;
 import com.github.k1rakishou.chan.core.helper.DialogFactory;
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper;
+import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.BookmarksManager;
+import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager;
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager;
+import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager;
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
+import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager;
 import com.github.k1rakishou.chan.core.manager.UpdateManager;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileChooser;
 import com.github.k1rakishou.fsaf.FileManager;
 
@@ -26,8 +32,8 @@ import dagger.Provides;
 @Module
 public class ActivityModule {
 
-    @Provides
     @PerActivity
+    @Provides
     public UpdateManager provideUpdateManager(
             AppCompatActivity activity,
             FileCacheV2 fileCacheV2,
@@ -52,8 +58,8 @@ public class ActivityModule {
         );
     }
 
-    @Provides
     @PerActivity
+    @Provides
     public RuntimePermissionsHelper provideRuntimePermissionHelper(
             AppCompatActivity activity,
             DialogFactory dialogFactory
@@ -64,8 +70,8 @@ public class ActivityModule {
         );
     }
 
-    @Provides
     @PerActivity
+    @Provides
     public StartActivityStartupHandlerHelper provideStartActivityStartupHandlerHelper(
             HistoryNavigationManager historyNavigationManager,
             SiteManager siteManager,
@@ -83,6 +89,42 @@ public class ActivityModule {
                 chanFilterManager,
                 chanThreadViewableInfoManager,
                 siteResolver
+        );
+    }
+
+    @PerActivity
+    @Provides
+    public GlobalWindowInsetsManager provideGlobalWindowInsetsManager() {
+        return new GlobalWindowInsetsManager();
+    }
+
+    @PerActivity
+    @Provides
+    public ControllerNavigationManager provideControllerNavigationManager() {
+        return new ControllerNavigationManager();
+    }
+
+    @PerActivity
+    @Provides
+    public ThreadFollowHistoryManager provideThreadFollowHistoryManager() {
+        return new ThreadFollowHistoryManager();
+    }
+
+    @PerActivity
+    @Provides
+    public BottomNavBarVisibilityStateManager provideReplyViewStateManager() {
+        return new BottomNavBarVisibilityStateManager();
+    }
+
+    @PerActivity
+    @Provides
+    public DialogFactory provideDialogFactory(
+            ApplicationVisibilityManager applicationVisibilityManager,
+            ThemeEngine themeEngine
+    ) {
+        return new DialogFactory(
+                applicationVisibilityManager,
+                themeEngine
         );
     }
 }
