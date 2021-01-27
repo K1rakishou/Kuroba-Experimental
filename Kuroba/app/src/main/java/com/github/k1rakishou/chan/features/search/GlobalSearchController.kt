@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import java.lang.ref.WeakReference
@@ -38,6 +39,8 @@ class GlobalSearchController(context: Context)
   lateinit var siteManager: SiteManager
   @Inject
   lateinit var archivesManager: ArchivesManager
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
   private val presenter by lazy {
     GlobalSearchPresenter(siteManager)
@@ -142,6 +145,7 @@ class GlobalSearchController(context: Context)
       id("global_search_epoxy_site")
       bindSiteName(dataState.sitesWithSearch.selectedSite.siteDescriptor.siteName)
       bindIcon(dataState.sitesWithSearch.selectedSite.siteIcon)
+      itemBackgroundColor(themeEngine.chanTheme.backColor)
       bindClickCallback {
         val controller = SelectSiteForSearchController(
           context = context,

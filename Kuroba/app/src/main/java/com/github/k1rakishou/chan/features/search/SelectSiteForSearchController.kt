@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteIcon
+import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchSiteView
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
@@ -59,11 +60,13 @@ internal class SelectSiteForSearchController(
     val sites = mutableListOf<SiteSupportingSearchData>()
 
     siteManager.viewActiveSitesOrderedWhile { chanSiteData, site ->
-      sites += SiteSupportingSearchData(
-        site.siteDescriptor(),
-        site.icon(),
-        site.siteDescriptor() == selectedSite
-      )
+      if (site.siteGlobalSearchType() != SiteGlobalSearchType.SearchNotSupported) {
+        sites += SiteSupportingSearchData(
+          site.siteDescriptor(),
+          site.icon(),
+          site.siteDescriptor() == selectedSite
+        )
+      }
 
       return@viewActiveSitesOrderedWhile true
     }
