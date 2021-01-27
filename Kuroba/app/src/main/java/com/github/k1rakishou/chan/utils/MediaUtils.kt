@@ -350,7 +350,10 @@ object MediaUtils {
         val audioIconBitmapWidth = (maxWidth / 5).coerceAtLeast(dp(32f))
         val audioIconBitmapHeight = (maxHeight / 5).coerceAtLeast(dp(32f))
 
-        val audioIconBitmap = AppCompatResources.getDrawable(context, R.drawable.ic_volume_up_white_24dp)
+        val audioIconBitmap = AppCompatResources.getDrawable(
+          context,
+          R.drawable.ic_volume_up_white_24dp
+        )
           ?.toBitmap(audioIconBitmapWidth, audioIconBitmapHeight)
           ?: return null
 
@@ -397,4 +400,13 @@ object MediaUtils {
   fun bitmapToDrawable(bitmap: Bitmap?): BitmapDrawable {
     return BitmapDrawable(AppModuleAndroidUtils.getRes(), bitmap)
   }
+
+  // For testing
+  fun Canvas.toBitmap(): Bitmap {
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565)
+    this.drawBitmap(bitmap, 0f, 0f, null)
+
+    return bitmap
+  }
+
 }
