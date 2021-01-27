@@ -334,7 +334,8 @@ class AppearanceSettingsScreen(
           context = context,
           identifier = AppearanceScreen.LayoutGroup.NeverHideToolbar,
           topDescriptionIdFunc = { R.string.setting_never_hide_toolbar },
-          setting = ChanSettings.neverHideToolbar
+          setting = ChanSettings.neverHideToolbar,
+          requiresRestart = true
         )
 
         group += BooleanSettingV2.createBuilder(

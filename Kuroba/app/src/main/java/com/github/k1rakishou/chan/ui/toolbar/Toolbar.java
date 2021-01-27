@@ -90,7 +90,7 @@ public class Toolbar
         @Override
         public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
             if (recyclerView.getLayoutManager() != null && newState == RecyclerView.SCROLL_STATE_IDLE) {
-                processRecyclerViewScroll(recyclerView);
+                checkToolbarCollapseState(recyclerView, false);
             }
         }
     };
@@ -302,6 +302,10 @@ public class Toolbar
         setCollapse(Toolbar.TOOLBAR_COLLAPSE_HIDE, animated);
     }
 
+    public boolean isToolbarShown() {
+        return scrollOffset == 0 || scrollOffset < (getHeight() / 2);
+    }
+
     public void setCollapse(int offset, boolean animated) {
         scrollOffset += offset;
         scrollOffset = Math.max(0, Math.min(getHeight(), scrollOffset));
@@ -343,11 +347,7 @@ public class Toolbar
         recyclerView.removeOnScrollListener(recyclerViewOnScrollListener);
     }
 
-    public void checkToolbarCollapseState(RecyclerView recyclerView) {
-        processRecyclerViewScroll(recyclerView);
-    }
-
-    private void processRecyclerViewScroll(RecyclerView recyclerView) {
+    public void checkToolbarCollapseState(RecyclerView recyclerView, boolean onGainedFocus) {
         RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
         if (layoutManager == null) {
             return;
@@ -358,32 +358,94 @@ public class Toolbar
             return;
         }
 
-        View positionZero = layoutManager.findViewByPosition(0);
-        boolean isAtVeryBottom = (adapter.getItemCount() - 1) == getLastCompletelyVisiblePosition(recyclerView);
+        boolean isAtVeryBottom = getCompletelyVisibleViewPosition(recyclerView, false) == (adapter.getItemCount() - 1);
+        boolean isAtVeryTop = getCompletelyVisibleViewPosition(recyclerView, true) == 0;
 
-        boolean allowHide = !isAtVeryBottom
-                && (positionZero == null || positionZero.getTop() < 0)
-                || lastScrollDeltaOffset <= 0;
+        if (onGainedFocus) {
+            // If Toolbar is already shown we need to notify all the listeners about that otherwise
+            // some views that depend of Toolbar's hidden/shown state will have incorrect state.
+            boolean shouldShowToolbar = isAtVeryBottom || isAtVeryTop || isToolbarShown();
+            if (shouldShowToolbar) {
+                setCollapse(TOOLBAR_COLLAPSE_SHOW, true);
+            }
 
-        if (allowHide) {
-            setCollapse(lastScrollDeltaOffset <= 0 ? TOOLBAR_COLLAPSE_SHOW : TOOLBAR_COLLAPSE_HIDE, true);
+            // Do not hide the toolbar when sliding between catalog/thread controller
         } else {
-            setCollapse(TOOLBAR_COLLAPSE_SHOW, true);
+            boolean shouldShowToolbar = isAtVeryBottom || isAtVeryTop || lastScrollDeltaOffset <= 0;
+            if (shouldShowToolbar) {
+                setCollapse(TOOLBAR_COLLAPSE_SHOW, true);
+            } else {
+                setCollapse(TOOLBAR_COLLAPSE_HIDE, true);
+            }
         }
     }
 
-    private int getLastCompletelyVisiblePosition(RecyclerView recyclerView) {
+    private int getCompletelyVisibleViewPosition(RecyclerView recyclerView, boolean first) {
         RecyclerView.LayoutManager layoutManager = recyclerView.getLayoutManager();
         if (layoutManager == null) {
             return -1;
         }
 
         if (layoutManager instanceof GridLayoutManager) {
-            return ((GridLayoutManager) layoutManager).findLastCompletelyVisibleItemPosition();
+            GridLayoutManager gridLayoutManager = (GridLayoutManager) layoutManager;
+            int itemsCount = gridLayoutManager.getItemCount() - 1;
+
+            int position;
+            if (first) {
+                position = gridLayoutManager.findFirstVisibleItemPosition();
+            } else {
+                position = gridLayoutManager.findLastVisibleItemPosition();
+            }
+
+            View view = gridLayoutManager.findViewByPosition(position);
+            if (view == null) {
+                return -1;
+            }
+
+            if (first) {
+                int recyclerTop = recyclerView.getPaddingTop();
+                if (view.getTop() == recyclerTop && position == 0) {
+                    return position;
+                }
+            } else {
+                int recyclerBottom = recyclerView.getBottom() + recyclerView.getPaddingBottom();
+                if (view.getBottom() == recyclerBottom && position == itemsCount) {
+                    return position;
+                }
+            }
+
+            return -1;
         }
 
         if (layoutManager instanceof LinearLayoutManager) {
-            return ((LinearLayoutManager) layoutManager).findLastCompletelyVisibleItemPosition();
+            LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
+            int itemsCount = linearLayoutManager.getItemCount() - 1;
+
+            int position;
+            if (first) {
+                position = linearLayoutManager.findFirstVisibleItemPosition();
+            } else {
+                position = linearLayoutManager.findLastVisibleItemPosition();
+            }
+
+            View view = linearLayoutManager.findViewByPosition(position);
+            if (view == null) {
+                return -1;
+            }
+
+            if (first) {
+                int recyclerTop = recyclerView.getPaddingTop();
+                if (view.getTop() == recyclerTop && position == 0) {
+                    return position;
+                }
+            } else {
+                int recyclerBottom = recyclerView.getBottom() - recyclerView.getPaddingBottom();
+                if (view.getBottom() == recyclerBottom && position == itemsCount) {
+                    return position;
+                }
+            }
+
+            return -1;
         }
 
         throw new IllegalStateException("Not supported LayoutManager: " + layoutManager.getClass().getSimpleName());
@@ -422,7 +484,7 @@ public class Toolbar
             final boolean pushing,
             final NavigationItem item,
             ChanTheme theme
-    )  {
+    ) {
         setNavigationItem(animate, pushing, item, theme, null);
     }
 

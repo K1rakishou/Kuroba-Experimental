@@ -1029,21 +1029,23 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   private fun showToolbarIfNeeded() {
-    if (canToolbarCollapse()) {
-      // Of coming back to focus from a dual controller, like the threadlistcontroller,
-      // check if we should show the toolbar again (after the other controller made it hide).
-      // It should show if the search or reply is open, or if the thread was scrolled at the
-      // top showing an empty space.
-      val toolbar = threadListLayoutCallback?.toolbar
-        ?: return
+    if (!canToolbarCollapse()) {
+      return
+    }
 
-      if (searchOpen || replyOpen) {
-        // force toolbar to show
-        toolbar.collapseShow(true)
-      } else {
-        // check if it should show if it was scrolled at the top
-        toolbar.checkToolbarCollapseState(recyclerView)
-      }
+    // Of coming back to focus from a dual controller, like the threadlistcontroller,
+    // check if we should show the toolbar again (after the other controller made it hide).
+    // It should show if the search or reply is open, or if the thread was scrolled at the
+    // top showing an empty space.
+    val toolbar = threadListLayoutCallback?.toolbar
+      ?: return
+
+    if (searchOpen || replyOpen) {
+      // force toolbar to show
+      toolbar.collapseShow(true)
+    } else {
+      // check if it should show if it was scrolled at the top
+      toolbar.checkToolbarCollapseState(recyclerView, true)
     }
   }
 

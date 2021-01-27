@@ -20,10 +20,7 @@ import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Paint
 import android.graphics.Path
-import android.graphics.PorterDuff
-import android.graphics.PorterDuffXfermode
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -32,7 +29,6 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.animation.doOnCancel
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
-import androidx.core.content.ContextCompat
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
@@ -78,11 +74,6 @@ class HidingFloatingActionButton
 
   private val outlinePath = Path()
 
-  private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-    color = ContextCompat.getColor(context, android.R.color.white)
-    xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_IN)
-  }
-
   private val isSnackbarShowing: Boolean
     get() {
       val layout = coordinatorLayout
@@ -115,7 +106,6 @@ class HidingFloatingActionButton
   }
 
   private fun init() {
-    setLayerType(View.LAYER_TYPE_HARDWARE, null)
     setWillNotDraw(false)
 
     if (!isInEditMode) {
@@ -162,6 +152,10 @@ class HidingFloatingActionButton
   }
 
   fun lostFocus(threadControllerType: ThreadSlideController.ThreadControllerType) {
+    if (ChanSettings.neverHideToolbar.get()) {
+      return
+    }
+
     val prevFocused = focused
     focused = (threadControllerType == this.threadControllerType).not()
 
@@ -240,8 +234,8 @@ class HidingFloatingActionButton
   }
 
   override fun draw(canvas: Canvas) {
+    canvas.clipPath(outlinePath)
     super.draw(canvas)
-    canvas.drawPath(outlinePath, paint)
   }
 
   private fun updatePath(widthPx: Int, heightPx: Int) {
