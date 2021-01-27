@@ -103,7 +103,7 @@ public class Toolbar
     private ArrowMenuDrawable arrowMenuDrawable;
     private ToolbarContainer navigationItemContainer;
     private int lastScrollDeltaOffset;
-    private int scrollOffset;
+    private int scrollOffsetCounter;
     private boolean ignoreThemeChanges = false;
     private List<ToolbarCollapseCallback> collapseCallbacks = new ArrayList<>();
     private List<ToolbarHeightUpdatesCallback> heightUpdatesCallbacks = new ArrayList<>();
@@ -263,10 +263,29 @@ public class Toolbar
         return isTransitioning() || super.dispatchTouchEvent(ev);
     }
 
+    @Override
+    public boolean onInterceptTouchEvent(MotionEvent ev) {
+        if (!isFullyVisible()) {
+            // Steal event from children
+            return true;
+        }
+
+        return super.onInterceptTouchEvent(ev);
+    }
+
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        return true;
+        if (!isFullyVisible()) {
+            // Pass event to other views
+            return false;
+        }
+
+        return super.onTouchEvent(event);
+    }
+
+    private boolean isFullyVisible() {
+        return getAlpha() >= 0.99f;
     }
 
     public int getToolbarHeight() {
@@ -303,39 +322,43 @@ public class Toolbar
     }
 
     public boolean isToolbarShown() {
-        return scrollOffset == 0 || scrollOffset < (getHeight() / 2);
+        return scrollOffsetCounter == 0 || scrollOffsetCounter < (getToolbarHeight() / 2);
     }
 
     public void setCollapse(int offset, boolean animated) {
-        scrollOffset += offset;
-        scrollOffset = Math.max(0, Math.min(getHeight(), scrollOffset));
+        int toolbarHeight = getToolbarHeight();
+
+        scrollOffsetCounter += offset;
+        scrollOffsetCounter = Math.max(0, Math.min(toolbarHeight, scrollOffsetCounter));
+
+        float newScrollOffset = 0f;
+        float newAlpha = 0f;
+
+        if (toolbarHeight > 0) {
+            newScrollOffset = scrollOffsetCounter / (float) toolbarHeight;
+            newAlpha = 1f - newScrollOffset;
+        }
 
         if (animated) {
-            animate().translationY(-scrollOffset)
+            animate()
+                    .alpha(newAlpha)
                     .setDuration(TOOLBAR_ANIMATION_DURATION_MS)
                     .setInterpolator(TOOLBAR_ANIMATION_INTERPOLATOR)
                     .start();
 
-            boolean collapse = scrollOffset > 0;
-            for (ToolbarCollapseCallback c : collapseCallbacks) {
-                c.onCollapseAnimation(collapse);
+            boolean collapse = scrollOffsetCounter > 0;
+            for (ToolbarCollapseCallback callback : collapseCallbacks) {
+                callback.onCollapseAnimation(collapse);
             }
 
             return;
         }
 
         animate().cancel();
-        setTranslationY(-scrollOffset);
+        setAlpha(newAlpha);
 
-        for (ToolbarCollapseCallback c : collapseCallbacks) {
-            float newScrollOffset = 0f;
-            int height = getHeight();
-
-            if (height > 0) {
-                newScrollOffset = scrollOffset / (float) height;
-            }
-
-            c.onCollapseTranslation(newScrollOffset);
+        for (ToolbarCollapseCallback callback : collapseCallbacks) {
+            callback.onCollapseTranslation(newScrollOffset);
         }
     }
 

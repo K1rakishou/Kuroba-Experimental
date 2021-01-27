@@ -3,13 +3,13 @@ package com.github.k1rakishou.chan.ui.view
 import android.animation.Animator
 import android.content.Context
 import android.util.AttributeSet
+import android.view.MotionEvent
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarCollapseCallback
 import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
 import com.github.k1rakishou.common.updatePaddings
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import kotlin.math.abs
 import kotlin.math.max
 
 class HidingBottomNavigationView @JvmOverloads constructor(
@@ -88,7 +88,25 @@ class HidingBottomNavigationView @JvmOverloads constructor(
   }
 
   fun isFullyVisible(): Boolean {
-    return translationY.toInt() == 0
+    return alpha >= 0.99f
+  }
+
+  override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
+    if (!isFullyVisible()) {
+      // Steal event from children
+      return true
+    }
+
+    return super.onInterceptTouchEvent(ev)
+  }
+
+  override fun onTouchEvent(event: MotionEvent?): Boolean {
+    if (!isFullyVisible()) {
+      // Pass event to other views
+      return false
+    }
+
+    return super.onTouchEvent(event)
   }
 
   override fun onAttachedToWindow() {
@@ -118,8 +136,8 @@ class HidingBottomNavigationView @JvmOverloads constructor(
       return
     }
 
-    val translation = (maxViewHeight * offset)
-    if (translation.toInt() == translationY.toInt()) {
+    val newAlpha = 1f - offset
+    if (newAlpha == alpha) {
       return
     }
 
@@ -127,17 +145,7 @@ class HidingBottomNavigationView @JvmOverloads constructor(
       return
     }
 
-    val diff = abs(translation - translationY)
-    if (diff >= height) {
-      animate()
-        .translationY(translation)
-        .setDuration(Toolbar.TOOLBAR_ANIMATION_DURATION_MS)
-        .setStartDelay(0)
-        .setInterpolator(Toolbar.TOOLBAR_ANIMATION_INTERPOLATOR)
-        .start()
-    } else {
-      translationY = translation
-    }
+    this.alpha = newAlpha
   }
 
   override fun onCollapseAnimation(collapse: Boolean) {
@@ -157,22 +165,21 @@ class HidingBottomNavigationView @JvmOverloads constructor(
       return
     }
 
-    val translation = if (collapse) {
-      maxViewHeight.toFloat()
-    } else {
+    val newAlpha = if (collapse) {
       0f
+    } else {
+      1f
     }
 
-    if (translation.toInt() == translationY.toInt()) {
+    if (newAlpha == alpha) {
       return
     }
 
     animate().cancel()
 
     animate()
-      .translationY(translation)
+      .alpha(newAlpha)
       .setDuration(Toolbar.TOOLBAR_ANIMATION_DURATION_MS)
-      .setStartDelay(0)
       .setInterpolator(Toolbar.TOOLBAR_ANIMATION_INTERPOLATOR)
       .setListener(object : SimpleAnimatorListener() {
         override fun onAnimationEnd(animation: Animator?) {
@@ -195,17 +202,16 @@ class HidingBottomNavigationView @JvmOverloads constructor(
       return
     }
 
-    val translation = lastCollapseTranslationOffset * maxViewHeight.toFloat()
-    if (translation.toInt() == translationY.toInt()) {
+    val newAlpha = 1f - lastCollapseTranslationOffset
+    if (newAlpha == alpha) {
       return
     }
 
     animate().cancel()
 
     animate()
-      .translationY(translation)
+      .alpha(newAlpha)
       .setDuration(Toolbar.TOOLBAR_ANIMATION_DURATION_MS)
-      .setStartDelay(0)
       .setInterpolator(Toolbar.TOOLBAR_ANIMATION_INTERPOLATOR)
       .start()
   }
