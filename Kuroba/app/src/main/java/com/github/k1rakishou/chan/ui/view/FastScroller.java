@@ -82,13 +82,13 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
     private static final int ANIMATION_STATE_IN = 2;
     private static final int ANIMATION_STATE_FADING_OUT = 3;
 
-    private static final int SHOW_DURATION_MS = 500;
+    private static final int SHOW_DURATION_MS = 300;
     private static final int HIDE_DELAY_AFTER_VISIBLE_MS = 1500;
     private static final int HIDE_DELAY_AFTER_DRAGGING_MS = 1200;
-    private static final int HIDE_DURATION_MS = 500;
-    private static final int SCROLLBAR_THUMB_ALPHA = 255;
+    private static final int HIDE_DURATION_MS = 300;
+    private static final int SCROLLBAR_THUMB_ALPHA = 200;
     private static final int SCROLLBAR_TRACK_ALPHA_DRAGGING = 200;
-    private static final int SCROLLBAR_TRACK_ALPHA_VISIBLE = 130;
+    private static final int SCROLLBAR_TRACK_ALPHA_VISIBLE = 80;
 
     private static final int[] PRESSED_STATE_SET = {android.R.attr.state_pressed};
     private static final int[] HOVERED_STATE_SET = {android.R.attr.state_hovered};

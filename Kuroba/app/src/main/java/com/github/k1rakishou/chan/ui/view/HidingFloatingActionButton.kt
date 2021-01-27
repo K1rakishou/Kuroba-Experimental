@@ -20,10 +20,12 @@ import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Outline
 import android.graphics.Path
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewOutlineProvider
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.animation.doOnCancel
@@ -73,6 +75,7 @@ class HidingFloatingActionButton
   lateinit var themeEngine: ThemeEngine
 
   private val outlinePath = Path()
+  private val fabOutlineProvider = FabOutlineProvider(outlinePath)
 
   private val isSnackbarShowing: Boolean
     get() {
@@ -124,6 +127,8 @@ class HidingFloatingActionButton
       startListeningForInsetsChangesIfNeeded()
       onThemeChanged()
     }
+
+    outlineProvider = fabOutlineProvider
 
     setVisibilityFast(GONE)
     setAlphaFast(0f)
@@ -416,6 +421,16 @@ class HidingFloatingActionButton
     }
 
     return parent as? ThreadLayout
+  }
+
+  private class FabOutlineProvider(
+    private val path: Path
+  ) : ViewOutlineProvider() {
+
+    override fun getOutline(view: View, outline: Outline) {
+      outline.setConvexPath(path)
+    }
+
   }
 
   enum class CurrentFabAnimation {

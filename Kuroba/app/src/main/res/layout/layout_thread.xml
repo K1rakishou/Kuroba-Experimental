@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:padding="12dp"
         android:clickable="true"
         android:focusable="true"
+        android:elevation="4dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_create_white_24dp"
         tools:ignore="RtlHardcoded" />

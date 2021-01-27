@@ -88,7 +88,7 @@ open class ColorizableEditText @JvmOverloads constructor(
           intArrayOf()
         ),
         intArrayOf(
-          manipulateColor(themeEngine.chanTheme.accentColor, 1.2f),
+          themeEngine.chanTheme.accentColor,
           themeEngine.chanTheme.defaultColors.controlNormalColor,
           themeEngine.chanTheme.getDisabledTextColor(themeEngine.chanTheme.defaultColors.controlNormalColor),
           themeEngine.chanTheme.textColorHint
