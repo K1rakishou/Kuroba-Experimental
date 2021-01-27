@@ -431,13 +431,28 @@ class ThemeSettingsController(context: Context) : Controller(context),
 
         showToastLong(message)
       }
-      is ThemeParser.ThemeParseResult.Success -> {
-        if (result.hasUnparsedFields) {
-          showToastLong(context.getString(R.string.theme_settings_controller_failed_to_parse_some_colors))
-        } else {
-          showToastLong(context.getString(R.string.done))
+      is ThemeParser.ThemeParseResult.FailedToParseSomeFields -> {
+        val fieldsString = buildString {
+          appendLine()
+          appendLine("Total fields failed to parse: ${result.unparsedFields.size}")
+          appendLine()
+
+          result.unparsedFields.forEach { unparsedField ->
+            appendLine("'$unparsedField'")
+          }
+
+          appendLine()
+          appendLine(context.getString(R.string.theme_settings_controller_failed_to_parse_some_fields_description))
         }
 
+        dialogFactory.createSimpleInformationDialog(
+          context = context,
+          titleText = context.getString(R.string.theme_settings_controller_failed_to_parse_some_fields_title),
+          descriptionText = fieldsString
+        )
+      }
+      is ThemeParser.ThemeParseResult.Success -> {
+        showToastLong(context.getString(R.string.done))
         reload()
       }
     }.exhaustive

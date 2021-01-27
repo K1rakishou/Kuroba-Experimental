@@ -1071,7 +1071,8 @@ Don't have a 4chan Pass?<br>
     <string name="theme_settings_controller_failed_to_open_theme_file">Failed to open theme file</string>
     <string name="theme_settings_controller_failed_to_export_theme">Failed to export theme: %1$s</string>
     <string name="theme_settings_controller_failed_to_import_theme">Failed to import theme: %1$s</string>
-    <string name="theme_settings_controller_failed_to_parse_some_colors">Failed to parse some colors. Those colors were reset to default</string>
+    <string name="theme_settings_controller_failed_to_parse_some_fields_title">Failed to parse some fields! Check their correctness.</string>
+    <string name="theme_settings_controller_failed_to_parse_some_fields_description">Theme cannot be applied because it contains errors! You can use services such as https://jsonformatter.org/ to make sure the JSON is correct. Additionally check the colors.</string>
     <string name="theme_settings_controller_failed_to_parse_bad_name">Bad theme name: \"%1$s\"</string>
     <string name="theme_settings_controller_failed_to_reset_theme">Failed to reset theme</string>
     <string name="theme_settings_controller_wrong_theme_type">You cannot import \"%1$s\" theme into \"%2$s\" theme slot</string>

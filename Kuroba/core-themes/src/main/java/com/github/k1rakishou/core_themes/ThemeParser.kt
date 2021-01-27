@@ -177,15 +177,15 @@ class ThemeParser(
       )
     }
 
-    val hasUnparsedFields = serializableTheme.hasUnparsedFields()
+    val unparsedFields = serializableTheme.getUnparsedFields()
+    if (unparsedFields.isNotEmpty()) {
+      return ThemeParseResult.FailedToParseSomeFields(unparsedFields)
+    }
 
     val theme = serializableTheme.toChanTheme(defaultTheme)
     storeThemeOnDisk(theme)
 
-    return ThemeParseResult.Success(
-      theme,
-      hasUnparsedFields
-    )
+    return ThemeParseResult.Success(theme)
   }
 
   data class SerializableTheme(
@@ -272,30 +272,80 @@ class ThemeParser(
     val bookmarkCounterNormalColor: String? = null
   ) {
 
-    fun hasUnparsedFields(): Boolean {
-      return accentColor == null || accentColor.toColorOrNull() == null ||
-        primaryColor == null || primaryColor.toColorOrNull() == null ||
-        backColor == null || backColor.toColorOrNull() == null ||
-        errorColor == null || errorColor.toColorOrNull() == null ||
-        textColorPrimary == null || textColorPrimary.toColorOrNull() == null ||
-        textColorSecondary == null || textColorSecondary.toColorOrNull() == null ||
-        textColorHint == null || textColorHint.toColorOrNull() == null ||
-        postHighlightedColor == null || postHighlightedColor.toColorOrNull() == null ||
-        postSavedReplyColor == null || postSavedReplyColor.toColorOrNull() == null ||
-        postSubjectColor == null || postSubjectColor.toColorOrNull() == null ||
-        postDetailsColor == null || postDetailsColor.toColorOrNull() == null ||
-        postNameColor == null || postNameColor.toColorOrNull() == null ||
-        postInlineQuoteColor == null || postInlineQuoteColor.toColorOrNull() == null ||
-        postQuoteColor == null || postQuoteColor.toColorOrNull() == null ||
-        postHighlightQuoteColor == null || postHighlightQuoteColor.toColorOrNull() == null ||
-        postLinkColor == null || postLinkColor.toColorOrNull() == null ||
-        postSpoilerColor == null || postSpoilerColor.toColorOrNull() == null ||
-        postSpoilerRevealTextColor == null || postSpoilerRevealTextColor.toColorOrNull() == null ||
-        postUnseenLabelColor == null || postUnseenLabelColor.toColorOrNull() == null ||
-        dividerColor == null || dividerColor.toColorOrNull() == null ||
-        bookmarkCounterNotWatchingColor == null || bookmarkCounterNotWatchingColor.toColorOrNull() == null ||
-        bookmarkCounterHasRepliesColor == null || bookmarkCounterHasRepliesColor.toColorOrNull() == null ||
-        bookmarkCounterNormalColor == null || bookmarkCounterNormalColor.toColorOrNull() == null
+    fun getUnparsedFields(): List<String> {
+      val unparsedFields = mutableListOf<String>()
+
+      if (accentColor == null || accentColor.toColorOrNull() == null) {
+        unparsedFields += "accent_color"
+      }
+      if (primaryColor == null || primaryColor.toColorOrNull() == null) {
+        unparsedFields += "primary_color"
+      }
+      if (backColor == null || backColor.toColorOrNull() == null) {
+        unparsedFields += "back_color"
+      }
+      if (errorColor == null || errorColor.toColorOrNull() == null) {
+        unparsedFields += "error_color"
+      }
+      if (textColorPrimary == null || textColorPrimary.toColorOrNull() == null) {
+        unparsedFields += "text_color_primary"
+      }
+      if (textColorSecondary == null || textColorSecondary.toColorOrNull() == null) {
+        unparsedFields += "text_color_secondary"
+      }
+      if (textColorHint == null || textColorHint.toColorOrNull() == null) {
+        unparsedFields += "text_color_hint"
+      }
+      if (postHighlightedColor == null || postHighlightedColor.toColorOrNull() == null) {
+        unparsedFields += "post_highlighted_color"
+      }
+      if (postSavedReplyColor == null || postSavedReplyColor.toColorOrNull() == null) {
+        unparsedFields += "post_saved_reply_color"
+      }
+      if (postSubjectColor == null || postSubjectColor.toColorOrNull() == null) {
+        unparsedFields += "post_subject_color"
+      }
+      if (postDetailsColor == null || postDetailsColor.toColorOrNull() == null) {
+        unparsedFields += "post_details_color"
+      }
+      if (postNameColor == null || postNameColor.toColorOrNull() == null) {
+        unparsedFields += "post_name_color"
+      }
+      if (postInlineQuoteColor == null || postInlineQuoteColor.toColorOrNull() == null) {
+        unparsedFields += "post_inline_quote_color"
+      }
+      if (postQuoteColor == null || postQuoteColor.toColorOrNull() == null) {
+        unparsedFields += "post_quote_color"
+      }
+      if (postHighlightQuoteColor == null || postHighlightQuoteColor.toColorOrNull() == null) {
+        unparsedFields += "post_highlight_quote_color"
+      }
+      if (postLinkColor == null || postLinkColor.toColorOrNull() == null) {
+        unparsedFields += "post_link_color"
+      }
+      if (postSpoilerColor == null || postSpoilerColor.toColorOrNull() == null) {
+        unparsedFields += "post_spoiler_color"
+      }
+      if (postSpoilerRevealTextColor == null || postSpoilerRevealTextColor.toColorOrNull() == null) {
+        unparsedFields += "post_spoiler_reveal_text_color"
+      }
+      if (postUnseenLabelColor == null || postUnseenLabelColor.toColorOrNull() == null) {
+        unparsedFields += "post_unseen_label_color"
+      }
+      if (dividerColor == null || dividerColor.toColorOrNull() == null) {
+        unparsedFields += "divider_color"
+      }
+      if (bookmarkCounterNotWatchingColor == null || bookmarkCounterNotWatchingColor.toColorOrNull() == null) {
+        unparsedFields += "bookmark_counter_not_watching_color"
+      }
+      if (bookmarkCounterHasRepliesColor == null || bookmarkCounterHasRepliesColor.toColorOrNull() == null) {
+        unparsedFields += "bookmark_counter_has_replies_color"
+      }
+      if (bookmarkCounterNormalColor == null || bookmarkCounterNormalColor.toColorOrNull() == null) {
+        unparsedFields += "bookmark_counter_normal_color"
+      }
+
+      return unparsedFields
     }
 
     fun toChanTheme(defaultTheme: ChanTheme): ChanTheme {
@@ -403,7 +453,8 @@ class ThemeParser(
     class Error(val error: Throwable) : ThemeParseResult()
     class BadName(val name: String) : ThemeParseResult()
     class AttemptToImportWrongTheme(val themeIsLight: Boolean, val themeSlotIsLight: Boolean) : ThemeParseResult()
-    class Success(val chanTheme: ChanTheme, val hasUnparsedFields: Boolean) : ThemeParseResult()
+    class FailedToParseSomeFields(val unparsedFields: List<String>) : ThemeParseResult()
+    class Success(val chanTheme: ChanTheme) : ThemeParseResult()
   }
 
   sealed class ThemeExportResult {
