@@ -16,47 +16,81 @@
  */
 package com.github.k1rakishou.chan.ui.view
 
-import android.animation.Animator
+import android.animation.AnimatorSet
+import android.animation.ValueAnimator
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
-import android.view.animation.DecelerateInterpolator
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.animation.doOnCancel
+import androidx.core.animation.doOnEnd
+import androidx.core.animation.doOnStart
+import androidx.core.content.ContextCompat
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
+import com.github.k1rakishou.chan.ui.animation.cancelAnimations
+import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarCollapseCallback
-import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.setAlphaFast
+import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.updateMargins
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.android.material.snackbar.Snackbar.SnackbarLayout
 import javax.inject.Inject
 
-class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarCollapseCallback, WindowInsetsListener {
+class HidingFloatingActionButton
+  : AppCompatImageView,
+  ToolbarCollapseCallback,
+  WindowInsetsListener,
+  ThemeEngine.ThemeChangesListener {
+
   private var attachedToWindow = false
   private var toolbar: Toolbar? = null
   private var attachedToToolbar = false
   private var coordinatorLayout: CoordinatorLayout? = null
-  private var currentCollapseScale = 0f
+  private var currentFabAlpha = -1f
   private var bottomNavViewHeight = 0
+
   private var listeningForInsetsChanges = false
-  private var animating = false
-  private var isCatalogFloatingActionButton: Boolean? = null
+  private var focused = false
+  private var isThreadMode = false
+  private var currentFabAnimation = CurrentFabAnimation.None
+  private var threadControllerType: ThreadSlideController.ThreadControllerType? = null
+  private var animatorSet: AnimatorSet? = null
 
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var themeEngine: ThemeEngine
+
+  private val outlinePath = Path()
+
+  private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    color = ContextCompat.getColor(context, android.R.color.white)
+    xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_IN)
+  }
 
   private val isSnackbarShowing: Boolean
     get() {
-      for (i in 0 until coordinatorLayout!!.childCount) {
-        if (coordinatorLayout!!.getChildAt(i) is SnackbarLayout) {
-          currentCollapseScale = -1f
+      val layout = coordinatorLayout
+        ?: return false
+
+      for (i in 0 until layout.childCount) {
+        if (layout.getChildAt(i) is SnackbarLayout) {
+          currentFabAlpha = -1f
           return true
         }
       }
@@ -72,11 +106,18 @@ class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarColla
     init()
   }
 
-  constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+  constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(
+    context,
+    attrs,
+    defStyleAttr
+  ) {
     init()
   }
 
   private fun init() {
+    setLayerType(View.LAYER_TYPE_HARDWARE, null)
+    setWillNotDraw(false)
+
     if (!isInEditMode) {
       AppModuleAndroidUtils.extractActivityComponent(context)
         .inject(this)
@@ -91,7 +132,11 @@ class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarColla
       }
 
       startListeningForInsetsChangesIfNeeded()
+      onThemeChanged()
     }
+
+    setVisibilityFast(GONE)
+    setAlphaFast(0f)
   }
 
   fun setToolbar(toolbar: Toolbar) {
@@ -104,16 +149,49 @@ class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarColla
     }
   }
 
-  fun setIsCatalogFloatingActionButton(isCatalog: Boolean) {
-    isCatalogFloatingActionButton = isCatalog
+  fun setThreadControllerType(threadControllerType: ThreadSlideController.ThreadControllerType) {
+    this.threadControllerType = threadControllerType
   }
 
-  override fun show() {
-    if (isCurrentReplyLayoutOpened()) {
-      return
+  fun setThreadVisibilityState(isThreadMode: Boolean) {
+    this.isThreadMode = isThreadMode
+  }
+
+  fun gainedFocus(threadControllerType: ThreadSlideController.ThreadControllerType) {
+    focused = threadControllerType == this.threadControllerType
+  }
+
+  fun lostFocus(threadControllerType: ThreadSlideController.ThreadControllerType) {
+    val prevFocused = focused
+    focused = (threadControllerType == this.threadControllerType).not()
+
+    if (!focused && focused != prevFocused) {
+      onCollapseAnimationInternal(collapse = true, forced = true)
+    }
+  }
+
+  fun isFabVisible(): Boolean {
+    return visibility == View.VISIBLE && currentFabAnimation != CurrentFabAnimation.Hiding
+  }
+
+  fun hide() {
+    onCollapseAnimation(collapse = true)
+  }
+
+  fun show() {
+    onCollapseAnimation(collapse = false)
+  }
+
+  override fun onTouchEvent(ev: MotionEvent): Boolean {
+    if (this.visibility != View.VISIBLE || currentFabAnimation != CurrentFabAnimation.None) {
+      return false
     }
 
-    super.show()
+    return super.onTouchEvent(ev)
+  }
+
+  override fun onThemeChanged() {
+    setBackgroundColor(themeEngine.chanTheme.accentColor)
   }
 
   override fun onAttachedToWindow() {
@@ -128,27 +206,26 @@ class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarColla
       attachedToToolbar = true
     }
 
-    startListeningForInsetsChangesIfNeeded()
-  }
-
-  override fun onTouchEvent(ev: MotionEvent): Boolean {
-    if (this.visibility != View.VISIBLE || animating) {
-      return false
+    if (!isInEditMode) {
+      startListeningForInsetsChangesIfNeeded()
+      themeEngine.addListener(this)
     }
-
-    return super.onTouchEvent(ev)
   }
 
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
 
+    cancelPrevAnimation()
     attachedToWindow = false
+
     if (attachedToToolbar) {
       toolbar!!.removeCollapseCallback(this)
       attachedToToolbar = false
     }
 
     stopListeningForInsetsChanges()
+    themeEngine.removeListener(this)
+
     coordinatorLayout = null
   }
 
@@ -156,8 +233,34 @@ class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarColla
     updatePaddings()
   }
 
+  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+
+    updatePath(measuredWidth, measuredHeight)
+  }
+
+  override fun draw(canvas: Canvas) {
+    super.draw(canvas)
+    canvas.drawPath(outlinePath, paint)
+  }
+
+  private fun updatePath(widthPx: Int, heightPx: Int) {
+    val centerX = widthPx / 2f
+    val centerY = heightPx / 2f
+
+    outlinePath.reset()
+    outlinePath.addCircle(centerX, centerY, widthPx / 2f, Path.Direction.CW)
+    outlinePath.close()
+  }
+
   override fun onCollapseTranslation(offset: Float) {
-    if (isSnackbarShowing) {
+    if (!isThreadMode) {
+      // We are either showing an error or an empty message or loading view, so we can't update the
+      // FAB state.
+      return
+    }
+
+    if (isSnackbarShowing || !focused) {
       return
     }
 
@@ -165,26 +268,44 @@ class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarColla
       return
     }
 
-    if (offset != currentCollapseScale) {
-      currentCollapseScale = 1f - offset
+    if (offset != currentFabAlpha) {
+      cancelPrevAnimation()
 
-      if (offset < 1f) {
-        if (visibility != VISIBLE) {
-          visibility = VISIBLE
-        }
-      } else {
-        if (visibility != GONE) {
-          visibility = GONE
-        }
+      currentFabAlpha = 1f - offset
+      if (currentFabAlpha < 0.5f) {
+        setVisibilityFast(GONE)
+      } else if (currentFabAlpha > 0.5f) {
+        setVisibilityFast(VISIBLE)
       }
 
-      scaleX = currentCollapseScale
-      scaleY = currentCollapseScale
+      setAlphaFast(currentFabAlpha)
     }
   }
 
   override fun onCollapseAnimation(collapse: Boolean) {
-    if (isSnackbarShowing) {
+    onCollapseAnimationInternal(collapse)
+  }
+
+  private fun onCollapseAnimationInternal(collapse: Boolean, forced: Boolean = false) {
+    if (collapse && currentFabAnimation == CurrentFabAnimation.Hiding
+      || !collapse && currentFabAnimation == CurrentFabAnimation.Showing
+    ) {
+      // Exactly this animation is already running
+      return
+    }
+
+    if (!collapse && !isThreadMode) {
+      // We can only hide the FAB when we are not showing the posts
+      return
+    }
+
+    if (isSnackbarShowing && !collapse) {
+      // Can't show FAB when snackbar is visible
+      return
+    }
+
+    if (!focused && !forced) {
+      // If not focused ignore everything (except for cases when it is a forced update).
       return
     }
 
@@ -193,35 +314,65 @@ class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarColla
       return
     }
 
-    val scale = if (collapse) {
+    val newFabAlpha = if (collapse) {
       0f
     } else {
       1f
     }
 
-    if (scale != currentCollapseScale) {
-      currentCollapseScale = scale
+    if (newFabAlpha == currentFabAlpha) {
+      return
+    }
 
-      animate()
-        .scaleX(currentCollapseScale)
-        .scaleY(currentCollapseScale)
-        .setDuration(300)
-        .setStartDelay(0)
-        .setListener(object : SimpleAnimatorListener() {
-          override fun onAnimationEnd(animation: Animator?) {
-            animating = false
-          }
+    val prevFabAlpha = currentFabAlpha
+    currentFabAlpha = newFabAlpha
 
-          override fun onAnimationCancel(animation: Animator?) {
-            animating = false
-          }
+    cancelPrevAnimation()
 
-          override fun onAnimationStart(animation: Animator?) {
-            animating = true
-          }
-        })
-        .setInterpolator(SLOWDOWN)
-        .start()
+    currentFabAnimation = if (collapse) {
+      CurrentFabAnimation.Hiding
+    } else {
+      CurrentFabAnimation.Showing
+    }
+
+    val alphaAnimation = ValueAnimator.ofFloat(prevFabAlpha, currentFabAlpha).apply {
+      duration = Toolbar.TOOLBAR_ANIMATION_DURATION_MS
+      interpolator = Toolbar.TOOLBAR_ANIMATION_INTERPOLATOR
+
+      doOnStart {
+        if (!collapse) {
+          setVisibilityFast(VISIBLE)
+        }
+      }
+
+      fun onCancelOrEnd() {
+        currentFabAnimation = CurrentFabAnimation.None
+
+        if (collapse) {
+          setVisibilityFast(GONE)
+        }
+      }
+
+      doOnCancel { onCancelOrEnd() }
+      doOnEnd { onCancelOrEnd() }
+
+      addUpdateListener { animation ->
+        val newAlpha = animation.animatedValue as Float
+
+        this@HidingFloatingActionButton.setAlphaFast(newAlpha)
+      }
+    }
+
+    animatorSet = AnimatorSet().apply {
+      play(alphaAnimation)
+      start()
+    }
+  }
+
+  private fun cancelPrevAnimation() {
+    if (animatorSet != null) {
+      animatorSet?.cancelAnimations()
+      animatorSet = null
     }
   }
 
@@ -245,31 +396,38 @@ class HidingFloatingActionButton : ColorizableFloatingActionButton, ToolbarColla
   }
 
   private fun isCurrentReplyLayoutOpened(): Boolean {
-    val threadLayout = findThreadLayout()
+    val controllerType = threadControllerType
       ?: return true
-    val isCatalogButton = isCatalogFloatingActionButton
+    val threadLayout = findThreadLayout(controllerType)
       ?: return true
-    val isCatalogReplyLayout = threadLayout.isCatalogReplyLayout()
+    val threadLayoutThreadControllerType = threadLayout.threadControllerType
       ?: return true
 
-    if (isCatalogButton == isCatalogReplyLayout && threadLayout.isReplyLayoutOpen()) {
+    if (controllerType == threadLayoutThreadControllerType && threadLayout.isReplyLayoutOpen()) {
       return true
     }
 
     return false
   }
 
-  private fun findThreadLayout(): ThreadLayout? {
+  private fun findThreadLayout(controllerType: ThreadSlideController.ThreadControllerType): ThreadLayout? {
     var parent = this.parent
 
     while (parent != null && parent !is ThreadLayout) {
+      if (parent is ThreadLayout && parent.threadControllerType == controllerType) {
+        break
+      }
+
       parent = parent.parent
     }
 
     return parent as? ThreadLayout
   }
 
-  companion object {
-    private val SLOWDOWN = DecelerateInterpolator(2f)
+  enum class CurrentFabAnimation {
+    None,
+    Hiding,
+    Showing
   }
+
 }

@@ -92,7 +92,7 @@ abstract class ThreadController(
     EventBus.getDefault().register(this)
 
     threadLayout = inflate(context, R.layout.layout_thread, null) as ThreadLayout
-    threadLayout.create(this)
+    threadLayout.create(this, threadControllerType)
     threadLayout.setDrawerCallbacks(drawerCallbacks)
 
     swipeRefreshLayout = object : SwipeRefreshLayout(context) {
@@ -120,6 +120,12 @@ abstract class ThreadController(
     super.onShow()
 
     threadLayout.gainedFocus(threadControllerType)
+  }
+
+  override fun onHide() {
+    super.onHide()
+
+    threadLayout.lostFocus(threadControllerType)
   }
 
   override fun onDestroy() {
@@ -307,6 +313,8 @@ abstract class ThreadController(
         "ThreadControllerTypes do not match! controllerType=$controllerType, current=$threadControllerType"
       }
     }
+
+    threadLayout.lostFocus(controllerType)
   }
 
   override fun onGainedFocus(controllerType: ThreadSlideController.ThreadControllerType) {

@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.ui.widget
 import android.graphics.Color
 import android.view.View
 import com.github.k1rakishou.chan.Chan
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.ui.layout.DrawerWidthAdjustingLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.view.HidingBottomNavigationView
@@ -23,6 +24,8 @@ class SnackbarWrapper private constructor(
 
   @Inject
   lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   init {
     Chan.getComponent().inject(this)
@@ -51,10 +54,7 @@ class SnackbarWrapper private constructor(
         val view = transientBottomBar.view
         updateSnackbarBottomPaddingSuperHacky(view)
 
-        findFab(view)?.let { fab ->
-          fab.visibility = View.INVISIBLE
-          fab.hide()
-        }
+        findFab(view)?.hide()
       }
 
       override fun onDismissed(transientBottomBar: Snackbar, event: Int) {
@@ -67,7 +67,14 @@ class SnackbarWrapper private constructor(
           ?: return
 
         if (bottomNavigationView.isFullyVisible()) {
-          findFab(view)?.show()
+          val fab = findFab(view)
+            ?: return
+
+          // Delayed, because we want the snackbar to be hidden and it's not yet detached from the
+          // parent at this point
+          view.post {
+            fab.show()
+          }
         }
       }
     })
@@ -100,11 +107,19 @@ class SnackbarWrapper private constructor(
 
   private fun updateSnackbarBottomPaddingSuperHacky(snackbarView: View) {
     val bottomNavView = findBottomNavigationView(snackbarView)
-      ?: return
+    if (bottomNavView == null) {
+      snackbarView.translationY = 0f
+      return
+    }
+
+    // TODO(KurobaEx): search for reply layout and use it instead when it's shown?
+    //  (since it's height is greater than BottomNavView's)
 
     if (snackbarView.y + snackbarView.height > bottomNavView.y) {
       val newTranslationY = (snackbarView.y + snackbarView.height) - bottomNavView.y
       snackbarView.translationY = -(newTranslationY + MARGIN)
+    } else {
+      snackbarView.translationY = -(globalWindowInsetsManager.bottom()).toFloat()
     }
   }
 

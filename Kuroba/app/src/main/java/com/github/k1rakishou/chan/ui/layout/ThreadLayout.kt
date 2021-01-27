@@ -16,8 +16,6 @@
  */
 package com.github.k1rakishou.chan.ui.layout
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
 import android.annotation.SuppressLint
 import android.app.ProgressDialog
 import android.content.Context
@@ -25,7 +23,6 @@ import android.os.Build
 import android.util.AttributeSet
 import android.view.KeyEvent
 import android.view.View
-import android.view.animation.DecelerateInterpolator
 import android.widget.AdapterView.OnItemClickListener
 import android.widget.ArrayAdapter
 import android.widget.CheckBox
@@ -156,10 +153,11 @@ class ThreadLayout @JvmOverloads constructor(
   private lateinit var removedPostsHelper: RemovedPostsHelper
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
+  var threadControllerType: ThreadSlideController.ThreadControllerType? = null
+    private set
   private var drawerCallbacks: DrawerCallbacks? = null
   private var newPostsNotification: SnackbarWrapper? = null
   private var replyButtonEnabled = false
-  private var showingReplyButton = false
   private var refreshedFromSwipe = false
   private var deletingDialog: ProgressDialog? = null
   private var visible: Visible? = null
@@ -206,13 +204,18 @@ class ThreadLayout @JvmOverloads constructor(
     this.drawerCallbacks = drawerCallbacks
   }
 
-  fun create(callback: ThreadLayoutCallback) {
+  fun create(
+    callback: ThreadLayoutCallback,
+    threadControllerType: ThreadSlideController.ThreadControllerType
+  ) {
     this.callback = callback
     this.serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
+    this.threadControllerType = threadControllerType
 
     // View binding
     loadView = findViewById(R.id.loadview)
     replyButton = findViewById(R.id.reply_button)
+    replyButton.setThreadControllerType(threadControllerType)
 
     // Inflate ThreadListLayout
     threadListLayout = inflate(context, R.layout.layout_thread_list, this, false) as ThreadListLayout
@@ -251,6 +254,8 @@ class ThreadLayout @JvmOverloads constructor(
 
   fun destroy() {
     drawerCallbacks = null
+    threadControllerType = null
+
     themeEngine.removeListener(this)
     presenter.unbindChanDescriptor(true)
     threadListLayout.onDestroy()
@@ -323,7 +328,12 @@ class ThreadLayout @JvmOverloads constructor(
     presenter.normalLoad(showLoading = true)
   }
 
+  fun lostFocus(threadControllerType: ThreadSlideController.ThreadControllerType) {
+    replyButton.lostFocus(threadControllerType)
+  }
+
   fun gainedFocus(threadControllerType: ThreadSlideController.ThreadControllerType) {
+    replyButton.gainedFocus(threadControllerType)
     threadListLayout.gainedFocus(threadControllerType, visible == Visible.THREAD)
   }
 
@@ -373,10 +383,6 @@ class ThreadLayout @JvmOverloads constructor(
 
     switchVisible(Visible.THREAD)
     callback.onShowPosts()
-
-    replyButton.setIsCatalogFloatingActionButton(
-      chanDescriptor is ChanDescriptor.CatalogDescriptor
-    )
   }
 
   override fun postClicked(postDescriptor: PostDescriptor) {
@@ -870,10 +876,6 @@ class ThreadLayout @JvmOverloads constructor(
 
     scrollToBottomDebouncer.post({
       currentToolbar.collapseShow(true)
-
-      if (!threadListLayout.isErrorShown() && replyButton.visibility != View.VISIBLE) {
-        replyButton.show()
-      }
     }, SCROLL_TO_BOTTOM_DEBOUNCE_TIMEOUT_MS)
   }
 
@@ -951,7 +953,6 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   fun isReplyLayoutOpen(): Boolean = threadListLayout.replyOpen
-  fun isCatalogReplyLayout(): Boolean? = threadListLayout.replyPresenter.isCatalogReplyLayout()
 
   fun getThumbnail(postImage: ChanPostImage?): ThumbnailView? {
     return if (postPopupHelper.isOpen) {
@@ -966,36 +967,15 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   private fun showReplyButton(show: Boolean) {
-    if (show == showingReplyButton || !replyButtonEnabled) {
+    if (replyButton.isFabVisible() == show || !replyButtonEnabled) {
       return
     }
 
-    showingReplyButton = show
-
-    if (show && replyButton.visibility != View.VISIBLE) {
-      replyButton.visibility = View.VISIBLE
+    if (show) {
+      replyButton.show()
+    } else {
+      replyButton.hide()
     }
-
-    replyButton.animate()
-      .setInterpolator(DecelerateInterpolator(2f))
-      .setStartDelay(if (show) 100 else 0.toLong())
-      .setDuration(200)
-      .alpha(if (show) 1f else 0f)
-      .scaleX(if (show) 1f else 0f)
-      .scaleY(if (show) 1f else 0f)
-      .setListener(object : AnimatorListenerAdapter() {
-        override fun onAnimationCancel(animation: Animator) {
-          replyButton.alpha = if (show) 1f else 0f
-          replyButton.scaleX = if (show) 1f else 0f
-          replyButton.scaleY = if (show) 1f else 0f
-          replyButton.isClickable = show
-        }
-
-        override fun onAnimationEnd(animation: Animator) {
-          replyButton.isClickable = show
-        }
-      })
-      .start()
   }
 
   private fun switchVisible(visible: Visible) {
@@ -1020,6 +1000,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     this.visible = visible
+    this.replyButton.setThreadVisibilityState(visible == Visible.THREAD)
 
     when (visible) {
       Visible.EMPTY -> {

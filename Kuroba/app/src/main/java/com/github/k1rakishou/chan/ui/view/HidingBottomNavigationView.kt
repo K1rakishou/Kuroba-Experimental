@@ -1,11 +1,12 @@
 package com.github.k1rakishou.chan.ui.view
 
+import android.animation.Animator
 import android.content.Context
 import android.util.AttributeSet
-import android.view.animation.DecelerateInterpolator
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarCollapseCallback
+import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
 import com.github.k1rakishou.common.updatePaddings
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlin.math.abs
@@ -20,6 +21,7 @@ class HidingBottomNavigationView @JvmOverloads constructor(
   private var toolbar: Toolbar? = null
   private var attachedToToolbar = false
 
+  private var animating = false
   private var lastCollapseTranslationOffset = 0f
   private var isTranslationLocked = false
   private var isCollapseLocked = false
@@ -121,13 +123,17 @@ class HidingBottomNavigationView @JvmOverloads constructor(
       return
     }
 
+    if (animating) {
+      return
+    }
+
     val diff = abs(translation - translationY)
     if (diff >= height) {
       animate()
         .translationY(translation)
-        .setDuration(300)
+        .setDuration(Toolbar.TOOLBAR_ANIMATION_DURATION_MS)
         .setStartDelay(0)
-        .setInterpolator(SLOWDOWN)
+        .setInterpolator(Toolbar.TOOLBAR_ANIMATION_INTERPOLATOR)
         .start()
     } else {
       translationY = translation
@@ -161,11 +167,26 @@ class HidingBottomNavigationView @JvmOverloads constructor(
       return
     }
 
+    animate().cancel()
+
     animate()
       .translationY(translation)
-      .setDuration(300)
+      .setDuration(Toolbar.TOOLBAR_ANIMATION_DURATION_MS)
       .setStartDelay(0)
-      .setInterpolator(SLOWDOWN)
+      .setInterpolator(Toolbar.TOOLBAR_ANIMATION_INTERPOLATOR)
+      .setListener(object : SimpleAnimatorListener() {
+        override fun onAnimationEnd(animation: Animator?) {
+          animating = false
+        }
+
+        override fun onAnimationCancel(animation: Animator?) {
+          animating = false
+        }
+
+        override fun onAnimationStart(animation: Animator?) {
+          animating = true
+        }
+      })
       .start()
   }
 
@@ -179,15 +200,13 @@ class HidingBottomNavigationView @JvmOverloads constructor(
       return
     }
 
+    animate().cancel()
+
     animate()
       .translationY(translation)
-      .setDuration(300)
+      .setDuration(Toolbar.TOOLBAR_ANIMATION_DURATION_MS)
       .setStartDelay(0)
-      .setInterpolator(SLOWDOWN)
+      .setInterpolator(Toolbar.TOOLBAR_ANIMATION_INTERPOLATOR)
       .start()
-  }
-
-  companion object {
-    private val SLOWDOWN = DecelerateInterpolator(2f)
   }
 }

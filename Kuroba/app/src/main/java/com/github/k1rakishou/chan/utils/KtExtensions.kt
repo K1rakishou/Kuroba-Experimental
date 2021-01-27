@@ -119,6 +119,16 @@ fun View.setVisibilityFast(newVisibility: Int) {
   }
 }
 
+fun View.setScaleFastXY(newScale: Float) {
+  if (scaleX != newScale) {
+    scaleX = newScale
+  }
+
+  if (scaleY != newScale) {
+    scaleY = newScale
+  }
+}
+
 fun View.setBackgroundColorFast(newBackgroundColor: Int) {
   val prevColor = (background as? ColorDrawable)?.color
   if (prevColor != newBackgroundColor) {

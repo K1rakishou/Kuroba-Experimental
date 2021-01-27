@@ -22,7 +22,6 @@ import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.animation.DecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -30,6 +29,7 @@ import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -66,9 +66,9 @@ public class Toolbar
 
     public static final int TOOLBAR_COLLAPSE_HIDE = 1000000;
     public static final int TOOLBAR_COLLAPSE_SHOW = -1000000;
-    private static final int MIN_SCROLL_SLOP = dp(64);
 
-    private static final Interpolator SLOWDOWN_INTERPOLATOR = new DecelerateInterpolator(2f);
+    public static final Interpolator TOOLBAR_ANIMATION_INTERPOLATOR = new FastOutSlowInInterpolator();
+    public static final long TOOLBAR_ANIMATION_DURATION_MS = 175L;
 
     @Inject
     ThemeEngine themeEngine;
@@ -77,46 +77,20 @@ public class Toolbar
 
     private boolean isInImmersiveMode = false;
 
-    private int prevScrollState = RecyclerView.SCROLL_STATE_IDLE;
-    private int pixelsToConsumeBeforeShowingToolbar = MIN_SCROLL_SLOP;
-
     private final RecyclerView.OnScrollListener recyclerViewOnScrollListener = new RecyclerView.OnScrollListener() {
         @Override
         public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
             if (isAtTheTopOfThread(recyclerView)) {
                 setCollapse(TOOLBAR_COLLAPSE_SHOW, false);
-                return;
+            } else {
+                processScrollCollapse(dy, false);
             }
-
-            int currentState = recyclerView.getScrollState();
-
-            // Consume the scroll events without showing the toolbar if we have some unconsumed
-            // pixels left.
-            if (dy < 0 &&
-                    prevScrollState == RecyclerView.SCROLL_STATE_IDLE
-                    && currentState != RecyclerView.SCROLL_STATE_IDLE) {
-                if (pixelsToConsumeBeforeShowingToolbar > 0) {
-                    pixelsToConsumeBeforeShowingToolbar -= Math.abs(dy);
-                } else {
-                    prevScrollState = currentState;
-                }
-
-                return;
-            }
-
-            // Show the UI
-            processScrollCollapse(dy, false);
         }
 
         @Override
         public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
             if (recyclerView.getLayoutManager() != null && newState == RecyclerView.SCROLL_STATE_IDLE) {
                 processRecyclerViewScroll(recyclerView);
-            }
-
-            if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                prevScrollState = RecyclerView.SCROLL_STATE_IDLE;
-                pixelsToConsumeBeforeShowingToolbar = MIN_SCROLL_SLOP;
             }
         }
     };
@@ -334,8 +308,8 @@ public class Toolbar
 
         if (animated) {
             animate().translationY(-scrollOffset)
-                    .setDuration(300)
-                    .setInterpolator(SLOWDOWN_INTERPOLATOR)
+                    .setDuration(TOOLBAR_ANIMATION_DURATION_MS)
+                    .setInterpolator(TOOLBAR_ANIMATION_INTERPOLATOR)
                     .start();
 
             boolean collapse = scrollOffset > 0;
