@@ -11,7 +11,7 @@ import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
-import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkForegroundWatcher
+import com.github.k1rakishou.chan.core.manager.watcher.BookmarkForegroundWatcher
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.ThreadWatcherScreen
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2

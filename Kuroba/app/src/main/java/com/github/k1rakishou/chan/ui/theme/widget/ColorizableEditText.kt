@@ -55,8 +55,8 @@ open class ColorizableEditText @JvmOverloads constructor(
           intArrayOf()
         ),
         intArrayOf(
+          ThemeEngine.updateAlphaForColor(themeEngine.chanTheme.textColorHint, 0.7f),
           themeEngine.chanTheme.textColorHint,
-          manipulateColor(themeEngine.chanTheme.textColorHint, 1.2f),
         )
       )
     )

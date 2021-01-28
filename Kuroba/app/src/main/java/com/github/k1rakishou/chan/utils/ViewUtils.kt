@@ -24,7 +24,7 @@ object ViewUtils {
   fun TextView.setEditTextCursorColor(theme: ChanTheme) {
     val accentColorWithAlpha = ColorUtils.setAlphaComponent(
       theme.accentColor,
-      0x80
+      0xb0
     )
 
     try {
@@ -73,7 +73,7 @@ object ViewUtils {
   fun TextView.setHandlesColors(theme: ChanTheme) {
     val accentColorWithAlpha = ColorUtils.setAlphaComponent(
       theme.accentColor,
-      0x80
+      0xb0
     )
 
     try {

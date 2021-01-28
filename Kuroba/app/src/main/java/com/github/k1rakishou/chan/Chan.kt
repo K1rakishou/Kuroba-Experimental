@@ -52,8 +52,8 @@ import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
+import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherCoordinator
 import com.github.k1rakishou.chan.core.net.DnsSelector
-import com.github.k1rakishou.chan.features.bookmarks.watcher.BookmarkWatcherCoordinator
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.service.SavingNotification
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType

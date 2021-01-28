@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import androidx.annotation.AttrRes
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
+import androidx.annotation.FloatRange
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.DrawableCompat
@@ -330,8 +331,8 @@ open class ThemeEngine(
     }
 
     @JvmStatic
-    fun updateAlphaForColor(color: Int, newAlpha: Int): Int {
-      return ColorUtils.setAlphaComponent(color, newAlpha)
+    fun updateAlphaForColor(color: Int, @FloatRange(from = 0.0, to = 1.0) newAlpha: Float): Int {
+      return ColorUtils.setAlphaComponent(color, (newAlpha * 255f).toInt())
     }
 
     @JvmStatic
