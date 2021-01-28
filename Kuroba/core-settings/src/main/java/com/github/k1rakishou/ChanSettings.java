@@ -377,7 +377,7 @@ public class ChanSettings {
             enableReplyFab = new BooleanSetting(provider, "preference_enable_reply_fab", true);
             captchaOnBottom = new BooleanSetting(provider, "captcha_on_bottom", true);
             neverShowPages = new BooleanSetting(provider, "never_show_page_number", false);
-            enableDraggableScrollbars = new BooleanSetting(provider, "hide_scrollbars", true);
+            enableDraggableScrollbars = new BooleanSetting(provider, "enable_draggable_scrollbars", true);
 
             // Post
             fontSize = new StringSetting(provider, "preference_font", chanSettingsInfo.isTablet() ? "16" : "14");
