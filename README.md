@@ -36,6 +36,8 @@ Screenshots can be found [here](https://github.com/K1rakishou/Kuroba-Experimenta
 
 ### New stuff and important annoncements:
 
+#### - (27/1/20) F-Droid version is now available.
+
 #### - (10/7/20) Unfortunatelly, built-in updater for release versions was broken in one of the releases so people using Android M and below won't be able to use it to update to a newer version. You will have to install  the update manually (it is fixed in [v0.2.10](https://github.com/K1rakishou/Kuroba-Experimental/releases/tag/v0.2.10-release)). If you are using Android N and above you should be fine. Beta versions are fine too.
 
 #### - New theme engine has been added which now allows you to create any theme you want, see [this wiki page](https://github.com/K1rakishou/Kuroba-Experimental/wiki/Dynamic-themes) for more info
