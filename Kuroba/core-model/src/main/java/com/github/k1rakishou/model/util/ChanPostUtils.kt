@@ -81,6 +81,22 @@ object ChanPostUtils {
     return ""
   }
 
+  @JvmStatic
+  fun getTitle(subject: CharSequence?, comment: CharSequence?, threadDescriptor: ThreadDescriptor): String {
+    val boardDescriptor = threadDescriptor.boardDescriptor()
+
+    if (!TextUtils.isEmpty(subject)) {
+      return "/" + boardDescriptor.boardCode + "/ - " + subject.toString()
+    }
+
+    if (!TextUtils.isEmpty(comment)) {
+      val length = min(comment!!.length, 200)
+      return "/" + boardDescriptor.boardCode + "/ - " + comment.subSequence(0, length)
+    }
+
+    return "/" + boardDescriptor.boardCode + "/" + threadDescriptor.threadNo
+  }
+
   fun getLocalDate(post: ChanPost): String {
     tmpDate.time = post.timestamp * 1000L
     return dateFormat.format(tmpDate)

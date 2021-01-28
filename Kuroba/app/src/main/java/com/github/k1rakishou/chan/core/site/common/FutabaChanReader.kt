@@ -11,12 +11,17 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.isNotNullNorEmpty
+import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.bookmark.StickyThread
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
+import com.github.k1rakishou.model.data.filter.FilterWatchCatalogThreadInfoObject
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -24,6 +29,7 @@ import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.google.gson.stream.JsonReader
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import okhttp3.HttpUrl
 import okhttp3.Request
 import okhttp3.ResponseBody
 import org.jsoup.parser.Parser
@@ -91,11 +97,13 @@ class FutabaChanReader(
   @Throws(Exception::class)
   private suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
     val builder = ChanPostBuilder()
-    builder.boardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
+    val boardDescriptor = chanReaderProcessor.chanDescriptor.boardDescriptor()
 
-    val site = siteManager.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
+    builder.boardDescriptor(boardDescriptor)
+
+    val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
       ?: return
-    val board = boardManager.byBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
+    val board = boardManager.byBoardDescriptor(boardDescriptor)
       ?: return
 
     val endpoints = site.endpoints()
@@ -193,8 +201,8 @@ class FutabaChanReader(
       val args = SiteEndpoints.makeArgument("tim", fileId, "ext", fileExt)
       val image = ChanPostImageBuilder()
         .serverFilename(fileId)
-        .thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
-        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, board.customSpoilers, args))
+        .thumbnailUrl(endpoints.thumbnailUrl(boardDescriptor, false, board.customSpoilers, args))
+        .spoilerThumbnailUrl(endpoints.thumbnailUrl(boardDescriptor, true, board.customSpoilers, args))
         .imageUrl(endpoints.imageUrl(builder, args))
         .filename(Parser.unescapeEntities(fileName, false))
         .extension(fileExt)
@@ -254,8 +262,6 @@ class FutabaChanReader(
     board: ChanBoard,
     endpoints: SiteEndpoints
   ): ChanPostImage? {
-    reader.beginObject()
-
     var fileId: String? = null
     var fileSize: Long = 0
     var fileExt: String? = null
@@ -264,6 +270,8 @@ class FutabaChanReader(
     var fileSpoiler = false
     var fileName: String? = null
     var fileHash: String? = null
+
+    reader.beginObject()
 
     while (reader.hasNext()) {
       when (reader.nextName()) {
@@ -283,10 +291,11 @@ class FutabaChanReader(
 
     if (fileId != null && fileName != null && fileExt != null) {
       val args = SiteEndpoints.makeArgument("tim", fileId, "ext", fileExt)
+
       return ChanPostImageBuilder()
         .serverFilename(fileId)
-        .thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
-        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, board.customSpoilers, args))
+        .thumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, false, board.customSpoilers, args))
+        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, true, board.customSpoilers, args))
         .imageUrl(endpoints.imageUrl(builder, args))
         .filename(Parser.unescapeEntities(fileName, false))
         .extension(fileExt)
@@ -396,7 +405,96 @@ class FutabaChanReader(
     }
   }
 
-  private suspend fun iteratePostsInThread(reader: JsonReader, iterator: suspend (JsonReader) -> Unit) {
+  override suspend fun readFilterWatchCatalogInfoObject(
+    boardDescriptor: BoardDescriptor,
+    request: Request,
+    responseBody: ResponseBody
+  ): ModularResult<FilterWatchCatalogInfoObject> {
+    val endpoints = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+      ?.endpoints()
+      ?: return ModularResult.error(SiteManager.SiteNotFoundException(boardDescriptor.siteDescriptor))
+
+    return ModularResult.Try {
+      val threadObjects = mutableListWithCap<FilterWatchCatalogThreadInfoObject>(100)
+
+      readBodyJson(responseBody) { jsonReader ->
+        iterateThreadsInCatalog(jsonReader) { reader ->
+          val threadObject = readFilterWatchCatalogThreadInfoObject(endpoints, boardDescriptor, reader)
+          if (threadObject != null) {
+            threadObjects += threadObject
+          }
+        }
+      }
+
+      return@Try FilterWatchCatalogInfoObject(
+        boardDescriptor,
+        threadObjects
+      )
+    }
+  }
+
+  private fun readFilterWatchCatalogThreadInfoObject(
+    siteEndpoints: SiteEndpoints,
+    boardDescriptor: BoardDescriptor,
+    reader: JsonReader
+  ): FilterWatchCatalogThreadInfoObject? {
+    var isOp: Boolean = false
+    var threadNo: Long? = null
+    var closed: Boolean = false
+    var archived: Boolean = false
+    var comment: String = ""
+    var subject: String = ""
+    var fileId: String? = null
+    var fileExt: String? = null
+    var thumbnail: HttpUrl? = null
+
+    reader.beginObject()
+
+    while (reader.hasNext()) {
+      when (reader.nextName()) {
+        "no" -> threadNo = reader.nextInt().toLong()
+        "closed" -> closed = reader.nextInt() == 1
+        "archived" -> archived = reader.nextInt() == 1
+        "com" -> comment = reader.nextString()
+        "resto" -> {
+          val opId = reader.nextInt()
+          isOp = opId == 0
+        }
+        "sub" -> subject = reader.nextString()
+        "tim" -> fileId = reader.nextString()
+        "ext" -> fileExt = reader.nextString().replace(".", "")
+        else -> {
+          // Unknown/ignored key
+          reader.skipValue()
+        }
+      }
+    }
+
+    reader.endObject()
+
+    if (!isOp || threadNo == null) {
+      return null
+    }
+
+    if (fileId.isNotNullNorEmpty() && fileExt.isNotNullNorEmpty()) {
+      val args = SiteEndpoints.makeArgument("tim", fileId, "ext", fileExt)
+      thumbnail = siteEndpoints.thumbnailUrl(boardDescriptor, false, 0, args)
+    }
+
+    return FilterWatchCatalogThreadInfoObject(
+      threadDescriptor = ChanDescriptor.ThreadDescriptor.Companion.create(boardDescriptor, threadNo),
+      closed = closed,
+      archived = archived,
+      commentRaw = comment,
+      subjectRaw = subject,
+      thumbnailUrl = thumbnail
+    )
+  }
+
+  private suspend fun iteratePostsInThread(
+    reader: JsonReader,
+    iterator: suspend (JsonReader) -> Unit
+  ) {
     reader.beginObject()
 
     // Page object
@@ -420,7 +518,10 @@ class FutabaChanReader(
     reader.endObject()
   }
 
-  private suspend fun iterateThreadsInCatalog(reader: JsonReader, iterator: suspend (JsonReader) -> Unit) {
+  private suspend fun iterateThreadsInCatalog(
+    reader: JsonReader,
+    iterator: suspend (JsonReader) -> Unit
+  ) {
     reader.beginArray() // Array of pages
 
     while (reader.hasNext()) {

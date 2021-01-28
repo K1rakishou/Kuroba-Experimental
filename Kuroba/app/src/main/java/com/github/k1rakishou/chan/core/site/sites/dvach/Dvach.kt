@@ -33,6 +33,7 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.site.SiteBoards
@@ -349,7 +350,7 @@ class Dvach : CommonSite() {
     }
 
     override fun thumbnailUrl(
-      post: ChanPostBuilder,
+      boardDescriptor: BoardDescriptor,
       spoiler: Boolean,
       customSpoilers: Int,
       arg: Map<String, String>

@@ -53,6 +53,7 @@ import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherCoordinator
+import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator
 import com.github.k1rakishou.chan.core.net.DnsSelector
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.service.SavingNotification
@@ -104,6 +105,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   lateinit var reportManager: ReportManager
   @Inject
   lateinit var bookmarkWatcherCoordinator: BookmarkWatcherCoordinator
+  @Inject
+  lateinit var filterWatcherCoordinator: FilterWatcherCoordinator
   @Inject
   lateinit var archivesManager: ArchivesManager
   @Inject
@@ -252,6 +255,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     bookmarksManager.initialize()
     historyNavigationManager.initialize()
     bookmarkWatcherCoordinator.initialize()
+    filterWatcherCoordinator.initialize()
     archivesManager.initialize()
     chanFilterManager.initialize()
     threadBookmarkGroupManager.initialize()

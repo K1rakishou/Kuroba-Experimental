@@ -25,6 +25,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 class ChanFilterManager(
+  private val isDevBuild: Boolean,
   private val appScope: CoroutineScope,
   private val chanFilterRepository: ChanFilterRepository,
   private val chanPostRepository: ChanPostRepository,
@@ -83,6 +84,8 @@ class ChanFilterManager(
       Logger.e(TAG, "ChanFilterManager initialization error", error)
       suspendableInitializer.initWithError(error)
     }
+
+    filtersChangedChannel.tryEmit(Unit)
   }
 
   fun createOrUpdateFilter(chanFilter: ChanFilter, onUpdated: () -> Unit) {
@@ -208,6 +211,29 @@ class ChanFilterManager(
     return lock.read { filters.map { chanFilter -> chanFilter.copy() } }
   }
 
+  fun viewAllFilters(viewer: (ChanFilter) -> Unit) {
+    lock.read {
+      filters.forEach { chanFilter ->
+        viewer(chanFilter)
+      }
+    }
+  }
+
+  fun getEnabledWatchFilters(): List<ChanFilter> {
+    return lock.read {
+      return@read filters.filter { chanFilter -> chanFilter.isEnabledWatchFilter() }
+        .map { chanFilter -> chanFilter.copy() }
+    }
+  }
+
+  fun hasEnabledWatchFilters(): Boolean {
+    return lock.read {
+      return@read filters.any { chanFilter ->
+        return@any chanFilter.isEnabledWatchFilter()
+      }
+    }
+  }
+
   fun filtersCount(): Int {
     return lock.read { filters.size }
   }
@@ -219,6 +245,7 @@ class ChanFilterManager(
     }
   }
 
+  // Whenever we update the filters we need to reload already cached posts and parse them again
   private fun clearFiltersAndPostHashes() {
     postFilterManager.clear()
     chanPostRepository.clearPostHashes()
@@ -310,7 +337,7 @@ class ChanFilterManager(
     Logger.d(TAG, "ChanFilterManager initialization completed, took $duration")
   }
 
-  private fun isReady() = suspendableInitializer.isInitialized()
+  fun isReady() = suspendableInitializer.isInitialized()
 
   companion object {
     private const val TAG = "ChanFilterManager"

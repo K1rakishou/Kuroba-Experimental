@@ -15,6 +15,7 @@ import com.github.k1rakishou.model.data.archive.ArchivePostMedia
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
 import com.github.k1rakishou.model.mapper.ArchiveThreadMapper
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
@@ -234,6 +235,16 @@ class FoolFuukaApi(
     reader: JsonReader
   ): ModularResult<ThreadBookmarkInfoObject> {
     val error = CommonClientException("Bookmarks are not supported for site ${site.name()}")
+
+    return ModularResult.error(error)
+  }
+
+  override suspend fun readFilterWatchCatalogInfoObject(
+    boardDescriptor: BoardDescriptor,
+    request: Request,
+    responseBody: ResponseBody
+  ): ModularResult<FilterWatchCatalogInfoObject> {
+    val error = CommonClientException("Filter watching is not supported for site ${site.name()}")
 
     return ModularResult.error(error)
   }

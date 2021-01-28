@@ -9,16 +9,23 @@ import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
+import com.github.k1rakishou.common.jsonArray
+import com.github.k1rakishou.common.jsonObject
+import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.bookmark.StickyThread
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
+import com.github.k1rakishou.model.data.filter.FilterWatchCatalogThreadInfoObject
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.google.gson.stream.JsonReader
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import okhttp3.ResponseBody
 import org.jsoup.parser.Parser
@@ -199,8 +206,8 @@ class DvachApi internal constructor(
       val args = SiteEndpoints.makeArgument("path", path, "thumbnail", thumbnail)
       return ChanPostImageBuilder()
         .serverFilename(fileName)
-        .thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
-        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, board.customSpoilers, args))
+        .thumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, false, board.customSpoilers, args))
+        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, true, board.customSpoilers, args))
         .imageUrl(endpoints.imageUrl(builder, args))
         .filename(Parser.unescapeEntities(fileName, false))
         .extension(fileExt)
@@ -246,7 +253,7 @@ class DvachApi internal constructor(
   }
 
   @Throws(Exception::class)
-  suspend fun readThreadBookmarkInfoPostObject(
+  private suspend fun readThreadBookmarkInfoPostObject(
     dvachExtraThreadInfo: DvachExtraThreadInfo,
     reader: JsonReader
   ): ThreadBookmarkInfoPostObject? {
@@ -320,6 +327,93 @@ class DvachApi internal constructor(
 
       return ThreadBookmarkInfoPostObject.RegularPost(postNo, comment)
     }
+  }
+
+  override suspend fun readFilterWatchCatalogInfoObject(
+    boardDescriptor: BoardDescriptor,
+    request: Request,
+    responseBody: ResponseBody
+  ): ModularResult<FilterWatchCatalogInfoObject> {
+    return ModularResult.Try {
+      val threadObjects = mutableListWithCap<FilterWatchCatalogThreadInfoObject>(100)
+
+      readBodyJson(responseBody) { jsonReader ->
+        iterateThreadsInCatalog(jsonReader) { reader ->
+          val threadObject = readFilterWatchCatalogThreadInfoObject(boardDescriptor, reader)
+          if (threadObject != null) {
+            threadObjects += threadObject
+          }
+        }
+      }
+
+      return@Try FilterWatchCatalogInfoObject(
+        boardDescriptor,
+        threadObjects
+      )
+    }
+  }
+
+  private fun readFilterWatchCatalogThreadInfoObject(
+    boardDescriptor: BoardDescriptor,
+    reader: JsonReader
+  ): FilterWatchCatalogThreadInfoObject? {
+    var threadNo: Long? = null
+    var isOp = false
+    var closed = false
+    var archived = false
+    var comment = ""
+    var subject = ""
+    var thumbnail: String? = null
+
+    reader.beginObject()
+
+    while (reader.hasNext()) {
+      when (reader.nextName()) {
+        "num" -> {
+          val num = reader.nextStringWithoutBOM()
+          threadNo = num.toInt().toLong()
+        }
+        "closed" -> closed = reader.nextInt() == 1
+        "archived" -> archived = reader.nextInt() == 1
+        "comment" -> comment = reader.nextStringWithoutBOM()
+        "parent" -> {
+          val parentPostId = reader.nextInt()
+          isOp = parentPostId == 0
+        }
+        "subject" -> subject = reader.nextStringWithoutBOM()
+        "files" -> {
+          reader.jsonArray {
+            jsonObject {
+              while (reader.hasNext()) {
+                when (reader.nextName()) {
+                  "thumbnail" -> thumbnail = reader.nextStringWithoutBOM()
+                  else -> reader.skipValue()
+                }
+              }
+            }
+          }
+        }
+        else -> {
+          // Unknown/ignored key
+          reader.skipValue()
+        }
+      }
+    }
+
+    reader.endObject()
+
+    if (!isOp || threadNo == null) {
+      return null
+    }
+
+    return FilterWatchCatalogThreadInfoObject(
+      threadDescriptor = ChanDescriptor.ThreadDescriptor.Companion.create(boardDescriptor, threadNo),
+      closed = closed,
+      archived = archived,
+      commentRaw = comment,
+      subjectRaw = subject,
+      thumbnailUrl = thumbnail?.toHttpUrlOrNull()
+    )
   }
 
   private suspend fun iteratePostsInThread(

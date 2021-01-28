@@ -45,8 +45,8 @@ class BookmarkBackgroundWatcherWorker(
     }
 
     if (isStopped) {
-      Logger.d(TAG, "BookmarkBackgroundWatcherWorker.doWork() Cannot start BookmarkWatcherDelegate, " +
-        "already stopped")
+      Logger.d(TAG, "BookmarkBackgroundWatcherWorker.doWork() Cannot start BookmarkWatcherDelegate " +
+        "(already stopped), restarting")
       BookmarkWatcherCoordinator.restartBackgroundWork(appConstants, applicationContext)
       return Result.success()
     }
@@ -64,7 +64,7 @@ class BookmarkBackgroundWatcherWorker(
 
     if (!bookmarksManager.hasActiveBookmarks()) {
       Logger.d(TAG, "BookmarkBackgroundWatcherWorker.doWork() Cannot start BookmarkWatcherDelegate, " +
-        "no active bookmarks requiring service")
+        "no active bookmarks found")
       return Result.success()
     }
 
@@ -75,10 +75,10 @@ class BookmarkBackgroundWatcherWorker(
 
     val activeBookmarks = bookmarksManager.activeBookmarksCount()
     if (activeBookmarks > 0) {
-      BookmarkWatcherCoordinator.restartBackgroundWork(appConstants, applicationContext)
-
       Logger.d(TAG, "BookmarkBackgroundWatcherWorker.doWork() work done. " +
         "There are $activeBookmarks active bookmarks left, work restarted")
+
+      BookmarkWatcherCoordinator.restartBackgroundWork(appConstants, applicationContext)
     } else {
       Logger.d(TAG, "BookmarkBackgroundWatcherWorker.doWork() work done. " +
         "No active bookmarks left, exiting without restarting the work")

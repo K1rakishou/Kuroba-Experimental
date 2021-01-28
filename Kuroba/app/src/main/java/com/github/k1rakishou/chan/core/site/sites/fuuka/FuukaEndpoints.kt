@@ -31,7 +31,7 @@ class FuukaEndpoints(
   }
 
   override fun thumbnailUrl(
-    post: ChanPostBuilder,
+    boardDescriptor: BoardDescriptor,
     spoiler: Boolean,
     customSpoilers: Int,
     arg: Map<String, String>

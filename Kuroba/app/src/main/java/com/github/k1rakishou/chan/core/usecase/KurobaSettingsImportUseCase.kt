@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.usecase
 
-import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
@@ -32,6 +31,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilter
+import com.github.k1rakishou.model.data.filter.FilterAction
 import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.google.gson.stream.JsonReader
@@ -462,7 +462,7 @@ class KurobaSettingsImportUseCase(
             return@jsonObject
           }
 
-          if (action == FilterEngine.FilterAction.WATCH.id) {
+          if (action == FilterAction.WATCH.id) {
             Logger.e(TAG, "readFilters() Skipping WATCH filter")
             return@jsonObject
           }

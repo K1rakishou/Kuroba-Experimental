@@ -400,6 +400,8 @@ open class SiteManager(
 
   fun isReady() = suspendableInitializer.isInitialized()
 
+  class SiteNotFoundException(siteDescriptor: SiteDescriptor) : Exception("Site ${siteDescriptor} not found")
+
   companion object {
     private const val TAG = "SiteManager"
 

@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.di.module.application;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
+import com.github.k1rakishou.chan.core.helper.FilterEngine;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.BookmarksManager;
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
@@ -12,6 +13,7 @@ import com.github.k1rakishou.chan.core.manager.SavedReplyManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
+import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase;
@@ -130,6 +132,35 @@ public class UseCaseModule {
         return new FilterOutHiddenImagesUseCase(
                 postHideManager,
                 postFilterManager
+        );
+    }
+
+    @Provides
+    @Singleton
+    public BookmarkFilterWatchableThreadsUseCase provideBookmarkFilterWatchableThreadsUseCase(
+            AppConstants appConstants,
+            CoroutineScope appScope,
+            BoardManager boardManager,
+            BookmarksManager bookmarksManager,
+            ChanFilterManager chanFilterManager,
+            SiteManager siteManager,
+            ProxiedOkHttpClient proxiedOkHttpClient,
+            SimpleCommentParser simpleCommentParser,
+            FilterEngine filterEngine,
+            ChanPostRepository chanPostRepository
+    ) {
+        return new BookmarkFilterWatchableThreadsUseCase(
+                ChanSettings.verboseLogs.get(),
+                appConstants,
+                boardManager,
+                bookmarksManager,
+                chanFilterManager,
+                siteManager,
+                appScope,
+                proxiedOkHttpClient,
+                simpleCommentParser,
+                filterEngine,
+                chanPostRepository
         );
     }
 

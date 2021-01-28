@@ -19,7 +19,7 @@ import com.github.k1rakishou.chan.features.settings.MediaScreen
 import com.github.k1rakishou.chan.features.settings.SecurityScreen
 import com.github.k1rakishou.chan.features.settings.SettingClickAction
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
-import com.github.k1rakishou.chan.features.settings.ThreadWatcherScreen
+import com.github.k1rakishou.chan.features.settings.WatcherScreen
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.setup.SitesSetupController
@@ -189,10 +189,10 @@ class MainSettingsScreen(
 
         group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = MainScreen.MainGroup.ThreadWatcher,
+          identifier = MainScreen.MainGroup.ThreadAndFilterWatcher,
           topDescriptionIdFunc = { R.string.settings_watch },
-          bottomDescriptionIdFunc = { R.string.setting_watch_summary_enabled },
-          callbackWithClickAction = { SettingClickAction.OpenScreen(ThreadWatcherScreen) }
+          bottomDescriptionIdFunc = { R.string.settings_watch_summary_enabled },
+          callbackWithClickAction = { SettingClickAction.OpenScreen(WatcherScreen) }
         )
 
         group += LinkSettingV2.createBuilder(

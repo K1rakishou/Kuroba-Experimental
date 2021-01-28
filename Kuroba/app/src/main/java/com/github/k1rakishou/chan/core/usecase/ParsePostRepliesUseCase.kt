@@ -84,8 +84,11 @@ class ParsePostRepliesUseCase(
               && extractedQuote.threadId == threadDescriptor.threadNo)
 
             if (!isQuotedPostInTheSameThread) {
-              // Cross-thread reply or something like that, we don't support that since it shouldn't
-              // be used much.
+              // Cross-thread reply or something like that, we don't support it since it shouldn't
+              // be used normally. The only use case that come to mind is when there are two
+              // different threads bookmarked and someone from one bookmarked thread replied to our
+              // post in another bookmarked thread. Normally, nobody would expect for this to work
+              // and that's why we don't support it.
               return@forEach
             }
 

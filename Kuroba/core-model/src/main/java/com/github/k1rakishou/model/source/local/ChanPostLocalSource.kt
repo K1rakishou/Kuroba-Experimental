@@ -631,7 +631,8 @@ class ChanPostLocalSource(
         ?: return
 
       // TODO(KurobaEx): this may be kinda slow since we are deleting posts one by one instead of
-      //  by batches
+      //  by batches. But to delete them in batches I need to figure out how SQLite WHERE operator
+      //  works with multiple IN operators (e.g. WHERE x IN (1,2,3) AND y IN ("1", "2", "3") ).
       postDescriptors.forEach { postDescriptor ->
         chanPostDao.deletePost(
           chanThreadEntity.threadId,
@@ -649,6 +650,8 @@ class ChanPostLocalSource(
     var deletedTotal = 0
     var skippedTotal = 0
     var offset = 0
+
+    // TODO(KurobaEx): force return if this operation takes more than 10 seconds
 
     do {
       val threadBatch = chanThreadDao.selectThreadsWithPostsOtherThanOp(offset, THREADS_IN_BATCH)
@@ -672,6 +675,7 @@ class ChanPostLocalSource(
           break
         }
 
+        // TODO(KurobaEx): batching!
         val deletedPosts = chanPostDao.deletePostsByThreadId(thread.threadId)
         deletedTotal += deletedPosts
 
@@ -692,6 +696,8 @@ class ChanPostLocalSource(
     var deletedTotal = 0
     var skippedTotal = 0
     var offset = 0
+
+    // TODO(KurobaEx): force return if this operation takes more than 10 seconds
 
     do {
       val threadBatch = chanThreadDao.selectOldThreads(offset, THREADS_IN_BATCH)
@@ -714,6 +720,7 @@ class ChanPostLocalSource(
           break
         }
 
+        // TODO(KurobaEx): batching!
         deletedTotal += chanThreadDao.deleteThread(thread.threadId)
         Logger.d(TAG, "deleteOldThreads() Deleting thread \"${thread}\", deletedTotal = $deletedTotal")
       }

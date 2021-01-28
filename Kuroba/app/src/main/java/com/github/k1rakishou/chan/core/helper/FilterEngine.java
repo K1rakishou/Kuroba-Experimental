@@ -27,12 +27,12 @@ import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.filter.ChanFilter;
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
+import com.github.k1rakishou.model.data.filter.FilterAction;
 import com.github.k1rakishou.model.data.filter.FilterType;
 import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,17 +86,6 @@ public class FilterEngine {
 
     public List<ChanFilter> getAllFilters() {
         return chanFilterManager.getAllFilters();
-    }
-
-    public List<ChanFilter> getEnabledWatchFilters() {
-        List<ChanFilter> watchFilters = new ArrayList<>();
-        for (ChanFilter f : getEnabledFilters()) {
-            if (f.getAction() == FilterAction.WATCH.id) {
-                watchFilters.add(f);
-            }
-        }
-
-        return watchFilters;
     }
 
     public boolean matchesBoard(ChanFilter filter, ChanBoard board) {
@@ -196,7 +185,10 @@ public class FilterEngine {
         }
 
         String fnames = files.toString();
-        return !fnames.isEmpty() && typeMatches(filter, FilterType.FILENAME) && matches(filter, fnames, false);
+
+        return !fnames.isEmpty()
+                && typeMatches(filter, FilterType.FILENAME)
+                && matches(filter, fnames, false);
     }
 
     @AnyThread
@@ -210,7 +202,30 @@ public class FilterEngine {
     }
 
     @AnyThread
-    public boolean matches(ChanFilter filter, CharSequence text, boolean forceCompile) {
+    public boolean matchesNoHtmlConversion(
+            ChanFilter filter,
+            CharSequence text,
+            boolean forceCompile
+    ) {
+        return matches(filter, text, forceCompile, false);
+    }
+
+    @AnyThread
+    public boolean matches(
+            ChanFilter filter,
+            CharSequence text,
+            boolean forceCompile
+    ) {
+        return matches(filter, text, forceCompile, true);
+    }
+
+    @AnyThread
+    private boolean matches(
+            ChanFilter filter,
+            CharSequence text,
+            boolean forceCompile,
+            boolean convertFromHtml
+    ) {
         if (TextUtils.isEmpty(text)) {
             return false;
         }
@@ -236,7 +251,14 @@ public class FilterEngine {
         }
 
         if (pattern != null) {
-            Matcher matcher = pattern.matcher(HtmlCompat.fromHtml(text.toString(), 0).toString());
+            Matcher matcher;
+
+            if (convertFromHtml) {
+                matcher = pattern.matcher(HtmlCompat.fromHtml(text.toString(), 0).toString());
+            } else {
+                matcher = pattern.matcher(text);
+            }
+
             try {
                 return matcher.find();
             } catch (IllegalArgumentException e) {
@@ -345,42 +367,17 @@ public class FilterEngine {
         return filterFilthyPattern.matcher(filthy).replaceAll("\\\\$1");
     }
 
-    public enum FilterAction {
-        HIDE(0),
-        COLOR(1),
-        REMOVE(2),
-        WATCH(3);
-
-        public final int id;
-
-        FilterAction(int id) {
-            this.id = id;
+    public static String actionName(FilterAction action) {
+        switch (action) {
+            case HIDE:
+                return getString(R.string.filter_hide);
+            case COLOR:
+                return getString(R.string.filter_color);
+            case REMOVE:
+                return getString(R.string.filter_remove);
+            case WATCH:
+                return getString(R.string.filter_watch);
         }
-
-        public static FilterAction forId(int id) {
-            return enums[id];
-        }
-
-        private static FilterAction[] enums = new FilterAction[4];
-
-        static {
-            for (FilterAction type : values()) {
-                enums[type.id] = type;
-            }
-        }
-
-        public static String actionName(FilterEngine.FilterAction action) {
-            switch (action) {
-                case HIDE:
-                    return getString(R.string.filter_hide);
-                case COLOR:
-                    return getString(R.string.filter_color);
-                case REMOVE:
-                    return getString(R.string.filter_remove);
-                case WATCH:
-                    return getString(R.string.filter_watch);
-            }
-            return null;
-        }
+        return null;
     }
 }

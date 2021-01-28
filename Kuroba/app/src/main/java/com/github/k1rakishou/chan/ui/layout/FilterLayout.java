@@ -40,7 +40,6 @@ import androidx.core.content.ContextCompat;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.helper.DialogFactory;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
-import com.github.k1rakishou.chan.core.helper.FilterEngine.FilterAction;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.ui.helper.BoardHelper;
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowDrawable;
@@ -54,6 +53,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
+import com.github.k1rakishou.model.data.filter.FilterAction;
 import com.github.k1rakishou.model.data.filter.FilterType;
 import com.google.android.material.textview.MaterialTextView;
 
@@ -302,12 +302,7 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
         List<FloatingMenuItem> menuItems = new ArrayList<>(6);
 
         for (FilterAction action : FilterAction.values()) {
-            if (action == FilterAction.WATCH) {
-                // TODO(KurobaEx): Filter watching.
-                continue;
-            }
-
-            menuItems.add(new FloatingMenuItem(action, FilterAction.actionName(action)));
+            menuItems.add(new FloatingMenuItem(action, FilterEngine.actionName(action)));
         }
 
         FloatingMenu menu = new FloatingMenu(v.getContext());
@@ -460,7 +455,7 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
 
     private void updateFilterAction() {
         FilterAction action = FilterAction.forId(chanFilterMutable.getAction());
-        actionText.setText(FilterAction.actionName(action));
+        actionText.setText(FilterEngine.actionName(action));
         colorContainer.setVisibility(action == FilterAction.COLOR ? VISIBLE : GONE);
 
         if (chanFilterMutable.getColor() == 0) {

@@ -18,6 +18,7 @@ import com.github.k1rakishou.chan.core.di.module.application.RoomDatabaseModule;
 import com.github.k1rakishou.chan.core.di.module.application.SiteModule;
 import com.github.k1rakishou.chan.core.di.module.application.UseCaseModule;
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkBackgroundWatcherWorker;
+import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherWorker;
 import com.github.k1rakishou.chan.core.receiver.ReplyNotificationDeleteIntentBroadcastReceiver;
 import com.github.k1rakishou.chan.core.site.SiteBase;
 import com.github.k1rakishou.chan.ui.view.FastScroller;
@@ -55,6 +56,7 @@ public interface ApplicationComponent {
 
     void inject(Chan application);
     void inject(BookmarkBackgroundWatcherWorker bookmarkBackgroundWatcherWorker);
+    void inject(FilterWatcherWorker filterWatcherWorker);
     void inject(SiteBase siteBase);
     void inject(SnackbarWrapper snackbarWrapper);
     void inject(ReplyNotificationDeleteIntentBroadcastReceiver replyNotificationDeleteIntentBroadcastReceiver);

@@ -27,7 +27,7 @@ import com.github.k1rakishou.chan.features.settings.screens.ImportExportSettings
 import com.github.k1rakishou.chan.features.settings.screens.MainSettingsScreen
 import com.github.k1rakishou.chan.features.settings.screens.MediaSettingsScreen
 import com.github.k1rakishou.chan.features.settings.screens.SecuritySettingsScreen
-import com.github.k1rakishou.chan.features.settings.screens.ThreadWatcherSettingsScreen
+import com.github.k1rakishou.chan.features.settings.screens.WatcherSettingsScreen
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils
@@ -121,7 +121,7 @@ class SettingsCoordinator(
   }
 
   private val threadWatcherSettingsScreen by lazy {
-    ThreadWatcherSettingsScreen(
+    WatcherSettingsScreen(
       context,
       applicationVisibilityManager,
       themeEngine,

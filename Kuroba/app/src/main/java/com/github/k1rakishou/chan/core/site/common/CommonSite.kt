@@ -355,7 +355,7 @@ abstract class CommonSite : SiteBase() {
       throw IllegalStateException("Attempt to call abstract method")
     }
     
-    override fun thumbnailUrl(post: ChanPostBuilder, spoiler: Boolean, customSpoilers: Int, arg: Map<String, String>): HttpUrl {
+    override fun thumbnailUrl(boardDescriptor: BoardDescriptor, spoiler: Boolean, customSpoilers: Int, arg: Map<String, String>): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
     

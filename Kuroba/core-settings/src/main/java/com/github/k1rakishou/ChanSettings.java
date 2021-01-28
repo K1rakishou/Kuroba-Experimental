@@ -37,6 +37,7 @@ import kotlin.LazyKt;
 
 import static com.github.k1rakishou.common.AndroidUtils.getAppDir;
 import static com.github.k1rakishou.common.AndroidUtils.getAppMainPreferences;
+import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 public class ChanSettings {
@@ -213,6 +214,11 @@ public class ChanSettings {
     public static BooleanSetting useSoundForLastPageNotifications;
     //endregion
 
+    //region FILTER WATCHER
+    public static BooleanSetting filterWatchEnabled;
+    public static IntegerSetting filterWatchInterval;
+    //endregion
+
     //region APPEARANCE
     // Theme
     public static BooleanSetting imageViewerFullscreenMode;
@@ -362,6 +368,11 @@ public class ChanSettings {
             useSoundForReplyNotifications = new BooleanSetting(provider, "use_sound_for_reply_notifications", false);
             watchLastPageNotify = new BooleanSetting(provider, "preference_watch_last_page_notify", false);
             useSoundForLastPageNotifications = new BooleanSetting(provider, "use_sound_for_last_page_notifications", false);
+            //endregion
+
+            //region FILTER WATCHER
+            filterWatchEnabled = new BooleanSetting(provider, "preference_filter_watch_enabled", false);
+            filterWatchInterval = new IntegerSetting(provider, "preference_filter_watch_interval", (int) HOURS.toMillis(12));
             //endregion
 
             //region APPEARANCE

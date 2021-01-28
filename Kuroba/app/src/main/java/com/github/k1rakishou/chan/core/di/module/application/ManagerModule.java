@@ -57,12 +57,15 @@ import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager;
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkForegroundWatcher;
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherCoordinator;
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherDelegate;
+import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator;
+import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherDelegate;
 import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.SiteRegistry;
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator;
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager;
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
+import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
@@ -466,6 +469,7 @@ public class ManagerModule {
             PostFilterManager postFilterManager
     ) {
         return new ChanFilterManager(
+                AppModuleAndroidUtils.isDevBuild(),
                 appScope,
                 chanFilterRepository,
                 chanPostRepository,
@@ -543,6 +547,42 @@ public class ManagerModule {
             SiteManager siteManager
     ) {
         return new PostingLimitationsInfoManager(siteManager);
+    }
+
+    @Singleton
+    @Provides
+    public FilterWatcherCoordinator provideFilterWatcherCoordinator(
+            Context appContext,
+            CoroutineScope appScope,
+            AppConstants appConstants,
+            ChanFilterManager chanFilterManager
+    ) {
+        return new FilterWatcherCoordinator(
+                ChanSettings.verboseLogs.get(),
+                appContext,
+                appScope,
+                appConstants,
+                chanFilterManager
+        );
+    }
+
+    @Singleton
+    @Provides
+    public FilterWatcherDelegate provideFilterWatcherDelegate(
+            BoardManager boardManager,
+            BookmarksManager bookmarksManager,
+            ChanFilterManager chanFilterManager,
+            SiteManager siteManager,
+            BookmarkFilterWatchableThreadsUseCase bookmarkFilterWatchableThreadsUseCase
+    ) {
+        return new FilterWatcherDelegate(
+                AppModuleAndroidUtils.isDevBuild(),
+                boardManager,
+                bookmarksManager,
+                chanFilterManager,
+                siteManager,
+                bookmarkFilterWatchableThreadsUseCase
+        );
     }
 
 }

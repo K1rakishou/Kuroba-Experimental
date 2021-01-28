@@ -40,7 +40,6 @@ import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.helper.DialogFactory;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
-import com.github.k1rakishou.chan.core.helper.FilterEngine.FilterAction;
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage;
 import com.github.k1rakishou.chan.ui.layout.FilterLayout;
@@ -51,6 +50,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.filter.ChanFilter;
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
+import com.github.k1rakishou.model.data.filter.FilterAction;
 import com.github.k1rakishou.model.data.filter.FilterType;
 
 import org.jetbrains.annotations.NotNull;
@@ -351,7 +351,7 @@ public class FiltersController
                 subText += getQuantityString(R.plurals.board, size, size);
             }
 
-            subText += " \u2013 " + FilterAction.actionName(FilterAction.forId(filter.getAction()));
+            subText += " \u2013 " + FilterEngine.actionName(FilterAction.forId(filter.getAction()));
 
             holder.subtext.setText(subText);
         }

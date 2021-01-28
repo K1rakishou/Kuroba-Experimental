@@ -26,6 +26,14 @@ class ChanFilter(
   @Synchronized
   fun getDatabaseId(): Long = filterDatabaseId
 
+  fun isEnabledWatchFilter(): Boolean {
+    return enabled && isWatchFilter()
+  }
+
+  fun isWatchFilter(): Boolean {
+    return action == FilterAction.WATCH.id
+  }
+
   fun matchesBoard(boardDescriptor: BoardDescriptor): Boolean {
     return allBoards() || boards.contains(boardDescriptor)
   }

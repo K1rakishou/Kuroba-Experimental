@@ -152,6 +152,10 @@ class BookmarksManager(
   }
 
   fun createBookmarks(simpleThreadBookmarkList: List<SimpleThreadBookmark>) {
+    if (simpleThreadBookmarkList.isEmpty()) {
+      return
+    }
+
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     val actuallyCreated = mutableListOf<ChanDescriptor.ThreadDescriptor>()

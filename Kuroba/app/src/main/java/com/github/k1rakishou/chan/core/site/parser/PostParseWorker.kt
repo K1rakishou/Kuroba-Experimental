@@ -23,6 +23,7 @@ import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilter
+import com.github.k1rakishou.model.data.filter.FilterAction
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.PostFilter
@@ -89,6 +90,11 @@ internal class PostParseWorker(
     }
 
     for (filter in filters) {
+      if (filter.isWatchFilter()) {
+        // Do not auto create watch filters, this may end up pretty bad
+        continue
+      }
+
       if (filterEngine.matches(filter, post)) {
         postFilterManager.insert(postDescriptor, createPostFilter(filter))
         return
@@ -100,8 +106,8 @@ internal class PostParseWorker(
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   private fun createPostFilter(filter: ChanFilter): PostFilter {
-    return when (FilterEngine.FilterAction.forId(filter.action)) {
-      FilterEngine.FilterAction.COLOR -> {
+    return when (FilterAction.forId(filter.action)) {
+      FilterAction.COLOR -> {
         PostFilter(
           enabled = filter.enabled,
           filterHighlightedColor = filter.color,
@@ -110,7 +116,7 @@ internal class PostParseWorker(
           filterSaved = filter.applyToSaved
         )
       }
-      FilterEngine.FilterAction.HIDE -> {
+      FilterAction.HIDE -> {
         PostFilter(
           enabled = filter.enabled,
           filterStub = true,
@@ -118,7 +124,7 @@ internal class PostParseWorker(
           filterOnlyOP = filter.onlyOnOP
         )
       }
-      FilterEngine.FilterAction.REMOVE -> {
+      FilterAction.REMOVE -> {
         PostFilter(
           enabled = filter.enabled,
           filterRemove = true,
@@ -126,12 +132,8 @@ internal class PostParseWorker(
           filterOnlyOP = filter.onlyOnOP
         )
       }
-      FilterEngine.FilterAction.WATCH -> {
-        PostFilter(
-          enabled = filter.enabled,
-          filterWatch = true,
-          filterOnlyOP = true
-        )
+      FilterAction.WATCH -> {
+        throw IllegalStateException("Cannot auto-create WATCH filters")
       }
     }
   }

@@ -128,12 +128,12 @@ open class Chan4 : SiteBase() {
     }
 
     override fun thumbnailUrl(
-      post: ChanPostBuilder,
+      boardDescriptor: BoardDescriptor,
       spoiler: Boolean,
       customSpoilers: Int,
       arg: Map<String, String>
     ): HttpUrl {
-      val boardCode = post.boardDescriptor!!.boardCode
+      val boardCode = boardDescriptor.boardCode
 
       return if (spoiler) {
         val image = s.newBuilder().addPathSegment("image")

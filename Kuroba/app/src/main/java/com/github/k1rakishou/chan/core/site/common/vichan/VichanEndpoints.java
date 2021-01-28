@@ -56,13 +56,13 @@ public class VichanEndpoints extends CommonSite.CommonEndpoints {
 
     @Override
     public HttpUrl thumbnailUrl(
-            ChanPostBuilder post,
+            BoardDescriptor boardDescriptor,
             boolean spoiler,
             int customSpoilter,
             Map<String, String> arg
     ) {
         return root.builder()
-                .s(post.boardDescriptor.getBoardCode())
+                .s(boardDescriptor.getBoardCode())
                 .s("thumb")
                 .s(arg.get("tim") + ".png")
                 .url();

@@ -35,6 +35,11 @@ open class ColorizableFloatingActionButton @JvmOverloads constructor(
     applyColors()
   }
 
+  override fun setImageResource(resId: Int) {
+    super.setImageResource(resId)
+    updateDrawableTint()
+  }
+
   override fun applyColors() {
     if (isInEditMode) {
       return
@@ -42,6 +47,10 @@ open class ColorizableFloatingActionButton @JvmOverloads constructor(
 
     backgroundTintList = ColorStateList.valueOf(themeEngine.chanTheme.accentColor)
 
+    updateDrawableTint()
+  }
+
+  private fun updateDrawableTint() {
     val isDarkColor = isDarkColor(themeEngine.chanTheme.accentColor)
     if (isDarkColor) {
       drawable.setTint(Color.WHITE)

@@ -7,11 +7,15 @@ import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.CommonSite.CommonApi
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
+import com.github.k1rakishou.model.data.filter.FilterWatchCatalogThreadInfoObject
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -154,8 +158,8 @@ class TaimabaApi(
     if (fileName != null && fileExt != null) {
       val args = SiteEndpoints.makeArgument("tim", fileName, "ext", fileExt)
       val image = ChanPostImageBuilder()
-        .thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
-        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, board.customSpoilers, args))
+        .thumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, false, board.customSpoilers, args))
+        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, true, board.customSpoilers, args))
         .imageUrl(endpoints.imageUrl(builder, args))
         .filename(Parser.unescapeEntities(fileName, false))
         .extension(fileExt)
@@ -248,8 +252,8 @@ class TaimabaApi(
     if (fileName != null && fileExt != null) {
       val args = SiteEndpoints.makeArgument("tim", fileName, "ext", fileExt)
       return ChanPostImageBuilder()
-        .thumbnailUrl(endpoints.thumbnailUrl(builder, false, board.customSpoilers, args))
-        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder, true, board.customSpoilers, args))
+        .thumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, false, board.customSpoilers, args))
+        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, true, board.customSpoilers, args))
         .imageUrl(endpoints.imageUrl(builder, args))
         .filename(Parser.unescapeEntities(fileName, false))
         .extension(fileExt)
@@ -291,6 +295,40 @@ class TaimabaApi(
       }
 
       return@Try ThreadBookmarkInfoObject(threadDescriptor, postObjects)
+    }
+  }
+
+  override suspend fun readFilterWatchCatalogInfoObject(
+    boardDescriptor: BoardDescriptor,
+    request: Request,
+    responseBody: ResponseBody
+  ): ModularResult<FilterWatchCatalogInfoObject> {
+    val endpoints = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+      ?.endpoints()
+      ?: return ModularResult.error(SiteManager.SiteNotFoundException(boardDescriptor.siteDescriptor))
+
+
+    return ModularResult.Try {
+      val threadObjects = mutableListWithCap<FilterWatchCatalogThreadInfoObject>(100)
+
+      readBodyJson(responseBody) { jsonReader ->
+        vichanReaderExtensions.iterateThreadsInCatalog(jsonReader) { reader ->
+          val threadObject = vichanReaderExtensions.readFilterWatchCatalogThreadInfoObject(
+            endpoints,
+            boardDescriptor,
+            reader
+          )
+
+          if (threadObject != null) {
+            threadObjects += threadObject
+          }
+        }
+      }
+
+      return@Try FilterWatchCatalogInfoObject(
+        boardDescriptor,
+        threadObjects
+      )
     }
   }
 

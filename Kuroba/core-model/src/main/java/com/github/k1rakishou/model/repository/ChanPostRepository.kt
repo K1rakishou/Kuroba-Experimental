@@ -511,6 +511,8 @@ class ChanPostRepository(
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }
 
+        // TODO(KurobaEx): maybe the amount of posts to delete should be decreased,
+        //  like 1/3 at a time not 1/2?
         val toDeleteCount = if (forced) {
           totalAmountOfPostsInDatabase / 2
         } else {
@@ -562,6 +564,8 @@ class ChanPostRepository(
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }
 
+        // TODO(KurobaEx): maybe the amount of posts to delete should be decreased,
+        //  like 1/3 at a time not 1/2?
         val toDeleteCount = if (forced) {
           totalAmountOfThreadsInDatabase / 2
         } else {

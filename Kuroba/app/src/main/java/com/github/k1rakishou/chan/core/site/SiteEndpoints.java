@@ -37,7 +37,7 @@ public interface SiteEndpoints {
     HttpUrl catalog(BoardDescriptor boardDescriptor);
     HttpUrl thread(ChanDescriptor.ThreadDescriptor threadDescriptor);
     HttpUrl imageUrl(ChanPostBuilder post, Map<String, String> arg);
-    HttpUrl thumbnailUrl(ChanPostBuilder post, boolean spoiler, int customSpoilers, Map<String, String> arg);
+    HttpUrl thumbnailUrl(BoardDescriptor boardDescriptor, boolean spoiler, int customSpoilers, Map<String, String> arg);
     HttpUrl icon(String icon, Map<String, String> arg);
     HttpUrl boards();
     HttpUrl pages(ChanBoard board);

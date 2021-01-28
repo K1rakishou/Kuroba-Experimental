@@ -64,7 +64,7 @@ public class TaimabaEndpoints
     }
 
     @Override
-    public HttpUrl thumbnailUrl(ChanPostBuilder post, boolean spoiler, int customSpoilers, Map<String, String> arg) {
+    public HttpUrl thumbnailUrl(BoardDescriptor boardDescriptor, boolean spoiler, int customSpoilers, Map<String, String> arg) {
         switch (arg.get("ext")) {
             case "swf":
                 return HttpUrl.parse(AppConstants.RESOURCES_ENDPOINT + "swf_thumb.png");
@@ -75,7 +75,7 @@ public class TaimabaEndpoints
                 return HttpUrl.parse(AppConstants.RESOURCES_ENDPOINT + "audio_thumb.png");
             default:
                 return sys.builder()
-                        .s(post.boardDescriptor.getBoardCode())
+                        .s(boardDescriptor.getBoardCode())
                         .s("thumb")
                         .s(arg.get("tim") + "s.jpg")
                         .url();

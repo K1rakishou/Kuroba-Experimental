@@ -16,6 +16,7 @@ import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
@@ -58,7 +59,12 @@ class Kun8 : CommonSite() {
         return requireNotNull(url) { "image url is null" }
       }
 
-      override fun thumbnailUrl(post: ChanPostBuilder, spoiler: Boolean, customSpoilters: Int, arg: Map<String, String>): HttpUrl {
+      override fun thumbnailUrl(
+        boardDescriptor: BoardDescriptor,
+        spoiler: Boolean,
+        customSpoilters: Int,
+        arg: Map<String, String>
+      ): HttpUrl {
         val tim = requireNotNull(arg["tim"]) { "\"tim\" parameter not found" }
 
         val extension = when (val ext = requireNotNull(arg["ext"]) { "\"ext\" parameter not found" }) {

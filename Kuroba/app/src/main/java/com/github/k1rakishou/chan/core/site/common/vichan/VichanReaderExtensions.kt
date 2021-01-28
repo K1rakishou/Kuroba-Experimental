@@ -1,9 +1,16 @@
 package com.github.k1rakishou.chan.core.site.common.vichan
 
+import com.github.k1rakishou.chan.core.site.SiteEndpoints
+import com.github.k1rakishou.common.jsonArray
+import com.github.k1rakishou.common.jsonObject
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.bookmark.StickyThread
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.filter.FilterWatchCatalogThreadInfoObject
 import com.google.gson.stream.JsonReader
+import okhttp3.HttpUrl
 
 @Suppress("BlockingMethodInNonBlockingContext")
 class VichanReaderExtensions {
@@ -119,6 +126,76 @@ class VichanReaderExtensions {
 
       return ThreadBookmarkInfoPostObject.RegularPost(postNo, comment)
     }
+  }
+
+  fun readFilterWatchCatalogThreadInfoObject(
+    endpoints: SiteEndpoints,
+    boardDescriptor: BoardDescriptor,
+    reader: JsonReader
+  ): FilterWatchCatalogThreadInfoObject? {
+    var isOp: Boolean = false
+    var threadNo: Long? = null
+    var closed: Boolean = false
+    var archived: Boolean = false
+    var comment: String = ""
+    var subject: String = ""
+    var thumbnailUrl: HttpUrl? = null
+
+    reader.beginObject()
+
+    while (reader.hasNext()) {
+      when (reader.nextName()) {
+        "no" -> threadNo = reader.nextInt().toLong()
+        "closed" -> closed = reader.nextInt() == 1
+        "archived" -> archived = reader.nextInt() == 1
+        "com" -> comment = reader.nextString()
+        "resto" -> {
+          val opId = reader.nextInt()
+          isOp = opId == 0
+        }
+        "sub" -> subject = reader.nextString()
+        "extra_files" -> {
+          reader.jsonArray {
+            if (reader.hasNext()) {
+              var fileId: String? = null
+              var fileExt: String? = null
+
+              jsonObject {
+                while (reader.hasNext()) {
+                  when (reader.nextName()) {
+                    "tim" -> fileId = reader.nextString()
+                    "ext" -> fileExt = reader.nextString().replace(".", "")
+                    else -> reader.skipValue()
+                  }
+                }
+              }
+
+              val args = SiteEndpoints.makeArgument("tim", fileId, "ext", fileExt)
+              thumbnailUrl = endpoints.thumbnailUrl(boardDescriptor, false, 0, args)
+            }
+          }
+        }
+        else -> {
+          // Unknown/ignored key
+          reader.skipValue()
+        }
+      }
+    }
+
+    reader.endObject()
+
+    if (!isOp || threadNo == null) {
+      return null
+    }
+
+    return FilterWatchCatalogThreadInfoObject(
+      threadDescriptor = ChanDescriptor.ThreadDescriptor.Companion.create(boardDescriptor, threadNo),
+      closed = closed,
+      archived = archived,
+      commentRaw = comment,
+      subjectRaw = subject,
+      thumbnailUrl = thumbnailUrl
+    )
   }
 
   companion object {

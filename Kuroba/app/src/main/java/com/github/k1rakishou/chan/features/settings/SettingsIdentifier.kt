@@ -93,7 +93,7 @@ sealed class MainScreen(
     IGroup,
     MainScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
-    object ThreadWatcher : MainGroup("thread_watcher")
+    object ThreadAndFilterWatcher : MainGroup("thread_filter_watcher")
     object SitesSetup : MainGroup("sites_setup")
     object Appearance : MainGroup("appearance")
     object Behavior : MainGroup("behavior")
@@ -213,41 +213,56 @@ sealed class DatabaseSummaryScreen(
 }
 
 // =========================================================
-// ================= ThreadWatcherScreen ===================
+// ================= WatcherScreen ===================
 // =========================================================
 
-sealed class ThreadWatcherScreen(
+sealed class WatcherScreen(
   groupIdentifier: GroupIdentifier,
   settingIdentifier: SettingIdentifier,
-  screenIdentifier: ScreenIdentifier = ThreadWatcherScreen.getScreenIdentifier()
+  screenIdentifier: ScreenIdentifier = WatcherScreen.getScreenIdentifier()
 ) :
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
 
-  sealed class MainGroup(
+  sealed class ThreadWatcherGroup(
     settingsId: String,
-    groupIdentifier: GroupIdentifier = MainGroup.getGroupIdentifier()
+    groupIdentifier: GroupIdentifier = ThreadWatcherGroup.getGroupIdentifier()
   ) : IGroup,
-    ThreadWatcherScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+    WatcherScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
-    object EnableThreadWatcher : MainGroup("enable_thread_watcher")
-    object EnableBackgroundThreadWatcher : MainGroup("enable_background_thread_watcher")
-    object ThreadWatcherBackgroundUpdateInterval : MainGroup("thread_watcher_background_update_interval")
-    object ThreadWatcherForegroundUpdateInterval : MainGroup("thread_watcher_foreground_update_interval")
-    object AdaptiveForegroundWatcherInterval : MainGroup("adaptive_foreground_watcher_interval")
-    object ReplyNotifications : MainGroup("reply_notifications")
-    object UseSoundForReplyNotifications : MainGroup("use_sound_for_reply_notifications")
-    object WatchLastPageNotify : MainGroup("watch_last_page_notify")
-    object UseSoundForLastPageNotifications : MainGroup("use_sound_for_last_page_notifications")
+    object EnableThreadWatcher : ThreadWatcherGroup("enable_thread_watcher")
+    object EnableBackgroundThreadWatcher : ThreadWatcherGroup("enable_background_thread_watcher")
+    object ThreadWatcherBackgroundUpdateInterval : ThreadWatcherGroup("thread_watcher_background_update_interval")
+    object ThreadWatcherForegroundUpdateInterval : ThreadWatcherGroup("thread_watcher_foreground_update_interval")
+    object AdaptiveForegroundWatcherInterval : ThreadWatcherGroup("adaptive_foreground_watcher_interval")
+    object ReplyNotifications : ThreadWatcherGroup("reply_notifications")
+    object UseSoundForReplyNotifications : ThreadWatcherGroup("use_sound_for_reply_notifications")
+    object WatchLastPageNotify : ThreadWatcherGroup("watch_last_page_notify")
+    object UseSoundForLastPageNotifications : ThreadWatcherGroup("use_sound_for_last_page_notifications")
 
     companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = ThreadWatcherScreen.getScreenIdentifier()
-      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("main_group")
+      override fun getScreenIdentifier(): ScreenIdentifier = WatcherScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("thread_watcher_group")
+    }
+  }
+
+  sealed class FilterWatcherGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = FilterWatcherGroup.getGroupIdentifier()
+  ) : IGroup,
+    WatcherScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object EnableFilterWatcher : FilterWatcherGroup("enable_filter_watcher")
+    object FilterWatcherUpdateInterval : FilterWatcherGroup("filter_watcher_update_interval")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = WatcherScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("filter_watcher_group")
     }
   }
 
   companion object : IScreenIdentifier() {
-    override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("thread_watcher_screen")
+    override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("watcher_screen")
   }
 }
 

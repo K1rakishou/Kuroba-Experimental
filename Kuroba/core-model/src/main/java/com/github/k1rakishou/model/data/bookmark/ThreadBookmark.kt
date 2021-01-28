@@ -113,6 +113,14 @@ class ThreadBookmark private constructor(
     state.set(BOOKMARK_STATE_WATCHING)
   }
 
+  fun setFilterWatchFlag() {
+    if (state.get(BOOKMARK_FILTER_WATCH)) {
+      return
+    }
+
+    state.set(BOOKMARK_FILTER_WATCH)
+  }
+
   fun readRepliesUpTo(lastSeenPostNo: Long) {
     // Mark all quotes to me as notified/seen/read which postNo is less or equals to lastSeenPostNo.
     threadBookmarkReplies.values
@@ -310,6 +318,10 @@ class ThreadBookmark private constructor(
         append("STICKY_NO_CAP ")
       }
 
+      if (state.get(BOOKMARK_FILTER_WATCH)) {
+        append("BOOKMARK_FILTER_WATCH ")
+      }
+
       append("]")
     }
   }
@@ -368,6 +380,12 @@ class ThreadBookmark private constructor(
      * really so if the user bookmarks such thread it will be fetching thread info infinitely.
      * */
     const val BOOKMARK_STATE_STICKY_NO_CAP = 1 shl 8
+
+    /**
+     * Indicates that this bookmark is used for filter watching and should be also visible on
+     * Filter Watches page of BookmarksController.
+     * */
+    const val BOOKMARK_FILTER_WATCH = 1 shl 9
 
     fun create(
       threadDescriptor: ChanDescriptor.ThreadDescriptor,

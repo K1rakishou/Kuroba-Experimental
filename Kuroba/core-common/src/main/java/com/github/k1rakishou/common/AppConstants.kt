@@ -17,6 +17,7 @@ open class AppConstants(
   val processorsCount: Int
   val proxiesFileName = PROXIES_FILE_NAME
   val bookmarkWatchWorkUniqueTag = "BookmarkWatcherController_${flavorType.name}"
+  val filterWatchWorkUniqueTag = "FilterWatcherController_${flavorType.name}"
 
   val attachFilesDir: File
     get() {

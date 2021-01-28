@@ -34,6 +34,7 @@ class ThreadBookmarkView private constructor(
   fun isRollingSticky(): Boolean = stickyThread is StickyThread.StickyWithCap
   fun isFirstFetch(): Boolean = state.get(ThreadBookmark.BOOKMARK_STATE_FIRST_FETCH)
   fun isError(): Boolean = state.get(ThreadBookmark.BOOKMARK_STATE_ERROR)
+  fun isFilterWatchBookmark(): Boolean = state.get(ThreadBookmark.BOOKMARK_FILTER_WATCH)
 
   fun postsCount(): Int = totalPostsCount
   fun newPostsCount(): Int = max(0, totalPostsCount - seenPostsCount)

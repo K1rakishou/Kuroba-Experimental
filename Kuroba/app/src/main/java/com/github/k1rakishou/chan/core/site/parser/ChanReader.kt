@@ -18,7 +18,9 @@ package com.github.k1rakishou.chan.core.site.parser
 
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
 import com.google.gson.stream.JsonReader
 import okhttp3.Request
 import okhttp3.ResponseBody
@@ -49,6 +51,12 @@ abstract class ChanReader() {
     expectedCapacity: Int,
     reader: JsonReader
   ): ModularResult<ThreadBookmarkInfoObject>
+
+  abstract suspend fun readFilterWatchCatalogInfoObject(
+    boardDescriptor: BoardDescriptor,
+    request: Request,
+    responseBody: ResponseBody
+  ): ModularResult<FilterWatchCatalogInfoObject>
 
   protected suspend fun readBodyJson(
     responseBody: ResponseBody,
