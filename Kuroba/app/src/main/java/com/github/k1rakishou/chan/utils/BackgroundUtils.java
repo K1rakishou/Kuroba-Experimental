@@ -21,14 +21,8 @@ import android.os.Looper;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.Chan;
-import com.github.k1rakishou.common.AndroidUtils;
 import com.github.k1rakishou.core_logger.Logger;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getFlavorType;
 import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
 
 public class BackgroundUtils {
@@ -59,12 +53,11 @@ public class BackgroundUtils {
             return;
         }
 
-        Logger.e("BackgroundUtils", "ensureMainThread() expected main thread but " +
-                "got " + Thread.currentThread().getName());
-
-        if (getFlavorType() != AndroidUtils.FlavorType.Stable
-                && ChanSettings.crashOnSafeThrow.get()) {
+        if (ChanSettings.crashOnSafeThrow.get()) {
             throw new IllegalStateException("Cannot be executed on a background thread!");
+        } else {
+            Logger.e("BackgroundUtils", "ensureMainThread() expected main thread but " +
+                    "got " + Thread.currentThread().getName());
         }
     }
 
@@ -73,67 +66,11 @@ public class BackgroundUtils {
             return;
         }
 
-        if (getFlavorType() != AndroidUtils.FlavorType.Stable
-                && ChanSettings.crashOnSafeThrow.get()) {
+        if (ChanSettings.crashOnSafeThrow.get()) {
             throw new IllegalStateException("Cannot be executed on the main thread!");
         } else {
             Logger.e("BackgroundUtils", "ensureBackgroundThread() expected background thread " +
                     "but got main");
         }
-    }
-
-    public static <T> Cancelable runWithExecutor(
-            Executor executor,
-            final Callable<T> background,
-            final BackgroundResult<T> result
-    ) {
-        final AtomicBoolean canceled = new AtomicBoolean(false);
-        Cancelable cancelable = () -> canceled.set(true);
-
-        executor.execute(() -> {
-            if (!canceled.get()) {
-                try {
-                    final T res = background.call();
-                    runOnMainThread(() -> {
-                        if (!canceled.get()) {
-                            result.onResult(res);
-                        }
-                    });
-                } catch (final Exception e) {
-                    runOnMainThread(() -> {
-                        throw new RuntimeException(e);
-                    });
-                }
-            }
-        });
-
-        return cancelable;
-    }
-
-    public static Cancelable runWithExecutor(Executor executor, final Runnable background) {
-        final AtomicBoolean canceled = new AtomicBoolean(false);
-        Cancelable cancelable = () -> canceled.set(true);
-
-        executor.execute(() -> {
-            if (!canceled.get()) {
-                try {
-                    background.run();
-                } catch (final Exception e) {
-                    runOnMainThread(() -> {
-                        throw new RuntimeException(e);
-                    });
-                }
-            }
-        });
-
-        return cancelable;
-    }
-
-    public interface BackgroundResult<T> {
-        void onResult(T result);
-    }
-
-    public interface Cancelable {
-        void cancel();
     }
 }

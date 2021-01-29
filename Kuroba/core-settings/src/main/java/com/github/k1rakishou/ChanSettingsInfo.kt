@@ -5,8 +5,13 @@ data class ChanSettingsInfo(
   val isTablet: Boolean,
   val defaultFilterOrderName: String,
   val isDevBuild: Boolean,
+  val isBetaBuild: Boolean,
   val bookmarkGridViewInfo: BookmarkGridViewInfo
-)
+) {
+
+  fun isDevOrBetaBuild(): Boolean = isDevBuild || isBetaBuild
+
+}
 
 data class BookmarkGridViewInfo(
   val defaultWidth: Int,

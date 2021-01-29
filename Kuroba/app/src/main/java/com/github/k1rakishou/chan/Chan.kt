@@ -428,6 +428,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       isTablet = isTablet(),
       defaultFilterOrderName = PostsFilter.Order.BUMP.orderName,
       isDevBuild = AppModuleAndroidUtils.isDevBuild(),
+      isBetaBuild = AppModuleAndroidUtils.isBetaBuild(),
       bookmarkGridViewInfo = BookmarkGridViewInfo(
         getDimen(R.dimen.thread_grid_bookmark_view_default_width),
         getDimen(R.dimen.thread_grid_bookmark_view_min_width),

@@ -511,12 +511,17 @@ public class ChanSettings {
             //endregion
 
             //region DEVELOPER
-            crashOnSafeThrow = new BooleanSetting(provider, "crash_on_safe_throw", true);
+            crashOnSafeThrow = new BooleanSetting(
+                    provider,
+                    "crash_on_safe_throw",
+                    // Always true by default for dev/beta flavors
+                    chanSettingsInfo.isDevOrBetaBuild()
+            );
             verboseLogs = new BooleanSetting(
                     provider,
                     "verbose_logs",
-                    // Always true by default for dev flavor
-                    chanSettingsInfo.isDevBuild()
+                    // Always true by default for dev/beta flavors
+                    chanSettingsInfo.isDevOrBetaBuild()
             );
             //endregion
 
