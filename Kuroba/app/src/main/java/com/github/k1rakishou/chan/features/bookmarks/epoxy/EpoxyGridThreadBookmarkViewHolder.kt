@@ -49,6 +49,8 @@ abstract class EpoxyGridThreadBookmarkViewHolder
   var groupId: String? = null
   @EpoxyAttribute
   var reloadBookmarkFlag: Int = 0
+  @EpoxyAttribute
+  var reorderingMode: Boolean = false
 
   private var holder: BaseThreadBookmarkViewHolder? = null
   var dragIndicator: AppCompatImageView? = null
@@ -64,7 +66,12 @@ abstract class EpoxyGridThreadBookmarkViewHolder
     super.bind(holder)
 
     this.holder = holder
-    this.dragIndicator = holder.dragIndicator
+
+    if (reorderingMode) {
+      this.dragIndicator = holder.dragIndicator
+    } else {
+      this.dragIndicator = null
+    }
 
     holder.setImageLoaderRequestData(imageLoaderRequestData)
     holder.setDescriptor(threadDescriptor)
@@ -77,7 +84,7 @@ abstract class EpoxyGridThreadBookmarkViewHolder
     holder.highlightBookmark(highlightBookmark || threadBookmarkSelection?.isSelected == true)
     holder.updateGridViewSizes(isTablet)
     holder.updateDragIndicatorColors(true)
-    holder.updateDragIndicatorState(threadBookmarkStats)
+    holder.updateDragIndicatorState(reorderingMode, threadBookmarkStats)
 
     val watching = threadBookmarkStats?.watching ?: true
     context?.let { holder.bindImage(true, watching, it) }

@@ -46,6 +46,10 @@ class BookmarksPresenter(
 ) : BasePresenter<BookmarksView>() {
 
   private val bookmarksRefreshed = AtomicBoolean(false)
+  private val isReorderingMode = AtomicBoolean(false)
+
+  // TODO(KurobaEx / @Cleanup): I would really like to figure out why I need this and if I don't
+  //  then get rid of it. Seems kinda strange to have it.
   private val reloadBookmarkFlagCounter = AtomicInteger(0)
 
   private val bookmarksControllerStateSubject = PublishProcessor.create<BookmarksControllerState>()
@@ -245,6 +249,20 @@ class BookmarksPresenter(
 
   fun isInSearchMode(): Boolean = searchFlow.value !is SearchQuery.Closed
 
+  fun isInReorderingMode(): Boolean = isReorderingMode.get()
+
+  fun updateReorderingMode(enterReorderingMode: Boolean): Boolean {
+    if (!isReorderingMode.compareAndSet(enterReorderingMode.not(), enterReorderingMode)) {
+      // Already in reordering mode or already not in reordering mode
+      return false
+    }
+
+    Logger.d(TAG, "calling reloadBookmarks() because reordering mode changed")
+
+    reloadBookmarks()
+    return true
+  }
+
   fun onViewBookmarksModeChanged() {
     Logger.d(TAG, "calling reloadBookmarks() because view bookmarks mode changed")
 
@@ -340,7 +358,7 @@ class BookmarksPresenter(
       return
     }
 
-    setState(BookmarksControllerState.Data(groupedBookmarks))
+    setState(BookmarksControllerState.Data(isReorderingMode.get(), groupedBookmarks))
   }
 
   private fun moveBookmarksWithUnreadRepliesToTop(

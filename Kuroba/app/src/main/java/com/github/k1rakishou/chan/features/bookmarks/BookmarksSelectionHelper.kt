@@ -26,11 +26,19 @@ class BookmarksSelectionHelper(
       { bookmarkMenuItemClickListener.onMenuItemClicked(BookmarksMenuItemType.Delete, selectedItems.toList()) }
     )
 
+    itemsList += BottomMenuPanelItem(
+      BookmarksMenuItemId(BookmarksMenuItemType.Delete),
+      R.drawable.ic_reorder_white_24dp,
+      R.string.bottom_menu_item_reorder,
+      { bookmarkMenuItemClickListener.onMenuItemClicked(BookmarksMenuItemType.Reorder, selectedItems.toList()) }
+    )
+
     return itemsList
   }
 
   enum class BookmarksMenuItemType(val id: Int) {
-    Delete(0)
+    Delete(0),
+    Reorder(1)
   }
 
   class BookmarksMenuItemId(val bookmarksMenuItemType: BookmarksMenuItemType) : BottomMenuPanelItemId {
