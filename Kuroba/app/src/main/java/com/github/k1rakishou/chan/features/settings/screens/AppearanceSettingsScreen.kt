@@ -362,6 +362,15 @@ class AppearanceSettingsScreen(
           setting = ChanSettings.neverShowPages
         )
 
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = AppearanceScreen.LayoutGroup.EnableDraggableScrollbars,
+          topDescriptionIdFunc = { R.string.setting_enable_draggable_scrollbars },
+          bottomDescriptionIdFunc = { R.string.setting_enable_draggable_scrollbars_bottom },
+          setting = ChanSettings.enableDraggableScrollbars,
+          requiresUiRefresh = true
+        )
+
         return group
       }
     )

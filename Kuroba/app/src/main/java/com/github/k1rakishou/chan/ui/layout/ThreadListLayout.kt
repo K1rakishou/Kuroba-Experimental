@@ -1080,7 +1080,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         }
       }
 
-      if (fastScroller == null) {
+      if (fastScroller == null && ChanSettings.enableDraggableScrollbars.get()) {
         val scroller = FastScrollerHelper.create(
           recyclerView,
           postInfoMapItemDecoration,
@@ -1090,10 +1090,16 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         scroller.setThumbDragListener(this)
 
         fastScroller = scroller
+
+        recyclerView.isVerticalScrollBarEnabled = false
+      }else{
+        fastScroller?.destroyCallbacks()
+
+        fastScroller = null
+
+        recyclerView.isVerticalScrollBarEnabled = true
       }
     }
-
-    recyclerView.isVerticalScrollBarEnabled = false
   }
 
   override fun onDragStarted() {

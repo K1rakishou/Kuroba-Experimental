@@ -374,7 +374,7 @@ class MainSettingsControllerV2(
           if (settingV2.isEnabled()) {
             settingEnabled(true)
 
-            clickListener { view ->
+            clickListener { _ ->
               val prev = settingV2.getCurrent()
 
               showInputDialog(settingV2) { curr ->
