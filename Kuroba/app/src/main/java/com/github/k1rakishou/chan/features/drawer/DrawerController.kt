@@ -44,7 +44,6 @@ import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.navigation.HasNavigation
-import com.github.k1rakishou.chan.features.bookmarks.BookmarksController
 import com.github.k1rakishou.chan.features.drawer.data.HistoryControllerState
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryEntryView
@@ -61,6 +60,7 @@ import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationContr
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
+import com.github.k1rakishou.chan.ui.controller.navigation.TabHostController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
@@ -388,7 +388,7 @@ class DrawerController(
 
   fun openBookmarksController(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
     closeAllNonMainControllers()
-    openControllerWrappedIntoBottomNavAwareController(BookmarksController(context, threadDescriptors, this))
+    openControllerWrappedIntoBottomNavAwareController(TabHostController(context, threadDescriptors, this))
     setBookmarksMenuItemSelected()
 
     setDrawerEnabled(false)

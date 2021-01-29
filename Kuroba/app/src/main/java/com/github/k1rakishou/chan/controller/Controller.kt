@@ -135,7 +135,7 @@ abstract class Controller(@JvmField var context: Context) {
     alive = true
 
     if (LOG_STATES) {
-      Logger.test(javaClass.simpleName + " onCreate")
+      Logger.e("LOG_STATES", javaClass.simpleName + " onCreate")
     }
   }
 
@@ -144,7 +144,7 @@ abstract class Controller(@JvmField var context: Context) {
     shown = true
 
     if (LOG_STATES) {
-      Logger.test(javaClass.simpleName + " onShow")
+      Logger.e("LOG_STATES", javaClass.simpleName + " onShow")
     }
 
     view.visibility = View.VISIBLE
@@ -161,7 +161,7 @@ abstract class Controller(@JvmField var context: Context) {
     shown = false
 
     if (LOG_STATES) {
-      Logger.test(javaClass.simpleName + " onHide")
+      Logger.e("LOG_STATES", javaClass.simpleName + " onHide")
     }
 
     view.visibility = View.GONE
@@ -180,7 +180,7 @@ abstract class Controller(@JvmField var context: Context) {
     job.cancelChildren()
 
     if (LOG_STATES) {
-      Logger.test(javaClass.simpleName + " onDestroy")
+      Logger.e("LOG_STATES", javaClass.simpleName + " onDestroy")
     }
 
     while (childControllers.size > 0) {
@@ -189,7 +189,7 @@ abstract class Controller(@JvmField var context: Context) {
 
     if (AndroidUtils.removeFromParentView(view)) {
       if (LOG_STATES) {
-        Logger.test(javaClass.simpleName + " view removed onDestroy")
+        Logger.e("LOG_STATES", javaClass.simpleName + " view removed onDestroy")
       }
     }
   }
@@ -209,6 +209,60 @@ abstract class Controller(@JvmField var context: Context) {
     controller.onCreate()
   }
 
+  fun addChildControllerOrMoveToTop(container: ViewGroup, newController: Controller) {
+    fun restoreCallbacks(newController: Controller) {
+      if (doubleNavigationController != null) {
+        newController.doubleNavigationController = doubleNavigationController
+      }
+
+      if (navigationController != null) {
+        newController.navigationController = navigationController
+      }
+    }
+
+    fun hideOtherControllers(newController: Controller) {
+      childControllers.forEach { controller ->
+        if (controller === newController) {
+          return@forEach
+        }
+
+        if (controller.shown) {
+          controller.onHide()
+        }
+      }
+    }
+
+    val controllerIndex = childControllers.indexOfFirst { controller -> controller === newController }
+    if (controllerIndex >= 0) {
+      hideOtherControllers(newController)
+      restoreCallbacks(newController)
+
+      if (childControllers.size >= 2) {
+        // Move this controller to the end so that it's considered to be the "top" controller
+        childControllers.add(childControllers.removeAt(controllerIndex))
+      }
+
+      newController.attachToParentView(container)
+
+      if (!newController.shown) {
+        newController.onShow()
+      }
+
+      return
+    }
+
+    childControllers.add(newController)
+
+    newController.parentController = this
+
+    hideOtherControllers(newController)
+    restoreCallbacks(newController)
+
+    newController.onCreate()
+    newController.attachToParentView(container)
+    newController.onShow()
+  }
+
   fun removeChildController(controller: Controller) {
     controller.onDestroy()
     childControllers.remove(controller)
@@ -217,7 +271,7 @@ abstract class Controller(@JvmField var context: Context) {
   fun attachToParentView(parentView: ViewGroup?) {
     if (view.parent != null) {
       if (LOG_STATES) {
-        Logger.test(javaClass.simpleName + " view removed")
+        Logger.e("LOG_STATES", javaClass.simpleName + " view removed")
       }
 
       AndroidUtils.removeFromParentView(view)
@@ -225,7 +279,7 @@ abstract class Controller(@JvmField var context: Context) {
 
     if (parentView != null) {
       if (LOG_STATES) {
-        Logger.test(javaClass.simpleName + " view attached")
+        Logger.e("LOG_STATES", javaClass.simpleName + " view attached")
       }
 
       attachToView(parentView)

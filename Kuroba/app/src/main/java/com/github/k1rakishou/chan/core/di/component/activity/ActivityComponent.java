@@ -19,6 +19,7 @@ import com.github.k1rakishou.chan.features.drawer.DrawerController;
 import com.github.k1rakishou.chan.features.drawer.DrawerPresenter;
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryEntryView;
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryHeaderView;
+import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesController;
 import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10GestureZonesController;
 import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10GestureZonesView;
 import com.github.k1rakishou.chan.features.login.LoginController;
@@ -98,6 +99,7 @@ import com.github.k1rakishou.chan.ui.controller.crashlogs.ViewFullCrashLogContro
 import com.github.k1rakishou.chan.ui.controller.navigation.BottomNavBarAwareNavigationController;
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController;
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController;
+import com.github.k1rakishou.chan.ui.controller.navigation.TabHostController;
 import com.github.k1rakishou.chan.ui.controller.settings.RangeSettingUpdaterController;
 import com.github.k1rakishou.chan.ui.controller.settings.ThemeSettingsController;
 import com.github.k1rakishou.chan.ui.controller.settings.captcha.JsCaptchaCookiesEditorController;
@@ -217,6 +219,8 @@ public interface ActivityComponent {
     void inject(SelectSiteForSearchController selectSiteForSearchController);
     void inject(SelectBoardForSearchController selectBoardForSearchController);
     void inject(CloudFlareBypassController cloudFlareBypassController);
+    void inject(TabHostController tabHostController);
+    void inject(FilterWatchesController filterWatchesController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

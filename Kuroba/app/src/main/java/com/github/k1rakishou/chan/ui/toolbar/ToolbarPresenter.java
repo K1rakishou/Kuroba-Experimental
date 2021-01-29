@@ -129,7 +129,7 @@ public class ToolbarPresenter {
         item.searchText = input;
         item.search = true;
 
-        callback.showForNavigationItem(item, themeEngine.getChanTheme(), AnimationStyle.NONE, listener);
+        callback.showForNavigationItem(item, themeEngine.getChanTheme(), AnimationStyle.FADE, listener);
         callback.onSearchVisibilityChanged(item, true);
     }
 
@@ -161,7 +161,7 @@ public class ToolbarPresenter {
         item.selectionMode = true;
         item.selectionStateText = text;
 
-        callback.showForNavigationItem(item, themeEngine.getChanTheme(), AnimationStyle.NONE);
+        callback.showForNavigationItem(item, themeEngine.getChanTheme(), AnimationStyle.FADE);
     }
 
     boolean isInSelectionMode() {
@@ -176,7 +176,7 @@ public class ToolbarPresenter {
         cancelTransitionIfNeeded();
 
         item.selectionMode = false;
-        callback.showForNavigationItem(item, themeEngine.getChanTheme(), AnimationStyle.NONE);
+        callback.showForNavigationItem(item, themeEngine.getChanTheme(), AnimationStyle.FADE);
     }
 
     private void cancelTransitionIfNeeded() {

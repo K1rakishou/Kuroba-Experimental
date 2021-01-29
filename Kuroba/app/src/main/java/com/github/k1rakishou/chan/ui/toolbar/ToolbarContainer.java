@@ -714,7 +714,11 @@ public class ToolbarContainer extends FrameLayout {
             textView.setGravity(Gravity.CENTER_VERTICAL);
             textView.setTextColor(Color.WHITE);
             textView.setTextSize(20f);
+            textView.setEllipsize(TextUtils.TruncateAt.END);
+            textView.setSingleLine(true);
             textView.setText(item.selectionStateText);
+
+            KotlinExtensionsKt.updatePaddings(textView, (int) dp(4f), null, null, null);
 
             linearLayout.addView(textView);
             return linearLayout;

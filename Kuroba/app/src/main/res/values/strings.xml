@@ -879,6 +879,8 @@ Don't have a 4chan Pass?<br>
     <string name="controller_bookmarks_bookmark_of_archived_thread">(Archive)</string>
     <string name="controller_bookmarks_delete_selected_bookmarks_title">Are you sure you want to delete %1$d bookmarks?</string>
 
+    <string name="controller_filter_watches">Filter watches</string>
+
     <string name="controller_sites_setup_no_sites">No sites loaded, this shouldn\'t happen</string>
     <string name="controller_sites_setup_archives_group">Archives (%1$d/%2$d)</string>
 
@@ -1157,6 +1159,9 @@ Don't have a 4chan Pass?<br>
     <string name="setting_exclusion_zones_edit_or_remove_zone_title">Edit or remove zone?</string>
     <string name="setting_exclusion_zones_zone_remove_message">Zone removed. Restart the app for the changes to kick in.</string>
     <string name="setting_exclusion_zones_zone_added_message">New exclusion zone added. Restart the app for the changes to kick in.</string>
+
+    <string name="bookmarks_tab_title">Bookmarks</string>
+    <string name="filter_watches_tab_title">Filter watches</string>
 
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
     <string name="file_has_exif_data">This file has exif data. Consider re-encoding it before posting.</string>

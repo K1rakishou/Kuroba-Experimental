@@ -18,7 +18,6 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
-import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -37,6 +36,7 @@ import com.github.k1rakishou.chan.features.bookmarks.epoxy.UnifiedBookmarkInfoAc
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyGridThreadBookmarkViewHolder
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyListThreadBookmarkViewHolder
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
+import com.github.k1rakishou.chan.ui.controller.navigation.TabPageController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.settings.RangeSettingUpdaterController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
@@ -45,6 +45,7 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
+import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
@@ -68,7 +69,7 @@ class BookmarksController(
   context: Context,
   bookmarksToHighlight: List<ChanDescriptor.ThreadDescriptor>,
   private var drawerCallbacks: DrawerCallbacks?
-) : Controller(context),
+) : TabPageController(context),
   BookmarksView,
   ToolbarNavigationController.ToolbarSearchCallback,
   BookmarksSelectionHelper.OnBookmarkMenuItemClicked {
@@ -242,12 +243,63 @@ class BookmarksController(
   override fun onCreate() {
     super.onCreate()
 
-    navigation.title = getString(R.string.controller_bookmarks)
-    navigation.swipeable = false
-
     serializedCoroutineExecutor = SerializedCoroutineExecutor(mainScope)
 
-    navigation.buildMenu(ConstraintLayoutBiasPair.TopRight)
+    view = inflate(context, R.layout.controller_bookmarks)
+    epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
+    epoxyRecyclerView.setController(controller)
+
+    itemTouchHelper = ItemTouchHelper(touchHelperCallback)
+    itemTouchHelper.attachToRecyclerView(epoxyRecyclerView)
+
+    mainScope.launch {
+      bookmarksPresenter.listenForStateChanges()
+        .asFlow()
+        .collect { state -> onStateChanged(state) }
+    }
+
+    mainScope.launch {
+      bookmarksSelectionHelper.listenForSelectionChanges()
+        .collect { selectionEvent -> onNewSelectionEvent(selectionEvent) }
+    }
+
+    onViewBookmarksModeChanged()
+    updateLayoutManager()
+
+    bookmarksPresenter.onCreate(this)
+
+    setupRecycler()
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+
+    cleanupFastScroller()
+
+    requireNavController().requireToolbar().exitSelectionMode()
+    drawerCallbacks?.hideBottomPanel()
+    drawerCallbacks = null
+
+    epoxyRecyclerView.swapAdapter(null, true)
+
+    epoxyRecyclerView.removeOnScrollListener(onScrollListener)
+    bookmarksPresenter.onDestroy()
+  }
+
+  override fun onBack(): Boolean {
+    val result = drawerCallbacks?.passOnBackToBottomPanel() ?: false
+    if (result) {
+      bookmarksSelectionHelper.clearSelection()
+    }
+
+    return result
+  }
+
+  override fun rebuildNavigationItem(navigationItem: NavigationItem) {
+    navigationItem.title = getString(R.string.controller_bookmarks)
+    navigationItem.swipeable = false
+
+    navigationItem.buildMenu(ConstraintLayoutBiasPair.TopRight)
       .withItem(R.drawable.ic_search_white_24dp) {
         (navigationController as ToolbarNavigationController).showSearch()
       }
@@ -300,55 +352,7 @@ class BookmarksController(
       .build()
       .build()
 
-    view = inflate(context, R.layout.controller_bookmarks)
-
-    epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
-    epoxyRecyclerView.setController(controller)
-
-    itemTouchHelper = ItemTouchHelper(touchHelperCallback)
-    itemTouchHelper.attachToRecyclerView(epoxyRecyclerView)
-
-    mainScope.launch {
-      bookmarksPresenter.listenForStateChanges()
-        .asFlow()
-        .collect { state -> onStateChanged(state) }
-    }
-
-    mainScope.launch {
-      bookmarksSelectionHelper.listenForSelectionChanges()
-        .collect { selectionEvent -> onNewSelectionEvent(selectionEvent) }
-    }
-
-    onViewBookmarksModeChanged()
-    updateLayoutManager()
-
-    bookmarksPresenter.onCreate(this)
-
-    setupRecycler()
-  }
-
-  override fun onDestroy() {
-    super.onDestroy()
-
-    cleanupFastScroller()
-
-    requireNavController().requireToolbar().exitSelectionMode()
-    drawerCallbacks?.hideBottomPanel()
-    drawerCallbacks = null
-
-    epoxyRecyclerView.swapAdapter(null, true)
-
-    epoxyRecyclerView.removeOnScrollListener(onScrollListener)
-    bookmarksPresenter.onDestroy()
-  }
-
-  override fun onBack(): Boolean {
-    val result = drawerCallbacks?.passOnBackToBottomPanel() ?: false
-    if (result) {
-      bookmarksSelectionHelper.clearSelection()
-    }
-
-    return result
+    this.navigation = navigationItem
   }
 
   override fun onMenuItemClicked(

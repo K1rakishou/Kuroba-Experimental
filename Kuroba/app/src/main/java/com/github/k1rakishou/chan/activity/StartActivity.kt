@@ -429,10 +429,6 @@ class StartActivity : AppCompatActivity(),
     drawerController.setSettingsMenuItemSelected()
   }
 
-  override fun setBookmarksMenuItemSelected() {
-    drawerController.setBookmarksMenuItemSelected()
-  }
-
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   private fun setupLayout() {
     val layoutMode = ChanSettings.getCurrentLayoutMode()
