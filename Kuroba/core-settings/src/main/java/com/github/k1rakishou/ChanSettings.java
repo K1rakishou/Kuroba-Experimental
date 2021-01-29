@@ -46,7 +46,7 @@ public class ChanSettings {
     public static final String NO_HASH_SET = "NO_HASH_SET";
 
     private static ChanSettingsInfo chanSettingsInfo;
-    private static Lazy<String> sharedPrefsFile = LazyKt.lazy(() ->
+    private static final Lazy<String> sharedPrefsFile = LazyKt.lazy(() ->
             "shared_prefs/"
             + chanSettingsInfo.getApplicationId()
             + "_preferences.xml");
@@ -231,6 +231,7 @@ public class ChanSettings {
     public static BooleanSetting enableReplyFab;
     public static BooleanSetting captchaOnBottom;
     public static BooleanSetting neverShowPages;
+    public static BooleanSetting enableDraggableScrollbars;
 
     //Post
     public static StringSetting fontSize;
@@ -387,6 +388,7 @@ public class ChanSettings {
             enableReplyFab = new BooleanSetting(provider, "preference_enable_reply_fab", true);
             captchaOnBottom = new BooleanSetting(provider, "captcha_on_bottom", true);
             neverShowPages = new BooleanSetting(provider, "never_show_page_number", false);
+            enableDraggableScrollbars = new BooleanSetting(provider, "enable_draggable_scrollbars", true);
 
             // Post
             fontSize = new StringSetting(provider, "preference_font", chanSettingsInfo.isTablet() ? "16" : "14");

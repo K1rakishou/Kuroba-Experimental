@@ -305,6 +305,7 @@ sealed class AppearanceScreen(
     object EnableReplyFAB : LayoutGroup("enable_reply_fab")
     object BottomJsCaptcha : LayoutGroup("bottom_js_captcha")
     object NeverShowPages : LayoutGroup("never_show_pages")
+    object EnableDraggableScrollbars : LayoutGroup("enable_draggable_scrollbars")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = AppearanceScreen.getScreenIdentifier()
