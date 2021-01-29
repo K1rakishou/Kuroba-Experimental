@@ -5,5 +5,9 @@ sealed class BookmarksControllerState {
   object Empty : BookmarksControllerState()
   data class NothingFound(val searchQuery: String) : BookmarksControllerState()
   data class Error(val errorText: String) : BookmarksControllerState()
-  data class Data(val groupedBookmarks: List<GroupOfThreadBookmarkItemViews>) : BookmarksControllerState()
+
+  data class Data(
+    val isReorderingMode: Boolean,
+    val groupedBookmarks: List<GroupOfThreadBookmarkItemViews>
+  ) : BookmarksControllerState()
 }

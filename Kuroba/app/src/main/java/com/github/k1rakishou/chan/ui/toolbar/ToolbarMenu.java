@@ -24,7 +24,19 @@ import java.util.List;
 public class ToolbarMenu {
     public static final int OVERFLOW_ID = 1000000;
 
+    @Nullable
+    private ToolbarMenuView.MenuItemClickInterceptor interceptor = null;
+
     public final List<ToolbarMenuItem> items = new ArrayList<>();
+
+    public void setMenuItemClickInterceptor(ToolbarMenuView.MenuItemClickInterceptor interceptor) {
+        this.interceptor = interceptor;
+    }
+
+    @Nullable
+    public ToolbarMenuView.MenuItemClickInterceptor getInterceptor() {
+        return interceptor;
+    }
 
     public void addItem(ToolbarMenuItem item) {
         items.add(item);

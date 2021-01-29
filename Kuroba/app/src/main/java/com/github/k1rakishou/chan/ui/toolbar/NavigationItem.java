@@ -19,6 +19,8 @@ package com.github.k1rakishou.chan.ui.toolbar;
 import android.graphics.drawable.Drawable;
 import android.view.View;
 
+import androidx.annotation.NonNull;
+
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController;
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair;
@@ -122,6 +124,17 @@ public class NavigationItem {
         public MenuBuilder withItem(ToolbarMenuItem menuItem) {
             menuItem.constraintLayoutBiasPair = constraintLayoutBiasPair;
             menu.addItem(menuItem);
+            return this;
+        }
+
+        /**
+         * Intercepts menu item clicks (except for the Middle menu). Can filter out clicks by
+         * returning false;
+         * */
+        public MenuBuilder withMenuItemClickInterceptor(
+                @NonNull ToolbarMenuView.MenuItemClickInterceptor itemClickInterceptor
+        ) {
+            menu.setMenuItemClickInterceptor(itemClickInterceptor);
             return this;
         }
 

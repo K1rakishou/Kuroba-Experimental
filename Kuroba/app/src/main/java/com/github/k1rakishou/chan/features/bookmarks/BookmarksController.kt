@@ -276,17 +276,24 @@ class BookmarksController(
 
     cleanupFastScroller()
 
+    bookmarksPresenter.updateReorderingMode(enterReorderingMode = false)
     requireNavController().requireToolbar().exitSelectionMode()
     drawerCallbacks?.hideBottomPanel()
     drawerCallbacks = null
 
     epoxyRecyclerView.swapAdapter(null, true)
-
     epoxyRecyclerView.removeOnScrollListener(onScrollListener)
+
     bookmarksPresenter.onDestroy()
   }
 
   override fun onBack(): Boolean {
+    if (bookmarksPresenter.isInReorderingMode()) {
+      if (bookmarksPresenter.updateReorderingMode(enterReorderingMode = false)) {
+        return true
+      }
+    }
+
     val result = drawerCallbacks?.passOnBackToBottomPanel() ?: false
     if (result) {
       bookmarksSelectionHelper.clearSelection()
@@ -300,6 +307,10 @@ class BookmarksController(
     navigationItem.swipeable = false
 
     navigationItem.buildMenu(ConstraintLayoutBiasPair.TopRight)
+      .withMenuItemClickInterceptor {
+        exitReorderingModeIfActive()
+        return@withMenuItemClickInterceptor true
+      }
       .withItem(R.drawable.ic_search_white_24dp) {
         (navigationController as ToolbarNavigationController).showSearch()
       }
@@ -313,41 +324,21 @@ class BookmarksController(
       .withSubItem(
         ACTION_MARK_ALL_BOOKMARKS_AS_SEEN,
         R.string.controller_bookmarks_mark_all_bookmarks_as_seen,
-        ToolbarMenuSubItem.ClickCallback { bookmarksPresenter.markAllAsSeen() })
+        { bookmarksPresenter.markAllAsSeen() })
       .withSubItem(
         ACTION_PRUNE_NON_ACTIVE_BOOKMARKS,
         R.string.controller_bookmarks_prune_inactive_bookmarks,
-        ToolbarMenuSubItem.ClickCallback { subItem -> onPruneNonActiveBookmarksClicked(subItem) })
+        { subItem -> onPruneNonActiveBookmarksClicked(subItem) })
       .withSubItem(
         ACTION_CLEAR_ALL_BOOKMARKS,
         R.string.controller_bookmarks_clear_all_bookmarks,
-        ToolbarMenuSubItem.ClickCallback { subItem -> onClearAllBookmarksClicked(subItem) }
+        { subItem -> onClearAllBookmarksClicked(subItem) }
       )
       .withSubItem(
         ACTION_SET_GRID_BOOKMARK_VIEW_WIDTH,
         R.string.controller_bookmarks_set_grid_bookmark_view_width,
-        PersistableChanState.viewThreadBookmarksGridMode.get(), {
-          val rangeSettingUpdaterController = RangeSettingUpdaterController(
-            context = context,
-            constraintLayoutBiasPair = ConstraintLayoutBiasPair.TopRight,
-            title = getString(R.string.controller_bookmarks_set_grid_view_width_text),
-            minValue = context.resources.getDimension(R.dimen.thread_grid_bookmark_view_min_width),
-            maxValue = context.resources.getDimension(R.dimen.thread_grid_bookmark_view_max_width),
-            currentValue = ChanSettings.bookmarkGridViewWidth.get().toFloat(),
-            resetClickedFunc = {
-              ChanSettings.bookmarkGridViewWidth.set(ChanSettings.bookmarkGridViewWidth.default)
-            },
-            applyClickedFunc = { newValue ->
-              val currentValue = ChanSettings.bookmarkGridViewWidth.get()
-              if (currentValue != newValue) {
-                ChanSettings.bookmarkGridViewWidth.set(newValue)
-                reloadBookmarksAndUpdateViewMode()
-              }
-            }
-          )
-
-          requireNavController().presentController(rangeSettingUpdaterController)
-        }
+        PersistableChanState.viewThreadBookmarksGridMode.get(),
+        { onSetGridBookmarkViewWidthClicked() }
       )
       .build()
       .build()
@@ -374,6 +365,15 @@ class BookmarksController(
           }
         )
       }
+      BookmarksSelectionHelper.BookmarksMenuItemType.Reorder -> {
+        bookmarksSelectionHelper.clearSelection()
+
+        if (bookmarksPresenter.isInReorderingMode()) {
+          bookmarksPresenter.updateReorderingMode(enterReorderingMode = false)
+        } else {
+          bookmarksPresenter.updateReorderingMode(enterReorderingMode = true)
+        }
+      }
     }
   }
 
@@ -381,15 +381,6 @@ class BookmarksController(
     Logger.d(TAG, "Calling reloadBookmarks() because bookmark sorting order was changed")
 
     needRestoreScrollPosition.set(true)
-    bookmarksPresenter.reloadBookmarks()
-  }
-
-  private fun reloadBookmarksAndUpdateViewMode() {
-    Logger.d(TAG, "Calling reloadBookmarks() because grid bookmark view width was changed")
-
-    updateLayoutManager(forced = true)
-    needRestoreScrollPosition.set(true)
-
     bookmarksPresenter.reloadBookmarks()
   }
 
@@ -410,6 +401,23 @@ class BookmarksController(
     super.onConfigurationChanged(newConfig)
 
     updateLayoutManager(forced = true)
+  }
+
+  override fun canSwitchTabs(): Boolean {
+    if (bookmarksSelectionHelper.isInSelectionMode() || bookmarksPresenter.isInReorderingMode()) {
+      return false
+    }
+
+    return true
+  }
+
+  private fun reloadBookmarksAndUpdateViewMode() {
+    Logger.d(TAG, "Calling reloadBookmarks() because grid bookmark view width was changed")
+
+    updateLayoutManager(forced = true)
+    needRestoreScrollPosition.set(true)
+
+    bookmarksPresenter.reloadBookmarks()
   }
 
   private fun onNewSelectionEvent(selectionEvent: BaseSelectionHelper.SelectionEvent) {
@@ -474,6 +482,29 @@ class BookmarksController(
     })
 
     fastScroller = scroller
+  }
+
+  private fun onSetGridBookmarkViewWidthClicked() {
+    val rangeSettingUpdaterController = RangeSettingUpdaterController(
+      context = context,
+      constraintLayoutBiasPair = ConstraintLayoutBiasPair.TopRight,
+      title = getString(R.string.controller_bookmarks_set_grid_view_width_text),
+      minValue = context.resources.getDimension(R.dimen.thread_grid_bookmark_view_min_width),
+      maxValue = context.resources.getDimension(R.dimen.thread_grid_bookmark_view_max_width),
+      currentValue = ChanSettings.bookmarkGridViewWidth.get().toFloat(),
+      resetClickedFunc = {
+        ChanSettings.bookmarkGridViewWidth.set(ChanSettings.bookmarkGridViewWidth.default)
+      },
+      applyClickedFunc = { newValue ->
+        val currentValue = ChanSettings.bookmarkGridViewWidth.get()
+        if (currentValue != newValue) {
+          ChanSettings.bookmarkGridViewWidth.set(newValue)
+          reloadBookmarksAndUpdateViewMode()
+        }
+      }
+    )
+
+    requireNavController().presentController(rangeSettingUpdaterController)
   }
 
   private fun onClearAllBookmarksClicked(subItem: ToolbarMenuSubItem) {
@@ -617,6 +648,7 @@ class BookmarksController(
                   isTablet(isTablet)
                   groupId(bookmark.groupId)
                   reloadBookmarkFlag(bookmark.reloadBookmarkFlag)
+                  reorderingMode(state.isReorderingMode)
                   bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
                   bookmarkLongClickListener { onBookmarkLongClicked(bookmark) }
                   bookmarkStatsClickListener { onBookmarkStatsClicked(bookmark) }
@@ -634,6 +666,7 @@ class BookmarksController(
                   isTablet(isTablet)
                   groupId(bookmark.groupId)
                   reloadBookmarkFlag(bookmark.reloadBookmarkFlag)
+                  reorderingMode(state.isReorderingMode)
                   bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
                   bookmarkLongClickListener { onBookmarkLongClicked(bookmark) }
                   bookmarkStatsClickListener { onBookmarkStatsClicked(bookmark) }
@@ -648,7 +681,18 @@ class BookmarksController(
     controller.requestModelBuild()
   }
 
+  private fun exitReorderingModeIfActive() {
+    if (bookmarksPresenter.isInReorderingMode()) {
+      bookmarksPresenter.updateReorderingMode(enterReorderingMode = false)
+    }
+  }
+
   private fun onBookmarkStatsClicked(bookmark: ThreadBookmarkItemView) {
+    if (bookmarksPresenter.isInReorderingMode()) {
+      exitReorderingModeIfActive()
+      return
+    }
+
     if (bookmarksSelectionHelper.isInSelectionMode()) {
       onBookmarkClicked(bookmark.threadDescriptor)
       return
@@ -658,6 +702,11 @@ class BookmarksController(
   }
 
   private fun onGroupViewClicked(bookmarkGroup: GroupOfThreadBookmarkItemViews) {
+    if (bookmarksPresenter.isInReorderingMode()) {
+      exitReorderingModeIfActive()
+      return
+    }
+
     if (!bookmarksSelectionHelper.isInSelectionMode()) {
       bookmarksPresenter.toggleBookmarkExpandState(bookmarkGroup.groupId)
       return
@@ -679,6 +728,11 @@ class BookmarksController(
   }
 
   private fun onBookmarkLongClicked(bookmark: ThreadBookmarkItemView) {
+    if (bookmarksPresenter.isInReorderingMode()) {
+      exitReorderingModeIfActive()
+      return
+    }
+
     if (bookmarksPresenter.isInSearchMode()) {
       return
     }
@@ -687,6 +741,11 @@ class BookmarksController(
   }
 
   private fun onBookmarkClicked(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    if (bookmarksPresenter.isInReorderingMode()) {
+      exitReorderingModeIfActive()
+      return
+    }
+
     if (bookmarksSelectionHelper.isInSelectionMode()) {
       if (bookmarksPresenter.isInSearchMode()) {
         return
@@ -810,10 +869,15 @@ class BookmarksController(
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    override fun onViewAttachedToWindow(holder: EpoxyViewHolder, model: EpoxyModel<*>) {
-      val dragIndicator = when (model) {
-        is EpoxyGridThreadBookmarkViewHolder_ -> model.dragIndicator
-        is EpoxyListThreadBookmarkViewHolder_ -> model.dragIndicator
+    override fun onModelBound(
+      holder: EpoxyViewHolder,
+      boundModel: EpoxyModel<*>,
+      position: Int,
+      previouslyBoundModel: EpoxyModel<*>?
+    ) {
+      val dragIndicator = when (boundModel) {
+        is EpoxyGridThreadBookmarkViewHolder_ -> boundModel.dragIndicator
+        is EpoxyListThreadBookmarkViewHolder_ -> boundModel.dragIndicator
         else -> null
       }
 
@@ -834,6 +898,20 @@ class BookmarksController(
       }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
+    override fun onModelUnbound(holder: EpoxyViewHolder, model: EpoxyModel<*>) {
+      val dragIndicator = when (model) {
+        is EpoxyGridThreadBookmarkViewHolder_ -> model.dragIndicator
+        is EpoxyListThreadBookmarkViewHolder_ -> model.dragIndicator
+        else -> null
+      }
+
+      if (dragIndicator == null) {
+        return
+      }
+
+      dragIndicator.setOnTouchListener(null)
+    }
   }
 
   companion object {

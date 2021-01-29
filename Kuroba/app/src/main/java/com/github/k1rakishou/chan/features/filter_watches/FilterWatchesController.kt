@@ -7,7 +7,9 @@ import com.github.k1rakishou.chan.ui.controller.navigation.TabPageController
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 
-class FilterWatchesController(context: Context) : TabPageController(context) {
+class FilterWatchesController(
+  context: Context,
+) : TabPageController(context) {
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -26,4 +28,7 @@ class FilterWatchesController(context: Context) : TabPageController(context) {
     this.navigation = navigationItem
   }
 
+  override fun canSwitchTabs(): Boolean {
+    return true
+  }
 }

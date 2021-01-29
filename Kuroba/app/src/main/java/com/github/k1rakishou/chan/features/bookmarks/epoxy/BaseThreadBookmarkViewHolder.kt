@@ -352,10 +352,16 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
   }
 
   fun updateDragIndicatorState(
+    reorderingMode: Boolean,
     threadBookmarkStats: ThreadBookmarkStats?
   ) {
     if (threadBookmarkStats == null) {
       dragIndicator?.setVisibilityFast(View.VISIBLE)
+      return
+    }
+
+    if (!reorderingMode) {
+      dragIndicator?.setVisibilityFast(View.GONE)
       return
     }
 

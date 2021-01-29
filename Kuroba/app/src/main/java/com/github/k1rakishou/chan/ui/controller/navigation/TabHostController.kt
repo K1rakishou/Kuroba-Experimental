@@ -12,6 +12,9 @@ import com.github.k1rakishou.chan.features.bookmarks.BookmarksController
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesController
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
+import com.github.k1rakishou.chan.ui.widget.DisableableLayout
+import com.github.k1rakishou.chan.ui.widget.KurobaTabLayout
+import com.github.k1rakishou.chan.ui.widget.KurobaViewPager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.google.android.material.tabs.TabLayout
@@ -20,9 +23,9 @@ class TabHostController(
   context: Context,
   private val bookmarksToHighlight: List<ChanDescriptor.ThreadDescriptor>,
   private val drawerCallbacks: DrawerCallbacks?
-) : Controller(context), ToolbarNavigationController.ToolbarSearchCallback {
-  private lateinit var tabLayout: TabLayout
-  private lateinit var viewPager: ViewPager
+) : Controller(context), ToolbarNavigationController.ToolbarSearchCallback, DisableableLayout {
+  private lateinit var tabLayout: KurobaTabLayout
+  private lateinit var viewPager: KurobaViewPager
 
   private var currentPageType: PageType? = null
 
@@ -59,7 +62,9 @@ class TabHostController(
     )
 
     tabLayout.addOnTabSelectedListener(simpleOnTabSelectedListener)
+    tabLayout.setDisableableLayoutHandler(this)
     viewPager.addOnPageChangeListener(simpleOnPageChangeListener)
+    viewPager.setDisableableLayoutHandler(this)
 
     onTabWithTypeSelected(PageType.Bookmarks)
     viewPagerAdapter.notifyDataSetChanged()
@@ -69,9 +74,22 @@ class TabHostController(
     super.onDestroy()
 
     tabLayout.removeOnTabSelectedListener(simpleOnTabSelectedListener)
+    tabLayout.removeDisableableLayoutHandler()
     viewPager.removeOnPageChangeListener(simpleOnPageChangeListener)
+    viewPager.removeDisableableLayoutHandler()
 
     currentPageType = null
+  }
+
+  override fun isLayoutEnabled(): Boolean {
+    val topController = top
+      ?: return false
+
+    if (navigation.search) {
+      return false
+    }
+
+    return (topController as TabPageController).canSwitchTabs()
   }
 
   override fun onSearchVisibilityChanged(visible: Boolean) {
@@ -135,13 +153,15 @@ class TabHostController(
       return when (pageType) {
         PageType.Bookmarks -> {
           BookmarksController(
-            context,
-            bookmarksToHighlight,
-            drawerCallbacks
+            context = context,
+            bookmarksToHighlight = bookmarksToHighlight,
+            drawerCallbacks = drawerCallbacks
           )
         }
         PageType.FilterWatches -> {
-          FilterWatchesController(context)
+          FilterWatchesController(
+            context = context,
+          )
         }
       }
     }

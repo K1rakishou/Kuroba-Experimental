@@ -31,8 +31,7 @@ import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 /**
  * The container view for the list of ToolbarMenuItems, a list of ImageViews.
  */
-public class ToolbarMenuView
-        extends LinearLayout {
+public class ToolbarMenuView extends LinearLayout {
     private ToolbarMenu menu;
 
     public ToolbarMenuView(Context context) {
@@ -71,7 +70,15 @@ public class ToolbarMenuView
         for (ToolbarMenuItem item : menu.items) {
             ImageView imageView = new ImageView(getContext());
 
-            imageView.setOnClickListener(v -> handleClick(item));
+            imageView.setOnClickListener(v -> {
+                MenuItemClickInterceptor menuItemClickInterceptor = menu.getInterceptor();
+
+                if (menuItemClickInterceptor != null && !menuItemClickInterceptor.intercept(item)) {
+                    return;
+                }
+
+                handleClick(item);
+            });
             imageView.setFocusable(true);
             imageView.setScaleType(ImageView.ScaleType.CENTER);
 
@@ -92,5 +99,9 @@ public class ToolbarMenuView
 
     private void handleClick(ToolbarMenuItem item) {
         item.performClick();
+    }
+
+    public interface MenuItemClickInterceptor {
+        boolean intercept(ToolbarMenuItem toolbarMenuItem);
     }
 }
