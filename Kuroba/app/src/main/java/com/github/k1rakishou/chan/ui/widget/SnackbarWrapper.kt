@@ -111,7 +111,7 @@ class SnackbarWrapper private constructor(
       return
     }
 
-    // TODO(KurobaEx): search for reply layout and use it instead when it's shown?
+    // TODO(KurobaEx v0.5.0): search for reply layout and use it instead when it's shown?
     //  (since it's height is greater than BottomNavView's)
 
     if (snackbarView.y + snackbarView.height > bottomNavView.y) {

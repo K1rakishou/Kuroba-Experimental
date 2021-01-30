@@ -24,8 +24,6 @@ class FilterWatchesController(
   override fun rebuildNavigationItem(navigationItem: NavigationItem) {
     navigationItem.title = AppModuleAndroidUtils.getString(R.string.controller_filter_watches)
     navigationItem.swipeable = false
-
-    this.navigation = navigationItem
   }
 
   override fun canSwitchTabs(): Boolean {

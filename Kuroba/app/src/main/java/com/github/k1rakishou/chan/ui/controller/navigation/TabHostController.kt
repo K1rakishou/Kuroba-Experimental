@@ -172,6 +172,7 @@ class TabHostController(
 
       val newNavItem = NavigationItem()
       childController.rebuildNavigationItem(newNavItem)
+      childController.navigation = newNavItem
 
       this@TabHostController.navigation = newNavItem
       requireNavController().requireToolbar().setNavigationItem(false, true, newNavItem, null)

@@ -157,7 +157,7 @@ class ThreadBookmarkGroupLocalSource(
   suspend fun deleteEmptyGroups() {
     ensureInTransaction()
 
-    // TODO(KurobaEx):
+    // TODO(KurobaEx): once custom groups are implemented
   }
 
 }

@@ -69,7 +69,7 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
       // }
       // ```
 
-      // TODO(KurobaEx): we need to skip meta commands (like breakpoint) here
+      // TODO(KurobaEx v0.5.0): we need to skip meta commands (like breakpoint) here
       check(parserCommands.last() !is KurobaCommandPopState) {
         "It's is not allowed to have two nested blocks one after the other, " +
           "you have to collapse them into a single block! See comment of nest() command builder"

@@ -27,7 +27,6 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
 ) {
   private val parserState = ParserState()
 
-  // TODO(KurobaEx): this should return ModularResult instead of throwing an exception
   @Throws(HtmlParsingException::class)
   fun executeCommands(
     document: Document,

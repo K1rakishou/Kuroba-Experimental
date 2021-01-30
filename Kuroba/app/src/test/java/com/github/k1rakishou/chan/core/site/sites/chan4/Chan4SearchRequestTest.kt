@@ -133,8 +133,6 @@ class Chan4SearchRequestTest {
     mockWebServer.shutdown()
   }
 
-  // TODO(KurobaEx): add test for a case when nothing is found by a query
-
   private fun createResponse(): MockResponse {
     val fileBytes = javaClass.classLoader!!.getResourceAsStream("search/test_search_response.html").readBytes()
     return MockResponse().setBody(String(fileBytes)).setResponseCode(200)

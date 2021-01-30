@@ -651,7 +651,7 @@ class ChanPostLocalSource(
     var skippedTotal = 0
     var offset = 0
 
-    // TODO(KurobaEx): force return if this operation takes more than 10 seconds
+    // TODO(KurobaEx v0.5.0): force return if this operation takes more than 10 seconds
 
     do {
       val threadBatch = chanThreadDao.selectThreadsWithPostsOtherThanOp(offset, THREADS_IN_BATCH)
@@ -675,7 +675,7 @@ class ChanPostLocalSource(
           break
         }
 
-        // TODO(KurobaEx): batching!
+        // TODO(KurobaEx v0.5.0): batching!
         val deletedPosts = chanPostDao.deletePostsByThreadId(thread.threadId)
         deletedTotal += deletedPosts
 
@@ -697,7 +697,7 @@ class ChanPostLocalSource(
     var skippedTotal = 0
     var offset = 0
 
-    // TODO(KurobaEx): force return if this operation takes more than 10 seconds
+    // TODO(KurobaEx v0.5.0): force return if this operation takes more than 10 seconds
 
     do {
       val threadBatch = chanThreadDao.selectOldThreads(offset, THREADS_IN_BATCH)
@@ -720,7 +720,7 @@ class ChanPostLocalSource(
           break
         }
 
-        // TODO(KurobaEx): batching!
+        // TODO(KurobaEx v0.5.0): batching!
         deletedTotal += chanThreadDao.deleteThread(thread.threadId)
         Logger.d(TAG, "deleteOldThreads() Deleting thread \"${thread}\", deletedTotal = $deletedTotal")
       }

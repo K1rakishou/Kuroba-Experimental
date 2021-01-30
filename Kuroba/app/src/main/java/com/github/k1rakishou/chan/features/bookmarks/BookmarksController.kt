@@ -342,8 +342,6 @@ class BookmarksController(
       )
       .build()
       .build()
-
-    this.navigation = navigationItem
   }
 
   override fun onMenuItemClicked(

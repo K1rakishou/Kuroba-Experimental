@@ -175,7 +175,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
 
         long postId = Long.parseLong(matcher.group(1));
 
-        // TODO(KurobaEx): archive ghost posts
+        // TODO(KurobaEx / @GhostPosts):
         long postSubNo = 0;
 
         PostLinkable.Type type;
