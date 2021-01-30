@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.viewpager.widget.PagerAdapter
 import androidx.viewpager.widget.ViewPager
+import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -66,7 +67,9 @@ class TabHostController(
     viewPager.addOnPageChangeListener(simpleOnPageChangeListener)
     viewPager.setDisableableLayoutHandler(this)
 
-    onTabWithTypeSelected(PageType.Bookmarks)
+    // TODO(KurobaEx v0.5.0): add ability to override this when TabHostController has custom input
+    //  (for example when we want to focus on BookmarksController to show highlighted bookmarks etc)
+    onTabWithTypeSelected(getLastOpenedTabPageIndex())
     viewPagerAdapter.notifyDataSetChanged()
   }
 
@@ -114,7 +117,9 @@ class TabHostController(
     }
 
     currentPageType = pageType
+
     viewPager.setCurrentItem(pageType.pageIndex, true)
+    storeLastOpenedTagPageIndex(pageType)
   }
 
   inner class ControllerAdapter : PagerAdapter() {
@@ -143,13 +148,18 @@ class TabHostController(
     }
 
     override fun isViewFromObject(view: View, controller: Any): Boolean {
-      return (controller as TabPageController).view == view
+      val tabPageController = (controller as TabPageController)
+
+      if (!tabPageController.isViewInitialized()) {
+        return false
+      }
+
+      return controller.view == view
     }
 
     override fun getCount(): Int = PageType.values().size
 
     private fun createController(pageType: PageType): TabPageController {
-      // TODO(KurobaEx v0.5.0): persist last opened tab
       return when (pageType) {
         PageType.Bookmarks -> {
           BookmarksController(
@@ -167,7 +177,6 @@ class TabHostController(
     }
 
     private fun attachController(container: ViewGroup, childController: TabPageController) {
-      // TODO(KurobaEx v0.5.0): persist last opened tab
       addChildControllerOrMoveToTop(container, childController)
 
       val newNavItem = NavigationItem()
@@ -179,6 +188,15 @@ class TabHostController(
       requireNavController().requireToolbar().setNavigationItem(false, true, newNavItem, null)
     }
 
+  }
+
+  private fun getLastOpenedTabPageIndex(): PageType {
+    val tabPageIndex = PersistableChanState.bookmarksLastOpenedTabPageIndex.get()
+    return PageType.fromInt(tabPageIndex)
+  }
+
+  private fun storeLastOpenedTagPageIndex(pageType: PageType) {
+    PersistableChanState.bookmarksLastOpenedTabPageIndex.set(pageType.pageIndex)
   }
 
   /**
@@ -194,7 +212,7 @@ class TabHostController(
         return when (value) {
           0 -> Bookmarks
           1 -> FilterWatches
-          else -> throw IllegalStateException("Unknown value: $value")
+          else -> Bookmarks
         }
       }
     }
@@ -236,7 +254,4 @@ class TabHostController(
   companion object {
     private const val TAG = "TabNavigationController"
   }
-
-  // TODO(KurobaEx v0.5.0): add ability to open this controller with specified child controller visible
-  //  (by default it will open last opened controller, need an ability to temporary override it)
 }

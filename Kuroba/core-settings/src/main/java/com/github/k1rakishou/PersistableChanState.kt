@@ -45,6 +45,8 @@ object PersistableChanState {
   lateinit var safExplanationMessageShown: BooleanSetting
   @JvmStatic
   lateinit var themesIgnoreSystemDayNightModeMessageShown: BooleanSetting
+  @JvmStatic
+  lateinit var bookmarksLastOpenedTabPageIndex: IntegerSetting
 
   fun init(persistableChanStateInfo: PersistableChanStateInfo) {
     this.persistableChanStateInfo = persistableChanStateInfo
@@ -106,6 +108,11 @@ object PersistableChanState {
         provider,
         "themes_ignore_system_day_night_mode_message_shown",
         false
+      )
+      bookmarksLastOpenedTabPageIndex = IntegerSetting(
+        provider,
+        "bookmarks_last_opened_tab_page_index",
+        -1
       )
     } catch (e: Exception) {
       Logger.e(TAG, "Error while initializing the state", e)

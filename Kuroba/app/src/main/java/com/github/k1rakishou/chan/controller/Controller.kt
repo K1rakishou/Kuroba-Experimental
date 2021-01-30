@@ -124,6 +124,8 @@ abstract class Controller(@JvmField var context: Context) {
       ?: throw IllegalStateException("Wrong context! Must be StartActivity")
   }
 
+  fun isViewInitialized(): Boolean = ::view.isInitialized
+
   init {
     injectDependencies(AppModuleAndroidUtils.extractActivityComponent(context))
   }
