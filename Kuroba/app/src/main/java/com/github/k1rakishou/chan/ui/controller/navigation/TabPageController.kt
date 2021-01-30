@@ -8,5 +8,6 @@ abstract class TabPageController(
   context: Context,
 ) : Controller(context) {
   abstract fun rebuildNavigationItem(navigationItem: NavigationItem)
+  abstract fun onTabFocused()
   abstract fun canSwitchTabs(): Boolean
 }

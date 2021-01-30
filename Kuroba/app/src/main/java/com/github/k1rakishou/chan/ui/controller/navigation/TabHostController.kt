@@ -149,7 +149,7 @@ class TabHostController(
     override fun getCount(): Int = PageType.values().size
 
     private fun createController(pageType: PageType): TabPageController {
-      // TODO(KurobaEx v0.5.0):persist last opened tab
+      // TODO(KurobaEx v0.5.0): persist last opened tab
       return when (pageType) {
         PageType.Bookmarks -> {
           BookmarksController(
@@ -173,6 +173,7 @@ class TabHostController(
       val newNavItem = NavigationItem()
       childController.rebuildNavigationItem(newNavItem)
       childController.navigation = newNavItem
+      childController.onTabFocused()
 
       this@TabHostController.navigation = newNavItem
       requireNavController().requireToolbar().setNavigationItem(false, true, newNavItem, null)

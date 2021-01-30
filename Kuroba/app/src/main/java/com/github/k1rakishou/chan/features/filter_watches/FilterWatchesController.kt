@@ -26,6 +26,10 @@ class FilterWatchesController(
     navigationItem.swipeable = false
   }
 
+  override fun onTabFocused() {
+
+  }
+
   override fun canSwitchTabs(): Boolean {
     return true
   }

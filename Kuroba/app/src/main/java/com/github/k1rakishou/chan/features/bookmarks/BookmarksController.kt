@@ -344,6 +344,18 @@ class BookmarksController(
       .build()
   }
 
+  override fun onTabFocused() {
+    reloadBookmarks()
+  }
+
+  override fun canSwitchTabs(): Boolean {
+    if (bookmarksSelectionHelper.isInSelectionMode() || bookmarksPresenter.isInReorderingMode()) {
+      return false
+    }
+
+    return true
+  }
+
   override fun onMenuItemClicked(
     bookmarksMenuItemType: BookmarksSelectionHelper.BookmarksMenuItemType,
     selectedItems: List<ChanDescriptor.ThreadDescriptor>
@@ -399,14 +411,6 @@ class BookmarksController(
     super.onConfigurationChanged(newConfig)
 
     updateLayoutManager(forced = true)
-  }
-
-  override fun canSwitchTabs(): Boolean {
-    if (bookmarksSelectionHelper.isInSelectionMode() || bookmarksPresenter.isInReorderingMode()) {
-      return false
-    }
-
-    return true
   }
 
   private fun reloadBookmarksAndUpdateViewMode() {
