@@ -5,6 +5,7 @@ import com.github.k1rakishou.model.repository.BoardRepository;
 import com.github.k1rakishou.model.repository.BookmarksRepository;
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository;
 import com.github.k1rakishou.model.repository.ChanFilterRepository;
+import com.github.k1rakishou.model.repository.ChanFilterWatchRepository;
 import com.github.k1rakishou.model.repository.ChanPostHideRepository;
 import com.github.k1rakishou.model.repository.ChanPostRepository;
 import com.github.k1rakishou.model.repository.ChanSavedReplyRepository;
@@ -142,6 +143,14 @@ public class RoomDatabaseModule {
             ModelComponent modelComponent
     ) {
         return modelComponent.getChanThreadsCache();
+    }
+
+    @Provides
+    @Singleton
+    public ChanFilterWatchRepository provideChanFilterWatchRepository(
+            ModelComponent modelComponent
+    ) {
+        return modelComponent.getChanFilterWatchRepository();
     }
 
 }

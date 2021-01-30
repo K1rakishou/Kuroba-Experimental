@@ -4,6 +4,7 @@ import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.model.data.id.BoardDBId
 import com.github.k1rakishou.model.mapper.ChanBoardMapper
 import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
 
@@ -21,7 +22,7 @@ class BoardLocalSource(
 
     allActiveBoards.forEach { chanBoardFull ->
       chanDescriptorCache.putBoardDescriptor(
-        chanBoardFull.chanBoardIdEntity.boardId,
+        BoardDBId(chanBoardFull.chanBoardIdEntity.boardId),
         chanBoardFull.chanBoardIdEntity.boardDescriptor()
       )
     }
@@ -58,7 +59,7 @@ class BoardLocalSource(
   suspend fun persist(boardsOrdered: Map<SiteDescriptor, List<ChanBoard>>) {
     ensureInTransaction()
 
-    val boardMapPerSite = mutableMapOf<SiteDescriptor, Map<BoardDescriptor, Long>>()
+    val boardMapPerSite = mutableMapOf<SiteDescriptor, Map<BoardDescriptor, BoardDBId>>()
 
     boardsOrdered.forEach { (siteDescriptor, boards) ->
       val boardCodes = boards.map { board -> board.boardCode() }
@@ -98,7 +99,7 @@ class BoardLocalSource(
           -1
         }
 
-        return@mapNotNull ChanBoardMapper.toChanBoardEntity(boardId, boardOrder, board)
+        return@mapNotNull ChanBoardMapper.toChanBoardEntity(boardId.id, boardOrder, board)
       }
 
       entities

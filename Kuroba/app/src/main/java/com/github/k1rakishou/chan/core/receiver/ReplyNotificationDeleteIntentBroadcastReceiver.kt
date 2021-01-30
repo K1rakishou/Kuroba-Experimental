@@ -64,7 +64,7 @@ class ReplyNotificationDeleteIntentBroadcastReceiver : BroadcastReceiver() {
     Logger.d(TAG, "replyNotificationSwipedAway() reply notification swiped away, "
       + "marking as seen ${threadDescriptors.size} bookmarks")
 
-    val updatedBookmarkDescriptors = bookmarksManager.updateBookmarks(threadDescriptors) { threadBookmark ->
+    val updatedBookmarkDescriptors = bookmarksManager.updateBookmarksNoPersist(threadDescriptors) { threadBookmark ->
       threadBookmark.markAsSeenAllReplies()
     }
 

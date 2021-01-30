@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileManager;
+import com.github.k1rakishou.model.repository.ChanFilterWatchRepository;
 import com.github.k1rakishou.model.repository.ChanPostRepository;
 
 import javax.inject.Singleton;
@@ -147,7 +148,8 @@ public class UseCaseModule {
             ProxiedOkHttpClient proxiedOkHttpClient,
             SimpleCommentParser simpleCommentParser,
             FilterEngine filterEngine,
-            ChanPostRepository chanPostRepository
+            ChanPostRepository chanPostRepository,
+            ChanFilterWatchRepository chanFilterWatchRepository
     ) {
         return new BookmarkFilterWatchableThreadsUseCase(
                 ChanSettings.verboseLogs.get(),
@@ -160,7 +162,8 @@ public class UseCaseModule {
                 proxiedOkHttpClient,
                 simpleCommentParser,
                 filterEngine,
-                chanPostRepository
+                chanPostRepository,
+                chanFilterWatchRepository
         );
     }
 

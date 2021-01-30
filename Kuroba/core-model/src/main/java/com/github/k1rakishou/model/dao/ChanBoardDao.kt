@@ -4,6 +4,7 @@ import androidx.room.*
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.id.BoardDBId
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardEntity
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardFull
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardIdEntity
@@ -115,7 +116,7 @@ abstract class ChanBoardDao {
   suspend fun createNewBoardIdEntities(
     ownerSiteName: String,
     boardCodes: List<String>
-  ): Map<BoardDescriptor, Long> {
+  ): Map<BoardDescriptor, BoardDBId> {
     val alreadyExistingBoardIdEntities = selectManyBoardIdEntities(ownerSiteName, boardCodes)
     val totalBoardIdEntities = mutableListWithCap<ChanBoardIdEntity>(alreadyExistingBoardIdEntities)
     totalBoardIdEntities.addAll(alreadyExistingBoardIdEntities)
@@ -144,11 +145,11 @@ abstract class ChanBoardDao {
       totalBoardIdEntities.addAll(newBoardIdEntities)
     }
 
-    val resultMap = mutableMapWithCap<BoardDescriptor, Long>(totalBoardIdEntities)
+    val resultMap = mutableMapWithCap<BoardDescriptor, BoardDBId>(totalBoardIdEntities)
 
     totalBoardIdEntities.forEach { chanBoardIdEntity ->
       require(chanBoardIdEntity.boardId > 0L) { "Bad boardId: ${chanBoardIdEntity.boardId}" }
-      resultMap[chanBoardIdEntity.boardDescriptor()] = chanBoardIdEntity.boardId
+      resultMap[chanBoardIdEntity.boardDescriptor()] = BoardDBId(chanBoardIdEntity.boardId)
     }
 
     return resultMap

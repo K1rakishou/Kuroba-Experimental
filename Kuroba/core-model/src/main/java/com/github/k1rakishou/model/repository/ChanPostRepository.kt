@@ -14,6 +14,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.id.ThreadDBId
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
@@ -57,6 +58,8 @@ class ChanPostRepository(
 
   suspend fun awaitUntilInitialized() = suspendableInitializer.awaitUntilInitialized()
 
+  fun isReady() = suspendableInitializer.isInitialized()
+
   suspend fun getTotalCachedPostsCount(): Int {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
@@ -92,7 +95,7 @@ class ChanPostRepository(
   suspend fun createEmptyThreadIfNotExists(descriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Boolean> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    val threadDatabaseIdFromCache = chanDescriptorCache.getThreadIdByThreadDescriptorFromCache(descriptor)
+    val threadDatabaseIdFromCache = chanDescriptorCache.getThreadIdByThreadDescriptorFromCache(descriptor)?.id
     if (threadDatabaseIdFromCache != null) {
       return value(threadDatabaseIdFromCache >= 0L)
     }
@@ -101,7 +104,10 @@ class ChanPostRepository(
       return@myAsync tryWithTransaction {
         val createdThreadDatabaseId = localSource.insertEmptyThread(descriptor) ?: -1L
         if (createdThreadDatabaseId >= 0L) {
-          chanDescriptorCache.putThreadDescriptor(createdThreadDatabaseId, descriptor)
+          chanDescriptorCache.putThreadDescriptor(
+            ThreadDBId(createdThreadDatabaseId),
+            descriptor
+          )
         }
 
         return@tryWithTransaction createdThreadDatabaseId >= 0

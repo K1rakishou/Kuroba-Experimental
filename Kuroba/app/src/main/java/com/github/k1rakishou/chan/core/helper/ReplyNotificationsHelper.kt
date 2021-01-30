@@ -144,7 +144,7 @@ class ReplyNotificationsHelper(
     val threadDescriptors = shownNotifications.keys
 
     // Mark all shown notifications as notified so we won't show them again
-    val updatedBookmarkDescriptors = bookmarksManager.updateBookmarks(threadDescriptors) { threadBookmark ->
+    val updatedBookmarkDescriptors = bookmarksManager.updateBookmarksNoPersist(threadDescriptors) { threadBookmark ->
       shownNotifications[threadBookmark.threadDescriptor]?.forEach { threadBookmarkReplyView ->
         threadBookmark.threadBookmarkReplies[threadBookmarkReplyView.postDescriptor]?.alreadyNotified = true
       }

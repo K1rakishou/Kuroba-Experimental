@@ -782,7 +782,7 @@ class ThreadPresenter @Inject constructor(
 
     val title = ChanPostUtils.getTitle(originalPost, localThreadDescriptor)
 
-    val updatedBookmarkDescriptor = bookmarksManager.updateBookmark(localThreadDescriptor) { threadBookmark ->
+    val updatedBookmarkDescriptor = bookmarksManager.updateBookmarkNoPersist(localThreadDescriptor) { threadBookmark ->
       if (threadBookmark.title.isNullOrEmpty() && title.isNotEmpty()) {
         threadBookmark.title = title
       }

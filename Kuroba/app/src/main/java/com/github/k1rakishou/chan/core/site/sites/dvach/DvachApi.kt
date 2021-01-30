@@ -359,8 +359,6 @@ class DvachApi internal constructor(
   ): FilterWatchCatalogThreadInfoObject? {
     var threadNo: Long? = null
     var isOp = false
-    var closed = false
-    var archived = false
     var comment = ""
     var subject = ""
     var thumbnail: String? = null
@@ -373,8 +371,6 @@ class DvachApi internal constructor(
           val num = reader.nextStringWithoutBOM()
           threadNo = num.toInt().toLong()
         }
-        "closed" -> closed = reader.nextInt() == 1
-        "archived" -> archived = reader.nextInt() == 1
         "comment" -> comment = reader.nextStringWithoutBOM()
         "parent" -> {
           val parentPostId = reader.nextInt()
@@ -408,8 +404,6 @@ class DvachApi internal constructor(
 
     return FilterWatchCatalogThreadInfoObject(
       threadDescriptor = ChanDescriptor.ThreadDescriptor.Companion.create(boardDescriptor, threadNo),
-      closed = closed,
-      archived = archived,
       commentRaw = comment,
       subjectRaw = subject,
       thumbnailUrl = thumbnail?.toHttpUrlOrNull()

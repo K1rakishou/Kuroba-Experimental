@@ -6,6 +6,7 @@ import com.github.k1rakishou.model.repository.BoardRepository
 import com.github.k1rakishou.model.repository.BookmarksRepository
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanFilterRepository
+import com.github.k1rakishou.model.repository.ChanFilterWatchRepository
 import com.github.k1rakishou.model.repository.ChanPostHideRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.repository.ChanSavedReplyRepository
@@ -47,6 +48,7 @@ interface ModelComponent {
   fun getChanFilterRepository(): ChanFilterRepository
   fun getThreadBookmarkGroupRepository(): ThreadBookmarkGroupRepository
   fun getChanCatalogSnapshotRepository(): ChanCatalogSnapshotRepository
+  fun getChanFilterWatchRepository(): ChanFilterWatchRepository
   fun getChanThreadsCache(): ChanThreadsCache
 
   @Component.Builder

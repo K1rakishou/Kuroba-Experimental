@@ -10,8 +10,9 @@ import org.joda.time.DateTime
  *
  * Which means that if [alreadyRead] is true then [alreadySeen] and [alreadyNotified] must be true
  * as well, but if they are not for some reason then we just ignore them. In other words, if
- * [alreadyRead] for a reply and [alreadySeen]/[alreadyNotified] then we won't see the notification
- * (let alone "hear" it) because [alreadyRead] has higher priority than the other two.
+ * [alreadyRead] is true for a reply and either (or both) [alreadySeen]/[alreadyNotified] are false
+ * then we won't see the notification (let alone "hear" it) because [alreadyRead] has higher
+ * priority than the other two.
  *
  * [alreadyNotified] - is a flag to figure out whether we should notify the user with sound and
  * vibration about this notification. Only used for "new" replies. We update this flag to true

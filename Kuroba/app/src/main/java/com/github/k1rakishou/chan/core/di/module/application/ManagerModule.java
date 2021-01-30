@@ -74,6 +74,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.repository.BoardRepository;
 import com.github.k1rakishou.model.repository.BookmarksRepository;
 import com.github.k1rakishou.model.repository.ChanFilterRepository;
+import com.github.k1rakishou.model.repository.ChanFilterWatchRepository;
 import com.github.k1rakishou.model.repository.ChanPostHideRepository;
 import com.github.k1rakishou.model.repository.ChanPostRepository;
 import com.github.k1rakishou.model.repository.ChanSavedReplyRepository;
@@ -465,6 +466,7 @@ public class ManagerModule {
     public ChanFilterManager provideChanFilterManager(
             ChanFilterRepository chanFilterRepository,
             ChanPostRepository chanPostRepository,
+            ChanFilterWatchRepository chanFilterWatchRepository,
             CoroutineScope appScope,
             PostFilterManager postFilterManager
     ) {
@@ -473,6 +475,7 @@ public class ManagerModule {
                 appScope,
                 chanFilterRepository,
                 chanPostRepository,
+                chanFilterWatchRepository,
                 postFilterManager
         );
     }
@@ -572,6 +575,7 @@ public class ManagerModule {
             BoardManager boardManager,
             BookmarksManager bookmarksManager,
             ChanFilterManager chanFilterManager,
+            ChanPostRepository chanPostRepository,
             SiteManager siteManager,
             BookmarkFilterWatchableThreadsUseCase bookmarkFilterWatchableThreadsUseCase
     ) {
@@ -580,6 +584,7 @@ public class ManagerModule {
                 boardManager,
                 bookmarksManager,
                 chanFilterManager,
+                chanPostRepository,
                 siteManager,
                 bookmarkFilterWatchableThreadsUseCase
         );

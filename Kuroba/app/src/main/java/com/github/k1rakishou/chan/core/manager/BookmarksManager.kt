@@ -140,6 +140,10 @@ class BookmarksManager(
 
   fun currentlyOpenedThread(): ChanDescriptor.ThreadDescriptor? = currentOpenThread.get()
 
+  /**
+   * Called by [ChanThreadManager] when we are about to start loading thread posts from the server.
+   * We use this to update a bookmark associated with this thread (if it exists and is active).
+   * */
   fun onThreadIsFetchingData(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     if (threadDescriptor == currentlyOpenedThread()) {
       val isActive = lock.read { bookmarks[threadDescriptor]?.isActive() ?: false }
@@ -151,9 +155,63 @@ class BookmarksManager(
     }
   }
 
-  fun createBookmarks(simpleThreadBookmarkList: List<SimpleThreadBookmark>) {
+  @JvmOverloads
+  fun createBookmark(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    title: String? = null,
+    thumbnailUrl: HttpUrl? = null
+  ): Boolean {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
+    val bookmarkToCreate = SimpleThreadBookmark(
+      threadDescriptor = threadDescriptor,
+      title = title,
+      thumbnailUrl = thumbnailUrl
+    )
+
+    return createBookmarks(listOf(bookmarkToCreate))
+  }
+
+  /**
+   * Creates bookmarks in the memory and schedules a persist task that should be executed some time
+   * in the near future.
+   * */
+  fun createBookmarks(simpleThreadBookmarkList: List<SimpleThreadBookmark>): Boolean {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
+    val actuallyCreated = createBookmarksInternal(simpleThreadBookmarkList)
+    if (actuallyCreated.isEmpty()) {
+      return false
+    }
+
+    bookmarksChanged(BookmarkChange.BookmarksCreated(actuallyCreated))
+    Logger.d(TAG, "Bookmarks created (${actuallyCreated.size})")
+    return true
+  }
+
+  /**
+   * Creates bookmarks and persist them right away.
+   * */
+  suspend fun createBookmarksSuspend(simpleThreadBookmarkList: List<SimpleThreadBookmark>): Boolean {
+    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
+
+    val actuallyCreated = createBookmarksInternal(simpleThreadBookmarkList)
+    if (actuallyCreated.isEmpty()) {
+      return false
+    }
+
+    persistBookmarksInternal()
+    bookmarksChangedSubject.onNext(BookmarkChange.BookmarksCreated(actuallyCreated))
+
+    Logger.d(TAG, "Bookmarks created (${actuallyCreated.size})")
+    return true
+  }
+
+  private fun createBookmarksInternal(
+    simpleThreadBookmarkList: List<SimpleThreadBookmark>
+  ): List<ChanDescriptor.ThreadDescriptor> {
     if (simpleThreadBookmarkList.isEmpty()) {
-      return
+      return emptyList()
     }
 
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
@@ -180,39 +238,7 @@ class BookmarksManager(
       }
     }
 
-    if (actuallyCreated.isEmpty()) {
-      return
-    }
-
-    bookmarksChanged(BookmarkChange.BookmarksCreated(actuallyCreated))
-    Logger.d(TAG, "Bookmarks created (${actuallyCreated.size})")
-  }
-
-  @JvmOverloads
-  fun createBookmark(
-    threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    title: String? = null,
-    thumbnailUrl: HttpUrl? = null
-  ): Boolean {
-    check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
-
-    return lock.write {
-      if (bookmarks.containsKey(threadDescriptor)) {
-        return@write false
-      }
-
-      val threadBookmark = ThreadBookmark.create(threadDescriptor, DateTime.now()).apply {
-        this.title = title
-        this.thumbnailUrl = thumbnailUrl
-      }
-
-      bookmarks[threadDescriptor] = threadBookmark
-
-      bookmarksChanged(BookmarkChange.BookmarksCreated(listOf(threadDescriptor)))
-      Logger.d(TAG, "Bookmark created ($threadDescriptor)")
-
-      return@write true
-    }
+    return actuallyCreated
   }
 
   fun deleteBookmark(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
@@ -253,11 +279,11 @@ class BookmarksManager(
    * was actually updated (something was changed) or null if [mutator] returned the same bookmark.
    * Don't forget to call [persistBookmarkManually] after this method!
    * */
-  fun updateBookmark(
+  fun updateBookmarkNoPersist(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     mutator: (ThreadBookmark) -> Unit
   ): ChanDescriptor.ThreadDescriptor? {
-    return updateBookmarks(listOf(threadDescriptor), mutator).firstOrNull()
+    return updateBookmarksNoPersist(listOf(threadDescriptor), mutator).firstOrNull()
   }
 
   /**
@@ -265,7 +291,7 @@ class BookmarksManager(
    * by [mutator] or empty list if no bookmarks were changed.
    * Don't forget to call [persistBookmarksManually] after this method!
    * */
-  fun updateBookmarks(
+  fun updateBookmarksNoPersist(
     threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>,
     mutator: (ThreadBookmark) -> Unit
   ): Set<ChanDescriptor.ThreadDescriptor> {
@@ -293,6 +319,10 @@ class BookmarksManager(
       }
 
       return@write
+    }
+
+    if (updatedBookmarks.isEmpty()) {
+      bookmarksChangedSubject.onNext(BookmarkChange.BookmarksUpdated(updatedBookmarks))
     }
 
     return updatedBookmarks
@@ -519,7 +549,7 @@ class BookmarksManager(
       return
     }
 
-    updateBookmark(threadDescriptor) { threadBookmark ->
+    updateBookmarkNoPersist(threadDescriptor) { threadBookmark ->
       threadBookmark.updateSeenPostsCount(unseenPostsCount)
       threadBookmark.updateLastViewedPostNo(postNo)
       threadBookmark.readRepliesUpTo(postNo)

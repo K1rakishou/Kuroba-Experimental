@@ -8,6 +8,7 @@ import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.filter.ChanFilter
 import com.github.k1rakishou.model.repository.ChanFilterRepository
+import com.github.k1rakishou.model.repository.ChanFilterWatchRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,12 +30,13 @@ class ChanFilterManager(
   private val appScope: CoroutineScope,
   private val chanFilterRepository: ChanFilterRepository,
   private val chanPostRepository: ChanPostRepository,
+  private val chanFilterWatchRepository: ChanFilterWatchRepository,
   private val postFilterManager: PostFilterManager
 ) {
-  private val filtersChangedChannel = MutableSharedFlow<Unit>(
+  private val filtersChangedChannel = MutableSharedFlow<FilterEvent>(
     replay = 1,
-    extraBufferCapacity = 1,
-    onBufferOverflow = BufferOverflow.DROP_OLDEST
+    extraBufferCapacity = 128,
+    onBufferOverflow = BufferOverflow.SUSPEND
   )
 
   private val suspendableInitializer = SuspendableInitializer<Unit>("ChanFilterManager")
@@ -55,7 +57,7 @@ class ChanFilterManager(
     }
   }
 
-  fun listenForFiltersChanges(): Flow<Unit> {
+  fun listenForFiltersChanges(): Flow<FilterEvent> {
     return filtersChangedChannel
       .asSharedFlow()
       .catch { error -> Logger.e(TAG, "Error while listening for filtersChangedSubject updates", error) }
@@ -85,7 +87,7 @@ class ChanFilterManager(
       suspendableInitializer.initWithError(error)
     }
 
-    filtersChangedChannel.tryEmit(Unit)
+    filtersChangedChannel.tryEmit(FilterEvent.Initialized)
   }
 
   fun createOrUpdateFilter(chanFilter: ChanFilter, onUpdated: () -> Unit) {
@@ -98,7 +100,9 @@ class ChanFilterManager(
         return@read filters.indexOfFirst { filter -> filter.getDatabaseId() == chanFilter.getDatabaseId() }
       }
 
-      val success = if (indexOfThisFilter < 0) {
+      val createFilter = indexOfThisFilter < 0
+
+      val success = if (createFilter) {
         createNewFilterInternal(indexOfThisFilter, chanFilter)
       } else {
         updateOldFilterInternal(indexOfThisFilter, chanFilter)
@@ -106,9 +110,16 @@ class ChanFilterManager(
 
       if (success) {
         clearFiltersAndPostHashes()
+        clearFilterWatchGroups(chanFilter)
       }
 
-      filtersChangedChannel.tryEmit(Unit)
+      val filterEvent = if (createFilter) {
+        FilterEvent.Created(chanFilter)
+      } else {
+        FilterEvent.Updated(listOf(chanFilter))
+      }
+
+      filtersChangedChannel.tryEmit(filterEvent)
       onUpdated()
     }
   }
@@ -161,14 +172,20 @@ class ChanFilterManager(
         .ignore()
 
       clearFiltersAndPostHashes()
+      clearFilterWatchGroups(chanFilter)
 
-      filtersChangedChannel.tryEmit(Unit)
+      filtersChangedChannel.tryEmit(FilterEvent.Deleted(listOf(chanFilter)))
       onUpdated()
     }
   }
 
   fun enableDisableFilters(filters: List<ChanFilter>, enable: Boolean, onUpdated: () -> Unit) {
     serializedCoroutineExecutor.post {
+      if (filters.isEmpty()) {
+        onUpdated()
+        return@post
+      }
+
       val changed = lock.write {
         val filterIds = filters.map { chanFilter ->
           val databaseId = chanFilter.getDatabaseId()
@@ -202,7 +219,7 @@ class ChanFilterManager(
 
       clearFiltersAndPostHashes()
 
-      filtersChangedChannel.tryEmit(Unit)
+      filtersChangedChannel.tryEmit(FilterEvent.Updated(allFilters))
       onUpdated()
     }
   }
@@ -249,6 +266,19 @@ class ChanFilterManager(
   private fun clearFiltersAndPostHashes() {
     postFilterManager.clear()
     chanPostRepository.clearPostHashes()
+  }
+
+  // Whenever we create/update/or delete a filter with WATCH flag, we want to delete all filter
+  // watch groups from the DB. The groups will be created anew on the next filter watch update cycle.
+  // We do not do this when enabling/disabling filters.
+  private suspend fun clearFilterWatchGroups(chanFilter: ChanFilter) {
+    if (!chanFilter.isWatchFilter()) {
+      return
+    }
+
+    chanFilterWatchRepository.clearFilterWatchGroups()
+      .peekError { error -> Logger.e(TAG, "clearFilterWatchGroups() error", error) }
+      .ignore()
   }
 
   private suspend fun updateOldFilterInternal(indexOfThisFilter: Int, newChanFilter: ChanFilter): Boolean {
@@ -338,6 +368,30 @@ class ChanFilterManager(
   }
 
   fun isReady() = suspendableInitializer.isInitialized()
+
+  sealed class FilterEvent {
+    abstract fun hasWatchFilter(): Boolean
+
+    object Initialized : FilterEvent() {
+      override fun hasWatchFilter(): Boolean = false
+    }
+
+    class Created(val chanFilter: ChanFilter) : FilterEvent() {
+      override fun hasWatchFilter(): Boolean = chanFilter.isWatchFilter()
+    }
+
+    class Updated(val chanFilters: List<ChanFilter>) : FilterEvent() {
+      override fun hasWatchFilter(): Boolean {
+        return chanFilters.any { chanFilter -> chanFilter.isWatchFilter() }
+      }
+    }
+
+    class Deleted(val chanFilters: List<ChanFilter>) : FilterEvent() {
+      override fun hasWatchFilter(): Boolean {
+        return chanFilters.any { chanFilter -> chanFilter.isWatchFilter() }
+      }
+    }
+  }
 
   companion object {
     private const val TAG = "ChanFilterManager"

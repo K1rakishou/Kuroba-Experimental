@@ -128,9 +128,7 @@ inline fun <T, R> Collection<T>.flatMapIndexed(transform: (Int, T) -> Collection
   return destination
 }
 
-fun <T> MutableCollection<T>.removeIfKt(filter: (T) -> Boolean): Boolean {
-  Objects.requireNonNull(filter)
-
+inline fun <T> MutableCollection<T>.removeIfKt(filter: (T) -> Boolean): Boolean {
   var removed = false
   val mutableIterator = iterator()
 
@@ -142,6 +140,16 @@ fun <T> MutableCollection<T>.removeIfKt(filter: (T) -> Boolean): Boolean {
   }
 
   return removed
+}
+
+inline fun <E> MutableList<E>.mutableIteration(func: (MutableIterator<E>, E) -> Boolean) {
+  val iterator = this.iterator()
+
+  while (iterator.hasNext()) {
+    if (!func(iterator, iterator.next())) {
+      return
+    }
+  }
 }
 
 public val <T> List<T>.lastIndexOrNull: Int?

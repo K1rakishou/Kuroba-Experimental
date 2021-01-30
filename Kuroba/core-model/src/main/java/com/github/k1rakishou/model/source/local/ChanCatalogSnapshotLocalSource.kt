@@ -32,13 +32,13 @@ class ChanCatalogSnapshotLocalSource(
     val chanCatalogSnapshotEntityList = chanCatalogSnapshot.catalogThreadDescriptors
       .mapIndexed { order, threadDescriptor ->
         return@mapIndexed ChanCatalogSnapshotEntity(
-          boardId,
+          boardId.id,
           threadDescriptor.threadNo,
           order
         )
       }
 
-    chanCatalogSnapshotDao.deleteManyByBoardId(boardId)
+    chanCatalogSnapshotDao.deleteManyByBoardId(boardId.id)
     chanCatalogSnapshotDao.insertMany(chanCatalogSnapshotEntityList)
 
     chanCatalogSnapshotCache.store(chanCatalogSnapshot.boardDescriptor, chanCatalogSnapshot)
@@ -59,7 +59,7 @@ class ChanCatalogSnapshotLocalSource(
     val boardId = chanDescriptorCache.getBoardIdByBoardDescriptor(boardDescriptor)
       ?: return false
 
-    val chanCatalogSnapshotEntityList = chanCatalogSnapshotDao.selectManyByBoardIdOrdered(boardId)
+    val chanCatalogSnapshotEntityList = chanCatalogSnapshotDao.selectManyByBoardIdOrdered(boardId.id)
     if (chanCatalogSnapshotEntityList.isEmpty()) {
       return false
     }

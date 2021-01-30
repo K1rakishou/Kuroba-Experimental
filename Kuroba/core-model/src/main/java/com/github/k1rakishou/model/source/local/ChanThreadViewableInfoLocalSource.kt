@@ -25,7 +25,7 @@ class ChanThreadViewableInfoLocalSource(
       return fromCache
     }
 
-    val threadId = chanDescriptorCache.getThreadIdByThreadDescriptor(threadDescriptor)
+    val threadId = chanDescriptorCache.getThreadIdByThreadDescriptor(threadDescriptor)?.id
       ?: return null
 
     val chanThreadViewableInfoEntity = chanThreadViewableInfoDao.selectByOwnerThreadId(threadId)
@@ -43,7 +43,8 @@ class ChanThreadViewableInfoLocalSource(
   suspend fun persist(chanThreadViewableInfo: ChanThreadViewableInfo) {
     ensureInTransaction()
 
-    val threadId = chanDescriptorCache.getThreadIdByThreadDescriptor(chanThreadViewableInfo.threadDescriptor)
+    val threadId = chanDescriptorCache
+      .getThreadIdByThreadDescriptor(chanThreadViewableInfo.threadDescriptor)?.id
       ?: return
 
     val databaseId = chanThreadViewableInfoDao.selectIdByOwnerThreadId(threadId)

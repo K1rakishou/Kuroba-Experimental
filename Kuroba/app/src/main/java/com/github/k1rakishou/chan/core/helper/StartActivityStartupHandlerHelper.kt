@@ -300,7 +300,7 @@ class StartActivityStartupHandlerHelper(
 
     openThreadFromNotificationOrBookmarksController(threadDescriptors)
 
-    val updatedBookmarkDescriptors = bookmarksManager.updateBookmarks(threadDescriptors) { threadBookmark ->
+    val updatedBookmarkDescriptors = bookmarksManager.updateBookmarksNoPersist(threadDescriptors) { threadBookmark ->
       threadBookmark.markAsSeenAllReplies()
     }
     bookmarksManager.persistBookmarksManually(updatedBookmarkDescriptors)

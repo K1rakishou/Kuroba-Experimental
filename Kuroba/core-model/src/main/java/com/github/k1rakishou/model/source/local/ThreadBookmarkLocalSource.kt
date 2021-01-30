@@ -8,6 +8,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmark
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.id.ThreadBookmarkDBId
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkEntity
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkFull
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkGroupEntity
@@ -111,11 +112,11 @@ class ThreadBookmarkLocalSource(
   }
 
   private suspend fun deleteBookmarks(toDelete: List<ChanDescriptor.ThreadDescriptor>) {
-    val threadIdSet = chanDescriptorCache.getManyThreadIdsByThreadDescriptors(
+    val threadBookmarkIdSet = chanDescriptorCache.getManyThreadBookmarkIds(
       toDelete
-    ).map { (_, threadId) -> threadId }.toSet()
+    ).map { (_, threadBookmarkId) -> threadBookmarkId.id }.toSet()
 
-    threadBookmarkDao.deleteMany(threadIdSet)
+    threadBookmarkDao.deleteMany(threadBookmarkIdSet)
     threadBookmarkCache.deleteMany(toDelete)
     chanDescriptorCache.deleteManyBookmarkIds(toDelete)
   }
@@ -125,7 +126,7 @@ class ThreadBookmarkLocalSource(
       return@map threadBookmark.threadDescriptor
     }
 
-    val threadIdMap = chanDescriptorCache.getManyThreadIdsByThreadDescriptors(
+    val threadIdMap = chanDescriptorCache.getManyThreadIdByThreadDescriptors(
       toInsertOrUpdateThreadDescriptors
     )
 
@@ -137,7 +138,7 @@ class ThreadBookmarkLocalSource(
 
       return@map ThreadBookmarkMapper.toThreadBookmarkEntity(
         threadBookmark,
-        threadId,
+        threadId.id,
         threadBookmark.createdOn
       )
     }
@@ -238,21 +239,21 @@ class ThreadBookmarkLocalSource(
         "bookmarkEntities.size=${bookmarkEntities.size}"
     }
 
-    val resultMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, Long>(bookmarkEntities.size)
+    val resultMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ThreadBookmarkDBId>(bookmarkEntities.size)
 
     bookmarkEntities.forEachIndexed { index, threadBookmarkEntity ->
       val threadDescriptor = threadBookmarks[index].threadDescriptor
       val threadBookmarkId = threadBookmarkEntity.threadBookmarkId
       check(threadBookmarkId > 0L) { "Bad threadBookmarkId: $threadBookmarkId" }
 
-      resultMap[threadDescriptor] = threadBookmarkId
+      resultMap[threadDescriptor] = ThreadBookmarkDBId(threadBookmarkId)
     }
 
     chanDescriptorCache.putManyBookmarkIds(resultMap)
   }
 
   private suspend fun cacheBookmarkDatabaseIds(bookmarkEntities: List<ThreadBookmarkFull>) {
-    val resultMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, Long>(bookmarkEntities.size)
+    val resultMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ThreadBookmarkDBId>(bookmarkEntities.size)
 
     bookmarkEntities.forEach { threadBookmarkFull ->
       val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
@@ -264,7 +265,7 @@ class ThreadBookmarkLocalSource(
       val threadBookmarkId = threadBookmarkFull.threadBookmarkEntity.threadBookmarkId
       check(threadBookmarkId > 0L) { "Bad threadBookmarkId: $threadBookmarkId" }
 
-      resultMap[threadDescriptor] = threadBookmarkId
+      resultMap[threadDescriptor] = ThreadBookmarkDBId(threadBookmarkId)
     }
 
     chanDescriptorCache.putManyBookmarkIds(resultMap)

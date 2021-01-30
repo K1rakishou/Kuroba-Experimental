@@ -649,7 +649,6 @@ class BookmarksController(
                   highlightBookmark(bookmark.highlight)
                   isTablet(isTablet)
                   groupId(bookmark.groupId)
-                  reloadBookmarkFlag(bookmark.reloadBookmarkFlag)
                   reorderingMode(state.isReorderingMode)
                   bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
                   bookmarkLongClickListener { onBookmarkLongClicked(bookmark) }
@@ -667,7 +666,6 @@ class BookmarksController(
                   highlightBookmark(bookmark.highlight)
                   isTablet(isTablet)
                   groupId(bookmark.groupId)
-                  reloadBookmarkFlag(bookmark.reloadBookmarkFlag)
                   reorderingMode(state.isReorderingMode)
                   bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
                   bookmarkLongClickListener { onBookmarkLongClicked(bookmark) }

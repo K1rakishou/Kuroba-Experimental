@@ -32,7 +32,6 @@ import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
 
@@ -47,10 +46,6 @@ class BookmarksPresenter(
 
   private val bookmarksRefreshed = AtomicBoolean(false)
   private val isReorderingMode = AtomicBoolean(false)
-
-  // TODO(KurobaEx / @Cleanup): I would really like to figure out why I need this and if I don't
-  //  then get rid of it. Seems kinda strange to have it.
-  private val reloadBookmarkFlagCounter = AtomicInteger(0)
 
   private val bookmarksControllerStateSubject = PublishProcessor.create<BookmarksControllerState>()
     .toSerialized()
@@ -196,7 +191,6 @@ class BookmarksPresenter(
         setState(BookmarksControllerState.Loading)
       }
 
-      reloadBookmarkFlagCounter.incrementAndGet()
       Logger.d(TAG, "calling showBookmarks() because reloadBookmarks() was called")
 
       ModularResult.Try { showBookmarks(loadingStateCancellationJob) }.safeUnwrap { error ->
@@ -271,7 +265,7 @@ class BookmarksPresenter(
 
   fun onBookmarkStatsClicked(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     bookmarksManager.enqueuePersistFunc {
-      val updatedBookmarkDescriptor = bookmarksManager.updateBookmark(threadDescriptor) { threadBookmark ->
+      val updatedBookmarkDescriptor = bookmarksManager.updateBookmarkNoPersist(threadDescriptor) { threadBookmark ->
         threadBookmark.toggleWatching()
       }
 
@@ -321,9 +315,7 @@ class BookmarksPresenter(
             thumbnailUrl = threadBookmarkView.thumbnailUrl,
             threadBookmarkStats = threadBookmarkStats,
             selection = selection,
-            createdOn = threadBookmarkView.createdOn,
-            // To force all the views to get reloaded
-            reloadBookmarkFlag = reloadBookmarkFlagCounter.get()
+            createdOn = threadBookmarkView.createdOn
           )
       }
 

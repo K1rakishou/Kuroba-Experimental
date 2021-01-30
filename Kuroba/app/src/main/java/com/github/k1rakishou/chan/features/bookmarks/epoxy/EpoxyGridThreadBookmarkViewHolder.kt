@@ -27,13 +27,14 @@ abstract class EpoxyGridThreadBookmarkViewHolder
   @EpoxyAttribute(EpoxyAttribute.Option.DoNotHash)
   var threadDescriptor: ChanDescriptor.ThreadDescriptor? = null
   @EpoxyAttribute(EpoxyAttribute.Option.DoNotHash)
-  var bookmarkClickListener: ((ChanDescriptor.ThreadDescriptor) -> Unit)? = null
-  @EpoxyAttribute(EpoxyAttribute.Option.DoNotHash)
-  var bookmarkLongClickListener: ((ChanDescriptor.ThreadDescriptor) -> Unit)? = null
-  @EpoxyAttribute(EpoxyAttribute.Option.DoNotHash)
-  var bookmarkStatsClickListener: ((ChanDescriptor.ThreadDescriptor) -> Unit)? = null
-  @EpoxyAttribute(EpoxyAttribute.Option.DoNotHash)
   var context: Context? = null
+
+  @EpoxyAttribute(value = [EpoxyAttribute.Option.IgnoreRequireHashCode])
+  var bookmarkClickListener: ((ChanDescriptor.ThreadDescriptor) -> Unit)? = null
+  @EpoxyAttribute(value = [EpoxyAttribute.Option.IgnoreRequireHashCode])
+  var bookmarkLongClickListener: ((ChanDescriptor.ThreadDescriptor) -> Unit)? = null
+  @EpoxyAttribute(value = [EpoxyAttribute.Option.IgnoreRequireHashCode])
+  var bookmarkStatsClickListener: ((ChanDescriptor.ThreadDescriptor) -> Unit)? = null
 
   @EpoxyAttribute
   var threadBookmarkStats: ThreadBookmarkStats? = null
@@ -47,8 +48,6 @@ abstract class EpoxyGridThreadBookmarkViewHolder
   open var isTablet: Boolean = false
   @EpoxyAttribute
   var groupId: String? = null
-  @EpoxyAttribute
-  var reloadBookmarkFlag: Int = 0
   @EpoxyAttribute
   var reorderingMode: Boolean = false
 

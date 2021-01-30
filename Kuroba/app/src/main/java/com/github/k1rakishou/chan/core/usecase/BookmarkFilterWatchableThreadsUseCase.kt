@@ -16,9 +16,11 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilter
+import com.github.k1rakishou.model.data.filter.ChanFilterWatchGroup
 import com.github.k1rakishou.model.data.filter.FilterType
 import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
 import com.github.k1rakishou.model.data.filter.FilterWatchCatalogThreadInfoObject
+import com.github.k1rakishou.model.repository.ChanFilterWatchRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.CoroutineScope
@@ -42,30 +44,36 @@ class BookmarkFilterWatchableThreadsUseCase(
   private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val simpleCommentParser: SimpleCommentParser,
   private val filterEngine: FilterEngine,
-  private val chanPostRepository: ChanPostRepository
-) : ISuspendUseCase<Unit, ModularResult<Unit>> {
+  private val chanPostRepository: ChanPostRepository,
+  private val chanFilterWatchRepository: ChanFilterWatchRepository
+) : ISuspendUseCase<Unit, ModularResult<Boolean>> {
 
-  override suspend fun execute(parameter: Unit): ModularResult<Unit> {
+  /**
+   * Returns true is we successfully fetched catalog threads, matched at least one filter with at
+   * least one thread and successfully created at least one watch filter group.
+   * */
+  override suspend fun execute(parameter: Unit): ModularResult<Boolean> {
     return ModularResult.Try { executeInternal() }
   }
 
   @Suppress("UnnecessaryVariable")
-  private suspend fun executeInternal() {
+  private suspend fun executeInternal(): Boolean {
     check(boardManager.isReady()) { "boardManager is not ready" }
     check(bookmarksManager.isReady()) { "bookmarksManager is not ready" }
     check(chanFilterManager.isReady()) { "chanFilterManager is not ready" }
     check(siteManager.isReady()) { "siteManager is not ready" }
+    check(chanPostRepository.isReady()) { "chanPostRepository is not ready" }
 
     val boardDescriptorsToCheck = collectBoardDescriptorsToCheck()
     if (boardDescriptorsToCheck.isEmpty()) {
       Logger.d(TAG, "doWorkInternal() boardDescriptorsToCheck is empty")
-      return
+      return true
     }
 
     val enabledWatchFilters = chanFilterManager.getEnabledWatchFilters()
     if (enabledWatchFilters.isEmpty()) {
       Logger.d(TAG, "doWorkInternal() enabledWatchFilters is empty")
-      return
+      return true
     }
 
     if (verboseLogsEnabled) {
@@ -81,7 +89,7 @@ class BookmarkFilterWatchableThreadsUseCase(
     val filterWatchCatalogInfoObject = filterOutNonSuccessResults(catalogFetchResults)
     if (filterWatchCatalogInfoObject.isEmpty()) {
       Logger.d(TAG, "doWorkInternal() Nothing has left after filtering out error results")
-      return
+      return true
     }
 
     val matchedCatalogThreads = filterOutThreadsThatDoNotMatchWatchFilters(
@@ -91,28 +99,38 @@ class BookmarkFilterWatchableThreadsUseCase(
       val subject = catalogThread.subject
       val parsedComment = simpleCommentParser.parseComment(rawComment) ?: ""
 
-      // Updated the old unparsed comment with the parsed one
+      // Update the old unparsed comment with the parsed one
       catalogThread.replaceRawCommentWithParsed(parsedComment.toString())
 
-      val matches = tryMatchWatchFiltersWithThreadInfo(
+      val matchedFilter = tryMatchWatchFiltersWithThreadInfo(
         enabledWatchFilters,
         parsedComment,
         subject
       )
 
-      return@filterOutThreadsThatDoNotMatchWatchFilters matches
+      if (matchedFilter != null) {
+        // Set the matched filter which we will use for grouping
+        catalogThread.setMatchedFilter(matchedFilter)
+      }
+
+      return@filterOutThreadsThatDoNotMatchWatchFilters matchedFilter != null
     }
 
     if (matchedCatalogThreads.isEmpty()) {
       Logger.d(TAG, "doWorkInternal() Nothing has left after filtering out non-matching catalog threads")
-      return
+      return true
     }
 
-    createBookmarks(matchedCatalogThreads)
-    Logger.d(TAG, "doWorkInternal() Success")
+    val result = createOrUpdateBookmarks(matchedCatalogThreads)
+    Logger.d(TAG, "doWorkInternal() Success: $result")
+
+    return result
   }
 
-  private suspend fun createBookmarks(matchedCatalogThreads: List<FilterWatchCatalogThreadInfoObject>) {
+  private suspend fun createOrUpdateBookmarks(
+    matchedCatalogThreads: List<FilterWatchCatalogThreadInfoObject>
+  ): Boolean {
+    val filterWatchGroupsToCreate = mutableListOf<ChanFilterWatchGroup>()
     val bookmarksToCreate = mutableListOf<BookmarksManager.SimpleThreadBookmark>()
     val bookmarksToUpdate = mutableListOf<ChanDescriptor.ThreadDescriptor>()
 
@@ -122,6 +140,13 @@ class BookmarkFilterWatchableThreadsUseCase(
       val isFilterWatchBookmark = bookmarksManager.mapBookmark(threadDescriptor) { threadBookmarkView ->
         return@mapBookmark threadBookmarkView.isFilterWatchBookmark()
       }
+
+      // Since we delete filter watch groups every time we create/delete/update a filter with "watch"
+      // flag, we need to recreate groups every time we fetch them from the server.
+      filterWatchGroupsToCreate += ChanFilterWatchGroup(
+        filterWatchCatalogThreadInfoObject.matchedFilter().getDatabaseId(),
+        threadDescriptor
+      )
 
       if (isFilterWatchBookmark == null) {
         // No such bookmark exists
@@ -142,11 +167,6 @@ class BookmarkFilterWatchableThreadsUseCase(
       // Bookmark already created and has "Filter watch" flag
     }
 
-    if (bookmarksToCreate.isEmpty() && bookmarksToUpdate.isEmpty()) {
-      Logger.d(TAG, "createBookmarks() nothing to create, nothing to update")
-      return
-    }
-
     if (bookmarksToCreate.isNotEmpty()) {
       val createdThreadBookmarks = bookmarksToCreate.mapNotNull { simpleThreadBookmark ->
         val success = chanPostRepository.createEmptyThreadIfNotExists(simpleThreadBookmark.threadDescriptor)
@@ -163,19 +183,38 @@ class BookmarkFilterWatchableThreadsUseCase(
         return@mapNotNull simpleThreadBookmark
       }
 
-      bookmarksManager.createBookmarks(createdThreadBookmarks)
+      bookmarksManager.createBookmarksSuspend(createdThreadBookmarks)
 
       Logger.d(TAG, "createBookmarks() created ${createdThreadBookmarks.size} " +
         "out of ${bookmarksToCreate.size} bookmarks")
     }
 
     if (bookmarksToUpdate.isNotEmpty()) {
-      bookmarksManager.updateBookmarks(bookmarksToUpdate) { threadBookmark ->
+      bookmarksManager.updateBookmarksNoPersist(bookmarksToUpdate) { threadBookmark ->
         threadBookmark.setFilterWatchFlag()
       }
 
       Logger.d(TAG, "createBookmarks() updated ${bookmarksToUpdate.size} bookmarks")
     }
+
+    if (bookmarksToCreate.isEmpty() && bookmarksToUpdate.isEmpty()) {
+      Logger.d(TAG, "createBookmarks() nothing to create, nothing to update")
+    }
+
+    return createFilterWatchGroups(filterWatchGroupsToCreate)
+  }
+
+  private suspend fun createFilterWatchGroups(filterWatchGroupsToCreate: List<ChanFilterWatchGroup>): Boolean {
+    if (filterWatchGroupsToCreate.isEmpty()) {
+      Logger.d(TAG, "createFilterWatchGroups() No filter watch groups to create")
+      return true
+    }
+
+    Logger.d(TAG, "createFilterWatchGroups() ${filterWatchGroupsToCreate.size} filter watch groups")
+
+    return chanFilterWatchRepository.createFilterWatchGroups(filterWatchGroupsToCreate)
+      .peekError { error -> Logger.e(TAG, "createFilterWatchGroups() error", error) }
+      .isValue()
   }
 
   private fun createBookmarkSubject(
@@ -192,22 +231,22 @@ class BookmarkFilterWatchableThreadsUseCase(
     enabledWatchFilters: List<ChanFilter>,
     parsedComment: CharSequence,
     subject: String
-  ): Boolean {
+  ): ChanFilter? {
     for (watchFilter in enabledWatchFilters) {
       if (filterEngine.typeMatches(watchFilter, FilterType.COMMENT)) {
         if (filterEngine.matchesNoHtmlConversion(watchFilter, parsedComment, false)) {
-          return true
+          return watchFilter
         }
       }
 
       if (filterEngine.typeMatches(watchFilter, FilterType.SUBJECT)) {
         if (filterEngine.matchesNoHtmlConversion(watchFilter, subject, false)) {
-          return true
+          return watchFilter
         }
       }
     }
 
-    return false
+    return null
   }
 
   private suspend fun filterOutThreadsThatDoNotMatchWatchFilters(

@@ -87,7 +87,7 @@ class ThreadBookmarkGroupLocalSource(
       }
     }
 
-    val bookmarkIdMap = chanDescriptorCache.getManyBookmarkIds(bookmarkThreadDescriptors)
+    val bookmarkIdMap = chanDescriptorCache.getManyThreadBookmarkIds(bookmarkThreadDescriptors)
 
     bookmarkEntriesToCreateMap.entries.forEach { (_, threadBookmarkGroupEntryToCreateList) ->
       if (threadBookmarkGroupEntryToCreateList.isEmpty()) {
@@ -96,7 +96,7 @@ class ThreadBookmarkGroupLocalSource(
 
       threadBookmarkGroupEntryToCreateList.forEach { threadBookmarkGroupEntryToCreate ->
         val threadDescriptor = threadBookmarkGroupEntryToCreate.threadDescriptor
-        val ownerBookmarkId = bookmarkIdMap[threadDescriptor]
+        val ownerBookmarkId = bookmarkIdMap[threadDescriptor]?.id
 
         requireNotNull(ownerBookmarkId) {
           "Couldn't find BookmarkDatabaseId for bookmark with descriptor $threadDescriptor"

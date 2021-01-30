@@ -108,6 +108,7 @@ import com.github.k1rakishou.chan.ui.epoxy.EpoxyDividerView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyErrorView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyExpandableGroupView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyPostLink;
+import com.github.k1rakishou.chan.ui.epoxy.EpoxySimpleGroupView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyTextView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyTextViewWrapHeight;
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
@@ -276,6 +277,7 @@ public interface ActivityComponent {
     void inject(EpoxyPostLink epoxyPostLink);
     void inject(EpoxyBoardSelectionButtonView epoxyBoardSelectionButtonView);
     void inject(EpoxySelectableBoardItemView epoxySelectableBoardItemView);
+    void inject(EpoxySimpleGroupView epoxySimpleGroupView);
 
     void inject(CaptchaNoJsLayoutV2 captchaNoJsLayoutV2);
     void inject(CaptchaNojsLayoutV1 captchaNojsLayoutV1);

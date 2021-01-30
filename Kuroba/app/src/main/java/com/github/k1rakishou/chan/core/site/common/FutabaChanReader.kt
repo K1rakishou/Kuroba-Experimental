@@ -440,8 +440,6 @@ class FutabaChanReader(
   ): FilterWatchCatalogThreadInfoObject? {
     var isOp: Boolean = false
     var threadNo: Long? = null
-    var closed: Boolean = false
-    var archived: Boolean = false
     var comment: String = ""
     var subject: String = ""
     var fileId: String? = null
@@ -453,8 +451,6 @@ class FutabaChanReader(
     while (reader.hasNext()) {
       when (reader.nextName()) {
         "no" -> threadNo = reader.nextInt().toLong()
-        "closed" -> closed = reader.nextInt() == 1
-        "archived" -> archived = reader.nextInt() == 1
         "com" -> comment = reader.nextString()
         "resto" -> {
           val opId = reader.nextInt()
@@ -483,8 +479,6 @@ class FutabaChanReader(
 
     return FilterWatchCatalogThreadInfoObject(
       threadDescriptor = ChanDescriptor.ThreadDescriptor.Companion.create(boardDescriptor, threadNo),
-      closed = closed,
-      archived = archived,
       commentRaw = comment,
       subjectRaw = subject,
       thumbnailUrl = thumbnail

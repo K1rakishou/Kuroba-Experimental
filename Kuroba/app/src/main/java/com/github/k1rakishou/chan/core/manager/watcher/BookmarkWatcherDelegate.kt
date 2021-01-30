@@ -205,7 +205,7 @@ class BookmarkWatcherDelegate(
     val updatedBookmarkDescriptors = unsuccessFetchResults.mapNotNull { unsuccessFetchResult ->
       val threadDescriptor = unsuccessFetchResult.threadDescriptor
 
-      return@mapNotNull bookmarksManager.updateBookmark(threadDescriptor) { threadBookmark ->
+      return@mapNotNull bookmarksManager.updateBookmarkNoPersist(threadDescriptor) { threadBookmark ->
         when (unsuccessFetchResult) {
           is ThreadBookmarkFetchResult.Error,
           is ThreadBookmarkFetchResult.BadStatusCode -> {
@@ -247,7 +247,7 @@ class BookmarkWatcherDelegate(
 
       checkNotNull(originalPost) { "threadBookmarkInfoObject has no OP!" }
 
-      return@mapNotNull bookmarksManager.updateBookmark(threadDescriptor) { threadBookmark ->
+      return@mapNotNull bookmarksManager.updateBookmarkNoPersist(threadDescriptor) { threadBookmark ->
         updateSingleBookmark(
           threadBookmark,
           threadDescriptor,

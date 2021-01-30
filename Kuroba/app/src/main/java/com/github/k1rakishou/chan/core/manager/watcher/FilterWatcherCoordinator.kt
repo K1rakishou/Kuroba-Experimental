@@ -31,7 +31,7 @@ class FilterWatcherCoordinator(
     appScope.launch {
       appScope.launch {
         chanFilterManager.listenForFiltersChanges()
-          .collect { startIfNotStartedYetFilterWatcherWork() }
+          .collect { filterEvent -> startIfNotStartedYetFilterWatcherWork(filterEvent) }
       }
 
       appScope.launch {
@@ -84,7 +84,11 @@ class FilterWatcherCoordinator(
     startFilterWatching(appConstants, appContext, replaceExisting = true)
   }
 
-  private suspend fun startIfNotStartedYetFilterWatcherWork() {
+  private suspend fun startIfNotStartedYetFilterWatcherWork(filterEvent: ChanFilterManager.FilterEvent) {
+    if (!filterEvent.hasWatchFilter()) {
+      return
+    }
+
     if (verboseLogs) {
       Logger.d(TAG, "startIfNotStartedYetFilterWatcherWork()")
     }

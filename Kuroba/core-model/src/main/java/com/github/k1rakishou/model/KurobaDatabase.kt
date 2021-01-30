@@ -18,6 +18,7 @@ import com.github.k1rakishou.model.converter.VideoServiceTypeConverter
 import com.github.k1rakishou.model.dao.ChanBoardDao
 import com.github.k1rakishou.model.dao.ChanCatalogSnapshotDao
 import com.github.k1rakishou.model.dao.ChanFilterDao
+import com.github.k1rakishou.model.dao.ChanFilterWatchGroupDao
 import com.github.k1rakishou.model.dao.ChanPostDao
 import com.github.k1rakishou.model.dao.ChanPostHideDao
 import com.github.k1rakishou.model.dao.ChanPostHttpIconDao
@@ -47,6 +48,7 @@ import com.github.k1rakishou.model.entity.chan.board.ChanBoardIdEntity
 import com.github.k1rakishou.model.entity.chan.catalog.ChanCatalogSnapshotEntity
 import com.github.k1rakishou.model.entity.chan.filter.ChanFilterBoardConstraintEntity
 import com.github.k1rakishou.model.entity.chan.filter.ChanFilterEntity
+import com.github.k1rakishou.model.entity.chan.filter.ChanFilterWatchGroupEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostHideEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostHttpIconEntity
@@ -64,6 +66,7 @@ import com.github.k1rakishou.model.entity.navigation.NavHistoryElementInfoEntity
 import com.github.k1rakishou.model.entity.view.ChanThreadsWithPosts
 import com.github.k1rakishou.model.entity.view.OldChanPostThread
 import com.github.k1rakishou.model.migrations.Migration_v10_to_v11
+import com.github.k1rakishou.model.migrations.Migration_v11_to_v12
 import com.github.k1rakishou.model.migrations.Migration_v1_to_v2
 import com.github.k1rakishou.model.migrations.Migration_v2_to_v3
 import com.github.k1rakishou.model.migrations.Migration_v3_to_v4
@@ -93,6 +96,7 @@ import com.github.k1rakishou.model.migrations.Migration_v9_to_v10
     ChanThreadViewableInfoEntity::class,
     ChanFilterEntity::class,
     ChanFilterBoardConstraintEntity::class,
+    ChanFilterWatchGroupEntity::class,
     ChanCatalogSnapshotEntity::class,
     MediaServiceLinkExtraContentEntity::class,
     SeenPostEntity::class,
@@ -108,7 +112,7 @@ import com.github.k1rakishou.model.migrations.Migration_v9_to_v10
     ChanThreadsWithPosts::class,
     OldChanPostThread::class
   ],
-  version = 11,
+  version = 12,
   exportSchema = true
 )
 @TypeConverters(
@@ -145,6 +149,7 @@ abstract class KurobaDatabase : RoomDatabase() {
   abstract fun chanPostHideDao(): ChanPostHideDao
   abstract fun chanFilterDao(): ChanFilterDao
   abstract fun chanCatalogSnapshotDao(): ChanCatalogSnapshotDao
+  abstract fun chanFilterWatchGroupDao(): ChanFilterWatchGroupDao
 
   suspend fun ensureInTransaction() {
     require(inTransaction()) { "Must be executed in a transaction!" }
@@ -177,7 +182,8 @@ abstract class KurobaDatabase : RoomDatabase() {
           Migration_v7_to_v8(),
           Migration_v8_to_v9(),
           Migration_v9_to_v10(),
-          Migration_v10_to_v11()
+          Migration_v10_to_v11(),
+          Migration_v11_to_v12()
         )
         .fallbackToDestructiveMigrationOnDowngrade()
         .build()

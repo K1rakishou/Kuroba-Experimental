@@ -98,8 +98,7 @@ abstract class Controller(@JvmField var context: Context) {
   var alive = false
 
   protected var compositeDisposable = CompositeDisposable()
-    @JvmName("compositeDisposable")
-    get
+    @JvmName("compositeDisposable") get
     private set
 
   private val job = SupervisorJob()

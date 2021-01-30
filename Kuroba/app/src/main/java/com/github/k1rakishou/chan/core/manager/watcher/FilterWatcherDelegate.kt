@@ -12,6 +12,11 @@ import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.repository.ChanPostRepository
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
@@ -20,9 +25,19 @@ class FilterWatcherDelegate(
   private val boardManager: BoardManager,
   private val bookmarksManager: BookmarksManager,
   private val chanFilterManager: ChanFilterManager,
+  private val chanPostRepository: ChanPostRepository,
   private val siteManager: SiteManager,
   private val bookmarkFilterWatchableThreadsUseCase: BookmarkFilterWatchableThreadsUseCase
 ) {
+  private val bookmarkFilterWatchGroupsUpdatedFlow = MutableSharedFlow<Unit>(
+    replay = 1,
+    extraBufferCapacity = 1,
+    BufferOverflow.SUSPEND
+  )
+
+  fun listenForBookmarkFilterWatchGroupsUpdatedFlowUpdates(): SharedFlow<Unit> {
+    return bookmarkFilterWatchGroupsUpdatedFlow.asSharedFlow()
+  }
 
   @OptIn(ExperimentalTime::class)
   suspend fun doWork() {
@@ -49,6 +64,12 @@ class FilterWatcherDelegate(
         Logger.e(TAG, "FilterWatcherDelegate.doWork() failure, " +
           "error: ${result.error.errorMessageOrClassName()}")
       }
+    } else {
+      result as ModularResult.Value
+
+      if (result.value) {
+        bookmarkFilterWatchGroupsUpdatedFlow.tryEmit(Unit)
+      }
     }
 
     Logger.d(TAG, "FilterWatcherDelegate.doWork() done, took $duration")
@@ -59,6 +80,7 @@ class FilterWatcherDelegate(
     bookmarksManager.awaitUntilInitialized()
     chanFilterManager.awaitUntilInitialized()
     siteManager.awaitUntilInitialized()
+    chanPostRepository.awaitUntilInitialized()
   }
 
   companion object {
