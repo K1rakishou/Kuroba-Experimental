@@ -35,7 +35,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.core.content.ContextCompat;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.helper.DialogFactory;
@@ -68,10 +67,11 @@ import kotlin.Unit;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 
-public class FilterLayout extends LinearLayout implements View.OnClickListener {
+public class FilterLayout extends LinearLayout implements View.OnClickListener, ThemeEngine.ThemeChangesListener {
     private ColorizableTextView typeText;
     private ColorizableTextView boardsSelector;
     private boolean patternContainerErrorShowing = false;
+    private boolean allBoardsChecked = false;
     private ColorizableEditText pattern;
     private ColorizableEditText patternPreview;
     private ColorizableTextView patternPreviewStatus;
@@ -106,6 +106,18 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
 
     public FilterLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        themeEngine.addListener(this);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        themeEngine.removeListener(this);
     }
 
     @Override
@@ -158,7 +170,6 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
         enabled = findViewById(R.id.enabled);
 
         help = findViewById(R.id.help);
-        help.setImageDrawable(ContextCompat.getDrawable(getContext(), R.drawable.ic_help_outline_white_24dp));
         help.setOnClickListener(this);
 
         MaterialTextView filterLabelText = findViewById(R.id.filter_label_text);
@@ -183,26 +194,38 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
         applyToSaved.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
 
         typeText.setOnClickListener(this);
+        boardsSelector.setOnClickListener(this);
+        actionText.setOnClickListener(this);
+
+        onThemeChanged();
+    }
+
+    @Override
+    public void onThemeChanged() {
+        boolean isDarkColor = themeEngine.chanTheme.isBackColorDark();
+
+        help.setImageDrawable(
+                themeEngine.tintDrawable(getContext(), R.drawable.ic_help_outline_white_24dp)
+        );
+
+        int color = themeEngine.resolveTintColor(isDarkColor);
+
         typeText.setCompoundDrawablesWithIntrinsicBounds(
                 null,
                 null,
-                new DropdownArrowDrawable(dp(12), dp(12), true),
+                new DropdownArrowDrawable(dp(12), dp(12), true, color),
                 null
         );
-
-        boardsSelector.setOnClickListener(this);
         boardsSelector.setCompoundDrawablesWithIntrinsicBounds(
                 null,
                 null,
-                new DropdownArrowDrawable(dp(12), dp(12), true),
+                new DropdownArrowDrawable(dp(12), dp(12), true, color),
                 null
         );
-
-        actionText.setOnClickListener(this);
         actionText.setCompoundDrawablesWithIntrinsicBounds(
                 null,
                 null,
-                new DropdownArrowDrawable(dp(12), dp(12), true),
+                new DropdownArrowDrawable(dp(12), dp(12), true, color),
                 null
         );
     }
@@ -230,6 +253,10 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
         chanFilterMutable.setApplyToSaved(applyToSaved.isChecked());
 
         return chanFilterMutable;
+    }
+
+    public boolean isAllBoardsChecked() {
+        return allBoardsChecked;
     }
 
     @Override
@@ -331,13 +358,13 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
                 (SelectLayout<ChanBoard>) AppModuleAndroidUtils.inflate(getContext(), R.layout.layout_select, null);
         selectLayout.init(themeEngine);
 
-        List<SelectLayout.SelectItem<ChanBoard>> items = new ArrayList<>();
+        List<SelectLayout.SelectItem<ChanBoard>> chanBoardItems = new ArrayList<>();
 
         boardManager.viewAllActiveBoards(chanBoard -> {
             String name = BoardHelper.getName(chanBoard);
             boolean checked = filterEngine.matchesBoard(chanFilterMutable, chanBoard);
 
-            items.add(
+            chanBoardItems.add(
                     new SelectLayout.SelectItem<>(
                             chanBoard,
                             chanBoard.getBoardDescriptor().hashCode(),
@@ -351,23 +378,29 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
             return Unit.INSTANCE;
         });
 
-        selectLayout.setItems(items);
+        selectLayout.setItems(chanBoardItems);
 
         DialogFactory.Builder.newBuilder(getContext(), dialogFactory)
                 .withCustomView(selectLayout)
                 .withOnPositiveButtonClickListener((dialog) -> {
-                    List<SelectLayout.SelectItem<ChanBoard>> items1 = selectLayout.getItems();
-                    List<ChanBoard> boardList = new ArrayList<>(items1.size());
+                    List<SelectLayout.SelectItem<ChanBoard>> selectedBoardItems = selectLayout.getItems();
+                    allBoardsChecked = selectLayout.checkAllItemsButtonChecked();
+                    List<ChanBoard> boardList = new ArrayList<>(selectedBoardItems.size());
 
-                    for (SelectLayout.SelectItem<ChanBoard> item : items1) {
+                    for (SelectLayout.SelectItem<ChanBoard> item : selectedBoardItems) {
                         if (item.checked) {
                             boardList.add(item.item);
                         }
                     }
 
-                    filterEngine.saveBoardsToFilter(chanFilterMutable, boardList);
+                    filterEngine.saveBoardsToFilter(
+                            allBoardsChecked,
+                            chanFilterMutable,
+                            boardList
+                    );
 
                     updateBoardsSummary();
+
                     return Unit.INSTANCE;
                 })
                 .create();
@@ -430,12 +463,14 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener {
         String text = getString(R.string.filter_boards) + " (";
 
         if (chanFilterMutable.allBoards()) {
-            text += getString(R.string.filter_all);
+            text += boardManager.activeBoardsCountForAllSites();
+            text += " " + getString(R.string.filter_all_currently_active_boards);
         } else {
             text += filterEngine.getFilterBoardCount(chanFilterMutable);
         }
 
         text += ")";
+
         boardsSelector.setText(text);
     }
 

@@ -151,7 +151,7 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
             }
         });
 
-        LinearLayout.LayoutParams searchViewParams = new LinearLayout.LayoutParams(0, dp(36), 1);
+        LinearLayout.LayoutParams searchViewParams = new LinearLayout.LayoutParams(0, dp(getContext(), 36), 1);
         searchViewParams.gravity = Gravity.CENTER_VERTICAL;
         addView(searchView, searchViewParams);
         searchView.setFocusable(true);
@@ -168,8 +168,11 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
             requestKeyboardFocus(searchView);
         });
 
-        addView(clearButton, dp(48), MATCH_PARENT);
-        onThemeChanged();
+        addView(clearButton, dp(getContext(), 48), MATCH_PARENT);
+
+        if (!isInEditMode()) {
+            onThemeChanged();
+        }
     }
 
     public void setText(String searchText) {

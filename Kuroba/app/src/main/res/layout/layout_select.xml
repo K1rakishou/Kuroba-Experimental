@@ -30,10 +30,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:paddingBottom="8dp"
-            android:paddingTop="8dp" />
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp" />
 
-        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
             android:id="@+id/select_all"
             android:layout_width="wrap_content"
             android:layout_height="match_parent" />

@@ -105,8 +105,12 @@ public class FilterEngine {
         return filter.getFilterBoardCount();
     }
 
-    public void saveBoardsToFilter(ChanFilterMutable filter, List<ChanBoard> appliedBoards) {
-        filter.applyToBoards(appliedBoards);
+    public void saveBoardsToFilter(
+            boolean allBoardsChecked,
+            ChanFilterMutable filter,
+            List<ChanBoard> appliedBoards
+    ) {
+        filter.applyToBoards(allBoardsChecked, appliedBoards);
     }
 
     /**

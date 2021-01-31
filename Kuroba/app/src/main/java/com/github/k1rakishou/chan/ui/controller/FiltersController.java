@@ -40,6 +40,7 @@ import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.helper.DialogFactory;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
+import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage;
 import com.github.k1rakishou.chan.ui.layout.FilterLayout;
@@ -48,6 +49,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.core_themes.ThemeEngine;
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
 import com.github.k1rakishou.model.data.filter.ChanFilter;
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
 import com.github.k1rakishou.model.data.filter.FilterAction;
@@ -58,6 +60,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -83,6 +86,8 @@ public class FiltersController
     ThemeEngine themeEngine;
     @Inject
     DialogFactory dialogFactory;
+    @Inject
+    BoardManager boardManager;
 
     private ColorizableRecyclerView recyclerView;
     private ColorizableFloatingActionButton add;
@@ -236,13 +241,19 @@ public class FiltersController
     }
 
     public void showFilterDialog(final ChanFilterMutable chanFilterMutable) {
+        Set<BoardDescriptor> allActiveBoardDescriptors = boardManager.getAllActiveBoardDescriptors();
+        chanFilterMutable.setBoards(allActiveBoardDescriptors);
+
         final FilterLayout filterLayout = (FilterLayout) inflate(context, R.layout.layout_filter, null);
 
         AlertDialog alertDialog = DialogFactory.Builder.newBuilder(context, dialogFactory)
                 .withCustomView(filterLayout)
                 .withPositiveButtonTextId(R.string.save)
                 .withOnPositiveButtonClickListener((dialog) -> {
-                    filterEngine.createOrUpdateFilter(filterLayout.getFilter(), () -> {
+                    ChanFilterMutable filter = filterLayout.getFilter();
+                    showWatchFilterAllBoardsWarning(filterLayout, filter);
+
+                    filterEngine.createOrUpdateFilter(filter, () -> {
                         BackgroundUtils.ensureMainThread();
 
                         if (filterEngine.getEnabledFilters().isEmpty()) {
@@ -272,6 +283,16 @@ public class FiltersController
                         .setEnabled(enabled));
 
         filterLayout.setFilter(chanFilterMutable);
+    }
+
+    private void showWatchFilterAllBoardsWarning(FilterLayout filterLayout, ChanFilterMutable chanFilter) {
+        if (filterLayout.isAllBoardsChecked() && chanFilter.isWatchFilter()) {
+            dialogFactory.createSimpleInformationDialog(
+                    context,
+                    context.getString(R.string.filter_watch_check_all_warning_title),
+                    context.getString(R.string.filter_watch_check_all_warning_description)
+            );
+        }
     }
 
     private void deleteFilter(ChanFilter filter) {
@@ -339,13 +360,14 @@ public class FiltersController
             holder.text.setTextColor(textColor);
             holder.subtext.setTextColor(textColor);
 
-
             int types = FilterType.forFlags(filter.getType()).size();
             String subText = getQuantityString(R.plurals.type, types, types);
 
             subText += " \u2013 ";
             if (filter.allBoards()) {
-                subText += getString(R.string.filter_summary_all_boards);
+                int count = boardManager.activeBoardsCountForAllSites();
+                subText += getQuantityString(R.plurals.board, count, count);
+                subText += " " + getString(R.string.filter_all_currently_active_boards);
             } else {
                 int size = filterEngine.getFilterBoardCount(filter);
                 subText += getQuantityString(R.plurals.board, size, size);

@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.ui.view;
 
 import android.content.Context;
+import android.graphics.drawable.ColorDrawable;
 import android.view.Gravity;
 import android.view.View;
 import android.view.View.MeasureSpec;
@@ -151,6 +152,7 @@ public class FloatingMenu {
         popupWindow.setDropDownGravity(anchorGravity);
         popupWindow.setVerticalOffset(-anchor.getHeight() + anchorOffsetY);
         popupWindow.setHorizontalOffset(anchorOffsetX);
+        popupWindow.setBackgroundDrawable(new ColorDrawable(themeEngine.getChanTheme().getBackColor()));
 
         if (popupHeight > 0) {
             popupWindow.setHeight(popupHeight);
@@ -304,6 +306,7 @@ public class FloatingMenu {
             TextView textView = (TextView) convertView;
             textView.setText(item.getText());
 
+            textView.setBackgroundColor(themeEngine.getChanTheme().getBackColor());
             textView.setTextColor(
                     item.isEnabled()
                             ? themeEngine.getChanTheme().getTextColorPrimary()

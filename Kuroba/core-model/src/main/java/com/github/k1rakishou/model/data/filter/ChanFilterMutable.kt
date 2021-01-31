@@ -22,7 +22,16 @@ class ChanFilterMutable(
 
   fun allBoards(): Boolean = boards.isEmpty()
 
-  fun applyToBoards(boards: List<ChanBoard>) {
+  fun isWatchFilter(): Boolean {
+    return action == FilterAction.WATCH.id
+  }
+
+  fun applyToBoards(allBoardsChecked: Boolean, boards: List<ChanBoard>) {
+    if (allBoardsChecked) {
+      this.boards.clear()
+      return
+    }
+
     this.boards.clear()
     this.boards.addAll(boards.map { board -> board.boardDescriptor })
   }

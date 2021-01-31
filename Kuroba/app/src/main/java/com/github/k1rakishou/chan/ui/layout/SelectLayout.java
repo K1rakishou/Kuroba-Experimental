@@ -29,7 +29,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
@@ -46,11 +45,10 @@ public class SelectLayout<T>
     private ThemeEngine themeEngine;
 
     private ColorizableRecyclerView recyclerView;
-    private ColorizableBarButton checkAllButton;
+    private ColorizableCheckBox checkAllButton;
 
     private List<SelectItem<T>> items = new ArrayList<>();
     private SelectAdapter adapter;
-    private boolean allChecked = false;
 
     public SelectLayout(Context context) {
         super(context);
@@ -86,6 +84,8 @@ public class SelectLayout<T>
         recyclerView = findViewById(R.id.recycler_view);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        checkAllButton.setText(R.string.board_check_all);
     }
 
     public void setItems(List<SelectItem<T>> items) {
@@ -95,40 +95,26 @@ public class SelectLayout<T>
         adapter = new SelectAdapter();
         recyclerView.setAdapter(adapter);
         adapter.load();
-
-        updateAllSelected();
     }
 
     public List<SelectItem<T>> getItems() {
         return items;
     }
 
+    public boolean checkAllItemsButtonChecked() {
+        return checkAllButton.isChecked();
+    }
+
     @Override
     public void onClick(View v) {
         if (v == checkAllButton) {
             for (SelectItem item : items) {
-                item.checked = !allChecked;
+                item.checked = checkAllButton.isChecked();
+                item.enabled = !checkAllButton.isChecked();
             }
 
-            updateAllSelected();
             recyclerView.getAdapter().notifyDataSetChanged();
         }
-    }
-
-    public boolean areAllChecked() {
-        return allChecked;
-    }
-
-    private void updateAllSelected() {
-        int checkedCount = 0;
-        for (SelectItem item : items) {
-            if (item.checked) {
-                checkedCount++;
-            }
-        }
-
-        allChecked = checkedCount == items.size();
-        checkAllButton.setText(allChecked ? R.string.board_select_none : R.string.board_select_all);
     }
 
     private class SelectAdapter
@@ -156,6 +142,7 @@ public class SelectLayout<T>
 
             holder.checkBox.setChecked(item.checked);
             holder.text.setText(item.name);
+            holder.setEnabledOrDisabled(item.enabled);
 
             if (item.description != null) {
                 holder.description.setVisibility(VISIBLE);
@@ -229,13 +216,25 @@ public class SelectLayout<T>
             if (buttonView == checkBox) {
                 SelectItem<?> board = adapter.displayList.get(getAdapterPosition());
                 board.checked = isChecked;
-                updateAllSelected();
             }
         }
 
         @Override
         public void onClick(View v) {
             checkBox.toggle();
+        }
+
+        public void setEnabledOrDisabled(boolean enabled) {
+            text.setEnabled(enabled);
+            description.setEnabled(enabled);
+
+            checkBox.setEnabled(enabled);
+            checkBox.setClickable(enabled);
+            checkBox.setFocusable(enabled);
+
+            itemView.setEnabled(enabled);
+            itemView.setClickable(enabled);
+            itemView.setFocusable(enabled);
         }
     }
 
@@ -246,6 +245,7 @@ public class SelectLayout<T>
         public final String description;
         public final String searchTerm;
         public boolean checked;
+        public boolean enabled;
 
         public SelectItem(T item, long id, String name, String description, String searchTerm, boolean checked) {
             this.item = item;
@@ -254,6 +254,7 @@ public class SelectLayout<T>
             this.description = description;
             this.searchTerm = searchTerm;
             this.checked = checked;
+            this.enabled = true;
         }
     }
 }

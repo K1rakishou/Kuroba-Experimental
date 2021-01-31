@@ -396,6 +396,25 @@ class BoardManager(
     }
   }
 
+  fun activeBoardsCountForAllSites(): Int {
+    check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureBoardsAndOrdersConsistency()
+
+    return lock.read {
+      var activeBoardsCount = 0
+
+      boardsMap.entries.forEach { (_, boardsMap) ->
+        boardsMap.entries.forEach { (_, chanBoard) ->
+          if (chanBoard.active) {
+            ++activeBoardsCount
+          }
+        }
+      }
+
+      return@read activeBoardsCount
+    }
+  }
+
   fun getTotalCount(onlyActive: Boolean = false): Int {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
@@ -444,6 +463,25 @@ class BoardManager(
     ensureBoardsAndOrdersConsistency()
 
     return lock.read { boardsMap[siteDescriptor]?.keys ?: emptySet() }
+  }
+
+  fun getAllActiveBoardDescriptors(): Set<BoardDescriptor> {
+    check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureBoardsAndOrdersConsistency()
+
+    return lock.read {
+      val allBoardDescriptors = mutableSetOf<BoardDescriptor>()
+
+      boardsMap.entries.forEach { (_, boardsMap) ->
+        boardsMap.entries.forEach { (_, chanBoard) ->
+          if (chanBoard.active) {
+            allBoardDescriptors += chanBoard.boardDescriptor
+          }
+        }
+      }
+
+      return@read allBoardDescriptors
+    }
   }
 
   fun isReady() = suspendableInitializer.isInitialized()

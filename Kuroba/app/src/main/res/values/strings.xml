@@ -276,7 +276,6 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="setup_board_removed">Removed \"%s\"</string>
     <string name="setup_board_added">%s added</string>
     <string name="setup_board_select_all">Select all</string>
-    <string name="filter_summary_all_boards">All boards</string>
     <string name="filter_enabled">Enabled</string>
     <string name="filter_filter">Filter</string>
     <string name="filter_action">Action</string>
@@ -284,18 +283,20 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="filter_match_test">Test the pattern</string>
     <string name="filter_boards">Boards</string>
     <string name="filter_types">Types</string>
-    <string name="filter_all">All</string>
     <string name="filter_hide">Hide post</string>
     <string name="filter_color">Highlight post</string>
     <string name="filter_remove">Remove post</string>
     <string name="filter_watch">Watch post</string>
     <string name="filter_invalid_pattern">Invalid pattern</string>
+    <string name="filter_all_currently_active_boards">(All currently added boards)</string>
 
     <string name="filter_preview">Test your filter</string>
     <string name="filter_no_matches">Does not match</string>
     <string name="filter_matches">Matches</string>
     <string name="filter_color_pick">Pick color</string>
     <string name="filter_help_title">Filter help</string>
+    <string name="filter_watch_check_all_warning_title">Watch filter and \"Check all boards\" combination warning</string>
+    <string name="filter_watch_check_all_warning_description">"Selecting \"Check all boards\" means that if you add more boards in the future, the filter will automatically be applied to those boards as well. \n\nSometimes this is a desired behavior (like when creating filters to hide/remove/highlight posts you will probably want those filters to automatically work on all boards you may or may not add in the future, so that you don\'t have to update filters every time you add new boards). On the other hand, this is very bad when combined with \"watch\" filters because, due to how they work, we have to execute a separate network request for each board (to download board's current thread list) which consumes battery and network traffic. So if you add 100 boards afterwards, then 100 requests will be executed on every filter watches update cycle. \n\nBe very careful when using the combination of watch filters together with \"check all boards\". I decided to allow this combination to work because it may be useful in some rare cases. This warning will be shown every time you create a watch filter so you don\'t forget about it.</string>
     <string name="filter_help">
 <![CDATA[
 Filters act on a given pattern and a place to search the pattern.<br>
@@ -362,8 +363,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="controller_image_viewer_save_image">Save image</string>
     <string name="controller_image_viewer_disabled">Disabled</string>
 
-    <string name="board_select_all">Select all</string>
-    <string name="board_select_none">Select none</string>
+    <string name="board_check_all">Check all</string>
 
     <string name="archive_title">%s archive</string>
     <string name="archive_error">Error loading archive</string>
