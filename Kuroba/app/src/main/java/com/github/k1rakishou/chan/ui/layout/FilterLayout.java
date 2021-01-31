@@ -34,6 +34,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
 import com.github.k1rakishou.chan.R;
@@ -70,7 +71,6 @@ import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 public class FilterLayout extends LinearLayout implements View.OnClickListener, ThemeEngine.ThemeChangesListener {
     private ColorizableTextView typeText;
     private ColorizableTextView boardsSelector;
-    private boolean patternContainerErrorShowing = false;
     private boolean allBoardsChecked = false;
     private ColorizableEditText pattern;
     private ColorizableEditText patternPreview;
@@ -339,7 +339,9 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener, 
             public void onFloatingMenuItemClicked(FloatingMenu menu, FloatingMenuItem item) {
                 FilterAction action = (FilterAction) item.getId();
                 chanFilterMutable.setAction(action.id);
+
                 updateFilterAction();
+                updateFilterValidity();
             }
 
             @Override
@@ -385,6 +387,7 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener, 
                 .withOnPositiveButtonClickListener((dialog) -> {
                     List<SelectLayout.SelectItem<ChanBoard>> selectedBoardItems = selectLayout.getItems();
                     allBoardsChecked = selectLayout.checkAllItemsButtonChecked();
+
                     List<ChanBoard> boardList = new ArrayList<>(selectedBoardItems.size());
 
                     for (SelectLayout.SelectItem<ChanBoard> item : selectedBoardItems) {
@@ -400,6 +403,7 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener, 
                     );
 
                     updateBoardsSummary();
+                    updateFilterValidity();
 
                     return Unit.INSTANCE;
                 })
@@ -436,27 +440,67 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener, 
                     chanFilterMutable.setType(flags);
                     updateFilterType();
                     updatePatternPreview();
+                    updateFilterValidity();
+
                     return Unit.INSTANCE;
                 })
                 .create();
     }
 
     private void updateFilterValidity() {
+        FilterValidationError filterValidationError = validateFilter();
+
+        if (filterValidationError != null) {
+            pattern.setError(filterValidationError.getErrorMessage());
+        } else {
+            pattern.setError(null);
+        }
+
+        if (callback != null) {
+            boolean enabled = filterValidationError == null;
+            callback.setSaveButtonEnabled(enabled);
+        }
+    }
+
+    @Nullable
+    private FilterValidationError validateFilter() {
+        if (TextUtils.isEmpty(chanFilterMutable.getPattern())) {
+            return new FilterValidationError(getString(R.string.filter_pattern_is_empty));
+        }
+
         int extraFlags = (chanFilterMutable.getType() & FilterType.COUNTRY_CODE.flag) != 0
                 ? Pattern.CASE_INSENSITIVE
                 : 0;
 
-        boolean valid = !TextUtils.isEmpty(chanFilterMutable.getPattern())
-                && filterEngine.compile(chanFilterMutable.getPattern(), extraFlags) != null;
-
-        if (valid != patternContainerErrorShowing) {
-            patternContainerErrorShowing = valid;
-            pattern.setError(valid ? null : getString(R.string.filter_invalid_pattern));
+        if (filterEngine.compile(chanFilterMutable.getPattern(), extraFlags) == null) {
+            return new FilterValidationError(getString(R.string.filter_cannot_compile_filter_pattern));
         }
 
-        if (callback != null) {
-            callback.setSaveButtonEnabled(valid);
+        if (chanFilterMutable.isWatchFilter()) {
+            List<FilterType> filterTypes = FilterType.forFlags(chanFilterMutable.getType());
+
+            for (FilterType filterType : filterTypes) {
+                if (filterType != FilterType.COMMENT && filterType != FilterType.SUBJECT) {
+                    String name = FilterType.filterTypeName(filterType);
+                    String errorMessage = getString(
+                            R.string.filter_type_not_allowed_with_watch_filters,
+                            name
+                    );
+
+                    return new FilterValidationError(errorMessage);
+                }
+            }
         }
+
+        if (chanFilterMutable.getType() == 0) {
+            return new FilterValidationError(getString(R.string.filter_no_filter_type_selected));
+        }
+
+        if (!chanFilterMutable.allBoards() && chanFilterMutable.getBoards().isEmpty()) {
+            return new FilterValidationError(getString(R.string.filter_no_boards_selected));
+        }
+
+        return null;
     }
 
     private void updateBoardsSummary() {
@@ -539,5 +583,17 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener, 
 
     public interface FilterLayoutCallback {
         void setSaveButtonEnabled(boolean enabled);
+    }
+
+    private class FilterValidationError {
+        private String errorMessage;
+
+        public FilterValidationError(String errorMessage) {
+            this.errorMessage = errorMessage;
+        }
+
+        public String getErrorMessage() {
+            return errorMessage;
+        }
     }
 }

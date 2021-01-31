@@ -15,22 +15,20 @@ class ChanFilterMutable(
   var onlyOnOP: Boolean = false,
   var applyToSaved: Boolean = false
 ) {
+  private var allBoardsChecked: Boolean = false
 
   fun matchesBoard(boardDescriptor: BoardDescriptor): Boolean {
     return allBoards() || boards.contains(boardDescriptor)
   }
 
-  fun allBoards(): Boolean = boards.isEmpty()
+  fun allBoards(): Boolean = allBoardsChecked && boards.isEmpty()
 
   fun isWatchFilter(): Boolean {
     return action == FilterAction.WATCH.id
   }
 
   fun applyToBoards(allBoardsChecked: Boolean, boards: List<ChanBoard>) {
-    if (allBoardsChecked) {
-      this.boards.clear()
-      return
-    }
+    this.allBoardsChecked = allBoardsChecked
 
     this.boards.clear()
     this.boards.addAll(boards.map { board -> board.boardDescriptor })
@@ -41,20 +39,22 @@ class ChanFilterMutable(
   }
 
   fun getFilterBoardCount(): Int {
-    if (boards.isEmpty()) {
-      return -1
-    }
-
     return boards.size
   }
 
   fun toChanFilter(): ChanFilter {
+    val selectedBoards = if (allBoards()) {
+      emptySet()
+    } else {
+      this.boards
+    }
+
     return ChanFilter(
       filterDatabaseId = this.databaseId,
       enabled = this.enabled,
       type = this.type,
       pattern = this.pattern,
-      boards = this.boards,
+      boards = selectedBoards,
       action = this.action,
       color = this.color,
       applyToReplies = this.applyToReplies,

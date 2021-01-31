@@ -278,9 +278,11 @@ public class FiltersController
         }
 
         filterLayout
-                .setCallback(enabled -> alertDialog
-                        .getButton(AlertDialog.BUTTON_POSITIVE)
-                        .setEnabled(enabled));
+                .setCallback(enabled -> {
+                    alertDialog
+                            .getButton(AlertDialog.BUTTON_POSITIVE)
+                            .setEnabled(enabled);
+                });
 
         filterLayout.setFilter(chanFilterMutable);
     }
