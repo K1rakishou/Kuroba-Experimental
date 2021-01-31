@@ -1049,10 +1049,14 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
   }
 
-  private fun setFastScroll(enabled: Boolean) {
-    if (!enabled) {
+  private fun setFastScroll(enable: Boolean) {
+    val enabledInSettings = ChanSettings.enableDraggableScrollbars.get()
+
+    if (!enable || !enabledInSettings) {
       if (fastScroller != null) {
         recyclerView.removeItemDecoration(fastScroller!!)
+
+        fastScroller?.destroyCallbacks()
         fastScroller?.onCleanup()
         fastScroller = null
       }
@@ -1064,42 +1068,38 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
 
     val chanDescriptor = currentChanDescriptorOrNull()
-    if (chanDescriptor != null) {
-      if (chanDescriptor is ThreadDescriptor) {
-        val chanThread = chanThreadManager.getChanThread(chanDescriptor)
-        if (chanThread != null) {
-          if (postInfoMapItemDecoration == null) {
-            postInfoMapItemDecoration = PostInfoMapItemDecoration(
-              context,
-              ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT
-            )
-          }
+    if (chanDescriptor == null) {
+      return
+    }
 
-          postInfoMapItemDecoration!!.setItems(
-            extractPostMapInfoHolderUseCase.execute(chanThread.getPostDescriptors()),
-            chanThread.postsCount
+    if (chanDescriptor is ThreadDescriptor) {
+      val chanThread = chanThreadManager.getChanThread(chanDescriptor)
+      if (chanThread != null) {
+        if (postInfoMapItemDecoration == null) {
+          postInfoMapItemDecoration = PostInfoMapItemDecoration(
+            context,
+            ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT
           )
         }
-      }
 
-      if (fastScroller == null && ChanSettings.enableDraggableScrollbars.get()) {
-        val scroller = FastScrollerHelper.create(
-          recyclerView,
-          postInfoMapItemDecoration,
-          toolbarPaddingTop()
+        postInfoMapItemDecoration!!.setItems(
+          extractPostMapInfoHolderUseCase.execute(chanThread.getPostDescriptors()),
+          chanThread.postsCount
         )
-        scroller.setThumbDragListener(this)
-
-        fastScroller = scroller
-
-        recyclerView.isVerticalScrollBarEnabled = false
-      }else{
-        fastScroller?.destroyCallbacks()
-
-        fastScroller = null
-
-        recyclerView.isVerticalScrollBarEnabled = true
       }
+    }
+
+    if (fastScroller == null) {
+      val scroller = FastScrollerHelper.create(
+        recyclerView,
+        postInfoMapItemDecoration,
+        toolbarPaddingTop()
+      )
+
+      scroller.setThumbDragListener(this)
+      fastScroller = scroller
+
+      recyclerView.isVerticalScrollBarEnabled = false
     }
   }
 
