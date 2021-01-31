@@ -26,6 +26,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -35,6 +36,7 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
@@ -261,6 +263,8 @@ public class FiltersController
                             enable.setImageResource(R.drawable.ic_clear_white_24dp);
                         }
 
+                        onFilterCreated(filter);
+
                         postToEventBus(new RefreshUIMessage("filters"));
                         adapter.reload();
 
@@ -284,6 +288,14 @@ public class FiltersController
                 });
 
         filterLayout.setFilter(chanFilterMutable);
+    }
+
+    private void onFilterCreated(ChanFilterMutable filter) {
+        if (filter.getEnabled() && filter.isWatchFilter()) {
+            if (!ChanSettings.filterWatchEnabled.get()) {
+                showToast(R.string.filter_watcher_disabled_message, Toast.LENGTH_LONG);
+            }
+        }
     }
 
     private void showWatchFilterAllBoardsWarning(FilterLayout filterLayout, ChanFilterMutable chanFilter) {

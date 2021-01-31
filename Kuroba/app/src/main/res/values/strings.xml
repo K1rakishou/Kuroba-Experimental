@@ -303,6 +303,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="filter_no_filter_type_selected">No filter type selected</string>
     <string name="filter_no_boards_selected">No boards selected</string>
     <string name="filter_identical_filter_detected">Identical filter already exists. Existing filter index=%1$d</string>
+    <string name="filter_watcher_disabled_message">Filter watch filter was successfully created but filter watcher is disabled so nothing is going to happen. You need to enable filter watcher in the settings</string>
 
     <string name="filter_help">
 <![CDATA[
