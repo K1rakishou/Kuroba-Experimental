@@ -307,7 +307,6 @@ class TaimabaApi(
       ?.endpoints()
       ?: return ModularResult.error(SiteManager.SiteNotFoundException(boardDescriptor.siteDescriptor))
 
-
     return ModularResult.Try {
       val threadObjects = mutableListWithCap<FilterWatchCatalogThreadInfoObject>(100)
 

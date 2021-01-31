@@ -18,6 +18,7 @@ import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter.R
 import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter.ReencodeType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import java.io.File
 import java.io.FileInputStream

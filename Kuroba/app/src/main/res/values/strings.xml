@@ -877,6 +877,7 @@ Don't have a 4chan Pass?<br>
     <string name="controller_bookmarks_prune">Prune</string>
     <string name="controller_bookmarks_clear">Clear</string>
     <string name="controller_bookmarks_bookmark_of_archived_thread">(Archive)</string>
+    <string name="controller_bookmarks_watcher_disabled">(Watcher disabled)</string>
     <string name="controller_bookmarks_delete_selected_bookmarks_title">Are you sure you want to delete %1$d bookmarks?</string>
 
     <string name="controller_filter_watches">Filter watches</string>
@@ -1193,6 +1194,6 @@ Don't have a 4chan Pass?<br>
     <string name="post_comment_search_query_hint">Post comment search query</string>
     <string name="cloud_flare_cookie_setting_title">CloudFlare cookie</string>
     <string name="cloud_flare_cookie_setting_description">If a site is hosted by CloudFlare and has anti-ddos checks enabled the application will automatically try to pass them and store CloudFlare clearance cookie that will be used to access site normally without having to pass checks every singe time. You will see a cookie here and will be able to edit/remove it if you ever need to do that. When removing a cookie (making it empty) a new cookie will be requested on the next site access. If a site does not use CloudFlare then this setting will always be empty.</string>
-    <string name="no_filter_watched_threads">You have no filter watched threads here yet</string>
+    <string name="no_filter_watched_threads">You have no filter watched threads here yet (They may be in the update process)</string>
 
 </resources>

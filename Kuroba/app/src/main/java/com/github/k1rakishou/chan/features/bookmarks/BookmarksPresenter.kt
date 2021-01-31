@@ -298,7 +298,7 @@ class BookmarksPresenter(
           ?: "No title"
 
         if (query == null || title.contains(query, ignoreCase = true)) {
-          val threadBookmarkStats = getThreadBookmarkStatsOrNull(isWatcherEnabled, threadBookmarkView)
+          val threadBookmarkStats = getThreadBookmarkStats(isWatcherEnabled, threadBookmarkView)
 
           val selection = if (bookmarksSelectionHelper.isInSelectionMode()) {
             val isSelected = bookmarksSelectionHelper.isSelected(threadBookmarkView.threadDescriptor)
@@ -430,7 +430,7 @@ class BookmarksPresenter(
     return
   }
 
-  private fun getThreadBookmarkStatsOrNull(
+  private fun getThreadBookmarkStats(
     isWatcherEnabled: Boolean,
     threadBookmarkView: ThreadBookmarkView
   ): ThreadBookmarkStats {
@@ -448,7 +448,7 @@ class BookmarksPresenter(
     return ThreadBookmarkStats(
       watching = threadBookmarkView.isWatching(),
       isArchive = false,
-      showBookmarkStats = isWatcherEnabled,
+      isWatcherEnabled = isWatcherEnabled,
       newPosts = threadBookmarkView.newPostsCount(),
       newQuotes = threadBookmarkView.newQuotesCount(),
       totalPosts = threadBookmarkView.totalPostsCount,

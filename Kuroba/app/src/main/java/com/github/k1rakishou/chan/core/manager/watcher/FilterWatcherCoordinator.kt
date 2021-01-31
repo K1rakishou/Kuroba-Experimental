@@ -31,7 +31,7 @@ class FilterWatcherCoordinator(
     appScope.launch {
       appScope.launch {
         chanFilterManager.listenForFiltersChanges()
-          .collect { filterEvent -> startIfNotStartedYetFilterWatcherWork(filterEvent) }
+          .collect { filterEvent -> restartFilterWatcherWithTinyDelay(filterEvent) }
       }
 
       appScope.launch {
@@ -84,25 +84,30 @@ class FilterWatcherCoordinator(
     startFilterWatching(appConstants, appContext, replaceExisting = true)
   }
 
-  private suspend fun startIfNotStartedYetFilterWatcherWork(filterEvent: ChanFilterManager.FilterEvent) {
+  private suspend fun restartFilterWatcherWithTinyDelay(filterEvent: ChanFilterManager.FilterEvent) {
     if (!filterEvent.hasWatchFilter()) {
       return
     }
 
     if (verboseLogs) {
-      Logger.d(TAG, "startIfNotStartedYetFilterWatcherWork()")
+      Logger.d(TAG, "restartFilterWatcherWithNoDelay()")
     }
 
     awaitInitialization()
     printDebugInfo()
 
     if (!chanFilterManager.hasEnabledWatchFilters()) {
-      Logger.d(TAG, "startIfNotStartedYetFilterWatcherWork() no watch filters found, canceling the work")
+      Logger.d(TAG, "restartFilterWatcherWithNoDelay() no watch filters found, canceling the work")
       cancelFilterWatching(appConstants, appContext)
       return
     }
 
-    startFilterWatching(appConstants, appContext, replaceExisting = false)
+    // When filters with WATCH flag change in any way (new filter created/old filter deleted or
+    // updated). We delete filter watch group. Because of that, if the user navigates to filter
+    // watches screen he will see nothing until the next filter watch update cycle. Since the regular
+    // update cycle is pretty big (4 hours minimum) we need to use another one that will update
+    // filter watches right away.
+    startFilterWatchingRightAway(appConstants, appContext)
   }
 
   private suspend fun awaitInitialization() {
@@ -127,6 +132,41 @@ class FilterWatcherCoordinator(
 
   companion object {
     private const val TAG = "FilterWatcherCoordinator"
+
+    suspend fun startFilterWatchingRightAway(
+      appConstants: AppConstants,
+      appContext: Context
+    ) {
+      val tag = appConstants.filterWatchWorkUniqueTag
+      Logger.d(TAG, "startFilterWatchingRightAway() called tag=$tag")
+
+      if (!ChanSettings.filterWatchEnabled.get()) {
+        Logger.d(TAG, "startFilterWatchingRightAway() cannot restart filter watcher because the " +
+          "setting is disabled")
+
+        cancelFilterWatching(appConstants, appContext)
+        return
+      }
+
+      val constraints = Constraints.Builder()
+        .setRequiredNetworkType(NetworkType.CONNECTED)
+        .build()
+
+      val workRequest = OneTimeWorkRequestBuilder<FilterWatcherWorker>()
+        .addTag(tag)
+        // Well not exactly right away, but in 10 seconds
+        .setInitialDelay(10, TimeUnit.SECONDS)
+        .setConstraints(constraints)
+        .build()
+
+      WorkManager
+        .getInstance(appContext)
+        .enqueueUniqueWork(tag, ExistingWorkPolicy.REPLACE, workRequest)
+        .result
+        .await()
+
+      Logger.d(TAG, "startFilterWatchingRightAway() enqueued work with tag $tag")
+    }
 
     suspend fun startFilterWatching(
       appConstants: AppConstants,

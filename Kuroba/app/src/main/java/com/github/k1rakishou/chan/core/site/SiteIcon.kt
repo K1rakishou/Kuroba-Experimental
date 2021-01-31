@@ -24,7 +24,7 @@ import coil.request.Disposable
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2.ImageListener
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.errorMessageOrClassName
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import okhttp3.HttpUrl
 

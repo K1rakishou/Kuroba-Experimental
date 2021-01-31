@@ -1,16 +1,21 @@
 package com.github.k1rakishou.chan.features.filter_watches
 
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.BasePresenter
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
+import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherDelegate
+import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkStats
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.errorMessageOrClassName
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkView
 import com.github.k1rakishou.model.data.filter.ChanFilter
 import com.github.k1rakishou.model.data.filter.ChanFilterWatchGroup
 import com.github.k1rakishou.model.repository.ChanFilterWatchRepository
@@ -21,9 +26,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlin.time.ExperimentalTime
+import kotlin.time.milliseconds
 
 class FilterWatchesPresenter : BasePresenter<FilterWatchesControllerView>() {
 
@@ -35,6 +44,10 @@ class FilterWatchesPresenter : BasePresenter<FilterWatchesControllerView>() {
   lateinit var bookmarksManager: BookmarksManager
   @Inject
   lateinit var chanFilterManager: ChanFilterManager
+  @Inject
+  lateinit var pageRequestManager: PageRequestManager
+  @Inject
+  lateinit var archivesManager: ArchivesManager
 
   private val filterWatchesControllerStateFlow = MutableSharedFlow<FilterWatchesControllerState>(
     replay = 1,
@@ -46,12 +59,27 @@ class FilterWatchesPresenter : BasePresenter<FilterWatchesControllerView>() {
     Chan.getComponent().inject(this)
   }
 
+  @OptIn(ExperimentalTime::class)
   override fun onCreate(view: FilterWatchesControllerView) {
     super.onCreate(view)
 
     scope.launch {
       filterWatcherDelegate.listenForBookmarkFilterWatchGroupsUpdatedFlowUpdates()
-        .collect { reloadFilterWatches() }
+        .collect {
+          Logger.d(TAG, "Reloading filter watches because filter watches were updated.")
+          reloadFilterWatches()
+        }
+    }
+
+    scope.launch {
+      bookmarksManager.listenForBookmarksChanges()
+        .onBackpressureLatest()
+        .asFlow()
+        .debounce(100.milliseconds)
+        .collect {
+          Logger.d(TAG, "Reloading filter watches because bookmarks were updated.")
+          reloadFilterWatches()
+        }
     }
 
     scope.launch {
@@ -77,8 +105,13 @@ class FilterWatchesPresenter : BasePresenter<FilterWatchesControllerView>() {
   private suspend fun reloadFilterWatchesInternal(loadingStateUpdateJob: Job? = null) {
     BackgroundUtils.ensureBackgroundThread()
 
+    Logger.d(TAG, "reloadFilterWatchesInternal() getFilterWatchGroups() called, waiting for dependencies")
+
     bookmarksManager.awaitUntilInitialized()
     chanFilterManager.awaitUntilInitialized()
+    archivesManager.awaitUntilInitialized()
+
+    Logger.d(TAG, "reloadFilterWatchesInternal() getFilterWatchGroups() called, done")
 
     val getFilterWatchGroupsResult = filterWatchRepository.getFilterWatchGroups()
     loadingStateUpdateJob?.cancel()
@@ -86,7 +119,7 @@ class FilterWatchesPresenter : BasePresenter<FilterWatchesControllerView>() {
     if (getFilterWatchGroupsResult is ModularResult.Error) {
       val error = getFilterWatchGroupsResult.error
 
-      Logger.e(TAG, "reloadFilterWatches() getFilterWatchGroups() error", error)
+      Logger.e(TAG, "reloadFilterWatchesInternal() getFilterWatchGroups() error", error)
       updateState(FilterWatchesControllerState.Error(error.errorMessageOrClassName()))
       return
     }
@@ -100,8 +133,13 @@ class FilterWatchesPresenter : BasePresenter<FilterWatchesControllerView>() {
     val groupedFilterWatches = try {
       createGroupsOfFilterWatches(filterWatchGroups)
     } catch (error: Throwable) {
-      Logger.e(TAG, "createGroupsOfFilterWatches() error", error)
+      Logger.e(TAG, "reloadFilterWatchesInternal() createGroupsOfFilterWatches() error", error)
       updateState(FilterWatchesControllerState.Error(error.errorMessageOrClassName()))
+      return
+    }
+
+    if (groupedFilterWatches.isEmpty()) {
+      updateState(FilterWatchesControllerState.Empty)
       return
     }
 
@@ -130,6 +168,7 @@ class FilterWatchesPresenter : BasePresenter<FilterWatchesControllerView>() {
     }
 
     val groupOfFilterWatchesList = mutableListWithCap<GroupOfFilterWatches>(filters.size)
+    val isFilterWatcherEnabled = ChanSettings.filterWatchEnabled.get()
 
     for (filter in filters) {
       val thisFilterWatchGroups = findAllFilterWatchGroupsForThisFilter(
@@ -149,10 +188,11 @@ class FilterWatchesPresenter : BasePresenter<FilterWatchesControllerView>() {
 
       bookmarksManager.viewBookmarks(bookmarkDescriptors) { threadBookmarkView ->
         filterWatches += FilterWatch(
-          threadBookmarkView.threadDescriptor,
-          threadBookmarkView.title ?: threadBookmarkView.threadDescriptor.toString(),
-          threadBookmarkView.thumbnailUrl,
-          threadBookmarkView.isActive() || threadBookmarkView.isThreadDeleted()
+          threadDescriptor = threadBookmarkView.threadDescriptor,
+          title = threadBookmarkView.title ?: threadBookmarkView.threadDescriptor.toString(),
+          thumbnailUrl = threadBookmarkView.thumbnailUrl,
+          threadBookmarkStats = getThreadBookmarkStats(isFilterWatcherEnabled, threadBookmarkView),
+          highlight = false
         )
       }
 
@@ -166,6 +206,38 @@ class FilterWatchesPresenter : BasePresenter<FilterWatchesControllerView>() {
     }
 
     return groupOfFilterWatchesList
+  }
+
+  private fun getThreadBookmarkStats(
+    isFilterWatcherEnabled: Boolean,
+    threadBookmarkView: ThreadBookmarkView
+  ): ThreadBookmarkStats {
+    if (archivesManager.isSiteArchive(threadBookmarkView.threadDescriptor.siteDescriptor())) {
+      return ThreadBookmarkStats(
+        watching = threadBookmarkView.isWatching(),
+        isArchive = true
+      )
+    }
+
+    val boardPage = pageRequestManager.getPage(threadBookmarkView.threadDescriptor)
+    val currentPage = boardPage?.currentPage ?: 0
+    val totalPages = boardPage?.totalPages ?: 0
+
+    return ThreadBookmarkStats(
+      watching = threadBookmarkView.isWatching(),
+      isArchive = false,
+      isWatcherEnabled = isFilterWatcherEnabled,
+      newPosts = threadBookmarkView.newPostsCount(),
+      newQuotes = threadBookmarkView.newQuotesCount(),
+      totalPosts = threadBookmarkView.totalPostsCount,
+      currentPage = currentPage,
+      totalPages = totalPages,
+      isBumpLimit = threadBookmarkView.isBumpLimit(),
+      isImageLimit = threadBookmarkView.isImageLimit(),
+      isFirstFetch = threadBookmarkView.isFirstFetch(),
+      isDeleted = threadBookmarkView.isThreadDeleted(),
+      isError = threadBookmarkView.isError()
+    )
   }
 
   private fun findAllFilterWatchGroupsForThisFilter(

@@ -133,9 +133,11 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
       return
     }
 
-    if (!threadBookmarkStats.showBookmarkStats) {
-      bookmarkStats.visibility = View.GONE
+    if (!threadBookmarkStats.isWatcherEnabled) {
+      bookmarkStats.visibility = View.VISIBLE
       bookmarkAdditionalStats?.visibility = View.GONE
+
+      setWatcherDisabledStats()
       return
     }
 
@@ -199,6 +201,13 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
 
     bookmarkAdditionalStats?.text = additionalStats
     return true
+  }
+
+  private fun setWatcherDisabledStats() {
+    bookmarkStats.text = bookmarkStats.context.getString(R.string.controller_bookmarks_watcher_disabled)
+    bookmarkStats.setTextColor(themeEngine.chanTheme.bookmarkCounterNormalColor)
+    bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.NORMAL)
+    bookmarkStats.paintFlags = Paint.ANTI_ALIAS_FLAG
   }
 
   private fun setArchiveBookmarksStats() {

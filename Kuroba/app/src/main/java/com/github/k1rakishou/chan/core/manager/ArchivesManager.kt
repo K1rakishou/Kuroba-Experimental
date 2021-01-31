@@ -25,6 +25,8 @@ import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 @DoNotStrip
 open class ArchivesManager(
@@ -112,6 +114,17 @@ open class ArchivesManager(
     }
 
     suspendableInitializer.initWithModularResult(result)
+  }
+
+  @OptIn(ExperimentalTime::class)
+  suspend fun awaitUntilInitialized() {
+    if (suspendableInitializer.isInitialized()) {
+      return
+    }
+
+    Logger.d(TAG, "ArchivesManager is not ready yet, waiting...")
+    val duration = measureTime { suspendableInitializer.awaitUntilInitialized() }
+    Logger.d(TAG, "ArchivesManager initialization completed, took $duration")
   }
 
   suspend fun getAllArchiveData(): List<ArchiveData> {

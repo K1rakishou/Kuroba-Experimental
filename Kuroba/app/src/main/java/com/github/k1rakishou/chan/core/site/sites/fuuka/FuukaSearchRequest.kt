@@ -7,7 +7,7 @@ import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.site.sites.search.SearchEntry
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
-import com.github.k1rakishou.chan.utils.errorMessageOrClassName
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCommandExecutor
 import okhttp3.Request

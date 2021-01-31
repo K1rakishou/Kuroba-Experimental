@@ -88,6 +88,13 @@ inline fun <T : Any?> JsonReader.jsonObject(func: JsonReader.() -> T): T {
   try {
     return func(this)
   } finally {
+    var token = peek()
+
+    while (token != JsonToken.END_OBJECT) {
+      skipValue()
+      token = peek()
+    }
+
     endObject()
   }
 }
@@ -98,6 +105,13 @@ inline fun <T> JsonReader.jsonArray(next: JsonReader.() -> T): T {
   try {
     return next(this)
   } finally {
+    var token = peek()
+
+    while (token != JsonToken.END_ARRAY) {
+      skipValue()
+      token = peek()
+    }
+
     endArray()
   }
 }

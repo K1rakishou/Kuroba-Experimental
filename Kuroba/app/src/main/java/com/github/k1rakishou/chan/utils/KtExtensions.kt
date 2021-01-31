@@ -29,14 +29,6 @@ operator fun CompositeDisposable.plusAssign(disposable: Disposable) {
   this.add(disposable)
 }
 
-fun Throwable.errorMessageOrClassName(): String {
-  if (message != null) {
-    return message!!
-  }
-
-  return this::class.java.name
-}
-
 fun removeExtensionIfPresent(filename: String): String {
   val index = filename.lastIndexOf('.')
   if (index < 0) {

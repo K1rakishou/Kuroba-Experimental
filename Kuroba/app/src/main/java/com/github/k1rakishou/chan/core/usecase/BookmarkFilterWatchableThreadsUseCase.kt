@@ -97,6 +97,7 @@ class BookmarkFilterWatchableThreadsUseCase(
     ) { catalogThread ->
       val rawComment = catalogThread.comment()
       val subject = catalogThread.subject
+      val catalogBoardDescriptor = catalogThread.threadDescriptor.boardDescriptor
       val parsedComment = simpleCommentParser.parseComment(rawComment) ?: ""
 
       // Update the old unparsed comment with the parsed one
@@ -104,6 +105,7 @@ class BookmarkFilterWatchableThreadsUseCase(
 
       val matchedFilter = tryMatchWatchFiltersWithThreadInfo(
         enabledWatchFilters,
+        catalogBoardDescriptor,
         parsedComment,
         subject
       )
@@ -229,10 +231,15 @@ class BookmarkFilterWatchableThreadsUseCase(
 
   private fun tryMatchWatchFiltersWithThreadInfo(
     enabledWatchFilters: List<ChanFilter>,
+    catalogBoardDescriptor: BoardDescriptor,
     parsedComment: CharSequence,
     subject: String
   ): ChanFilter? {
     for (watchFilter in enabledWatchFilters) {
+      if (!watchFilter.matchesBoard(catalogBoardDescriptor)) {
+        continue
+      }
+
       if (filterEngine.typeMatches(watchFilter, FilterType.COMMENT)) {
         if (filterEngine.matchesNoHtmlConversion(watchFilter, parsedComment, false)) {
           return watchFilter

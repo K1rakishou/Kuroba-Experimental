@@ -25,7 +25,7 @@ import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.google.gson.stream.JsonReader
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.HttpUrl
 import okhttp3.Request
 import okhttp3.ResponseBody
 import org.jsoup.parser.Parser
@@ -334,12 +334,16 @@ class DvachApi internal constructor(
     request: Request,
     responseBody: ResponseBody
   ): ModularResult<FilterWatchCatalogInfoObject> {
+    val endpoints = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+      ?.endpoints()
+      ?: return ModularResult.error(SiteManager.SiteNotFoundException(boardDescriptor.siteDescriptor))
+
     return ModularResult.Try {
       val threadObjects = mutableListWithCap<FilterWatchCatalogThreadInfoObject>(100)
 
       readBodyJson(responseBody) { jsonReader ->
         iterateThreadsInCatalog(jsonReader) { reader ->
-          val threadObject = readFilterWatchCatalogThreadInfoObject(boardDescriptor, reader)
+          val threadObject = readFilterWatchCatalogThreadInfoObject(boardDescriptor, reader, endpoints)
           if (threadObject != null) {
             threadObjects += threadObject
           }
@@ -355,13 +359,16 @@ class DvachApi internal constructor(
 
   private fun readFilterWatchCatalogThreadInfoObject(
     boardDescriptor: BoardDescriptor,
-    reader: JsonReader
+    reader: JsonReader,
+    endpoints: SiteEndpoints
   ): FilterWatchCatalogThreadInfoObject? {
     var threadNo: Long? = null
     var isOp = false
     var comment = ""
     var subject = ""
+    var path: String? = null
     var thumbnail: String? = null
+    var fullThumbnailUrl: HttpUrl? = null
 
     reader.beginObject()
 
@@ -379,11 +386,14 @@ class DvachApi internal constructor(
         "subject" -> subject = reader.nextStringWithoutBOM()
         "files" -> {
           reader.jsonArray {
-            jsonObject {
-              while (reader.hasNext()) {
-                when (reader.nextName()) {
-                  "thumbnail" -> thumbnail = reader.nextStringWithoutBOM()
-                  else -> reader.skipValue()
+            if (hasNext()) {
+              jsonObject {
+                while (hasNext()) {
+                  when (nextName()) {
+                    "path" -> path = reader.nextStringWithoutBOM()
+                    "thumbnail" -> thumbnail = nextStringWithoutBOM()
+                    else -> skipValue()
+                  }
                 }
               }
             }
@@ -402,11 +412,16 @@ class DvachApi internal constructor(
       return null
     }
 
+    if (path != null && thumbnail != null) {
+      val args = SiteEndpoints.makeArgument("path", path, "thumbnail", thumbnail)
+      fullThumbnailUrl = endpoints.thumbnailUrl(boardDescriptor, false, 0, args)
+    }
+
     return FilterWatchCatalogThreadInfoObject(
       threadDescriptor = ChanDescriptor.ThreadDescriptor.Companion.create(boardDescriptor, threadNo),
       commentRaw = comment,
       subjectRaw = subject,
-      thumbnailUrl = thumbnail?.toHttpUrlOrNull()
+      thumbnailUrl = fullThumbnailUrl
     )
   }
 

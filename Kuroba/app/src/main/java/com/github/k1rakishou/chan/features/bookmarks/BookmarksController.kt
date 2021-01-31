@@ -88,7 +88,7 @@ class BookmarksController(
   lateinit var archivesManager: ArchivesManager
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
-  private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
+  private lateinit var threadLoadCoroutineExecutor: SerializedCoroutineExecutor
   private lateinit var itemTouchHelper: ItemTouchHelper
 
   private val bookmarksSelectionHelper = BookmarksSelectionHelper(this)
@@ -243,7 +243,7 @@ class BookmarksController(
   override fun onCreate() {
     super.onCreate()
 
-    serializedCoroutineExecutor = SerializedCoroutineExecutor(mainScope)
+    threadLoadCoroutineExecutor = SerializedCoroutineExecutor(mainScope)
 
     view = inflate(context, R.layout.controller_bookmarks)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
@@ -755,7 +755,7 @@ class BookmarksController(
       return
     }
 
-    serializedCoroutineExecutor.post {
+    threadLoadCoroutineExecutor.post {
       (context as? StartActivity)?.loadThread(threadDescriptor, true)
     }
   }
@@ -917,8 +917,8 @@ class BookmarksController(
   companion object {
     private const val TAG = "BookmarksController"
 
-    private const val MIN_SPAN_COUNT = 2
-    private const val MAX_SPAN_COUNT = 20
+    const val MIN_SPAN_COUNT = 2
+    const val MAX_SPAN_COUNT = 20
 
     private const val ACTION_CHANGE_VIEW_BOOKMARK_MODE = 1000
     private const val ACTION_OPEN_SORT_SETTINGS = 1001
