@@ -12,6 +12,7 @@ data class ThreadBookmarkStats(
   val isBumpLimit: Boolean = false,
   val isImageLimit: Boolean = false,
   val isFirstFetch: Boolean = false,
+  val isFilterWatchBookmark: Boolean = false,
   val isDeleted: Boolean = false,
   val isError: Boolean = false
 ) {

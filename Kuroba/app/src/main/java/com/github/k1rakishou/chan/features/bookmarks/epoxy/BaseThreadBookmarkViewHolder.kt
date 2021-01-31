@@ -193,6 +193,14 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
 
         append("Err")
       }
+
+      if (threadBookmarkStats.isFilterWatchBookmark) {
+        if (isNotEmpty()) {
+          append(", ")
+        }
+
+        append("Wtch")
+      }
     }
 
     if (additionalStats.isBlank()) {
@@ -234,6 +242,14 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
         append(" (")
         append(threadBookmarkStats.newQuotes)
         append(")")
+      }
+
+      if (!isGridMode && threadBookmarkStats.isFilterWatchBookmark) {
+        if (isNotEmpty()) {
+          append(" ")
+        }
+
+        append("Wtch")
       }
     }
 

@@ -1,8 +1,6 @@
 package com.github.k1rakishou.chan.core.site.common.vichan
 
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
-import com.github.k1rakishou.common.jsonArray
-import com.github.k1rakishou.common.jsonObject
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.bookmark.StickyThread
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
@@ -138,6 +136,8 @@ class VichanReaderExtensions {
     var comment: String = ""
     var subject: String = ""
     var thumbnailUrl: HttpUrl? = null
+    var fileId: String? = null
+    var fileExt: String? = null
 
     reader.beginObject()
 
@@ -150,27 +150,8 @@ class VichanReaderExtensions {
           isOp = opId == 0
         }
         "sub" -> subject = reader.nextString()
-        "extra_files" -> {
-          reader.jsonArray {
-            if (reader.hasNext()) {
-              var fileId: String? = null
-              var fileExt: String? = null
-
-              jsonObject {
-                while (reader.hasNext()) {
-                  when (reader.nextName()) {
-                    "tim" -> fileId = reader.nextString()
-                    "ext" -> fileExt = reader.nextString().replace(".", "")
-                    else -> reader.skipValue()
-                  }
-                }
-              }
-
-              val args = SiteEndpoints.makeArgument("tim", fileId, "ext", fileExt)
-              thumbnailUrl = endpoints.thumbnailUrl(boardDescriptor, false, 0, args)
-            }
-          }
-        }
+        "tim" -> fileId = reader.nextString()
+        "ext" -> fileExt = reader.nextString().replace(".", "")
         else -> {
           // Unknown/ignored key
           reader.skipValue()
@@ -182,6 +163,11 @@ class VichanReaderExtensions {
 
     if (!isOp || threadNo == null) {
       return null
+    }
+
+    if (fileId != null && fileExt != null) {
+      val args = SiteEndpoints.makeArgument("tim", fileId, "ext", fileExt)
+      thumbnailUrl = endpoints.thumbnailUrl(boardDescriptor, false, 0, args)
     }
 
     return FilterWatchCatalogThreadInfoObject(

@@ -437,7 +437,8 @@ class BookmarksPresenter(
     if (archivesManager.isSiteArchive(threadBookmarkView.threadDescriptor.siteDescriptor())) {
       return ThreadBookmarkStats(
         watching = threadBookmarkView.isWatching(),
-        isArchive = true
+        isArchive = true,
+        isFilterWatchBookmark = threadBookmarkView.isFilterWatchBookmark()
       )
     }
 
@@ -457,6 +458,7 @@ class BookmarksPresenter(
       isBumpLimit = threadBookmarkView.isBumpLimit(),
       isImageLimit = threadBookmarkView.isImageLimit(),
       isFirstFetch = threadBookmarkView.isFirstFetch(),
+      isFilterWatchBookmark = threadBookmarkView.isFilterWatchBookmark(),
       isDeleted = threadBookmarkView.isThreadDeleted(),
       isError = threadBookmarkView.isError()
     )

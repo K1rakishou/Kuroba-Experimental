@@ -67,6 +67,7 @@ import com.github.k1rakishou.model.entity.view.ChanThreadsWithPosts
 import com.github.k1rakishou.model.entity.view.OldChanPostThread
 import com.github.k1rakishou.model.migrations.Migration_v10_to_v11
 import com.github.k1rakishou.model.migrations.Migration_v11_to_v12
+import com.github.k1rakishou.model.migrations.Migration_v12_to_v13
 import com.github.k1rakishou.model.migrations.Migration_v1_to_v2
 import com.github.k1rakishou.model.migrations.Migration_v2_to_v3
 import com.github.k1rakishou.model.migrations.Migration_v3_to_v4
@@ -112,7 +113,7 @@ import com.github.k1rakishou.model.migrations.Migration_v9_to_v10
     ChanThreadsWithPosts::class,
     OldChanPostThread::class
   ],
-  version = 12,
+  version = 13,
   exportSchema = true
 )
 @TypeConverters(
@@ -183,7 +184,8 @@ abstract class KurobaDatabase : RoomDatabase() {
           Migration_v8_to_v9(),
           Migration_v9_to_v10(),
           Migration_v10_to_v11(),
-          Migration_v11_to_v12()
+          Migration_v11_to_v12(),
+          Migration_v12_to_v13()
         )
         .fallbackToDestructiveMigrationOnDowngrade()
         .build()

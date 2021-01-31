@@ -334,65 +334,66 @@ class ThreadBookmark private constructor(
      * A flag for threads that are being watched (not paused). Default flag when bookmarking any
      * thread.
      * */
-    const val BOOKMARK_STATE_WATCHING = 1 shl 0
+    const val BOOKMARK_STATE_WATCHING = 0
 
     /**
      * A flag for threads that are probably got deleted (404ed) from the server
      * */
-    const val BOOKMARK_STATE_THREAD_DELETED = 1 shl 1
+    const val BOOKMARK_STATE_THREAD_DELETED = 1
 
     /**
      * A flag for threads that got archived by first-party archives (like the archive that 4chan has)
      * */
-    const val BOOKMARK_STATE_THREAD_ARCHIVED = 1 shl 2
+    const val BOOKMARK_STATE_THREAD_ARCHIVED = 2
 
     /**
      * A flag for closed threads
      * */
-    const val BOOKMARK_STATE_THREAD_CLOSED = 1 shl 3
+    const val BOOKMARK_STATE_THREAD_CLOSED = 3
 
     /**
      * A flag for threads that we failed to fetch bookmark info from for any reason (no internet,
      * server is down, etc.)
      * */
-    const val BOOKMARK_STATE_ERROR = 1 shl 4
+    const val BOOKMARK_STATE_ERROR = 4
 
     /**
      * Thread has reached bump limit
      * */
-    const val BOOKMARK_STATE_THREAD_BUMP_LIMIT = 1 shl 5
+    const val BOOKMARK_STATE_THREAD_BUMP_LIMIT = 5
 
     /**
      * Thread has reached image limit
      * */
-    const val BOOKMARK_STATE_THREAD_IMAGE_LIMIT = 1 shl 6
+    const val BOOKMARK_STATE_THREAD_IMAGE_LIMIT = 6
 
     /**
      * Default bookmark state that is getting cleared once the very first fetch is completed with
      * any result (success/error). We need this flag to show the "Loading" label for bookmarks we
      * have no info yet (before their very first fetch).
      * */
-    const val BOOKMARK_STATE_FIRST_FETCH = 1 shl 7
+    const val BOOKMARK_STATE_FIRST_FETCH = 7
 
     /**
      * The thread is sticky (and it is not "sticky rolling" thread). We need this flag to handle
      * cases when a thread is sticky and closed because such threads are "alive" threads but not
      * really so if the user bookmarks such thread it will be fetching thread info infinitely.
      * */
-    const val BOOKMARK_STATE_STICKY_NO_CAP = 1 shl 8
+    const val BOOKMARK_STATE_STICKY_NO_CAP = 8
 
     /**
      * Indicates that this bookmark is used for filter watching and should be also visible on
      * Filter Watches page of BookmarksController.
      * */
-    const val BOOKMARK_FILTER_WATCH = 1 shl 9
+    const val BOOKMARK_FILTER_WATCH = 9
 
     fun create(
       threadDescriptor: ChanDescriptor.ThreadDescriptor,
       createdOn: DateTime,
-      groupId: String? = null
+      groupId: String? = null,
+      initialFlags: BitSet? = null
     ): ThreadBookmark {
-      val bookmarkInitialState = BitSet()
+      val bookmarkInitialState = initialFlags ?: BitSet()
       bookmarkInitialState.set(BOOKMARK_STATE_WATCHING)
       bookmarkInitialState.set(BOOKMARK_STATE_FIRST_FETCH)
 

@@ -215,7 +215,8 @@ class FilterWatchesPresenter : BasePresenter<FilterWatchesControllerView>() {
     if (archivesManager.isSiteArchive(threadBookmarkView.threadDescriptor.siteDescriptor())) {
       return ThreadBookmarkStats(
         watching = threadBookmarkView.isWatching(),
-        isArchive = true
+        isArchive = true,
+        isFilterWatchBookmark = threadBookmarkView.isFilterWatchBookmark()
       )
     }
 
@@ -235,6 +236,7 @@ class FilterWatchesPresenter : BasePresenter<FilterWatchesControllerView>() {
       isBumpLimit = threadBookmarkView.isBumpLimit(),
       isImageLimit = threadBookmarkView.isImageLimit(),
       isFirstFetch = threadBookmarkView.isFirstFetch(),
+      isFilterWatchBookmark = threadBookmarkView.isFilterWatchBookmark(),
       isDeleted = threadBookmarkView.isThreadDeleted(),
       isError = threadBookmarkView.isError()
     )

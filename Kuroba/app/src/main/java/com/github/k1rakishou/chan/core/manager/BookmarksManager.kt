@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl
 import org.joda.time.DateTime
+import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -223,12 +224,17 @@ class BookmarksManager(
         val threadDescriptor = simpleThreadBookmark.threadDescriptor
         val title = simpleThreadBookmark.title
         val thumbnailUrl = simpleThreadBookmark.thumbnailUrl
+        val initialFlags = simpleThreadBookmark.initialFlags
 
         if (bookmarks.containsKey(threadDescriptor)) {
           return@forEach
         }
 
-        val threadBookmark = ThreadBookmark.create(threadDescriptor, DateTime.now()).apply {
+        val threadBookmark = ThreadBookmark.create(
+          threadDescriptor = threadDescriptor,
+          createdOn = DateTime.now(),
+          initialFlags = initialFlags
+        ).apply {
           this.title = title
           this.thumbnailUrl = thumbnailUrl
         }
@@ -287,7 +293,7 @@ class BookmarksManager(
   }
 
   /**
-   * @return either a list of [ChanDescriptor.ThreadDescriptor] of bookmarks that ware actually changed
+   * @return either a list of [ChanDescriptor.ThreadDescriptor] of bookmarks that were actually changed
    * by [mutator] or empty list if no bookmarks were changed.
    * Don't forget to call [persistBookmarksManually] after this method!
    * */
@@ -669,7 +675,8 @@ class BookmarksManager(
   data class SimpleThreadBookmark(
     val threadDescriptor: ChanDescriptor.ThreadDescriptor,
     val title: String? = null,
-    val thumbnailUrl: HttpUrl? = null
+    val thumbnailUrl: HttpUrl? = null,
+    val initialFlags: BitSet? = null
   )
 
   @DoNotStrip

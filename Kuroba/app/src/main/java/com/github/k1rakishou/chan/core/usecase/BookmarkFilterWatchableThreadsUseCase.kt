@@ -13,6 +13,7 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.bookmark.ThreadBookmark
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilter
@@ -32,6 +33,7 @@ import okhttp3.HttpUrl
 import okhttp3.Request
 import org.jsoup.parser.Parser
 import java.io.IOException
+import java.util.*
 
 class BookmarkFilterWatchableThreadsUseCase(
   private val verboseLogsEnabled: Boolean,
@@ -86,14 +88,14 @@ class BookmarkFilterWatchableThreadsUseCase(
       boardDescriptorsToCheck,
     )
 
-    val filterWatchCatalogInfoObject = filterOutNonSuccessResults(catalogFetchResults)
-    if (filterWatchCatalogInfoObject.isEmpty()) {
+    val filterWatchCatalogInfoObjects = filterOutNonSuccessResults(catalogFetchResults)
+    if (filterWatchCatalogInfoObjects.isEmpty()) {
       Logger.d(TAG, "doWorkInternal() Nothing has left after filtering out error results")
       return true
     }
 
     val matchedCatalogThreads = filterOutThreadsThatDoNotMatchWatchFilters(
-      filterWatchCatalogInfoObject
+      filterWatchCatalogInfoObjects
     ) { catalogThread ->
       val rawComment = catalogThread.comment()
       val subject = catalogThread.subject
@@ -121,6 +123,12 @@ class BookmarkFilterWatchableThreadsUseCase(
     if (matchedCatalogThreads.isEmpty()) {
       Logger.d(TAG, "doWorkInternal() Nothing has left after filtering out non-matching catalog threads")
       return true
+    }
+
+    if (verboseLogsEnabled) {
+      matchedCatalogThreads.forEach { filterWatchCatalogThreadInfoObject ->
+        Logger.d(TAG, "filterWatchCatalogThreadInfoObject=$filterWatchCatalogThreadInfoObject")
+      }
     }
 
     val result = createOrUpdateBookmarks(matchedCatalogThreads)
@@ -151,11 +159,15 @@ class BookmarkFilterWatchableThreadsUseCase(
       )
 
       if (isFilterWatchBookmark == null) {
+        val filterWatchFlags = BitSet()
+        filterWatchFlags.set(ThreadBookmark.BOOKMARK_FILTER_WATCH)
+
         // No such bookmark exists
         bookmarksToCreate += BookmarksManager.SimpleThreadBookmark(
           threadDescriptor = threadDescriptor,
           title = createBookmarkSubject(filterWatchCatalogThreadInfoObject),
-          thumbnailUrl = filterWatchCatalogThreadInfoObject.thumbnailUrl
+          thumbnailUrl = filterWatchCatalogThreadInfoObject.thumbnailUrl,
+          initialFlags = filterWatchFlags
         )
 
         return@forEach
@@ -192,11 +204,15 @@ class BookmarkFilterWatchableThreadsUseCase(
     }
 
     if (bookmarksToUpdate.isNotEmpty()) {
-      bookmarksManager.updateBookmarksNoPersist(bookmarksToUpdate) { threadBookmark ->
+      val updatedBookmarks = bookmarksManager.updateBookmarksNoPersist(bookmarksToUpdate) { threadBookmark ->
         threadBookmark.setFilterWatchFlag()
       }
 
-      Logger.d(TAG, "createBookmarks() updated ${bookmarksToUpdate.size} bookmarks")
+      if (updatedBookmarks.isNotEmpty()) {
+        bookmarksManager.persistBookmarksManually(updatedBookmarks)
+      }
+
+      Logger.d(TAG, "createBookmarks() updated ${updatedBookmarks.size} bookmarks")
     }
 
     if (bookmarksToCreate.isEmpty() && bookmarksToUpdate.isEmpty()) {
