@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.core.helper;
 import android.text.TextUtils;
 
 import androidx.annotation.AnyThread;
+import androidx.annotation.Nullable;
 import androidx.core.text.HtmlCompat;
 
 import com.github.k1rakishou.chan.R;
@@ -127,7 +128,13 @@ public class FilterEngine {
             return false;
         }
 
-        if (typeMatches(filter, FilterType.TRIPCODE) && matches(filter, post.tripcode, false)) {
+        if (typeMatches(filter, FilterType.COMMENT) && post.postCommentBuilder.getComment().length() > 0) {
+            if (matches(filter, post.postCommentBuilder.getComment(), false)) {
+                return true;
+            }
+        }
+
+        if (typeMatches(filter, FilterType.SUBJECT) && matches(filter, post.subject, false)) {
             return true;
         }
 
@@ -135,36 +142,30 @@ public class FilterEngine {
             return true;
         }
 
-        if (typeMatches(filter, FilterType.COMMENT) && post.postCommentBuilder.getComment().length() > 0) {
-            if (matches(filter, post.postCommentBuilder.getComment().toString(), false)) {
-                return true;
-            }
+        if (typeMatches(filter, FilterType.TRIPCODE) && matches(filter, post.tripcode, false)) {
+            return true;
         }
 
         if (typeMatches(filter, FilterType.ID) && matches(filter, post.posterId, false)) {
             return true;
         }
 
-        if (typeMatches(filter, FilterType.SUBJECT) && matches(filter, post.subject, false)) {
-            return true;
-        }
-
-        for (ChanPostImage image : post.postImages) {
-            if (typeMatches(filter, FilterType.IMAGE) && matches(filter, image.getFileHash(), false)) {
-                // for filtering image hashes, we don't want to apply the post-level filter
-                // (thus return false) this takes care of it at an image level, either flagging it
-                // to be hidden, which applies a custom spoiler image, or removes the image from
-                // the post entirely since this is a Post.Builder instance
-                if (filter.getAction() == FilterAction.HIDE.id) {
-                    image.setHiddenByFilter(true);
-                } else if (filter.getAction() == FilterAction.REMOVE.id) {
-                    post.postImages.remove(image);
-                }
-
-                return false;
+        if (post.postImages.size() > 0) {
+            if (tryMatchPostImagesWithFilter(filter, post)) {
+                return true;
             }
         }
 
+        if (post.httpIcons.size() > 0) {
+            if (tryMatchPostFlagsWithFilter(filter, post)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean tryMatchPostFlagsWithFilter(ChanFilter filter, ChanPostBuilder post) {
         // figure out if the post has a country code, if so check the filter
         String countryCode = "";
         for (ChanPostHttpIcon icon : post.httpIcons) {
@@ -179,6 +180,16 @@ public class FilterEngine {
             return true;
         }
 
+        return false;
+    }
+
+    private boolean tryMatchPostImagesWithFilter(ChanFilter filter, ChanPostBuilder post) {
+        for (ChanPostImage image : post.postImages) {
+            if (typeMatches(filter, FilterType.IMAGE) && matches(filter, image.getFileHash(), false)) {
+                return true;
+            }
+        }
+
         StringBuilder files = new StringBuilder();
         for (ChanPostImage image : post.postImages) {
             files.append(image.getFilename()).append(" ");
@@ -186,19 +197,28 @@ public class FilterEngine {
 
         String fnames = files.toString();
 
-        return !fnames.isEmpty()
-                && typeMatches(filter, FilterType.FILENAME)
-                && matches(filter, fnames, false);
+        if (fnames.length() > 0) {
+            if (typeMatches(filter, FilterType.FILENAME) && matches(filter, fnames, false)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @AnyThread
     public boolean typeMatches(ChanFilter filter, FilterType type) {
-        return (filter.getType() & type.flag) != 0;
+        return typeMatches(filter.getType(), type);
     }
 
     @AnyThread
     public boolean typeMatches(ChanFilterMutable filter, FilterType type) {
-        return (filter.getType() & type.flag) != 0;
+        return typeMatches(filter.getType(), type);
+    }
+
+    @AnyThread
+    private boolean typeMatches(int filterType, FilterType type) {
+        return (filterType & type.flag) != 0;
     }
 
     @AnyThread
@@ -207,7 +227,7 @@ public class FilterEngine {
             CharSequence text,
             boolean forceCompile
     ) {
-        return matches(filter, text, forceCompile, false);
+        return matchesInternal(filter.getPattern(), filter.getType(), text, forceCompile, false);
     }
 
     @AnyThread
@@ -216,12 +236,22 @@ public class FilterEngine {
             CharSequence text,
             boolean forceCompile
     ) {
-        return matches(filter, text, forceCompile, true);
+        return matchesInternal(filter.getPattern(), filter.getType(), text, forceCompile, true);
     }
 
     @AnyThread
-    private boolean matches(
-            ChanFilter filter,
+    public boolean matches(
+            ChanFilterMutable filter,
+            CharSequence text,
+            boolean forceCompile
+    ) {
+        return matchesInternal(filter.getPattern(), filter.getType(), text, forceCompile, true);
+    }
+
+    @AnyThread
+    private boolean matchesInternal(
+            @Nullable String patternRaw,
+            int filterType,
             CharSequence text,
             boolean forceCompile,
             boolean convertFromHtml
@@ -233,19 +263,19 @@ public class FilterEngine {
         Pattern pattern = null;
         if (!forceCompile) {
             synchronized (patternCache) {
-                pattern = patternCache.get(filter.getPattern());
+                pattern = patternCache.get(patternRaw);
             }
         }
 
         if (pattern == null) {
-            int extraFlags = typeMatches(filter, FilterType.COUNTRY_CODE)
+            int extraFlags = typeMatches(filterType, FilterType.COUNTRY_CODE)
                     ? Pattern.CASE_INSENSITIVE
                     : 0;
 
-            pattern = compile(filter.getPattern(), extraFlags);
+            pattern = compile(patternRaw, extraFlags);
             if (pattern != null) {
                 synchronized (patternCache) {
-                    patternCache.put(filter.getPattern(), pattern);
+                    patternCache.put(patternRaw, pattern);
                 }
             }
         }
@@ -259,46 +289,6 @@ public class FilterEngine {
                 matcher = pattern.matcher(text);
             }
 
-            try {
-                return matcher.find();
-            } catch (IllegalArgumentException e) {
-                Logger.e(TAG, "matcher.find() exception, pattern=" + pattern.pattern(), e);
-                return false;
-            }
-        } else {
-            Logger.e(TAG, "Invalid pattern");
-            return false;
-        }
-    }
-
-    @AnyThread
-    public boolean matches(ChanFilterMutable filter, CharSequence text, boolean forceCompile) {
-        if (TextUtils.isEmpty(text)) {
-            return false;
-        }
-
-        Pattern pattern = null;
-        if (!forceCompile) {
-            synchronized (patternCache) {
-                pattern = patternCache.get(filter.getPattern());
-            }
-        }
-
-        if (pattern == null) {
-            int extraFlags = typeMatches(filter, FilterType.COUNTRY_CODE)
-                    ? Pattern.CASE_INSENSITIVE
-                    : 0;
-
-            pattern = compile(filter.getPattern(), extraFlags);
-            if (pattern != null) {
-                synchronized (patternCache) {
-                    patternCache.put(filter.getPattern(), pattern);
-                }
-            }
-        }
-
-        if (pattern != null) {
-            Matcher matcher = pattern.matcher(HtmlCompat.fromHtml(text.toString(), 0).toString());
             try {
                 return matcher.find();
             } catch (IllegalArgumentException e) {
