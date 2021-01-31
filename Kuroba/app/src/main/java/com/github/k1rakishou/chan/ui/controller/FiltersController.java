@@ -49,7 +49,6 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.core_themes.ThemeEngine;
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
 import com.github.k1rakishou.model.data.filter.ChanFilter;
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
 import com.github.k1rakishou.model.data.filter.FilterAction;
@@ -60,7 +59,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 import javax.inject.Inject;
 
@@ -241,8 +239,9 @@ public class FiltersController
     }
 
     public void showFilterDialog(final ChanFilterMutable chanFilterMutable) {
-        Set<BoardDescriptor> allActiveBoardDescriptors = boardManager.getAllActiveBoardDescriptors();
-        chanFilterMutable.setBoards(allActiveBoardDescriptors);
+        if (chanFilterMutable.getBoards().isEmpty()) {
+            chanFilterMutable.applyToBoards(true, new ArrayList<>());
+        }
 
         final FilterLayout filterLayout = (FilterLayout) inflate(context, R.layout.layout_filter, null);
 
@@ -350,10 +349,13 @@ public class FiltersController
             return new FilterCell(inflate(parent.getContext(), R.layout.cell_filter, parent, false));
         }
 
+        @SuppressLint("SetTextI18n")
         @Override
         public void onBindViewHolder(FilterCell holder, int position) {
             ChanFilter filter = displayList.get(position);
-            holder.text.setText(filter.getPattern());
+
+            String fullText = "#" + (position + 1) + " " + filter.getPattern();
+            holder.text.setText(fullText);
 
             int textColor = filter.getEnabled()
                     ? themeEngine.getChanTheme().getTextColorPrimary()

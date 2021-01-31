@@ -29,8 +29,12 @@ class ChanFilterMutable(
 
   fun applyToBoards(allBoardsChecked: Boolean, boards: List<ChanBoard>) {
     this.allBoardsChecked = allBoardsChecked
-
     this.boards.clear()
+
+    if (allBoardsChecked) {
+      return
+    }
+
     this.boards.addAll(boards.map { board -> board.boardDescriptor })
   }
 

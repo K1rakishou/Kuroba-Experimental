@@ -236,6 +236,16 @@ class ChanFilterManager(
     }
   }
 
+  fun viewAllFiltersWhile(viewer: (ChanFilter) -> Boolean) {
+    lock.read {
+      for (chanFilter in filters) {
+        if (!viewer(chanFilter)) {
+          return@read
+        }
+      }
+    }
+  }
+
   fun getEnabledWatchFilters(): List<ChanFilter> {
     return lock.read {
       return@read filters.filter { chanFilter -> chanFilter.isEnabledWatchFilter() }

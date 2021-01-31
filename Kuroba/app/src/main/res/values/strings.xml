@@ -302,6 +302,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="filter_type_not_allowed_with_watch_filters">Filter type (%1$s) is not allowed in combination with watch filter action. Only COMMENT and/or SUBJECT types are allowed!</string>
     <string name="filter_no_filter_type_selected">No filter type selected</string>
     <string name="filter_no_boards_selected">No boards selected</string>
+    <string name="filter_identical_filter_detected">Identical filter already exists. Existing filter index=%1$d</string>
 
     <string name="filter_help">
 <![CDATA[

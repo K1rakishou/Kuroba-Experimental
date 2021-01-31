@@ -30,6 +30,7 @@ import android.text.style.TypefaceSpan;
 import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -41,6 +42,7 @@ import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.helper.DialogFactory;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
+import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.chan.ui.helper.BoardHelper;
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowDrawable;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
@@ -52,6 +54,7 @@ import com.github.k1rakishou.chan.ui.view.FloatingMenuItem;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.board.ChanBoard;
+import com.github.k1rakishou.model.data.filter.ChanFilter;
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
 import com.github.k1rakishou.model.data.filter.FilterAction;
 import com.github.k1rakishou.model.data.filter.FilterType;
@@ -59,6 +62,8 @@ import com.google.android.material.textview.MaterialTextView;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
 import javax.inject.Inject;
@@ -68,7 +73,12 @@ import kotlin.Unit;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 
-public class FilterLayout extends LinearLayout implements View.OnClickListener, ThemeEngine.ThemeChangesListener {
+public class FilterLayout
+        extends LinearLayout
+        implements View.OnClickListener,
+        ThemeEngine.ThemeChangesListener,
+        CompoundButton.OnCheckedChangeListener {
+
     private ColorizableTextView typeText;
     private ColorizableTextView boardsSelector;
     private boolean allBoardsChecked = false;
@@ -88,6 +98,8 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener, 
     BoardManager boardManager;
     @Inject
     FilterEngine filterEngine;
+    @Inject
+    ChanFilterManager chanFilterManager;
     @Inject
     ThemeEngine themeEngine;
     @Inject
@@ -180,6 +192,7 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener, 
         colorContainer = findViewById(R.id.color_container);
         colorContainer.setOnClickListener(this);
         colorPreview = findViewById(R.id.color_preview);
+
         applyToReplies = findViewById(R.id.apply_to_replies_checkbox);
         onlyOnOP = findViewById(R.id.only_on_op_checkbox);
         applyToSaved = findViewById(R.id.apply_to_saved_checkbox);
@@ -196,6 +209,10 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener, 
         typeText.setOnClickListener(this);
         boardsSelector.setOnClickListener(this);
         actionText.setOnClickListener(this);
+
+        applyToReplies.setOnCheckedChangeListener(this);
+        onlyOnOP.setOnCheckedChangeListener(this);
+        applyToSaved.setOnCheckedChangeListener(this);
 
         onThemeChanged();
     }
@@ -234,12 +251,13 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener, 
         this.chanFilterMutable = chanFilterMutable;
         pattern.setText(chanFilterMutable.getPattern());
 
-        updateFilterValidity();
         updateFilterType();
         updateFilterAction();
         updateCheckboxes();
         updateBoardsSummary();
         updatePatternPreview();
+
+        updateFilterValidity();
     }
 
     public void setCallback(FilterLayoutCallback callback) {
@@ -272,6 +290,11 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener, 
         } else if (v == colorContainer) {
             onColorContainerClicked();
         }
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        updateFilterValidity();
     }
 
     private void onColorContainerClicked() {
@@ -476,6 +499,13 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener, 
             return new FilterValidationError(getString(R.string.filter_cannot_compile_filter_pattern));
         }
 
+        int indexOfExistingFilter = indexOfExistingFilter();
+        if (indexOfExistingFilter >= 0) {
+            return new FilterValidationError(
+                    getString(R.string.filter_identical_filter_detected, indexOfExistingFilter)
+            );
+        }
+
         if (chanFilterMutable.isWatchFilter()) {
             List<FilterType> filterTypes = FilterType.forFlags(chanFilterMutable.getType());
 
@@ -501,6 +531,61 @@ public class FilterLayout extends LinearLayout implements View.OnClickListener, 
         }
 
         return null;
+    }
+
+    private int indexOfExistingFilter() {
+        AtomicInteger index = new AtomicInteger(0);
+        AtomicBoolean theSameFilterExists = new AtomicBoolean(false);
+
+        boolean applyToRepliesChecked = applyToReplies.isChecked();
+        boolean onlyOnOPChecked = onlyOnOP.isChecked();
+        boolean applyToSavedChecked = applyToSaved.isChecked();
+
+        chanFilterManager.viewAllFiltersWhile(chanFilter -> {
+            index.getAndIncrement();
+
+            boolean isFilterTheSame = compareWithChanFilter(chanFilterMutable, chanFilter)
+                    && chanFilter.getApplyToReplies() == applyToRepliesChecked
+                    && chanFilter.getOnlyOnOP() == onlyOnOPChecked
+                    && chanFilter.getApplyToSaved() == applyToSavedChecked;
+
+            if (isFilterTheSame) {
+                theSameFilterExists.set(true);
+                return false;
+            }
+
+            return true;
+        });
+
+        if (!theSameFilterExists.get()) {
+            return -1;
+        }
+
+        return index.get();
+    }
+
+    private boolean compareWithChanFilter(ChanFilterMutable chanFilterMutable, ChanFilter other) {
+        if (chanFilterMutable.getType() != other.getType()) {
+            return false;
+        }
+
+        if (chanFilterMutable.getAction() != other.getAction()) {
+            return false;
+        }
+
+        if (chanFilterMutable.getColor() != other.getColor()) {
+            return false;
+        }
+
+        if (!chanFilterMutable.getPattern().equals(other.getPattern())) {
+            return false;
+        }
+
+        if (chanFilterMutable.getBoards().size() != other.getBoards().size()) {
+            return false;
+        }
+
+        return chanFilterMutable.getBoards().equals(other.getBoards());
     }
 
     private void updateBoardsSummary() {
