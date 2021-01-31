@@ -38,6 +38,8 @@ object PersistableChanState {
   @JvmStatic
   lateinit var bookmarksRecyclerIndexAndTop: StringSetting
   @JvmStatic
+  lateinit var filterWatchesRecyclerIndexAndTop: StringSetting
+  @JvmStatic
   lateinit var proxyEditingNotificationShown: BooleanSetting
   @JvmStatic
   lateinit var lastRememberedFilePicker: StringSetting
@@ -83,7 +85,13 @@ object PersistableChanState {
       bookmarksRecyclerIndexAndTop = StringSetting(
         provider,
         "bookmarks_recycler_index_and_top",
-        BookmarksRecyclerIndexAndTopInfo.defaultJson(viewThreadBookmarksGridMode)
+        RecyclerIndexAndTopInfo.bookmarksControllerDefaultJson(viewThreadBookmarksGridMode)
+      )
+
+      filterWatchesRecyclerIndexAndTop = StringSetting(
+        provider,
+        "filter_watches_recycler_index_and_top",
+        RecyclerIndexAndTopInfo.filterWatchesControllerDefaultJson()
       )
 
       proxyEditingNotificationShown = BooleanSetting(
@@ -120,19 +128,20 @@ object PersistableChanState {
     }
   }
 
-  fun storeBookmarksRecyclerIndexAndTopInfo(
+  fun storeRecyclerIndexAndTopInfo(
+    setting: StringSetting,
     isForGridLayoutManager: Boolean,
     indexAndTop: IndexAndTop
   ) {
-    val setting = requireNotNull(bookmarksRecyclerIndexAndTop) { "bookmarksRecyclerIndexAndTop is null" }
-
-    val json = gson.toJson(BookmarksRecyclerIndexAndTopInfo(isForGridLayoutManager, indexAndTop))
+    val json = gson.toJson(RecyclerIndexAndTopInfo(isForGridLayoutManager, indexAndTop))
     setting.set(json)
   }
 
-  fun getBookmarksRecyclerIndexAndTopInfo(isForGridLayoutManager: Boolean): IndexAndTop {
-    val setting = requireNotNull(bookmarksRecyclerIndexAndTop) { "bookmarksRecyclerIndexAndTop is null" }
-    val info = gson.fromJson(setting.get(), BookmarksRecyclerIndexAndTopInfo::class.java)
+  fun getRecyclerIndexAndTopInfo(
+    setting: StringSetting,
+    isForGridLayoutManager: Boolean
+  ): IndexAndTop {
+    val info = gson.fromJson(setting.get(), RecyclerIndexAndTopInfo::class.java)
 
     if (info.isForGridLayoutManager == isForGridLayoutManager) {
       // If we are trying to restore index and top for RecyclerView with the same layout manager
@@ -143,17 +152,26 @@ object PersistableChanState {
     return IndexAndTop(info.indexAndTop.index, 0)
   }
 
-  data class BookmarksRecyclerIndexAndTopInfo(
+  data class RecyclerIndexAndTopInfo(
     @SerializedName("is_for_grid_layout_manager")
     val isForGridLayoutManager: Boolean,
     @SerializedName("index_and_top")
     val indexAndTop: IndexAndTop = IndexAndTop()
   ) {
     companion object {
-      fun defaultJson(viewThreadBookmarksGridMode: BooleanSetting): String {
+      fun bookmarksControllerDefaultJson(viewThreadBookmarksGridMode: BooleanSetting): String {
         return gson.toJson(
-          BookmarksRecyclerIndexAndTopInfo(isForGridLayoutManager = viewThreadBookmarksGridMode.default)
+          RecyclerIndexAndTopInfo(isForGridLayoutManager = viewThreadBookmarksGridMode.default)
         )
+      }
+
+      fun filterWatchesControllerDefaultJson(): String {
+        val recyclerIndexAndTopInfo = RecyclerIndexAndTopInfo(
+          isForGridLayoutManager = true,
+          indexAndTop = IndexAndTop()
+        )
+
+        return gson.toJson(recyclerIndexAndTopInfo)
       }
     }
   }

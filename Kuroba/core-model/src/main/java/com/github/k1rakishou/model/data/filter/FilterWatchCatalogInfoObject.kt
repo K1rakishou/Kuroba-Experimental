@@ -45,7 +45,7 @@ class FilterWatchCatalogThreadInfoObject(
 
   override fun toString(): String {
     return "FilterWatchCatalogThreadInfoObject(threadDescriptor=$threadDescriptor, " +
-      "thumbnailUrl=$thumbnailUrl, comment='$comment', matchedFilter=$matchedFilter, subject='$subject')"
+      "thumbnailUrl=$thumbnailUrl, comment='${comment.take(64)}', matchedFilter=$matchedFilter, subject='$subject')"
   }
 
 

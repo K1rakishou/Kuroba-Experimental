@@ -559,12 +559,6 @@ class BookmarksController(
   }
 
   private fun onStateChanged(state: BookmarksControllerState) {
-    controller.addOneshotModelBuildListener {
-      if (viewModeChanged.compareAndSet(true, false)) {
-        updateLayoutManager()
-      }
-    }
-
     val isGridMode = PersistableChanState.viewThreadBookmarksGridMode.get()
 
     controller.callback = {
@@ -607,6 +601,10 @@ class BookmarksController(
         }
         is BookmarksControllerState.Data -> {
           addOneshotModelBuildListener {
+            if (viewModeChanged.compareAndSet(true, false)) {
+              updateLayoutManager()
+            }
+
             if (!isInSearchMode && needRestoreScrollPosition.compareAndSet(true, false)) {
               restoreScrollPosition()
             }
@@ -769,7 +767,8 @@ class BookmarksController(
       )
     }
 
-    PersistableChanState.storeBookmarksRecyclerIndexAndTopInfo(
+    PersistableChanState.storeRecyclerIndexAndTopInfo(
+      PersistableChanState.bookmarksRecyclerIndexAndTop,
       isGridLayoutManager,
       RecyclerUtils.getIndexAndTop(recyclerView)
     )
@@ -784,7 +783,10 @@ class BookmarksController(
       )
     }
 
-    val indexAndTop = PersistableChanState.getBookmarksRecyclerIndexAndTopInfo(isForGridLayoutManager)
+    val indexAndTop = PersistableChanState.getRecyclerIndexAndTopInfo(
+      PersistableChanState.bookmarksRecyclerIndexAndTop,
+      isForGridLayoutManager
+    )
 
     when (val layoutManager = epoxyRecyclerView.layoutManager) {
       is GridLayoutManager -> layoutManager.scrollToPositionWithOffset(indexAndTop.index, indexAndTop.top)

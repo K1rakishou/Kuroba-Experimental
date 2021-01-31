@@ -3,8 +3,11 @@ package com.github.k1rakishou.chan.features.filter_watches
 import android.content.Context
 import android.content.res.Configuration
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
@@ -20,10 +23,13 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.RecyclerUtils
+import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 
 class FilterWatchesController(
   context: Context,
@@ -32,8 +38,19 @@ class FilterWatchesController(
 
   private val presenter = FilterWatchesPresenter()
   private val controller = FilterWatchesEpoxyController()
+  private val needRestoreScrollPosition = AtomicBoolean(true)
 
   private lateinit var threadLoadCoroutineExecutor: SerializedCoroutineExecutor
+
+  private val onScrollListener = object : RecyclerView.OnScrollListener() {
+    override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+      if (newState != RecyclerView.SCROLL_STATE_IDLE) {
+        return
+      }
+
+      onRecyclerViewScrolled(recyclerView)
+    }
+  }
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -47,6 +64,7 @@ class FilterWatchesController(
     view = AppModuleAndroidUtils.inflate(context, R.layout.controller_filter_watches)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
     epoxyRecyclerView.setController(controller)
+    epoxyRecyclerView.addOnScrollListener(onScrollListener)
 
     mainScope.launch {
       presenter.listenForStateUpdates()
@@ -60,6 +78,7 @@ class FilterWatchesController(
   override fun onDestroy() {
     super.onDestroy()
 
+    epoxyRecyclerView.removeOnScrollListener(onScrollListener)
     presenter.onDestroy()
   }
 
@@ -110,6 +129,12 @@ class FilterWatchesController(
   }
 
   private fun EpoxyController.renderDataState(filterWatchesControllerState: FilterWatchesControllerState.Data) {
+    addOneshotModelBuildListener {
+      if (needRestoreScrollPosition.compareAndSet(true, false)) {
+        restoreScrollPosition()
+      }
+    }
+
     val isTablet = AppModuleAndroidUtils.isTablet()
 
     filterWatchesControllerState.groupedFilterWatches.forEach { groupOfFilterWatches ->
@@ -164,6 +189,42 @@ class FilterWatchesController(
 
     epoxyRecyclerView.layoutManager = GridLayoutManager(context, spanCount).apply {
       spanSizeLookup = controller.spanSizeLookup
+    }
+  }
+
+  private fun onRecyclerViewScrolled(recyclerView: RecyclerView) {
+    val isGridLayoutManager = when (recyclerView.layoutManager) {
+      is GridLayoutManager -> true
+      is LinearLayoutManager -> false
+      else -> throw IllegalStateException("Unknown layout manager: " +
+        "${recyclerView.layoutManager?.javaClass?.simpleName}"
+      )
+    }
+
+    PersistableChanState.storeRecyclerIndexAndTopInfo(
+      PersistableChanState.filterWatchesRecyclerIndexAndTop,
+      isGridLayoutManager,
+      RecyclerUtils.getIndexAndTop(recyclerView)
+    )
+  }
+
+  private fun restoreScrollPosition() {
+    val isForGridLayoutManager = when (epoxyRecyclerView.layoutManager) {
+      is GridLayoutManager -> true
+      is LinearLayoutManager -> false
+      else -> throw IllegalStateException("Unknown layout manager: " +
+        "${epoxyRecyclerView.layoutManager?.javaClass?.simpleName}"
+      )
+    }
+
+    val indexAndTop = PersistableChanState.getRecyclerIndexAndTopInfo(
+      PersistableChanState.filterWatchesRecyclerIndexAndTop,
+      isForGridLayoutManager
+    )
+
+    when (val layoutManager = epoxyRecyclerView.layoutManager) {
+      is GridLayoutManager -> layoutManager.scrollToPositionWithOffset(indexAndTop.index, indexAndTop.top)
+      is LinearLayoutManager -> layoutManager.scrollToPositionWithOffset(indexAndTop.index, indexAndTop.top)
     }
   }
 
