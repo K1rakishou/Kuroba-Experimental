@@ -166,12 +166,9 @@ class SearchResultsController(
         }
       }
 
-      val isNextPostOP = data.searchPostInfoList.getOrNull(index + 1)?.postDescriptor?.isOP() == true
-      if (!isNextPostOP) {
-        epoxySearchPostDividerView {
-          id("epoxy_divider_view_${searchPostInfo.postDescriptor.serializeToString()}")
-          updateMargins(NEW_MARGINS)
-        }
+      epoxySearchPostDividerView {
+        id("epoxy_divider_view_${searchPostInfo.postDescriptor.serializeToString()}")
+        updateMargins(NEW_MARGINS)
       }
     }
 

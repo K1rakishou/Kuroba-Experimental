@@ -12,8 +12,6 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.viewpager.widget.ViewPager
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ChanTheme
 import java.lang.reflect.Field
 
@@ -65,8 +63,7 @@ object ViewUtils {
         field[editor] = drawables
       }
 
-    } catch (error: Exception) {
-      Logger.d(TAG, "setEditTextCursorColor() failure, error=${error.errorMessageOrClassName()}")
+    } catch (ignored: Exception) {
     }
   }
 
@@ -130,8 +127,7 @@ object ViewUtils {
           handleField[editor] = drawable
         }
       }
-    } catch (error: Exception) {
-      Logger.d(TAG, "setHandlesColors() failure, error=${error.errorMessageOrClassName()}")
+    } catch (ignored: Exception) {
     }
   }
 
@@ -158,8 +154,7 @@ object ViewUtils {
       val f2: Field = AbsListView::class.java.getDeclaredField("mEdgeGlowBottom")
       f2.isAccessible = true
       f2.set(this, edgeEffectBottom)
-    } catch (error: Exception) {
-      Logger.d(TAG, "AbsListView.changeEdgeEffect() failure, error=${error.errorMessageOrClassName()}")
+    } catch (ignored: Exception) {
     }
   }
 
@@ -180,8 +175,7 @@ object ViewUtils {
       val f2: Field = ViewPager::class.java.getDeclaredField("mRightEdge")
       f2.isAccessible = true
       f2.set(this, rightEdge)
-    } catch (error: Exception) {
-      Logger.d(TAG, "ViewPager.changeEdgeEffect() failure, error=${error.errorMessageOrClassName()}")
+    } catch (ignored: Exception) {
     }
   }
 
@@ -194,8 +188,7 @@ object ViewUtils {
       val f2: Field = ProgressDialog::class.java.getDeclaredField("mProgressPercent")
       f2.isAccessible = true
       (f2.get(this) as? TextView)?.let { progressPercent -> progressPercent.setTextColor(theme.textColorSecondary) }
-    } catch (error: Exception) {
-      Logger.d(TAG, "ProgressDialog.changeProgressColor() failure, error=${error.errorMessageOrClassName()}")
+    } catch (ignored: Exception) {
     }
   }
 

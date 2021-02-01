@@ -100,35 +100,29 @@ class GlobalSearchUseCase(
           val parsedComment = simpleCommentParser.parseComment(commentRaw.toString()) ?: ""
           val spannedComment = SpannableString(parsedComment)
 
-          var found = false
-
-          found = found or findAllQueryEntriesInsideSpannableStringAndMarkThem(
+          findAllQueryEntriesInsideSpannableStringAndMarkThem(
             inputQueries = getAllQueries(searchResult.searchParams),
             spannableString = spannedComment,
             theme = theme
           )
 
-          found = found or findAllQuotesAndMarkThem(spannedComment, theme)
+          findAllQuotesAndMarkThem(spannedComment, theme)
 
-          if (found) {
-            commentRaw.clear()
-            commentRaw.append(spannedComment)
-          }
+          commentRaw.clear()
+          commentRaw.append(spannedComment)
         }
 
         searchEntryPost.subject?.let { subject ->
           val spannedSubject = SpannableString(subject)
 
-          val found = findAllQueryEntriesInsideSpannableStringAndMarkThem(
+          findAllQueryEntriesInsideSpannableStringAndMarkThem(
             inputQueries = getAllQueries(searchResult.searchParams),
             spannableString = spannedSubject,
             theme = theme
           )
 
-          if (found) {
-            subject.clear()
-            subject.append(spannedSubject)
-          }
+          subject.clear()
+          subject.append(spannedSubject)
         }
       }
     }
@@ -185,15 +179,13 @@ class GlobalSearchUseCase(
     inputQueries: Collection<String>,
     spannableString: SpannableString,
     theme: ChanTheme
-  ): Boolean {
+  ) {
     val queries = inputQueries
       .filter { query -> query.isNotEmpty() && query.length <= spannableString.length }
 
     if (queries.isEmpty()) {
-      return false
+      return
     }
-
-    var found = false
 
     for (query in queries) {
       var offset = 0
@@ -225,13 +217,7 @@ class GlobalSearchUseCase(
           0
         )
       }
-
-      if (spans.isNotEmpty()) {
-        found = true
-      }
     }
-
-    return found
   }
 
   private fun compare(query: String, parsedComment: CharSequence, currentPosition: Int): Int {
