@@ -121,6 +121,14 @@ class ThreadBookmark private constructor(
     state.set(BOOKMARK_FILTER_WATCH)
   }
 
+  fun removeFilterWatchFlag() {
+    if (!state.get(BOOKMARK_FILTER_WATCH)) {
+      return
+    }
+
+    state.clear(BOOKMARK_FILTER_WATCH)
+  }
+
   fun readRepliesUpTo(lastSeenPostNo: Long) {
     // Mark all quotes to me as notified/seen/read which postNo is less or equals to lastSeenPostNo.
     threadBookmarkReplies.values

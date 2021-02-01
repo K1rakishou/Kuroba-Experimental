@@ -572,6 +572,7 @@ public class ManagerModule {
     @Singleton
     @Provides
     public FilterWatcherDelegate provideFilterWatcherDelegate(
+            CoroutineScope appScope,
             BoardManager boardManager,
             BookmarksManager bookmarksManager,
             ChanFilterManager chanFilterManager,
@@ -581,6 +582,7 @@ public class ManagerModule {
     ) {
         return new FilterWatcherDelegate(
                 AppModuleAndroidUtils.isDevBuild(),
+                appScope,
                 boardManager,
                 bookmarksManager,
                 chanFilterManager,

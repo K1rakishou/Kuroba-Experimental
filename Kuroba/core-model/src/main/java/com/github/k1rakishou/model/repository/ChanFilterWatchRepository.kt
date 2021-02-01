@@ -22,6 +22,14 @@ class ChanFilterWatchRepository(
     }
   }
 
+  suspend fun getFilterWatchGroupsByFilterId(filterId: Long): ModularResult<List<ChanFilterWatchGroup>> {
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        return@tryWithTransaction localSource.getFilterWatchGroupsByFilterId(filterId)
+      }
+    }
+  }
+
   suspend fun getFilterWatchGroups(): ModularResult<List<ChanFilterWatchGroup>> {
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {

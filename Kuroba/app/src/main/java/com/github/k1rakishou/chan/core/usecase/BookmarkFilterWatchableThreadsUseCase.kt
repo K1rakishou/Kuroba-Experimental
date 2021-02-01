@@ -145,9 +145,9 @@ class BookmarkFilterWatchableThreadsUseCase(
     val bookmarksToUpdate = mutableListOf<ChanDescriptor.ThreadDescriptor>()
 
     matchedCatalogThreads.forEach { filterWatchCatalogThreadInfoObject ->
-      val threadDescriptor = filterWatchCatalogThreadInfoObject.threadDescriptor
+      val bookmarkThreadDescriptor = filterWatchCatalogThreadInfoObject.threadDescriptor
 
-      val isFilterWatchBookmark = bookmarksManager.mapBookmark(threadDescriptor) { threadBookmarkView ->
+      val isFilterWatchBookmark = bookmarksManager.mapBookmark(bookmarkThreadDescriptor) { threadBookmarkView ->
         return@mapBookmark threadBookmarkView.isFilterWatchBookmark()
       }
 
@@ -155,7 +155,7 @@ class BookmarkFilterWatchableThreadsUseCase(
       // flag, we need to recreate groups every time we fetch them from the server.
       filterWatchGroupsToCreate += ChanFilterWatchGroup(
         filterWatchCatalogThreadInfoObject.matchedFilter().getDatabaseId(),
-        threadDescriptor
+        bookmarkThreadDescriptor
       )
 
       if (isFilterWatchBookmark == null) {
@@ -164,7 +164,7 @@ class BookmarkFilterWatchableThreadsUseCase(
 
         // No such bookmark exists
         bookmarksToCreate += BookmarksManager.SimpleThreadBookmark(
-          threadDescriptor = threadDescriptor,
+          threadDescriptor = bookmarkThreadDescriptor,
           title = createBookmarkSubject(filterWatchCatalogThreadInfoObject),
           thumbnailUrl = filterWatchCatalogThreadInfoObject.thumbnailUrl,
           initialFlags = filterWatchFlags
@@ -175,6 +175,7 @@ class BookmarkFilterWatchableThreadsUseCase(
 
       if (!isFilterWatchBookmark) {
         // Bookmark exists but has no "Filter watch" flag
+        bookmarksToUpdate += bookmarkThreadDescriptor
         return@forEach
       }
 

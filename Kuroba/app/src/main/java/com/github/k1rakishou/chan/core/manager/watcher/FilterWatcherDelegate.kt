@@ -13,15 +13,19 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
 class FilterWatcherDelegate(
   private val isDevFlavor: Boolean,
+  private val appScope: CoroutineScope,
   private val boardManager: BoardManager,
   private val bookmarksManager: BookmarksManager,
   private val chanFilterManager: ChanFilterManager,
@@ -34,6 +38,13 @@ class FilterWatcherDelegate(
     extraBufferCapacity = 1,
     BufferOverflow.SUSPEND
   )
+
+  init {
+    appScope.launch {
+      chanFilterManager.listenForFilterGroupDeletions()
+        .collect { filterDeletionEvent -> onFilterDeleted(filterDeletionEvent) }
+    }
+  }
 
   fun listenForBookmarkFilterWatchGroupsUpdatedFlowUpdates(): SharedFlow<Unit> {
     return bookmarkFilterWatchGroupsUpdatedFlow.asSharedFlow()
@@ -73,6 +84,28 @@ class FilterWatcherDelegate(
     }
 
     Logger.d(TAG, "FilterWatcherDelegate.doWork() done, took $duration")
+  }
+
+  private suspend fun onFilterDeleted(filterDeletionEvent: ChanFilterManager.FilterDeletionEvent) {
+    bookmarksManager.awaitUntilInitialized()
+
+    val chanFilter = filterDeletionEvent.chanFilter
+    val filterWatchGroups = filterDeletionEvent.filterWatchGroups
+    val threadDescriptors = filterWatchGroups.map { filterWatchGroup -> filterWatchGroup.threadDescriptor }
+
+    Logger.d(TAG, "onFilterDeleted() new filter deleted, " +
+      "filterId=${chanFilter.getDatabaseId()}, " +
+      "watch groups count=${filterWatchGroups.size}")
+
+    val updatedBookmarkDescriptors = bookmarksManager.updateBookmarksNoPersist(
+      threadDescriptors
+    ) { threadBookmark -> threadBookmark.removeFilterWatchFlag() }
+
+    if (updatedBookmarkDescriptors.isEmpty()) {
+      return
+    }
+
+    bookmarksManager.persistBookmarksManually(updatedBookmarkDescriptors)
   }
 
   private suspend fun awaitUntilAllDependenciesAreReady() {

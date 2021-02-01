@@ -7,16 +7,16 @@ import com.github.k1rakishou.common.SuspendableInitializer
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.filter.ChanFilter
+import com.github.k1rakishou.model.data.filter.ChanFilterWatchGroup
 import com.github.k1rakishou.model.repository.ChanFilterRepository
 import com.github.k1rakishou.model.repository.ChanFilterWatchRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -33,9 +33,15 @@ class ChanFilterManager(
   private val chanFilterWatchRepository: ChanFilterWatchRepository,
   private val postFilterManager: PostFilterManager
 ) {
-  private val filtersChangedChannel = MutableSharedFlow<FilterEvent>(
+  private val filterChangesFlow = MutableSharedFlow<FilterEvent>(
     replay = 1,
-    extraBufferCapacity = 128,
+    extraBufferCapacity = 32,
+    onBufferOverflow = BufferOverflow.SUSPEND
+  )
+
+  private val filterGroupDeletionsFlow = MutableSharedFlow<FilterDeletionEvent>(
+    replay = 1,
+    extraBufferCapacity = 32,
     onBufferOverflow = BufferOverflow.SUSPEND
   )
 
@@ -57,10 +63,14 @@ class ChanFilterManager(
     }
   }
 
-  fun listenForFiltersChanges(): Flow<FilterEvent> {
-    return filtersChangedChannel
+  fun listenForFiltersChanges(): SharedFlow<FilterEvent> {
+    return filterChangesFlow
       .asSharedFlow()
-      .catch { error -> Logger.e(TAG, "Error while listening for filtersChangedSubject updates", error) }
+  }
+
+  fun listenForFilterGroupDeletions(): SharedFlow<FilterDeletionEvent> {
+    return filterGroupDeletionsFlow
+      .asSharedFlow()
   }
 
   private suspend fun loadFiltersInternal() {
@@ -87,7 +97,7 @@ class ChanFilterManager(
       suspendableInitializer.initWithError(error)
     }
 
-    filtersChangedChannel.tryEmit(FilterEvent.Initialized)
+    filterChangesFlow.tryEmit(FilterEvent.Initialized)
   }
 
   fun createOrUpdateFilter(chanFilter: ChanFilter, onUpdated: () -> Unit) {
@@ -119,7 +129,7 @@ class ChanFilterManager(
         FilterEvent.Updated(listOf(chanFilter))
       }
 
-      filtersChangedChannel.tryEmit(filterEvent)
+      filterChangesFlow.tryEmit(filterEvent)
       onUpdated()
     }
   }
@@ -155,6 +165,12 @@ class ChanFilterManager(
         return@post
       }
 
+      // It is important to do this before actually deleting the filter, otherwise this will always
+      // be returning null.
+      val filterWatchGroupResult = chanFilterWatchRepository.getFilterWatchGroupsByFilterId(
+        chanFilter.getDatabaseId()
+      )
+
       val success = chanFilterRepository.deleteFilter(chanFilter)
         .peekError { error -> Logger.e(TAG, "chanFilterRepository.deleteFilter() error", error) }
         .mapErrorToValue { false }
@@ -174,7 +190,17 @@ class ChanFilterManager(
       clearFiltersAndPostHashes()
       clearFilterWatchGroups(chanFilter)
 
-      filtersChangedChannel.tryEmit(FilterEvent.Deleted(listOf(chanFilter)))
+      filterChangesFlow.tryEmit(FilterEvent.Deleted(listOf(chanFilter)))
+
+      if (filterWatchGroupResult is ModularResult.Error) {
+        Logger.e(TAG, "Failed to get filter watch group by filter id", filterWatchGroupResult.error)
+      } else {
+        val filterWatchGroups = (filterWatchGroupResult as ModularResult.Value).value
+        if (filterWatchGroups.isNotEmpty()) {
+          filterGroupDeletionsFlow.tryEmit(FilterDeletionEvent(chanFilter, filterWatchGroups))
+        }
+      }
+
       onUpdated()
     }
   }
@@ -219,7 +245,7 @@ class ChanFilterManager(
 
       clearFiltersAndPostHashes()
 
-      filtersChangedChannel.tryEmit(FilterEvent.Updated(allFilters))
+      filterChangesFlow.tryEmit(FilterEvent.Updated(allFilters))
       onUpdated()
     }
   }
@@ -378,6 +404,11 @@ class ChanFilterManager(
   }
 
   fun isReady() = suspendableInitializer.isInitialized()
+
+  data class FilterDeletionEvent(
+    val chanFilter: ChanFilter,
+    val filterWatchGroups: List<ChanFilterWatchGroup>
+  )
 
   sealed class FilterEvent {
     abstract fun hasWatchFilter(): Boolean

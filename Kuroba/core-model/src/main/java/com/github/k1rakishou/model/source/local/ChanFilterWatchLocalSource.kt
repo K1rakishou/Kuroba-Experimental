@@ -34,6 +34,39 @@ class ChanFilterWatchLocalSource(
     chanFilterWatchGroupDao.insertMany(watchGroupEntities)
   }
 
+  suspend fun getFilterWatchGroupsByFilterId(filterId: Long): List<ChanFilterWatchGroup> {
+    ensureInTransaction()
+
+    val chanFilterWatchGroupEntities = chanFilterWatchGroupDao.selectFilterWatchGroupsByFilterId(filterId)
+    if (chanFilterWatchGroupEntities.isEmpty()) {
+      return emptyList()
+    }
+
+    val threadBookmarkIds = chanFilterWatchGroupEntities.map { chanFilterWatchGroupEntity ->
+      return@map ThreadBookmarkDBId(chanFilterWatchGroupEntity.ownerThreadBookmarkDatabaseId)
+    }
+
+    val bookmarkIdMap = chanDescriptorCache.getManyBookmarkThreadDescriptors(
+      threadBookmarkIds
+    )
+
+    if (bookmarkIdMap.isEmpty()) {
+      return emptyList()
+    }
+
+    return chanFilterWatchGroupEntities.mapNotNull { chanFilterWatchGroupEntity ->
+      val threadBookmarkDBId = ThreadBookmarkDBId(chanFilterWatchGroupEntity.ownerThreadBookmarkDatabaseId)
+
+      val bookmarkThreadDescriptor = bookmarkIdMap[threadBookmarkDBId]
+        ?: return@mapNotNull null
+
+      return@mapNotNull ChanFilterWatchGroup(
+        chanFilterWatchGroupEntity.ownerChanFilterDatabaseId,
+        bookmarkThreadDescriptor.threadDescriptor
+      )
+    }
+  }
+
   suspend fun getFilterWatchGroups(): List<ChanFilterWatchGroup> {
     ensureInTransaction()
 
