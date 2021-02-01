@@ -50,8 +50,12 @@ import static com.github.k1rakishou.chan.ui.adapter.PostsFilter.Order.isNotBumpO
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 
-public class CardPostCell extends ColorizableCardView implements PostCellInterface,
-        View.OnClickListener, View.OnLongClickListener {
+public class CardPostCell
+        extends ColorizableCardView
+        implements PostCellInterface,
+        View.OnClickListener,
+        View.OnLongClickListener,
+        ThemeEngine.ThemeChangesListener {
 
     private static final int COMMENT_MAX_LENGTH = 200;
     public static final int HI_RES_THUMBNAIL_SIZE = dp(160);
@@ -92,6 +96,18 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
     private void init() {
         AppModuleAndroidUtils.extractActivityComponent(getContext())
                 .inject(this);
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        themeEngine.addListener(this);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        themeEngine.removeListener(this);
     }
 
     @Override
@@ -176,6 +192,8 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
             this.compact = compact;
             setCompact(compact);
         }
+
+        onThemeChanged();
     }
 
     public ChanPost getPost() {
@@ -263,7 +281,7 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
         }
 
         comment.setText(commentText);
-        comment.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
+
 
         String status = getString(
                 R.string.card_stats,
@@ -279,11 +297,17 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
         }
 
         replies.setText(status);
-        replies.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
 
         if (callback != null) {
             callback.onPostBind(post);
         }
+    }
+
+    @Override
+    public void onThemeChanged() {
+        comment.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
+        replies.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+        options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getPostDetailsColor()));
     }
 
     private void setCompact(boolean compact) {
@@ -302,6 +326,5 @@ public class CardPostCell extends ColorizableCardView implements PostCellInterfa
 
         int optionsPadding = compact ? 0 : dp(5);
         options.setPadding(0, optionsPadding, optionsPadding, 0);
-        options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getPostDetailsColor()));
     }
 }

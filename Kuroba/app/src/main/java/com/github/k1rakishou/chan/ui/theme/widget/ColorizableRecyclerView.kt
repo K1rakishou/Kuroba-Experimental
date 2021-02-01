@@ -37,6 +37,8 @@ open class ColorizableRecyclerView @JvmOverloads constructor(
       return
     }
 
+    setBackgroundColor(themeEngine.chanTheme.backColor)
+
     edgeEffectFactory = object : RecyclerView.EdgeEffectFactory() {
       override fun createEdgeEffect(view: RecyclerView, direction: Int): EdgeEffect {
         return EdgeEffect(view.context).apply { color = themeEngine.chanTheme.accentColor }

@@ -107,7 +107,7 @@ import java.text.BreakIterator
 import java.util.*
 import javax.inject.Inject
 
-class PostCell : LinearLayout, PostCellInterface {
+class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
@@ -170,6 +170,16 @@ class PostCell : LinearLayout, PostCellInterface {
 
   constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int)
     : super(context, attrs, defStyleAttr)
+
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    themeEngine.addListener(this)
+  }
+
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+    themeEngine.removeListener(this)
+  }
 
   override fun onFinishInflate() {
     super.onFinishInflate()
@@ -256,6 +266,17 @@ class PostCell : LinearLayout, PostCellInterface {
     }
   }
 
+  override fun onThemeChanged() {
+    val thisPost = post
+      ?: return
+
+    bindBackgroundColor(themeEngine.chanTheme, thisPost)
+
+    title.invalidate()
+    comment.invalidate()
+    replies.invalidate()
+  }
+
   @SuppressLint("ClickableViewAccessibility")
   override fun setPost(
     chanDescriptor: ChanDescriptor,
@@ -306,6 +327,8 @@ class PostCell : LinearLayout, PostCellInterface {
     if (inPopup) {
       setOnTouchListener { _, ev -> gestureDetector.onTouchEvent(ev) }
     }
+
+    onThemeChanged()
   }
 
   override fun getPost(): ChanPost? {
@@ -388,7 +411,6 @@ class PostCell : LinearLayout, PostCellInterface {
       replies.setBackgroundResource(0)
     }
 
-    bindBackgroundColor(theme, post)
     bindPostAttentionLabel(theme, post)
     bindThumbnails(post)
     bindTitle(theme, post)

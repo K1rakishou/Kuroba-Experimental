@@ -50,7 +50,10 @@ import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 
 public class PostStubCell
         extends RelativeLayout
-        implements PostCellInterface, View.OnClickListener {
+        implements PostCellInterface,
+        View.OnClickListener,
+        ThemeEngine.ThemeChangesListener {
+
     private static final int TITLE_MAX_LENGTH = 100;
 
     @Inject
@@ -68,6 +71,7 @@ public class PostStubCell
 
     private TextView title;
     private ColorizableDivider divider;
+    private ImageView options;
     private boolean inPopup;
 
     public PostStubCell(Context context) {
@@ -91,11 +95,23 @@ public class PostStubCell
     }
 
     @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        themeEngine.addListener(this);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        themeEngine.removeListener(this);
+    }
+
+    @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
 
         title = findViewById(R.id.title);
-        ImageView options = findViewById(R.id.options);
+        options = findViewById(R.id.options);
         AndroidUtils.setBoundlessRoundRippleBackground(options);
 
         divider = findViewById(R.id.divider);
@@ -112,7 +128,6 @@ public class PostStubCell
         divider.setLayoutParams(dividerParams);
 
         setOnClickListener(this);
-        options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getPostDetailsColor()));
 
         options.setOnClickListener(v -> {
             List<FloatingListMenuItem> items = new ArrayList<>();
@@ -181,6 +196,7 @@ public class PostStubCell
         this.filterHash = filterHash;
 
         bindPost(post);
+        onThemeChanged();
     }
 
     public ChanPost getPost() {
@@ -212,8 +228,6 @@ public class PostStubCell
             title.setText(titleText);
         }
 
-        title.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
-
         divider.setVisibility(
                 postViewMode == ChanSettings.PostViewMode.CARD
                         ? GONE
@@ -223,5 +237,11 @@ public class PostStubCell
         if (callback != null) {
             callback.onPostBind(post);
         }
+    }
+
+    @Override
+    public void onThemeChanged() {
+        title.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+        options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getPostDetailsColor()));
     }
 }
