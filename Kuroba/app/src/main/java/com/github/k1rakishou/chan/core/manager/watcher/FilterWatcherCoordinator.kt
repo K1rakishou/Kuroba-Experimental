@@ -8,6 +8,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.await
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
@@ -24,6 +25,7 @@ class FilterWatcherCoordinator(
   private val appConstants: AppConstants,
   private val chanFilterManager: ChanFilterManager
 ) {
+  private val restartFilterWatcherDebouncer = DebouncingCoroutineExecutor(appScope)
 
   fun initialize() {
     Logger.d(TAG, "FilterWatcherCoordinator.initialize()")
@@ -39,7 +41,7 @@ class FilterWatcherCoordinator(
           .asFlow()
           .collect { enabled ->
             if (enabled) {
-              restartFilterWatcherWork()
+              restartFilterWatcherWithTinyDelay(null)
             } else {
               stopFilterWatcherWork()
             }
@@ -50,7 +52,7 @@ class FilterWatcherCoordinator(
         ChanSettings.filterWatchInterval.listenForChanges()
           .asFlow()
           .collect {
-            restartFilterWatcherWork()
+            restartFilterWatcherWithTinyDelay(null)
           }
       }
     }
@@ -67,47 +69,32 @@ class FilterWatcherCoordinator(
     cancelFilterWatching(appConstants, appContext)
   }
 
-  private suspend fun restartFilterWatcherWork() {
-    if (verboseLogs) {
-      Logger.d(TAG, "restartFilterWatcherWork()")
-    }
+  private suspend fun restartFilterWatcherWithTinyDelay(filterEvent: ChanFilterManager.FilterEvent?) {
+    restartFilterWatcherDebouncer.post(1000L, {
+      if (filterEvent?.hasWatchFilter() == false) {
+        return@post
+      }
 
-    awaitInitialization()
-    printDebugInfo()
+      if (verboseLogs) {
+        Logger.d(TAG, "restartFilterWatcherWithNoDelay()")
+      }
 
-    if (!chanFilterManager.hasEnabledWatchFilters()) {
-      Logger.d(TAG, "restartFilterWatcherWork() no watch filters found, canceling the work")
-      cancelFilterWatching(appConstants, appContext)
-      return
-    }
+      awaitInitialization()
+      printDebugInfo()
 
-    startFilterWatching(appConstants, appContext, replaceExisting = true)
-  }
+      if (!chanFilterManager.hasEnabledWatchFilters()) {
+        Logger.d(TAG, "restartFilterWatcherWithNoDelay() no watch filters found, canceling the work")
+        cancelFilterWatching(appConstants, appContext)
+        return@post
+      }
 
-  private suspend fun restartFilterWatcherWithTinyDelay(filterEvent: ChanFilterManager.FilterEvent) {
-    if (!filterEvent.hasWatchFilter()) {
-      return
-    }
-
-    if (verboseLogs) {
-      Logger.d(TAG, "restartFilterWatcherWithNoDelay()")
-    }
-
-    awaitInitialization()
-    printDebugInfo()
-
-    if (!chanFilterManager.hasEnabledWatchFilters()) {
-      Logger.d(TAG, "restartFilterWatcherWithNoDelay() no watch filters found, canceling the work")
-      cancelFilterWatching(appConstants, appContext)
-      return
-    }
-
-    // When filters with WATCH flag change in any way (new filter created/old filter deleted or
-    // updated). We delete filter watch group. Because of that, if the user navigates to filter
-    // watches screen he will see nothing until the next filter watch update cycle. Since the regular
-    // update cycle is pretty big (4 hours minimum) we need to use another one that will update
-    // filter watches right away.
-    startFilterWatchingRightAway(appConstants, appContext)
+      // When filters with WATCH flag change in any way (new filter created/old filter deleted or
+      // updated). We delete filter watch group. Because of that, if the user navigates to filter
+      // watches screen he will see nothing until the next filter watch update cycle. Since the regular
+      // update cycle is pretty big (4 hours minimum) we need to use another one that will update
+      // filter watches right away.
+      startFilterWatchingRightAway(appConstants, appContext)
+    })
   }
 
   private suspend fun awaitInitialization() {
