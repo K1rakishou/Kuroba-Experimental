@@ -341,7 +341,7 @@ object SpannableStringMapper {
             spanInfo.spanData,
             SerializableForegroundColorSpan::class.java
           )
-          spannableString.setSpan(
+          spannableString.setSpanSafe(
             ForegroundColorSpanHashed(serializableForegroundColorSpan.foregroundColor),
             spanInfo.spanStart,
             spanInfo.spanEnd,
@@ -354,7 +354,7 @@ object SpannableStringMapper {
             SerializableColorizableForegroundColorSpan::class.java
           )
 
-          spannableString.setSpan(
+          spannableString.setSpanSafe(
             ColorizableForegroundColorSpan(colorizableForegroundColorSpan.colorId),
             spanInfo.spanStart,
             spanInfo.spanEnd,
@@ -366,7 +366,7 @@ object SpannableStringMapper {
             spanInfo.spanData,
             SerializableBackgroundColorSpan::class.java
           )
-          spannableString.setSpan(
+          spannableString.setSpanSafe(
             BackgroundColorSpanHashed(serializableBackgroundColorSpan.backgroundColor),
             spanInfo.spanStart,
             spanInfo.spanEnd,
@@ -379,25 +379,27 @@ object SpannableStringMapper {
             SerializableColorizableBackgroundColorSpan::class.java
           )
 
-          spannableString.setSpan(
+          spannableString.setSpanSafe(
             ColorizableBackgroundColorSpan(colorizableBackgroundColorSpan.colorId),
             spanInfo.spanStart,
             spanInfo.spanEnd,
             spanInfo.flags
           )
         }
-        SerializableSpanType.StrikethroughSpanType -> spannableString.setSpan(StrikethroughSpan(),
-          spanInfo.spanStart,
-          spanInfo.spanEnd,
-          spanInfo.flags
-        )
+        SerializableSpanType.StrikethroughSpanType -> {
+          spannableString.setSpanSafe(StrikethroughSpan(),
+            spanInfo.spanStart,
+            spanInfo.spanEnd,
+            spanInfo.flags
+          )
+        }
         SerializableSpanType.StyleSpanType -> {
           val serializableStyleSpan = gson.fromJson(
             spanInfo.spanData,
             SerializableStyleSpan::class.java
           )
 
-          spannableString.setSpan(StyleSpan(serializableStyleSpan.style),
+          spannableString.setSpanSafe(StyleSpan(serializableStyleSpan.style),
             spanInfo.spanStart,
             spanInfo.spanEnd,
             spanInfo.flags
@@ -409,7 +411,7 @@ object SpannableStringMapper {
             SerializableTypefaceSpan::class.java
           )
 
-          spannableString.setSpan(TypefaceSpan(serializableTypefaceSpan.family),
+          spannableString.setSpanSafe(TypefaceSpan(serializableTypefaceSpan.family),
             spanInfo.spanStart,
             spanInfo.spanEnd,
             spanInfo.flags
@@ -421,7 +423,7 @@ object SpannableStringMapper {
             SerializableAbsoluteSizeSpan::class.java
           )
 
-          spannableString.setSpan(
+          spannableString.setSpanSafe(
             AbsoluteSizeSpanHashed(serializableAbsoluteSizeSpan.size),
             spanInfo.spanStart,
             spanInfo.spanEnd,
@@ -452,7 +454,7 @@ object SpannableStringMapper {
     val postLinkable = extractPostLinkable(gson, serializablePostLinkableSpan)
       ?: return
 
-    spannableString.setSpan(
+    spannableString.setSpanSafe(
       postLinkable,
       spanInfo.spanStart,
       spanInfo.spanEnd,
@@ -578,5 +580,14 @@ object SpannableStringMapper {
       }
       else -> throw IllegalArgumentException("Not implemented for type " + serializablePostLinkableSpan.postLinkableType.name)
     }
+  }
+
+  private fun SpannableString.setSpanSafe(span: CharacterStyle, start: Int, end: Int, flags: Int) {
+    setSpan(
+      span,
+      start.coerceIn(0, this.length),
+      end.coerceIn(0, this.length),
+      flags
+    )
   }
 }
