@@ -534,6 +534,7 @@ public class ManagerModule {
             ChanThreadLoaderCoordinator chanThreadLoaderCoordinator
     ) {
         return new ChanThreadManager(
+                ChanSettings.verboseLogs.get(),
                 siteManager,
                 bookmarksManager,
                 postFilterManager,

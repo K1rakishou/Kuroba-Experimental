@@ -24,6 +24,7 @@ import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
  * classes to avoid circular dependencies.
  * */
 class ChanThreadManager(
+  private val verboseLogs: Boolean,
   private val siteManager: SiteManager,
   private val bookmarksManager: BookmarksManager,
   private val postFilterManager: PostFilterManager,
@@ -41,6 +42,9 @@ class ChanThreadManager(
   @set:Synchronized
   var currentThreadDescriptor: ChanDescriptor.ThreadDescriptor? = null
     private set
+
+  // Only accessed on the main thread
+  private val requestedChanDescriptors = hashSetOf<ChanDescriptor>()
 
   fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
     when (chanDescriptor) {
@@ -68,49 +72,63 @@ class ChanThreadManager(
     onReloaded: suspend (ThreadLoadResult) -> Unit
   ) {
     BackgroundUtils.ensureMainThread()
-    Logger.d(TAG, "loadThreadOrCatalog(chanDescriptor=$chanDescriptor, " +
-      "requestNewPostsFromServer=$requestNewPostsFromServer, " +
-      "$chanLoadOptions, $chanCacheOptions, $chanReadOptions)")
 
-    if (chanLoadOptions.isNotDefault()) {
-      postFilterManager.removeAllForDescriptor(chanDescriptor)
+    if (!requestedChanDescriptors.add(chanDescriptor)) {
+      // This chan descriptor has already been requested
+      if (verboseLogs) {
+        Logger.d(TAG, "loadThreadOrCatalog() skipping $chanDescriptor because it was already requested")
+      }
+
+      return
     }
 
-    if (chanLoadOptions.canClearCache()) {
-      when (chanDescriptor) {
-        is ChanDescriptor.ThreadDescriptor -> chanThreadsCache.deleteThread(chanDescriptor)
-        is ChanDescriptor.CatalogDescriptor -> {
-          // no-op, we never delete threads from catalog snapshots
+    try {
+      Logger.d(TAG, "loadThreadOrCatalog(chanDescriptor=$chanDescriptor, " +
+        "requestNewPostsFromServer=$requestNewPostsFromServer, " +
+        "$chanLoadOptions, $chanCacheOptions, $chanReadOptions)")
+
+      if (chanLoadOptions.isNotDefault()) {
+        postFilterManager.removeAllForDescriptor(chanDescriptor)
+      }
+
+      if (chanLoadOptions.canClearCache()) {
+        when (chanDescriptor) {
+          is ChanDescriptor.ThreadDescriptor -> chanThreadsCache.deleteThread(chanDescriptor)
+          is ChanDescriptor.CatalogDescriptor -> {
+            // no-op, we never delete threads from catalog snapshots
+          }
         }
       }
-    }
 
-    if (chanLoadOptions.canClearDatabase()) {
-      when (chanDescriptor) {
-        is ChanDescriptor.ThreadDescriptor -> chanPostRepository.deleteThread(chanDescriptor)
-        is ChanDescriptor.CatalogDescriptor -> chanPostRepository.deleteCatalog(chanDescriptor)
-      }
-    }
-
-    val threadLoaderResult = loadInternal(
-      chanDescriptor = chanDescriptor,
-      requestNewPostsFromServer = requestNewPostsFromServer,
-      chanCacheOptions = chanCacheOptions,
-      chanReadOptions = chanReadOptions
-    )
-
-    when (threadLoaderResult) {
-      is ModularResult.Value -> {
-        onReloaded.invoke(threadLoaderResult.value)
-      }
-      is ModularResult.Error -> {
-        val error = threadLoaderResult.error
-        if (error is ChanLoaderException) {
-          onReloaded.invoke(ThreadLoadResult.Error(error))
-        } else {
-          onReloaded.invoke(ThreadLoadResult.Error(ChanLoaderException(error)))
+      if (chanLoadOptions.canClearDatabase()) {
+        when (chanDescriptor) {
+          is ChanDescriptor.ThreadDescriptor -> chanPostRepository.deleteThread(chanDescriptor)
+          is ChanDescriptor.CatalogDescriptor -> chanPostRepository.deleteCatalog(chanDescriptor)
         }
       }
+
+      val threadLoaderResult = loadInternal(
+        chanDescriptor = chanDescriptor,
+        requestNewPostsFromServer = requestNewPostsFromServer,
+        chanCacheOptions = chanCacheOptions,
+        chanReadOptions = chanReadOptions
+      )
+
+      when (threadLoaderResult) {
+        is ModularResult.Value -> {
+          onReloaded.invoke(threadLoaderResult.value)
+        }
+        is ModularResult.Error -> {
+          val error = threadLoaderResult.error
+          if (error is ChanLoaderException) {
+            onReloaded.invoke(ThreadLoadResult.Error(error))
+          } else {
+            onReloaded.invoke(ThreadLoadResult.Error(ChanLoaderException(error)))
+          }
+        }
+      }
+    } finally {
+      requestedChanDescriptors.remove(chanDescriptor)
     }
   }
 
@@ -268,6 +286,8 @@ class ChanThreadManager(
     chanCacheOptions: ChanCacheOptions,
     chanReadOptions: ChanReadOptions
   ): ModularResult<ThreadLoadResult> {
+    BackgroundUtils.ensureMainThread()
+
     siteManager.awaitUntilInitialized()
     bookmarksManager.awaitUntilInitialized()
 
@@ -290,8 +310,12 @@ class ChanThreadManager(
       // Do not load new posts from the network, just refresh memory caches with data from the
       //  database
       return when (chanDescriptor) {
-        is ChanDescriptor.ThreadDescriptor -> chanThreadLoaderCoordinator.reloadThreadFromDatabase(chanDescriptor)
-        is ChanDescriptor.CatalogDescriptor -> chanThreadLoaderCoordinator.reloadCatalogFromDatabase(chanDescriptor)
+        is ChanDescriptor.ThreadDescriptor -> {
+          chanThreadLoaderCoordinator.reloadThreadFromDatabase(chanDescriptor)
+        }
+        is ChanDescriptor.CatalogDescriptor -> {
+          chanThreadLoaderCoordinator.reloadCatalogFromDatabase(chanDescriptor)
+        }
       }
     }
 
