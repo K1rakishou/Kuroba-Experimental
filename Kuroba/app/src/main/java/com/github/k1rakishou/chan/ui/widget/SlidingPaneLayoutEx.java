@@ -47,6 +47,8 @@ import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.customview.view.AbsSavedState;
 import androidx.customview.widget.ViewDragHelper;
 
+import com.github.k1rakishou.ChanSettings;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -148,6 +150,8 @@ public class SlidingPaneLayoutEx extends ViewGroup {
      * True if a panel can slide with the current measurements
      */
     private boolean mCanSlide;
+
+    private boolean allowedToSlide = true;
 
     /**
      * The child view that can slide, if any.
@@ -263,6 +267,8 @@ public class SlidingPaneLayoutEx extends ViewGroup {
 
         mDragHelper = ViewDragHelper.create(this, 0.5f, new DragHelperCallback());
         mDragHelper.setMinVelocity(MIN_FLING_VELOCITY * density);
+
+        allowedToSlide = ChanSettings.controllerSwipeable.get();
     }
 
     public void setOverhangSize(@Px int overhangSize) {
@@ -798,6 +804,11 @@ public class SlidingPaneLayoutEx extends ViewGroup {
             return false;
         }
 
+        if (!isOpen() && !allowedToSlide) {
+            mDragHelper.cancel();
+            return false;
+        }
+
         boolean interceptTap = false;
 
         switch (action) {
@@ -830,7 +841,6 @@ public class SlidingPaneLayoutEx extends ViewGroup {
         }
 
         final boolean interceptForDrag = mDragHelper.shouldInterceptTouchEvent(ev);
-
         return interceptForDrag || interceptTap;
     }
 

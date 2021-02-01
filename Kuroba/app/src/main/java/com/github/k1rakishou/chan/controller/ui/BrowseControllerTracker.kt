@@ -100,7 +100,7 @@ class BrowseControllerTracker(
     )
 
     try {
-      return  browseController.passMotionEventIntoDrawer(motionEvent)
+      return browseController.passMotionEventIntoDrawer(motionEvent)
     } finally {
       motionEvent.recycle()
 
