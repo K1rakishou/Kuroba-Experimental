@@ -44,7 +44,6 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController;
-import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage;
 import com.github.k1rakishou.chan.ui.layout.FilterLayout;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
@@ -72,7 +71,6 @@ import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantity
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.postToEventBus;
 
 public class FiltersController
         extends Controller
@@ -264,8 +262,6 @@ public class FiltersController
                         }
 
                         onFilterCreated(filter);
-
-                        postToEventBus(new RefreshUIMessage("filters"));
                         adapter.reload();
 
                         return Unit.INSTANCE;
@@ -311,8 +307,6 @@ public class FiltersController
     private void deleteFilter(ChanFilter filter) {
         filterEngine.deleteFilter(filter, () -> {
             BackgroundUtils.ensureMainThread();
-
-            postToEventBus(new RefreshUIMessage("filters"));
             adapter.reload();
 
             return Unit.INSTANCE;

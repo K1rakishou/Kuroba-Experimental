@@ -42,6 +42,7 @@ import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
@@ -185,6 +186,7 @@ abstract class ThreadController(
 
   @Subscribe
   fun onEvent(message: RefreshUIMessage?) {
+    Logger.d(TAG, "onEvent reason=${message?.reason ?: "<reason is empty>"}")
     threadLayout.presenter.normalLoad()
   }
 

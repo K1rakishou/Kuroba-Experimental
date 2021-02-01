@@ -199,6 +199,14 @@ class ThreadPresenter @Inject constructor(
       return bookmarksManager.exists(threadDescriptor)
     }
 
+  init {
+    launch {
+      chanFilterManager.listenForFiltersChanges()
+        .debounce(1000L)
+        .collect { filterEvent -> onFiltersChanged(filterEvent) }
+    }
+  }
+
   override fun getCurrentChanDescriptor(): ChanDescriptor? {
     return chanThreadTicker.currentChanDescriptor
   }
@@ -206,12 +214,6 @@ class ThreadPresenter @Inject constructor(
   fun create(context: Context, threadPresenterCallback: ThreadPresenterCallback) {
     this.context = context
     this.threadPresenterCallback = threadPresenterCallback
-
-    launch {
-      chanFilterManager.listenForFiltersChanges()
-        .debounce(500L)
-        .collect { onFiltersChanged() }
-    }
   }
 
   fun showNoContent() {
@@ -387,8 +389,9 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    Logger.d(TAG, "normalLoad(showLoading=$showLoading, requestNewPostsFromServer=$requestNewPostsFromServer, " +
-      "chanLoadOptions=$chanLoadOptions, chanCacheOptions=$chanCacheOptions, chanReadOptions=$chanReadOptions)")
+    Logger.d(TAG, "normalLoad(currentChanDescriptor=$currentChanDescriptor, showLoading=$showLoading, " +
+      "requestNewPostsFromServer=$requestNewPostsFromServer, chanLoadOptions=$chanLoadOptions, " +
+      "chanCacheOptions=$chanCacheOptions, chanReadOptions=$chanReadOptions)")
 
     chanThreadLoadingState = ChanThreadLoadingState.Loading
 
@@ -613,7 +616,11 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  private suspend fun onFiltersChanged() {
+  private suspend fun onFiltersChanged(filterEvent: ChanFilterManager.FilterEvent) {
+    if (filterEvent is ChanFilterManager.FilterEvent.Initialized) {
+      return
+    }
+
     chanPostRepository.awaitUntilInitialized()
     Logger.d(TAG, "onFiltersChanged($currentChanDescriptor) clearing posts cache")
 
