@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.usecase
 
 import android.text.SpannableString
+import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
@@ -72,6 +73,14 @@ class GlobalSearchUseCase(
         return SearchResult.Failure(SearchError.ServerError(htmlReaderResponse.statusCode))
       }
       is HtmlReaderRequest.HtmlReaderResponse.UnknownServerError -> {
+        if (htmlReaderResponse.isCloudFlareException()) {
+          val cloudFlareDetectedException =
+            htmlReaderResponse.error as CloudFlareHandlerInterceptor.CloudFlareDetectedException
+          val searchError = SearchError.CloudFlareDetectedError(cloudFlareDetectedException.requestUrl)
+
+          return SearchResult.Failure(searchError)
+        }
+
         Logger.e(TAG, "doSearch() UnknownServerError", htmlReaderResponse.error)
         return SearchResult.Failure(SearchError.UnknownError(htmlReaderResponse.error))
       }

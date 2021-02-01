@@ -158,6 +158,10 @@ internal class SearchResultsPresenter(
 
       val searchResult = executeRequest()
       if (searchResult is SearchResult.Failure) {
+        if (searchResult.searchError is SearchError.CloudFlareDetectedError) {
+          withView { onCloudFlareDetected(searchResult.searchError.requestUrl) }
+        }
+
         logSearchError(searchResult)
 
         if (prevStateData == null) {
@@ -194,6 +198,9 @@ internal class SearchResultsPresenter(
       is SearchError.ServerError -> Logger.e(TAG, "${searchResult.searchError}")
       is SearchError.HtmlParsingError -> Logger.e(TAG, "${searchResult.searchError}")
       is SearchError.UnknownError -> Logger.e(TAG, "Unknown error", searchResult.searchError.error)
+      is SearchError.CloudFlareDetectedError -> {
+        Logger.e(TAG, "CloudFlare detected error, requestUrl=${searchResult.searchError.requestUrl}")
+      }
     }
   }
 
@@ -332,6 +339,7 @@ internal class SearchResultsPresenter(
       is SearchError.ServerError -> "Bad response status: ${failure.searchError.statusCode}"
       is SearchError.UnknownError -> "Unknown error: ${failure.searchError.error.errorMessageOrClassName()}"
       is SearchError.HtmlParsingError -> "Html parsing error: ${failure.searchError.message}"
+      is SearchError.CloudFlareDetectedError -> "CloudFlare detected! You need to pass CloudFlare checks to continue"
     }
   }
 

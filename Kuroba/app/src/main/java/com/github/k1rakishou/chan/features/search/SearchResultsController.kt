@@ -19,18 +19,22 @@ import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchErrorView
 import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchLoadingView
 import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchPostDividerView
 import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchPostView
+import com.github.k1rakishou.chan.ui.controller.CloudFlareBypassController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.chan.utils.plusAssign
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import okhttp3.HttpUrl
 import javax.inject.Inject
 
 class SearchResultsController(
@@ -87,6 +91,40 @@ class SearchResultsController(
     presenter.resetSavedState()
     presenter.resetLastRecyclerViewScrollState()
     return super.onBack()
+  }
+
+  override fun onCloudFlareDetected(requestUrl: HttpUrl) {
+    val hostUrl = HttpUrl.Builder()
+      .scheme("https")
+      .host(requestUrl.host)
+      .build()
+      .toString()
+
+    val controller = CloudFlareBypassController(
+      context = context,
+      originalRequestUrlHost = hostUrl,
+      onResult = { cookieResult ->
+        when (cookieResult) {
+          is CloudFlareBypassController.CookieResult.CookieValue -> {
+            AppModuleAndroidUtils.showToast(context, "Successfully passed CloudFlare checks!")
+            presenter.reloadCurrentPage()
+
+            return@CloudFlareBypassController
+          }
+          is CloudFlareBypassController.CookieResult.Error -> {
+            AppModuleAndroidUtils.showToast(
+              context,
+              "Failed to pass CloudFlare checks, reason: ${cookieResult.exception.errorMessageOrClassName()}"
+            )
+          }
+          CloudFlareBypassController.CookieResult.Canceled -> {
+            AppModuleAndroidUtils.showToast(context, "Failed to pass CloudFlare checks, reason: Canceled")
+          }
+        }
+      }
+    )
+
+    presentController(controller, animated = true)
   }
 
   private fun onStateChanged(state: SearchResultsControllerState) {

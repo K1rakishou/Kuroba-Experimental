@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.net
 
+import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.suspendCall
@@ -64,8 +65,13 @@ abstract class HtmlReaderRequest<T>(
   sealed class HtmlReaderResponse<out T> {
     class Success<out T>(val result: T) : HtmlReaderResponse<T>()
     class ServerError(val statusCode: Int) : HtmlReaderResponse<Nothing>()
-    class UnknownServerError(val error: Throwable) : HtmlReaderResponse<Nothing>()
     class ParsingError(val error: Throwable) : HtmlReaderResponse<Nothing>()
+
+    class UnknownServerError(val error: Throwable) : HtmlReaderResponse<Nothing>() {
+      fun isCloudFlareException(): Boolean {
+        return error is CloudFlareHandlerInterceptor.CloudFlareDetectedException
+      }
+    }
   }
 
   companion object {

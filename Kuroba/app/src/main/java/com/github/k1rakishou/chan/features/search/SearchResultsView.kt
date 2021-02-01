@@ -1,3 +1,7 @@
 package com.github.k1rakishou.chan.features.search
 
-interface SearchResultsView
+import okhttp3.HttpUrl
+
+interface SearchResultsView {
+  fun onCloudFlareDetected(requestUrl: HttpUrl)
+}

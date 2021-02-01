@@ -78,6 +78,7 @@ sealed class SearchError  {
   data class SiteNotFound(val siteDescriptor: SiteDescriptor) : SearchError()
   data class ServerError(val statusCode: Int) : SearchError()
   data class UnknownError(val error: Throwable) : SearchError()
+  data class CloudFlareDetectedError(val requestUrl: HttpUrl) : SearchError()
   data class HtmlParsingError(val message: String) : SearchError()
 }
 
