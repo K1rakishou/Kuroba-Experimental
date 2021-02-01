@@ -192,15 +192,18 @@ class BoardManager(
 
   suspend fun activateDeactivateBoards(
     siteDescriptor: SiteDescriptor,
-    boardDescriptors: LinkedHashSet<BoardDescriptor>,
+    boardDescriptorsSet: LinkedHashSet<BoardDescriptor>,
     activate: Boolean
   ): Boolean {
-    if (boardDescriptors.isEmpty()) {
+    if (boardDescriptorsSet.isEmpty()) {
       return false
     }
 
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
+
+    val boardDescriptors = boardDescriptorsSet
+      .sortedBy { boardDescriptor -> boardDescriptor.boardCode }
 
     val changed = lock.write {
       // Very bad, but whatever we only do this in one place where it's not critical
