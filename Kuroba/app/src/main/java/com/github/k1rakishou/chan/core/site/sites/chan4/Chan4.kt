@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.core.site.sites.chan4
 import android.webkit.CookieManager
 import android.webkit.WebView
 import com.github.k1rakishou.OptionSettingItem
+import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
@@ -16,7 +17,6 @@ import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.SiteSetting.SiteOptionsSetting
-import com.github.k1rakishou.chan.core.site.SiteSetting.SiteStringSetting
 import com.github.k1rakishou.chan.core.site.SiteUrlHandler
 import com.github.k1rakishou.chan.core.site.common.FutabaChanReader
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
@@ -66,7 +66,7 @@ open class Chan4 : SiteBase() {
   private lateinit var passPass: StringSetting
   private lateinit var passToken: StringSetting
   private lateinit var captchaType: OptionsSetting<CaptchaType>
-  lateinit var  flagType: StringSetting
+  lateinit var flagType: StringSetting
 
   override fun initialize() {
     super.initialize()
@@ -515,6 +515,13 @@ open class Chan4 : SiteBase() {
     )
   }
 
+  override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? {
+    return when (settingId) {
+      SiteSetting.SiteSettingId.CountryFlag -> flagType as T
+      else -> super.getSettingBySettingId(settingId)
+    }
+  }
+
   override fun settings(): MutableList<SiteSetting> {
     val settings = ArrayList<SiteSetting>()
 
@@ -524,14 +531,6 @@ open class Chan4 : SiteBase() {
         null,
         captchaType,
         listOf("Javascript", "Noscript")
-      )
-    )
-
-    settings.add(
-      SiteStringSetting(
-        "Country flag code",
-        null,
-        flagType
       )
     )
 

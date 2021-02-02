@@ -71,17 +71,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                             android:textSize="16sp" />
 
                         <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
-                            android:id="@+id/flag"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:hint="Flag"
-                            android:singleLine="true"
-                            android:textSize="16sp"
-                            android:visibility="gone"
-                            tools:visibility="visible" />
-
-                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
                             android:id="@+id/options"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -89,6 +78,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                             android:hint="@string/reply_options"
                             android:singleLine="true"
                             android:textSize="16sp" />
+
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+                            android:id="@+id/flag"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:hint="@string/reply_flag"
+                            android:gravity="center"
+                            android:singleLine="true"
+                            android:textSize="16sp"
+                            android:visibility="gone"
+                            tools:visibility="visible" />
 
                     </LinearLayout>
 

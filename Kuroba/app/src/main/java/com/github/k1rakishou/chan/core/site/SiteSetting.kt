@@ -38,7 +38,8 @@ sealed class SiteSetting(
   ) : SiteSetting(settingName, settingDescription)
 
   enum class SiteSettingId {
-    CloudFlareClearanceCookie
+    CloudFlareClearanceCookie,
+    CountryFlag
   }
 
 }

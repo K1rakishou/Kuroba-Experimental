@@ -35,6 +35,7 @@ import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.prefs.JsonSetting
@@ -444,6 +445,7 @@ class Dvach : CommonSite() {
   companion object {
     private const val TAG = "Dvach"
     const val SITE_NAME = "2ch.hk"
+    val SITE_DESCRIPTOR = SiteDescriptor(SITE_NAME)
     const val CAPTCHA_KEY = "6LeQYz4UAAAAAL8JCk35wHSv6cuEV5PyLhI6IxsM"
     const val DEFAULT_MAX_FILE_SIZE = 20480 * 1024 // 20MB
 

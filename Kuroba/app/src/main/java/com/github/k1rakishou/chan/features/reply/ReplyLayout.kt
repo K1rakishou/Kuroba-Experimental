@@ -59,8 +59,10 @@ import com.github.k1rakishou.chan.core.manager.KeyboardStateListener
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
+import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
+import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.features.reply.ReplyPresenter.ReplyPresenterCallback
 import com.github.k1rakishou.chan.features.reply.data.Reply
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
@@ -72,8 +74,10 @@ import com.github.k1rakishou.chan.ui.captcha.GenericWebViewAuthenticationLayout
 import com.github.k1rakishou.chan.ui.captcha.LegacyCaptchaLayout
 import com.github.k1rakishou.chan.ui.captcha.v1.CaptchaNojsLayoutV1
 import com.github.k1rakishou.chan.ui.captcha.v2.CaptchaNoJsLayoutV2
+import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout
+import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowDrawable
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
@@ -81,6 +85,8 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.ui.view.LoadView
 import com.github.k1rakishou.chan.ui.view.ReplyInputEditText
 import com.github.k1rakishou.chan.ui.view.ReplyInputEditText.SelectionChangedListener
+import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
+import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
@@ -96,6 +102,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import com.github.k1rakishou.prefs.StringSetting
 import com.google.android.material.textview.MaterialTextView
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
@@ -134,6 +141,8 @@ class ReplyLayout @JvmOverloads constructor(
   lateinit var proxyStorage: ProxyStorage
   @Inject
   lateinit var replyManager: ReplyManager
+  @Inject
+  lateinit var staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository
 
   private var threadListLayoutCallbacks: ThreadListLayoutCallbacks? = null
   private var threadListLayoutFilesCallback: ReplyLayoutFilesArea.ThreadListLayoutCallbacks? = null
@@ -153,7 +162,7 @@ class ReplyLayout @JvmOverloads constructor(
   private lateinit var replyInputHolder: FrameLayout
   private lateinit var name: ColorizableEditText
   private lateinit var subject: ColorizableEditText
-  private lateinit var flag: ColorizableEditText
+  private lateinit var flag: ColorizableTextView
   private lateinit var options: ColorizableEditText
   private lateinit var nameOptions: LinearLayout
   private lateinit var commentButtonsHolder: LinearLayout
@@ -315,6 +324,7 @@ class ReplyLayout @JvmOverloads constructor(
     commentMathButton.setOnClickListener(this)
     commentEqnButton.setOnClickListener(this)
     commentSJISButton.setOnClickListener(this)
+    flag.setOnClickListener(this)
 
     replyInputMessage.setOnClickListener {
       removeCallbacks(closeMessageRunnable)
@@ -588,8 +598,51 @@ class ReplyLayout @JvmOverloads constructor(
         v === commentMathButton -> insertTags("[math]", "[/math]")
         v === commentSJISButton -> insertTags("[sjis]", "[/sjis]")
         v === commentRevertChangeButton -> presenter.onRevertChangeButtonClicked()
+        v === flag -> showFlagSelector(chanDescriptor)
       }
     }
+  }
+
+  private fun showFlagSelector(chanDescriptor: ChanDescriptor?) {
+    val boardDescriptor = chanDescriptor?.boardDescriptor()
+      ?: return
+
+    val countryFlagSetting = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+      ?.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.CountryFlag)
+      ?: return
+
+    val flagInfoList = staticBoardFlagInfoRepository.getFlagInfoList(boardDescriptor)
+    if (flagInfoList.isEmpty()) {
+      return
+    }
+
+    val lastUsedFlagInfo = staticBoardFlagInfoRepository.getLastUsedFlagInfo(boardDescriptor)
+      ?: return
+
+    val floatingListMenuItems = mutableListOf<FloatingListMenuItem>()
+
+    flagInfoList.forEach { flagInfo ->
+      floatingListMenuItems += CheckableFloatingListMenuItem(
+        key = flagInfo.flagKey,
+        name = "${flagInfo.flagKey} (${flagInfo.flagDescription})",
+        value = flagInfo,
+        isCurrentlySelected = flagInfo.flagKey == lastUsedFlagInfo.flagKey
+      )
+    }
+
+    val floatingListMenuController = FloatingListMenuController(
+      context,
+      ConstraintLayoutBiasPair.Center,
+      floatingListMenuItems,
+      { floatingListMenuItem ->
+        val flagInfo = floatingListMenuItem.value as? StaticBoardFlagInfoRepository.FlagInfo
+          ?: return@FloatingListMenuController
+
+        countryFlagSetting.set(flagInfo.flagKey)
+        openFlag(flagInfo)
+      })
+
+    threadListLayoutCallbacks?.presentController(floatingListMenuController)
   }
 
   private fun insertQuote(): Boolean {
@@ -794,10 +847,16 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   override fun loadDraftIntoViews(chanDescriptor: ChanDescriptor) {
+    val lastUsedFlagInfo = staticBoardFlagInfoRepository.getLastUsedFlagInfo(chanDescriptor.boardDescriptor())
+
     replyManager.readReply(chanDescriptor) { reply: Reply ->
       name.setText(reply.postName)
       subject.setText(reply.subject)
-      flag.setText(reply.flag)
+
+      if (lastUsedFlagInfo != null) {
+        flag.text = getString(R.string.reply_flag_format, lastUsedFlagInfo.flagKey)
+      }
+
       options.setText(reply.options)
 
       blockSelectionChange = true
@@ -807,12 +866,17 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   override fun loadViewsIntoDraft(chanDescriptor: ChanDescriptor) {
+    val lastUsedFlagInfo = staticBoardFlagInfoRepository.getLastUsedFlagInfo(chanDescriptor.boardDescriptor())
+
     replyManager.readReply(chanDescriptor) { reply: Reply ->
       reply.postName = name.text.toString()
       reply.subject = subject.text.toString()
-      reply.flag = flag.text.toString()
       reply.options = options.text.toString()
       reply.comment = comment.text.toString()
+
+      if (lastUsedFlagInfo != null) {
+        reply.flag = lastUsedFlagInfo.flagKey
+      }
     }
   }
 
@@ -931,8 +995,13 @@ class ReplyLayout @JvmOverloads constructor(
     subject.visibility = if (open) VISIBLE else GONE
   }
 
-  override fun openFlag(open: Boolean) {
-    flag.visibility = if (open) VISIBLE else GONE
+  override fun openFlag(flagInfo: StaticBoardFlagInfoRepository.FlagInfo) {
+    flag.visibility = VISIBLE
+    flag.text = getString(R.string.reply_flag_format, flagInfo.flagKey)
+  }
+
+  override fun hideFlag() {
+    flag.visibility = GONE
   }
 
   override fun openCommentQuoteButton(open: Boolean) {
@@ -1228,6 +1297,7 @@ class ReplyLayout @JvmOverloads constructor(
     fun getCurrentChanDescriptor(): ChanDescriptor?
     fun updateRecyclerViewPaddings()
     fun measureReplyLayout()
+    fun presentController(controller: FloatingListMenuController)
   }
 
   companion object {

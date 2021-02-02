@@ -34,6 +34,15 @@ data class ChanBoard(
   fun siteName(): String =  boardDescriptor.siteName()
   fun boardCode(): String = boardDescriptor.boardCode
 
+  fun boardSupportsFlagSelection(): Boolean {
+    val is4chan = boardDescriptor.siteDescriptor.is4chan()
+    if (is4chan && boardCode() == "pol") {
+      return true
+    }
+
+    return false
+  }
+
   companion object {
     const val DEFAULT_CATALOG_SIZE = 150
 

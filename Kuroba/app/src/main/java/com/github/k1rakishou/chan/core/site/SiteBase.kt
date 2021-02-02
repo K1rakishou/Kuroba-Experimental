@@ -182,6 +182,7 @@ abstract class SiteBase : Site, CoroutineScope {
   override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? {
     return when (settingId) {
       SiteSetting.SiteSettingId.CloudFlareClearanceCookie -> cloudFlareClearanceCookie as T
+      SiteSetting.SiteSettingId.CountryFlag -> null
     }
   }
 

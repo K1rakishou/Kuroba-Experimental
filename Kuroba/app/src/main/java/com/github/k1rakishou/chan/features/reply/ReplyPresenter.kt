@@ -28,6 +28,7 @@ import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.repository.LastReplyRepository
+import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
@@ -70,7 +71,8 @@ class ReplyPresenter @Inject constructor(
   private val boardManager: BoardManager,
   private val bookmarksManager: BookmarksManager,
   private val chanThreadManager: ChanThreadManager,
-  private val chanPostRepository: ChanPostRepository
+  private val chanPostRepository: ChanPostRepository,
+  private val staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository
 ) : AuthenticationLayoutCallback,
   CoroutineScope,
   CommentEditingHistory.CommentEditingHistoryListener {
@@ -206,6 +208,7 @@ class ReplyPresenter @Inject constructor(
     }
 
     val is4chan = chanBoard.boardDescriptor.siteDescriptor.is4chan()
+
     callback.openCommentQuoteButton(isExpanded)
 
     if (chanBoard.spoilers) {
@@ -225,8 +228,12 @@ class ReplyPresenter @Inject constructor(
       callback.openCommentSJISButton(isExpanded)
     }
 
-    if (is4chan && chanBoard.boardCode() == "pol") {
-      callback.openFlag(isExpanded)
+    if (isExpanded && chanBoard.boardSupportsFlagSelection()) {
+      val flagInfo = staticBoardFlagInfoRepository.getLastUsedFlagInfo(chanBoard.boardDescriptor)
+        ?: return
+      callback.openFlag(flagInfo)
+    } else {
+      callback.hideFlag()
     }
   }
 
@@ -444,7 +451,7 @@ class ReplyPresenter @Inject constructor(
     callback.openMessage(null)
     callback.setExpanded(expanded = false, isCleaningUp = true)
     callback.openSubject(false)
-    callback.openFlag(false)
+    callback.hideFlag()
     callback.openCommentQuoteButton(false)
     callback.openCommentSpoilerButton(false)
     callback.openCommentCodeButton(false)
@@ -807,7 +814,8 @@ class ReplyPresenter @Inject constructor(
     fun setExpanded(expanded: Boolean, isCleaningUp: Boolean)
     fun openNameOptions(open: Boolean)
     fun openSubject(open: Boolean)
-    fun openFlag(open: Boolean)
+    fun openFlag(flagInfo: StaticBoardFlagInfoRepository.FlagInfo)
+    fun hideFlag()
     fun openCommentQuoteButton(open: Boolean)
     fun openCommentSpoilerButton(open: Boolean)
     fun openCommentCodeButton(open: Boolean)

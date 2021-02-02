@@ -21,6 +21,7 @@ import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository;
 import com.github.k1rakishou.chan.core.repository.LastReplyRepository;
+import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository;
 import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
@@ -68,6 +69,16 @@ public class RepositoryModule {
             BoardManager boardManager
     ) {
         return new LastReplyRepository(siteManager, boardManager);
+    }
+
+    @Provides
+    @Singleton
+    public StaticBoardFlagInfoRepository provideStaticBoardFlagInfoRepository(
+            SiteManager siteManager
+    ) {
+        return new StaticBoardFlagInfoRepository(
+                siteManager
+        );
     }
 
 }
