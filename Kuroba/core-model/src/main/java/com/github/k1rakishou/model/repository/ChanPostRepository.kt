@@ -517,14 +517,11 @@ class ChanPostRepository(
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }
 
-        // TODO(KurobaEx v0.5.0): maybe the amount of posts to delete should be decreased,
-        //  like 1/3 at a time not 1/2?
-
+        // Delete 1/3 of the posts in the database
         val toDeleteCount = if (forced) {
-          totalAmountOfPostsInDatabase / 2
+          totalAmountOfPostsInDatabase / 3
         } else {
-          // Delete half of the posts in the database
-          max(totalAmountOfPostsInDatabase, maxPostsAmount) / 2
+          max(totalAmountOfPostsInDatabase, maxPostsAmount) / 3
         }
 
         if (toDeleteCount <= 0) {
@@ -571,13 +568,11 @@ class ChanPostRepository(
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }
 
-        // TODO(KurobaEx v0.5.0): maybe the amount of posts to delete should be decreased,
-        //  like 1/3 at a time not 1/2?
+        // Delete 1/3 of the threads in the database
         val toDeleteCount = if (forced) {
-          totalAmountOfThreadsInDatabase / 2
+          totalAmountOfThreadsInDatabase / 3
         } else {
-          // Delete half of the posts in the database
-          max(totalAmountOfThreadsInDatabase, maxThreadsAmount) / 2
+          max(totalAmountOfThreadsInDatabase, maxThreadsAmount) / 3
         }
 
         if (toDeleteCount <= 0) {

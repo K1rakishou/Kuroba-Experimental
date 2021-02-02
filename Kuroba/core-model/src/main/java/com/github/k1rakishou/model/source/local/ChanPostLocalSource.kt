@@ -18,12 +18,15 @@ import com.github.k1rakishou.model.entity.chan.post.ChanPostImageEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostReplyEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanTextSpanEntity
 import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
+import com.github.k1rakishou.model.entity.view.ChanThreadsWithPosts
+import com.github.k1rakishou.model.entity.view.OldChanPostThread
 import com.github.k1rakishou.model.mapper.ChanPostEntityMapper
 import com.github.k1rakishou.model.mapper.ChanPostHttpIconMapper
 import com.github.k1rakishou.model.mapper.ChanPostImageMapper
 import com.github.k1rakishou.model.mapper.ChanThreadMapper
 import com.github.k1rakishou.model.mapper.TextSpanMapper
 import com.google.gson.Gson
+import java.util.concurrent.TimeUnit
 
 class ChanPostLocalSource(
   database: KurobaDatabase,
@@ -650,15 +653,21 @@ class ChanPostLocalSource(
     var deletedTotal = 0
     var skippedTotal = 0
     var offset = 0
-
-    // TODO(KurobaEx v0.5.0): force return if this operation takes more than 10 seconds
+    val startTime = System.currentTimeMillis()
 
     do {
+      if (System.currentTimeMillis() - startTime > TEN_SECONDS) {
+        Logger.d(TAG, "deleteOldPosts() execution took more than ${TEN_SECONDS} millis, exiting early")
+        break
+      }
+
       val threadBatch = chanThreadDao.selectThreadsWithPostsOtherThanOp(offset, THREADS_IN_BATCH)
       if (threadBatch.isEmpty()) {
         Logger.d(TAG, "deleteOldPosts() selectThreadsWithPostsOtherThanOp returned empty list")
         return DeleteResult(deletedTotal, skippedTotal)
       }
+
+      val chanThreads = mutableSetOf<ChanThreadsWithPosts>()
 
       for (thread in threadBatch) {
         if (thread.threadBookmarkId != null) {
@@ -675,12 +684,19 @@ class ChanPostLocalSource(
           break
         }
 
-        // TODO(KurobaEx v0.5.0): batching!
-        val deletedPosts = chanPostDao.deletePostsByThreadId(thread.threadId)
-        deletedTotal += deletedPosts
+        chanThreads += thread
+      }
 
-        Logger.d(TAG, "deleteOldPosts() Deleting posts in \"${thread}\" thread, " +
-          "deleted $deletedPosts posts, deletedTotal = $deletedTotal")
+      if (chanThreads.isNotEmpty()) {
+        val threadIdSet = chanThreads
+          .map { chanThreadsWithPosts -> chanThreadsWithPosts.threadId }
+          .toSet()
+
+        val totalPosts = chanThreads
+          .sumBy { chanThreadsWithPosts -> chanThreadsWithPosts.postsCount }
+
+        Logger.d(TAG, "deleteOldPosts() deleting a batch of ${threadIdSet.size} threads with ${totalPosts} posts")
+        deletedTotal += chanPostDao.deletePostsByThreadIds(threadIdSet)
       }
 
       offset += threadBatch.size
@@ -696,15 +712,21 @@ class ChanPostLocalSource(
     var deletedTotal = 0
     var skippedTotal = 0
     var offset = 0
-
-    // TODO(KurobaEx v0.5.0): force return if this operation takes more than 10 seconds
+    val startTime = System.currentTimeMillis()
 
     do {
+      if (System.currentTimeMillis() - startTime > TEN_SECONDS) {
+        Logger.d(TAG, "deleteOldPosts() execution took more than ${TEN_SECONDS} millis, exiting early")
+        break
+      }
+
       val threadBatch = chanThreadDao.selectOldThreads(offset, THREADS_IN_BATCH)
       if (threadBatch.isEmpty()) {
         Logger.d(TAG, "deleteOldThreads() selectOldThreads returned empty list")
         return DeleteResult(deletedTotal, skippedTotal)
       }
+
+      val chanThreads = mutableSetOf<OldChanPostThread>()
 
       for (thread in threadBatch) {
         if (thread.threadBookmarkId != null) {
@@ -720,9 +742,19 @@ class ChanPostLocalSource(
           break
         }
 
-        // TODO(KurobaEx v0.5.0): batching!
-        deletedTotal += chanThreadDao.deleteThread(thread.threadId)
-        Logger.d(TAG, "deleteOldThreads() Deleting thread \"${thread}\", deletedTotal = $deletedTotal")
+        chanThreads += thread
+      }
+
+      if (chanThreads.isNotEmpty()) {
+        val threadIdSet = chanThreads
+          .map { chanThreadsWithPosts -> chanThreadsWithPosts.threadId }
+          .toSet()
+
+        val totalPosts = chanThreads
+          .sumBy { chanThreadsWithPosts -> chanThreadsWithPosts.postsCount }
+
+        Logger.d(TAG, "deleteOldThreads() deleting a batch of ${threadIdSet.size} threads with $totalPosts posts")
+        deletedTotal += chanThreadDao.deleteThreads(threadIdSet)
       }
 
       offset += threadBatch.size
@@ -740,6 +772,8 @@ class ChanPostLocalSource(
   data class DeleteResult(val deletedTotal: Int = 0, val skippedTotal: Int = 0)
 
   companion object {
-    private const val THREADS_IN_BATCH = 128
+    private const val THREADS_IN_BATCH = 256
+
+    private val TEN_SECONDS = TimeUnit.SECONDS.toMillis(10)
   }
 }

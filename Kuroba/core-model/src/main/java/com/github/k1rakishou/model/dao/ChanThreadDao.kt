@@ -176,9 +176,9 @@ abstract class ChanThreadDao {
   @Query("""
     DELETE 
     FROM ${ChanThreadEntity.TABLE_NAME} 
-    WHERE ${ChanThreadEntity.THREAD_ID_COLUMN_NAME} = :threadId
+    WHERE ${ChanThreadEntity.THREAD_ID_COLUMN_NAME} IN (:threadIds)
     """)
-  abstract suspend fun deleteThread(threadId: Long): Int
+  abstract suspend fun deleteThreads(threadIds: Collection<Long>): Int
 
   @Query("""
     DELETE 
