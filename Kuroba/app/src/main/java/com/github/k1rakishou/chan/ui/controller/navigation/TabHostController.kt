@@ -12,9 +12,9 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesController
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTabLayout
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.widget.DisableableLayout
-import com.github.k1rakishou.chan.ui.widget.KurobaTabLayout
 import com.github.k1rakishou.chan.ui.widget.KurobaViewPager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -25,7 +25,7 @@ class TabHostController(
   private val bookmarksToHighlight: List<ChanDescriptor.ThreadDescriptor>,
   private val drawerCallbacks: DrawerCallbacks?
 ) : Controller(context), ToolbarNavigationController.ToolbarSearchCallback, DisableableLayout {
-  private lateinit var tabLayout: KurobaTabLayout
+  private lateinit var tabLayout: ColorizableTabLayout
   private lateinit var viewPager: KurobaViewPager
 
   private var currentPageType: PageType? = null
