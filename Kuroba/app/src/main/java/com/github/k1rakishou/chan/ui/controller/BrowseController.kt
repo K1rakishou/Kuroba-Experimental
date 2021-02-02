@@ -293,7 +293,14 @@ class BrowseController(
         R.string.dev_bookmark_every_thread,
         true,
         DEV_BOOKMARK_EVERY_THREAD,
-        { subItem -> onBookmarkEveryThreadClicked(subItem) }
+        { presenter.bookmarkEveryThread(threadLayout.presenter.currentChanDescriptor) }
+      )
+      .addNestedItem(
+        DEV_CACHE_EVERY_THREAD,
+        R.string.dev_cache_every_thread,
+        true,
+        DEV_CACHE_EVERY_THREAD,
+        { presenter.cacheEveryThreadClicked(threadLayout.presenter.currentChanDescriptor) }
       )
       .build()
 
@@ -367,17 +374,6 @@ class BrowseController(
       .build()
 
     return this
-  }
-
-  private fun onBookmarkEveryThreadClicked(subItem: ToolbarMenuSubItem) {
-    val id = subItem.value as? Int
-      ?: return
-
-    when (id) {
-      DEV_BOOKMARK_EVERY_THREAD -> {
-        presenter.bookmarkEveryThread(threadLayout.presenter.currentChanDescriptor)
-      }
-    }
   }
 
   private fun onSortItemClicked(subItem: ToolbarMenuSubItem) {
@@ -793,5 +789,6 @@ class BrowseController(
     private const val SORT_MODE_ACTIVITY = 1006
 
     private const val DEV_BOOKMARK_EVERY_THREAD = 2000
+    private const val DEV_CACHE_EVERY_THREAD = 2001
   }
 }

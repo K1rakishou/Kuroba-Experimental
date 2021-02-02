@@ -21,6 +21,9 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.common.options.ChanCacheOptions
+import com.github.k1rakishou.common.options.ChanLoadOptions
+import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -33,6 +36,7 @@ import kotlinx.coroutines.reactive.asFlow
 import javax.inject.Inject
 
 class BrowsePresenter @Inject constructor(
+  private val appScope: CoroutineScope,
   private val historyNavigationManager: HistoryNavigationManager,
   private val bookmarksManager: BookmarksManager,
   private val siteManager: SiteManager,
@@ -139,6 +143,55 @@ class BrowsePresenter @Inject constructor(
 
     bookmarksManager.createBookmarks(simpleThreadBookmarkList)
     Logger.d(TAG, "bookmarkEveryThread() done")
+  }
+
+  fun cacheEveryThreadClicked(chanDescriptor: ChanDescriptor?) {
+    if (chanDescriptor == null) {
+      Logger.e(TAG, "cacheEveryThreadClicked() chanDescriptor == null")
+      return
+    }
+
+    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      Logger.e(TAG, "cacheEveryThreadClicked() chanDescriptor is not catalog descriptor")
+      return
+    }
+
+    chanDescriptor as ChanDescriptor.CatalogDescriptor
+
+    val catalog = chanThreadManager.getChanCatalog(chanDescriptor)
+    if (catalog == null) {
+      Logger.e(TAG, "cacheEveryThreadClicked() Couldn't find catalog by descriptor: $chanDescriptor")
+      return
+    }
+
+    val activeThreads = mutableSetOf<ChanDescriptor.ThreadDescriptor>()
+
+    catalog.iteratePostsOrdered { chanOriginalPost ->
+      appScope.launch {
+        val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+          chanDescriptor,
+          chanOriginalPost.postNo()
+        )
+
+        activeThreads += threadDescriptor
+
+        chanThreadManager.loadThreadOrCatalog(
+          chanDescriptor = threadDescriptor,
+          requestNewPostsFromServer = true,
+          chanLoadOptions = ChanLoadOptions.RetainAll,
+          chanCacheOptions = ChanCacheOptions.StoreEverywhere,
+          chanReadOptions = ChanReadOptions.default(),
+          onReloaded = {
+            activeThreads.remove(threadDescriptor)
+
+            Logger.d(TAG, "cacheEveryThreadClicked() $threadDescriptor cached, " +
+              "threads left: ${activeThreads.size}")
+          }
+        )
+      }
+    }
+
+    Logger.d(TAG, "cacheEveryThreadClicked() done")
   }
 
   interface Callback {

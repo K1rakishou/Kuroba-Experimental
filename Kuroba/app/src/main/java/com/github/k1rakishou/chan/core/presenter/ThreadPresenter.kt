@@ -1669,20 +1669,8 @@ class ThreadPresenter @Inject constructor(
           }
 
           if (deleteResponse.deleted) {
-            // TODO(KurobaEx / @Cleanup): I probably don't need to call this since
-            //  chanThreadManager.deletePost() is doing that internally
-            val isSuccess = chanPostRepository.deletePost(post.postDescriptor)
-              .peekError { error ->
-                Logger.e(TAG, "Error while trying to delete post " +
-                  "${post.postDescriptor} from the database", error)
-              }
-              .valueOrNull() != null
-
-            if (isSuccess) {
-              chanThreadManager.deletePost(post.postDescriptor)
-
-              normalLoad()
-            }
+            chanThreadManager.deletePost(post.postDescriptor)
+            normalLoad()
           }
 
           threadPresenterCallback?.hideDeleting(message)
