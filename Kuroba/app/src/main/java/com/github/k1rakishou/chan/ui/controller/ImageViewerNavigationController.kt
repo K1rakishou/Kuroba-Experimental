@@ -63,7 +63,13 @@ class ImageViewerNavigationController(context: Context) : ToolbarNavigationContr
     imageViewerCallback: ImageViewerCallback?,
     goPostCallback: GoPostCallback? = null
   ) {
-    val filteredImages = filterOutHiddenImagesUseCase.execute(images)
+    val output = filterOutHiddenImagesUseCase.execute(
+      FilterOutHiddenImagesUseCase.Input(images, index)
+    )
+
+    val filteredImages = output.images
+    val newIndex = output.index
+
     if (filteredImages.isEmpty()) {
       showToast("No images left to show after filtering out images of hidden/removed posts");
       return
@@ -78,7 +84,7 @@ class ImageViewerNavigationController(context: Context) : ToolbarNavigationContr
     imageViewerController.setGoPostCallback(goPostCallback)
     pushController(imageViewerController, false)
     imageViewerController.setImageViewerCallback(imageViewerCallback)
-    imageViewerController.presenter.showImages(filteredImages, index, chanDescriptor)
+    imageViewerController.presenter.showImages(filteredImages, newIndex, chanDescriptor)
   }
 
 }

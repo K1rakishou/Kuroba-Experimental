@@ -8,20 +8,22 @@ import com.github.k1rakishou.model.data.post.ChanPostImage
 class FilterOutHiddenImagesUseCase(
   private val postHideManager: PostHideManager,
   private val postFilterManager: PostFilterManager
-) : IUseCase<List<ChanPostImage>, List<ChanPostImage>> {
+) : IUseCase<FilterOutHiddenImagesUseCase.Input, FilterOutHiddenImagesUseCase.Output> {
 
-  override fun execute(parameter: List<ChanPostImage>): List<ChanPostImage> {
-    val threadDescriptors = parameter
-      .map { chanPostImage -> chanPostImage.ownerPostDescriptor.threadDescriptor() }
-      .toSet()
+  override fun execute(parameter: Input): Output {
+    val chanPostImages = parameter.images
+    val prevSelectedImage = chanPostImages[parameter.index]
 
-    val resultList = mutableListWithCap<ChanPostImage>(parameter.size / 2)
+    val groupedImages = chanPostImages
+      .groupBy { chanPostImage -> chanPostImage.ownerPostDescriptor.threadDescriptor() }
 
-    threadDescriptors.forEach { threadDescriptor ->
+    val resultList = mutableListWithCap<ChanPostImage>(chanPostImages.size / 2)
+
+    groupedImages.forEach { (threadDescriptor, chanPostImages) ->
       val chanPostHidesMap = postHideManager.getHiddenPostsForThread(threadDescriptor)
         .associateBy { chanPostHide -> chanPostHide.postDescriptor }
 
-      parameter.forEach { chanPostImage ->
+      chanPostImages.forEach { chanPostImage ->
         if (chanPostHidesMap.containsKey(chanPostImage.ownerPostDescriptor)) {
           return@forEach
         }
@@ -34,7 +36,22 @@ class FilterOutHiddenImagesUseCase(
       }
     }
 
-    return resultList
+    val newSelectedImageIndex = resultList.indexOfFirst { postImage -> postImage == prevSelectedImage }
+    if (newSelectedImageIndex < 0) {
+      return Output(emptyList(), -1)
+    }
+
+    return Output(resultList, newSelectedImageIndex)
   }
+
+  data class Input(
+    val images: List<ChanPostImage>,
+    val index: Int
+  )
+
+  data class Output(
+    val images: List<ChanPostImage>,
+    val index: Int
+  )
 
 }

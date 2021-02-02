@@ -239,13 +239,19 @@ abstract class ThreadController(
       return
     }
 
-    val filteredImages = filterOutHiddenImagesUseCase.execute(images)
+    val output = filterOutHiddenImagesUseCase.execute(
+      FilterOutHiddenImagesUseCase.Input(images, index)
+    )
+
+    val filteredImages = output.images
+    val newIndex = output.index
+
     if (filteredImages.isEmpty()) {
       return
     }
 
     val albumViewController = AlbumViewController(context)
-    albumViewController.setImages(chanDescriptor, filteredImages, index, navigation.title)
+    albumViewController.setImages(chanDescriptor, filteredImages, newIndex, navigation.title)
 
     if (doubleNavigationController != null) {
       doubleNavigationController!!.pushController(albumViewController)
