@@ -67,9 +67,7 @@ class TabHostController(
     viewPager.addOnPageChangeListener(simpleOnPageChangeListener)
     viewPager.setDisableableLayoutHandler(this)
 
-    // TODO(KurobaEx v0.5.0): add ability to override this when TabHostController has custom input
-    //  (for example when we want to focus on BookmarksController to show highlighted bookmarks etc)
-    onTabWithTypeSelected(getLastOpenedTabPageIndex())
+    onTabWithTypeSelected(getLastOpenedTabPageIndex(bookmarksToHighlight))
     viewPagerAdapter.notifyDataSetChanged()
   }
 
@@ -190,7 +188,13 @@ class TabHostController(
 
   }
 
-  private fun getLastOpenedTabPageIndex(): PageType {
+  private fun getLastOpenedTabPageIndex(
+    bookmarksToHighlight: List<ChanDescriptor.ThreadDescriptor>
+  ): PageType {
+    if (bookmarksToHighlight.isNotEmpty()) {
+      return PageType.Bookmarks
+    }
+
     val tabPageIndex = PersistableChanState.bookmarksLastOpenedTabPageIndex.get()
     return PageType.fromInt(tabPageIndex)
   }
