@@ -126,7 +126,6 @@ object SoundCloudLinkExtractContentParser : IExtractContentParser {
     )
   }
 
-  // TODO(KurobaEx / @Testme!!!):
   private fun createAlbumParserCommandBuffer(): List<KurobaParserCommand<SoundCloudAlbumLinkContentCollector>> {
     return KurobaHtmlParserCommandBufferBuilder<SoundCloudAlbumLinkContentCollector>()
       .start {
@@ -148,7 +147,6 @@ object SoundCloudLinkExtractContentParser : IExtractContentParser {
       .build()
   }
 
-  // TODO(KurobaEx / @Testme!!!):
   private fun createNormalParserCommandBuffer(): List<KurobaParserCommand<SoundCloudNormalLinkContentCollector>> {
     return KurobaHtmlParserCommandBufferBuilder<SoundCloudNormalLinkContentCollector>()
       .start {

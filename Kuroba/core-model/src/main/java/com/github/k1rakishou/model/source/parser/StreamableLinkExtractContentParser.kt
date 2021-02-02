@@ -54,7 +54,6 @@ object StreamableLinkExtractContentParser : IExtractContentParser {
     )
   }
 
-  // TODO(KurobaEx / @Testme!!!):
   private fun createParserCommandBuffer():  List<KurobaParserCommand<StreamableLinkContentCollector>> {
     return KurobaHtmlParserCommandBufferBuilder<StreamableLinkContentCollector>()
       .start {
@@ -64,17 +63,24 @@ object StreamableLinkExtractContentParser : IExtractContentParser {
           body()
 
           nest {
-            script(
-              attrExtractorBuilderFunc = {
-                expectAttrWithValue("data-id", KurobaMatcher.PatternMatcher.stringEquals("player-instream"))
-                extractAttrValueByKey("data-duration")
-                extractAttrValueByKey("data-title")
-              },
-              extractorFunc = { _, extractAttributeValues, collector ->
-                collector.videoTitle = extractAttributeValues.getAttrValue("data-title")
-                collector.videoDuration = extractAttributeValues.getAttrValue("data-duration")
-              }
-            )
+            div(matchableBuilderFunc = {
+              className(KurobaMatcher.PatternMatcher.stringEquals("container"))
+              attr("id", KurobaMatcher.PatternMatcher.stringEquals("player"))
+            })
+
+            nest {
+              script(
+                matchableBuilderFunc = { attr("data-id", KurobaMatcher.PatternMatcher.stringEquals("player-instream")) },
+                attrExtractorBuilderFunc = {
+                  extractAttrValueByKey("data-duration")
+                  extractAttrValueByKey("data-title")
+                },
+                extractorFunc = { _, extractAttributeValues, collector ->
+                  collector.videoTitle = extractAttributeValues.getAttrValue("data-title")
+                  collector.videoDuration = extractAttributeValues.getAttrValue("data-duration")
+                }
+              )
+            }
           }
         }
       }
