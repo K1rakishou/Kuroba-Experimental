@@ -530,18 +530,22 @@ public class PostAdapter
 
     public long getPostNo(int itemPosition) {
         if (itemPosition < 0) {
-            return -1;
+            return -1L;
         }
 
         int correctedPosition = getPostPosition(itemPosition);
         if (correctedPosition < 0) {
-            return -1;
+            return -1L;
         }
 
-        int itemViewType = getItemViewType(correctedPosition);
+        int itemViewType = getItemViewTypeSafe(correctedPosition);
         if (itemViewType == TYPE_STATUS) {
             correctedPosition = getPostPosition(correctedPosition - 1);
-            itemViewType = getItemViewType(correctedPosition);
+            itemViewType = getItemViewTypeSafe(correctedPosition);
+        }
+
+        if (itemViewType < 0) {
+            return -1L;
         }
 
         if (itemViewType != TYPE_POST && itemViewType != TYPE_POST_STUB) {
@@ -554,6 +558,28 @@ public class PostAdapter
 
         ChanPost post = displayList.get(correctedPosition);
         return post.postNo();
+    }
+
+    private int getItemViewTypeSafe(int position) {
+        if (position == lastSeenIndicatorPosition) {
+            return TYPE_LAST_SEEN;
+        }
+
+        if (showStatusView() && position == getItemCount() - 1) {
+            return TYPE_STATUS;
+        }
+
+        int correctedPosition = getPostPosition(position);
+        if (correctedPosition < 0 || correctedPosition > displayList.size()) {
+            return -1;
+        }
+
+        ChanPost post = displayList.get(correctedPosition);
+        if (postFilterManager.getFilterStub(post.getPostDescriptor())) {
+            return TYPE_POST_STUB;
+        } else {
+            return TYPE_POST;
+        }
     }
 
     public boolean isErrorShown() {
