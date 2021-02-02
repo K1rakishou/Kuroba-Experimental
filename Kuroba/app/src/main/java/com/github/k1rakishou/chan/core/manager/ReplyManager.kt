@@ -324,8 +324,18 @@ class ReplyManager @Inject constructor(
     val attachFilesDir = appConstants.attachFilesDir
     val attachFilesMetaDir = appConstants.attachFilesMetaDir
 
-    // TODO(KurobaEx / @Speedup): we don't need to do listFiles() inside of the loop,
-    //  it can only be done once outside of the loop
+    val filesInDir = attachFilesDir.listFiles()
+    val metaFilesInDir = attachFilesMetaDir.listFiles()
+
+    val allFileNamesSet = filesInDir
+      ?.map { file -> file.absolutePath }
+      ?.toSet()
+      ?: emptySet()
+
+    val allMetaFileNamesSet = metaFilesInDir
+      ?.map { file -> file.absolutePath }
+      ?.toSet()
+      ?: emptySet()
 
     while (true) {
       val uuid = UUID.randomUUID()
@@ -333,23 +343,10 @@ class ReplyManager @Inject constructor(
       val metaFileName = getMetaFileName(uuid.toString())
       val previewFileName = getPreviewFileName(uuid.toString())
 
-      val filesInDir = attachFilesDir.listFiles()
-      val metaFilesInDir = attachFilesMetaDir.listFiles()
-
       if ((filesInDir == null || filesInDir.isEmpty())
         && (metaFilesInDir == null || metaFilesInDir.isEmpty())) {
         return UniqueFileName(uuid, fileName, metaFileName, previewFileName)
       }
-
-      val allFileNamesSet = filesInDir
-        ?.map { file -> file.absolutePath }
-        ?.toSet()
-        ?: emptySet()
-
-      val allMetaFileNamesSet = metaFilesInDir
-        ?.map { file -> file.absolutePath }
-        ?.toSet()
-        ?: emptySet()
 
       if (fileName in allFileNamesSet) {
         continue
