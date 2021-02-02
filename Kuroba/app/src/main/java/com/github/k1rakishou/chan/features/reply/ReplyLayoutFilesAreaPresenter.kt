@@ -10,13 +10,14 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
+import com.github.k1rakishou.chan.features.reply.data.AttachAdditionalInfo
 import com.github.k1rakishou.chan.features.reply.data.IReplyAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.features.reply.data.ReplyNewAttachable
+import com.github.k1rakishou.chan.features.reply.data.SpoilerInfo
 import com.github.k1rakishou.chan.features.reply.data.TooManyAttachables
-import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyReplyFileView
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.PickedFile
@@ -395,7 +396,7 @@ class ReplyLayoutFilesAreaPresenter(
             val spoilerInfo = if (!boardSupportsSpoilers && !replyFileMeta.spoiler) {
               null
             } else {
-              EpoxyReplyFileView.SpoilerInfo(replyFileMeta.spoiler, boardSupportsSpoilers)
+              SpoilerInfo(replyFileMeta.spoiler, boardSupportsSpoilers)
             }
 
             val imageDimensions = MediaUtils.getImageDims(replyFile.fileOnDisk)
@@ -408,7 +409,7 @@ class ReplyLayoutFilesAreaPresenter(
               selected = isSelected,
               fileSize = fileFileSizeMap[replyFile.fileOnDisk.absolutePath]!!,
               imageDimensions = imageDimensions,
-              attachAdditionalInfo = EpoxyReplyFileView.AttachAdditionalInfo(
+              attachAdditionalInfo = AttachAdditionalInfo(
                 fileExifStatus = fileExifStatus,
                 totalFileSizeExceeded = totalFileSizeExceeded,
                 fileMaxSizeExceeded = exceedsMaxFileSize,

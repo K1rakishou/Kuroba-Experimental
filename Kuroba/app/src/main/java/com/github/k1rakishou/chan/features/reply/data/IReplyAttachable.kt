@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.features.reply.data
 
-import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyReplyFileView
+import com.github.k1rakishou.chan.features.reply.ReplyLayoutFilesAreaPresenter
 import java.util.*
 
 interface IReplyAttachable
@@ -12,11 +12,11 @@ class TooManyAttachables(val attachablesTotal: Int) : IReplyAttachable
 class ReplyFileAttachable(
   val fileUuid: UUID,
   val fileName: String,
-  val spoilerInfo: EpoxyReplyFileView.SpoilerInfo?,
+  val spoilerInfo: SpoilerInfo?,
   val selected: Boolean,
   val fileSize: Long,
   val imageDimensions: ImageDimensions?,
-  val attachAdditionalInfo: EpoxyReplyFileView.AttachAdditionalInfo,
+  val attachAdditionalInfo: AttachAdditionalInfo,
   val maxAttachedFilesCountExceeded: Boolean
 ) : IReplyAttachable {
 
@@ -57,5 +57,34 @@ class ReplyFileAttachable(
   }
 
   data class ImageDimensions(val width: Int, val height: Int)
+
+}
+
+data class SpoilerInfo(
+  val markedAsSpoiler: Boolean,
+  val boardSupportsSpoilers: Boolean
+)
+
+data class AttachAdditionalInfo(
+  val fileExifStatus: Set<ReplyLayoutFilesAreaPresenter.FileExifInfoStatus>,
+  val totalFileSizeExceeded: Boolean,
+  val fileMaxSizeExceeded: Boolean,
+  val markedAsSpoilerOnNonSpoilerBoard: Boolean
+) {
+
+  fun getGspExifDataOrNull(): ReplyLayoutFilesAreaPresenter.FileExifInfoStatus.GpsExifFound? {
+    return fileExifStatus.firstOrNull { status ->
+      status is ReplyLayoutFilesAreaPresenter.FileExifInfoStatus.GpsExifFound
+    } as? ReplyLayoutFilesAreaPresenter.FileExifInfoStatus.GpsExifFound
+  }
+
+  fun getOrientationExifData(): ReplyLayoutFilesAreaPresenter.FileExifInfoStatus.OrientationExifFound? {
+    return fileExifStatus.firstOrNull { status ->
+      status is ReplyLayoutFilesAreaPresenter.FileExifInfoStatus.OrientationExifFound
+    } as? ReplyLayoutFilesAreaPresenter.FileExifInfoStatus.OrientationExifFound
+  }
+
+  fun hasGspExifData(): Boolean = getGspExifDataOrNull() != null
+  fun hasOrientationExifData(): Boolean = getOrientationExifData() != null
 
 }

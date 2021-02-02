@@ -18,8 +18,9 @@ import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
-import com.github.k1rakishou.chan.features.reply.ReplyLayoutFilesAreaPresenter
+import com.github.k1rakishou.chan.features.reply.data.AttachAdditionalInfo
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
+import com.github.k1rakishou.chan.features.reply.data.SpoilerInfo
 import com.github.k1rakishou.chan.ui.view.SelectionCheckView
 import com.github.k1rakishou.chan.ui.widget.FixedViewSizeResolver
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -278,37 +279,6 @@ class EpoxyReplyFileView @JvmOverloads constructor(
 
       return@setOnLongClickListener false
     }
-  }
-
-  // TODO(KurobaEx / @Cleanup): this should be moved into IReplyAttachable.kt file
-  data class SpoilerInfo(
-    val markedAsSpoiler: Boolean,
-    val boardSupportsSpoilers: Boolean
-  )
-
-  // TODO(KurobaEx / @Cleanup): this should be moved into IReplyAttachable.kt file
-  data class AttachAdditionalInfo(
-    val fileExifStatus: Set<ReplyLayoutFilesAreaPresenter.FileExifInfoStatus>,
-    val totalFileSizeExceeded: Boolean,
-    val fileMaxSizeExceeded: Boolean,
-    val markedAsSpoilerOnNonSpoilerBoard: Boolean
-  ) {
-
-    fun getGspExifDataOrNull(): ReplyLayoutFilesAreaPresenter.FileExifInfoStatus.GpsExifFound? {
-      return fileExifStatus.firstOrNull { status ->
-        status is ReplyLayoutFilesAreaPresenter.FileExifInfoStatus.GpsExifFound
-      } as? ReplyLayoutFilesAreaPresenter.FileExifInfoStatus.GpsExifFound
-    }
-
-    fun getOrientationExifData(): ReplyLayoutFilesAreaPresenter.FileExifInfoStatus.OrientationExifFound? {
-      return fileExifStatus.firstOrNull { status ->
-        status is ReplyLayoutFilesAreaPresenter.FileExifInfoStatus.OrientationExifFound
-      } as? ReplyLayoutFilesAreaPresenter.FileExifInfoStatus.OrientationExifFound
-    }
-
-    fun hasGspExifData(): Boolean = getGspExifDataOrNull() != null
-    fun hasOrientationExifData(): Boolean = getOrientationExifData() != null
-
   }
 
   companion object {
