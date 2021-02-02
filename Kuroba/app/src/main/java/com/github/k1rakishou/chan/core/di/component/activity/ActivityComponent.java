@@ -143,6 +143,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableSwitchMaterial;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTabLayout;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableToolbarSearchLayoutEditText;
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingConstraintLayout;
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingCoordinatorLayout;
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout;
@@ -245,6 +246,7 @@ public interface ActivityComponent {
     void inject(ColorizableTextView colorizableTextView);
     void inject(ReplyInputEditText replyInputEditText);
     void inject(ColorizableTabLayout colorizableTabLayout);
+    void inject(ColorizableToolbarSearchLayoutEditText colorizableToolbarSearchLayoutEditText);
 
     void inject(EpoxyGridThreadBookmarkViewHolder epoxyGridThreadBookmarkViewHolder);
     void inject(EpoxyListThreadBookmarkViewHolder epoxyListThreadBookmarkViewHolder);

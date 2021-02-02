@@ -31,9 +31,11 @@ import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableToolbarSearchLayoutEditText;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.KtExtensionsKt;
 import com.github.k1rakishou.core_themes.ThemeEngine;
+import com.google.android.material.textfield.TextInputEditText;
 
 import javax.inject.Inject;
 
@@ -50,7 +52,7 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
     @Inject
     ThemeEngine themeEngine;
 
-    private ColorizableEditText searchView;
+    private TextInputEditText searchView;
     private ImageView clearButton;
     private boolean autoRequestFocus = true;
 
@@ -103,7 +105,16 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
     }
 
     public void setCallback(final SearchLayoutCallback callback) {
-        searchView = new ColorizableEditText(getContext());
+        setCallback(false, callback);
+    }
+
+    public void setCallback(boolean isToolbar, final SearchLayoutCallback callback) {
+        if (isToolbar) {
+            searchView = new ColorizableToolbarSearchLayoutEditText(getContext());
+        } else {
+            searchView = new ColorizableEditText(getContext());
+        }
+
         searchView.setImeOptions(EditorInfo.IME_FLAG_NO_FULLSCREEN | EditorInfo.IME_ACTION_DONE);
         searchView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 18);
         searchView.setHint(getString(R.string.search_hint));
