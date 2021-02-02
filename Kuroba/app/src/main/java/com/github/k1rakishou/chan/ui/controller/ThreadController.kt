@@ -197,7 +197,11 @@ abstract class ThreadController(
   override fun openReportController(post: ChanPost) {
     val site = siteManager.bySiteDescriptor(post.boardDescriptor.siteDescriptor)
     if (site != null) {
-      navigationController!!.pushController(ReportController(context, post, site))
+      val toolbarHeight = toolbar?.toolbarHeight
+        ?: return
+
+      val reportController = ReportController(context, post, site, toolbarHeight)
+      navigationController!!.pushController(reportController)
     }
   }
 

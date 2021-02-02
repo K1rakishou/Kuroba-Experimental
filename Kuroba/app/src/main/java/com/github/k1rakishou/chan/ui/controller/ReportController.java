@@ -21,6 +21,8 @@ import android.content.Context;
 import android.util.AndroidRuntimeException;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.github.k1rakishou.chan.R;
@@ -29,6 +31,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier;
+import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.model.data.post.ChanPost;
 import com.github.k1rakishou.model.util.ChanPostUtils;
 
@@ -42,16 +45,18 @@ import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 public class ReportController extends Controller implements RequiresNoBottomNavBar {
     private ChanPost post;
     private Site site;
+    private int toolbarHeight = 0;
 
     @Override
     protected void injectDependencies(@NotNull ActivityComponent component) {
         component.inject(this);
     }
 
-    public ReportController(Context context, ChanPost post, Site site) {
+    public ReportController(Context context, ChanPost post, Site site, int toolbarHeight) {
         super(context);
         this.post = post;
         this.site = site;
+        this.toolbarHeight = toolbarHeight;
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -61,6 +66,14 @@ public class ReportController extends Controller implements RequiresNoBottomNavB
         navigation.title = getString(R.string.report_screen, ChanPostUtils.getTitle(post, null));
 
         HttpUrl url = site.endpoints().report(post);
+
+        FrameLayout frameLayout = new FrameLayout(context);
+        frameLayout.setLayoutParams(
+                new LinearLayout.LayoutParams(
+                        FrameLayout.LayoutParams.MATCH_PARENT,
+                        FrameLayout.LayoutParams.MATCH_PARENT
+                )
+        );
 
         try {
             WebView webView = new WebView(context);
@@ -74,7 +87,25 @@ public class ReportController extends Controller implements RequiresNoBottomNavB
             settings.setJavaScriptEnabled(true);
             settings.setDomStorageEnabled(true);
             webView.loadUrl(url.toString());
-            view = webView;
+
+            frameLayout.addView(
+                    webView,
+                    new FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.MATCH_PARENT,
+                            FrameLayout.LayoutParams.MATCH_PARENT
+                    )
+            );
+
+            view = frameLayout;
+
+            KotlinExtensionsKt.updatePaddings(
+                    frameLayout,
+                    null,
+                    null,
+                    toolbarHeight,
+                    null
+            );
+
         } catch (Throwable error) {
             String errmsg = "";
             if (error instanceof AndroidRuntimeException && error.getMessage() != null) {
