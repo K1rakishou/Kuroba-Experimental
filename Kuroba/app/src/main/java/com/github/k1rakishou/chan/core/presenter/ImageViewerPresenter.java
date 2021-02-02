@@ -555,12 +555,6 @@ public class ImageViewerPresenter
         if (imageAutoLoad(postImage) && !postImage.getSpoiler()) {
             if (postImage.getType() == ChanPostImageType.MOVIE && callback.getImageMode(postImage) != VIDEO) {
                 callback.setImageMode(postImage, VIDEO, true);
-            } else {
-                if (callback.isImmersive()) {
-                    callback.showSystemUI(true);
-                } else {
-                    onExit();
-                }
             }
         } else {
             MultiImageView.Mode currentMode = callback.getImageMode(postImage);
@@ -573,26 +567,13 @@ public class ImageViewerPresenter
             } else if ((postImage.getType() == ChanPostImageType.PDF || postImage.getType() == ChanPostImageType.SWF)
                     && currentMode != OTHER) {
                 callback.setImageMode(postImage, OTHER, true);
-            } else {
-                if (callback.isImmersive()) {
-                    callback.showSystemUI(true);
-                } else {
-                    onExit();
-                }
             }
         }
     }
 
     @Override
     public void checkImmersive() {
-        if (callback.isImmersive()) {
-            callback.showSystemUI(true);
-        }
-    }
-
-    @Override
-    public void resetImmersive() {
-        motionEventDebouncer.post(callback::resetImmersive, 300);
+        callback.showSystemUI(callback.isImmersive());
     }
 
     @Override
@@ -841,7 +822,6 @@ public class ImageViewerPresenter
         void showVolumeMenuItem(boolean show, boolean muted);
         void showDownloadMenuItem(boolean show);
         boolean isImmersive();
-        void resetImmersive();
         void showSystemUI(boolean show);
         void presentController(Controller controller, boolean animated);
     }

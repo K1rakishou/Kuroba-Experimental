@@ -27,8 +27,6 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.drawable.BitmapDrawable;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -106,7 +104,6 @@ public class ImageViewerController
     private static final String TAG = "ImageViewerController";
     private static final int TRANSITION_DURATION = 300;
     private static final float TRANSITION_FINAL_ALPHA = 0.85f;
-    public static final int DISAPPEARANCE_DELAY_MS = 3000;
 
     private static final int VOLUME_ID = 1;
     private static final int SAVE_ID = 2;
@@ -148,8 +145,6 @@ public class ImageViewerController
     private LoadingBar loadingBar;
 
     private boolean isInImmersiveMode = false;
-    private Handler mainHandler = new Handler(Looper.getMainLooper());
-    private Runnable uiHideCall = this::hideSystemUI;
 
     @Override
     protected void injectDependencies(@NotNull ActivityComponent component) {
@@ -208,7 +203,6 @@ public class ImageViewerController
         super.onDestroy();
 
         showSystemUI();
-        mainHandler.removeCallbacks(uiHideCall);
         getWindow(context).clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         globalWindowInsetsManager.removeInsetsUpdatesListener(this);
 
@@ -317,13 +311,11 @@ public class ImageViewerController
             this.imageViewerCallback = imageViewerCallback;
             waitForLayout(view, view -> {
                 showSystemUI();
-                mainHandler.removeCallbacks(uiHideCall);
                 presenter.onExit();
                 return false;
             });
         } else {
             showSystemUI();
-            mainHandler.removeCallbacks(uiHideCall);
             presenter.onExit();
         }
     }
@@ -491,7 +483,6 @@ public class ImageViewerController
 
         showSystemUI();
 
-        mainHandler.removeCallbacks(uiHideCall);
         presenter.onExit();
         return true;
     }
@@ -824,16 +815,6 @@ public class ImageViewerController
     }
 
     @Override
-    public void resetImmersive() {
-        if (!ChanSettings.imageViewerFullscreenMode.get()) {
-            return;
-        }
-
-        mainHandler.removeCallbacks(uiHideCall);
-        mainHandler.postDelayed(uiHideCall, DISAPPEARANCE_DELAY_MS);
-    }
-
-    @Override
     public void showSystemUI(boolean show) {
         if (!ChanSettings.imageViewerFullscreenMode.get()) {
             return;
@@ -841,7 +822,6 @@ public class ImageViewerController
 
         if (show) {
             showSystemUI();
-            mainHandler.postDelayed(uiHideCall, DISAPPEARANCE_DELAY_MS);
         } else {
             hideSystemUI();
         }
@@ -864,7 +844,6 @@ public class ImageViewerController
         window.getDecorView().setOnSystemUiVisibilityChangeListener(visibility -> {
             if ((visibility & View.SYSTEM_UI_FLAG_FULLSCREEN) == 0 && isInImmersiveMode) {
                 FullScreenUtils.INSTANCE.showSystemUI(window, themeEngine.getChanTheme());
-                mainHandler.postDelayed(uiHideCall, DISAPPEARANCE_DELAY_MS);
             }
         });
 

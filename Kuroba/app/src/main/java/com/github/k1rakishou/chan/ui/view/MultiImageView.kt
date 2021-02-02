@@ -30,9 +30,7 @@ import android.graphics.PorterDuff
 import android.graphics.drawable.BitmapDrawable
 import android.util.AttributeSet
 import android.view.GestureDetector
-import android.view.MotionEvent
 import android.view.View
-import android.view.View.OnTouchListener
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ProgressBar
@@ -60,7 +58,6 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2.ImageListener
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
-import com.github.k1rakishou.chan.ui.controller.ImageViewerController
 import com.github.k1rakishou.chan.ui.view.MultiImageViewGestureDetector.MultiImageViewGestureDetectorCallbacks
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -74,7 +71,6 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.common.findChild
-import com.github.k1rakishou.common.findChildren
 import com.github.k1rakishou.common.updateHeight
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -154,27 +150,6 @@ class MultiImageView @JvmOverloads constructor(
   private var transparentBackground = ChanSettings.transparencyOn.get()
   private var imageAlreadySaved = false
   private val gestureDetector: GestureDetector
-
-  private val childrenToInterceptClicks = setOf(
-    R.id.exo_controls_view_root,
-    R.id.exo_prev,
-    R.id.exo_rew,
-    R.id.exo_play,
-    R.id.exo_progress,
-    R.id.exo_pause,
-    R.id.exo_ffwd,
-    R.id.exo_next
-  )
-
-  @SuppressLint("ClickableViewAccessibility")
-  private val exoControlsTouchListener = OnTouchListener { v, event ->
-    if (event.actionMasked == MotionEvent.ACTION_DOWN
-      || event.actionMasked == MotionEvent.ACTION_UP) {
-      callback?.resetImmersive()
-    }
-
-    return@OnTouchListener false
-  }
 
   private val defaultMuteState: Boolean
     private get() = (ChanSettings.videoDefaultMuted.get() &&
@@ -345,10 +320,6 @@ class MultiImageView @JvmOverloads constructor(
 
   override fun checkImmersive() {
     callback?.checkImmersive()
-  }
-
-  override fun resetImmersive() {
-    callback?.resetImmersive()
   }
 
   override fun togglePlayState() {
@@ -725,7 +696,7 @@ class MultiImageView @JvmOverloads constructor(
       }
       exoVideoView.useController = false
       exoVideoView.controllerHideOnTouch = false
-      exoVideoView.controllerShowTimeoutMs = ImageViewerController.DISAPPEARANCE_DELAY_MS
+      exoVideoView.controllerShowTimeoutMs = -1
       exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
       exoVideoView.useArtwork = true
       exoVideoView.defaultArtwork = ResourcesCompat.getDrawable(
@@ -735,7 +706,6 @@ class MultiImageView @JvmOverloads constructor(
       )
       updateExoBufferingViewColors(exoVideoView)
 
-      setExoControlsViewGlobalTouchListener(exoVideoView)
       updatePlayerControlsInsets(exoVideoView)
       onModeLoaded(Mode.VIDEO, exoVideoView)
 
@@ -777,7 +747,7 @@ class MultiImageView @JvmOverloads constructor(
               }
               exoVideoView.useController = false
               exoVideoView.controllerHideOnTouch = false
-              exoVideoView.controllerShowTimeoutMs = ImageViewerController.DISAPPEARANCE_DELAY_MS
+              exoVideoView.controllerShowTimeoutMs = -1
               exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
               exoVideoView.useArtwork = true
               exoVideoView.defaultArtwork = ResourcesCompat.getDrawable(
@@ -787,7 +757,6 @@ class MultiImageView @JvmOverloads constructor(
               )
               updateExoBufferingViewColors(exoVideoView)
 
-              setExoControlsViewGlobalTouchListener(exoVideoView)
               updatePlayerControlsInsets(exoVideoView)
               onModeLoaded(Mode.VIDEO, exoVideoView)
 
@@ -819,19 +788,6 @@ class MultiImageView @JvmOverloads constructor(
       (progressView as? ProgressBar)?.indeterminateTintList =
         ColorStateList.valueOf(themeEngine.chanTheme.accentColor)
     }
-  }
-
-  /**
-   * When any button of the exoPlayer's controls is pressed we want to reset image gallery's
-   * immersion state (more precisely we want to postpone automatic UI hide handler)
-   * */
-  @SuppressLint("ClickableViewAccessibility")
-  private fun setExoControlsViewGlobalTouchListener(exoVideoView: PlayerView) {
-    val views = exoVideoView.findChildren<View> { childView ->
-      childView.id in childrenToInterceptClicks
-    }
-
-    views.forEach { view -> view.setOnTouchListener(exoControlsTouchListener) }
   }
 
   /**
@@ -1244,7 +1200,6 @@ class MultiImageView @JvmOverloads constructor(
 
     fun onTap()
     fun checkImmersive()
-    fun resetImmersive()
     fun onSwipeToCloseImage()
     fun onSwipeToSaveImage()
     fun onStartDownload(postImage: ChanPostImage?, chunksCount: Int)

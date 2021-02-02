@@ -22,20 +22,19 @@ class MultiImageViewGestureDetector(
     val activeView = callbacks.getActiveView()
       ?: return false
 
-    if (activeView is PlayerView) {
-      if (activeView.player != null) {
-        if (activeView.isControllerVisible) {
-          callbacks.resetImmersive()
-        } else {
-          activeView.useController = true
-          activeView.showController()
-          callbacks.checkImmersive()
-        }
-        return true
+    if (activeView is PlayerView && activeView.player != null) {
+      if (!activeView.isControllerVisible) {
+        activeView.useController = true
+        activeView.showController()
+      } else {
+        activeView.useController = false
+        activeView.hideController()
       }
     }
 
     callbacks.onTap()
+    callbacks.checkImmersive()
+
     return true
   }
 
@@ -50,12 +49,12 @@ class MultiImageViewGestureDetector(
       } else {
         gifImageViewDrawable.start()
       }
+
       return true
     }
 
     if (activeView is PlayerView) {
       callbacks.togglePlayState()
-      callbacks.resetImmersive()
       return true
     }
 
@@ -189,7 +188,6 @@ class MultiImageViewGestureDetector(
     fun setImageAlreadySaved()
     fun onTap()
     fun checkImmersive()
-    fun resetImmersive()
     fun togglePlayState()
     fun onSwipeToCloseImage()
     fun onSwipeToSaveImage()
