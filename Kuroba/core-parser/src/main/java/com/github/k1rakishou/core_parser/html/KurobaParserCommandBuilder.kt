@@ -1,5 +1,6 @@
 package com.github.k1rakishou.core_parser.html
 
+import com.github.k1rakishou.core_parser.html.commands.IMetaCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaBeginConditionCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaBeginLoopCommand
 import com.github.k1rakishou.core_parser.html.commands.KurobaBreakpointCommand
@@ -69,8 +70,7 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
       // }
       // ```
 
-      // TODO(KurobaEx v0.5.0): we need to skip meta commands (like breakpoint) here
-      check(parserCommands.last() !is KurobaCommandPopState) {
+      check(getLastCommand() !is KurobaCommandPopState) {
         "It's is not allowed to have two nested blocks one after the other, " +
           "you have to collapse them into a single block! See comment of nest() command builder"
       }
@@ -86,6 +86,11 @@ class KurobaParserCommandBuilder<T : KurobaHtmlParserCollector>(
     parserCommands += KurobaCommandPopState()
 
     return this
+  }
+
+  private fun getLastCommand(): KurobaParserCommand<T> {
+    // Skip all the meta commands (like Breakpoint)
+    return parserCommands.last { command -> command !is IMetaCommand }
   }
 
   /**

@@ -111,9 +111,6 @@ class SnackbarWrapper private constructor(
       return
     }
 
-    // TODO(KurobaEx v0.5.0): search for reply layout and use it instead when it's shown?
-    //  (since it's height is greater than BottomNavView's)
-
     if (snackbarView.y + snackbarView.height > bottomNavView.y) {
       val newTranslationY = (snackbarView.y + snackbarView.height) - bottomNavView.y
       snackbarView.translationY = -(newTranslationY + MARGIN)
