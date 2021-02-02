@@ -577,6 +577,11 @@ public class ImageViewerPresenter
     }
 
     @Override
+    public boolean isInImmersiveMode() {
+        return callback.isImmersive();
+    }
+
+    @Override
     public void onSwipeToCloseImage() {
         onExit();
     }

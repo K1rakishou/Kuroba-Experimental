@@ -694,11 +694,16 @@ class MultiImageView @JvmOverloads constructor(
         gestureDetector.onTouchEvent(motionEvent)
         return@setOnTouchListener true
       }
-      exoVideoView.useController = false
+      exoVideoView.useController = true
       exoVideoView.controllerHideOnTouch = false
       exoVideoView.controllerShowTimeoutMs = -1
-      exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+      exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
       exoVideoView.useArtwork = true
+
+      if (callback?.isInImmersiveMode() == false) {
+        exoVideoView.showController()
+      }
+
       exoVideoView.defaultArtwork = ResourcesCompat.getDrawable(
         getRes(),
         R.drawable.ic_volume_up_white_24dp,
@@ -745,11 +750,16 @@ class MultiImageView @JvmOverloads constructor(
                 gestureDetector.onTouchEvent(motionEvent)
                 return@setOnTouchListener true
               }
-              exoVideoView.useController = false
+              exoVideoView.useController = true
               exoVideoView.controllerHideOnTouch = false
               exoVideoView.controllerShowTimeoutMs = -1
               exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
               exoVideoView.useArtwork = true
+
+              if (callback?.isInImmersiveMode() == false) {
+                exoVideoView.showController()
+              }
+
               exoVideoView.defaultArtwork = ResourcesCompat.getDrawable(
                 getRes(),
                 R.drawable.ic_volume_up_white_24dp,
@@ -1200,6 +1210,7 @@ class MultiImageView @JvmOverloads constructor(
 
     fun onTap()
     fun checkImmersive()
+    fun isInImmersiveMode(): Boolean
     fun onSwipeToCloseImage()
     fun onSwipeToSaveImage()
     fun onStartDownload(postImage: ChanPostImage?, chunksCount: Int)

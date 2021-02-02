@@ -24,10 +24,8 @@ class MultiImageViewGestureDetector(
 
     if (activeView is PlayerView && activeView.player != null) {
       if (!activeView.isControllerVisible) {
-        activeView.useController = true
         activeView.showController()
       } else {
-        activeView.useController = false
         activeView.hideController()
       }
     }
