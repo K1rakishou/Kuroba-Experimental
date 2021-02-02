@@ -327,7 +327,7 @@ class BookmarksManager(
       return@write
     }
 
-    if (updatedBookmarks.isEmpty()) {
+    if (updatedBookmarks.isNotEmpty()) {
       bookmarksChangedSubject.onNext(BookmarkChange.BookmarksUpdated(updatedBookmarks))
     }
 
@@ -682,12 +682,27 @@ class BookmarksManager(
   @DoNotStrip
   sealed class BookmarkChange {
     object BookmarksInitialized : BookmarkChange()
-    class BookmarksCreated(val threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) : BookmarkChange()
-    class BookmarksDeleted(val threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) : BookmarkChange()
+
+    class BookmarksCreated(val threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) : BookmarkChange() {
+      init {
+        require(threadDescriptors.isNotEmpty()) { "threadDescriptors must not be empty!" }
+      }
+    }
+    class BookmarksDeleted(val threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) : BookmarkChange() {
+      init {
+        require(threadDescriptors.isNotEmpty()) { "threadDescriptors must not be empty!" }
+      }
+    }
 
     // When threadDescriptors is null that means that we want to update ALL bookmarks. For now we
     // only use it in one place - when opening BookmarksController to refresh all bookmarks.
-    class BookmarksUpdated(val threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>?) : BookmarkChange()
+    class BookmarksUpdated(val threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>?) : BookmarkChange() {
+      init {
+        if (threadDescriptors != null) {
+          require(threadDescriptors.isNotEmpty()) { "threadDescriptors must not be empty!" }
+        }
+      }
+    }
 
     fun threadDescriptors(): Collection<ChanDescriptor.ThreadDescriptor> {
       return when (this) {

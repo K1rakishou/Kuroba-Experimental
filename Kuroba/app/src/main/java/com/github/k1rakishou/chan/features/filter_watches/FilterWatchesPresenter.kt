@@ -96,7 +96,7 @@ class FilterWatchesPresenter : BasePresenter<FilterWatchesControllerView>() {
     return filterWatchesControllerStateFlow
   }
 
-  suspend fun reloadFilterWatches(loadingStateUpdateJob: Job? = null) {
+  private suspend fun reloadFilterWatches(loadingStateUpdateJob: Job? = null) {
     withContext(Dispatchers.Default) {
       reloadFilterWatchesInternal(loadingStateUpdateJob)
     }
