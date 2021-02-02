@@ -207,7 +207,7 @@ class PageRequestManager(
       val lastUpdateTime = lastUpdate ?: 0L
 
       if (lastUpdateTime + UPDATE_INTERVAL <= System.currentTimeMillis()) {
-        Logger.d(TAG, "Requesting existing board pages for /${board.boardCode()}/, timeout")
+        Logger.d(TAG, "Requesting existing board pages for /${board.boardCode()}/")
         requestBoard(boardDescriptor)
       }
     }

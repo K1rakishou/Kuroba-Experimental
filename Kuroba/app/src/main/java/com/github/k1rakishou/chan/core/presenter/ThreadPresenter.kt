@@ -276,8 +276,14 @@ class ThreadPresenter @Inject constructor(
 
     if (isDestroying) {
       job.cancelChildren()
-      postOptionsClickExecutor.stop()
-      serializedCoroutineExecutor.stop()
+
+      if (::postOptionsClickExecutor.isInitialized) {
+        postOptionsClickExecutor.stop()
+      }
+
+      if (::serializedCoroutineExecutor.isInitialized) {
+        serializedCoroutineExecutor.stop()
+      }
     }
 
     compositeDisposable.clear()

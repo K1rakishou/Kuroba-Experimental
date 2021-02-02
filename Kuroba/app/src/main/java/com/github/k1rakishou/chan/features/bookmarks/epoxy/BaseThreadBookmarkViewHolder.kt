@@ -199,7 +199,7 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
           append(", ")
         }
 
-        append("Wtch")
+        append("FW")
       }
     }
 
@@ -249,7 +249,7 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
           append(" ")
         }
 
-        append("Wtch")
+        append("FW")
       }
     }
 
