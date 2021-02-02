@@ -38,7 +38,9 @@ class ColorizableTabLayout @JvmOverloads constructor(
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
 
-    applyColors()
+    if (!isInEditMode) {
+      applyColors()
+    }
   }
 
   override fun onInterceptTouchEvent(event: MotionEvent?): Boolean {
