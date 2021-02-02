@@ -363,6 +363,10 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
+  fun resetTicker() {
+    chanThreadTicker.resetTicker()
+  }
+
   /**
    * A very flexible method to load new posts or reload posts from database.
    * [chanLoadOptions] allows you to delete previous posts from in-memory cache or from database
@@ -1546,7 +1550,7 @@ class ThreadPresenter @Inject constructor(
   }
 
   override suspend fun timeUntilLoadMoreMs(): Long {
-    return chanThreadTicker.timeUntilLoadMoreMs() ?: 0L
+    return chanThreadTicker.timeUntilLoadMoreMs()
   }
 
   override fun isWatching(): Boolean {

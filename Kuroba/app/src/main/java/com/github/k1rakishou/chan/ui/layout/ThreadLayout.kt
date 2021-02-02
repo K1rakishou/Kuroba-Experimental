@@ -325,6 +325,8 @@ class ThreadLayout @JvmOverloads constructor(
 
   fun refreshFromSwipe() {
     refreshedFromSwipe = true
+
+    presenter.resetTicker()
     presenter.normalLoad(showLoading = true)
   }
 

@@ -162,6 +162,8 @@ class ChanThreadTicker(
       return
     }
 
+    chanTickerData.resetAll()
+
     val tickerAction = TickerAction.StartOrResetTicker(
       chanDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
     )
@@ -181,7 +183,7 @@ class ChanThreadTicker(
     actor.offer(TickerAction.StopTicker)
   }
 
-  fun timeUntilLoadMoreMs(): Long? = chanTickerData.getTimeUntilLoadMoreMs()
+  fun timeUntilLoadMoreMs(): Long = chanTickerData.getTimeUntilLoadMoreMs()
 
   @Synchronized
   private fun increaseCurrentTimeoutIndex(): Int? {

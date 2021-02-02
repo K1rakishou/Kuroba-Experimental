@@ -299,6 +299,7 @@ open class ViewThreadController(
   }
 
   private fun reloadClicked(item: ToolbarMenuSubItem) {
+    threadLayout.presenter.resetTicker()
     threadLayout.presenter.normalLoad(
       showLoading = true,
       chanLoadOptions = ChanLoadOptions.ClearMemoryCache
@@ -306,6 +307,7 @@ open class ViewThreadController(
   }
 
   private fun forceReloadClicked(item: ToolbarMenuSubItem) {
+    threadLayout.presenter.resetTicker()
     threadLayout.presenter.normalLoad(
       showLoading = true,
       chanLoadOptions = ChanLoadOptions.ClearMemoryAndDatabaseCaches
