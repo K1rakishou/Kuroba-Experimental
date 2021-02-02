@@ -273,25 +273,33 @@ class MainSettingsScreen(
   }
 
   private fun createAppVersionString(): String {
-    val verifiedBuildType = getVerifiedBuildType()
-
-    val isVerified = verifiedBuildType == VerifiedBuildType.Release
-      || verifiedBuildType == VerifiedBuildType.Debug
-
-    val verificationBadge = if (isVerified) {
-      "✓"
-    } else {
-      "✗"
-    }
-
     return String.format(
       "%s %s.%s %s (commit %s)",
       getApplicationLabel().toString(),
       BuildConfig.VERSION_NAME,
       BuildConfig.BUILD_NUMBER,
-      verificationBadge,
+      getVerificationBadge(),
       BuildConfig.COMMIT_HASH.take(12)
     )
+  }
+
+  private fun getVerificationBadge(): String {
+    if (isFdroidBuild()) {
+      // F-Droid releases are signed by their own keys so the build will always be considered
+      // non-official so we just should not show the badge at all.
+      return ""
+    }
+
+    val verifiedBuildType = getVerifiedBuildType()
+
+    val isVerified = verifiedBuildType == VerifiedBuildType.Release
+      || verifiedBuildType == VerifiedBuildType.Debug
+
+    return if (isVerified) {
+      "✓"
+    } else {
+      "✗"
+    }
   }
 
   private fun onReportSettingClick() {
