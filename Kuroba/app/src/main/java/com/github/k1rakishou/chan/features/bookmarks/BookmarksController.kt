@@ -463,27 +463,32 @@ class BookmarksController(
 
   private fun setupRecycler() {
     epoxyRecyclerView.addOnScrollListener(onScrollListener)
-    epoxyRecyclerView.isVerticalScrollBarEnabled = false
 
-    cleanupFastScroller()
+    if (ChanSettings.enableDraggableScrollbars.get()) {
+      epoxyRecyclerView.isVerticalScrollBarEnabled = false
+      cleanupFastScroller()
 
-    val scroller = FastScrollerHelper.create(
-      epoxyRecyclerView,
-      null,
-      0,
-    )
+      val scroller = FastScrollerHelper.create(
+        epoxyRecyclerView,
+        null,
+        0,
+      )
 
-    scroller.setThumbDragListener(object : FastScroller.ThumbDragListener {
-      override fun onDragStarted() {
-        // no-op
-      }
+      scroller.setThumbDragListener(object : FastScroller.ThumbDragListener {
+        override fun onDragStarted() {
+          // no-op
+        }
 
-      override fun onDragEnded() {
-        onRecyclerViewScrolled(epoxyRecyclerView)
-      }
-    })
+        override fun onDragEnded() {
+          onRecyclerViewScrolled(epoxyRecyclerView)
+        }
+      })
 
-    fastScroller = scroller
+      fastScroller = scroller
+    } else {
+      epoxyRecyclerView.isVerticalScrollBarEnabled = true
+      cleanupFastScroller()
+    }
   }
 
   private fun onSetGridBookmarkViewWidthClicked() {
