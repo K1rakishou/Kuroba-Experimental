@@ -69,21 +69,21 @@ class FilterWatcherCoordinator(
     cancelFilterWatching(appConstants, appContext)
   }
 
-  private suspend fun restartFilterWatcherWithTinyDelay(filterEvent: ChanFilterManager.FilterEvent?) {
+  fun restartFilterWatcherWithTinyDelay(filterEvent: ChanFilterManager.FilterEvent?) {
     restartFilterWatcherDebouncer.post(1000L, {
       if (filterEvent?.hasWatchFilter() == false) {
         return@post
       }
 
       if (verboseLogs) {
-        Logger.d(TAG, "restartFilterWatcherWithNoDelay()")
+        Logger.d(TAG, "restartFilterWatcherWithTinyDelay()")
       }
 
       awaitInitialization()
       printDebugInfo()
 
       if (!chanFilterManager.hasEnabledWatchFilters()) {
-        Logger.d(TAG, "restartFilterWatcherWithNoDelay() no watch filters found, canceling the work")
+        Logger.d(TAG, "restartFilterWatcherWithTinyDelay() no watch filters found, canceling the work")
         cancelFilterWatching(appConstants, appContext)
         return@post
       }

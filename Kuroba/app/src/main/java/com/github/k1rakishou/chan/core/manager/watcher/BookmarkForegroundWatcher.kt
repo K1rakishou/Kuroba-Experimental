@@ -89,6 +89,8 @@ class BookmarkForegroundWatcher(
 
   @Synchronized
   fun restartWatching() {
+    Logger.d(TAG, "restartWatching() called")
+
     stopWatching()
     startWatchingIfNotWatchingYet()
   }

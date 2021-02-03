@@ -5,6 +5,7 @@ import android.content.res.Configuration
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.PersistableChanState
@@ -12,6 +13,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.BaseThreadBookmarkViewHolder
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyGridThreadBookmarkViewHolder
@@ -30,17 +32,38 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.inject.Inject
 
 class FilterWatchesController(
   context: Context,
 ) : TabPageController(context), FilterWatchesControllerView {
+
+  @Inject
+  lateinit var filterWatcherCoordinator: FilterWatcherCoordinator
+
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
+  private lateinit var swipeRefreshLayout: SwipeRefreshLayout
 
   private val presenter = FilterWatchesPresenter()
   private val controller = FilterWatchesEpoxyController()
   private val needRestoreScrollPosition = AtomicBoolean(true)
 
   private lateinit var threadLoadCoroutineExecutor: SerializedCoroutineExecutor
+
+  private val topAdapterPosition: Int
+    get() {
+      val layoutManager = epoxyRecyclerView.layoutManager
+      if (layoutManager == null) {
+        return -1
+      }
+
+      when (layoutManager) {
+        is GridLayoutManager -> return layoutManager.findFirstVisibleItemPosition()
+        is LinearLayoutManager -> return layoutManager.findFirstVisibleItemPosition()
+      }
+
+      return -1
+    }
 
   private val onScrollListener = object : RecyclerView.OnScrollListener() {
     override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
@@ -63,6 +86,21 @@ class FilterWatchesController(
 
     view = AppModuleAndroidUtils.inflate(context, R.layout.controller_filter_watches)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
+    swipeRefreshLayout = view.findViewById(R.id.filter_watches_swipe_refresh_layout)
+
+    swipeRefreshLayout.setOnChildScrollUpCallback { parent, child ->
+      if (topAdapterPosition != 0) {
+        return@setOnChildScrollUpCallback true
+      }
+
+      return@setOnChildScrollUpCallback false
+    }
+
+    swipeRefreshLayout.setOnRefreshListener {
+      filterWatcherCoordinator.restartFilterWatcherWithTinyDelay(null)
+      swipeRefreshLayout.isRefreshing = false
+    }
+
     epoxyRecyclerView.setController(controller)
     epoxyRecyclerView.addOnScrollListener(onScrollListener)
 

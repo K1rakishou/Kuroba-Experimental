@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyModel
 import com.airbnb.epoxy.EpoxyModelTouchCallback
@@ -26,6 +27,7 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
+import com.github.k1rakishou.chan.core.manager.watcher.BookmarkForegroundWatcher
 import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
 import com.github.k1rakishou.chan.features.bookmarks.data.GroupOfThreadBookmarkItemViews
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkItemView
@@ -86,8 +88,11 @@ class BookmarksController(
   lateinit var pageRequestManager: PageRequestManager
   @Inject
   lateinit var archivesManager: ArchivesManager
+  @Inject
+  lateinit var bookmarkForegroundWatcher: BookmarkForegroundWatcher
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
+  private lateinit var swipeRefreshLayout: SwipeRefreshLayout
   private lateinit var threadLoadCoroutineExecutor: SerializedCoroutineExecutor
   private lateinit var itemTouchHelper: ItemTouchHelper
 
@@ -109,6 +114,21 @@ class BookmarksController(
   private val needRestoreScrollPosition = AtomicBoolean(true)
   private var isInSearchMode = false
   private var fastScroller: FastScroller? = null
+
+  private val topAdapterPosition: Int
+    get() {
+      val layoutManager = epoxyRecyclerView.layoutManager
+      if (layoutManager == null) {
+        return -1
+      }
+
+      when (layoutManager) {
+        is GridLayoutManager -> return layoutManager.findFirstVisibleItemPosition()
+        is LinearLayoutManager -> return layoutManager.findFirstVisibleItemPosition()
+      }
+
+      return -1
+    }
 
   private val touchHelperCallback = object : EpoxyModelTouchCallback<EpoxyModel<*>>(controller, EpoxyModel::class.java) {
 
@@ -247,6 +267,27 @@ class BookmarksController(
 
     view = inflate(context, R.layout.controller_bookmarks)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
+    swipeRefreshLayout = view.findViewById(R.id.boomarks_swipe_refresh_layout)
+
+    swipeRefreshLayout.setOnChildScrollUpCallback { parent, child ->
+      if (topAdapterPosition != 0) {
+        return@setOnChildScrollUpCallback true
+      }
+
+      val isDragging = fastScroller?.isDragging ?: false
+      if (isDragging) {
+        // Disable SwipeRefresh layout when dragging the fast scroller
+        return@setOnChildScrollUpCallback true
+      }
+
+      return@setOnChildScrollUpCallback false
+    }
+
+    swipeRefreshLayout.setOnRefreshListener {
+      bookmarkForegroundWatcher.restartWatching()
+      swipeRefreshLayout.isRefreshing = false
+    }
+
     epoxyRecyclerView.setController(controller)
 
     itemTouchHelper = ItemTouchHelper(touchHelperCallback)
