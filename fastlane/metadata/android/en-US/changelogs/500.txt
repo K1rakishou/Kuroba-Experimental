@@ -1,0 +1,30 @@
+v0.5.0-beta
+
+TLDR version:
+- New 4chan archive added (warosu.org).
+- Added search support for 4chan archives (warosu.org, fireden.net, arch.b4k.co, archived.moe). For now it's only possible to use "subject" and/or "comment" search options. Other options will be added in the future updates.
+- Filter watching is back.
+
+Full version:
+- Added support for Fuuka-based archives and added one Fuuka-based 4chan archive - warosu. (warosu is kinda buggy, sometimes it won't show the original post sometimes some other posts will be missing. There is nothing I can do about it. The decision to support it was made because of it being one of the few archives supporting search).
+- Added ability to automatically pass CloudFlare anti-ddos checks on sites that are using it (for now only warosu is using it). Once you attempt to use this archive somehow (open a thread or search for something) a WebView will be shown which will try to automatically pass CloudFlare checks. A clearance cookie will be stored which will then be used to access the site without passing the checks again. This cookie can be viewed or ever edited in site settings.
+- Added search support for 4chan archives that have it (warosu.org, fireden.net, arch.b4k.co, archived.moe). For now you can only use two search options - subject and/or comment.
+- It's now possible to import themes directly from the clipboard.
+- When importing a theme, if it is malformed, it will be completely rejected (in the previous version we would still attempt to import it and if some colors couldn't be parsed we would replace them with default colors which might have been an unexpected behavior). If a theme is malformed a dialog window will be shown listing color names which we couldn't parse.
+- Toolbar/BottomNavView appear/disappear animations have been changed from slide to fade. It should now be less irritating and way faster.
+- Filter watching is back. You can now again create filters which will automatically bookmark threads matching a pattern. It has it's own separate screen which can be found on Bookmarks page of BottomNavView. Don't forget to turn on the filter watcher (it's now a separate watcher with it's own intervals), otherwise it won't do anything.
+- It's now possible to manually refresh Bookmarks by using SwipeToRefresh (you need to pull it down when you are at the very top of the list, just like in catalog/thread).
+- When creating a filter to hide an image by it's MD5 hash, the whole post will now be hidden instead of only the image.
+- A bug where a theme switch would not affect posts when catalog/thread was in refresh state has been fixed.
+- When adding multiple boards at once the same sorting comparator is applied to the list as in the board selection list.
+- ControllerSwipeable setting now works as intended.
+- A new flag selector for 4chan.org/pol/ has been implemented. It's now located directly in the reply layout.
+- Toolbar search layout now uses correct white colors.
+- Fixed SQL query in a routine that is running on every app start, which job is to delete old cached posts/threads. It deletes posts/threads in batches which should drastically improve it's performance (On some old devices it could sometimes take up to 30 seconds to complete).
+- Fixed ReportController's view being shown partially under toolbar.
+- Fixed incorrect image index used in ImageViewer when opening catalog/thread images that had at least one hidden post with an image which would result in a wrong image being shown.
+- System UI now won't be hidden automatically when viewing images. It's hidden by default and you can make it show up like before, but now you can only hide it manually by clicking on any part of the image.
+- Added new catalog view mode - staggered grid.
+- It's now possible to set catalog's column count to 1 when using Grid/Staggered grid mode.
+- A setting was added to enable/disable draggable scrollbars (fast scroller). Thanks to @alexandrius
+- Other minor fixes and adjustments.
