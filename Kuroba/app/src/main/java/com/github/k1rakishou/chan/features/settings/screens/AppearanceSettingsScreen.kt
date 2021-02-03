@@ -426,7 +426,7 @@ class AppearanceSettingsScreen(
   companion object {
     private val SUPPORTED_FONT_SIZES = (10..19)
     private const val AUTO_COLUMN = 0
-    private val ALL_COLUMNS = listOf(AUTO_COLUMN, 2, 3, 4, 5)
-    private val ALL_COLUMNS_EXCLUDING_AUTO = setOf(2, 3, 4, 5)
+    private val ALL_COLUMNS = listOf(AUTO_COLUMN, 1, 2, 3, 4, 5)
+    private val ALL_COLUMNS_EXCLUDING_AUTO = setOf(1, 2, 3, 4, 5)
   }
 }

@@ -37,6 +37,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration;
 import androidx.recyclerview.widget.RecyclerView.OnItemTouchListener;
 import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.core_themes.ChanTheme;
@@ -579,6 +580,8 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
             ((GridLayoutManager) layoutManager).scrollToPositionWithOffset(scrollPosition, 0);
         } else if (layoutManager instanceof LinearLayoutManager) {
             ((LinearLayoutManager) layoutManager).scrollToPositionWithOffset(scrollPosition, 0);
+        } else if (layoutManager instanceof StaggeredGridLayoutManager) {
+            ((StaggeredGridLayoutManager) layoutManager).scrollToPositionWithOffset(scrollPosition, 0);
         }
     }
 

@@ -207,6 +207,15 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       when (postViewMode) {
         PostViewMode.LIST -> return (layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
         PostViewMode.CARD -> return (layoutManager as GridLayoutManager).findFirstVisibleItemPosition()
+        PostViewMode.STAGGER -> {
+          val resultArray = (layoutManager as StaggeredGridLayoutManager).findFirstVisibleItemPositions(null)
+          if (resultArray.isEmpty()) {
+            return -1
+          }
+
+          // The mean value of all returned positions
+          return resultArray.sumBy { value -> value } / resultArray.size
+        }
       }
 
       return -1
@@ -221,6 +230,15 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       when (postViewMode) {
         PostViewMode.LIST -> return (layoutManager as LinearLayoutManager).findLastCompletelyVisibleItemPosition()
         PostViewMode.CARD -> return (layoutManager as GridLayoutManager).findLastCompletelyVisibleItemPosition()
+        PostViewMode.STAGGER -> {
+          val resultArray = (layoutManager as StaggeredGridLayoutManager).findLastCompletelyVisibleItemPositions(null)
+          if (resultArray.isEmpty()) {
+            return -1
+          }
+
+          // The mean value of all returned positions
+          return resultArray.sumBy { value -> value } / resultArray.size
+        }
       }
       return -1
     }
@@ -454,6 +472,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     if (postViewMode == PostViewMode.CARD) {
       postAdapter.setCompact(compactMode)
       (layoutManager as GridLayoutManager).spanCount = spanCount
+    } else if (postViewMode == PostViewMode.STAGGER) {
+      postAdapter.setCompact(compactMode)
+      (layoutManager as StaggeredGridLayoutManager).spanCount = spanCount
     }
   }
 
@@ -488,9 +509,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       }
       PostViewMode.CARD -> {
         val gridLayoutManager: GridLayoutManager = object : GridLayoutManager(
-          null,
+          context,
           spanCount,
-          VERTICAL,
+          GridLayoutManager.VERTICAL,
           false
         ) {
           override fun requestChildRectangleOnScreen(
@@ -510,6 +531,29 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         layoutManager = gridLayoutManager
 
         setBackgroundColor(themeEngine.chanTheme.backColorSecondary())
+      }
+      PostViewMode.STAGGER -> {
+        val staggerLayoutManager: StaggeredGridLayoutManager = object : StaggeredGridLayoutManager(
+          spanCount,
+          StaggeredGridLayoutManager.VERTICAL,
+        ) {
+          override fun requestChildRectangleOnScreen(
+            parent: RecyclerView,
+            child: View,
+            rect: Rect,
+            immediate: Boolean,
+            focusedChildVisible: Boolean
+          ): Boolean {
+            return false
+          }
+        }
+
+        setRecyclerViewPadding()
+
+        recyclerView.layoutManager = staggerLayoutManager
+        layoutManager = staggerLayoutManager
+
+        setBackgroundColor(themeEngine.chanTheme.backColor)
       }
     }
 
@@ -568,14 +612,24 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     if (markedPost == null && initial) {
       chanThreadViewableInfoManager.view(chanDescriptor) { (_, index, top) ->
         when (postViewMode) {
-          PostViewMode.LIST -> (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
-            index,
-            top
-          )
-          PostViewMode.CARD -> (layoutManager as GridLayoutManager).scrollToPositionWithOffset(
-            index,
-            top
-          )
+          PostViewMode.LIST -> {
+            (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
+              index,
+              top
+            )
+          }
+          PostViewMode.CARD -> {
+            (layoutManager as GridLayoutManager).scrollToPositionWithOffset(
+              index,
+              top
+            )
+          }
+          PostViewMode.STAGGER -> {
+            (layoutManager as StaggeredGridLayoutManager).scrollToPositionWithOffset(
+              index,
+              top
+            )
+          }
         }
       }
 
@@ -594,14 +648,24 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
           highlightPost(markedPost.postDescriptor)
 
           when (postViewMode) {
-            PostViewMode.LIST -> (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
-              position,
-              0
-            )
-            PostViewMode.CARD -> (layoutManager as GridLayoutManager).scrollToPositionWithOffset(
-              position,
-              0
-            )
+            PostViewMode.LIST -> {
+              (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
+                position,
+                0
+              )
+            }
+            PostViewMode.CARD -> {
+              (layoutManager as GridLayoutManager).scrollToPositionWithOffset(
+                position,
+                0
+              )
+            }
+            PostViewMode.STAGGER -> {
+              (layoutManager as StaggeredGridLayoutManager).scrollToPositionWithOffset(
+                position,
+                0
+              )
+            }
           }
         }
       }
@@ -863,6 +927,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     when (postViewMode) {
       PostViewMode.LIST -> return topView.top != toolbarHeight()
+      PostViewMode.STAGGER,
       PostViewMode.CARD -> return if (topView is PostStubCell) {
         // PostStubCell does not have grid_card_margin
         topView.top != toolbarHeight() + dp(1f)
@@ -1166,7 +1231,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   private fun setRecyclerViewPadding() {
-    val defaultPadding = if (postViewMode == PostViewMode.CARD) {
+    val defaultPadding = if (postViewMode == PostViewMode.CARD || postViewMode == PostViewMode.STAGGER) {
       dp(1f)
     } else {
       0

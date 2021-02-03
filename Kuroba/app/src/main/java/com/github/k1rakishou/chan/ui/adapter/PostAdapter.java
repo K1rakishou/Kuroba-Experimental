@@ -129,6 +129,7 @@ public class PostAdapter
                         layout = R.layout.cell_post;
                         break;
                     case CARD:
+                    case STAGGER:
                         layout = R.layout.cell_post_card;
                         break;
                 }

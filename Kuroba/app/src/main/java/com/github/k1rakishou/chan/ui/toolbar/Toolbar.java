@@ -33,10 +33,12 @@ import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
+import com.github.k1rakishou.chan.ui.cell.CardPostCell;
 import com.github.k1rakishou.chan.ui.theme.ArrowMenuDrawable;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.common.AndroidUtils;
@@ -48,6 +50,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
+
+import kotlin.collections.ArraysKt;
 
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
@@ -409,6 +413,48 @@ public class Toolbar
             return -1;
         }
 
+        if (layoutManager instanceof StaggeredGridLayoutManager) {
+            StaggeredGridLayoutManager staggeredGridLayoutManager = (StaggeredGridLayoutManager) layoutManager;
+            int itemsCount = staggeredGridLayoutManager.getItemCount() - 1;
+            int spanCount = staggeredGridLayoutManager.getSpanCount();
+
+            int[] positions;
+            if (first) {
+                positions = staggeredGridLayoutManager.findFirstVisibleItemPositions(null);
+            } else {
+                positions = staggeredGridLayoutManager.findLastVisibleItemPositions(null);
+            }
+
+            if (positions.length == 0) {
+                return -1;
+            }
+
+            for (int position : positions) {
+                if (position < 0) {
+                    continue;
+                }
+
+                View view = staggeredGridLayoutManager.findViewByPosition(position);
+                if (view == null) {
+                    continue;
+                }
+
+                if (first) {
+                    int recyclerTop = recyclerView.getPaddingTop();
+                    if (getViewTop(view) == recyclerTop && position <= spanCount) {
+                        return position;
+                    }
+                } else {
+                    int recyclerBottom = recyclerView.getBottom() - recyclerView.getPaddingBottom();
+                    if (getViewBottom(view) == recyclerBottom && position >= (itemsCount - spanCount)) {
+                        return position;
+                    }
+                }
+            }
+
+            return -1;
+        }
+
         if (layoutManager instanceof GridLayoutManager) {
             GridLayoutManager gridLayoutManager = (GridLayoutManager) layoutManager;
             int itemsCount = gridLayoutManager.getItemCount() - 1;
@@ -427,12 +473,12 @@ public class Toolbar
 
             if (first) {
                 int recyclerTop = recyclerView.getPaddingTop();
-                if (view.getTop() == recyclerTop && position == 0) {
+                if (getViewTop(view) == recyclerTop && position == 0) {
                     return position;
                 }
             } else {
-                int recyclerBottom = recyclerView.getBottom() + recyclerView.getPaddingBottom();
-                if (view.getBottom() == recyclerBottom && position == itemsCount) {
+                int recyclerBottom = recyclerView.getBottom() - recyclerView.getPaddingBottom();
+                if (getViewBottom(view) == recyclerBottom && position == itemsCount) {
                     return position;
                 }
             }
@@ -458,12 +504,12 @@ public class Toolbar
 
             if (first) {
                 int recyclerTop = recyclerView.getPaddingTop();
-                if (view.getTop() == recyclerTop && position == 0) {
+                if (getViewTop(view) == recyclerTop && position == 0) {
                     return position;
                 }
             } else {
                 int recyclerBottom = recyclerView.getBottom() - recyclerView.getPaddingBottom();
-                if (view.getBottom() == recyclerBottom && position == itemsCount) {
+                if (getViewBottom(view) == recyclerBottom && position == itemsCount) {
                     return position;
                 }
             }
@@ -472,6 +518,22 @@ public class Toolbar
         }
 
         throw new IllegalStateException("Not supported LayoutManager: " + layoutManager.getClass().getSimpleName());
+    }
+
+    private int getViewTop(View view) {
+        if (view instanceof CardPostCell) {
+            return view.getTop() - getDimen(R.dimen.grid_card_margin);
+        }
+
+        return view.getTop();
+    }
+
+    private int getViewBottom(View view) {
+        if (view instanceof CardPostCell) {
+            return view.getBottom() + getDimen(R.dimen.grid_card_margin);
+        }
+
+        return view.getBottom();
     }
 
     public void openSearchWithCallback(@Nullable ToolbarContainer.ToolbarTransitionAnimationListener listener) {
@@ -655,6 +717,11 @@ public class Toolbar
             firstVisibleElement = ((GridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPosition();
         } else if (layoutManager instanceof LinearLayoutManager) {
             firstVisibleElement = ((LinearLayoutManager) layoutManager).findFirstCompletelyVisibleItemPosition();
+        } else if (layoutManager instanceof StaggeredGridLayoutManager) {
+            int[] array = ((StaggeredGridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPositions(null);
+            if (array.length > 0) {
+                firstVisibleElement = ArraysKt.min(array);
+            }
         } else {
             throw new IllegalStateException("Not implemented for " + layoutManager.getClass().getName());
         }

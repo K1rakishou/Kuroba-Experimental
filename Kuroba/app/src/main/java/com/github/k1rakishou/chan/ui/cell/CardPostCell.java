@@ -57,7 +57,8 @@ public class CardPostCell
         View.OnLongClickListener,
         ThemeEngine.ThemeChangesListener {
 
-    private static final int COMMENT_MAX_LENGTH = 200;
+    private static final int COMMENT_MAX_LENGTH_GRID = 200;
+    private static final int COMMENT_MAX_LENGTH_STAGGER = 500;
     public static final int HI_RES_THUMBNAIL_SIZE = dp(160);
 
     @Inject
@@ -115,7 +116,14 @@ public class CardPostCell
         super.onFinishInflate();
 
         FixedRatioLinearLayout content = findViewById(R.id.card_content);
-        content.setRatio(9f / 18f);
+
+        if (canEnableCardPostCellRatio()) {
+            content.setEnabled(true);
+            content.setRatio(9f / 18f);
+        } else {
+            content.setEnabled(false);
+        }
+
         thumbView = findViewById(R.id.thumbnail);
         thumbView.setRatio(16f / 13f);
         thumbView.setOnClickListener(this);
@@ -142,6 +150,11 @@ public class CardPostCell
                 }
             }
         });
+    }
+
+    private boolean canEnableCardPostCellRatio() {
+        return ChanSettings.boardViewMode.get() == ChanSettings.PostViewMode.CARD
+                && ChanSettings.boardGridSpanCount.get() != 1;
     }
 
     @Override
@@ -276,8 +289,14 @@ public class CardPostCell
         }
 
         CharSequence commentText = post.getPostComment().comment();
-        if (commentText.length() > COMMENT_MAX_LENGTH) {
-            commentText = commentText.subSequence(0, COMMENT_MAX_LENGTH);
+        int commentMaxLength = COMMENT_MAX_LENGTH_GRID;
+
+        if (ChanSettings.boardViewMode.get() == ChanSettings.PostViewMode.STAGGER) {
+            commentMaxLength = COMMENT_MAX_LENGTH_STAGGER;
+        }
+
+        if (commentText.length() > commentMaxLength) {
+            commentText = commentText.subSequence(0, commentMaxLength);
         }
 
         comment.setText(commentText);

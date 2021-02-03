@@ -228,8 +228,11 @@ public class PostStubCell
             title.setText(titleText);
         }
 
+        boolean isGridOrStagger = postViewMode == ChanSettings.PostViewMode.CARD
+                || postViewMode == ChanSettings.PostViewMode.STAGGER;
+
         divider.setVisibility(
-                postViewMode == ChanSettings.PostViewMode.CARD
+                isGridOrStagger
                         ? GONE
                         : (showDivider ? VISIBLE : GONE)
         );

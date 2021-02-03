@@ -128,7 +128,8 @@ public class ChanSettings {
 
     public enum PostViewMode implements OptionSettingItem {
         LIST("list"),
-        CARD("grid");
+        CARD("grid"),
+        STAGGER("stagger");
 
         String name;
 

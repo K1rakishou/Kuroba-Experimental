@@ -255,10 +255,10 @@ class BrowseController(
       overflowBuilder.withSubItem(ACTION_REPLY, R.string.action_reply) { item -> replyClicked(item) }
     }
 
-    val modeStringId = if (ChanSettings.boardViewMode.get() == PostViewMode.LIST) {
-      R.string.action_switch_catalog
-    } else {
-      R.string.action_switch_board
+    val modeStringId = when (ChanSettings.boardViewMode.get()) {
+      PostViewMode.LIST -> R.string.action_switch_catalog_grid
+      PostViewMode.CARD -> R.string.action_switch_catalog_stagger
+      PostViewMode.STAGGER -> R.string.action_switch_board
     }
 
     overflowBuilder
@@ -472,18 +472,18 @@ class BrowseController(
   private fun viewModeClicked(item: ToolbarMenuSubItem) {
     var postViewMode = ChanSettings.boardViewMode.get()
 
-    postViewMode = if (postViewMode == PostViewMode.LIST) {
-      PostViewMode.CARD
-    } else {
-      PostViewMode.LIST
+    postViewMode = when (postViewMode) {
+      PostViewMode.LIST -> PostViewMode.CARD
+      PostViewMode.CARD -> PostViewMode.STAGGER
+      PostViewMode.STAGGER -> PostViewMode.LIST
     }
 
     ChanSettings.boardViewMode.set(postViewMode)
 
-    val viewModeText = if (postViewMode == PostViewMode.LIST) {
-      R.string.action_switch_catalog
-    } else {
-      R.string.action_switch_board
+    val viewModeText = when (postViewMode) {
+      PostViewMode.LIST -> R.string.action_switch_catalog_grid
+      PostViewMode.CARD -> R.string.action_switch_catalog_stagger
+      PostViewMode.STAGGER -> R.string.action_switch_board
     }
 
     item.text = getString(viewModeText)
