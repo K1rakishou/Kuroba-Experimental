@@ -7,6 +7,7 @@ import android.text.style.StyleSpan
 import android.text.style.TypefaceSpan
 import com.github.k1rakishou.common.data.ArchiveType
 import com.github.k1rakishou.common.exhaustive
+import com.github.k1rakishou.common.setSpanSafe
 import com.github.k1rakishou.core_spannable.serializable.SerializableAbsoluteSizeSpan
 import com.github.k1rakishou.core_spannable.serializable.SerializableBackgroundColorSpan
 import com.github.k1rakishou.core_spannable.serializable.SerializableColorizableBackgroundColorSpan
@@ -582,12 +583,4 @@ object SpannableStringMapper {
     }
   }
 
-  private fun SpannableString.setSpanSafe(span: CharacterStyle, start: Int, end: Int, flags: Int) {
-    setSpan(
-      span,
-      start.coerceIn(0, this.length),
-      end.coerceIn(0, this.length),
-      flags
-    )
-  }
 }

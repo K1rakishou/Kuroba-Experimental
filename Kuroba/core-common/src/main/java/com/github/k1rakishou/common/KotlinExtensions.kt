@@ -1,6 +1,9 @@
 package com.github.k1rakishou.common
 
+import android.text.SpannableString
+import android.text.SpannableStringBuilder
 import android.text.TextUtils
+import android.text.style.CharacterStyle
 import android.view.View
 import android.view.ViewGroup
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -566,4 +569,22 @@ public inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long): Long {
     sum += selector(element)
   }
   return sum
+}
+
+fun SpannableStringBuilder.setSpanSafe(span: CharacterStyle, start: Int, end: Int, flags: Int) {
+  setSpan(
+    span,
+    start.coerceAtLeast(0),
+    end.coerceAtMost(this.length),
+    flags
+  )
+}
+
+fun SpannableString.setSpanSafe(span: CharacterStyle, start: Int, end: Int, flags: Int) {
+  setSpan(
+    span,
+    start.coerceAtLeast(0),
+    end.coerceAtMost(this.length),
+    flags
+  )
 }

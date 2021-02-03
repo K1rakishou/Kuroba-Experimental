@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.putIfNotContains
+import com.github.k1rakishou.common.setSpanSafe
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
 import org.joda.time.Period
@@ -83,7 +84,7 @@ internal object CommentSpanUpdater {
         ssb.insert(start, formattedLinkUrl)
 
         // Add the updated span
-        ssb.setSpan(
+        ssb.setSpanSafe(
           postLinkableSpan.postLinkable,
           start,
           start + formattedLinkUrl.length,
@@ -96,16 +97,16 @@ internal object CommentSpanUpdater {
           val oldSpanStart = ssb.getSpanStart(oldSpan)
           val oldSpanEnd = ssb.getSpanEnd(oldSpan)
 
-          ssb.setSpan(
+          ssb.setSpanSafe(
             oldSpan,
-            oldSpanStart.coerceAtLeast(0),
-            (oldSpanEnd + formattedLinkUrl.length).coerceAtMost(ssb.lastIndex),
+            oldSpanStart,
+            oldSpanEnd + formattedLinkUrl.length,
             ssb.getSpanFlags(oldSpan)
           )
         }
 
         // Add the icon span
-        ssb.setSpan(
+        ssb.setSpanSafe(
           getIconSpan(invertedSpanUpdateBatch.iconBitmap),
           start,
           start + 1,
