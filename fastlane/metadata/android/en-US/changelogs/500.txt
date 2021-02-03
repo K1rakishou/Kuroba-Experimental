@@ -12,7 +12,7 @@ Full version:
 - It's now possible to import themes directly from the clipboard.
 - When importing a theme, if it is malformed, it will be completely rejected (in the previous version we would still attempt to import it and if some colors couldn't be parsed we would replace them with default colors which might have been an unexpected behavior). If a theme is malformed a dialog window will be shown listing color names which we couldn't parse.
 - Toolbar/BottomNavView appear/disappear animations have been changed from slide to fade. It should now be less irritating and way faster.
-- Filter watching is back. You can now again create filters which will automatically bookmark threads matching a pattern. It has it's own separate screen which can be found on Bookmarks page of BottomNavView. Don't forget to turn on the filter watcher (it's now a separate watcher with it's own intervals), otherwise it won't do anything.
+- Filter watching is back. It allows you to create filters which will automatically bookmark threads matching a pattern. It has it's own separate screen which can be found on Bookmarks page of BottomNavView. Don't forget to turn on the filter watcher (it's now a separate watcher with it's own intervals), otherwise it won't do anything.
 - It's now possible to manually refresh Bookmarks by using SwipeToRefresh (you need to pull it down when you are at the very top of the list, just like in catalog/thread).
 - When creating a filter to hide an image by it's MD5 hash, the whole post will now be hidden instead of only the image.
 - A bug where a theme switch would not affect posts when catalog/thread was in refresh state has been fixed.
