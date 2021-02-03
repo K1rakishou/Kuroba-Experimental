@@ -1172,6 +1172,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       0
     }
 
+    val recyclerRight = if (ChanSettings.enableDraggableScrollbars.get()) {
+      defaultPadding + FastScrollerHelper.FAST_SCROLLER_WIDTH
+    } else {
+      defaultPadding
+    }
+
     var recyclerTop = defaultPadding + toolbarHeight()
     var recyclerBottom = defaultPadding
     val keyboardOpened = globalWindowInsetsManager.isKeyboardOpened
@@ -1209,7 +1215,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     recyclerView.setPadding(
       defaultPadding,
       recyclerTop,
-      defaultPadding,
+      recyclerRight,
       recyclerBottom
     )
   }

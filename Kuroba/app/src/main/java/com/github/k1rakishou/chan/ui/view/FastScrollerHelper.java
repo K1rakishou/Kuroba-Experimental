@@ -11,6 +11,7 @@ import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
  * make it look like a normal scrollbar.
  */
 public class FastScrollerHelper {
+    public static final int FAST_SCROLLER_WIDTH = dp(10);
 
     public static FastScroller create(
             RecyclerView recyclerView,
@@ -18,7 +19,6 @@ public class FastScrollerHelper {
             PostInfoMapItemDecoration postInfoMapItemDecoration,
             int toolbarPaddingTop
     ) {
-        final int defaultThickness = dp(10);
         final int minimumRange = dp(50);
         final int margin = 0;
         final int thumbMinLength = dp(32);
@@ -26,7 +26,7 @@ public class FastScrollerHelper {
         return new FastScroller(
                 recyclerView,
                 postInfoMapItemDecoration,
-                defaultThickness,
+                FAST_SCROLLER_WIDTH,
                 minimumRange,
                 margin,
                 thumbMinLength,
