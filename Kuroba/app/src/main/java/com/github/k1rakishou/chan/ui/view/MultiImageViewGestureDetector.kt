@@ -31,7 +31,6 @@ class MultiImageViewGestureDetector(
     }
 
     callbacks.onTap()
-    callbacks.checkImmersive()
 
     return true
   }
@@ -185,7 +184,6 @@ class MultiImageViewGestureDetector(
     fun isImageAlreadySaved(): Boolean
     fun setImageAlreadySaved()
     fun onTap()
-    fun checkImmersive()
     fun togglePlayState()
     fun onSwipeToCloseImage()
     fun onSwipeToSaveImage()

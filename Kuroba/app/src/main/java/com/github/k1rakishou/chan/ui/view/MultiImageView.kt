@@ -318,10 +318,6 @@ class MultiImageView @JvmOverloads constructor(
     callback?.onTap()
   }
 
-  override fun checkImmersive() {
-    callback?.checkImmersive()
-  }
-
   override fun togglePlayState() {
     if (exoPlayer != null) {
       exoPlayer?.playWhenReady = !exoPlayer!!.playWhenReady
@@ -1209,7 +1205,6 @@ class MultiImageView @JvmOverloads constructor(
     val isWorkSafe: Boolean
 
     fun onTap()
-    fun checkImmersive()
     fun isInImmersiveMode(): Boolean
     fun onSwipeToCloseImage()
     fun onSwipeToSaveImage()

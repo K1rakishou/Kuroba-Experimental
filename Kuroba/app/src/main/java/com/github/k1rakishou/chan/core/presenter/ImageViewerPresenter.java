@@ -24,7 +24,6 @@ import androidx.viewpager.widget.ViewPager;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.controller.Controller;
-import com.github.k1rakishou.chan.core.base.Debouncer;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.cache.FileCacheListener;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
@@ -106,7 +105,6 @@ public class ImageViewerPresenter
     private ChanDescriptor chanDescriptor;
     private Set<CancelableDownload> preloadingImages = new HashSet<>();
     private final Set<String> nonCancelableImages = new HashSet<>();
-    private Debouncer motionEventDebouncer = new Debouncer(false);
 
     // Disables swiping until the view pager is visible
     private boolean viewPagerVisible = false;
@@ -551,6 +549,8 @@ public class ImageViewerPresenter
             return;
         }
 
+        callback.showSystemUI(callback.isImmersive());
+
         ChanPostImage postImage = images.get(selectedPosition);
         if (imageAutoLoad(postImage) && !postImage.getSpoiler()) {
             if (postImage.getType() == ChanPostImageType.MOVIE && callback.getImageMode(postImage) != VIDEO) {
@@ -569,11 +569,6 @@ public class ImageViewerPresenter
                 callback.setImageMode(postImage, OTHER, true);
             }
         }
-    }
-
-    @Override
-    public void checkImmersive() {
-        callback.showSystemUI(callback.isImmersive());
     }
 
     @Override
