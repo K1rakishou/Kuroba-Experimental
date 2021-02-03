@@ -240,7 +240,7 @@ abstract class ThreadController(
     }
 
     val output = filterOutHiddenImagesUseCase.execute(
-      FilterOutHiddenImagesUseCase.Input(images, index)
+      FilterOutHiddenImagesUseCase.Input(images, index, true)
     )
 
     val filteredImages = output.images

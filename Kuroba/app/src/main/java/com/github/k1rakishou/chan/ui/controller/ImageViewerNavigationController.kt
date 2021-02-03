@@ -64,7 +64,7 @@ class ImageViewerNavigationController(context: Context) : ToolbarNavigationContr
     goPostCallback: GoPostCallback? = null
   ) {
     val output = filterOutHiddenImagesUseCase.execute(
-      FilterOutHiddenImagesUseCase.Input(images, index)
+      FilterOutHiddenImagesUseCase.Input(images, index, false)
     )
 
     val filteredImages = output.images

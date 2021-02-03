@@ -12,7 +12,9 @@ class FilterOutHiddenImagesUseCase(
 
   override fun execute(parameter: Input): Output {
     val chanPostImages = parameter.images
-    val prevSelectedImage = chanPostImages[parameter.index]
+    val prevSelectedImageIndex = parameter.index
+    val prevSelectedImage = chanPostImages[prevSelectedImageIndex]
+    val isOpeningAlbum = parameter.isOpeningAlbum
 
     val groupedImages = chanPostImages
       .groupBy { chanPostImage -> chanPostImage.ownerPostDescriptor.threadDescriptor() }
@@ -36,9 +38,28 @@ class FilterOutHiddenImagesUseCase(
       }
     }
 
-    val newSelectedImageIndex = resultList.indexOfFirst { postImage -> postImage == prevSelectedImage }
+    if (isOpeningAlbum) {
+      var newIndex = 0
+
+      // Since the image index we were about to scroll to may happen to be of a hidden image, we need
+      // to find the next image that exists in resultList (meaning it's not hidden).
+      for (index in prevSelectedImageIndex until chanPostImages.size) {
+        val image = resultList.getOrNull(index)
+          ?: break
+
+        if (image in resultList) {
+          newIndex = index
+          break
+        }
+      }
+
+      return Output(resultList, newIndex)
+    }
+
+    var newSelectedImageIndex = resultList.indexOfFirst { postImage -> postImage == prevSelectedImage }
     if (newSelectedImageIndex < 0) {
-      return Output(emptyList(), -1)
+      // Just reset the scroll position to the beginning of the list
+      newSelectedImageIndex = 0
     }
 
     return Output(resultList, newSelectedImageIndex)
@@ -46,7 +67,8 @@ class FilterOutHiddenImagesUseCase(
 
   data class Input(
     val images: List<ChanPostImage>,
-    val index: Int
+    val index: Int,
+    val isOpeningAlbum: Boolean
   )
 
   data class Output(
