@@ -1,5 +1,6 @@
 package com.github.k1rakishou.common
 
+import android.text.TextUtils
 import android.view.View
 import android.view.ViewGroup
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -29,6 +30,8 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+
+val ELLIPSIZE_SYMBOL: CharSequence = "…"
 
 suspend fun OkHttpClient.suspendCall(request: Request): Response {
   return suspendCancellableCoroutine { continuation ->
@@ -441,7 +444,6 @@ fun View.updateHeight(newHeight: Int) {
 
 fun String.ellipsizeEnd(maxLength: Int): String {
   val minStringLength = 5
-  val threeDotsLength = 3
 
   if (maxLength < minStringLength) {
     return this
@@ -451,7 +453,21 @@ fun String.ellipsizeEnd(maxLength: Int): String {
     return this
   }
 
-  return this.take(maxLength - threeDotsLength) + "..."
+  return this.take(maxLength - ELLIPSIZE_SYMBOL.length) + ELLIPSIZE_SYMBOL
+}
+
+fun CharSequence.ellipsizeEnd(maxLength: Int): CharSequence {
+  val minStringLength = 5
+
+  if (maxLength < minStringLength) {
+    return this
+  }
+
+  if (this.length <= maxLength) {
+    return this
+  }
+
+  return TextUtils.concat(this.take(maxLength - ELLIPSIZE_SYMBOL.length), ELLIPSIZE_SYMBOL)
 }
 
 @Suppress("ReplaceSizeCheckWithIsNotEmpty", "NOTHING_TO_INLINE")

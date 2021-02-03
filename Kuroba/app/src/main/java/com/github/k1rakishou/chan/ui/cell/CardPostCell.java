@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.common.AndroidUtils;
+import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.core_themes.ChanTheme;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.board.pages.BoardPage;
@@ -295,12 +296,8 @@ public class CardPostCell
             commentMaxLength = COMMENT_MAX_LENGTH_STAGGER;
         }
 
-        if (commentText.length() > commentMaxLength) {
-            commentText = commentText.subSequence(0, commentMaxLength);
-        }
-
+        commentText = KotlinExtensionsKt.ellipsizeEnd(commentText, commentMaxLength);
         comment.setText(commentText);
-
 
         String status = getString(
                 R.string.card_stats,
