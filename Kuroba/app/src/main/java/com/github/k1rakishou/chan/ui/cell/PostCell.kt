@@ -59,7 +59,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
-import com.github.k1rakishou.chan.core.image.ImageLoaderV2.ImageListener
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2.FailureAwareImageListener
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -1335,7 +1335,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     imageLoaderV2: ImageLoaderV2,
     name: String,
     url: HttpUrl
-  ) : ImageListener {
+  ) : FailureAwareImageListener {
     private val context: Context
     private val postIcons: PostIcons
     private val url: HttpUrl
@@ -1362,7 +1362,13 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
 
     fun request() {
       cancel()
-      requestDisposable = imageLoaderV2.loadFromNetwork(context, url.toString(), this)
+
+      requestDisposable = imageLoaderV2.loadFromNetwork(
+        context,
+        url.toString(),
+        ImageLoaderV2.ImageSize.UnknownImageSize,
+        this
+      )
     }
 
     fun cancel() {

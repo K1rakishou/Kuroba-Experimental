@@ -23,7 +23,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
-import java.lang.ref.WeakReference
 import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
@@ -68,8 +67,8 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
     threadThumbnailImageSize = context.resources.getDimension(R.dimen.history_entry_thread_image_size).toInt()
     siteThumbnailImageSize = context.resources.getDimension(R.dimen.history_entry_site_image_size).toInt()
 
-    threadThumbnailImage.visibility = View.GONE
-    siteThumbnailImage.visibility = View.GONE
+    threadThumbnailImage.visibility = View.VISIBLE
+    siteThumbnailImage.visibility = View.VISIBLE
   }
 
   override fun onAttachedToWindow() {
@@ -167,39 +166,33 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
   @AfterPropsSet
   fun afterPropsSet() {
     if (imagesLoaderRequestData == null) {
+      threadThumbnailImage.setImageBitmap(null)
+      siteThumbnailImage.setImageBitmap(null)
       return
     }
 
     val threadThumbnailUrl = imagesLoaderRequestData?.threadThumbnailUrl
     if (threadThumbnailUrl != null) {
-      val threadThumbnailImageRef = WeakReference(threadThumbnailImage)
-
       threadImageRequestDisposable = imageLoaderV2.loadFromNetwork(
         context,
         threadThumbnailUrl.toString(),
-        threadThumbnailImageSize,
-        threadThumbnailImageSize,
+        ImageLoaderV2.ImageSize.MeasurableImageSize.create(threadThumbnailImage),
         listOf(CIRCLE_CROP),
         { drawable ->
-          threadThumbnailImageRef.get()?.visibility = View.VISIBLE
-          threadThumbnailImageRef.get()?.setImageBitmap(drawable.bitmap)
+          threadThumbnailImage.setImageBitmap(drawable.bitmap)
         }
       )
     }
 
     val siteThumbnailUrl = imagesLoaderRequestData?.siteThumbnailUrl
     if (siteThumbnailUrl != null) {
-      val siteThumbnailImageRef = WeakReference(siteThumbnailImage)
-
       siteImageRequestDisposable = imageLoaderV2.loadFromNetwork(
         context,
         siteThumbnailUrl.toString(),
-        siteThumbnailImageSize,
-        siteThumbnailImageSize,
+        ImageLoaderV2.ImageSize.MeasurableImageSize.create(siteThumbnailImage),
         listOf(CIRCLE_CROP),
         { drawable ->
-          siteThumbnailImageRef.get()?.visibility = View.VISIBLE
-          siteThumbnailImageRef.get()?.setImageBitmap(drawable.bitmap)
+          siteThumbnailImage.setImageBitmap(drawable.bitmap)
         }
       )
     }

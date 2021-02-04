@@ -537,9 +537,12 @@ class ReplyNotificationsHelper(
       imageLoaderV2.loadFromNetwork(
         appContext,
         thumbnailUrl.toString(),
-        NOTIFICATION_THUMBNAIL_SIZE,
-        NOTIFICATION_THUMBNAIL_SIZE,
-        object : ImageLoaderV2.ImageListener {
+        ImageLoaderV2.ImageSize.FixedImageSize(
+          NOTIFICATION_THUMBNAIL_SIZE,
+          NOTIFICATION_THUMBNAIL_SIZE,
+        ),
+        CIRCLE_CROP,
+        object : ImageLoaderV2.FailureAwareImageListener {
           override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
             cancellableContinuation.resume(threadDescriptor to drawable)
           }
@@ -556,8 +559,7 @@ class ReplyNotificationsHelper(
 
             cancellableContinuation.resume(null)
           }
-        },
-        CIRCLE_CROP
+        }
       )
     }
   }

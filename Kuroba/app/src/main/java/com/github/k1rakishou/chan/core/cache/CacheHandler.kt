@@ -93,6 +93,28 @@ class CacheHandler(
     clearChunksCacheDir()
   }
 
+  @Synchronized
+  fun getCacheFileOrNull(url: String): RawFile? {
+    createDirectories()
+    val cacheFile = getCacheFileInternal(url)
+
+    try {
+      if (!fileManager.exists(cacheFile)) {
+        return null
+      }
+
+      if (!fileManager.exists(getCacheFileMetaInternal(url))) {
+        return null
+      }
+
+      return cacheFile
+    } catch (error: IOException) {
+      Logger.e(TAG, "Error while trying to get cache file", error)
+      deleteCacheFile(cacheFile)
+      return null
+    }
+  }
+
   /**
    * Either returns already downloaded file or creates an empty new one on the disk (also creates
    * cache file meta with default parameters)

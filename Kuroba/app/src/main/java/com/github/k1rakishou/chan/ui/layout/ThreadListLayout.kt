@@ -1155,7 +1155,13 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
 
     if (fastScroller == null) {
+      val fastScrollerType = when (chanDescriptor) {
+        is ThreadDescriptor -> FastScroller.FastScrollerType.Thread
+        is ChanDescriptor.CatalogDescriptor -> FastScroller.FastScrollerType.Catalog
+      }
+
       val scroller = FastScrollerHelper.create(
+        fastScrollerType,
         recyclerView,
         postInfoMapItemDecoration,
         toolbarPaddingTop()

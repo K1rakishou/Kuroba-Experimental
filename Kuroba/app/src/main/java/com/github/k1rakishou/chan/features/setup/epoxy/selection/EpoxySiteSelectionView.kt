@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
-import androidx.core.view.doOnPreDraw
 import coil.request.Disposable
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
@@ -15,7 +14,6 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.android.material.textview.MaterialTextView
-import java.lang.ref.WeakReference
 import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
@@ -67,24 +65,17 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
 
   @ModelProp
   fun bindIcon(iconUrl: String) {
-    val siteIconRef = WeakReference(siteIcon)
+    requestDisposable?.dispose()
+    requestDisposable = null
 
-    siteIcon.doOnPreDraw {
-      requestDisposable?.dispose()
-      requestDisposable = null
-
-      require(siteIcon.width > 0 && siteIcon.height > 0) { "View (siteIcon) has no size!" }
-
-      requestDisposable = imageLoaderV2.loadFromNetwork(
-        context,
-        iconUrl,
-        siteIcon.width,
-        siteIcon.height,
-        listOf(),
-        { drawable -> siteIconRef.get()?.setImageBitmap(drawable.bitmap) },
-        R.drawable.error_icon
-      )
-    }
+    requestDisposable = imageLoaderV2.loadFromNetwork(
+      context,
+      iconUrl,
+      ImageLoaderV2.ImageSize.MeasurableImageSize.create(siteIcon),
+      listOf(),
+      { drawable -> siteIcon.setImageBitmap(drawable.bitmap) },
+      R.drawable.error_icon
+    )
   }
 
   @CallbackProp

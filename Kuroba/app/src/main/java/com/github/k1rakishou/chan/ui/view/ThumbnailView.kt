@@ -14,374 +14,402 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.ui.view;
+package com.github.k1rakishou.chan.ui.view
 
-import android.animation.AnimatorSet;
-import android.animation.ValueAnimator;
-import android.content.Context;
-import android.content.res.ColorStateList;
-import android.graphics.Bitmap;
-import android.graphics.BitmapShader;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Matrix;
-import android.graphics.Paint;
-import android.graphics.Rect;
-import android.graphics.RectF;
-import android.graphics.Shader;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.RippleDrawable;
-import android.text.TextUtils;
-import android.util.AttributeSet;
-import android.util.TypedValue;
-import android.view.View;
-import android.view.animation.Interpolator;
+import android.animation.AnimatorSet
+import android.animation.ValueAnimator
+import android.content.Context
+import android.content.res.ColorStateList
+import android.graphics.Bitmap
+import android.graphics.BitmapShader
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Matrix
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.RectF
+import android.graphics.Shader
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.RippleDrawable
+import android.text.TextUtils
+import android.util.AttributeSet
+import android.util.TypedValue
+import android.view.View
+import android.view.animation.Interpolator
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator
+import coil.request.Disposable
+import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.base.Debouncer
+import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2.ImageSize.FixedImageSize
+import com.github.k1rakishou.chan.core.manager.ViewFlagsStorage
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
+open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
+  private var requestDisposable: Disposable? = null
+  private var circular = false
+  private var rounding = 0
+  private var clickable = false
+  private var calculate = false
+  private var foregroundCalculate = false
+  private var imageForeground: Drawable? = null
+  private var errorText: String? = null
 
-import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.core.base.Debouncer;
-import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
-import com.github.k1rakishou.core_logger.Logger;
-import com.github.k1rakishou.core_themes.ThemeEngine;
+  var bitmap: Bitmap? = null
+    private set
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+  @JvmField
+  protected var error = false
 
-import javax.inject.Inject;
+  private val bitmapRect = RectF()
+  private val drawRect = RectF()
+  private val outputRect = RectF()
+  private val imageMatrix = Matrix()
+  private var bitmapShader: BitmapShader? = null
+  private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+  private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+  private val tmpTextRect = Rect()
+  private val alphaAnimator = AnimatorSet()
+  private val debouncer = Debouncer(false)
+  private val kurobaScope = KurobaCoroutineScope()
 
-import coil.request.Disposable;
+  @Inject
+  lateinit var imageLoaderV2: ImageLoaderV2
+  @Inject
+  lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var viewFlagsStorage: ViewFlagsStorage
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp;
+  constructor(context: Context) : super(context) {
+    init()
+  }
 
-public class ThumbnailView extends View implements ImageLoaderV2.ImageListener {
-    private static final String TAG = "ThumbnailView";
-    private static final Interpolator INTERPOLATOR = new FastOutSlowInInterpolator();
+  constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+    init()
+  }
 
-    private Disposable requestDisposable;
-    private boolean circular = false;
-    private int rounding = 0;
-    private boolean clickable = false;
+  constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int)
+    : super(context, attrs, defStyleAttr) {
+    init()
+  }
 
-    private boolean calculate;
-    private Bitmap bitmap;
-    private RectF bitmapRect = new RectF();
-    private RectF drawRect = new RectF();
-    private RectF outputRect = new RectF();
+  private fun init() {
+    AppModuleAndroidUtils.extractActivityComponent(context)
+      .inject(this)
 
-    private Matrix matrix = new Matrix();
-    private BitmapShader bitmapShader;
-    private Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
+    textPaint.color = themeEngine.chanTheme.textColorPrimary
+    textPaint.textSize = AppModuleAndroidUtils.sp(14f).toFloat()
+  }
 
-    private boolean foregroundCalculate = false;
-    private Drawable foreground;
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
 
-    protected boolean error = false;
-    private String errorText;
-    private Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-    private Rect tmpTextRect = new Rect();
+    kurobaScope.cancelChildren()
+  }
 
-    private AnimatorSet alphaAnimator = new AnimatorSet();
-    private Debouncer debouncer = new Debouncer(false);
+  fun setUrl(url: String?, maxWidth: Int?, maxHeight: Int?) {
+    if (requestDisposable != null) {
+      requestDisposable?.dispose()
+      requestDisposable = null
 
-    @Inject
-    ImageLoaderV2 imageLoaderV2;
-    @Inject
-    ThemeEngine themeEngine;
+      setImageBitmap(null)
 
-    public ThumbnailView(Context context) {
-        super(context);
-        init();
+      error = false
+      alphaAnimator.end()
     }
 
-    public ThumbnailView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init();
+    if (TextUtils.isEmpty(url)) {
+      return
     }
 
-    public ThumbnailView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        init();
+    kurobaScope.launch {
+      setUrlInternal(url!!, maxWidth, maxHeight)
+    }
+  }
+
+  private suspend fun setUrlInternal(
+    url: String,
+    maxWidth: Int?,
+    maxHeight: Int?
+  ) {
+    val isCached = imageLoaderV2.isImageCachedLocally(url)
+
+    val isDraggingCatalogScroller =
+      viewFlagsStorage.isDraggingFastScroller(FastScroller.FastScrollerType.Catalog)
+    val isDraggingThreadScroller =
+      viewFlagsStorage.isDraggingFastScroller(FastScroller.FastScrollerType.Thread)
+    val isDraggingCatalogOrThreadFastScroller =
+      isDraggingCatalogScroller || isDraggingThreadScroller
+
+    if (!isDraggingCatalogOrThreadFastScroller && isCached) {
+      imageLoaderV2.loadFromNetwork(
+        context,
+        url,
+        FixedImageSize(
+          maxWidth!!,
+          maxHeight!!
+        ),
+        emptyList(),
+        this@ThumbnailView
+      )
+
+      return
     }
 
-    private void init() {
-        AppModuleAndroidUtils.extractActivityComponent(getContext())
-                .inject(this);
+    debouncer.post({
+      requestDisposable = imageLoaderV2.loadFromNetwork(
+        context,
+        url,
+        FixedImageSize(
+          maxWidth!!,
+          maxHeight!!
+        ),
+        emptyList(),
+        this@ThumbnailView
+      )
+    }, IMAGE_REQUEST_DEBOUNCER_TIMEOUT_MS)
+  }
 
-        textPaint.setColor(themeEngine.getChanTheme().getTextColorPrimary());
-        textPaint.setTextSize(sp(14));
+  fun setUrl(url: String?) {
+    if (url == null) {
+      debouncer.clear()
     }
 
-    public void setUrl(@Nullable String url, Integer maxWidth, Integer maxHeight) {
-        if (requestDisposable != null) {
-            requestDisposable.dispose();
-            requestDisposable = null;
+    setUrl(url, null, null)
+  }
 
-            error = false;
-            setImageBitmap(null);
+  fun setCircular(circular: Boolean) {
+    this.circular = circular
+  }
 
-            alphaAnimator.end();
+  fun setRounding(rounding: Int) {
+    this.rounding = rounding
+  }
+
+  override fun setClickable(clickable: Boolean) {
+    super.setClickable(clickable)
+
+    if (clickable != this.clickable) {
+      this.clickable = clickable
+      foregroundCalculate = clickable
+
+      if (clickable) {
+        val rippleAttrForThemeValue = TypedValue()
+
+        context.theme.resolveAttribute(
+          R.attr.colorControlHighlight,
+          rippleAttrForThemeValue,
+          true
+        )
+
+        val newImageForeground = RippleDrawable(
+          ColorStateList.valueOf(rippleAttrForThemeValue.data),
+          null,
+          ColorDrawable(Color.WHITE)
+        )
+
+        newImageForeground.callback = this
+        if (newImageForeground.isStateful) {
+          newImageForeground.state = drawableState
         }
 
-        if (!TextUtils.isEmpty(url)) {
-            debouncer.post(() -> {
-                requestDisposable = imageLoaderV2.loadFromNetwork(
-                        getContext(),
-                        url,
-                        maxWidth,
-                        maxHeight,
-                        this
-                );
-            }, 50);
-        }
+        imageForeground = newImageForeground
+      } else {
+        unscheduleDrawable(imageForeground)
+        imageForeground = null
+      }
+
+      requestLayout()
+      invalidate()
+    }
+  }
+
+  override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
+    setImageBitmap(drawable.bitmap)
+    onImageSet(isImmediate)
+  }
+
+  override fun onNotFound() {
+    error = true
+    errorText = AppModuleAndroidUtils.getString(R.string.thumbnail_load_failed_404)
+    onImageSet(false)
+    invalidate()
+  }
+
+  override fun onResponseError(error: Throwable) {
+    this.error = true
+    errorText = AppModuleAndroidUtils.getString(R.string.thumbnail_load_failed_network)
+    onImageSet(false)
+    invalidate()
+  }
+
+  override fun onSetAlpha(alpha: Int): Boolean {
+    if (error) {
+      textPaint.alpha = alpha
+    } else {
+      paint.alpha = alpha
     }
 
-    public void setUrl(@Nullable String url) {
-        if (url == null) {
-            debouncer.clear();
-        }
+    invalidate()
+    return true
+  }
 
-        setUrl(url, null, null);
+  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+    calculate = true
+    foregroundCalculate = true
+  }
+
+  override fun onDraw(canvas: Canvas) {
+    if (alpha == 0f) {
+      return
     }
 
-    public void setCircular(boolean circular) {
-        this.circular = circular;
+    val width = width - paddingLeft - paddingRight
+    val height = height - paddingTop - paddingBottom
+
+    if (error) {
+      canvas.save()
+      textPaint.getTextBounds(errorText, 0, errorText!!.length, tmpTextRect)
+      val x = width / 2f - tmpTextRect.exactCenterX()
+      val y = height / 2f - tmpTextRect.exactCenterY()
+      canvas.drawText(errorText!!, x + paddingLeft, y + paddingTop, textPaint)
+      canvas.restore()
+      return
     }
 
-    public void setRounding(int rounding) {
-        this.rounding = rounding;
+    if (bitmap == null) {
+      return
     }
 
-    @Override
-    public void setClickable(boolean clickable) {
-        super.setClickable(clickable);
-
-        if (clickable != this.clickable) {
-            this.clickable = clickable;
-
-            foregroundCalculate = clickable;
-            if (clickable) {
-                TypedValue rippleAttrForThemeValue = new TypedValue();
-
-                getContext().getTheme().resolveAttribute(
-                        R.attr.colorControlHighlight,
-                        rippleAttrForThemeValue,
-                        true
-                );
-
-                foreground = new RippleDrawable(
-                        ColorStateList.valueOf(rippleAttrForThemeValue.data),
-                        null,
-                        new ColorDrawable(Color.WHITE)
-                );
-
-                foreground.setCallback(this);
-                if (foreground.isStateful()) {
-                    foreground.setState(getDrawableState());
-                }
-            } else {
-                unscheduleDrawable(foreground);
-                foreground = null;
-            }
-
-            requestLayout();
-            invalidate();
-        }
+    if (bitmap!!.isRecycled) {
+      Logger.e(TAG, "Attempt to draw recycled bitmap!")
+      return
     }
 
-    public Bitmap getBitmap() {
-        return bitmap;
+    if (calculate) {
+      calculate = false
+
+      bitmapRect[0f, 0f, bitmap!!.width.toFloat()] = bitmap!!.height.toFloat()
+
+      val scale = Math.max(width / bitmap!!.width.toFloat(), height / bitmap!!.height.toFloat())
+      val scaledX = bitmap!!.width * scale
+      val scaledY = bitmap!!.height * scale
+      val offsetX = (scaledX - width) * 0.5f
+      val offsetY = (scaledY - height) * 0.5f
+
+      drawRect[-offsetX, -offsetY, scaledX - offsetX] = scaledY - offsetY
+      drawRect.offset(paddingLeft.toFloat(), paddingTop.toFloat())
+
+      outputRect.set(
+        paddingLeft.toFloat(),
+        paddingTop.toFloat(),
+        (getWidth() - paddingRight).toFloat(),
+        (getHeight() - paddingBottom).toFloat()
+      )
+
+      imageMatrix.setRectToRect(bitmapRect, drawRect, Matrix.ScaleToFit.FILL)
+      bitmapShader!!.setLocalMatrix(imageMatrix)
+      paint.shader = bitmapShader
     }
 
-    @Override
-    public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
-        setImageBitmap(drawable.getBitmap());
-        onImageSet(isImmediate);
+    canvas.save()
+    canvas.clipRect(outputRect)
+
+    if (circular) {
+      canvas.drawRoundRect(outputRect, width / 2f, height / 2f, paint)
+    } else {
+      canvas.drawRoundRect(outputRect, rounding.toFloat(), rounding.toFloat(), paint)
     }
 
-    @Override
-    public void onNotFound() {
-        this.error = true;
-        errorText = getString(R.string.thumbnail_load_failed_404);
+    canvas.restore()
+    canvas.save()
 
-        onImageSet(false);
-        invalidate();
+    if (imageForeground != null) {
+      if (foregroundCalculate) {
+        foregroundCalculate = false
+        imageForeground!!.setBounds(0, 0, right, bottom)
+      }
+
+      imageForeground!!.draw(canvas)
     }
 
-    @Override
-    public void onResponseError(@NotNull Throwable error) {
-        this.error = true;
-        errorText = getString(R.string.thumbnail_load_failed_network);
+    canvas.restore()
+  }
 
-        onImageSet(false);
-        invalidate();
+  override fun verifyDrawable(who: Drawable): Boolean {
+    return super.verifyDrawable(who) || who === imageForeground
+  }
+
+  override fun jumpDrawablesToCurrentState() {
+    super.jumpDrawablesToCurrentState()
+
+    if (imageForeground != null) {
+      imageForeground!!.jumpToCurrentState()
+    }
+  }
+
+  override fun drawableStateChanged() {
+    super.drawableStateChanged()
+
+    if (imageForeground != null && imageForeground!!.isStateful) {
+      imageForeground!!.state = drawableState
+    }
+  }
+
+  override fun drawableHotspotChanged(x: Float, y: Float) {
+    super.drawableHotspotChanged(x, y)
+    if (imageForeground != null) {
+      imageForeground!!.setHotspot(x, y)
+    }
+  }
+
+  private fun onImageSet(isImmediate: Boolean) {
+    if (!isImmediate) {
+      alpha = 0f
+
+      val alphaAnimation = ValueAnimator.ofFloat(0f, 1f)
+      alphaAnimation.duration = 200
+      alphaAnimation.interpolator = INTERPOLATOR
+      alphaAnimation.addUpdateListener { animation: ValueAnimator ->
+        val alpha = animation.animatedValue as Float
+        setAlpha(alpha)
+      }
+
+      alphaAnimator.play(alphaAnimation)
+      alphaAnimator.start()
+    } else {
+      alphaAnimator.end()
+      alpha = 1f
+    }
+  }
+
+  private fun setImageBitmap(bitmap: Bitmap?) {
+    bitmapShader = null
+    paint.shader = null
+
+    if (bitmap != null) {
+      calculate = true
+      bitmapShader = BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+    } else {
+      calculate = false
     }
 
-    @Override
-    protected boolean onSetAlpha(int alpha) {
-        if (error) {
-            textPaint.setAlpha(alpha);
-        } else {
-            paint.setAlpha(alpha);
-        }
+    this.bitmap = bitmap
+    invalidate()
+  }
 
-        invalidate();
+  companion object {
+    private const val TAG = "ThumbnailView"
+    private const val IMAGE_REQUEST_DEBOUNCER_TIMEOUT_MS = 250L
 
-        return true;
-    }
-
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        calculate = true;
-        foregroundCalculate = true;
-    }
-
-    @Override
-    protected void onDraw(Canvas canvas) {
-        if (getAlpha() == 0f) {
-            return;
-        }
-
-        int width = getWidth() - getPaddingLeft() - getPaddingRight();
-        int height = getHeight() - getPaddingTop() - getPaddingBottom();
-
-        if (error) {
-            canvas.save();
-
-            textPaint.getTextBounds(errorText, 0, errorText.length(), tmpTextRect);
-            float x = width / 2f - tmpTextRect.exactCenterX();
-            float y = height / 2f - tmpTextRect.exactCenterY();
-            canvas.drawText(errorText, x + getPaddingLeft(), y + getPaddingTop(), textPaint);
-
-            canvas.restore();
-            return;
-        }
-
-        if (bitmap == null) {
-            return;
-        }
-
-        if (bitmap.isRecycled()) {
-            Logger.e(TAG, "Attempt to draw recycled bitmap!");
-            return;
-        }
-
-        if (calculate) {
-            calculate = false;
-            bitmapRect.set(0, 0, bitmap.getWidth(), bitmap.getHeight());
-            float scale = Math.max(width / (float) bitmap.getWidth(), height / (float) bitmap.getHeight());
-            float scaledX = bitmap.getWidth() * scale;
-            float scaledY = bitmap.getHeight() * scale;
-            float offsetX = (scaledX - width) * 0.5f;
-            float offsetY = (scaledY - height) * 0.5f;
-
-            drawRect.set(-offsetX, -offsetY, scaledX - offsetX, scaledY - offsetY);
-            drawRect.offset(getPaddingLeft(), getPaddingTop());
-
-            outputRect.set(getPaddingLeft(),
-                    getPaddingTop(),
-                    getWidth() - getPaddingRight(),
-                    getHeight() - getPaddingBottom()
-            );
-
-            matrix.setRectToRect(bitmapRect, drawRect, Matrix.ScaleToFit.FILL);
-
-            bitmapShader.setLocalMatrix(matrix);
-            paint.setShader(bitmapShader);
-        }
-
-        canvas.save();
-        canvas.clipRect(outputRect);
-
-        if (circular) {
-            canvas.drawRoundRect(outputRect, width / 2f, height / 2f, paint);
-        } else {
-            canvas.drawRoundRect(outputRect, rounding, rounding, paint);
-        }
-
-        canvas.restore();
-        canvas.save();
-
-        if (foreground != null) {
-            if (foregroundCalculate) {
-                foregroundCalculate = false;
-                foreground.setBounds(0, 0, getRight(), getBottom());
-            }
-
-            foreground.draw(canvas);
-        }
-
-        canvas.restore();
-    }
-
-    @Override
-    protected boolean verifyDrawable(Drawable who) {
-        return super.verifyDrawable(who) || (who == foreground);
-    }
-
-    @Override
-    public void jumpDrawablesToCurrentState() {
-        super.jumpDrawablesToCurrentState();
-
-        if (foreground != null) {
-            foreground.jumpToCurrentState();
-        }
-    }
-
-    @Override
-    protected void drawableStateChanged() {
-        super.drawableStateChanged();
-        if (foreground != null && foreground.isStateful()) {
-            foreground.setState(getDrawableState());
-        }
-    }
-
-    @Override
-    public void drawableHotspotChanged(float x, float y) {
-        super.drawableHotspotChanged(x, y);
-
-        if (foreground != null) {
-            foreground.setHotspot(x, y);
-        }
-    }
-
-    private void onImageSet(boolean isImmediate) {
-        if (!isImmediate) {
-            setAlpha(0f);
-
-            ValueAnimator alphaAnimation = ValueAnimator.ofFloat(0f, 1f);
-            alphaAnimation.setDuration(200);
-            alphaAnimation.setInterpolator(INTERPOLATOR);
-            alphaAnimation.addUpdateListener(animation -> {
-                float alpha = (float) animation.getAnimatedValue();
-                setAlpha(alpha);
-            });
-
-            alphaAnimator.play(alphaAnimation);
-            alphaAnimator.start();
-        } else {
-            alphaAnimator.end();
-            setAlpha(1f);
-        }
-    }
-
-    private void setImageBitmap(Bitmap bitmap) {
-        bitmapShader = null;
-        paint.setShader(null);
-
-        if (bitmap != null) {
-            calculate = true;
-            bitmapShader = new BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP);
-        } else {
-            calculate = false;
-        }
-
-        this.bitmap = bitmap;
-        invalidate();
-    }
+    private val INTERPOLATOR: Interpolator = FastOutSlowInInterpolator()
+  }
 }

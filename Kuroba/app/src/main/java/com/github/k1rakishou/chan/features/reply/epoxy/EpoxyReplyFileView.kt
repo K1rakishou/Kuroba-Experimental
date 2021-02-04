@@ -22,7 +22,6 @@ import com.github.k1rakishou.chan.features.reply.data.AttachAdditionalInfo
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
 import com.github.k1rakishou.chan.features.reply.data.SpoilerInfo
 import com.github.k1rakishou.chan.ui.view.SelectionCheckView
-import com.github.k1rakishou.chan.ui.widget.FixedViewSizeResolver
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDrawable
 import com.github.k1rakishou.chan.utils.setVisibilityFast
@@ -116,10 +115,6 @@ class EpoxyReplyFileView @JvmOverloads constructor(
 
     replyAttachmentImageView.setImageBitmap(null)
 
-    val imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize(
-      FixedViewSizeResolver(replyAttachmentImageView)
-    )
-
     val transformations = if (exceedsMaxFilesPerPostLimit) {
       listOf(GRAYSCALE)
     } else {
@@ -129,7 +124,7 @@ class EpoxyReplyFileView @JvmOverloads constructor(
     imageLoaderV2.loadRelyFilePreviewFromDisk(
       context = context,
       fileUuid = fileUuid,
-      imageSize = imageSize,
+      imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(replyAttachmentImageView),
       scale = Scale.FILL,
       transformations = transformations
     ) { bitmapDrawable ->

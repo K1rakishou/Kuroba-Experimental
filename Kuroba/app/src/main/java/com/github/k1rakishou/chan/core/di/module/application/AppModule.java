@@ -24,6 +24,7 @@ import android.os.Environment;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient;
+import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
 import com.github.k1rakishou.chan.core.saver.ImageSaver;
@@ -96,8 +97,11 @@ public class AppModule {
         return new ImageLoader.Builder(applicationContext)
                 .allowHardware(true)
                 .memoryCachePolicy(CachePolicy.ENABLED)
-                .diskCachePolicy(CachePolicy.ENABLED)
                 .networkCachePolicy(CachePolicy.ENABLED)
+                // Coil's caching system relies on OkHttp's caching system which is not suitable for
+                // us (It doesn't handle 404 responses how we want). So we have to use our own disk
+                // caching system.
+                .diskCachePolicy(CachePolicy.DISABLED)
                 .callFactory(coilOkHttpClient.okHttpClient())
                 .build();
     }
@@ -109,15 +113,17 @@ public class AppModule {
             ImageLoader coilImageLoader,
             ReplyManager replyManager,
             ThemeEngine themeEngine,
-            AppConstants appConstants
+            AppConstants appConstants,
+            CacheHandler cacheHandler
     ) {
         return new ImageLoaderV2(
+                ChanSettings.verboseLogs.get(),
                 appScope,
                 appConstants,
                 coilImageLoader,
-                ChanSettings.verboseLogs.get(),
                 replyManager,
-                themeEngine
+                themeEngine,
+                cacheHandler
         );
     }
 

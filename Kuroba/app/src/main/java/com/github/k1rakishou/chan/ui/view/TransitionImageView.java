@@ -27,8 +27,7 @@ import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.View;
 
-public class TransitionImageView
-        extends View {
+public class TransitionImageView extends View {
     private static final String TAG = "TransitionImageView";
 
     private Bitmap bitmap;

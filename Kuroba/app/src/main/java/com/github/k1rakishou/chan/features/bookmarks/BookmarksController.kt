@@ -510,6 +510,7 @@ class BookmarksController(
       cleanupFastScroller()
 
       val scroller = FastScrollerHelper.create(
+        FastScroller.FastScrollerType.Bookmarks,
         epoxyRecyclerView,
         null,
         0,

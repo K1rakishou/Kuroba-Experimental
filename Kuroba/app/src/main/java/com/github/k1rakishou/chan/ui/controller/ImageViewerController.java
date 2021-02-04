@@ -79,6 +79,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -581,12 +582,15 @@ public class ImageViewerController
 
     @Override
     public void updatePreviewImage(ChanPostImage postImage) {
-        imageLoaderV2.load(
+        imageLoaderV2.loadFromNetwork(
                 context,
                 postImage,
-                previewImage.getWidth(),
-                previewImage.getHeight(),
-                new ImageLoaderV2.ImageListener() {
+                new ImageLoaderV2.ImageSize.FixedImageSize(
+                        previewImage.getWidth(),
+                        previewImage.getHeight()
+                ),
+                Collections.emptyList(),
+                new ImageLoaderV2.FailureAwareImageListener() {
                     @Override
                     public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
                         previewImage.setBitmap(drawable.getBitmap());
@@ -687,12 +691,15 @@ public class ImageViewerController
             }
         });
 
-        imageLoaderV2.load(
+        imageLoaderV2.loadFromNetwork(
                 context,
                 postImage,
-                previewImage.getWidth(),
-                previewImage.getHeight(),
-                new ImageLoaderV2.ImageListener() {
+                new ImageLoaderV2.ImageSize.FixedImageSize(
+                        previewImage.getWidth(),
+                        previewImage.getHeight()
+                ),
+                Collections.emptyList(),
+                new ImageLoaderV2.FailureAwareImageListener() {
                     @Override
                     public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
                         previewImage.setBitmap(drawable.getBitmap());

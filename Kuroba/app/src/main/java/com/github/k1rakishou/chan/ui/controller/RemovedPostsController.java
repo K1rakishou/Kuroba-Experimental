@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -267,9 +268,12 @@ public class RemovedPostsController
                     imageLoaderV2.loadFromNetwork(
                             getContext(),
                             thumbnailUrl.toString(),
-                            postImage.getWidth(),
-                            postImage.getHeight(),
-                            new ImageLoaderV2.ImageListener() {
+                            new ImageLoaderV2.ImageSize.FixedImageSize(
+                                    postImage.getWidth(),
+                                    postImage.getHeight()
+                            ),
+                            Collections.emptyList(),
+                            new ImageLoaderV2.FailureAwareImageListener() {
                                 @Override
                                 public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
                                     postImage.setImageBitmap(drawable.getBitmap());

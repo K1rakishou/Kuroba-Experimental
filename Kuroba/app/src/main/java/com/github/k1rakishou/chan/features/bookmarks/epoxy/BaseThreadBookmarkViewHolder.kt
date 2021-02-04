@@ -24,7 +24,6 @@ import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkStats
 import com.github.k1rakishou.chan.ui.view.SelectionCheckView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.resetClickListener
 import com.github.k1rakishou.common.resetLongClickListener
@@ -33,7 +32,6 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
-import java.lang.ref.WeakReference
 import javax.inject.Inject
 
 @Suppress("LeakingThis")
@@ -332,10 +330,29 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
   }
 
   fun bindImage(isGridMode: Boolean, watching: Boolean, context: Context) {
-    waitForLayout(bookmarkImage) {
-      bindImageInternal(isGridMode, watching, context)
-      return@waitForLayout true
+    val url = imageLoaderRequestData?.url
+    if (url == null) {
+      bookmarkImage.setImageBitmap(null)
+      return
     }
+
+    val transformations: MutableList<Transformation> = if (isGridMode) {
+      mutableListOf(ROUNDED_CORNERS)
+    } else {
+      mutableListOf(CIRCLE_CROP)
+    }
+
+    if (!watching) {
+      transformations.add(GRAYSCALE)
+    }
+
+    requestDisposable = imageLoaderV2.loadFromNetwork(
+      context,
+      url.toString(),
+      ImageLoaderV2.ImageSize.MeasurableImageSize.create(bookmarkImage),
+      transformations,
+      { drawable -> bookmarkImage.setImageBitmap(drawable.bitmap) }
+    )
   }
 
   fun updateGridViewSizes(isTablet: Boolean) {
@@ -419,30 +436,6 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
         indicator.imageTintList = ColorStateList.valueOf(color)
       }
     }
-  }
-
-  private fun bindImageInternal(isGridMode: Boolean, watching: Boolean, context: Context) {
-    val url = imageLoaderRequestData?.url
-    val thumbnailImageRef = WeakReference(bookmarkImage)
-
-    val transformations: MutableList<Transformation> = if (isGridMode) {
-      mutableListOf(ROUNDED_CORNERS)
-    } else {
-      mutableListOf(CIRCLE_CROP)
-    }
-
-    if (!watching) {
-      transformations.add(GRAYSCALE)
-    }
-
-    requestDisposable = imageLoaderV2.loadFromNetwork(
-      context,
-      url.toString(),
-      bookmarkImage.width,
-      bookmarkImage.height,
-      transformations,
-      { drawable -> thumbnailImageRef.get()?.setImageBitmap(drawable.bitmap) }
-    )
   }
 
   data class ImageLoaderRequestData(val url: HttpUrl?)

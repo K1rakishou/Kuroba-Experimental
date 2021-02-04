@@ -14,6 +14,7 @@ public class FastScrollerHelper {
     public static final int FAST_SCROLLER_WIDTH = dp(10);
 
     public static FastScroller create(
+            FastScroller.FastScrollerType fastScrollerType,
             RecyclerView recyclerView,
             @Nullable
             PostInfoMapItemDecoration postInfoMapItemDecoration,
@@ -24,6 +25,7 @@ public class FastScrollerHelper {
         final int thumbMinLength = dp(32);
 
         return new FastScroller(
+                fastScrollerType,
                 recyclerView,
                 postInfoMapItemDecoration,
                 FAST_SCROLLER_WIDTH,

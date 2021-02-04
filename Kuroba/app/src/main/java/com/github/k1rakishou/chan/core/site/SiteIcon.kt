@@ -22,7 +22,7 @@ import androidx.annotation.DrawableRes
 import androidx.core.graphics.drawable.toBitmap
 import coil.request.Disposable
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
-import com.github.k1rakishou.chan.core.image.ImageLoaderV2.ImageListener
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2.FailureAwareImageListener
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
@@ -54,9 +54,12 @@ class SiteIcon private constructor(private val imageLoaderV2: ImageLoaderV2) {
     requestDisposable = imageLoaderV2.loadFromNetwork(
       context,
       url.toString(),
-      FAVICON_SIZE,
-      FAVICON_SIZE,
-      object : ImageListener {
+      ImageLoaderV2.ImageSize.FixedImageSize(
+        FAVICON_SIZE,
+        FAVICON_SIZE,
+      ),
+      emptyList(),
+      object : FailureAwareImageListener {
         override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
           resultFunc(drawable)
         }

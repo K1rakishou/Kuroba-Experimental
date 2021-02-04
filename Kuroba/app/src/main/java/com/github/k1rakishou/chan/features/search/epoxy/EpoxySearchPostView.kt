@@ -18,7 +18,6 @@ import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.google.android.material.textview.MaterialTextView
-import java.lang.ref.WeakReference
 import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
@@ -139,18 +138,14 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
       return
     }
 
-    val searchPostThumbnailRef = WeakReference(searchPostThumbnail)
     searchPostImagesContainer.setVisibilityFast(View.VISIBLE)
 
     imageDisposable = imageLoaderV2.loadFromNetwork(
       context,
       thumbnailUrl.toString(),
-      searchPostThumbnailSize,
-      searchPostThumbnailSize,
+      ImageLoaderV2.ImageSize.MeasurableImageSize.create(searchPostThumbnail),
       listOf(),
-      { drawable ->
-        searchPostThumbnailRef.get()?.setImageBitmap(drawable.bitmap)
-      }
+      { drawable -> searchPostThumbnail.setImageBitmap(drawable.bitmap) }
     )
   }
 

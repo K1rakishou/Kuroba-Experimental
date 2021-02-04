@@ -55,7 +55,7 @@ import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
 import com.github.k1rakishou.chan.core.cache.stream.WebmStreamingDataSource
 import com.github.k1rakishou.chan.core.cache.stream.WebmStreamingSource
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
-import com.github.k1rakishou.chan.core.image.ImageLoaderV2.ImageListener
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2.FailureAwareImageListener
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.ui.view.MultiImageViewGestureDetector.MultiImageViewGestureDetectorCallbacks
@@ -359,12 +359,15 @@ class MultiImageView @JvmOverloads constructor(
   private fun setThumbnail(postImage: ChanPostImage, center: Boolean) {
     BackgroundUtils.ensureMainThread()
 
-    thumbnailRequestDisposable = imageLoaderV2.load(
+    thumbnailRequestDisposable = imageLoaderV2.loadFromNetwork(
       context,
       postImage,
-      width,
-      height,
-      object : ImageListener {
+      ImageLoaderV2.ImageSize.FixedImageSize(
+        width,
+        height,
+      ),
+      emptyList(),
+      object : FailureAwareImageListener {
         @SuppressLint("ClickableViewAccessibility")
         override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
           thumbnailRequestDisposable = null
@@ -1068,7 +1071,8 @@ class MultiImageView @JvmOverloads constructor(
       imageLoaderV2.loadFromNetwork(
         context,
         CHAN4_404_IMAGE_LINKS.random(random),
-        object : ImageListener {
+        ImageLoaderV2.ImageSize.UnknownImageSize,
+        object : FailureAwareImageListener {
           override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
             imageNotFoundPlaceholderLoadJob = null
 

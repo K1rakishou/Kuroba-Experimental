@@ -39,7 +39,8 @@ import androidx.recyclerview.widget.RecyclerView.OnItemTouchListener;
 import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
-import com.github.k1rakishou.chan.Chan;
+import com.github.k1rakishou.chan.core.manager.ViewFlagsStorage;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.core_themes.ChanTheme;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 
@@ -127,6 +128,8 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
     private int mRecyclerViewRightPadding = 0;
     private int mRecyclerViewBottomPadding = 0;
 
+    private FastScrollerType fastScrollerType;
+
     private RecyclerView mRecyclerView;
     /**
      * Whether the document is long/wide enough to require scrolling. If not, we don't show the
@@ -152,8 +155,11 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
 
     @Inject
     ThemeEngine themeEngine;
+    @Inject
+    ViewFlagsStorage viewFlagsStorage;
 
     public FastScroller(
+            FastScrollerType fastScrollerType,
             RecyclerView recyclerView,
             @Nullable
             PostInfoMapItemDecoration postInfoMapItemDecoration,
@@ -163,8 +169,10 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
             int thumbMinLength,
             int toolbarPaddingTop
     ) {
-        Chan.getComponent().inject(this);
+        AppModuleAndroidUtils.extractActivityComponent(recyclerView.getContext())
+                .inject(this);
 
+        this.fastScrollerType = fastScrollerType;
         this.mScrollbarMinimumRange = scrollbarMinimumRange;
         this.defaultWidth = defaultWidth;
         this.mMargin = margin;
@@ -538,6 +546,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
                 requestRedraw();
 
                 if (thumbDragListener != null) {
+                    viewFlagsStorage.updateIsDraggingFastScroller(fastScrollerType, true);
                     thumbDragListener.onDragStarted();
                 }
 
@@ -550,6 +559,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
             requestRedraw();
 
             if (thumbDragListener != null) {
+                viewFlagsStorage.updateIsDraggingFastScroller(fastScrollerType, false);
                 thumbDragListener.onDragEnded();
             }
         } else if (me.getAction() == MotionEvent.ACTION_MOVE && mState == STATE_DRAGGING) {
@@ -664,5 +674,11 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
     public interface ThumbDragListener {
         void onDragStarted();
         void onDragEnded();
+    }
+
+    public enum FastScrollerType {
+        Catalog,
+        Thread,
+        Bookmarks
     }
 }
