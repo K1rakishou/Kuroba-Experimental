@@ -35,25 +35,4 @@ public class BoardHelper {
         return Parser.unescapeEntities(board.getDescription(), false);
     }
 
-    public static String boardUniqueId(ChanBoard board) {
-        String code = board.boardCode().replace(":", "").replace(",", "");
-        return board.getBoardDescriptor().siteName() + ":" + code;
-    }
-
-    public static boolean matchesUniqueId(ChanBoard board, String uniqueId) {
-        if (!uniqueId.contains(":")) {
-            return board.getBoardDescriptor().getSiteDescriptor().is4chan() && board.boardCode().equals(uniqueId);
-        }
-
-        String[] splitted = uniqueId.split(":");
-        if (splitted.length != 2) {
-            return false;
-        }
-
-        try {
-            return splitted[0].equals(board.getBoardDescriptor().siteName()) && splitted[1].equals(board.boardCode());
-        } catch (NumberFormatException ignored) {
-            return false;
-        }
-    }
 }

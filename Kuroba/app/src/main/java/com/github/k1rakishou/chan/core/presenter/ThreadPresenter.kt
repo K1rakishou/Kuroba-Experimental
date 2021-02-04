@@ -87,6 +87,7 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import com.github.k1rakishou.model.source.cache.ChanPostBuilderCache
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
 import io.reactivex.disposables.CompositeDisposable
@@ -128,7 +129,8 @@ class ThreadPresenter @Inject constructor(
   private val lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder,
   private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
   private val postHideHelper: PostHideHelper,
-  private val chanThreadManager: ChanThreadManager
+  private val chanThreadManager: ChanThreadManager,
+  private val chanPostBuilderCache: ChanPostBuilderCache
 ) : PostAdapterCallback,
   PostCellCallback,
   ThreadStatusCell.Callback,
@@ -1621,13 +1623,28 @@ class ThreadPresenter @Inject constructor(
   }
 
   private suspend fun saveUnsavePost(post: ChanPost) {
+    val descriptor = currentChanDescriptor
+      ?: return
+
     if (savedReplyManager.isSaved(post.postDescriptor)) {
       savedReplyManager.unsavePost(post.postDescriptor)
     } else {
       savedReplyManager.savePost(post.postDescriptor)
     }
 
-    // force reload for reply highlighting
+    if (descriptor is ChanDescriptor.ThreadDescriptor) {
+      val isThreadCached = chanPostBuilderCache.isCached(descriptor)
+      if (isThreadCached) {
+        normalLoad(
+          showLoading = false,
+          requestNewPostsFromServer = false,
+          chanLoadOptions = ChanLoadOptions.ClearMemoryAndDatabaseCaches
+        )
+
+        return
+      }
+    }
+
     normalLoad(
       showLoading = true,
       chanLoadOptions = ChanLoadOptions.ClearMemoryCache

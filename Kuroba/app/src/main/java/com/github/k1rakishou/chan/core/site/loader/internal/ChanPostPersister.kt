@@ -4,8 +4,8 @@ import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsUseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
-import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
+import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.options.ChanCacheOptions
@@ -27,18 +27,17 @@ internal class ChanPostPersister(
 
   @OptIn(ExperimentalTime::class)
   suspend fun persistPosts(
-    url: String,
     chanReaderProcessor: ChanReaderProcessor,
     cacheOptions: ChanCacheOptions,
     chanDescriptor: ChanDescriptor,
-    chanReader: ChanReader
+    postParser: PostParser
   ): ThreadResultWithTimeInfo {
     return Try {
       BackgroundUtils.ensureBackgroundThread()
       chanPostRepository.awaitUntilInitialized()
 
-      Logger.d(TAG, "persistPosts($url, $chanReaderProcessor, $cacheOptions, " +
-        "$chanDescriptor, ${chanReader.javaClass.simpleName})")
+      Logger.d(TAG, "persistPosts($chanDescriptor, $chanReaderProcessor, $cacheOptions, " +
+        "${postParser.javaClass.simpleName})")
 
       if (chanReaderProcessor.chanDescriptor is ChanDescriptor.CatalogDescriptor) {
         val chanCatalogSnapshot = ChanCatalogSnapshot.fromSortedThreadDescriptorList(
@@ -54,7 +53,7 @@ internal class ChanPostPersister(
       val (parsedPosts, parsingDuration) = measureTimedValue {
         return@measureTimedValue parsePostsUseCase.parseNewPostsPosts(
           chanDescriptor,
-          chanReader,
+          postParser,
           chanReaderProcessor.getToParse()
         )
       }
@@ -75,7 +74,6 @@ internal class ChanPostPersister(
       checkNotNull(chanReaderProcessor.getOp()) { "OP is null" }
 
       val loadTimeInfo = LoadTimeInfo(
-        url = url,
         storeDuration = storeDuration,
         storedPostsCount = storedPostsCount,
         parsingDuration = parsingDuration,
@@ -101,7 +99,6 @@ internal class ChanPostPersister(
   )
 
   class LoadTimeInfo @OptIn(ExperimentalTime::class) constructor(
-    val url: String,
     val storeDuration: Duration,
     val storedPostsCount: Int,
     val parsingDuration: Duration,

@@ -69,11 +69,41 @@ public class ChanPostBuilder {
     public ChanPostBuilder() {
     }
 
+    public ChanPostBuilder(ChanPostBuilder other) {
+        this.boardDescriptor = other.boardDescriptor;
+        this.id = other.id;
+        this.opId = other.opId;
+        this.op = other.op;
+        this.totalRepliesCount = other.totalRepliesCount;
+        this.threadImagesCount = other.threadImagesCount;
+        this.uniqueIps = other.uniqueIps;
+        this.stickyCap = other.stickyCap;
+        this.sticky = other.sticky;
+        this.closed = other.closed;
+        this.archived = other.archived;
+        this.deleted = other.deleted;
+        this.lastModified = other.lastModified;
+        this.name = other.name;
+        this.postCommentBuilder = other.postCommentBuilder.copy();
+        this.unixTimestampSeconds = other.unixTimestampSeconds;
+        this.posterId = other.posterId;
+        this.moderatorCapcode = other.moderatorCapcode;
+        this.idColor = other.idColor;
+        this.isSavedReply = other.isSavedReply;
+        this.tripcode = other.tripcode;
+        this.subject = other.subject;
+        this.postDescriptor = other.postDescriptor;
+
+        this.postImages.addAll(other.postImages);
+        this.httpIcons.addAll(other.httpIcons);
+        this.repliesToIds.addAll(other.repliesToIds);
+    }
+
     /**
      * This hash is calculated on a raw post comment/subject/name/tripcode etc, before we add or
      * remove any spans or other info into the comment or other stuff. Basically those values are
      * the same as we receive them from the server at the moment of the hash calculation.
-     * */
+     */
     public synchronized MurmurHashUtils.Murmur3Hash getGetPostHash() {
         int commentUpdateCounter = postCommentBuilder.getCommentUpdateCounter();
         if (commentUpdateCounter > 1) {

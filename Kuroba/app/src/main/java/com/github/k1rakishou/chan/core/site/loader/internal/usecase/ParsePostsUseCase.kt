@@ -4,8 +4,8 @@ import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
-import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.PostParseWorker
+import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.core_logger.Logger
@@ -32,7 +32,7 @@ class ParsePostsUseCase(
 
   suspend fun parseNewPostsPosts(
     chanDescriptor: ChanDescriptor,
-    chanReader: ChanReader,
+    postParser: PostParser,
     postBuildersToParse: List<ChanPostBuilder>
   ): List<ChanPost> {
     BackgroundUtils.ensureBackgroundThread()
@@ -66,7 +66,7 @@ class ParsePostsUseCase(
                 savedReplyManager,
                 filters,
                 postToParse,
-                chanReader,
+                postParser,
                 internalIds,
                 boardDescriptors
               ).parse()

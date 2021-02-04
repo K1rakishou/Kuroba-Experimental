@@ -48,13 +48,16 @@ class PostCommentBuilder(
   fun hasComment() = comment != null
 
   @Synchronized
-  fun toPostComment(): PostComment {
-    val c = checkNotNull(comment) { "Comment is null!" }
-    require(c is Spannable) { "Comment is not instance of Spannable! comment=${c::class.java.simpleName}" }
+  fun copy(): PostCommentBuilder {
+    val commentCopy = if (comment == null) {
+      comment
+    } else {
+      SpannableString(comment)
+    }
 
-    return PostComment(
-      originalComment = SpannableString(c),
-      linkables = postLinkables.toList()
+    return PostCommentBuilder(
+      commentCopy,
+      postLinkables.toMutableSet()
     )
   }
 

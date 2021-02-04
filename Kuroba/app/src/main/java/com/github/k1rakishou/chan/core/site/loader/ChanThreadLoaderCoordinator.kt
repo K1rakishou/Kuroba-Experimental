@@ -30,6 +30,7 @@ import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ReloadPostsF
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
+import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
@@ -42,6 +43,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import com.github.k1rakishou.model.source.cache.ChanPostBuilderCache
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineName
@@ -76,6 +78,7 @@ class ChanThreadLoaderCoordinator(
   private val filterEngine: FilterEngine,
   private val chanPostRepository: ChanPostRepository,
   private val chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository,
+  private val chanPostBuilderCache: ChanPostBuilderCache,
   private val appConstants: AppConstants,
   private val postFilterManager: PostFilterManager,
   private val verboseLogsEnabled: Boolean,
@@ -174,15 +177,22 @@ class ChanThreadLoaderCoordinator(
           ).unwrap()
         }
 
+        if (chanReaderProcessor.chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+          val threadDescriptor = chanReaderProcessor.chanDescriptor
+          chanPostBuilderCache.storePostBuilders(threadDescriptor, chanReaderProcessor.getToParse())
+        }
+
+        val postParser = chanReader.getParser()
+          ?: throw NullPointerException("PostParser cannot be null!")
+
         val (threadLoadResult, loadTimeInfo) = chanPostPersister.persistPosts(
-          url,
           chanReaderProcessor,
           chanCacheOptions,
           chanDescriptor,
-          chanReader
+          postParser
         )
 
-        loadRequestStatistics(chanDescriptor, loadTimeInfo, requestDuration, readPostsDuration)
+        loadRequestStatistics(url, chanDescriptor, loadTimeInfo, requestDuration, readPostsDuration)
         return@Try threadLoadResult
       }.mapError { error -> ChanLoaderException(error) }
     }
@@ -190,6 +200,7 @@ class ChanThreadLoaderCoordinator(
 
   @OptIn(ExperimentalTime::class)
   private suspend fun loadRequestStatistics(
+    url: String,
     chanDescriptor: ChanDescriptor,
     loadTimeInfo: ChanPostPersister.LoadTimeInfo?,
     requestDuration: Duration,
@@ -199,7 +210,6 @@ class ChanThreadLoaderCoordinator(
       return
     }
 
-    val url = loadTimeInfo.url
     val storeDuration = loadTimeInfo.storeDuration
     val storedPostsCount = loadTimeInfo.storedPostsCount
     val parsingDuration = loadTimeInfo.parsingDuration
@@ -237,15 +247,38 @@ class ChanThreadLoaderCoordinator(
     Logger.d(TAG, logString)
   }
 
-  suspend fun reloadThreadFromDatabase(
+  suspend fun reloadThreadFromCache(
+    postParser: PostParser,
     threadDescriptor: ChanDescriptor.ThreadDescriptor
   ): ModularResult<ThreadLoadResult> {
-    Logger.d(TAG, "reloadThreadFromDatabase($threadDescriptor)")
+    Logger.d(TAG, "reloadThreadFromCache($threadDescriptor)")
 
     return withContext(Dispatchers.IO) {
       return@withContext Try {
-        databasePostLoader.loadPosts(threadDescriptor)
-        return@Try ThreadLoadResult.Loaded(threadDescriptor)
+        val chanPostBuilders = chanPostBuilderCache.getPostBuilders(threadDescriptor)
+
+        val chanReaderProcessor = ChanReaderProcessor(
+          chanPostRepository,
+          ChanReadOptions.default(),
+          threadDescriptor
+        )
+
+        chanPostBuilders.forEach { chanPostBuilder ->
+          if (chanPostBuilder.op) {
+            chanReaderProcessor.setOp(chanPostBuilder)
+          }
+
+          chanReaderProcessor.addPost(chanPostBuilder)
+        }
+
+        val (threadLoadResult, _) = chanPostPersister.persistPosts(
+          chanReaderProcessor,
+          ChanCacheOptions.StoreEverywhere,
+          threadDescriptor,
+          postParser
+        )
+
+        return@Try threadLoadResult
       }
     }
   }

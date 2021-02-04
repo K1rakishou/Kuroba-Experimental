@@ -87,11 +87,14 @@ class ChanThreadManager(
         "requestNewPostsFromServer=$requestNewPostsFromServer, " +
         "$chanLoadOptions, $chanCacheOptions, $chanReadOptions)")
 
-      if (chanLoadOptions.isNotDefault()) {
+      if (!requestNewPostsFromServer || chanLoadOptions.isNotDefault()) {
+        Logger.d(TAG, "loadThreadOrCatalog() postFilterManager.removeAllForDescriptor()")
         postFilterManager.removeAllForDescriptor(chanDescriptor)
       }
 
-      if (chanLoadOptions.canClearCache()) {
+      if (!requestNewPostsFromServer || chanLoadOptions.canClearCache()) {
+        Logger.d(TAG, "loadThreadOrCatalog() deleting posts from the cache")
+
         when (chanDescriptor) {
           is ChanDescriptor.ThreadDescriptor -> chanThreadsCache.deleteThread(chanDescriptor)
           is ChanDescriptor.CatalogDescriptor -> {
@@ -100,7 +103,9 @@ class ChanThreadManager(
         }
       }
 
-      if (chanLoadOptions.canClearDatabase()) {
+      if (!requestNewPostsFromServer || chanLoadOptions.canClearDatabase()) {
+        Logger.d(TAG, "loadThreadOrCatalog() deleting posts from the database")
+
         when (chanDescriptor) {
           is ChanDescriptor.ThreadDescriptor -> chanPostRepository.deleteThread(chanDescriptor)
           is ChanDescriptor.CatalogDescriptor -> chanPostRepository.deleteCatalog(chanDescriptor)
@@ -311,7 +316,20 @@ class ChanThreadManager(
       //  database
       return when (chanDescriptor) {
         is ChanDescriptor.ThreadDescriptor -> {
-          chanThreadLoaderCoordinator.reloadThreadFromDatabase(chanDescriptor)
+          val siteDescriptor = chanDescriptor.siteDescriptor()
+
+          val postParser = siteManager.bySiteDescriptor(siteDescriptor)
+            ?.chanReader()
+            ?.getParser()
+
+          if (postParser == null) {
+            val threadLoadResult = ThreadLoadResult.Error(
+              ChanLoaderException(SiteManager.SiteNotFoundException(siteDescriptor))
+            )
+            return ModularResult.value(threadLoadResult)
+          }
+
+          chanThreadLoaderCoordinator.reloadThreadFromCache(postParser, chanDescriptor)
         }
         is ChanDescriptor.CatalogDescriptor -> {
           chanThreadLoaderCoordinator.reloadCatalogFromDatabase(chanDescriptor)

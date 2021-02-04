@@ -37,7 +37,7 @@ internal class PostParseWorker(
   private val savedReplyManager: SavedReplyManager,
   private val filters: List<ChanFilter>,
   private val postBuilder: ChanPostBuilder,
-  private val reader: ChanReader,
+  private val postParser: PostParser,
   private val internalIds: Set<Long>,
   private val boardDescriptors: Set<BoardDescriptor>
 ) {
@@ -50,10 +50,7 @@ internal class PostParseWorker(
       // Process the filters before finish, because parsing the html is dependent on filter matches
       processPostFilter(postBuilder)
 
-      val parser = reader.getParser()
-        ?: throw NullPointerException("PostParser cannot be null!")
-
-      return@Try parser.parse(postBuilder, object : PostParser.Callback {
+      return@Try postParser.parse(postBuilder, object : PostParser.Callback {
         override fun isSaved(postNo: Long, postSubNo: Long): Boolean {
           return savedReplyManager.isSaved(postBuilder.postDescriptor.descriptor, postNo, postSubNo)
         }

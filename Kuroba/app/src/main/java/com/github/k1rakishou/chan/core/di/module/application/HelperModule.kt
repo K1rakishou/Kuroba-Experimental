@@ -20,6 +20,7 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import com.github.k1rakishou.model.source.cache.ChanPostBuilderCache
 import dagger.Module
 import dagger.Provides
 import kotlinx.coroutines.CoroutineScope
@@ -36,6 +37,7 @@ class HelperModule {
     filterEngine: FilterEngine,
     chanPostRepository: ChanPostRepository,
     chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository,
+    chanPostBuilderCache: ChanPostBuilderCache,
     appConstants: AppConstants,
     postFilterManager: PostFilterManager,
     boardManager: BoardManager
@@ -46,6 +48,7 @@ class HelperModule {
       filterEngine,
       chanPostRepository,
       chanCatalogSnapshotRepository,
+      chanPostBuilderCache,
       appConstants,
       postFilterManager,
       ChanSettings.verboseLogs.get(),
