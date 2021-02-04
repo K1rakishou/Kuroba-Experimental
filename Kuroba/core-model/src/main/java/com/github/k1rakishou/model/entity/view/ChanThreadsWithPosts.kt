@@ -28,8 +28,6 @@ import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
         ON postIds.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = threads.${ChanThreadsWithPosts.THREAD_ID_COLUMN_NAME}
     WHERE 
         posts.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_FALSE}
-    AND 
-        threads.${ChanThreadsWithPosts.LAST_MODIFIED_COLUMN_NAME} > 0
     GROUP BY threads.${ChanThreadsWithPosts.THREAD_ID_COLUMN_NAME}
     HAVING ${ChanThreadsWithPosts.POSTS_COUNT_COLUMN_NAME} >= 0
     ORDER BY threads.${ChanThreadsWithPosts.LAST_MODIFIED_COLUMN_NAME} ASC

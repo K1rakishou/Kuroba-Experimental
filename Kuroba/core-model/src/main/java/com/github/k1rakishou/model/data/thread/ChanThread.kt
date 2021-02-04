@@ -67,6 +67,10 @@ class ChanThread(
     lock.write { rawPostHashesMap.clear() }
   }
 
+  fun getAllPostsForDatabasePersisting(): List<ChanPost> {
+    return lock.read { threadPosts }
+  }
+
   fun addOrUpdatePosts(newChanPosts: List<ChanPost>): Boolean {
     return lock.write {
       require(newChanPosts.isNotEmpty()) { "newPosts are empty!" }
@@ -455,7 +459,6 @@ class ChanThread(
     check(oldChanOriginalPost.postDescriptor == newChanOriginalPost.postDescriptor) {
       "Post descriptors differ!"
     }
-    val descriptor = newPost.postDescriptor.descriptor
 
     val mergedOriginalPost = ChanOriginalPost(
       chanPostId = oldChanOriginalPost.chanPostId,
@@ -464,7 +467,7 @@ class ChanThread(
       postImages = newChanOriginalPost.postImages,
       postIcons = newChanOriginalPost.postIcons,
       repliesTo = newChanOriginalPost.repliesTo,
-      timestamp = newChanOriginalPost.timestamp,
+      timestamp = Math.max(oldChanOriginalPost.timestamp, newChanOriginalPost.timestamp),
       postComment = newChanOriginalPost.postComment,
       subject = newChanOriginalPost.subject,
       tripcode = newChanOriginalPost.tripcode,
@@ -475,7 +478,7 @@ class ChanThread(
       catalogRepliesCount = newChanOriginalPost.catalogRepliesCount,
       catalogImagesCount = newChanOriginalPost.catalogImagesCount,
       uniqueIps = newChanOriginalPost.uniqueIps,
-      lastModified = newChanOriginalPost.lastModified,
+      lastModified = Math.max(oldChanOriginalPost.lastModified, newChanOriginalPost.lastModified),
       sticky = newChanOriginalPost.sticky,
       closed = newChanOriginalPost.closed,
       archived = newChanOriginalPost.archived
@@ -544,6 +547,14 @@ class ChanThread(
 
       threadPosts.forEach { chanPost1 ->
         val chanPost2 = postsByPostDescriptors[chanPost1.postDescriptor]
+
+        if (chanPost1 is ChanOriginalPost) {
+          check(chanPost1.lastModified >= 0L) { "Bad lastModified" }
+        }
+
+        if (chanPost2 is ChanOriginalPost) {
+          check(chanPost2.lastModified >= 0L) { "Bad lastModified" }
+        }
 
         checkNotNull(chanPost2) { "postsByPostDescriptors does not contain $chanPost1" }
         check(chanPost1 == chanPost2) { "Posts do not match (chanPost1=$chanPost1, chanPost2=$chanPost2)" }

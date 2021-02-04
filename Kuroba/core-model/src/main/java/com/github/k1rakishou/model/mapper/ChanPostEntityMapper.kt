@@ -75,6 +75,12 @@ object ChanPostEntityMapper {
       ?.toSet()
       ?: emptySet()
 
+    val lastModified = if (chanThreadEntity.lastModified < 0) {
+      System.currentTimeMillis()
+    } else {
+      chanThreadEntity.lastModified
+    }
+
     val post = if (chanPostEntity.isOp) {
       ChanOriginalPost(
         chanPostId = chanPostEntity.chanPostId,
@@ -85,7 +91,7 @@ object ChanPostEntityMapper {
         catalogRepliesCount = chanThreadEntity.catalogRepliesCount,
         catalogImagesCount = chanThreadEntity.catalogImagesCount,
         uniqueIps = chanThreadEntity.uniqueIps,
-        lastModified = chanThreadEntity.lastModified,
+        lastModified = lastModified,
         sticky = chanThreadEntity.sticky,
         closed = chanThreadEntity.closed,
         archived = chanThreadEntity.archived,

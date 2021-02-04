@@ -42,7 +42,7 @@ public class ChanPostBuilder {
     public boolean closed;
     public boolean archived;
     public boolean deleted;
-    public long lastModified = -1L;
+    private long lastModified;
     public String name = "";
     public PostCommentBuilder postCommentBuilder = PostCommentBuilder.create();
     public long unixTimestampSeconds = -1L;
@@ -155,6 +155,10 @@ public class ChanPostBuilder {
         return postDescriptor;
     }
 
+    public long getLastModified() {
+        return lastModified;
+    }
+
     public ChanPostBuilder boardDescriptor(BoardDescriptor boardDescriptor) {
         this.boardDescriptor = boardDescriptor;
         return this;
@@ -216,6 +220,15 @@ public class ChanPostBuilder {
     }
 
     public ChanPostBuilder lastModified(long lastModified) {
+        if (lastModified < -1 && this.lastModified >= 0) {
+            return this;
+        }
+
+        if (lastModified < -1) {
+            this.lastModified = System.currentTimeMillis();
+            return this;
+        }
+
         this.lastModified = lastModified;
         return this;
     }

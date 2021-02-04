@@ -673,18 +673,19 @@ class ChanPostLocalSource(
         if (thread.threadBookmarkId != null) {
           skippedTotal += thread.postsCount
 
-          Logger.d(TAG, "deleteOldPosts() skipping bookmarked thread (threadNo = ${thread.threadNo}, " +
-            "deletedTotal = $deletedTotal, toDeleteCount = $toDeleteCount, posts count = ${thread.postsCount})")
+          Logger.d(TAG, "deleteOldPosts() skipping bookmarked thread " +
+            "(threadNo = ${thread.threadNo}, posts count = ${thread.postsCount})")
           continue
         }
 
         if (deletedTotal >= toDeleteCount) {
-          Logger.d(TAG, "deleteOldPosts() Deleted enough posts (deletedTotal = $deletedTotal, " +
-            "toDeleteCount = $toDeleteCount, posts count = ${thread.postsCount}), exiting early")
+          Logger.d(TAG, "deleteOldPosts() Deleted enough posts " +
+            "(posts count = ${thread.postsCount}), exiting early")
           break
         }
 
         chanThreads += thread
+        deletedTotal += thread.postsCount
       }
 
       if (chanThreads.isNotEmpty()) {
@@ -696,7 +697,7 @@ class ChanPostLocalSource(
           .sumBy { chanThreadsWithPosts -> chanThreadsWithPosts.postsCount }
 
         Logger.d(TAG, "deleteOldPosts() deleting a batch of ${threadIdSet.size} threads with ${totalPosts} posts")
-        deletedTotal += chanPostDao.deletePostsByThreadIds(threadIdSet)
+        chanPostDao.deletePostsByThreadIds(threadIdSet)
       }
 
       offset += threadBatch.size

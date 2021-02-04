@@ -461,8 +461,10 @@ class ChanPostRepository(
       return 0
     }
 
-    localSource.insertManyOriginalPosts(posts, cacheOptions)
-    chanThreadsCache.putManyCatalogPostsIntoCache(posts)
+    val postsToStoreIntoDatabase = chanThreadsCache.putManyCatalogPostsIntoCache(posts)
+    if (postsToStoreIntoDatabase.isNotEmpty()) {
+      localSource.insertManyOriginalPosts(postsToStoreIntoDatabase, cacheOptions)
+    }
 
     return posts.size
   }
@@ -492,8 +494,14 @@ class ChanPostRepository(
     Logger.d(TAG, "insertOrUpdateThreadPosts() ${postsThatDifferWithCache.size} posts differ from " +
       "the cache (total posts=${posts.size})")
 
-    localSource.insertPosts(postsThatDifferWithCache, cacheOptions)
-    chanThreadsCache.putManyThreadPostsIntoCache(postsThatDifferWithCache, cacheOptions)
+    val postsToStoreIntoDatabase = chanThreadsCache.putManyThreadPostsIntoCache(
+      postsThatDifferWithCache,
+      cacheOptions
+    )
+
+    if (postsToStoreIntoDatabase.isNotEmpty()) {
+      localSource.insertPosts(postsToStoreIntoDatabase, cacheOptions)
+    }
 
     return postsThatDifferWithCache.size
   }

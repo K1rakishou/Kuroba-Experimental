@@ -12,6 +12,10 @@ import com.google.gson.Gson
 object ChanThreadMapper {
 
   fun toEntity(threadNo: Long, ownerBoardId: Long, chanPost: ChanOriginalPost): ChanThreadEntity {
+    if (chanPost.isOP()) {
+      check(chanPost.lastModified >= 0L) { "Bad chanOriginalPost.lastModified" }
+    }
+
     return ChanThreadEntity(
       threadId = 0L,
       threadNo = threadNo,

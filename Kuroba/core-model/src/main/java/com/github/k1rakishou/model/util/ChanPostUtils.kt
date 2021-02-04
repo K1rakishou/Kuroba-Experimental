@@ -102,39 +102,39 @@ object ChanPostUtils {
     return dateFormat.format(tmpDate)
   }
 
-  fun postsDiffer(chanPostBuilder: ChanPostBuilder, chanPost: ChanPost): Boolean {
-    if (chanPostBuilder.boardDescriptor!! != chanPost.postDescriptor.descriptor.boardDescriptor()) {
+  fun postsDiffer(chanPostBuilder: ChanPostBuilder, chanPostFromCache: ChanPost): Boolean {
+    if (chanPostBuilder.boardDescriptor!! != chanPostFromCache.postDescriptor.descriptor.boardDescriptor()) {
       return true
     }
-    if (chanPostBuilder.op != (chanPost is ChanOriginalPost)) {
+    if (chanPostBuilder.op != (chanPostFromCache is ChanOriginalPost)) {
       return true
     }
 
     if (chanPostBuilder.op) {
-      chanPost as ChanOriginalPost
+      chanPostFromCache as ChanOriginalPost
 
-      if (chanPostBuilder.lastModified != chanPost.lastModified) {
+      if (chanPostBuilder.lastModified != chanPostFromCache.lastModified) {
         return true
       }
-      if (chanPostBuilder.sticky != chanPost.sticky) {
+      if (chanPostBuilder.sticky != chanPostFromCache.sticky) {
         return true
       }
-      if (chanPostBuilder.uniqueIps != chanPost.uniqueIps) {
+      if (chanPostBuilder.uniqueIps != chanPostFromCache.uniqueIps) {
         return true
       }
-      if (chanPostBuilder.threadImagesCount != chanPost.catalogImagesCount) {
+      if (chanPostBuilder.threadImagesCount != chanPostFromCache.catalogImagesCount) {
         return true
       }
-      if (chanPostBuilder.closed != chanPost.closed) {
+      if (chanPostBuilder.closed != chanPostFromCache.closed) {
         return true
       }
-      if (chanPostBuilder.archived != chanPost.archived) {
+      if (chanPostBuilder.archived != chanPostFromCache.archived) {
         return true
       }
-      if (chanPostBuilder.deleted != chanPost.deleted) {
+      if (chanPostBuilder.deleted != chanPostFromCache.deleted) {
         return true
       }
-      if (chanPostBuilder.totalRepliesCount != chanPost.catalogRepliesCount) {
+      if (chanPostBuilder.totalRepliesCount != chanPostFromCache.catalogRepliesCount) {
         return true
       }
     }
@@ -145,7 +145,7 @@ object ChanPostUtils {
     // remove it to not show it to the user).
     // Instead, we calculate a hash of a raw post comment (+ subject, name, tripcode, posterId and
     // moderatorCapcode) and then compare them instead.
-    if (postImagesDiffer2(chanPostBuilder.postImages, chanPost.postImages)) {
+    if (postImagesDiffer2(chanPostBuilder.postImages, chanPostFromCache.postImages)) {
       return true
     }
 

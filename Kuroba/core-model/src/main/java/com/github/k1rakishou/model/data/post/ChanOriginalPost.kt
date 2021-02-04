@@ -19,7 +19,7 @@ class ChanOriginalPost(
   override val catalogRepliesCount: Int = -1,
   override val catalogImagesCount: Int = -1,
   val uniqueIps: Int = -1,
-  val lastModified: Long = -1L,
+  val lastModified: Long,
   val sticky: Boolean = false,
   val closed: Boolean = false,
   val archived: Boolean = false,

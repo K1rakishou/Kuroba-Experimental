@@ -54,13 +54,19 @@ class ChanThreadsCache(
     }
   }
 
-  fun putManyCatalogPostsIntoCache(originalPosts: List<ChanOriginalPost>) {
+  /**
+   * Inserts [originalPosts] into the memory cache by either adding them as new or updating old ones.
+   * Returns as list of updated posts.
+   * */
+  fun putManyCatalogPostsIntoCache(originalPosts: List<ChanOriginalPost>): List<ChanOriginalPost> {
     if (originalPosts.isEmpty()) {
-      return
+      return emptyList()
     }
 
-    lock.write {
+    return lock.write {
       runOldPostEvictionRoutineIfNeeded()
+
+      val updatedPosts = mutableListWithCap<ChanOriginalPost>(originalPosts)
 
       originalPosts.forEach { chanOriginalPost ->
         check(chanOriginalPost.postDescriptor.descriptor is ChanDescriptor.ThreadDescriptor) {
@@ -74,18 +80,21 @@ class ChanThreadsCache(
           chanThreads[threadDescriptor] = ChanThread(isDevBuild, threadDescriptor)
         }
 
-        chanThreads[threadDescriptor]?.setOrUpdateOriginalPost(chanOriginalPost)
+        chanThreads[threadDescriptor]!!.setOrUpdateOriginalPost(chanOriginalPost)
+        updatedPosts += chanThreads[threadDescriptor]!!.getOriginalPost()
       }
+
+      return@write updatedPosts
     }
   }
 
-  fun putManyThreadPostsIntoCache(posts: List<ChanPost>, cacheOptions: ChanCacheOptions) {
+  fun putManyThreadPostsIntoCache(posts: List<ChanPost>, cacheOptions: ChanCacheOptions): List<ChanPost> {
     // We are doing some kinda heavy stuff (reply calculations) so we want this method to always be
     //  called on a background thread.
     ensureBackgroundThread()
 
     if (posts.isEmpty()) {
-      return
+      return emptyList()
     }
 
     val originalPost = posts.first()
@@ -103,7 +112,7 @@ class ChanThreadsCache(
       }
     }
 
-    lock.write {
+    return lock.write {
       runOldPostEvictionRoutineIfNeeded()
       val threadDescriptor = originalPost.postDescriptor.descriptor as ChanDescriptor.ThreadDescriptor
 
@@ -116,6 +125,8 @@ class ChanThreadsCache(
       } else {
         chanThreads[threadDescriptor]!!.setOrUpdateOriginalPost(originalPost)
       }
+
+      return@write chanThreads[threadDescriptor]!!.getAllPostsForDatabasePersisting()
     }
   }
 
