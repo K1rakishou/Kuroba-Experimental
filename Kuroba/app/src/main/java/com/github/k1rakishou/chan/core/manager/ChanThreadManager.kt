@@ -87,12 +87,12 @@ class ChanThreadManager(
         "requestNewPostsFromServer=$requestNewPostsFromServer, " +
         "$chanLoadOptions, $chanCacheOptions, $chanReadOptions)")
 
-      if (!requestNewPostsFromServer || chanLoadOptions.isNotDefault()) {
+      if (chanLoadOptions.isNotDefault()) {
         Logger.d(TAG, "loadThreadOrCatalog() postFilterManager.removeAllForDescriptor()")
         postFilterManager.removeAllForDescriptor(chanDescriptor)
       }
 
-      if (!requestNewPostsFromServer || chanLoadOptions.canClearCache()) {
+      if (chanLoadOptions.canClearCache()) {
         Logger.d(TAG, "loadThreadOrCatalog() deleting posts from the cache")
 
         when (chanDescriptor) {
@@ -103,7 +103,7 @@ class ChanThreadManager(
         }
       }
 
-      if (!requestNewPostsFromServer || chanLoadOptions.canClearDatabase()) {
+      if (chanLoadOptions.canClearDatabase()) {
         Logger.d(TAG, "loadThreadOrCatalog() deleting posts from the database")
 
         when (chanDescriptor) {
