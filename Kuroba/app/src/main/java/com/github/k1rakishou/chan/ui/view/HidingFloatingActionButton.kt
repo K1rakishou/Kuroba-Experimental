@@ -59,7 +59,6 @@ class HidingFloatingActionButton
   private var toolbar: Toolbar? = null
   private var attachedToToolbar = false
   private var coordinatorLayout: CoordinatorLayout? = null
-  private var currentFabAlpha = -1f
   private var bottomNavViewHeight = 0
 
   private var listeningForInsetsChanges = false
@@ -84,7 +83,6 @@ class HidingFloatingActionButton
 
       for (i in 0 until layout.childCount) {
         if (layout.getChildAt(i) is SnackbarLayout) {
-          currentFabAlpha = -1f
           return true
         }
       }
@@ -267,17 +265,17 @@ class HidingFloatingActionButton
       return
     }
 
-    if (offset != currentFabAlpha) {
+    val newFabAlpha = 1f - offset
+    if (newFabAlpha != this.alpha) {
       cancelPrevAnimation()
 
-      currentFabAlpha = 1f - offset
-      if (currentFabAlpha < 0.5f) {
+      if (newFabAlpha < 0.5f) {
         setVisibilityFast(GONE)
-      } else if (currentFabAlpha > 0.5f) {
+      } else if (newFabAlpha > 0.5f) {
         setVisibilityFast(VISIBLE)
       }
 
-      setAlphaFast(currentFabAlpha)
+      setAlphaFast(newFabAlpha)
     }
   }
 
@@ -319,12 +317,9 @@ class HidingFloatingActionButton
       1f
     }
 
-    if (newFabAlpha == currentFabAlpha) {
+    if (newFabAlpha == this.alpha) {
       return
     }
-
-    val prevFabAlpha = currentFabAlpha
-    currentFabAlpha = newFabAlpha
 
     cancelPrevAnimation()
 
@@ -334,7 +329,7 @@ class HidingFloatingActionButton
       CurrentFabAnimation.Showing
     }
 
-    val alphaAnimation = ValueAnimator.ofFloat(prevFabAlpha, currentFabAlpha).apply {
+    val alphaAnimation = ValueAnimator.ofFloat(this.alpha, newFabAlpha).apply {
       duration = Toolbar.TOOLBAR_ANIMATION_DURATION_MS
       interpolator = Toolbar.TOOLBAR_ANIMATION_INTERPOLATOR
 
