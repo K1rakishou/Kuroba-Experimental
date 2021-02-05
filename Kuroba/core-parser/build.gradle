@@ -31,8 +31,6 @@ android {
 }
 
 dependencies {
-
-
     implementation "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin_version}"
     implementation "org.jsoup:jsoup:${versions.jsoup}"
     implementation "joda-time:joda-time:${versions.joda_time}"

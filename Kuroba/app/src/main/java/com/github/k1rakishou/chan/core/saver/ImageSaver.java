@@ -73,6 +73,9 @@ import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
 
 public class ImageSaver {
     private static final String TAG = "ImageSaver";
+    private static final String SHARE_FILES_DIR_NAME = "share_files";
+    private static final String SHARE_FILE_NAME = "shared_file";
+
     /**
      * We don't want to process all images at once because that will freeze the phone. Also we don't
      * want to process images one by one because it will be way too slow. So we use this parameter
@@ -195,7 +198,7 @@ public class ImageSaver {
     }
 
     private void startDownloadTaskInternal(ImageSaveTask task, DownloadTaskCallbacks callbacks) {
-        if (!fileManager.baseDirectoryExists(SavedFilesBaseDirectory.class)) {
+        if (!task.getShare() && !fileManager.baseDirectoryExists(SavedFilesBaseDirectory.class)) {
             // If current base dir is File API backed and it's not set, attempt to create it
             // manually
             if (ChanSettings.saveLocation.isFileDirActive()) {
@@ -255,6 +258,19 @@ public class ImageSaver {
 
     @Nullable
     private AbstractFile getSaveLocation(ImageSaveTask task) {
+        if (task.getShare()) {
+            File shareFilesDir = new File(getAppContext().getCacheDir(), SHARE_FILES_DIR_NAME);
+            if (!shareFilesDir.exists()) {
+                if (!shareFilesDir.mkdirs()) {
+                    Logger.e(TAG, "getSaveLocation() failed to create share files dir, " +
+                            "path=" + shareFilesDir.getAbsolutePath());
+                    return null;
+                }
+            }
+
+            return fileManager.fromRawFile(shareFilesDir);
+        }
+
         AbstractFile baseSaveDir = fileManager.newBaseDirectoryFile(SavedFilesBaseDirectory.class);
         if (baseSaveDir == null) {
             Logger.e(TAG, "getSaveLocation() fileManager.newSaveLocationFile() returned null");
@@ -538,13 +554,25 @@ public class ImageSaver {
             ChanPostImage postImage,
             ImageSaveTask task,
             @NonNull AbstractFile saveLocation) {
+        if (task.getShare()) {
+            AbstractFile shareFileLocation = saveLocation.clone(new FileSegment(SHARE_FILE_NAME));
+
+            if (fileManager.exists(shareFileLocation)) {
+                if (!fileManager.delete(shareFileLocation)) {
+                    Logger.e(TAG, "deduplicateFile() Failed to delete " + shareFileLocation.getFullPath());
+                }
+            }
+
+            return shareFileLocation;
+        }
+
         String name = ChanSettings.saveServerFilename.get()
                 ? postImage.getServerFilename()
                 : postImage.getFilename();
 
         // dedupe shared files to have their own file name; ok to overwrite, prevents lots
         // of downloads for multiple shares
-        String fileName = filterName(name + (task.getShare() ? "_shared" : "") + "." + postImage.getExtension(), true);
+        String fileName = filterName(name + "." + postImage.getExtension(), true);
         AbstractFile saveFile = saveLocation.clone(new FileSegment(fileName));
 
         // shared files don't need deduplicating

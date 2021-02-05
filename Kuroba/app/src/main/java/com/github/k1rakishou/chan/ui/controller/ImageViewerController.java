@@ -327,7 +327,7 @@ public class ImageViewerController
 
     private void saveClicked(ToolbarMenuItem item) {
         item.setEnabled(false);
-        saveShare(false, presenter.getCurrentPostImage());
+        saveImage(presenter.getCurrentPostImage());
 
         ((ImageViewerAdapter) pager.getAdapter()).onImageSaved(presenter.getCurrentPostImage());
     }
@@ -354,7 +354,7 @@ public class ImageViewerController
 
     private void shareContentClicked(ToolbarMenuSubItem item) {
         ChanPostImage postImage = presenter.getCurrentPostImage();
-        saveShare(true, postImage);
+        shareImage(postImage);
     }
 
     private void searchClicked(ToolbarMenuSubItem item) {
@@ -397,7 +397,7 @@ public class ImageViewerController
         }
     }
 
-    private void saveShare(boolean share, ChanPostImage postImage) {
+    private void shareImage(ChanPostImage postImage) {
         ImageSaveTask task = new ImageSaveTask(
                 fileCacheV2,
                 fileManager,
@@ -406,7 +406,29 @@ public class ImageViewerController
                 false
         );
 
-        task.setShare(share);
+        task.setShare(true);
+
+        imageSaver.startDownloadTask(context, task, message -> {
+            String errorMessage = String.format(Locale.ENGLISH,
+                    "%s, error message = %s",
+                    "Couldn't start download task",
+                    message
+            );
+
+            showToast(errorMessage, Toast.LENGTH_LONG);
+        });
+    }
+
+    private void saveImage(ChanPostImage postImage) {
+        ImageSaveTask task = new ImageSaveTask(
+                fileCacheV2,
+                fileManager,
+                chanDescriptor,
+                postImage,
+                false
+        );
+
+        task.setShare(false);
         if (ChanSettings.saveBoardFolder.get()) {
             String subFolderName;
 
@@ -616,7 +638,7 @@ public class ImageViewerController
             saveMenuItem.setEnabled(false);
         }
 
-        saveShare(false, presenter.getCurrentPostImage());
+        saveImage(presenter.getCurrentPostImage());
     }
 
     public void showProgress(boolean show) {

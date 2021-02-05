@@ -17,10 +17,10 @@
 package com.github.k1rakishou.chan.core.saver;
 
 import android.content.Intent;
-import android.media.MediaScannerConnection;
 import android.net.Uri;
 
 import androidx.annotation.Nullable;
+import androidx.core.content.FileProvider;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.cache.FileCacheListener;
@@ -36,6 +36,7 @@ import com.github.k1rakishou.fsaf.file.RawFile;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 
+import java.io.File;
 import java.io.IOException;
 
 import io.reactivex.Single;
@@ -48,6 +49,7 @@ import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledDownloadRe
 import static com.github.k1rakishou.chan.core.saver.ImageSaver.BundledDownloadResult.Success;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent;
 import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
+import static com.github.k1rakishou.common.AndroidUtils.getAppFileProvider;
 import static com.github.k1rakishou.common.AndroidUtils.isAndroid11;
 
 public class ImageSaveTask
@@ -202,14 +204,20 @@ public class ImageSaveTask
     private void onDestination() {
         success = true;
 
-        if (destination instanceof RawFile) {
-            String[] paths = {destination.getFullPath()};
+        if (!share) {
+            return;
+        }
 
-            MediaScannerConnection.scanFile(getAppContext(),
-                    paths,
-                    null,
-                    (path, uri) -> BackgroundUtils.runOnMainThread(() -> afterScan(uri))
-            );
+        if (destination instanceof RawFile) {
+            BackgroundUtils.runOnMainThread(() -> {
+                Uri uri = FileProvider.getUriForFile(
+                        getAppContext(),
+                        getAppFileProvider(),
+                        new File(destination.getFullPath())
+                );
+
+                afterScan(uri);
+            });
         } else if (destination instanceof ExternalFile) {
             Uri uri = Uri.parse(destination.getFullPath());
             BackgroundUtils.runOnMainThread(() -> afterScan(uri));
@@ -247,8 +255,6 @@ public class ImageSaveTask
     }
 
     private void afterScan(final Uri uri) {
-        Logger.d(TAG, "Media scan succeeded: " + uri);
-
         if (share) {
             Intent intent = new Intent(Intent.ACTION_SEND);
             intent.setType("image/*");

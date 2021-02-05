@@ -9,4 +9,9 @@
         name="exfc"
         path="filecache/" />
 
+    <!-- This one is for file sharing into other apps-->
+    <cache-path
+        name="sf"
+        path="share_files/" />
+
 </paths>
