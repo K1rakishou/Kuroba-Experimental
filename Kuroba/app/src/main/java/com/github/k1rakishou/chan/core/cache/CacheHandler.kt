@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.core.cache
 
 import android.os.Environment
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.ConversionUtils.charArrayToInt
@@ -24,6 +25,7 @@ import com.github.k1rakishou.chan.utils.ConversionUtils.intToCharArray
 import com.github.k1rakishou.chan.utils.HashingUtil
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.StringUtils
+import com.github.k1rakishou.common.mbytesToBytes
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
@@ -55,13 +57,8 @@ import java.util.concurrent.atomic.AtomicLong
  * minimum cache file life time is 5 minutes. That means we won't delete any cache files (and their
  * meta files) for at least 5 minutes.
  *
- * The cache size has been increased from 100MB up to 512MB. The reasoning for that is that there
- * are some boards on 4chan where a single file may take up to 5MB. Also, there are other chans
- * where a file (i.e. webm) may take up to 25MB (like 2ch.hk). So we definitely need to increase it.
- * The files are being located at the cache directory and can be removed at any time by the OS or
- * the user so it's not a big deal.
- *
- * CacheHandler now also caches file chunks that are used by [ConcurrentChunkedFileDownloader]
+ * CacheHandler now also caches file chunks that are used by [ConcurrentChunkedFileDownloader] as well
+ * as all media files retrieved via [ImageLoaderV2]
  */
 class CacheHandler(
   private val fileManager: FileManager,
@@ -82,13 +79,18 @@ class CacheHandler(
   private val trimChunksRunning = AtomicBoolean(false)
   private val directoriesChecked = AtomicBoolean(false)
 
-  private val fileCacheDiskSize = if (autoLoadThreadImages) {
-    PREFETCH_CACHE_SIZE
-  } else {
-    DEFAULT_CACHE_SIZE
-  }
+  @Suppress("JoinDeclarationAndAssignment")
+  private val fileCacheDiskSizeBytes: Long
 
   init {
+    fileCacheDiskSizeBytes = if (autoLoadThreadImages) {
+      ChanSettings.prefetchDiskCacheSizeMegabytes.get().mbytesToBytes()
+    } else {
+      ChanSettings.diskCacheSizeMegabytes.get().mbytesToBytes()
+    }
+
+    Logger.d(TAG, "fileCacheDiskSizeMBytes=${(fileCacheDiskSizeBytes / (1024L * 1024L))}")
+
     backgroundRecalculateSize()
     clearChunksCacheDir()
   }
@@ -312,7 +314,7 @@ class CacheHandler(
     val now = System.currentTimeMillis()
 
     if (
-      totalSize > fileCacheDiskSize
+      totalSize > fileCacheDiskSizeBytes
       // If the user scrolls through high-res images very fast we may end up in a situation
       // where the cache limit is hit but all the files in it were created earlier than
       // MIN_CACHE_FILE_LIFE_TIME ago. So in such case trim() will be called on EVERY
@@ -784,10 +786,10 @@ class CacheHandler(
     val now = System.currentTimeMillis()
 
     val sizeToFree = size.get().let { currentCacheSize ->
-      if (currentCacheSize > DEFAULT_CACHE_SIZE) {
+      if (currentCacheSize > fileCacheDiskSizeBytes) {
         currentCacheSize / 2
       } else {
-        DEFAULT_CACHE_SIZE / 2
+        fileCacheDiskSizeBytes / 2
       }
     }
 
@@ -972,15 +974,6 @@ class CacheHandler(
     private const val TAG = "CacheHandler"
 
     private const val CURRENT_META_FILE_VERSION = 1
-
-    // 1GB for prefetching, so that entire threads can be loaded at once more easily,
-    // otherwise 512MB. 100MB is actually not that much for some boards like /wsg/ where every file
-    // may weigh up to 5MB (I believe). So it's like 20 files before we have to clean the cache.
-    // And there are other chans (like 2ch.hk) where a webm may weigh up to 25MB
-    // (or even more I don't remember how much exactly). Also when downloading albums, the cache
-    // will be cleaned a lot of times with the old size.
-    private const val DEFAULT_CACHE_SIZE = 512L * 1024L * 1024L
-    private const val PREFETCH_CACHE_SIZE = 1024L * 1024L * 1024L
     private const val CACHE_FILE_META_HEADER_SIZE = 4
 
     // I don't think it will ever get this big but just in case don't forget to update it if it

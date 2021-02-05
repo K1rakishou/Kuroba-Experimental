@@ -9,7 +9,6 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
-import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.R
@@ -32,6 +31,7 @@ class EpoxyLinkSetting @JvmOverloads constructor(
 
   private val topDescriptor: TextView
   private val bottomDescription: TextView
+  private val currentSettingValue: TextView
   private val settingViewHolder: LinearLayout
   private val notificationIcon: AppCompatImageView
 
@@ -43,6 +43,7 @@ class EpoxyLinkSetting @JvmOverloads constructor(
 
     topDescriptor = findViewById(R.id.top)
     bottomDescription = findViewById(R.id.bottom)
+    currentSettingValue = findViewById(R.id.current)
     settingViewHolder = findViewById(R.id.preference_item)
     notificationIcon = findViewById(R.id.setting_notification_icon)
   }
@@ -60,6 +61,7 @@ class EpoxyLinkSetting @JvmOverloads constructor(
   override fun onThemeChanged() {
     updateTopDescriptionTextColor()
     updateBottomDescriptionTextColor()
+    updateCurrentValueTextColor()
   }
 
   @ModelProp
@@ -79,6 +81,19 @@ class EpoxyLinkSetting @JvmOverloads constructor(
 
     bottomDescription.visibility = View.VISIBLE
     updateBottomDescriptionTextColor()
+  }
+
+  @ModelProp
+  fun setCurrentValue(value: String?) {
+    currentSettingValue.text = value
+
+    if (value == null) {
+      currentSettingValue.visibility = View.GONE
+      return
+    }
+
+    currentSettingValue.visibility = View.VISIBLE
+    updateCurrentValueTextColor()
   }
 
   @ModelProp
@@ -113,7 +128,7 @@ class EpoxyLinkSetting @JvmOverloads constructor(
     }
   }
 
-  @CallbackProp
+  @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.IgnoreRequireHashCode])
   fun setClickListener(callback: ((View) -> Unit)?) {
     if (callback == null) {
       settingViewHolder.setOnClickListener(null)
@@ -148,6 +163,23 @@ class EpoxyLinkSetting @JvmOverloads constructor(
         intArrayOf(
           themeEngine.chanTheme.textColorSecondary,
           themeEngine.chanTheme.getDisabledTextColor(themeEngine.chanTheme.textColorSecondary)
+        )
+      )
+    )
+  }
+
+  private fun updateCurrentValueTextColor() {
+    val color = ThemeEngine.manipulateColor(themeEngine.chanTheme.textColorSecondary, 1.2f)
+
+    currentSettingValue.setTextColor(
+      ColorStateList(
+        arrayOf(
+          intArrayOf(android.R.attr.state_enabled),
+          intArrayOf(-android.R.attr.state_enabled)
+        ),
+        intArrayOf(
+          color,
+          themeEngine.chanTheme.getDisabledTextColor(color)
         )
       )
     )

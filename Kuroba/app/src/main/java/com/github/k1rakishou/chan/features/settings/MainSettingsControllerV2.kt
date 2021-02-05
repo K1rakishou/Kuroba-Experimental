@@ -17,6 +17,7 @@ import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.RangeSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.SettingV2
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController.ToolbarSearchCallback
@@ -162,6 +163,7 @@ class MainSettingsControllerV2(
 
   private fun updateRestartRefreshButton(settingV2: SettingV2) {
     if (settingV2.requiresRestart) {
+      showToast(context.getString(R.string.the_app_will_be_restarted))
       hasPendingRestart = true
     } else if (settingV2.requiresUiRefresh) {
       hasPendingUiRefresh = true
@@ -378,6 +380,38 @@ class MainSettingsControllerV2(
               val prev = settingV2.getCurrent()
 
               showInputDialog(settingV2) { curr ->
+                if (prev != curr) {
+                  updateRestartRefreshButton(settingV2)
+                }
+
+                if (!query.isNullOrEmpty()) {
+                  settingsCoordinator.rebuildScreenWithSearchQuery(query, BuildOptions.Default)
+                } else {
+                  settingsCoordinator.rebuildCurrentScreen(BuildOptions.Default)
+                }
+              }
+            }
+          } else {
+            settingEnabled(false)
+            clickListener(null)
+          }
+        }
+      }
+      is RangeSettingV2 -> {
+        epoxyLinkSetting {
+          id("epoxy_range_setting_${settingV2.settingsIdentifier.getIdentifier()}")
+          topDescription(settingV2.topDescription)
+          bottomDescription(settingV2.bottomDescription)
+          currentValue(settingV2.currentValueText)
+          bindNotificationIcon(notificationType)
+
+          if (settingV2.isEnabled()) {
+            settingEnabled(true)
+
+            clickListener {
+              val prev = settingV2.current
+
+              showUpdateRangeSettingDialog(settingV2) { curr ->
                 if (prev != curr) {
                   updateRestartRefreshButton(settingV2)
                 }

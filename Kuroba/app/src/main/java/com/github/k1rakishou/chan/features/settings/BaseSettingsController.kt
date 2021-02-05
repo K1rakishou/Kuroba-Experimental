@@ -5,7 +5,9 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.RangeSettingV2
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
+import com.github.k1rakishou.chan.ui.controller.settings.RangeSettingUpdaterController
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
 import com.github.k1rakishou.common.exhaustive
@@ -42,6 +44,30 @@ abstract class BaseSettingsController(
       controller,
       true
     )
+  }
+
+  protected fun showUpdateRangeSettingDialog(
+    rangeSettingV2: RangeSettingV2,
+    rebuildScreenFunc: (Any?) -> Unit
+  ) {
+    val rangeSettingUpdaterController = RangeSettingUpdaterController(
+      context = context,
+      constraintLayoutBiasPair = ConstraintLayoutBiasPair.Center,
+      title = rangeSettingV2.topDescription,
+      minValue = rangeSettingV2.min,
+      maxValue = rangeSettingV2.max,
+      currentValue = rangeSettingV2.current,
+      resetClickedFunc = {
+        rangeSettingV2.updateSetting(rangeSettingV2.default)
+        rebuildScreenFunc(rangeSettingV2.default)
+      },
+      applyClickedFunc = { newValue ->
+        rangeSettingV2.updateSetting(newValue)
+        rebuildScreenFunc(newValue)
+      }
+    )
+
+    presentController(rangeSettingUpdaterController)
   }
 
   protected fun showInputDialog(

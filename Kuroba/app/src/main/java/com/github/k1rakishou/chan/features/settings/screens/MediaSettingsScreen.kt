@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.features.settings.screens.delegate.MediaSettin
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.RangeSettingV2
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.fsaf.FileChooser
@@ -56,6 +57,7 @@ class MediaSettingsScreen(
   override fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
       buildMediaSavingSettingsGroup(),
+      buildCacheSizeSettingGroup(),
       buildVideoSettingsGroup(),
       buildLoadingSettingsGroup()
     )
@@ -201,6 +203,42 @@ class MediaSettingsScreen(
           topDescriptionIdFunc = { R.string.setting_video_stream },
           bottomDescriptionIdFunc = { R.string.setting_video_stream_description },
           setting = ChanSettings.videoStream
+        )
+
+        return group
+      }
+    )
+  }
+
+  private fun buildCacheSizeSettingGroup(): SettingsGroup.SettingsGroupBuilder {
+    val identifier = MediaScreen.CacheSizeGroup
+
+    return SettingsGroup.SettingsGroupBuilder(
+      groupIdentifier = identifier,
+      buildFunction = fun(): SettingsGroup {
+        val group = SettingsGroup(
+          groupTitle = context.getString(R.string.settings_cache_size),
+          groupIdentifier = identifier
+        )
+
+        group += RangeSettingV2.createBuilder(
+          context = context,
+          identifier = MediaScreen.CacheSizeGroup.NormalCacheSize,
+          topDescriptionIdFunc = { R.string.normal_cache_size_title },
+          bottomDescriptionIdFunc = { R.string.normal_cache_size_description },
+          currentValueStringFunc = { "${ChanSettings.diskCacheSizeMegabytes.get()} MB" },
+          requiresRestart = true,
+          setting = ChanSettings.diskCacheSizeMegabytes
+        )
+
+        group += RangeSettingV2.createBuilder(
+          context = context,
+          identifier = MediaScreen.CacheSizeGroup.PrefetchCacheSize,
+          topDescriptionIdFunc = { R.string.prefetch_cache_size_title },
+          bottomDescriptionIdFunc = { R.string.prefetch_cache_size_description },
+          currentValueStringFunc = { "${ChanSettings.prefetchDiskCacheSizeMegabytes.get()} MB" },
+          requiresRestart = true,
+          setting = ChanSettings.prefetchDiskCacheSizeMegabytes
         )
 
         return group

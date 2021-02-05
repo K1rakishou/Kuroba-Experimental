@@ -588,3 +588,11 @@ fun SpannableString.setSpanSafe(span: CharacterStyle, start: Int, end: Int, flag
     flags
   )
 }
+
+fun Int.mbytesToBytes(): Long {
+  return this * (1024L * 1024L)
+}
+
+fun Long.mbytesToBytes(): Long {
+  return this * (1024L * 1024L)
+}

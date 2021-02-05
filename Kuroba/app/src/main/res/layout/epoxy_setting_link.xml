@@ -19,6 +19,15 @@
 
             <include layout="@layout/setting_description" />
 
+            <TextView
+                android:id="@+id/current"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:fontFamily="sans-serif-medium"
+                android:textSize="14sp" />
+
         </LinearLayout>
 
         <include layout="@layout/setting_notification" />

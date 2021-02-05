@@ -492,6 +492,21 @@ sealed class MediaScreen(
     }
   }
 
+  sealed class CacheSizeGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = CacheSizeGroup.getGroupIdentifier()
+  ) : IGroup,
+    MediaScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object NormalCacheSize : CacheSizeGroup("normal_cache_size")
+    object PrefetchCacheSize : CacheSizeGroup("prefetch_cache_size")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = MediaScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("cache_size_group")
+    }
+  }
+
   sealed class VideoGroup(
     settingsId: String,
     groupIdentifier: GroupIdentifier = MediaSavingGroup.getGroupIdentifier()

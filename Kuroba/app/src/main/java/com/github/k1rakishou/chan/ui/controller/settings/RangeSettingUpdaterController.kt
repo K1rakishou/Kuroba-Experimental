@@ -20,9 +20,9 @@ class RangeSettingUpdaterController(
   context: Context,
   private val constraintLayoutBiasPair: ConstraintLayoutBiasPair = ConstraintLayoutBiasPair.TopRight,
   private val title: String,
-  private val minValue: Float,
-  private val maxValue: Float,
-  private val currentValue: Float,
+  private val minValue: Int,
+  private val maxValue: Int,
+  private val currentValue: Int,
   private var resetClickedFunc: (() -> Unit)? = null,
   private var applyClickedFunc: ((Int) -> Unit)? = null
 ) : BaseFloatingController(context) {
@@ -64,18 +64,18 @@ class RangeSettingUpdaterController(
       verticalBias = constraintLayoutBiasPair.verticalBias
     }
 
-    slider.valueFrom = minValue
-    slider.valueTo = maxValue
-    slider.value = currentValue
+    slider.valueFrom = minValue.toFloat()
+    slider.valueTo = maxValue.toFloat()
+    slider.value = currentValue.toFloat()
 
     slider.addOnChangeListener { _, value, _ ->
       currentValueInput.mySetText(value.toInt().toString())
     }
 
-    minValueTextView.text = minValue.toInt().toString()
-    maxValueTextView.text = maxValue.toInt().toString()
+    minValueTextView.text = minValue.toString()
+    maxValueTextView.text = maxValue.toString()
 
-    currentValueInput.mySetText(currentValue.toInt().toString())
+    currentValueInput.mySetText(currentValue.toString())
     currentValueInput.inputType = InputType.TYPE_CLASS_NUMBER
 
     this.textWatcher = currentValueInput.doAfterTextChanged { editable ->
@@ -85,12 +85,12 @@ class RangeSettingUpdaterController(
       }
 
       if (floatValue < minValue) {
-        currentValueInput.mySetText(minValue.toInt().toString())
+        currentValueInput.mySetText(minValue.toString())
         return@doAfterTextChanged
       }
 
       if (floatValue > maxValue) {
-        currentValueInput.mySetText(maxValue.toInt().toString())
+        currentValueInput.mySetText(maxValue.toString())
         return@doAfterTextChanged
       }
 

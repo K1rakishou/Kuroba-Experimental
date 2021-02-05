@@ -197,22 +197,6 @@ class DialogFactory(
       .show()
   }
 
-  fun createWithStringArray(
-    context: Context,
-    keys: Array<CharSequence?>,
-    onClickListener: (Int) -> Unit
-  ) {
-    if (!applicationVisibilityManager.isAppInForeground()) {
-      return
-    }
-
-    AlertDialog.Builder(context)
-      .setItems(keys) { _, which -> onClickListener.invoke(which) }
-      .create()
-      .apply { setOnShowListener { dialogInterface -> dialogInterface.applyColors() } }
-      .show()
-  }
-
   private fun AlertDialog.Builder.setDescriptionInternal(
     descriptionTextId: Int?,
     descriptionText: CharSequence?

@@ -299,6 +299,8 @@ public class ChanSettings {
     public static BooleanSetting saveAlbumBoardFolder;
     public static BooleanSetting saveAlbumThreadFolder;
     public static BooleanSetting saveServerFilename;
+    public static RangeSetting diskCacheSizeMegabytes;
+    public static RangeSetting prefetchDiskCacheSizeMegabytes;
 
     // Video settings
     public static BooleanSetting videoAutoLoop;
@@ -471,6 +473,8 @@ public class ChanSettings {
             saveAlbumBoardFolder = new BooleanSetting(provider, "preference_save_album_subboard", false);
             saveAlbumThreadFolder = new BooleanSetting(provider, "preference_save_album_subthread", false);
             saveServerFilename = new BooleanSetting(provider, "preference_image_save_original", false);
+            diskCacheSizeMegabytes = new RangeSetting(provider, "disk_cache_size", 512, 256, 1024);
+            prefetchDiskCacheSizeMegabytes = new RangeSetting(provider, "prefetch_disk_cache_size", 1024, 1024, 2048);
 
             // Video Settings
             videoAutoLoop = new BooleanSetting(provider, "preference_video_loop", true);

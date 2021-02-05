@@ -538,9 +538,9 @@ class BookmarksController(
       context = context,
       constraintLayoutBiasPair = ConstraintLayoutBiasPair.TopRight,
       title = getString(R.string.controller_bookmarks_set_grid_view_width_text),
-      minValue = context.resources.getDimension(R.dimen.thread_grid_bookmark_view_min_width),
-      maxValue = context.resources.getDimension(R.dimen.thread_grid_bookmark_view_max_width),
-      currentValue = ChanSettings.bookmarkGridViewWidth.get().toFloat(),
+      minValue = context.resources.getDimension(R.dimen.thread_grid_bookmark_view_min_width).toInt(),
+      maxValue = context.resources.getDimension(R.dimen.thread_grid_bookmark_view_max_width).toInt(),
+      currentValue = ChanSettings.bookmarkGridViewWidth.get(),
       resetClickedFunc = {
         ChanSettings.bookmarkGridViewWidth.set(ChanSettings.bookmarkGridViewWidth.default)
       },

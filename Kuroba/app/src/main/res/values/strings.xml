@@ -684,6 +684,15 @@ Note that for country code filtering, troll country codes should be prepended wi
 Re-enable this permission in the app settings if you permanently disabled it."
     </string>
 
+    <!-- Cache size group -->
+    <string name="settings_cache_size">Cache size</string>
+
+    <string name="normal_cache_size_title">Media disk cache size</string>
+    <string name="normal_cache_size_description">The maximum size of all files stored in the cache before it gets cleaned up. Disk cache is used to reduce the amount of network requests to show media. It\'s also helpful when you have no internet connection or if a media was deleted from the server (you will be able to see it until it\' remove from the cache).</string>
+
+    <string name="prefetch_cache_size_title">Prefetch media disk cache size</string>
+    <string name="prefetch_cache_size_description">The same as above but it\'s only used when media prefetching setting is turned on. Since you are basically downloading media files and you hover over them you will need a more spacious cache.</string>
+
     <!-- Media video options group -->
     <string name="setting_video_options">Video options</string>
     <string name="setting_video_auto_loop">Enable automatic video-looping</string>
@@ -705,7 +714,7 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="setting_image_auto_load_none">Never</string>
     <string name="setting_video_auto_loop_description">Automatically loop video content</string>
     <string name="setting_auto_load_thread_images">Enable media prefetching</string>
-    <string name="setting_auto_load_thread_images_description">Loads all images or videos in a thread immediately (subject to the settings above). Increases the filecache size to 1GB.</string>
+    <string name="setting_auto_load_thread_images_description">Loads all images or videos in a thread immediately. Uses it\'s own setting for the cache size which is greater than the regular cache size.</string>
 
     <!-- Save location settings -->
     <string name="setting_folder_pick_ok">Choose</string>
@@ -1206,5 +1215,6 @@ Don't have a 4chan Pass?<br>
     <string name="cloud_flare_cookie_setting_title">CloudFlare cookie</string>
     <string name="cloud_flare_cookie_setting_description">If a site is hosted by CloudFlare and has anti-ddos checks enabled the application will automatically try to pass them and store CloudFlare clearance cookie that will be used to access site normally without having to pass checks every singe time. You will see a cookie here and will be able to edit/remove it if you ever need to do that. When removing a cookie (making it empty) a new cookie will be requested on the next site access. If a site does not use CloudFlare then this setting will always be empty.</string>
     <string name="no_filter_watched_threads">You have no filter watched threads here yet (They may be in the update process)</string>
+    <string name="the_app_will_be_restarted">The app will be restarted when exiting the settings screen</string>
 
 </resources>
