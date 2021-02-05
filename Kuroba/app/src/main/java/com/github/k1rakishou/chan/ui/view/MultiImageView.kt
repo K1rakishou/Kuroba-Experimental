@@ -339,12 +339,7 @@ class MultiImageView @JvmOverloads constructor(
   }
 
   fun onSystemUiVisibilityChange(visible: Boolean) {
-    if (!visible) {
-      val playerView = findView(PlayerView::class.java) as? PlayerView
-        ?: return
-
-      playerView.useController = false
-    }
+    // no-op
   }
 
   override fun onDetachedFromWindow() {
