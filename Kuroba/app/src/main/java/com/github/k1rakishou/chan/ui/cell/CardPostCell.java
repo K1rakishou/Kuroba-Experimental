@@ -26,6 +26,7 @@ import android.widget.TextView;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
 import com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView;
@@ -252,18 +253,20 @@ public class CardPostCell
         if (firstPostImage != null && !ChanSettings.textOnly.get()) {
             thumbView.setVisibility(VISIBLE);
 
-            int width = ChanSettings.highResCells.get()
-                    ? Math.max(HI_RES_THUMBNAIL_SIZE, thumbView.getWidth())
-                    : thumbView.getWidth();
+            ImageLoaderV2.ImageSize imageSize;
 
-            int height =  ChanSettings.highResCells.get()
-                    ? Math.max(HI_RES_THUMBNAIL_SIZE, thumbView.getHeight())
-                    : thumbView.getHeight();
+            if (ChanSettings.highResCells.get()) {
+                imageSize = new ImageLoaderV2.ImageSize.FixedImageSize(
+                        Math.max(HI_RES_THUMBNAIL_SIZE, thumbView.getWidth()),
+                        Math.max(HI_RES_THUMBNAIL_SIZE, thumbView.getHeight())
+                );
+            } else {
+                imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(thumbView);
+            }
 
             thumbView.bindPostImage(
                     firstPostImage,
-                    width,
-                    height
+                    imageSize
             );
         } else {
             thumbView.setVisibility(GONE);

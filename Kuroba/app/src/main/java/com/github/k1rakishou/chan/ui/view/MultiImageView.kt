@@ -61,17 +61,9 @@ import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.ui.view.MultiImageViewGestureDetector.MultiImageViewGestureDetectorCallbacks
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getRes
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForMeasure
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.AppConstants
-import com.github.k1rakishou.common.exhaustive
-import com.github.k1rakishou.common.findChild
-import com.github.k1rakishou.common.updateHeight
+import com.github.k1rakishou.common.*
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.file.RawFile
@@ -88,12 +80,7 @@ import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import pl.droidsonroids.gif.GifDrawable
 import pl.droidsonroids.gif.GifImageView
 import java.io.File
@@ -354,9 +341,14 @@ class MultiImageView @JvmOverloads constructor(
   private fun setThumbnail(postImage: ChanPostImage, center: Boolean) {
     BackgroundUtils.ensureMainThread()
 
+    val thumbnailUrl = postImage.getThumbnailUrl()?.toString()
+    if (thumbnailUrl == null) {
+      return
+    }
+
     thumbnailRequestDisposable = imageLoaderV2.loadFromNetwork(
       context,
-      postImage,
+      thumbnailUrl,
       ImageLoaderV2.ImageSize.FixedImageSize(
         width,
         height,
@@ -1067,6 +1059,7 @@ class MultiImageView @JvmOverloads constructor(
         context,
         CHAN4_404_IMAGE_LINKS.random(random),
         ImageLoaderV2.ImageSize.UnknownImageSize,
+        emptyList(),
         object : FailureAwareImageListener {
           override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
             imageNotFoundPlaceholderLoadJob = null

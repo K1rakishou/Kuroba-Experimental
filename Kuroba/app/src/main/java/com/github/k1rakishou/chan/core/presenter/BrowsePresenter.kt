@@ -28,7 +28,6 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.util.ChanPostUtils
-import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -44,7 +43,6 @@ class BrowsePresenter @Inject constructor(
   private val chanThreadManager: ChanThreadManager
 ) {
   private var callback: Callback? = null
-  private val compositeDisposable = CompositeDisposable()
   private var currentOpenedBoard: BoardDescriptor? = null
 
   fun create(controllerScope: CoroutineScope, callback: Callback?) {
@@ -71,7 +69,7 @@ class BrowsePresenter @Inject constructor(
 
   fun destroy() {
     callback = null
-    compositeDisposable.clear()
+    currentOpenedBoard = null
   }
 
   suspend fun loadWithDefaultBoard() {

@@ -208,13 +208,17 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         PostViewMode.LIST -> return (layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
         PostViewMode.CARD -> return (layoutManager as GridLayoutManager).findFirstVisibleItemPosition()
         PostViewMode.STAGGER -> {
-          val resultArray = (layoutManager as StaggeredGridLayoutManager).findFirstVisibleItemPositions(null)
-          if (resultArray.isEmpty()) {
+          val positions = (layoutManager as StaggeredGridLayoutManager).findFirstVisibleItemPositions(null)
+          if (positions.isEmpty()) {
             return -1
           }
 
-          // The mean value of all returned positions
-          return resultArray.sumBy { value -> value } / resultArray.size
+          val hasViewTouchingTop = positions.any { position -> position == 0 }
+          if (!hasViewTouchingTop) {
+            return -1
+          }
+
+          return 0
         }
       }
 
@@ -231,13 +235,19 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         PostViewMode.LIST -> return (layoutManager as LinearLayoutManager).findLastCompletelyVisibleItemPosition()
         PostViewMode.CARD -> return (layoutManager as GridLayoutManager).findLastCompletelyVisibleItemPosition()
         PostViewMode.STAGGER -> {
-          val resultArray = (layoutManager as StaggeredGridLayoutManager).findLastCompletelyVisibleItemPositions(null)
-          if (resultArray.isEmpty()) {
+          val positions = (layoutManager as StaggeredGridLayoutManager).findLastCompletelyVisibleItemPositions(null)
+          if (positions.isEmpty()) {
             return -1
           }
 
-          // The mean value of all returned positions
-          return resultArray.sumBy { value -> value } / resultArray.size
+          val totalItemsCount = (layoutManager as StaggeredGridLayoutManager).itemCount - 1
+
+          val hasViewTouchingBottom = positions.any { position -> position == totalItemsCount }
+          if (!hasViewTouchingBottom) {
+            return -1
+          }
+
+          return totalItemsCount
         }
       }
       return -1

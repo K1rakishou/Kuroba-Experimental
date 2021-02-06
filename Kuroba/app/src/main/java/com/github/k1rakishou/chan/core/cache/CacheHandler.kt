@@ -185,9 +185,16 @@ class CacheHandler(
     return fileManager.create(chunkCacheFile) as RawFile?
   }
 
+  @JvmOverloads
   @Synchronized
   fun cacheFileExists(fileUrl: String): Boolean {
     return fileManager.exists(getCacheFileInternal(fileUrl))
+  }
+
+  @JvmOverloads
+  @Synchronized
+  fun deleteCacheFileByUrl(url: String): Boolean {
+    return deleteCacheFile(hashUrl(url))
   }
 
   @Synchronized
@@ -379,11 +386,6 @@ class CacheHandler(
     val fileName = fileManager.getName(cacheFile)
 
     return deleteCacheFile(fileName)
-  }
-
-  @Synchronized
-  fun deleteCacheFileByUrl(url: String): Boolean {
-    return deleteCacheFile(hashUrl(url))
   }
 
   private fun deleteCacheFile(fileName: String): Boolean {
@@ -600,7 +602,11 @@ class CacheHandler(
     return cacheDirFile.clone(FileSegment(fileName)) as RawFile
   }
 
-  private fun getChunkCacheFileInternal(chunkStart: Long, chunkEnd: Long, url: String): RawFile {
+  private fun getChunkCacheFileInternal(
+    chunkStart: Long,
+    chunkEnd: Long,
+    url: String
+  ): RawFile {
     createDirectories()
 
     val fileName = formatChunkCacheFileName(chunkStart, chunkEnd, hashUrl(url))

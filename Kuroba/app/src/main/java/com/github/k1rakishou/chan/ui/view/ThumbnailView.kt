@@ -20,20 +20,11 @@ import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import android.content.Context
 import android.content.res.ColorStateList
-import android.graphics.Bitmap
-import android.graphics.BitmapShader
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Matrix
-import android.graphics.Paint
-import android.graphics.Rect
-import android.graphics.RectF
-import android.graphics.Shader
+import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.RippleDrawable
-import android.text.TextUtils
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
@@ -44,7 +35,6 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
-import com.github.k1rakishou.chan.core.image.ImageLoaderV2.ImageSize.FixedImageSize
 import com.github.k1rakishou.chan.core.manager.ViewFlagsStorage
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_logger.Logger
@@ -114,7 +104,7 @@ open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
     kurobaScope.cancelChildren()
   }
 
-  fun setUrl(url: String?, maxWidth: Int?, maxHeight: Int?) {
+  fun setUrl(url: String, imageSize: ImageLoaderV2.ImageSize) {
     if (requestDisposable != null) {
       requestDisposable?.dispose()
       requestDisposable = null
@@ -125,19 +115,14 @@ open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
       alphaAnimator.end()
     }
 
-    if (TextUtils.isEmpty(url)) {
-      return
-    }
-
     kurobaScope.launch {
-      setUrlInternal(url!!, maxWidth, maxHeight)
+      setUrlInternal(url, imageSize)
     }
   }
 
   private suspend fun setUrlInternal(
     url: String,
-    maxWidth: Int?,
-    maxHeight: Int?
+    imageSize: ImageLoaderV2.ImageSize
   ) {
     val isCached = imageLoaderV2.isImageCachedLocally(url)
 
@@ -152,10 +137,7 @@ open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
       imageLoaderV2.loadFromNetwork(
         context,
         url,
-        FixedImageSize(
-          maxWidth!!,
-          maxHeight!!
-        ),
+        imageSize,
         emptyList(),
         this@ThumbnailView
       )
@@ -167,10 +149,7 @@ open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
       requestDisposable = imageLoaderV2.loadFromNetwork(
         context,
         url,
-        FixedImageSize(
-          maxWidth!!,
-          maxHeight!!
-        ),
+        imageSize,
         emptyList(),
         this@ThumbnailView
       )
@@ -179,10 +158,28 @@ open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
 
   fun setUrl(url: String?) {
     if (url == null) {
-      debouncer.clear()
+      unbindImageView()
+      return
     }
 
-    setUrl(url, null, null)
+    setUrl(url, ImageLoaderV2.ImageSize.UnknownImageSize)
+  }
+
+  protected fun unbindImageView() {
+    debouncer.clear()
+
+    if (requestDisposable != null) {
+      requestDisposable?.dispose()
+      requestDisposable = null
+
+      setImageBitmap(null)
+
+      error = false
+      alphaAnimator.end()
+    }
+
+    setImageBitmap(null)
+    return
   }
 
   fun setCircular(circular: Boolean) {

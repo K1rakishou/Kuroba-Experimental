@@ -20,6 +20,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.text.TextUtils;
 import android.util.AttributeSet;
 
 import androidx.annotation.NonNull;
@@ -27,6 +28,7 @@ import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchState;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
@@ -38,6 +40,7 @@ import javax.inject.Inject;
 
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import okhttp3.HttpUrl;
 
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDrawable;
@@ -103,8 +106,7 @@ public class PostImageThumbnailView extends ThumbnailView {
 
     public void bindPostImage(
             @NonNull ChanPostImage postImage,
-            int width,
-            int height
+            ImageLoaderV2.ImageSize imageSize
     ) {
         if (postImage.equals(this.postImage)) {
             return;
@@ -113,13 +115,18 @@ public class PostImageThumbnailView extends ThumbnailView {
         this.postImage = postImage;
 
         String url = getUrl(postImage);
-        setUrl(url, width, height);
+        if (url == null || TextUtils.isEmpty(url)) {
+            unbindPostImage();
+            return;
+        }
+
+        setUrl(url, imageSize);
     }
 
     public void unbindPostImage() {
         this.postImage = null;
 
-        setUrl(null);
+        unbindImageView();
         compositeDisposable.clear();
     }
 
@@ -155,13 +162,20 @@ public class PostImageThumbnailView extends ThumbnailView {
         }
     }
 
+    @Nullable
     private String getUrl(ChanPostImage postImage) {
+        HttpUrl thumbnailUrl = postImage.getThumbnailUrl();
+        if (thumbnailUrl == null) {
+            return null;
+        }
+
         String url = postImage.getThumbnailUrl().toString();
 
         boolean highRes = ChanSettings.highResCells.get();
         boolean hasImageUrl = postImage.getImageUrl() != null;
+        boolean revealingSpoilers = !postImage.getSpoiler() || ChanSettings.removeImageSpoilers.get();
 
-        if (highRes && hasImageUrl && (!postImage.getSpoiler() || ChanSettings.removeImageSpoilers.get())) {
+        if (highRes && hasImageUrl && revealingSpoilers) {
             url = (postImage.getType() == ChanPostImageType.STATIC
                     ? postImage.getImageUrl()
                     : postImage.getThumbnailUrl()).toString();

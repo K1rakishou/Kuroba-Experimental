@@ -25,12 +25,12 @@ import androidx.annotation.NonNull;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen;
 import static com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize;
 
 public class AlbumViewCell
@@ -60,15 +60,25 @@ public class AlbumViewCell
 
     public void setPostImage(@NonNull ChanPostImage postImage) {
         this.postImage = postImage;
-        int thumbnailSize = getDimen(R.dimen.cell_post_thumbnail_size);
-
         // We don't want to show the prefetch loading indicator in album thumbnails (at least for
         // now)
         thumbnailView.overrideShowPrefetchLoadingIndicator(false);
+
+
+        ImageLoaderV2.ImageSize imageSize;
+
+        if (ChanSettings.highResCells.get()) {
+            imageSize = new ImageLoaderV2.ImageSize.FixedImageSize(
+                    CardPostCell.HI_RES_THUMBNAIL_SIZE,
+                    CardPostCell.HI_RES_THUMBNAIL_SIZE
+            );
+        } else {
+            imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(thumbnailView);
+        }
+
         thumbnailView.bindPostImage(
                 postImage,
-                ChanSettings.highResCells.get() ? CardPostCell.HI_RES_THUMBNAIL_SIZE : thumbnailSize,
-                ChanSettings.highResCells.get() ? CardPostCell.HI_RES_THUMBNAIL_SIZE : thumbnailSize
+                imageSize
         );
 
         String details = postImage.getExtension().toUpperCase()

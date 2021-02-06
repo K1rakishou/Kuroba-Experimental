@@ -36,6 +36,7 @@ import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.helper.DialogFactory;
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
 import com.github.k1rakishou.chan.core.saver.ImageSaveTask;
@@ -460,7 +461,10 @@ public class AlbumDownloadController
         public void onBindViewHolder(AlbumDownloadCell holder, int position) {
             AlbumDownloadItem item = items.get(position);
 
-            holder.thumbnailView.bindPostImage(item.postImage, dp(100), dp(100));
+            ImageLoaderV2.ImageSize imageSize =
+                    ImageLoaderV2.ImageSize.MeasurableImageSize.create(holder.thumbnailView);
+
+            holder.thumbnailView.bindPostImage(item.postImage, imageSize);
             setItemChecked(holder, item.checked, false);
         }
 

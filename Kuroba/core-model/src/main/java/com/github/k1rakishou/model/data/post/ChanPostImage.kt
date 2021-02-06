@@ -104,6 +104,9 @@ class ChanPostImage(
     if (type != other.type) {
       return false
     }
+    if (serverFilename != other.serverFilename) {
+      return false
+    }
     if (imageUrl != other.imageUrl) {
       return false
     }
@@ -117,7 +120,8 @@ class ChanPostImage(
   override fun hashCode(): Int {
     var result = imageUrl.hashCode()
     result = 31 * result + actualThumbnailUrl.hashCode()
-    result = 31 * result + (type?.hashCode() ?: 0)
+    result = 31 * result + serverFilename.hashCode()
+    result = 31 * result + type.hashCode()
     return result
   }
 
@@ -125,6 +129,7 @@ class ChanPostImage(
     return "ChanPostImage(" +
       "serverFilename='$serverFilename', " +
       "imageUrl=$imageUrl, " +
+      "actualThumbnailUrl=$actualThumbnailUrl, " +
       "imageWidth=$imageWidth, " +
       "imageHeight=$imageHeight, " +
       "size=$size, " +

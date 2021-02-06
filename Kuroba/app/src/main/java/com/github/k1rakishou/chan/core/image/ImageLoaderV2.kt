@@ -2,21 +2,20 @@ package com.github.k1rakishou.chan.core.image
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Matrix
+import android.graphics.Paint
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.widget.ImageView
+import android.view.View
 import androidx.annotation.DrawableRes
 import androidx.core.graphics.drawable.toBitmap
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
+import coil.bitmap.BitmapPool
 import coil.network.HttpException
-import coil.request.Disposable
-import coil.request.ErrorResult
-import coil.request.ImageRequest
-import coil.request.ImageResult
-import coil.request.SuccessResult
-import coil.size.Scale
-import coil.size.ViewSizeResolver
+import coil.request.*
+import coil.size.*
 import coil.transform.Transformation
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheHandler
@@ -27,25 +26,12 @@ import com.github.k1rakishou.chan.ui.widget.FixedViewSizeResolver
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.chan.utils.getLifecycleFromContext
-import com.github.k1rakishou.common.AppConstants
-import com.github.k1rakishou.common.DoNotStrip
-import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.*
 import com.github.k1rakishou.common.ModularResult.Companion.Try
-import com.github.k1rakishou.common.StringUtils
-import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
-import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.google.android.exoplayer2.util.MimeTypes
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.io.File
 import java.io.FileOutputStream
 import java.util.*
@@ -78,42 +64,6 @@ class ImageLoaderV2(
 
   fun loadFromNetwork(
     context: Context,
-    postImage: ChanPostImage,
-    imageSize: ImageSize,
-    transformations: List<Transformation>,
-    listener: FailureAwareImageListener
-  ): Disposable {
-    BackgroundUtils.ensureMainThread()
-
-    return loadFromNetwork(
-      context = context,
-      url = postImage.getThumbnailUrl().toString(),
-      imageSize = imageSize,
-      transformations = transformations,
-      listener = listener
-    )
-  }
-
-  fun loadFromNetwork(
-    context: Context,
-    url: String,
-    imageSize: ImageSize,
-    transformations: List<Transformation>,
-    listener: FailureAwareImageListener
-  ): Disposable {
-    BackgroundUtils.ensureMainThread()
-
-    return loadFromNetwork(
-      context = context,
-      url = url,
-      imageSize = imageSize,
-      transformations = transformations,
-      imageListenerParam = ImageListenerParam.FailureAwareImageListener(listener)
-    )
-  }
-
-  fun loadFromNetwork(
-    context: Context,
     url: String,
     imageSize: ImageSize,
     transformations: List<Transformation>,
@@ -140,6 +90,7 @@ class ImageLoaderV2(
     context: Context,
     requestUrl: String,
     imageSize: ImageSize,
+    transformations: List<Transformation>,
     listener: FailureAwareImageListener
   ): Disposable {
     BackgroundUtils.ensureMainThread()
@@ -148,7 +99,7 @@ class ImageLoaderV2(
       context = context,
       url = requestUrl,
       imageSize = imageSize,
-      transformations = emptyList(),
+      transformations = transformations,
       imageListenerParam = ImageListenerParam.FailureAwareImageListener(listener)
     )
   }
@@ -164,15 +115,33 @@ class ImageLoaderV2(
     val completableDeferred = CompletableDeferred<Unit>()
 
     val job = appScope.launch(Dispatchers.IO) {
+      BackgroundUtils.ensureBackgroundThread()
+
       try {
         val startTime = System.currentTimeMillis()
 
         var isFromCache = true
         var imageResult = tryLoadFromCacheOrNull(context, url, imageSize)
 
+        if (verboseLogs && imageResult is SuccessResult) {
+          Logger.d(TAG, "Loaded '$url' from cache, $imageSize, bitmap size = " +
+            "${imageResult.drawable.intrinsicWidth}x${imageResult.drawable.intrinsicHeight}")
+        }
+
         if (imageResult == null) {
-          imageResult = loadFromNetworkInternal(context, url, imageSize)
           isFromCache = false
+          imageResult = loadFromNetworkInternal(context, url)
+
+          if (imageResult is SuccessResult) {
+            if (verboseLogs) {
+              Logger.d(TAG, "Loaded '$url' from network, bitmap size = " +
+                "${imageResult.drawable.intrinsicWidth}x${imageResult.drawable.intrinsicHeight}")
+            }
+
+            cacheResultBitmapOnDisk(url, imageResult.drawable)
+              .peekError { error -> Logger.e(TAG, "loadFromNetwork() Failed to cache result on disk", error) }
+              .ignore()
+          }
         }
 
         if (imageResult is ErrorResult) {
@@ -192,13 +161,8 @@ class ImageLoaderV2(
 
         imageResult as SuccessResult
 
-        if (!isFromCache) {
-          cacheResultBitmapOnDisk(url, imageResult.drawable)
-            .peekError { error -> Logger.e(TAG, "loadFromNetwork() Failed to cache result on disk", error) }
-            .ignore()
-        }
-
         val finalBitmapDrawable = applyTransformationsToDrawable(
+          url = url,
           context = context,
           imageResult = imageResult,
           transformations = transformations,
@@ -218,7 +182,8 @@ class ImageLoaderV2(
           if (verboseLogs) {
             val endTime = System.currentTimeMillis() - startTime
 
-            Logger.d(TAG, "Loaded '$url' $imageSize, " +
+            Logger.d(TAG, "Loaded '$url' $imageSize, bitmap size = " +
+              "${finalBitmapDrawable.intrinsicWidth}x${finalBitmapDrawable.intrinsicHeight}, " +
               "transformations: ${transformations.size}, fromCache=$isFromCache, time=${endTime}ms")
           }
 
@@ -260,22 +225,22 @@ class ImageLoaderV2(
 
       if (cacheFile.exists()) {
         if (!cacheFile.delete()) {
-          Logger.e(TAG, "cacheResultBitmapOnDisk() failed to delete old cache file ${cacheFile.absolutePath}")
+          Logger.e(TAG, "cacheResultBitmapOnDisk() '$url' failed to delete old cache file ${cacheFile.absolutePath}")
         }
 
         if (!cacheFile.createNewFile()) {
-          Logger.e(TAG, "cacheResultBitmapOnDisk() failed to create new cache file ${cacheFile.absolutePath}")
+          Logger.e(TAG, "cacheResultBitmapOnDisk() '$url' failed to create new cache file ${cacheFile.absolutePath}")
         }
       }
 
       val bitmap = drawable.toBitmap()
 
       FileOutputStream(cacheFile).use { fos ->
-        bitmap.compress(Bitmap.CompressFormat.PNG, 90, fos)
+        bitmap.compress(Bitmap.CompressFormat.PNG, 95, fos)
       }
 
       val success = cacheHandler.markFileDownloaded(newCacheFile)
-      Logger.d(TAG, "cacheResultBitmapOnDisk() done, success: $success")
+      Logger.d(TAG, "cacheResultBitmapOnDisk() '$url' done, success: $success")
     }
   }
 
@@ -286,6 +251,8 @@ class ImageLoaderV2(
     transformations: List<Transformation>,
     imageResult: ErrorResult
   ) {
+    BackgroundUtils.ensureMainThread()
+
     when (actualListener) {
       is ImageListenerParam.SimpleImageListener -> {
         val errorDrawable = loadErrorDrawableByException(
@@ -312,33 +279,41 @@ class ImageLoaderV2(
   }
 
   private suspend fun applyTransformationsToDrawable(
+    url: String,
     context: Context,
     imageResult: SuccessResult,
     transformations: List<Transformation>,
     imageSize: ImageSize
   ): BitmapDrawable? {
+    BackgroundUtils.ensureBackgroundThread()
+
     val lifecycle = context.getLifecycleFromContext()
     val drawable = imageResult.drawable
 
     val request = with(ImageRequest.Builder(context)) {
       lifecycle(lifecycle)
       allowHardware(false)
-      scale(Scale.FIT)
       data(drawable)
-      transformations(transformations)
+      transformations(transformations + RESIZE_TRANSFORMATION)
       applyImageSize(imageSize)
 
       build()
     }
 
-    return when (val result = imageLoader.execute(request)) {
+    when (val result = imageLoader.execute(request)) {
       is SuccessResult -> {
         val bitmap = result.drawable.toBitmap()
-        BitmapDrawable(context.resources, bitmap)
+
+        if (verboseLogs) {
+          Logger.d(TAG, "applyTransformationsToDrawable() done, url='$url', " +
+            "bitmap.size=${bitmap.width}x${bitmap.height}")
+        }
+
+        return BitmapDrawable(context.resources, bitmap)
       }
       is ErrorResult -> {
         Logger.e(TAG, "applyTransformationsToDrawable() error", result.throwable)
-        null
+        return null
       }
     }
   }
@@ -374,18 +349,16 @@ class ImageLoaderV2(
 
   private suspend fun loadFromNetworkInternal(
     context: Context,
-    url: String,
-    imageSize: ImageSize
+    url: String
   ): ImageResult {
+    BackgroundUtils.ensureBackgroundThread()
     val lifecycle = context.getLifecycleFromContext()
 
     val request = with(ImageRequest.Builder(context)) {
       lifecycle(lifecycle)
       allowHardware(false)
-      scale(Scale.FIT)
       data(url)
       addHeader("User-Agent", appConstants.userAgent)
-      applyImageSize(imageSize)
 
       build()
     }
@@ -789,18 +762,20 @@ class ImageLoaderV2(
   }
 
   sealed class ImageSize {
-    object UnknownImageSize : ImageSize()
+    object UnknownImageSize : ImageSize() {
+      override fun toString(): String = "UnknownImageSize"
+    }
 
     data class FixedImageSize(val width: Int, val height: Int) : ImageSize() {
       override fun toString(): String = "FixedImageSize{${width}x${height}}"
     }
 
-    data class MeasurableImageSize private constructor(val sizeResolver: ViewSizeResolver<ImageView>) : ImageSize() {
+    data class MeasurableImageSize private constructor(val sizeResolver: ViewSizeResolver<View>) : ImageSize() {
       override fun toString(): String = "MeasurableImageSize"
 
       companion object {
         @JvmStatic
-        fun create(view: ImageView): MeasurableImageSize {
+        fun create(view: View): MeasurableImageSize {
           return MeasurableImageSize(FixedViewSizeResolver(view))
         }
       }
@@ -827,9 +802,66 @@ class ImageLoaderV2(
 
   }
 
+  private class ResizeTransformation : Transformation {
+    override fun key(): String = "${TAG}_ResizeTransformation"
+
+    override suspend fun transform(pool: BitmapPool, input: Bitmap, size: Size): Bitmap {
+      val (width, height) = when (size) {
+        OriginalSize -> null to null
+        is PixelSize -> size.width to size.height
+      }
+
+      if (width == null || height == null) {
+        return input
+      }
+
+      if (input.width == width && input.height == height) {
+        return input
+      }
+
+      return scale(pool, input, width, height)
+    }
+
+    private fun scale(pool: BitmapPool, bitmap: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {
+      val width: Int
+      val height: Int
+      val widthRatio = bitmap.width.toFloat() / maxWidth
+      val heightRatio = bitmap.height.toFloat() / maxHeight
+
+      if (widthRatio >= heightRatio) {
+        width = maxWidth
+        height = (width.toFloat() / bitmap.width * bitmap.height).toInt()
+      } else {
+        height = maxHeight
+        width = (height.toFloat() / bitmap.height * bitmap.width).toInt()
+      }
+
+      val scaledBitmap = pool.get(width, height, bitmap.config ?: Bitmap.Config.ARGB_8888)
+      val ratioX = width.toFloat() / bitmap.width
+      val ratioY = height.toFloat() / bitmap.height
+      val middleX = width / 2.0f
+      val middleY = height / 2.0f
+      val scaleMatrix = Matrix()
+      scaleMatrix.setScale(ratioX, ratioY, middleX, middleY)
+
+      val canvas = Canvas(scaledBitmap)
+      canvas.setMatrix(scaleMatrix)
+      canvas.drawBitmap(
+        bitmap,
+        middleX - bitmap.width / 2,
+        middleY - bitmap.height / 2,
+        Paint(Paint.FILTER_BITMAP_FLAG)
+      )
+
+      return scaledBitmap
+    }
+  }
+
   companion object {
     private const val TAG = "ImageLoaderV2"
     private const val PREVIEW_SIZE = 1024
+
+    private val RESIZE_TRANSFORMATION = ResizeTransformation()
   }
 
 }

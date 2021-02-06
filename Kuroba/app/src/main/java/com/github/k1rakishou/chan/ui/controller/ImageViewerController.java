@@ -85,6 +85,8 @@ import java.util.Locale;
 
 import javax.inject.Inject;
 
+import okhttp3.HttpUrl;
+
 import static android.view.View.GONE;
 import static android.view.View.INVISIBLE;
 import static android.view.View.VISIBLE;
@@ -604,9 +606,16 @@ public class ImageViewerController
 
     @Override
     public void updatePreviewImage(ChanPostImage postImage) {
+        HttpUrl httpUrl = postImage.getThumbnailUrl();
+        if (httpUrl == null) {
+            return;
+        }
+
+        String url = httpUrl.toString();
+
         imageLoaderV2.loadFromNetwork(
                 context,
-                postImage,
+                url,
                 new ImageLoaderV2.ImageSize.FixedImageSize(
                         previewImage.getWidth(),
                         previewImage.getHeight()
@@ -688,7 +697,14 @@ public class ImageViewerController
     @Override
     public void startPreviewInTransition(ChanDescriptor chanDescriptor, ChanPostImage postImage) {
         ThumbnailView startImageView = getTransitionImageView(postImage);
-        if (!setTransitionViewData(startImageView)) {
+        HttpUrl httpUrl = postImage.getThumbnailUrl();
+        String thumbnailUrl = null;
+
+        if (httpUrl != null) {
+            thumbnailUrl = httpUrl.toString();
+        }
+
+        if (thumbnailUrl == null || !setTransitionViewData(startImageView)) {
             presenter.onInTransitionEnd();
             return;
         }
@@ -715,7 +731,7 @@ public class ImageViewerController
 
         imageLoaderV2.loadFromNetwork(
                 context,
-                postImage,
+                thumbnailUrl,
                 new ImageLoaderV2.ImageSize.FixedImageSize(
                         previewImage.getWidth(),
                         previewImage.getHeight()

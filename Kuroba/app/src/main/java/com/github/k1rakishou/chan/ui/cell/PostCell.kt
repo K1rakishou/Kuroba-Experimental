@@ -20,33 +20,17 @@ import android.annotation.SuppressLint
 import android.app.SearchManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.Rect
-import android.graphics.RectF
-import android.graphics.Typeface
+import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.text.Layout
-import android.text.Spannable
-import android.text.SpannableString
-import android.text.SpannableStringBuilder
-import android.text.Spanned
-import android.text.TextPaint
-import android.text.TextUtils
+import android.text.*
 import android.text.format.DateUtils
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
 import android.text.style.UnderlineSpan
 import android.util.AttributeSet
-import android.view.ActionMode
-import android.view.GestureDetector
+import android.view.*
 import android.view.GestureDetector.SimpleOnGestureListener
-import android.view.Menu
-import android.view.MenuItem
-import android.view.MotionEvent
-import android.view.View
 import android.view.View.OnClickListener
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -70,27 +54,13 @@ import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getRes
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
-import com.github.k1rakishou.chan.utils.MediaUtils
+import com.github.k1rakishou.chan.utils.*
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
 import com.github.k1rakishou.chan.utils.ViewUtils.setEditTextCursorColor
 import com.github.k1rakishou.chan.utils.ViewUtils.setHandlesColors
-import com.github.k1rakishou.chan.utils.setAlphaFast
-import com.github.k1rakishou.chan.utils.setBackgroundColorFast
-import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.isNotNullNorEmpty
-import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed
-import com.github.k1rakishou.core_spannable.ClearableSpan
-import com.github.k1rakishou.core_spannable.ColorizableBackgroundColorSpan
-import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed
-import com.github.k1rakishou.core_spannable.PostLinkable
+import com.github.k1rakishou.core_spannable.*
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ChanThemeColorId
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -837,7 +807,8 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
         layoutParams.addRule(RelativeLayout.BELOW, lastId)
       }
 
-      thumbnailView.bindPostImage(image, CELL_POST_THUMBNAIL_SIZE, CELL_POST_THUMBNAIL_SIZE)
+      val imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(thumbnailView)
+      thumbnailView.bindPostImage(image, imageSize)
       thumbnailView.isClickable = true
 
       // Always set the click listener to avoid check the file cache (which will touch the
@@ -1367,6 +1338,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
         context,
         url.toString(),
         ImageLoaderV2.ImageSize.UnknownImageSize,
+        emptyList(),
         this
       )
     }
