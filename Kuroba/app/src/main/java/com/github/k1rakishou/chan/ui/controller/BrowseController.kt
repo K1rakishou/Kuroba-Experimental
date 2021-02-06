@@ -114,7 +114,7 @@ class BrowseController(
       order = PostsFilter.Order.find(boardOrder) ?: PostsFilter.Order.BUMP
 
       threadLayout.setPostViewMode(ChanSettings.boardViewMode.get())
-      threadLayout.presenter.setOrder(order)
+      threadLayout.presenter.setOrder(order, isManuallyChangedOrder = false)
     }
   }
 
@@ -392,7 +392,7 @@ class BrowseController(
       subItem.isChecked = true
 
       val presenter = threadLayout.presenter
-      presenter.setOrder(order)
+      presenter.setOrder(order, isManuallyChangedOrder = true)
     }
   }
 

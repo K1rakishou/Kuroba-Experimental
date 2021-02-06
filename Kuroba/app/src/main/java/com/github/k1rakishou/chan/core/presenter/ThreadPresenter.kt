@@ -568,12 +568,15 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  suspend fun setOrder(order: PostsFilter.Order) {
+  suspend fun setOrder(order: PostsFilter.Order, isManuallyChangedOrder: Boolean) {
     if (this.order != order) {
       this.order = order
 
       if (isBound) {
-        scrollTo(0, false)
+        if (isManuallyChangedOrder) {
+          scrollTo(0, false)
+        }
+
         showPosts()
       }
     }

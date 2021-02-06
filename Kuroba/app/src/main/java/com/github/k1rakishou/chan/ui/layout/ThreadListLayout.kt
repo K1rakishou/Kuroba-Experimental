@@ -744,11 +744,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     threadPresenter?.gainedFocus(threadControllerType)
 
     if (isThreadVisible) {
-      val chanDescriptor = currentChanDescriptorOrNull()
-      if (chanDescriptor != null) {
-        restorePrevScrollPosition(chanDescriptor, false)
-      }
-
       showToolbarIfNeeded()
     }
   }

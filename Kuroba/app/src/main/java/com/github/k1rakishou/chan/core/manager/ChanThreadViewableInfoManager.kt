@@ -192,6 +192,6 @@ class ChanThreadViewableInfoManager(
 
   companion object {
     private const val TAG = "ChanThreadViewableInfoManager"
-    private const val DEBOUNCE_TIME = 500L
+    private const val DEBOUNCE_TIME = 100L
   }
 }
