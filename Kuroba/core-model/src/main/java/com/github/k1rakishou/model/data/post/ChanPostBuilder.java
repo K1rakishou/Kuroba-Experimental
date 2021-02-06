@@ -225,7 +225,7 @@ public class ChanPostBuilder {
         }
 
         if (lastModified < -1) {
-            this.lastModified = System.currentTimeMillis();
+            this.lastModified = 0;
             return this;
         }
 

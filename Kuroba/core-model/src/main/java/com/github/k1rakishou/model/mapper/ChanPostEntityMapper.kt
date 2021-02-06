@@ -76,7 +76,7 @@ object ChanPostEntityMapper {
       ?: emptySet()
 
     val lastModified = if (chanThreadEntity.lastModified < 0) {
-      System.currentTimeMillis()
+      0
     } else {
       chanThreadEntity.lastModified
     }
