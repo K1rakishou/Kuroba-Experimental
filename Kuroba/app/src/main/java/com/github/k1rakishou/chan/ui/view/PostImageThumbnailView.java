@@ -32,6 +32,7 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchState;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
+import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 import com.github.k1rakishou.model.data.post.ChanPostImageType;
@@ -166,6 +167,7 @@ public class PostImageThumbnailView extends ThumbnailView {
     private String getUrl(ChanPostImage postImage) {
         HttpUrl thumbnailUrl = postImage.getThumbnailUrl();
         if (thumbnailUrl == null) {
+            Logger.e(TAG, "getUrl() postImage: " + postImage.toString() + ", has no thumbnail url");
             return null;
         }
 

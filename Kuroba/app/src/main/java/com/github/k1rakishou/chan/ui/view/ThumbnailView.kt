@@ -98,22 +98,8 @@ open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
     textPaint.textSize = AppModuleAndroidUtils.sp(14f).toFloat()
   }
 
-  override fun onDetachedFromWindow() {
-    super.onDetachedFromWindow()
-
-    kurobaScope.cancelChildren()
-  }
-
   fun setUrl(url: String, imageSize: ImageLoaderV2.ImageSize) {
-    if (requestDisposable != null) {
-      requestDisposable?.dispose()
-      requestDisposable = null
-
-      setImageBitmap(null)
-
-      error = false
-      alphaAnimator.end()
-    }
+    unbindImageView()
 
     kurobaScope.launch {
       setUrlInternal(url, imageSize)
@@ -171,13 +157,12 @@ open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
     if (requestDisposable != null) {
       requestDisposable?.dispose()
       requestDisposable = null
-
-      setImageBitmap(null)
-
-      error = false
-      alphaAnimator.end()
     }
 
+    error = false
+    alphaAnimator.end()
+
+    kurobaScope.cancelChildren()
     setImageBitmap(null)
     return
   }
