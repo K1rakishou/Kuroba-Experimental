@@ -43,6 +43,7 @@ import androidx.appcompat.app.AlertDialog;
 
 import com.davemorrissey.labs.subscaleview.ImageViewState;
 import com.github.k1rakishou.ChanSettings;
+import com.github.k1rakishou.PersistableChanState;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
@@ -172,7 +173,13 @@ public class ImageViewerController
         navigation.subtitle = "0";
 
         buildMenu();
-        hideSystemUI();
+
+        isInImmersiveMode = PersistableChanState.imageViewerImmersiveModeEnabled.get();
+        if (isInImmersiveMode) {
+            hideSystemUI(true);
+        } else {
+            showSystemUI();
+        }
 
         // View setup
         getWindow(context).addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -871,24 +878,26 @@ public class ImageViewerController
     }
 
     @Override
-    public void showSystemUI(boolean show) {
+    public void showSystemUI(boolean showSystemUi) {
         if (!ChanSettings.imageViewerFullscreenMode.get()) {
             return;
         }
 
-        if (show) {
+        PersistableChanState.imageViewerImmersiveModeEnabled.set(!showSystemUi);
+
+        if (showSystemUi) {
             showSystemUI();
         } else {
-            hideSystemUI();
+            hideSystemUI(false);
         }
     }
 
-    private void hideSystemUI() {
+    private void hideSystemUI(boolean forced) {
         if (!ChanSettings.imageViewerFullscreenMode.get()) {
             return;
         }
 
-        if (isInImmersiveMode) {
+        if (!forced && isInImmersiveMode) {
             return;
         }
 

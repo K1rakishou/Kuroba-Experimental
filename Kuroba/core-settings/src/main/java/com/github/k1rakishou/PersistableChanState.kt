@@ -49,6 +49,8 @@ object PersistableChanState {
   lateinit var themesIgnoreSystemDayNightModeMessageShown: BooleanSetting
   @JvmStatic
   lateinit var bookmarksLastOpenedTabPageIndex: IntegerSetting
+  @JvmStatic
+  lateinit var imageViewerImmersiveModeEnabled: BooleanSetting
 
   fun init(persistableChanStateInfo: PersistableChanStateInfo) {
     this.persistableChanStateInfo = persistableChanStateInfo
@@ -121,6 +123,12 @@ object PersistableChanState {
         provider,
         "bookmarks_last_opened_tab_page_index",
         -1
+      )
+
+      imageViewerImmersiveModeEnabled = BooleanSetting(
+        provider,
+        "image_viewer_immersive_mode_enabled",
+        true
       )
     } catch (e: Exception) {
       Logger.e(TAG, "Error while initializing the state", e)
