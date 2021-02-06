@@ -137,10 +137,10 @@ public class ImageViewerAdapter
         }
     }
 
-    public void toggleTransparency(ChanPostImage postImage) {
+    public void updateTransparency(ChanPostImage postImage, boolean transparencyOn) {
         MultiImageView view = find(postImage);
         if (view != null) {
-            view.toggleTransparency();
+            view.updateTransparency(transparencyOn);
         }
     }
 

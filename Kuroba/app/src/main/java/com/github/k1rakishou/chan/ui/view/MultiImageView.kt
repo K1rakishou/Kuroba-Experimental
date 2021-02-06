@@ -568,7 +568,7 @@ class MultiImageView @JvmOverloads constructor(
       callback?.hideProgress(this@MultiImageView)
 
       onModeLoaded(Mode.GIFIMAGE, gifImageView)
-      toggleTransparency()
+      updateTransparency()
     }
 
     gifImageView.setOnClickListener(null)
@@ -841,8 +841,8 @@ class MultiImageView @JvmOverloads constructor(
     }
   }
 
-  fun toggleTransparency() {
-    transparentBackground = !transparentBackground
+  fun updateTransparency(transparencyOn: Boolean = ChanSettings.transparencyOn.get()) {
+    transparentBackground = transparencyOn
     val workSafe = callback?.isWorkSafe ?: false
 
     val boardColor = if (workSafe) {
@@ -865,7 +865,11 @@ class MultiImageView @JvmOverloads constructor(
     }
 
     val isImage = activeView is CustomScaleImageView
-    val backgroundColor = if (!transparentBackground) Color.TRANSPARENT else boardColor
+    val backgroundColor = if (!transparentBackground) {
+      Color.TRANSPARENT
+    } else {
+      boardColor
+    }
 
     if (isImage) {
       (activeView as CustomScaleImageView).setTileBackgroundColor(backgroundColor)
@@ -949,7 +953,7 @@ class MultiImageView @JvmOverloads constructor(
           runAppearAnimation(prevActiveView, findView(CustomScaleImageView::class.java), isSpoiler) {
             callback?.hideProgress(this@MultiImageView)
             onModeLoaded(Mode.BIGIMAGE, image)
-            toggleTransparency()
+            updateTransparency()
           }
         }
       }

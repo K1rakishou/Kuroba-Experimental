@@ -74,6 +74,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
+import com.github.k1rakishou.model.util.ChanPostUtils;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -114,7 +115,7 @@ public class ImageViewerController
     private static final int ACTION_SHARE_URL = 4;
     private static final int ACTION_SHARE_CONTENT = 5;
     private static final int ACTION_SEARCH_IMAGE = 6;
-    private static final int ACTION_TRANSPARENCY_TOGGLE = 7;
+    private static final int ACTION_ALLOW_IMAGE_TRANSPARENCY = 7;
     private static final int ACTION_IMAGE_ROTATE = 8;
     private static final int ACTION_RELOAD = 9;
     private static final int ACTION_CHANGE_GESTURES = 10;
@@ -282,10 +283,12 @@ public class ImageViewerController
                 R.string.action_search_image,
                 this::searchClicked
         );
-        overflowBuilder.withSubItem(
-                ACTION_TRANSPARENCY_TOGGLE,
-                R.string.action_transparency_toggle,
-                this::toggleTransparency
+        overflowBuilder.withCheckableSubItem(
+                ACTION_ALLOW_IMAGE_TRANSPARENCY,
+                R.string.action_allow_image_transparency,
+                true,
+                !ChanSettings.transparencyOn.get(),
+                this::updateTransparency
         );
         overflowBuilder.withSubItem(
                 ACTION_IMAGE_ROTATE,
@@ -363,8 +366,14 @@ public class ImageViewerController
         presenter.showImageSearchOptions();
     }
 
-    private void toggleTransparency(ToolbarMenuSubItem item) {
-        ((ImageViewerAdapter) pager.getAdapter()).toggleTransparency(presenter.getCurrentPostImage());
+    private void updateTransparency(ToolbarMenuSubItem item) {
+        boolean newTransparencyOn = !ChanSettings.transparencyOn.get();
+        ChanSettings.transparencyOn.set(newTransparencyOn);
+
+        ((ImageViewerAdapter) pager.getAdapter()).updateTransparency(
+                presenter.getCurrentPostImage(),
+                newTransparencyOn
+        );
     }
 
     private void rotateImage(ToolbarMenuSubItem item) {
@@ -592,9 +601,11 @@ public class ImageViewerController
             navigation.title = postImage.getFilename() + "." + postImage.getExtension();
         }
 
-        navigation.subtitle = (index + 1) + "/" + count;
-        requireNavController().requireToolbar().updateTitle(navigation);
+        navigation.subtitle = (index + 1) + "/" + count +
+                ", " + postImage.getImageWidth() + "x" + postImage.getImageHeight() +
+                ", " + ChanPostUtils.getReadableFileSize(postImage.getSize());
 
+        requireNavController().requireToolbar().updateTitle(navigation);
 
         ToolbarMenuSubItem rotate = navigation.findSubItem(ACTION_IMAGE_ROTATE);
         rotate.visible = getImageMode(postImage) == MultiImageView.Mode.BIGIMAGE;

@@ -1061,8 +1061,7 @@ class ThreadPresenter @Inject constructor(
         }
 
         val imageUrl = image.imageUrl
-        val setCallback = (!post.deleted ||
-          imageUrl != null && cacheHandler.cacheFileExists(imageUrl.toString()))
+        val setCallback = (!post.deleted || imageUrl != null && cacheHandler.cacheFileExists(imageUrl.toString()))
 
         if (setCallback) {
           // Deleted posts always have 404'd images, but let it through if the file exists
