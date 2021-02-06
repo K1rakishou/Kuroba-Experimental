@@ -261,11 +261,13 @@ class HidingFloatingActionButton
       return
     }
 
-    if (offset >= 1f && isCurrentReplyLayoutOpened()) {
+    val newFabAlpha = 1f - offset
+
+    if (newFabAlpha >= 1f && isCurrentReplyLayoutOpened()) {
+      // If trying to show and currently reply layout is opened - do not show.
       return
     }
 
-    val newFabAlpha = 1f - offset
     if (newFabAlpha != this.alpha) {
       cancelPrevAnimation()
 
