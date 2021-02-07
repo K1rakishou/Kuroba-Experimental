@@ -37,7 +37,6 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
@@ -69,7 +68,6 @@ import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.TransitionImageView;
 import com.github.k1rakishou.chan.utils.FullScreenUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
-import com.github.k1rakishou.common.StringUtils;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileManager;
@@ -79,7 +77,6 @@ import com.github.k1rakishou.model.util.ChanPostUtils;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -416,14 +413,7 @@ public class ImageViewerController
     }
 
     private void shareImage(ChanPostImage postImage) {
-        ImageSaveTask task = new ImageSaveTask(
-                fileCacheV2,
-                fileManager,
-                chanDescriptor,
-                postImage,
-                false
-        );
-
+        ImageSaveTask task = new ImageSaveTask(postImage, false);
         task.setShare(true);
 
         imageSaver.startDownloadTask(context, task, message -> {
@@ -438,32 +428,8 @@ public class ImageViewerController
     }
 
     private void saveImage(ChanPostImage postImage) {
-        ImageSaveTask task = new ImageSaveTask(
-                fileCacheV2,
-                fileManager,
-                chanDescriptor,
-                postImage,
-                false
-        );
-
+        ImageSaveTask task = new ImageSaveTask(postImage, false);
         task.setShare(false);
-        if (ChanSettings.saveBoardFolder.get()) {
-            String subFolderName;
-
-            if (ChanSettings.saveThreadFolder.get()) {
-                subFolderName = appendAdditionalSubDirectories(postImage);
-            } else {
-                String siteNameSafe = StringUtils.dirNameRemoveBadCharacters(
-                        presenter.getChanDescriptor().siteName()
-                );
-
-                subFolderName = siteNameSafe
-                        + File.separator
-                        + presenter.getChanDescriptor().boardCode();
-            }
-
-            task.setSubFolder(subFolderName);
-        }
 
         imageSaver.startDownloadTask(context, task, message -> {
             String errorMessage = String.format(Locale.ENGLISH,
@@ -474,46 +440,6 @@ public class ImageViewerController
 
             showToast(errorMessage, Toast.LENGTH_LONG);
         });
-    }
-
-    @NonNull
-    private String appendAdditionalSubDirectories(ChanPostImage postImage) {
-        long threadNo = 0L;
-
-        if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
-            threadNo = ((ChanDescriptor.ThreadDescriptor) chanDescriptor).getThreadNo();
-        }
-
-        String siteName = chanDescriptor.siteName();
-        String boardCode = chanDescriptor.boardCode();
-
-        // save to op no appended with the first 50 characters of the subject
-        // should be unique and perfectly understandable title wise
-        String sanitizedSubFolderName = StringUtils.dirNameRemoveBadCharacters(siteName)
-                + File.separator
-                + StringUtils.dirNameRemoveBadCharacters(boardCode)
-                + File.separator
-                + threadNo
-                + "_";
-
-        String sanitizedFileName = StringUtils.dirNameRemoveBadCharacters(
-                getTempTitle(threadNo, siteName, boardCode)
-        );
-        String truncatedFileName = sanitizedFileName.substring(
-                0,
-                Math.min(sanitizedFileName.length(), 50)
-        );
-
-        return sanitizedSubFolderName + truncatedFileName;
-    }
-
-    @NonNull
-    private String getTempTitle(long threadNo, String siteName, String boardCode) {
-        if (threadNo <= 0) {
-            return "catalog";
-        }
-
-        return String.format(Locale.ENGLISH, "%s_%s_%d", siteName, boardCode, threadNo);
     }
 
     @Override

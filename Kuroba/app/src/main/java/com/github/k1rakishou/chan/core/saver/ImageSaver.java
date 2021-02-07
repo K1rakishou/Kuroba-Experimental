@@ -43,6 +43,7 @@ import com.github.k1rakishou.fsaf.file.AbstractFile;
 import com.github.k1rakishou.fsaf.file.DirectorySegment;
 import com.github.k1rakishou.fsaf.file.FileSegment;
 import com.github.k1rakishou.fsaf.util.FSAFUtils;
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 
 import org.greenrobot.eventbus.EventBus;
@@ -53,6 +54,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -181,7 +184,11 @@ public class ImageSaver {
                 });
     }
 
-    public void startDownloadTask(Context context, final ImageSaveTask task, DownloadTaskCallbacks callbacks) {
+    public void startDownloadTask(
+            Context context,
+            final ImageSaveTask task,
+            DownloadTaskCallbacks callbacks
+    ) {
         if (hasPermission(context)) {
             startDownloadTaskInternal(task, callbacks);
             return;
@@ -197,7 +204,29 @@ public class ImageSaver {
         });
     }
 
-    private void startDownloadTaskInternal(ImageSaveTask task, DownloadTaskCallbacks callbacks) {
+    private void startDownloadTaskInternal(
+            ImageSaveTask task,
+            DownloadTaskCallbacks callbacks
+    ) {
+        if (ChanSettings.saveBoardFolder.get()) {
+            String subFolderName;
+            ChanDescriptor chanDescriptor = Objects.requireNonNull(task.getChanDescriptor());
+
+            if (ChanSettings.saveThreadFolder.get()) {
+                subFolderName = appendAdditionalSubDirectories(chanDescriptor);
+            } else {
+                String siteNameSafe = StringUtils.dirNameRemoveBadCharacters(
+                        chanDescriptor.siteName()
+                );
+
+                subFolderName = siteNameSafe
+                        + File.separator
+                        + chanDescriptor.boardCode();
+            }
+
+            task.setSubFolder(subFolderName);
+        }
+
         if (!task.getShare() && !fileManager.baseDirectoryExists(SavedFilesBaseDirectory.class)) {
             // If current base dir is File API backed and it's not set, attempt to create it
             // manually
@@ -222,6 +251,46 @@ public class ImageSaver {
         // At this point we already have disk permissions
         startTask(task);
         updateNotification();
+    }
+
+    @NonNull
+    private String appendAdditionalSubDirectories(ChanDescriptor chanDescriptor) {
+        long threadNo = 0L;
+
+        if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
+            threadNo = ((ChanDescriptor.ThreadDescriptor) chanDescriptor).getThreadNo();
+        }
+
+        String siteName = chanDescriptor.siteName();
+        String boardCode = chanDescriptor.boardCode();
+
+        // save to op no appended with the first 50 characters of the subject
+        // should be unique and perfectly understandable title wise
+        String sanitizedSubFolderName = StringUtils.dirNameRemoveBadCharacters(siteName)
+                + File.separator
+                + StringUtils.dirNameRemoveBadCharacters(boardCode)
+                + File.separator
+                + threadNo
+                + "_";
+
+        String sanitizedFileName = StringUtils.dirNameRemoveBadCharacters(
+                getTempTitle(threadNo, siteName, boardCode)
+        );
+        String truncatedFileName = sanitizedFileName.substring(
+                0,
+                Math.min(sanitizedFileName.length(), 50)
+        );
+
+        return sanitizedSubFolderName + truncatedFileName;
+    }
+
+    @NonNull
+    private String getTempTitle(long threadNo, String siteName, String boardCode) {
+        if (threadNo <= 0) {
+            return "catalog";
+        }
+
+        return String.format(Locale.ENGLISH, "%s_%s_%d", siteName, boardCode, threadNo);
     }
 
     public Single<BundledImageSaveResult> startBundledTask(Context context, final List<ImageSaveTask> tasks) {

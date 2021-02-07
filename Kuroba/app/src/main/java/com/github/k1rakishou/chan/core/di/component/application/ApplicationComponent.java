@@ -20,6 +20,7 @@ import com.github.k1rakishou.chan.core.di.module.application.UseCaseModule;
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkBackgroundWatcherWorker;
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherWorker;
 import com.github.k1rakishou.chan.core.receiver.ReplyNotificationDeleteIntentBroadcastReceiver;
+import com.github.k1rakishou.chan.core.saver.ImageSaveTask;
 import com.github.k1rakishou.chan.core.site.SiteBase;
 import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesPresenter;
 import com.github.k1rakishou.chan.ui.widget.SnackbarWrapper;
@@ -62,6 +63,7 @@ public interface ApplicationComponent {
     void inject(ReplyNotificationDeleteIntentBroadcastReceiver replyNotificationDeleteIntentBroadcastReceiver);
     void inject(CloudFlareHandlerInterceptor cloudFlareHandlerInterceptor);
     void inject(FilterWatchesPresenter filterWatchesPresenter);
+    void inject(ImageSaveTask imageSaveTask);
 
     @Component.Builder
     interface Builder {

@@ -23,6 +23,7 @@ import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 
 import com.github.k1rakishou.ChanSettings;
+import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.core.cache.FileCacheListener;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload;
@@ -39,6 +40,8 @@ import com.github.k1rakishou.model.data.post.ChanPostImage;
 import java.io.File;
 import java.io.IOException;
 
+import javax.inject.Inject;
+
 import io.reactivex.Single;
 import io.reactivex.functions.Action;
 import io.reactivex.subjects.SingleSubject;
@@ -52,12 +55,13 @@ import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
 import static com.github.k1rakishou.common.AndroidUtils.getAppFileProvider;
 import static com.github.k1rakishou.common.AndroidUtils.isAndroid11;
 
-public class ImageSaveTask
-        extends FileCacheListener {
+public class ImageSaveTask extends FileCacheListener {
     private static final String TAG = "ImageSaveTask";
 
-    private final FileCacheV2 fileCacheV2;
-    private final FileManager fileManager;
+    @Inject
+    FileCacheV2 fileCacheV2;
+    @Inject
+    FileManager fileManager;
 
     private ChanPostImage postImage;
     private ChanDescriptor chanDescriptor;
@@ -69,19 +73,19 @@ public class ImageSaveTask
     private SingleSubject<ImageSaver.BundledDownloadResult> imageSaveTaskAsyncResult;
 
     public ImageSaveTask(
-            FileCacheV2 fileCacheV2,
-            FileManager fileManager,
-            ChanDescriptor chanDescriptor,
             ChanPostImage postImage,
             boolean isBatchDownload
     ) {
-        this.fileCacheV2 = fileCacheV2;
-        this.fileManager = fileManager;
+        Chan.getComponent().inject(this);
 
-        this.chanDescriptor = chanDescriptor;
+        this.chanDescriptor = postImage.getOwnerPostDescriptor().getDescriptor();
         this.postImage = postImage;
         this.isBatchDownload = isBatchDownload;
         this.imageSaveTaskAsyncResult = SingleSubject.create();
+    }
+
+    public ChanDescriptor getChanDescriptor() {
+        return chanDescriptor;
     }
 
     public void setSubFolder(String boardName) {

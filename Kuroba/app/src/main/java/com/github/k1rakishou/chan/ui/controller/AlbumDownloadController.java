@@ -222,14 +222,7 @@ public class AlbumDownloadController
             }
 
             if (item.checked) {
-                ImageSaveTask imageTask = new ImageSaveTask(
-                        fileCacheV2,
-                        fileManager,
-                        chanDescriptor,
-                        item.postImage,
-                        true
-                );
-
+                ImageSaveTask imageTask = new ImageSaveTask(item.postImage, true);
                 if (subFolder != null) {
                     imageTask.setSubFolder(subFolder);
                 }

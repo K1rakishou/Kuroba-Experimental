@@ -18,6 +18,7 @@ package com.github.k1rakishou.chan.core.presenter
 
 import android.content.Context
 import android.text.TextUtils
+import android.widget.Toast
 import androidx.annotation.StringRes
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -29,20 +30,9 @@ import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
 import com.github.k1rakishou.chan.core.helper.PostHideHelper
 import com.github.k1rakishou.chan.core.loader.LoaderBatchResult
 import com.github.k1rakishou.chan.core.loader.LoaderResult.Succeeded
-import com.github.k1rakishou.chan.core.manager.ArchivesManager
-import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.manager.BookmarksManager
-import com.github.k1rakishou.chan.core.manager.ChanFilterManager
-import com.github.k1rakishou.chan.core.manager.ChanThreadManager
-import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
-import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
-import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager
-import com.github.k1rakishou.chan.core.manager.PageRequestManager
-import com.github.k1rakishou.chan.core.manager.PostFilterManager
-import com.github.k1rakishou.chan.core.manager.PostHideManager
-import com.github.k1rakishou.chan.core.manager.SavedReplyManager
-import com.github.k1rakishou.chan.core.manager.SeenPostsManager
-import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.*
+import com.github.k1rakishou.chan.core.saver.ImageSaveTask
+import com.github.k1rakishou.chan.core.saver.ImageSaver
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
@@ -60,11 +50,7 @@ import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutPre
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.AndroidUtils
@@ -77,11 +63,7 @@ import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.board.pages.BoardPage
-import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.model.data.descriptor.*
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -91,20 +73,9 @@ import com.github.k1rakishou.model.source.cache.ChanPostBuilderCache
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
 import io.reactivex.disposables.CompositeDisposable
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
@@ -130,7 +101,8 @@ class ThreadPresenter @Inject constructor(
   private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
   private val postHideHelper: PostHideHelper,
   private val chanThreadManager: ChanThreadManager,
-  private val chanPostBuilderCache: ChanPostBuilderCache
+  private val chanPostBuilderCache: ChanPostBuilderCache,
+  private val imageSaver: ImageSaver
 ) : PostAdapterCallback,
   PostCellCallback,
   ThreadStatusCell.Callback,
@@ -1100,6 +1072,8 @@ class ThreadPresenter @Inject constructor(
 
     val items = mutableListOf<FloatingListMenuItem>()
     items += createMenuItem(THUMBNAIL_COPY_URL, R.string.action_copy_image_url)
+    items += createMenuItem(SHARE_MEDIA_FILE_CONTENT, R.string.action_share_content)
+    items += createMenuItem(DOWNLOAD_MEDIA_FILE_CONTENT, R.string.action_download_content)
 
     val floatingListMenuController = FloatingListMenuController(
       context,
@@ -1111,7 +1085,11 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.presentController(floatingListMenuController, true)
   }
 
-  private fun onThumbnailOptionClicked(id: Int, postImage: ChanPostImage, thumbnail: ThumbnailView) {
+  private fun onThumbnailOptionClicked(
+    id: Int,
+    postImage: ChanPostImage,
+    thumbnail: ThumbnailView
+  ) {
     when (id) {
       THUMBNAIL_COPY_URL -> {
         if (postImage.imageUrl == null) {
@@ -1121,7 +1099,29 @@ class ThreadPresenter @Inject constructor(
         AndroidUtils.setClipboardContent("Image URL", postImage.imageUrl.toString())
         showToast(context, R.string.image_url_copied_to_clipboard)
       }
+      SHARE_MEDIA_FILE_CONTENT -> {
+        shareOrDownloadMediaFile(true, postImage)
+      }
+      DOWNLOAD_MEDIA_FILE_CONTENT -> {
+        shareOrDownloadMediaFile(false, postImage)
+      }
     }
+  }
+
+  private fun shareOrDownloadMediaFile(share: Boolean, postImage: ChanPostImage) {
+    val task = ImageSaveTask(postImage, false)
+    task.share = share
+
+    imageSaver.startDownloadTask(context, task, { message: String? ->
+      val errorMessage = String.format(
+        Locale.ENGLISH,
+        "%s, error message = %s",
+        "Couldn't start download task",
+        message
+      )
+
+      showToast(context, errorMessage, Toast.LENGTH_LONG)
+    })
   }
 
   override fun onPopulatePostOptions(post: ChanPost, menu: MutableList<FloatingListMenuItem>) {
@@ -1503,7 +1503,11 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.quote(post, quoted)
   }
 
-  override fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>) {
+  override fun showPostOptions(
+    post: ChanPost,
+    inPopup: Boolean,
+    items: List<FloatingListMenuItem>
+  ) {
     val gravity = if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
       when (currentChanDescriptor) {
         is ChanDescriptor.CatalogDescriptor -> ConstraintLayoutBiasPair.BottomLeft
@@ -1922,7 +1926,13 @@ class ThreadPresenter @Inject constructor(
     fun openReportView(post: ChanPost)
     fun showPostsPopup(forPost: ChanPost, posts: List<ChanPost>)
     fun hidePostsPopup()
-    fun showImages(images: List<ChanPostImage>, index: Int, chanDescriptor: ChanDescriptor, thumbnail: ThumbnailView)
+    fun showImages(
+      images: List<ChanPostImage>,
+      index: Int,
+      chanDescriptor: ChanDescriptor,
+      thumbnail: ThumbnailView
+    )
+
     fun showAlbum(images: List<ChanPostImage>, index: Int)
     fun scrollTo(displayPosition: Int, smooth: Boolean)
     fun smoothScrollNewPosts(displayPosition: Int)
@@ -1941,12 +1951,31 @@ class ThreadPresenter @Inject constructor(
     fun hideDeleting(message: String)
     fun hideThread(post: ChanPost, threadNo: Long, hide: Boolean)
     fun showNewPostsNotification(show: Boolean, newPostsCount: Int)
-    fun showImageReencodingWindow(fileUuid: UUID, chanDescriptor: ChanDescriptor, supportsReencode: Boolean)
+    fun showImageReencodingWindow(
+      fileUuid: UUID,
+      chanDescriptor: ChanDescriptor,
+      supportsReencode: Boolean
+    )
+
     fun showHideOrRemoveWholeChainDialog(hide: Boolean, post: ChanPost, threadNo: Long)
-    fun hideOrRemovePosts(hide: Boolean, wholeChain: Boolean, postDescriptors: Set<PostDescriptor>, threadNo: Long)
+    fun hideOrRemovePosts(
+      hide: Boolean,
+      wholeChain: Boolean,
+      postDescriptors: Set<PostDescriptor>,
+      threadNo: Long
+    )
+
     fun unhideOrUnremovePost(post: ChanPost)
-    fun viewRemovedPostsForTheThread(threadPosts: List<PostDescriptor>, threadDescriptor: ChanDescriptor.ThreadDescriptor)
-    fun onRestoreRemovedPostsClicked(chanDescriptor: ChanDescriptor, selectedPosts: List<PostDescriptor>)
+    fun viewRemovedPostsForTheThread(
+      threadPosts: List<PostDescriptor>,
+      threadDescriptor: ChanDescriptor.ThreadDescriptor
+    )
+
+    fun onRestoreRemovedPostsClicked(
+      chanDescriptor: ChanDescriptor,
+      selectedPosts: List<PostDescriptor>
+    )
+
     fun onPostUpdated(post: ChanPost)
     fun presentController(floatingListMenuController: FloatingListMenuController, animate: Boolean)
     fun showToolbar()
@@ -1975,6 +2004,8 @@ class ThreadPresenter @Inject constructor(
     private const val POST_OPTION_FILTER_IMAGE_HASH = 101
 
     private const val THUMBNAIL_COPY_URL = 1000
+    private const val SHARE_MEDIA_FILE_CONTENT = 1001
+    private const val DOWNLOAD_MEDIA_FILE_CONTENT = 1002
   }
 
 }
