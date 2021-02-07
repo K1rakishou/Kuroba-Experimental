@@ -8,26 +8,11 @@ import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
-import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
-import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.manager.ChanFilterManager
-import com.github.k1rakishou.chan.core.manager.PostHideManager
-import com.github.k1rakishou.chan.core.manager.ReportManager
-import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
-import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
-import com.github.k1rakishou.chan.features.settings.screens.AppearanceSettingsScreen
-import com.github.k1rakishou.chan.features.settings.screens.BehaviourSettingsScreen
-import com.github.k1rakishou.chan.features.settings.screens.DatabaseSettingsSummaryScreen
-import com.github.k1rakishou.chan.features.settings.screens.DeveloperSettingsScreen
-import com.github.k1rakishou.chan.features.settings.screens.ExperimentalSettingsScreen
-import com.github.k1rakishou.chan.features.settings.screens.ImportExportSettingsScreen
-import com.github.k1rakishou.chan.features.settings.screens.MainSettingsScreen
-import com.github.k1rakishou.chan.features.settings.screens.MediaSettingsScreen
-import com.github.k1rakishou.chan.features.settings.screens.SecuritySettingsScreen
-import com.github.k1rakishou.chan.features.settings.screens.WatcherSettingsScreen
+import com.github.k1rakishou.chan.features.settings.screens.*
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils
@@ -45,15 +30,10 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
 import io.reactivex.processors.PublishProcessor
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import java.util.*
 import javax.inject.Inject
@@ -178,6 +158,7 @@ class SettingsCoordinator(
   private val importExportSettingsScreen by lazy {
     ImportExportSettingsScreen(
       context,
+      this,
       navigationController,
       fileChooser,
       fileManager,

@@ -11,9 +11,11 @@ import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
+import kotlinx.coroutines.CoroutineScope
 
 class ImportExportSettingsScreen(
   context: Context,
+  coroutineScope: CoroutineScope,
   private val navigationController: NavigationController,
   private val fileChooser: FileChooser,
   private val fileManager: FileManager,
@@ -27,18 +29,12 @@ class ImportExportSettingsScreen(
   private val importExportSettingsDelegate by lazy {
     ImportExportSettingsDelegate(
       context,
+      coroutineScope,
       navigationController,
       fileChooser,
       fileManager,
-      dialogFactory,
       importExportRepository
     )
-  }
-
-  override fun onDestroy() {
-    super.onDestroy()
-
-    importExportSettingsDelegate.onDestroy()
   }
 
   override fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
@@ -88,8 +84,7 @@ class ImportExportSettingsScreen(
           identifier =  ImportExportScreen.MainSettingsGroup.ExportSetting,
           topDescriptionIdFunc = { R.string.export_settings },
           bottomDescriptionIdFunc = { R.string.export_settings_to_a_file },
-          callback = { importExportSettingsDelegate.onExportClicked() },
-          isEnabledFunc = { false }
+          callback = { importExportSettingsDelegate.onExportClicked() }
         )
 
         group += LinkSettingV2.createBuilder(
@@ -97,8 +92,7 @@ class ImportExportSettingsScreen(
           identifier =  ImportExportScreen.MainSettingsGroup.ImportSetting,
           topDescriptionIdFunc = { R.string.import_settings },
           bottomDescriptionIdFunc = { R.string.import_settings_from_a_file },
-          callback = { importExportSettingsDelegate.onImportClicked() },
-          isEnabledFunc = { false }
+          callback = { importExportSettingsDelegate.onImportClicked() }
         )
 
         return group

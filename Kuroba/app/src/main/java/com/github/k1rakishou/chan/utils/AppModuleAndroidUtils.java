@@ -61,6 +61,8 @@ public class AppModuleAndroidUtils {
     @SuppressLint("StaticFieldLeak")
     private static Application application;
 
+    public static final String SITE_PREFS_FILE_PREFIX = "site_preferences_";
+
     public static void init(Application application) {
         if (AppModuleAndroidUtils.application == null) {
             AppModuleAndroidUtils.application = application;
@@ -549,7 +551,7 @@ public class AppModuleAndroidUtils {
     }
 
     public static SharedPreferences getPreferencesForSite(SiteDescriptor siteDescriptor) {
-        String preferencesFileName = "site_preferences_" + siteDescriptor.getSiteName();
+        String preferencesFileName = SITE_PREFS_FILE_PREFIX + siteDescriptor.getSiteName();
 
         return application.getSharedPreferences(
                 preferencesFileName,

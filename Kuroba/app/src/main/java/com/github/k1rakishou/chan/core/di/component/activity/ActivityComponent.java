@@ -8,7 +8,6 @@ import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLay
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule;
 import com.github.k1rakishou.chan.core.di.scope.PerActivity;
 import com.github.k1rakishou.chan.core.presenter.ImageViewerPresenter;
-import com.github.k1rakishou.chan.core.presenter.ImportExportSettingsPresenter;
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController;
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksPresenter;
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksSortingController;
@@ -302,7 +301,6 @@ public interface ActivityComponent {
     void inject(ThreadStatusCell threadStatusCell);
     void inject(PostCell postCell);
     void inject(NavigationControllerContainerLayout navigationControllerContainerLayout);
-    void inject(ImportExportSettingsPresenter importExportSettingsPresenter);
     void inject(BookmarksPresenter bookmarksPresenter);
     void inject(BaseThreadBookmarkViewHolder baseThreadBookmarkViewHolder);
     void inject(DrawerPresenter drawerPresenter);

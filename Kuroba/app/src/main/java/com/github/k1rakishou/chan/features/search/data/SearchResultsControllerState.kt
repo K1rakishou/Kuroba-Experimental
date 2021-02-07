@@ -7,6 +7,7 @@ import okhttp3.HttpUrl
 
 internal sealed class SearchResultsControllerState {
   object Uninitialized : SearchResultsControllerState()
+  object Loading : SearchResultsControllerState()
   class NothingFound(val searchParameters: SearchParameters) : SearchResultsControllerState()
   data class Data(val data: SearchResultsControllerStateData) : SearchResultsControllerState()
 }

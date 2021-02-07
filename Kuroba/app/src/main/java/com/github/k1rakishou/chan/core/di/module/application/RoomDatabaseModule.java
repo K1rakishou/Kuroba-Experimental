@@ -10,6 +10,7 @@ import com.github.k1rakishou.model.repository.ChanPostHideRepository;
 import com.github.k1rakishou.model.repository.ChanPostRepository;
 import com.github.k1rakishou.model.repository.ChanSavedReplyRepository;
 import com.github.k1rakishou.model.repository.ChanThreadViewableInfoRepository;
+import com.github.k1rakishou.model.repository.DatabaseMetaRepository;
 import com.github.k1rakishou.model.repository.HistoryNavigationRepository;
 import com.github.k1rakishou.model.repository.InlinedFileInfoRepository;
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository;
@@ -26,6 +27,15 @@ import dagger.Provides;
 
 @Module
 public class RoomDatabaseModule {
+
+    @Provides
+    @Singleton
+    public DatabaseMetaRepository provideDatabaseMetaRepository(
+            ModelComponent modelComponent
+    ) {
+        return modelComponent.getDatabaseMetaRepository();
+    }
+
     @Provides
     @Singleton
     public MediaServiceLinkExtraContentRepository provideMediaServiceLinkExtraContentRepository(

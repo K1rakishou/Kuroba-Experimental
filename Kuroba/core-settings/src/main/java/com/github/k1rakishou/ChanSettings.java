@@ -16,8 +16,6 @@
  */
 package com.github.k1rakishou;
 
-import android.net.Uri;
-
 import com.github.k1rakishou.base_dir.SavedFilesBaseDirSetting;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.prefs.BooleanSetting;
@@ -28,9 +26,6 @@ import com.github.k1rakishou.prefs.RangeSetting;
 import com.github.k1rakishou.prefs.StringSetting;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 
 import kotlin.Lazy;
 import kotlin.LazyKt;
@@ -44,10 +39,11 @@ public class ChanSettings {
     private static final String TAG = "ChanSettings";
     public static final String EMPTY_JSON = "{}";
     public static final String NO_HASH_SET = "NO_HASH_SET";
+    public static final String SHARED_PREFS_DIR_NAME = "shared_prefs";
 
-    private static ChanSettingsInfo chanSettingsInfo;
+    public static ChanSettingsInfo chanSettingsInfo;
     private static final Lazy<String> sharedPrefsFile = LazyKt.lazy(() ->
-            "shared_prefs/"
+            SHARED_PREFS_DIR_NAME + "/"
             + chanSettingsInfo.getApplicationId()
             + "_preferences.xml");
 
@@ -593,94 +589,6 @@ public class ChanSettings {
         }
     }
 
-    /**
-     * Reads setting from the shared preferences file to a string.
-     * Called on the Database thread.
-     */
-    public synchronized static String serializeToString() throws IOException {
-        String prevSaveLocationUri = null;
-
-        /*
-         We need to check if the user has any of the location settings set to a SAF directory.
-         We can't export them because if the user reinstalls the app and then imports a location
-         setting that point to a SAF directory that directory won't be valid for the app because
-         after clearing settings all permissions for that directory will be lost. So in case the
-         user tries to export SAF directory paths we don't export them and instead export default
-         locations. But we also don't wont to change the paths for the current app so we need to
-         save the previous paths, patch the sharedPrefs file read it to string and then restore
-         the current paths back to what they were before exporting.
-
-         We also need to reset the active dir setting in case of resetting the base dir (and then
-         restore back) so that the user won't see empty paths to files when importing settings
-         back.
-        */
-        if (saveLocation.isSafDirActive()) {
-            // Save the saveLocationUri
-            prevSaveLocationUri = saveLocation.getSafBaseDir().get();
-
-            saveLocation.getSafBaseDir().remove();
-            saveLocation.resetFileDir();
-            saveLocation.resetActiveDir();
-        }
-
-        File file = new File(getAppDir(), sharedPrefsFile.getValue());
-
-        if (!file.exists()) {
-            throw new IOException("Shared preferences file does not exist! " +
-                    "(" + file.getAbsolutePath() + ")");
-        }
-
-        if (!file.canRead()) {
-            throw new IOException("Cannot read from shared preferences file! " +
-                    "(" + file.getAbsolutePath() + ")");
-        }
-
-        byte[] buffer = new byte[(int) file.length()];
-
-        try (FileInputStream inputStream = new FileInputStream(file)) {
-            int readAmount = inputStream.read(buffer);
-
-            if (readAmount != file.length()) {
-                throw new IOException("Could not read shared prefs file " +
-                        "readAmount != fileLength " + readAmount + ", "
-                        + file.length());
-            }
-        }
-
-        // Restore back the previous paths
-        if (prevSaveLocationUri != null) {
-            ChanSettings.saveLocation.resetFileDir();
-            ChanSettings.saveLocation.setSafBaseDir(Uri.parse(prevSaveLocationUri));
-        }
-
-        return new String(buffer);
-    }
-
-    /**
-     * Reads settings from string and writes them to the shared preferences file.
-     * Called on the Database thread.
-     */
-    public static void deserializeFromString(String settings)
-            throws IOException {
-        File file = new File(getAppDir(), sharedPrefsFile.getValue());
-
-        if (!file.exists()) {
-            // Hack to create the shared_prefs file when it does not exist so that we don't cancel
-            // settings importing because shared_prefs file does not exist
-            String fontSize = ChanSettings.fontSize.get();
-            ChanSettings.fontSize.setSyncNoCheck(fontSize);
-        }
-
-        if (!file.canWrite()) {
-            throw new IOException("Cannot write to shared preferences file! (" + file.getAbsolutePath() + ")");
-        }
-
-        try (FileOutputStream outputStream = new FileOutputStream(file)) {
-            outputStream.write(settings.getBytes());
-            outputStream.flush();
-        }
-    }
-
     public static ChanSettings.LayoutMode getCurrentLayoutMode() {
         ChanSettings.LayoutMode layoutMode = ChanSettings.layoutMode.get();
 
@@ -693,6 +601,10 @@ public class ChanSettings {
         }
 
         return layoutMode;
+    }
+
+    public static File getMainSharedPrefsFileForThisFlavor() {
+        return new File(getAppDir(), sharedPrefsFile.getValue());
     }
 
     public static boolean isSlideLayoutMode() {

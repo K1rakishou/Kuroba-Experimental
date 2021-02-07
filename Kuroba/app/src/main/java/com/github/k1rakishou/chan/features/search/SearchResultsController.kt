@@ -13,20 +13,13 @@ import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
 import com.github.k1rakishou.chan.features.search.data.SearchParameters
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerState
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerStateData
-import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchPostDividerView
-import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchEndOfResultsView
-import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchErrorView
-import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchLoadingView
-import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchPostDividerView
-import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchPostView
+import com.github.k1rakishou.chan.features.search.epoxy.*
 import com.github.k1rakishou.chan.ui.controller.CloudFlareBypassController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.chan.utils.plusAssign
@@ -130,7 +123,8 @@ class SearchResultsController(
   private fun onStateChanged(state: SearchResultsControllerState) {
     epoxyRecyclerView.withModels {
       when (state) {
-        SearchResultsControllerState.Uninitialized -> {
+        SearchResultsControllerState.Uninitialized,
+        SearchResultsControllerState.Loading -> {
           epoxyLoadingView {
             id("epoxy_loading_view")
           }

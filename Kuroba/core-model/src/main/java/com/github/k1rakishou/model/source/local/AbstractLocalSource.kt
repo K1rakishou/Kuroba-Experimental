@@ -8,4 +8,8 @@ abstract class AbstractLocalSource(protected val database: KurobaDatabase) {
     database.ensureInTransaction()
   }
 
+  protected suspend fun ensureNotInTransaction() {
+    database.ensureNotInTransaction()
+  }
+
 }

@@ -6,22 +6,9 @@ import android.text.style.StyleSpan
 import androidx.core.text.buildSpannedString
 import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.core.base.BasePresenter
-import com.github.k1rakishou.chan.core.site.sites.search.Chan4SearchParams
-import com.github.k1rakishou.chan.core.site.sites.search.FoolFuukaSearchParams
-import com.github.k1rakishou.chan.core.site.sites.search.FuukaSearchParams
-import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
-import com.github.k1rakishou.chan.core.site.sites.search.SearchEntryPost
-import com.github.k1rakishou.chan.core.site.sites.search.SearchError
-import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
+import com.github.k1rakishou.chan.core.site.sites.search.*
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
-import com.github.k1rakishou.chan.features.search.data.CharSequenceMurMur
-import com.github.k1rakishou.chan.features.search.data.CurrentQueryInfo
-import com.github.k1rakishou.chan.features.search.data.ErrorInfo
-import com.github.k1rakishou.chan.features.search.data.SearchParameters
-import com.github.k1rakishou.chan.features.search.data.SearchPostInfo
-import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerState
-import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerStateData
-import com.github.k1rakishou.chan.features.search.data.ThumbnailInfo
+import com.github.k1rakishou.chan.features.search.data.*
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.exhaustive
@@ -124,16 +111,10 @@ internal class SearchResultsPresenter(
   }
 
   fun reloadCurrentPage() {
+    // Get rid of the error and show loading indicator
+    setState(SearchResultsControllerState.Loading)
+
     scope.launch {
-      val prevState = requireNotNull(searchResultsControllerStateSubject.value) { "Initial state was not set!" }
-      val prevStateData = (prevState as? SearchResultsControllerState.Data)?.data
-
-      if (prevStateData?.errorInfo != null) {
-        // Get rid of the error and show loading indicator
-        val stateWithoutError = prevStateData.copy(errorInfo = null)
-        setState(SearchResultsControllerState.Data(stateWithoutError))
-      }
-
       doSearch()
     }
   }

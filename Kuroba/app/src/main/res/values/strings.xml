@@ -495,7 +495,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_media_description">Save location, auto loading, etc.</string>
     <string name="settings_filters">Filters</string>
     <string name="settings_import_export">Import/Export</string>
-    <string name="settings_import_export_description">Import/export settings/pins, etc.</string>
+    <string name="settings_import_export_description">Import/Export application backup file</string>
     <string name="settings_security">Security</string>
     <string name="settings_security_description">Proxy settings, etc.</string>
     <string name="settings_experimental_settings">⚠ EXPERIMENTAL ⚠</string>
@@ -773,16 +773,11 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="setting_cloudflare_preloading_dialog_description">This option will be forcing Cloudflare to preload all currently visible images in a thread. No images will be downloaded on your phone and no additional traffic will be used. Only HEAD requests will be sent for every image in the thread which will force Cloudflare to cache those images. This SHOULD make subsequent image downloads way faster because you will be loading them from Cloudflare servers, not 4chan\'s. This feature works similar to how media prefetching works (you don\'t need to click anything, just scroll through the thread like you always do).</string>
 
     <!-- Import/Export settings -->
-    <string name="import_or_export_settings">Import/export settings</string>
-    <string name="import_or_export_dialog_title">Overwrite existing file or create a new one?</string>
-    <string name="import_or_export_dialog_positive_button_text">Overwrite</string>
-    <string name="import_or_export_dialog_negative_button_text">Create new</string>
-    <string name="import_or_export_warning">Warning!</string>
-    <string name="import_or_export_saf_location_warning">You have saved files base directory set to be located in a directory that uses the Storage Access Framework. These directory locations cannot be exported; THEY WILL BE RESET TO DEFAULT in the exported settings file! Once you import them you will have to manually set those locations in Media Settings again.</string>
-    <string name="export_settings">Export settings</string>
-    <string name="export_settings_to_a_file">Export settings to a file</string>
-    <string name="import_settings">Import settings</string>
-    <string name="import_settings_from_a_file">Import settings from a file</string>
+    <string name="import_or_export_settings">Import/Export application backup</string>
+    <string name="export_settings">Export backup file</string>
+    <string name="export_settings_to_a_file">Export application database and other files that are used to persist application state into a zip file.</string>
+    <string name="import_settings">Import backup file</string>
+    <string name="import_settings_from_a_file">Restore application state from backup file. This is only supposed to work on the same application version or higher (downgrades are not supported).</string>
 
     <string name="import_from_kuroba">Import from Kuroba</string>
     <string name="import_settings_from_kuroba">Import Bookmarks/Filters/Filters/Hidden posts and threads/Added sites and boards and some other stuff from Kuroba (the settings file must be exported on 4.13.X-release version of Kuroba, other versions probably won\'t work). Settings are not imported since they differ too much. You need to clear the app data beforehand.</string>

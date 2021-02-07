@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.core.di.module.application;
 
+import android.content.Context;
+
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
@@ -14,10 +16,12 @@ import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase;
+import com.github.k1rakishou.chan.core.usecase.ExportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase;
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase;
+import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
 import com.github.k1rakishou.common.AppConstants;
@@ -25,6 +29,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.repository.ChanFilterWatchRepository;
 import com.github.k1rakishou.model.repository.ChanPostRepository;
+import com.github.k1rakishou.model.repository.DatabaseMetaRepository;
 
 import javax.inject.Singleton;
 
@@ -164,6 +169,32 @@ public class UseCaseModule {
                 filterEngine,
                 chanPostRepository,
                 chanFilterWatchRepository
+        );
+    }
+
+    @Provides
+    @Singleton
+    public ExportBackupFileUseCase provideExportBackupFileUseCase(
+            Context appContext,
+            DatabaseMetaRepository databaseMetaRepository,
+            FileManager fileManager
+    ) {
+        return new ExportBackupFileUseCase(
+                appContext,
+                databaseMetaRepository,
+                fileManager
+        );
+    }
+
+    @Provides
+    @Singleton
+    public ImportBackupFileUseCase provideImportBackupFileUseCase(
+            Context appContext,
+            FileManager fileManager
+    ) {
+        return new ImportBackupFileUseCase(
+                appContext,
+                fileManager
         );
     }
 

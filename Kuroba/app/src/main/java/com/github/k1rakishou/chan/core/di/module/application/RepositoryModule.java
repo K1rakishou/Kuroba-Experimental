@@ -24,6 +24,8 @@ import com.github.k1rakishou.chan.core.repository.LastReplyRepository;
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository;
 import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager;
+import com.github.k1rakishou.chan.core.usecase.ExportBackupFileUseCase;
+import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.google.gson.Gson;
@@ -41,12 +43,16 @@ public class RepositoryModule {
     public ImportExportRepository provideImportExportRepository(
             Gson gson,
             FileManager fileManager,
-            KurobaSettingsImportUseCase kurobaSettingsImportUseCase
+            KurobaSettingsImportUseCase kurobaSettingsImportUseCase,
+            ExportBackupFileUseCase exportBackupFileUseCase,
+            ImportBackupFileUseCase importBackupFileUseCase
     ) {
         return new ImportExportRepository(
                 gson,
                 fileManager,
-                kurobaSettingsImportUseCase
+                kurobaSettingsImportUseCase,
+                exportBackupFileUseCase,
+                importBackupFileUseCase
         );
     }
 

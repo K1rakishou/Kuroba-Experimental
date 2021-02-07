@@ -54,7 +54,7 @@ import static android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT;
 
 public class AndroidUtils {
     private static final String TAG = "AndroidUtils";
-    private static final String CHAN_STATE_PREFS_NAME = "chan_state";
+    public static final String CHAN_STATE_PREFS_NAME = "chan_state";
 
     @SuppressLint("StaticFieldLeak")
     private static Application application;

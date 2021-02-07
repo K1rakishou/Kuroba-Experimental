@@ -3,66 +3,63 @@ package com.github.k1rakishou.chan.features.settings.screens.delegate
 import android.content.Context
 import android.net.Uri
 import android.widget.Toast
-import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.activity.StartActivity
-import com.github.k1rakishou.chan.core.helper.DialogFactory
-import com.github.k1rakishou.chan.core.presenter.ImportExportSettingsPresenter
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
-import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.callback.FileChooserCallback
 import com.github.k1rakishou.fsaf.callback.FileCreateCallback
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormatterBuilder
+import org.joda.time.format.ISODateTimeFormat
 
 class ImportExportSettingsDelegate(
   private val context: Context,
+  private val coroutineScope: CoroutineScope,
   private val navigationController: NavigationController,
   private val fileChooser: FileChooser,
   private val fileManager: FileManager,
-  private val dialogFactory: DialogFactory,
   private val importExportRepository: ImportExportRepository
-) : ImportExportSettingsPresenter.ImportExportSettingsCallbacks {
+) {
   private val loadingViewController = LoadingViewController(context, true)
 
-  private val presenter by lazy {
-    ImportExportSettingsPresenter(importExportRepository, this)
-  }
-
-  fun onDestroy() {
-    presenter.onDestroy()
-  }
 
   fun onExportClicked() {
-    val savedFilesLocationIsSAFBacked = ChanSettings.saveLocation.isSafDirActive()
+    val dateString = BACKUP_DATE_FORMAT.print(DateTime.now())
+    val exportFileName = "KurobaEx_v${BuildConfig.VERSION_CODE}_($dateString)_backup.zip"
 
-    if (savedFilesLocationIsSAFBacked) {
-      showDirectoriesWillBeResetToDefaultDialog()
-      return
-    }
+    /**
+     * Creates a new file with the default name (that can be changed in the file chooser) with the
+     * settings. Cannot be used for overwriting an old settings file (when trying to do so a new file
+     * with appended "(1)" at the end will appear, e.g. "test (1).txt")
+     */
+    fileChooser.openCreateFileDialog(
+      exportFileName,
+      object : FileCreateCallback() {
+        override fun onResult(uri: Uri) {
+          onExportFileChosen(uri)
+        }
 
-    showCreateNewOrOverwriteDialog()
+        override fun onCancel(reason: String) {
+          showToast(context, reason, Toast.LENGTH_LONG)
+        }
+      })
   }
 
   fun onImportClicked() {
     fileChooser.openChooseFileDialog(object : FileChooserCallback() {
       override fun onResult(uri: Uri) {
-        val externalFile = fileManager.fromUri(uri)
-
-        if (externalFile == null) {
-          val message = "onImportClicked() fileManager.fromUri() returned null, uri = $uri"
-          Logger.d(TAG, message)
-          showToast(context, message, Toast.LENGTH_LONG)
-          return
-        }
-        navigationController.presentController(loadingViewController)
-        presenter.doImport(externalFile)
+        onImportFileChosen(uri)
       }
 
       override fun onCancel(reason: String) {
@@ -74,16 +71,7 @@ class ImportExportSettingsDelegate(
   fun onImportFromKurobaClicked() {
     fileChooser.openChooseFileDialog(object : FileChooserCallback() {
       override fun onResult(uri: Uri) {
-        val externalFile = fileManager.fromUri(uri)
-        if (externalFile == null) {
-          val message = "onImportFromKurobaClicked() fileManager.fromUri() returned null, uri = $uri"
-          Logger.d(TAG, message)
-          showToast(context, message, Toast.LENGTH_LONG)
-          return
-        }
-
-        navigationController.presentController(loadingViewController)
-        presenter.doImportFromKuroba(externalFile)
+        onImportFromKurobaFileChosen(uri)
       }
 
       override fun onCancel(reason: String) {
@@ -92,72 +80,7 @@ class ImportExportSettingsDelegate(
     })
   }
 
-  @Suppress("MoveLambdaOutsideParentheses")
-  private fun showDirectoriesWillBeResetToDefaultDialog() {
-    dialogFactory.createSimpleConfirmationDialog(
-      context = context,
-      titleTextId = R.string.import_or_export_warning,
-      descriptionTextId = R.string.import_or_export_saf_location_warning,
-      onPositiveButtonClickListener = { dialog ->
-        dialog.dismiss()
-        showCreateNewOrOverwriteDialog()
-      }
-    )
-  }
-
-  /**
-   * SAF is kinda horrible so it cannot be used to overwrite a file that already exist on the disk
-   * (or at some network location). When trying to do so, a new file with appended "(1)" at the
-   * end will appear. That's why there are two methods (one for overwriting an existing file and
-   * the other one for creating a new file) instead of one that does everything.
-   */
-  @Suppress("MoveLambdaOutsideParentheses")
-  private fun showCreateNewOrOverwriteDialog() {
-    dialogFactory.createSimpleConfirmationDialog(
-      context = context,
-      titleTextId = R.string.import_or_export_dialog_title,
-      positiveButtonText = getString(R.string.import_or_export_dialog_positive_button_text),
-      onPositiveButtonClickListener = { overwriteExisting() },
-      negativeButtonText = getString(R.string.import_or_export_dialog_negative_button_text),
-      onNegativeButtonClickListener = { createNew() }
-    )
-  }
-
-  /**
-   * Opens an existing file (any file) for overwriting with the settings.
-   */
-  private fun overwriteExisting() {
-    fileChooser.openChooseFileDialog(object : FileChooserCallback() {
-      override fun onResult(uri: Uri) {
-        onFileChosen(uri, false)
-      }
-
-      override fun onCancel(reason: String) {
-        showToast(context, reason, Toast.LENGTH_LONG)
-      }
-    })
-  }
-
-  /**
-   * Creates a new file with the default name (that can be changed in the file chooser) with the
-   * settings. Cannot be used for overwriting an old settings file (when trying to do so a new file
-   * with appended "(1)" at the end will appear, e.g. "test (1).txt")
-   */
-  private fun createNew() {
-    fileChooser.openCreateFileDialog(
-      EXPORT_FILE_NAME,
-      object : FileCreateCallback() {
-        override fun onResult(uri: Uri) {
-          onFileChosen(uri, true)
-        }
-
-        override fun onCancel(reason: String) {
-          showToast(context, reason, Toast.LENGTH_LONG)
-        }
-      })
-  }
-
-  private fun onFileChosen(uri: Uri, isNewFile: Boolean) {
+  private fun onExportFileChosen(uri: Uri) {
     // We use SAF here by default because settings importing/exporting does not depend on the
     // Kuroba default directory location. There is just no need to use old java files.
     val externalFile = fileManager.fromUri(uri)
@@ -168,35 +91,92 @@ class ImportExportSettingsDelegate(
       return
     }
 
-    navigationController.presentController(loadingViewController)
-    presenter.doExport(externalFile, isNewFile)
-  }
+    coroutineScope.launch {
+      navigationController.presentController(loadingViewController)
 
-  override fun onSuccess(importExport: ImportExportRepository.ImportExport) {
-    // called on background thread
-    if (context !is StartActivity) {
-      return
-    }
+      val result = withContext(Dispatchers.Default) {
+        importExportRepository.exportTo(externalFile)
+      }
 
-    BackgroundUtils.runOnMainThread {
-      if (importExport === ImportExportRepository.ImportExport.Import) {
-        context.restartApp()
-      } else {
-        loadingViewController.stopPresenting()
-        showToast(context, R.string.successfully_exported_text, Toast.LENGTH_LONG)
+      loadingViewController.stopPresenting()
+
+      when (result) {
+        is ModularResult.Error -> {
+          Logger.e(TAG, "Export error", result.error)
+          showToast(context, "Export error: ${result.error}")
+        }
+        is ModularResult.Value -> {
+          showToast(context, "Export success!")
+        }
       }
     }
   }
 
-  override fun onError(message: String?) {
-    BackgroundUtils.runOnMainThread {
-      loadingViewController.stopPresenting()
+  private fun onImportFileChosen(uri: Uri) {
+    val externalFile = fileManager.fromUri(uri)
+    if (externalFile == null) {
+      val message = "onImportClicked() fileManager.fromUri() returned null, uri = $uri"
+      Logger.d(TAG, message)
       showToast(context, message, Toast.LENGTH_LONG)
+      return
+    }
+
+    coroutineScope.launch {
+      navigationController.presentController(loadingViewController)
+
+      val result = withContext(Dispatchers.Default) {
+        importExportRepository.importFrom(externalFile)
+      }
+
+      loadingViewController.stopPresenting()
+
+      when (result) {
+        is ModularResult.Error -> {
+          Logger.e(TAG, "Import error", result.error)
+          showToast(context, "Import error: ${result.error}")
+        }
+        is ModularResult.Value -> {
+          (context as StartActivity).restartApp()
+        }
+      }
+    }
+  }
+
+  private fun onImportFromKurobaFileChosen(uri: Uri) {
+    val externalFile = fileManager.fromUri(uri)
+    if (externalFile == null) {
+      val message = "onImportFromKurobaFileChosen() fileManager.fromUri() returned null, uri = $uri"
+      Logger.d(TAG, message)
+      showToast(context, message, Toast.LENGTH_LONG)
+      return
+    }
+
+    coroutineScope.launch {
+      navigationController.presentController(loadingViewController)
+
+      val result = withContext(Dispatchers.Default) {
+        importExportRepository.importFromKuroba(externalFile)
+      }
+
+      loadingViewController.stopPresenting()
+
+      when (result) {
+        is ModularResult.Error -> {
+          Logger.e(TAG, "Import from Kuroba error", result.error)
+          showToast(context, "Import from Kuroba error: ${result.error}")
+        }
+        is ModularResult.Value -> {
+          (context as StartActivity).restartApp()
+        }
+      }
     }
   }
 
   companion object {
     private const val TAG = "ImportExportSettingsDelegate"
-    val EXPORT_FILE_NAME = AndroidUtils.getApplicationLabel().toString() + "_exported_settings.json"
+
+    private val BACKUP_DATE_FORMAT = DateTimeFormatterBuilder()
+      .append(ISODateTimeFormat.date())
+      .toFormatter()
   }
 }
