@@ -215,6 +215,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
               exceedsMaxFilesPerPostLimit(replyAttachable.maxAttachedFilesCountExceeded)
               onClickListener { fileUuid -> presenter.updateFileSelection(fileUuid) }
               onLongClickListener { fileUuid -> showAttachFileOptions(fileUuid) }
+              onDoubleClickListener { fileUuid -> onReplyFileViewDoubleClicked(fileUuid) }
               onStatusIconClickListener { fileUuid -> presenter.onFileStatusRequested(fileUuid) }
               onSpoilerMarkClickListener { fileUuid -> presenter.updateFileSpoilerFlag(fileUuid) }
             }
@@ -291,6 +292,13 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     )
 
     threadListLayoutCallbacks?.presentController(floatingListMenuController)
+  }
+
+  private fun onReplyFileViewDoubleClicked(clickedFileUuid: UUID) {
+    threadListLayoutCallbacks?.showImageReencodingWindow(
+      clickedFileUuid,
+      presenter.isFileSupportedForReencoding(clickedFileUuid)
+    )
   }
 
   private fun onAttachFileItemClicked(item: FloatingListMenuItem) {
