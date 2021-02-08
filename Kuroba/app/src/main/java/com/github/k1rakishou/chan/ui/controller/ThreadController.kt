@@ -247,6 +247,7 @@ abstract class ThreadController(
     val newIndex = output.index
 
     if (filteredImages.isEmpty()) {
+      showToast("No images left to show after filtering out images of hidden/removed posts");
       return
     }
 
