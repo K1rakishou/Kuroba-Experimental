@@ -195,6 +195,10 @@ public class ImageViewerController
             throw new IllegalArgumentException("parentController.view not attached");
         }
 
+        if (loadingBar != null) {
+            updateLoadingBarTopMargin();
+        }
+
         waitForLayout(parentController.view.getViewTreeObserver(), view, view -> {
             ToolbarMenuItem saveMenuItem = navigation.findItem(SAVE_ID);
             if (saveMenuItem != null) {
@@ -841,6 +845,10 @@ public class ImageViewerController
         hideToolbar();
 
         onSystemUiVisibilityChange(false);
+
+        if (loadingBar != null) {
+            updateLoadingBarTopMargin();
+        }
     }
 
     private void showSystemUI() {
@@ -862,6 +870,10 @@ public class ImageViewerController
         showToolbar();
 
         onSystemUiVisibilityChange(true);
+
+        if (loadingBar != null) {
+            updateLoadingBarTopMargin();
+        }
     }
 
     private void hideToolbar() {
@@ -876,10 +888,6 @@ public class ImageViewerController
         params.height = 0;
         toolbar.setInImmersiveMode(true);
         toolbar.setLayoutParams(params);
-
-        if (loadingBar != null) {
-            KotlinExtensionsKt.updateMargins(loadingBar, null, null, null, null, params.height, null);
-        }
     }
 
     private void showToolbar() {
@@ -893,10 +901,11 @@ public class ImageViewerController
         params.height = getDimen(R.dimen.toolbar_height) + globalWindowInsetsManager.top();
         toolbar.setInImmersiveMode(false);
         toolbar.setLayoutParams(params);
+    }
 
-        if (loadingBar != null) {
-            KotlinExtensionsKt.updateMargins(loadingBar, null, null, null, null, params.height + toolbar.getPaddingTop(), null);
-        }
+    private void updateLoadingBarTopMargin() {
+        int newTopMargin = requireNavController().requireToolbar().getToolbarHeight();
+        KotlinExtensionsKt.updateMargins(loadingBar, null, null, null, null, newTopMargin, null);
     }
 
     public interface ImageViewerCallback {
