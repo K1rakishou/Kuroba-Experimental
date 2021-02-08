@@ -27,6 +27,8 @@ object ArchiveThreadMapper {
       }
     }
 
+    val now = System.currentTimeMillis()
+
     val postBuilder = ChanPostBuilder()
       .boardDescriptor(boardDescriptor)
       .id(archivePost.postNo)
@@ -35,7 +37,7 @@ object ArchiveThreadMapper {
       .sticky(archivePost.sticky)
       .closed(archivePost.closed)
       .archived(archivePost.archived)
-      .lastModified(-1)
+      .lastModified(now)
       .name(archivePost.name)
       .subject(archivePost.subject)
       .tripcode(archivePost.tripcode)

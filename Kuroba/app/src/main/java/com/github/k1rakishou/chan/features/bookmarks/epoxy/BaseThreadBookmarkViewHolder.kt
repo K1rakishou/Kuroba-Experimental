@@ -11,6 +11,7 @@ import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import coil.request.Disposable
+import coil.size.Scale
 import coil.transform.CircleCropTransformation
 import coil.transform.GrayscaleTransformation
 import coil.transform.RoundedCornersTransformation
@@ -332,7 +333,18 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
   fun bindImage(isGridMode: Boolean, watching: Boolean, context: Context) {
     val url = imageLoaderRequestData?.url
     if (url == null) {
-      bookmarkImage.setImageBitmap(null)
+      requestDisposable?.dispose()
+      requestDisposable = null
+
+      requestDisposable = imageLoaderV2.loadFromResources(
+        context,
+        R.drawable.error_icon,
+        ImageLoaderV2.ImageSize.MeasurableImageSize.create(bookmarkImage),
+        Scale.FILL,
+        emptyList(),
+        { drawable -> bookmarkImage.setImageBitmap(drawable.bitmap) }
+      )
+
       return
     }
 
@@ -345,6 +357,9 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
     if (!watching) {
       transformations.add(GRAYSCALE)
     }
+
+    requestDisposable?.dispose()
+    requestDisposable = null
 
     requestDisposable = imageLoaderV2.loadFromNetwork(
       context,

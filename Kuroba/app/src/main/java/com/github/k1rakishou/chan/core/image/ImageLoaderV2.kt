@@ -328,7 +328,7 @@ class ImageLoaderV2(
   ): BitmapDrawable {
     if (throwable.isNotFoundError()) {
       if (notFoundDrawableId != null) {
-        val drawable = loadFromResources(context, notFoundDrawableId, imageSize, transformations)
+        val drawable = loadFromResources(context, notFoundDrawableId, imageSize, Scale.FIT, transformations)
         if (drawable != null) {
           return drawable
         }
@@ -338,7 +338,7 @@ class ImageLoaderV2(
     }
 
     if (errorDrawableId != null) {
-      val drawable = loadFromResources(context, errorDrawableId, imageSize, transformations)
+      val drawable = loadFromResources(context, errorDrawableId, imageSize, Scale.FIT, transformations)
       if (drawable != null) {
         return drawable
       }
@@ -397,10 +397,41 @@ class ImageLoaderV2(
     return imageLoader.execute(request)
   }
 
+  fun loadFromResources(
+    context: Context,
+    @DrawableRes drawableId: Int,
+    imageSize: ImageSize,
+    scale: Scale,
+    transformations: List<Transformation>,
+    listener: SimpleImageListener
+  ): Disposable {
+    val completableDeferred = CompletableDeferred<Unit>()
+
+    val job = appScope.launch(Dispatchers.IO) {
+      try {
+        val bitmapDrawable = loadFromResources(context, drawableId, imageSize, scale, transformations)
+        if (bitmapDrawable == null) {
+          withContext(Dispatchers.Main) { listener.onResponse(getImageErrorLoadingDrawable(context)) }
+          return@launch
+        }
+
+        withContext(Dispatchers.Main) { listener.onResponse(bitmapDrawable) }
+      } finally {
+        completableDeferred.complete(Unit)
+      }
+    }
+
+    return ImageLoaderRequestDisposable(
+      imageLoaderJob = job,
+      imageLoaderCompletableDeferred = completableDeferred
+    )
+  }
+
   private suspend fun loadFromResources(
     context: Context,
     @DrawableRes drawableId: Int,
     imageSize: ImageSize,
+    scale: Scale,
     transformations: List<Transformation>
   ): BitmapDrawable? {
     val lifecycle = context.getLifecycleFromContext()
@@ -410,7 +441,7 @@ class ImageLoaderV2(
       lifecycle(lifecycle)
       transformations(transformations)
       allowHardware(false)
-      scale(Scale.FIT)
+      scale(scale)
       applyImageSize(imageSize)
 
       build()
