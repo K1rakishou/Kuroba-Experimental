@@ -61,6 +61,7 @@ import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
@@ -285,7 +286,14 @@ class BookmarksController(
 
     swipeRefreshLayout.setOnRefreshListener {
       bookmarkForegroundWatcher.restartWatching()
-      swipeRefreshLayout.isRefreshing = false
+
+      // The process of reloading bookmarks may not notify us about the results when none of the
+      // bookmarks were changed during the update so we need to have this timeout mechanism in
+      // such case.
+      mainScope.launch {
+        delay(10_000)
+        swipeRefreshLayout.isRefreshing = false
+      }
     }
 
     epoxyRecyclerView.setController(controller)
@@ -619,6 +627,7 @@ class BookmarksController(
         }
         BookmarksControllerState.Empty -> {
           updateTitleWithoutStats()
+          swipeRefreshLayout.isRefreshing = false
 
           epoxyTextView {
             id("bookmarks_are_empty_text_view")
@@ -627,6 +636,7 @@ class BookmarksController(
         }
         is BookmarksControllerState.NothingFound -> {
           updateTitleWithoutStats()
+          swipeRefreshLayout.isRefreshing = false
 
           epoxyTextView {
             id("bookmarks_nothing_found_by_search_query")
@@ -639,6 +649,7 @@ class BookmarksController(
           }
         }
         is BookmarksControllerState.Error -> {
+          swipeRefreshLayout.isRefreshing = false
           updateTitleWithoutStats()
 
           epoxyErrorView {
@@ -647,6 +658,8 @@ class BookmarksController(
           }
         }
         is BookmarksControllerState.Data -> {
+          swipeRefreshLayout.isRefreshing = false
+
           addOneshotModelBuildListener {
             if (viewModeChanged.compareAndSet(true, false)) {
               updateLayoutManager()

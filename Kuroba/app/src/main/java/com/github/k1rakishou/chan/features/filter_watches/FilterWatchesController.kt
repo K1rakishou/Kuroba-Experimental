@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
@@ -98,7 +99,14 @@ class FilterWatchesController(
 
     swipeRefreshLayout.setOnRefreshListener {
       filterWatcherCoordinator.restartFilterWatcherWithTinyDelay(null)
-      swipeRefreshLayout.isRefreshing = false
+
+      // The process of reloading filter watches may not notify us about the results when none of the
+      // bookmarks were changed during the update so we need to have this timeout mechanism in
+      // such case.
+      mainScope.launch {
+        delay(10_000)
+        swipeRefreshLayout.isRefreshing = false
+      }
     }
 
     epoxyRecyclerView.setController(controller)
@@ -148,18 +156,25 @@ class FilterWatchesController(
           }
         }
         FilterWatchesControllerState.Empty -> {
+          swipeRefreshLayout.isRefreshing = false
+
           epoxyTextView {
             id("filter_watches_controller_empty_view")
             message(context.getString(R.string.no_filter_watched_threads))
           }
         }
         is FilterWatchesControllerState.Error -> {
+          swipeRefreshLayout.isRefreshing = false
+
           epoxyErrorView {
             id("filter_watches_controller_error_view")
             errorMessage(filterWatchesControllerState.errorText)
           }
         }
-        is FilterWatchesControllerState.Data -> renderDataState(filterWatchesControllerState)
+        is FilterWatchesControllerState.Data -> {
+          swipeRefreshLayout.isRefreshing = false
+          renderDataState(filterWatchesControllerState)
+        }
       }
     }
 

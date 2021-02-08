@@ -141,8 +141,8 @@ class FilterWatcherCoordinator(
 
       val workRequest = OneTimeWorkRequestBuilder<FilterWatcherWorker>()
         .addTag(tag)
-        // Well not exactly right away, but in 10 seconds
-        .setInitialDelay(10, TimeUnit.SECONDS)
+        // Well not exactly right away, but in 5 seconds
+        .setInitialDelay(5, TimeUnit.SECONDS)
         .setConstraints(constraints)
         .build()
 

@@ -125,10 +125,8 @@ class BookmarkFilterWatchableThreadsUseCase(
       return true
     }
 
-    if (verboseLogsEnabled) {
-      matchedCatalogThreads.forEach { filterWatchCatalogThreadInfoObject ->
-        Logger.d(TAG, "filterWatchCatalogThreadInfoObject=$filterWatchCatalogThreadInfoObject")
-      }
+    matchedCatalogThreads.forEach { filterWatchCatalogThreadInfoObject ->
+      Logger.d(TAG, "filterWatchCatalogThreadInfoObject=$filterWatchCatalogThreadInfoObject")
     }
 
     val result = createOrUpdateBookmarks(matchedCatalogThreads)
