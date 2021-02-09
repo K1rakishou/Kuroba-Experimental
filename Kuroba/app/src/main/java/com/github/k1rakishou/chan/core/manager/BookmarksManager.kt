@@ -397,6 +397,10 @@ class BookmarksManager(
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     lock.write {
+      if (bookmarks.keys.isEmpty()) {
+        return@write
+      }
+
       bookmarks.entries.forEach { (_, threadBookmark) ->
         threadBookmark.readAllPostsAndNotifications()
       }
