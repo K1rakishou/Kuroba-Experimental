@@ -170,6 +170,9 @@ class StartActivityStartupHandlerHelper(
       intent.hasExtra(NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
         return lastPageNotificationClicked(extras)
       }
+      intent.action == Intent.ACTION_VIEW -> {
+        return restoreFromUrl(intent)
+      }
       else -> return false
     }
   }
@@ -266,6 +269,7 @@ class StartActivityStartupHandlerHelper(
     return when (action) {
       NotificationConstants.LAST_PAGE_NOTIFICATION_ACTION -> true
       NotificationConstants.REPLY_NOTIFICATION_ACTION -> true
+      Intent.ACTION_VIEW -> true
       else -> false
     }
   }
