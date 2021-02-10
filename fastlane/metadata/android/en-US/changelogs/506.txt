@@ -1,0 +1,67 @@
+v0.5.6-release
+TLDR version:
+- New 4chan archive added (warosu.org).
+- Added search support for 4chan archives (warosu.org, fireden.net, arch.b4k.co, archived.moe). For now it's only possible to use "subject" and/or "comment" search options. Other options will be added in the future updates.
+- Filter watching is back.
+- Thumbnail images and full resolution images caches were merged into a single cache.
+- It's now possible to set disk media cache's max size.
+- It's now possible to create a full application backup and then restore from it.
+
+Full version:
+v0.5.6-release
+- Fix crash that happens when clicking "Mark all bookmarks as read" when there are no bookmarks.
+- Fix disk media cache not getting cleaned automatically in some cases.
+- Fix not being able to open thread links in the app while it's in the foreground (alive).
+
+v0.5.5-release (hotfix)
+- Fix inability to open threads in most of archives ("Bad chanOriginalPost.lastModified" error)
+
+v0.5.4-release
+- Fix media LoadingBar showing up under the toolbar most of the times.
+- Fix rare crash that happens when opening images in catalogs/threads where there are hidden/removed (by filters or manually) images.
+- Some adjustments for FilterWatcher's work initial delay (reduced from 10 seconds to 5 seconds).
+
+v0.5.3-beta
+- Application backups have been implemented. They should be application flavor independent, meaning you can export backup from a beta version and import it on a release version. For now everything is exported/imported (And the backup file may end up quite large); more detailed settings will be added in the future updates. Important! You won't be able to import a backup file that was exported from a greater app version, meaning if backup was exported from the app version 5 it's impossible to import it on version 4 or below (well you actually can but nothing will happen, the database will be simply wiped).
+- It's now possible to open attached reply image in the image editor by double tapping it.
+- Two new actions were added into the floating menu that shows up when long tapping post image thumbnails: share image/download image.
+
+v0.5.2-beta
+- Quick fix for FAB not getting hidden when opening reply layout. 
+
+v0.5.1-beta
+- "Mark/unmark post as own" now does not require reloading posts from the network (except for when you do that while in catalog).
+- Thumbnails and full res images now use the same cache, meaning their deletion from the cache should be synchronized. This means that if you open an image and then the thread is delete from the server (or you open it without internet connection) you either see both the thumbnail and full res version of the image or neither.
+- Can now set size of the media cache (for both modes when prefetching is enabled or not).
+- Fix an old bug in deleteOldPosts mechanism. There could be a situation where some threads would never be deleted because of them having "last_modified" variable set to -1. This could happen on some sites where "last_modified" parameter of a thread differs depending on whether we load catalog of threads or some thread in particular (in the latter case it could be -1).
+- Fix PlayerView's controls stopping showing up when toggling immersive mode multiple times.
+- Fix a bug where catalog/thread FAB wouldn't be hidden when scrolling down with very high speed (more than "toolbarHeight" pixels per frame).
+- Fix inability to share files into other apps.
+- Fix new thumbnail caching mechanism when highResCells setting is turned on. When loading a full resolution version of an image the old cached low res version could be used in some cases.
+- Remember previous "image transparency" setting.
+- Remember last used "immersive mode" flag.
+- Fix two more bugs that could mess up thread scroll position restoration upon app start.
+
+v0.5.0-beta
+- Added support for Fuuka-based archives and added one Fuuka-based 4chan archive - warosu. (warosu is kinda buggy, sometimes it won't show the original post sometimes some other posts will be missing. There is nothing I can do about it. The decision to support it was made because of it being one of the few archives supporting search).
+- Added ability to automatically pass CloudFlare anti-ddos checks on sites that are using it (for now only warosu is using it). Once you attempt to use this archive somehow (open a thread or search for something) a WebView will be shown which will try to automatically pass CloudFlare checks. A clearance cookie will be stored which will then be used to access the site without passing the checks again. This cookie can be viewed or ever edited in site settings.
+- Added search support for 4chan archives that have it (warosu.org, fireden.net, arch.b4k.co, archived.moe). For now you can only use two search options - subject and/or comment.
+- It's now possible to import themes directly from the clipboard.
+- When importing a theme, if it is malformed, it will be completely rejected (in the previous version we would still attempt to import it and if some colors couldn't be parsed we would replace them with default colors which might have been an unexpected behavior). If a theme is malformed a dialog window will be shown listing color names which we couldn't parse.
+- Toolbar/BottomNavView appear/disappear animations have been changed from slide to fade. It should now be less irritating and way faster.
+- Filter watching is back. It allows you to create filters which will automatically bookmark threads matching a pattern. It has it's own separate screen which can be found on Bookmarks page of BottomNavView. Don't forget to turn on the filter watcher (it's now a separate watcher with it's own intervals), otherwise it won't do anything.
+- It's now possible to manually refresh Bookmarks by using SwipeToRefresh (you need to pull it down when you are at the very top of the list, just like in catalog/thread).
+- When creating a filter to hide an image by it's MD5 hash, the whole post will now be hidden instead of only the image.
+- A bug where a theme switch would not affect posts when catalog/thread was in refresh state has been fixed.
+- When adding multiple boards at once the same sorting comparator is applied to the list as in the board selection list.
+- ControllerSwipeable setting now works as intended.
+- A new flag selector for 4chan.org/pol/ has been implemented. It's now located directly in the reply layout.
+- Toolbar search layout now uses correct white colors.
+- Fixed SQL query in a routine that is running on every app start, which job is to delete old cached posts/threads. It deletes posts/threads in batches which should drastically improve it's performance (On some old devices it could sometimes take up to 30 seconds to complete).
+- Fixed ReportController's view being shown partially under toolbar.
+- Fixed incorrect image index used in ImageViewer when opening catalog/thread images that had at least one hidden post with an image which would result in a wrong image being shown.
+- System UI now won't be hidden automatically when viewing images. It's hidden by default and you can make it show up like before, but now you can only hide it manually by clicking on any part of the image.
+- Added new catalog view mode - staggered grid.
+- It's now possible to set catalog's column count to 1 when using Grid/Staggered grid mode.
+- A setting was added to enable/disable draggable scrollbars (fast scroller). Thanks to @alexandrius
+- Other minor fixes and adjustments.
