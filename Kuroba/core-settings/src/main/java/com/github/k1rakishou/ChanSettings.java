@@ -469,8 +469,9 @@ public class ChanSettings {
             saveAlbumBoardFolder = new BooleanSetting(provider, "preference_save_album_subboard", false);
             saveAlbumThreadFolder = new BooleanSetting(provider, "preference_save_album_subthread", false);
             saveServerFilename = new BooleanSetting(provider, "preference_image_save_original", false);
-            diskCacheSizeMegabytes = new RangeSetting(provider, "disk_cache_size", 512, 256, 1024);
-            prefetchDiskCacheSizeMegabytes = new RangeSetting(provider, "prefetch_disk_cache_size", 1024, 1024, 2048);
+
+            diskCacheSizeMegabytes = new RangeSetting(provider, "disk_cache_size", 512, diskCacheSizeGetMin(), 1024);
+            prefetchDiskCacheSizeMegabytes = new RangeSetting(provider, "prefetch_disk_cache_size", 1024, diskCacheSizePrefetchGetMin(), 2048);
 
             // Video Settings
             videoAutoLoop = new BooleanSetting(provider, "preference_video_loop", true);
@@ -587,6 +588,22 @@ public class ChanSettings {
             Logger.e(TAG, "Error while initializing the settings", error);
             throw error;
         }
+    }
+
+    private static int diskCacheSizePrefetchGetMin() {
+        if (chanSettingsInfo.isDevBuild()) {
+            return 32;
+        }
+
+        return 1024;
+    }
+
+    private static int diskCacheSizeGetMin() {
+        if (chanSettingsInfo.isDevBuild()) {
+            return 32;
+        }
+
+        return 256;
     }
 
     public static ChanSettings.LayoutMode getCurrentLayoutMode() {

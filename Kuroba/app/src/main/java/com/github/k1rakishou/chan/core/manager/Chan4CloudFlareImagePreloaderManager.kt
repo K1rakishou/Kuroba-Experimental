@@ -81,7 +81,7 @@ class Chan4CloudFlareImagePreloaderManager(
         toPreload.clear()
       }
 
-      if (verboseLogsEnabled) {
+      if (ENABLE_LOGS) {
         val postNos = toActuallyPreload
           .joinToString { postDescriptor -> postDescriptor.postNo.toString() }
 
@@ -97,7 +97,7 @@ class Chan4CloudFlareImagePreloaderManager(
                 lock.write { alreadyPreloaded.add(postDescriptor) }
               } catch (error: Throwable) {
                 if (error.isExceptionImportant()) {
-                  if (verboseLogsEnabled) {
+                  if (ENABLE_LOGS) {
                     Logger.e(TAG, "preloadImage() postDescriptor=$postDescriptor FAILURE", error)
                   } else {
                     Logger.e(
@@ -202,7 +202,7 @@ class Chan4CloudFlareImagePreloaderManager(
     }
 
     actualToPreload.forEach { postDescriptor ->
-      if (verboseLogsEnabled) {
+      if (ENABLE_LOGS) {
         Logger.d(TAG, "startLoading(ImageViewer) Pushing post ($postDescriptor) into the actor")
       }
 
@@ -249,7 +249,7 @@ class Chan4CloudFlareImagePreloaderManager(
       .highLowMap { pd -> pd }
 
     postDescriptorsBinaryMapped.forEach { pd ->
-      if (verboseLogsEnabled) {
+      if (ENABLE_LOGS) {
         Logger.d(TAG, "startLoading(Normal) Pushing post ($pd) into the actor")
       }
 
@@ -305,7 +305,7 @@ class Chan4CloudFlareImagePreloaderManager(
         return@write
       }
 
-      if (verboseLogsEnabled) {
+      if (ENABLE_LOGS) {
         Logger.d(TAG, "cancelLoading() postDescriptor=${postDescriptor}")
       }
 
@@ -345,7 +345,7 @@ class Chan4CloudFlareImagePreloaderManager(
       return
     }
 
-    if (verboseLogsEnabled) {
+    if (ENABLE_LOGS) {
       val imageNames = imagesToLoad.joinToString { postImage -> postImage.serverFilename }
       Logger.d(TAG, "Ready to preload ${imagesToLoad.size} images (${imageNames})")
     }
@@ -401,7 +401,7 @@ class Chan4CloudFlareImagePreloaderManager(
       return
     }
 
-    if (verboseLogsEnabled) {
+    if (ENABLE_LOGS) {
       val cfCacheStatusHeaderValue = response.header("CF-Cache-Status")
         ?: "<null>"
 
@@ -453,5 +453,7 @@ class Chan4CloudFlareImagePreloaderManager(
     // to the left side of the current post.
     const val NEXT_N_POSTS_RELATIVE = 4
     const val PREV_N_POSTS_RELATIVE = 4
+
+    private const val ENABLE_LOGS = false
   }
 }

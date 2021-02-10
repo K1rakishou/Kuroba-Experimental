@@ -120,7 +120,10 @@ open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
       isDraggingCatalogScroller || isDraggingThreadScroller
 
     if (!isDraggingCatalogOrThreadFastScroller && isCached) {
-      imageLoaderV2.loadFromNetwork(
+      requestDisposable?.dispose()
+      requestDisposable = null
+
+      requestDisposable = imageLoaderV2.loadFromNetwork(
         context,
         url,
         imageSize,
@@ -132,6 +135,9 @@ open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
     }
 
     debouncer.post({
+      requestDisposable?.dispose()
+      requestDisposable = null
+
       requestDisposable = imageLoaderV2.loadFromNetwork(
         context,
         url,
@@ -154,10 +160,8 @@ open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
   protected fun unbindImageView() {
     debouncer.clear()
 
-    if (requestDisposable != null) {
-      requestDisposable?.dispose()
-      requestDisposable = null
-    }
+    requestDisposable?.dispose()
+    requestDisposable = null
 
     error = false
     alphaAnimator.end()

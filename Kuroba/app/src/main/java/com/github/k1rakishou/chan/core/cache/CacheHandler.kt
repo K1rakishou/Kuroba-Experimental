@@ -33,6 +33,7 @@ import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.FileDescriptorMode
 import com.github.k1rakishou.fsaf.file.FileSegment
 import com.github.k1rakishou.fsaf.file.RawFile
+import com.github.k1rakishou.model.util.ChanPostUtils
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.ISODateTimeFormat
 import java.io.File
@@ -316,20 +317,32 @@ class CacheHandler(
    * */
   @Synchronized
   fun fileWasAdded(fileLen: Long) {
-    val totalSize = size.addAndGet(fileLen)
+    val totalSize = size.addAndGet(fileLen.coerceAtLeast(0))
     val trimTime = lastTrimTime.get()
     val now = System.currentTimeMillis()
 
-    if (
-      totalSize > fileCacheDiskSizeBytes
+    val minTrimInterval = if (AppModuleAndroidUtils.isDevBuild()) {
+      0
+    } else {
       // If the user scrolls through high-res images very fast we may end up in a situation
       // where the cache limit is hit but all the files in it were created earlier than
       // MIN_CACHE_FILE_LIFE_TIME ago. So in such case trim() will be called on EVERY
       // new opened image and since trim() is a pretty slow operation it may overload the
       // disk IO. So to avoid it we run trim() only once per MIN_TRIM_INTERVAL.
-      && now - trimTime > MIN_TRIM_INTERVAL
+      MIN_TRIM_INTERVAL
+    }
+
+    if (AppModuleAndroidUtils.isDevBuild()) {
+      Logger.d(TAG, "fileWasAdded() " +
+        "fileLen=${ChanPostUtils.getReadableFileSize(fileLen)}, " +
+        "totalSize=${ChanPostUtils.getReadableFileSize(totalSize)}")
+    }
+
+    val canRunTrim = totalSize > fileCacheDiskSizeBytes
+      && now - trimTime > minTrimInterval
       && trimRunning.compareAndSet(false, true)
-    ) {
+
+    if (canRunTrim) {
       executor.execute {
         try {
           trim()
@@ -804,11 +817,17 @@ class CacheHandler(
       val file = cacheFile.file
       val createdOn = cacheFile.createdOn
 
-      if (now - createdOn < MIN_CACHE_FILE_LIFE_TIME) {
+      val minCacheFileLifeTime = if (AppModuleAndroidUtils.isDevBuild()) {
+        0
+      } else {
         // Do not delete fresh files because it may happen right at the time user switched
         // to it. Since the list is sorted there is no point to iterate it anymore since all
         // the following files will be "too young" to be deleted so we just break out of
         // the loop.
+        MIN_CACHE_FILE_LIFE_TIME
+      }
+
+      if (now - createdOn < minCacheFileLifeTime) {
         break
       }
 
@@ -827,7 +846,8 @@ class CacheHandler(
     recalculateSize()
 
     val timeDiff = System.currentTimeMillis() - start
-    Logger.d(TAG, "trim() ended (took ${timeDiff} ms), filesDeleted = $filesDeleted, space freed = $totalDeleted")
+    Logger.d(TAG, "trim() ended (took ${timeDiff} ms), filesDeleted=$filesDeleted, " +
+      "total space freed=${ChanPostUtils.getReadableFileSize(totalDeleted)}")
   }
 
   private fun groupFilterAndSortFiles(directoryFiles: List<AbstractFile>): List<CacheFile> {
@@ -847,10 +867,7 @@ class CacheHandler(
         Logger.e(TAG, "Couldn't read cache meta for file = ${abstractFile.getFullPath()}")
 
         if (!deleteCacheFile(abstractFile)) {
-          Logger.e(
-            TAG,
-            "Couldn't delete cache file with meta for file = ${abstractFile.getFullPath()}"
-          )
+          Logger.e(TAG, "Couldn't delete cache file with meta for file = ${abstractFile.getFullPath()}")
         }
         continue
       }

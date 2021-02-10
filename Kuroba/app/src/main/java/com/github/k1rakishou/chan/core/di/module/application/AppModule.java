@@ -114,7 +114,8 @@ public class AppModule {
             ReplyManager replyManager,
             ThemeEngine themeEngine,
             AppConstants appConstants,
-            CacheHandler cacheHandler
+            CacheHandler cacheHandler,
+            FileManager fileManager
     ) {
         return new ImageLoaderV2(
                 ChanSettings.verboseLogs.get(),
@@ -123,7 +124,8 @@ public class AppModule {
                 coilImageLoader,
                 replyManager,
                 themeEngine,
-                cacheHandler
+                cacheHandler,
+                fileManager
         );
     }
 

@@ -30,6 +30,7 @@ import com.github.k1rakishou.common.*
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.fsaf.FileManager
 import com.google.android.exoplayer2.util.MimeTypes
 import kotlinx.coroutines.*
 import java.io.File
@@ -48,7 +49,8 @@ class ImageLoaderV2(
   private val imageLoader: ImageLoader,
   private val replyManager: ReplyManager,
   private val themeEngine: ThemeEngine,
-  private val cacheHandler: CacheHandler
+  private val cacheHandler: CacheHandler,
+  private val fileManager: FileManager
 ) {
   private var imageNotFoundDrawable: BitmapDrawable? = null
   private var imageErrorLoadingDrawable: BitmapDrawable? = null
@@ -240,6 +242,7 @@ class ImageLoaderV2(
       }
 
       val success = cacheHandler.markFileDownloaded(newCacheFile)
+      cacheHandler.fileWasAdded(fileManager.getLength(newCacheFile))
       Logger.d(TAG, "cacheResultBitmapOnDisk() '$url' done, success: $success")
     }
   }
