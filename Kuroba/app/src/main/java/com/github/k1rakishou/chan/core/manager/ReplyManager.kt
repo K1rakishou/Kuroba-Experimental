@@ -21,6 +21,7 @@ import com.github.k1rakishou.chan.features.reply.data.Reply
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.features.reply.data.ReplyFilesStorage
+import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -262,7 +263,13 @@ class ReplyManager @Inject constructor(
   }
 
   @Synchronized
-  fun createNewEmptyAttachFile(uniqueFileName: UniqueFileName, originalFileName: String, addedOn: Long): ReplyFile? {
+  fun createNewEmptyAttachFile(
+    uniqueFileName: UniqueFileName,
+    originalFileName: String,
+    addedOn: Long
+  ): ReplyFile? {
+    BackgroundUtils.ensureBackgroundThread()
+
     val attachFile = File(
       appConstants.attachFilesDir,
       uniqueFileName.fullFileName
@@ -314,6 +321,7 @@ class ReplyManager @Inject constructor(
 
       attachFile.delete()
       attachFileMeta.delete()
+      previewFile.delete()
 
       return null
     }
@@ -321,6 +329,8 @@ class ReplyManager @Inject constructor(
 
   @Synchronized
   fun generateUniqueFileName(appConstants: AppConstants): UniqueFileName {
+    BackgroundUtils.ensureBackgroundThread()
+
     val attachFilesDir = appConstants.attachFilesDir
     val attachFilesMetaDir = appConstants.attachFilesMetaDir
 

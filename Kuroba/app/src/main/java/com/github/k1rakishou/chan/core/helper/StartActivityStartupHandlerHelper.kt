@@ -161,6 +161,8 @@ class StartActivityStartupHandlerHelper(
     }
 
     Logger.d(TAG, "onNewIntentInternal called, action=${action}")
+    siteManager.awaitUntilInitialized()
+    boardManager.awaitUntilInitialized()
     bookmarksManager.awaitUntilInitialized()
 
     when {

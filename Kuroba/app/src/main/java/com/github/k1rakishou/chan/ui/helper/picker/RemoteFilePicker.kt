@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.core.cache.FileCacheListener
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
+import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.IOUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
@@ -82,6 +83,8 @@ class RemoteFilePicker(
     originalFileName: String,
     replyChanDescriptor: ChanDescriptor
   ): ModularResult<PickedFile> {
+    BackgroundUtils.ensureBackgroundThread()
+
     return ModularResult.Try {
       val reply = replyManager.getReplyOrNull(replyChanDescriptor)
       if (reply == null) {

@@ -38,7 +38,7 @@ class ExtractPostMapInfoHolderUseCase(
 
     val threadDescriptor = postDescriptors.first().threadDescriptor()
     val savedPostNoSet = HashSet(
-      savedReplyManager.retainSavedPostNoMap2(postDescriptors, threadDescriptor)
+      savedReplyManager.retainSavedPostNoMap(postDescriptors, threadDescriptor)
     )
 
     if (savedPostNoSet.isEmpty()) {
@@ -77,7 +77,7 @@ class ExtractPostMapInfoHolderUseCase(
 
     val threadDescriptor = postDescriptors.first().threadDescriptor()
     val savedPostNoSet = HashSet(
-      savedReplyManager.retainSavedPostNoMap2(postDescriptors, threadDescriptor)
+      savedReplyManager.retainSavedPostNoMap(postDescriptors, threadDescriptor)
     )
 
     if (savedPostNoSet.isEmpty()) {
