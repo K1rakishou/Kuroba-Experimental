@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    <com.github.k1rakishou.chan.ui.widget.KurobaSwipeRefreshLayout
         android:id="@+id/boomarks_swipe_refresh_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -15,6 +15,6 @@
             android:layout_height="match_parent"
             android:scrollbars="vertical" />
 
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+    </com.github.k1rakishou.chan.ui.widget.KurobaSwipeRefreshLayout>
 
 </com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingConstraintLayout>

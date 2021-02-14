@@ -10,7 +10,6 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyModel
 import com.airbnb.epoxy.EpoxyModelTouchCallback
@@ -51,6 +50,7 @@ import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
+import com.github.k1rakishou.chan.ui.widget.KurobaSwipeRefreshLayout
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
@@ -93,7 +93,7 @@ class BookmarksController(
   lateinit var bookmarkForegroundWatcher: BookmarkForegroundWatcher
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
-  private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+  private lateinit var swipeRefreshLayout: KurobaSwipeRefreshLayout
   private lateinit var threadLoadCoroutineExecutor: SerializedCoroutineExecutor
   private lateinit var itemTouchHelper: ItemTouchHelper
 
