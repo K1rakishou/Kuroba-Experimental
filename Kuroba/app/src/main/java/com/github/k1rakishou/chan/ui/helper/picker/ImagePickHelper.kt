@@ -79,7 +79,7 @@ class ImagePickHelper(
           imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
             appContext,
             replyFileMeta.fileUuid,
-            Scale.FILL
+            Scale.FIT
           )
         }
 
@@ -151,7 +151,7 @@ class ImagePickHelper(
         imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
           appContext,
           replyFileMeta.fileUuid,
-          Scale.FILL
+          Scale.FIT
         )
       }
     } finally {
@@ -221,7 +221,7 @@ class ImagePickHelper(
         imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
           appContext,
           replyFileMeta.fileUuid,
-          Scale.FILL
+          Scale.FIT
         )
       }
     } finally {

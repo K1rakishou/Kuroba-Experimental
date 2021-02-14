@@ -463,7 +463,7 @@ class ImageLoaderV2(
     context: Context,
     fileUuid: UUID,
     imageSize: ImageSize,
-    scale: Scale = Scale.FILL,
+    scale: Scale = Scale.FIT,
     transformations: List<Transformation>,
     listener: SimpleImageListener
   ) {
@@ -522,7 +522,7 @@ class ImageLoaderV2(
   suspend fun calculateFilePreviewAndStoreOnDisk(
     context: Context,
     fileUuid: UUID,
-    scale: Scale = Scale.FILL
+    scale: Scale = Scale.FIT
   ) {
     BackgroundUtils.ensureBackgroundThread()
 

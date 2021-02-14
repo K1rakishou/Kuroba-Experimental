@@ -46,7 +46,6 @@ class EpoxyReplyFileView @JvmOverloads constructor(
 
   private var attachmentFileUuid: UUID? = null
   private var exceedsMaxFilesPerPostLimit = false
-  private var doubleClickListener: ((UUID) -> Unit)? = null
 
   private val replyAttachmentRoot: ConstraintLayout
   private val replyAttachmentImageView: AppCompatImageView
@@ -127,7 +126,7 @@ class EpoxyReplyFileView @JvmOverloads constructor(
       context = context,
       fileUuid = fileUuid,
       imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(replyAttachmentImageView),
-      scale = Scale.FILL,
+      scale = Scale.FIT,
       transformations = transformations
     ) { bitmapDrawable ->
       if (attachmentFileUuid == null || attachmentFileUuid != fileUuid) {

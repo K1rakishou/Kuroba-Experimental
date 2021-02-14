@@ -116,7 +116,7 @@ class ImageReencodingPresenter(
       context = context,
       fileUuid = fileUuid,
       imageSize = imageSize,
-      scale = Scale.FILL,
+      scale = Scale.FIT,
       transformations = emptyList()
     ) { bitmapDrawable -> callback.showImagePreview(bitmapDrawable.bitmap) }
   }
