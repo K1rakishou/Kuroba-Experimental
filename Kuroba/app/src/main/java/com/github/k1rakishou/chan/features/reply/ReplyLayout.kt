@@ -58,6 +58,7 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.KeyboardStateListener
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.ViewFlagsStorage
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.Site
@@ -75,6 +76,7 @@ import com.github.k1rakishou.chan.ui.captcha.LegacyCaptchaLayout
 import com.github.k1rakishou.chan.ui.captcha.v1.CaptchaNojsLayoutV1
 import com.github.k1rakishou.chan.ui.captcha.v2.CaptchaNoJsLayoutV2
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
+import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
@@ -143,6 +145,8 @@ class ReplyLayout @JvmOverloads constructor(
   lateinit var replyManager: ReplyManager
   @Inject
   lateinit var staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository
+  @Inject
+  lateinit var viewFlagsStorage: ViewFlagsStorage
 
   private var threadListLayoutCallbacks: ThreadListLayoutCallbacks? = null
   private var threadListLayoutFilesCallback: ReplyLayoutFilesArea.ThreadListLayoutCallbacks? = null
@@ -430,6 +434,17 @@ class ReplyLayout @JvmOverloads constructor(
 
     if (open && proxyStorage.isDirty()) {
       openMessage(getString(R.string.reply_proxy_list_is_dirty_message), 10000)
+    }
+
+    val isCatalogReplyLayout = presenter.isCatalogReplyLayout()
+    if (isCatalogReplyLayout != null) {
+      val threadControllerType = if (isCatalogReplyLayout) {
+        ThreadSlideController.ThreadControllerType.Catalog
+      } else {
+        ThreadSlideController.ThreadControllerType.Thread
+      }
+
+      viewFlagsStorage.updateIsReplyLayoutOpened(threadControllerType, open)
     }
   }
 

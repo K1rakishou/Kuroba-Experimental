@@ -31,6 +31,9 @@ class ThreadControllerTracker(
   private val shadowRect = Rect()
   private var shadowPosition = 0
 
+  // Is the top controller being tracked and moved
+  protected var tracking = false
+
   // Used to fling and scroll the tracking view
   private var scroller: Scroller = Scroller(context)
 

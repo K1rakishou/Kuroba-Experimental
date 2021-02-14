@@ -160,6 +160,13 @@ abstract class ThreadController(
     return drawerCallbacks?.passMotionEventIntoDrawer(event) ?: false
   }
 
+  fun passMotionEventIntoSlidingPaneLayout(event: MotionEvent): Boolean {
+    val threadSlideController = (this.parentController as? ThreadSlideController)
+      ?: return false
+
+    return threadSlideController.passMotionEventIntoSlidingPaneLayout(event)
+  }
+
   fun showLoading() {
     threadLayout.showLoading()
   }

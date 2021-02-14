@@ -27,9 +27,6 @@ abstract class ControllerTracker(
    */
   protected var minimalMovedPixels = dp(10f)
 
-  // Is the top controller being tracked and moved
-  protected var tracking = false
-
   // The event used in onInterceptTouchEvent to track the initial down event
   protected var interceptedEvent: MotionEvent? = null
 
