@@ -271,6 +271,7 @@ class LocalFilePicker(
   }
 
   data class LocalFilePickerInput(
+    val notifyListeners: Boolean,
     val replyChanDescriptor: ChanDescriptor,
     val clearLastRememberedFilePicker: Boolean = false,
     val showLoadingView: suspend () -> Unit,

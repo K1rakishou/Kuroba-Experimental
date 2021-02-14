@@ -582,7 +582,7 @@ class ReplyPresenter @Inject constructor(
     Logger.d(TAG, "prevChanDescriptor() prevChanDescriptor=$prevChanDescriptor, " +
       "siteDescriptor=$siteDescriptor, replyResponse=$replyResponse")
 
-    replyManager.cleanupFiles(prevChanDescriptor)
+    replyManager.cleanupFiles(prevChanDescriptor, notifyListeners = true)
 
     if (siteDescriptor == null) {
       Logger.e(TAG, "onPostedSuccessfully() siteDescriptor==null")

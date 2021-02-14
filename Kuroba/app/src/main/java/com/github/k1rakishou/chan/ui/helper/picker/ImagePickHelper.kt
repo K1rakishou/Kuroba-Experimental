@@ -83,9 +83,11 @@ class ImagePickHelper(
           )
         }
 
-        Logger.d(TAG, "pickFilesFromIntent() success! Picked new local file " +
-          "with UUID='${replyFileMeta.fileUuid}'")
-        pickedFilesUpdatesState.emit(replyFileMeta.fileUuid)
+        Logger.d(TAG, "pickFilesFromIntent() success! Picked new local file with UUID='${replyFileMeta.fileUuid}'")
+
+        if (filePickerInput.notifyListeners) {
+          pickedFilesUpdatesState.emit(replyFileMeta.fileUuid)
+        }
       }
     } finally {
       withContext(Dispatchers.Main) {
@@ -160,9 +162,11 @@ class ImagePickHelper(
       }
     }
 
-    Logger.d(TAG, "pickLocalFile() success! Picked new local file " +
-      "with UUID='${replyFileMeta.fileUuid}'")
-    pickedFilesUpdatesState.emit(replyFileMeta.fileUuid)
+    Logger.d(TAG, "pickLocalFile() success! Picked new local file with UUID='${replyFileMeta.fileUuid}'")
+
+    if (filePickerInput.notifyListeners) {
+      pickedFilesUpdatesState.emit(replyFileMeta.fileUuid)
+    }
 
     return result
   }
@@ -230,9 +234,11 @@ class ImagePickHelper(
       }
     }
 
-    Logger.d(TAG, "pickRemoteFile() success! Picked new remote file " +
-      "with UUID='${replyFileMeta.fileUuid}'")
-    pickedFilesUpdatesState.emit(replyFileMeta.fileUuid)
+    Logger.d(TAG, "pickRemoteFile() success! Picked new remote file with UUID='${replyFileMeta.fileUuid}'")
+
+    if (filePickerInput.notifyListeners) {
+      pickedFilesUpdatesState.emit(replyFileMeta.fileUuid)
+    }
 
     return result
   }

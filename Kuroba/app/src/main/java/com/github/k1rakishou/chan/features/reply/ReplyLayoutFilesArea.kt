@@ -296,6 +296,20 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
       )
     }
 
+    if (!presenter.allFilesSelected()) {
+      floatingListMenuItems += FloatingListMenuItem(
+        key = ACTION_SELECT_ALL,
+        name = context.getString(R.string.layout_reply_files_area_select_all),
+        value = selectedFileUuid
+      )
+    } else {
+      floatingListMenuItems += FloatingListMenuItem(
+        key = ACTION_UNSELECT_ALL,
+        name = context.getString(R.string.layout_reply_files_area_unselect_all),
+        value = selectedFileUuid
+      )
+    }
+
     val floatingListMenuController = FloatingListMenuController(
       context = context,
       constraintLayoutBiasPair = ConstraintLayoutBiasPair.Bottom,
@@ -323,6 +337,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
       ACTION_REMOVE_FILE_NAME -> presenter.removeSelectedFilesName()
       ACTION_REMOVE_METADATA -> presenter.removeSelectedFilesMetadata(context)
       ACTION_CHANGE_CHECKSUM -> presenter.changeSelectedFilesChecksum(context)
+      ACTION_SELECT_ALL -> presenter.selectUnselectAll(selectAll = true)
+      ACTION_UNSELECT_ALL -> presenter.selectUnselectAll(selectAll = false)
     }
   }
 
@@ -400,6 +416,10 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     }
   }
 
+  override fun showReplyLayoutMessage(message: String?, hideDelayMs: Int) {
+    replyLayoutCallbacks?.openMessage(message, hideDelayMs)
+  }
+
   override fun updateFilesStatusTextView(newStatus: String) {
     replyLayoutCallbacks?.showReplyLayoutMessage(newStatus)
   }
@@ -436,6 +456,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     fun requestWrappingModeUpdate()
     fun disableSendButton()
     fun enableSendButton()
+    fun openMessage(message: String?, hideDelayMs: Int)
     fun showReplyLayoutMessage(message: String, duration: Int = 5000)
   }
 
@@ -445,6 +466,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     private const val ACTION_REMOVE_FILE_NAME = 3
     private const val ACTION_REMOVE_METADATA = 4
     private const val ACTION_CHANGE_CHECKSUM = 5
+    private const val ACTION_SELECT_ALL = 6
+    private const val ACTION_UNSELECT_ALL = 7
 
     private const val ACTION_PICK_LOCAL_FILE_SHOW_ALL_FILE_PICKERS = 100
     private const val ACTION_PICK_REMOTE_FILE = 101

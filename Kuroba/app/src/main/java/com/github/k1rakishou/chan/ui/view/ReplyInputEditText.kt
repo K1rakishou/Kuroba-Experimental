@@ -218,6 +218,7 @@ class ReplyInputEditText @JvmOverloads constructor(
               AppModuleAndroidUtils.showToast(context, getString(R.string.share_success_start))
 
               val shareFilePickerInput = ShareFilePicker.ShareFilePickerInput(
+                notifyListeners = true,
                 dataUri = null,
                 clipData = null,
                 inputContentInfo = inputContentInfo,

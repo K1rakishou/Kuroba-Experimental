@@ -12,7 +12,7 @@ class SitePostingLimitationInfo(
 )
 
 interface PostAttachableLimitationInfo {
-  suspend fun getMaxAllowedAttachablesPerPost(params: Params): Int?
+  suspend fun getMaxAllowedAttachablesPerPost(params: Params): Int
 
   data class Params(
     val siteDescriptor: SiteDescriptor

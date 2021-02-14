@@ -74,33 +74,27 @@ class ReplyManager @Inject constructor(
   }
 
   @Synchronized
-  fun updateFileSelection(fileUuid: UUID, selected: Boolean): ModularResult<Boolean> {
+  fun updateFileSelection(fileUuid: UUID, selected: Boolean, notifyListeners: Boolean): ModularResult<Boolean> {
     ensureFilesLoaded()
-    return replyFilesStorage.updateFileSelection(fileUuid, selected)
+    return replyFilesStorage.updateFileSelection(fileUuid, selected, notifyListeners)
   }
 
   @Synchronized
-  fun updateFileSpoilerFlag(fileUuid: UUID, spoiler: Boolean): ModularResult<Boolean> {
+  fun updateFileSpoilerFlag(fileUuid: UUID, spoiler: Boolean, notifyListeners: Boolean): ModularResult<Boolean> {
     ensureFilesLoaded()
-    return replyFilesStorage.updateFileSpoilerFlag(fileUuid, spoiler)
+    return replyFilesStorage.updateFileSpoilerFlag(fileUuid, spoiler, notifyListeners)
   }
 
   @Synchronized
-  fun deleteFile(fileUuid: UUID): ModularResult<Unit> {
+  fun deleteFile(fileUuid: UUID, notifyListeners: Boolean): ModularResult<Unit> {
     ensureFilesLoaded()
-    return replyFilesStorage.deleteFile(fileUuid)
+    return replyFilesStorage.deleteFile(fileUuid, notifyListeners)
   }
 
   @Synchronized
-  fun deleteSelectedFiles(): ModularResult<Unit> {
+  fun deleteSelectedFiles(notifyListeners: Boolean): ModularResult<Unit> {
     ensureFilesLoaded()
-    return replyFilesStorage.deleteSelectedFiles()
-  }
-
-  @Synchronized
-  fun clearFilesSelection(): ModularResult<Unit> {
-    ensureFilesLoaded()
-    return replyFilesStorage.clearSelection()
+    return replyFilesStorage.deleteSelectedFiles(notifyListeners)
   }
 
   @Synchronized
@@ -190,16 +184,13 @@ class ReplyManager @Inject constructor(
   }
 
   @Synchronized
-  fun iterateFilesOrdered(iterator: (Int, ReplyFile) -> Unit) {
+  fun iterateFilesOrdered(iterator: (Int, ReplyFile, ReplyFileMeta) -> Unit) {
     replyFilesStorage.iterateFilesOrdered(iterator)
   }
 
   @Synchronized
   fun iterateSelectedFilesOrdered(iterator: (Int, ReplyFile, ReplyFileMeta) -> Unit) {
-    replyFilesStorage.iterateFilesOrdered { order, replyFile ->
-      val replyFileMeta = replyFile.getReplyFileMeta().valueOrNull()
-        ?: return@iterateFilesOrdered
-
+    replyFilesStorage.iterateFilesOrdered { order, replyFile, replyFileMeta ->
       if (!replyFileMeta.selected) {
         return@iterateFilesOrdered
       }
@@ -212,10 +203,7 @@ class ReplyManager @Inject constructor(
   fun getSelectedFilesOrdered(): List<ReplyFile> {
     val files = mutableListOf<ReplyFile>()
 
-    replyFilesStorage.iterateFilesOrdered { i, replyFile ->
-      val replyFileMeta = replyFile.getReplyFileMeta().valueOrNull()
-        ?: return@iterateFilesOrdered
-
+    replyFilesStorage.iterateFilesOrdered { i, replyFile, replyFileMeta ->
       if (replyFileMeta.selected) {
         files += replyFile
       }
@@ -231,7 +219,7 @@ class ReplyManager @Inject constructor(
   }
 
   @Synchronized
-  fun cleanupFiles(chanDescriptor: ChanDescriptor) {
+  fun cleanupFiles(chanDescriptor: ChanDescriptor, notifyListeners: Boolean) {
     ensureFilesLoaded()
 
     readReply(chanDescriptor) { reply ->
@@ -243,7 +231,7 @@ class ReplyManager @Inject constructor(
         return@readReply
       }
 
-      replyFilesStorage.deleteFiles(fileUuids)
+      replyFilesStorage.deleteFiles(fileUuids, notifyListeners)
         .peekError { error -> Logger.e(TAG, "replyFilesStorage.deleteFiles($fileUuids) error", error) }
     }
   }
