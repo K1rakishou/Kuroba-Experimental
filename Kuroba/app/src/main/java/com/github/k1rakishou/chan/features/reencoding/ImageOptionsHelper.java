@@ -83,8 +83,6 @@ public class ImageOptionsHelper
             imageOptionsController.stopPresenting();
             imageOptionsController = null;
         }
-
-        callbacks.onImageOptionsComplete();
     }
 
     @Override

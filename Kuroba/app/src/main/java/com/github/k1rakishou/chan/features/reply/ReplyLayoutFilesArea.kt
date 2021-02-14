@@ -213,9 +213,9 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
               attachmentFileDimensions(replyAttachable.imageDimensions)
               attachAdditionalInfo(replyAttachable.attachAdditionalInfo)
               exceedsMaxFilesPerPostLimit(replyAttachable.maxAttachedFilesCountExceeded)
-              onClickListener { fileUuid -> presenter.updateFileSelection(fileUuid) }
-              onLongClickListener { fileUuid -> showAttachFileOptions(fileUuid) }
-              onDoubleClickListener { fileUuid -> onReplyFileViewDoubleClicked(fileUuid) }
+              onRootClickListener { fileUuid -> onReplyFileRootViewClicked(fileUuid) }
+              onRootLongClickListener { fileUuid -> showAttachFileOptions(fileUuid) }
+              onCheckClickListener { fileUuid -> presenter.updateFileSelection(fileUuid) }
               onStatusIconClickListener { fileUuid -> presenter.onFileStatusRequested(fileUuid) }
               onSpoilerMarkClickListener { fileUuid -> presenter.updateFileSpoilerFlag(fileUuid) }
             }
@@ -265,12 +265,6 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     val floatingListMenuItems = mutableListOf<FloatingListMenuItem>()
 
     floatingListMenuItems += FloatingListMenuItem(
-      key = ACTION_OPEN_IN_EDITOR,
-      name = context.getString(R.string.layout_reply_files_area_open_in_editor_action),
-      value = selectedFileUuid
-    )
-
-    floatingListMenuItems += FloatingListMenuItem(
       key = ACTION_DELETE_FILE,
       name = context.getString(R.string.layout_reply_files_area_delete_file_action),
       value = selectedFileUuid
@@ -294,7 +288,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     threadListLayoutCallbacks?.presentController(floatingListMenuController)
   }
 
-  private fun onReplyFileViewDoubleClicked(clickedFileUuid: UUID) {
+  private fun onReplyFileRootViewClicked(clickedFileUuid: UUID) {
     threadListLayoutCallbacks?.showImageReencodingWindow(
       clickedFileUuid,
       presenter.isFileSupportedForReencoding(clickedFileUuid)
@@ -306,12 +300,6 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     val clickedFileUuid = item.value as UUID
 
     when (id) {
-      ACTION_OPEN_IN_EDITOR -> {
-        threadListLayoutCallbacks?.showImageReencodingWindow(
-          clickedFileUuid,
-          presenter.isFileSupportedForReencoding(clickedFileUuid)
-        )
-      }
       ACTION_DELETE_FILE -> {
         presenter.deleteFiles(clickedFileUuid)
       }
@@ -435,9 +423,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   }
 
   companion object {
-    private const val ACTION_OPEN_IN_EDITOR = 1
-    private const val ACTION_DELETE_FILE = 2
-    private const val ACTION_DELETE_SELECTED_FILES = 3
+    private const val ACTION_DELETE_FILE = 1
+    private const val ACTION_DELETE_SELECTED_FILES = 2
 
     private const val ACTION_PICK_LOCAL_FILE_SHOW_ALL_FILE_PICKERS = 100
     private const val ACTION_PICK_REMOTE_FILE = 101
