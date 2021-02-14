@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.features.reply
 
+import android.content.Context
 import androidx.exifinterface.media.ExifInterface
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BasePresenter
@@ -22,6 +23,7 @@ import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.PickedFile
 import com.github.k1rakishou.chan.ui.helper.picker.RemoteFilePicker
+import com.github.k1rakishou.chan.utils.HashingUtil
 import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
@@ -253,7 +255,7 @@ class ReplyLayoutFilesAreaPresenter(
     }
   }
 
-  fun deleteFiles(fileUuid: UUID) {
+  fun deleteFile(fileUuid: UUID) {
     fileChangeExecutor.post {
       handleStateUpdate {
         replyManager.deleteFile(fileUuid)
@@ -275,6 +277,138 @@ class ReplyLayoutFilesAreaPresenter(
             Logger.e(TAG, "deleteSelectedFiles() error", error)
             return@handleStateUpdate
           }
+
+        refreshAttachedFiles()
+      }
+    }
+  }
+
+  fun removeSelectedFilesName() {
+    fileChangeExecutor.post {
+      handleStateUpdate {
+        withContext(Dispatchers.Default) {
+          replyManager.iterateSelectedFilesOrdered { _, replyFile, replyFileMeta ->
+            val newFileName = replyManager.getNewImageName(replyFileMeta.fileName)
+
+            replyFile.updateFileName(newFileName)
+              .peekError { error -> Logger.e(TAG, "Failed to update file name", error) }
+              .ignore()
+          }
+        }
+
+        refreshAttachedFiles()
+      }
+    }
+  }
+
+  fun removeSelectedFilesMetadata(context: Context) {
+    fileChangeExecutor.post {
+      handleStateUpdate {
+        withView {
+          showLoadingView(
+            titleTextId = R.string.layout_reply_files_area_removing_metadata,
+            cancellationFunc = {}
+          )
+        }
+
+        withContext(Dispatchers.Default) {
+          val selectedReplyFiles = replyManager.getSelectedFilesOrdered()
+
+          selectedReplyFiles.forEach { replyFile ->
+            val replyFileMeta = replyFile.getReplyFileMeta().valueOrNull()
+              ?: return@forEach
+
+            val reencodedFile = MediaUtils.reencodeBitmapFile(
+              inputBitmapFile = replyFile.fileOnDisk,
+              fixExif = false,
+              removeMetadata = true,
+              changeImageChecksum = false,
+              reencodeSettings = null
+            )
+
+            if (reencodedFile == null) {
+              Logger.e(TAG, "removeSelectedFilesMetadata() Failed to remove metadata for " +
+                "file '${replyFile.fileOnDisk.absolutePath}'")
+              return@forEach
+            }
+
+            val isSuccess = replyFile.overwriteFileOnDisk(reencodedFile)
+              .peekError { error ->
+                Logger.e(TAG, "removeSelectedFilesMetadata() Failed to overwrite " +
+                  "file '${replyFile.fileOnDisk.absolutePath}' " +
+                  "with '${reencodedFile.absolutePath}'", error)
+              }
+              .isValue()
+
+            if (!isSuccess) {
+              return@forEach
+            }
+
+            imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
+              context,
+              replyFileMeta.fileUuid
+            )
+          }
+        }
+
+        withView { hideLoadingView() }
+
+        refreshAttachedFiles()
+      }
+    }
+  }
+
+  fun changeSelectedFilesChecksum(context: Context) {
+    fileChangeExecutor.post {
+      handleStateUpdate {
+        withView {
+          showLoadingView(
+            titleTextId = R.string.layout_reply_files_area_changing_checksum,
+            cancellationFunc = {}
+          )
+        }
+
+        withContext(Dispatchers.Default) {
+          val selectedReplyFiles = replyManager.getSelectedFilesOrdered()
+
+          selectedReplyFiles.forEach { replyFile ->
+            val replyFileMeta = replyFile.getReplyFileMeta().valueOrNull()
+              ?: return@forEach
+
+            val reencodedFile = MediaUtils.reencodeBitmapFile(
+              inputBitmapFile = replyFile.fileOnDisk,
+              fixExif = false,
+              removeMetadata = false,
+              changeImageChecksum = true,
+              reencodeSettings = null
+            )
+
+            if (reencodedFile == null) {
+              Logger.e(TAG, "changeSelectedFilesChecksum() Failed to change checksum for " +
+                "file '${replyFile.fileOnDisk.absolutePath}'")
+              return@forEach
+            }
+
+            val isSuccess = replyFile.overwriteFileOnDisk(reencodedFile)
+              .peekError { error ->
+                Logger.e(TAG, "changeSelectedFilesChecksum() Failed to overwrite " +
+                  "file '${replyFile.fileOnDisk.absolutePath}' " +
+                  "with '${reencodedFile.absolutePath}'", error)
+              }
+              .isValue()
+
+            if (!isSuccess) {
+              return@forEach
+            }
+
+            imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
+              context,
+              replyFileMeta.fileUuid
+            )
+          }
+        }
+
+        withView { hideLoadingView() }
 
         refreshAttachedFiles()
       }
@@ -561,8 +695,19 @@ class ReplyLayoutFilesAreaPresenter(
       val totalFileSizeSum = getTotalFileSizeSumPerPost(chanDescriptor)
       val attachAdditionalInfo = clickedFile.attachAdditionalInfo
 
+      val fileMd5Hash = withContext(Dispatchers.Default) {
+        val replyFile = replyManager.getReplyFileByFileUuid(fileUuid).valueOrNull()
+          ?: return@withContext null
+
+        return@withContext HashingUtil.fileHash(replyFile.fileOnDisk)
+      }
+
       val fileStatusString = buildString {
         appendLine("File name: \"${clickedFile.fileName}\"")
+
+        if (fileMd5Hash != null) {
+          appendLine("File MD5 hash: \"${fileMd5Hash}\"")
+        }
 
         clickedFile.spoilerInfo?.let { spoilerInfo ->
           appendLine("Marked as spoiler: ${spoilerInfo.markedAsSpoiler}, " +

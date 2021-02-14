@@ -270,10 +270,28 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
       value = selectedFileUuid
     )
 
-    if (presenter.selectedFilesCount() > 1) {
+    if (presenter.hasSelectedFiles()) {
       floatingListMenuItems += FloatingListMenuItem(
-        key = ACTION_DELETE_SELECTED_FILES,
+        key = ACTION_DELETE_FILES,
         name = context.getString(R.string.layout_reply_files_area_delete_selected_files_action),
+        value = selectedFileUuid
+      )
+
+      floatingListMenuItems += FloatingListMenuItem(
+        key = ACTION_REMOVE_FILE_NAME,
+        name = context.getString(R.string.layout_reply_files_area_remove_file_name),
+        value = selectedFileUuid
+      )
+
+      floatingListMenuItems += FloatingListMenuItem(
+        key = ACTION_REMOVE_METADATA,
+        name = context.getString(R.string.layout_reply_files_area_remove_file_metadata),
+        value = selectedFileUuid
+      )
+
+      floatingListMenuItems += FloatingListMenuItem(
+        key = ACTION_CHANGE_CHECKSUM,
+        name = context.getString(R.string.layout_reply_files_area_change_checksum),
         value = selectedFileUuid
       )
     }
@@ -300,12 +318,11 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     val clickedFileUuid = item.value as UUID
 
     when (id) {
-      ACTION_DELETE_FILE -> {
-        presenter.deleteFiles(clickedFileUuid)
-      }
-      ACTION_DELETE_SELECTED_FILES -> {
-        presenter.deleteSelectedFiles()
-      }
+      ACTION_DELETE_FILE -> presenter.deleteFile(clickedFileUuid)
+      ACTION_DELETE_FILES -> presenter.deleteSelectedFiles()
+      ACTION_REMOVE_FILE_NAME -> presenter.removeSelectedFilesName()
+      ACTION_REMOVE_METADATA -> presenter.removeSelectedFilesMetadata(context)
+      ACTION_CHANGE_CHECKSUM -> presenter.changeSelectedFilesChecksum(context)
     }
   }
 
@@ -424,7 +441,10 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
   companion object {
     private const val ACTION_DELETE_FILE = 1
-    private const val ACTION_DELETE_SELECTED_FILES = 2
+    private const val ACTION_DELETE_FILES = 2
+    private const val ACTION_REMOVE_FILE_NAME = 3
+    private const val ACTION_REMOVE_METADATA = 4
+    private const val ACTION_CHANGE_CHECKSUM = 5
 
     private const val ACTION_PICK_LOCAL_FILE_SHOW_ALL_FILE_PICKERS = 100
     private const val ACTION_PICK_REMOTE_FILE = 101

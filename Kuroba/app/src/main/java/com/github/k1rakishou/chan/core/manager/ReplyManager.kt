@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.core.manager
 
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter
 import com.github.k1rakishou.chan.features.reply.data.Reply
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
@@ -24,6 +25,7 @@ import com.github.k1rakishou.chan.features.reply.data.ReplyFilesStorage
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.SuspendableInitializer
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -190,6 +192,36 @@ class ReplyManager @Inject constructor(
   @Synchronized
   fun iterateFilesOrdered(iterator: (Int, ReplyFile) -> Unit) {
     replyFilesStorage.iterateFilesOrdered(iterator)
+  }
+
+  @Synchronized
+  fun iterateSelectedFilesOrdered(iterator: (Int, ReplyFile, ReplyFileMeta) -> Unit) {
+    replyFilesStorage.iterateFilesOrdered { order, replyFile ->
+      val replyFileMeta = replyFile.getReplyFileMeta().valueOrNull()
+        ?: return@iterateFilesOrdered
+
+      if (!replyFileMeta.selected) {
+        return@iterateFilesOrdered
+      }
+
+      iterator(order, replyFile, replyFileMeta)
+    }
+  }
+
+  @Synchronized
+  fun getSelectedFilesOrdered(): List<ReplyFile> {
+    val files = mutableListOf<ReplyFile>()
+
+    replyFilesStorage.iterateFilesOrdered { i, replyFile ->
+      val replyFileMeta = replyFile.getReplyFileMeta().valueOrNull()
+        ?: return@iterateFilesOrdered
+
+      if (replyFileMeta.selected) {
+        files += replyFile
+      }
+    }
+
+    return files
   }
 
   @Synchronized
@@ -362,6 +394,25 @@ class ReplyManager @Inject constructor(
         fullFileMetaName = metaFileName,
         previewFileName = previewFileName
       )
+    }
+  }
+
+  fun getNewImageName(
+    currentFileName: String,
+    newType: ImageReencodingPresenter.ReencodeType = ImageReencodingPresenter.ReencodeType.AS_IS
+  ): String {
+    var currentExt = StringUtils.extractFileNameExtension(currentFileName)
+    currentExt = if (currentExt == null) {
+      ""
+    } else {
+      ".$currentExt"
+    }
+
+    return when (newType) {
+      ImageReencodingPresenter.ReencodeType.AS_PNG -> System.currentTimeMillis().toString() + ".png"
+      ImageReencodingPresenter.ReencodeType.AS_JPEG -> System.currentTimeMillis().toString() + ".jpg"
+      ImageReencodingPresenter.ReencodeType.AS_IS -> System.currentTimeMillis().toString() + currentExt
+      else -> System.currentTimeMillis().toString() + currentExt
     }
   }
 
