@@ -150,6 +150,7 @@ public class ImageViewerPresenter
 
     public void onInTransitionEnd() {
         entering = false;
+
         // Depends on what onModeLoaded did
         if (changeViewsOnInTransitionEnd) {
             callback.setPreviewVisibility(false);
@@ -158,7 +159,10 @@ public class ImageViewerPresenter
     }
 
     public void onExit() {
-        if (entering || exiting) return;
+        if (entering || exiting) {
+            return;
+        }
+
         exiting = true;
 
         ChanPostImage postImage = images.get(selectedPosition);
@@ -549,25 +553,32 @@ public class ImageViewerPresenter
             return;
         }
 
-        callback.showSystemUI(callback.isImmersive());
-
         ChanPostImage postImage = images.get(selectedPosition);
         if (imageAutoLoad(postImage) && !postImage.getSpoiler()) {
             if (postImage.getType() == ChanPostImageType.MOVIE && callback.getImageMode(postImage) != VIDEO) {
                 callback.setImageMode(postImage, VIDEO, true);
+                return;
             }
-        } else {
-            MultiImageView.Mode currentMode = callback.getImageMode(postImage);
-            if (postImage.getType() == ChanPostImageType.STATIC && currentMode != BIGIMAGE) {
-                callback.setImageMode(postImage, BIGIMAGE, true);
-            } else if (postImage.getType() == ChanPostImageType.GIF && currentMode != GIFIMAGE) {
-                callback.setImageMode(postImage, GIFIMAGE, true);
-            } else if (postImage.getType() == ChanPostImageType.MOVIE && currentMode != VIDEO) {
-                callback.setImageMode(postImage, VIDEO, true);
-            } else if ((postImage.getType() == ChanPostImageType.PDF || postImage.getType() == ChanPostImageType.SWF)
-                    && currentMode != OTHER) {
-                callback.setImageMode(postImage, OTHER, true);
+
+            if (!ChanSettings.imageViewerFullscreenMode.get()) {
+                onExit();
+                return;
             }
+
+            callback.showSystemUI(callback.isImmersive());
+            return;
+        }
+
+        MultiImageView.Mode currentMode = callback.getImageMode(postImage);
+        if (postImage.getType() == ChanPostImageType.STATIC && currentMode != BIGIMAGE) {
+            callback.setImageMode(postImage, BIGIMAGE, true);
+        } else if (postImage.getType() == ChanPostImageType.GIF && currentMode != GIFIMAGE) {
+            callback.setImageMode(postImage, GIFIMAGE, true);
+        } else if (postImage.getType() == ChanPostImageType.MOVIE && currentMode != VIDEO) {
+            callback.setImageMode(postImage, VIDEO, true);
+        } else if ((postImage.getType() == ChanPostImageType.PDF || postImage.getType() == ChanPostImageType.SWF)
+                && currentMode != OTHER) {
+            callback.setImageMode(postImage, OTHER, true);
         }
     }
 
@@ -686,9 +697,12 @@ public class ImageViewerPresenter
             return false;
         }
 
-        // Auto load the image when it is cached
-        return cacheHandler.cacheFileExists(imageUrl.toString())
-                || shouldLoadForNetworkType(ChanSettings.imageAutoLoadNetwork.get());
+        if (cacheHandler.cacheFileExists(imageUrl.toString())) {
+            // Auto load the image when it is cached
+            return true;
+        }
+
+        return  shouldLoadForNetworkType(ChanSettings.imageAutoLoadNetwork.get());
     }
 
     private boolean videoAutoLoad(ChanPostImage postImage) {
@@ -696,8 +710,17 @@ public class ImageViewerPresenter
             return false;
         }
 
-        return imageAutoLoad(postImage)
-                && shouldLoadForNetworkType(ChanSettings.videoAutoLoadNetwork.get());
+        HttpUrl imageUrl = postImage.getImageUrl();
+        if (imageUrl == null) {
+            return false;
+        }
+
+        if (cacheHandler.cacheFileExists(imageUrl.toString())) {
+            // Auto load the image when it is cached
+            return true;
+        }
+
+        return shouldLoadForNetworkType(ChanSettings.videoAutoLoadNetwork.get());
     }
 
     private void setTitle(ChanPostImage postImage, int position) {
