@@ -200,6 +200,7 @@ class RemoteFilePicker(
   }
 
   data class RemoteFilePickerInput(
+    val notifyListeners: Boolean,
     val replyChanDescriptor: ChanDescriptor,
     val imageUrl: String,
     val showLoadingView: suspend (Int) -> Unit,

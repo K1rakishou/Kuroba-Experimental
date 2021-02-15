@@ -26,6 +26,7 @@ import android.view.MotionEvent
 import android.widget.FrameLayout
 import androidx.annotation.RequiresApi
 import androidx.core.view.ViewCompat
+import com.github.k1rakishou.chan.core.manager.ViewFlagsStorage
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.gesture_editor.ExclusionZone
 import com.github.k1rakishou.chan.ui.controller.BrowseController
@@ -40,6 +41,8 @@ class NavigationControllerContainerLayout : FrameLayout {
 
   @Inject
   lateinit var exclusionZonesHolder: Android10GesturesExclusionZonesHolder
+  @Inject
+  lateinit var viewFlagsStorage: ViewFlagsStorage
 
   constructor(context: Context) : super(context) {
     preInit()
@@ -83,6 +86,7 @@ class NavigationControllerContainerLayout : FrameLayout {
   ) {
     controllerTracker = BrowseControllerTracker(
       context,
+      viewFlagsStorage,
       browseController,
       navigationController
     )

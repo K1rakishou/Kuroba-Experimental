@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.core.manager
 
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter
 import com.github.k1rakishou.chan.features.reply.data.Reply
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
@@ -25,6 +26,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.SuspendableInitializer
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -73,33 +75,27 @@ class ReplyManager @Inject constructor(
   }
 
   @Synchronized
-  fun updateFileSelection(fileUuid: UUID, selected: Boolean): ModularResult<Boolean> {
+  fun updateFileSelection(fileUuid: UUID, selected: Boolean, notifyListeners: Boolean): ModularResult<Boolean> {
     ensureFilesLoaded()
-    return replyFilesStorage.updateFileSelection(fileUuid, selected)
+    return replyFilesStorage.updateFileSelection(fileUuid, selected, notifyListeners)
   }
 
   @Synchronized
-  fun updateFileSpoilerFlag(fileUuid: UUID, spoiler: Boolean): ModularResult<Boolean> {
+  fun updateFileSpoilerFlag(fileUuid: UUID, spoiler: Boolean, notifyListeners: Boolean): ModularResult<Boolean> {
     ensureFilesLoaded()
-    return replyFilesStorage.updateFileSpoilerFlag(fileUuid, spoiler)
+    return replyFilesStorage.updateFileSpoilerFlag(fileUuid, spoiler, notifyListeners)
   }
 
   @Synchronized
-  fun deleteFile(fileUuid: UUID): ModularResult<Unit> {
+  fun deleteFile(fileUuid: UUID, notifyListeners: Boolean): ModularResult<Unit> {
     ensureFilesLoaded()
-    return replyFilesStorage.deleteFile(fileUuid)
+    return replyFilesStorage.deleteFile(fileUuid, notifyListeners)
   }
 
   @Synchronized
-  fun deleteSelectedFiles(): ModularResult<Unit> {
+  fun deleteSelectedFiles(notifyListeners: Boolean): ModularResult<Unit> {
     ensureFilesLoaded()
-    return replyFilesStorage.deleteSelectedFiles()
-  }
-
-  @Synchronized
-  fun clearFilesSelection(): ModularResult<Unit> {
-    ensureFilesLoaded()
-    return replyFilesStorage.clearSelection()
+    return replyFilesStorage.deleteSelectedFiles(notifyListeners)
   }
 
   @Synchronized
@@ -189,8 +185,32 @@ class ReplyManager @Inject constructor(
   }
 
   @Synchronized
-  fun iterateFilesOrdered(iterator: (Int, ReplyFile) -> Unit) {
+  fun iterateFilesOrdered(iterator: (Int, ReplyFile, ReplyFileMeta) -> Unit) {
     replyFilesStorage.iterateFilesOrdered(iterator)
+  }
+
+  @Synchronized
+  fun iterateSelectedFilesOrdered(iterator: (Int, ReplyFile, ReplyFileMeta) -> Unit) {
+    replyFilesStorage.iterateFilesOrdered { order, replyFile, replyFileMeta ->
+      if (!replyFileMeta.selected) {
+        return@iterateFilesOrdered
+      }
+
+      iterator(order, replyFile, replyFileMeta)
+    }
+  }
+
+  @Synchronized
+  fun getSelectedFilesOrdered(): List<ReplyFile> {
+    val files = mutableListOf<ReplyFile>()
+
+    replyFilesStorage.iterateFilesOrdered { i, replyFile, replyFileMeta ->
+      if (replyFileMeta.selected) {
+        files += replyFile
+      }
+    }
+
+    return files
   }
 
   @Synchronized
@@ -200,7 +220,7 @@ class ReplyManager @Inject constructor(
   }
 
   @Synchronized
-  fun cleanupFiles(chanDescriptor: ChanDescriptor) {
+  fun cleanupFiles(chanDescriptor: ChanDescriptor, notifyListeners: Boolean) {
     ensureFilesLoaded()
 
     readReply(chanDescriptor) { reply ->
@@ -212,7 +232,7 @@ class ReplyManager @Inject constructor(
         return@readReply
       }
 
-      replyFilesStorage.deleteFiles(fileUuids)
+      replyFilesStorage.deleteFiles(fileUuids, notifyListeners)
         .peekError { error -> Logger.e(TAG, "replyFilesStorage.deleteFiles($fileUuids) error", error) }
     }
   }
@@ -372,6 +392,25 @@ class ReplyManager @Inject constructor(
         fullFileMetaName = metaFileName,
         previewFileName = previewFileName
       )
+    }
+  }
+
+  fun getNewImageName(
+    currentFileName: String,
+    newType: ImageReencodingPresenter.ReencodeType = ImageReencodingPresenter.ReencodeType.AS_IS
+  ): String {
+    var currentExt = StringUtils.extractFileNameExtension(currentFileName)
+    currentExt = if (currentExt == null) {
+      ""
+    } else {
+      ".$currentExt"
+    }
+
+    return when (newType) {
+      ImageReencodingPresenter.ReencodeType.AS_PNG -> System.currentTimeMillis().toString() + ".png"
+      ImageReencodingPresenter.ReencodeType.AS_JPEG -> System.currentTimeMillis().toString() + ".jpg"
+      ImageReencodingPresenter.ReencodeType.AS_IS -> System.currentTimeMillis().toString() + currentExt
+      else -> System.currentTimeMillis().toString() + currentExt
     }
   }
 

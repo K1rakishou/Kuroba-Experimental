@@ -118,7 +118,7 @@ public class SlidingPaneLayoutEx extends ViewGroup {
     /**
      * Minimum velocity that will be detected as a fling
      */
-    private static final int MIN_FLING_VELOCITY = 400; // dips per second
+    private static final int MIN_FLING_VELOCITY = 300; // dips per second
 
     /** Class name may be obfuscated by Proguard. Hardcode the string for accessibility usage. */
     private static final String ACCESSIBILITY_CLASS_NAME =

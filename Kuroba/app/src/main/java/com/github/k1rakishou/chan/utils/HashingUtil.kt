@@ -6,9 +6,18 @@ import okio.HashingSource
 import okio.blackholeSink
 import okio.buffer
 import okio.source
+import java.io.File
 import java.io.InputStream
 
 object HashingUtil {
+
+  fun fileHash(inputFile: File): String? {
+    if (!inputFile.exists()) {
+      return null
+    }
+
+    return inputStreamHash(inputFile.inputStream())
+  }
 
   fun inputStreamHash(inputStream: InputStream): String {
     return HashingSource.md5(inputStream.source()).use { hashingSource ->

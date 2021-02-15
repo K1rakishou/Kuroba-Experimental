@@ -31,7 +31,6 @@ import com.github.k1rakishou.chan.utils.MediaUtils.getImageDims
 import com.github.k1rakishou.chan.utils.MediaUtils.getImageFormat
 import com.github.k1rakishou.common.AndroidUtils.getDisplaySize
 import com.github.k1rakishou.common.DoNotStrip
-import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.google.gson.Gson
@@ -117,7 +116,7 @@ class ImageReencodingPresenter(
       context = context,
       fileUuid = fileUuid,
       imageSize = imageSize,
-      scale = Scale.FILL,
+      scale = Scale.FIT,
       transformations = emptyList()
     ) { bitmapDrawable -> callback.showImagePreview(bitmapDrawable.bitmap) }
   }
@@ -133,7 +132,7 @@ class ImageReencodingPresenter(
 
   fun getGenerateNewFileName(): String {
     val oldFileName = getCurrentFileName()
-    return getNewImageName(oldFileName)
+    return replyManager.getNewImageName(oldFileName)
   }
 
   fun hasAttachedFile(): Boolean {
@@ -254,7 +253,8 @@ class ImageReencodingPresenter(
     if (replyFile != null) {
       val oldFileName = replyFile.getReplyFileMeta().valueOrNull()?.fileName
       if (oldFileName != null) {
-        val fileName = newFileName ?: getNewImageName(oldFileName, ReencodeType.AS_IS)
+        val fileName = newFileName
+          ?: replyManager.getNewImageName(oldFileName, ReencodeType.AS_IS)
 
         replyFile.updateFileName(fileName)
           .peekError { error ->
@@ -278,22 +278,6 @@ class ImageReencodingPresenter(
       && !imageOptions.removeMetadata
       && !imageOptions.changeImageChecksum
       && imageOptions.reencodeSettings == null
-  }
-
-  private fun getNewImageName(currentFileName: String, newType: ReencodeType = ReencodeType.AS_IS): String {
-    var currentExt = StringUtils.extractFileNameExtension(currentFileName)
-    currentExt = if (currentExt == null) {
-      ""
-    } else {
-      ".$currentExt"
-    }
-
-    return when (newType) {
-      ReencodeType.AS_PNG -> System.currentTimeMillis().toString() + ".png"
-      ReencodeType.AS_JPEG -> System.currentTimeMillis().toString() + ".jpg"
-      ReencodeType.AS_IS -> System.currentTimeMillis().toString() + currentExt
-      else -> System.currentTimeMillis().toString() + currentExt
-    }
   }
 
   @DoNotStrip

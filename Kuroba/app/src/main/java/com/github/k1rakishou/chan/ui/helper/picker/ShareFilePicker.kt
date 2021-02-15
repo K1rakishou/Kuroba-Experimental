@@ -81,6 +81,7 @@ class ShareFilePicker(
   }
 
   data class ShareFilePickerInput(
+    val notifyListeners: Boolean,
     val dataUri: Uri?,
     val clipData: ClipData?,
     val inputContentInfo: InputContentInfoCompat?,

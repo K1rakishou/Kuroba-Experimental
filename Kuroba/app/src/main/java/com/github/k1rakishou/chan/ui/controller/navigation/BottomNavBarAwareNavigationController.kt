@@ -1,22 +1,15 @@
 package com.github.k1rakishou.chan.ui.controller.navigation
 
 import android.content.Context
-import android.content.res.Configuration
 import android.view.View
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
-import com.github.k1rakishou.chan.features.bookmarks.BookmarksController
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getScreenOrientation
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout
-import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_themes.ThemeEngine
 import javax.inject.Inject
@@ -26,7 +19,6 @@ class BottomNavBarAwareNavigationController(
   private val listener: CloseBottomNavBarAwareNavigationControllerListener
 ) :
   ToolbarNavigationController(context),
-  AppModuleAndroidUtils.OnMeasuredCallback,
   WindowInsetsListener,
   Toolbar.ToolbarHeightUpdatesCallback {
 
@@ -64,12 +56,6 @@ class BottomNavBarAwareNavigationController(
     }
   }
 
-  override fun onShow() {
-    super.onShow()
-
-    waitForLayout(container, this)
-  }
-
   override fun onDestroy() {
     super.onDestroy()
 
@@ -91,37 +77,6 @@ class BottomNavBarAwareNavigationController(
       top = requireToolbar().toolbarHeight,
       bottom = bottomNavBarHeight + globalWindowInsetsManager.bottom()
     )
-  }
-
-  override fun onMeasured(view: View?): Boolean {
-    if (!isTablet()) {
-      return true
-    }
-
-    if (getScreenOrientation() != Configuration.ORIENTATION_LANDSCAPE) {
-      return true
-    }
-
-    val hasBookmarksController = childControllers.any { controller -> controller is BookmarksController }
-    if (hasBookmarksController) {
-      return true
-    }
-
-    val v = view
-      ?: return true
-
-    val margin = (v.width * 0.1).toInt()
-
-    view.updateMargins(
-      margin,
-      margin,
-      margin,
-      margin,
-      null,
-      null
-    )
-
-    return false
   }
 
   override fun onMenuOrBackClicked(isArrow: Boolean) {

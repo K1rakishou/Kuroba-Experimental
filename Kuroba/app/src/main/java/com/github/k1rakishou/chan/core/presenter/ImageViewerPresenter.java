@@ -150,6 +150,7 @@ public class ImageViewerPresenter
 
     public void onInTransitionEnd() {
         entering = false;
+
         // Depends on what onModeLoaded did
         if (changeViewsOnInTransitionEnd) {
             callback.setPreviewVisibility(false);
@@ -158,7 +159,10 @@ public class ImageViewerPresenter
     }
 
     public void onExit() {
-        if (entering || exiting) return;
+        if (entering || exiting) {
+            return;
+        }
+
         exiting = true;
 
         ChanPostImage postImage = images.get(selectedPosition);
@@ -316,12 +320,12 @@ public class ImageViewerPresenter
     private void onLowResInCenter() {
         ChanPostImage postImage = images.get(selectedPosition);
 
-        if (imageAutoLoad(postImage) && (!postImage.getSpoiler() || ChanSettings.revealImageSpoilers.get())) {
+        if (canAutoLoad(postImage) && (!postImage.getSpoiler() || ChanSettings.revealImageSpoilers.get())) {
             if (postImage.getType() == ChanPostImageType.STATIC) {
                 callback.setImageMode(postImage, BIGIMAGE, true);
             } else if (postImage.getType() == ChanPostImageType.GIF) {
                 callback.setImageMode(postImage, GIFIMAGE, true);
-            } else if (postImage.getType() == ChanPostImageType.MOVIE && videoAutoLoad(postImage)) {
+            } else if (postImage.getType() == ChanPostImageType.MOVIE) {
                 callback.setImageMode(postImage, VIDEO, true);
             } else if (postImage.getType() == ChanPostImageType.PDF || postImage.getType() == ChanPostImageType.SWF) {
                 callback.setImageMode(postImage, OTHER, true);
@@ -430,15 +434,7 @@ public class ImageViewerPresenter
     }
 
     private void doPreloading(ChanPostImage postImage) {
-        boolean allowedToPreload = false;
-
-        // Do not auto preload PDF/SWF files
-        if (postImage.getType() == ChanPostImageType.MOVIE) {
-            allowedToPreload = videoAutoLoad(postImage);
-        } else if (postImage.getType() == ChanPostImageType.STATIC || postImage.getType() == ChanPostImageType.GIF) {
-            allowedToPreload = imageAutoLoad(postImage);
-        }
-
+        boolean allowedToPreload = canAutoLoad(postImage);
         if (!allowedToPreload) {
             return;
         }
@@ -549,25 +545,32 @@ public class ImageViewerPresenter
             return;
         }
 
-        callback.showSystemUI(callback.isImmersive());
-
         ChanPostImage postImage = images.get(selectedPosition);
-        if (imageAutoLoad(postImage) && !postImage.getSpoiler()) {
+        if (canAutoLoad(postImage) && !postImage.getSpoiler()) {
             if (postImage.getType() == ChanPostImageType.MOVIE && callback.getImageMode(postImage) != VIDEO) {
                 callback.setImageMode(postImage, VIDEO, true);
+                return;
             }
-        } else {
-            MultiImageView.Mode currentMode = callback.getImageMode(postImage);
-            if (postImage.getType() == ChanPostImageType.STATIC && currentMode != BIGIMAGE) {
-                callback.setImageMode(postImage, BIGIMAGE, true);
-            } else if (postImage.getType() == ChanPostImageType.GIF && currentMode != GIFIMAGE) {
-                callback.setImageMode(postImage, GIFIMAGE, true);
-            } else if (postImage.getType() == ChanPostImageType.MOVIE && currentMode != VIDEO) {
-                callback.setImageMode(postImage, VIDEO, true);
-            } else if ((postImage.getType() == ChanPostImageType.PDF || postImage.getType() == ChanPostImageType.SWF)
-                    && currentMode != OTHER) {
-                callback.setImageMode(postImage, OTHER, true);
+
+            if (!ChanSettings.imageViewerFullscreenMode.get()) {
+                onExit();
+                return;
             }
+
+            callback.showSystemUI(callback.isImmersive());
+            return;
+        }
+
+        MultiImageView.Mode currentMode = callback.getImageMode(postImage);
+        if (postImage.getType() == ChanPostImageType.STATIC && currentMode != BIGIMAGE) {
+            callback.setImageMode(postImage, BIGIMAGE, true);
+        } else if (postImage.getType() == ChanPostImageType.GIF && currentMode != GIFIMAGE) {
+            callback.setImageMode(postImage, GIFIMAGE, true);
+        } else if (postImage.getType() == ChanPostImageType.MOVIE && currentMode != VIDEO) {
+            callback.setImageMode(postImage, VIDEO, true);
+        } else if ((postImage.getType() == ChanPostImageType.PDF || postImage.getType() == ChanPostImageType.SWF)
+                && currentMode != OTHER) {
+            callback.setImageMode(postImage, OTHER, true);
         }
     }
 
@@ -676,7 +679,7 @@ public class ImageViewerPresenter
         }
     }
 
-    private boolean imageAutoLoad(ChanPostImage postImage) {
+    private boolean canAutoLoad(ChanPostImage postImage) {
         if (postImage.isInlined()) {
             return false;
         }
@@ -686,18 +689,28 @@ public class ImageViewerPresenter
             return false;
         }
 
-        // Auto load the image when it is cached
-        return cacheHandler.cacheFileExists(imageUrl.toString())
-                || shouldLoadForNetworkType(ChanSettings.imageAutoLoadNetwork.get());
-    }
+        if (cacheHandler.cacheFileExists(imageUrl.toString())) {
+            // Auto load the image when it is cached
+            return true;
+        }
 
-    private boolean videoAutoLoad(ChanPostImage postImage) {
-        if (postImage.isInlined()) {
+        ChanPostImageType postImageType = postImage.getType();
+        if (postImageType == null) {
             return false;
         }
 
-        return imageAutoLoad(postImage)
-                && shouldLoadForNetworkType(ChanSettings.videoAutoLoadNetwork.get());
+        switch (postImageType) {
+            case GIF:
+            case STATIC:
+                return shouldLoadForNetworkType(ChanSettings.imageAutoLoadNetwork.get());
+            case MOVIE:
+                return shouldLoadForNetworkType(ChanSettings.videoAutoLoadNetwork.get());
+            case PDF:
+            case SWF:
+                return false;
+            default:
+                throw new IllegalArgumentException("Not handled " + postImageType.name());
+        }
     }
 
     private void setTitle(ChanPostImage postImage, int position) {

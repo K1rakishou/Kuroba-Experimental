@@ -5,7 +5,6 @@ import android.content.res.Configuration
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.PersistableChanState
@@ -24,6 +23,7 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxySimpleGroupView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
+import com.github.k1rakishou.chan.ui.widget.KurobaSwipeRefreshLayout
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
@@ -43,7 +43,7 @@ class FilterWatchesController(
   lateinit var filterWatcherCoordinator: FilterWatcherCoordinator
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
-  private lateinit var swipeRefreshLayout: SwipeRefreshLayout
+  private lateinit var swipeRefreshLayout: KurobaSwipeRefreshLayout
 
   private val presenter = FilterWatchesPresenter()
   private val controller = FilterWatchesEpoxyController()

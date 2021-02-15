@@ -16,10 +16,12 @@
  */
 package com.github.k1rakishou.chan.ui.view
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Bundle
 import android.text.Spanned
 import android.util.AttributeSet
+import android.view.MotionEvent
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import androidx.core.view.inputmethod.EditorInfoCompat
@@ -39,6 +41,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@SuppressLint("ClickableViewAccessibility")
 class ReplyInputEditText @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null
@@ -58,6 +61,21 @@ class ReplyInputEditText @JvmOverloads constructor(
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
+
+    setOnTouchListener { view, event ->
+      if (hasFocus()) {
+        view.parent.requestDisallowInterceptTouchEvent(true)
+
+        when (event.action and MotionEvent.ACTION_MASK) {
+          MotionEvent.ACTION_SCROLL -> {
+            view.parent.requestDisallowInterceptTouchEvent(false)
+            return@setOnTouchListener true
+          }
+        }
+      }
+
+      return@setOnTouchListener false
+    }
   }
 
   fun setSelectionChangedListener(listener: SelectionChangedListener?) {
@@ -167,13 +185,18 @@ class ReplyInputEditText @JvmOverloads constructor(
           opts: Bundle?
         ): Boolean {
           if (!AndroidUtils.isAndroidNMR1()) {
-            AppModuleAndroidUtils.showToast(context, "Unsupported Android version (Must be >= N_MR1)")
+            AppModuleAndroidUtils.showToast(
+              context,
+              "Unsupported Android version (Must be >= N_MR1)"
+            )
             return false
           }
 
           if (flags and InputConnectionCompat.INPUT_CONTENT_GRANT_READ_URI_PERMISSION == 0) {
-            AppModuleAndroidUtils.showToast(context, "No INPUT_CONTENT_GRANT_READ_URI_PERMISSION " +
-              "flag present")
+            AppModuleAndroidUtils.showToast(
+              context, "No INPUT_CONTENT_GRANT_READ_URI_PERMISSION " +
+                "flag present"
+            )
             return false
           }
 
@@ -195,6 +218,7 @@ class ReplyInputEditText @JvmOverloads constructor(
               AppModuleAndroidUtils.showToast(context, getString(R.string.share_success_start))
 
               val shareFilePickerInput = ShareFilePicker.ShareFilePickerInput(
+                notifyListeners = true,
                 dataUri = null,
                 clipData = null,
                 inputContentInfo = inputContentInfo,

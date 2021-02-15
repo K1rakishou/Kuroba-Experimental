@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.ui.controller;
 
 import android.content.Context;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -398,6 +399,10 @@ public class ThreadSlideController
         navigation.hasDrawer = true;
 
         toolbar.setNavigationItem(animate, true, navigation, null);
+    }
+
+    public boolean passMotionEventIntoSlidingPaneLayout(@NotNull MotionEvent event) {
+        return slidingPaneLayout.onTouchEvent(event);
     }
 
     public interface ReplyAutoCloseListener {

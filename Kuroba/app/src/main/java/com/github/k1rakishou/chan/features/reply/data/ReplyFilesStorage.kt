@@ -35,7 +35,7 @@ class ReplyFilesStorage(
   }
 
   @Synchronized
-  fun takeSelectedFiles(chanDescriptor: ChanDescriptor): ModularResult<List<ReplyFile>> {
+  fun takeSelectedFiles(chanDescriptor: ChanDescriptor, notifyListeners: Boolean = true): ModularResult<List<ReplyFile>> {
     return Try {
       val takenFiles = mutableListOf<ReplyFile>()
 
@@ -65,7 +65,7 @@ class ReplyFilesStorage(
 
       ensureFilesSorted()
 
-      if (takenFiles.isNotEmpty()) {
+      if (takenFiles.isNotEmpty() && notifyListeners) {
         onReplyFilesChanged()
       }
 
@@ -99,7 +99,7 @@ class ReplyFilesStorage(
   }
 
   @Synchronized
-  fun updateFileSelection(fileUuid: UUID, selected: Boolean): ModularResult<Boolean> {
+  fun updateFileSelection(fileUuid: UUID, selected: Boolean, notifyListeners: Boolean): ModularResult<Boolean> {
     return Try {
       val replyFile = replyFiles
         .firstOrNull { replyFile -> replyFile.getReplyFileMeta().unwrap().fileUuid == fileUuid }
@@ -112,14 +112,16 @@ class ReplyFilesStorage(
         return@Try false
       }
 
-      onReplyFilesChanged()
+      if (notifyListeners) {
+        onReplyFilesChanged()
+      }
 
       return@Try replyFile.updateFileSelection(selected).unwrap()
     }
   }
 
   @Synchronized
-  fun updateFileSpoilerFlag(fileUuid: UUID, spoiler: Boolean): ModularResult<Boolean> {
+  fun updateFileSpoilerFlag(fileUuid: UUID, spoiler: Boolean, notifyListeners: Boolean): ModularResult<Boolean> {
     return Try {
       val replyFile = replyFiles
         .firstOrNull { replyFile -> replyFile.getReplyFileMeta().unwrap().fileUuid == fileUuid }
@@ -132,40 +134,25 @@ class ReplyFilesStorage(
         return@Try false
       }
 
-      onReplyFilesChanged()
+      if (notifyListeners) {
+        onReplyFilesChanged()
+      }
 
       return@Try replyFile.updateFileSpoilerFlag(spoiler).unwrap()
     }
   }
 
   @Synchronized
-  fun clearSelection(): ModularResult<Unit> {
-    return Try {
-      replyFiles.forEach { replyFile ->
-        if (replyFile.getReplyFileMeta().unwrap().isTaken()) {
-          return@Try
-        }
-
-        replyFile.clearSelection().unwrap()
-      }
-
-      onReplyFilesChanged()
-    }
+  fun deleteFile(fileUuid: UUID, notifyListeners: Boolean): ModularResult<Unit> {
+    return deleteFiles(listOf(fileUuid), notifyListeners)
   }
 
   @Synchronized
-  fun deleteFile(fileUuid: UUID): ModularResult<Unit> {
-    return deleteFiles(listOf(fileUuid))
-  }
-
-  @Synchronized
-  fun deleteSelectedFiles(): ModularResult<Unit> {
+  fun deleteSelectedFiles(notifyListeners: Boolean): ModularResult<Unit> {
     return Try {
       val toDelete = mutableListOf<UUID>()
 
-      iterateFilesOrdered { _, replyFile ->
-        val replyFileMeta = replyFile.getReplyFileMeta().unwrap()
-
+      iterateFilesOrdered { _, replyFile, replyFileMeta ->
         if (replyFileMeta.isTaken()) {
           return@iterateFilesOrdered
         }
@@ -177,12 +164,12 @@ class ReplyFilesStorage(
         toDelete += replyFileMeta.fileUuid
       }
 
-      deleteFiles(toDelete).unwrap()
+      deleteFiles(toDelete, notifyListeners).unwrap()
     }
   }
 
   @Synchronized
-  fun deleteFiles(fileUuids: List<UUID>): ModularResult<Unit> {
+  fun deleteFiles(fileUuids: List<UUID>, notifyListeners: Boolean): ModularResult<Unit> {
     if (fileUuids.isEmpty()) {
       return value(Unit)
     }
@@ -204,7 +191,7 @@ class ReplyFilesStorage(
         deleted = true
       }
 
-      if (deleted) {
+      if (deleted && notifyListeners) {
         onReplyFilesChanged()
       }
     }
@@ -298,9 +285,14 @@ class ReplyFilesStorage(
   }
 
   @Synchronized
-  fun iterateFilesOrdered(iterator: (Int, ReplyFile) -> Unit) {
+  fun iterateFilesOrdered(iterator: (Int, ReplyFile, ReplyFileMeta) -> Unit) {
     ensureFilesSorted()
-    replyFiles.forEachIndexed(iterator)
+    replyFiles.forEachIndexed { index, replyFile ->
+      val replyFileMeta = replyFile.getReplyFileMeta()
+        .unwrap()
+
+      iterator(index, replyFile, replyFileMeta)
+    }
   }
 
   @Synchronized

@@ -287,7 +287,6 @@ class MultiImageView @JvmOverloads constructor(
   }
 
   private fun findView(classType: Class<out View>): View? {
-
     return (0 until childCount)
       .firstOrNull { getChildAt(it).javaClass == classType }
       ?.let(this@MultiImageView::getChildAt)

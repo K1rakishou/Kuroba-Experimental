@@ -5,8 +5,6 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.util.AttributeSet
-import android.view.GestureDetector
-import android.view.MotionEvent
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
@@ -48,7 +46,6 @@ class EpoxyReplyFileView @JvmOverloads constructor(
 
   private var attachmentFileUuid: UUID? = null
   private var exceedsMaxFilesPerPostLimit = false
-  private var doubleClickListener: ((UUID) -> Unit)? = null
 
   private val replyAttachmentRoot: ConstraintLayout
   private val replyAttachmentImageView: AppCompatImageView
@@ -58,21 +55,6 @@ class EpoxyReplyFileView @JvmOverloads constructor(
   private val replyAttachmentSelectionView: SelectionCheckView
   private val replyAttachmentStatusView: AppCompatImageView
   private val replyAttachmentSpoiler: TextView
-
-  private val gestureDetector = GestureDetector(getContext(), object : GestureDetector.SimpleOnGestureListener() {
-    override fun onDoubleTap(e: MotionEvent): Boolean {
-      if (doubleClickListener == null) {
-        return false
-      }
-
-      val uuid = attachmentFileUuid
-        ?: return false
-
-      doubleClickListener?.invoke(uuid)
-
-      return true
-    }
-  })
 
   init {
     inflate(context, R.layout.epoxy_reply_file_view, this)
@@ -88,8 +70,6 @@ class EpoxyReplyFileView @JvmOverloads constructor(
     replyAttachmentSelectionView = findViewById(R.id.reply_attachment_selection_check_view)
     replyAttachmentStatusView = findViewById(R.id.reply_attachment_status_icon)
     replyAttachmentSpoiler = findViewById(R.id.reply_attachment_file_spoiler)
-
-    replyAttachmentRoot.setOnTouchListener { v, event -> gestureDetector.onTouchEvent(event) }
   }
 
   override fun onAttachedToWindow() {
@@ -146,7 +126,7 @@ class EpoxyReplyFileView @JvmOverloads constructor(
       context = context,
       fileUuid = fileUuid,
       imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(replyAttachmentImageView),
-      scale = Scale.FILL,
+      scale = Scale.FIT,
       transformations = transformations
     ) { bitmapDrawable ->
       if (attachmentFileUuid == null || attachmentFileUuid != fileUuid) {
@@ -239,7 +219,21 @@ class EpoxyReplyFileView @JvmOverloads constructor(
   }
 
   @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.IgnoreRequireHashCode])
-  fun setOnClickListener(listener: ((UUID) -> Unit)?) {
+  fun setOnCheckClickListener(listener: ((UUID) -> Unit)?) {
+    if (listener == null) {
+      replyAttachmentSelectionView.setOnClickListener(null)
+      return
+    }
+
+    replyAttachmentSelectionView.setOnClickListener {
+      if (attachmentFileUuid != null) {
+        listener.invoke(attachmentFileUuid!!)
+      }
+    }
+  }
+
+  @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.IgnoreRequireHashCode])
+  fun setOnRootClickListener(listener: ((UUID) -> Unit)?) {
     if (listener == null) {
       replyAttachmentRoot.setOnClickListener(null)
       return
@@ -248,7 +242,27 @@ class EpoxyReplyFileView @JvmOverloads constructor(
     replyAttachmentRoot.setOnClickListener {
       if (attachmentFileUuid != null) {
         listener.invoke(attachmentFileUuid!!)
+        return@setOnClickListener
       }
+
+      return@setOnClickListener
+    }
+  }
+
+  @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.IgnoreRequireHashCode])
+  fun setOnRootLongClickListener(listener: ((UUID) -> Unit)?) {
+    if (listener == null) {
+      replyAttachmentRoot.setOnLongClickListener(null)
+      return
+    }
+
+    replyAttachmentRoot.setOnLongClickListener {
+      if (attachmentFileUuid != null) {
+        listener.invoke(attachmentFileUuid!!)
+        return@setOnLongClickListener true
+      }
+
+      return@setOnLongClickListener false
     }
   }
 
@@ -278,28 +292,6 @@ class EpoxyReplyFileView @JvmOverloads constructor(
         listener.invoke(attachmentFileUuid!!)
       }
     }
-  }
-
-  @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.IgnoreRequireHashCode])
-  fun setOnLongClickListener(listener: ((UUID) -> Unit)?) {
-    if (listener == null) {
-      replyAttachmentRoot.setOnLongClickListener(null)
-      return
-    }
-
-    replyAttachmentRoot.setOnLongClickListener {
-      if (attachmentFileUuid != null) {
-        listener.invoke(attachmentFileUuid!!)
-        return@setOnLongClickListener true
-      }
-
-      return@setOnLongClickListener false
-    }
-  }
-
-  @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.IgnoreRequireHashCode])
-  fun setOnDoubleClickListener(listener: ((UUID) -> Unit)?) {
-    this.doubleClickListener = listener
   }
 
   companion object {

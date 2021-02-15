@@ -340,7 +340,7 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
         context,
         R.drawable.error_icon,
         ImageLoaderV2.ImageSize.MeasurableImageSize.create(bookmarkImage),
-        Scale.FILL,
+        Scale.FIT,
         emptyList(),
         { drawable -> bookmarkImage.setImageBitmap(drawable.bitmap) }
       )

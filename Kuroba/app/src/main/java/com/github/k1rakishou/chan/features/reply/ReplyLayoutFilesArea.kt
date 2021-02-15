@@ -213,9 +213,9 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
               attachmentFileDimensions(replyAttachable.imageDimensions)
               attachAdditionalInfo(replyAttachable.attachAdditionalInfo)
               exceedsMaxFilesPerPostLimit(replyAttachable.maxAttachedFilesCountExceeded)
-              onClickListener { fileUuid -> presenter.updateFileSelection(fileUuid) }
-              onLongClickListener { fileUuid -> showAttachFileOptions(fileUuid) }
-              onDoubleClickListener { fileUuid -> onReplyFileViewDoubleClicked(fileUuid) }
+              onRootClickListener { fileUuid -> onReplyFileRootViewClicked(fileUuid) }
+              onRootLongClickListener { fileUuid -> showAttachFileOptions(fileUuid) }
+              onCheckClickListener { fileUuid -> presenter.updateFileSelection(fileUuid) }
               onStatusIconClickListener { fileUuid -> presenter.onFileStatusRequested(fileUuid) }
               onSpoilerMarkClickListener { fileUuid -> presenter.updateFileSpoilerFlag(fileUuid) }
             }
@@ -265,21 +265,47 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     val floatingListMenuItems = mutableListOf<FloatingListMenuItem>()
 
     floatingListMenuItems += FloatingListMenuItem(
-      key = ACTION_OPEN_IN_EDITOR,
-      name = context.getString(R.string.layout_reply_files_area_open_in_editor_action),
-      value = selectedFileUuid
-    )
-
-    floatingListMenuItems += FloatingListMenuItem(
       key = ACTION_DELETE_FILE,
       name = context.getString(R.string.layout_reply_files_area_delete_file_action),
       value = selectedFileUuid
     )
 
-    if (presenter.selectedFilesCount() > 1) {
+    if (presenter.hasSelectedFiles()) {
       floatingListMenuItems += FloatingListMenuItem(
-        key = ACTION_DELETE_SELECTED_FILES,
+        key = ACTION_DELETE_FILES,
         name = context.getString(R.string.layout_reply_files_area_delete_selected_files_action),
+        value = selectedFileUuid
+      )
+
+      floatingListMenuItems += FloatingListMenuItem(
+        key = ACTION_REMOVE_FILE_NAME,
+        name = context.getString(R.string.layout_reply_files_area_remove_file_name),
+        value = selectedFileUuid
+      )
+
+      floatingListMenuItems += FloatingListMenuItem(
+        key = ACTION_REMOVE_METADATA,
+        name = context.getString(R.string.layout_reply_files_area_remove_file_metadata),
+        value = selectedFileUuid
+      )
+
+      floatingListMenuItems += FloatingListMenuItem(
+        key = ACTION_CHANGE_CHECKSUM,
+        name = context.getString(R.string.layout_reply_files_area_change_checksum),
+        value = selectedFileUuid
+      )
+    }
+
+    if (!presenter.allFilesSelected()) {
+      floatingListMenuItems += FloatingListMenuItem(
+        key = ACTION_SELECT_ALL,
+        name = context.getString(R.string.layout_reply_files_area_select_all),
+        value = selectedFileUuid
+      )
+    } else {
+      floatingListMenuItems += FloatingListMenuItem(
+        key = ACTION_UNSELECT_ALL,
+        name = context.getString(R.string.layout_reply_files_area_unselect_all),
         value = selectedFileUuid
       )
     }
@@ -294,7 +320,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     threadListLayoutCallbacks?.presentController(floatingListMenuController)
   }
 
-  private fun onReplyFileViewDoubleClicked(clickedFileUuid: UUID) {
+  private fun onReplyFileRootViewClicked(clickedFileUuid: UUID) {
     threadListLayoutCallbacks?.showImageReencodingWindow(
       clickedFileUuid,
       presenter.isFileSupportedForReencoding(clickedFileUuid)
@@ -306,18 +332,13 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     val clickedFileUuid = item.value as UUID
 
     when (id) {
-      ACTION_OPEN_IN_EDITOR -> {
-        threadListLayoutCallbacks?.showImageReencodingWindow(
-          clickedFileUuid,
-          presenter.isFileSupportedForReencoding(clickedFileUuid)
-        )
-      }
-      ACTION_DELETE_FILE -> {
-        presenter.deleteFiles(clickedFileUuid)
-      }
-      ACTION_DELETE_SELECTED_FILES -> {
-        presenter.deleteSelectedFiles()
-      }
+      ACTION_DELETE_FILE -> presenter.deleteFile(clickedFileUuid)
+      ACTION_DELETE_FILES -> presenter.deleteSelectedFiles()
+      ACTION_REMOVE_FILE_NAME -> presenter.removeSelectedFilesName()
+      ACTION_REMOVE_METADATA -> presenter.removeSelectedFilesMetadata(context)
+      ACTION_CHANGE_CHECKSUM -> presenter.changeSelectedFilesChecksum(context)
+      ACTION_SELECT_ALL -> presenter.selectUnselectAll(selectAll = true)
+      ACTION_UNSELECT_ALL -> presenter.selectUnselectAll(selectAll = false)
     }
   }
 
@@ -395,6 +416,10 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     }
   }
 
+  override fun showReplyLayoutMessage(message: String?, hideDelayMs: Int) {
+    replyLayoutCallbacks?.openMessage(message, hideDelayMs)
+  }
+
   override fun updateFilesStatusTextView(newStatus: String) {
     replyLayoutCallbacks?.showReplyLayoutMessage(newStatus)
   }
@@ -431,13 +456,18 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     fun requestWrappingModeUpdate()
     fun disableSendButton()
     fun enableSendButton()
+    fun openMessage(message: String?, hideDelayMs: Int)
     fun showReplyLayoutMessage(message: String, duration: Int = 5000)
   }
 
   companion object {
-    private const val ACTION_OPEN_IN_EDITOR = 1
-    private const val ACTION_DELETE_FILE = 2
-    private const val ACTION_DELETE_SELECTED_FILES = 3
+    private const val ACTION_DELETE_FILE = 1
+    private const val ACTION_DELETE_FILES = 2
+    private const val ACTION_REMOVE_FILE_NAME = 3
+    private const val ACTION_REMOVE_METADATA = 4
+    private const val ACTION_CHANGE_CHECKSUM = 5
+    private const val ACTION_SELECT_ALL = 6
+    private const val ACTION_UNSELECT_ALL = 7
 
     private const val ACTION_PICK_LOCAL_FILE_SHOW_ALL_FILE_PICKERS = 100
     private const val ACTION_PICK_REMOTE_FILE = 101
