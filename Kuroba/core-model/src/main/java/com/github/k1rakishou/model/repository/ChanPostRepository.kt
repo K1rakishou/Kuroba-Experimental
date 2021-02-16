@@ -41,24 +41,35 @@ class ChanPostRepository(
   private val TAG = "ChanPostRepository"
   private val suspendableInitializer = SuspendableInitializer<Unit>("ChanPostRepository")
 
-  init {
-    applicationScope.launch(Dispatchers.Default) {
+  fun initialize() {
+    Logger.d(TAG, "ChanPostRepository.initialize()")
+
+    applicationScope.launch(Dispatchers.IO) {
       // We need to first delete the posts, so that the threads are only left with the OP
-      val postDeleteResult = deleteOldPostsIfNeeded().mapValue { Unit }
+      val postDeleteResult = deleteOldPostsIfNeeded()
       if (postDeleteResult is ModularResult.Error) {
-        suspendableInitializer.initWithModularResult(postDeleteResult)
+        Logger.e(TAG, "deleteOldPostsIfNeeded() error", postDeleteResult.error)
         return@launch
       }
 
       // Then we can delete the threads themselves
-      val threadDeleteResult = deleteOldThreadsIfNeeded().mapValue { Unit }
-      suspendableInitializer.initWithModularResult(threadDeleteResult)
+      val threadDeleteResult = deleteOldThreadsIfNeeded()
+      if (threadDeleteResult is ModularResult.Error) {
+        Logger.e(TAG, "deleteOldThreadsIfNeeded() error", threadDeleteResult.error)
+        return@launch
+      }
+
+      suspendableInitializer.initWithValue(Unit)
     }
   }
 
   suspend fun awaitUntilInitialized() = suspendableInitializer.awaitUntilInitialized()
 
   fun isReady() = suspendableInitializer.isInitialized()
+
+  fun updateThreadLastAccessTime(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    chanThreadsCache.updateLastAccessTime(threadDescriptor)
+  }
 
   suspend fun getTotalCachedPostsCount(): Int {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
@@ -312,10 +323,6 @@ class ChanPostRepository(
         return@tryWithTransaction resultMap
       }
     }
-  }
-
-  fun updateThreadLastAccessTime(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    chanThreadsCache.updateLastAccessTime(threadDescriptor)
   }
 
   @OptIn(ExperimentalTime::class)

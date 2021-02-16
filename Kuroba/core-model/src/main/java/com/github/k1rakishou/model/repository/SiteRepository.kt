@@ -25,7 +25,7 @@ class SiteRepository(
   suspend fun awaitUntilSitesLoaded() = allSitesLoadedInitializer.awaitUntilInitialized()
 
   @OptIn(ExperimentalTime::class)
-  suspend fun initializeSites(allSiteDescriptors: Collection<SiteDescriptor>): ModularResult<List<ChanSiteData>> {
+  suspend fun initialize(allSiteDescriptors: Collection<SiteDescriptor>): ModularResult<List<ChanSiteData>> {
     return applicationScope.myAsync {
       val result = tryWithTransaction {
         ensureBackgroundThread()

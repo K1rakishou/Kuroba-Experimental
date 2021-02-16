@@ -226,6 +226,10 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       appConstants
     )
 
+    // We need to start initializing ChanPostRepository first because it deletes old posts during
+    // the initialization.
+    modelComponent.getChanPostRepository().initialize()
+
     applicationComponent = DaggerApplicationComponent.builder()
       .application(this)
       .appContext(this)
