@@ -44,7 +44,7 @@ Screenshots can be found [here](https://github.com/K1rakishou/Kuroba-Experimenta
 
 [Latest beta version](https://kuroba.io:8443/latest_apk)
 
-[All beta versions](https://kuroba.io:8443/apks/0) (or [here](https://github.com/K1rakishou/Kuroba-Experimental/releases) look for "Pre-release" versions)
+[All beta versions](https://kuroba.io:8443/apks/0)
 
 ### [Latest release version (v0.5.7)](https://github.com/K1rakishou/Kuroba-Experimental/releases/tag/v0.5.7-release)
 
