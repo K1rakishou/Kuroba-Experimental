@@ -30,8 +30,6 @@ class ChanThreadsCache(
   private val maxCacheSize: Int,
   private val chanCatalogSnapshotCache: ChanCatalogSnapshotCache
 ) {
-  private val tag = "PostsCache"
-
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
   private val chanThreads = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanThread>(128)
@@ -338,12 +336,9 @@ class ChanThreadsCache(
     // Evict 35% of the cache
     val amountToEvict = (currentTotalPostsCount / 100) * 35
     if (amountToEvict > 0) {
-      Logger.d(tag, "evictOld start (posts: ${currentTotalPostsCount}/${maxCacheSize})")
+      Logger.d(TAG, "evictOld start (posts: ${currentTotalPostsCount}/${maxCacheSize})")
       val time = measureTime { evictOld(amountToEvict) }
-      Logger.d(
-        tag,
-        "evictOld end (posts: ${currentTotalPostsCount}/${maxCacheSize}), took ${time}"
-      )
+      Logger.d(TAG, "evictOld end (posts: ${currentTotalPostsCount}/${maxCacheSize}), took ${time}")
     }
 
     lastEvictInvokeTime.set(System.currentTimeMillis())
@@ -364,15 +359,13 @@ class ChanThreadsCache(
       .map { (threadDescriptor, _) -> threadDescriptor }
 
     if (threadDescriptorsSorted.isEmpty()) {
-      Logger.d(tag, "threadDescriptorsSorted is empty, accessTimes size=${accessTimes.size}")
+      Logger.d(TAG, "threadDescriptorsSorted is empty, accessTimes size=${accessTimes.size}")
       return
     }
 
-    Logger.d(
-      tag, "threadDescriptorsSorted size=${threadDescriptorsSorted.size}, " +
+    Logger.d(TAG, "threadDescriptorsSorted size=${threadDescriptorsSorted.size}, " +
         "accessTimes size=${accessTimes.size}, " +
-        "totalPostsCount=${totalPostsCount}"
-    )
+        "totalPostsCount=${totalPostsCount}")
 
     val threadDescriptorsToDelete = mutableListOf<ChanDescriptor.ThreadDescriptor>()
     var amountOfPostsToEvict = amountToEvictParam
@@ -388,13 +381,11 @@ class ChanThreadsCache(
       amountOfPostsToEvict -= count
     }
 
-    Logger.d(
-      tag, "Evicting ${threadDescriptorsToDelete.size} threads, " +
-        "postsToEvict=${amountToEvictParam - amountOfPostsToEvict}"
-    )
+    Logger.d(TAG, "Evicting ${threadDescriptorsToDelete.size} threads, " +
+        "postsToEvict=${amountToEvictParam - amountOfPostsToEvict}")
 
     if (threadDescriptorsToDelete.isEmpty()) {
-      Logger.d(tag, "threadDescriptorsToDelete is empty")
+      Logger.d(TAG, "threadDescriptorsToDelete is empty")
       return
     }
 
@@ -402,6 +393,8 @@ class ChanThreadsCache(
   }
 
   companion object {
+    private const val TAG = "ChanThreadsCache"
+
     // The freshest N threads that will never have their posts evicted from the cache. Let's say we
     // have 16 threads in the cache and we want to delete such amount of posts that it will delete
     // posts from 10 threads. Without considering the immune threads it will evict posts for 10
