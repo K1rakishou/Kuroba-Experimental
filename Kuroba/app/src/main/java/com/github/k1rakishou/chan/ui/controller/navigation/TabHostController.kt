@@ -5,7 +5,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.viewpager.widget.PagerAdapter
 import androidx.viewpager.widget.ViewPager
-import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -18,6 +17,7 @@ import com.github.k1rakishou.chan.ui.widget.DisableableLayout
 import com.github.k1rakishou.chan.ui.widget.KurobaViewPager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.persist_state.PersistableChanState
 import com.google.android.material.tabs.TabLayout
 
 class TabHostController(

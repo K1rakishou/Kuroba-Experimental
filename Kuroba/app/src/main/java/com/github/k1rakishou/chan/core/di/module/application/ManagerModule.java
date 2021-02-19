@@ -21,6 +21,7 @@ import android.content.Context;
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
+import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
 import com.github.k1rakishou.chan.core.helper.LastPageNotificationsHelper;
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder;
@@ -68,9 +69,11 @@ import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Delegate;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_themes.ThemeEngine;
+import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.repository.BoardRepository;
 import com.github.k1rakishou.model.repository.BookmarksRepository;
 import com.github.k1rakishou.model.repository.ChanFilterRepository;
@@ -590,6 +593,19 @@ public class ManagerModule {
                 chanPostRepository,
                 siteManager,
                 bookmarkFilterWatchableThreadsUseCase
+        );
+    }
+
+    @Singleton
+    @Provides
+    public ImageSaverV2Delegate provideImageSaverV2Delegate(
+            FileCacheV2 fileCacheV2,
+            FileManager fileManager
+    ) {
+        return new ImageSaverV2Delegate(
+                ChanSettings.verboseLogs.get(),
+                fileCacheV2,
+                fileManager
         );
     }
 

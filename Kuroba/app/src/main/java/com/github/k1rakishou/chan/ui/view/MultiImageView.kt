@@ -819,7 +819,10 @@ class MultiImageView @JvmOverloads constructor(
     }
   }
 
-  override fun onAudioSessionId(audioSessionId: Int) {
+  // TODO(KurobaEx / @Testme!!!):
+  override fun onAudioSessionIdChanged(audioSessionId: Int) {
+    super.onAudioSessionIdChanged(audioSessionId)
+
     if (exoPlayer != null && exoPlayer?.audioFormat != null) {
       callback?.onAudioLoaded(this)
     }

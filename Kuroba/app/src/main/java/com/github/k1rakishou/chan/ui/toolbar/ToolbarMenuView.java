@@ -77,8 +77,11 @@ public class ToolbarMenuView extends LinearLayout {
                     return;
                 }
 
-                handleClick(item);
+                item.performClick();
             });
+
+            imageView.setOnLongClickListener(v -> item.performLongClick());
+
             imageView.setFocusable(true);
             imageView.setScaleType(ImageView.ScaleType.CENTER);
 
@@ -94,11 +97,6 @@ public class ToolbarMenuView extends LinearLayout {
 
             item.attach(imageView);
         }
-    }
-
-
-    private void handleClick(ToolbarMenuItem item) {
-        item.performClick();
     }
 
     public interface MenuItemClickInterceptor {

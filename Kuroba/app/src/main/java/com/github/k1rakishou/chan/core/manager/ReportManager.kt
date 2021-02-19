@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.TimeUtils.getCurrentDateAndTimeUTC
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.persist_state.PersistableChanState
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import io.reactivex.Completable
@@ -302,23 +303,11 @@ class ReportManager(
       appendLine("Hi-res thumbnails enabled: ${ChanSettings.highResCells.get()}")
       appendLine("Youtube titles and durations parsing enabled: ${ChanSettings.parseYoutubeTitlesAndDuration.get()}")
       appendLine("WEBM streaming enabled: ${ChanSettings.videoStream.get()}")
-      appendLine("Saved files base dir info: ${getFilesLocationInfo()}")
+      appendLine("ImageSaver root directory: ${PersistableChanState.imageSaverV2PersistedOptions.get().rootDirectoryUri}")
       appendLine("Phone layout mode: ${ChanSettings.getCurrentLayoutMode().name}")
       appendLine("OkHttp IPv6 support enabled: ${ChanSettings.okHttpAllowIpv6.get()}")
       appendLine("OkHttp HTTP/2 support enabled: ${ChanSettings.okHttpAllowHttp2.get()}")
     }
-  }
-
-  private fun getFilesLocationInfo(): String {
-    val filesLocationActiveDirType = when {
-      ChanSettings.saveLocation.isFileDirActive() -> "Java API"
-      ChanSettings.saveLocation.isSafDirActive() -> "SAF"
-      else -> "Neither of them is active, wtf?!"
-    }
-
-    return "Java API location: \"${ChanSettings.saveLocation.fileApiBaseDir.get()}\", " +
-      "SAF location: \"${ChanSettings.saveLocation.safBaseDir.get()}\", " +
-      "active: $filesLocationActiveDirType"
   }
 
   private fun createReportRequest(crashLog: CrashLog): ReportRequestWithFile? {

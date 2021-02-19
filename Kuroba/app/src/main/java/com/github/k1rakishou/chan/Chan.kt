@@ -25,7 +25,6 @@ import android.os.Bundle
 import com.github.k1rakishou.BookmarkGridViewInfo
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettingsInfo
-import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.PersistableChanStateInfo
 import com.github.k1rakishou.chan.core.cache.downloader.FileCacheException
 import com.github.k1rakishou.chan.core.cache.downloader.FileCacheException.FileNotFoundOnTheServerException
@@ -56,9 +55,7 @@ import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherCoordinato
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator
 import com.github.k1rakishou.chan.core.net.DnsSelector
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
-import com.github.k1rakishou.chan.ui.service.SavingNotification
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
-import com.github.k1rakishou.chan.ui.settings.base_directory.SavedFilesBaseDirectory
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
@@ -73,6 +70,7 @@ import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.manager.base_directory.DirectoryManager
 import com.github.k1rakishou.model.ModelModuleInjector
 import com.github.k1rakishou.model.di.NetworkModule
+import com.github.k1rakishou.persist_state.PersistableChanState
 import io.reactivex.exceptions.UndeliverableException
 import io.reactivex.plugins.RxJavaPlugins
 import kotlinx.coroutines.CoroutineName
@@ -201,7 +199,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
     val appConstants = AppConstants(applicationContext, flavorType, kurobaExUserAgent)
     logAppConstants(appConstants)
-    SavingNotification.setupChannel()
 
     val okHttpDns = okHttpDns
     val okHttpProtocols = okHttpProtocols
@@ -441,20 +438,17 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     val directoryManager = DirectoryManager(this)
 
     // Add new base directories here
-    val savedFilesBaseDirectory = SavedFilesBaseDirectory()
     var resolutionStrategy = BadPathSymbolResolutionStrategy.ReplaceBadSymbols
 
     if (AppModuleAndroidUtils.getFlavorType() != AndroidUtils.FlavorType.Stable) {
       resolutionStrategy = BadPathSymbolResolutionStrategy.ThrowAnException
     }
 
-    val fileManager = FileManager(
+    return FileManager(
       this,
-      resolutionStrategy, directoryManager
+      resolutionStrategy,
+      directoryManager
     )
-
-    fileManager.registerBaseDir(SavedFilesBaseDirectory::class.java, savedFilesBaseDirectory)
-    return fileManager
   }
 
   override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}

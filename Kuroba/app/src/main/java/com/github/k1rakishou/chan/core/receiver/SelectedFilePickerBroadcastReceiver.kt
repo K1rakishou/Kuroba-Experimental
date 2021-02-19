@@ -4,9 +4,9 @@ import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.persist_state.PersistableChanState
 
 class SelectedFilePickerBroadcastReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context?, intent: Intent?) {

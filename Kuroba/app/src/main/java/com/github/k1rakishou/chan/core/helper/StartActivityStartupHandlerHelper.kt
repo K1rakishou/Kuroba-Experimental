@@ -2,7 +2,9 @@ package com.github.k1rakishou.chan.core.helper
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.DocumentsContract
 import android.widget.Toast
 import androidx.core.util.Pair
 import com.github.k1rakishou.ChanSettings
@@ -17,7 +19,9 @@ import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.features.drawer.DrawerController
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ForegroundWorker
 import com.github.k1rakishou.chan.ui.controller.BrowseController
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.common.AndroidUtils
@@ -25,6 +29,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
+
 
 class StartActivityStartupHandlerHelper(
   private val historyNavigationManager: HistoryNavigationManager,
@@ -67,8 +72,7 @@ class StartActivityStartupHandlerHelper(
     chanFilterManager.awaitUntilInitialized()
 
     Logger.d(TAG, "setupFromStateOrFreshLaunch(intent==null: ${intent == null}, " +
-      "savedInstanceState==null: ${savedInstanceState == null})"
-    )
+        "savedInstanceState==null: ${savedInstanceState == null})")
 
     val newIntentHandled = onNewIntentInternal(intent)
     Logger.d(TAG, "onNewIntentInternal() -> $newIntentHandled")
@@ -161,6 +165,7 @@ class StartActivityStartupHandlerHelper(
     }
 
     Logger.d(TAG, "onNewIntentInternal called, action=${action}")
+
     siteManager.awaitUntilInitialized()
     boardManager.awaitUntilInitialized()
     bookmarksManager.awaitUntilInitialized()
@@ -174,6 +179,20 @@ class StartActivityStartupHandlerHelper(
       }
       intent.action == Intent.ACTION_VIEW -> {
         return restoreFromUrl(intent)
+      }
+      intent.action == ImageSaverV2ForegroundWorker.ACTION_TYPE_NAVIGATE -> {
+        val outputDirUri = extras.getString(ImageSaverV2ForegroundWorker.OUTPUT_DIR_URI)
+          ?.let { uriRaw -> Uri.parse(uriRaw) }
+
+        if (outputDirUri != null) {
+          val newIntent = Intent(Intent.ACTION_VIEW)
+          newIntent.setDataAndType(outputDirUri, DocumentsContract.Document.MIME_TYPE_DIR)
+
+          AppModuleAndroidUtils.openIntent(newIntent)
+        }
+
+        // Always return false here since we don't want to override the default "restore app" mechanism
+        return false
       }
       else -> return false
     }
@@ -271,6 +290,7 @@ class StartActivityStartupHandlerHelper(
     return when (action) {
       NotificationConstants.LAST_PAGE_NOTIFICATION_ACTION -> true
       NotificationConstants.REPLY_NOTIFICATION_ACTION -> true
+      ImageSaverV2ForegroundWorker.ACTION_TYPE_NAVIGATE -> true
       Intent.ACTION_VIEW -> true
       else -> false
     }

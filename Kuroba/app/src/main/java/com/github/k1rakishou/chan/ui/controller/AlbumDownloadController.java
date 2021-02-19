@@ -25,12 +25,10 @@ import android.view.animation.Interpolator;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
@@ -39,14 +37,12 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
-import com.github.k1rakishou.chan.core.saver.ImageSaveTask;
-import com.github.k1rakishou.chan.core.saver.ImageSaver;
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
-import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.RecyclerUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.common.StringUtils;
@@ -63,19 +59,13 @@ import java.util.Locale;
 
 import javax.inject.Inject;
 
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.Disposable;
-import kotlin.Unit;
-
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 
 public class AlbumDownloadController
         extends Controller
         implements View.OnClickListener,
-        ImageSaver.BundledDownloadTaskCallbacks,
         WindowInsetsListener,
         Toolbar.ToolbarHeightUpdatesCallback {
 
@@ -85,11 +75,8 @@ public class AlbumDownloadController
     private List<AlbumDownloadItem> items = new ArrayList<>();
     private ChanDescriptor chanDescriptor;
 
-    @Nullable
-    private LoadingViewController loadingViewController;
-
     @Inject
-    ImageSaver imageSaver;
+    ImageSaverV2 imageSaverV2;
     @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
     @Inject
@@ -132,8 +119,6 @@ public class AlbumDownloadController
         AlbumAdapter adapter = new AlbumAdapter();
         recyclerView.setAdapter(adapter);
 
-        imageSaver.setBundledTaskCallback(this);
-
         globalWindowInsetsManager.addInsetsUpdatesListener(this);
         requireNavController().requireToolbar().addToolbarHeightUpdatesCallback(this);
 
@@ -146,17 +131,6 @@ public class AlbumDownloadController
 
         globalWindowInsetsManager.removeInsetsUpdatesListener(this);
         requireNavController().requireToolbar().removeToolbarHeightUpdatesCallback(this);
-        imageSaver.removeBundleTaskCallback();
-    }
-
-    @Override
-    public boolean onBack() {
-        if (loadingViewController != null) {
-            loadingViewController.stopPresenting();
-            loadingViewController = null;
-            return true;
-        }
-        return super.onBack();
     }
 
     @Override
@@ -203,16 +177,7 @@ public class AlbumDownloadController
             return;
         }
 
-        String siteNameSafe = StringUtils.dirNameRemoveBadCharacters(chanDescriptor.siteName());
-        String subFolder = getSubFolder(siteNameSafe);
-        String message = getString(
-                R.string.album_download_confirm,
-                getQuantityString(R.plurals.image, checkCount, checkCount),
-                (subFolder != null ? subFolder : "your base saved files location") + "."
-        );
-
-        //generate tasks before prompting
-        List<ImageSaveTask> tasks = new ArrayList<>(items.size());
+        List<ChanPostImage> chanPostImages = new ArrayList<>(items.size());
         for (AlbumDownloadItem item : items) {
             if (item.postImage.isInlined() || item.postImage.getHidden()) {
                 // Do not download inlined files via the Album downloads (because they often
@@ -222,113 +187,19 @@ public class AlbumDownloadController
             }
 
             if (item.checked) {
-                ImageSaveTask imageTask = new ImageSaveTask(item.postImage, true);
-                if (subFolder != null) {
-                    imageTask.setSubFolder(subFolder);
-                }
-
-                tasks.add(imageTask);
+                chanPostImages.add(item.postImage);
             }
         }
 
-        DialogFactory.Builder
-                .newBuilder(context, dialogFactory)
-                .withDescription(message)
-                .withCancelable(false)
-                .withPositiveButtonTextId(R.string.ok)
-                .withOnPositiveButtonClickListener(dialog -> {
-                    startAlbumDownloadTask(tasks);
-                    return Unit.INSTANCE;
-                })
-                .create();
-    }
-
-    @Nullable
-    private String getSubFolder(String siteNameSafe) {
-        if (ChanSettings.saveAlbumBoardFolder.get()) {
-            if (ChanSettings.saveAlbumThreadFolder.get()) {
-                return appendAdditionalSubDirectories();
-            } else {
-                return siteNameSafe + File.separator + chanDescriptor.boardCode();
-            }
-        }
-
-        return null;
-    }
-
-    private void startAlbumDownloadTask(List<ImageSaveTask> tasks) {
-        showLoadingView();
-
-        Disposable disposable = imageSaver.startBundledTask(context, tasks)
-                .observeOn(AndroidSchedulers.mainThread())
-                .onErrorReturnItem(ImageSaver.BundledImageSaveResult.UnknownError)
-                .subscribe(this::onResultEvent);
-
-        compositeDisposable().add(disposable);
-    }
-
-    private void onResultEvent(ImageSaver.BundledImageSaveResult result) {
-        BackgroundUtils.ensureMainThread();
-
-        if (result == ImageSaver.BundledImageSaveResult.Ok) {
-            // Do nothing, we got the permissions and started downloading an album
+        if (chanPostImages.isEmpty()) {
             return;
         }
 
-        switch (result) {
-            case BaseDirectoryDoesNotExist:
-                showToast(R.string.files_base_dir_does_not_exist);
-                break;
-            case NoWriteExternalStoragePermission:
-                showToast(R.string.could_not_start_saving_no_permissions);
-                break;
-            case UnknownError:
-                showToast(R.string.album_download_could_not_save_one_or_more_images);
-                break;
-        }
+        // TODO(KurobaEx v0.6.0): show image saver options controller if necessary
+//        imageSaverV2.saveMany(chanPostImages);
 
-        // Only hide in case of an error. If everything is fine the loading view will be hidden when
-        // onBundleDownloadCompleted() is called
-        hideLoadingView();
-    }
-
-    @Override
-    public void onImageProcessed(int downloaded, int failed, int total) {
-        BackgroundUtils.ensureMainThread();
-
-        if (loadingViewController != null) {
-            String message =
-                    getString(R.string.album_download_batch_image_processed_message, downloaded, total, failed);
-
-            loadingViewController.updateWithText(message);
-        }
-    }
-
-    @Override
-    public void onBundleDownloadCompleted() {
-        BackgroundUtils.ensureMainThread();
-        hideLoadingView();
-
-        //extra pop to get out of this controller
+        // Close this controller
         navigationController.popController();
-    }
-
-    private void hideLoadingView() {
-        BackgroundUtils.ensureMainThread();
-
-        if (loadingViewController != null) {
-            loadingViewController.stopPresenting();
-            loadingViewController = null;
-        }
-    }
-
-    private void showLoadingView() {
-        BackgroundUtils.ensureMainThread();
-        hideLoadingView();
-
-        loadingViewController = new LoadingViewController(context, false);
-        loadingViewController.enableBack();
-        navigationController.presentController(loadingViewController);
     }
 
     private void onCheckAllClicked(ToolbarMenuItem menuItem) {
@@ -344,6 +215,7 @@ public class AlbumDownloadController
                 }
             }
         }
+
         updateAllChecked();
         updateTitle();
     }

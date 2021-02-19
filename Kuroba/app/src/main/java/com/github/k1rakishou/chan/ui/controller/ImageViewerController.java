@@ -35,14 +35,12 @@ import android.view.WindowManager;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 
 import com.davemorrissey.labs.subscaleview.ImageViewState;
 import com.github.k1rakishou.ChanSettings;
-import com.github.k1rakishou.PersistableChanState;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
@@ -52,8 +50,8 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
 import com.github.k1rakishou.chan.core.presenter.ImageViewerPresenter;
-import com.github.k1rakishou.chan.core.saver.ImageSaveTask;
-import com.github.k1rakishou.chan.core.saver.ImageSaver;
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2;
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController;
 import com.github.k1rakishou.chan.ui.adapter.ImageViewerAdapter;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView;
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem;
@@ -74,16 +72,19 @@ import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 import com.github.k1rakishou.model.util.ChanPostUtils;
+import com.github.k1rakishou.persist_state.ImageSaverV2Options;
+import com.github.k1rakishou.persist_state.PersistableChanState;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 
 import javax.inject.Inject;
 
+import kotlin.Unit;
+import kotlin.jvm.functions.Function0;
 import okhttp3.HttpUrl;
 
 import static android.view.View.GONE;
@@ -121,7 +122,7 @@ public class ImageViewerController
     @Inject
     ImageLoaderV2 imageLoaderV2;
     @Inject
-    ImageSaver imageSaver;
+    ImageSaverV2 imageSaverV2;
     @Inject
     ThemeEngine themeEngine;
     @Inject
@@ -254,7 +255,12 @@ public class ImageViewerController
         }
 
         menuBuilder.withItem(VOLUME_ID, R.drawable.ic_volume_off_white_24dp, this::volumeClicked);
-        menuBuilder.withItem(SAVE_ID, R.drawable.ic_file_download_white_24dp, this::saveClicked);
+        menuBuilder.withItem(
+                SAVE_ID,
+                R.drawable.ic_file_download_white_24dp,
+                (item) -> saveClicked(item, false),
+                (item) -> saveClicked(item, true)
+        );
 
         NavigationItem.MenuOverflowBuilder overflowBuilder = menuBuilder.withOverflow(
                 navigationController,
@@ -338,11 +344,40 @@ public class ImageViewerController
         presenter.onVolumeClicked();
     }
 
-    private void saveClicked(ToolbarMenuItem item) {
-        item.setEnabled(false);
-        saveImage(presenter.getCurrentPostImage());
+    private void saveClicked(ToolbarMenuItem item, boolean longClick) {
+        saveInternal(longClick, () -> {
+            if (item != null) {
+                item.setEnabled(false);
+            }
 
-        ((ImageViewerAdapter) pager.getAdapter()).onImageSaved(presenter.getCurrentPostImage());
+            ((ImageViewerAdapter) pager.getAdapter()).onImageSaved(presenter.getCurrentPostImage());
+            return Unit.INSTANCE;
+        });
+    }
+
+    private void saveInternal(boolean longClick, Function0<Unit> onActuallyDownloading) {
+        ChanPostImage currentPostImage = presenter.getCurrentPostImage();
+
+        ImageSaverV2Options imageSaverV2Options =
+                PersistableChanState.getImageSaverV2PersistedOptions().get();
+
+        if (longClick || imageSaverV2Options.shouldShowImageSaverOptionsController()) {
+            ImageSaverV2OptionsController controller = new ImageSaverV2OptionsController(
+                    context,
+                    (updatedImageSaverV2Options, newFileName) -> {
+                        imageSaverV2.save(updatedImageSaverV2Options, currentPostImage, newFileName);
+                        onActuallyDownloading.invoke();
+
+                        return Unit.INSTANCE;
+                    },
+                    currentPostImage
+            );
+
+            presentController(controller);
+        } else {
+            imageSaverV2.save(imageSaverV2Options, currentPostImage, null);
+            onActuallyDownloading.invoke();
+        }
     }
 
     private void openBrowserClicked(ToolbarMenuSubItem item) {
@@ -367,7 +402,7 @@ public class ImageViewerController
 
     private void shareContentClicked(ToolbarMenuSubItem item) {
         ChanPostImage postImage = presenter.getCurrentPostImage();
-        shareImage(postImage);
+        imageSaverV2.share(postImage);
     }
 
     private void searchClicked(ToolbarMenuSubItem item) {
@@ -414,36 +449,6 @@ public class ImageViewerController
         if (menuItem != null && presenter.forceReload()) {
             menuItem.setEnabled(false);
         }
-    }
-
-    private void shareImage(ChanPostImage postImage) {
-        ImageSaveTask task = new ImageSaveTask(postImage, false);
-        task.setShare(true);
-
-        imageSaver.startDownloadTask(context, task, message -> {
-            String errorMessage = String.format(Locale.ENGLISH,
-                    "%s, error message = %s",
-                    "Couldn't start download task",
-                    message
-            );
-
-            showToast(errorMessage, Toast.LENGTH_LONG);
-        });
-    }
-
-    private void saveImage(ChanPostImage postImage) {
-        ImageSaveTask task = new ImageSaveTask(postImage, false);
-        task.setShare(false);
-
-        imageSaver.startDownloadTask(context, task, message -> {
-            String errorMessage = String.format(Locale.ENGLISH,
-                    "%s, error message = %s",
-                    "Couldn't start download task",
-                    message
-            );
-
-            showToast(errorMessage, Toast.LENGTH_LONG);
-        });
     }
 
     @Override
@@ -590,12 +595,14 @@ public class ImageViewerController
     }
 
     public void saveImage() {
-        ToolbarMenuItem saveMenuItem = navigation.findItem(SAVE_ID);
-        if (saveMenuItem != null) {
-            saveMenuItem.setEnabled(false);
-        }
+        saveInternal(false, () -> {
+            ToolbarMenuItem saveMenuItem = navigation.findItem(SAVE_ID);
+            if (saveMenuItem != null) {
+                saveMenuItem.setEnabled(false);
+            }
 
-        saveImage(presenter.getCurrentPostImage());
+            return Unit.INSTANCE;
+        });
     }
 
     public void showProgress(boolean show) {

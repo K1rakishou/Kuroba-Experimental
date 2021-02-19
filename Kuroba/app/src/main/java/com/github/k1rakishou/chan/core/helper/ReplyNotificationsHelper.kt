@@ -899,7 +899,7 @@ class ReplyNotificationsHelper(
     private const val MAX_NOTIFICATION_LINE_LENGTH = 128
 
     // For Android O and above
-    private val notificationsGroup by lazy { "${BuildConfig.APPLICATION_ID}_${getFlavorType().name}" }
+    private val notificationsGroup by lazy { "${TAG}_${BuildConfig.APPLICATION_ID}_${getFlavorType().name}" }
 
     private val REPLIES_COMPARATOR = Comparator<ThreadBookmarkReplyView> { o1, o2 ->
       o1.postDescriptor.postNo.compareTo(o2.postDescriptor.postNo)

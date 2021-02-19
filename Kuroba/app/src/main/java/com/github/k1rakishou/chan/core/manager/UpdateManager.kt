@@ -28,7 +28,6 @@ import android.text.TextUtils
 import androidx.core.content.FileProvider
 import androidx.core.text.parseAsHtml
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
@@ -59,6 +58,7 @@ import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.callback.FileCreateCallback
 import com.github.k1rakishou.fsaf.file.RawFile
+import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

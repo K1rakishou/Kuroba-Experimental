@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.bookmarks.epoxy
 
 import android.content.Context
+import android.view.ViewParent
 import androidx.appcompat.widget.AppCompatImageView
 import com.airbnb.epoxy.EpoxyAttribute
 import com.airbnb.epoxy.EpoxyModelClass
@@ -109,7 +110,7 @@ abstract class EpoxyListThreadBookmarkViewHolder
     }
   }
 
-  override fun createNewHolder(): BaseThreadBookmarkViewHolder {
+  override fun createNewHolder(parent: ViewParent): BaseThreadBookmarkViewHolder {
     return BaseThreadBookmarkViewHolder()
   }
 

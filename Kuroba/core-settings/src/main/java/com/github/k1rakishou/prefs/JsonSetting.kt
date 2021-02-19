@@ -3,6 +3,7 @@ package com.github.k1rakishou.prefs
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.Setting
 import com.github.k1rakishou.SettingProvider
+import com.github.k1rakishou.core_logger.Logger
 import com.google.gson.Gson
 
 class JsonSetting<T>(
@@ -16,7 +17,13 @@ class JsonSetting<T>(
 
   override fun get(): T {
     val json = settingProvider.getString(key, ChanSettings.EMPTY_JSON)
-    cached = gson.fromJson(json, clazz)
+
+    cached = try {
+      gson.fromJson(json, clazz)
+    } catch (error: Throwable) {
+      Logger.e("JsonSetting", "JsonSetting<${clazz.simpleName}>.get()", error)
+      def
+    }
 
     return cached!!
   }

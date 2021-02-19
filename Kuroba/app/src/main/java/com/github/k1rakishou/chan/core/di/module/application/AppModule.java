@@ -27,8 +27,8 @@ import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
-import com.github.k1rakishou.chan.core.saver.ImageSaver;
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_logger.Logger;
@@ -131,8 +131,17 @@ public class AppModule {
 
     @Provides
     @Singleton
-    public ImageSaver provideImageSaver(FileManager fileManager) {
-        return new ImageSaver(fileManager);
+    public ImageSaverV2 provideImageSaverV2(
+            Context appContext,
+            CoroutineScope appScope,
+            Gson gson
+    ) {
+        return new ImageSaverV2(
+                ChanSettings.verboseLogs.get(),
+                appContext,
+                appScope,
+                gson
+        );
     }
 
     @Provides

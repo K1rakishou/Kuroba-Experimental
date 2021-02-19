@@ -21,6 +21,7 @@ import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryHeaderView;
 import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesController;
 import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10GestureZonesController;
 import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10GestureZonesView;
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController;
 import com.github.k1rakishou.chan.features.login.LoginController;
 import com.github.k1rakishou.chan.features.proxies.ProxyEditorController;
 import com.github.k1rakishou.chan.features.proxies.ProxySetupController;
@@ -90,7 +91,6 @@ import com.github.k1rakishou.chan.ui.controller.PostRepliesController;
 import com.github.k1rakishou.chan.ui.controller.RemovedPostsController;
 import com.github.k1rakishou.chan.ui.controller.ReportController;
 import com.github.k1rakishou.chan.ui.controller.ReportProblemController;
-import com.github.k1rakishou.chan.ui.controller.SaveLocationController;
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController;
 import com.github.k1rakishou.chan.ui.controller.ViewThreadController;
 import com.github.k1rakishou.chan.ui.controller.crashlogs.ReviewCrashLogsController;
@@ -190,7 +190,6 @@ public interface ActivityComponent {
     void inject(PostRepliesController postRepliesController);
     void inject(RemovedPostsController removedPostsController);
     void inject(ReportController reportController);
-    void inject(SaveLocationController saveLocationController);
     void inject(SitesSetupController sitesSetupController);
     void inject(SplitNavigationController splitNavigationController);
     void inject(StyledToolbarNavigationController styledToolbarNavigationController);
@@ -224,6 +223,7 @@ public interface ActivityComponent {
     void inject(CloudFlareBypassController cloudFlareBypassController);
     void inject(TabHostController tabHostController);
     void inject(FilterWatchesController filterWatchesController);
+    void inject(ImageSaverV2OptionsController imageSaverV2OptionsController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

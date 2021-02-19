@@ -4,7 +4,6 @@ import android.graphics.Typeface
 import android.text.SpannableString
 import android.text.style.StyleSpan
 import androidx.core.text.buildSpannedString
-import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.site.sites.search.*
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
@@ -17,6 +16,7 @@ import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan
 import com.github.k1rakishou.core_themes.ChanThemeColorId
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.persist_state.IndexAndTop
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
@@ -102,11 +102,11 @@ internal class SearchResultsPresenter(
     searchResultsStateStorage.resetLastRecyclerViewScrollState()
   }
 
-  fun updateLastRecyclerViewScrollState(indexAndTop: PersistableChanState.IndexAndTop) {
+  fun updateLastRecyclerViewScrollState(indexAndTop: IndexAndTop) {
     searchResultsStateStorage.updateLastRecyclerViewScrollState(indexAndTop)
   }
 
-  fun lastRecyclerViewScrollStateOrNull(): PersistableChanState.IndexAndTop? {
+  fun lastRecyclerViewScrollStateOrNull(): IndexAndTop? {
     return searchResultsStateStorage.lastRecyclerViewScrollState
   }
 

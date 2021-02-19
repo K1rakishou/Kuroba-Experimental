@@ -1,11 +1,52 @@
 package com.github.k1rakishou.model.di
 
-import com.github.k1rakishou.json.*
+import com.github.k1rakishou.json.BooleanJsonSetting
+import com.github.k1rakishou.json.IntegerJsonSetting
+import com.github.k1rakishou.json.JsonSetting
+import com.github.k1rakishou.json.LongJsonSetting
+import com.github.k1rakishou.json.RuntimeTypeAdapterFactory
+import com.github.k1rakishou.json.StringJsonSetting
 import com.github.k1rakishou.model.KurobaDatabase
-import com.github.k1rakishou.model.repository.*
-import com.github.k1rakishou.model.source.cache.*
+import com.github.k1rakishou.model.repository.BoardRepository
+import com.github.k1rakishou.model.repository.BookmarksRepository
+import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
+import com.github.k1rakishou.model.repository.ChanFilterRepository
+import com.github.k1rakishou.model.repository.ChanFilterWatchRepository
+import com.github.k1rakishou.model.repository.ChanPostHideRepository
+import com.github.k1rakishou.model.repository.ChanPostImageRepository
+import com.github.k1rakishou.model.repository.ChanPostRepository
+import com.github.k1rakishou.model.repository.ChanSavedReplyRepository
+import com.github.k1rakishou.model.repository.ChanThreadViewableInfoRepository
+import com.github.k1rakishou.model.repository.DatabaseMetaRepository
+import com.github.k1rakishou.model.repository.HistoryNavigationRepository
+import com.github.k1rakishou.model.repository.InlinedFileInfoRepository
+import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository
+import com.github.k1rakishou.model.repository.SeenPostRepository
+import com.github.k1rakishou.model.repository.SiteRepository
+import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository
+import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
+import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
+import com.github.k1rakishou.model.source.cache.ChanPostBuilderCache
+import com.github.k1rakishou.model.source.cache.GenericSuspendableCacheSource
+import com.github.k1rakishou.model.source.cache.ThreadBookmarkCache
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
-import com.github.k1rakishou.model.source.local.*
+import com.github.k1rakishou.model.source.local.BoardLocalSource
+import com.github.k1rakishou.model.source.local.ChanCatalogSnapshotLocalSource
+import com.github.k1rakishou.model.source.local.ChanFilterLocalSource
+import com.github.k1rakishou.model.source.local.ChanFilterWatchLocalSource
+import com.github.k1rakishou.model.source.local.ChanPostHideLocalSource
+import com.github.k1rakishou.model.source.local.ChanPostImageLocalSource
+import com.github.k1rakishou.model.source.local.ChanPostLocalSource
+import com.github.k1rakishou.model.source.local.ChanSavedReplyLocalSource
+import com.github.k1rakishou.model.source.local.ChanThreadViewableInfoLocalSource
+import com.github.k1rakishou.model.source.local.DatabaseMetaLocalSource
+import com.github.k1rakishou.model.source.local.InlinedFileInfoLocalSource
+import com.github.k1rakishou.model.source.local.MediaServiceLinkExtraContentLocalSource
+import com.github.k1rakishou.model.source.local.NavHistoryLocalSource
+import com.github.k1rakishou.model.source.local.SeenPostLocalSource
+import com.github.k1rakishou.model.source.local.SiteLocalSource
+import com.github.k1rakishou.model.source.local.ThreadBookmarkGroupLocalSource
+import com.github.k1rakishou.model.source.local.ThreadBookmarkLocalSource
 import com.github.k1rakishou.model.source.remote.InlinedFileInfoRemoteSource
 import com.github.k1rakishou.model.source.remote.MediaServiceLinkExtraContentRemoteSource
 import com.google.gson.Gson
@@ -276,6 +317,18 @@ class ModelModule {
     return DatabaseMetaLocalSource(database)
   }
 
+  @Singleton
+  @Provides
+  fun provideChanPostImageLocalSource(
+    database: KurobaDatabase,
+    chanDescriptorCache: ChanDescriptorCache,
+  ): ChanPostImageLocalSource {
+    return ChanPostImageLocalSource(
+      database,
+      chanDescriptorCache
+    )
+  }
+
   /**
    * Remote sources
    * */
@@ -532,6 +585,21 @@ class ModelModule {
   ): DatabaseMetaRepository {
     return DatabaseMetaRepository(
       database,
+      dependencies.coroutineScope,
+      localSource
+    )
+  }
+
+  @Singleton
+  @Provides
+  fun provideChanPostImageRepository(
+    database: KurobaDatabase,
+    dependencies: ModelComponent.Dependencies,
+    localSource: ChanPostImageLocalSource
+  ): ChanPostImageRepository {
+    return ChanPostImageRepository(
+      database,
+      dependencies.isDevFlavor,
       dependencies.coroutineScope,
       localSource
     )

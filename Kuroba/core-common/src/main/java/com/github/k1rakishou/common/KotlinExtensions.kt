@@ -483,6 +483,16 @@ inline fun CharSequence?.isNotNullNorEmpty(): Boolean {
   return this != null && this.length > 0
 }
 
+@Suppress("ReplaceSizeCheckWithIsNotEmpty", "NOTHING_TO_INLINE")
+@OptIn(ExperimentalContracts::class)
+inline fun CharSequence?.isNotNullNorBlank(): Boolean {
+  contract {
+    returns(true) implies (this@isNotNullNorBlank != null)
+  }
+
+  return this != null && this.isNotBlank()
+}
+
 suspend fun <T> CompletableDeferred<T>.awaitSilently(defaultValue: T): T {
   return try {
     await()
@@ -595,4 +605,12 @@ fun Int.mbytesToBytes(): Long {
 
 fun Long.mbytesToBytes(): Long {
   return this * (1024L * 1024L)
+}
+
+fun StringBuilder.appendIfNotEmpty(text: String): StringBuilder {
+  if (isNotEmpty()) {
+    append(text)
+  }
+
+  return this
 }

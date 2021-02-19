@@ -29,7 +29,6 @@ import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.github.k1rakishou.PersistableChanState;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.saver.FileWatcher;
 import com.github.k1rakishou.chan.ui.adapter.FilesAdapter;
@@ -37,6 +36,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.RecyclerUtils;
 import com.github.k1rakishou.core_themes.ThemeEngine;
+import com.github.k1rakishou.persist_state.IndexAndTop;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -139,7 +139,7 @@ public class FilesLayout
     public void setFiles(FileWatcher.FileItems fileItems) {
         // Save the associated list position
         if (currentFileItems != null) {
-            PersistableChanState.IndexAndTop indexTop = RecyclerUtils.getIndexAndTop(recyclerView);
+            IndexAndTop indexTop = RecyclerUtils.getIndexAndTop(recyclerView);
             currentHistory.index = indexTop.getIndex();
             currentHistory.top = indexTop.getTop();
             history.put(currentFileItems.path.getAbsolutePath(), currentHistory);

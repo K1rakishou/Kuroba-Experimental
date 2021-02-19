@@ -113,14 +113,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         </activity>
 
-        <service
-            android:name="com.github.k1rakishou.chan.ui.service.SavingNotification"
-            android:exported="false" />
-
         <receiver android:name=".core.receiver.SelectedFilePickerBroadcastReceiver"
             android:exported="false"/>
 
         <receiver android:name=".core.receiver.ReplyNotificationDeleteIntentBroadcastReceiver"
+            android:exported="false"/>
+
+        <receiver android:name=".core.receiver.CancelImagesDownloadBroadcastReceiver"
             android:exported="false"/>
 
         <provider

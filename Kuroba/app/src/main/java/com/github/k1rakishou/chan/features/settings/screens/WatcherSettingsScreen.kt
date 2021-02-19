@@ -7,7 +7,6 @@ import android.text.util.Linkify
 import android.widget.TextView
 import androidx.core.text.util.LinkifyCompat
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
@@ -20,6 +19,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.PhoneWithBackgroundLimitationsHelper
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.persist_state.PersistableChanState
 import java.util.concurrent.TimeUnit
 
 

@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.features.settings
 
 import android.content.Context
 import com.airbnb.epoxy.EpoxyRecyclerView
-import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
@@ -26,6 +25,7 @@ import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.repository.InlinedFileInfoRepository
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository
 import com.github.k1rakishou.model.repository.SeenPostRepository
+import com.github.k1rakishou.persist_state.IndexAndTop
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
@@ -167,19 +167,7 @@ class SettingsCoordinator(
     )
   }
 
-  private val mediaSettingsScreen by lazy {
-    val runtimePermissionsHelper = (context as StartActivity).runtimePermissionsHelper
-
-    MediaSettingsScreen(
-      context,
-      this,
-      navigationController,
-      fileManager,
-      fileChooser,
-      runtimePermissionsHelper,
-      dialogFactory
-    )
-  }
+  private val mediaSettingsScreen by lazy { MediaSettingsScreen(context) }
 
   private val securitySettingsScreen by lazy {
     SecuritySettingsScreen(
@@ -193,7 +181,7 @@ class SettingsCoordinator(
   private val onSearchEnteredSubject = BehaviorProcessor.create<String>()
   private val renderSettingsSubject = PublishProcessor.create<RenderAction>()
 
-  private val scrollPositionsPerScreen = mutableMapOf<IScreenIdentifier, PersistableChanState.IndexAndTop>()
+  private val scrollPositionsPerScreen = mutableMapOf<IScreenIdentifier, IndexAndTop>()
 
   private val settingsGraphDelegate = lazy { buildSettingsGraph() }
   private val settingsGraph by settingsGraphDelegate
@@ -292,7 +280,7 @@ class SettingsCoordinator(
     renderSettingsSubject.onNext(RenderAction.RenderScreen(settingsScreen))
   }
 
-  fun getCurrentIndexAndTopOrNull(): PersistableChanState.IndexAndTop? {
+  fun getCurrentIndexAndTopOrNull(): IndexAndTop? {
     val currentScreen = if (screenStack.isEmpty()) {
       null
     } else {

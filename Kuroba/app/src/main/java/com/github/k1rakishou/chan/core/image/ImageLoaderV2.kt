@@ -243,7 +243,10 @@ class ImageLoaderV2(
 
       val success = cacheHandler.markFileDownloaded(newCacheFile)
       cacheHandler.fileWasAdded(fileManager.getLength(newCacheFile))
-      Logger.d(TAG, "cacheResultBitmapOnDisk() '$url' done, success: $success")
+
+      if (verboseLogs) {
+        Logger.d(TAG, "cacheResultBitmapOnDisk() '$url' done, success: $success")
+      }
     }
   }
 

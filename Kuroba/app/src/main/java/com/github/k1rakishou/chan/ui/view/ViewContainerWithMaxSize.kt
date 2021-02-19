@@ -26,16 +26,20 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
   var maxHeight: Int = 0
 
   init {
-    AppModuleAndroidUtils.extractActivityComponent(context)
-      .inject(this)
+    if (!isInEditMode) {
+      AppModuleAndroidUtils.extractActivityComponent(context)
+        .inject(this)
+    }
   }
 
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
 
-    val (displayWidth, displayHeight) = AndroidUtils.getDisplaySize()
-    this.maxWidth = displayWidth
-    this.maxHeight = displayHeight
+    if (!isInEditMode) {
+      val (displayWidth, displayHeight) = AndroidUtils.getDisplaySize()
+      this.maxWidth = displayWidth
+      this.maxHeight = displayHeight
+    }
   }
 
   override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -44,38 +48,40 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
     var width = MeasureSpec.getSize(widthMeasureSpec)
     var height = MeasureSpec.getSize(heightMeasureSpec)
 
-    val horizontalPaddings = globalWindowInsetsManager.left() +
-      globalWindowInsetsManager.right() +
-      paddingStart +
-      paddingEnd +
-      marginStart +
-      marginEnd
+    if (!isInEditMode) {
+      val horizontalPaddings = globalWindowInsetsManager.left() +
+        globalWindowInsetsManager.right() +
+        paddingStart +
+        paddingEnd +
+        marginStart +
+        marginEnd
 
-    val verticalPaddings = globalWindowInsetsManager.top() +
-      globalWindowInsetsManager.bottom() +
-      paddingTop +
-      paddingBottom +
-      marginTop +
-      marginBottom
+      val verticalPaddings = globalWindowInsetsManager.top() +
+        globalWindowInsetsManager.bottom() +
+        paddingTop +
+        paddingBottom +
+        marginTop +
+        marginBottom
 
-    val maxWidthWithPaddings = if (maxWidth <= 0) {
-      0
-    } else {
-      maxWidth - horizontalPaddings
-    }
+      val maxWidthWithPaddings = if (maxWidth <= 0) {
+        0
+      } else {
+        maxWidth - horizontalPaddings
+      }
 
-    val maxHeightWithPaddings = if (maxHeight <= 0) {
-      0
-    } else {
-      maxHeight - verticalPaddings
-    }
+      val maxHeightWithPaddings = if (maxHeight <= 0) {
+        0
+      } else {
+        maxHeight - verticalPaddings
+      }
 
-    if (maxWidthWithPaddings in 1 until width) {
-      width = maxWidthWithPaddings
-    }
+      if (maxWidthWithPaddings in 1 until width) {
+        width = maxWidthWithPaddings
+      }
 
-    if (maxHeightWithPaddings in 1 until height) {
-      height = maxHeightWithPaddings
+      if (maxHeightWithPaddings in 1 until height) {
+        height = maxHeightWithPaddings
+      }
     }
 
     setMeasuredDimension(

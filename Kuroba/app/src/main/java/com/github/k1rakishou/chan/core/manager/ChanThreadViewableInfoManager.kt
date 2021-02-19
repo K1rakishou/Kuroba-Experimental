@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
@@ -10,6 +9,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.thread.ChanThreadViewableInfo
 import com.github.k1rakishou.model.data.thread.ChanThreadViewableInfoView
 import com.github.k1rakishou.model.repository.ChanThreadViewableInfoRepository
+import com.github.k1rakishou.persist_state.IndexAndTop
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -65,7 +65,7 @@ class ChanThreadViewableInfoManager(
     }
   }
 
-  fun getIndexAndTop(threadDescriptor: ChanDescriptor.ThreadDescriptor): PersistableChanState.IndexAndTop? {
+  fun getIndexAndTop(threadDescriptor: ChanDescriptor.ThreadDescriptor): IndexAndTop? {
     return lock.read {
       val chanThreadViewableInfo = chanThreadViewableMap[threadDescriptor]
         ?: return@read null
@@ -73,7 +73,7 @@ class ChanThreadViewableInfoManager(
       val listViewIndex = chanThreadViewableInfo.listViewIndex
       val listViewTop = chanThreadViewableInfo.listViewTop
 
-      return@read PersistableChanState.IndexAndTop(listViewIndex, listViewTop)
+      return@read IndexAndTop(listViewIndex, listViewTop)
     }
   }
 

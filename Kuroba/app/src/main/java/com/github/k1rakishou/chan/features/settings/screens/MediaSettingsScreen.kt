@@ -3,60 +3,22 @@ package com.github.k1rakishou.chan.features.settings.screens
 import android.content.Context
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.features.settings.MediaScreen
-import com.github.k1rakishou.chan.features.settings.SettingsCoordinatorCallbacks
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
-import com.github.k1rakishou.chan.features.settings.screens.delegate.MediaSettingsDelegate
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.RangeSettingV2
-import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
-import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
-import com.github.k1rakishou.fsaf.FileChooser
-import com.github.k1rakishou.fsaf.FileManager
 
 class MediaSettingsScreen(
-  context: Context,
-  private val callback: SettingsCoordinatorCallbacks,
-  private val navigationController: NavigationController,
-  private val fileManager: FileManager,
-  private val fileChooser: FileChooser,
-  private val runtimePermissionsHelper: RuntimePermissionsHelper,
-  private val dialogFactory: DialogFactory
+  context: Context
 ) : BaseSettingsScreen(
   context,
   MediaScreen,
   R.string.settings_screen_media
 ) {
-  private val mediaSettingsDelegate by lazy {
-    MediaSettingsDelegate(
-      context,
-      callback,
-      navigationController,
-      fileManager,
-      fileChooser,
-      runtimePermissionsHelper,
-      dialogFactory
-    )
-  }
-
-  override fun onCreate() {
-    super.onCreate()
-
-    mediaSettingsDelegate.onCreate()
-  }
-
-  override fun onDestroy() {
-    super.onDestroy()
-
-    mediaSettingsDelegate.onDestroy()
-  }
 
   override fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
-      buildMediaSavingSettingsGroup(),
       buildCacheSizeSettingGroup(),
       buildVideoSettingsGroup(),
       buildLoadingSettingsGroup()
@@ -239,76 +201,6 @@ class MediaSettingsScreen(
           currentValueStringFunc = { "${ChanSettings.prefetchDiskCacheSizeMegabytes.get()} MB" },
           requiresRestart = true,
           setting = ChanSettings.prefetchDiskCacheSizeMegabytes
-        )
-
-        return group
-      }
-    )
-  }
-
-  private fun buildMediaSavingSettingsGroup(): SettingsGroup.SettingsGroupBuilder {
-    val identifier = MediaScreen.MediaSavingGroup
-
-    return SettingsGroup.SettingsGroupBuilder(
-      groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
-        val group = SettingsGroup(
-          groupTitle = context.getString(R.string.settings_group_saving),
-          groupIdentifier = identifier
-        )
-
-        group += LinkSettingV2.createBuilder(
-          context = context,
-          identifier =  MediaScreen.MediaSavingGroup.MediaSaveLocation,
-          topDescriptionIdFunc = { R.string.save_location_screen },
-          bottomDescriptionStringFunc = { mediaSettingsDelegate.getSaveLocation() },
-          callback = { mediaSettingsDelegate.showUseSAFOrOldAPIForSaveLocationDialog() }
-        )
-
-        // Individual images
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = MediaScreen.MediaSavingGroup.SaveBoardFolder,
-          topDescriptionIdFunc = { R.string.setting_save_board_folder },
-          bottomDescriptionIdFunc = { R.string.setting_save_board_folder_description },
-          setting = ChanSettings.saveBoardFolder
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = MediaScreen.MediaSavingGroup.SaveThreadFolder,
-          topDescriptionIdFunc = { R.string.setting_save_thread_folder },
-          bottomDescriptionIdFunc = { R.string.setting_save_thread_folder_description },
-          setting = ChanSettings.saveThreadFolder,
-          dependsOnSetting = ChanSettings.saveBoardFolder
-        )
-        // =============
-
-        // Albums
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = MediaScreen.MediaSavingGroup.SaveAlbumBoardFolder,
-          topDescriptionIdFunc = { R.string.setting_save_album_board_folder },
-          bottomDescriptionIdFunc = { R.string.setting_save_album_board_folder_description },
-          setting = ChanSettings.saveAlbumBoardFolder
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = MediaScreen.MediaSavingGroup.SaveAlbumThreadFolder,
-          topDescriptionIdFunc = { R.string.setting_save_album_thread_folder },
-          bottomDescriptionIdFunc = { R.string.setting_save_album_thread_folder_description },
-          setting = ChanSettings.saveAlbumThreadFolder,
-          dependsOnSetting = ChanSettings.saveAlbumBoardFolder
-        )
-        // =============
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = MediaScreen.MediaSavingGroup.SaveServerFilename,
-          topDescriptionIdFunc = { R.string.setting_save_server_filename },
-          bottomDescriptionIdFunc = { R.string.setting_save_server_filename_description },
-          setting = ChanSettings.saveServerFilename
         )
 
         return group

@@ -19,10 +19,11 @@ import com.github.k1rakishou.chan.core.di.module.application.SiteModule;
 import com.github.k1rakishou.chan.core.di.module.application.UseCaseModule;
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkBackgroundWatcherWorker;
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherWorker;
+import com.github.k1rakishou.chan.core.receiver.CancelImagesDownloadBroadcastReceiver;
 import com.github.k1rakishou.chan.core.receiver.ReplyNotificationDeleteIntentBroadcastReceiver;
-import com.github.k1rakishou.chan.core.saver.ImageSaveTask;
 import com.github.k1rakishou.chan.core.site.SiteBase;
 import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesPresenter;
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ForegroundWorker;
 import com.github.k1rakishou.chan.ui.widget.SnackbarWrapper;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_themes.ThemeEngine;
@@ -63,7 +64,8 @@ public interface ApplicationComponent {
     void inject(ReplyNotificationDeleteIntentBroadcastReceiver replyNotificationDeleteIntentBroadcastReceiver);
     void inject(CloudFlareHandlerInterceptor cloudFlareHandlerInterceptor);
     void inject(FilterWatchesPresenter filterWatchesPresenter);
-    void inject(ImageSaveTask imageSaveTask);
+    void inject(ImageSaverV2ForegroundWorker imageSaverV2ForegroundWorker);
+    void inject(CancelImagesDownloadBroadcastReceiver cancelImagesDownloadBroadcastReceiver);
 
     @Component.Builder
     interface Builder {

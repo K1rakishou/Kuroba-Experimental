@@ -1,13 +1,17 @@
 package com.github.k1rakishou.model.dao
 
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.entity.chan.board.ChanBoardIdEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostFull
 import com.github.k1rakishou.model.entity.chan.post.ChanPostIdEntity
+import com.github.k1rakishou.model.entity.chan.site.ChanSiteIdEntity
+import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
 
 @Dao
 abstract class ChanPostDao {
@@ -43,6 +47,27 @@ abstract class ChanPostDao {
 
   @Query("SELECT COUNT(*) FROM ${ChanPostIdEntity.TABLE_NAME}")
   abstract suspend fun totalPostsCount(): Int
+
+  @Query("""
+    SELECT 
+	      post_id,
+        post_no,
+        post_sub_no,
+	      thread_no, 
+	      board_code, 
+	      site_name
+    FROM ${ChanPostIdEntity.TABLE_NAME} post_ids
+    INNER JOIN ${ChanThreadEntity.TABLE_NAME} threads 
+        ON threads.${ChanThreadEntity.THREAD_ID_COLUMN_NAME} = post_ids.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME}
+    INNER JOIN ${ChanBoardIdEntity.TABLE_NAME} boards 
+        ON boards.${ChanBoardIdEntity.BOARD_ID_COLUMN_NAME} = threads.${ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME}
+    INNER JOIN ${ChanSiteIdEntity.TABLE_NAME} sites 
+        ON sites.${ChanSiteIdEntity.SITE_NAME_COLUMN_NAME} = boards.${ChanBoardIdEntity.OWNER_SITE_NAME_COLUMN_NAME}
+    WHERE post_ids.${ChanPostIdEntity.POST_ID_COLUMN_NAME} IN (:chanPostIds)
+  """)
+  abstract suspend fun selectPostDescriptorDatabaseObjectsByPostIds(
+    chanPostIds: Set<Long>
+  ): List<PostDescriptorDatabaseObject>
 
   @Query("""
         SELECT *
@@ -121,5 +146,20 @@ abstract class ChanPostDao {
 
   @Query("SELECT * FROM ${ChanPostEntity.TABLE_NAME}")
   abstract suspend fun testGetAllChanPosts(): List<ChanPostEntity>
+
+  data class PostDescriptorDatabaseObject(
+    @ColumnInfo(name = ChanPostIdEntity.POST_ID_COLUMN_NAME)
+    val postDatabaseId: Long,
+    @ColumnInfo(name = ChanPostIdEntity.POST_NO_COLUMN_NAME)
+    val postNo: Long,
+    @ColumnInfo(name = ChanPostIdEntity.POST_SUB_NO_COLUMN_NAME)
+    val postSubNo: Long,
+    @ColumnInfo(name = ChanThreadEntity.THREAD_NO_COLUMN_NAME)
+    val threadNo: Long,
+    @ColumnInfo(name = ChanBoardIdEntity.BOARD_CODE_COLUMN_NAME)
+    val boardCode: String,
+    @ColumnInfo(name = ChanSiteIdEntity.SITE_NAME_COLUMN_NAME)
+    val siteName: String
+  )
 
 }

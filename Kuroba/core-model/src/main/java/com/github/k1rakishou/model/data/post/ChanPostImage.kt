@@ -97,6 +97,18 @@ class ChanPostImage(
     return (AppConstants.RESOURCES_ENDPOINT + "hide_thumb.png").toHttpUrl()
   }
 
+  fun getServerFilenameWithExtension(): String? {
+    if (serverFilename.isNullOrEmpty()) {
+      return null
+    }
+
+    if (extension.isNullOrEmpty()) {
+      return null
+    }
+
+    return "$serverFilename.$extension"
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is ChanPostImage) return false

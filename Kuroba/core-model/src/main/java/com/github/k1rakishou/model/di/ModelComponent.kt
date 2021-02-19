@@ -2,7 +2,23 @@ package com.github.k1rakishou.model.di
 
 import android.app.Application
 import com.github.k1rakishou.common.AppConstants
-import com.github.k1rakishou.model.repository.*
+import com.github.k1rakishou.model.repository.BoardRepository
+import com.github.k1rakishou.model.repository.BookmarksRepository
+import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
+import com.github.k1rakishou.model.repository.ChanFilterRepository
+import com.github.k1rakishou.model.repository.ChanFilterWatchRepository
+import com.github.k1rakishou.model.repository.ChanPostHideRepository
+import com.github.k1rakishou.model.repository.ChanPostImageRepository
+import com.github.k1rakishou.model.repository.ChanPostRepository
+import com.github.k1rakishou.model.repository.ChanSavedReplyRepository
+import com.github.k1rakishou.model.repository.ChanThreadViewableInfoRepository
+import com.github.k1rakishou.model.repository.DatabaseMetaRepository
+import com.github.k1rakishou.model.repository.HistoryNavigationRepository
+import com.github.k1rakishou.model.repository.InlinedFileInfoRepository
+import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository
+import com.github.k1rakishou.model.repository.SeenPostRepository
+import com.github.k1rakishou.model.repository.SiteRepository
+import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository
 import com.github.k1rakishou.model.source.cache.ChanPostBuilderCache
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import com.google.gson.Gson
@@ -37,6 +53,7 @@ interface ModelComponent {
   fun getThreadBookmarkGroupRepository(): ThreadBookmarkGroupRepository
   fun getChanCatalogSnapshotRepository(): ChanCatalogSnapshotRepository
   fun getChanFilterWatchRepository(): ChanFilterWatchRepository
+  fun getChanPostImageRepository(): ChanPostImageRepository
   fun getChanThreadsCache(): ChanThreadsCache
   fun getChanPostBuilderCache(): ChanPostBuilderCache
 

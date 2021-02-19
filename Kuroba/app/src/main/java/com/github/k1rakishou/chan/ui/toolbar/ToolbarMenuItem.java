@@ -60,6 +60,7 @@ public class ToolbarMenuItem {
     public Drawable drawable;
     public final List<ToolbarMenuSubItem> subItems = new ArrayList<>();
     private ClickCallback clickCallback;
+    private ClickCallback longClickCallback;
 
     @Nullable
     private ToobarThreedotMenuCallback threedotMenuCallback;
@@ -85,6 +86,18 @@ public class ToolbarMenuItem {
         this.id = id;
         this.drawable = drawable;
         this.clickCallback = clickCallback;
+    }
+
+    public ToolbarMenuItem(
+            int id,
+            Drawable drawable,
+            ClickCallback clickCallback,
+            ClickCallback longClickCallback
+    ) {
+        this.id = id;
+        this.drawable = drawable;
+        this.clickCallback = clickCallback;
+        this.longClickCallback = longClickCallback;
     }
 
     public ToolbarMenuItem(
@@ -336,6 +349,15 @@ public class ToolbarMenuItem {
         if (clickCallback != null) {
             clickCallback.clicked(this);
         }
+    }
+
+    public boolean performLongClick() {
+        if (longClickCallback != null) {
+            longClickCallback.clicked(this);
+            return true;
+        }
+
+        return false;
     }
 
     public void setCallback(ClickCallback callback) {
