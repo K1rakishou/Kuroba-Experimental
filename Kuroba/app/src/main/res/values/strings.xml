@@ -197,6 +197,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_copy_image_url">Copy file url</string>
     <string name="action_share_content">Share file content</string>
     <string name="action_download_content">Download file</string>
+    <string name="action_download_content_with_options">Download file (show options)</string>
 
     <string name="open_link_not_matched">%1$s cannot open this link; it will open in your browser instead.</string>
 
@@ -392,6 +393,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="controller_image_save_options_root_dir">Root dir: %1$s</string>
     <string name="controller_image_save_options_root_dir_not_set">Root dir is not set!</string>
     <string name="controller_image_save_options_file_name_is_blank">File name is blank!</string>
+    <string name="controller_image_save_options_file_name_bad_symbols">File name contains bad symbols! Only Letters/numbers and \'_\' symbol are allowed!</string>
     <string name="controller_image_save_options_sub_dirs_are_not_valid">Sub dirs are not valid!</string>
 
     <string name="board_check_all">Check all</string>

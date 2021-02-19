@@ -1075,6 +1075,7 @@ class ThreadPresenter @Inject constructor(
     items += createMenuItem(THUMBNAIL_COPY_URL, R.string.action_copy_image_url)
     items += createMenuItem(SHARE_MEDIA_FILE_CONTENT, R.string.action_share_content)
     items += createMenuItem(DOWNLOAD_MEDIA_FILE_CONTENT, R.string.action_download_content)
+    items += createMenuItem(DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT, R.string.action_download_content_with_options)
 
     val floatingListMenuController = FloatingListMenuController(
       context,
@@ -1100,23 +1101,21 @@ class ThreadPresenter @Inject constructor(
         showToast(context, R.string.image_url_copied_to_clipboard)
       }
       SHARE_MEDIA_FILE_CONTENT -> {
-        shareOrDownloadMediaFile(true, postImage)
+        imageSaverV2.share(postImage)
       }
       DOWNLOAD_MEDIA_FILE_CONTENT -> {
-        shareOrDownloadMediaFile(false, postImage)
+        downloadMediaFile(false, postImage)
+      }
+      DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT -> {
+        downloadMediaFile(true, postImage)
       }
     }
   }
 
-  private fun shareOrDownloadMediaFile(share: Boolean, postImage: ChanPostImage) {
-    if (share) {
-      imageSaverV2.share(postImage)
-      return
-    }
-
+  private fun downloadMediaFile(showOptions: Boolean, postImage: ChanPostImage) {
     val imageSaverV2Options = imageSaverV2PersistedOptions.get()
 
-    if (imageSaverV2Options.shouldShowImageSaverOptionsController()) {
+    if (showOptions || imageSaverV2Options.shouldShowImageSaverOptionsController()) {
       val controller = ImageSaverV2OptionsController(
         context,
         { updatedImageSaverV2Options, newFileName ->
@@ -2013,6 +2012,7 @@ class ThreadPresenter @Inject constructor(
     private const val THUMBNAIL_COPY_URL = 1000
     private const val SHARE_MEDIA_FILE_CONTENT = 1001
     private const val DOWNLOAD_MEDIA_FILE_CONTENT = 1002
+    private const val DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT = 1003
   }
 
 }

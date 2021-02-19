@@ -30,6 +30,7 @@ import javax.inject.Inject
 class ImageSaverV2OptionsController(
   context: Context,
   private val onSaveClicked: (ImageSaverV2Options, String?) -> Unit,
+  // Null when opening this controller when downloading multiple images at once
   private val chanPostImage: ChanPostImage? = null,
 ) : BaseFloatingController(context) {
   private lateinit var imageNameOptionsGroup: RadioGroup
@@ -43,10 +44,16 @@ class ImageSaverV2OptionsController(
   private lateinit var additionalDirs: ColorizableEditText
   private lateinit var cancelButton: ColorizableButton
   private lateinit var saveButton: ColorizableButton
-  private lateinit var textWatcher: TextWatcher
+
+  private lateinit var fileNameTextWatcher: TextWatcher
+  private lateinit var additionalDirsTextWatcher: TextWatcher
 
   private val currentSetting = PersistableChanState.imageSaverV2PersistedOptions.get().copy()
-  private val debouncer = Debouncer(false)
+
+  private val fileNameDebouncer = Debouncer(false)
+  private val additionalDirsDebouncer = Debouncer(false)
+
+  private var overriddenFileName: String? = null
 
   @Inject
   lateinit var fileChooser: FileChooser
@@ -148,17 +155,18 @@ class ImageSaverV2OptionsController(
       })
     }
 
-    textWatcher = additionalDirs.doAfterTextChanged { editable ->
-      debouncer.post({
+    fileNameTextWatcher = fileName.doAfterTextChanged { editable ->
+      fileNameDebouncer.post({
+        overriddenFileName = editable?.toString()
+        applyOptionsToView()
+      }, 100)
+    }
+    additionalDirsTextWatcher = additionalDirs.doAfterTextChanged { editable ->
+      additionalDirsDebouncer.post({
         val input = editable?.toString()
         if (input.isNullOrEmpty()) {
           currentSetting.subDirs = null
           applyOptionsToView()
-          return@post
-        }
-
-        if (!checkSubDirsValid(input)) {
-          showToast(R.string.controller_image_save_options_sub_dirs_are_not_valid)
           return@post
         }
 
@@ -208,11 +216,11 @@ class ImageSaverV2OptionsController(
       .split("\\")
 
     for ((index, subDir) in subDirs.withIndex()) {
-      if (containsBadSymbols(subDir)) {
+      if (pathContainsBadSymbols(subDir)) {
         return false
       }
 
-      if (subDir.isBlank() && index != subDirs.lastIndex) {
+      if (subDir.isBlank()) {
         return false
       }
     }
@@ -220,7 +228,7 @@ class ImageSaverV2OptionsController(
     return true
   }
 
-  private fun containsBadSymbols(subDir: String): Boolean {
+  private fun pathContainsBadSymbols(subDir: String): Boolean {
     for (char in subDir) {
       if (char.isLetterOrDigit() || char == '\\' || char == '_') {
         continue
@@ -232,9 +240,24 @@ class ImageSaverV2OptionsController(
     return false
   }
 
+  private fun fileNameContainsBadSymbols(fileName: String): Boolean {
+    for (char in fileName) {
+      if (char.isLetterOrDigit() || char == '_') {
+        continue
+      }
+
+      return true
+    }
+
+    return false
+  }
+
   private fun applyOptionsToView() {
     val options = currentSetting
+    
     outputDir.error = null
+    fileName.error = null
+    additionalDirs.error = null
 
     when (options.imageNameOptions) {
       ImageNameOptions.UseServerFileName.rawValue -> {
@@ -257,22 +280,28 @@ class ImageSaverV2OptionsController(
       }
     }
 
-    var currentFileNameString = when (options.imageNameOptions) {
-      ImageNameOptions.UseServerFileName.rawValue -> {
-        chanPostImage?.serverFilename
+    val currentFileNameString = if (chanPostImage != null) {
+      val currentFileNameString = if (overriddenFileName != null) {
+        overriddenFileName
+      } else {
+        when (options.imageNameOptions) {
+          ImageNameOptions.UseServerFileName.rawValue -> {
+            chanPostImage.serverFilename
+          }
+          ImageNameOptions.UseOriginalFileName.rawValue -> {
+            chanPostImage.filename
+          }
+          else -> throw IllegalArgumentException("Unknown imageNameOptions: ${options.imageNameOptions}")
+        }
       }
-      ImageNameOptions.UseOriginalFileName.rawValue -> {
-        chanPostImage?.filename
-      }
-      else -> throw IllegalArgumentException("Unknown imageNameOptions: ${options.imageNameOptions}")
-    }
 
-    if (chanPostImage != null) {
-      if (currentFileNameString.isNullOrBlank()) {
-        currentFileNameString = System.currentTimeMillis().toString()
+      fileName.doIgnoringTextWatcher(fileNameTextWatcher) {
+        text?.replace(0, text!!.length, currentFileNameString)
       }
 
-      fileName.setText(currentFileNameString)
+      currentFileNameString
+    } else {
+      null
     }
 
     appendSiteName.isChecked = options.appendSiteName
@@ -289,18 +318,19 @@ class ImageSaverV2OptionsController(
     }
 
     val subDirsString = options.subDirs
-    additionalDirs.doIgnoringTextWatcher(textWatcher) {
+
+    if (subDirsString != null && !checkSubDirsValid(subDirsString)) {
+      additionalDirs.error = context.getString(R.string.controller_image_save_options_sub_dirs_are_not_valid)
+      enableDisableSaveButton(enable = false)
+      return
+    }
+
+    additionalDirs.doIgnoringTextWatcher(additionalDirsTextWatcher) {
       text?.replace(0, text!!.length, subDirsString ?: "")
     }
 
     if (rootDirectoryUriString.isNullOrBlank()) {
       outputDir.error = context.getString(R.string.controller_image_save_options_root_dir_not_set)
-      enableDisableSaveButton(enable = false)
-      return
-    }
-
-    if (chanPostImage != null && currentFileNameString.isNullOrBlank()) {
-      outputDir.error = context.getString(R.string.controller_image_save_options_file_name_is_blank)
       enableDisableSaveButton(enable = false)
       return
     }
@@ -317,13 +347,35 @@ class ImageSaverV2OptionsController(
       if (options.appendThreadId) {
         append("\\<Thread id>")
       }
-
       if (subDirsString.isNotNullNorBlank()) {
         append("\\${subDirsString}")
+      }
+
+      if (currentFileNameString != null && chanPostImage != null) {
+        append("\\${currentFileNameString}")
+        append(".")
+        append(chanPostImage.extension)
       }
     }
 
     outputDir.setText(outputDirText)
+
+    if (chanPostImage != null) {
+      if (currentFileNameString.isNullOrBlank()) {
+        fileName.error = context.getString(R.string.controller_image_save_options_file_name_is_blank)
+        enableDisableSaveButton(enable = false)
+        return
+      }
+
+      if (fileNameContainsBadSymbols(currentFileNameString)) {
+        fileName.error = context.getString(R.string.controller_image_save_options_file_name_bad_symbols)
+        enableDisableSaveButton(enable = false)
+        return
+      }
+
+      // fallthrough
+    }
+
     enableDisableSaveButton(enable = true)
   }
 
