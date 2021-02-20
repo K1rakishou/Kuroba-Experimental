@@ -19,6 +19,7 @@ import com.github.k1rakishou.model.repository.ChanSavedReplyRepository
 import com.github.k1rakishou.model.repository.ChanThreadViewableInfoRepository
 import com.github.k1rakishou.model.repository.DatabaseMetaRepository
 import com.github.k1rakishou.model.repository.HistoryNavigationRepository
+import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
 import com.github.k1rakishou.model.repository.InlinedFileInfoRepository
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository
 import com.github.k1rakishou.model.repository.SeenPostRepository
@@ -40,6 +41,7 @@ import com.github.k1rakishou.model.source.local.ChanPostLocalSource
 import com.github.k1rakishou.model.source.local.ChanSavedReplyLocalSource
 import com.github.k1rakishou.model.source.local.ChanThreadViewableInfoLocalSource
 import com.github.k1rakishou.model.source.local.DatabaseMetaLocalSource
+import com.github.k1rakishou.model.source.local.ImageDownloadRequestLocalSource
 import com.github.k1rakishou.model.source.local.InlinedFileInfoLocalSource
 import com.github.k1rakishou.model.source.local.MediaServiceLinkExtraContentLocalSource
 import com.github.k1rakishou.model.source.local.NavHistoryLocalSource
@@ -329,6 +331,14 @@ class ModelModule {
     )
   }
 
+  @Singleton
+  @Provides
+  fun provideImageDownloadRequestLocalSource(
+    database: KurobaDatabase
+  ): ImageDownloadRequestLocalSource {
+    return ImageDownloadRequestLocalSource(database)
+  }
+
   /**
    * Remote sources
    * */
@@ -600,6 +610,20 @@ class ModelModule {
     return ChanPostImageRepository(
       database,
       dependencies.isDevFlavor,
+      dependencies.coroutineScope,
+      localSource
+    )
+  }
+
+  @Singleton
+  @Provides
+  fun provideImageDownloadRequestRepository(
+    database: KurobaDatabase,
+    dependencies: ModelComponent.Dependencies,
+    localSource: ImageDownloadRequestLocalSource
+  ): ImageDownloadRequestRepository {
+    return ImageDownloadRequestRepository(
+      database,
       dependencies.coroutineScope,
       localSource
     )

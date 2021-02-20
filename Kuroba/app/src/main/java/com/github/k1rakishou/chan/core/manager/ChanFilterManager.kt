@@ -34,13 +34,11 @@ class ChanFilterManager(
   private val postFilterManager: PostFilterManager
 ) {
   private val filterChangesFlow = MutableSharedFlow<FilterEvent>(
-    replay = 1,
     extraBufferCapacity = 32,
     onBufferOverflow = BufferOverflow.SUSPEND
   )
 
   private val filterGroupDeletionsFlow = MutableSharedFlow<FilterDeletionEvent>(
-    replay = 1,
     extraBufferCapacity = 32,
     onBufferOverflow = BufferOverflow.SUSPEND
   )

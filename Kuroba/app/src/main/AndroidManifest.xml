@@ -113,13 +113,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         </activity>
 
+        <service android:name=".features.image_saver.ImageSaverV2Service"
+            android:exported="false"/>
+
         <receiver android:name=".core.receiver.SelectedFilePickerBroadcastReceiver"
             android:exported="false"/>
 
         <receiver android:name=".core.receiver.ReplyNotificationDeleteIntentBroadcastReceiver"
             android:exported="false"/>
 
-        <receiver android:name=".core.receiver.CancelImagesDownloadBroadcastReceiver"
+        <receiver android:name=".core.receiver.ImageSaverBroadcastReceiver"
             android:exported="false"/>
 
         <provider

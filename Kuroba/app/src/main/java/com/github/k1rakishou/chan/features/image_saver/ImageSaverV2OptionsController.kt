@@ -21,8 +21,6 @@ import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.callback.directory.PermanentDirectoryChooserCallback
 import com.github.k1rakishou.model.data.post.ChanPostImage
-import com.github.k1rakishou.persist_state.DuplicatesResolution
-import com.github.k1rakishou.persist_state.ImageNameOptions
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
 import com.github.k1rakishou.persist_state.PersistableChanState
 import javax.inject.Inject
@@ -90,10 +88,10 @@ class ImageSaverV2OptionsController(
     imageNameOptionsGroup.setOnCheckedChangeListener { _, itemId ->
       when (itemId) {
         R.id.image_name_options_use_server_name -> {
-          currentSetting.imageNameOptions = ImageNameOptions.UseServerFileName.rawValue
+          currentSetting.imageNameOptions = ImageSaverV2Options.ImageNameOptions.UseServerFileName.rawValue
         }
         R.id.image_name_options_use_original_name -> {
-          currentSetting.imageNameOptions = ImageNameOptions.UseOriginalFileName.rawValue
+          currentSetting.imageNameOptions = ImageSaverV2Options.ImageNameOptions.UseOriginalFileName.rawValue
         }
       }
 
@@ -102,13 +100,13 @@ class ImageSaverV2OptionsController(
     duplicatesResolutionOptionsGroup.setOnCheckedChangeListener { _, itemId ->
       when (itemId) {
         R.id.duplicate_resolution_options_ask -> {
-          currentSetting.duplicatesResolution = DuplicatesResolution.AskWhatToDo.rawValue
+          currentSetting.duplicatesResolution = ImageSaverV2Options.DuplicatesResolution.AskWhatToDo.rawValue
         }
         R.id.duplicate_resolution_options_overwrite -> {
-          currentSetting.duplicatesResolution = DuplicatesResolution.Overwrite.rawValue
+          currentSetting.duplicatesResolution = ImageSaverV2Options.DuplicatesResolution.Overwrite.rawValue
         }
         R.id.duplicate_resolution_options_skip -> {
-          currentSetting.duplicatesResolution = DuplicatesResolution.Skip.rawValue
+          currentSetting.duplicatesResolution = ImageSaverV2Options.DuplicatesResolution.Skip.rawValue
         }
       }
 
@@ -260,22 +258,22 @@ class ImageSaverV2OptionsController(
     additionalDirs.error = null
 
     when (options.imageNameOptions) {
-      ImageNameOptions.UseServerFileName.rawValue -> {
+      ImageSaverV2Options.ImageNameOptions.UseServerFileName.rawValue -> {
         imageNameOptionsGroup.check(R.id.image_name_options_use_server_name)
       }
-      ImageNameOptions.UseOriginalFileName.rawValue -> {
+      ImageSaverV2Options.ImageNameOptions.UseOriginalFileName.rawValue -> {
         imageNameOptionsGroup.check(R.id.image_name_options_use_original_name)
       }
     }
 
     when (options.duplicatesResolution) {
-      DuplicatesResolution.AskWhatToDo.rawValue -> {
+      ImageSaverV2Options.DuplicatesResolution.AskWhatToDo.rawValue -> {
         duplicatesResolutionOptionsGroup.check(R.id.duplicate_resolution_options_ask)
       }
-      DuplicatesResolution.Overwrite.rawValue -> {
+      ImageSaverV2Options.DuplicatesResolution.Overwrite.rawValue -> {
         duplicatesResolutionOptionsGroup.check(R.id.duplicate_resolution_options_overwrite)
       }
-      DuplicatesResolution.Skip.rawValue -> {
+      ImageSaverV2Options.DuplicatesResolution.Skip.rawValue -> {
         duplicatesResolutionOptionsGroup.check(R.id.duplicate_resolution_options_skip)
       }
     }
@@ -285,10 +283,10 @@ class ImageSaverV2OptionsController(
         overriddenFileName
       } else {
         when (options.imageNameOptions) {
-          ImageNameOptions.UseServerFileName.rawValue -> {
+          ImageSaverV2Options.ImageNameOptions.UseServerFileName.rawValue -> {
             chanPostImage.serverFilename
           }
-          ImageNameOptions.UseOriginalFileName.rawValue -> {
+          ImageSaverV2Options.ImageNameOptions.UseOriginalFileName.rawValue -> {
             chanPostImage.filename
           }
           else -> throw IllegalArgumentException("Unknown imageNameOptions: ${options.imageNameOptions}")

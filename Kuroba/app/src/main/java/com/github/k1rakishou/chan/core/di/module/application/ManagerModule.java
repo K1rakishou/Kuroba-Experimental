@@ -69,7 +69,7 @@ import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Delegate;
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_themes.ThemeEngine;
@@ -79,10 +79,12 @@ import com.github.k1rakishou.model.repository.BookmarksRepository;
 import com.github.k1rakishou.model.repository.ChanFilterRepository;
 import com.github.k1rakishou.model.repository.ChanFilterWatchRepository;
 import com.github.k1rakishou.model.repository.ChanPostHideRepository;
+import com.github.k1rakishou.model.repository.ChanPostImageRepository;
 import com.github.k1rakishou.model.repository.ChanPostRepository;
 import com.github.k1rakishou.model.repository.ChanSavedReplyRepository;
 import com.github.k1rakishou.model.repository.ChanThreadViewableInfoRepository;
 import com.github.k1rakishou.model.repository.HistoryNavigationRepository;
+import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository;
 import com.github.k1rakishou.model.repository.SeenPostRepository;
 import com.github.k1rakishou.model.repository.SiteRepository;
 import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository;
@@ -598,14 +600,20 @@ public class ManagerModule {
 
     @Singleton
     @Provides
-    public ImageSaverV2Delegate provideImageSaverV2Delegate(
+    public ImageSaverV2ServiceDelegate provideImageSaverV2Delegate(
+            CoroutineScope appScope,
             FileCacheV2 fileCacheV2,
-            FileManager fileManager
+            FileManager fileManager,
+            ChanPostImageRepository chanPostImageRepository,
+            ImageDownloadRequestRepository imageDownloadRequestRepository
     ) {
-        return new ImageSaverV2Delegate(
+        return new ImageSaverV2ServiceDelegate(
                 ChanSettings.verboseLogs.get(),
+                appScope,
                 fileCacheV2,
-                fileManager
+                fileManager,
+                chanPostImageRepository,
+                imageDownloadRequestRepository
         );
     }
 

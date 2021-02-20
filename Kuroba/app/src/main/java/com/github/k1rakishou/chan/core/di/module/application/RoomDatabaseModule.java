@@ -13,6 +13,7 @@ import com.github.k1rakishou.model.repository.ChanSavedReplyRepository;
 import com.github.k1rakishou.model.repository.ChanThreadViewableInfoRepository;
 import com.github.k1rakishou.model.repository.DatabaseMetaRepository;
 import com.github.k1rakishou.model.repository.HistoryNavigationRepository;
+import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository;
 import com.github.k1rakishou.model.repository.InlinedFileInfoRepository;
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository;
 import com.github.k1rakishou.model.repository.SeenPostRepository;
@@ -179,6 +180,14 @@ public class RoomDatabaseModule {
             ModelComponent modelComponent
     ) {
         return modelComponent.getChanPostImageRepository();
+    }
+
+    @Provides
+    @Singleton
+    public ImageDownloadRequestRepository provideImageDownloadRequestRepository(
+            ModelComponent modelComponent
+    ) {
+        return modelComponent.getImageDownloadRequestRepository();
     }
 
 }

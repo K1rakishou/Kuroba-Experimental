@@ -303,7 +303,7 @@ class ReplyNotificationsHelper(
       .setContentText(titleText)
       .setSmallIcon(iconId)
       .setupClickOnNotificationIntent(
-        RequestCodes.REPLY_NORMAL_NOTIFICATION_CLICK_REQUEST_CODE,
+        RequestCodes.nextRequestCode(),
         unreadNotificationsGrouped.keys
       )
       .setupDeleteNotificationIntent(unreadNotificationsGrouped.keys)
@@ -395,7 +395,7 @@ class ReplyNotificationsHelper(
       .setupSoundAndVibration(hasNewReplies, useSoundForReplyNotifications)
       .setupSummaryNotificationsStyle(titleText)
       .setupClickOnNotificationIntent(
-        RequestCodes.REPLY_SUMMARY_NOTIFICATION_CLICK_REQUEST_CODE,
+        RequestCodes.nextRequestCode(),
         unreadNotificationsGrouped.keys
       )
       .setupDeleteNotificationIntent(unreadNotificationsGrouped.keys)
@@ -466,7 +466,7 @@ class ReplyNotificationsHelper(
         .setAutoCancel(true)
         .setupReplyNotificationsStyle(threadTitle, threadBookmarkReplies)
         .setupClickOnNotificationIntent(
-          RequestCodes.REPLY_NORMAL_NOTIFICATION_CLICK_REQUEST_CODE,
+          RequestCodes.nextRequestCode(),
           listOf(threadDescriptor)
         )
         .setupDeleteNotificationIntent(listOf(threadDescriptor))
@@ -642,7 +642,7 @@ class ReplyNotificationsHelper(
 
     val pendingIntent = PendingIntent.getBroadcast(
       appContext,
-      RequestCodes.REPLY_ALL_NOTIFICATIONS_SWIPE_REQUEST_CODE,
+      RequestCodes.nextRequestCode(),
       intent,
       PendingIntent.FLAG_UPDATE_CURRENT
     )

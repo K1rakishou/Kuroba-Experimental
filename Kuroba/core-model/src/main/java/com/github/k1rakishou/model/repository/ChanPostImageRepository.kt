@@ -16,6 +16,11 @@ class ChanPostImageRepository(
 ) : AbstractRepository(database) {
   private val TAG = "ChanPostImageRepository"
 
+  suspend fun selectPostImageByUrl(imagesUrl: HttpUrl): ModularResult<ChanPostImage?> {
+    return selectPostImagesByUrls(listOf(imagesUrl))
+      .mapValue { chanPostImages -> chanPostImages.firstOrNull() }
+  }
+
   suspend fun selectPostImagesByUrls(imagesUrls: Collection<HttpUrl>): ModularResult<List<ChanPostImage>> {
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
@@ -23,4 +28,5 @@ class ChanPostImageRepository(
       }
     }
   }
+
 }

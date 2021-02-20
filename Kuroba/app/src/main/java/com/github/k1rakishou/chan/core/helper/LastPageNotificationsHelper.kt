@@ -173,7 +173,7 @@ class LastPageNotificationsHelper(
 
     val pendingIntent = PendingIntent.getActivity(
       appContext,
-      RequestCodes.LAST_PAGE_ALL_NOTIFICATIONS_CLICK_REQUEST_CODE,
+      RequestCodes.nextRequestCode(),
       intent,
       PendingIntent.FLAG_UPDATE_CURRENT
     )

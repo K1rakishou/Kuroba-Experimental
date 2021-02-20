@@ -27,27 +27,27 @@ data class ImageSaverV2Options(
     return false
   }
 
-}
+  enum class DuplicatesResolution(val rawValue: Int) {
+    AskWhatToDo(0),
+    Overwrite(1),
+    Skip(2);
 
-enum class DuplicatesResolution(val rawValue: Int) {
-  AskWhatToDo(0),
-  Overwrite(1),
-  Skip(2);
-
-  companion object {
-    fun fromRawValue(rawValue: Int): DuplicatesResolution {
-      return values().first { value -> value.rawValue == rawValue }
+    companion object {
+      fun fromRawValue(rawValue: Int): DuplicatesResolution? {
+        return values().firstOrNull { value -> value.rawValue == rawValue }
+      }
     }
   }
-}
 
-enum class ImageNameOptions(val rawValue: Int) {
-  UseServerFileName(0),
-  UseOriginalFileName(1);
+  enum class ImageNameOptions(val rawValue: Int) {
+    UseServerFileName(0),
+    UseOriginalFileName(1);
 
-  companion object {
-    fun fromRawValue(rawValue: Int): ImageNameOptions {
-      return values().first { value -> value.rawValue == rawValue }
+    companion object {
+      fun fromRawValue(rawValue: Int): ImageNameOptions {
+        return values().first { value -> value.rawValue == rawValue }
+      }
     }
   }
+
 }

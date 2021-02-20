@@ -35,6 +35,7 @@ import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileChooser;
 import com.github.k1rakishou.fsaf.FileManager;
+import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -134,13 +135,15 @@ public class AppModule {
     public ImageSaverV2 provideImageSaverV2(
             Context appContext,
             CoroutineScope appScope,
-            Gson gson
+            Gson gson,
+            ImageDownloadRequestRepository imageDownloadRequestRepository
     ) {
         return new ImageSaverV2(
                 ChanSettings.verboseLogs.get(),
                 appContext,
                 appScope,
-                gson
+                gson,
+                imageDownloadRequestRepository
         );
     }
 
