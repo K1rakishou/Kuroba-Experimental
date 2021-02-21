@@ -65,7 +65,7 @@ class ImageSaverBroadcastReceiver : BroadcastReceiver() {
         }
 
         hideImageSaverNotification(context, uniqueId)
-        imageSaverV2.retryFailedImages(uniqueId)
+        imageSaverV2.retryFailedImages(uniqueId, null)
       }
       ImageSaverV2Service.ACTION_TYPE_DELETE -> {
         val uniqueId = extras.getString(ImageSaverV2Service.UNIQUE_ID)
@@ -75,24 +75,16 @@ class ImageSaverBroadcastReceiver : BroadcastReceiver() {
           return
         }
 
-        val pendingResult = goAsync()
-
-        serializedExecutor.post {
-          try {
-            // Do not call hideNotification() here because it may cause an infinite loop
-            //
-            // cancel notification
-            //    |
-            //    v
-            // ACTION_TYPE_DELETE intent to this broadcast receiver
-            //    |
-            //    v
-            // cancel notification again -> ...)
-            imageSaverV2ServiceDelegate.deleteDownload(uniqueId)
-          } finally {
-            pendingResult.finish()
-          }
-        }
+        // Do not call hideNotification() here because it may cause an infinite loop
+        //
+        // cancel notification
+        //    |
+        //    v
+        // ACTION_TYPE_DELETE intent to this broadcast receiver
+        //    |
+        //    v
+        // cancel notification again -> ...)
+        imageSaverV2.deleteDownload(uniqueId)
       }
     }
 

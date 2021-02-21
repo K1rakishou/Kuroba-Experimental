@@ -97,25 +97,25 @@ class ImageSaverV2Service : Service() {
         return@launch
       }
 
-      val activeDownloadsCount1 = imageSaverV2ServiceDelegate.createDownloadContext(
+      val activeDownloadsCountBefore = imageSaverV2ServiceDelegate.createDownloadContext(
         imageSaverInputData.uniqueId
       )
 
       if (verboseLogs) {
-        Logger.d(TAG, "onStartCommand() start, activeDownloadsCount=$activeDownloadsCount1")
+        Logger.d(TAG, "onStartCommand() start, activeDownloadsCount=$activeDownloadsCountBefore")
       }
 
       serializedCoroutineExecutor.post {
         try {
-          val activeDownloadsCount2 = withContext(Dispatchers.Default) {
+          val activeDownloadsCountAfter = withContext(Dispatchers.Default) {
             imageSaverV2ServiceDelegate.downloadImages(imageSaverInputData)
           }
 
           if (verboseLogs) {
-            Logger.d(TAG, "onStartCommand() end, activeDownloadsCount=$activeDownloadsCount2")
+            Logger.d(TAG, "onStartCommand() end, activeDownloadsCount=$activeDownloadsCountAfter")
           }
 
-          if (activeDownloadsCount2 <= 0) {
+          if (activeDownloadsCountAfter <= 0) {
             Logger.d(TAG, "onStartCommand() stopping service")
             stopSelf()
           }
@@ -171,7 +171,44 @@ class ImageSaverV2Service : Service() {
           return null
         }
 
-        return BatchImageDownloadInputData(uniqueId, imageSaverV2Options, imageDownloadRequests)
+        return BatchImageDownloadInputData(
+          uniqueId = uniqueId,
+          imageSaverV2Options = imageSaverV2Options,
+          imageDownloadRequests = imageDownloadRequests
+        )
+      }
+      RETRY_DOWNLOAD_TYPE -> {
+        val allowedStatuses = listOf(
+          ImageDownloadRequest.Status.DownloadFailed,
+          ImageDownloadRequest.Status.ResolvingDuplicate,
+        )
+
+        val imageDownloadRequests = imageDownloadRequestRepository.selectManyWithStatus(
+          uniqueId,
+          allowedStatuses
+        ).safeUnwrap { error ->
+          Logger.e(TAG, "imageDownloadRequestRepository.selectMany($uniqueId) error", error)
+          return null
+        }
+
+        if (imageDownloadRequests.isEmpty()) {
+          Logger.d(TAG, "convertInputData(Retry) imageDownloadRequests is empty")
+          return null
+        }
+
+        if (imageDownloadRequests.size == 1) {
+          return SingleImageDownloadInputData(
+            uniqueId = uniqueId,
+            imageSaverV2Options = imageSaverV2Options,
+            imageDownloadRequest = imageDownloadRequests.first()
+          )
+        } else {
+          return BatchImageDownloadInputData(
+            uniqueId = uniqueId,
+            imageSaverV2Options = imageSaverV2Options,
+            imageDownloadRequests = imageDownloadRequests
+          )
+        }
       }
       else -> throw IllegalStateException("Unknown parameter downloadType: $downloadType")
     }
@@ -206,7 +243,7 @@ class ImageSaverV2Service : Service() {
     val processedCount = imageSaverDelegateResult.processedCount()
 
     val smallIcon = if (imageSaverDelegateResult.completed) {
-      if (imageSaverDelegateResult.hasDuplicatesOrFailures()) {
+      if (imageSaverDelegateResult.hasAnyErrors()) {
         android.R.drawable.ic_dialog_alert
       } else {
         android.R.drawable.stat_sys_download_done
@@ -217,9 +254,23 @@ class ImageSaverV2Service : Service() {
 
     // TODO(KurobaEx v0.6.0): strings
     val title = if (imageSaverDelegateResult.completed) {
-      "Finished downloading ${totalToDownloadCount} images"
+      if (imageSaverDelegateResult.hasAnyErrors()) {
+        "Finished downloading ${totalToDownloadCount} images with errors"
+      } else {
+        "Successfully finished downloading ${totalToDownloadCount} images"
+      }
     } else {
       "Downloading ${processedCount}/${totalToDownloadCount} images"
+    }
+
+    val notificationContentText = formatNotificationText(imageSaverDelegateResult)
+
+    val style = if (imageSaverDelegateResult.completed) {
+      NotificationCompat.BigTextStyle().bigText(notificationContentText)
+    } else {
+      // Big style doesn't really work well with progress so we only use it when the download has
+      // completed
+      null
     }
 
     val notification = NotificationCompat.Builder(
@@ -230,11 +281,13 @@ class ImageSaverV2Service : Service() {
       .setSmallIcon(smallIcon)
       .setOngoing(ongoing)
       .setAutoCancel(true)
+      .setSound(null)
+      .setStyle(style)
       .setProgressEx(imageSaverDelegateResult, totalToDownloadCount, processedCount)
-      .setContentTextEx(imageSaverDelegateResult, formatNotificationText(imageSaverDelegateResult))
+      .setContentTextEx(imageSaverDelegateResult, notificationContentText)
       .setTimeoutAfterEx(imageSaverDelegateResult)
       .addOnNotificationCloseAction(imageSaverDelegateResult)
-      .addCancelOrNavigateAction(imageSaverDelegateResult)
+      .addCancelOrNavigateOrShowSettingsAction(imageSaverDelegateResult)
       .addResolveFailedDownloadsAction(imageSaverDelegateResult)
       .addResolveDuplicateImagesAction(imageSaverDelegateResult)
       .build()
@@ -251,6 +304,12 @@ class ImageSaverV2Service : Service() {
   ): String {
     // TODO(KurobaEx v0.6.0): strings
     return buildString {
+      if (imageSaverDelegateResult.hasResultDirAccessErrors) {
+        appendLine("Failed to access root directory!")
+        appendLine("Click \"show settings\" and then check that it exists and you have access to it!")
+        return@buildString
+      }
+
       if (imageSaverDelegateResult.downloadedImages.isNotEmpty()) {
         appendIfNotEmpty(", ")
         append("Downloaded: ${imageSaverDelegateResult.downloadedImages.count()}")
@@ -276,9 +335,13 @@ class ImageSaverV2Service : Service() {
     }
   }
 
-  private fun NotificationCompat.Builder.addResolveFailedDownloadsAction(
+  private fun NotificationCompat.Builder.addResolveDuplicateImagesAction(
     imageSaverDelegateResult: ImageSaverV2ServiceDelegate.ImageSaverDelegateResult
   ): NotificationCompat.Builder {
+    if (imageSaverDelegateResult.hasResultDirAccessErrors) {
+      return this
+    }
+
     if (imageSaverDelegateResult.completed && imageSaverDelegateResult.duplicates > 0) {
       val intent = Intent(applicationContext, StartActivity::class.java).apply {
         setAction(ACTION_TYPE_RESOLVE_DUPLICATES)
@@ -299,7 +362,7 @@ class ImageSaverV2Service : Service() {
     return this
   }
 
-  private fun NotificationCompat.Builder.addCancelOrNavigateAction(
+  private fun NotificationCompat.Builder.addCancelOrNavigateOrShowSettingsAction(
     imageSaverDelegateResult: ImageSaverV2ServiceDelegate.ImageSaverDelegateResult
   ): NotificationCompat.Builder {
     if (!imageSaverDelegateResult.completed) {
@@ -319,33 +382,53 @@ class ImageSaverV2Service : Service() {
       return this
     }
 
-    val downloadedImages = imageSaverDelegateResult.downloadedImages
-    if (downloadedImages.outputDirUri == null) {
+    if (imageSaverDelegateResult.hasResultDirAccessErrors) {
+      val intent = Intent(applicationContext, StartActivity::class.java).apply {
+        setAction(ACTION_TYPE_SHOW_IMAGE_SAVER_SETTINGS)
+
+        putExtra(UNIQUE_ID, imageSaverDelegateResult.uniqueId)
+      }
+
+      val navigate = PendingIntent.getActivity(
+        applicationContext,
+        RequestCodes.nextRequestCode(),
+        intent,
+        PendingIntent.FLAG_UPDATE_CURRENT
+      )
+
+      addAction(0, "Show settings", navigate)  // TODO(KurobaEx v0.6.0): strings
       return this
     }
 
-    val intent = Intent(applicationContext, StartActivity::class.java).apply {
-      setAction(ACTION_TYPE_NAVIGATE)
+    if (imageSaverDelegateResult.downloadedImages.outputDirUri != null) {
+      val downloadedImages = imageSaverDelegateResult.downloadedImages
 
-      putExtra(UNIQUE_ID, imageSaverDelegateResult.uniqueId)
-      putExtra(OUTPUT_DIR_URI, downloadedImages.outputDirUri.toString())
+      val intent = Intent(applicationContext, StartActivity::class.java).apply {
+        setAction(ACTION_TYPE_NAVIGATE)
+
+        putExtra(UNIQUE_ID, imageSaverDelegateResult.uniqueId)
+        putExtra(OUTPUT_DIR_URI, downloadedImages.outputDirUri.toString())
+      }
+
+      val navigate = PendingIntent.getActivity(
+        applicationContext,
+        RequestCodes.nextRequestCode(),
+        intent,
+        PendingIntent.FLAG_UPDATE_CURRENT
+      )
+
+      addAction(0, "Navigate", navigate)  // TODO(KurobaEx v0.6.0): strings
+      return this
     }
 
-    val navigate = PendingIntent.getActivity(
-      applicationContext,
-      RequestCodes.nextRequestCode(),
-      intent,
-      PendingIntent.FLAG_UPDATE_CURRENT
-    )
-
-    addAction(0, "Navigate", navigate)  // TODO(KurobaEx v0.6.0): strings
     return this
   }
 
-  private fun NotificationCompat.Builder.addResolveDuplicateImagesAction(
+  private fun NotificationCompat.Builder.addResolveFailedDownloadsAction(
     imageSaverDelegateResult: ImageSaverV2ServiceDelegate.ImageSaverDelegateResult
   ): NotificationCompat.Builder {
-    if (imageSaverDelegateResult.completed && imageSaverDelegateResult.failedRequests > 0) {
+    val canShowRetryAction = imageSaverDelegateResult.completed && imageSaverDelegateResult.failedRequests > 0
+    if (canShowRetryAction) {
       val intent = Intent(applicationContext, ImageSaverBroadcastReceiver::class.java).apply {
         setAction(ACTION_TYPE_RETRY_FAILED)
 
@@ -421,6 +504,7 @@ class ImageSaverV2Service : Service() {
     return this
   }
 
+  @Synchronized
   private fun setupChannels() {
     BackgroundUtils.ensureMainThread()
 
@@ -432,14 +516,17 @@ class ImageSaverV2Service : Service() {
       if (notificationManagerCompat.getNotificationChannel(this) == null) {
         Logger.d(TAG, "setupChannels() creating $this channel")
 
-        // notification channel for replies summary
-        val lastPageSilentChannel = NotificationChannel(
+        val imageSaverChannel = NotificationChannel(
           this,
           NotificationConstants.ImageSaverNotifications.IMAGE_SAVER_NOTIFICATION_NAME,
           NotificationManager.IMPORTANCE_DEFAULT
         )
 
-        notificationManagerCompat.createNotificationChannel(lastPageSilentChannel)
+        imageSaverChannel.setSound(null, null)
+        imageSaverChannel.enableLights(false)
+        imageSaverChannel.enableVibration(false)
+
+        notificationManagerCompat.createNotificationChannel(imageSaverChannel)
       }
     }
 
@@ -484,11 +571,13 @@ class ImageSaverV2Service : Service() {
     const val ACTION_TYPE_DELETE = "${TAG}_ACTION_DELETE"
     const val ACTION_TYPE_CANCEL = "${TAG}_ACTION_CANCEL"
     const val ACTION_TYPE_NAVIGATE = "${TAG}_ACTION_NAVIGATE"
+    const val ACTION_TYPE_SHOW_IMAGE_SAVER_SETTINGS = "${TAG}_ACTION_SHOW_IMAGE_SAVER_SETTINGS"
     const val ACTION_TYPE_RESOLVE_DUPLICATES = "${TAG}_ACTION_RESOLVE_DUPLICATES"
     const val ACTION_TYPE_RETRY_FAILED = "${TAG}_ACTION_RETRY_FAILED"
 
     const val SINGLE_IMAGE_DOWNLOAD_TYPE = 0
     const val BATCH_IMAGE_DOWNLOAD_TYPE = 1
+    const val RETRY_DOWNLOAD_TYPE = 2
 
     fun startService(context: Context, uniqueId: String, downloadType: Int, imageSaverV2OptionsJson: String) {
       val startServiceIntent = Intent(

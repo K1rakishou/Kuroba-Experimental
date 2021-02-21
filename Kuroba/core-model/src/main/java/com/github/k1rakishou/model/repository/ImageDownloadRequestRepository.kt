@@ -42,10 +42,24 @@ class ImageDownloadRequestRepository(
     }
   }
 
-  suspend fun updateMany(imageDownloadRequest: List<ImageDownloadRequest>): ModularResult<Unit> {
+  suspend fun selectManyWithStatus(
+    uniqueId: String,
+    downloadStatuses: Collection<ImageDownloadRequest.Status>
+  ): ModularResult<List<ImageDownloadRequest>> {
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
-        return@tryWithTransaction imageDownloadRequestLocalSource.updateMany(imageDownloadRequest)
+        return@tryWithTransaction imageDownloadRequestLocalSource.selectManyWithStatus(
+          uniqueId,
+          downloadStatuses
+        )
+      }
+    }
+  }
+
+  suspend fun completeMany(imageDownloadRequest: List<ImageDownloadRequest>): ModularResult<Unit> {
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        return@tryWithTransaction imageDownloadRequestLocalSource.completeMany(imageDownloadRequest)
       }
     }
   }

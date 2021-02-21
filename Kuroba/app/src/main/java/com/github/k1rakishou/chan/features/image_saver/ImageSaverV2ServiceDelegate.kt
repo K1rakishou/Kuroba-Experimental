@@ -77,6 +77,10 @@ class ImageSaverV2ServiceDelegate(
         activeDownloads[uniqueId] = DownloadContext()
       }
 
+      // Otherwise the download already exist, just wait until it's completed. But this shouldn't
+      // really happen since we always check duplicate requests in the database before even starting
+      // the service.
+
       return@withLock activeDownloads.size
     }
   }
@@ -179,7 +183,7 @@ class ImageSaverV2ServiceDelegate(
           imageDownloadRequest.createdOn
         )
 
-        imageDownloadRequestRepository.updateMany(listOf(updatedImageDownloadRequest))
+        imageDownloadRequestRepository.completeMany(listOf(updatedImageDownloadRequest))
           .peekError { error -> Logger.e(TAG, "imageDownloadRequestRepository.updateMany() error", error) }
           .ignore()
 
@@ -213,11 +217,10 @@ class ImageSaverV2ServiceDelegate(
         hasResultDirAccessErrors = hasResultDirAccessErrors.get()
       )
 
-      return mutex.withLock {
-        activeDownloads.remove(imageDownloadInputData.uniqueId)
-        return@withLock activeDownloads.size
-      }
+      mutex.withLock { activeDownloads.remove(imageDownloadInputData.uniqueId) }
     }
+
+    return mutex.withLock { activeDownloads.size }
   }
 
   private fun completedRequestsToDownloadedImagesResult(
@@ -296,8 +299,8 @@ class ImageSaverV2ServiceDelegate(
     return "$fileName.$extension"
   }
 
-  @Throws(FailedToOpenResultDir::class)
-  private fun getFullFileUriOrThrow(
+  @Suppress("MoveVariableDeclarationIntoWhen")
+  private fun getFullFileUri(
     imageSaverV2Options: ImageSaverV2Options,
     postDescriptor: PostDescriptor,
     fileName: String
@@ -305,7 +308,7 @@ class ImageSaverV2ServiceDelegate(
     val rootDirectoryUri = Uri.parse(checkNotNull(imageSaverV2Options.rootDirectoryUri))
 
     val rootDirectory = fileManager.fromUri(rootDirectoryUri)
-      ?: throw FailedToOpenResultDir(rootDirectoryUri.toString())
+      ?: return ResultFile.FailedToOpenResultDir(rootDirectoryUri.toString())
 
     val segments = mutableListOf<Segment>()
 
@@ -329,19 +332,40 @@ class ImageSaverV2ServiceDelegate(
 
     val resultDir = fileManager.create(rootDirectory, segments)
     if (resultDir == null) {
-      throw FailedToOpenResultDir(rootDirectory.clone(segments).getFullPath())
+      return ResultFile.FailedToOpenResultDir(rootDirectory.clone(segments).getFullPath())
     }
 
     segments += FileSegment(fileName)
 
     val resultFile = rootDirectory.clone(segments)
-    if (fileManager.exists(resultFile) && fileManager.getLength(resultFile) > 0) {
-      return ResultFile.DuplicateFound(Uri.parse(resultFile.getFullPath()))
+    val resultFileUri = Uri.parse(resultFile.getFullPath())
+    val resultDirUri = Uri.parse(resultDir.getFullPath())
+
+    if (fileManager.exists(resultFile)) {
+      val duplicatesResolution =
+        ImageSaverV2Options.DuplicatesResolution.fromRawValue(imageSaverV2Options.duplicatesResolution)
+
+      when (duplicatesResolution) {
+        ImageSaverV2Options.DuplicatesResolution.AskWhatToDo -> {
+          return ResultFile.DuplicateFound(resultFileUri)
+        }
+        ImageSaverV2Options.DuplicatesResolution.Skip -> {
+          val fileIsNotEmpty = fileManager.getLength(resultFile) > 0
+          return ResultFile.Skipped(resultDirUri, resultFileUri, fileIsNotEmpty)
+        }
+        ImageSaverV2Options.DuplicatesResolution.Overwrite -> {
+          if (!fileManager.delete(resultFile)) {
+            return ResultFile.FailedToOpenResultDir(resultFile.getFullPath())
+          }
+
+          // Fallthrough, continue downloading the file
+        }
+      }
     }
 
     return ResultFile.File(
-      Uri.parse(resultDir.getFullPath()),
-      Uri.parse(resultFile.getFullPath()),
+      resultDirUri,
+      resultFileUri,
       resultFile
     )
   }
@@ -354,6 +378,14 @@ class ImageSaverV2ServiceDelegate(
     ) : ResultFile()
 
     data class DuplicateFound(val fileUri: Uri) : ResultFile()
+
+    data class FailedToOpenResultDir(val dirPath: String) : ResultFile()
+
+    data class Skipped(
+      val outputDirUri: Uri,
+      val outputFileUri: Uri,
+      val fileIsNotEmpty: Boolean
+    ) : ResultFile()
   }
 
   private suspend fun downloadImage(
@@ -390,32 +422,52 @@ class ImageSaverV2ServiceDelegate(
       )
 
       val postDescriptor = chanPostImage.ownerPostDescriptor
-      val outputFileResult = try {
-        getFullFileUriOrThrow(imageSaverV2Options, postDescriptor, fileName)
-      } catch (error: FailedToOpenResultDir) {
-        return@Try DownloadImageResult.ResultDirectoryError(error.path, imageDownloadRequest)
+
+      val outputFileResult = getFullFileUri(imageSaverV2Options, postDescriptor, fileName)
+      when (outputFileResult) {
+        is ResultFile.DuplicateFound -> {
+          val duplicateImage = DuplicateImage(
+            imageDownloadRequest,
+            outputFileResult.fileUri
+          )
+
+          return DownloadImageResult.DuplicateFound(duplicateImage)
+        }
+        is ResultFile.FailedToOpenResultDir -> {
+          return@Try DownloadImageResult.ResultDirectoryError(
+            outputFileResult.dirPath,
+            imageDownloadRequest
+          )
+        }
+        is ResultFile.Skipped -> {
+          if (outputFileResult.fileIsNotEmpty) {
+            return@Try DownloadImageResult.Success(outputFileResult.outputDirUri, imageDownloadRequest)
+          }
+
+          val error = IOException("Duplicate file is empty")
+          return@Try DownloadImageResult.Failure(error, true)
+        }
+        is ResultFile.File -> {
+          // no-op
+        }
       }
 
-      if (outputFileResult is ResultFile.DuplicateFound) {
-        val duplicateImage = DuplicateImage(
-          imageDownloadRequest,
-          outputFileResult.fileUri
-        )
-
-        return DownloadImageResult.DuplicateFound(duplicateImage)
-      }
-
-      val outputFile = (outputFileResult as ResultFile.File).file
-      val outputDirUri = (outputFileResult as ResultFile.File).outputDirUri
+      val outputFile = outputFileResult.file
+      val outputDirUri = outputFileResult.outputDirUri
 
       val actualOutputFile = fileManager.create(outputFile)
       if (actualOutputFile == null) {
-        return@Try FailedToOpenResultDir(outputFile.getFullPath())
+        return@Try DownloadImageResult.ResultDirectoryError(
+          outputFile.getFullPath(),
+          imageDownloadRequest
+        )
       }
 
       val sourceFile = try {
         downloadFileInternal(chanPostImage)
       } catch (error: Throwable) {
+        fileManager.delete(actualOutputFile)
+
         if (error is Canceled) {
           return@Try DownloadImageResult.Canceled(imageDownloadRequest)
         } else if (error is NotFoundException) {
@@ -426,6 +478,8 @@ class ImageSaverV2ServiceDelegate(
       }
 
       if (!fileManager.copyFileContents(sourceFile, actualOutputFile)) {
+        fileManager.delete(actualOutputFile)
+
         return@Try DownloadImageResult.ResultDirectoryError(
           actualOutputFile.getFullPath(),
           imageDownloadRequest
@@ -439,6 +493,8 @@ class ImageSaverV2ServiceDelegate(
   @Throws(Canceled::class, NotFoundException::class)
   private suspend fun downloadFileInternal(chanPostImage: ChanPostImage): RawFile {
     return suspendCancellableCoroutine { continuation ->
+      // TODO(KurobaEx v0.6.0): do not use fileCacheV2 here to download images, we don't really need it.
+      //  Just use okHttp and return inputSource or something like that.
       fileCacheV2.enqueueNormalDownloadFileRequest(
         chanPostImage,
         true,
@@ -481,7 +537,6 @@ class ImageSaverV2ServiceDelegate(
 
   class Canceled : Exception("Canceled")
   class NotFoundException : Exception("Not found on server")
-  class FailedToOpenResultDir(val path: String) : Exception("Failed to open result directory: '$path'")
 
   class DownloadContext(
     private val canceled: AtomicBoolean = AtomicBoolean(false)
@@ -508,6 +563,8 @@ class ImageSaverV2ServiceDelegate(
 
     data class Canceled(val imageDownloadRequest: ImageDownloadRequest) : DownloadImageResult()
 
+    // TODO(KurobaEx v0.6.0): add Skipped?
+
     data class DuplicateFound(val duplicate: DuplicateImage) : DownloadImageResult()
 
     data class ResultDirectoryError(
@@ -527,8 +584,8 @@ class ImageSaverV2ServiceDelegate(
     val hasResultDirAccessErrors: Boolean
   ) {
 
-    fun hasDuplicatesOrFailures(): Boolean {
-      return duplicates > 0 || failedRequests > 0
+    fun hasAnyErrors(): Boolean {
+      return duplicates > 0 || failedRequests > 0 || hasResultDirAccessErrors
     }
 
     fun hasOnlyCompletedRequests(): Boolean {

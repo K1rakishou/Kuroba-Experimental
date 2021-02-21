@@ -8,6 +8,7 @@ import com.github.k1rakishou.model.data.download.ImageDownloadRequest
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
+import com.github.k1rakishou.persist_state.PersistableChanState
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import org.joda.time.DateTime
@@ -17,12 +18,30 @@ class ImageSaverV2(
   private val appContext: Context,
   private val appScope: CoroutineScope,
   private val gson: Gson,
-  private val imageDownloadRequestRepository: ImageDownloadRequestRepository
+  private val imageDownloadRequestRepository: ImageDownloadRequestRepository,
+  private val imageSaverV2ServiceDelegate: ImageSaverV2ServiceDelegate
 ) {
   private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(appScope)
 
-  fun retryFailedImages(uniqueId: String) {
-    // TODO(KurobaEx v0.6.0):
+  fun retryFailedImages(uniqueId: String, overrideImageSaverV2Options: ImageSaverV2Options?) {
+    try {
+      val imageSaverV2Options = overrideImageSaverV2Options
+        ?: PersistableChanState.imageSaverV2PersistedOptions.get().copy()
+
+      startImageSaverService(
+        uniqueId = uniqueId,
+        imageSaverV2Options = imageSaverV2Options,
+        downloadType = ImageSaverV2Service.RETRY_DOWNLOAD_TYPE
+      )
+    } catch (error: Throwable) {
+      Logger.e(TAG, "retryFailedImages() error", error)
+    }
+  }
+
+  fun deleteDownload(uniqueId: String) {
+    rendezvousCoroutineExecutor.post {
+      imageSaverV2ServiceDelegate.deleteDownload(uniqueId)
+    }
   }
 
   fun save(imageSaverV2Options: ImageSaverV2Options, postImage: ChanPostImage, newFileName: String?) {
@@ -30,6 +49,8 @@ class ImageSaverV2(
 
     rendezvousCoroutineExecutor.post {
       val uniqueId = calculateUniqueId(listOf(postImage))
+      val duplicatesResolution =
+        ImageSaverV2Options.DuplicatesResolution.fromRawValue(imageSaverV2Options.duplicatesResolution)
 
       val imageDownloadRequest = ImageDownloadRequest(
         uniqueId = uniqueId,
@@ -38,7 +59,7 @@ class ImageSaverV2(
         newFileName = newFileName,
         status = ImageDownloadRequest.Status.Queued,
         duplicatePathUri = null,
-        duplicatesResolution = ImageSaverV2Options.DuplicatesResolution.fromRawValue(imageSaverV2Options.duplicatesResolution)!!,
+        duplicatesResolution = duplicatesResolution,
         createdOn = DateTime.now()
       )
 
@@ -53,7 +74,7 @@ class ImageSaverV2(
         return@post
       }
 
-      startBackgroundBookmarkWatchingWorkIfNeeded(
+      startImageSaverService(
         uniqueId = uniqueId,
         imageSaverV2Options = imageSaverV2Options,
         downloadType = ImageSaverV2Service.SINGLE_IMAGE_DOWNLOAD_TYPE
@@ -68,16 +89,16 @@ class ImageSaverV2(
       "rootDirectoryUri is null"
     }
 
-    // TODO(KurobaEx):
+    // TODO(KurobaEx v0.6.0): not implemented
   }
 
   fun share(postImage: ChanPostImage) {
     checkInputs(listOf(postImage))
 
-    // TODO(KurobaEx):
+    // TODO(KurobaEx v0.6.0): not implemented
   }
 
-  private fun startBackgroundBookmarkWatchingWorkIfNeeded(
+  private fun startImageSaverService(
     uniqueId: String,
     imageSaverV2Options: ImageSaverV2Options,
     downloadType: Int,

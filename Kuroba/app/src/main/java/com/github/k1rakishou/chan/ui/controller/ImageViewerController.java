@@ -362,15 +362,19 @@ public class ImageViewerController
                 PersistableChanState.getImageSaverV2PersistedOptions().get();
 
         if (longClick || imageSaverV2Options.shouldShowImageSaverOptionsController()) {
-            ImageSaverV2OptionsController controller = new ImageSaverV2OptionsController(
-                    context,
+            ImageSaverV2OptionsController.Options options = new ImageSaverV2OptionsController.Options.SingleImage(
+                    currentPostImage,
                     (updatedImageSaverV2Options, newFileName) -> {
                         imageSaverV2.save(updatedImageSaverV2Options, currentPostImage, newFileName);
                         onActuallyDownloading.invoke();
 
                         return Unit.INSTANCE;
-                    },
-                    currentPostImage
+                    }
+            );
+
+            ImageSaverV2OptionsController controller = new ImageSaverV2OptionsController(
+                    context,
+                    options
             );
 
             presentController(controller);

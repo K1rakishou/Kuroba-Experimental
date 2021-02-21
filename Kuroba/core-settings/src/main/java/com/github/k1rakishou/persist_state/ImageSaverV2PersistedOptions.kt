@@ -33,8 +33,9 @@ data class ImageSaverV2Options(
     Skip(2);
 
     companion object {
-      fun fromRawValue(rawValue: Int): DuplicatesResolution? {
+      fun fromRawValue(rawValue: Int): DuplicatesResolution {
         return values().firstOrNull { value -> value.rawValue == rawValue }
+          ?: AskWhatToDo
       }
     }
   }
@@ -45,7 +46,8 @@ data class ImageSaverV2Options(
 
     companion object {
       fun fromRawValue(rawValue: Int): ImageNameOptions {
-        return values().first { value -> value.rawValue == rawValue }
+        return values().firstOrNull { value -> value.rawValue == rawValue }
+          ?: UseServerFileName
       }
     }
   }

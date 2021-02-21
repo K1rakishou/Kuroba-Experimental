@@ -201,10 +201,22 @@ class StartActivityStartupHandlerHelper(
         return false
       }
       action == ImageSaverV2Service.ACTION_TYPE_RESOLVE_DUPLICATES -> {
-        // TODO(KurobaEx v0.6.0): show ResolveDuplicateImagesController
-
-        extras.getString(ImageSaverV2Service.UNIQUE_ID)?.let { uniqueId ->
+        val uniqueId = extras.getString(ImageSaverV2Service.UNIQUE_ID)
+        if (uniqueId != null) {
           hideImageSaverNotification(context!!, uniqueId)
+          drawerController?.showResolveDuplicateImagesController(uniqueId)
+        }
+
+        // Always return false here since we don't want to override the default "restore app"
+        // mechanism here
+        return false
+      }
+      action == ImageSaverV2Service.ACTION_TYPE_SHOW_IMAGE_SAVER_SETTINGS -> {
+        val uniqueId = extras.getString(ImageSaverV2Service.UNIQUE_ID)
+        if (uniqueId != null) {
+          hideImageSaverNotification(context!!, uniqueId)
+
+          drawerController?.showImageSaverV2OptionsController(uniqueId)
         }
 
         // Always return false here since we don't want to override the default "restore app"
@@ -315,6 +327,7 @@ class StartActivityStartupHandlerHelper(
       ImageSaverV2Service.ACTION_TYPE_NAVIGATE -> true
       ImageSaverV2Service.ACTION_TYPE_RESOLVE_DUPLICATES -> true
       ImageSaverV2Service.ACTION_TYPE_RETRY_FAILED -> true
+      ImageSaverV2Service.ACTION_TYPE_SHOW_IMAGE_SAVER_SETTINGS -> true
       Intent.ACTION_VIEW -> true
       else -> false
     }

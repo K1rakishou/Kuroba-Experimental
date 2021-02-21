@@ -22,6 +22,7 @@ import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesControlle
 import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10GestureZonesController;
 import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10GestureZonesView;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController;
+import com.github.k1rakishou.chan.features.image_saver.ResolveDuplicateImagesController;
 import com.github.k1rakishou.chan.features.login.LoginController;
 import com.github.k1rakishou.chan.features.proxies.ProxyEditorController;
 import com.github.k1rakishou.chan.features.proxies.ProxySetupController;
@@ -224,6 +225,7 @@ public interface ActivityComponent {
     void inject(TabHostController tabHostController);
     void inject(FilterWatchesController filterWatchesController);
     void inject(ImageSaverV2OptionsController imageSaverV2OptionsController);
+    void inject(ResolveDuplicateImagesController resolveDuplicateImagesController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

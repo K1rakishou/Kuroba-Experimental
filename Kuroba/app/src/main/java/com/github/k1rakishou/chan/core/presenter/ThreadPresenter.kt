@@ -1116,14 +1116,14 @@ class ThreadPresenter @Inject constructor(
     val imageSaverV2Options = imageSaverV2PersistedOptions.get()
 
     if (showOptions || imageSaverV2Options.shouldShowImageSaverOptionsController()) {
-      val controller = ImageSaverV2OptionsController(
-        context,
-        { updatedImageSaverV2Options, newFileName ->
+      val options = ImageSaverV2OptionsController.Options.SingleImage(
+        chanPostImage = postImage,
+        onSaveClicked = { updatedImageSaverV2Options, newFileName ->
           imageSaverV2.save(updatedImageSaverV2Options, postImage, newFileName)
-        },
-        postImage
+        }
       )
 
+      val controller = ImageSaverV2OptionsController(context, options)
       threadPresenterCallback?.presentController(controller, false)
     } else {
       imageSaverV2.save(imageSaverV2Options, postImage, null)

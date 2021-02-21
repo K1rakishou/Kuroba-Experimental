@@ -48,7 +48,7 @@ data class ImageDownloadRequestEntity(
 ) {
 
   fun isQueued(): Boolean {
-    return status == ImageDownloadRequest.STATUS_QUEUED
+    return status == ImageDownloadRequest.Status.Queued.rawValue
   }
 
   companion object {

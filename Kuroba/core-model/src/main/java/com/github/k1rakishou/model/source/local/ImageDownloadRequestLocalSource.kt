@@ -4,6 +4,7 @@ import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.download.ImageDownloadRequest
 import com.github.k1rakishou.model.entity.download.ImageDownloadRequestEntity
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
+import okhttp3.HttpUrl
 import org.joda.time.DateTime
 import org.joda.time.Period
 
@@ -19,9 +20,12 @@ class ImageDownloadRequestLocalSource(
       return emptyList()
     }
 
-    val imageUrls = imageDownloadRequests.map { imageDownloadRequest -> imageDownloadRequest.imageFullUrl }
+    val imageUrls = imageDownloadRequests
+      .map { imageDownloadRequest -> imageDownloadRequest.imageFullUrl }
 
-    val activeRequests = imageDownloadRequestDao.selectMany(imageUrls)
+    val activeRequests = imageUrls
+      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .flatMap { chunk -> imageDownloadRequestDao.selectMany(chunk) }
       .filter { imageDownloadRequestEntity -> imageDownloadRequestEntity.isQueued() }
 
     val newImageDownloadRequestEntities = imageDownloadRequests.mapNotNull { imageDownloadRequest ->
@@ -76,8 +80,8 @@ class ImageDownloadRequestLocalSource(
       .mapNotNull { imageDownloadRequestEntity ->
         val status = ImageDownloadRequest.Status.fromRawValue(imageDownloadRequestEntity.status)
           ?: return@mapNotNull null
-        val resolution = ImageSaverV2Options.DuplicatesResolution.fromRawValue(imageDownloadRequestEntity.duplicatesResolution)
-          ?: return@mapNotNull null
+        val resolution =
+          ImageSaverV2Options.DuplicatesResolution.fromRawValue(imageDownloadRequestEntity.duplicatesResolution)
 
         return@mapNotNull ImageDownloadRequest(
           uniqueId = imageDownloadRequestEntity.uniqueId,
@@ -92,11 +96,47 @@ class ImageDownloadRequestLocalSource(
       }
   }
 
-  suspend fun updateMany(imageDownloadRequests: List<ImageDownloadRequest>) {
+  suspend fun selectManyWithStatus(
+    uniqueId: String,
+    downloadStatuses: Collection<ImageDownloadRequest.Status>
+  ): List<ImageDownloadRequest> {
     ensureInTransaction()
 
-    val imageDownloadRequestEntities = imageDownloadRequests.map { imageDownloadRequest ->
-      return@map ImageDownloadRequestEntity(
+    val rawDownloadStatuses = downloadStatuses.map { downloadStatus -> downloadStatus.rawValue }
+
+    return imageDownloadRequestDao.selectManyWithStatus(uniqueId, rawDownloadStatuses)
+      .mapNotNull { imageDownloadRequestEntity ->
+        val status = ImageDownloadRequest.Status.fromRawValue(imageDownloadRequestEntity.status)
+          ?: return@mapNotNull null
+        val resolution =
+          ImageSaverV2Options.DuplicatesResolution.fromRawValue(imageDownloadRequestEntity.duplicatesResolution)
+
+        return@mapNotNull ImageDownloadRequest(
+          uniqueId = imageDownloadRequestEntity.uniqueId,
+          imageServerFileName = imageDownloadRequestEntity.imageServerFileName,
+          imageFullUrl = imageDownloadRequestEntity.imageFullUrl,
+          newFileName = imageDownloadRequestEntity.newFileName,
+          status = status,
+          duplicatePathUri = imageDownloadRequestEntity.duplicatePathUri,
+          duplicatesResolution = resolution,
+          createdOn = imageDownloadRequestEntity.createdOn
+        )
+      }
+  }
+
+  suspend fun completeMany(imageDownloadRequests: List<ImageDownloadRequest>) {
+    ensureInTransaction()
+
+    val toDelete = mutableListOf<HttpUrl>()
+    val toUpdate = mutableListOf<ImageDownloadRequestEntity>()
+
+    imageDownloadRequests.forEach { imageDownloadRequest ->
+      if (imageDownloadRequest.status == ImageDownloadRequest.Status.Downloaded) {
+        toDelete += imageDownloadRequest.imageFullUrl
+        return@forEach
+      }
+
+      toUpdate += ImageDownloadRequestEntity(
         uniqueId = imageDownloadRequest.uniqueId,
         imageServerFileName = imageDownloadRequest.imageServerFileName,
         imageFullUrl = imageDownloadRequest.imageFullUrl,
@@ -108,7 +148,11 @@ class ImageDownloadRequestLocalSource(
       )
     }
 
-    imageDownloadRequestDao.updateMany(imageDownloadRequestEntities)
+    imageDownloadRequestDao.updateMany(toUpdate)
+
+    toDelete
+      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .forEach { chunk -> imageDownloadRequestDao.deleteManyByUrl(chunk) }
   }
 
   suspend fun deleteByUniqueId(uniqueId: String) {
@@ -120,10 +164,11 @@ class ImageDownloadRequestLocalSource(
   suspend fun deleteOld() {
     ensureInTransaction()
 
-    imageDownloadRequestDao.deleteOlderThan(MONTH_AGO)
+    // TODO(KurobaEx / @Testme!!!):
+    imageDownloadRequestDao.deleteOlderThan(WEEK_AGO)
   }
 
   companion object {
-    private val MONTH_AGO = DateTime.now().minus(Period.days(30))
+    private val WEEK_AGO = DateTime.now().minus(Period.weeks(1))
   }
 }

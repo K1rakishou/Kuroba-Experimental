@@ -5,6 +5,8 @@ import android.net.Uri
 import android.text.TextWatcher
 import android.view.View
 import android.widget.RadioGroup
+import android.widget.Toast
+import androidx.core.view.children
 import androidx.core.widget.doAfterTextChanged
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.Debouncer
@@ -13,6 +15,7 @@ import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.utils.doIgnoringTextWatcher
 import com.github.k1rakishou.chan.utils.setVisibilityFast
@@ -27,9 +30,7 @@ import javax.inject.Inject
 
 class ImageSaverV2OptionsController(
   context: Context,
-  private val onSaveClicked: (ImageSaverV2Options, String?) -> Unit,
-  // Null when opening this controller when downloading multiple images at once
-  private val chanPostImage: ChanPostImage? = null,
+  private val options: Options,
 ) : BaseFloatingController(context) {
   private lateinit var imageNameOptionsGroup: RadioGroup
   private lateinit var duplicatesResolutionOptionsGroup: RadioGroup
@@ -37,14 +38,19 @@ class ImageSaverV2OptionsController(
   private lateinit var appendBoardCode: ColorizableCheckBox
   private lateinit var appendThreadId: ColorizableCheckBox
   private lateinit var rootDir: ColorizableTextView
+  private lateinit var customFileName: ColorizableEditText
   private lateinit var outputDir: ColorizableEditText
-  private lateinit var fileName: ColorizableEditText
+  private lateinit var outputDirTil: ColorizableTextInputLayout
   private lateinit var additionalDirs: ColorizableEditText
+  private lateinit var customFileNameTil: ColorizableTextInputLayout
+  private lateinit var additionalDirectoriesTil: ColorizableTextInputLayout
   private lateinit var cancelButton: ColorizableButton
   private lateinit var saveButton: ColorizableButton
 
   private lateinit var fileNameTextWatcher: TextWatcher
   private lateinit var additionalDirsTextWatcher: TextWatcher
+
+  private var needCallCancelFunc = true
 
   private val currentSetting = PersistableChanState.imageSaverV2PersistedOptions.get().copy()
 
@@ -75,17 +81,48 @@ class ImageSaverV2OptionsController(
     appendThreadId = view.findViewById(R.id.append_thread_id)
     additionalDirs = view.findViewById(R.id.additional_directories)
     outputDir = view.findViewById(R.id.output_dir)
-    fileName = view.findViewById(R.id.custom_file_name)
+    outputDirTil = view.findViewById(R.id.output_dir_til)
+    customFileName = view.findViewById(R.id.custom_file_name)
+    customFileNameTil = view.findViewById(R.id.custom_file_name_til)
+    additionalDirectoriesTil = view.findViewById(R.id.additional_directories_til)
     cancelButton = view.findViewById(R.id.cancel_button)
     saveButton = view.findViewById(R.id.save_button)
 
-    if (chanPostImage == null) {
-      fileName.setVisibilityFast(View.GONE)
-    } else {
-      fileName.setVisibilityFast(View.VISIBLE)
+    when (options) {
+      is Options.MultipleImages -> {
+        // no customFileName because we can't rename multiple images at once
+        customFileNameTil.setVisibilityFast(View.GONE)
+        customFileName.setVisibilityFast(View.GONE)
+      }
+      is Options.ResultDirAccessProblems -> {
+        // no customFileName here because it's either already set or the initial request was to
+        // download multiple images.
+        customFileNameTil.setVisibilityFast(View.GONE)
+        customFileName.setVisibilityFast(View.GONE)
+
+        imageNameOptionsGroup.enableOrDisable(enable = false)
+        duplicatesResolutionOptionsGroup.enableOrDisable(enable = false)
+
+        appendSiteName.isEnabled = false
+        appendBoardCode.isEnabled = false
+        appendThreadId.isEnabled = false
+
+        additionalDirectoriesTil.isEnabled = false
+        additionalDirs.isEnabled = false
+
+        outputDirTil.isEnabled = false
+        outputDir.isEnabled = false
+
+        saveButton.setText(R.string.retry)
+      }
+      is Options.SingleImage -> {
+        // no-op, fileName is visible by default
+      }
     }
 
     imageNameOptionsGroup.setOnCheckedChangeListener { _, itemId ->
+      this.overriddenFileName = null
+
       when (itemId) {
         R.id.image_name_options_use_server_name -> {
           currentSetting.imageNameOptions = ImageSaverV2Options.ImageNameOptions.UseServerFileName.rawValue
@@ -121,20 +158,7 @@ class ImageSaverV2OptionsController(
         }
 
         override fun onResult(uri: Uri) {
-          // TODO(KurobaEx v0.6.0): strings
-          val externalFile = fileManager.fromUri(uri)
-          if (externalFile == null) {
-            showToast("Failed to open result uri: '$uri'")
-            return
-          }
-
-          if (!fileManager.isDirectory(externalFile)) {
-            showToast("Uri '$uri' is not a directory")
-            return
-          }
-
-          if (!fileManager.exists(externalFile)) {
-            showToast("Directory '$uri' does not exist")
+          if (!checkRootDirAccessible(uri)) {
             return
           }
 
@@ -153,7 +177,7 @@ class ImageSaverV2OptionsController(
       })
     }
 
-    fileNameTextWatcher = fileName.doAfterTextChanged { editable ->
+    fileNameTextWatcher = customFileName.doAfterTextChanged { editable ->
       fileNameDebouncer.post({
         overriddenFileName = editable?.toString()
         applyOptionsToView()
@@ -190,19 +214,67 @@ class ImageSaverV2OptionsController(
       pop()
     }
     saveButton.setOnClickListener {
-      val newFileName = if (chanPostImage != null) {
-        fileName.text?.toString()
+      val newFileName = if (options is Options.SingleImage) {
+        customFileName.text?.toString()
       } else {
         null
       }
 
       PersistableChanState.imageSaverV2PersistedOptions.set(currentSetting)
-      onSaveClicked.invoke(currentSetting, newFileName)
+      needCallCancelFunc = false
+
+      when (options) {
+        is Options.MultipleImages -> options.onSaveClicked(currentSetting)
+        is Options.ResultDirAccessProblems -> options.onRetryClicked(currentSetting)
+        is Options.SingleImage -> options.onSaveClicked(currentSetting, newFileName)
+      }
 
       pop()
     }
 
+    currentSetting.rootDirectoryUri?.let { rootDirUri ->
+      checkRootDirAccessible(Uri.parse(rootDirUri))
+    }
+
     applyOptionsToView()
+  }
+
+  private fun RadioGroup.enableOrDisable(enable: Boolean) {
+    isEnabled = enable
+
+    children.forEach { child ->
+      child.isEnabled = enable
+    }
+  }
+
+  private fun checkRootDirAccessible(uri: Uri): Boolean {
+    // TODO(KurobaEx v0.6.0): strings
+
+    val externalFile = fileManager.fromUri(uri)
+    if (externalFile == null) {
+      showToast("Root directory is inaccessible", Toast.LENGTH_LONG)
+      return false
+    }
+
+    if (!fileManager.isDirectory(externalFile)) {
+      showToast("Uri '$uri' is not a directory", Toast.LENGTH_LONG)
+      return false
+    }
+
+    if (!fileManager.exists(externalFile)) {
+      showToast("Directory '$uri' does not exist", Toast.LENGTH_LONG)
+      return false
+    }
+
+    return true
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+
+    if (needCallCancelFunc && options is Options.ResultDirAccessProblems) {
+      options.onCancelClicked()
+    }
   }
 
   private fun checkSubDirsValid(input: String): Boolean {
@@ -251,13 +323,13 @@ class ImageSaverV2OptionsController(
   }
 
   private fun applyOptionsToView() {
-    val options = currentSetting
+    val currentImageSaverSetting = currentSetting
     
     outputDir.error = null
-    fileName.error = null
+    customFileName.error = null
     additionalDirs.error = null
 
-    when (options.imageNameOptions) {
+    when (currentImageSaverSetting.imageNameOptions) {
       ImageSaverV2Options.ImageNameOptions.UseServerFileName.rawValue -> {
         imageNameOptionsGroup.check(R.id.image_name_options_use_server_name)
       }
@@ -266,7 +338,7 @@ class ImageSaverV2OptionsController(
       }
     }
 
-    when (options.duplicatesResolution) {
+    when (currentImageSaverSetting.duplicatesResolution) {
       ImageSaverV2Options.DuplicatesResolution.AskWhatToDo.rawValue -> {
         duplicatesResolutionOptionsGroup.check(R.id.duplicate_resolution_options_ask)
       }
@@ -278,22 +350,24 @@ class ImageSaverV2OptionsController(
       }
     }
 
+    val chanPostImage = options.chanPostImageOrNull()
+
     val currentFileNameString = if (chanPostImage != null) {
       val currentFileNameString = if (overriddenFileName != null) {
         overriddenFileName
       } else {
-        when (options.imageNameOptions) {
+        when (currentImageSaverSetting.imageNameOptions) {
           ImageSaverV2Options.ImageNameOptions.UseServerFileName.rawValue -> {
             chanPostImage.serverFilename
           }
           ImageSaverV2Options.ImageNameOptions.UseOriginalFileName.rawValue -> {
             chanPostImage.filename
           }
-          else -> throw IllegalArgumentException("Unknown imageNameOptions: ${options.imageNameOptions}")
+          else -> throw IllegalArgumentException("Unknown imageNameOptions: ${currentImageSaverSetting.imageNameOptions}")
         }
       }
 
-      fileName.doIgnoringTextWatcher(fileNameTextWatcher) {
+      customFileName.doIgnoringTextWatcher(fileNameTextWatcher) {
         text?.replace(0, text!!.length, currentFileNameString)
       }
 
@@ -302,11 +376,11 @@ class ImageSaverV2OptionsController(
       null
     }
 
-    appendSiteName.isChecked = options.appendSiteName
-    appendBoardCode.isChecked = options.appendBoardCode
-    appendThreadId.isChecked = options.appendThreadId
+    appendSiteName.isChecked = currentImageSaverSetting.appendSiteName
+    appendBoardCode.isChecked = currentImageSaverSetting.appendBoardCode
+    appendThreadId.isChecked = currentImageSaverSetting.appendThreadId
 
-    val rootDirectoryUriString = options.rootDirectoryUri
+    val rootDirectoryUriString = currentImageSaverSetting.rootDirectoryUri
     if (rootDirectoryUriString.isNullOrBlank()) {
       rootDir.textSize = 20f
       rootDir.text = context.getString(R.string.controller_image_save_options_click_to_set_root_dir)
@@ -315,7 +389,7 @@ class ImageSaverV2OptionsController(
       rootDir.textSize = 14f
     }
 
-    val subDirsString = options.subDirs
+    val subDirsString = currentImageSaverSetting.subDirs
 
     if (subDirsString != null && !checkSubDirsValid(subDirsString)) {
       additionalDirs.error = context.getString(R.string.controller_image_save_options_sub_dirs_are_not_valid)
@@ -336,13 +410,13 @@ class ImageSaverV2OptionsController(
     val outputDirText = buildString {
       append("<Root dir>")
 
-      if (options.appendSiteName) {
+      if (currentImageSaverSetting.appendSiteName) {
         append("\\<Site name>")
       }
-      if (options.appendBoardCode) {
+      if (currentImageSaverSetting.appendBoardCode) {
         append("\\<Board code>")
       }
-      if (options.appendThreadId) {
+      if (currentImageSaverSetting.appendThreadId) {
         append("\\<Thread id>")
       }
       if (subDirsString.isNotNullNorBlank()) {
@@ -360,13 +434,13 @@ class ImageSaverV2OptionsController(
 
     if (chanPostImage != null) {
       if (currentFileNameString.isNullOrBlank()) {
-        fileName.error = context.getString(R.string.controller_image_save_options_file_name_is_blank)
+        customFileName.error = context.getString(R.string.controller_image_save_options_file_name_is_blank)
         enableDisableSaveButton(enable = false)
         return
       }
 
       if (fileNameContainsBadSymbols(currentFileNameString)) {
-        fileName.error = context.getString(R.string.controller_image_save_options_file_name_bad_symbols)
+        customFileName.error = context.getString(R.string.controller_image_save_options_file_name_bad_symbols)
         enableDisableSaveButton(enable = false)
         return
       }
@@ -381,6 +455,31 @@ class ImageSaverV2OptionsController(
     saveButton.isEnabled = enable
     saveButton.isClickable = enable
     saveButton.isFocusable = enable
+  }
+
+  sealed class Options {
+    fun chanPostImageOrNull(): ChanPostImage? {
+      return when (this) {
+        is SingleImage -> chanPostImage
+        is ResultDirAccessProblems -> null
+        is MultipleImages -> null
+      }
+    }
+
+    data class SingleImage(
+      val chanPostImage: ChanPostImage,
+      val onSaveClicked: (ImageSaverV2Options, String?) -> Unit
+    ) : Options()
+
+    data class MultipleImages(
+      val onSaveClicked: (ImageSaverV2Options) -> Unit
+    ) : Options()
+
+    data class ResultDirAccessProblems(
+      val uniqueId: String,
+      val onRetryClicked: (ImageSaverV2Options) -> Unit,
+      val onCancelClicked: () -> Unit
+    ) : Options()
   }
 
 }

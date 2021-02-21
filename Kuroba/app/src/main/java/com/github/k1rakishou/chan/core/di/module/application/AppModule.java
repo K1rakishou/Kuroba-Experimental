@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2;
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_logger.Logger;
@@ -136,14 +137,16 @@ public class AppModule {
             Context appContext,
             CoroutineScope appScope,
             Gson gson,
-            ImageDownloadRequestRepository imageDownloadRequestRepository
+            ImageDownloadRequestRepository imageDownloadRequestRepository,
+            ImageSaverV2ServiceDelegate imageSaverV2ServiceDelegate
     ) {
         return new ImageSaverV2(
                 ChanSettings.verboseLogs.get(),
                 appContext,
                 appScope,
                 gson,
-                imageDownloadRequestRepository
+                imageDownloadRequestRepository,
+                imageSaverV2ServiceDelegate
         );
     }
 
