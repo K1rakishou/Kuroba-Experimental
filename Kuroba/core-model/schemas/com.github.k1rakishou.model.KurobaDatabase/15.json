@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 15,
-    "identityHash": "e782660f310c8cb3ab1272c1d6b3e761",
+    "identityHash": "67ffcd86905ae67a3707b40ba808da6e",
     "entities": [
       {
         "tableName": "chan_site_id",
@@ -2022,7 +2022,7 @@
       },
       {
         "tableName": "image_download_request_entity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`unique_id` TEXT NOT NULL, `image_server_file_name` TEXT NOT NULL, `image_full_url` TEXT NOT NULL, `new_file_name` TEXT, `status` INTEGER NOT NULL, `duplicate_path_uri` TEXT, `duplicates_resolution` INTEGER NOT NULL, `created_on` INTEGER NOT NULL, PRIMARY KEY(`unique_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`unique_id` TEXT NOT NULL, `image_server_file_name` TEXT NOT NULL, `image_full_url` TEXT NOT NULL, `new_file_name` TEXT, `status` INTEGER NOT NULL, `duplicate_file_uri` TEXT, `duplicates_resolution` INTEGER NOT NULL, `created_on` INTEGER NOT NULL, PRIMARY KEY(`unique_id`))",
         "fields": [
           {
             "fieldPath": "uniqueId",
@@ -2055,8 +2055,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "duplicatePathUri",
-            "columnName": "duplicate_path_uri",
+            "fieldPath": "duplicateFileUri",
+            "columnName": "duplicate_file_uri",
             "affinity": "TEXT",
             "notNull": false
           },
@@ -2128,7 +2128,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e782660f310c8cb3ab1272c1d6b3e761')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '67ffcd86905ae67a3707b40ba808da6e')"
     ]
   }
 }

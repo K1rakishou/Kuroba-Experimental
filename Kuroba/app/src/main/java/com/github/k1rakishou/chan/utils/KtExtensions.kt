@@ -105,6 +105,12 @@ fun View.setAlphaFast(newAlpha: Float) {
   }
 }
 
+fun View.setEnabledFast(newEnabled: Boolean) {
+  if (isEnabled != newEnabled) {
+    isEnabled = newEnabled
+  }
+}
+
 fun View.setVisibilityFast(newVisibility: Int) {
   if (visibility != newVisibility) {
     visibility = newVisibility

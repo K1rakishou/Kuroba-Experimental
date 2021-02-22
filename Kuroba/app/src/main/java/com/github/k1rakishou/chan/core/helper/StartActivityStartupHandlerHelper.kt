@@ -202,9 +202,10 @@ class StartActivityStartupHandlerHelper(
       }
       action == ImageSaverV2Service.ACTION_TYPE_RESOLVE_DUPLICATES -> {
         val uniqueId = extras.getString(ImageSaverV2Service.UNIQUE_ID)
-        if (uniqueId != null) {
-          hideImageSaverNotification(context!!, uniqueId)
-          drawerController?.showResolveDuplicateImagesController(uniqueId)
+        val imageSaverOptionsJson = extras.getString(ImageSaverV2Service.IMAGE_SAVER_OPTIONS)
+
+        if (uniqueId != null && imageSaverOptionsJson != null) {
+          drawerController?.showResolveDuplicateImagesController(uniqueId, imageSaverOptionsJson)
         }
 
         // Always return false here since we don't want to override the default "restore app"
@@ -214,8 +215,6 @@ class StartActivityStartupHandlerHelper(
       action == ImageSaverV2Service.ACTION_TYPE_SHOW_IMAGE_SAVER_SETTINGS -> {
         val uniqueId = extras.getString(ImageSaverV2Service.UNIQUE_ID)
         if (uniqueId != null) {
-          hideImageSaverNotification(context!!, uniqueId)
-
           drawerController?.showImageSaverV2OptionsController(uniqueId)
         }
 

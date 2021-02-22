@@ -7,6 +7,7 @@ import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.view.View
 import androidx.annotation.DrawableRes
 import androidx.core.graphics.drawable.toBitmap
@@ -23,6 +24,7 @@ import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.ui.widget.FixedViewSizeResolver
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.chan.utils.getLifecycleFromContext
@@ -70,8 +72,8 @@ class ImageLoaderV2(
     imageSize: ImageSize,
     transformations: List<Transformation>,
     listener: SimpleImageListener,
-    @DrawableRes errorDrawableId: Int? = null,
-    @DrawableRes notFoundDrawableId: Int? = errorDrawableId
+    @DrawableRes errorDrawableId: Int = R.drawable.ic_image_error_loading,
+    @DrawableRes notFoundDrawableId: Int = R.drawable.ic_image_not_found
   ): Disposable {
     BackgroundUtils.ensureMainThread()
 
@@ -299,6 +301,7 @@ class ImageLoaderV2(
     val request = with(ImageRequest.Builder(context)) {
       lifecycle(lifecycle)
       allowHardware(false)
+      allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
       data(drawable)
       transformations(transformations + RESIZE_TRANSFORMATION)
       applyImageSize(imageSize)
@@ -329,25 +332,21 @@ class ImageLoaderV2(
     imageSize: ImageSize,
     transformations: List<Transformation>,
     throwable: Throwable,
-    notFoundDrawableId: Int? = null,
-    errorDrawableId: Int? = null
+    notFoundDrawableId: Int,
+    errorDrawableId: Int
   ): BitmapDrawable {
     if (throwable.isNotFoundError()) {
-      if (notFoundDrawableId != null) {
-        val drawable = loadFromResources(context, notFoundDrawableId, imageSize, Scale.FIT, transformations)
-        if (drawable != null) {
-          return drawable
-        }
+      val drawable = loadFromResources(context, notFoundDrawableId, imageSize, Scale.FIT, transformations)
+      if (drawable != null) {
+        return drawable
       }
 
       return getImageNotFoundDrawable(context)
     }
 
-    if (errorDrawableId != null) {
-      val drawable = loadFromResources(context, errorDrawableId, imageSize, Scale.FIT, transformations)
-      if (drawable != null) {
-        return drawable
-      }
+    val drawable = loadFromResources(context, errorDrawableId, imageSize, Scale.FIT, transformations)
+    if (drawable != null) {
+      return drawable
     }
 
     return getImageErrorLoadingDrawable(context)
@@ -363,6 +362,7 @@ class ImageLoaderV2(
     val request = with(ImageRequest.Builder(context)) {
       lifecycle(lifecycle)
       allowHardware(false)
+      allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
       data(url)
       addHeader("User-Agent", appConstants.userAgent)
 
@@ -393,6 +393,7 @@ class ImageLoaderV2(
     val request = with(ImageRequest.Builder(context)) {
       lifecycle(lifecycle)
       allowHardware(false)
+      allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
       scale(Scale.FIT)
       data(File(cacheFile.getFullPath()))
       applyImageSize(imageSize)
@@ -413,15 +414,78 @@ class ImageLoaderV2(
   ): Disposable {
     val completableDeferred = CompletableDeferred<Unit>()
 
-    val job = appScope.launch(Dispatchers.IO) {
+    val job = appScope.launch(Dispatchers.Main.immediate) {
       try {
         val bitmapDrawable = loadFromResources(context, drawableId, imageSize, scale, transformations)
         if (bitmapDrawable == null) {
-          withContext(Dispatchers.Main) { listener.onResponse(getImageErrorLoadingDrawable(context)) }
+          if (verboseLogs ) {
+            Logger.d(TAG, "loadFromResources() Failed to load '$drawableId', $imageSize")
+          }
+
+          listener.onResponse(getImageErrorLoadingDrawable(context))
           return@launch
         }
 
-        withContext(Dispatchers.Main) { listener.onResponse(bitmapDrawable) }
+        if (verboseLogs ) {
+          Logger.d(TAG, "loadFromResources() Loaded '$drawableId', $imageSize, bitmap size = " +
+            "${bitmapDrawable.intrinsicWidth}x${bitmapDrawable.intrinsicHeight}")
+        }
+
+        listener.onResponse(bitmapDrawable)
+      } finally {
+        completableDeferred.complete(Unit)
+      }
+    }
+
+    return ImageLoaderRequestDisposable(
+      imageLoaderJob = job,
+      imageLoaderCompletableDeferred = completableDeferred
+    )
+  }
+
+  fun loadFromDisk(
+    context: Context,
+    diskPath: DiskPath,
+    imageSize: ImageSize,
+    scale: Scale,
+    transformations: List<Transformation>,
+    listener: SimpleImageListener
+  ): Disposable {
+    val lifecycle = context.getLifecycleFromContext()
+    val completableDeferred = CompletableDeferred<Unit>()
+
+    val job = appScope.launch(Dispatchers.Main.immediate) {
+      try {
+        val request = with(ImageRequest.Builder(context)) {
+          when (diskPath) {
+            is DiskPath.JavaFile -> data(diskPath.file)
+            is DiskPath.FileUri -> data(diskPath.uri)
+          }
+
+          lifecycle(lifecycle)
+          transformations(transformations)
+          allowHardware(false)
+          allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
+          scale(scale)
+          applyImageSize(imageSize)
+
+          build()
+        }
+
+        val bitmapDrawable = when (val imageResult = imageLoader.execute(request)) {
+          is SuccessResult -> {
+            val bitmap = imageResult.drawable.toBitmap()
+            BitmapDrawable(context.resources, bitmap)
+          }
+          is ErrorResult -> null
+        }
+
+        if (bitmapDrawable == null) {
+          listener.onResponse(getImageErrorLoadingDrawable(context))
+          return@launch
+        }
+
+        listener.onResponse(bitmapDrawable)
       } finally {
         completableDeferred.complete(Unit)
       }
@@ -447,6 +511,7 @@ class ImageLoaderV2(
       lifecycle(lifecycle)
       transformations(transformations)
       allowHardware(false)
+      allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
       scale(scale)
       applyImageSize(imageSize)
 
@@ -493,6 +558,7 @@ class ImageLoaderV2(
       lifecycle(lifecycle)
       transformations(transformations)
       allowHardware(true)
+      allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
       scale(scale)
       applyImageSize(imageSize)
 
@@ -679,6 +745,7 @@ class ImageLoaderV2(
         lifecycle(lifecycle)
         transformations(transformations)
         allowHardware(true)
+        allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
         scale(scale)
         size(width, height)
 
@@ -779,8 +846,8 @@ class ImageLoaderV2(
   sealed class ImageListenerParam {
     class SimpleImageListener(
       val listener: ImageLoaderV2.SimpleImageListener,
-      @DrawableRes val errorDrawableId: Int? = null,
-      @DrawableRes val notFoundDrawableId: Int? = errorDrawableId
+      @DrawableRes val errorDrawableId: Int,
+      @DrawableRes val notFoundDrawableId: Int
     ) : ImageListenerParam()
 
     class FailureAwareImageListener(
@@ -837,6 +904,11 @@ class ImageLoaderV2(
       imageLoaderCompletableDeferred.cancel()
     }
 
+  }
+
+  sealed class DiskPath {
+    data class JavaFile(val file: File) : DiskPath()
+    data class FileUri(val uri: Uri) : DiskPath()
   }
 
   private class ResizeTransformation : Transformation {

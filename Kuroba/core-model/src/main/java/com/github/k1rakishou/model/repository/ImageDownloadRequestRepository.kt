@@ -26,7 +26,7 @@ class ImageDownloadRequestRepository(
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         if (deletionRoutineExecuted.compareAndSet(false, true)) {
-          imageDownloadRequestLocalSource.deleteOld()
+          imageDownloadRequestLocalSource.deleteOldAndHangedInQueueStatus()
         }
 
         return@tryWithTransaction imageDownloadRequestLocalSource.createMany(imageDownloadRequests)
@@ -60,6 +60,14 @@ class ImageDownloadRequestRepository(
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         return@tryWithTransaction imageDownloadRequestLocalSource.completeMany(imageDownloadRequest)
+      }
+    }
+  }
+
+  suspend fun updateMany(imageDownloadRequests: List<ImageDownloadRequest>): ModularResult<Unit> {
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        return@tryWithTransaction imageDownloadRequestLocalSource.updateMany(imageDownloadRequests)
       }
     }
   }

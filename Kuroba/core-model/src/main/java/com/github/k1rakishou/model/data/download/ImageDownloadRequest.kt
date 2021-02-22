@@ -11,7 +11,7 @@ data class ImageDownloadRequest(
   val imageFullUrl: HttpUrl,
   val newFileName: String? = null,
   val status: Status = Status.Queued,
-  val duplicatePathUri: Uri? = null,
+  val duplicateFileUri: Uri? = null,
   val duplicatesResolution: ImageSaverV2Options.DuplicatesResolution = ImageSaverV2Options.DuplicatesResolution.AskWhatToDo,
   val createdOn: DateTime = DateTime.now()
 ) {

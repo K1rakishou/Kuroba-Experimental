@@ -46,7 +46,7 @@ class ImageDownloadRequestLocalSource(
         imageFullUrl = imageDownloadRequest.imageFullUrl,
         newFileName = imageDownloadRequest.newFileName,
         status = imageDownloadRequest.status.rawValue,
-        duplicatePathUri = imageDownloadRequest.duplicatePathUri,
+        duplicateFileUri = imageDownloadRequest.duplicateFileUri,
         duplicatesResolution = imageDownloadRequest.duplicatesResolution.rawValue,
         createdOn = DateTime.now()
       )
@@ -66,7 +66,7 @@ class ImageDownloadRequestLocalSource(
         imageFullUrl = newRequest.imageFullUrl,
         newFileName = newRequest.newFileName,
         status = status,
-        duplicatePathUri = newRequest.duplicatePathUri,
+        duplicateFileUri = newRequest.duplicateFileUri,
         duplicatesResolution = resolution,
         createdOn = newRequest.createdOn
       )
@@ -89,7 +89,7 @@ class ImageDownloadRequestLocalSource(
           imageFullUrl = imageDownloadRequestEntity.imageFullUrl,
           newFileName = imageDownloadRequestEntity.newFileName,
           status = status,
-          duplicatePathUri = imageDownloadRequestEntity.duplicatePathUri,
+          duplicateFileUri = imageDownloadRequestEntity.duplicateFileUri,
           duplicatesResolution = resolution,
           createdOn = imageDownloadRequestEntity.createdOn
         )
@@ -117,7 +117,7 @@ class ImageDownloadRequestLocalSource(
           imageFullUrl = imageDownloadRequestEntity.imageFullUrl,
           newFileName = imageDownloadRequestEntity.newFileName,
           status = status,
-          duplicatePathUri = imageDownloadRequestEntity.duplicatePathUri,
+          duplicateFileUri = imageDownloadRequestEntity.duplicateFileUri,
           duplicatesResolution = resolution,
           createdOn = imageDownloadRequestEntity.createdOn
         )
@@ -142,7 +142,7 @@ class ImageDownloadRequestLocalSource(
         imageFullUrl = imageDownloadRequest.imageFullUrl,
         newFileName = imageDownloadRequest.newFileName,
         status = imageDownloadRequest.status.rawValue,
-        duplicatePathUri = imageDownloadRequest.duplicatePathUri,
+        duplicateFileUri = imageDownloadRequest.duplicateFileUri,
         duplicatesResolution = imageDownloadRequest.duplicatesResolution.rawValue,
         createdOn = DateTime.now()
       )
@@ -155,17 +155,38 @@ class ImageDownloadRequestLocalSource(
       .forEach { chunk -> imageDownloadRequestDao.deleteManyByUrl(chunk) }
   }
 
+  suspend fun updateMany(imageDownloadRequests: List<ImageDownloadRequest>) {
+    ensureInTransaction()
+
+    imageDownloadRequests
+      .map { imageDownloadRequest ->
+        return@map ImageDownloadRequestEntity(
+          uniqueId = imageDownloadRequest.uniqueId,
+          imageServerFileName = imageDownloadRequest.imageServerFileName,
+          imageFullUrl = imageDownloadRequest.imageFullUrl,
+          newFileName = imageDownloadRequest.newFileName,
+          status = imageDownloadRequest.status.rawValue,
+          duplicateFileUri = imageDownloadRequest.duplicateFileUri,
+          duplicatesResolution = imageDownloadRequest.duplicatesResolution.rawValue,
+          createdOn = imageDownloadRequest.createdOn,
+        )
+      }
+      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .forEach { chunk -> imageDownloadRequestDao.updateMany(chunk) }
+  }
+
   suspend fun deleteByUniqueId(uniqueId: String) {
     ensureInTransaction()
 
     imageDownloadRequestDao.deleteByUniqueId(uniqueId)
   }
 
-  suspend fun deleteOld() {
+  suspend fun deleteOldAndHangedInQueueStatus() {
     ensureInTransaction()
 
     // TODO(KurobaEx / @Testme!!!):
     imageDownloadRequestDao.deleteOlderThan(WEEK_AGO)
+    imageDownloadRequestDao.deleteWithStatus(ImageDownloadRequest.Status.Queued.rawValue)
   }
 
   companion object {

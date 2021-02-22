@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.image_saver
 
 import android.net.Uri
 import androidx.annotation.GuardedBy
+import androidx.core.app.NotificationManagerCompat
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -40,6 +41,7 @@ import kotlin.coroutines.resumeWithException
 class ImageSaverV2ServiceDelegate(
   private val verboseLogs: Boolean,
   private val appScope: CoroutineScope,
+  private val notificationManagerCompat: NotificationManagerCompat,
   private val fileCacheV2: FileCacheV2,
   private val fileManager: FileManager,
   private val chanPostImageRepository: ChanPostImageRepository,
@@ -60,6 +62,8 @@ class ImageSaverV2ServiceDelegate(
   }
 
   suspend fun deleteDownload(uniqueId: String) {
+    notificationManagerCompat.cancel(uniqueId, uniqueId.hashCode())
+
     imageDownloadRequestRepository.deleteByUniqueId(uniqueId)
       .peekError { error -> Logger.e(TAG, "imageDownloadRequestRepository.deleteByUniqueId($uniqueId) error", error) }
       .ignore()
@@ -68,6 +72,7 @@ class ImageSaverV2ServiceDelegate(
   }
 
   suspend fun cancelDownload(uniqueId: String) {
+    notificationManagerCompat.cancel(uniqueId, uniqueId.hashCode())
     mutex.withLock { activeDownloads[uniqueId]?.cancel() }
   }
 
@@ -105,6 +110,7 @@ class ImageSaverV2ServiceDelegate(
       // Start event
       emitNotificationUpdate(
         uniqueId = imageDownloadInputData.uniqueId,
+        imageSaverOptionsJson = imageDownloadInputData.imageSaverOptionsJson,
         completed = false,
         totalImagesCount = imageDownloadInputData.requestsCount(),
         canceledRequests = canceledRequests.get(),
@@ -190,6 +196,7 @@ class ImageSaverV2ServiceDelegate(
         // Progress event
         emitNotificationUpdate(
           uniqueId = imageDownloadInputData.uniqueId,
+          imageSaverOptionsJson = imageDownloadInputData.imageSaverOptionsJson,
           completed = false,
           totalImagesCount = imageDownloadInputData.requestsCount(),
           canceledRequests = canceledRequests.get(),
@@ -208,6 +215,7 @@ class ImageSaverV2ServiceDelegate(
       // End event
       emitNotificationUpdate(
         uniqueId = imageDownloadInputData.uniqueId,
+        imageSaverOptionsJson = imageDownloadInputData.imageSaverOptionsJson,
         completed = true,
         totalImagesCount = imageDownloadInputData.requestsCount(),
         canceledRequests = canceledRequests.get(),
@@ -256,6 +264,7 @@ class ImageSaverV2ServiceDelegate(
 
   private suspend fun emitNotificationUpdate(
     uniqueId: String,
+    imageSaverOptionsJson: String,
     completed: Boolean,
     totalImagesCount: Int,
     canceledRequests: Int,
@@ -268,6 +277,7 @@ class ImageSaverV2ServiceDelegate(
 
     val imageSaverDelegateResult = ImageSaverDelegateResult(
       uniqueId = uniqueId,
+      imageSaverOptionsJson = imageSaverOptionsJson,
       completed = completed,
       totalImagesCount = totalImagesCount,
       canceledRequests = canceledRequests,
@@ -302,6 +312,7 @@ class ImageSaverV2ServiceDelegate(
   @Suppress("MoveVariableDeclarationIntoWhen")
   private fun getFullFileUri(
     imageSaverV2Options: ImageSaverV2Options,
+    imageDownloadRequest: ImageDownloadRequest,
     postDescriptor: PostDescriptor,
     fileName: String
   ): ResultFile {
@@ -342,8 +353,14 @@ class ImageSaverV2ServiceDelegate(
     val resultDirUri = Uri.parse(resultDir.getFullPath())
 
     if (fileManager.exists(resultFile)) {
-      val duplicatesResolution =
+      var duplicatesResolution =
         ImageSaverV2Options.DuplicatesResolution.fromRawValue(imageSaverV2Options.duplicatesResolution)
+
+      // If the setting is set to DuplicatesResolution.AskWhatToDo then check the duplicatesResolution
+      // of imageDownloadRequest
+      if (duplicatesResolution == ImageSaverV2Options.DuplicatesResolution.AskWhatToDo) {
+        duplicatesResolution = imageDownloadRequest.duplicatesResolution
+      }
 
       when (duplicatesResolution) {
         ImageSaverV2Options.DuplicatesResolution.AskWhatToDo -> {
@@ -423,7 +440,13 @@ class ImageSaverV2ServiceDelegate(
 
       val postDescriptor = chanPostImage.ownerPostDescriptor
 
-      val outputFileResult = getFullFileUri(imageSaverV2Options, postDescriptor, fileName)
+      val outputFileResult = getFullFileUri(
+        imageSaverV2Options = imageSaverV2Options,
+        imageDownloadRequest = imageDownloadRequest,
+        postDescriptor = postDescriptor,
+        fileName = fileName
+      )
+
       when (outputFileResult) {
         is ResultFile.DuplicateFound -> {
           val duplicateImage = DuplicateImage(
@@ -575,6 +598,7 @@ class ImageSaverV2ServiceDelegate(
 
   data class ImageSaverDelegateResult(
     val uniqueId: String,
+    val imageSaverOptionsJson: String,
     val completed: Boolean,
     val totalImagesCount: Int,
     val canceledRequests: Int,

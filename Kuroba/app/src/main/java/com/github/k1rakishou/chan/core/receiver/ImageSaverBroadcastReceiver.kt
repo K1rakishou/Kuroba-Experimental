@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import androidx.core.app.NotificationManagerCompat
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
@@ -49,7 +48,6 @@ class ImageSaverBroadcastReceiver : BroadcastReceiver() {
 
         serializedExecutor.post {
           try {
-            hideImageSaverNotification(context, uniqueId)
             imageSaverV2ServiceDelegate.cancelDownload(uniqueId)
           } finally {
             pendingResult.finish()
@@ -64,8 +62,7 @@ class ImageSaverBroadcastReceiver : BroadcastReceiver() {
           return
         }
 
-        hideImageSaverNotification(context, uniqueId)
-        imageSaverV2.retryFailedImages(uniqueId, null)
+        imageSaverV2.restartUncompleted(uniqueId, null)
       }
       ImageSaverV2Service.ACTION_TYPE_DELETE -> {
         val uniqueId = extras.getString(ImageSaverV2Service.UNIQUE_ID)
@@ -80,20 +77,18 @@ class ImageSaverBroadcastReceiver : BroadcastReceiver() {
         // cancel notification
         //    |
         //    v
-        // ACTION_TYPE_DELETE intent to this broadcast receiver
+        // ACTION_TYPE_DELETE intent sent to this broadcast receiver
         //    |
         //    v
-        // cancel notification again -> ...)
+        // cancel notification again
+        //    |
+        //    v
+        //   ...
         imageSaverV2.deleteDownload(uniqueId)
       }
     }
 
     // Unknown action
-  }
-
-  private fun hideImageSaverNotification(context: Context, uniqueId: String) {
-    val notificationManagerCompat = NotificationManagerCompat.from(context)
-    notificationManagerCompat.cancel(uniqueId, uniqueId.hashCode())
   }
 
   companion object {

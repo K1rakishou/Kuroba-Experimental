@@ -132,11 +132,13 @@ class ImageSaverV2Service : Service() {
     val extras = intent.extras
       ?: return null
 
-    val imageSaverV2Options = extras.getString(IMAGE_SAVER_OPTIONS)
-      ?.let { optionsJson -> gson.fromJson(optionsJson, ImageSaverV2Options::class.java) }
-    val uniqueId = requireNotNull(extras.getString(UNIQUE_ID))
+    val imageSaverOptionsJson = extras.getString(IMAGE_SAVER_OPTIONS)
+    checkNotNull(imageSaverOptionsJson) { "imageSaverV2Options is null" }
 
+    val imageSaverV2Options = gson.fromJson(imageSaverOptionsJson, ImageSaverV2Options::class.java)
     checkNotNull(imageSaverV2Options) { "imageSaverV2Options is null" }
+
+    val uniqueId = requireNotNull(extras.getString(UNIQUE_ID))
 
     when (val downloadType = extras.getInt(DOWNLOAD_TYPE_KEY, -1)) {
       SINGLE_IMAGE_DOWNLOAD_TYPE -> {
@@ -155,6 +157,7 @@ class ImageSaverV2Service : Service() {
 
         return SingleImageDownloadInputData(
           uniqueId = uniqueId,
+          imageSaverOptionsJson = imageSaverOptionsJson,
           imageSaverV2Options = imageSaverV2Options,
           imageDownloadRequest = imageDownloadRequests.first()
         )
@@ -173,11 +176,12 @@ class ImageSaverV2Service : Service() {
 
         return BatchImageDownloadInputData(
           uniqueId = uniqueId,
+          imageSaverOptionsJson = imageSaverOptionsJson,
           imageSaverV2Options = imageSaverV2Options,
           imageDownloadRequests = imageDownloadRequests
         )
       }
-      RETRY_DOWNLOAD_TYPE -> {
+      RESTART_UNCOMPLETED_DOWNLOAD_TYPE -> {
         val allowedStatuses = listOf(
           ImageDownloadRequest.Status.DownloadFailed,
           ImageDownloadRequest.Status.ResolvingDuplicate,
@@ -199,12 +203,14 @@ class ImageSaverV2Service : Service() {
         if (imageDownloadRequests.size == 1) {
           return SingleImageDownloadInputData(
             uniqueId = uniqueId,
+            imageSaverOptionsJson = imageSaverOptionsJson,
             imageSaverV2Options = imageSaverV2Options,
             imageDownloadRequest = imageDownloadRequests.first()
           )
         } else {
           return BatchImageDownloadInputData(
             uniqueId = uniqueId,
+            imageSaverOptionsJson = imageSaverOptionsJson,
             imageSaverV2Options = imageSaverV2Options,
             imageDownloadRequests = imageDownloadRequests
           )
@@ -347,6 +353,7 @@ class ImageSaverV2Service : Service() {
         setAction(ACTION_TYPE_RESOLVE_DUPLICATES)
 
         putExtra(UNIQUE_ID, imageSaverDelegateResult.uniqueId)
+        putExtra(IMAGE_SAVER_OPTIONS, imageSaverDelegateResult.imageSaverOptionsJson)
       }
 
       val navigate = PendingIntent.getActivity(
@@ -534,6 +541,7 @@ class ImageSaverV2Service : Service() {
 
   interface ImageDownloadInputData {
     val uniqueId: String
+    val imageSaverOptionsJson: String
     val imageSaverV2Options: ImageSaverV2Options
 
     fun requestsCount(): Int
@@ -541,6 +549,7 @@ class ImageSaverV2Service : Service() {
 
   data class SingleImageDownloadInputData(
     override val uniqueId: String,
+    override val imageSaverOptionsJson: String,
     override val imageSaverV2Options: ImageSaverV2Options,
     val imageDownloadRequest: ImageDownloadRequest,
   ) : ImageDownloadInputData {
@@ -549,6 +558,7 @@ class ImageSaverV2Service : Service() {
 
   data class BatchImageDownloadInputData(
     override val uniqueId: String,
+    override val imageSaverOptionsJson: String,
     override val imageSaverV2Options: ImageSaverV2Options,
     val imageDownloadRequests: List<ImageDownloadRequest>
   ) : ImageDownloadInputData {
@@ -577,7 +587,7 @@ class ImageSaverV2Service : Service() {
 
     const val SINGLE_IMAGE_DOWNLOAD_TYPE = 0
     const val BATCH_IMAGE_DOWNLOAD_TYPE = 1
-    const val RETRY_DOWNLOAD_TYPE = 2
+    const val RESTART_UNCOMPLETED_DOWNLOAD_TYPE = 2
 
     fun startService(context: Context, uniqueId: String, downloadType: Int, imageSaverV2OptionsJson: String) {
       val startServiceIntent = Intent(

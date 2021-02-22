@@ -18,6 +18,8 @@ package com.github.k1rakishou.chan.core.di.module.application;
 
 import android.content.Context;
 
+import androidx.core.app.NotificationManagerCompat;
+
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
@@ -601,6 +603,7 @@ public class ManagerModule {
     @Singleton
     @Provides
     public ImageSaverV2ServiceDelegate provideImageSaverV2Delegate(
+            Context appContext,
             CoroutineScope appScope,
             FileCacheV2 fileCacheV2,
             FileManager fileManager,
@@ -610,6 +613,7 @@ public class ManagerModule {
         return new ImageSaverV2ServiceDelegate(
                 ChanSettings.verboseLogs.get(),
                 appScope,
+                NotificationManagerCompat.from(appContext),
                 fileCacheV2,
                 fileManager,
                 chanPostImageRepository,

@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10Gesture
 import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10GestureZonesView;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController;
 import com.github.k1rakishou.chan.features.image_saver.ResolveDuplicateImagesController;
+import com.github.k1rakishou.chan.features.image_saver.epoxy.EpoxyDuplicateImageView;
 import com.github.k1rakishou.chan.features.login.LoginController;
 import com.github.k1rakishou.chan.features.proxies.ProxyEditorController;
 import com.github.k1rakishou.chan.features.proxies.ProxySetupController;
@@ -284,6 +285,7 @@ public interface ActivityComponent {
     void inject(EpoxyBoardSelectionButtonView epoxyBoardSelectionButtonView);
     void inject(EpoxySelectableBoardItemView epoxySelectableBoardItemView);
     void inject(EpoxySimpleGroupView epoxySimpleGroupView);
+    void inject(EpoxyDuplicateImageView epoxyDuplicateImageView);
 
     void inject(CaptchaNoJsLayoutV2 captchaNoJsLayoutV2);
     void inject(CaptchaNojsLayoutV1 captchaNojsLayoutV1);

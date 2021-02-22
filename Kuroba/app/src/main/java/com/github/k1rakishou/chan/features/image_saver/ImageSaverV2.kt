@@ -23,7 +23,10 @@ class ImageSaverV2(
 ) {
   private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(appScope)
 
-  fun retryFailedImages(uniqueId: String, overrideImageSaverV2Options: ImageSaverV2Options?) {
+  fun restartUncompleted(
+    uniqueId: String,
+    overrideImageSaverV2Options: ImageSaverV2Options? = null
+  ) {
     try {
       val imageSaverV2Options = overrideImageSaverV2Options
         ?: PersistableChanState.imageSaverV2PersistedOptions.get().copy()
@@ -31,10 +34,10 @@ class ImageSaverV2(
       startImageSaverService(
         uniqueId = uniqueId,
         imageSaverV2Options = imageSaverV2Options,
-        downloadType = ImageSaverV2Service.RETRY_DOWNLOAD_TYPE
+        downloadType = ImageSaverV2Service.RESTART_UNCOMPLETED_DOWNLOAD_TYPE
       )
     } catch (error: Throwable) {
-      Logger.e(TAG, "retryFailedImages() error", error)
+      Logger.e(TAG, "restartUncompleted($uniqueId, $overrideImageSaverV2Options) error", error)
     }
   }
 
@@ -58,7 +61,7 @@ class ImageSaverV2(
         imageFullUrl = postImage.imageUrl!!,
         newFileName = newFileName,
         status = ImageDownloadRequest.Status.Queued,
-        duplicatePathUri = null,
+        duplicateFileUri = null,
         duplicatesResolution = duplicatesResolution,
         createdOn = DateTime.now()
       )

@@ -18,6 +18,7 @@ package com.github.k1rakishou.common;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ActivityManager;
 import android.app.Application;
 import android.app.Dialog;
 import android.app.NotificationManager;
@@ -220,6 +221,10 @@ public class AndroidUtils {
         return (ClipboardManager) application.getSystemService(CLIPBOARD_SERVICE);
     }
 
+    public static ActivityManager getActivityManager() {
+        return (ActivityManager) application.getSystemService(Context.ACTIVITY_SERVICE);
+    }
+
     public static String getClipboardContent() {
         ClipData primary = getClipboardManager().getPrimaryClip();
         if (primary != null && primary.getItemCount() > 0) {
@@ -263,6 +268,14 @@ public class AndroidUtils {
 
     public static boolean isAndroidO() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
+    }
+
+    public static boolean isAndroidKitKat() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
+    }
+
+    public static boolean isAndroidL() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
     }
 
     public static boolean isAndroidL_MR1() {

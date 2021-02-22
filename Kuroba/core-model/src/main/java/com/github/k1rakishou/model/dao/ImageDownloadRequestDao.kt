@@ -59,6 +59,12 @@ abstract class ImageDownloadRequestDao {
 
   @Query("""
     DELETE FROM ${ImageDownloadRequestEntity.TABLE_NAME}
+    WHERE ${ImageDownloadRequestEntity.STATUS_COLUMN_NAME} = :status
+  """)
+  abstract suspend fun deleteWithStatus(status: Int)
+
+  @Query("""
+    DELETE FROM ${ImageDownloadRequestEntity.TABLE_NAME}
     WHERE ${ImageDownloadRequestEntity.IMAGE_FULL_URL_COLUMN_NAME} IN (:imageUrls)
   """)
   abstract suspend fun deleteManyByUrl(imageUrls: Collection<HttpUrl>)

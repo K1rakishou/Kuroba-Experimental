@@ -109,6 +109,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="retry">Retry</string>
     <string name="apply">Apply</string>
     <string name="clear">Clear</string>
+    <string name="resolve">Resolve</string>
     <string name="unhandled_error">Unhandled error!</string>
     <string name="unknown_error">Unknown error</string>
     <string name="loading">Loading…</string>
@@ -1196,5 +1197,9 @@ Don't have a 4chan Pass?<br>
     <string name="cloud_flare_cookie_setting_description">If a site is hosted by CloudFlare and has anti-ddos checks enabled the application will automatically try to pass them and store CloudFlare clearance cookie that will be used to access site normally without having to pass checks every singe time. You will see a cookie here and will be able to edit/remove it if you ever need to do that. When removing a cookie (making it empty) a new cookie will be requested on the next site access. If a site does not use CloudFlare then this setting will always be empty.</string>
     <string name="no_filter_watched_threads">You have no filter watched threads here yet (They may be in the update process)</string>
     <string name="the_app_will_be_restarted">The app will be restarted when exiting the settings screen</string>
+    <string name="resolve_duplicate_images">Resolve duplicate images</string>
+    <string name="resolve_duplicate_images_explanation">Select images that you want to retain. In case of selecting server image, the local duplicate will be overwritten with server image. In case of selecting local image, it will be left as is.</string>
+    <string name="images_from_server">Images from server</string>
+    <string name="local_images_on_disk">Local images on disk</string>
 
 </resources>

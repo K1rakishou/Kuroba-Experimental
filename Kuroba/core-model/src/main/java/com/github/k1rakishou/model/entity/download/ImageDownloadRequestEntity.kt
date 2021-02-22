@@ -39,8 +39,8 @@ data class ImageDownloadRequestEntity(
   val newFileName: String?,
   @ColumnInfo(name = STATUS_COLUMN_NAME)
   val status: Int,
-  @ColumnInfo(name = DUPLICATE_PATH_URI_COLUMN_NAME)
-  val duplicatePathUri: Uri?,
+  @ColumnInfo(name = DUPLICATE_FILE_URI_COLUMN_NAME)
+  val duplicateFileUri: Uri?,
   @ColumnInfo(name = DUPLICATES_RESOLUTION_COLUMN_NAME)
   val duplicatesResolution: Int,
   @ColumnInfo(name = CREATED_ON_COLUMN_NAME)
@@ -59,7 +59,7 @@ data class ImageDownloadRequestEntity(
     const val IMAGE_FULL_URL_COLUMN_NAME = "image_full_url"
     const val NEW_FILE_NAME_COLUMN_NAME = "new_file_name"
     const val STATUS_COLUMN_NAME = "status"
-    const val DUPLICATE_PATH_URI_COLUMN_NAME = "duplicate_path_uri"
+    const val DUPLICATE_FILE_URI_COLUMN_NAME = "duplicate_file_uri"
     const val DUPLICATES_RESOLUTION_COLUMN_NAME = "duplicates_resolution"
     const val CREATED_ON_COLUMN_NAME = "created_on"
   }

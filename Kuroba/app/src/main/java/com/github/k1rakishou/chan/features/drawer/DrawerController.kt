@@ -803,15 +803,30 @@ class DrawerController(
     }
   }
 
-  fun showResolveDuplicateImagesController(uniqueId: String) {
-    val resolveDuplicateImagesController = ResolveDuplicateImagesController(context, uniqueId)
+  fun showResolveDuplicateImagesController(uniqueId: String, imageSaverOptionsJson: String) {
+    val alreadyPresenting = isAlreadyPresenting { controller -> controller is ResolveDuplicateImagesController }
+    if (alreadyPresenting) {
+      return
+    }
+
+    val resolveDuplicateImagesController = ResolveDuplicateImagesController(
+      context,
+      uniqueId,
+      imageSaverOptionsJson
+    )
+
     presentController(resolveDuplicateImagesController)
   }
 
   fun showImageSaverV2OptionsController(uniqueId: String) {
+    val alreadyPresenting = isAlreadyPresenting { controller -> controller is ImageSaverV2OptionsController }
+    if (alreadyPresenting) {
+      return
+    }
+
     val options = ImageSaverV2OptionsController.Options.ResultDirAccessProblems(
       uniqueId,
-      onRetryClicked = { imageSaverV2Options -> imageSaverV2.retryFailedImages(uniqueId, imageSaverV2Options) },
+      onRetryClicked = { imageSaverV2Options -> imageSaverV2.restartUncompleted(uniqueId, imageSaverV2Options) },
       onCancelClicked = { imageSaverV2.deleteDownload(uniqueId) }
     )
 
