@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.features.image_saver.epoxy
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.drawable.BitmapDrawable
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
@@ -20,6 +19,7 @@ import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.core.image.InputFile
 import com.github.k1rakishou.chan.features.image_saver.IDuplicateImage
 import com.github.k1rakishou.chan.features.image_saver.LocalImage
 import com.github.k1rakishou.chan.features.image_saver.ServerImage
@@ -129,7 +129,7 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
         imageSize,
         Scale.FIT,
         transformation,
-        { bitmapDrawable -> setErrorDrawable(bitmapDrawable, serverImageView) }
+        { bitmapDrawable -> serverImageView.setImageDrawable(bitmapDrawable) }
       )
     } else {
       serverImageRequestDisposable = imageLoaderV2.loadFromNetwork(
@@ -162,11 +162,11 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
         imageSize,
         Scale.FIT,
         transformation
-      ) { bitmapDrawable -> setErrorDrawable(bitmapDrawable, localImageView) }
+      ) { bitmapDrawable -> localImageView.setImageDrawable(bitmapDrawable) }
     } else {
       localImageRequestDisposable = imageLoaderV2.loadFromDisk(
         context,
-        ImageLoaderV2.DiskPath.FileUri(localImage!!.uri),
+        InputFile.FileUri(context.applicationContext, localImage!!.uri),
         imageSize,
         Scale.FIT,
         transformation,
@@ -264,15 +264,6 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
         listener?.invoke(localImage!!)
       }
     }
-  }
-
-  private fun setErrorDrawable(bitmapDrawable: BitmapDrawable, imageView: AppCompatImageView) {
-    val tintedDrawable = themeEngine.tintDrawable(
-      bitmapDrawable,
-      themeEngine.chanTheme.isBackColorDark
-    )
-
-    imageView.setImageDrawable(tintedDrawable)
   }
 
   companion object {

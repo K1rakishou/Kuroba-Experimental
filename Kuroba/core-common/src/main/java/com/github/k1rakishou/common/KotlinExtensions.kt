@@ -1,5 +1,6 @@
 package com.github.k1rakishou.common
 
+import android.graphics.Bitmap
 import android.system.ErrnoException
 import android.system.OsConstants
 import android.text.SpannableString
@@ -647,4 +648,10 @@ fun IOException.isOutOfDiskSpaceError(): Boolean {
   }
 
   return false
+}
+
+fun Bitmap.recycleSafe() {
+  if (!isRecycled) {
+    recycle()
+  }
 }

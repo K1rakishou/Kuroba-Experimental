@@ -14,12 +14,15 @@ import androidx.core.math.MathUtils
 import androidx.core.util.Pair
 import androidx.exifinterface.media.ExifInterface
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.image.InputFile
 import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter.ReencodeSettings
 import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter.ReencodeType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.runInterruptible
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -317,21 +320,50 @@ object MediaUtils {
     }
   }
 
-  fun decodeFileMimeType(file: File): String? {
+  suspend fun decodeFileMimeTypeInterruptible(inputFile: InputFile): String? {
     BackgroundUtils.ensureBackgroundThread()
 
     try {
-      val metadataRetriever = MediaMetadataRetriever()
-      metadataRetriever.setDataSource(file.absolutePath)
-      return metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
-    } catch (ignored: Throwable) {
+      return runInterruptible {
+        val metadataRetriever = MediaMetadataRetriever()
+
+        when (inputFile) {
+          is InputFile.FileUri -> metadataRetriever.setDataSource(inputFile.applicationContext, inputFile.uri)
+          is InputFile.JavaFile ->  metadataRetriever.setDataSource(inputFile.file.absolutePath)
+        }
+
+        return@runInterruptible metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
+      }
+    } catch (exception: Throwable) {
+      if (exception is CancellationException) {
+        throw exception
+      }
+
       return null
     }
   }
 
-  fun decodeVideoFilePreviewImage(
+  suspend fun decodeVideoFilePreviewImageInterruptible(
     context: Context,
-    file: File,
+    inputFile: InputFile,
+    maxWidth: Int,
+    maxHeight: Int,
+    addAudioIcon: Boolean
+  ): BitmapDrawable? {
+    return runInterruptible {
+      return@runInterruptible decodeVideoFilePreviewImage(
+        context = context,
+        inputFile = inputFile,
+        maxWidth = maxWidth,
+        maxHeight = maxHeight,
+        addAudioIcon = addAudioIcon
+      )
+    }
+  }
+
+  private fun decodeVideoFilePreviewImage(
+    context: Context,
+    inputFile: InputFile,
     maxWidth: Int,
     maxHeight: Int,
     addAudioIcon: Boolean
@@ -341,7 +373,12 @@ object MediaUtils {
 
     try {
       val metadataRetriever = MediaMetadataRetriever()
-      metadataRetriever.setDataSource(file.absolutePath)
+
+      when (inputFile) {
+        is InputFile.FileUri -> metadataRetriever.setDataSource(inputFile.applicationContext, inputFile.uri)
+        is InputFile.JavaFile -> metadataRetriever.setDataSource(inputFile.file.absolutePath)
+      }
+
       val frameBitmap = metadataRetriever.frameAtTime
 
       val audioMetaResult = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO)
@@ -389,6 +426,10 @@ object MediaUtils {
         result = frameBitmap
       }
     } catch (error: Exception) {
+      if (error is CancellationException) {
+        throw error
+      }
+
       val errorMsg = error.errorMessageOrClassName()
       Logger.e(TAG, "decodeVideoFilePreviewImage() error: $errorMsg")
     }

@@ -11,6 +11,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.data.download.ImageDownloadRequest
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.data.post.ChanPostImageType
 import com.github.k1rakishou.model.repository.ChanPostImageRepository
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
@@ -230,7 +231,7 @@ internal class ResolveDuplicateImagesPresenter(
 
     duplicateImages.forEach { imageDownloadRequest ->
       val localImage = imageDownloadRequest.duplicateFileUri
-        ?.let { duplicateFileUri -> getLocalImageFileByUri(duplicateFileUri) }
+        ?.let { duplicateFileUri -> getLocalImage(duplicateFileUri) }
       val serverImage = getServerImage(imagesFromDatabase, imageDownloadRequest)
 
       // Skip
@@ -267,21 +268,32 @@ internal class ResolveDuplicateImagesPresenter(
     imagesFromDatabase: List<ChanPostImage>,
     imageDownloadRequest: ImageDownloadRequest
   ): ServerImage? {
-    return imagesFromDatabase
+    val chanPostImage =  imagesFromDatabase
       .firstOrNull { chanPostImage -> chanPostImage.imageUrl == imageDownloadRequest.imageFullUrl }
-      ?.let { chanPostImage ->
-        val url = chanPostImage.imageUrl
-          ?: return@let null
-        val extension = chanPostImage.extension
-          ?.toUpperCase(Locale.ENGLISH)
 
-        return@let ServerImage(
-          url = url,
-          fileName = getPostImageFileName(chanPostImage),
-          extension = extension,
-          size = chanPostImage.size
-        )
-      }
+    if (chanPostImage == null) {
+      return null
+    }
+
+    val url = if (chanPostImage.type == ChanPostImageType.MOVIE) {
+      chanPostImage.actualThumbnailUrl
+    } else {
+      chanPostImage.imageUrl
+    }
+
+    if (url == null) {
+      return null
+    }
+
+    val extension = chanPostImage.extension
+      ?.toUpperCase(Locale.ENGLISH)
+
+    return ServerImage(
+      url = url,
+      fileName = getPostImageFileName(chanPostImage),
+      extension = extension,
+      size = chanPostImage.size
+    )
   }
 
   private fun getPostImageFileName(chanPostImage: ChanPostImage): String {
@@ -295,7 +307,7 @@ internal class ResolveDuplicateImagesPresenter(
     }
   }
 
-  private fun getLocalImageFileByUri(duplicateFileUri: Uri): LocalImage? {
+  private fun getLocalImage(duplicateFileUri: Uri): LocalImage? {
     val localImage = fileManager.fromUri(duplicateFileUri)
       ?: return null
 

@@ -195,6 +195,7 @@ class ResolveDuplicateImagesController(
         locked(duplicateImage.locked)
         duplicateResolution(duplicateImage.resolution)
         onImageClickListener { clickedDuplicateImage ->
+          // TODO(KurobaEx v0.6.0): reset selectAllFromServer/selectAllLocal if we unchecked something
           resolveDuplicateImagesPresenter.onDuplicateImageClicked(clickedDuplicateImage)
         }
       }
