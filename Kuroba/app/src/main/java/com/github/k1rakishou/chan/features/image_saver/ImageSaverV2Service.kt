@@ -15,7 +15,6 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
-import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.receiver.ImageSaverBroadcastReceiver
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.NotificationConstants
@@ -28,7 +27,6 @@ import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -44,10 +42,7 @@ class ImageSaverV2Service : Service() {
 
   private val notificationManagerCompat by lazy { NotificationManagerCompat.from(applicationContext) }
   private val kurobaScope = KurobaCoroutineScope()
-  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(kurobaScope)
   private val verboseLogs = ChanSettings.verboseLogs.get()
-
-  private var job: Job? = null
 
   override fun onBind(intent: Intent?): IBinder? {
     return null
@@ -59,12 +54,20 @@ class ImageSaverV2Service : Service() {
     Logger.d(TAG, "onCreate()")
     Chan.getComponent().inject(this)
 
-    job = kurobaScope.launch {
+    kurobaScope.launch {
       imageSaverV2ServiceDelegate.listenForNotificationUpdates()
         .collect { imageSaverDelegateResult ->
           withContext(Dispatchers.Main) {
             showDownloadNotification(imageSaverDelegateResult)
           }
+        }
+    }
+
+    kurobaScope.launch {
+      imageSaverV2ServiceDelegate.listenForStopServiceEvent()
+        .collect {
+          Logger.d(TAG, "Got StopService command, stopping the serving")
+          stopSelf()
         }
     }
   }
@@ -73,10 +76,6 @@ class ImageSaverV2Service : Service() {
     super.onDestroy()
 
     Logger.d(TAG, "onDestroy()")
-
-    job?.cancel()
-    job = null
-
     kurobaScope.cancelChildren()
   }
 
@@ -105,24 +104,7 @@ class ImageSaverV2Service : Service() {
         Logger.d(TAG, "onStartCommand() start, activeDownloadsCount=$activeDownloadsCountBefore")
       }
 
-      serializedCoroutineExecutor.post {
-        try {
-          val activeDownloadsCountAfter = withContext(Dispatchers.Default) {
-            imageSaverV2ServiceDelegate.downloadImages(imageSaverInputData)
-          }
-
-          if (verboseLogs) {
-            Logger.d(TAG, "onStartCommand() end, activeDownloadsCount=$activeDownloadsCountAfter")
-          }
-
-          if (activeDownloadsCountAfter <= 0) {
-            Logger.d(TAG, "onStartCommand() stopping service")
-            stopSelf()
-          }
-        } catch (error: Throwable) {
-          Logger.e(TAG, "Unhandled exception", error)
-        }
-      }
+      imageSaverV2ServiceDelegate.downloadImages(imageSaverInputData)
     }
 
     return START_STICKY

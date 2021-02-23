@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.image_saver
 import android.net.Uri
 import androidx.annotation.GuardedBy
 import androidx.core.app.NotificationManagerCompat
+import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -35,6 +36,7 @@ import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import okhttp3.Request
 import java.io.IOException
 import java.util.*
@@ -61,13 +63,24 @@ class ImageSaverV2ServiceDelegate(
   @GuardedBy("mutex")
   private val activeNotificationIdQueue = LinkedList<String>()
 
+  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
+
   private val notificationUpdatesFlow = MutableSharedFlow<ImageSaverDelegateResult>(
     extraBufferCapacity = 128,
     onBufferOverflow = BufferOverflow.SUSPEND
   )
 
+  private val stopServiceFlow = MutableSharedFlow<Unit>(
+    extraBufferCapacity = 1,
+    onBufferOverflow = BufferOverflow.DROP_OLDEST
+  )
+
   fun listenForNotificationUpdates(): SharedFlow<ImageSaverDelegateResult> {
     return notificationUpdatesFlow.asSharedFlow()
+  }
+
+  fun listenForStopServiceEvent(): SharedFlow<Unit> {
+    return stopServiceFlow.asSharedFlow()
   }
 
   suspend fun deleteDownload(uniqueId: String) {
@@ -102,7 +115,28 @@ class ImageSaverV2ServiceDelegate(
     }
   }
 
-  suspend fun downloadImages(imageDownloadInputData: ImageSaverV2Service.ImageDownloadInputData): Int {
+  fun downloadImages(imageDownloadInputData: ImageSaverV2Service.ImageDownloadInputData) {
+    serializedCoroutineExecutor.post {
+      try {
+        val activeDownloadsCountAfter = withContext(Dispatchers.Default) {
+          downloadImagesInternal(imageDownloadInputData)
+        }
+
+        if (verboseLogs) {
+          Logger.d(TAG, "onStartCommand() end, activeDownloadsCount=$activeDownloadsCountAfter")
+        }
+
+        if (activeDownloadsCountAfter <= 0) {
+          Logger.d(TAG, "onStartCommand() stopping service")
+          stopServiceFlow.emit(Unit)
+        }
+      } catch (error: Throwable) {
+        Logger.e(TAG, "Unhandled exception", error)
+      }
+    }
+  }
+
+  private suspend fun downloadImagesInternal(imageDownloadInputData: ImageSaverV2Service.ImageDownloadInputData): Int {
     BackgroundUtils.ensureBackgroundThread()
 
     val outputDirUri = AtomicReference<Uri>(null)

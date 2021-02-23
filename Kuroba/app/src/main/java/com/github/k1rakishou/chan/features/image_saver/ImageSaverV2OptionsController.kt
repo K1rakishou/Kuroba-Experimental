@@ -39,8 +39,8 @@ class ImageSaverV2OptionsController(
   private lateinit var appendThreadId: ColorizableCheckBox
   private lateinit var rootDir: ColorizableTextView
   private lateinit var customFileName: ColorizableEditText
-  private lateinit var outputDir: ColorizableEditText
-  private lateinit var outputDirTil: ColorizableTextInputLayout
+  private lateinit var outputFile: ColorizableEditText
+  private lateinit var outputDirFile: ColorizableTextInputLayout
   private lateinit var additionalDirs: ColorizableEditText
   private lateinit var customFileNameTil: ColorizableTextInputLayout
   private lateinit var additionalDirectoriesTil: ColorizableTextInputLayout
@@ -80,8 +80,8 @@ class ImageSaverV2OptionsController(
     appendBoardCode = view.findViewById(R.id.append_board_code)
     appendThreadId = view.findViewById(R.id.append_thread_id)
     additionalDirs = view.findViewById(R.id.additional_directories)
-    outputDir = view.findViewById(R.id.output_dir)
-    outputDirTil = view.findViewById(R.id.output_dir_til)
+    outputFile = view.findViewById(R.id.output_file)
+    outputDirFile = view.findViewById(R.id.output_file_til)
     customFileName = view.findViewById(R.id.custom_file_name)
     customFileNameTil = view.findViewById(R.id.custom_file_name_til)
     additionalDirectoriesTil = view.findViewById(R.id.additional_directories_til)
@@ -110,8 +110,8 @@ class ImageSaverV2OptionsController(
         additionalDirectoriesTil.isEnabled = false
         additionalDirs.isEnabled = false
 
-        outputDirTil.isEnabled = false
-        outputDir.isEnabled = false
+        outputDirFile.isEnabled = false
+        outputFile.isEnabled = false
 
         saveButton.setText(R.string.retry)
       }
@@ -153,8 +153,7 @@ class ImageSaverV2OptionsController(
     rootDir.setOnClickListener {
       fileChooser.openChooseDirectoryDialog(object : PermanentDirectoryChooserCallback() {
         override fun onCancel(reason: String) {
-          // TODO(KurobaEx v0.6.0): strings
-          showToast("Canceled. Reason: $reason")
+          showToast(context.getString(R.string.controller_image_save_options_canceled_with_reason, reason))
         }
 
         override fun onResult(uri: Uri) {
@@ -325,7 +324,7 @@ class ImageSaverV2OptionsController(
   private fun applyOptionsToView() {
     val currentImageSaverSetting = currentSetting
     
-    outputDir.error = null
+    outputFile.error = null
     customFileName.error = null
     additionalDirs.error = null
 
@@ -402,7 +401,7 @@ class ImageSaverV2OptionsController(
     }
 
     if (rootDirectoryUriString.isNullOrBlank()) {
-      outputDir.error = context.getString(R.string.controller_image_save_options_root_dir_not_set)
+      outputFile.error = context.getString(R.string.controller_image_save_options_root_dir_not_set)
       enableDisableSaveButton(enable = false)
       return
     }
@@ -430,7 +429,7 @@ class ImageSaverV2OptionsController(
       }
     }
 
-    outputDir.setText(outputDirText)
+    outputFile.setText(outputDirText)
 
     if (chanPostImage != null) {
       if (currentFileNameString.isNullOrBlank()) {

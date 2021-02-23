@@ -105,13 +105,13 @@
                     </com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout>
 
                     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
-                        android:id="@+id/output_dir_til"
+                        android:id="@+id/output_file_til"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/controller_image_save_options_output_dir">
+                        android:hint="@string/controller_image_save_options_output_file">
 
                         <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
-                            android:id="@+id/output_dir"
+                            android:id="@+id/output_file"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:editable="false"
