@@ -19,6 +19,7 @@ import com.github.k1rakishou.model.repository.ChanPostImageRepository
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
 import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -80,7 +81,7 @@ class ResolveDuplicateImagesController(
       resolveDuplicateImagesPresenter.resolve()
     }
 
-    mainScope.launch {
+    mainScope.launch(Dispatchers.Main.immediate) {
       resolveDuplicateImagesPresenter.listenForStateUpdates()
         .collect { state -> renderState(state) }
     }
@@ -144,9 +145,7 @@ class ResolveDuplicateImagesController(
         return@all duplicateImage.resolution != ImageSaverV2Options.DuplicatesResolution.AskWhatToDo
       }
 
-    if (canEnableResolveButton) {
-      resolveButton.setEnabledFast(true)
-    }
+    resolveButton.setEnabledFast(canEnableResolveButton)
 
     dataState.duplicateImages.forEach { duplicateImage ->
       epoxyDuplicateImageView {

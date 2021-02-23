@@ -389,9 +389,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     threadListLayoutCallback?.toolbar?.removeToolbarHeightUpdatesCallback(this)
     replyLayout.onDestroy()
+    setFastScroll(false)
 
     forceRecycleAllPostViews()
-    recyclerView.adapter = null
+    recyclerView.swapAdapter(null, true)
     threadPresenter = null
   }
 

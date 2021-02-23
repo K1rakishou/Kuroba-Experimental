@@ -32,7 +32,7 @@ import com.github.k1rakishou.persist_state.ImageSaverV2Options
 import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
-class EpoxyDuplicateImageView  @JvmOverloads constructor(
+internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
@@ -105,7 +105,6 @@ class EpoxyDuplicateImageView  @JvmOverloads constructor(
 
   @AfterPropsSet
   fun afterPropsSet() {
-    // TODO(KurobaEx v0.6.0): sometimes images do not show up (the view is recycled before afterPropsSet() is called?)
     loadLocalImage()
     loadServerImage()
   }

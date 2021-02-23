@@ -15,7 +15,7 @@ class Migration_v14_to_v15 : Migration(14, 15) {
         `image_full_url` TEXT NOT NULL, 
         `new_file_name` TEXT, 
         `status` INTEGER NOT NULL, 
-        `duplicate_path_uri` TEXT, 
+        `duplicate_file_uri` TEXT, 
         `duplicates_resolution` INTEGER NOT NULL, 
         `created_on` INTEGER NOT NULL, PRIMARY KEY(`unique_id`)
       )

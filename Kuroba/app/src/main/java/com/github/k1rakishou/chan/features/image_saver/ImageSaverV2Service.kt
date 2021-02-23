@@ -286,7 +286,7 @@ class ImageSaverV2Service : Service() {
       .setContentTitle(title)
       .setSmallIcon(smallIcon)
       .setOngoing(ongoing)
-      .setAutoCancel(true)
+      .setAutoCancel(false)
       .setSound(null)
       .setStyle(style)
       .setProgressEx(imageSaverDelegateResult, totalToDownloadCount, processedCount)
@@ -298,9 +298,9 @@ class ImageSaverV2Service : Service() {
       .addResolveDuplicateImagesAction(imageSaverDelegateResult)
       .build()
 
-    notificationManagerCompat.notify(
+    showNotification(
+      notificationManagerCompat,
       imageSaverDelegateResult.uniqueId,
-      imageSaverDelegateResult.uniqueId.hashCode(),
       notification
     )
   }
@@ -481,7 +481,11 @@ class ImageSaverV2Service : Service() {
   private fun NotificationCompat.Builder.setTimeoutAfterEx(
     imageSaverDelegateResult: ImageSaverV2ServiceDelegate.ImageSaverDelegateResult
   ): NotificationCompat.Builder {
-    if (imageSaverDelegateResult.completed && imageSaverDelegateResult.hasOnlyCompletedRequests()) {
+    val canAutoDismiss = imageSaverDelegateResult.completed
+      && imageSaverDelegateResult.hasOnlyCompletedRequests()
+      && !imageSaverDelegateResult.hasAnyErrors()
+
+    if (canAutoDismiss) {
       setTimeoutAfter(NOTIFICATION_AUTO_DISMISS_TIMEOUT_MS)
     }
 
@@ -572,6 +576,7 @@ class ImageSaverV2Service : Service() {
   companion object {
     private const val TAG = "ImageSaverV2Service"
     private const val NOTIFICATION_AUTO_DISMISS_TIMEOUT_MS = 10_000L
+    private const val IMAGE_SAVER_NOTIFICATIONS_TAG = "ImageSaverNotification"
 
     const val UNIQUE_ID = "unique_id"
     const val DOWNLOAD_TYPE_KEY = "download_type"
@@ -588,6 +593,21 @@ class ImageSaverV2Service : Service() {
     const val SINGLE_IMAGE_DOWNLOAD_TYPE = 0
     const val BATCH_IMAGE_DOWNLOAD_TYPE = 1
     const val RESTART_UNCOMPLETED_DOWNLOAD_TYPE = 2
+
+    fun showNotification(
+      notificationManagerCompat: NotificationManagerCompat,
+      uniqueId: String,
+      notification: Notification
+    ) {
+      notificationManagerCompat.notify(IMAGE_SAVER_NOTIFICATIONS_TAG, uniqueId.hashCode(), notification)
+    }
+
+    fun cancelNotification(
+      notificationManagerCompat: NotificationManagerCompat,
+      uniqueId: String
+    ) {
+      notificationManagerCompat.cancel(IMAGE_SAVER_NOTIFICATIONS_TAG, uniqueId.hashCode())
+    }
 
     fun startService(context: Context, uniqueId: String, downloadType: Int, imageSaverV2OptionsJson: String) {
       val startServiceIntent = Intent(

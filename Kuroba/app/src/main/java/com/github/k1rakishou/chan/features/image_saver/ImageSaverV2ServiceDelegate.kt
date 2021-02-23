@@ -5,6 +5,7 @@ import androidx.annotation.GuardedBy
 import androidx.core.app.NotificationManagerCompat
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.isNotNullNorBlank
@@ -31,6 +32,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.IOException
+import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -52,8 +54,11 @@ class ImageSaverV2ServiceDelegate(
   @GuardedBy("mutex")
   private val activeDownloads = hashMapOf<String, DownloadContext>()
 
+  @GuardedBy("mutex")
+  private val activeNotificationIdQueue = LinkedList<String>()
+
   private val notificationUpdatesFlow = MutableSharedFlow<ImageSaverDelegateResult>(
-    extraBufferCapacity = 1024,
+    extraBufferCapacity = 128,
     onBufferOverflow = BufferOverflow.SUSPEND
   )
 
@@ -62,17 +67,20 @@ class ImageSaverV2ServiceDelegate(
   }
 
   suspend fun deleteDownload(uniqueId: String) {
-    notificationManagerCompat.cancel(uniqueId, uniqueId.hashCode())
+    ImageSaverV2Service.cancelNotification(notificationManagerCompat, uniqueId)
 
     imageDownloadRequestRepository.deleteByUniqueId(uniqueId)
       .peekError { error -> Logger.e(TAG, "imageDownloadRequestRepository.deleteByUniqueId($uniqueId) error", error) }
       .ignore()
 
-    mutex.withLock { activeDownloads.remove(uniqueId) }
+    mutex.withLock {
+      activeNotificationIdQueue.remove(uniqueId)
+      activeDownloads.remove(uniqueId)
+    }
   }
 
   suspend fun cancelDownload(uniqueId: String) {
-    notificationManagerCompat.cancel(uniqueId, uniqueId.hashCode())
+    ImageSaverV2Service.cancelNotification(notificationManagerCompat, uniqueId)
     mutex.withLock { activeDownloads[uniqueId]?.cancel() }
   }
 
@@ -106,6 +114,8 @@ class ImageSaverV2ServiceDelegate(
         // Canceled, no need to send even here because we do that in try/finally block
         return mutex.withLock { activeDownloads.size }
       }
+
+      handleNewNotificationId(imageDownloadInputData.uniqueId)
 
       // Start event
       emitNotificationUpdate(
@@ -229,6 +239,47 @@ class ImageSaverV2ServiceDelegate(
     }
 
     return mutex.withLock { activeDownloads.size }
+  }
+
+  private suspend fun handleNewNotificationId(uniqueId: String) {
+    val notificationsIdToDelete = mutex.withLock {
+      if (!activeNotificationIdQueue.contains(uniqueId)) {
+        activeNotificationIdQueue.push(uniqueId)
+      }
+
+      val maxNotifications = if (AppModuleAndroidUtils.isDevBuild()) {
+        MAX_VISIBLE_NOTIFICATIONS_TEST
+      } else {
+        MAX_VISIBLE_NOTIFICATIONS_PROD
+      }
+
+      if (activeNotificationIdQueue.size > maxNotifications) {
+        var count = (maxNotifications - activeNotificationIdQueue.size).coerceAtLeast(1)
+        val notificationsIdToDelete = mutableListOf<String>()
+
+        for (notificationId in activeNotificationIdQueue.asReversed()) {
+          if (count <= 0) {
+            break
+          }
+
+          val notExistsOrCanceled = activeDownloads[notificationId]?.isCanceled()
+            ?: true
+
+          if (notExistsOrCanceled) {
+            notificationsIdToDelete += notificationId
+            --count
+          }
+        }
+
+        return@withLock notificationsIdToDelete
+      }
+
+      return@withLock emptyList<String>()
+    }
+
+    notificationsIdToDelete.forEach { notificationIdToDelete ->
+      deleteDownload(notificationIdToDelete)
+    }
   }
 
   private fun completedRequestsToDownloadedImagesResult(
@@ -637,10 +688,10 @@ class ImageSaverV2ServiceDelegate(
 
     data class Multiple(
       override val outputDirUri: Uri?,
-      val imageDownloadRequest: Int
+      val imageDownloadRequestsCount: Int
     ) : DownloadedImages() {
       override fun count(): Int {
-        return imageDownloadRequest
+        return imageDownloadRequestsCount
       }
     }
   }
@@ -652,5 +703,7 @@ class ImageSaverV2ServiceDelegate(
 
   companion object {
     private const val TAG = "ImageSaverV2ServiceDelegate"
+    private const val MAX_VISIBLE_NOTIFICATIONS_PROD = 12
+    private const val MAX_VISIBLE_NOTIFICATIONS_TEST = 3
   }
 }

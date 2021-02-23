@@ -23,7 +23,7 @@ import kotlinx.coroutines.launch
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
-class ResolveDuplicateImagesPresenter(
+internal class ResolveDuplicateImagesPresenter(
   private val uniqueId: String,
   private val imageSaverOptions: ImageSaverV2Options,
   private val fileManager: FileManager,
