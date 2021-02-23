@@ -23,6 +23,7 @@ import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Matcher
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
@@ -613,4 +614,24 @@ fun StringBuilder.appendIfNotEmpty(text: String): StringBuilder {
   }
 
   return this
+}
+
+suspend fun doIoTaskWithAttempts(attempts: Int, task: suspend (Int) -> Unit) {
+  val retries = AtomicInteger(0)
+
+  while (true) {
+    try {
+      // Try to execute a task
+      task(retries.incrementAndGet())
+
+      // If no exceptions were thrown then just exit
+      return
+    } catch (error: IOException) {
+      // If any kind of IOException was thrown then retry until we either succeed or exhaust all
+      // attempts
+      if (retries.get() >= attempts) {
+        throw error
+      }
+    }
+  }
 }

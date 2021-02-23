@@ -12,6 +12,7 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
 import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.fsaf.FileManager
@@ -19,7 +20,6 @@ import com.github.k1rakishou.model.repository.ChanPostImageRepository
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
 import com.google.gson.Gson
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -43,6 +43,8 @@ class ResolveDuplicateImagesController(
 
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
   private lateinit var resolveButton: ColorizableButton
+  private lateinit var selectAllFromServer: ColorizableCheckBox
+  private lateinit var selectAllLocal: ColorizableCheckBox
 
   private val resolveDuplicateImagesPresenter by lazy {
     return@lazy ResolveDuplicateImagesPresenter(
@@ -66,10 +68,48 @@ class ResolveDuplicateImagesController(
 
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
     resolveButton = view.findViewById(R.id.resolve_button)
-    resolveButton.setEnabledFast(false)
+    selectAllFromServer = view.findViewById(R.id.select_all_from_server)
+    selectAllLocal = view.findViewById(R.id.select_all_local)
 
     val cancelButton = view.findViewById<ColorizableButton>(R.id.cancel_button)
     val outsideArea = view.findViewById<FrameLayout>(R.id.outside_area)
+
+    resolveButton.setEnabledFast(false)
+
+    selectAllFromServer.setOnCheckedChangeListener { buttonView, isChecked ->
+      if (!isChecked) {
+        if (!selectAllLocal.isChecked) {
+          resolveDuplicateImagesPresenter.updateManyDuplicateImages(
+            batchUpdate = ResolveDuplicateImagesPresenter.BatchUpdate.SelectNone
+          )
+        }
+
+        return@setOnCheckedChangeListener
+      }
+
+      resolveDuplicateImagesPresenter.updateManyDuplicateImages(
+        batchUpdate = ResolveDuplicateImagesPresenter.BatchUpdate.SelectAllFromServer
+      )
+
+      selectAllLocal.isChecked = false
+    }
+    selectAllLocal.setOnCheckedChangeListener { buttonView, isChecked ->
+      if (!isChecked) {
+        if (!selectAllFromServer.isChecked) {
+          resolveDuplicateImagesPresenter.updateManyDuplicateImages(
+            batchUpdate = ResolveDuplicateImagesPresenter.BatchUpdate.SelectNone
+          )
+        }
+
+        return@setOnCheckedChangeListener
+      }
+
+      resolveDuplicateImagesPresenter.updateManyDuplicateImages(
+        batchUpdate = ResolveDuplicateImagesPresenter.BatchUpdate.SelectAllLocal
+      )
+
+      selectAllFromServer.isChecked = false
+    }
 
     cancelButton.setOnClickListener {
       pop()
@@ -81,7 +121,7 @@ class ResolveDuplicateImagesController(
       resolveDuplicateImagesPresenter.resolve()
     }
 
-    mainScope.launch(Dispatchers.Main.immediate) {
+    mainScope.launch {
       resolveDuplicateImagesPresenter.listenForStateUpdates()
         .collect { state -> renderState(state) }
     }

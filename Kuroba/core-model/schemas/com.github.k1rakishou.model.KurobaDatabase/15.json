@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 15,
-    "identityHash": "67ffcd86905ae67a3707b40ba808da6e",
+    "identityHash": "dfee30fbc05be285140b2e110bc14041",
     "entities": [
       {
         "tableName": "chan_site_id",
@@ -2022,17 +2022,11 @@
       },
       {
         "tableName": "image_download_request_entity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`unique_id` TEXT NOT NULL, `image_server_file_name` TEXT NOT NULL, `image_full_url` TEXT NOT NULL, `new_file_name` TEXT, `status` INTEGER NOT NULL, `duplicate_file_uri` TEXT, `duplicates_resolution` INTEGER NOT NULL, `created_on` INTEGER NOT NULL, PRIMARY KEY(`unique_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`unique_id` TEXT NOT NULL, `image_full_url` TEXT NOT NULL, `new_file_name` TEXT, `status` INTEGER NOT NULL, `duplicate_file_uri` TEXT, `duplicates_resolution` INTEGER NOT NULL, `created_on` INTEGER NOT NULL, PRIMARY KEY(`unique_id`, `image_full_url`))",
         "fields": [
           {
             "fieldPath": "uniqueId",
             "columnName": "unique_id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "imageServerFileName",
-            "columnName": "image_server_file_name",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -2075,26 +2069,19 @@
         ],
         "primaryKey": {
           "columnNames": [
-            "unique_id"
+            "unique_id",
+            "image_full_url"
           ],
           "autoGenerate": false
         },
         "indices": [
           {
             "name": "index_image_download_request_entity_unique_id",
-            "unique": true,
+            "unique": false,
             "columnNames": [
               "unique_id"
             ],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_image_download_request_entity_unique_id` ON `${TABLE_NAME}` (`unique_id`)"
-          },
-          {
-            "name": "index_image_download_request_entity_image_server_file_name",
-            "unique": true,
-            "columnNames": [
-              "image_server_file_name"
-            ],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_image_download_request_entity_image_server_file_name` ON `${TABLE_NAME}` (`image_server_file_name`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_image_download_request_entity_unique_id` ON `${TABLE_NAME}` (`unique_id`)"
           },
           {
             "name": "index_image_download_request_entity_image_full_url",
@@ -2128,7 +2115,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '67ffcd86905ae67a3707b40ba808da6e')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'dfee30fbc05be285140b2e110bc14041')"
     ]
   }
 }

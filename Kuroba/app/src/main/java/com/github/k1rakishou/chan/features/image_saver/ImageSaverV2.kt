@@ -57,7 +57,6 @@ class ImageSaverV2(
 
       val imageDownloadRequest = ImageDownloadRequest(
         uniqueId = uniqueId,
-        imageServerFileName = postImage.serverFilename,
         imageFullUrl = postImage.imageUrl!!,
         newFileName = newFileName,
         status = ImageDownloadRequest.Status.Queued,
@@ -88,11 +87,43 @@ class ImageSaverV2(
   fun saveMany(imageSaverV2Options: ImageSaverV2Options, postImages: Collection<ChanPostImage>) {
     checkInputs(postImages)
 
-    val outputFileUri = requireNotNull(imageSaverV2Options.rootDirectoryUri) {
-      "rootDirectoryUri is null"
-    }
+    rendezvousCoroutineExecutor.post {
+      val uniqueId = calculateUniqueId(postImages)
+      val duplicatesResolution =
+        ImageSaverV2Options.DuplicatesResolution.fromRawValue(imageSaverV2Options.duplicatesResolution)
 
-    // TODO(KurobaEx v0.6.0): not implemented
+      val imageDownloadRequests = postImages.mapNotNull { postImage ->
+        val imageUrl = postImage.imageUrl
+          ?: return@mapNotNull null
+
+        return@mapNotNull ImageDownloadRequest(
+          uniqueId = uniqueId,
+          imageFullUrl = imageUrl,
+          newFileName = null,
+          status = ImageDownloadRequest.Status.Queued,
+          duplicateFileUri = null,
+          duplicatesResolution = duplicatesResolution,
+          createdOn = DateTime.now()
+        )
+      }
+
+      val actualImageDownloadRequests = imageDownloadRequestRepository.createMany(imageDownloadRequests)
+        .safeUnwrap { error ->
+          Logger.e(TAG, "Failed to create image download request", error)
+          return@post
+        }
+
+      if (actualImageDownloadRequests.isEmpty()) {
+        // This request is already active
+        return@post
+      }
+
+      startImageSaverService(
+        uniqueId = uniqueId,
+        imageSaverV2Options = imageSaverV2Options,
+        downloadType = ImageSaverV2Service.BATCH_IMAGE_DOWNLOAD_TYPE
+      )
+    }
   }
 
   fun share(postImage: ChanPostImage) {

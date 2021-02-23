@@ -130,10 +130,9 @@ class ImageSaverV2Service : Service() {
             return null
           }
 
-        check(imageDownloadRequests.size <= 1) { "Bad imageDownloadRequests count: ${imageDownloadRequests.size}" }
-
-        if (imageDownloadRequests.isEmpty()) {
-          Logger.d(TAG, "convertInputData(Single) imageDownloadRequests is empty")
+        if (imageDownloadRequests.size != 1) {
+          Logger.e(TAG, "convertInputData(Single) " +
+            "imageDownloadRequests (${imageDownloadRequests.size}) != 1")
           return null
         }
 
@@ -152,7 +151,7 @@ class ImageSaverV2Service : Service() {
           }
 
         if (imageDownloadRequests.isEmpty()) {
-          Logger.d(TAG, "convertInputData(Batch) imageDownloadRequests is empty")
+          Logger.e(TAG, "convertInputData(Batch) imageDownloadRequests is empty")
           return null
         }
 
@@ -223,7 +222,9 @@ class ImageSaverV2Service : Service() {
     setupChannels()
 
     if (verboseLogs) {
-      Logger.d(TAG, "showDownloadNotification() uniqueId='${imageSaverDelegateResult.uniqueId}'")
+      Logger.d(TAG, "showDownloadNotification() " +
+        "uniqueId='${imageSaverDelegateResult.uniqueId}', " +
+        "completed=${imageSaverDelegateResult.completed}")
     }
 
     val ongoing = imageSaverDelegateResult.completed.not()

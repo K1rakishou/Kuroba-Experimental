@@ -80,7 +80,7 @@ class AddBoardsController(
 
     mainScope.launch {
       startListeningForSearchQueries()
-        .debounce(350.milliseconds)
+        .debounce(50.milliseconds)
         .collect { query -> presenter.onSearchQueryChanged(query) }
     }
 

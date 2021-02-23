@@ -20,7 +20,6 @@ import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl
 import org.joda.time.DateTime
 import java.util.*
@@ -66,7 +65,7 @@ class BookmarksManager(
           return@addListener
         }
 
-        persistBookmarks(true)
+        persistBookmarks(eager = true)
       }
 
       appScope.launch(Dispatchers.Default) {
@@ -569,7 +568,7 @@ class BookmarksManager(
       timeout = 250L,
       func = {
         persistBookmarks(
-          blocking = false,
+          eager = false,
           onBookmarksPersisted = {
             val bookmarkChange = BookmarkChange.BookmarksUpdated(listOf(threadDescriptor))
             bookmarksChangedSubject.onNext(bookmarkChange)
@@ -614,7 +613,7 @@ class BookmarksManager(
     }
 
     persistBookmarks(
-      blocking = false,
+      eager = false,
       onBookmarksPersisted = {
         // Only notify the listeners about bookmark updates AFTER we have persisted them
         bookmarksChangedSubject.onNext(bookmarkChange)
@@ -633,19 +632,19 @@ class BookmarksManager(
   }
 
   private fun persistBookmarks(
-    blocking: Boolean = false,
+    eager: Boolean = false,
     onBookmarksPersisted: (() -> Unit)? = null
   ) {
     if (!isReady()) {
       return
     }
 
-    if (blocking) {
-      runBlocking(Dispatchers.Default) {
-        Logger.d(TAG, "persistBookmarks blocking called")
+    if (eager) {
+      appScope.launch(Dispatchers.Default) {
+        Logger.d(TAG, "persistBookmarks eager called")
         persistBookmarksInternal()
         onBookmarksPersisted?.invoke()
-        Logger.d(TAG, "persistBookmarks blocking finished")
+        Logger.d(TAG, "persistBookmarks eager finished")
       }
     } else {
       persistBookmarksExecutor.post {

@@ -149,7 +149,7 @@ public class AlbumViewController
 
     private void downloadAlbumClicked(ToolbarMenuItem item) {
         AlbumDownloadController albumDownloadController = new AlbumDownloadController(context);
-        albumDownloadController.setPostImages(chanDescriptor, postImages);
+        albumDownloadController.setPostImages(postImages);
         navigationController.pushController(albumDownloadController);
     }
 

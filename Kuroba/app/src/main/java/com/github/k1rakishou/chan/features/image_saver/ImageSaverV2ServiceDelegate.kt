@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.doIoTaskWithAttempts
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
@@ -153,6 +154,10 @@ class ImageSaverV2ServiceDelegate(
         return mutex.withLock { activeDownloads.size }
       }
 
+      Logger.d(TAG, "downloadImagesInternal() " +
+        "imageDownloadInputData=${imageDownloadInputData.javaClass.simpleName}, " +
+        "imagesCount=${imageDownloadInputData.requestsCount()}")
+
       handleNewNotificationId(imageDownloadInputData.uniqueId)
 
       // Start event
@@ -182,10 +187,10 @@ class ImageSaverV2ServiceDelegate(
         }
       }
 
-      imageDownloadRequests
-        .chunked(appConstants.processorsCount)
-        .forEach { imageDownloadRequestBatch ->
-          supervisorScope {
+      supervisorScope {
+        imageDownloadRequests
+          .chunked(appConstants.processorsCount)
+          .forEach { imageDownloadRequestBatch ->
             val updatedImageDownloadRequestBatch = imageDownloadRequestBatch.map { imageDownloadRequest ->
               return@map appScope.async(Dispatchers.IO) {
                 return@async downloadSingleImage(
@@ -221,7 +226,7 @@ class ImageSaverV2ServiceDelegate(
               hasResultDirAccessErrors = hasResultDirAccessErrors.get()
             )
           }
-        }
+      }
     } finally {
       // End event
       emitNotificationUpdate(
@@ -282,7 +287,7 @@ class ImageSaverV2ServiceDelegate(
       is DownloadImageResult.Success -> {
         // Image successfully downloaded
         if (!outputDirUri.compareAndSet(null, downloadImageResult.outputDirUri)) {
-          check(outputDirUri == downloadImageResult.outputDirUri) {
+          check(outputDirUri.get() == downloadImageResult.outputDirUri) {
             "outputDirUris differ! Expected: $outputDirUri, actual: ${downloadImageResult.outputDirUri}"
           }
         }
@@ -298,12 +303,11 @@ class ImageSaverV2ServiceDelegate(
 
     if (verboseLogs) {
       Logger.d(TAG, "downloadImagesInternal() end uniqueId='${imageDownloadInputData.uniqueId}', " +
-          "imageUrl='${imageDownloadRequest.imageFullUrl}', result=$downloadImageResult")
+        "imageUrl='${imageDownloadRequest.imageFullUrl}', result=$downloadImageResult")
     }
 
     return ImageDownloadRequest(
       imageDownloadRequest.uniqueId,
-      imageDownloadRequest.imageServerFileName,
       imageDownloadRequest.imageFullUrl,
       imageDownloadRequest.newFileName,
       downloadImageResultToStatus(downloadImageResult),
@@ -610,7 +614,10 @@ class ImageSaverV2ServiceDelegate(
       }
 
       try {
-        downloadFileInternal(chanPostImage, actualOutputFile)
+        doIoTaskWithAttempts(MAX_IO_ERROR_RETRIES_COUNT) { currentAttempt ->
+          Logger.d(TAG, "downloadFileInternal() currentAttempt=$currentAttempt")
+          downloadFileInternal(chanPostImage, actualOutputFile)
+        }
       } catch (error: Throwable) {
         fileManager.delete(actualOutputFile)
 
@@ -765,5 +772,7 @@ class ImageSaverV2ServiceDelegate(
     private const val TAG = "ImageSaverV2ServiceDelegate"
     private const val MAX_VISIBLE_NOTIFICATIONS_PROD = 12
     private const val MAX_VISIBLE_NOTIFICATIONS_TEST = 3
+
+    private const val MAX_IO_ERROR_RETRIES_COUNT = 3
   }
 }

@@ -4,21 +4,20 @@ import android.net.Uri
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
-import androidx.room.PrimaryKey
 import com.github.k1rakishou.model.data.download.ImageDownloadRequest
 import okhttp3.HttpUrl
 import org.joda.time.DateTime
 
 @Entity(
   tableName = ImageDownloadRequestEntity.TABLE_NAME,
+  primaryKeys = [
+    ImageDownloadRequestEntity.UNIQUE_ID_COLUMN_NAME,
+    ImageDownloadRequestEntity.IMAGE_FULL_URL_COLUMN_NAME
+  ],
   indices = [
     Index(
       value = [ImageDownloadRequestEntity.UNIQUE_ID_COLUMN_NAME],
-      unique = true
-    ),
-    Index(
-      value = [ImageDownloadRequestEntity.IMAGE_SERVER_FILE_NAME_COLUMN_NAME],
-      unique = true
+      unique = false
     ),
     Index(
       value = [ImageDownloadRequestEntity.IMAGE_FULL_URL_COLUMN_NAME],
@@ -28,11 +27,8 @@ import org.joda.time.DateTime
   ]
 )
 data class ImageDownloadRequestEntity(
-  @PrimaryKey(autoGenerate = false)
   @ColumnInfo(name = UNIQUE_ID_COLUMN_NAME)
   val uniqueId: String,
-  @ColumnInfo(name = IMAGE_SERVER_FILE_NAME_COLUMN_NAME)
-  val imageServerFileName: String,
   @ColumnInfo(name = IMAGE_FULL_URL_COLUMN_NAME)
   val imageFullUrl: HttpUrl,
   @ColumnInfo(name = NEW_FILE_NAME_COLUMN_NAME)
@@ -55,7 +51,6 @@ data class ImageDownloadRequestEntity(
     const val TABLE_NAME = "image_download_request_entity"
 
     const val UNIQUE_ID_COLUMN_NAME = "unique_id"
-    const val IMAGE_SERVER_FILE_NAME_COLUMN_NAME = "image_server_file_name"
     const val IMAGE_FULL_URL_COLUMN_NAME = "image_full_url"
     const val NEW_FILE_NAME_COLUMN_NAME = "new_file_name"
     const val STATUS_COLUMN_NAME = "status"

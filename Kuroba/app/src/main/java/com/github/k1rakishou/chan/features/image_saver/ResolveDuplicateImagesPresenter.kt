@@ -16,6 +16,7 @@ import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -48,9 +49,37 @@ internal class ResolveDuplicateImagesPresenter(
     super.onCreate(view)
 
     scope.launch(Dispatchers.IO) {
+      delay(100)
       updateState(ResolveDuplicateImagesState.Loading)
 
       loadDuplicateImagesInitial()
+    }
+  }
+
+  fun updateManyDuplicateImages(batchUpdate: BatchUpdate) {
+    serializedCoroutineExecutor.post {
+      val currentState = cachedState.get()
+      if (currentState !is ResolveDuplicateImagesState.Data) {
+        return@post
+      }
+
+      for ((index, duplicateImage) in currentState.duplicateImages.withIndex()) {
+        val updatedImage = when (batchUpdate) {
+          BatchUpdate.SelectNone -> {
+            duplicateImage.copy(resolution = ImageSaverV2Options.DuplicatesResolution.AskWhatToDo)
+          }
+          BatchUpdate.SelectAllFromServer -> {
+            duplicateImage.copy(resolution = ImageSaverV2Options.DuplicatesResolution.Overwrite)
+          }
+          BatchUpdate.SelectAllLocal -> {
+            duplicateImage.copy(resolution = ImageSaverV2Options.DuplicatesResolution.Skip)
+          }
+        }
+
+        currentState.duplicateImages[index] = updatedImage
+      }
+
+      updateState(currentState)
     }
   }
 
@@ -295,6 +324,12 @@ internal class ResolveDuplicateImagesPresenter(
   private suspend fun updateState(newState: ResolveDuplicateImagesState) {
     cachedState.set(newState)
     stateUpdates.emit(newState)
+  }
+
+  enum class BatchUpdate {
+    SelectNone,
+    SelectAllFromServer,
+    SelectAllLocal
   }
 
   companion object {

@@ -32,8 +32,7 @@ class ImageDownloadRequestLocalSource(
       val contains = activeRequests.any { activeRequest ->
         // If an image has QUEUED status and we are trying to download it again, then skip it. All
         // other statuses should be overwritten
-        return@any activeRequest.imageServerFileName == imageDownloadRequest.imageServerFileName
-          || activeRequest.imageFullUrl == imageDownloadRequest.imageFullUrl
+        return@any activeRequest.imageFullUrl == imageDownloadRequest.imageFullUrl
       }
 
       if (contains) {
@@ -42,7 +41,6 @@ class ImageDownloadRequestLocalSource(
 
       return@mapNotNull ImageDownloadRequestEntity(
         uniqueId = imageDownloadRequest.uniqueId,
-        imageServerFileName = imageDownloadRequest.imageServerFileName,
         imageFullUrl = imageDownloadRequest.imageFullUrl,
         newFileName = imageDownloadRequest.newFileName,
         status = imageDownloadRequest.status.rawValue,
@@ -58,11 +56,9 @@ class ImageDownloadRequestLocalSource(
       val status = ImageDownloadRequest.Status.fromRawValue(newRequest.status)
         ?: return@mapNotNull null
       val resolution = ImageSaverV2Options.DuplicatesResolution.fromRawValue(newRequest.duplicatesResolution)
-        ?: return@mapNotNull null
 
       return@mapNotNull ImageDownloadRequest(
         uniqueId = newRequest.uniqueId,
-        imageServerFileName = newRequest.imageServerFileName,
         imageFullUrl = newRequest.imageFullUrl,
         newFileName = newRequest.newFileName,
         status = status,
@@ -85,7 +81,6 @@ class ImageDownloadRequestLocalSource(
 
         return@mapNotNull ImageDownloadRequest(
           uniqueId = imageDownloadRequestEntity.uniqueId,
-          imageServerFileName = imageDownloadRequestEntity.imageServerFileName,
           imageFullUrl = imageDownloadRequestEntity.imageFullUrl,
           newFileName = imageDownloadRequestEntity.newFileName,
           status = status,
@@ -113,7 +108,6 @@ class ImageDownloadRequestLocalSource(
 
         return@mapNotNull ImageDownloadRequest(
           uniqueId = imageDownloadRequestEntity.uniqueId,
-          imageServerFileName = imageDownloadRequestEntity.imageServerFileName,
           imageFullUrl = imageDownloadRequestEntity.imageFullUrl,
           newFileName = imageDownloadRequestEntity.newFileName,
           status = status,
@@ -138,7 +132,6 @@ class ImageDownloadRequestLocalSource(
 
       toUpdate += ImageDownloadRequestEntity(
         uniqueId = imageDownloadRequest.uniqueId,
-        imageServerFileName = imageDownloadRequest.imageServerFileName,
         imageFullUrl = imageDownloadRequest.imageFullUrl,
         newFileName = imageDownloadRequest.newFileName,
         status = imageDownloadRequest.status.rawValue,
@@ -162,7 +155,6 @@ class ImageDownloadRequestLocalSource(
       .map { imageDownloadRequest ->
         return@map ImageDownloadRequestEntity(
           uniqueId = imageDownloadRequest.uniqueId,
-          imageServerFileName = imageDownloadRequest.imageServerFileName,
           imageFullUrl = imageDownloadRequest.imageFullUrl,
           newFileName = imageDownloadRequest.newFileName,
           status = imageDownloadRequest.status.rawValue,

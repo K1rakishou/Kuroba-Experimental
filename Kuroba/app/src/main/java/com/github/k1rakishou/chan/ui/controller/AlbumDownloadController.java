@@ -38,6 +38,7 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2;
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
@@ -45,19 +46,19 @@ import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.utils.RecyclerUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
-import com.github.k1rakishou.common.StringUtils;
 import com.github.k1rakishou.fsaf.FileManager;
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
+import com.github.k1rakishou.persist_state.ImageSaverV2Options;
+import com.github.k1rakishou.persist_state.PersistableChanState;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import javax.inject.Inject;
+
+import kotlin.Unit;
 
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
@@ -73,7 +74,7 @@ public class AlbumDownloadController
     private ColorizableFloatingActionButton download;
 
     private List<AlbumDownloadItem> items = new ArrayList<>();
-    private ChanDescriptor chanDescriptor;
+    private static final Interpolator slowdown = new DecelerateInterpolator(3f);
 
     @Inject
     ImageSaverV2 imageSaverV2;
@@ -192,11 +193,35 @@ public class AlbumDownloadController
         }
 
         if (chanPostImages.isEmpty()) {
+            showToast(R.string.album_download_no_suitable_images);
             return;
         }
 
-        // TODO(KurobaEx v0.6.0): show image saver options controller if necessary
-//        imageSaverV2.saveMany(chanPostImages);
+        ImageSaverV2Options imageSaverV2Options =
+                PersistableChanState.getImageSaverV2PersistedOptions().get();
+
+        if (imageSaverV2Options.shouldShowImageSaverOptionsController()) {
+            ImageSaverV2OptionsController.Options options = new ImageSaverV2OptionsController.Options.MultipleImages(
+                    (updatedImageSaverV2Options) -> {
+                        imageSaverV2.saveMany(updatedImageSaverV2Options, chanPostImages);
+
+                        // Close this controller
+                        navigationController.popController();
+
+                        return Unit.INSTANCE;
+                    }
+            );
+
+            ImageSaverV2OptionsController controller = new ImageSaverV2OptionsController(
+                    context,
+                    options
+            );
+
+            presentController(controller);
+            return;
+        }
+
+        imageSaverV2.saveMany(imageSaverV2Options, chanPostImages);
 
         // Close this controller
         navigationController.popController();
@@ -220,9 +245,7 @@ public class AlbumDownloadController
         updateTitle();
     }
 
-    public void setPostImages(ChanDescriptor chanDescriptor, List<ChanPostImage> postImages) {
-        this.chanDescriptor = chanDescriptor;
-
+    public void setPostImages(List<ChanPostImage> postImages) {
         for (int i = 0, postImagesSize = postImages.size(); i < postImagesSize; i++) {
             ChanPostImage postImage = postImages.get(i);
             if (postImage == null || postImage.isInlined() || postImage.getHidden()) {
@@ -253,47 +276,6 @@ public class AlbumDownloadController
             }
         }
         return checkCount;
-    }
-
-    // This method and the one in ImageViewerController should be roughly equivalent in function
-    @NonNull
-    private String appendAdditionalSubDirectories() {
-        long threadNo = 0L;
-
-        if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
-            threadNo = ((ChanDescriptor.ThreadDescriptor) chanDescriptor).getThreadNo();
-        }
-
-        String siteName = chanDescriptor.siteName();
-        String boardCode = chanDescriptor.boardCode();
-
-        // save to op no appended with the first 50 characters of the subject
-        // should be unique and perfectly understandable title wise
-        String sanitizedSubFolderName = StringUtils.dirNameRemoveBadCharacters(siteName)
-                + File.separator
-                + StringUtils.dirNameRemoveBadCharacters(boardCode)
-                + File.separator
-                + threadNo
-                + "_";
-
-        String sanitizedFileName = StringUtils.dirNameRemoveBadCharacters(
-                getTempTitle(threadNo, siteName, boardCode)
-        );
-        String truncatedFileName = sanitizedFileName.substring(
-                0,
-                Math.min(sanitizedFileName.length(), 50)
-        );
-
-        return sanitizedSubFolderName + truncatedFileName;
-    }
-
-    @NonNull
-    private String getTempTitle(long threadNo, String siteName, String boardCode) {
-        if (threadNo <= 0) {
-            return "catalog";
-        }
-
-        return String.format(Locale.ENGLISH, "%s_%s_%d", siteName, boardCode, threadNo);
     }
 
     private static class AlbumDownloadItem {
@@ -344,9 +326,7 @@ public class AlbumDownloadController
         }
     }
 
-    private class AlbumDownloadCell
-            extends RecyclerView.ViewHolder
-            implements View.OnClickListener {
+    private class AlbumDownloadCell extends RecyclerView.ViewHolder implements View.OnClickListener {
         private ImageView checkbox;
         private PostImageThumbnailView thumbnailView;
 
@@ -372,8 +352,12 @@ public class AlbumDownloadController
     private void setItemChecked(AlbumDownloadCell cell, boolean checked, boolean animated) {
         float scale = checked ? 0.75f : 1f;
         if (animated) {
-            Interpolator slowdown = new DecelerateInterpolator(3f);
-            cell.thumbnailView.animate().scaleX(scale).scaleY(scale).setInterpolator(slowdown).setDuration(500).start();
+            cell.thumbnailView.animate()
+                    .scaleX(scale)
+                    .scaleY(scale)
+                    .setInterpolator(slowdown)
+                    .setDuration(500)
+                    .start();
         } else {
             cell.thumbnailView.setScaleX(scale);
             cell.thumbnailView.setScaleY(scale);
