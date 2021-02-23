@@ -3,18 +3,18 @@ package com.github.k1rakishou.chan.features.image_saver
 import android.net.Uri
 import androidx.annotation.GuardedBy
 import androidx.core.app.NotificationManagerCompat
-import com.github.k1rakishou.chan.core.cache.FileCacheListener
-import com.github.k1rakishou.chan.core.cache.FileCacheV2
+import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.isNotNullNorBlank
+import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.DirectorySegment
 import com.github.k1rakishou.fsaf.file.FileSegment
-import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.fsaf.file.Segment
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.download.ImageDownloadRequest
@@ -23,28 +23,32 @@ import com.github.k1rakishou.model.repository.ChanPostImageRepository
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ObsoleteCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import okhttp3.Request
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 
 @OptIn(ObsoleteCoroutinesApi::class)
 class ImageSaverV2ServiceDelegate(
   private val verboseLogs: Boolean,
   private val appScope: CoroutineScope,
+  private val appConstants: AppConstants,
+  private val downloaderOkHttpClient: RealDownloaderOkHttpClient,
   private val notificationManagerCompat: NotificationManagerCompat,
-  private val fileCacheV2: FileCacheV2,
   private val fileManager: FileManager,
   private val chanPostImageRepository: ChanPostImageRepository,
   private val imageDownloadRequestRepository: ImageDownloadRequestRepository
@@ -144,83 +148,46 @@ class ImageSaverV2ServiceDelegate(
         }
       }
 
-      // TODO(KurobaEx / @Speedup): concurrency!!!
-      imageDownloadRequests.forEach { imageDownloadRequest ->
-        if (verboseLogs) {
-          Logger.d(TAG, "downloadImagesInternal() start uniqueId='${imageDownloadInputData.uniqueId}', " +
-            "imageUrl='${imageDownloadRequest.imageFullUrl}'")
-        }
-
-        val downloadImageResult = downloadImage(
-          hasResultDirAccessErrors,
-          imageDownloadInputData,
-          imageDownloadRequest
-        )
-
-        when (downloadImageResult) {
-          is DownloadImageResult.Canceled -> {
-            // Canceled by user by clicking "Cancel" notification action
-            canceledRequests.incrementAndGet()
-          }
-          is DownloadImageResult.DuplicateFound -> {
-            // Duplicate image (the same result file name) was found on disk and DuplicateResolution
-            // setting is set to ask the user what to do.
-            duplicates.incrementAndGet()
-          }
-          is DownloadImageResult.Failure -> {
-            // Some error happened
-            failedRequests.incrementAndGet()
-          }
-          is DownloadImageResult.Success -> {
-            // Image successfully downloaded
-            if (!outputDirUri.compareAndSet(null, downloadImageResult.outputDirUri)) {
-              check(outputDirUri == downloadImageResult.outputDirUri) {
-                "outputDirUris differ! Expected: $outputDirUri, actual: ${downloadImageResult.outputDirUri}"
+      imageDownloadRequests
+        .chunked(appConstants.processorsCount)
+        .forEach { imageDownloadRequestBatch ->
+          supervisorScope {
+            val updatedImageDownloadRequestBatch = imageDownloadRequestBatch.map { imageDownloadRequest ->
+              return@map appScope.async(Dispatchers.IO) {
+                return@async downloadSingleImage(
+                  imageDownloadInputData,
+                  imageDownloadRequest,
+                  hasResultDirAccessErrors,
+                  canceledRequests,
+                  duplicates,
+                  failedRequests,
+                  outputDirUri,
+                  completedRequests
+                )
               }
-            }
+            }.awaitAll()
 
-            completedRequests.incrementAndGet()
-          }
-          is DownloadImageResult.ResultDirectoryError -> {
-            // Something have happened with the output directory (it was deleted or something like that)
-            hasResultDirAccessErrors.set(true)
-            canceledRequests.incrementAndGet()
+            imageDownloadRequestRepository.completeMany(updatedImageDownloadRequestBatch)
+              .peekError { error -> Logger.e(TAG, "imageDownloadRequestRepository.updateMany() error", error) }
+              .ignore()
+
+            // Progress event
+            emitNotificationUpdate(
+              uniqueId = imageDownloadInputData.uniqueId,
+              imageSaverOptionsJson = imageDownloadInputData.imageSaverOptionsJson,
+              completed = false,
+              totalImagesCount = imageDownloadInputData.requestsCount(),
+              canceledRequests = canceledRequests.get(),
+              completedRequests = completedRequestsToDownloadedImagesResult(
+                completedRequests,
+                outputDirUri
+              ),
+              duplicates = duplicates.get(),
+              failedRequests = failedRequests.get(),
+              hasResultDirAccessErrors = hasResultDirAccessErrors.get()
+            )
           }
         }
-
-        val updatedImageDownloadRequest = ImageDownloadRequest(
-          imageDownloadRequest.uniqueId,
-          imageDownloadRequest.imageServerFileName,
-          imageDownloadRequest.imageFullUrl,
-          imageDownloadRequest.newFileName,
-          downloadImageResultToStatus(downloadImageResult),
-          getDuplicateUriOrNull(downloadImageResult),
-          imageDownloadRequest.duplicatesResolution,
-          imageDownloadRequest.createdOn
-        )
-
-        imageDownloadRequestRepository.completeMany(listOf(updatedImageDownloadRequest))
-          .peekError { error -> Logger.e(TAG, "imageDownloadRequestRepository.updateMany() error", error) }
-          .ignore()
-
-        // Progress event
-        emitNotificationUpdate(
-          uniqueId = imageDownloadInputData.uniqueId,
-          imageSaverOptionsJson = imageDownloadInputData.imageSaverOptionsJson,
-          completed = false,
-          totalImagesCount = imageDownloadInputData.requestsCount(),
-          canceledRequests = canceledRequests.get(),
-          completedRequests = completedRequestsToDownloadedImagesResult(completedRequests, outputDirUri),
-          duplicates = duplicates.get(),
-          failedRequests = failedRequests.get(),
-          hasResultDirAccessErrors = hasResultDirAccessErrors.get()
-        )
-
-        if (verboseLogs) {
-          Logger.d(TAG, "downloadImagesInternal() end uniqueId='${imageDownloadInputData.uniqueId}', " +
-            "imageUrl='${imageDownloadRequest.imageFullUrl}', result=$downloadImageResult")
-        }
-      }
     } finally {
       // End event
       emitNotificationUpdate(
@@ -239,6 +206,77 @@ class ImageSaverV2ServiceDelegate(
     }
 
     return mutex.withLock { activeDownloads.size }
+  }
+
+  private suspend fun downloadSingleImage(
+    imageDownloadInputData: ImageSaverV2Service.ImageDownloadInputData,
+    imageDownloadRequest: ImageDownloadRequest,
+    hasResultDirAccessErrors: AtomicBoolean,
+    canceledRequests: AtomicInteger,
+    duplicates: AtomicInteger,
+    failedRequests: AtomicInteger,
+    outputDirUri: AtomicReference<Uri>,
+    completedRequests: AtomicInteger
+  ): ImageDownloadRequest {
+    BackgroundUtils.ensureBackgroundThread()
+
+    if (verboseLogs) {
+      Logger.d(TAG, "downloadImagesInternal() start uniqueId='${imageDownloadInputData.uniqueId}', " +
+          "imageUrl='${imageDownloadRequest.imageFullUrl}'")
+    }
+
+    val downloadImageResult = downloadSingleImageInternal(
+      hasResultDirAccessErrors,
+      imageDownloadInputData,
+      imageDownloadRequest
+    )
+
+    when (downloadImageResult) {
+      is DownloadImageResult.Canceled -> {
+        // Canceled by user by clicking "Cancel" notification action
+        canceledRequests.incrementAndGet()
+      }
+      is DownloadImageResult.DuplicateFound -> {
+        // Duplicate image (the same result file name) was found on disk and DuplicateResolution
+        // setting is set to ask the user what to do.
+        duplicates.incrementAndGet()
+      }
+      is DownloadImageResult.Failure -> {
+        // Some error happened
+        failedRequests.incrementAndGet()
+      }
+      is DownloadImageResult.Success -> {
+        // Image successfully downloaded
+        if (!outputDirUri.compareAndSet(null, downloadImageResult.outputDirUri)) {
+          check(outputDirUri == downloadImageResult.outputDirUri) {
+            "outputDirUris differ! Expected: $outputDirUri, actual: ${downloadImageResult.outputDirUri}"
+          }
+        }
+
+        completedRequests.incrementAndGet()
+      }
+      is DownloadImageResult.ResultDirectoryError -> {
+        // Something have happened with the output directory (it was deleted or something like that)
+        hasResultDirAccessErrors.set(true)
+        canceledRequests.incrementAndGet()
+      }
+    }
+
+    if (verboseLogs) {
+      Logger.d(TAG, "downloadImagesInternal() end uniqueId='${imageDownloadInputData.uniqueId}', " +
+          "imageUrl='${imageDownloadRequest.imageFullUrl}', result=$downloadImageResult")
+    }
+
+    return ImageDownloadRequest(
+      imageDownloadRequest.uniqueId,
+      imageDownloadRequest.imageServerFileName,
+      imageDownloadRequest.imageFullUrl,
+      imageDownloadRequest.newFileName,
+      downloadImageResultToStatus(downloadImageResult),
+      getDuplicateUriOrNull(downloadImageResult),
+      imageDownloadRequest.duplicatesResolution,
+      imageDownloadRequest.createdOn
+    )
   }
 
   private suspend fun handleNewNotificationId(uniqueId: String) {
@@ -456,7 +494,7 @@ class ImageSaverV2ServiceDelegate(
     ) : ResultFile()
   }
 
-  private suspend fun downloadImage(
+  private suspend fun downloadSingleImageInternal(
     hasResultDirAccessErrors: AtomicBoolean,
     imageDownloadInputData: ImageSaverV2Service.ImageDownloadInputData,
     imageDownloadRequest: ImageDownloadRequest
@@ -537,69 +575,57 @@ class ImageSaverV2ServiceDelegate(
         )
       }
 
-      val sourceFile = try {
-        downloadFileInternal(chanPostImage)
+      try {
+        downloadFileInternal(chanPostImage, actualOutputFile)
       } catch (error: Throwable) {
         fileManager.delete(actualOutputFile)
 
-        if (error is Canceled) {
-          return@Try DownloadImageResult.Canceled(imageDownloadRequest)
-        } else if (error is NotFoundException) {
-          return@Try DownloadImageResult.Failure(error, false)
+        return@Try when (error) {
+          is ResultFileAccessError -> {
+            DownloadImageResult.ResultDirectoryError(error.resultFileUri, imageDownloadRequest)
+          }
+          is NotFoundException -> DownloadImageResult.Failure(error, false)
+          is IOException -> DownloadImageResult.Failure(error, true)
+          else -> throw error
         }
-
-        throw error
-      }
-
-      if (!fileManager.copyFileContents(sourceFile, actualOutputFile)) {
-        fileManager.delete(actualOutputFile)
-
-        return@Try DownloadImageResult.ResultDirectoryError(
-          actualOutputFile.getFullPath(),
-          imageDownloadRequest
-        )
       }
 
       return@Try DownloadImageResult.Success(outputDirUri, imageDownloadRequest)
     }.mapErrorToValue { error -> DownloadImageResult.Failure(error, true) }
   }
 
-  @Throws(Canceled::class, NotFoundException::class)
-  private suspend fun downloadFileInternal(chanPostImage: ChanPostImage): RawFile {
-    return suspendCancellableCoroutine { continuation ->
-      // TODO(KurobaEx v0.6.0): do not use fileCacheV2 here to download images, we don't really need it.
-      //  Just use okHttp and return inputSource or something like that.
-      fileCacheV2.enqueueNormalDownloadFileRequest(
-        chanPostImage,
-        true,
-        object : FileCacheListener() {
-          override fun onSuccess(file: RawFile) {
-            super.onSuccess(file)
+  @Throws(ResultFileAccessError::class, IOException::class, NotFoundException::class)
+  private suspend fun downloadFileInternal(chanPostImage: ChanPostImage, outputFile: AbstractFile) {
+    BackgroundUtils.ensureBackgroundThread()
+    val imageUrl = checkNotNull(chanPostImage.imageUrl) { "Image url is empty!" }
 
-            continuation.resume(file)
-          }
+    val request = Request.Builder()
+      .url(imageUrl)
+      .header("User-Agent", appConstants.userAgent)
+      .build()
 
-          override fun onNotFound() {
-            super.onNotFound()
-            onFail(NotFoundException())
-          }
+    val response = downloaderOkHttpClient.okHttpClient().suspendCall(request)
 
-          override fun onStop(file: AbstractFile?) {
-            super.onStop(file)
-            onFail(Canceled())
-          }
+    if (!response.isSuccessful) {
+      if (response.code == 404) {
+        throw NotFoundException()
+      }
 
-          override fun onCancel() {
-            super.onCancel()
-            onFail(Canceled())
-          }
+      throw IOException("Unsuccessful response, code: ${response.code}")
+    }
 
-          override fun onFail(exception: Exception) {
-            super.onFail(exception)
+    val responseBody = response.body
+      ?: throw IOException("Response has no body")
 
-            continuation.resumeWithException(exception)
-          }
-        })
+    val outputFileStream = fileManager.getOutputStream(outputFile)
+      ?: throw ResultFileAccessError(outputFile.getFullPath())
+
+    runInterruptible {
+      responseBody.source().inputStream().use { inputStream ->
+        outputFileStream.use { outputStream ->
+          inputStream.copyTo(outputStream)
+        }
+      }
     }
   }
 
@@ -609,7 +635,7 @@ class ImageSaverV2ServiceDelegate(
     return mutex.withLock { activeDownloads.get(imageDownloadInputData.uniqueId) }
   }
 
-  class Canceled : Exception("Canceled")
+  class ResultFileAccessError(val resultFileUri: String) : Exception("Failed to access result file: $resultFileUri")
   class NotFoundException : Exception("Not found on server")
 
   class DownloadContext(

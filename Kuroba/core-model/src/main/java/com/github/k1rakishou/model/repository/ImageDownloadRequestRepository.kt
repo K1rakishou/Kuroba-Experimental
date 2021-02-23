@@ -23,6 +23,8 @@ class ImageDownloadRequestRepository(
   suspend fun createMany(
     imageDownloadRequests: List<ImageDownloadRequest>
   ): ModularResult<List<ImageDownloadRequest>> {
+    check(imageDownloadRequests.isNotEmpty()) { "imageDownloadRequests is empty" }
+
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         if (deletionRoutineExecuted.compareAndSet(false, true)) {
@@ -56,15 +58,23 @@ class ImageDownloadRequestRepository(
     }
   }
 
-  suspend fun completeMany(imageDownloadRequest: List<ImageDownloadRequest>): ModularResult<Unit> {
+  suspend fun completeMany(imageDownloadRequests: List<ImageDownloadRequest>): ModularResult<Unit> {
+    if (imageDownloadRequests.isEmpty()) {
+      return ModularResult.value(Unit)
+    }
+
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
-        return@tryWithTransaction imageDownloadRequestLocalSource.completeMany(imageDownloadRequest)
+        return@tryWithTransaction imageDownloadRequestLocalSource.completeMany(imageDownloadRequests)
       }
     }
   }
 
   suspend fun updateMany(imageDownloadRequests: List<ImageDownloadRequest>): ModularResult<Unit> {
+    if (imageDownloadRequests.isEmpty()) {
+      return ModularResult.value(Unit)
+    }
+
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         return@tryWithTransaction imageDownloadRequestLocalSource.updateMany(imageDownloadRequests)

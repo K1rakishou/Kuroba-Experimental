@@ -22,8 +22,8 @@ import androidx.core.app.NotificationManagerCompat;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
+import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
-import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
 import com.github.k1rakishou.chan.core.helper.LastPageNotificationsHelper;
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder;
@@ -605,7 +605,8 @@ public class ManagerModule {
     public ImageSaverV2ServiceDelegate provideImageSaverV2Delegate(
             Context appContext,
             CoroutineScope appScope,
-            FileCacheV2 fileCacheV2,
+            AppConstants appConstants,
+            RealDownloaderOkHttpClient downloaderOkHttpClient,
             FileManager fileManager,
             ChanPostImageRepository chanPostImageRepository,
             ImageDownloadRequestRepository imageDownloadRequestRepository
@@ -613,8 +614,9 @@ public class ManagerModule {
         return new ImageSaverV2ServiceDelegate(
                 ChanSettings.verboseLogs.get(),
                 appScope,
+                appConstants,
+                downloaderOkHttpClient,
                 NotificationManagerCompat.from(appContext),
-                fileCacheV2,
                 fileManager,
                 chanPostImageRepository,
                 imageDownloadRequestRepository
