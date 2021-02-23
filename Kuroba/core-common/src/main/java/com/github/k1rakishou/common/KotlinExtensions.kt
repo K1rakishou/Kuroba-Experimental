@@ -1,5 +1,7 @@
 package com.github.k1rakishou.common
 
+import android.system.ErrnoException
+import android.system.OsConstants
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.TextUtils
@@ -634,4 +636,15 @@ suspend fun doIoTaskWithAttempts(attempts: Int, task: suspend (Int) -> Unit) {
       }
     }
   }
+}
+
+fun IOException.isOutOfDiskSpaceError(): Boolean {
+  if (cause is ErrnoException) {
+    val errorNumber: Int = (cause as ErrnoException).errno
+    if (errorNumber == OsConstants.ENOSPC) {
+      return true
+    }
+  }
+
+  return false
 }

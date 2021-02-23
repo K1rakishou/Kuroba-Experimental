@@ -293,6 +293,11 @@ class ImageSaverV2Service : Service() {
   ): String {
     // TODO(KurobaEx v0.6.0): strings
     return buildString {
+      if (imageSaverDelegateResult.hasOutOfDiskSpaceErrors) {
+        appendLine("Out of disk space!")
+        return@buildString
+      }
+
       if (imageSaverDelegateResult.hasResultDirAccessErrors) {
         appendLine("Failed to access root directory!")
         appendLine("Click \"show settings\" and then check that it exists and you have access to it!")
@@ -327,7 +332,7 @@ class ImageSaverV2Service : Service() {
   private fun NotificationCompat.Builder.addResolveDuplicateImagesAction(
     imageSaverDelegateResult: ImageSaverV2ServiceDelegate.ImageSaverDelegateResult
   ): NotificationCompat.Builder {
-    if (imageSaverDelegateResult.hasResultDirAccessErrors) {
+    if (imageSaverDelegateResult.hasResultDirAccessErrors || imageSaverDelegateResult.hasOutOfDiskSpaceErrors) {
       return this
     }
 
@@ -465,6 +470,7 @@ class ImageSaverV2Service : Service() {
     imageSaverDelegateResult: ImageSaverV2ServiceDelegate.ImageSaverDelegateResult
   ): NotificationCompat.Builder {
     val canAutoDismiss = imageSaverDelegateResult.completed
+      && imageSaverDelegateResult.totalImagesCount == 1
       && imageSaverDelegateResult.hasOnlyCompletedRequests()
       && !imageSaverDelegateResult.hasAnyErrors()
 

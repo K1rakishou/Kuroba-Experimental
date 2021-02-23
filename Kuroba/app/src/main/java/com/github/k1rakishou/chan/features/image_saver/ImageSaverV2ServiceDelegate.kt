@@ -11,6 +11,7 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.doIoTaskWithAttempts
 import com.github.k1rakishou.common.isNotNullNorBlank
+import com.github.k1rakishou.common.isOutOfDiskSpaceError
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
@@ -142,6 +143,7 @@ class ImageSaverV2ServiceDelegate(
 
     val outputDirUri = AtomicReference<Uri>(null)
     val hasResultDirAccessErrors = AtomicBoolean(false)
+    val hasOutOfDiskSpaceErrors = AtomicBoolean(false)
     val completedRequests = AtomicInteger(0)
     val failedRequests = AtomicInteger(0)
     val duplicates = AtomicInteger(0)
@@ -167,10 +169,14 @@ class ImageSaverV2ServiceDelegate(
         completed = false,
         totalImagesCount = imageDownloadInputData.requestsCount(),
         canceledRequests = canceledRequests.get(),
-        completedRequests = completedRequestsToDownloadedImagesResult(completedRequests, outputDirUri),
+        completedRequests = completedRequestsToDownloadedImagesResult(
+          completedRequests,
+          outputDirUri
+        ),
         duplicates = duplicates.get(),
         failedRequests = failedRequests.get(),
-        hasResultDirAccessErrors = hasResultDirAccessErrors.get()
+        hasResultDirAccessErrors = hasResultDirAccessErrors.get(),
+        hasOutOfDiskSpaceErrors = hasOutOfDiskSpaceErrors.get()
       )
 
       val imageDownloadRequests = when (imageDownloadInputData) {
@@ -181,15 +187,22 @@ class ImageSaverV2ServiceDelegate(
           imageDownloadInputData.imageDownloadRequests
         }
         else -> {
-          throw IllegalArgumentException("Unknown imageDownloadInputData: " +
-            imageDownloadInputData.javaClass.simpleName
+          throw IllegalArgumentException(
+            "Unknown imageDownloadInputData: " +
+              imageDownloadInputData.javaClass.simpleName
           )
         }
       }
 
+      val concurrency = when {
+        imageDownloadRequests.size > 128 -> 8
+        imageDownloadRequests.size > 64 -> 6
+        else -> 4
+      }
+
       supervisorScope {
         imageDownloadRequests
-          .chunked(appConstants.processorsCount)
+          .chunked(concurrency)
           .forEach { imageDownloadRequestBatch ->
             val updatedImageDownloadRequestBatch = imageDownloadRequestBatch.map { imageDownloadRequest ->
               return@map appScope.async(Dispatchers.IO) {
@@ -197,6 +210,7 @@ class ImageSaverV2ServiceDelegate(
                   imageDownloadInputData,
                   imageDownloadRequest,
                   hasResultDirAccessErrors,
+                  hasOutOfDiskSpaceErrors,
                   canceledRequests,
                   duplicates,
                   failedRequests,
@@ -223,7 +237,8 @@ class ImageSaverV2ServiceDelegate(
               ),
               duplicates = duplicates.get(),
               failedRequests = failedRequests.get(),
-              hasResultDirAccessErrors = hasResultDirAccessErrors.get()
+              hasResultDirAccessErrors = hasResultDirAccessErrors.get(),
+              hasOutOfDiskSpaceErrors = hasOutOfDiskSpaceErrors.get()
             )
           }
       }
@@ -235,10 +250,14 @@ class ImageSaverV2ServiceDelegate(
         completed = true,
         totalImagesCount = imageDownloadInputData.requestsCount(),
         canceledRequests = canceledRequests.get(),
-        completedRequests = completedRequestsToDownloadedImagesResult(completedRequests, outputDirUri),
+        completedRequests = completedRequestsToDownloadedImagesResult(
+          completedRequests,
+          outputDirUri
+        ),
         duplicates = duplicates.get(),
         failedRequests = failedRequests.get(),
-        hasResultDirAccessErrors = hasResultDirAccessErrors.get()
+        hasResultDirAccessErrors = hasResultDirAccessErrors.get(),
+        hasOutOfDiskSpaceErrors = hasOutOfDiskSpaceErrors.get(),
       )
 
       mutex.withLock { activeDownloads.remove(imageDownloadInputData.uniqueId) }
@@ -251,6 +270,7 @@ class ImageSaverV2ServiceDelegate(
     imageDownloadInputData: ImageSaverV2Service.ImageDownloadInputData,
     imageDownloadRequest: ImageDownloadRequest,
     hasResultDirAccessErrors: AtomicBoolean,
+    hasOutOfDiskSpaceErrors: AtomicBoolean,
     canceledRequests: AtomicInteger,
     duplicates: AtomicInteger,
     failedRequests: AtomicInteger,
@@ -266,6 +286,7 @@ class ImageSaverV2ServiceDelegate(
 
     val downloadImageResult = downloadSingleImageInternal(
       hasResultDirAccessErrors,
+      hasOutOfDiskSpaceErrors,
       imageDownloadInputData,
       imageDownloadRequest
     )
@@ -293,6 +314,10 @@ class ImageSaverV2ServiceDelegate(
         }
 
         completedRequests.incrementAndGet()
+      }
+      is DownloadImageResult.OutOfDiskSpaceError -> {
+        hasOutOfDiskSpaceErrors.set(true)
+        canceledRequests.incrementAndGet()
       }
       is DownloadImageResult.ResultDirectoryError -> {
         // Something have happened with the output directory (it was deleted or something like that)
@@ -383,9 +408,10 @@ class ImageSaverV2ServiceDelegate(
     return when (downloadImageResult) {
       is DownloadImageResult.Canceled -> ImageDownloadRequest.Status.Canceled
       is DownloadImageResult.DuplicateFound -> ImageDownloadRequest.Status.ResolvingDuplicate
-      is DownloadImageResult.Failure -> ImageDownloadRequest.Status.DownloadFailed
-      is DownloadImageResult.ResultDirectoryError -> ImageDownloadRequest.Status.DownloadFailed
       is DownloadImageResult.Success -> ImageDownloadRequest.Status.Downloaded
+      is DownloadImageResult.Failure,
+      is DownloadImageResult.ResultDirectoryError,
+      is DownloadImageResult.OutOfDiskSpaceError -> ImageDownloadRequest.Status.DownloadFailed
     }
   }
 
@@ -398,7 +424,8 @@ class ImageSaverV2ServiceDelegate(
     completedRequests: DownloadedImages,
     duplicates: Int,
     failedRequests: Int,
-    hasResultDirAccessErrors: Boolean
+    hasResultDirAccessErrors: Boolean,
+    hasOutOfDiskSpaceErrors: Boolean
   ) {
     BackgroundUtils.ensureBackgroundThread()
 
@@ -411,7 +438,8 @@ class ImageSaverV2ServiceDelegate(
       downloadedImages = completedRequests,
       duplicates = duplicates,
       failedRequests = failedRequests,
-      hasResultDirAccessErrors = hasResultDirAccessErrors
+      hasResultDirAccessErrors = hasResultDirAccessErrors,
+      hasOutOfDiskSpaceErrors =  hasOutOfDiskSpaceErrors
     )
 
     notificationUpdatesFlow.emit(imageSaverDelegateResult)
@@ -424,7 +452,8 @@ class ImageSaverV2ServiceDelegate(
   ): String {
     var fileName = when (ImageSaverV2Options.ImageNameOptions.fromRawValue(imageSaverV2Options.imageNameOptions)) {
       ImageSaverV2Options.ImageNameOptions.UseServerFileName -> postImage.serverFilename
-      ImageSaverV2Options.ImageNameOptions.UseOriginalFileName -> postImage.filename ?: postImage.serverFilename
+      ImageSaverV2Options.ImageNameOptions.UseOriginalFileName -> postImage.filename
+        ?: postImage.serverFilename
     }
 
     if (imageDownloadRequest.newFileName.isNotNullNorBlank()) {
@@ -534,6 +563,7 @@ class ImageSaverV2ServiceDelegate(
 
   private suspend fun downloadSingleImageInternal(
     hasResultDirAccessErrors: AtomicBoolean,
+    hasOutOfDiskSpaceErrors: AtomicBoolean,
     imageDownloadInputData: ImageSaverV2Service.ImageDownloadInputData,
     imageDownloadRequest: ImageDownloadRequest
   ): DownloadImageResult {
@@ -541,7 +571,7 @@ class ImageSaverV2ServiceDelegate(
 
     return ModularResult.Try {
       val canceled = getDownloadContext(imageDownloadInputData)?.isCanceled() ?: true
-      if (hasResultDirAccessErrors.get() || canceled) {
+      if (hasResultDirAccessErrors.get() || hasOutOfDiskSpaceErrors.get() || canceled) {
         return@Try DownloadImageResult.Canceled(imageDownloadRequest)
       }
 
@@ -591,7 +621,10 @@ class ImageSaverV2ServiceDelegate(
         }
         is ResultFile.Skipped -> {
           if (outputFileResult.fileIsNotEmpty) {
-            return@Try DownloadImageResult.Success(outputFileResult.outputDirUri, imageDownloadRequest)
+            return@Try DownloadImageResult.Success(
+              outputFileResult.outputDirUri,
+              imageDownloadRequest
+            )
           }
 
           val error = IOException("Duplicate file is empty")
@@ -614,14 +647,24 @@ class ImageSaverV2ServiceDelegate(
       }
 
       try {
-        doIoTaskWithAttempts(MAX_IO_ERROR_RETRIES_COUNT) { currentAttempt ->
-          Logger.d(TAG, "downloadFileInternal() currentAttempt=$currentAttempt")
-          downloadFileInternal(chanPostImage, actualOutputFile)
+        doIoTaskWithAttempts(MAX_IO_ERROR_RETRIES_COUNT) {
+          try {
+            downloadFileInternal(chanPostImage, actualOutputFile)
+          } catch (error: IOException) {
+            if (error.isOutOfDiskSpaceError()) {
+              throw OutOfDiskSpaceException()
+            }
+
+            throw error
+          }
         }
       } catch (error: Throwable) {
         fileManager.delete(actualOutputFile)
 
         return@Try when (error) {
+          is OutOfDiskSpaceException -> {
+            DownloadImageResult.OutOfDiskSpaceError(imageDownloadRequest)
+          }
           is ResultFileAccessError -> {
             DownloadImageResult.ResultDirectoryError(error.resultFileUri, imageDownloadRequest)
           }
@@ -678,6 +721,7 @@ class ImageSaverV2ServiceDelegate(
 
   class ResultFileAccessError(val resultFileUri: String) : Exception("Failed to access result file: $resultFileUri")
   class NotFoundException : Exception("Not found on server")
+  class OutOfDiskSpaceException : Exception("Out of disk space")
 
   class DownloadContext(
     private val canceled: AtomicBoolean = AtomicBoolean(false)
@@ -704,9 +748,9 @@ class ImageSaverV2ServiceDelegate(
 
     data class Canceled(val imageDownloadRequest: ImageDownloadRequest) : DownloadImageResult()
 
-    // TODO(KurobaEx v0.6.0): add Skipped?
-
     data class DuplicateFound(val duplicate: DuplicateImage) : DownloadImageResult()
+
+    data class OutOfDiskSpaceError(val imageDownloadRequest: ImageDownloadRequest) : DownloadImageResult()
 
     data class ResultDirectoryError(
       val path: String,
@@ -723,11 +767,12 @@ class ImageSaverV2ServiceDelegate(
     val downloadedImages: DownloadedImages,
     val duplicates: Int,
     val failedRequests: Int,
-    val hasResultDirAccessErrors: Boolean
+    val hasResultDirAccessErrors: Boolean,
+    val hasOutOfDiskSpaceErrors: Boolean
   ) {
 
     fun hasAnyErrors(): Boolean {
-      return duplicates > 0 || failedRequests > 0 || hasResultDirAccessErrors
+      return duplicates > 0 || failedRequests > 0 || hasResultDirAccessErrors || hasOutOfDiskSpaceErrors
     }
 
     fun hasOnlyCompletedRequests(): Boolean {

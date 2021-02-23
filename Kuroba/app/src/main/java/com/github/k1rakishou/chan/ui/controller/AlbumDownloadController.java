@@ -48,8 +48,6 @@ import com.github.k1rakishou.chan.utils.RecyclerUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
-import com.github.k1rakishou.persist_state.ImageSaverV2Options;
-import com.github.k1rakishou.persist_state.PersistableChanState;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -197,34 +195,23 @@ public class AlbumDownloadController
             return;
         }
 
-        ImageSaverV2Options imageSaverV2Options =
-                PersistableChanState.getImageSaverV2PersistedOptions().get();
+        ImageSaverV2OptionsController.Options options = new ImageSaverV2OptionsController.Options.MultipleImages(
+                (updatedImageSaverV2Options) -> {
+                    imageSaverV2.saveMany(updatedImageSaverV2Options, chanPostImages);
 
-        if (imageSaverV2Options.shouldShowImageSaverOptionsController()) {
-            ImageSaverV2OptionsController.Options options = new ImageSaverV2OptionsController.Options.MultipleImages(
-                    (updatedImageSaverV2Options) -> {
-                        imageSaverV2.saveMany(updatedImageSaverV2Options, chanPostImages);
+                    // Close this controller
+                    navigationController.popController();
 
-                        // Close this controller
-                        navigationController.popController();
+                    return Unit.INSTANCE;
+                }
+        );
 
-                        return Unit.INSTANCE;
-                    }
-            );
+        ImageSaverV2OptionsController controller = new ImageSaverV2OptionsController(
+                context,
+                options
+        );
 
-            ImageSaverV2OptionsController controller = new ImageSaverV2OptionsController(
-                    context,
-                    options
-            );
-
-            presentController(controller);
-            return;
-        }
-
-        imageSaverV2.saveMany(imageSaverV2Options, chanPostImages);
-
-        // Close this controller
-        navigationController.popController();
+        presentController(controller);
     }
 
     private void onCheckAllClicked(ToolbarMenuItem menuItem) {
