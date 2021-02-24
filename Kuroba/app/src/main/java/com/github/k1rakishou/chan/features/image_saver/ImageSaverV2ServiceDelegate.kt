@@ -142,7 +142,7 @@ class ImageSaverV2ServiceDelegate(
     BackgroundUtils.ensureBackgroundThread()
 
     val outputDirUri = AtomicReference<Uri>(null)
-    val firstChanPostImage = AtomicReference<ChanPostImage>(null)
+    val currentChanPostImage = AtomicReference<ChanPostImage>(null)
     val hasResultDirAccessErrors = AtomicBoolean(false)
     val hasOutOfDiskSpaceErrors = AtomicBoolean(false)
     val completedRequests = AtomicInteger(0)
@@ -213,7 +213,7 @@ class ImageSaverV2ServiceDelegate(
                   imageDownloadRequest,
                   hasResultDirAccessErrors,
                   hasOutOfDiskSpaceErrors,
-                  firstChanPostImage,
+                  currentChanPostImage,
                   canceledRequests,
                   duplicates,
                   failedRequests,
@@ -227,8 +227,11 @@ class ImageSaverV2ServiceDelegate(
               .peekError { error -> Logger.e(TAG, "imageDownloadRequestRepository.updateMany() error", error) }
               .ignore()
 
-            val notificationSummary =
-              extractNotificationSummaryText(firstChanPostImage, imageDownloadRequests)
+            val notificationSummary = extractNotificationSummaryText(
+              currentChanPostImage = currentChanPostImage,
+              imageDownloadRequests = imageDownloadRequests,
+              isCompleted = false
+            )
 
             // Progress event
             emitNotificationUpdate(
@@ -250,8 +253,11 @@ class ImageSaverV2ServiceDelegate(
           }
       }
     } finally {
-      val notificationSummary =
-        extractNotificationSummaryText(firstChanPostImage, imageDownloadRequests)
+      val notificationSummary = extractNotificationSummaryText(
+        currentChanPostImage = currentChanPostImage,
+        imageDownloadRequests = imageDownloadRequests,
+        isCompleted = true
+      )
 
       // End event
       emitNotificationUpdate(
@@ -278,15 +284,26 @@ class ImageSaverV2ServiceDelegate(
   }
 
   private fun extractNotificationSummaryText(
-    firstChanPostImage: AtomicReference<ChanPostImage>,
-    imageDownloadRequests: List<ImageDownloadRequest>
+    currentChanPostImage: AtomicReference<ChanPostImage>,
+    imageDownloadRequests: List<ImageDownloadRequest>,
+    isCompleted: Boolean
   ): String? {
-    return firstChanPostImage.get()?.let { chanPostImage ->
-      if (imageDownloadRequests.size == 1) {
-        return@let chanPostImage.imageUrl!!.toString()
-      } else {
-        val threadDescriptor = chanPostImage.ownerPostDescriptor.threadDescriptor()
-        return@let "${threadDescriptor.siteName()}/${threadDescriptor.boardCode()}/${threadDescriptor.threadNo}"
+    return currentChanPostImage.get()?.let { chanPostImage ->
+      if (!isCompleted || imageDownloadRequests.size <= 1) {
+        return@let chanPostImage.imageUrl?.pathSegments?.lastOrNull()
+      }
+
+      val threadDescriptor = chanPostImage.ownerPostDescriptor.threadDescriptor()
+
+      return@let buildString {
+        append(threadDescriptor.siteName())
+        append("/")
+        append(threadDescriptor.boardCode())
+        append("/")
+        append(threadDescriptor.threadNo)
+        append(" (")
+        append(imageDownloadRequests.size)
+        append(")")
       }
     }
   }
@@ -296,7 +313,7 @@ class ImageSaverV2ServiceDelegate(
     imageDownloadRequest: ImageDownloadRequest,
     hasResultDirAccessErrors: AtomicBoolean,
     hasOutOfDiskSpaceErrors: AtomicBoolean,
-    firstChanPostImage: AtomicReference<ChanPostImage>,
+    currentChanPostImage: AtomicReference<ChanPostImage>,
     canceledRequests: AtomicInteger,
     duplicates: AtomicInteger,
     failedRequests: AtomicInteger,
@@ -313,7 +330,7 @@ class ImageSaverV2ServiceDelegate(
     val downloadImageResult = downloadSingleImageInternal(
       hasResultDirAccessErrors,
       hasOutOfDiskSpaceErrors,
-      firstChanPostImage,
+      currentChanPostImage,
       imageDownloadInputData,
       imageDownloadRequest
     )
@@ -593,7 +610,7 @@ class ImageSaverV2ServiceDelegate(
   private suspend fun downloadSingleImageInternal(
     hasResultDirAccessErrors: AtomicBoolean,
     hasOutOfDiskSpaceErrors: AtomicBoolean,
-    firstChanPostImage: AtomicReference<ChanPostImage>,
+    currentChanPostImage: AtomicReference<ChanPostImage>,
     imageDownloadInputData: ImageSaverV2Service.ImageDownloadInputData,
     imageDownloadRequest: ImageDownloadRequest
   ): DownloadImageResult {
@@ -619,7 +636,7 @@ class ImageSaverV2ServiceDelegate(
         return@Try DownloadImageResult.Failure(error, false)
       }
 
-      firstChanPostImage.compareAndSet(null, chanPostImage)
+      currentChanPostImage.set(chanPostImage)
 
       val fileName = formatFileName(
         imageSaverV2Options,

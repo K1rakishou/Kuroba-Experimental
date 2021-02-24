@@ -171,7 +171,6 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
     }
 
     circularProgressDrawable.start()
-
     localImageView.setImageDrawable(circularProgressDrawable)
 
     if (localImage == null) {
@@ -196,11 +195,7 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
 
   @ModelProp
   fun setLocked(locked: Boolean) {
-    // TODO(KurobaEx v0.6.0):
-
-    if (locked) {
-
-    }
+    this.wholeViewLocked = locked
   }
 
   @SuppressLint("SetTextI18n")
@@ -266,20 +261,20 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
 
   @CallbackProp
   fun setOnImageClickListener(listener: ((IDuplicateImage) -> Unit)?) {
-    if (serverImage == null && localImage == null) {
+    if (wholeViewLocked || (serverImage == null && localImage == null)) {
       serverImageContainer.setOnClickListener(null)
       localImageContainer.setOnClickListener(null)
       return
     }
 
     serverImageContainer.setOnClickListener {
-      if (serverImage != null) {
+      if (!wholeViewLocked && serverImage != null) {
         listener?.invoke(serverImage!!)
       }
     }
 
     localImageContainer.setOnClickListener {
-      if (localImage != null) {
+      if (!wholeViewLocked && localImage != null) {
         listener?.invoke(localImage!!)
       }
     }

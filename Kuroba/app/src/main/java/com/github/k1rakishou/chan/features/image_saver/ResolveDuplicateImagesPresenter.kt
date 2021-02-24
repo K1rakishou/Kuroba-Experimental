@@ -205,7 +205,7 @@ internal class ResolveDuplicateImagesPresenter(
     )
 
     if (duplicateImagesResult is ModularResult.Error) {
-      Logger.e(TAG, "imageDownloadRequestRepository.selectManyWithStatus() error", duplicateImagesResult.error)
+      Logger.e(TAG, "loadDuplicateImagesInitial() selectManyWithStatus() error", duplicateImagesResult.error)
       updateState(ResolveDuplicateImagesState.Error(duplicateImagesResult.error))
       return
     }
@@ -221,7 +221,7 @@ internal class ResolveDuplicateImagesPresenter(
 
     val imagesFromDatabaseResult = chanPostImageRepository.selectPostImagesByUrls(serverImageUrls)
     if (imagesFromDatabaseResult is ModularResult.Error) {
-      Logger.e(TAG, "chanPostImageRepository.selectPostImagesByUrls() error", imagesFromDatabaseResult.error)
+      Logger.e(TAG, "loadDuplicateImagesInitial() selectPostImagesByUrls() error", imagesFromDatabaseResult.error)
       updateState(ResolveDuplicateImagesState.Error(imagesFromDatabaseResult.error))
       return
     }

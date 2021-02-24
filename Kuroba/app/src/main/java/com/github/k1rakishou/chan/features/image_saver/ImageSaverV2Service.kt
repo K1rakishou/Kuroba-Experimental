@@ -275,8 +275,8 @@ class ImageSaverV2Service : Service() {
       .setAutoCancel(false)
       .setSound(null)
       .setStyle(style)
+      .setContentText(notificationContentText)
       .setProgressEx(imageSaverDelegateResult, totalToDownloadCount, processedCount)
-      .setContentTextEx(imageSaverDelegateResult, notificationContentText)
       .setTimeoutAfterEx(imageSaverDelegateResult)
       .addOnNotificationCloseAction(imageSaverDelegateResult)
       .addCancelOrNavigateOrShowSettingsAction(imageSaverDelegateResult)
@@ -296,6 +296,11 @@ class ImageSaverV2Service : Service() {
   ): String {
     // TODO(KurobaEx v0.6.0): strings
     return buildString {
+      if (!imageSaverDelegateResult.completed) {
+        appendLine(imageSaverDelegateResult.notificationSummary ?: "")
+        return@buildString
+      }
+
       if (imageSaverDelegateResult.hasOutOfDiskSpaceErrors) {
         appendLine("Out of disk space!")
         return@buildString
@@ -491,17 +496,6 @@ class ImageSaverV2Service : Service() {
   ): NotificationCompat.Builder {
     if (!imageSaverDelegateResult.completed) {
       setProgress(max, progress, false)
-    }
-
-    return this
-  }
-
-  private fun NotificationCompat.Builder.setContentTextEx(
-    imageSaverDelegateResult: ImageSaverV2ServiceDelegate.ImageSaverDelegateResult,
-    text: String
-  ): NotificationCompat.Builder {
-    if (imageSaverDelegateResult.completed) {
-      setContentText(text)
     }
 
     return this
