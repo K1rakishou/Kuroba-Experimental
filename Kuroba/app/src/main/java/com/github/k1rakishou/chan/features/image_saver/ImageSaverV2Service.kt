@@ -255,7 +255,10 @@ class ImageSaverV2Service : Service() {
     val notificationContentText = formatNotificationText(imageSaverDelegateResult)
 
     val style = if (imageSaverDelegateResult.completed) {
-      NotificationCompat.BigTextStyle().bigText(notificationContentText)
+      NotificationCompat.BigTextStyle()
+        .setBigContentTitle(title)
+        .setSummaryText(imageSaverDelegateResult.notificationSummary)
+        .bigText(notificationContentText)
     } else {
       // Big style doesn't really work well with progress so we only use it when the download has
       // completed

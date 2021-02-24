@@ -381,14 +381,16 @@ object MediaUtils {
       val oneHundredMs = 100 * 1000L
 
       // MediaMetadataRetriever is an absolute trash and apparently uses global locks so all
-      // getFrameAtTime() are processed sequentially. This is especially bad for WEBMs since
-      // the average execution time of getFrameAtTime() for one WEBM is 5-10 seconds.
+      // getFrameAtTime() are processed sequentially (doesn't matter how many threads is used).
+      // This is especially bad for WEBMs since the average execution time of getFrameAtTime()
+      // for one WEBM is 5-10 seconds.
       val frameBitmap = metadataRetriever.getFrameAtTime(
         oneHundredMs,
         MediaMetadataRetriever.OPTION_CLOSEST
       )
 
-      val audioMetaResult = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO)
+      val audioMetaResult =
+        metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO)
       val hasAudio = "yes" == audioMetaResult
 
       if (hasAudio && frameBitmap != null && addAudioIcon) {

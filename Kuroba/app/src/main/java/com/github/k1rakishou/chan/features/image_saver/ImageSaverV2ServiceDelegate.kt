@@ -142,12 +142,28 @@ class ImageSaverV2ServiceDelegate(
     BackgroundUtils.ensureBackgroundThread()
 
     val outputDirUri = AtomicReference<Uri>(null)
+    val firstChanPostImage = AtomicReference<ChanPostImage>(null)
     val hasResultDirAccessErrors = AtomicBoolean(false)
     val hasOutOfDiskSpaceErrors = AtomicBoolean(false)
     val completedRequests = AtomicInteger(0)
     val failedRequests = AtomicInteger(0)
     val duplicates = AtomicInteger(0)
     val canceledRequests = AtomicInteger(0)
+
+    val imageDownloadRequests = when (imageDownloadInputData) {
+      is ImageSaverV2Service.SingleImageDownloadInputData -> {
+        listOf(imageDownloadInputData.imageDownloadRequest)
+      }
+      is ImageSaverV2Service.BatchImageDownloadInputData -> {
+        imageDownloadInputData.imageDownloadRequests
+      }
+      else -> {
+        throw IllegalArgumentException(
+          "Unknown imageDownloadInputData: " +
+            imageDownloadInputData.javaClass.simpleName
+        )
+      }
+    }
 
     try {
       val canceled = getDownloadContext(imageDownloadInputData)?.isCanceled() ?: true
@@ -167,6 +183,7 @@ class ImageSaverV2ServiceDelegate(
         uniqueId = imageDownloadInputData.uniqueId,
         imageSaverOptionsJson = imageDownloadInputData.imageSaverOptionsJson,
         completed = false,
+        notificationSummary = null,
         totalImagesCount = imageDownloadInputData.requestsCount(),
         canceledRequests = canceledRequests.get(),
         completedRequests = completedRequestsToDownloadedImagesResult(
@@ -178,21 +195,6 @@ class ImageSaverV2ServiceDelegate(
         hasResultDirAccessErrors = hasResultDirAccessErrors.get(),
         hasOutOfDiskSpaceErrors = hasOutOfDiskSpaceErrors.get()
       )
-
-      val imageDownloadRequests = when (imageDownloadInputData) {
-        is ImageSaverV2Service.SingleImageDownloadInputData -> {
-          listOf(imageDownloadInputData.imageDownloadRequest)
-        }
-        is ImageSaverV2Service.BatchImageDownloadInputData -> {
-          imageDownloadInputData.imageDownloadRequests
-        }
-        else -> {
-          throw IllegalArgumentException(
-            "Unknown imageDownloadInputData: " +
-              imageDownloadInputData.javaClass.simpleName
-          )
-        }
-      }
 
       val concurrency = when {
         imageDownloadRequests.size > 128 -> 8
@@ -211,6 +213,7 @@ class ImageSaverV2ServiceDelegate(
                   imageDownloadRequest,
                   hasResultDirAccessErrors,
                   hasOutOfDiskSpaceErrors,
+                  firstChanPostImage,
                   canceledRequests,
                   duplicates,
                   failedRequests,
@@ -224,11 +227,15 @@ class ImageSaverV2ServiceDelegate(
               .peekError { error -> Logger.e(TAG, "imageDownloadRequestRepository.updateMany() error", error) }
               .ignore()
 
+            val notificationSummary =
+              extractNotificationSummaryText(firstChanPostImage, imageDownloadRequests)
+
             // Progress event
             emitNotificationUpdate(
               uniqueId = imageDownloadInputData.uniqueId,
               imageSaverOptionsJson = imageDownloadInputData.imageSaverOptionsJson,
               completed = false,
+              notificationSummary = notificationSummary,
               totalImagesCount = imageDownloadInputData.requestsCount(),
               canceledRequests = canceledRequests.get(),
               completedRequests = completedRequestsToDownloadedImagesResult(
@@ -243,11 +250,15 @@ class ImageSaverV2ServiceDelegate(
           }
       }
     } finally {
+      val notificationSummary =
+        extractNotificationSummaryText(firstChanPostImage, imageDownloadRequests)
+
       // End event
       emitNotificationUpdate(
         uniqueId = imageDownloadInputData.uniqueId,
         imageSaverOptionsJson = imageDownloadInputData.imageSaverOptionsJson,
         completed = true,
+        notificationSummary = notificationSummary,
         totalImagesCount = imageDownloadInputData.requestsCount(),
         canceledRequests = canceledRequests.get(),
         completedRequests = completedRequestsToDownloadedImagesResult(
@@ -266,11 +277,26 @@ class ImageSaverV2ServiceDelegate(
     return mutex.withLock { activeDownloads.size }
   }
 
+  private fun extractNotificationSummaryText(
+    firstChanPostImage: AtomicReference<ChanPostImage>,
+    imageDownloadRequests: List<ImageDownloadRequest>
+  ): String? {
+    return firstChanPostImage.get()?.let { chanPostImage ->
+      if (imageDownloadRequests.size == 1) {
+        return@let chanPostImage.imageUrl!!.toString()
+      } else {
+        val threadDescriptor = chanPostImage.ownerPostDescriptor.threadDescriptor()
+        return@let "${threadDescriptor.siteName()}/${threadDescriptor.boardCode()}/${threadDescriptor.threadNo}"
+      }
+    }
+  }
+
   private suspend fun downloadSingleImage(
     imageDownloadInputData: ImageSaverV2Service.ImageDownloadInputData,
     imageDownloadRequest: ImageDownloadRequest,
     hasResultDirAccessErrors: AtomicBoolean,
     hasOutOfDiskSpaceErrors: AtomicBoolean,
+    firstChanPostImage: AtomicReference<ChanPostImage>,
     canceledRequests: AtomicInteger,
     duplicates: AtomicInteger,
     failedRequests: AtomicInteger,
@@ -287,6 +313,7 @@ class ImageSaverV2ServiceDelegate(
     val downloadImageResult = downloadSingleImageInternal(
       hasResultDirAccessErrors,
       hasOutOfDiskSpaceErrors,
+      firstChanPostImage,
       imageDownloadInputData,
       imageDownloadRequest
     )
@@ -419,6 +446,7 @@ class ImageSaverV2ServiceDelegate(
     uniqueId: String,
     imageSaverOptionsJson: String,
     completed: Boolean,
+    notificationSummary: String?,
     totalImagesCount: Int,
     canceledRequests: Int,
     completedRequests: DownloadedImages,
@@ -433,6 +461,7 @@ class ImageSaverV2ServiceDelegate(
       uniqueId = uniqueId,
       imageSaverOptionsJson = imageSaverOptionsJson,
       completed = completed,
+      notificationSummary = notificationSummary,
       totalImagesCount = totalImagesCount,
       canceledRequests = canceledRequests,
       downloadedImages = completedRequests,
@@ -564,6 +593,7 @@ class ImageSaverV2ServiceDelegate(
   private suspend fun downloadSingleImageInternal(
     hasResultDirAccessErrors: AtomicBoolean,
     hasOutOfDiskSpaceErrors: AtomicBoolean,
+    firstChanPostImage: AtomicReference<ChanPostImage>,
     imageDownloadInputData: ImageSaverV2Service.ImageDownloadInputData,
     imageDownloadRequest: ImageDownloadRequest
   ): DownloadImageResult {
@@ -588,6 +618,8 @@ class ImageSaverV2ServiceDelegate(
         val error = IOException("Image $imageFullUrl already deleted from the database")
         return@Try DownloadImageResult.Failure(error, false)
       }
+
+      firstChanPostImage.compareAndSet(null, chanPostImage)
 
       val fileName = formatFileName(
         imageSaverV2Options,
@@ -762,6 +794,7 @@ class ImageSaverV2ServiceDelegate(
     val uniqueId: String,
     val imageSaverOptionsJson: String,
     val completed: Boolean,
+    val notificationSummary: String?,
     val totalImagesCount: Int,
     val canceledRequests: Int,
     val downloadedImages: DownloadedImages,
