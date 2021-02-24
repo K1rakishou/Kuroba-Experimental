@@ -13,12 +13,18 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.RecyclerUtils
+import com.github.k1rakishou.chan.utils.RecyclerUtils.doOnRecyclerScrollStopped
+import com.github.k1rakishou.chan.utils.RecyclerUtils.restoreScrollPosition
+import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.repository.ChanPostImageRepository
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
+import com.github.k1rakishou.persist_state.IndexAndTop
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -46,6 +52,8 @@ class ResolveDuplicateImagesController(
   private lateinit var selectAllFromServer: ColorizableCheckBox
   private lateinit var selectAllLocal: ColorizableCheckBox
 
+  private var indexAndTop: IndexAndTop? = null
+
   private val resolveDuplicateImagesPresenter by lazy {
     return@lazy ResolveDuplicateImagesPresenter(
       uniqueId,
@@ -67,6 +75,10 @@ class ResolveDuplicateImagesController(
     super.onCreate()
 
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
+    epoxyRecyclerView.doOnRecyclerScrollStopped { rv ->
+      indexAndTop = RecyclerUtils.getIndexAndTop(rv)
+    }
+
     resolveButton = view.findViewById(R.id.resolve_button)
     selectAllFromServer = view.findViewById(R.id.select_all_from_server)
     selectAllLocal = view.findViewById(R.id.select_all_local)
@@ -132,6 +144,7 @@ class ResolveDuplicateImagesController(
   override fun onDestroy() {
     super.onDestroy()
 
+    indexAndTop = null
     resolveDuplicateImagesPresenter.onDestroy()
   }
 
@@ -157,8 +170,7 @@ class ResolveDuplicateImagesController(
           ResolveDuplicateImagesState.Empty -> {
             epoxyTextView {
               id("resolve_duplicates_controller_empty_view")
-              // TODO(KurobaEx v0.6.0): strings
-              message("No unresolved duplicate images were found")
+              message(getString(R.string.image_saver_no_unresolved_images_found))
             }
           }
           is ResolveDuplicateImagesState.Error -> {
@@ -187,6 +199,10 @@ class ResolveDuplicateImagesController(
 
     resolveButton.setEnabledFast(canEnableResolveButton)
 
+    addOneshotModelBuildListener {
+      epoxyRecyclerView.restoreScrollPosition(indexAndTop)
+    }
+
     dataState.duplicateImages.forEach { duplicateImage ->
       epoxyDuplicateImageView {
         id("epoxy_duplicate_image_view_${duplicateImage.hashCode()}")
@@ -195,7 +211,11 @@ class ResolveDuplicateImagesController(
         locked(duplicateImage.locked)
         duplicateResolution(duplicateImage.resolution)
         onImageClickListener { clickedDuplicateImage ->
-          // TODO(KurobaEx v0.6.0): reset selectAllFromServer/selectAllLocal if we unchecked something
+          when (clickedDuplicateImage) {
+            is ServerImage -> selectAllLocal.isChecked = false
+            is LocalImage -> selectAllFromServer.isChecked = false
+          }
+
           resolveDuplicateImagesPresenter.onDuplicateImageClicked(clickedDuplicateImage)
         }
       }

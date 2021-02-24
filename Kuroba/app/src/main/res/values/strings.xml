@@ -1164,6 +1164,24 @@ Don't have a 4chan Pass?<br>
     <string name="setting_exclusion_zones_zone_remove_message">Zone removed. Restart the app for the changes to kick in.</string>
     <string name="setting_exclusion_zones_zone_added_message">New exclusion zone added. Restart the app for the changes to kick in.</string>
 
+    <string name="image_saver_resolve_duplicate_images">Resolve duplicate images</string>
+    <string name="image_saver_resolve_duplicate_images_explanation">Select images that you want to retain. In case of selecting server image, the local duplicate will be overwritten with server image. In case of selecting local image, it will be left as is.</string>
+    <string name="image_saver_images_from_server">Images from server</string>
+    <string name="image_saver_local_images_on_disk">Local images on disk</string>
+    <string name="image_saver_out_of_disk_space">Out of disk space!</string>
+    <string name="image_saver_failed_to_access_root_dir">Failed to access root directory!\nClick \"show settings\" and then check that it exists and you have access to it!</string>
+    <string name="image_saver_root_dir_is_inaccessible">Root directory is inaccessible</string>
+    <string name="image_saver_root_uri_is_not_a_dir">Uri \'%1$s\' is not a directory</string>
+    <string name="image_saver_root_dir_uri_does_not_exist">Directory \'%1$s\' does not exist</string>
+    <string name="image_saver_show_images_saver_settings">Show settings</string>
+    <string name="image_saver_navigate">Navigate</string>
+    <string name="image_saver_resolve_duplicates">Resolve duplicates</string>
+    <string name="image_saver_downloading_images">Downloading images</string>
+    <string name="image_saver_no_unresolved_images_found">No unresolved duplicate images were found</string>
+    <string name="image_saver_finished_downloading_images_success">Successfully finished downloading %1$d images</string>
+    <string name="image_saver_finished_downloading_images_progress">Downloading %1$d/%2$d images</string>
+    <string name="image_saver_finished_downloading_images_with_errors">Finished downloading %1$d images with errors</string>
+
     <string name="bookmarks_tab_title">Bookmarks</string>
     <string name="filter_watches_tab_title">Filter watches</string>
 
@@ -1199,9 +1217,5 @@ Don't have a 4chan Pass?<br>
     <string name="cloud_flare_cookie_setting_description">If a site is hosted by CloudFlare and has anti-ddos checks enabled the application will automatically try to pass them and store CloudFlare clearance cookie that will be used to access site normally without having to pass checks every singe time. You will see a cookie here and will be able to edit/remove it if you ever need to do that. When removing a cookie (making it empty) a new cookie will be requested on the next site access. If a site does not use CloudFlare then this setting will always be empty.</string>
     <string name="no_filter_watched_threads">You have no filter watched threads here yet (They may be in the update process)</string>
     <string name="the_app_will_be_restarted">The app will be restarted when exiting the settings screen</string>
-    <string name="resolve_duplicate_images">Resolve duplicate images</string>
-    <string name="resolve_duplicate_images_explanation">Select images that you want to retain. In case of selecting server image, the local duplicate will be overwritten with server image. In case of selecting local image, it will be left as is.</string>
-    <string name="images_from_server">Images from server</string>
-    <string name="local_images_on_disk">Local images on disk</string>
 
 </resources>

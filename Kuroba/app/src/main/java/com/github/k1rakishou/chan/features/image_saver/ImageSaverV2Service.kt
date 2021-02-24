@@ -209,7 +209,7 @@ class ImageSaverV2Service : Service() {
       applicationContext,
       NotificationConstants.ImageSaverNotifications.IMAGE_SAVER_NOTIFICATION_CHANNEL_ID
     )
-      .setContentTitle("Downloading images") // TODO(KurobaEx v0.6.0): strings
+      .setContentTitle(getString(R.string.image_saver_downloading_images))
       .setSmallIcon(R.drawable.ic_stat_notify)
       .setOngoing(true)
       .build()
@@ -241,15 +241,14 @@ class ImageSaverV2Service : Service() {
       android.R.drawable.stat_sys_download
     }
 
-    // TODO(KurobaEx v0.6.0): strings
     val title = if (imageSaverDelegateResult.completed) {
       if (imageSaverDelegateResult.hasAnyErrors()) {
-        "Finished downloading ${totalToDownloadCount} images with errors"
+        getString(R.string.image_saver_finished_downloading_images_with_errors, totalToDownloadCount)
       } else {
-        "Successfully finished downloading ${totalToDownloadCount} images"
+        getString(R.string.image_saver_finished_downloading_images_success, totalToDownloadCount)
       }
     } else {
-      "Downloading ${processedCount}/${totalToDownloadCount} images"
+      getString(R.string.image_saver_finished_downloading_images_progress, processedCount, totalToDownloadCount)
     }
 
     val notificationContentText = formatNotificationText(imageSaverDelegateResult)
@@ -294,7 +293,6 @@ class ImageSaverV2Service : Service() {
   private fun formatNotificationText(
     imageSaverDelegateResult: ImageSaverV2ServiceDelegate.ImageSaverDelegateResult
   ): String {
-    // TODO(KurobaEx v0.6.0): strings
     return buildString {
       if (!imageSaverDelegateResult.completed) {
         appendLine(imageSaverDelegateResult.notificationSummary ?: "")
@@ -302,13 +300,12 @@ class ImageSaverV2Service : Service() {
       }
 
       if (imageSaverDelegateResult.hasOutOfDiskSpaceErrors) {
-        appendLine("Out of disk space!")
+        appendLine(getString(R.string.image_saver_out_of_disk_space))
         return@buildString
       }
 
       if (imageSaverDelegateResult.hasResultDirAccessErrors) {
-        appendLine("Failed to access root directory!")
-        appendLine("Click \"show settings\" and then check that it exists and you have access to it!")
+        appendLine(getString(R.string.image_saver_failed_to_access_root_dir))
         return@buildString
       }
 
@@ -359,7 +356,7 @@ class ImageSaverV2Service : Service() {
         PendingIntent.FLAG_UPDATE_CURRENT
       )
 
-      addAction(0, "Resolve duplicates", navigate)  // TODO(KurobaEx v0.6.0): strings
+      addAction(0, getString(R.string.image_saver_resolve_duplicates), navigate)
     }
 
     return this
@@ -381,7 +378,7 @@ class ImageSaverV2Service : Service() {
         PendingIntent.FLAG_UPDATE_CURRENT
       )
 
-      addAction(0, "Cancel", cancelIntent)  // TODO(KurobaEx v0.6.0): strings
+      addAction(0, getString(R.string.cancel), cancelIntent)
       return this
     }
 
@@ -399,7 +396,7 @@ class ImageSaverV2Service : Service() {
         PendingIntent.FLAG_UPDATE_CURRENT
       )
 
-      addAction(0, "Show settings", navigate)  // TODO(KurobaEx v0.6.0): strings
+      addAction(0, getString(R.string.image_saver_show_images_saver_settings), navigate)
       return this
     }
 
@@ -420,7 +417,7 @@ class ImageSaverV2Service : Service() {
         PendingIntent.FLAG_UPDATE_CURRENT
       )
 
-      addAction(0, "Navigate", navigate)  // TODO(KurobaEx v0.6.0): strings
+      addAction(0, getString(R.string.image_saver_navigate), navigate)
       return this
     }
 
@@ -445,7 +442,7 @@ class ImageSaverV2Service : Service() {
         PendingIntent.FLAG_UPDATE_CURRENT
       )
 
-      addAction(0, "Retry", navigate)  // TODO(KurobaEx v0.6.0): strings
+      addAction(0, getString(R.string.retry), navigate)
     }
 
     return this

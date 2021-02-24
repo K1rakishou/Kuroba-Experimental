@@ -247,21 +247,19 @@ class ImageSaverV2OptionsController(
   }
 
   private fun checkRootDirAccessible(uri: Uri): Boolean {
-    // TODO(KurobaEx v0.6.0): strings
-
     val externalFile = fileManager.fromUri(uri)
     if (externalFile == null) {
-      showToast("Root directory is inaccessible", Toast.LENGTH_LONG)
+      showToast(context.getString(R.string.image_saver_root_dir_is_inaccessible), Toast.LENGTH_LONG)
       return false
     }
 
     if (!fileManager.isDirectory(externalFile)) {
-      showToast("Uri '$uri' is not a directory", Toast.LENGTH_LONG)
+      showToast(context.getString(R.string.image_saver_root_uri_is_not_a_dir, uri), Toast.LENGTH_LONG)
       return false
     }
 
     if (!fileManager.exists(externalFile)) {
-      showToast("Directory '$uri' does not exist", Toast.LENGTH_LONG)
+      showToast(context.getString(R.string.image_saver_root_dir_uri_does_not_exist, uri), Toast.LENGTH_LONG)
       return false
     }
 

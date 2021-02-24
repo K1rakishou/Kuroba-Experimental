@@ -16,8 +16,11 @@
  */
 package com.github.k1rakishou.chan.utils
 
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Recycler
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.persist_state.IndexAndTop
@@ -55,6 +58,59 @@ object RecyclerUtils {
     }
 
     return IndexAndTop(index, top)
+  }
+
+  @JvmStatic
+  fun RecyclerView.restoreScrollPosition(indexAndTop: IndexAndTop?) {
+    if (indexAndTop == null) {
+      return
+    }
+
+    val itemsCount = (adapter?.itemCount?.minus(1) ?: -1)
+    if (itemsCount <= 0) {
+      return
+    }
+
+    val newIndex = indexAndTop.index.coerceIn(0, itemsCount)
+
+    when (val layoutManager = this.layoutManager) {
+      is GridLayoutManager -> layoutManager.scrollToPositionWithOffset(newIndex, indexAndTop.top)
+      is LinearLayoutManager -> layoutManager.scrollToPositionWithOffset(newIndex, indexAndTop.top)
+      is StaggeredGridLayoutManager -> layoutManager.scrollToPositionWithOffset(newIndex, indexAndTop.top)
+    }
+  }
+
+  @JvmStatic
+  fun RecyclerView.doOnRecyclerScrollStopped(func: (RecyclerView) -> Unit): RecyclerScrollCallbackDisposable {
+    val listener = object : RecyclerView.OnScrollListener() {
+      override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+        super.onScrollStateChanged(recyclerView, newState)
+
+        if (newState != RecyclerView.SCROLL_STATE_IDLE) {
+          return
+        }
+
+        func(recyclerView)
+      }
+
+    }
+
+    val recyclerScrollCallbackDisposable = RecyclerScrollCallbackDisposable {
+      removeOnScrollListener(listener)
+    }
+
+    addOnScrollListener(listener)
+
+    return recyclerScrollCallbackDisposable
+  }
+
+  class RecyclerScrollCallbackDisposable(var disposableFunc: (() -> Unit)?) {
+
+    fun dispose() {
+      disposableFunc?.invoke()
+      disposableFunc = null
+    }
+
   }
 
 }

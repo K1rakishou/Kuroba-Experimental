@@ -10,6 +10,7 @@ data class RecyclerIndexAndTopInfo(
   @SerializedName("index_and_top")
   val indexAndTop: IndexAndTop = IndexAndTop()
 ) {
+
   companion object {
     fun bookmarksControllerDefaultJson(gson: Gson, viewThreadBookmarksGridMode: BooleanSetting): String {
       return gson.toJson(
@@ -25,9 +26,7 @@ data class RecyclerIndexAndTopInfo(
 
       return gson.toJson(recyclerIndexAndTopInfo)
     }
-
   }
-
 }
 
 data class IndexAndTop(
