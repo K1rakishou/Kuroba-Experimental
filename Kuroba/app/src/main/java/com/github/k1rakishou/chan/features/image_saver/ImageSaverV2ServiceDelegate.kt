@@ -39,6 +39,7 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import okhttp3.HttpUrl
 import okhttp3.Request
 import java.io.IOException
 import java.util.*
@@ -695,10 +696,12 @@ class ImageSaverV2ServiceDelegate(
         )
       }
 
+      val imageUrl = checkNotNull(chanPostImage.imageUrl) { "Image url is empty!" }
+
       try {
         doIoTaskWithAttempts(MAX_IO_ERROR_RETRIES_COUNT) {
           try {
-            downloadFileInternal(chanPostImage, actualOutputFile)
+            downloadFileIntoFile(imageUrl, actualOutputFile)
           } catch (error: IOException) {
             if (error.isOutOfDiskSpaceError()) {
               throw OutOfDiskSpaceException()
@@ -728,9 +731,8 @@ class ImageSaverV2ServiceDelegate(
   }
 
   @Throws(ResultFileAccessError::class, IOException::class, NotFoundException::class)
-  private suspend fun downloadFileInternal(chanPostImage: ChanPostImage, outputFile: AbstractFile) {
+  suspend fun downloadFileIntoFile(imageUrl: HttpUrl, outputFile: AbstractFile) {
     BackgroundUtils.ensureBackgroundThread()
-    val imageUrl = checkNotNull(chanPostImage.imageUrl) { "Image url is empty!" }
 
     val request = Request.Builder()
       .url(imageUrl)

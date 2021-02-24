@@ -137,6 +137,7 @@ public class AppModule {
             Context appContext,
             CoroutineScope appScope,
             Gson gson,
+            FileManager fileManager,
             ImageDownloadRequestRepository imageDownloadRequestRepository,
             ImageSaverV2ServiceDelegate imageSaverV2ServiceDelegate
     ) {
@@ -145,6 +146,7 @@ public class AppModule {
                 appContext,
                 appScope,
                 gson,
+                fileManager,
                 imageDownloadRequestRepository,
                 imageSaverV2ServiceDelegate
         );

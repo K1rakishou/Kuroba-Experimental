@@ -619,16 +619,17 @@ fun StringBuilder.appendIfNotEmpty(text: String): StringBuilder {
   return this
 }
 
-suspend fun doIoTaskWithAttempts(attempts: Int, task: suspend (Int) -> Unit) {
+suspend fun <T : Any> doIoTaskWithAttempts(attempts: Int, task: suspend (Int) -> T): T {
+  require(attempts > 0) { "Bad attempts count: $attempts" }
   val retries = AtomicInteger(0)
 
   while (true) {
     try {
       // Try to execute a task
-      task(retries.incrementAndGet())
+      val result = task(retries.incrementAndGet())
 
       // If no exceptions were thrown then just exit
-      return
+      return result
     } catch (error: IOException) {
       // If any kind of IOException was thrown then retry until we either succeed or exhaust all
       // attempts

@@ -18,6 +18,7 @@ package com.github.k1rakishou.chan.core.presenter
 
 import android.content.Context
 import android.text.TextUtils
+import android.widget.Toast
 import androidx.annotation.StringRes
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -1101,7 +1102,17 @@ class ThreadPresenter @Inject constructor(
         showToast(context, R.string.image_url_copied_to_clipboard)
       }
       SHARE_MEDIA_FILE_CONTENT -> {
-        imageSaverV2.share(postImage)
+        imageSaverV2.share(postImage) { result ->
+          if (result is ModularResult.Error) {
+            showToast(
+              context,
+              "Failed to share content, error=${result.error.errorMessageOrClassName()}",
+              Toast.LENGTH_LONG
+            )
+
+            return@share
+          }
+        }
       }
       DOWNLOAD_MEDIA_FILE_CONTENT -> {
         downloadMediaFile(false, postImage)

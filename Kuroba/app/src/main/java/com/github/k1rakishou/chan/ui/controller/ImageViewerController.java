@@ -35,6 +35,7 @@ import android.view.WindowManager;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -66,6 +67,7 @@ import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.TransitionImageView;
 import com.github.k1rakishou.chan.utils.FullScreenUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
+import com.github.k1rakishou.common.ModularResult;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileManager;
@@ -406,7 +408,18 @@ public class ImageViewerController
 
     private void shareContentClicked(ToolbarMenuSubItem item) {
         ChanPostImage postImage = presenter.getCurrentPostImage();
-        imageSaverV2.share(postImage);
+
+        imageSaverV2.share(postImage, result -> {
+            if (result instanceof ModularResult.Error) {
+                String errorMessage = KotlinExtensionsKt.errorMessageOrClassName(
+                        ((ModularResult.Error<Unit>) result).getError()
+                );
+
+                showToast("Failed to share content, error=" + errorMessage, Toast.LENGTH_LONG);
+            }
+
+            return Unit.INSTANCE;
+        });
     }
 
     private void searchClicked(ToolbarMenuSubItem item) {

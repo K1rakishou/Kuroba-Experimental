@@ -1,7 +1,9 @@
 package com.github.k1rakishou.chan.core.base
 
 import com.github.k1rakishou.core_logger.Logger
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -16,13 +18,14 @@ import kotlinx.coroutines.launch
  * */
 @OptIn(ExperimentalCoroutinesApi::class)
 class RendezvousCoroutineExecutor(
-  private val scope: CoroutineScope
-  ) {
+  private val scope: CoroutineScope,
+  private val dispatcher: CoroutineDispatcher = Dispatchers.Main
+) {
   private val channel = Channel<SerializedAction>(Channel.RENDEZVOUS)
   private var job: Job? = null
 
   init {
-    job = scope.launch {
+    job = scope.launch(context = dispatcher) {
       channel.consumeEach { serializedAction ->
         try {
           serializedAction.action()
