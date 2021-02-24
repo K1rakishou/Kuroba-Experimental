@@ -14,8 +14,8 @@ import com.github.k1rakishou.chan.features.bookmarks.BookmarksSortingController;
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.BaseThreadBookmarkViewHolder;
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.EpoxyGridThreadBookmarkViewHolder;
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.EpoxyListThreadBookmarkViewHolder;
-import com.github.k1rakishou.chan.features.drawer.DrawerController;
 import com.github.k1rakishou.chan.features.drawer.DrawerPresenter;
+import com.github.k1rakishou.chan.features.drawer.MainController;
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryEntryView;
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryHeaderView;
 import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesController;
@@ -179,7 +179,7 @@ public interface ActivityComponent {
     void inject(AlbumDownloadController albumDownloadController);
     void inject(AlbumViewController albumViewController);
     void inject(BrowseController browseController);
-    void inject(DrawerController drawerController);
+    void inject(MainController mainController);
     void inject(FiltersController filtersController);
     void inject(ImageOptionsController imageOptionsController);
     void inject(ImageReencodeOptionsController imageReencodeOptionsController);

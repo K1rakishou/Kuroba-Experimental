@@ -24,7 +24,7 @@ import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.controller.transition.ControllerTransition;
 import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
-import com.github.k1rakishou.chan.features.drawer.DrawerController;
+import com.github.k1rakishou.chan.features.drawer.MainController;
 import com.github.k1rakishou.chan.ui.controller.PopupController;
 
 import org.jetbrains.annotations.NotNull;
@@ -86,9 +86,9 @@ public class StyledToolbarNavigationController extends ToolbarNavigationControll
         super.transition(from, to, pushing, controllerTransition);
 
         if (to != null) {
-            DrawerController drawerController = getDrawerController();
-            if (drawerController != null) {
-                drawerController.setDrawerEnabled(to.navigation.hasDrawer);
+            MainController mainController = getDrawerController();
+            if (mainController != null) {
+                mainController.setDrawerEnabled(to.navigation.hasDrawer);
             }
         }
     }
@@ -98,9 +98,9 @@ public class StyledToolbarNavigationController extends ToolbarNavigationControll
         super.endSwipeTransition(from, to, finish);
 
         if (finish) {
-            DrawerController drawerController = getDrawerController();
-            if (drawerController != null) {
-                drawerController.setDrawerEnabled(to.navigation.hasDrawer);
+            MainController mainController = getDrawerController();
+            if (mainController != null) {
+                mainController.setDrawerEnabled(to.navigation.hasDrawer);
             }
         }
     }
@@ -126,19 +126,19 @@ public class StyledToolbarNavigationController extends ToolbarNavigationControll
 
     @Override
     public void onMenuClicked() {
-        DrawerController drawerController = getDrawerController();
-        if (drawerController != null) {
-            drawerController.onMenuClicked();
+        MainController mainController = getDrawerController();
+        if (mainController != null) {
+            mainController.onMenuClicked();
         }
     }
 
-    private DrawerController getDrawerController() {
-        if (parentController instanceof DrawerController) {
-            return (DrawerController) parentController;
+    private MainController getDrawerController() {
+        if (parentController instanceof MainController) {
+            return (MainController) parentController;
         } else if (doubleNavigationController != null) {
             Controller doubleNav = (Controller) doubleNavigationController;
-            if (doubleNav.parentController instanceof DrawerController) {
-                return (DrawerController) doubleNav.parentController;
+            if (doubleNav.parentController instanceof MainController) {
+                return (MainController) doubleNav.parentController;
             }
         }
         return null;

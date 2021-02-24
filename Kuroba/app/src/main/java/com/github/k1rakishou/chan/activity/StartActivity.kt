@@ -52,7 +52,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.UpdateManager
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.k1rakishou.chan.core.site.SiteResolver
-import com.github.k1rakishou.chan.features.drawer.DrawerController
+import com.github.k1rakishou.chan.features.drawer.MainController
 import com.github.k1rakishou.chan.ui.controller.AlbumViewController
 import com.github.k1rakishou.chan.ui.controller.BrowseController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
@@ -149,7 +149,7 @@ class StartActivity : AppCompatActivity(),
   private lateinit var activityComponent: ActivityComponent
   private lateinit var mainRootLayoutMargins: TouchBlockingFrameLayout
   private lateinit var mainNavigationController: NavigationController
-  private lateinit var drawerController: DrawerController
+  private lateinit var mainController: MainController
 
   fun getComponent(): ActivityComponent {
     return activityComponent
@@ -187,7 +187,7 @@ class StartActivity : AppCompatActivity(),
     startActivityStartupHandlerHelper.onCreate(
       context = this,
       browseController = browseController!!,
-      drawerController = drawerController,
+      mainController = mainController,
       startActivityCallbacks = this
     )
 
@@ -255,22 +255,22 @@ class StartActivity : AppCompatActivity(),
     window.setupStatusAndNavBarColors(themeEngine.chanTheme)
 
     // Setup base controllers, and decide if to use the split layout for tablets
-    drawerController = DrawerController(this).apply {
+    mainController = MainController(this).apply {
       onCreate()
       onShow()
     }
 
-    mainRootLayoutMargins = drawerController.view.findViewById(R.id.main_root_layout_margins)
+    mainRootLayoutMargins = mainController.view.findViewById(R.id.main_root_layout_margins)
     listenForWindowInsetsChanges()
 
     mainNavigationController = StyledToolbarNavigationController(this)
     setupLayout()
 
-    setContentView(drawerController.view)
-    themeEngine.setRootView(drawerController.view)
-    pushController(drawerController)
+    setContentView(mainController.view)
+    themeEngine.setRootView(mainController.view)
+    pushController(mainController)
 
-    drawerController.attachBottomNavViewToToolbar()
+    mainController.attachBottomNavViewToToolbar()
 
     // Prevent overdraw
     // Do this after setContentView, or the decor creating will reset the background to a
@@ -376,16 +376,16 @@ class StartActivity : AppCompatActivity(),
 
     val hasRequiresNoBottomNavBarControllers = isControllerAdded { controller -> controller is RequiresNoBottomNavBar }
     if (hasRequiresNoBottomNavBarControllers) {
-      drawerController.hideBottomNavBar(lockTranslation = true, lockCollapse = true)
+      mainController.hideBottomNavBar(lockTranslation = true, lockCollapse = true)
       return
     }
 
     if (bottomNavBarVisibilityStateManager.anyOfViewsIsVisible()) {
-      drawerController.hideBottomNavBar(lockTranslation = true, lockCollapse = true)
+      mainController.hideBottomNavBar(lockTranslation = true, lockCollapse = true)
       return
     }
 
-    drawerController.resetBottomNavViewState(unlockTranslation = true, unlockCollapse = true)
+    mainController.resetBottomNavViewState(unlockTranslation = true, unlockCollapse = true)
   }
 
   private fun isControllerPresent(
@@ -401,7 +401,7 @@ class StartActivity : AppCompatActivity(),
 
   fun loadThread(postDescriptor: PostDescriptor) {
     lifecycleScope.launch {
-      drawerController.closeAllNonMainControllers()
+      mainController.closeAllNonMainControllers()
 
       if (!postDescriptor.isOP()) {
         chanThreadViewableInfoManager.update(postDescriptor.threadDescriptor(), true) { chanThreadViewableInfo ->
@@ -414,7 +414,7 @@ class StartActivity : AppCompatActivity(),
   }
 
   override suspend fun loadThread(threadDescriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean) {
-    drawerController.loadThread(
+    mainController.loadThread(
       threadDescriptor,
       closeAllNonMainControllers = true,
       animated = animated
@@ -422,11 +422,11 @@ class StartActivity : AppCompatActivity(),
   }
 
   override fun openControllerWrappedIntoBottomNavAwareController(controller: Controller) {
-    drawerController.openControllerWrappedIntoBottomNavAwareController(controller)
+    mainController.openControllerWrappedIntoBottomNavAwareController(controller)
   }
 
   override fun setSettingsMenuItemSelected() {
-    drawerController.setSettingsMenuItemSelected()
+    mainController.setSettingsMenuItemSelected()
   }
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
@@ -438,26 +438,26 @@ class StartActivity : AppCompatActivity(),
         val split = SplitNavigationController(
           this,
           inflate(this, R.layout.layout_split_empty),
-          drawerController
+          mainController
         )
 
-        drawerController.pushChildController(split)
+        mainController.pushChildController(split)
         split.setLeftController(mainNavigationController, false)
       }
       ChanSettings.LayoutMode.PHONE,
       ChanSettings.LayoutMode.SLIDE -> {
-        drawerController.pushChildController(mainNavigationController)
+        mainController.pushChildController(mainNavigationController)
       }
       ChanSettings.LayoutMode.AUTO -> throw IllegalStateException("Shouldn't happen")
     }
 
-    browseController = BrowseController(this, drawerController)
+    browseController = BrowseController(this, mainController)
 
     if (layoutMode == ChanSettings.LayoutMode.PHONE || layoutMode == ChanSettings.LayoutMode.SLIDE) {
       val slideController = ThreadSlideController(
         this,
         inflate(this, R.layout.layout_split_empty),
-        drawerController
+        mainController
       )
 
       mainNavigationController.pushController(slideController, false)
@@ -470,7 +470,7 @@ class StartActivity : AppCompatActivity(),
 
   override fun dispatchKeyEvent(event: KeyEvent): Boolean {
     if (event.keyCode == KeyEvent.KEYCODE_MENU && event.action == KeyEvent.ACTION_DOWN) {
-      drawerController.onMenuClicked()
+      mainController.onMenuClicked()
       return true
     }
 
@@ -488,8 +488,8 @@ class StartActivity : AppCompatActivity(),
 
     var threadDescriptor: ChanDescriptor? = null
 
-    if (drawerController.childControllers[0] is SplitNavigationController) {
-      val dblNav = drawerController.childControllers[0] as SplitNavigationController
+    if (mainController.childControllers[0] is SplitNavigationController) {
+      val dblNav = mainController.childControllers[0] as SplitNavigationController
 
       if (dblNav.getRightController() is NavigationController) {
         val rightNavigationController = dblNav.getRightController() as NavigationController

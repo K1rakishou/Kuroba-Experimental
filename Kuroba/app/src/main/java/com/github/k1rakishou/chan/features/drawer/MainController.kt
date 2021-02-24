@@ -95,7 +95,7 @@ import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
-class DrawerController(
+class MainController(
   context: Context
 ) : Controller(context),
   DrawerView,
@@ -203,7 +203,7 @@ class DrawerController(
   override fun onCreate() {
     super.onCreate()
 
-    view = inflate(context, R.layout.controller_navigation_drawer)
+    view = inflate(context, R.layout.controller_main)
     rootLayout = view.findViewById(R.id.main_root_layout)
     container = view.findViewById(R.id.container)
     drawerLayout = view.findViewById(R.id.drawer_layout)

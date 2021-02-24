@@ -19,7 +19,7 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
-import com.github.k1rakishou.chan.features.drawer.DrawerController
+import com.github.k1rakishou.chan.features.drawer.MainController
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Service
 import com.github.k1rakishou.chan.ui.controller.BrowseController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -43,25 +43,25 @@ class StartActivityStartupHandlerHelper(
 ) {
   private var context: Context? = null
   private var browseController: BrowseController? = null
-  private var drawerController: DrawerController? = null
+  private var mainController: MainController? = null
   private var startActivityCallbacks: StartActivityCallbacks? = null
 
   fun onCreate(
     context: Context,
     browseController: BrowseController,
-    drawerController: DrawerController,
+    mainController: MainController,
     startActivityCallbacks: StartActivityCallbacks
   ) {
     this.context = context
     this.browseController = browseController
-    this.drawerController = drawerController
+    this.mainController = mainController
     this.startActivityCallbacks = startActivityCallbacks
   }
 
   fun onDestroy() {
     this.context = null
     this.browseController = null
-    this.drawerController = null
+    this.mainController = null
     this.startActivityCallbacks = null
   }
 
@@ -205,7 +205,7 @@ class StartActivityStartupHandlerHelper(
         val imageSaverOptionsJson = extras.getString(ImageSaverV2Service.IMAGE_SAVER_OPTIONS)
 
         if (uniqueId != null && imageSaverOptionsJson != null) {
-          drawerController?.showResolveDuplicateImagesController(uniqueId, imageSaverOptionsJson)
+          mainController?.showResolveDuplicateImagesController(uniqueId, imageSaverOptionsJson)
         }
 
         // Always return false here since we don't want to override the default "restore app"
@@ -215,7 +215,7 @@ class StartActivityStartupHandlerHelper(
       action == ImageSaverV2Service.ACTION_TYPE_SHOW_IMAGE_SAVER_SETTINGS -> {
         val uniqueId = extras.getString(ImageSaverV2Service.UNIQUE_ID)
         if (uniqueId != null) {
-          drawerController?.showImageSaverV2OptionsController(uniqueId)
+          mainController?.showImageSaverV2OptionsController(uniqueId)
         }
 
         // Always return false here since we don't want to override the default "restore app"
@@ -337,7 +337,7 @@ class StartActivityStartupHandlerHelper(
       NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
     )?.map { it -> ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(it) }
 
-    if (drawerController == null || threadDescriptors.isNullOrEmpty()) {
+    if (mainController == null || threadDescriptors.isNullOrEmpty()) {
       return false
     }
 
@@ -353,7 +353,7 @@ class StartActivityStartupHandlerHelper(
       NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
     )?.map { it -> ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(it) }
 
-    if (drawerController == null || threadDescriptors.isNullOrEmpty()) {
+    if (mainController == null || threadDescriptors.isNullOrEmpty()) {
       return false
     }
 
@@ -383,7 +383,7 @@ class StartActivityStartupHandlerHelper(
     if (threadDescriptors.size == 1) {
       startActivityCallbacks?.loadThread(threadDescriptors.first(), animated = false)
     } else {
-      drawerController?.openBookmarksController(threadDescriptors)
+      mainController?.openBookmarksController(threadDescriptors)
     }
   }
 
