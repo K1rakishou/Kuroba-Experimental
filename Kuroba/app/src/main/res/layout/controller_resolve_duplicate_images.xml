@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/outside_area"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -71,27 +72,31 @@
                     android:scrollbars="vertical"
                     android:orientation="vertical"/>
 
-                <LinearLayout
+                <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="end"
-                    android:orientation="horizontal">
+                    android:layout_height="wrap_content">
 
                     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
                         android:id="@+id/cancel_button"
                         android:layout_width="112dp"
                         android:layout_height="wrap_content"
+                        android:text="@string/cancel"
                         android:layout_marginEnd="16dp"
-                        android:text="@string/cancel" />
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@+id/resolve_button"
+                        app:layout_constraintTop_toTopOf="@+id/resolve_button" />
 
                     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
                         android:id="@+id/resolve_button"
                         android:layout_width="112dp"
                         android:layout_height="wrap_content"
+                        android:text="@string/resolve"
                         android:layout_marginEnd="16dp"
-                        android:text="@string/resolve" />
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
 
-                </LinearLayout>
+                </androidx.constraintlayout.widget.ConstraintLayout>
 
             </LinearLayout>
 

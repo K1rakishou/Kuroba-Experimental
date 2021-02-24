@@ -8,6 +8,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.swiperefreshlayout.widget.CircularProgressDrawable
 import coil.request.Disposable
 import coil.size.Scale
 import coil.transform.GrayscaleTransformation
@@ -25,7 +26,9 @@ import com.github.k1rakishou.chan.features.image_saver.LocalImage
 import com.github.k1rakishou.chan.features.image_saver.ServerImage
 import com.github.k1rakishou.chan.ui.view.SelectionCheckView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
@@ -52,6 +55,8 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
   private val localImageInfoContainer: LinearLayout
   private val localImageName: TextView
   private val localImageSizeAndExtension: TextView
+
+  private val circularProgressDrawable: CircularProgressDrawable
 
   private var serverImage: ServerImage? = null
   private var localImage: LocalImage? = null
@@ -87,10 +92,20 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
     localImageInfoContainer = findViewById(R.id.local_image_info_container)
     localImageName = findViewById(R.id.local_image_name)
     localImageSizeAndExtension = findViewById(R.id.local_image_size_and_extension)
+
+    val duplicateImageViewRoot = findViewById<ConstraintLayout>(R.id.duplicate_image_view_root)
+    duplicateImageViewRoot.updateMargins(top = dp(4f), bottom = dp(4f))
+
+    circularProgressDrawable = CircularProgressDrawable(context)
+    circularProgressDrawable.strokeWidth = dp(3f).toFloat()
+    circularProgressDrawable.centerRadius = dp(10f).toFloat()
+    circularProgressDrawable.setColorSchemeColors(themeEngine.chanTheme.accentColor)
   }
 
   @OnViewRecycled
   fun onViewRecycled() {
+    circularProgressDrawable.stop()
+
     serverImageRequestDisposable?.dispose()
     serverImageRequestDisposable = null
 
@@ -154,6 +169,10 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
     } else {
       emptyList<Transformation>()
     }
+
+    circularProgressDrawable.start()
+
+    localImageView.setImageDrawable(circularProgressDrawable)
 
     if (localImage == null) {
       localImageRequestDisposable = imageLoaderV2.loadFromResources(

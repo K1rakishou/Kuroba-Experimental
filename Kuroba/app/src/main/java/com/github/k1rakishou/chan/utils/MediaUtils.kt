@@ -33,7 +33,7 @@ import kotlin.math.abs
 import kotlin.math.min
 
 object MediaUtils {
-  private const val TAG = "BitmapUtils"
+  private const val TAG = "MediaUtils"
   private const val MIN_QUALITY = 1
   private const val MAX_QUALITY = 100
   private const val MIN_REDUCE = 0
@@ -370,16 +370,23 @@ object MediaUtils {
   ): BitmapDrawable? {
     BackgroundUtils.ensureBackgroundThread()
     var result: Bitmap? = null
+    val metadataRetriever = MediaMetadataRetriever()
 
     try {
-      val metadataRetriever = MediaMetadataRetriever()
-
       when (inputFile) {
         is InputFile.FileUri -> metadataRetriever.setDataSource(inputFile.applicationContext, inputFile.uri)
         is InputFile.JavaFile -> metadataRetriever.setDataSource(inputFile.file.absolutePath)
       }
 
-      val frameBitmap = metadataRetriever.frameAtTime
+      val oneHundredMs = 100 * 1000L
+
+      // MediaMetadataRetriever is an absolute trash and apparently uses global locks so all
+      // getFrameAtTime() are processed sequentially. This is especially bad for WEBMs since
+      // the average execution time of getFrameAtTime() for one WEBM is 5-10 seconds.
+      val frameBitmap = metadataRetriever.getFrameAtTime(
+        oneHundredMs,
+        MediaMetadataRetriever.OPTION_CLOSEST
+      )
 
       val audioMetaResult = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO)
       val hasAudio = "yes" == audioMetaResult
@@ -432,6 +439,8 @@ object MediaUtils {
 
       val errorMsg = error.errorMessageOrClassName()
       Logger.e(TAG, "decodeVideoFilePreviewImage() error: $errorMsg")
+    } finally {
+      metadataRetriever.release()
     }
 
     check(!(result != null && result.isRecycled)) { "Result bitmap is already recycled!" }

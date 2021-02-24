@@ -446,7 +446,6 @@ class ImageLoaderV2(
     )
   }
 
-  // TODO(KurobaEx v0.6.0): result bitmap has incorrect width/height or maybe it's just a wrong frame?
   fun loadFromDisk(
     context: Context,
     inputFile: InputFile,
@@ -460,8 +459,12 @@ class ImageLoaderV2(
     val lifecycle = context.getLifecycleFromContext()
     val completableDeferred = CompletableDeferred<Unit>()
 
-    val job = appScope.launch(Dispatchers.Main.immediate) {
+    val job = appScope.launch(Dispatchers.Main) {
       try {
+        if (verboseLogs) {
+          Logger.d(TAG, "loadFromDisk() inputFilePath=${inputFile.path()}, imageSize=${imageSize}")
+        }
+
         val fileName = inputFile.fileName()
         if (fileName == null) {
           listener.onResponse(getImageErrorLoadingDrawable(context))
@@ -469,23 +472,32 @@ class ImageLoaderV2(
         }
 
         suspend fun getBitmapDrawable(): BitmapDrawable? {
+          BackgroundUtils.ensureBackgroundThread()
+
           if (fileIsProbablyVideoInterruptible(fileName, inputFile)) {
             val (width, height) = checkNotNull(imageSize.size())
 
-            return withContext(Dispatchers.IO) {
-              val key = MemoryCache.Key.invoke(inputFile.path())
-              val fromCache = imageLoader.memoryCache[key]
-              if (fromCache != null) {
-                return@withContext BitmapDrawable(context.resources, fromCache)
-              }
-
-              val decoded = decodedFilePreview(true, inputFile, context, width, height, scale)
-              if (decoded !is CachedTintedErrorDrawable) {
-                imageLoader.memoryCache[key] = decoded.bitmap
-              }
-
-              return@withContext decoded
+            val key = MemoryCache.Key.invoke(inputFile.path())
+            val fromCache = imageLoader.memoryCache[key]
+            if (fromCache != null) {
+              return BitmapDrawable(context.resources, fromCache)
             }
+
+            val decoded = decodedFilePreview(
+              isProbablyVideo = true,
+              inputFile = inputFile,
+              context = context,
+              width = width,
+              height = height,
+              scale = scale,
+              addAudioIcon = false
+            )
+
+            if (decoded !is CachedTintedErrorDrawable) {
+              imageLoader.memoryCache[key] = decoded.bitmap
+            }
+
+            return decoded
           }
 
           val request = with(ImageRequest.Builder(context)) {
@@ -513,10 +525,20 @@ class ImageLoaderV2(
           }
         }
 
-        val bitmapDrawable = getBitmapDrawable()
+        val bitmapDrawable = withContext(Dispatchers.IO) { getBitmapDrawable() }
         if (bitmapDrawable == null) {
+          if (verboseLogs) {
+            Logger.d(TAG, "loadFromDisk() inputFilePath=${inputFile.path()}, " +
+              "imageSize=${imageSize} error or canceled")
+          }
+
           listener.onResponse(getImageErrorLoadingDrawable(context))
           return@launch
+        }
+
+        if (verboseLogs) {
+          Logger.d(TAG, "loadFromDisk() inputFilePath=${inputFile.path()}, " +
+            "imageSize=${imageSize} success")
         }
 
         listener.onResponse(bitmapDrawable)
@@ -658,12 +680,13 @@ class ImageLoaderV2(
     )
 
     val previewBitmap = decodedFilePreview(
-      isProbablyVideo,
-      inputFile,
-      context,
-      PREVIEW_SIZE,
-      PREVIEW_SIZE,
-      scale
+      isProbablyVideo = isProbablyVideo,
+      inputFile = inputFile,
+      context = context,
+      width = PREVIEW_SIZE,
+      height = PREVIEW_SIZE,
+      scale = scale,
+      addAudioIcon = true
     ).bitmap
 
     try {
@@ -697,7 +720,8 @@ class ImageLoaderV2(
     context: Context,
     width: Int,
     height: Int,
-    scale: Scale
+    scale: Scale,
+    addAudioIcon: Boolean
   ): BitmapDrawable {
     BackgroundUtils.ensureBackgroundThread()
 
@@ -709,17 +733,23 @@ class ImageLoaderV2(
             inputFile,
             width,
             height,
-            true
+            addAudioIcon
           )
         }
       }
 
       if (videoFrameDecodeMaybe is ModularResult.Value) {
         val (videoFrame, decodeVideoFilePreviewImageDuration) = videoFrameDecodeMaybe.value
-        Logger.d(TAG, "decodeVideoFilePreviewImage duration=$decodeVideoFilePreviewImageDuration")
+        Logger.d(TAG, "decodeVideoFilePreviewImageInterruptible duration=$decodeVideoFilePreviewImageDuration")
 
         if (videoFrame != null) {
           return videoFrame
+        }
+      }
+
+      videoFrameDecodeMaybe.errorOrNull()?.let { error ->
+        if (error is CancellationException) {
+          throw error
         }
       }
 
@@ -741,6 +771,12 @@ class ImageLoaderV2(
 
     if (fileImagePreviewMaybe is ModularResult.Value) {
       return fileImagePreviewMaybe.value
+    }
+
+    fileImagePreviewMaybe.errorOrNull()?.let { error ->
+      if (error is CancellationException) {
+        throw error
+      }
     }
 
     // Do not recycle bitmaps that are supposed to always stay in memory
