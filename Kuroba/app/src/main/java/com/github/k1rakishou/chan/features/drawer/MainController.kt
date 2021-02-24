@@ -835,7 +835,7 @@ class MainController(
   }
 
   companion object {
-    private const val TAG = "DrawerController"
+    private const val TAG = "MainController"
     private const val BOOKMARKS_BADGE_COUNTER_MAX_NUMBERS = 5
     private const val SETTINGS_BADGE_COUNTER_MAX_NUMBERS = 2
 

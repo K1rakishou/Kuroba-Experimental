@@ -86,7 +86,7 @@ public class StyledToolbarNavigationController extends ToolbarNavigationControll
         super.transition(from, to, pushing, controllerTransition);
 
         if (to != null) {
-            MainController mainController = getDrawerController();
+            MainController mainController = getMainController();
             if (mainController != null) {
                 mainController.setDrawerEnabled(to.navigation.hasDrawer);
             }
@@ -98,7 +98,7 @@ public class StyledToolbarNavigationController extends ToolbarNavigationControll
         super.endSwipeTransition(from, to, finish);
 
         if (finish) {
-            MainController mainController = getDrawerController();
+            MainController mainController = getMainController();
             if (mainController != null) {
                 mainController.setDrawerEnabled(to.navigation.hasDrawer);
             }
@@ -126,13 +126,13 @@ public class StyledToolbarNavigationController extends ToolbarNavigationControll
 
     @Override
     public void onMenuClicked() {
-        MainController mainController = getDrawerController();
+        MainController mainController = getMainController();
         if (mainController != null) {
             mainController.onMenuClicked();
         }
     }
 
-    private MainController getDrawerController() {
+    private MainController getMainController() {
         if (parentController instanceof MainController) {
             return (MainController) parentController;
         } else if (doubleNavigationController != null) {
