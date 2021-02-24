@@ -1,7 +1,7 @@
 import os
-import sys
 import requests
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -32,7 +32,7 @@ def getLatestCommitHash(baseUrl):
 
 def uploadApk(baseUrl, headers, latestCommits):
     apkPath = ""
-    for p in Path("app/build/outputs/apk/beta/debug/").iterdir():
+    for p in Path("app/build/outputs/apk/beta/release/").iterdir():
         if p.is_file() and str(p).endswith("apk"):
             apkPath = str(p)
             break

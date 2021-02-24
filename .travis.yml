@@ -28,7 +28,7 @@ install:
 script: 
   - cd Kuroba || travis_terminate 1;
   - chmod +x gradlew || travis_terminate 2;
-  - ./gradlew assembleBetaDebug --console plain -x lint || travis_terminate 3;
+  - ./gradlew assembleBetaRelease --console plain -x lint || travis_terminate 3;
 #  - ./gradlew test || travis_terminate 4;
   - python3 upload_apk.py https://kuroba.io:8443 beta || travis_terminate 5;
 
