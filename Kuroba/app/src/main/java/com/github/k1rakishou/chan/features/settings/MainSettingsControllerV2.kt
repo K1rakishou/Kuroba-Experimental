@@ -130,12 +130,13 @@ class MainSettingsControllerV2(
         }
 
         val indexAndTop = settingsCoordinator.getCurrentIndexAndTopOrNull()
-          ?: return@addOneshotModelBuildListener
+        val llm = (epoxyRecyclerView.layoutManager as? LinearLayoutManager)
 
-        (epoxyRecyclerView.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(
-          indexAndTop.index,
-          indexAndTop.top
-        )
+        if (indexAndTop != null) {
+          llm?.scrollToPositionWithOffset(indexAndTop.index, indexAndTop.top)
+        } else {
+          llm?.scrollToPositionWithOffset(0, 0)
+        }
       }
 
       when (renderAction) {

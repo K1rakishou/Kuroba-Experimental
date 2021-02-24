@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
-import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -60,7 +59,7 @@ class HistoryNavigationManager(
           return@addListener
         }
 
-        persisNavigationStack(true)
+        persisNavigationStack(eager = true)
       }
 
       appScope.launch {
@@ -69,7 +68,7 @@ class HistoryNavigationManager(
           .asFlow()
           .debounce(1.seconds)
           .collect {
-            persisNavigationStack()
+            persisNavigationStack(eager = false)
           }
       }
 
@@ -290,7 +289,7 @@ class HistoryNavigationManager(
     navStackChanged()
   }
 
-  private fun persisNavigationStack(blocking: Boolean = false) {
+  private fun persisNavigationStack(eager: Boolean = false) {
     BackgroundUtils.ensureMainThread()
 
     if (!suspendableInitializer.isInitialized()) {
@@ -301,9 +300,9 @@ class HistoryNavigationManager(
       return
     }
 
-    if (blocking) {
-      runBlocking(Dispatchers.Default) {
-        Logger.d(TAG, "persistNavigationStack blocking called")
+    if (eager) {
+      appScope.launch(Dispatchers.Default) {
+        Logger.d(TAG, "persistNavigationStack eager called")
 
         try {
           val navStackCopy = lock.read { navigationStack.toList() }
@@ -311,10 +310,10 @@ class HistoryNavigationManager(
           historyNavigationRepository.persist(navStackCopy)
             .safeUnwrap { error ->
               Logger.e(TAG, "Error while trying to persist navigation stack", error)
-              return@runBlocking
+              return@launch
             }
         } finally {
-          Logger.d(TAG, "persistNavigationStack blocking finished")
+          Logger.d(TAG, "persistNavigationStack eager finished")
           persistRunning.set(false)
         }
       }

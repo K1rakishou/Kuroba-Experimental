@@ -1,5 +1,8 @@
 package com.github.k1rakishou.common
 
+import android.graphics.Bitmap
+import android.system.ErrnoException
+import android.system.OsConstants
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.TextUtils
@@ -23,6 +26,7 @@ import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Matcher
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
@@ -483,6 +487,16 @@ inline fun CharSequence?.isNotNullNorEmpty(): Boolean {
   return this != null && this.length > 0
 }
 
+@Suppress("ReplaceSizeCheckWithIsNotEmpty", "NOTHING_TO_INLINE")
+@OptIn(ExperimentalContracts::class)
+inline fun CharSequence?.isNotNullNorBlank(): Boolean {
+  contract {
+    returns(true) implies (this@isNotNullNorBlank != null)
+  }
+
+  return this != null && this.isNotBlank()
+}
+
 suspend fun <T> CompletableDeferred<T>.awaitSilently(defaultValue: T): T {
   return try {
     await()
@@ -595,4 +609,49 @@ fun Int.mbytesToBytes(): Long {
 
 fun Long.mbytesToBytes(): Long {
   return this * (1024L * 1024L)
+}
+
+fun StringBuilder.appendIfNotEmpty(text: String): StringBuilder {
+  if (isNotEmpty()) {
+    append(text)
+  }
+
+  return this
+}
+
+suspend fun doIoTaskWithAttempts(attempts: Int, task: suspend (Int) -> Unit) {
+  val retries = AtomicInteger(0)
+
+  while (true) {
+    try {
+      // Try to execute a task
+      task(retries.incrementAndGet())
+
+      // If no exceptions were thrown then just exit
+      return
+    } catch (error: IOException) {
+      // If any kind of IOException was thrown then retry until we either succeed or exhaust all
+      // attempts
+      if (retries.get() >= attempts) {
+        throw error
+      }
+    }
+  }
+}
+
+fun IOException.isOutOfDiskSpaceError(): Boolean {
+  if (cause is ErrnoException) {
+    val errorNumber: Int = (cause as ErrnoException).errno
+    if (errorNumber == OsConstants.ENOSPC) {
+      return true
+    }
+  }
+
+  return false
+}
+
+fun Bitmap.recycleSafe() {
+  if (!isRecycled) {
+    recycle()
+  }
 }

@@ -16,6 +16,7 @@ object NotificationConstants {
   const val REPLIES_SUMMARY_NOTIFICATION_ID = 0
   const val REPLIES_PRE_OREO_NOTIFICATION_ID = 1
   const val LAST_PAGE_NOTIFICATION_ID = 2
+  const val IMAGE_SAVER_WORKER_NOTIFICATION_ID = 3
 
   const val REPLY_NOTIFICATION_ACTION = "${BuildConfig.APPLICATION_ID}_reply_notification_action"
   const val LAST_PAGE_NOTIFICATION_ACTION = "${BuildConfig.APPLICATION_ID}_last_page_notification_action"
@@ -49,6 +50,11 @@ object NotificationConstants {
     val LAST_PAGE_NOTIFICATION_TAG = "LAST_PAGE_NOTIFICATION_TAG_${getFlavorType().name}"
 
     const val LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY = "last_page_notification_click_thread_descriptors"
+  }
+
+  object ImageSaverNotifications {
+    const val IMAGE_SAVER_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_image_saver_notification_channel"
+    const val IMAGE_SAVER_NOTIFICATION_NAME = "Notification channel for downloading images"
   }
 
 }

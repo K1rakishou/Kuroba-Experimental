@@ -39,6 +39,7 @@ open class TaimabaActions(
 ) : CommonActions(commonSite) {
   @Volatile
   var threadNo = 0L
+  @Volatile
   var password: String? = null
 
   override fun setupPost(

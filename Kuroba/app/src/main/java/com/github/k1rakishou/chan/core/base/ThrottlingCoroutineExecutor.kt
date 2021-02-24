@@ -4,7 +4,8 @@ import kotlinx.coroutines.*
 
 class ThrottlingCoroutineExecutor(
   private val scope: CoroutineScope,
-  private val mode: Mode = Mode.ThrottleFirst
+  private val mode: Mode = Mode.ThrottleFirst,
+  private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate
 ) {
   @Volatile
   private var func: (suspend () -> Unit)? = null
@@ -36,7 +37,7 @@ class ThrottlingCoroutineExecutor(
       return
     }
 
-    val newJob = scope.launch(start = CoroutineStart.LAZY) {
+    val newJob = scope.launch(start = CoroutineStart.LAZY, context = dispatcher) {
       this@ThrottlingCoroutineExecutor.func?.invoke()
       this@ThrottlingCoroutineExecutor.func = null
 
@@ -67,7 +68,7 @@ class ThrottlingCoroutineExecutor(
       return
     }
 
-    val newJob = scope.launch(start = CoroutineStart.LAZY) {
+    val newJob = scope.launch(start = CoroutineStart.LAZY, context = dispatcher) {
       delay(timeout)
 
       this@ThrottlingCoroutineExecutor.func?.invoke()

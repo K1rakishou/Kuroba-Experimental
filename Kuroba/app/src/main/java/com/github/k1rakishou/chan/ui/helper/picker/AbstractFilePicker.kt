@@ -5,6 +5,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
+import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.IOUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
@@ -26,6 +27,8 @@ abstract class AbstractFilePicker<T>(
     externalFileUri: Uri,
     addedOn: Long
   ): ModularResult<ReplyFile> {
+    BackgroundUtils.ensureBackgroundThread()
+
     return ModularResult.Try {
       val uniqueFileName = replyManager.generateUniqueFileName(appConstants)
       val originalFileName = tryExtractFileNameOrDefault(externalFileUri, appContext)
@@ -78,7 +81,7 @@ abstract class AbstractFilePicker<T>(
   }
 
   protected fun getDefaultFileName(): String {
-    return System.nanoTime().toString()
+    return System.currentTimeMillis().toString()
   }
 
   private fun copyExternalFileIntoReplyFile(

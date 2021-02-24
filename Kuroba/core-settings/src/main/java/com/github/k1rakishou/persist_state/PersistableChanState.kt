@@ -1,13 +1,15 @@
-package com.github.k1rakishou
+package com.github.k1rakishou.persist_state
 
+import com.github.k1rakishou.PersistableChanStateInfo
+import com.github.k1rakishou.SharedPreferencesSettingProvider
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.prefs.BooleanSetting
 import com.github.k1rakishou.prefs.IntegerSetting
+import com.github.k1rakishou.prefs.JsonSetting
 import com.github.k1rakishou.prefs.LongSetting
 import com.github.k1rakishou.prefs.StringSetting
 import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
 
 /**
  * This state class acts in a similar manner to [ChanSettings], but everything here is not exported; this data is
@@ -51,9 +53,11 @@ object PersistableChanState {
   lateinit var bookmarksLastOpenedTabPageIndex: IntegerSetting
   @JvmStatic
   lateinit var imageViewerImmersiveModeEnabled: BooleanSetting
+  @JvmStatic
+  lateinit var imageSaverV2PersistedOptions: JsonSetting<ImageSaverV2Options>
 
   fun init(persistableChanStateInfo: PersistableChanStateInfo) {
-    this.persistableChanStateInfo = persistableChanStateInfo
+    PersistableChanState.persistableChanStateInfo = persistableChanStateInfo
 
     initInternal()
   }
@@ -87,13 +91,13 @@ object PersistableChanState {
       bookmarksRecyclerIndexAndTop = StringSetting(
         provider,
         "bookmarks_recycler_index_and_top",
-        RecyclerIndexAndTopInfo.bookmarksControllerDefaultJson(viewThreadBookmarksGridMode)
+        RecyclerIndexAndTopInfo.bookmarksControllerDefaultJson(gson, viewThreadBookmarksGridMode)
       )
 
       filterWatchesRecyclerIndexAndTop = StringSetting(
         provider,
         "filter_watches_recycler_index_and_top",
-        RecyclerIndexAndTopInfo.filterWatchesControllerDefaultJson()
+        RecyclerIndexAndTopInfo.filterWatchesControllerDefaultJson(gson)
       )
 
       proxyEditingNotificationShown = BooleanSetting(
@@ -130,6 +134,14 @@ object PersistableChanState {
         "image_viewer_immersive_mode_enabled",
         true
       )
+
+      imageSaverV2PersistedOptions = JsonSetting(
+        gson,
+        ImageSaverV2Options::class.java,
+        provider,
+        "image_saver_options",
+        ImageSaverV2Options()
+      )
     } catch (e: Exception) {
       Logger.e(TAG, "Error while initializing the state", e)
       throw e
@@ -160,34 +172,4 @@ object PersistableChanState {
     return IndexAndTop(info.indexAndTop.index, 0)
   }
 
-  data class RecyclerIndexAndTopInfo(
-    @SerializedName("is_for_grid_layout_manager")
-    val isForGridLayoutManager: Boolean,
-    @SerializedName("index_and_top")
-    val indexAndTop: IndexAndTop = IndexAndTop()
-  ) {
-    companion object {
-      fun bookmarksControllerDefaultJson(viewThreadBookmarksGridMode: BooleanSetting): String {
-        return gson.toJson(
-          RecyclerIndexAndTopInfo(isForGridLayoutManager = viewThreadBookmarksGridMode.default)
-        )
-      }
-
-      fun filterWatchesControllerDefaultJson(): String {
-        val recyclerIndexAndTopInfo = RecyclerIndexAndTopInfo(
-          isForGridLayoutManager = true,
-          indexAndTop = IndexAndTop()
-        )
-
-        return gson.toJson(recyclerIndexAndTopInfo)
-      }
-    }
-  }
-
-  data class IndexAndTop(
-    @SerializedName("index")
-    var index: Int = 0,
-    @SerializedName("top")
-    var top: Int = 0
-  )
 }

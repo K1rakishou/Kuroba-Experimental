@@ -2,10 +2,13 @@ package com.github.k1rakishou.model.source.cache
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.common.mutableMapWithCap
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.id.BoardDBId
+import com.github.k1rakishou.model.data.id.PostDBId
 import com.github.k1rakishou.model.data.id.ThreadBookmarkDBId
 import com.github.k1rakishou.model.data.id.ThreadBookmarkDescriptor
 import com.github.k1rakishou.model.data.id.ThreadDBId
@@ -24,10 +27,14 @@ class ChanDescriptorCache(
   private val threadIdCache = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ThreadDBId>(512)
 
   @GuardedBy("mutex")
-  private val bookmarkIdCache = mutableMapWithCap<ThreadBookmarkDescriptor, ThreadBookmarkDBId>(512)
+  private val bookmarkIdCache = mutableMapWithCap<ThreadBookmarkDescriptor, ThreadBookmarkDBId>(128)
+
+  @GuardedBy("mutex")
+  private val postIdCache = mutableMapWithCap<PostDescriptor, PostDBId>(1024)
 
   private val chanBoardDao = database.chanBoardDao()
   private val chanThreadDao = database.chanThreadDao()
+  private val chanPostDao = database.chanPostDao()
   private val threadBookmarkDao = database.threadBookmarkDao()
 
   suspend fun putManyBookmarkIds(bookmarkIdMap: Map<ChanDescriptor.ThreadDescriptor, ThreadBookmarkDBId>) {
@@ -43,7 +50,7 @@ class ChanDescriptorCache(
   ) {
     mutex.withLock {
       threadDescriptors.forEach { threadDescriptor ->
-        bookmarkIdCache.remove(threadDescriptor)
+        bookmarkIdCache.remove(ThreadBookmarkDescriptor(threadDescriptor))
       }
     }
   }
@@ -223,8 +230,10 @@ class ChanDescriptorCache(
 
     mutex.withLock {
       threadDescriptors.forEach { threadDescriptor ->
-        if (bookmarkIdCache.containsKey(threadDescriptor)) {
-          resultMap[threadDescriptor] = bookmarkIdCache[threadDescriptor]!!
+        val threadBookmarkDescriptor = ThreadBookmarkDescriptor(threadDescriptor)
+
+        if (bookmarkIdCache.containsKey(threadBookmarkDescriptor)) {
+          resultMap[threadDescriptor] = bookmarkIdCache[threadBookmarkDescriptor]!!
         }
       }
     }
@@ -272,7 +281,7 @@ class ChanDescriptorCache(
   }
 
   suspend fun getManyBookmarkThreadDescriptors(
-    threadBookmarkDatabaseIds: List<ThreadBookmarkDBId>
+    threadBookmarkDatabaseIds: Set<ThreadBookmarkDBId>
   ): Map<ThreadBookmarkDBId, ThreadBookmarkDescriptor> {
     database.ensureInTransaction()
 
@@ -302,18 +311,18 @@ class ChanDescriptorCache(
     )
 
     mutex.withLock {
-      threadBookmarkDescriptors.forEach { threadBookmarkDescriptor ->
-        check(threadBookmarkDescriptor.threadBookmarkDatabaseId >= 0L) {
-          "Bad databaseId ${threadBookmarkDescriptor.threadBookmarkDatabaseId}"
+      threadBookmarkDescriptors.forEach { threadBookmarkDescriptorDatabaseObject ->
+        check(threadBookmarkDescriptorDatabaseObject.threadBookmarkDatabaseId >= 0L) {
+          "Bad databaseId ${threadBookmarkDescriptorDatabaseObject.threadBookmarkDatabaseId}"
         }
 
         val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
-          threadBookmarkDescriptor.bookmarkSiteName,
-          threadBookmarkDescriptor.bookmarkBoardCode,
-          threadBookmarkDescriptor.bookmarkThreadNo
+          threadBookmarkDescriptorDatabaseObject.bookmarkSiteName,
+          threadBookmarkDescriptorDatabaseObject.bookmarkBoardCode,
+          threadBookmarkDescriptorDatabaseObject.bookmarkThreadNo
         )
 
-        val threadBookmarkId = ThreadBookmarkDBId(threadBookmarkDescriptor.threadBookmarkDatabaseId)
+        val threadBookmarkId = ThreadBookmarkDBId(threadBookmarkDescriptorDatabaseObject.threadBookmarkDatabaseId)
         val threadBookmarkDescriptor = ThreadBookmarkDescriptor(threadDescriptor)
 
         resultMap[threadBookmarkId] = threadBookmarkDescriptor
@@ -322,6 +331,88 @@ class ChanDescriptorCache(
     }
 
     return resultMap
+  }
+
+  suspend fun getManyPostDescriptors(chanPostIds: Set<PostDBId>): Map<PostDBId, PostDescriptor> {
+    database.ensureInTransaction()
+
+    if (chanPostIds.isEmpty()) {
+      return emptyMap()
+    }
+
+    val resultMap = mutableMapWithCap<PostDBId, PostDescriptor>(chanPostIds)
+
+    mutex.withLock {
+      if (postIdCache.size > MAX_POST_ID_CACHE_ENTRIES) {
+        cleanupCaches()
+      }
+
+      postIdCache.forEach { (postDescriptor, postDBId) ->
+        if (postDBId in chanPostIds) {
+          resultMap[postDBId] = postDescriptor
+        }
+      }
+    }
+
+    if (resultMap.size == chanPostIds.size) {
+      return resultMap
+    }
+
+    val postDescriptorDatabaseObjects = chanPostDao.selectPostDescriptorDatabaseObjectsByPostIds(
+      chanPostIds
+        .map { chanPostId -> chanPostId.id }
+        .toSet()
+    )
+
+    mutex.withLock {
+      postDescriptorDatabaseObjects.forEach { postDescriptorDatabaseObject ->
+        check(postDescriptorDatabaseObject.postDatabaseId >= 0L) {
+          "Bad databaseId ${postDescriptorDatabaseObject.postDatabaseId}"
+        }
+
+        val postDescriptor = PostDescriptor.create(
+          siteName = postDescriptorDatabaseObject.siteName,
+          boardCode = postDescriptorDatabaseObject.boardCode,
+          threadNo = postDescriptorDatabaseObject.threadNo,
+          postNo = postDescriptorDatabaseObject.postNo,
+          postSubNo = postDescriptorDatabaseObject.postSubNo
+        )
+
+        val postDBId = PostDBId(postDescriptorDatabaseObject.postDatabaseId)
+
+        resultMap[postDBId] = postDescriptor
+        postIdCache[postDescriptor] = postDBId
+      }
+    }
+
+    return resultMap
+  }
+
+  private suspend fun cleanupCaches() {
+    require(mutex.isLocked) { "Mutex must be locked" }
+
+    var toDelete = postIdCache.size / 2
+    Logger.d(TAG, "cleanupCaches() called, postIdCache.size=${postIdCache.size}, toDelete=${toDelete}")
+
+    val iterator = postIdCache.entries.iterator()
+
+    while (iterator.hasNext()) {
+      if (toDelete <= 0) {
+        break
+      }
+
+      val (postDescriptor, _) = iterator.next()
+      postIdCache.remove(postDescriptor)
+
+      --toDelete
+    }
+
+    Logger.d(TAG, "cleanupCaches() done")
+  }
+
+  companion object {
+    private const val TAG = "ChanDescriptorCache"
+    private const val MAX_POST_ID_CACHE_ENTRIES = 8000
   }
 
 }

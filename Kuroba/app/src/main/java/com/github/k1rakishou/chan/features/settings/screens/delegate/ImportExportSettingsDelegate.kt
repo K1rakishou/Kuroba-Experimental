@@ -38,11 +38,6 @@ class ImportExportSettingsDelegate(
     val dateString = BACKUP_DATE_FORMAT.print(DateTime.now())
     val exportFileName = "KurobaEx_v${BuildConfig.VERSION_CODE}_($dateString)_backup.zip"
 
-    /**
-     * Creates a new file with the default name (that can be changed in the file chooser) with the
-     * settings. Cannot be used for overwriting an old settings file (when trying to do so a new file
-     * with appended "(1)" at the end will appear, e.g. "test (1).txt")
-     */
     fileChooser.openCreateFileDialog(
       exportFileName,
       object : FileCreateCallback() {

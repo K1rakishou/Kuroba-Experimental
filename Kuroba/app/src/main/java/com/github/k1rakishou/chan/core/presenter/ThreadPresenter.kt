@@ -18,10 +18,10 @@ package com.github.k1rakishou.chan.core.presenter
 
 import android.content.Context
 import android.text.TextUtils
-import android.widget.Toast
 import androidx.annotation.StringRes
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.cache.CacheHandler
@@ -31,8 +31,6 @@ import com.github.k1rakishou.chan.core.helper.PostHideHelper
 import com.github.k1rakishou.chan.core.loader.LoaderBatchResult
 import com.github.k1rakishou.chan.core.loader.LoaderResult.Succeeded
 import com.github.k1rakishou.chan.core.manager.*
-import com.github.k1rakishou.chan.core.saver.ImageSaveTask
-import com.github.k1rakishou.chan.core.saver.ImageSaver
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
@@ -40,6 +38,8 @@ import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
@@ -72,6 +72,7 @@ import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.source.cache.ChanPostBuilderCache
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
+import com.github.k1rakishou.persist_state.PersistableChanState.imageSaverV2PersistedOptions
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
@@ -102,7 +103,7 @@ class ThreadPresenter @Inject constructor(
   private val postHideHelper: PostHideHelper,
   private val chanThreadManager: ChanThreadManager,
   private val chanPostBuilderCache: ChanPostBuilderCache,
-  private val imageSaver: ImageSaver
+  private val imageSaverV2: ImageSaverV2
 ) : PostAdapterCallback,
   PostCellCallback,
   ThreadStatusCell.Callback,
@@ -1074,12 +1075,13 @@ class ThreadPresenter @Inject constructor(
     items += createMenuItem(THUMBNAIL_COPY_URL, R.string.action_copy_image_url)
     items += createMenuItem(SHARE_MEDIA_FILE_CONTENT, R.string.action_share_content)
     items += createMenuItem(DOWNLOAD_MEDIA_FILE_CONTENT, R.string.action_download_content)
+    items += createMenuItem(DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT, R.string.action_download_content_with_options)
 
     val floatingListMenuController = FloatingListMenuController(
       context,
       gravity,
       items,
-      { item -> onThumbnailOptionClicked(item.key as Int, postImage, thumbnail) }
+      { item -> onThumbnailOptionClicked(item.key as Int, postImage) }
     )
 
     threadPresenterCallback?.presentController(floatingListMenuController, true)
@@ -1087,8 +1089,7 @@ class ThreadPresenter @Inject constructor(
 
   private fun onThumbnailOptionClicked(
     id: Int,
-    postImage: ChanPostImage,
-    thumbnail: ThumbnailView
+    postImage: ChanPostImage
   ) {
     when (id) {
       THUMBNAIL_COPY_URL -> {
@@ -1100,28 +1101,33 @@ class ThreadPresenter @Inject constructor(
         showToast(context, R.string.image_url_copied_to_clipboard)
       }
       SHARE_MEDIA_FILE_CONTENT -> {
-        shareOrDownloadMediaFile(true, postImage)
+        imageSaverV2.share(postImage)
       }
       DOWNLOAD_MEDIA_FILE_CONTENT -> {
-        shareOrDownloadMediaFile(false, postImage)
+        downloadMediaFile(false, postImage)
+      }
+      DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT -> {
+        downloadMediaFile(true, postImage)
       }
     }
   }
 
-  private fun shareOrDownloadMediaFile(share: Boolean, postImage: ChanPostImage) {
-    val task = ImageSaveTask(postImage, false)
-    task.share = share
+  private fun downloadMediaFile(showOptions: Boolean, postImage: ChanPostImage) {
+    val imageSaverV2Options = imageSaverV2PersistedOptions.get()
 
-    imageSaver.startDownloadTask(context, task, { message: String? ->
-      val errorMessage = String.format(
-        Locale.ENGLISH,
-        "%s, error message = %s",
-        "Couldn't start download task",
-        message
+    if (showOptions || imageSaverV2Options.shouldShowImageSaverOptionsController()) {
+      val options = ImageSaverV2OptionsController.Options.SingleImage(
+        chanPostImage = postImage,
+        onSaveClicked = { updatedImageSaverV2Options, newFileName ->
+          imageSaverV2.save(updatedImageSaverV2Options, postImage, newFileName)
+        }
       )
 
-      showToast(context, errorMessage, Toast.LENGTH_LONG)
-    })
+      val controller = ImageSaverV2OptionsController(context, options)
+      threadPresenterCallback?.presentController(controller, false)
+    } else {
+      imageSaverV2.save(imageSaverV2Options, postImage, null)
+    }
   }
 
   override fun onPopulatePostOptions(post: ChanPost, menu: MutableList<FloatingListMenuItem>) {
@@ -1977,7 +1983,7 @@ class ThreadPresenter @Inject constructor(
     )
 
     fun onPostUpdated(post: ChanPost)
-    fun presentController(floatingListMenuController: FloatingListMenuController, animate: Boolean)
+    fun presentController(controller: Controller, animate: Boolean)
     fun showToolbar()
     fun showAvailableArchivesList(threadDescriptor: ChanDescriptor.ThreadDescriptor)
   }
@@ -2006,6 +2012,7 @@ class ThreadPresenter @Inject constructor(
     private const val THUMBNAIL_COPY_URL = 1000
     private const val SHARE_MEDIA_FILE_CONTENT = 1001
     private const val DOWNLOAD_MEDIA_FILE_CONTENT = 1002
+    private const val DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT = 1003
   }
 
 }

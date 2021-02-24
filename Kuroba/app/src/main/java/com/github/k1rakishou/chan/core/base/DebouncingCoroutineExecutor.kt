@@ -13,6 +13,7 @@ import java.util.concurrent.atomic.AtomicLong
  * callback is already being executed and a new one is posted, then the new one is ignored. In other
  * words this executor DOES NOT cancel callbacks that are already in execution progress.
  * */
+@Suppress("JoinDeclarationAndAssignment")
 @OptIn(ExperimentalCoroutinesApi::class)
 class DebouncingCoroutineExecutor(
   scope: CoroutineScope

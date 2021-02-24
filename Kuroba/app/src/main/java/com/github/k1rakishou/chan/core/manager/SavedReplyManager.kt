@@ -8,7 +8,6 @@ import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanSavedReply
 import com.github.k1rakishou.model.repository.ChanSavedReplyRepository
 import java.util.*
@@ -158,16 +157,6 @@ class SavedReplyManager(
   }
 
   fun retainSavedPostNoMap(
-    postList: List<ChanPost>,
-    threadDescriptor: ChanDescriptor.ThreadDescriptor
-  ): List<Long> {
-    return retainSavedPostNoMap2(
-      postList.map { post -> post.postDescriptor },
-      threadDescriptor
-    )
-  }
-
-  fun retainSavedPostNoMap2(
     postList: List<PostDescriptor>,
     threadDescriptor: ChanDescriptor.ThreadDescriptor
   ): List<Long> {

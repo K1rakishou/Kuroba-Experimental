@@ -14,12 +14,15 @@ import androidx.core.math.MathUtils
 import androidx.core.util.Pair
 import androidx.exifinterface.media.ExifInterface
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.image.InputFile
 import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter.ReencodeSettings
 import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter.ReencodeType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.runInterruptible
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -30,7 +33,7 @@ import kotlin.math.abs
 import kotlin.math.min
 
 object MediaUtils {
-  private const val TAG = "BitmapUtils"
+  private const val TAG = "MediaUtils"
   private const val MIN_QUALITY = 1
   private const val MAX_QUALITY = 100
   private const val MIN_REDUCE = 0
@@ -317,34 +320,77 @@ object MediaUtils {
     }
   }
 
-  fun decodeFileMimeType(file: File): String? {
+  suspend fun decodeFileMimeTypeInterruptible(inputFile: InputFile): String? {
     BackgroundUtils.ensureBackgroundThread()
 
     try {
-      val metadataRetriever = MediaMetadataRetriever()
-      metadataRetriever.setDataSource(file.absolutePath)
-      return metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
-    } catch (ignored: Throwable) {
+      return runInterruptible {
+        val metadataRetriever = MediaMetadataRetriever()
+
+        when (inputFile) {
+          is InputFile.FileUri -> metadataRetriever.setDataSource(inputFile.applicationContext, inputFile.uri)
+          is InputFile.JavaFile ->  metadataRetriever.setDataSource(inputFile.file.absolutePath)
+        }
+
+        return@runInterruptible metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
+      }
+    } catch (exception: Throwable) {
+      if (exception is CancellationException) {
+        throw exception
+      }
+
       return null
     }
   }
 
-  fun decodeVideoFilePreviewImage(
+  suspend fun decodeVideoFilePreviewImageInterruptible(
     context: Context,
-    file: File,
+    inputFile: InputFile,
+    maxWidth: Int,
+    maxHeight: Int,
+    addAudioIcon: Boolean
+  ): BitmapDrawable? {
+    return runInterruptible {
+      return@runInterruptible decodeVideoFilePreviewImage(
+        context = context,
+        inputFile = inputFile,
+        maxWidth = maxWidth,
+        maxHeight = maxHeight,
+        addAudioIcon = addAudioIcon
+      )
+    }
+  }
+
+  private fun decodeVideoFilePreviewImage(
+    context: Context,
+    inputFile: InputFile,
     maxWidth: Int,
     maxHeight: Int,
     addAudioIcon: Boolean
   ): BitmapDrawable? {
     BackgroundUtils.ensureBackgroundThread()
     var result: Bitmap? = null
+    val metadataRetriever = MediaMetadataRetriever()
 
     try {
-      val metadataRetriever = MediaMetadataRetriever()
-      metadataRetriever.setDataSource(file.absolutePath)
-      val frameBitmap = metadataRetriever.frameAtTime
+      when (inputFile) {
+        is InputFile.FileUri -> metadataRetriever.setDataSource(inputFile.applicationContext, inputFile.uri)
+        is InputFile.JavaFile -> metadataRetriever.setDataSource(inputFile.file.absolutePath)
+      }
 
-      val audioMetaResult = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO)
+      val oneHundredMs = 100 * 1000L
+
+      // MediaMetadataRetriever is an absolute trash and apparently uses global locks so all
+      // getFrameAtTime() are processed sequentially (doesn't matter how many threads is used).
+      // This is especially bad for WEBMs since the average execution time of getFrameAtTime()
+      // for one WEBM is 5-10 seconds.
+      val frameBitmap = metadataRetriever.getFrameAtTime(
+        oneHundredMs,
+        MediaMetadataRetriever.OPTION_CLOSEST
+      )
+
+      val audioMetaResult =
+        metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_HAS_AUDIO)
       val hasAudio = "yes" == audioMetaResult
 
       if (hasAudio && frameBitmap != null && addAudioIcon) {
@@ -389,8 +435,14 @@ object MediaUtils {
         result = frameBitmap
       }
     } catch (error: Exception) {
+      if (error is CancellationException) {
+        throw error
+      }
+
       val errorMsg = error.errorMessageOrClassName()
       Logger.e(TAG, "decodeVideoFilePreviewImage() error: $errorMsg")
+    } finally {
+      metadataRetriever.release()
     }
 
     check(!(result != null && result.isRecycled)) { "Result bitmap is already recycled!" }

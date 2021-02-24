@@ -38,7 +38,7 @@ class ThreadBookmarkGroupManager(
   private val suspendableInitializer = SuspendableInitializer<Unit>("ThreadBookmarkGroupManager")
 
   @GuardedBy("mutex")
-  // Map<GroupId, ThreadBookmarkGroupEntry>
+  // Map<GroupId, ThreadBookmarkGroup>
   private val groupsByGroupIdMap = mutableMapOf<String, ThreadBookmarkGroup>()
 
   init {

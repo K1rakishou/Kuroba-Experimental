@@ -18,8 +18,11 @@ package com.github.k1rakishou.chan.core.di.module.application;
 
 import android.content.Context;
 
+import androidx.core.app.NotificationManagerCompat;
+
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
+import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
 import com.github.k1rakishou.chan.core.helper.LastPageNotificationsHelper;
@@ -68,18 +71,22 @@ import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_themes.ThemeEngine;
+import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.repository.BoardRepository;
 import com.github.k1rakishou.model.repository.BookmarksRepository;
 import com.github.k1rakishou.model.repository.ChanFilterRepository;
 import com.github.k1rakishou.model.repository.ChanFilterWatchRepository;
 import com.github.k1rakishou.model.repository.ChanPostHideRepository;
+import com.github.k1rakishou.model.repository.ChanPostImageRepository;
 import com.github.k1rakishou.model.repository.ChanPostRepository;
 import com.github.k1rakishou.model.repository.ChanSavedReplyRepository;
 import com.github.k1rakishou.model.repository.ChanThreadViewableInfoRepository;
 import com.github.k1rakishou.model.repository.HistoryNavigationRepository;
+import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository;
 import com.github.k1rakishou.model.repository.SeenPostRepository;
 import com.github.k1rakishou.model.repository.SiteRepository;
 import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository;
@@ -590,6 +597,29 @@ public class ManagerModule {
                 chanPostRepository,
                 siteManager,
                 bookmarkFilterWatchableThreadsUseCase
+        );
+    }
+
+    @Singleton
+    @Provides
+    public ImageSaverV2ServiceDelegate provideImageSaverV2Delegate(
+            Context appContext,
+            CoroutineScope appScope,
+            AppConstants appConstants,
+            RealDownloaderOkHttpClient downloaderOkHttpClient,
+            FileManager fileManager,
+            ChanPostImageRepository chanPostImageRepository,
+            ImageDownloadRequestRepository imageDownloadRequestRepository
+    ) {
+        return new ImageSaverV2ServiceDelegate(
+                ChanSettings.verboseLogs.get(),
+                appScope,
+                appConstants,
+                downloaderOkHttpClient,
+                NotificationManagerCompat.from(appContext),
+                fileManager,
+                chanPostImageRepository,
+                imageDownloadRequestRepository
         );
     }
 

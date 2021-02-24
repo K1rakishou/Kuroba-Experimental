@@ -473,25 +473,6 @@ sealed class MediaScreen(
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
 
-  sealed class MediaSavingGroup(
-    settingsId: String,
-    groupIdentifier: GroupIdentifier = MediaSavingGroup.getGroupIdentifier()
-  ) : IGroup,
-    MediaScreen(groupIdentifier, SettingIdentifier(settingsId)) {
-
-    object MediaSaveLocation : MediaSavingGroup("media_save_location")
-    object SaveBoardFolder : MediaSavingGroup("save_board_folder")
-    object SaveThreadFolder : MediaSavingGroup("save_thread_folder")
-    object SaveAlbumBoardFolder : MediaSavingGroup("save_album_board_folder")
-    object SaveAlbumThreadFolder : MediaSavingGroup("save_album_thread_folder")
-    object SaveServerFilename : MediaSavingGroup("save_server_file_name")
-
-    companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = MediaScreen.getScreenIdentifier()
-      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("media_saving_group")
-    }
-  }
-
   sealed class CacheSizeGroup(
     settingsId: String,
     groupIdentifier: GroupIdentifier = CacheSizeGroup.getGroupIdentifier()
@@ -509,7 +490,7 @@ sealed class MediaScreen(
 
   sealed class VideoGroup(
     settingsId: String,
-    groupIdentifier: GroupIdentifier = MediaSavingGroup.getGroupIdentifier()
+    groupIdentifier: GroupIdentifier = getGroupIdentifier()
   ) : IGroup,
     MediaScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
@@ -527,7 +508,7 @@ sealed class MediaScreen(
 
   sealed class LoadingGroup(
     settingsId: String,
-    groupIdentifier: GroupIdentifier = MediaSavingGroup.getGroupIdentifier()
+    groupIdentifier: GroupIdentifier = getGroupIdentifier()
   ) : IGroup,
     MediaScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 

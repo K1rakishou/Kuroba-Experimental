@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/outside_area"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#88000000"
+    android:clickable="true"
+    android:focusable="true">
+
+    <com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp">
+
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
+            android:id="@+id/card_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp">
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_horizontal"
+                        android:text="@string/controller_image_save_options_root_dir" />
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+                        android:id="@+id/root_dir"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:background="?attr/selectableItemBackground"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center_horizontal"
+                        android:padding="4dp"
+                        android:text="@string/controller_image_save_options_click_to_set_root_dir" />
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
+                        android:id="@+id/custom_file_name_til"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginBottom="8dp"
+                        android:hint="@string/controller_image_save_options_override_file_name">
+
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
+                            android:id="@+id/custom_file_name"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="text"
+                            android:maxLines="1" />
+
+                    </com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout>
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
+                        android:id="@+id/append_site_name"
+                        android:layout_width="match_parent"
+                        android:layout_height="32dp"
+                        android:text="@string/controller_image_save_options_output_dir_append_site_name" />
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
+                        android:id="@+id/append_board_code"
+                        android:layout_width="match_parent"
+                        android:layout_height="32dp"
+                        android:text="@string/controller_image_save_options_output_dir_append_board_code" />
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
+                        android:id="@+id/append_thread_id"
+                        android:layout_width="match_parent"
+                        android:layout_height="32dp"
+                        android:text="@string/controller_image_save_options_output_dir_append_thread_id" />
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
+                        android:id="@+id/additional_directories_til"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/controller_image_save_options_additional_dirs">
+
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
+                            android:id="@+id/additional_directories"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="text"
+                            android:maxLines="2" />
+
+                    </com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout>
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
+                        android:id="@+id/output_file_til"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/controller_image_save_options_output_file">
+
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
+                            android:id="@+id/output_file"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:editable="false"
+                            android:maxLines="3" />
+
+                    </com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout>
+
+                    <RadioGroup
+                        android:id="@+id/image_name_options_group"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp">
+
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_horizontal"
+                            android:text="@string/controller_image_save_options_image_name_options" />
+
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
+                            android:id="@+id/image_name_options_use_server_name"
+                            android:layout_width="match_parent"
+                            android:layout_height="32dp"
+                            android:text="@string/controller_image_save_options_image_name_options_use_server_name" />
+
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
+                            android:id="@+id/image_name_options_use_original_name"
+                            android:layout_width="match_parent"
+                            android:layout_height="32dp"
+                            android:text="@string/controller_image_save_options_image_name_options_use_original_name" />
+
+                    </RadioGroup>
+
+                    <RadioGroup
+                        android:id="@+id/duplicate_resolution_options_group"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp">
+
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center_horizontal"
+                            android:text="@string/controller_image_save_options_duplicate_resolution_options" />
+
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
+                            android:id="@+id/duplicate_resolution_options_ask"
+                            android:layout_width="match_parent"
+                            android:layout_height="32dp"
+                            android:text="@string/controller_image_save_options_duplicate_resolution_options_ask" />
+
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
+                            android:id="@+id/duplicate_resolution_options_overwrite"
+                            android:layout_width="match_parent"
+                            android:layout_height="32dp"
+                            android:text="@string/controller_image_save_options_duplicate_resolution_options_overwrite" />
+
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
+                            android:id="@+id/duplicate_resolution_options_skip"
+                            android:layout_width="match_parent"
+                            android:layout_height="32dp"
+                            android:text="@string/controller_image_save_options_duplicate_resolution_options_skip" />
+
+                    </RadioGroup>
+
+                </LinearLayout>
+
+            </ScrollView>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
+                    android:id="@+id/cancel_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="16dp"
+                    android:text="@string/cancel"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@+id/save_button"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
+                    android:id="@+id/save_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/save"
+                    android:layout_marginEnd="16dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </LinearLayout>
+
+        </com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView>
+
+    </com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize>
+
+</FrameLayout>

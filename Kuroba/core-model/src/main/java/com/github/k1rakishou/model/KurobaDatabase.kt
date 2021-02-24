@@ -6,8 +6,39 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.github.k1rakishou.common.DoNotStrip
-import com.github.k1rakishou.model.converter.*
-import com.github.k1rakishou.model.dao.*
+import com.github.k1rakishou.model.converter.BitSetTypeConverter
+import com.github.k1rakishou.model.converter.ChanPostImageTypeTypeConverter
+import com.github.k1rakishou.model.converter.DateTimeTypeConverter
+import com.github.k1rakishou.model.converter.HttpUrlTypeConverter
+import com.github.k1rakishou.model.converter.JsonSettingsTypeConverter
+import com.github.k1rakishou.model.converter.PeriodTypeConverter
+import com.github.k1rakishou.model.converter.ReplyTypeTypeConverter
+import com.github.k1rakishou.model.converter.TextTypeTypeConverter
+import com.github.k1rakishou.model.converter.UriTypeConverter
+import com.github.k1rakishou.model.converter.VideoServiceTypeConverter
+import com.github.k1rakishou.model.dao.ChanBoardDao
+import com.github.k1rakishou.model.dao.ChanCatalogSnapshotDao
+import com.github.k1rakishou.model.dao.ChanFilterDao
+import com.github.k1rakishou.model.dao.ChanFilterWatchGroupDao
+import com.github.k1rakishou.model.dao.ChanPostDao
+import com.github.k1rakishou.model.dao.ChanPostHideDao
+import com.github.k1rakishou.model.dao.ChanPostHttpIconDao
+import com.github.k1rakishou.model.dao.ChanPostImageDao
+import com.github.k1rakishou.model.dao.ChanPostReplyDao
+import com.github.k1rakishou.model.dao.ChanSavedReplyDao
+import com.github.k1rakishou.model.dao.ChanSiteDao
+import com.github.k1rakishou.model.dao.ChanTextSpanDao
+import com.github.k1rakishou.model.dao.ChanThreadDao
+import com.github.k1rakishou.model.dao.ChanThreadViewableInfoDao
+import com.github.k1rakishou.model.dao.DatabaseMetaDao
+import com.github.k1rakishou.model.dao.ImageDownloadRequestDao
+import com.github.k1rakishou.model.dao.InlinedFileInfoDao
+import com.github.k1rakishou.model.dao.MediaServiceLinkExtraContentDao
+import com.github.k1rakishou.model.dao.NavHistoryDao
+import com.github.k1rakishou.model.dao.SeenPostDao
+import com.github.k1rakishou.model.dao.ThreadBookmarkDao
+import com.github.k1rakishou.model.dao.ThreadBookmarkGroupDao
+import com.github.k1rakishou.model.dao.ThreadBookmarkReplyDao
 import com.github.k1rakishou.model.entity.InlinedFileInfoEntity
 import com.github.k1rakishou.model.entity.MediaServiceLinkExtraContentEntity
 import com.github.k1rakishou.model.entity.SeenPostEntity
@@ -21,16 +52,37 @@ import com.github.k1rakishou.model.entity.chan.catalog.ChanCatalogSnapshotEntity
 import com.github.k1rakishou.model.entity.chan.filter.ChanFilterBoardConstraintEntity
 import com.github.k1rakishou.model.entity.chan.filter.ChanFilterEntity
 import com.github.k1rakishou.model.entity.chan.filter.ChanFilterWatchGroupEntity
-import com.github.k1rakishou.model.entity.chan.post.*
+import com.github.k1rakishou.model.entity.chan.post.ChanPostEntity
+import com.github.k1rakishou.model.entity.chan.post.ChanPostHideEntity
+import com.github.k1rakishou.model.entity.chan.post.ChanPostHttpIconEntity
+import com.github.k1rakishou.model.entity.chan.post.ChanPostIdEntity
+import com.github.k1rakishou.model.entity.chan.post.ChanPostImageEntity
+import com.github.k1rakishou.model.entity.chan.post.ChanPostReplyEntity
+import com.github.k1rakishou.model.entity.chan.post.ChanSavedReplyEntity
+import com.github.k1rakishou.model.entity.chan.post.ChanTextSpanEntity
 import com.github.k1rakishou.model.entity.chan.site.ChanSiteEntity
 import com.github.k1rakishou.model.entity.chan.site.ChanSiteIdEntity
 import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
 import com.github.k1rakishou.model.entity.chan.thread.ChanThreadViewableInfoEntity
+import com.github.k1rakishou.model.entity.download.ImageDownloadRequestEntity
 import com.github.k1rakishou.model.entity.navigation.NavHistoryElementIdEntity
 import com.github.k1rakishou.model.entity.navigation.NavHistoryElementInfoEntity
 import com.github.k1rakishou.model.entity.view.ChanThreadsWithPosts
 import com.github.k1rakishou.model.entity.view.OldChanPostThread
-import com.github.k1rakishou.model.migrations.*
+import com.github.k1rakishou.model.migrations.Migration_v10_to_v11
+import com.github.k1rakishou.model.migrations.Migration_v11_to_v12
+import com.github.k1rakishou.model.migrations.Migration_v12_to_v13
+import com.github.k1rakishou.model.migrations.Migration_v13_to_v14
+import com.github.k1rakishou.model.migrations.Migration_v14_to_v15
+import com.github.k1rakishou.model.migrations.Migration_v1_to_v2
+import com.github.k1rakishou.model.migrations.Migration_v2_to_v3
+import com.github.k1rakishou.model.migrations.Migration_v3_to_v4
+import com.github.k1rakishou.model.migrations.Migration_v4_to_v5
+import com.github.k1rakishou.model.migrations.Migration_v5_to_v6
+import com.github.k1rakishou.model.migrations.Migration_v6_to_v7
+import com.github.k1rakishou.model.migrations.Migration_v7_to_v8
+import com.github.k1rakishou.model.migrations.Migration_v8_to_v9
+import com.github.k1rakishou.model.migrations.Migration_v9_to_v10
 
 @DoNotStrip
 @Database(
@@ -61,13 +113,14 @@ import com.github.k1rakishou.model.migrations.*
     ThreadBookmarkEntity::class,
     ThreadBookmarkReplyEntity::class,
     ThreadBookmarkGroupEntity::class,
-    ThreadBookmarkGroupEntryEntity::class
+    ThreadBookmarkGroupEntryEntity::class,
+    ImageDownloadRequestEntity::class
   ],
   views = [
     ChanThreadsWithPosts::class,
     OldChanPostThread::class
   ],
-  version = 14,
+  version = 15,
   exportSchema = true
 )
 @TypeConverters(
@@ -80,7 +133,8 @@ import com.github.k1rakishou.model.migrations.*
     TextTypeTypeConverter::class,
     ReplyTypeTypeConverter::class,
     BitSetTypeConverter::class,
-    JsonSettingsTypeConverter::class
+    JsonSettingsTypeConverter::class,
+    UriTypeConverter::class
   ]
 )
 abstract class KurobaDatabase : RoomDatabase() {
@@ -106,6 +160,7 @@ abstract class KurobaDatabase : RoomDatabase() {
   abstract fun chanFilterDao(): ChanFilterDao
   abstract fun chanCatalogSnapshotDao(): ChanCatalogSnapshotDao
   abstract fun chanFilterWatchGroupDao(): ChanFilterWatchGroupDao
+  abstract fun imageDownloadRequestDao(): ImageDownloadRequestDao
 
   suspend fun ensureInTransaction() {
     require(inTransaction()) { "Must be executed in a transaction!" }
@@ -145,7 +200,8 @@ abstract class KurobaDatabase : RoomDatabase() {
           Migration_v10_to_v11(),
           Migration_v11_to_v12(),
           Migration_v12_to_v13(),
-          Migration_v13_to_v14()
+          Migration_v13_to_v14(),
+          Migration_v14_to_v15()
         )
         .fallbackToDestructiveMigrationOnDowngrade()
         .build()

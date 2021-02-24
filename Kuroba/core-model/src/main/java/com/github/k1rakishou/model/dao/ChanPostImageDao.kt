@@ -1,6 +1,10 @@
 package com.github.k1rakishou.model.dao
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
 import com.github.k1rakishou.model.entity.chan.post.ChanPostImageEntity
 import okhttp3.HttpUrl
 
@@ -16,6 +20,13 @@ abstract class ChanPostImageDao {
         WHERE ${ChanPostImageEntity.IMAGE_URL_COLUMN_NAME} = :imageUrl
     """)
   abstract suspend fun selectByImageUrl(imageUrl: HttpUrl): ChanPostImageEntity?
+
+  @Query("""
+        SELECT *
+        FROM ${ChanPostImageEntity.TABLE_NAME}
+        WHERE ${ChanPostImageEntity.IMAGE_URL_COLUMN_NAME} IN (:imageUrls)
+    """)
+  abstract suspend fun selectByImageUrlMany(imageUrls: Collection<HttpUrl>): List<ChanPostImageEntity>
 
   @Query("""
         SELECT *

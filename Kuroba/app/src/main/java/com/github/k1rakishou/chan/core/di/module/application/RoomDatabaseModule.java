@@ -7,11 +7,13 @@ import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository;
 import com.github.k1rakishou.model.repository.ChanFilterRepository;
 import com.github.k1rakishou.model.repository.ChanFilterWatchRepository;
 import com.github.k1rakishou.model.repository.ChanPostHideRepository;
+import com.github.k1rakishou.model.repository.ChanPostImageRepository;
 import com.github.k1rakishou.model.repository.ChanPostRepository;
 import com.github.k1rakishou.model.repository.ChanSavedReplyRepository;
 import com.github.k1rakishou.model.repository.ChanThreadViewableInfoRepository;
 import com.github.k1rakishou.model.repository.DatabaseMetaRepository;
 import com.github.k1rakishou.model.repository.HistoryNavigationRepository;
+import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository;
 import com.github.k1rakishou.model.repository.InlinedFileInfoRepository;
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository;
 import com.github.k1rakishou.model.repository.SeenPostRepository;
@@ -170,6 +172,22 @@ public class RoomDatabaseModule {
             ModelComponent modelComponent
     ) {
         return modelComponent.getChanPostBuilderCache();
+    }
+
+    @Provides
+    @Singleton
+    public ChanPostImageRepository provideChanPostImageRepository(
+            ModelComponent modelComponent
+    ) {
+        return modelComponent.getChanPostImageRepository();
+    }
+
+    @Provides
+    @Singleton
+    public ImageDownloadRequestRepository provideImageDownloadRequestRepository(
+            ModelComponent modelComponent
+    ) {
+        return modelComponent.getImageDownloadRequestRepository();
     }
 
 }

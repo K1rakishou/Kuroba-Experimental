@@ -52,7 +52,6 @@ import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper.ImageReencodingHelperCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.controller.CloudFlareBypassController
-import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.PostLinksController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
@@ -879,10 +878,10 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun presentController(
-    floatingListMenuController: FloatingListMenuController,
+    controller: Controller,
     animate: Boolean
   ) {
-    callback.presentController(floatingListMenuController, animate)
+    callback.presentController(controller, animate)
   }
 
   override fun showToolbar() {

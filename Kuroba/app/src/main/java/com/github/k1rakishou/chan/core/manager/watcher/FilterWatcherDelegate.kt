@@ -34,9 +34,8 @@ class FilterWatcherDelegate(
   private val bookmarkFilterWatchableThreadsUseCase: BookmarkFilterWatchableThreadsUseCase
 ) {
   private val bookmarkFilterWatchGroupsUpdatedFlow = MutableSharedFlow<Unit>(
-    replay = 1,
     extraBufferCapacity = 1,
-    BufferOverflow.SUSPEND
+    onBufferOverflow = BufferOverflow.SUSPEND
   )
 
   init {

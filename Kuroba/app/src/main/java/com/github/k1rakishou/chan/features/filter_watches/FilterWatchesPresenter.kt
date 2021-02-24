@@ -50,7 +50,6 @@ class FilterWatchesPresenter : BasePresenter<FilterWatchesControllerView>() {
   lateinit var archivesManager: ArchivesManager
 
   private val filterWatchesControllerStateFlow = MutableSharedFlow<FilterWatchesControllerState>(
-    replay = 1,
     extraBufferCapacity = 1,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
   )

@@ -2,8 +2,11 @@ package com.github.k1rakishou.chan.core.helper
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.provider.DocumentsContract
 import android.widget.Toast
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.util.Pair
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -17,7 +20,9 @@ import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.features.drawer.DrawerController
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Service
 import com.github.k1rakishou.chan.ui.controller.BrowseController
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.common.AndroidUtils
@@ -25,6 +30,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
+
 
 class StartActivityStartupHandlerHelper(
   private val historyNavigationManager: HistoryNavigationManager,
@@ -67,8 +73,7 @@ class StartActivityStartupHandlerHelper(
     chanFilterManager.awaitUntilInitialized()
 
     Logger.d(TAG, "setupFromStateOrFreshLaunch(intent==null: ${intent == null}, " +
-      "savedInstanceState==null: ${savedInstanceState == null})"
-    )
+        "savedInstanceState==null: ${savedInstanceState == null})")
 
     val newIntentHandled = onNewIntentInternal(intent)
     Logger.d(TAG, "onNewIntentInternal() -> $newIntentHandled")
@@ -147,7 +152,7 @@ class StartActivityStartupHandlerHelper(
   }
 
   suspend fun onNewIntentInternal(intent: Intent?): Boolean {
-    if (intent == null) {
+    if (intent == null || context == null) {
       return false
     }
 
@@ -161,6 +166,7 @@ class StartActivityStartupHandlerHelper(
     }
 
     Logger.d(TAG, "onNewIntentInternal called, action=${action}")
+
     siteManager.awaitUntilInitialized()
     boardManager.awaitUntilInitialized()
     bookmarksManager.awaitUntilInitialized()
@@ -172,11 +178,57 @@ class StartActivityStartupHandlerHelper(
       intent.hasExtra(NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
         return lastPageNotificationClicked(extras)
       }
-      intent.action == Intent.ACTION_VIEW -> {
+      action == Intent.ACTION_VIEW -> {
         return restoreFromUrl(intent)
+      }
+      action == ImageSaverV2Service.ACTION_TYPE_NAVIGATE -> {
+        val outputDirUri = extras.getString(ImageSaverV2Service.OUTPUT_DIR_URI)
+          ?.let { uriRaw -> Uri.parse(uriRaw) }
+
+        extras.getString(ImageSaverV2Service.UNIQUE_ID)?.let { uniqueId ->
+          hideImageSaverNotification(context!!, uniqueId)
+        }
+
+        if (outputDirUri != null) {
+          val newIntent = Intent(Intent.ACTION_VIEW)
+          newIntent.setDataAndType(outputDirUri, DocumentsContract.Document.MIME_TYPE_DIR)
+
+          AppModuleAndroidUtils.openIntent(newIntent)
+        }
+
+        // Always return false here since we don't want to override the default "restore app"
+        // mechanism here
+        return false
+      }
+      action == ImageSaverV2Service.ACTION_TYPE_RESOLVE_DUPLICATES -> {
+        val uniqueId = extras.getString(ImageSaverV2Service.UNIQUE_ID)
+        val imageSaverOptionsJson = extras.getString(ImageSaverV2Service.IMAGE_SAVER_OPTIONS)
+
+        if (uniqueId != null && imageSaverOptionsJson != null) {
+          drawerController?.showResolveDuplicateImagesController(uniqueId, imageSaverOptionsJson)
+        }
+
+        // Always return false here since we don't want to override the default "restore app"
+        // mechanism here
+        return false
+      }
+      action == ImageSaverV2Service.ACTION_TYPE_SHOW_IMAGE_SAVER_SETTINGS -> {
+        val uniqueId = extras.getString(ImageSaverV2Service.UNIQUE_ID)
+        if (uniqueId != null) {
+          drawerController?.showImageSaverV2OptionsController(uniqueId)
+        }
+
+        // Always return false here since we don't want to override the default "restore app"
+        // mechanism here
+        return false
       }
       else -> return false
     }
+  }
+
+  private fun hideImageSaverNotification(context: Context, uniqueId: String) {
+    val notificationManagerCompat = NotificationManagerCompat.from(context)
+    notificationManagerCompat.cancel(uniqueId, uniqueId.hashCode())
   }
 
   private suspend fun restoreFromUrl(intent: Intent?): Boolean {
@@ -271,6 +323,10 @@ class StartActivityStartupHandlerHelper(
     return when (action) {
       NotificationConstants.LAST_PAGE_NOTIFICATION_ACTION -> true
       NotificationConstants.REPLY_NOTIFICATION_ACTION -> true
+      ImageSaverV2Service.ACTION_TYPE_NAVIGATE -> true
+      ImageSaverV2Service.ACTION_TYPE_RESOLVE_DUPLICATES -> true
+      ImageSaverV2Service.ACTION_TYPE_RETRY_FAILED -> true
+      ImageSaverV2Service.ACTION_TYPE_SHOW_IMAGE_SAVER_SETTINGS -> true
       Intent.ACTION_VIEW -> true
       else -> false
     }

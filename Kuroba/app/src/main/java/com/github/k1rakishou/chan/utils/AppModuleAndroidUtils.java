@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.utils;
 
 import android.annotation.SuppressLint;
+import android.app.ActivityManager;
 import android.app.Application;
 import android.content.ComponentName;
 import android.content.Context;
@@ -51,12 +52,13 @@ import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
 import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Debug;
 import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Release;
 import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Unknown;
+import static com.github.k1rakishou.common.AndroidUtils.getActivityManager;
 import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
 import static com.github.k1rakishou.common.AndroidUtils.isAndroidP;
 
 public class AppModuleAndroidUtils {
     private static final String TAG = "AppModuleAndroidUtils";
-    private static CancellableToast cancellableToast = new CancellableToast();
+    private static final CancellableToast cancellableToast = new CancellableToast();
 
     @SuppressLint("StaticFieldLeak")
     private static Application application;
@@ -574,6 +576,12 @@ public class AppModuleAndroidUtils {
         throw new IllegalStateException(
                 "Unknown context wrapper " + context.getClass().getName());
     }
+
+    public static boolean isLowRamDevice() {
+        ActivityManager activityManager = getActivityManager();
+        return activityManager != null && activityManager.isLowRamDevice();
+    }
+
 
     public interface OnMeasuredCallback {
         /**

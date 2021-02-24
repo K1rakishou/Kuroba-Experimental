@@ -1,8 +1,8 @@
 package com.github.k1rakishou.chan.features.search
 
-import com.github.k1rakishou.PersistableChanState
 import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerStateData
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerStateData
+import com.github.k1rakishou.persist_state.IndexAndTop
 
 internal object SearchResultsStateStorage {
   @get:Synchronized
@@ -12,7 +12,7 @@ internal object SearchResultsStateStorage {
 
   @get:Synchronized
   @set:Synchronized
-  var lastRecyclerViewScrollState: PersistableChanState.IndexAndTop? = null
+  var lastRecyclerViewScrollState: IndexAndTop? = null
     private set
 
   @get:Synchronized
@@ -24,9 +24,9 @@ internal object SearchResultsStateStorage {
     this.searchResultsState = searchResultsState
   }
 
-  fun updateLastRecyclerViewScrollState(indexAndTop: PersistableChanState.IndexAndTop) {
+  fun updateLastRecyclerViewScrollState(indexAndTop: IndexAndTop) {
     if (lastRecyclerViewScrollState == null) {
-      lastRecyclerViewScrollState = PersistableChanState.IndexAndTop()
+      lastRecyclerViewScrollState = IndexAndTop()
     }
 
     lastRecyclerViewScrollState!!.index = indexAndTop.index

@@ -16,7 +16,6 @@
  */
 package com.github.k1rakishou;
 
-import com.github.k1rakishou.base_dir.SavedFilesBaseDirSetting;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.prefs.BooleanSetting;
 import com.github.k1rakishou.prefs.CounterSetting;
@@ -289,12 +288,6 @@ public class ChanSettings {
 
     //region MEDIA
     // Saving
-    public static SavedFilesBaseDirSetting saveLocation;
-    public static BooleanSetting saveBoardFolder;
-    public static BooleanSetting saveThreadFolder;
-    public static BooleanSetting saveAlbumBoardFolder;
-    public static BooleanSetting saveAlbumThreadFolder;
-    public static BooleanSetting saveServerFilename;
     public static RangeSetting diskCacheSizeMegabytes;
     public static RangeSetting prefetchDiskCacheSizeMegabytes;
 
@@ -463,13 +456,6 @@ public class ChanSettings {
 
             //region MEDIA
             // Saving
-            saveLocation = new SavedFilesBaseDirSetting(provider);
-            saveBoardFolder = new BooleanSetting(provider, "preference_save_subboard", false);
-            saveThreadFolder = new BooleanSetting(provider, "preference_save_subthread", false);
-            saveAlbumBoardFolder = new BooleanSetting(provider, "preference_save_album_subboard", false);
-            saveAlbumThreadFolder = new BooleanSetting(provider, "preference_save_album_subthread", false);
-            saveServerFilename = new BooleanSetting(provider, "preference_image_save_original", false);
-
             diskCacheSizeMegabytes = new RangeSetting(provider, "disk_cache_size", 512, diskCacheSizeGetMin(), 1024);
             prefetchDiskCacheSizeMegabytes = new RangeSetting(provider, "prefetch_disk_cache_size", 1024, diskCacheSizePrefetchGetMin(), 2048);
 

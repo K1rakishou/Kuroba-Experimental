@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.ThrottlingCoroutineExecutor
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.core.image.InputFile
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
@@ -660,7 +661,7 @@ class ReplyLayoutFilesAreaPresenter(
     }
   }
 
-  private fun fileExceedsMaxFileSize(
+  private suspend fun fileExceedsMaxFileSize(
     replyFile: ReplyFile,
     replyFileMeta: ReplyFileMeta,
     chanDescriptor: ChanDescriptor
@@ -668,7 +669,11 @@ class ReplyLayoutFilesAreaPresenter(
     val chanBoard = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
       ?: return false
 
-    val isProbablyVideo = imageLoaderV2.replyFileIsProbablyVideo(replyFile, replyFileMeta)
+    val isProbablyVideo = imageLoaderV2.fileIsProbablyVideoInterruptible(
+      replyFileMeta.originalFileName,
+      InputFile.JavaFile(replyFile.fileOnDisk)
+    )
+
     val fileOnDiskSize = replyFile.fileOnDisk.length()
 
     if (chanBoard.maxWebmSize > 0 && isProbablyVideo) {

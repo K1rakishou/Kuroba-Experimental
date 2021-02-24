@@ -15,7 +15,9 @@ import kotlinx.coroutines.launch
  * asynchronously.
  * */
 @OptIn(ExperimentalCoroutinesApi::class)
-class RendezvousCoroutineExecutor(private val scope: CoroutineScope) {
+class RendezvousCoroutineExecutor(
+  private val scope: CoroutineScope
+  ) {
   private val channel = Channel<SerializedAction>(Channel.RENDEZVOUS)
   private var job: Job? = null
 

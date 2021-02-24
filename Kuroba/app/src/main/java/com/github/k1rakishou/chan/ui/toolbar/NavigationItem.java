@@ -31,6 +31,7 @@ import java.util.List;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDrawable;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 
 /**
@@ -119,6 +120,24 @@ public class NavigationItem {
 
         public MenuBuilder withItem(int id, Drawable drawable, ToolbarMenuItem.ClickCallback clickCallback) {
             return withItem(new ToolbarMenuItem(id, drawable, clickCallback));
+        }
+
+        public MenuBuilder withItem(
+                int id,
+                int drawable,
+                ToolbarMenuItem.ClickCallback clickCallback,
+                ToolbarMenuItem.ClickCallback longClickCallback
+        ) {
+            return withItem(new ToolbarMenuItem(id, getDrawable(drawable), clickCallback, longClickCallback));
+        }
+
+        public MenuBuilder withItem(
+                int id,
+                Drawable drawable,
+                ToolbarMenuItem.ClickCallback clickCallback,
+                ToolbarMenuItem.ClickCallback longClickCallback
+        ) {
+            return withItem(new ToolbarMenuItem(id, drawable, clickCallback, longClickCallback));
         }
 
         public MenuBuilder withItem(ToolbarMenuItem menuItem) {

@@ -50,6 +50,9 @@ import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryEntryView
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryEntryViewModel_
 import com.github.k1rakishou.chan.features.drawer.epoxy.epoxyHistoryEntryView
 import com.github.k1rakishou.chan.features.drawer.epoxy.epoxyHistoryHeaderView
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController
+import com.github.k1rakishou.chan.features.image_saver.ResolveDuplicateImagesController
 import com.github.k1rakishou.chan.features.search.GlobalSearchController
 import com.github.k1rakishou.chan.features.settings.MainSettingsControllerV2
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
@@ -123,6 +126,8 @@ class DrawerController(
   lateinit var chanThreadManager: ChanThreadManager
   @Inject
   lateinit var dialogFactory: DialogFactory
+  @Inject
+  lateinit var imageSaverV2: ImageSaverV2
 
   private lateinit var rootLayout: TouchBlockingFrameLayout
   private lateinit var container: FrameLayout
@@ -597,6 +602,7 @@ class DrawerController(
 
     val badgeDrawable = bottomNavView.getOrCreateBadge(R.id.action_bookmarks)
 
+    badgeDrawable.verticalOffset = BADGE_DRAWABLE_VERTICAL_OFFSET
     badgeDrawable.maxCharacterCount = BOOKMARKS_BADGE_COUNTER_MAX_NUMBERS
     badgeDrawable.number = state.totalUnseenPostsCount
 
@@ -631,6 +637,7 @@ class DrawerController(
 
     val badgeDrawable = bottomNavView.getOrCreateBadge(R.id.action_settings)
 
+    badgeDrawable.verticalOffset = BADGE_DRAWABLE_VERTICAL_OFFSET
     badgeDrawable.maxCharacterCount = SETTINGS_BADGE_COUNTER_MAX_NUMBERS
     badgeDrawable.number = notificationsCount
 
@@ -796,6 +803,37 @@ class DrawerController(
     }
   }
 
+  fun showResolveDuplicateImagesController(uniqueId: String, imageSaverOptionsJson: String) {
+    val alreadyPresenting = isAlreadyPresenting { controller -> controller is ResolveDuplicateImagesController }
+    if (alreadyPresenting) {
+      return
+    }
+
+    val resolveDuplicateImagesController = ResolveDuplicateImagesController(
+      context,
+      uniqueId,
+      imageSaverOptionsJson
+    )
+
+    presentController(resolveDuplicateImagesController)
+  }
+
+  fun showImageSaverV2OptionsController(uniqueId: String) {
+    val alreadyPresenting = isAlreadyPresenting { controller -> controller is ImageSaverV2OptionsController }
+    if (alreadyPresenting) {
+      return
+    }
+
+    val options = ImageSaverV2OptionsController.Options.ResultDirAccessProblems(
+      uniqueId,
+      onRetryClicked = { imageSaverV2Options -> imageSaverV2.restartUncompleted(uniqueId, imageSaverV2Options) },
+      onCancelClicked = { imageSaverV2.deleteDownload(uniqueId) }
+    )
+
+    val imageSaverV2OptionsController = ImageSaverV2OptionsController(context, options)
+    presentController(imageSaverV2OptionsController)
+  }
+
   companion object {
     private const val TAG = "DrawerController"
     private const val BOOKMARKS_BADGE_COUNTER_MAX_NUMBERS = 5
@@ -805,5 +843,7 @@ class DrawerController(
     private const val ACTION_SHOW_BOOKMARKS = 1
     private const val ACTION_SHOW_NAV_HISTORY = 2
     private const val ACTION_CLEAR_NAV_HISTORY = 3
+
+    private val BADGE_DRAWABLE_VERTICAL_OFFSET = dp(4f)
   }
 }

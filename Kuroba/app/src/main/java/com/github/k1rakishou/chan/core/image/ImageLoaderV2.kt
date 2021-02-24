@@ -1,8 +1,10 @@
 package com.github.k1rakishou.chan.core.image
 
 import android.content.Context
+import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.ColorFilter
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.drawable.BitmapDrawable
@@ -13,6 +15,7 @@ import androidx.core.graphics.drawable.toBitmap
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
 import coil.bitmap.BitmapPool
+import coil.memory.MemoryCache
 import coil.network.HttpException
 import coil.request.*
 import coil.size.*
@@ -20,9 +23,8 @@ import coil.transform.Transformation
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.manager.ReplyManager
-import com.github.k1rakishou.chan.features.reply.data.ReplyFile
-import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.ui.widget.FixedViewSizeResolver
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.chan.utils.getLifecycleFromContext
@@ -37,7 +39,6 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.resume
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
@@ -52,8 +53,8 @@ class ImageLoaderV2(
   private val cacheHandler: CacheHandler,
   private val fileManager: FileManager
 ) {
-  private var imageNotFoundDrawable: BitmapDrawable? = null
-  private var imageErrorLoadingDrawable: BitmapDrawable? = null
+  private var imageNotFoundDrawable: CachedTintedErrorDrawable? = null
+  private var imageErrorLoadingDrawable: CachedTintedErrorDrawable? = null
 
   suspend fun isImageCachedLocally(url: String): Boolean {
     return withContext(Dispatchers.Default) {
@@ -70,8 +71,8 @@ class ImageLoaderV2(
     imageSize: ImageSize,
     transformations: List<Transformation>,
     listener: SimpleImageListener,
-    @DrawableRes errorDrawableId: Int? = null,
-    @DrawableRes notFoundDrawableId: Int? = errorDrawableId
+    @DrawableRes errorDrawableId: Int = R.drawable.ic_image_error_loading,
+    @DrawableRes notFoundDrawableId: Int = R.drawable.ic_image_not_found
   ): Disposable {
     BackgroundUtils.ensureMainThread()
 
@@ -243,7 +244,10 @@ class ImageLoaderV2(
 
       val success = cacheHandler.markFileDownloaded(newCacheFile)
       cacheHandler.fileWasAdded(fileManager.getLength(newCacheFile))
-      Logger.d(TAG, "cacheResultBitmapOnDisk() '$url' done, success: $success")
+
+      if (verboseLogs) {
+        Logger.d(TAG, "cacheResultBitmapOnDisk() '$url' done, success: $success")
+      }
     }
   }
 
@@ -296,6 +300,7 @@ class ImageLoaderV2(
     val request = with(ImageRequest.Builder(context)) {
       lifecycle(lifecycle)
       allowHardware(false)
+      allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
       data(drawable)
       transformations(transformations + RESIZE_TRANSFORMATION)
       applyImageSize(imageSize)
@@ -326,11 +331,11 @@ class ImageLoaderV2(
     imageSize: ImageSize,
     transformations: List<Transformation>,
     throwable: Throwable,
-    notFoundDrawableId: Int? = null,
-    errorDrawableId: Int? = null
+    notFoundDrawableId: Int,
+    errorDrawableId: Int
   ): BitmapDrawable {
     if (throwable.isNotFoundError()) {
-      if (notFoundDrawableId != null) {
+      if (notFoundDrawableId != R.drawable.ic_image_not_found) {
         val drawable = loadFromResources(context, notFoundDrawableId, imageSize, Scale.FIT, transformations)
         if (drawable != null) {
           return drawable
@@ -340,7 +345,7 @@ class ImageLoaderV2(
       return getImageNotFoundDrawable(context)
     }
 
-    if (errorDrawableId != null) {
+    if (errorDrawableId != R.drawable.ic_image_error_loading) {
       val drawable = loadFromResources(context, errorDrawableId, imageSize, Scale.FIT, transformations)
       if (drawable != null) {
         return drawable
@@ -360,6 +365,7 @@ class ImageLoaderV2(
     val request = with(ImageRequest.Builder(context)) {
       lifecycle(lifecycle)
       allowHardware(false)
+      allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
       data(url)
       addHeader("User-Agent", appConstants.userAgent)
 
@@ -390,6 +396,7 @@ class ImageLoaderV2(
     val request = with(ImageRequest.Builder(context)) {
       lifecycle(lifecycle)
       allowHardware(false)
+      allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
       scale(Scale.FIT)
       data(File(cacheFile.getFullPath()))
       applyImageSize(imageSize)
@@ -410,15 +417,131 @@ class ImageLoaderV2(
   ): Disposable {
     val completableDeferred = CompletableDeferred<Unit>()
 
-    val job = appScope.launch(Dispatchers.IO) {
+    val job = appScope.launch(Dispatchers.Main.immediate) {
       try {
         val bitmapDrawable = loadFromResources(context, drawableId, imageSize, scale, transformations)
         if (bitmapDrawable == null) {
-          withContext(Dispatchers.Main) { listener.onResponse(getImageErrorLoadingDrawable(context)) }
+          if (verboseLogs ) {
+            Logger.d(TAG, "loadFromResources() Failed to load '$drawableId', $imageSize")
+          }
+
+          listener.onResponse(getImageErrorLoadingDrawable(context))
           return@launch
         }
 
-        withContext(Dispatchers.Main) { listener.onResponse(bitmapDrawable) }
+        if (verboseLogs ) {
+          Logger.d(TAG, "loadFromResources() Loaded '$drawableId', $imageSize, bitmap size = " +
+            "${bitmapDrawable.intrinsicWidth}x${bitmapDrawable.intrinsicHeight}")
+        }
+
+        listener.onResponse(bitmapDrawable)
+      } finally {
+        completableDeferred.complete(Unit)
+      }
+    }
+
+    return ImageLoaderRequestDisposable(
+      imageLoaderJob = job,
+      imageLoaderCompletableDeferred = completableDeferred
+    )
+  }
+
+  fun loadFromDisk(
+    context: Context,
+    inputFile: InputFile,
+    imageSize: ImageSize,
+    scale: Scale,
+    transformations: List<Transformation>,
+    listener: SimpleImageListener
+  ): Disposable {
+    require(imageSize !is ImageSize.UnknownImageSize) { "Cannot use UnknownImageSize here!" }
+
+    val lifecycle = context.getLifecycleFromContext()
+    val completableDeferred = CompletableDeferred<Unit>()
+
+    val job = appScope.launch(Dispatchers.Main) {
+      try {
+        if (verboseLogs) {
+          Logger.d(TAG, "loadFromDisk() inputFilePath=${inputFile.path()}, imageSize=${imageSize}")
+        }
+
+        val fileName = inputFile.fileName()
+        if (fileName == null) {
+          listener.onResponse(getImageErrorLoadingDrawable(context))
+          return@launch
+        }
+
+        suspend fun getBitmapDrawable(): BitmapDrawable? {
+          BackgroundUtils.ensureBackgroundThread()
+
+          if (fileIsProbablyVideoInterruptible(fileName, inputFile)) {
+            val (width, height) = checkNotNull(imageSize.size())
+
+            val key = MemoryCache.Key.invoke(inputFile.path())
+            val fromCache = imageLoader.memoryCache[key]
+            if (fromCache != null) {
+              return BitmapDrawable(context.resources, fromCache)
+            }
+
+            val decoded = decodedFilePreview(
+              isProbablyVideo = true,
+              inputFile = inputFile,
+              context = context,
+              width = width,
+              height = height,
+              scale = scale,
+              addAudioIcon = false
+            )
+
+            if (decoded !is CachedTintedErrorDrawable) {
+              imageLoader.memoryCache[key] = decoded.bitmap
+            }
+
+            return decoded
+          }
+
+          val request = with(ImageRequest.Builder(context)) {
+            when (inputFile) {
+              is InputFile.JavaFile -> data(inputFile.file)
+              is InputFile.FileUri -> data(inputFile.uri)
+            }
+
+            lifecycle(lifecycle)
+            transformations(transformations)
+            allowHardware(false)
+            allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
+            scale(scale)
+            applyImageSize(imageSize)
+
+            build()
+          }
+
+          return when (val imageResult = imageLoader.execute(request)) {
+            is SuccessResult -> {
+              val bitmap = imageResult.drawable.toBitmap()
+              BitmapDrawable(context.resources, bitmap)
+            }
+            is ErrorResult -> null
+          }
+        }
+
+        val bitmapDrawable = withContext(Dispatchers.IO) { getBitmapDrawable() }
+        if (bitmapDrawable == null) {
+          if (verboseLogs) {
+            Logger.d(TAG, "loadFromDisk() inputFilePath=${inputFile.path()}, " +
+              "imageSize=${imageSize} error or canceled")
+          }
+
+          listener.onResponse(getImageErrorLoadingDrawable(context))
+          return@launch
+        }
+
+        if (verboseLogs) {
+          Logger.d(TAG, "loadFromDisk() inputFilePath=${inputFile.path()}, " +
+            "imageSize=${imageSize} success")
+        }
+
+        listener.onResponse(bitmapDrawable)
       } finally {
         completableDeferred.complete(Unit)
       }
@@ -444,6 +567,7 @@ class ImageLoaderV2(
       lifecycle(lifecycle)
       transformations(transformations)
       allowHardware(false)
+      allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
       scale(scale)
       applyImageSize(imageSize)
 
@@ -490,6 +614,7 @@ class ImageLoaderV2(
       lifecycle(lifecycle)
       transformations(transformations)
       allowHardware(true)
+      allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
       scale(scale)
       applyImageSize(imageSize)
 
@@ -547,15 +672,24 @@ class ImageLoaderV2(
     }
 
     val replyFileMeta = (replyFileMetaMaybe as ModularResult.Value).value
+    val inputFile = InputFile.JavaFile(replyFile.fileOnDisk)
 
-    doWithDecodedFilePreview(
-      replyFile,
-      replyFileMeta,
-      context,
-      PREVIEW_SIZE,
-      PREVIEW_SIZE,
-      scale
-    ) { previewBitmap ->
+    val isProbablyVideo = fileIsProbablyVideoInterruptible(
+      replyFileMeta.originalFileName,
+      inputFile
+    )
+
+    val previewBitmap = decodedFilePreview(
+      isProbablyVideo = isProbablyVideo,
+      inputFile = inputFile,
+      context = context,
+      width = PREVIEW_SIZE,
+      height = PREVIEW_SIZE,
+      scale = scale,
+      addAudioIcon = true
+    ).bitmap
+
+    try {
       val previewFileOnDisk = replyFile.previewFileOnDisk
 
       if (!previewFileOnDisk.exists()) {
@@ -564,55 +698,58 @@ class ImageLoaderV2(
         }
       }
 
-      FileOutputStream(previewFileOnDisk).use { fos ->
-        previewBitmap.compress(Bitmap.CompressFormat.JPEG, 95, fos)
+      try {
+        runInterruptible {
+          FileOutputStream(previewFileOnDisk).use { fos ->
+            previewBitmap.compress(Bitmap.CompressFormat.JPEG, 95, fos)
+          }
+        }
+      } catch (error: CancellationException) {
+        previewFileOnDisk.delete()
+        throw error
       }
+    } finally {
+      previewBitmap.recycleSafe()
     }
   }
 
   @OptIn(ExperimentalTime::class)
-  private suspend fun doWithDecodedFilePreview(
-    replyFile: ReplyFile,
-    replyFileMeta: ReplyFileMeta,
+  private suspend fun decodedFilePreview(
+    isProbablyVideo: Boolean,
+    inputFile: InputFile,
     context: Context,
     width: Int,
     height: Int,
     scale: Scale,
-    func: (Bitmap) -> Unit
-  ) {
-    val isProbablyVideo = replyFileIsProbablyVideo(replyFile, replyFileMeta)
-
-    fun recycleBitmap(bitmap: Bitmap) {
-      if (!bitmap.isRecycled) {
-        bitmap.recycle()
-      }
-    }
+    addAudioIcon: Boolean
+  ): BitmapDrawable {
+    BackgroundUtils.ensureBackgroundThread()
 
     if (isProbablyVideo) {
       val videoFrameDecodeMaybe = Try {
         return@Try measureTimedValue {
-          return@measureTimedValue MediaUtils.decodeVideoFilePreviewImage(
+          return@measureTimedValue MediaUtils.decodeVideoFilePreviewImageInterruptible(
             context,
-            replyFile.fileOnDisk,
+            inputFile,
             width,
             height,
-            true
+            addAudioIcon
           )
         }
       }
 
       if (videoFrameDecodeMaybe is ModularResult.Value) {
         val (videoFrame, decodeVideoFilePreviewImageDuration) = videoFrameDecodeMaybe.value
-        Logger.d(TAG, "decodeVideoFilePreviewImage duration=$decodeVideoFilePreviewImageDuration")
+        Logger.d(TAG, "decodeVideoFilePreviewImageInterruptible duration=$decodeVideoFilePreviewImageDuration")
 
         if (videoFrame != null) {
-          try {
-            func(videoFrame.bitmap)
-          } finally {
-            recycleBitmap(videoFrame.bitmap)
-          }
+          return videoFrame
+        }
+      }
 
-          return
+      videoFrameDecodeMaybe.errorOrNull()?.let { error ->
+        if (error is CancellationException) {
+          throw error
         }
       }
 
@@ -622,7 +759,7 @@ class ImageLoaderV2(
     val (fileImagePreviewMaybe, getFileImagePreviewDuration) = measureTimedValue {
       return@measureTimedValue getFileImagePreview(
         context = context,
-        file = replyFile.fileOnDisk,
+        inputFile = inputFile,
         transformations = emptyList(),
         scale = scale,
         width = width,
@@ -633,21 +770,24 @@ class ImageLoaderV2(
     Logger.d(TAG, "getFileImagePreviewDuration=$getFileImagePreviewDuration")
 
     if (fileImagePreviewMaybe is ModularResult.Value) {
-      try {
-        func(fileImagePreviewMaybe.value.bitmap)
-      } finally {
-        recycleBitmap(fileImagePreviewMaybe.value.bitmap)
-      }
+      return fileImagePreviewMaybe.value
+    }
 
-      return
+    fileImagePreviewMaybe.errorOrNull()?.let { error ->
+      if (error is CancellationException) {
+        throw error
+      }
     }
 
     // Do not recycle bitmaps that are supposed to always stay in memory
-    func(getImageErrorLoadingDrawable(context).bitmap)
+    return getImageErrorLoadingDrawable(context)
   }
 
-  fun replyFileIsProbablyVideo(replyFile: ReplyFile, replyFileMeta: ReplyFileMeta): Boolean {
-    val hasVideoExtension = StringUtils.extractFileNameExtension(replyFileMeta.originalFileName)
+  suspend fun fileIsProbablyVideoInterruptible(
+    fileName: String,
+    inputFile: InputFile
+  ): Boolean {
+    val hasVideoExtension = StringUtils.extractFileNameExtension(fileName)
       ?.let { extension -> extension == "mp4" || extension == "webm" }
       ?: false
 
@@ -655,61 +795,49 @@ class ImageLoaderV2(
       return true
     }
 
-    return MediaUtils.decodeFileMimeType(replyFile.fileOnDisk)
+    return MediaUtils.decodeFileMimeTypeInterruptible(inputFile)
       ?.let { mimeType -> MimeTypes.isVideo(mimeType) }
       ?: false
   }
 
   private suspend fun getFileImagePreview(
     context: Context,
-    file: File,
+    inputFile: InputFile,
     transformations: List<Transformation>,
     scale: Scale,
     width: Int,
     height: Int
   ): ModularResult<BitmapDrawable> {
-    val lifecycle = context.getLifecycleFromContext()
+    return Try {
+      val lifecycle = context.getLifecycleFromContext()
 
-    return suspendCancellableCoroutine { cancellableContinuation ->
       val request = with(ImageRequest.Builder(context)) {
-        data(file)
+        when (inputFile) {
+          is InputFile.FileUri -> data(inputFile.uri)
+          is InputFile.JavaFile -> data(inputFile.file)
+        }
+
         lifecycle(lifecycle)
         transformations(transformations)
         allowHardware(true)
+        allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
         scale(scale)
         size(width, height)
-
-        listener(
-          onError = { _, throwable ->
-            cancellableContinuation.resume(ModularResult.error(throwable))
-          },
-          onCancel = {
-            cancellableContinuation.resume(ModularResult.error(CancellationException()))
-          }
-        )
-        target(
-          onSuccess = { drawable ->
-            cancellableContinuation.resume(ModularResult.value(drawable as BitmapDrawable))
-          }
-        )
 
         build()
       }
 
-      val disposable = imageLoader.enqueue(request)
-
-      cancellableContinuation.invokeOnCancellation {
-        if (!disposable.isDisposed) {
-          disposable.dispose()
-        }
+      when (val imageResult = imageLoader.execute(request)) {
+        is SuccessResult -> return@Try imageResult.drawable as BitmapDrawable
+        is ErrorResult -> throw imageResult.throwable
       }
     }
   }
 
   @Synchronized
   private fun getImageNotFoundDrawable(context: Context): BitmapDrawable {
-    if (imageNotFoundDrawable != null) {
-      return imageNotFoundDrawable!!
+    if (imageNotFoundDrawable != null && imageNotFoundDrawable!!.isDarkTheme == themeEngine.chanTheme.isDarkTheme) {
+      return imageNotFoundDrawable!!.bitmapDrawable
     }
 
     val drawable = themeEngine.tintDrawable(
@@ -719,19 +847,25 @@ class ImageLoaderV2(
 
     requireNotNull(drawable) { "Couldn't load R.drawable.ic_image_not_found" }
 
-    imageNotFoundDrawable = if (drawable is BitmapDrawable) {
+    val bitmapDrawable = if (drawable is BitmapDrawable) {
       drawable
     } else {
       BitmapDrawable(context.resources, drawable.toBitmap())
     }
+
+    imageNotFoundDrawable = CachedTintedErrorDrawable(
+      context.applicationContext.resources,
+      bitmapDrawable,
+      themeEngine.chanTheme.isDarkTheme
+    )
 
     return imageNotFoundDrawable!!
   }
 
   @Synchronized
   private fun getImageErrorLoadingDrawable(context: Context): BitmapDrawable {
-    if (imageErrorLoadingDrawable != null) {
-      return imageErrorLoadingDrawable!!
+    if (imageErrorLoadingDrawable != null && imageErrorLoadingDrawable!!.isDarkTheme == themeEngine.chanTheme.isDarkTheme) {
+      return imageErrorLoadingDrawable!!.bitmapDrawable
     }
 
     val drawable = themeEngine.tintDrawable(
@@ -741,11 +875,17 @@ class ImageLoaderV2(
 
     requireNotNull(drawable) { "Couldn't load R.drawable.ic_image_error_loading" }
 
-    imageErrorLoadingDrawable = if (drawable is BitmapDrawable) {
+    val bitmapDrawable = if (drawable is BitmapDrawable) {
       drawable
     } else {
       BitmapDrawable(context.resources, drawable.toBitmap())
     }
+
+    imageErrorLoadingDrawable = CachedTintedErrorDrawable(
+      context.applicationContext.resources,
+      bitmapDrawable,
+      themeEngine.chanTheme.isDarkTheme
+    )
 
     return imageErrorLoadingDrawable!!
   }
@@ -776,8 +916,8 @@ class ImageLoaderV2(
   sealed class ImageListenerParam {
     class SimpleImageListener(
       val listener: ImageLoaderV2.SimpleImageListener,
-      @DrawableRes val errorDrawableId: Int? = null,
-      @DrawableRes val notFoundDrawableId: Int? = errorDrawableId
+      @DrawableRes val errorDrawableId: Int,
+      @DrawableRes val notFoundDrawableId: Int
     ) : ImageListenerParam()
 
     class FailureAwareImageListener(
@@ -796,6 +936,14 @@ class ImageLoaderV2(
   }
 
   sealed class ImageSize {
+    suspend fun size(): PixelSize? {
+      return when (this) {
+        is FixedImageSize -> PixelSize(width, height)
+        is MeasurableImageSize -> sizeResolver.size() as PixelSize
+        UnknownImageSize -> null
+      }
+    }
+
     object UnknownImageSize : ImageSize() {
       override fun toString(): String = "UnknownImageSize"
     }
@@ -888,6 +1036,28 @@ class ImageLoaderV2(
       )
 
       return scaledBitmap
+    }
+  }
+
+  private class CachedTintedErrorDrawable(
+    resources: Resources,
+    val bitmapDrawable: BitmapDrawable,
+    val isDarkTheme: Boolean
+  ) : BitmapDrawable(resources, bitmapDrawable.bitmap) {
+    override fun draw(canvas: Canvas) {
+      bitmapDrawable.draw(canvas)
+    }
+
+    override fun setAlpha(alpha: Int) {
+      bitmapDrawable.alpha = alpha
+    }
+
+    override fun setColorFilter(colorFilter: ColorFilter?) {
+      bitmapDrawable.colorFilter = colorFilter
+    }
+
+    override fun getOpacity(): Int {
+      return bitmapDrawable.opacity
     }
   }
 

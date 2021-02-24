@@ -1,7 +1,9 @@
 package com.github.k1rakishou.chan.core.base
 
 import com.github.k1rakishou.core_logger.Logger
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
@@ -14,12 +16,15 @@ import kotlinx.coroutines.launch
  * be two callbacks running at the same, they will be queued and executed sequentially instead.
  * */
 @OptIn(ExperimentalCoroutinesApi::class)
-class SerializedCoroutineExecutor(private val scope: CoroutineScope) {
+class SerializedCoroutineExecutor(
+  private val scope: CoroutineScope,
+  private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate
+) {
   private val channel = Channel<SerializedAction>(Channel.UNLIMITED)
   private var job: Job? = null
 
   init {
-    job = scope.launch {
+    job = scope.launch(dispatcher) {
       channel.consumeEach { serializedAction ->
         try {
           serializedAction.action()

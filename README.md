@@ -30,6 +30,8 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan
 
 - Ability to attach multiple media files to reply, attach media files that was shared by external apps (event by some keyboards), attach remote media files by URL, etc.
 
+- New image downloader. Allows downloading images while the app is in background, retrying failed to download images, resolving duplicates, etc. 
+
 - Lots of other tiny improvements.
 
 Screenshots can be found [here](https://github.com/K1rakishou/Kuroba-Experimental/tree/develop/fastlane/metadata/android/en-US/images)

@@ -47,7 +47,7 @@ class ChanFilterWatchLocalSource(
     }
 
     val bookmarkIdMap = chanDescriptorCache.getManyBookmarkThreadDescriptors(
-      threadBookmarkIds
+      threadBookmarkIds.toSet()
     )
 
     if (bookmarkIdMap.isEmpty()) {
@@ -76,7 +76,9 @@ class ChanFilterWatchLocalSource(
         return@map ThreadBookmarkDBId(chanFilterWatchGroupEntity.ownerThreadBookmarkDatabaseId)
       }
 
-    val bookmarkIdMap = chanDescriptorCache.getManyBookmarkThreadDescriptors(threadBookmarkDatabaseIds)
+    val bookmarkIdMap = chanDescriptorCache.getManyBookmarkThreadDescriptors(
+      threadBookmarkDatabaseIds.toSet()
+    )
 
     return chanFilterWatchGroupEntities.mapNotNull { chanFilterWatchGroupEntity ->
       val threadBookmarkId = ThreadBookmarkDBId(chanFilterWatchGroupEntity.ownerThreadBookmarkDatabaseId)

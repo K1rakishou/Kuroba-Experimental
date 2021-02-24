@@ -109,6 +109,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="retry">Retry</string>
     <string name="apply">Apply</string>
     <string name="clear">Clear</string>
+    <string name="resolve">Resolve</string>
     <string name="unhandled_error">Unhandled error!</string>
     <string name="unknown_error">Unknown error</string>
     <string name="loading">Loading…</string>
@@ -197,6 +198,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_copy_image_url">Copy file url</string>
     <string name="action_share_content">Share file content</string>
     <string name="action_download_content">Download file</string>
+    <string name="action_download_content_with_options">Download file (show options)</string>
 
     <string name="open_link_not_matched">%1$s cannot open this link; it will open in your browser instead.</string>
 
@@ -374,6 +376,27 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="controller_image_viewer_save_image">Save image</string>
     <string name="controller_image_viewer_disabled">Disabled</string>
 
+    <string name="controller_image_save_options_image_name_options">Image name options</string>
+    <string name="controller_image_save_options_image_name_options_use_server_name">Use server file name</string>
+    <string name="controller_image_save_options_image_name_options_use_original_name">Use original file name</string>
+    <string name="controller_image_save_options_duplicate_resolution_options">Duplicate resolution options</string>
+    <string name="controller_image_save_options_duplicate_resolution_options_ask">Ask what to do</string>
+    <string name="controller_image_save_options_duplicate_resolution_options_overwrite">Overwrite already existing image</string>
+    <string name="controller_image_save_options_duplicate_resolution_options_skip">Skip image</string>
+    <string name="controller_image_save_options_root_dir">Root directory:</string>
+    <string name="controller_image_save_options_output_dir_append_site_name">Append site name</string>
+    <string name="controller_image_save_options_output_dir_append_board_code">Append board code</string>
+    <string name="controller_image_save_options_output_dir_append_thread_id">Append thread id</string>
+    <string name="controller_image_save_options_additional_dirs">Additional directories (\'\\\' separated)</string>
+    <string name="controller_image_save_options_output_file">Output file</string>
+    <string name="controller_image_save_options_override_file_name">Override file name (without extension)</string>
+    <string name="controller_image_save_options_click_to_set_root_dir">Click to set root directory</string>
+    <string name="controller_image_save_options_root_dir_not_set">Root dir is not set!</string>
+    <string name="controller_image_save_options_file_name_is_blank">File name is blank!</string>
+    <string name="controller_image_save_options_file_name_bad_symbols">File name contains bad symbols! Only Letters/numbers and \'_\' symbol are allowed!</string>
+    <string name="controller_image_save_options_sub_dirs_are_not_valid">Sub dirs are not valid!</string>
+    <string name="controller_image_save_options_canceled_with_reason">Canceled: %1$s</string>
+
     <string name="board_check_all">Check all</string>
 
     <string name="archive_title">%s archive</string>
@@ -462,7 +485,7 @@ Note that for country code filtering, troll country codes should be prepended wi
 
     <string name="album_download_screen">Select images (%1$d / %2$d)</string>
     <string name="album_download_none_checked">Please select images to download</string>
-    <string name="album_download_confirm">%1$s will be downloaded to %2$s</string>
+    <string name="album_download_no_suitable_images">No suitable images to download were found (not inlined, not hidden)</string>
     <string name="image_saver_album_download_success">Finished saving images; downloaded to %1$s</string>
 
     <string name="report_screen">Report %1$s</string>
@@ -663,20 +686,7 @@ Note that for country code filtering, troll country codes should be prepended wi
 
     <!-- Media general group -->
     <string name="settings_screen_media">Media</string>
-    <string name="settings_group_saving">Media saving</string>
 
-    <string name="setting_save_board_folder">Save images in board folders</string>
-    <string name="setting_save_board_folder_description">Create a folder for each board when saving individual images</string>
-    <string name="setting_save_thread_folder">Save images in thread folders</string>
-    <string name="setting_save_thread_folder_description">Create a folder for each thread when saving individual images</string>
-
-    <string name="setting_save_album_board_folder">Save albums in board folders</string>
-    <string name="setting_save_album_board_folder_description">Create a folder for each board when saving albums</string>
-    <string name="setting_save_album_thread_folder">Save albums in thread folders</string>
-    <string name="setting_save_album_thread_folder_description">Create a folder for each thread when saving albums</string>
-
-    <string name="setting_save_server_filename">Save server filename</string>
-    <string name="setting_save_server_filename_description">Save the image with the filename the site assigned. If disabled, save the image with the filename the uploader assigned.</string>
     <string name="save_location_screen">Save location</string>
     <string name="save_location_storage_permission_required_title">Storage permission required</string>
     <string name="save_location_storage_permission_required">
@@ -1037,46 +1047,13 @@ Don't have a 4chan Pass?<br>
     <string name="thread_layout_background_watcher_is_disabled_message">Thread is currently being downloaded, but the background watcher is disabled so it won\'t be incrementally updated. To enable incremental thread updating, you have to enable the background thread watcher.</string>
     <string name="cannot_open_in_browser_already_deleted">Can\'t open this thread in a browser</string>
     <string name="cannot_shared_thread_already_deleted">Can\'t share this thread</string>
-    <string name="album_download_could_not_save_one_or_more_images">Could not save one or more images</string>
     <string name="thread_follow_history_has_been_cleared">Thread follow history has been cleared</string>
     <string name="thread_loading_error_title">Failed to load thread</string>
 
-    <string name="media_settings_use_saf_for_save_location_dialog_title">Use the new Storage Access Framework API to choose images download directory?</string>
-    <string name="media_settings_use_saf_for_save_location_dialog_message">If you choose to use the SAF you will be able to choose an SD-card as a place to store downloaded images</string>
-    <string name="media_settings_use_saf_dialog_positive_button_text">Use SAF API</string>
-    <string name="media_settings_use_saf_dialog_negative_button_text">Use old API</string>
-    <string name="media_settings_could_not_copy_files">Could not copy one directory\'s file into another one</string>
-    <string name="media_settings_files_copied">Successfully copied files</string>
-    <string name="media_settings_would_you_like_to_delete_file_in_old_dir">Would you like to delete files in the old directory?</string>
-    <string name="media_settings_file_have_been_copied">Files have been copied and now exist in two directories. You may want to remove files in the old directory \n\n\"%1$s\"\n\nsince you won\'t need them anymore. \nThis operation will DELETE ALL the files in that directory, so if you had some files not related to this app you probably should do that manually.</string>
-    <string name="media_settings_could_not_delete_files_in_old_dir">Couldn\'t delete files in the old directory</string>
-    <string name="media_settings_old_files_deleted">Successfully deleted files in the old directory</string>
-    <string name="media_settings_copy_files">Copy files</string>
-    <string name="media_settings_do_you_want_to_copy_files">Do you want to copy %1$d files from old directory to the new one?"</string>
-    <string name="media_settings_move_saved_files_to_new_dir">Move old saved files to the new directory?</string>
-    <string name="media_settings_move_saved_files_to_new_dir_description">Move files from \n\n\"%1$s\"\n\n directory to \n\n\"%2$s\"\n\ndirectory? This operation may take quite some time. Once started this operation must not be canceled. \nThis operation will move ALL the files, so if you had some files not related to this app you probably should do that manually.</string>
-    <string name="media_settings_old_saved_files_base_dir_not_registered">Old saved files base directory is probably not registered (newBaseDirectoryFile returned null)</string>
-    <string name="media_settings_new_saved_files_base_dir_not_registered">New saved files base directory is probably not registered</string>
-    <string name="media_settings_no_files_to_copy">No files to copy</string>
-    <string name="media_settings_copying_file">Copying file %1$d out of %2$d</string>
-    <string name="media_settings_some_thread_downloads_are_still_processed">Some thread downloads are still being processed</string>
-    <string name="media_settings_cannot_continue_write_permission">Cannot continue without the WRITE_EXTERNAL_STORAGE permission</string>
-    <string name="media_settings_base_directory_is_already_registered">Cannot use this directory because it is already in use</string>
-    <string name="media_settings_saf_explanation_title">Storage Access Framework</string>
-    <string name="media_settings_saf_explanation_message">The app was updated to use the latest targetSdk 30. This means that it cannot use the old way to access external files anymore and is forced to use Storage Access Framework (SAF). SAF is way slower than the old file API and may not work on some devices. There is no way to avoid it (Other than downgrading your Android version).</string>
     <string name="setting_youtube_dur_title">Enable Youtube durations</string>
     <string name="setting_youtube_dur_description">Adds duration parsing to Youtube titles; does not do anything with titles off</string>
     <string name="pdf_not_viewable">PDFs are not internally viewable; you can still download this file.</string>
     <string name="swf_not_viewable">SWFs are not internally viewable; you can still download this file.</string>
-    <string name="files_base_dir_does_not_exist"><![CDATA[Base directory for files does not exist! Set it manually in the settings (Media -> Save location)]]></string>
-    <string name="image_saver_could_not_figure_out_save_location">Couldn\'t figure out save location</string>
-    <string name="image_saver_canceled_by_user_message">Canceled by user</string>
-    <string name="image_saver_unknown_location_message">Unknown location</string>
-    <string name="image_saver_failed_to_save_image">Failed to save the image. Reason: %s</string>
-    <string name="image_saver_no_write_permission_message">Cannot start saving images without the WRITE_EXTERNAL_STORAGE permission</string>
-    <string name="album_download_batch_image_processed_message">Downloaded %1$d out of %2$d (%3$d failed)</string>
-    <string name="media_settings_image_click_preload_strategy">Image preload strategy</string>
-    <string name="media_settings_image_click_preload_strategy_description">When opening up an image pager, determines what image(s) should be preloaded next.</string>
 
     <string name="lorem_ipsum">
         The standard Lorem Ipsum passage, used since the 1500s
@@ -1155,12 +1132,13 @@ Don't have a 4chan Pass?<br>
 
     <string name="media_settings_base_dir_reset_message">Base directory reset to default</string>
     <string name="media_settings_could_not_create_default_baseDir">Could not create default base dir: %1$s</string>
+    <string name="media_settings_image_click_preload_strategy">Image preload strategy</string>
+    <string name="media_settings_image_click_preload_strategy_description">When opening up an image pager, determines what image(s) should be preloaded next.</string>
 
     <string name="board_search_links_are_disabled">Board search links are disabled for now</string>
     <string name="site_uses_dynamic_boards">"Unable to go to board (site likely has dynamic boards). Add the board using the boards menu first."</string>
     <string name="archive_is_not_enabled">Archive \"%1$s\" is not enabled or does not exist</string>
 
-    <string name="could_not_start_saving_no_permissions">Could not start downloading images, no WRITE_ACCESS permission was granted</string>
     <string name="update_manager_copy_apk_title">Copy apk?</string>
     <string name="update_manager_copy_apk_message">Would you like to store this apk?</string>
     <string name="update_manager_could_not_convert_uri">Couldn\'t convert uri (%1$s) into an ExternalFile</string>
@@ -1185,6 +1163,24 @@ Don't have a 4chan Pass?<br>
     <string name="setting_exclusion_zones_edit_or_remove_zone_title">Edit or remove zone?</string>
     <string name="setting_exclusion_zones_zone_remove_message">Zone removed. Restart the app for the changes to kick in.</string>
     <string name="setting_exclusion_zones_zone_added_message">New exclusion zone added. Restart the app for the changes to kick in.</string>
+
+    <string name="image_saver_resolve_duplicate_images">Resolve duplicate images</string>
+    <string name="image_saver_resolve_duplicate_images_explanation">Select images that you want to retain. In case of selecting server image, the local duplicate will be overwritten with server image. In case of selecting local image, it will be left as is.</string>
+    <string name="image_saver_images_from_server">Images from server</string>
+    <string name="image_saver_local_images_on_disk">Local images on disk</string>
+    <string name="image_saver_out_of_disk_space">Out of disk space!</string>
+    <string name="image_saver_failed_to_access_root_dir">Failed to access root directory!\nClick \"show settings\" and then check that it exists and you have access to it!</string>
+    <string name="image_saver_root_dir_is_inaccessible">Root directory is inaccessible</string>
+    <string name="image_saver_root_uri_is_not_a_dir">Uri \'%1$s\' is not a directory</string>
+    <string name="image_saver_root_dir_uri_does_not_exist">Directory \'%1$s\' does not exist</string>
+    <string name="image_saver_show_images_saver_settings">Show settings</string>
+    <string name="image_saver_navigate">Navigate</string>
+    <string name="image_saver_resolve_duplicates">Resolve duplicates</string>
+    <string name="image_saver_downloading_images">Downloading images</string>
+    <string name="image_saver_no_unresolved_images_found">No unresolved duplicate images were found</string>
+    <string name="image_saver_finished_downloading_images_success">Successfully finished downloading %1$d images</string>
+    <string name="image_saver_finished_downloading_images_progress">Downloading %1$d/%2$d images</string>
+    <string name="image_saver_finished_downloading_images_with_errors">Finished downloading %1$d images with errors</string>
 
     <string name="bookmarks_tab_title">Bookmarks</string>
     <string name="filter_watches_tab_title">Filter watches</string>

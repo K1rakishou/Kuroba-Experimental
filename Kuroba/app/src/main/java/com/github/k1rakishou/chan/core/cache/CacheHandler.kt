@@ -186,13 +186,11 @@ class CacheHandler(
     return fileManager.create(chunkCacheFile) as RawFile?
   }
 
-  @JvmOverloads
   @Synchronized
   fun cacheFileExists(fileUrl: String): Boolean {
     return fileManager.exists(getCacheFileInternal(fileUrl))
   }
 
-  @JvmOverloads
   @Synchronized
   fun deleteCacheFileByUrl(url: String): Boolean {
     return deleteCacheFile(hashUrl(url))

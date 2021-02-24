@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.utils
 
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
+import okio.HashingSink
 import okio.HashingSource
 import okio.blackholeSink
 import okio.buffer
@@ -30,6 +31,16 @@ object HashingUtil {
 
   fun stringHash(inputString: String): String {
     return inputString.encodeUtf8().md5().hex()
+  }
+
+  fun stringsHash(inputStrings: Collection<String>): String {
+    return HashingSink.sha256(blackholeSink()).use { hashingSink ->
+      hashingSink.buffer().outputStream().use { outputStream ->
+        inputStrings.forEach { inputString -> inputString.encodeUtf8().write(outputStream) }
+      }
+
+      return@use hashingSink.hash.hex()
+    }
   }
 
   @JvmStatic
