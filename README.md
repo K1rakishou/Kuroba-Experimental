@@ -38,6 +38,8 @@ Screenshots can be found [here](https://github.com/K1rakishou/Kuroba-Experimenta
 
 ### New stuff and important annoncements:
 
+#### - (2/24/20) Beta apk are now built as release apk not debug to make them more performant. The downside here is that you won't be able to automatically install v0.6.x-beta and will have to do that manually. You will have to export all your settings, remove the previous beta version, install the new one and then import the settings back. This is pretty inconvenient but as a result you will have an app with the same performance as the release version.
+
 #### - (1/27/20) F-Droid version is now available.
 
 #### - (10/7/20) Unfortunatelly, built-in updater for release versions was broken in one of the releases so people using Android M and below won't be able to use it to update to a newer version. You will have to install  the update manually (it is fixed in [v0.2.10](https://github.com/K1rakishou/Kuroba-Experimental/releases/tag/v0.2.10-release)). If you are using Android N and above you should be fine. Beta versions are fine too.
