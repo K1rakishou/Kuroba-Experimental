@@ -334,7 +334,9 @@ open class ArchivesManager(
     private const val TAG = "ArchivesManager"
     private const val ARCHIVES_JSON_FILE_NAME = "archives.json"
     private const val FOOLFUUKA_THREAD_ENDPOINT_FORMAT = "https://%s/_/api/chan/thread/?board=%s&num=%d"
-    private const val FOOLFUUKA_POST_ENDPOINT_FORMAT = "https://%s/_/api/chan/post/?board=%s&num=%d"
+
+    // wakarimasen.moe uses a slightly different request url
+    // https://archive.wakarimasen.moe/_/api/chan/thread/&board=a&num=216913439
 
     private const val WWW_PREFIX = "www."
   }

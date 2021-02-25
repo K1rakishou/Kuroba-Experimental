@@ -135,6 +135,8 @@ class HistoryNavigationManager(
 
   suspend fun awaitUntilInitialized() = suspendableInitializer.awaitUntilInitialized()
 
+  fun isReady() = suspendableInitializer.isInitialized()
+
   fun canCreateNavElement(
     bookmarksManager: BookmarksManager,
     chanDescriptor: ChanDescriptor
@@ -163,15 +165,19 @@ class HistoryNavigationManager(
   fun createNewNavElement(
     descriptor: ChanDescriptor,
     thumbnailImageUrl: HttpUrl,
-    title: String
+    title: String,
+    createdByBookmarkCreation: Boolean
   ) {
     BackgroundUtils.ensureMainThread()
 
     val newNavigationElement = NewNavigationElement(descriptor, thumbnailImageUrl, title)
-    createNewNavElements(listOf(newNavigationElement))
+    createNewNavElements(listOf(newNavigationElement), createdByBookmarkCreation)
   }
 
-  fun createNewNavElements(newNavigationElements: Collection<NewNavigationElement>) {
+  fun createNewNavElements(
+    newNavigationElements: Collection<NewNavigationElement>,
+    createdByBookmarkCreation: Boolean
+  ) {
     BackgroundUtils.ensureMainThread()
 
     if (newNavigationElements.isEmpty()) {
@@ -191,7 +197,7 @@ class HistoryNavigationManager(
         is ChanDescriptor.CatalogDescriptor -> NavHistoryElement.Catalog(descriptor, navElementInfo)
       }
 
-      if (addNewOrIgnore(navElement)) {
+      if (addNewOrIgnore(navElement, createdByBookmarkCreation)) {
         created = true
       }
     }
@@ -337,7 +343,7 @@ class HistoryNavigationManager(
     }
   }
 
-  private fun addNewOrIgnore(navElement: NavHistoryElement): Boolean {
+  private fun addNewOrIgnore(navElement: NavHistoryElement, createdByBookmarkCreation: Boolean): Boolean {
     BackgroundUtils.ensureMainThread()
 
     return lock.write {
@@ -346,7 +352,16 @@ class HistoryNavigationManager(
         return@write false
       }
 
-      navigationStack.add(0, navElement)
+      if (navigationStack.isEmpty() || !createdByBookmarkCreation) {
+        navigationStack.add(0, navElement)
+      } else {
+        // Do not overwrite the top of nav stack that we use to restore previously opened thread.
+        // Otherwise this may lead to unexpected behaviors, for example, a situation when starting
+        // the app after a bookmark was created when the app was in background (filter watching)
+        // the user will see the last bookmarked thread instead of last opened thread.
+        navigationStack.add(1, navElement)
+      }
+
       return@write true
     }
   }

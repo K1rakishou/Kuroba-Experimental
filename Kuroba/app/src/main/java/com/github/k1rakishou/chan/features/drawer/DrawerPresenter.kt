@@ -54,6 +54,13 @@ class DrawerPresenter(
     scope.launch {
       setState(HistoryControllerState.Loading)
 
+      // If we somehow managed to get here twice (dur to some Android weirdness) we need to manually
+      // reload navigation history, otherwise we will be stuck in Loading state until something
+      // updates the nav history.
+      if (historyNavigationManager.isReady()) {
+        reloadNavigationHistory()
+      }
+
       historyNavigationManager.listenForNavigationStackChanges()
         .asFlow()
         .collect { reloadNavigationHistory() }
@@ -79,7 +86,11 @@ class DrawerPresenter(
       val newNavigationElements = bookmarkChange.threadDescriptors
         .mapNotNull { threadDescriptor -> createNewNavigationElement(threadDescriptor) }
 
-      historyNavigationManager.createNewNavElements(newNavigationElements)
+      historyNavigationManager.createNewNavElements(
+        newNavigationElements,
+        createdByBookmarkCreation = true
+      )
+
       return
     }
 

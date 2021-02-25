@@ -27,14 +27,4 @@ class ArchiveDescriptor(
     return "AD(name='$name', domain='$domain')"
   }
 
-  companion object {
-    // Default value for archiveId key in the database. If a post has archiveId == 0L that means the
-    // post was fetched from the original server and not from an archive.
-    const val NO_ARCHIVE_ID = 0L
-
-    @JvmStatic
-    fun isActualArchive(archiveId: Long): Boolean {
-      return archiveId != NO_ARCHIVE_ID
-    }
-  }
 }

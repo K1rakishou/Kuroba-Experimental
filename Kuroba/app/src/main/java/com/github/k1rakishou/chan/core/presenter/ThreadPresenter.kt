@@ -811,7 +811,12 @@ class ThreadPresenter @Inject constructor(
         val siteIconUrl = site.icon().url!!
         val title = String.format(Locale.ENGLISH, "%s/%s", site.name(), localChanDescriptor.boardCode())
 
-        historyNavigationManager.createNewNavElement(localChanDescriptor, siteIconUrl, title)
+        historyNavigationManager.createNewNavElement(
+          descriptor = localChanDescriptor,
+          thumbnailImageUrl = siteIconUrl,
+          title = title,
+          createdByBookmarkCreation = false
+        )
       }
 
       is ChanDescriptor.ThreadDescriptor -> {
@@ -833,7 +838,12 @@ class ThreadPresenter @Inject constructor(
         )
 
         if (opThumbnailUrl != null && title.isNotEmpty()) {
-          historyNavigationManager.createNewNavElement(localChanDescriptor, opThumbnailUrl, title)
+          historyNavigationManager.createNewNavElement(
+            descriptor = localChanDescriptor,
+            thumbnailImageUrl = opThumbnailUrl,
+            title = title,
+            createdByBookmarkCreation = false
+          )
         }
       }
     }

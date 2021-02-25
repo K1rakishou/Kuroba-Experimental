@@ -756,7 +756,8 @@ class MainController(
 
         if (ChanSettings.drawerShowBookmarkedThreads.get()) {
           historyNavigationManager.createNewNavElements(
-            drawerPresenter.mapBookmarksIntoNewNavigationElements()
+            drawerPresenter.mapBookmarksIntoNewNavigationElements(),
+            createdByBookmarkCreation = false
           )
         } else {
           val bookmarkDescriptors = bookmarksManager
