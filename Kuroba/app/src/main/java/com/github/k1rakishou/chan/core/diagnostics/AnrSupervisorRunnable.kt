@@ -39,10 +39,12 @@ class AnrSupervisorRunnable(
 
           if (!callback.isCalled) {
             if (ChanSettings.collectANRs.get()) {
-              val stackTraces = AnrException(handler.looper.thread)
+              val stackTracesByteStream = AnrException(handler.looper.thread)
                 .collectAllStackTraces(reportManager.getReportFooter())
 
-              reportManager.storeAnr(stackTraces)
+              if (stackTracesByteStream != null) {
+                reportManager.storeAnr(stackTracesByteStream)
+              }
             }
 
             callback.wait()

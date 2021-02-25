@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.diagnostics
 
+import android.os.Looper
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import java.util.*
@@ -11,16 +12,39 @@ class AnrException(thread: Thread) : Exception("ANR detected") {
     stackTrace = thread.stackTrace
   }
 
-  fun collectAllStackTraces(reportFooter: String): ByteArrayOutputStream {
+  fun collectAllStackTraces(reportFooter: String): ByteArrayOutputStream? {
     val bos = ByteArrayOutputStream(4096)
     val ps = PrintStream(bos)
-    printProcessMap(ps, reportFooter)
+
+    if (!printProcessMap(ps, reportFooter)) {
+      return null
+    }
 
     return bos
   }
 
-  private fun printProcessMap(ps: PrintStream, reportFooter: String) {
+  private fun printProcessMap(ps: PrintStream, reportFooter: String): Boolean {
     val stackTraces = Thread.getAllStackTraces()
+
+    val mainThread = stackTraces.keys.firstOrNull { thread -> thread == Looper.getMainLooper().thread }
+    checkNotNull(mainThread) { "Couldn't find main thread???!!!" }
+
+    // Sometimes ANR detection is triggered the main thread is not actually blocked
+    // (because of coroutines or some other shit) so we need to check that the main thread is actually
+    // blocked or is waiting for something.
+    val continueDump = when (mainThread.state) {
+      null,
+      Thread.State.NEW,
+      Thread.State.RUNNABLE,
+      Thread.State.TERMINATED -> false
+      Thread.State.BLOCKED,
+      Thread.State.WAITING,
+      Thread.State.TIMED_WAITING -> true
+    }
+
+    if (!continueDump) {
+      return false
+    }
 
     for (thread in stackTraces.keys) {
       if (stackTraces[thread]?.size ?: 0 > 0) {
@@ -31,6 +55,8 @@ class AnrException(thread: Thread) : Exception("ANR detected") {
 
     ps.println(reportFooter)
     ps.flush()
+
+    return true
   }
 
   private fun printThread(
