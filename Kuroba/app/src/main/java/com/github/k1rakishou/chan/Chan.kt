@@ -22,6 +22,7 @@ import android.app.Application.ActivityLifecycleCallbacks
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
+import android.os.StrictMode
 import com.github.k1rakishou.BookmarkGridViewInfo
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettingsInfo
@@ -190,6 +191,23 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
     val isDev = AppModuleAndroidUtils.isDevBuild()
     val flavorType = AppModuleAndroidUtils.getFlavorType()
+
+    if (isDev) {
+      StrictMode.setThreadPolicy(
+        StrictMode.ThreadPolicy.Builder()
+          .detectAll()
+          .penaltyLog()
+          .penaltyFlashScreen()
+          .build()
+      )
+
+      StrictMode.setVmPolicy(
+        StrictMode.VmPolicy.Builder()
+          .detectAll()
+          .penaltyLog()
+          .build()
+      )
+    }
 
     System.setProperty("kotlinx.coroutines.debug", if (isDev) "on" else "off")
 

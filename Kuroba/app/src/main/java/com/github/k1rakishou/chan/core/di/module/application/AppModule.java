@@ -49,6 +49,9 @@ import coil.ImageLoader;
 import coil.request.CachePolicy;
 import dagger.Module;
 import dagger.Provides;
+import kotlin.Lazy;
+import kotlin.LazyKt;
+import kotlin.LazyThreadSafetyMode;
 import kotlinx.coroutines.CoroutineScope;
 
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getAvailableSpaceInBytes;
@@ -60,22 +63,24 @@ import static com.github.k1rakishou.common.AndroidUtils.getMinScreenSize;
 public class AppModule {
     public static final String DI_TAG = "Dependency Injection";
 
-    public static File getCacheDir() {
-        File cacheDir;
-        File externalStorage = getAppContext().getExternalCacheDir();
+    public static Lazy<File> getCacheDir() {
+        return LazyKt.lazy(LazyThreadSafetyMode.SYNCHRONIZED, () -> {
+            File cacheDir;
+            File externalStorage = getAppContext().getExternalCacheDir();
 
-        // See also res/xml/filepaths.xml for the fileprovider.
-        if (isExternalStorageOk(externalStorage)) {
-            cacheDir = externalStorage;
-        } else {
-            cacheDir = getAppContext().getCacheDir();
-        }
+            // See also res/xml/filepaths.xml for the fileprovider.
+            if (isExternalStorageOk(externalStorage)) {
+                cacheDir = externalStorage;
+            } else {
+                cacheDir = getAppContext().getCacheDir();
+            }
 
-        long spaceInBytes = getAvailableSpaceInBytes(cacheDir);
-        Logger.d(DI_TAG, "Available space for cache dir: " + spaceInBytes +
-                " bytes, cacheDirPath = " + cacheDir.getAbsolutePath());
+            long spaceInBytes = getAvailableSpaceInBytes(cacheDir);
+            Logger.d(DI_TAG, "Available space for cache dir: " + spaceInBytes +
+                    " bytes, cacheDirPath = " + cacheDir.getAbsolutePath());
 
-        return cacheDir;
+            return cacheDir;
+        });
     }
 
     @Provides

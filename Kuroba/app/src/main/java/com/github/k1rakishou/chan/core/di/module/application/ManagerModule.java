@@ -202,7 +202,7 @@ public class ManagerModule {
             Gson gson,
             SettingsNotificationManager settingsNotificationManager
     ) {
-        File cacheDir = getCacheDir();
+        File cacheDir = getCacheDir().getValue();
 
         return new ReportManager(
                 appScope,

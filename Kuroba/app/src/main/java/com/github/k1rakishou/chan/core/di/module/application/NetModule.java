@@ -84,7 +84,7 @@ public class NetModule {
     public CacheHandler provideCacheHandler(
             FileManager fileManager
     ) {
-        File cacheDir = getCacheDir();
+        File cacheDir = getCacheDir().getValue();
         RawFile cacheDirFile = fileManager.fromRawFile(new File(cacheDir, FILE_CACHE_DIR));
         RawFile chunksCacheDirFile = fileManager.fromRawFile(new File(cacheDir, FILE_CHUNKS_CACHE_DIR));
 
