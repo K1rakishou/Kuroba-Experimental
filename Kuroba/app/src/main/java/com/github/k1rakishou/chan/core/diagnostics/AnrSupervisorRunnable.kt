@@ -90,6 +90,6 @@ class AnrSupervisorRunnable(
   companion object {
     private const val TAG = "AnrSupervisorRunnable"
     private const val ANR_DETECTED_THRESHOLD_APP_START_MS = 5000L
-    private const val ANR_DETECTED_THRESHOLD_NORMAL_MS = 1000L
+    private const val ANR_DETECTED_THRESHOLD_NORMAL_MS = 2500L
   }
 }

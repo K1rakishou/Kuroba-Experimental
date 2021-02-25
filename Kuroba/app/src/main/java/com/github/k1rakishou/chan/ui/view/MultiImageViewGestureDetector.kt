@@ -19,19 +19,7 @@ class MultiImageViewGestureDetector(
 ) : SimpleOnGestureListener() {
 
   override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
-    val activeView = callbacks.getActiveView()
-      ?: return false
-
-    if (activeView is PlayerView && activeView.player != null) {
-      if (!activeView.isControllerVisible) {
-        activeView.showController()
-      } else {
-        activeView.hideController()
-      }
-    }
-
     callbacks.onTap()
-
     return true
   }
 

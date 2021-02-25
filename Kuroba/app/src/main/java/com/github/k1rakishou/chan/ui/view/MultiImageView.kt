@@ -301,6 +301,25 @@ class MultiImageView @JvmOverloads constructor(
   }
 
   override fun onTap() {
+    val playerView = findView(PlayerView::class.java) as? PlayerView
+
+    if (playerView != null) {
+      if (!ChanSettings.imageViewerFullscreenMode.get()) {
+        if (!playerView.isControllerVisible) {
+          playerView.showController()
+          return
+        }
+
+        // fallthrough
+      } else {
+        if (!playerView.isControllerVisible) {
+          playerView.showController()
+        } else {
+          playerView.hideController()
+        }
+      }
+    }
+
     callback?.onTap()
   }
 
@@ -685,7 +704,7 @@ class MultiImageView @JvmOverloads constructor(
       exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
       exoVideoView.useArtwork = true
 
-      if (callback?.isInImmersiveMode() == false) {
+      if (callback?.isInImmersiveMode() == false || !ChanSettings.imageViewerFullscreenMode.get()) {
         exoVideoView.showController()
       }
 
@@ -741,7 +760,7 @@ class MultiImageView @JvmOverloads constructor(
               exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
               exoVideoView.useArtwork = true
 
-              if (callback?.isInImmersiveMode() == false) {
+              if (callback?.isInImmersiveMode() == false || !ChanSettings.imageViewerFullscreenMode.get()) {
                 exoVideoView.showController()
               }
 
@@ -819,7 +838,6 @@ class MultiImageView @JvmOverloads constructor(
     }
   }
 
-  // TODO(KurobaEx / @Testme!!!):
   override fun onAudioSessionIdChanged(audioSessionId: Int) {
     super.onAudioSessionIdChanged(audioSessionId)
 
