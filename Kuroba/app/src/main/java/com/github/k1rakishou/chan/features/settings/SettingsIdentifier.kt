@@ -286,7 +286,6 @@ sealed class AppearanceScreen(
     AppearanceScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
     object ThemeCustomization : MainGroup("theme_customization")
-    object ImageViewerFullscreenMode : MainGroup("image_viewer_fullscreen_mode")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = AppearanceScreen.getScreenIdentifier()
@@ -361,7 +360,6 @@ sealed class AppearanceScreen(
 
     object HideImages : ImagesGroup("hide_images")
     object RemoveImageSpoilers : ImagesGroup("remove_image_spoilers")
-    object RevealImageSpoilers : ImagesGroup("reveal_image_spoilers")
     object HighResCells : ImagesGroup("high_res_cells")
     object ParsePostImageLinks : ImagesGroup("parse_post_image_links")
     object FetchInlinedFileSizes : ImagesGroup("fetch_inlined_file_sizes")

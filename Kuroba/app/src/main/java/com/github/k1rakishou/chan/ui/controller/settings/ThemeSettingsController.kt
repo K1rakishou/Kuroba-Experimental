@@ -54,7 +54,6 @@ import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
-import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
@@ -239,11 +238,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
   }
 
   private fun onIgnoreDarkNightModeClick(item: ToolbarMenuSubItem) {
-    navigation.findSubItem(ACTION_IGNORE_DARK_NIGHT_MODE)?.let { subItem ->
-      require(subItem is CheckableToolbarMenuSubItem) {
-        "subItem is not CheckableToolbarMenuSubItem, class=${subItem.javaClass.simpleName}"
-      }
-
+    navigation.findCheckableSubItem(ACTION_IGNORE_DARK_NIGHT_MODE)?.let { subItem ->
       subItem.isChecked = ChanSettings.ignoreDarkNightMode.toggle()
     }
   }

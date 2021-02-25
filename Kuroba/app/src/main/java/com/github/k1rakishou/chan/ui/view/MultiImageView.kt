@@ -699,6 +699,7 @@ class MultiImageView @JvmOverloads constructor(
         return@setOnTouchListener true
       }
       exoVideoView.useController = true
+      exoVideoView.controllerAutoShow = false
       exoVideoView.controllerHideOnTouch = false
       exoVideoView.controllerShowTimeoutMs = -1
       exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
@@ -756,6 +757,7 @@ class MultiImageView @JvmOverloads constructor(
               }
               exoVideoView.useController = true
               exoVideoView.controllerHideOnTouch = false
+              exoVideoView.controllerAutoShow = false
               exoVideoView.controllerShowTimeoutMs = -1
               exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
               exoVideoView.useArtwork = true

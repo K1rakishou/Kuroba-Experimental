@@ -55,6 +55,7 @@ import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController;
 import com.github.k1rakishou.chan.ui.adapter.ImageViewerAdapter;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView;
+import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem;
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
@@ -117,9 +118,11 @@ public class ImageViewerController
     private static final int ACTION_SHARE_CONTENT = 5;
     private static final int ACTION_SEARCH_IMAGE = 6;
     private static final int ACTION_ALLOW_IMAGE_TRANSPARENCY = 7;
-    private static final int ACTION_IMAGE_ROTATE = 8;
-    private static final int ACTION_RELOAD = 9;
-    private static final int ACTION_CHANGE_GESTURES = 10;
+    private static final int ACTION_ALLOW_IMAGE_FULLSCREEN = 8;
+    private static final int ACTION_AUTO_REVEAL_SPOILERS = 9;
+    private static final int ACTION_IMAGE_ROTATE = 10;
+    private static final int ACTION_RELOAD = 11;
+    private static final int ACTION_CHANGE_GESTURES = 12;
 
     @Inject
     ImageLoaderV2 imageLoaderV2;
@@ -279,6 +282,27 @@ public class ImageViewerController
                     requireNavController().presentController(controller);
                 }
         );
+        overflowBuilder.withCheckableSubItem(
+                ACTION_ALLOW_IMAGE_TRANSPARENCY,
+                R.string.action_allow_image_transparency,
+                true,
+                !ChanSettings.transparencyOn.get(),
+                this::updateTransparency
+        );
+        overflowBuilder.withCheckableSubItem(
+                ACTION_ALLOW_IMAGE_FULLSCREEN,
+                R.string.setting_full_screen_mode,
+                true,
+                ChanSettings.imageViewerFullscreenMode.get(),
+                this::updateFullScreenMode
+        );
+        overflowBuilder.withCheckableSubItem(
+                ACTION_AUTO_REVEAL_SPOILERS,
+                R.string.settings_reveal_image_spoilers,
+                true,
+                ChanSettings.revealImageSpoilers.get(),
+                this::updateRevealImageSpoilers
+        );
         overflowBuilder.withSubItem(
                 ACTION_OPEN_BROWSER,
                 R.string.action_open_browser,
@@ -298,13 +322,6 @@ public class ImageViewerController
                 ACTION_SEARCH_IMAGE,
                 R.string.action_search_image,
                 this::searchClicked
-        );
-        overflowBuilder.withCheckableSubItem(
-                ACTION_ALLOW_IMAGE_TRANSPARENCY,
-                R.string.action_allow_image_transparency,
-                true,
-                !ChanSettings.transparencyOn.get(),
-                this::updateTransparency
         );
         overflowBuilder.withSubItem(
                 ACTION_IMAGE_ROTATE,
@@ -426,14 +443,38 @@ public class ImageViewerController
         presenter.showImageSearchOptions();
     }
 
+    private void updateRevealImageSpoilers(ToolbarMenuSubItem item) {
+        CheckableToolbarMenuSubItem subItem = navigation.findCheckableSubItem(ACTION_AUTO_REVEAL_SPOILERS);
+        if (subItem == null) {
+            return;
+        }
+
+        subItem.isChecked = ChanSettings.revealImageSpoilers.toggle();
+    }
+
+    private void updateFullScreenMode(ToolbarMenuSubItem item) {
+        CheckableToolbarMenuSubItem subItem = navigation.findCheckableSubItem(ACTION_ALLOW_IMAGE_FULLSCREEN);
+        if (subItem == null) {
+            return;
+        }
+
+        subItem.isChecked = ChanSettings.imageViewerFullscreenMode.toggle();
+    }
+
     private void updateTransparency(ToolbarMenuSubItem item) {
-        boolean newTransparencyOn = !ChanSettings.transparencyOn.get();
-        ChanSettings.transparencyOn.set(newTransparencyOn);
+        CheckableToolbarMenuSubItem subItem = navigation.findCheckableSubItem(ACTION_ALLOW_IMAGE_TRANSPARENCY);
+        if (subItem == null) {
+            return;
+        }
+
+        boolean newTransparencyOn = ChanSettings.transparencyOn.toggle();
 
         ((ImageViewerAdapter) pager.getAdapter()).updateTransparency(
                 presenter.getCurrentPostImage(),
                 newTransparencyOn
         );
+
+        subItem.isChecked = newTransparencyOn;
     }
 
     private void rotateImage(ToolbarMenuSubItem item) {

@@ -62,14 +62,6 @@ class AppearanceSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
-          identifier = AppearanceScreen.ImagesGroup.RevealImageSpoilers,
-          topDescriptionIdFunc = { R.string.settings_reveal_image_spoilers },
-          bottomDescriptionIdFunc = { R.string.settings_reveal_image_spoilers_description },
-          setting = ChanSettings.revealImageSpoilers
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
           identifier = AppearanceScreen.ImagesGroup.HighResCells,
           topDescriptionIdFunc = { R.string.setting_images_high_res },
           bottomDescriptionIdFunc = { R.string.setting_images_high_res_description },
@@ -394,14 +386,6 @@ class AppearanceSettingsScreen(
           topDescriptionIdFunc = { R.string.setting_theme },
           bottomDescriptionStringFunc = { themeEngine.chanTheme.name },
           callback = { navigationController.pushController(ThemeSettingsController(context)) }
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = AppearanceScreen.MainGroup.ImageViewerFullscreenMode,
-          topDescriptionIdFunc = { R.string.setting_full_screen_mode },
-          bottomDescriptionIdFunc = { R.string.setting_full_screen_mode_description },
-          setting = ChanSettings.imageViewerFullscreenMode
         )
 
         return group

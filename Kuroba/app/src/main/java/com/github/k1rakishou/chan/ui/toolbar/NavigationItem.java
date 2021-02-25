@@ -95,6 +95,19 @@ public class NavigationItem {
         return menu == null ? null : menu.findSubItem(id);
     }
 
+    public CheckableToolbarMenuSubItem findCheckableSubItem(int id) {
+        if (menu == null) {
+            return null;
+        }
+
+        ToolbarMenuSubItem subItem = menu.findSubItem(id);
+        if (subItem instanceof CheckableToolbarMenuSubItem) {
+            return (CheckableToolbarMenuSubItem) subItem;
+        }
+
+        return null;
+    }
+
     public ToolbarMenuSubItem findNestedSubItem(int id) {
         return menu == null ? null : menu.findNestedSubItem(id);
     }

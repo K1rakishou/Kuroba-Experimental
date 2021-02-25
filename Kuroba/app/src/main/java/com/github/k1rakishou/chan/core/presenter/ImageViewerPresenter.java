@@ -546,32 +546,39 @@ public class ImageViewerPresenter
         }
 
         ChanPostImage postImage = images.get(selectedPosition);
-        if (canAutoLoad(postImage) && !postImage.getSpoiler()) {
+        if (canAutoLoad(postImage) && (!postImage.getSpoiler() || ChanSettings.revealImageSpoilers.get())) {
             if (postImage.getType() == ChanPostImageType.MOVIE && callback.getImageMode(postImage) != VIDEO) {
                 callback.setImageMode(postImage, VIDEO, true);
                 return;
             }
 
-            if (!ChanSettings.imageViewerFullscreenMode.get()) {
-                onExit();
+            // Fallthrough
+        } else {
+            MultiImageView.Mode currentMode = callback.getImageMode(postImage);
+            if (postImage.getType() == ChanPostImageType.STATIC && currentMode != BIGIMAGE) {
+                callback.setImageMode(postImage, BIGIMAGE, true);
+                return;
+            } else if (postImage.getType() == ChanPostImageType.GIF && currentMode != GIFIMAGE) {
+                callback.setImageMode(postImage, GIFIMAGE, true);
+                return;
+            } else if (postImage.getType() == ChanPostImageType.MOVIE && currentMode != VIDEO) {
+                callback.setImageMode(postImage, VIDEO, true);
+                return;
+            } else if ((postImage.getType() == ChanPostImageType.PDF || postImage.getType() == ChanPostImageType.SWF)
+                    && currentMode != OTHER) {
+                callback.setImageMode(postImage, OTHER, true);
                 return;
             }
 
-            callback.showSystemUI(callback.isImmersive());
+            // Fallthrough
+        }
+
+        if (!ChanSettings.imageViewerFullscreenMode.get()) {
+            onExit();
             return;
         }
 
-        MultiImageView.Mode currentMode = callback.getImageMode(postImage);
-        if (postImage.getType() == ChanPostImageType.STATIC && currentMode != BIGIMAGE) {
-            callback.setImageMode(postImage, BIGIMAGE, true);
-        } else if (postImage.getType() == ChanPostImageType.GIF && currentMode != GIFIMAGE) {
-            callback.setImageMode(postImage, GIFIMAGE, true);
-        } else if (postImage.getType() == ChanPostImageType.MOVIE && currentMode != VIDEO) {
-            callback.setImageMode(postImage, VIDEO, true);
-        } else if ((postImage.getType() == ChanPostImageType.PDF || postImage.getType() == ChanPostImageType.SWF)
-                && currentMode != OTHER) {
-            callback.setImageMode(postImage, OTHER, true);
-        }
+        callback.showSystemUI(callback.isImmersive());
     }
 
     @Override
