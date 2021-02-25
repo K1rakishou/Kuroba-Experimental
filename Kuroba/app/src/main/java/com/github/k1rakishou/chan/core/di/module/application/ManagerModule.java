@@ -112,6 +112,7 @@ import static com.github.k1rakishou.common.AndroidUtils.getNotificationManagerCo
 @Module
 public class ManagerModule {
     private static final String CRASH_LOGS_DIR_NAME = "crashlogs";
+    private static final String ANRS_DIR_NAME = "anrs";
 
     @Provides
     @Singleton
@@ -196,6 +197,7 @@ public class ManagerModule {
     @Provides
     @Singleton
     public ReportManager provideReportManager(
+            CoroutineScope appScope,
             ProxiedOkHttpClient okHttpClient,
             Gson gson,
             SettingsNotificationManager settingsNotificationManager
@@ -203,10 +205,12 @@ public class ManagerModule {
         File cacheDir = getCacheDir();
 
         return new ReportManager(
+                appScope,
                 okHttpClient.okHttpClient(),
                 settingsNotificationManager,
                 gson,
-                new File(cacheDir, CRASH_LOGS_DIR_NAME)
+                new File(cacheDir, CRASH_LOGS_DIR_NAME),
+                new File(cacheDir, ANRS_DIR_NAME)
         );
     }
 

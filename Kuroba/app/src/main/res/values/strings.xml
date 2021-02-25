@@ -569,6 +569,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_report_description">Report a problem/crash</string>
     <string name="settings_collect_crash_logs">Collect crash logs</string>
     <string name="settings_collect_crash_logs_description">By enabling this setting, the app will start collecting crash logs. They are NOT uploaded automatically. Crash logs only collect the stacktrace itself, app version and basic OS information. You can review and upload them manually (or delete) by clicking the \"Report\" setting.</string>
+    <string name="settings_collect_anrs">Collect ANR repors</string>
+    <string name="settings_collect_anrs_description">Same as with crashlogs. When enabling this setting ANRs will be collected but not uploaded. ANR means Application Not Responding reports. They will be formed every time the app hangs for more than 1 second. At that time a thread stack dump will be collected and stored into a file. This may help developers to fix those hangs/freezes/deadlocks so please send them. You can review and upload them manually (or delete) by clicking the \"Report\" setting.</string>
     <string name="settings_find_app_on_github">Find %1$s on GitHub</string>
     <string name="settings_find_app_on_github_bottom">View the source code, give feedback, submit bug reports</string>
     <string name="settings_about_license">Released under the GNU GPLv3 license</string>
@@ -1062,7 +1064,7 @@ Don't have a 4chan Pass?<br>
     <string name="report_controller_report_an_error_problem">Report an error/crash/other problem</string>
     <string name="report_controller_i_have_a_problem_with">I have a problem with:</string>
     <string name="report_controller_problem_description">Problem description:</string>
-    <string name="report_controller_attach_logs">Attach logs (In case of Release build you have to turn on \"Verbose logs\" setting for the logs to show up)</string>
+    <string name="report_controller_attach_logs">Attach logs</string>
     <string name="report_controller_no_logs">No logs</string>
     <string name="report_controller_cancel">Cancel</string>
     <string name="report_controller_send_report">Send report</string>
@@ -1121,14 +1123,14 @@ Don't have a 4chan Pass?<br>
     <string name="cookies_editor_failed_parse">Failed to parse cookies, re-enter them correctly!</string>
 
     <string name="mock_reply">Mock reply</string>
-    <string name="review_crashlogs_controller_title">Review crash logs</string>
-    <string name="settings_report_suggest_sending_logs_title">You have %1$d collected crash logs</string>
+    <string name="review_report_files_controller_title">Review report files</string>
+    <string name="settings_report_suggest_sending_logs_title">You have %1$d collected report files</string>
     <string name="settings_report_suggest_sending_logs_message">Would you like to review and maybe send them to developers?</string>
-    <string name="settings_report_review_button_text">Review crash logs</string>
+    <string name="settings_report_review_button_text">Review report files</string>
     <string name="settings_report_review_later_button_text">Review later</string>
-    <string name="settings_report_delete_all_crash_logs">Delete all crash logs</string>
-    <string name="deleted_n_crashlogs">Deleted %1$d crash log(s)</string>
-    <string name="sent_n_crashlogs">Sent %1$d crash log(s)</string>
+    <string name="settings_report_delete_all_report_files">Delete all report files</string>
+    <string name="deleted_n_report_files">Deleted %1$d report file(s)</string>
+    <string name="sent_n_report_files">Sent %1$d report file(s)</string>
 
     <string name="media_settings_base_dir_reset_message">Base directory reset to default</string>
     <string name="media_settings_could_not_create_default_baseDir">Could not create default base dir: %1$s</string>

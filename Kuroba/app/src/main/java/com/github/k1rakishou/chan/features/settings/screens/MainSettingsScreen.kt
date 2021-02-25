@@ -26,7 +26,7 @@ import com.github.k1rakishou.chan.features.setup.SitesSetupController
 import com.github.k1rakishou.chan.ui.controller.FiltersController
 import com.github.k1rakishou.chan.ui.controller.LicensesController
 import com.github.k1rakishou.chan.ui.controller.ReportProblemController
-import com.github.k1rakishou.chan.ui.controller.crashlogs.ReviewCrashLogsController
+import com.github.k1rakishou.chan.ui.controller.crashlogs.ReviewReportFilesController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString
@@ -110,7 +110,7 @@ class MainSettingsScreen(
           topDescriptionIdFunc = { R.string.settings_report },
           bottomDescriptionIdFunc = { R.string.settings_report_description },
           callback = { onReportSettingClick() },
-          notificationType = SettingNotificationType.CrashLog
+          notificationType = SettingNotificationType.CrashLogOrAnr
         )
 
         group += BooleanSettingV2.createBuilder(
@@ -122,6 +122,19 @@ class MainSettingsScreen(
           checkChangedCallback = { isChecked ->
             if (!isChecked) {
               reportManager.deleteAllCrashLogs()
+            }
+          }
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = MainScreen.AboutAppGroup.CollectAnrReport,
+          topDescriptionIdFunc = { R.string.settings_collect_anrs },
+          bottomDescriptionIdFunc = { R.string.settings_collect_anrs_description },
+          setting = ChanSettings.collectANRs,
+          checkChangedCallback = { isChecked ->
+            if (!isChecked) {
+              reportManager.deleteAllAnrs()
             }
           }
         )
@@ -307,7 +320,7 @@ class MainSettingsScreen(
       navigationController.pushController(ReportProblemController(context))
     }
 
-    val crashLogsCount: Int = reportManager.countCrashLogs()
+    val crashLogsCount: Int = reportManager.countReportFiles()
     if (crashLogsCount > 0) {
       dialogFactory.createSimpleConfirmationDialog(
         context = context,
@@ -315,15 +328,15 @@ class MainSettingsScreen(
         descriptionTextId = R.string.settings_report_suggest_sending_logs_message,
         positiveButtonText = getString(R.string.settings_report_review_button_text),
         onPositiveButtonClickListener = {
-          navigationController.pushController(ReviewCrashLogsController(context))
+          navigationController.pushController(ReviewReportFilesController(context))
         },
         neutralButtonText = getString(R.string.settings_report_review_later_button_text),
         onNeutralButtonClickListener = {
           openReportProblemController()
         },
-        negativeButtonText = getString(R.string.settings_report_delete_all_crash_logs),
+        negativeButtonText = getString(R.string.settings_report_delete_all_report_files),
         onNegativeButtonClickListener = {
-          reportManager.deleteAllCrashLogs()
+          reportManager.deleteAllReportFiles(deleteCrashLogs = true, deleteAnrs = true)
           openReportProblemController()
         }
       )

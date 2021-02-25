@@ -39,8 +39,8 @@ class SettingsNotificationManager {
       return SettingNotificationType.ApkUpdate
     }
 
-    if (contains(SettingNotificationType.CrashLog)) {
-      return SettingNotificationType.CrashLog
+    if (contains(SettingNotificationType.CrashLogOrAnr)) {
+      return SettingNotificationType.CrashLogOrAnr
     }
 
     // Add new notifications here. Don't forget that order matters! The order affects priority.

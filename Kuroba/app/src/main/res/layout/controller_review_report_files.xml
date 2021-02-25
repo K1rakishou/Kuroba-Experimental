@@ -5,7 +5,7 @@
     android:orientation="vertical">
 
     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView
-        android:id="@+id/review_crashlogs_controller_crashlogs_list"
+        android:id="@+id/review_reports_controller_reports_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
@@ -15,7 +15,7 @@
         android:layout_height="64dp">
 
         <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
-            android:id="@+id/review_crashlogs_controller_delete_crashlogs_button"
+            android:id="@+id/review_reports_controller_delete_reports_button"
             android:layout_width="128dp"
             android:layout_height="48dp"
             android:layout_gravity="center_vertical"
@@ -28,7 +28,7 @@
             android:layout_weight="1" />
 
         <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
-            android:id="@+id/review_crashlogs_controller_send_crashlogs_button"
+            android:id="@+id/review_reports_controller_send_reports_button"
             android:layout_width="128dp"
             android:layout_height="48dp"
             android:layout_gravity="center_vertical"

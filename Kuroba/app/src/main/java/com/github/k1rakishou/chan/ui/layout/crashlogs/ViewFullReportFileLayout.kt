@@ -11,7 +11,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import javax.inject.Inject
 
 @SuppressLint("ViewConstructor")
-class ViewFullCrashLogLayout(context: Context, private val crashLog: CrashLog) : FrameLayout(context) {
+class ViewFullReportFileLayout(context: Context, private val reportFile: ReportFile) : FrameLayout(context) {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -31,14 +31,14 @@ class ViewFullCrashLogLayout(context: Context, private val crashLog: CrashLog) :
 
       save.setTextColor(themeEngine.chanTheme.textColorPrimary)
 
-      crashLogText.setText(crashLog.file.readText())
+      crashLogText.setText(reportFile.file.readText())
       crashLogText.setTextColor(themeEngine.chanTheme.textColorPrimary)
 
       save.setOnClickListener {
         val text = crashLogText.text.toString()
 
         if (text.isNotEmpty()) {
-          crashLog.file.writeText(text)
+          reportFile.file.writeText(text)
         }
 
         callbacks?.onFinished()

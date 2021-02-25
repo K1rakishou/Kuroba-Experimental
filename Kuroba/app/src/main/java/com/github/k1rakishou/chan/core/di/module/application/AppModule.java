@@ -25,8 +25,10 @@ import android.os.Environment;
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
+import com.github.k1rakishou.chan.core.diagnostics.AnrSupervisor;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
+import com.github.k1rakishou.chan.core.manager.ReportManager;
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate;
@@ -168,6 +170,12 @@ public class AppModule {
     @Singleton
     public Android10GesturesExclusionZonesHolder provideAndroid10GesturesHolder(Gson gson) {
         return new Android10GesturesExclusionZonesHolder(gson, getMinScreenSize(), getMaxScreenSize());
+    }
+
+    @Provides
+    @Singleton
+    public AnrSupervisor provideAnrSupervisor(ReportManager reportManager) {
+        return new AnrSupervisor(reportManager);
     }
 
     private static boolean isExternalStorageOk(File externalStorage) {

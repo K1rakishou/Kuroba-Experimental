@@ -15,7 +15,7 @@ enum class SettingNotificationType(@ColorRes val notificationIconTintColor: Int)
   ApkUpdate(R.color.new_apk_update_icon_color),
 
   /**
-   * There is at least one crash log available notification
+   * There is at least one crash log/ANR available notification
    * */
-  CrashLog(R.color.new_crash_log_icon_color)
+  CrashLogOrAnr(R.color.new_crash_log_icon_color)
 }

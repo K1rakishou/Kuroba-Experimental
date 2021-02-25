@@ -1,164 +1,105 @@
 package com.github.k1rakishou.chan.core.manager
 
-import android.annotation.SuppressLint
 import android.os.Build
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
+import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.ui.controller.LogsController
-import com.github.k1rakishou.chan.ui.layout.crashlogs.CrashLog
+import com.github.k1rakishou.chan.ui.layout.crashlogs.ReportFile
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.TimeUtils.getCurrentDateAndTimeUTC
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.groupOrNull
+import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.persist_state.PersistableChanState
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
-import io.reactivex.Completable
-import io.reactivex.Flowable
-import io.reactivex.Single
-import io.reactivex.processors.PublishProcessor
-import io.reactivex.schedulers.Schedulers
-import okhttp3.Call
-import okhttp3.Callback
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.Response
+import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.IOException
 import java.util.*
-import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.regex.Pattern
 
 class ReportManager(
+  private val appScope: CoroutineScope,
   private val okHttpClient: OkHttpClient,
   private val settingsNotificationManager: SettingsNotificationManager,
   private val gson: Gson,
-  private val crashLogsDirPath: File
+  private val crashLogsDirPath: File,
+  private val anrsDirPath: File
 ) {
-  private val crashLogSenderQueue = PublishProcessor.create<ReportRequestWithFile>()
-
-  private val senderThreadIndex = AtomicInteger(0)
-  private val senderScheduler = Schedulers.from(
-    Executors.newFixedThreadPool(1) { runnable ->
-      return@newFixedThreadPool Thread(
-        runnable,
-        String.format(
-          Locale.ENGLISH,
-          SENDER_THREAD_NAME_FORMAT,
-          senderThreadIndex.getAndIncrement()
-        )
-      )
-    }
+  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(
+    scope = appScope,
+    dispatcher = Dispatchers.Default
   )
 
   init {
-    createCrashLogsDirIfNotExists()
-
-    initSenderQueue()
+    createDirectoriesIfNotExists()
   }
 
-  /**
-   * This is a singleton class so we don't care about the disposable since we will never should
-   * dispose of this stream
-   * */
-  @SuppressLint("CheckResult")
-  private fun initSenderQueue() {
-    crashLogSenderQueue
-      .subscribeOn(senderScheduler)
-      .onBackpressureBuffer(UNBOUNDED_QUEUE_MIN_SIZE, false, true)
-      .observeOn(senderScheduler)
-      .buffer(1, TimeUnit.SECONDS)
-      .filter { requests -> requests.isNotEmpty() }
-      .flatMap { requests ->
-        Logger.d(TAG, "Collected ${requests.size} crash logs")
-
-        return@flatMap Flowable.fromIterable(requests)
-          .flatMapSingle { (request, crashLogFile) ->
-            return@flatMapSingle processSingleRequest(request, crashLogFile)
-          }
-      }
-      .debounce(1, TimeUnit.SECONDS)
-      .onBackpressureLatest()
-      .doOnNext {
-        // If no more crash logs left, remove the notification
-        if (!hasCrashLogs()) {
-          settingsNotificationManager.cancel(SettingNotificationType.CrashLog)
-        }
-      }
-      .subscribe({
-        // Do nothing
-      }, { error ->
-        throw RuntimeException("$TAG Uncaught exception!!! " +
-          "workerQueue is in error state now!!! " +
-          "This should not happen!!!, original error = " + error.message)
-      }, {
-        throw RuntimeException(
-          "$TAG workerQueue stream has completed!!! This should not happen!!!"
-        )
-      })
-  }
-
-  private fun processSingleRequest(request: ReportRequest, crashLogFile: File): Single<ModularResult<Boolean>> {
-    BackgroundUtils.ensureBackgroundThread()
-
-    // Delete old crash logs
-    if (System.currentTimeMillis() - crashLogFile.lastModified() > MAX_CRASH_LOG_LIFETIME) {
-      if (!crashLogFile.delete()) {
-        Logger.e(TAG, "Couldn't delete crash log file: ${crashLogFile.absolutePath}")
-      }
-
-      return Single.just(ModularResult.value(true))
-    }
-
-    return sendInternal(request)
-      .onErrorReturn { error -> ModularResult.error(error) }
-      .doOnSuccess { result ->
-        when (result) {
-          is ModularResult.Value -> {
-            Logger.d(TAG, "Crash log ${crashLogFile.absolutePath} sent")
-
-            if (!crashLogFile.delete()) {
-              Logger.e(TAG, "Couldn't delete crash log file: ${crashLogFile.absolutePath}")
-            }
-          }
-          is ModularResult.Error -> {
-            if (result.error is HttpCodeError) {
-              val httpCodeError = result.error as HttpCodeError
-
-              Logger.e(TAG, "Bad response code: ${httpCodeError.code}")
-            } else {
-              Logger.e(TAG, "Error while trying to send crash log", result.error)
-            }
-          }
-        }
-      }
-  }
-
-  fun storeCrashLog(exceptionMessage: String?, error: String) {
-    if (!createCrashLogsDirIfNotExists()) {
+  fun storeAnr(anrByteStream: ByteArrayOutputStream) {
+    if (!createDirectoriesIfNotExists()) {
       return
     }
 
-    val time = System.currentTimeMillis()
-    val newCrashLog = File(crashLogsDirPath, "${CRASH_LOG_FILE_NAME_PREFIX}_${time}.txt")
+    val currentTime = System.currentTimeMillis()
 
+    val newAnr = File(anrsDirPath, "${ANR_FILE_NAME_PREFIX}_${currentTime}.txt")
+    if (newAnr.exists()) {
+      return
+    }
+
+    try {
+      newAnr.outputStream().use { outputStream ->
+        anrByteStream.use { inputStream ->
+          inputStream.writeTo(outputStream)
+        }
+      }
+    } catch (error: Throwable) {
+      Logger.e(TAG, "Error writing to a ANR file", error)
+      return
+    }
+
+    deleteOldAnrReports()
+
+    Logger.d(TAG, "Stored new ANR, path = ${newAnr.absolutePath}")
+    settingsNotificationManager.notify(SettingNotificationType.CrashLogOrAnr)
+  }
+
+  fun storeCrashLog(exceptionMessage: String?, error: String) {
+    if (!createDirectoriesIfNotExists()) {
+      return
+    }
+
+    val currentTime = System.currentTimeMillis()
+
+    val newCrashLog = File(crashLogsDirPath, "${CRASH_LOG_FILE_NAME_PREFIX}_${currentTime}.txt")
     if (newCrashLog.exists()) {
       return
     }
 
     try {
-      val settings = getSettingsStateString()
+      val settings = getReportFooter()
       val logs = LogsController.loadLogs(CRASH_REPORT_LOGS_LINES_COUNT)
 
       // Most of the time logs already contain the crash logs so we don't really want to print
       // it twice.
-      val logsAlreadyContainCrash = exceptionMessage?.let { msg ->
-        logs?.contains(msg, ignoreCase = true)
-      } ?: false
+      val logsAlreadyContainCrash = exceptionMessage
+        ?.let { msg -> logs?.contains(msg, ignoreCase = true) }
+        ?: false
 
       val resultString = buildString {
         // To avoid log spam that may happen because of, let's say, server failure for
@@ -173,7 +114,6 @@ class ReportManager(
           append("\n\n")
         }
 
-        appendLine("=== SETTINGS ===")
         append(settings)
       }
 
@@ -184,121 +124,256 @@ class ReportManager(
     }
 
     Logger.d(TAG, "Stored new crash log, path = ${newCrashLog.absolutePath}")
+    settingsNotificationManager.notify(SettingNotificationType.CrashLogOrAnr)
   }
 
-  fun hasCrashLogs(): Boolean {
-    if (!createCrashLogsDirIfNotExists()) {
+  fun hasReportFiles(): Boolean {
+    if (!createDirectoriesIfNotExists()) {
       return false
     }
 
     val crashLogs = crashLogsDirPath.listFiles()
-    return crashLogs != null && crashLogs.isNotEmpty()
+    if (crashLogs != null && crashLogs.isNotEmpty()) {
+      return true
+    }
+
+    val anrs = anrsDirPath.listFiles()
+    if (anrs != null && anrs.isNotEmpty()) {
+      return true
+    }
+
+    return false
   }
 
-  fun countCrashLogs(): Int {
-    if (!createCrashLogsDirIfNotExists()) {
+  fun countReportFiles(): Int {
+    if (!createDirectoriesIfNotExists()) {
       return 0
     }
 
-    return crashLogsDirPath.listFiles()?.size ?: 0
+    val crashlogs = crashLogsDirPath.listFiles()?.size ?: 0
+    val anrs = anrsDirPath.listFiles()?.size ?: 0
+
+    return crashlogs + anrs
   }
 
-  fun getCrashLogs(): List<File> {
-    if (!createCrashLogsDirIfNotExists()) {
+  fun getReportFiles(): List<File> {
+    if (!createDirectoriesIfNotExists()) {
       return emptyList()
     }
 
-    return crashLogsDirPath.listFiles()
-      ?.sortedByDescending { file -> file.lastModified() }
-      ?.toList() ?: emptyList()
+    val crashLogs = crashLogsDirPath.listFiles() ?: emptyArray()
+    val anrs = anrsDirPath.listFiles() ?: emptyArray()
+
+    return (crashLogs + anrs)
+      .sortedByDescending { file -> file.lastModified() }
+      .toList()
   }
 
-  fun deleteCrashLogs(crashLogs: List<CrashLog>) {
-    if (!createCrashLogsDirIfNotExists()) {
-      settingsNotificationManager.cancel(SettingNotificationType.CrashLog)
+  fun deleteReportFiles(reportFiles: List<ReportFile>) {
+    if (!createDirectoriesIfNotExists()) {
+      settingsNotificationManager.cancel(SettingNotificationType.CrashLogOrAnr)
       return
     }
 
-    crashLogs.forEach { crashLog -> crashLog.file.delete() }
+    reportFiles.forEach { crashLog -> crashLog.file.delete() }
 
     val remainingCrashLogs = crashLogsDirPath.listFiles()?.size ?: 0
-    if (remainingCrashLogs == 0) {
-      settingsNotificationManager.cancel(SettingNotificationType.CrashLog)
+    val remainingAnrs = anrsDirPath.listFiles()?.size ?: 0
+
+    if (remainingCrashLogs == 0 && remainingAnrs == 0) {
+      settingsNotificationManager.cancel(SettingNotificationType.CrashLogOrAnr)
       return
     }
 
-    // There are still crash logs left, so show the notifications if they are not shown yet
-    settingsNotificationManager.notify(SettingNotificationType.CrashLog)
+    // There are still crash logs/ANRs left, so show the notifications if they are not shown yet
+    settingsNotificationManager.notify(SettingNotificationType.CrashLogOrAnr)
   }
 
   fun deleteAllCrashLogs() {
-    if (!createCrashLogsDirIfNotExists()) {
-      settingsNotificationManager.cancel(SettingNotificationType.CrashLog)
+    deleteAllReportFiles(deleteCrashLogs = true, deleteAnrs = false)
+  }
+
+  fun deleteAllAnrs() {
+    deleteAllReportFiles(deleteCrashLogs = false, deleteAnrs = true)
+  }
+
+  fun deleteAllReportFiles(deleteCrashLogs: Boolean, deleteAnrs: Boolean) {
+    if (!deleteCrashLogs && !deleteAnrs) {
+      throw IllegalArgumentException("Invalid parameters! deleteCrashLogs=$deleteCrashLogs, deleteAnrs=$deleteAnrs")
+    }
+
+    if (!createDirectoriesIfNotExists()) {
+      settingsNotificationManager.cancel(SettingNotificationType.CrashLogOrAnr)
       return
     }
 
-    val potentialCrashLogs = crashLogsDirPath.listFiles()
-    if (potentialCrashLogs.isNullOrEmpty()) {
-      Logger.d(TAG, "No new crash logs")
-      settingsNotificationManager.cancel(SettingNotificationType.CrashLog)
+    val potentialReports = when {
+      deleteCrashLogs && deleteAnrs -> {
+        (crashLogsDirPath.listFiles() ?: emptyArray()) + (anrsDirPath.listFiles() ?: emptyArray())
+      }
+      deleteCrashLogs -> {
+        crashLogsDirPath.listFiles() ?: emptyArray()
+      }
+      deleteAnrs -> {
+        anrsDirPath.listFiles() ?: emptyArray()
+      }
+      else -> {
+        throw IllegalArgumentException("Invalid parameters! deleteCrashLogs=$deleteCrashLogs, deleteAnrs=$deleteAnrs")
+      }
+    }
+
+    if (potentialReports.isNullOrEmpty()) {
+      Logger.d(TAG, "No new crash logs/ANRs")
+      settingsNotificationManager.cancel(SettingNotificationType.CrashLogOrAnr)
       return
     }
 
-    potentialCrashLogs.asSequence()
+    potentialReports.asSequence()
       .forEach { crashLogFile -> crashLogFile.delete() }
 
     val remainingCrashLogs = crashLogsDirPath.listFiles()?.size ?: 0
-    if (remainingCrashLogs == 0) {
-      settingsNotificationManager.cancel(SettingNotificationType.CrashLog)
+    val remainingAnrs = anrsDirPath.listFiles()?.size ?: 0
+
+    if (remainingCrashLogs == 0 && remainingAnrs == 0) {
+      settingsNotificationManager.cancel(SettingNotificationType.CrashLogOrAnr)
       return
     }
 
     // There are still crash logs left, so show the notifications if they are not shown yet
-    settingsNotificationManager.notify(SettingNotificationType.CrashLog)
+    settingsNotificationManager.notify(SettingNotificationType.CrashLogOrAnr)
   }
 
-  fun sendCrashLogs(crashLogs: List<CrashLog>): Completable {
-    if (!createCrashLogsDirIfNotExists()) {
-      return Completable.complete()
-    }
+  fun sendCrashLogs(
+    reportFiles: List<ReportFile>,
+    onCrashLogsSent: (ModularResult<Unit>) -> Unit
+  ) {
+    serializedCoroutineExecutor.post {
+      if (!createDirectoriesIfNotExists()) {
+        withContext(Dispatchers.Main) { onCrashLogsSent(ModularResult.value(Unit)) }
+        return@post
+      }
 
-    if (crashLogs.isEmpty()) {
-      return Completable.complete()
-    }
+      if (reportFiles.isEmpty()) {
+        withContext(Dispatchers.Main) { onCrashLogsSent(ModularResult.value(Unit)) }
+        return@post
+      }
 
-    // Collect and create reports on a background thread because logs may wait quite a lot now
-    // and it may lag the UI.
-    return Completable.fromAction {
-      BackgroundUtils.ensureBackgroundThread()
+      val results = supervisorScope {
+        reportFiles
+          .mapNotNull { crashLog -> createReportRequest(crashLog) }
+          .map { request ->
+            appScope.async(Dispatchers.IO) {
+              processSingleRequest(request.reportRequest, request.crashLogFile)
+            }
+          }
+          .awaitAll()
+      }
 
-      crashLogs
-        .mapNotNull { crashLog -> createReportRequest(crashLog) }
-        .forEach { request -> crashLogSenderQueue.onNext(request) }
+      // If no more crash logs left, remove the notification
+      if (!hasReportFiles()) {
+        settingsNotificationManager.cancel(SettingNotificationType.CrashLogOrAnr)
+      }
+
+      val errorResult = results
+        .firstOrNull { result -> result is ModularResult.Error }
+        ?: results.first() as ModularResult.Value<Unit>
+
+      withContext(Dispatchers.Main) { onCrashLogsSent(errorResult) }
     }
-      .subscribeOn(senderScheduler)
   }
 
-  fun sendReport(title: String, description: String, logs: String?): Single<ModularResult<Boolean>> {
+  fun sendReport(
+    title: String,
+    description: String,
+    logs: String?,
+    onReportSendResult: (ModularResult<Unit>) -> Unit
+  ) {
     require(title.isNotEmpty()) { "title is empty" }
     require(description.isNotEmpty() || logs != null) { "description is empty" }
     require(title.length <= MAX_TITLE_LENGTH) { "title is too long ${title.length}" }
     require(description.length <= MAX_DESCRIPTION_LENGTH) { "description is too long ${description.length}" }
     logs?.let { require(it.length <= MAX_LOGS_LENGTH) { "logs are too long" } }
 
-    val request = ReportRequest(
-      buildFlavor = BuildConfig.FLAVOR,
-      versionName = BuildConfig.VERSION_NAME,
-      osInfo = getOsInfo(),
-      title = title,
-      description = description,
-      logs = logs
-    )
+    serializedCoroutineExecutor.post {
+      val request = ReportRequest(
+        buildFlavor = BuildConfig.FLAVOR,
+        versionName = BuildConfig.VERSION_NAME,
+        osInfo = getOsInfo(),
+        title = title,
+        description = description,
+        logs = logs
+      )
 
-    return sendInternal(request)
+      val result = sendInternal(request)
+      withContext(Dispatchers.Main) { onReportSendResult.invoke(result) }
+    }
   }
 
-  private fun getSettingsStateString(): String {
+  private fun deleteOldAnrReports() {
+    val prevAnrs = anrsDirPath.listFiles() ?: arrayOf<File>()
+    if (prevAnrs.size > MAX_ANR_FILES) {
+      val toDelete = prevAnrs.size - MAX_ANR_FILES
+      if (toDelete > 0) {
+        val oldestAnrFilesToDelete = prevAnrs.map { prevAnrFile ->
+          val matcher = ANR_EXTRACT_TIME_PATTERN.matcher(prevAnrFile.name)
+          if (!matcher.find()) {
+            return@map prevAnrFile to 0L
+          }
+
+          return@map prevAnrFile to (matcher.groupOrNull(1)?.toLongOrNull() ?: 0L)
+        }
+          .sortedByDescending { (_, time) -> time }
+          .takeLast(toDelete)
+          .map { (anrFile, _) -> anrFile }
+
+        oldestAnrFilesToDelete.forEach { anrFile -> anrFile.delete() }
+      }
+    }
+  }
+
+  private suspend fun processSingleRequest(request: ReportRequest, crashLogFile: File): ModularResult<Unit> {
+    BackgroundUtils.ensureBackgroundThread()
+
+    // Delete old crash logs
+    if (System.currentTimeMillis() - crashLogFile.lastModified() > MAX_CRASH_LOG_LIFETIME) {
+      if (!crashLogFile.delete()) {
+        Logger.e(TAG, "Couldn't delete crash log file: ${crashLogFile.absolutePath}")
+      }
+
+      return ModularResult.value(Unit)
+    }
+
+    val result = sendInternal(request)
+    when (result) {
+      is ModularResult.Value -> {
+        Logger.d(TAG, "Crash log ${crashLogFile.absolutePath} sent")
+
+        if (!crashLogFile.delete()) {
+          Logger.e(TAG, "Couldn't delete crash log file: ${crashLogFile.absolutePath}")
+        }
+      }
+      is ModularResult.Error -> {
+        if (result.error is HttpCodeError) {
+          val httpCodeError = result.error as HttpCodeError
+
+          Logger.e(TAG, "Bad response code: ${httpCodeError.code}")
+        } else {
+          Logger.e(TAG, "Error while trying to send crash log", result.error)
+        }
+      }
+    }
+
+    return result
+  }
+
+  fun getReportFooter(): String {
     return buildString {
+      appendLine("------------------------------")
+      appendLine("Android API Level: " + Build.VERSION.SDK_INT)
+      appendLine("App Version: " + BuildConfig.VERSION_NAME + "." + BuildConfig.BUILD_NUMBER)
+      appendLine("Development Build: " + AppModuleAndroidUtils.getVerifiedBuildType().name)
+      appendLine("Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL)
+      appendLine("------------------------------")
       appendLine("Prefetching enabled: ${ChanSettings.autoLoadThreadImages.get()}")
       appendLine("Hi-res thumbnails enabled: ${ChanSettings.highResCells.get()}")
       appendLine("Youtube titles and durations parsing enabled: ${ChanSettings.parseYoutubeTitlesAndDuration.get()}")
@@ -307,31 +382,38 @@ class ReportManager(
       appendLine("Phone layout mode: ${ChanSettings.getCurrentLayoutMode().name}")
       appendLine("OkHttp IPv6 support enabled: ${ChanSettings.okHttpAllowIpv6.get()}")
       appendLine("OkHttp HTTP/2 support enabled: ${ChanSettings.okHttpAllowHttp2.get()}")
+      appendLine("------------------------------")
     }
   }
 
-  private fun createReportRequest(crashLog: CrashLog): ReportRequestWithFile? {
+  private fun createReportRequest(reportFile: ReportFile): ReportRequestWithFile? {
     BackgroundUtils.ensureBackgroundThread()
 
     val log = try {
-      crashLog.file.readText()
+      reportFile.file.readText()
     } catch (error: Throwable) {
       Logger.e(TAG, "Error reading crash log file", error)
       return null
+    }
+
+    val title = if (reportFile.fileName.startsWith(ANR_FILE_NAME_PREFIX)) {
+      "ANR report"
+    } else {
+      "Crash report"
     }
 
     val request = ReportRequest(
       buildFlavor = BuildConfig.FLAVOR,
       versionName = BuildConfig.VERSION_NAME,
       osInfo = getOsInfo(),
-      title = "Crash report",
+      title = title,
       description = "No title",
       logs = log
     )
 
     return ReportRequestWithFile(
       reportRequest = request,
-      crashLogFile = crashLog.file
+      crashLogFile = reportFile.file
     )
   }
 
@@ -343,28 +425,35 @@ class ReportManager(
     )
   }
 
-  private fun createCrashLogsDirIfNotExists(): Boolean {
+  private fun createDirectoriesIfNotExists(): Boolean {
+    var success = true
+
     if (!crashLogsDirPath.exists()) {
       if (!crashLogsDirPath.mkdir()) {
-        Logger.e(TAG, "Couldn't create crash logs directory! " +
-          "path = ${crashLogsDirPath.absolutePath}")
-        return false
+        Logger.e(TAG, "Couldn't create crash logs directory! path = ${crashLogsDirPath.absolutePath}")
+        success = false
       }
     }
 
-    return true
+    if (!anrsDirPath.exists()) {
+      if (!anrsDirPath.mkdir()) {
+        Logger.e(TAG, "Couldn't create ANRs directory! path = ${anrsDirPath.absolutePath}")
+        success = false
+      }
+    }
+
+    return success
   }
 
-  private fun sendInternal(reportRequest: ReportRequest): Single<ModularResult<Boolean>> {
-    return Single.create<ModularResult<Boolean>> { emitter ->
-      BackgroundUtils.ensureBackgroundThread()
+  private suspend fun sendInternal(reportRequest: ReportRequest): ModularResult<Unit> {
+    BackgroundUtils.ensureBackgroundThread()
 
+    return ModularResult.Try {
       val json = try {
         gson.toJson(reportRequest)
       } catch (error: Throwable) {
         Logger.e(TAG, "Couldn't convert $reportRequest to json", error)
-        emitter.tryOnError(error)
-        return@create
+        throw error
       }
 
       val requestBody = json.toRequestBody("application/json".toMediaType())
@@ -373,24 +462,19 @@ class ReportManager(
         .post(requestBody)
         .build()
 
-      okHttpClient.newCall(request).enqueue(object : Callback {
-        override fun onFailure(call: Call, e: IOException) {
-          emitter.onSuccess(ModularResult.error(e))
-        }
+      val response = okHttpClient.suspendCall(request)
 
-        override fun onResponse(call: Call, response: Response) {
-          if (!response.isSuccessful) {
-            val message = "Response is not successful, status = ${response.code}"
-            Logger.e(TAG, message)
+      if (!response.isSuccessful) {
+        val message = "Response is not successful, status = ${response.code}"
+        Logger.e(TAG, message)
 
-            emitter.onSuccess(ModularResult.error(HttpCodeError(response.code)))
-            return
-          }
+        throw HttpCodeError(response.code)
+      }
+    }
+  }
 
-          emitter.onSuccess(ModularResult.value(true))
-        }
-      })
-    }.subscribeOn(senderScheduler)
+  fun postTask(task: () -> Unit) {
+    serializedCoroutineExecutor.post { task() }
   }
 
   private class HttpCodeError(val code: Int) : Exception("Response is not successful, code = $code")
@@ -417,12 +501,14 @@ class ReportManager(
 
   companion object {
     private const val TAG = "ReportManager"
-    private const val SENDER_THREAD_NAME_FORMAT = "ReportSenderThread-%d"
     private const val REPORT_URL = "${BuildConfig.DEV_API_ENDPOINT}/report"
     private const val CRASH_LOG_FILE_NAME_PREFIX = "crashlog"
-    private const val UNBOUNDED_QUEUE_MIN_SIZE = 32
+    private const val ANR_FILE_NAME_PREFIX = "anr"
     private const val CRASH_REPORT_LOGS_LINES_COUNT = 500
+    private const val MAX_ANR_FILES = 5
+
     private val MAX_CRASH_LOG_LIFETIME = TimeUnit.DAYS.toMillis(3)
+    private val ANR_EXTRACT_TIME_PATTERN = Pattern.compile("${ANR_FILE_NAME_PREFIX}_(\\d+)\\.txt")
 
     const val MAX_TITLE_LENGTH = 512
     const val MAX_DESCRIPTION_LENGTH = 8192

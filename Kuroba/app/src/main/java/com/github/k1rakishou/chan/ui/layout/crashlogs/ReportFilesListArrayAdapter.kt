@@ -13,16 +13,16 @@ import androidx.appcompat.widget.AppCompatCheckBox
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 
-internal class CrashLogsListArrayAdapter(
+internal class ReportFilesListArrayAdapter(
   context: Context,
-  crashLogs: List<CrashLog>,
-  private val callbacks: CrashLogsListCallbacks
-) : ArrayAdapter<CrashLog>(context, R.layout.cell_crashlog_item) {
+  reportFiles: List<ReportFile>,
+  private val callbacks: ReportFilesListCallbacks
+) : ArrayAdapter<ReportFile>(context, R.layout.cell_crashlog_item) {
   private val handler = Handler(Looper.getMainLooper())
 
   init {
     clear()
-    addAll(crashLogs)
+    addAll(reportFiles)
   }
 
   @SuppressLint("ViewHolder")
@@ -41,7 +41,7 @@ internal class CrashLogsListArrayAdapter(
     checkBox.isChecked = crashLog.markedToSend
 
     fileNameView.setOnClickListener {
-      callbacks.onCrashLogClicked(crashLog)
+      callbacks.onReportFileClicked(crashLog)
     }
     clickArea.setOnClickListener {
       val crashLogItem = getItem(position)
@@ -63,17 +63,17 @@ internal class CrashLogsListArrayAdapter(
     notifyDataSetChanged()
   }
 
-  fun deleteSelectedCrashLogs(selectedCrashLogs: List<CrashLog>): Int {
-    if (selectedCrashLogs.isNotEmpty()) {
-      selectedCrashLogs.forEach { crashLog -> remove(crashLog) }
+  fun deleteSelectedCrashLogs(selectedReportFiles: List<ReportFile>): Int {
+    if (selectedReportFiles.isNotEmpty()) {
+      selectedReportFiles.forEach { crashLog -> remove(crashLog) }
       notifyDataSetChanged()
     }
 
     return count
   }
 
-  fun getSelectedCrashLogs(): List<CrashLog> {
-    val selectedCrashLogs = mutableListOf<CrashLog>()
+  fun getSelectedCrashLogs(): List<ReportFile> {
+    val selectedCrashLogs = mutableListOf<ReportFile>()
 
     for (i in 0 until count) {
       val item = getItem(i)

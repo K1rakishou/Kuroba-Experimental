@@ -41,6 +41,7 @@ import com.github.k1rakishou.chan.core.di.module.application.RepositoryModule
 import com.github.k1rakishou.chan.core.di.module.application.RoomDatabaseModule
 import com.github.k1rakishou.chan.core.di.module.application.SiteModule
 import com.github.k1rakishou.chan.core.di.module.application.UseCaseModule
+import com.github.k1rakishou.chan.core.diagnostics.AnrSupervisor
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -58,6 +59,7 @@ import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
@@ -119,6 +121,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   lateinit var historyNavigationManager: HistoryNavigationManager
   @Inject
   lateinit var bookmarksManager: BookmarksManager
+  @Inject
+  lateinit var anrSupervisor: AnrSupervisor
 
   private val okHttpDns: Dns
     get() {
@@ -251,6 +255,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       .build()
       .also { component -> component.inject(this) }
 
+    anrSupervisor.start()
+
     siteManager.initialize()
     boardManager.initialize()
     bookmarksManager.initialize()
@@ -263,12 +269,17 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
     setupErrorHandlers()
 
-    // TODO(KurobaEx): move to background thread!
-    if (ChanSettings.collectCrashLogs.get()) {
-      if (reportManager.hasCrashLogs()) {
-        settingsNotificationManager.notify(SettingNotificationType.CrashLog)
+    reportManager.postTask {
+      if (ChanSettings.collectCrashLogs.get() || ChanSettings.collectANRs.get()) {
+        if (reportManager.hasReportFiles()) {
+          settingsNotificationManager.notify(SettingNotificationType.CrashLogOrAnr)
+        }
+
+        return@postTask
       }
     }
+
+    anrSupervisor.onApplicationLoaded()
   }
 
   private fun setupErrorHandlers() {
@@ -364,25 +375,14 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   }
 
   private fun onUnhandledException(exception: Throwable, errorText: String) {
-    Logger.e("UNCAUGHT", errorText)
-    Logger.e("UNCAUGHT", "------------------------------")
-    Logger.e("UNCAUGHT", "END OF CURRENT RUNTIME MESSAGES")
-    Logger.e("UNCAUGHT", "------------------------------")
-    Logger.e("UNCAUGHT", "Android API Level: " + Build.VERSION.SDK_INT)
-    Logger.e(
-      "UNCAUGHT",
-      "App Version: " + BuildConfig.VERSION_NAME + "." + BuildConfig.BUILD_NUMBER
-    )
-    Logger.e("UNCAUGHT", "Development Build: " + AppModuleAndroidUtils.getVerifiedBuildType().name)
-    Logger.e("UNCAUGHT", "Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL)
+    if (!isDevBuild()) {
+      if ("Debug crash" == exception.message) {
+        return
+      }
 
-    // don't upload debug crashes
-    if ("Debug crash" == exception.message) {
-      return
-    }
-
-    if (isEmulator) {
-      return
+      if (isEmulator) {
+        return
+      }
     }
 
     if (ChanSettings.collectCrashLogs.get()) {

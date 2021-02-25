@@ -12,10 +12,10 @@ import com.github.k1rakishou.chan.ui.view.ReportProblemView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
+import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import javax.inject.Inject
 
@@ -53,7 +53,8 @@ class ReportProblemLayout(context: Context) : FrameLayout(context), ReportProble
 
     val logs = LogsController.loadLogs()
     if (logs != null) {
-      reportActivityLogsText.setText(logs)
+      val reportFooter = reportManager.getReportFooter()
+      reportActivityLogsText.setText(logs + reportFooter)
     }
 
     reportActivityAttachLogsButton.setOnCheckedChangeListener { _, isChecked ->
@@ -104,26 +105,28 @@ class ReportProblemLayout(context: Context) : FrameLayout(context), ReportProble
 
     callbacks?.showProgressDialog()
 
-    reportManager.sendReport(title, description, logsParam)
-      .observeOn(AndroidSchedulers.mainThread())
-      .doOnTerminate { callbacks?.hideProgressDialog() }
-      .subscribe({ result ->
-        handleResult(result)
-      }, { error ->
-        Logger.e(TAG, "Send report error", error)
+    reportManager.sendReport(title, description, logsParam) { result ->
+      BackgroundUtils.ensureMainThread()
+      callbacks?.hideProgressDialog()
 
-        val errorMessage = error.message ?: "No error message"
-        val formattedMessage = getString(
-          R.string.report_controller_error_while_trying_to_send_report,
-          errorMessage
-        )
+      when (result) {
+        is ModularResult.Value -> handleResult(result)
+        is ModularResult.Error -> {
+          Logger.e(TAG, "Send report error", result.error)
 
-        showToast(context, formattedMessage)
-      })
-      .also { disposable -> compositeDisposable.add(disposable) }
+          val errorMessage = result.error.message ?: "No error message"
+          val formattedMessage = getString(
+            R.string.report_controller_error_while_trying_to_send_report,
+            errorMessage
+          )
+
+          showToast(context, formattedMessage)
+        }
+      }
+    }
   }
 
-  private fun handleResult(result: ModularResult<Boolean>) {
+  private fun handleResult(result: ModularResult<Unit>) {
     when (result) {
       is ModularResult.Value -> {
         showToast(context, R.string.report_controller_report_sent_message)

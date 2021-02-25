@@ -14,7 +14,7 @@
             android:id="@+id/view_full_crashlog_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:textSize="13sp"
             tools:text="@string/lorem_ipsum" />
 
     </ScrollView>

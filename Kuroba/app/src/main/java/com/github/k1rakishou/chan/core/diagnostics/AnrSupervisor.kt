@@ -1,0 +1,33 @@
+package com.github.k1rakishou.chan.core.diagnostics
+
+import com.github.k1rakishou.chan.core.manager.ReportManager
+import java.util.concurrent.Executors
+
+// Taken from https://medium.com/@cwurthner/detecting-anrs-e6139f475acb
+class AnrSupervisor(
+  private val reportManager: ReportManager
+) {
+  private val executor = Executors.newSingleThreadExecutor()
+  private val supervisor: AnrSupervisorRunnable = AnrSupervisorRunnable(reportManager)
+
+  @Synchronized
+  fun start() {
+    synchronized(supervisor) {
+      if (supervisor.isStopped) {
+        executor.execute(supervisor)
+      } else {
+        supervisor.unstop()
+      }
+    }
+  }
+
+  @Synchronized
+  fun onApplicationLoaded() {
+    supervisor.onApplicationLoaded()
+  }
+
+  @Synchronized
+  fun stop() {
+    supervisor.stop()
+  }
+}

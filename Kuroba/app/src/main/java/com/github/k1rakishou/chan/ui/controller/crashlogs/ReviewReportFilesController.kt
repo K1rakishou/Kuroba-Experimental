@@ -5,11 +5,11 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
-import com.github.k1rakishou.chan.ui.layout.crashlogs.CrashLog
-import com.github.k1rakishou.chan.ui.layout.crashlogs.ReviewCrashLogsLayout
-import com.github.k1rakishou.chan.ui.layout.crashlogs.ReviewCrashLogsLayoutCallbacks
+import com.github.k1rakishou.chan.ui.layout.crashlogs.ReportFile
+import com.github.k1rakishou.chan.ui.layout.crashlogs.ReviewReportFilesLayout
+import com.github.k1rakishou.chan.ui.layout.crashlogs.ReviewReportFilesLayoutCallbacks
 
-class ReviewCrashLogsController(context: Context) : Controller(context), ReviewCrashLogsLayoutCallbacks {
+class ReviewReportFilesController(context: Context) : Controller(context), ReviewReportFilesLayoutCallbacks {
   private var loadingViewController: LoadingViewController? = null
 
   override fun injectDependencies(component: ActivityComponent) {
@@ -18,15 +18,15 @@ class ReviewCrashLogsController(context: Context) : Controller(context), ReviewC
 
   override fun onCreate() {
     super.onCreate()
-    navigation.setTitle(R.string.review_crashlogs_controller_title)
+    navigation.setTitle(R.string.review_report_files_controller_title)
 
-    view = ReviewCrashLogsLayout(context).apply { onCreate(this@ReviewCrashLogsController) }
+    view = ReviewReportFilesLayout(context).apply { onCreate(this@ReviewReportFilesController) }
   }
 
   override fun onDestroy() {
     super.onDestroy()
 
-    (view as ReviewCrashLogsLayout).onDestroy()
+    (view as ReviewReportFilesLayout).onDestroy()
   }
 
   override fun showProgressDialog() {
@@ -41,8 +41,8 @@ class ReviewCrashLogsController(context: Context) : Controller(context), ReviewC
     loadingViewController = null
   }
 
-  override fun onCrashLogClicked(crashLog: CrashLog) {
-    navigationController!!.pushController(ViewFullCrashLogController(context, crashLog))
+  override fun onReportFileClicked(reportFile: ReportFile) {
+    navigationController!!.pushController(ViewFullCrashLogController(context, reportFile))
   }
 
   override fun onFinished() {
