@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.features.settings
 class SettingsGraph(
   private val screenMap: MutableMap<IScreenIdentifier, SettingsScreen> = mutableMapOf()
 ) {
-  private val screensBuilderMap = mutableMapOf<IScreenIdentifier, () -> SettingsScreen>()
+  private val screensBuilderMap = mutableMapOf<IScreenIdentifier, suspend () -> SettingsScreen>()
 
   operator fun plusAssign(screenBuilder: SettingsScreen.SettingsScreenBuilder) {
     val screenIdentifier = screenBuilder.screenIdentifier
@@ -22,7 +22,7 @@ class SettingsGraph(
     screensBuilderMap[screenIdentifier] = screenBuildFunction
   }
 
-  operator fun get(screenIdentifier: IScreenIdentifier): SettingsScreen {
+  suspend fun get(screenIdentifier: IScreenIdentifier): SettingsScreen {
     val cached = screenMap[screenIdentifier]
     if (cached != null) {
       return cached
@@ -36,7 +36,7 @@ class SettingsGraph(
     screenMap.values.forEach { screen -> iterator(screen) }
   }
 
-  fun rebuildScreens(buildOptions: BuildOptions) {
+  suspend fun rebuildScreens(buildOptions: BuildOptions) {
     screenMap.clear()
 
     screensBuilderMap.forEach { (screenIdentifier, buildFunction) ->
@@ -45,7 +45,7 @@ class SettingsGraph(
     }
   }
 
-  fun rebuildScreen(screenIdentifier: IScreenIdentifier, buildOptions: BuildOptions) {
+  suspend fun rebuildScreen(screenIdentifier: IScreenIdentifier, buildOptions: BuildOptions) {
     requireNotNull(screensBuilderMap[screenIdentifier]) {
       "Screen builder does not exist, identifier: ${screenIdentifier}"
     }

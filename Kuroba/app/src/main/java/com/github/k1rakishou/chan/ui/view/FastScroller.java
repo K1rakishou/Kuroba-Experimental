@@ -39,6 +39,7 @@ import androidx.recyclerview.widget.RecyclerView.OnItemTouchListener;
 import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.manager.ViewFlagsStorage;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.core_themes.ChanTheme;
@@ -128,7 +129,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
     private int mRecyclerViewRightPadding = 0;
     private int mRecyclerViewBottomPadding = 0;
 
-    private FastScrollerType fastScrollerType;
+    private FastScrollerControllerType fastScrollerControllerType;
 
     private RecyclerView mRecyclerView;
     /**
@@ -159,7 +160,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
     ViewFlagsStorage viewFlagsStorage;
 
     public FastScroller(
-            FastScrollerType fastScrollerType,
+            FastScrollerControllerType fastScrollerControllerType,
             RecyclerView recyclerView,
             @Nullable
             PostInfoMapItemDecoration postInfoMapItemDecoration,
@@ -172,7 +173,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
         AppModuleAndroidUtils.extractActivityComponent(recyclerView.getContext())
                 .inject(this);
 
-        this.fastScrollerType = fastScrollerType;
+        this.fastScrollerControllerType = fastScrollerControllerType;
         this.mScrollbarMinimumRange = scrollbarMinimumRange;
         this.defaultWidth = defaultWidth;
         this.mMargin = margin;
@@ -546,7 +547,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
                 requestRedraw();
 
                 if (thumbDragListener != null) {
-                    viewFlagsStorage.updateIsDraggingFastScroller(fastScrollerType, true);
+                    viewFlagsStorage.updateIsDraggingFastScroller(fastScrollerControllerType, true);
                     thumbDragListener.onDragStarted();
                 }
 
@@ -559,7 +560,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
             requestRedraw();
 
             if (thumbDragListener != null) {
-                viewFlagsStorage.updateIsDraggingFastScroller(fastScrollerType, false);
+                viewFlagsStorage.updateIsDraggingFastScroller(fastScrollerControllerType, false);
                 thumbDragListener.onDragEnded();
             }
         } else if (me.getAction() == MotionEvent.ACTION_MOVE && mState == STATE_DRAGGING) {
@@ -618,6 +619,21 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
 
     @VisibleForTesting
     boolean isPointInsideVerticalThumb(float x, float y) {
+        ChanSettings.FastScrollerType fastScrollerType = ChanSettings.draggableScrollbars.get();
+        if (fastScrollerType == ChanSettings.FastScrollerType.Disabled) {
+            // Can't use fast scroller for scrolling
+            return false;
+        }
+
+        if (fastScrollerType != ChanSettings.FastScrollerType.ScrollByClickingAnyPointOfTrack) {
+            // Can only scroll when the touch is inside the scrollbar's thumb
+            return (isLayoutRTL() ? x <= mRecyclerViewLeftPadding + defaultWidth / 2f
+                    : x >= mRecyclerViewLeftPadding + mRecyclerViewWidth - defaultWidth)
+                    && y >= mVerticalThumbCenterY - verticalThumbHeight / 2f - defaultWidth
+                    && y <= mVerticalThumbCenterY + verticalThumbHeight / 2f + defaultWidth;
+        }
+
+        // Can scroll when clicking any point of the scrollbar's track
         return isLayoutRTL()
                 ? x <= mRecyclerViewLeftPadding + mVerticalThumbWidth / 2.0f
                 : x >= mRecyclerViewLeftPadding + mRecyclerViewWidth - mVerticalThumbWidth;
@@ -676,7 +692,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
         void onDragEnded();
     }
 
-    public enum FastScrollerType {
+    public enum FastScrollerControllerType {
         Catalog,
         Thread,
         Bookmarks

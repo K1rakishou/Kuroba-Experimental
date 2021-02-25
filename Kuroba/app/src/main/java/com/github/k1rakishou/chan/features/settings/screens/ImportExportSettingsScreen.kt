@@ -37,7 +37,7 @@ class ImportExportSettingsScreen(
     )
   }
 
-  override fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
+  override suspend fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
       buildMainSettingsGroup(),
       buildImportFromKurobaGroup()
@@ -49,7 +49,7 @@ class ImportExportSettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.import_from_kuroba),
           groupIdentifier = identifier
@@ -63,7 +63,7 @@ class ImportExportSettingsScreen(
           callback = { importExportSettingsDelegate.onImportFromKurobaClicked() }
         )
 
-        return group
+        group
       }
     )
   }
@@ -73,7 +73,7 @@ class ImportExportSettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.import_or_export_settings),
           groupIdentifier = identifier
@@ -95,7 +95,7 @@ class ImportExportSettingsScreen(
           callback = { importExportSettingsDelegate.onImportClicked() }
         )
 
-        return group
+        group
       }
     )
   }

@@ -8,7 +8,7 @@ class SettingsGroup(
   val groupTitle: String? = null,
   private val settingsMap: MutableMap<SettingsIdentifier, SettingV2> = mutableMapOf()
 ) {
-  private val settingsBuilderMap = mutableMapOf<SettingsIdentifier, (Int) -> SettingV2>()
+  private val settingsBuilderMap = mutableMapOf<SettingsIdentifier, suspend (Int) -> SettingV2>()
 
   @Suppress("UNCHECKED_CAST")
   operator fun plusAssign(linkSettingV2Builder: SettingV2Builder) {
@@ -42,7 +42,7 @@ class SettingsGroup(
 
   fun lastIndex() = settingsMap.values.size - 1
 
-  fun rebuildSettings(buildOptions: BuildOptions) {
+  suspend fun rebuildSettings(buildOptions: BuildOptions) {
     settingsBuilderMap.forEach { (settingsIdentifier, buildFunction) ->
       if (!shouldBuildThisSetting(buildOptions, settingsIdentifier)) {
         return@forEach
@@ -53,7 +53,7 @@ class SettingsGroup(
     }
   }
 
-  fun rebuildSetting(settingsIdentifier: SettingsIdentifier, buildOptions: BuildOptions) {
+  suspend fun rebuildSetting(settingsIdentifier: SettingsIdentifier, buildOptions: BuildOptions) {
     requireNotNull(settingsMap[settingsIdentifier]) {
       "Setting does not exist, identifier: ${settingsIdentifier}"
     }
@@ -96,7 +96,7 @@ class SettingsGroup(
 
   class SettingsGroupBuilder(
     val groupIdentifier: IGroupIdentifier,
-    val buildFunction: () -> SettingsGroup
+    val buildFunction: suspend () -> SettingsGroup
   )
 
 }

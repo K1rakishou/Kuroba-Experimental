@@ -121,7 +121,7 @@ class SiteSettingsController(
           bindNotificationIcon(SettingNotificationType.Default)
 
           clickListener {
-            settingV2.callback.invoke()
+            mainScope.launch { settingV2.callback.invoke() }
           }
         }
       }

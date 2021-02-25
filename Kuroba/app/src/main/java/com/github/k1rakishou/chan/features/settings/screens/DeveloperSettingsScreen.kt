@@ -32,7 +32,7 @@ class DeveloperSettingsScreen(
   R.string.settings_developer
 ) {
 
-  override fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
+  override suspend fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
       buildMainSettingsGroup()
     )
@@ -43,7 +43,7 @@ class DeveloperSettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupIdentifier = identifier
         )
@@ -196,7 +196,7 @@ class DeveloperSettingsScreen(
           }
         )
 
-        return group
+        group
       }
     )
   }

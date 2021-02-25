@@ -34,7 +34,7 @@ class WatcherSettingsScreen(
   R.string.settings_screen_watch
 ) {
 
-  override fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
+  override suspend fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
       buildThreadWatcherSettingsGroup(),
       buildFilterWatcherSettingsGroup()
@@ -46,7 +46,7 @@ class WatcherSettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.settings_filter_watcher_group),
           groupIdentifier = identifier
@@ -93,7 +93,7 @@ class WatcherSettingsScreen(
           dependsOnSetting = ChanSettings.filterWatchEnabled
         )
 
-        return group
+        group
       }
     )
   }
@@ -103,7 +103,7 @@ class WatcherSettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.settings_thread_watcher_group),
           groupIdentifier = identifier
@@ -253,7 +253,7 @@ class WatcherSettingsScreen(
           dependsOnSetting = ChanSettings.watchLastPageNotify
         )
 
-        return group
+        group
       }
     )
   }

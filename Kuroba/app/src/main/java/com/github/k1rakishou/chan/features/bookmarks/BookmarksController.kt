@@ -513,12 +513,12 @@ class BookmarksController(
   private fun setupRecycler() {
     epoxyRecyclerView.addOnScrollListener(onScrollListener)
 
-    if (ChanSettings.enableDraggableScrollbars.get()) {
+    if (ChanSettings.draggableScrollbars.get().isEnabled) {
       epoxyRecyclerView.isVerticalScrollBarEnabled = false
       cleanupFastScroller()
 
       val scroller = FastScrollerHelper.create(
-        FastScroller.FastScrollerType.Bookmarks,
+        FastScroller.FastScrollerControllerType.Bookmarks,
         epoxyRecyclerView,
         null,
         0,

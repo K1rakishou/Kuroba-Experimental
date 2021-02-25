@@ -33,7 +33,7 @@ class ExperimentalSettingsScreen(
     )
   }
 
-  override fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
+  override suspend fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
       buildMainSettingsGroup()
     )
@@ -44,7 +44,7 @@ class ExperimentalSettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.experimental_settings_group),
           groupIdentifier = identifier
@@ -99,7 +99,7 @@ class ExperimentalSettingsScreen(
           setting = ChanSettings.cloudflareForcePreload
         )
 
-        return group
+        group
       }
     )
   }

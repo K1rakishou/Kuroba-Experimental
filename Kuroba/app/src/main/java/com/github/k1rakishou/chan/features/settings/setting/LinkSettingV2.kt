@@ -20,8 +20,8 @@ open class LinkSettingV2 protected constructor() : SettingV2() {
     private set
 
   private var isEnabledFunc: (() -> Boolean)? = null
-  private var _callback: (() -> SettingClickAction)? = null
-  var callback: () -> SettingClickAction = { SettingClickAction.RefreshClickedSetting }
+  private var _callback: (suspend () -> SettingClickAction)? = null
+  var callback: suspend () -> SettingClickAction = { SettingClickAction.RefreshClickedSetting }
     get() = _callback!!
     private set
 
@@ -76,94 +76,96 @@ open class LinkSettingV2 protected constructor() : SettingV2() {
   }
 
   companion object {
-    fun createBuilder(
+    suspend fun createBuilder(
       context: Context,
       identifier: SettingsIdentifier,
       dependsOnSetting: BooleanSetting? = null,
       isEnabledFunc: (() -> Boolean)? = null,
-      callback: (() -> Unit)? = null,
-      callbackWithClickAction: (() -> SettingClickAction)? = null,
-      topDescriptionIdFunc: (() -> Int)? = null,
-      topDescriptionStringFunc: (() -> String)? = null,
-      bottomDescriptionIdFunc: (() -> Int)? = null,
-      bottomDescriptionStringFunc: (() -> String)? = null,
+      callback: (suspend () -> Unit)? = null,
+      callbackWithClickAction: (suspend () -> SettingClickAction)? = null,
+      topDescriptionIdFunc: (suspend () -> Int)? = null,
+      topDescriptionStringFunc: (suspend () -> String)? = null,
+      bottomDescriptionIdFunc: (suspend () -> Int)? = null,
+      bottomDescriptionStringFunc: (suspend () -> String)? = null,
       requiresRestart: Boolean = false,
       requiresUiRefresh: Boolean = false,
       notificationType: SettingNotificationType? = null
     ): SettingV2Builder {
+      suspend fun buildFunc(updateCounter: Int): LinkSettingV2 {
+        require(notificationType != SettingNotificationType.Default) {
+          "Can't use default notification type here"
+        }
+
+        if (topDescriptionIdFunc != null && topDescriptionStringFunc != null) {
+          throw IllegalArgumentException("Both topDescriptionFuncs are not null!")
+        }
+
+        if (bottomDescriptionIdFunc != null && bottomDescriptionStringFunc != null) {
+          throw IllegalArgumentException("Both bottomDescriptionFuncs are not null!")
+        }
+
+        if (callback != null && callbackWithClickAction != null) {
+          throw IllegalArgumentException("Both callbacks are not null!")
+        }
+
+        val settingV2 = LinkSettingV2()
+        settingV2.settingsIdentifier = identifier
+
+        val topDescResult = listOf(
+          topDescriptionIdFunc,
+          topDescriptionStringFunc
+        ).mapNotNull { func -> func?.invoke() }
+          .lastOrNull()
+
+        settingV2.topDescription = when (topDescResult) {
+          is Int -> context.getString(topDescResult as Int)
+          is String -> topDescResult as String
+          null -> throw IllegalArgumentException("Both topDescriptionFuncs are null!")
+          else -> throw IllegalStateException("Bad topDescResult: $topDescResult")
+        }
+
+        val bottomDescResult = listOf(
+          bottomDescriptionIdFunc,
+          bottomDescriptionStringFunc
+        ).mapNotNull { func -> func?.invoke() }
+          .lastOrNull()
+
+        settingV2.bottomDescription = when (bottomDescResult) {
+          is Int -> context.getString(bottomDescResult as Int)
+          is String -> bottomDescResult as String
+          null -> null
+          else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
+        }
+
+        dependsOnSetting?.let { setting -> settingV2.setDependsOnSetting(setting) }
+
+        settingV2.requiresRestart = requiresRestart
+        settingV2.requiresUiRefresh = requiresUiRefresh
+        settingV2.notificationType = notificationType
+
+        val clickCallback = listOfNotNull(
+          callback,
+          callbackWithClickAction
+        ).lastOrNull()
+          ?: throw IllegalArgumentException("Both callbacks are null")
+
+        settingV2._callback = {
+          when (val callbackResult = clickCallback.invoke()) {
+            is SettingClickAction -> callbackResult as SettingClickAction
+            is Unit -> SettingClickAction.RefreshClickedSetting as SettingClickAction
+            else -> throw IllegalStateException("Bad callbackResult: $callbackResult")
+          }
+        }
+
+        settingV2.updateCounter = updateCounter
+        settingV2.isEnabledFunc = isEnabledFunc
+
+        return settingV2
+      }
+
       return SettingV2Builder(
         settingsIdentifier = identifier,
-        buildFunction = fun(updateCounter: Int): LinkSettingV2 {
-          require(notificationType != SettingNotificationType.Default) {
-            "Can't use default notification type here"
-          }
-
-          if (topDescriptionIdFunc != null && topDescriptionStringFunc != null) {
-            throw IllegalArgumentException("Both topDescriptionFuncs are not null!")
-          }
-
-          if (bottomDescriptionIdFunc != null && bottomDescriptionStringFunc != null) {
-            throw IllegalArgumentException("Both bottomDescriptionFuncs are not null!")
-          }
-
-          if (callback != null && callbackWithClickAction != null) {
-            throw IllegalArgumentException("Both callbacks are not null!")
-          }
-
-          val settingV2 = LinkSettingV2()
-          settingV2.settingsIdentifier = identifier
-
-          val topDescResult = listOf(
-            topDescriptionIdFunc,
-            topDescriptionStringFunc
-          ).mapNotNull { func -> func?.invoke() }
-            .lastOrNull()
-
-          settingV2.topDescription = when (topDescResult) {
-            is Int -> context.getString(topDescResult as Int)
-            is String -> topDescResult as String
-            null -> throw IllegalArgumentException("Both topDescriptionFuncs are null!")
-            else -> throw IllegalStateException("Bad topDescResult: $topDescResult")
-          }
-
-          val bottomDescResult = listOf(
-            bottomDescriptionIdFunc,
-            bottomDescriptionStringFunc
-          ).mapNotNull { func -> func?.invoke() }
-            .lastOrNull()
-
-          settingV2.bottomDescription = when (bottomDescResult) {
-            is Int -> context.getString(bottomDescResult as Int)
-            is String -> bottomDescResult as String
-            null -> null
-            else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
-          }
-
-          dependsOnSetting?.let { setting -> settingV2.setDependsOnSetting(setting) }
-
-          settingV2.requiresRestart = requiresRestart
-          settingV2.requiresUiRefresh = requiresUiRefresh
-          settingV2.notificationType = notificationType
-
-          val clickCallback = listOfNotNull(
-            callback,
-            callbackWithClickAction
-          ).lastOrNull()
-            ?: throw IllegalArgumentException("Both callbacks are null")
-
-          settingV2._callback = fun(): SettingClickAction {
-            return when (val callbackResult = clickCallback.invoke()) {
-              is SettingClickAction -> callbackResult as SettingClickAction
-              is Unit -> SettingClickAction.RefreshClickedSetting as SettingClickAction
-              else -> throw IllegalStateException("Bad callbackResult: $callbackResult")
-            }
-          }
-
-          settingV2.updateCounter = updateCounter
-          settingV2.isEnabledFunc = isEnabledFunc
-
-          return settingV2
-        }
+        buildFunction = ::buildFunc
       )
     }
   }

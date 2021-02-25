@@ -93,7 +93,7 @@ class SiteSettingsPresenter(
   ): SettingsGroup.SettingsGroupBuilder {
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = SiteSettingsScreen.AdditionalSettingsGroup,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = "Additional settings",
           groupIdentifier = SiteSettingsScreen.AdditionalSettingsGroup
@@ -146,7 +146,7 @@ class SiteSettingsPresenter(
           }
         }
 
-        return group
+        group
       }
     )
   }
@@ -157,7 +157,7 @@ class SiteSettingsPresenter(
   ): SettingsGroup.SettingsGroupBuilder {
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = SiteSettingsScreen.AuthenticationGroup,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = "Authentication",
           groupIdentifier = SiteSettingsScreen.AuthenticationGroup
@@ -181,7 +181,7 @@ class SiteSettingsPresenter(
           }
         )
 
-        return group
+        group
       }
     )
   }
@@ -192,7 +192,7 @@ class SiteSettingsPresenter(
   ): SettingsGroup.SettingsGroupBuilder {
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = SiteSettingsScreen.GeneralGroup,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = "General",
           groupIdentifier = SiteSettingsScreen.GeneralGroup
@@ -208,7 +208,7 @@ class SiteSettingsPresenter(
           }
         )
 
-        return group
+        group
       }
     )
   }

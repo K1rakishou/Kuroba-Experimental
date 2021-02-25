@@ -5,7 +5,7 @@ class SettingsScreen(
   val screenIdentifier: IScreenIdentifier,
   private val groupsMap: MutableMap<IGroupIdentifier, SettingsGroup> = mutableMapOf()
 ) {
-  private val groupsBuilderMap = mutableMapOf<IGroupIdentifier, () -> SettingsGroup>()
+  private val groupsBuilderMap = mutableMapOf<IGroupIdentifier, suspend () -> SettingsGroup>()
 
   operator fun plusAssign(groupBuilder: SettingsGroup.SettingsGroupBuilder) {
     val groupIdentifier = groupBuilder.groupIdentifier
@@ -26,7 +26,7 @@ class SettingsScreen(
     groupsMap.values.forEach { settingsGroup -> iterator(settingsGroup) }
   }
 
-  fun rebuildGroups(buildOptions: BuildOptions) {
+  suspend fun rebuildGroups(buildOptions: BuildOptions) {
     groupsMap.clear()
 
     groupsBuilderMap.forEach { (groupIdentifier, buildFunction) ->
@@ -35,7 +35,7 @@ class SettingsScreen(
     }
   }
 
-  fun rebuildGroup(groupIdentifier: IGroupIdentifier, buildOptions: BuildOptions) {
+  suspend fun rebuildGroup(groupIdentifier: IGroupIdentifier, buildOptions: BuildOptions) {
     requireNotNull(groupsBuilderMap[groupIdentifier]) {
       "Group builder does not exist, identifier: ${groupIdentifier}"
     }
@@ -44,7 +44,7 @@ class SettingsScreen(
       .apply { rebuildSettings(buildOptions) }
   }
 
-  fun rebuildSetting(
+  suspend fun rebuildSetting(
     groupIdentifier: IGroupIdentifier,
     settingIdentifier: SettingsIdentifier,
     buildOptions: BuildOptions
@@ -60,6 +60,6 @@ class SettingsScreen(
 
   class SettingsScreenBuilder(
     val screenIdentifier: IScreenIdentifier,
-    val buildFunction: () -> SettingsScreen
+    val buildFunction: suspend () -> SettingsScreen
   )
 }

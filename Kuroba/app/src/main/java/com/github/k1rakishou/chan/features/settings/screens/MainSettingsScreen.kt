@@ -52,7 +52,7 @@ class MainSettingsScreen(
   R.string.settings_screen
 ) {
 
-  override fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
+  override suspend fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
       buildMainSettingsGroup(),
       buildAboutAppGroup()
@@ -64,7 +64,7 @@ class MainSettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.settings_group_about),
           groupIdentifier = identifier
@@ -184,7 +184,7 @@ class MainSettingsScreen(
           callbackWithClickAction = { SettingClickAction.OpenScreen(DeveloperScreen) }
         )
 
-        return group
+        group
       }
     )
   }
@@ -194,7 +194,7 @@ class MainSettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.settings_screen),
           groupIdentifier = identifier
@@ -280,7 +280,7 @@ class MainSettingsScreen(
           callbackWithClickAction = { SettingClickAction.OpenScreen(ExperimentalScreen) }
         )
 
-        return group
+        group
       }
     )
   }

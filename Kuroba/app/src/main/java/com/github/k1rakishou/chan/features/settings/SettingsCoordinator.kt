@@ -3,6 +3,9 @@ package com.github.k1rakishou.chan.features.settings
 import android.content.Context
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.chan.activity.StartActivity
+import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.base.LazySuspend
+import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.helper.DialogFactory
@@ -37,13 +40,12 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.reactive.asFlow
 import java.util.*
 import javax.inject.Inject
-import kotlin.coroutines.CoroutineContext
 
 class SettingsCoordinator(
   private val context: Context,
   private val navigationController: NavigationController,
   private val drawerCallbacks: DrawerCallbacks?
-) : CoroutineScope, SettingsCoordinatorCallbacks {
+): SettingsCoordinatorCallbacks {
 
   @Inject
   lateinit var appConstants: AppConstants
@@ -87,6 +89,9 @@ class SettingsCoordinator(
   lateinit var proxyStorage: ProxyStorage
   @Inject
   lateinit var importExportRepository: ImportExportRepository
+
+  private val scope = KurobaCoroutineScope()
+  private val settingBuilderExecutor = SerializedCoroutineExecutor(scope)
 
   private val mainSettingsScreen by lazy {
     MainSettingsScreen(
@@ -158,7 +163,7 @@ class SettingsCoordinator(
   private val importExportSettingsScreen by lazy {
     ImportExportSettingsScreen(
       context,
-      this,
+      scope,
       navigationController,
       fileChooser,
       fileManager,
@@ -183,21 +188,17 @@ class SettingsCoordinator(
 
   private val scrollPositionsPerScreen = mutableMapOf<IScreenIdentifier, IndexAndTop>()
 
-  private val settingsGraphDelegate = lazy { buildSettingsGraph() }
-  private val settingsGraph by settingsGraphDelegate
+  private val settingsGraphDelegate = LazySuspend<SettingsGraph> { buildSettingsGraph() }
   private val screenStack = Stack<IScreenIdentifier>()
   private val job = SupervisorJob()
 
   private val screensBuiltOnce = SuspendableInitializer<Unit>("screensBuiltOnce")
 
-  override val coroutineContext: CoroutineContext
-    get() = job + Dispatchers.Main + CoroutineName("SettingsCoordinator")
-
   fun onCreate() {
     AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
-    launch {
+    scope.launch {
       onSearchEnteredSubject
         .asFlow()
         .catch { error -> Logger.e(TAG, "Unknown error received from onSearchEnteredSubject", error) }
@@ -214,7 +215,7 @@ class SettingsCoordinator(
         }
     }
 
-    launch {
+    scope.launch {
       settingsNotificationManager.listenForNotificationUpdates()
         .asFlow()
         .collect {
@@ -251,9 +252,10 @@ class SettingsCoordinator(
     screenStack.clear()
 
     if (settingsGraphDelegate.isInitialized()) {
-      settingsGraph.clear()
+      settingsGraphDelegate.valueOrNull()?.clear()
     }
 
+    scope.cancelChildren()
     job.cancelChildren()
   }
 
@@ -268,16 +270,18 @@ class SettingsCoordinator(
     groupIdentifier: IGroupIdentifier,
     settingIdentifier: SettingsIdentifier
   ) {
-    val settingsScreen = settingsGraph[screenIdentifier]
-      .apply {
-        rebuildSetting(
-          groupIdentifier,
-          settingIdentifier,
-          BuildOptions.Default
-        )
-      }
+    settingBuilderExecutor.post {
+      val settingsScreen = settingsGraphDelegate.value().get(screenIdentifier)
+        .apply {
+          rebuildSetting(
+            groupIdentifier,
+            settingIdentifier,
+            BuildOptions.Default
+          )
+        }
 
-    renderSettingsSubject.onNext(RenderAction.RenderScreen(settingsScreen))
+      emitRenderAction(RenderAction.RenderScreen(settingsScreen))
+    }
   }
 
   fun getCurrentIndexAndTopOrNull(): IndexAndTop? {
@@ -313,16 +317,28 @@ class SettingsCoordinator(
     buildOptions: BuildOptions,
     isFirstRebuild: Boolean = false
   ) {
-    launch(Dispatchers.Main.immediate) {
-      if (isFirstRebuild) {
-        renderSettingsSubject.onNext(RenderAction.Loading)
+    scope.launch(Dispatchers.Main.immediate) {
+      val loadingJob = if (isFirstRebuild) {
+        val job = scope.launch {
+          delay(100)
+          emitRenderAction(RenderAction.Loading)
+        }
 
         siteManager.awaitUntilInitialized()
         boardManager.awaitUntilInitialized()
+
+        job
+      } else {
+        null
       }
 
       pushScreen(screenIdentifier)
-      rebuildScreenInternal(screenIdentifier, buildOptions)
+
+      settingsGraphDelegate.value().rebuildScreen(screenIdentifier, buildOptions)
+      val settingsScreen = settingsGraphDelegate.value().get(screenIdentifier)
+
+      loadingJob?.cancel()
+      emitRenderAction(RenderAction.RenderScreen(settingsScreen))
 
       screensBuiltOnce.initWithValue(Unit)
     }
@@ -350,24 +366,27 @@ class SettingsCoordinator(
     rebuildScreen(screenIdentifier, buildOptions)
   }
 
-  fun rebuildScreenWithSearchQuery(query: String, buildOptions: BuildOptions) {
-    settingsGraph.rebuildScreens(buildOptions)
-    val graph = settingsGraph
-
-    val topScreenIdentifier = if (screenStack.isEmpty()) {
-      null
-    } else {
-      screenStack.peek()
-    }
-
-    renderSettingsSubject.onNext(RenderAction.RenderSearchScreen(topScreenIdentifier, graph, query))
+  fun post(func: suspend () -> Unit) {
+    settingBuilderExecutor.post(func)
   }
 
-  private fun rebuildScreenInternal(screen: IScreenIdentifier, buildOptions: BuildOptions) {
-    settingsGraph.rebuildScreen(screen, buildOptions)
-    val settingsScreen = settingsGraph[screen]
+  fun rebuildScreenWithSearchQuery(query: String, buildOptions: BuildOptions) {
+    settingBuilderExecutor.post {
+      settingsGraphDelegate.value().rebuildScreens(buildOptions)
+      val graph = settingsGraphDelegate.value()
 
-    renderSettingsSubject.onNext(RenderAction.RenderScreen(settingsScreen))
+      val topScreenIdentifier = if (screenStack.isEmpty()) {
+        null
+      } else {
+        screenStack.peek()
+      }
+
+      emitRenderAction(RenderAction.RenderSearchScreen(topScreenIdentifier, graph, query))
+    }
+  }
+
+  private fun emitRenderAction(renderAction: RenderAction) {
+    renderSettingsSubject.onNext(renderAction)
   }
 
   private fun popScreen(): IScreenIdentifier {
@@ -388,7 +407,7 @@ class SettingsCoordinator(
     }
   }
 
-  private fun buildSettingsGraph(): SettingsGraph {
+  private suspend fun buildSettingsGraph(): SettingsGraph {
     val graph = SettingsGraph()
 
     graph += mainSettingsScreen.build()

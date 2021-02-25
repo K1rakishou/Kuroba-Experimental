@@ -4,5 +4,5 @@ import com.github.k1rakishou.chan.features.settings.SettingsIdentifier
 
 class SettingV2Builder(
   val settingsIdentifier: SettingsIdentifier,
-  val buildFunction: (Int) -> SettingV2
+  val buildFunction: suspend (Int) -> SettingV2
 )

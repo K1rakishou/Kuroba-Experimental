@@ -4,15 +4,15 @@ import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.view.FastScroller
 
 class ViewFlagsStorage {
-  private val fastScrollerDragStateMap = mutableMapOf<FastScroller.FastScrollerType, Boolean>()
+  private val fastScrollerDragStateMap = mutableMapOf<FastScroller.FastScrollerControllerType, Boolean>()
   private val replyLayoutOpenStateMap = mutableMapOf<ThreadSlideController.ThreadControllerType, Boolean>()
 
-  fun updateIsDraggingFastScroller(fastScrollerType: FastScroller.FastScrollerType, dragging: Boolean) {
-    fastScrollerDragStateMap[fastScrollerType] = dragging
+  fun updateIsDraggingFastScroller(fastScrollerControllerType: FastScroller.FastScrollerControllerType, dragging: Boolean) {
+    fastScrollerDragStateMap[fastScrollerControllerType] = dragging
   }
 
-  fun isDraggingFastScroller(fastScrollerType: FastScroller.FastScrollerType): Boolean {
-    return fastScrollerDragStateMap[fastScrollerType] ?: false
+  fun isDraggingFastScroller(fastScrollerControllerType: FastScroller.FastScrollerControllerType): Boolean {
+    return fastScrollerDragStateMap[fastScrollerControllerType] ?: false
   }
 
   fun updateIsReplyLayoutOpened(threadControllerType: ThreadSlideController.ThreadControllerType, isOpened: Boolean) {

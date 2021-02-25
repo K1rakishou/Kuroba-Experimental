@@ -83,6 +83,9 @@ class MainSettingsControllerV2(
     settingsCoordinator = SettingsCoordinator(context, requireNavController(), drawerCallbacks)
     settingsCoordinator.onCreate()
 
+    compositeDisposable += settingsCoordinator.listenForRenderScreenActions()
+      .subscribe { renderAction -> renderScreen(renderAction) }
+
     settingsCoordinator.rebuildScreen(
       screenIdentifier = defaultScreen,
       buildOptions = BuildOptions.Default,
@@ -90,9 +93,6 @@ class MainSettingsControllerV2(
     )
 
     epoxyRecyclerView.addOnScrollListener(scrollListener)
-
-    compositeDisposable += settingsCoordinator.listenForRenderScreenActions()
-      .subscribe { renderAction -> renderScreen(renderAction) }
   }
 
   override fun onDestroy() {
@@ -275,29 +275,31 @@ class MainSettingsControllerV2(
             settingEnabled(true)
 
             clickListener {
-              when (val clickAction = settingV2.callback.invoke()) {
-                SettingClickAction.NoAction -> {
-                  // no-op
-                }
-                SettingClickAction.RefreshClickedSetting -> {
-                  if (!query.isNullOrEmpty()) {
-                    settingsCoordinator.rebuildScreenWithSearchQuery(query, BuildOptions.Default)
-                  } else {
-                    settingsCoordinator.rebuildSetting(
-                      settingsScreen.screenIdentifier,
-                      settingsGroup.groupIdentifier,
-                      settingV2.settingsIdentifier
-                    )
+              settingsCoordinator.post {
+                when (val clickAction = settingV2.callback.invoke()) {
+                  SettingClickAction.NoAction -> {
+                    // no-op
                   }
-                }
-                is SettingClickAction.OpenScreen -> {
-                  storeRecyclerPositionForCurrentScreen()
-                  settingsCoordinator.rebuildScreen(clickAction.screenIdentifier, BuildOptions.Default)
-                }
-                is SettingClickAction.ShowToast -> {
-                  showToast(clickAction.messageId)
-                }
-              }.exhaustive
+                  SettingClickAction.RefreshClickedSetting -> {
+                    if (!query.isNullOrEmpty()) {
+                      settingsCoordinator.rebuildScreenWithSearchQuery(query, BuildOptions.Default)
+                    } else {
+                      settingsCoordinator.rebuildSetting(
+                        settingsScreen.screenIdentifier,
+                        settingsGroup.groupIdentifier,
+                        settingV2.settingsIdentifier
+                      )
+                    }
+                  }
+                  is SettingClickAction.OpenScreen -> {
+                    storeRecyclerPositionForCurrentScreen()
+                    settingsCoordinator.rebuildScreen(clickAction.screenIdentifier, BuildOptions.Default)
+                  }
+                  is SettingClickAction.ShowToast -> {
+                    showToast(clickAction.messageId)
+                  }
+                }.exhaustive
+              }
             }
           } else {
             settingEnabled(false)

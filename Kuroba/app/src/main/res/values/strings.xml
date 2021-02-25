@@ -610,6 +610,11 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_enable_draggable_scrollbars">Draggable scrollbars</string>
     <string name="setting_enable_draggable_scrollbars_bottom">Enable draggable scrollbars for fast scrolling</string>
 
+    <string name="setting_enable_draggable_scrollbars_disabled">Disabled (Regular, non-draggable scrollbars)</string>
+    <string name="setting_enable_draggable_scrollbars_scroll_by_dragging_thumb">Scroll only when dragging thumb</string>
+    <string name="setting_enable_draggable_scrollbars_scroll_by_clicking_track">Scroll by clicking any point of track</string>
+
+
     <!-- Appearance post group -->
     <string name="setting_post_full_date">Show the full date on posts</string>
     <string name="setting_post_file_info">Show file info on posts</string>

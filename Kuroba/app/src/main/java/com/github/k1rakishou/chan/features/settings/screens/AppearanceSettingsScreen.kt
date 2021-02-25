@@ -22,7 +22,7 @@ class AppearanceSettingsScreen(
   R.string.settings_screen_appearance
 ) {
 
-  override fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
+  override suspend fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
       buildAppearanceSettingsGroup(),
       buildLayoutSettingsGroup(),
@@ -37,7 +37,7 @@ class AppearanceSettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.settings_group_images),
           groupIdentifier = identifier
@@ -96,7 +96,7 @@ class AppearanceSettingsScreen(
           setting = ChanSettings.transparencyOn
         )
 
-        return group
+        group
       }
     )
 
@@ -107,7 +107,7 @@ class AppearanceSettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.settings_group_post),
           groupIdentifier = identifier
@@ -197,7 +197,7 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        return group
+        group
       }
     )
   }
@@ -207,7 +207,7 @@ class AppearanceSettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.setting_group_post_links),
           groupIdentifier = identifier
@@ -270,8 +270,9 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        return group
-      })
+        group
+      }
+    )
   }
 
   private fun buildLayoutSettingsGroup(): SettingsGroup.SettingsGroupBuilder {
@@ -279,7 +280,7 @@ class AppearanceSettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.settings_group_layout),
           groupIdentifier = identifier
@@ -355,26 +356,40 @@ class AppearanceSettingsScreen(
           setting = ChanSettings.neverShowPages
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += ListSettingV2.createBuilder<ChanSettings.FastScrollerType>(
           context = context,
           identifier = AppearanceScreen.LayoutGroup.EnableDraggableScrollbars,
           topDescriptionIdFunc = { R.string.setting_enable_draggable_scrollbars },
           bottomDescriptionIdFunc = { R.string.setting_enable_draggable_scrollbars_bottom },
-          setting = ChanSettings.enableDraggableScrollbars,
+          items = ChanSettings.FastScrollerType.values().toList(),
+          itemNameMapper = { fastScrollerType ->
+            when (fastScrollerType) {
+              ChanSettings.FastScrollerType.Disabled -> {
+                context.getString(R.string.setting_enable_draggable_scrollbars_disabled)
+              }
+              ChanSettings.FastScrollerType.ScrollByDraggingThumb -> {
+                context.getString(R.string.setting_enable_draggable_scrollbars_scroll_by_dragging_thumb)
+              }
+              ChanSettings.FastScrollerType.ScrollByClickingAnyPointOfTrack -> {
+                context.getString(R.string.setting_enable_draggable_scrollbars_scroll_by_clicking_track)
+              }
+            }
+          },
+          setting = ChanSettings.draggableScrollbars,
           requiresUiRefresh = true
         )
 
-        return group
+        group
       }
     )
   }
 
-  private fun buildAppearanceSettingsGroup(): SettingsGroup.SettingsGroupBuilder {
+  private suspend fun buildAppearanceSettingsGroup(): SettingsGroup.SettingsGroupBuilder {
     val identifier = AppearanceScreen.MainGroup
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.settings_group_appearance),
           groupIdentifier = identifier
@@ -388,7 +403,7 @@ class AppearanceSettingsScreen(
           callback = { navigationController.pushController(ThemeSettingsController(context)) }
         )
 
-        return group
+        group
       }
     )
   }

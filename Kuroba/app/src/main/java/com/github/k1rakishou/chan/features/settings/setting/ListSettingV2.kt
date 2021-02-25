@@ -103,83 +103,85 @@ class ListSettingV2<T : Any> : SettingV2() {
       items: List<T>,
       itemNameMapper: (T) -> String,
       dependsOnSetting: BooleanSetting? = null,
-      topDescriptionIdFunc: (() -> Int)? = null,
-      topDescriptionStringFunc: (() -> String)? = null,
-      bottomDescriptionIdFunc: ((name: String) -> Int)? = null,
-      bottomDescriptionStringFunc: ((name: String) -> String)? = null,
+      topDescriptionIdFunc: (suspend () -> Int)? = null,
+      topDescriptionStringFunc: (suspend () -> String)? = null,
+      bottomDescriptionIdFunc: (suspend (name: String) -> Int)? = null,
+      bottomDescriptionStringFunc: (suspend (name: String) -> String)? = null,
       requiresRestart: Boolean = false,
       requiresUiRefresh: Boolean = false,
       notificationType: SettingNotificationType? = null
     ): SettingV2Builder {
+      suspend fun buildFunc(updateCounter: Int): ListSettingV2<T> {
+        require(items.isNotEmpty()) { "Items are empty" }
+
+        require(notificationType != SettingNotificationType.Default) {
+          "Can't use default notification type here"
+        }
+
+        if (topDescriptionIdFunc != null && topDescriptionStringFunc != null) {
+          throw IllegalArgumentException("Both topDescriptionFuncs are not null!")
+        }
+
+        if (bottomDescriptionIdFunc != null && bottomDescriptionStringFunc != null) {
+          throw IllegalArgumentException("Both bottomDescriptionFuncs are not null!")
+        }
+
+        val listSettingV2 = ListSettingV2<T>()
+
+        val topDescResult: Any? = listOf(
+          topDescriptionIdFunc,
+          topDescriptionStringFunc
+        )
+          .mapNotNull { func -> func?.invoke() }
+          .lastOrNull()
+
+        listSettingV2.topDescription = when (topDescResult) {
+          is Int -> context.getString(topDescResult)
+          is String -> topDescResult
+          null -> throw IllegalArgumentException("Both topDescriptionFuncs are null!")
+          else -> throw IllegalStateException("Bad topDescResult: $topDescResult")
+        }
+
+        val bottomDescResult: Any? = listOf(
+          bottomDescriptionIdFunc,
+          bottomDescriptionStringFunc
+        ).mapNotNull { func ->
+          val settingValue = setting.get()
+
+          val item = items.firstOrNull { item -> item == settingValue }
+          if (item == null) {
+            Logger.e(TAG, "Couldn't find item with value $settingValue " +
+              "resetting to default: ${setting.default}")
+
+            setting.set(setting.default)
+            return@mapNotNull func?.invoke(itemNameMapper(setting.default))
+          }
+
+          return@mapNotNull func?.invoke(itemNameMapper(item))
+        }.lastOrNull()
+
+        listSettingV2.bottomDescription = when (bottomDescResult) {
+          is Int -> context.getString(bottomDescResult)
+          is String -> bottomDescResult
+          null -> null
+          else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
+        }
+
+        dependsOnSetting?.let { setting -> listSettingV2.setDependsOnSetting(setting) }
+        listSettingV2.requiresRestart = requiresRestart
+        listSettingV2.requiresUiRefresh = requiresUiRefresh
+        listSettingV2.notificationType = notificationType
+        listSettingV2.settingsIdentifier = identifier
+        listSettingV2.setting = setting
+        listSettingV2.items = items
+        listSettingV2.itemNameMapper = itemNameMapper as (T: Any?) -> String
+
+        return listSettingV2
+      }
+
       return SettingV2Builder(
         settingsIdentifier = identifier,
-        buildFunction = fun(_: Int): ListSettingV2<T> {
-          require(items.isNotEmpty()) { "Items are empty" }
-
-          require(notificationType != SettingNotificationType.Default) {
-            "Can't use default notification type here"
-          }
-
-          if (topDescriptionIdFunc != null && topDescriptionStringFunc != null) {
-            throw IllegalArgumentException("Both topDescriptionFuncs are not null!")
-          }
-
-          if (bottomDescriptionIdFunc != null && bottomDescriptionStringFunc != null) {
-            throw IllegalArgumentException("Both bottomDescriptionFuncs are not null!")
-          }
-
-          val listSettingV2 = ListSettingV2<T>()
-
-          val topDescResult: Any? = listOf(
-            topDescriptionIdFunc,
-            topDescriptionStringFunc
-          )
-            .mapNotNull { func -> func?.invoke() }
-            .lastOrNull()
-
-          listSettingV2.topDescription = when (topDescResult) {
-            is Int -> context.getString(topDescResult)
-            is String -> topDescResult
-            null -> throw IllegalArgumentException("Both topDescriptionFuncs are null!")
-            else -> throw IllegalStateException("Bad topDescResult: $topDescResult")
-          }
-
-          val bottomDescResult: Any? = listOf(
-            bottomDescriptionIdFunc,
-            bottomDescriptionStringFunc
-          ).mapNotNull { func ->
-            val settingValue = setting.get()
-
-            val item = items.firstOrNull { item -> item == settingValue }
-            if (item == null) {
-              Logger.e(TAG, "Couldn't find item with value $settingValue " +
-                "resetting to default: ${setting.default}")
-
-              setting.set(setting.default)
-              return@mapNotNull func?.invoke(itemNameMapper(setting.default))
-            }
-
-            return@mapNotNull func?.invoke(itemNameMapper(item))
-          }.lastOrNull()
-
-          listSettingV2.bottomDescription = when (bottomDescResult) {
-            is Int -> context.getString(bottomDescResult)
-            is String -> bottomDescResult
-            null -> null
-            else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
-          }
-
-          dependsOnSetting?.let { setting -> listSettingV2.setDependsOnSetting(setting) }
-          listSettingV2.requiresRestart = requiresRestart
-          listSettingV2.requiresUiRefresh = requiresUiRefresh
-          listSettingV2.notificationType = notificationType
-          listSettingV2.settingsIdentifier = identifier
-          listSettingV2.setting = setting
-          listSettingV2.items = items
-          listSettingV2.itemNameMapper = itemNameMapper as (T: Any?) -> String
-
-          return listSettingV2
-        }
+        buildFunction = ::buildFunc
       )
     }
   }

@@ -28,7 +28,7 @@ class BehaviourSettingsScreen(
   R.string.settings_screen_behavior
 ) {
 
-  override fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
+  override suspend fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
       buildMainSettingsGroup(),
       buildReplySettingsGroup(),
@@ -42,7 +42,7 @@ class BehaviourSettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.setting_other_settings_group),
           groupIdentifier = identifier
@@ -64,7 +64,7 @@ class BehaviourSettingsScreen(
           setting = ChanSettings.showCopyApkUpdateDialog
         )
 
-        return group
+        group
       }
     )
   }
@@ -74,7 +74,7 @@ class BehaviourSettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.settings_group_post),
           groupIdentifier = identifier
@@ -103,7 +103,7 @@ class BehaviourSettingsScreen(
           requiresUiRefresh = true
         )
 
-        return group
+        group
       }
     )
   }
@@ -113,7 +113,7 @@ class BehaviourSettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.settings_group_reply),
           groupIdentifier = identifier
@@ -135,7 +135,7 @@ class BehaviourSettingsScreen(
           inputType = DialogFactory.DialogInputType.String
         )
 
-        return group
+        group
       }
     )
   }
@@ -145,7 +145,7 @@ class BehaviourSettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.settings_group_general),
           groupIdentifier = identifier
@@ -216,7 +216,7 @@ class BehaviourSettingsScreen(
           }
         )
 
-        return group
+        group
       }
     )
   }

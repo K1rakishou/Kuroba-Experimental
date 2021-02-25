@@ -104,66 +104,69 @@ class InputSettingV2<T : Any> : SettingV2() {
       requiresUiRefresh: Boolean = false,
       notificationType: SettingNotificationType? = null
     ): SettingV2Builder {
+
+      suspend fun buildFunc(updateCounter: Int): InputSettingV2<T> {
+        require(notificationType != SettingNotificationType.Default) {
+          "Can't use default notification type here"
+        }
+
+        if (topDescriptionIdFunc != null && topDescriptionStringFunc != null) {
+          throw IllegalArgumentException("Both topDescriptionFuncs are not null!")
+        }
+
+        if (bottomDescriptionIdFunc != null && bottomDescriptionStringFunc != null) {
+          throw IllegalArgumentException("Both bottomDescriptionFuncs are not null!")
+        }
+
+        val inputSettingV2 = InputSettingV2<T>()
+
+        val topDescResult = listOf(
+          topDescriptionIdFunc,
+          topDescriptionStringFunc
+        ).mapNotNull { func -> func?.invoke() }
+          .lastOrNull()
+
+        inputSettingV2.topDescription = when (topDescResult) {
+          is Int -> context.getString(topDescResult as Int)
+          is String -> topDescResult as String
+          null -> throw IllegalArgumentException("Both topDescriptionFuncs are null!")
+          else -> throw IllegalStateException("Bad topDescResult: $topDescResult")
+        }
+
+        val bottomDescResult = listOf(
+          bottomDescriptionIdFunc,
+          bottomDescriptionStringFunc
+        ).mapNotNull { func -> func?.invoke() }
+          .lastOrNull()
+
+        inputSettingV2.bottomDescription = when (bottomDescResult) {
+          is Int -> context.getString(bottomDescResult as Int)
+          is String -> bottomDescResult as String
+          null -> null
+          else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
+        }
+
+        inputSettingV2.bottomDescription = when (bottomDescResult) {
+          is Int -> context.getString(bottomDescResult as Int)
+          is String -> bottomDescResult as String
+          null -> null
+          else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
+        }
+
+        dependsOnSetting?.let { setting -> inputSettingV2.setDependsOnSetting(setting) }
+        inputSettingV2.requiresRestart = requiresRestart
+        inputSettingV2.requiresUiRefresh = requiresUiRefresh
+        inputSettingV2.notificationType = notificationType
+        inputSettingV2.settingsIdentifier = identifier
+        inputSettingV2.setting = setting
+        inputSettingV2.inputType = inputType
+
+        return inputSettingV2
+      }
+
       return SettingV2Builder(
         settingsIdentifier = identifier,
-        buildFunction = fun(_: Int): InputSettingV2<T> {
-          require(notificationType != SettingNotificationType.Default) {
-            "Can't use default notification type here"
-          }
-
-          if (topDescriptionIdFunc != null && topDescriptionStringFunc != null) {
-            throw IllegalArgumentException("Both topDescriptionFuncs are not null!")
-          }
-
-          if (bottomDescriptionIdFunc != null && bottomDescriptionStringFunc != null) {
-            throw IllegalArgumentException("Both bottomDescriptionFuncs are not null!")
-          }
-
-          val inputSettingV2 = InputSettingV2<T>()
-
-          val topDescResult = listOf(
-            topDescriptionIdFunc,
-            topDescriptionStringFunc
-          ).mapNotNull { func -> func?.invoke() }
-            .lastOrNull()
-
-          inputSettingV2.topDescription = when (topDescResult) {
-            is Int -> context.getString(topDescResult as Int)
-            is String -> topDescResult as String
-            null -> throw IllegalArgumentException("Both topDescriptionFuncs are null!")
-            else -> throw IllegalStateException("Bad topDescResult: $topDescResult")
-          }
-
-          val bottomDescResult = listOf(
-            bottomDescriptionIdFunc,
-            bottomDescriptionStringFunc
-          ).mapNotNull { func -> func?.invoke() }
-            .lastOrNull()
-
-          inputSettingV2.bottomDescription = when (bottomDescResult) {
-            is Int -> context.getString(bottomDescResult as Int)
-            is String -> bottomDescResult as String
-            null -> null
-            else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
-          }
-
-          inputSettingV2.bottomDescription = when (bottomDescResult) {
-            is Int -> context.getString(bottomDescResult as Int)
-            is String -> bottomDescResult as String
-            null -> null
-            else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
-          }
-
-          dependsOnSetting?.let { setting -> inputSettingV2.setDependsOnSetting(setting) }
-          inputSettingV2.requiresRestart = requiresRestart
-          inputSettingV2.requiresUiRefresh = requiresUiRefresh
-          inputSettingV2.notificationType = notificationType
-          inputSettingV2.settingsIdentifier = identifier
-          inputSettingV2.setting = setting
-          inputSettingV2.inputType = inputType
-
-          return inputSettingV2
-        }
+        buildFunction = ::buildFunc
       )
     }
   }

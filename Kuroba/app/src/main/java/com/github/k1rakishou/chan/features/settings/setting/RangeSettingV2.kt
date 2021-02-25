@@ -107,77 +107,79 @@ class RangeSettingV2(
       requiresUiRefresh: Boolean = false,
       notificationType: SettingNotificationType? = null
     ): SettingV2Builder {
+      suspend fun buildFunc(updateCounter: Int): RangeSettingV2 {
+        require(notificationType != SettingNotificationType.Default) {
+          "Can't use default notification type here"
+        }
+
+        if (topDescriptionIdFunc != null && topDescriptionStringFunc != null) {
+          throw IllegalArgumentException("Both topDescriptionFuncs are not null!")
+        }
+
+        if (bottomDescriptionIdFunc != null && bottomDescriptionStringFunc != null) {
+          throw IllegalArgumentException("Both bottomDescriptionFuncs are not null!")
+        }
+
+        val rangeSetting = RangeSettingV2(setting)
+
+        val topDescResult = listOf(
+          topDescriptionIdFunc,
+          topDescriptionStringFunc
+        ).mapNotNull { func -> func?.invoke() }
+          .lastOrNull()
+
+        rangeSetting.topDescription = when (topDescResult) {
+          is Int -> context.getString(topDescResult as Int)
+          is String -> topDescResult as String
+          null -> throw IllegalArgumentException("Both topDescriptionFuncs are null!")
+          else -> throw IllegalStateException("Bad topDescResult: $topDescResult")
+        }
+
+        val currentValueResult = listOf(
+          currentValueIdFunc,
+          currentValueStringFunc
+        ).mapNotNull { func -> func?.invoke() }
+          .lastOrNull()
+
+        rangeSetting.currentValueText = when (currentValueResult) {
+          is Int -> context.getString(currentValueResult as Int)
+          is String -> currentValueResult as String
+          null -> throw IllegalArgumentException("Both currentValueFuncs are null!")
+          else -> throw IllegalStateException("Bad currentValueResult: $currentValueResult")
+        }
+
+        val bottomDescResult = listOf(
+          bottomDescriptionIdFunc,
+          bottomDescriptionStringFunc
+        ).mapNotNull { func -> func?.invoke() }
+          .lastOrNull()
+
+        rangeSetting.bottomDescription = when (bottomDescResult) {
+          is Int -> context.getString(bottomDescResult as Int)
+          is String -> bottomDescResult as String
+          null -> null
+          else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
+        }
+
+        rangeSetting.bottomDescription = when (bottomDescResult) {
+          is Int -> context.getString(bottomDescResult as Int)
+          is String -> bottomDescResult as String
+          null -> null
+          else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
+        }
+
+        dependsOnSetting?.let { setting -> rangeSetting.setDependsOnSetting(setting) }
+        rangeSetting.requiresRestart = requiresRestart
+        rangeSetting.requiresUiRefresh = requiresUiRefresh
+        rangeSetting.notificationType = notificationType
+        rangeSetting.settingsIdentifier = identifier
+
+        return rangeSetting
+      }
+
       return SettingV2Builder(
         settingsIdentifier = identifier,
-        buildFunction = fun(_: Int): RangeSettingV2 {
-          require(notificationType != SettingNotificationType.Default) {
-            "Can't use default notification type here"
-          }
-
-          if (topDescriptionIdFunc != null && topDescriptionStringFunc != null) {
-            throw IllegalArgumentException("Both topDescriptionFuncs are not null!")
-          }
-
-          if (bottomDescriptionIdFunc != null && bottomDescriptionStringFunc != null) {
-            throw IllegalArgumentException("Both bottomDescriptionFuncs are not null!")
-          }
-
-          val rangeSetting = RangeSettingV2(setting)
-
-          val topDescResult = listOf(
-            topDescriptionIdFunc,
-            topDescriptionStringFunc
-          ).mapNotNull { func -> func?.invoke() }
-            .lastOrNull()
-
-          rangeSetting.topDescription = when (topDescResult) {
-            is Int -> context.getString(topDescResult as Int)
-            is String -> topDescResult as String
-            null -> throw IllegalArgumentException("Both topDescriptionFuncs are null!")
-            else -> throw IllegalStateException("Bad topDescResult: $topDescResult")
-          }
-
-          val currentValueResult = listOf(
-            currentValueIdFunc,
-            currentValueStringFunc
-          ).mapNotNull { func -> func?.invoke() }
-            .lastOrNull()
-
-          rangeSetting.currentValueText = when (currentValueResult) {
-            is Int -> context.getString(currentValueResult as Int)
-            is String -> currentValueResult as String
-            null -> throw IllegalArgumentException("Both currentValueFuncs are null!")
-            else -> throw IllegalStateException("Bad currentValueResult: $currentValueResult")
-          }
-
-          val bottomDescResult = listOf(
-            bottomDescriptionIdFunc,
-            bottomDescriptionStringFunc
-          ).mapNotNull { func -> func?.invoke() }
-            .lastOrNull()
-
-          rangeSetting.bottomDescription = when (bottomDescResult) {
-            is Int -> context.getString(bottomDescResult as Int)
-            is String -> bottomDescResult as String
-            null -> null
-            else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
-          }
-
-          rangeSetting.bottomDescription = when (bottomDescResult) {
-            is Int -> context.getString(bottomDescResult as Int)
-            is String -> bottomDescResult as String
-            null -> null
-            else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
-          }
-
-          dependsOnSetting?.let { setting -> rangeSetting.setDependsOnSetting(setting) }
-          rangeSetting.requiresRestart = requiresRestart
-          rangeSetting.requiresUiRefresh = requiresUiRefresh
-          rangeSetting.notificationType = notificationType
-          rangeSetting.settingsIdentifier = identifier
-
-          return rangeSetting
-        }
+        buildFunction = ::buildFunc
       )
     }
   }

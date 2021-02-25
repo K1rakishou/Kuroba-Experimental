@@ -11,8 +11,6 @@ import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.repository.InlinedFileInfoRepository
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository
 import com.github.k1rakishou.model.repository.SeenPostRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import java.util.*
 
 class DatabaseSettingsSummaryScreen(
@@ -28,7 +26,7 @@ class DatabaseSettingsSummaryScreen(
   R.string.settings_database_summary
 ) {
 
-  override fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
+  override suspend fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
       buildMainSettingsGroup()
     )
@@ -39,7 +37,7 @@ class DatabaseSettingsSummaryScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupIdentifier = identifier
         )
@@ -49,12 +47,12 @@ class DatabaseSettingsSummaryScreen(
           identifier = DatabaseSummaryScreen.MainGroup.ClearInlinedFilesTable,
           topDescriptionIdFunc = { R.string.settings_clear_inlined_files_table },
           bottomDescriptionStringFunc = {
-            val count = runBlocking(Dispatchers.Default) { inlinedFileInfoRepository.count().unwrap() }
+            val count = inlinedFileInfoRepository.count().unwrap()
             String.format(Locale.ENGLISH, "This table stores file size info for inlined files.\n\n" +
               "Inlined files info table rows count: $count")
           },
           callback = {
-            val deleted = runBlocking(Dispatchers.Default) { inlinedFileInfoRepository.deleteAll().unwrap() }
+            val deleted = inlinedFileInfoRepository.deleteAll().unwrap()
             showToast(context, "Done, deleted $deleted inlined file info rows")
           }
         )
@@ -64,12 +62,12 @@ class DatabaseSettingsSummaryScreen(
           identifier = DatabaseSummaryScreen.MainGroup.ClearLinkExtraInfoTable,
           topDescriptionIdFunc = { R.string.settings_clear_link_info_table },
           bottomDescriptionStringFunc = {
-            val count = runBlocking(Dispatchers.Default) { mediaServiceLinkExtraContentRepository.count().unwrap() }
+            val count = mediaServiceLinkExtraContentRepository.count().unwrap()
             String.format(Locale.ENGLISH, "This table stores title and durations for youtube (and not only) like.\n\n" +
               "Link extra info table rows count: $count")
           },
           callback = {
-            val deleted = runBlocking(Dispatchers.Default) { mediaServiceLinkExtraContentRepository.deleteAll().unwrap() }
+            val deleted = mediaServiceLinkExtraContentRepository.deleteAll().unwrap()
             showToast(context, "Done, deleted $deleted extra link info rows")
           }
         )
@@ -79,12 +77,12 @@ class DatabaseSettingsSummaryScreen(
           identifier = DatabaseSummaryScreen.MainGroup.ClearSeenPostsTable,
           topDescriptionIdFunc = { R.string.settings_clear_seen_posts_table },
           bottomDescriptionStringFunc = {
-            val count = runBlocking(Dispatchers.Default) { seenPostRepository.count().unwrap() }
+            val count = seenPostRepository.count().unwrap()
             String.format(Locale.ENGLISH, "This table stores ids of already seen posts.\n\n" +
               "Seen posts table rows count: $count")
           },
           callback = {
-            val deleted = runBlocking(Dispatchers.Default) { seenPostRepository.deleteAll().unwrap() }
+            val deleted = seenPostRepository.deleteAll().unwrap()
             showToast(context, "Done, deleted $deleted seen posts rows")
           }
         )
@@ -94,7 +92,7 @@ class DatabaseSettingsSummaryScreen(
           identifier = DatabaseSummaryScreen.MainGroup.ThreadsTable,
           topDescriptionIdFunc = { R.string.settings_trigger_thread_cleanup },
           bottomDescriptionStringFunc = {
-            val count = runBlocking(Dispatchers.Default) { chanPostRepository.totalThreadsCount().unwrap() }
+            val count = chanPostRepository.totalThreadsCount().unwrap()
             val maxCount = appConstants.maxAmountOfThreadsInDatabase
 
             return@createBuilder String.format(
@@ -103,9 +101,7 @@ class DatabaseSettingsSummaryScreen(
             )
           },
           callback = {
-            val deleted = runBlocking(Dispatchers.Default) {
-              chanPostRepository.deleteOldThreadsIfNeeded(forced = true).unwrap()
-            }
+            val deleted = chanPostRepository.deleteOldThreadsIfNeeded(forced = true).unwrap()
 
             showToast(context, "Done, deleted ${deleted.deletedTotal} thread rows, " +
               "skipped ${deleted.skippedTotal} thread rows")
@@ -117,7 +113,7 @@ class DatabaseSettingsSummaryScreen(
           identifier = DatabaseSummaryScreen.MainGroup.PostsTable,
           topDescriptionIdFunc = { R.string.settings_trigger_post_cleanup },
           bottomDescriptionStringFunc = {
-            val count = runBlocking(Dispatchers.Default) { chanPostRepository.totalPostsCount().unwrap() }
+            val count = chanPostRepository.totalPostsCount().unwrap()
             val maxCount = appConstants.maxAmountOfPostsInDatabase
 
             return@createBuilder String.format(
@@ -126,16 +122,14 @@ class DatabaseSettingsSummaryScreen(
             )
           },
           callback = {
-            val deleted = runBlocking(Dispatchers.Default) {
-              chanPostRepository.deleteOldPostsIfNeeded(forced = true).unwrap()
-            }
+            val deleted = chanPostRepository.deleteOldPostsIfNeeded(forced = true).unwrap()
 
             showToast(context, "Done, deleted ${deleted.deletedTotal} post rows, " +
               "skipped ${deleted.skippedTotal} post rows")
           }
         )
 
-        return group
+        group
       }
     )
   }

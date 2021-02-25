@@ -17,7 +17,7 @@ class MediaSettingsScreen(
   R.string.settings_screen_media
 ) {
 
-  override fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
+  override suspend fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
       buildCacheSizeSettingGroup(),
       buildVideoSettingsGroup(),
@@ -30,7 +30,7 @@ class MediaSettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.settings_group_media_loading),
           groupIdentifier = identifier
@@ -110,7 +110,7 @@ class MediaSettingsScreen(
           dependsOnSetting = ChanSettings.autoLoadThreadImages
         )
 
-        return group
+        group
       }
     )
   }
@@ -120,7 +120,7 @@ class MediaSettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.setting_video_options),
           groupIdentifier = identifier
@@ -167,7 +167,7 @@ class MediaSettingsScreen(
           setting = ChanSettings.videoStream
         )
 
-        return group
+        group
       }
     )
   }
@@ -177,7 +177,7 @@ class MediaSettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.settings_cache_size),
           groupIdentifier = identifier
@@ -203,7 +203,7 @@ class MediaSettingsScreen(
           setting = ChanSettings.prefetchDiskCacheSizeMegabytes
         )
 
-        return group
+        group
       }
     )
   }

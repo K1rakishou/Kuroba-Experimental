@@ -12,26 +12,25 @@ import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
  */
 public class FastScrollerHelper {
     public static final int FAST_SCROLLER_WIDTH = dp(10);
+    private static final int MINIMUM_RANGE = dp(50);
+    private static final int MARGIN = 0;
+    private static final int THUMB_MIN_LENGTH = dp(48);
 
     public static FastScroller create(
-            FastScroller.FastScrollerType fastScrollerType,
+            FastScroller.FastScrollerControllerType fastScrollerControllerType,
             RecyclerView recyclerView,
             @Nullable
             PostInfoMapItemDecoration postInfoMapItemDecoration,
             int toolbarPaddingTop
     ) {
-        final int minimumRange = dp(50);
-        final int margin = 0;
-        final int thumbMinLength = dp(32);
-
         return new FastScroller(
-                fastScrollerType,
+                fastScrollerControllerType,
                 recyclerView,
                 postInfoMapItemDecoration,
                 FAST_SCROLLER_WIDTH,
-                minimumRange,
-                margin,
-                thumbMinLength,
+                MINIMUM_RANGE,
+                MARGIN,
+                THUMB_MIN_LENGTH,
                 toolbarPaddingTop
         );
     }

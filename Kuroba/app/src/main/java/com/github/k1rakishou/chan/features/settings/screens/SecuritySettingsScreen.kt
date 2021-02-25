@@ -22,7 +22,7 @@ class SecuritySettingsScreen(
   R.string.settings_screen_security
 ) {
 
-  override fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
+  override suspend fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(buildMainGroup())
   }
 
@@ -31,7 +31,7 @@ class SecuritySettingsScreen(
 
     return SettingsGroup.SettingsGroupBuilder(
       groupIdentifier = identifier,
-      buildFunction = fun(): SettingsGroup {
+      buildFunction = {
         val group = SettingsGroup(
           groupTitle = context.getString(R.string.settings_screen_security_proxy_group),
           groupIdentifier = identifier
@@ -48,7 +48,7 @@ class SecuritySettingsScreen(
           callback = { navigationController.pushController(ProxySetupController(context, drawerCallbacks)) }
         )
 
-        return group
+        group
       }
     )
   }

@@ -1121,7 +1121,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   private fun setFastScroll(enable: Boolean) {
-    val enabledInSettings = ChanSettings.enableDraggableScrollbars.get()
+    val enabledInSettings = ChanSettings.draggableScrollbars.get().isEnabled
 
     if (!enable || !enabledInSettings) {
       if (fastScroller != null) {
@@ -1162,8 +1162,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     if (fastScroller == null) {
       val fastScrollerType = when (chanDescriptor) {
-        is ThreadDescriptor -> FastScroller.FastScrollerType.Thread
-        is ChanDescriptor.CatalogDescriptor -> FastScroller.FastScrollerType.Catalog
+        is ThreadDescriptor -> FastScroller.FastScrollerControllerType.Thread
+        is ChanDescriptor.CatalogDescriptor -> FastScroller.FastScrollerControllerType.Catalog
       }
 
       val scroller = FastScrollerHelper.create(
@@ -1249,7 +1249,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       0
     }
 
-    val recyclerRight = if (ChanSettings.enableDraggableScrollbars.get()) {
+    val recyclerRight = if (ChanSettings.draggableScrollbars.get().isEnabled) {
       defaultPadding + FastScrollerHelper.FAST_SCROLLER_WIDTH
     } else {
       defaultPadding

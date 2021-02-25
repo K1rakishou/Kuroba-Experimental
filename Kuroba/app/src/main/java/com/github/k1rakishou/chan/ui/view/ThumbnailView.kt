@@ -113,9 +113,9 @@ open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
     val isCached = imageLoaderV2.isImageCachedLocally(url)
 
     val isDraggingCatalogScroller =
-      viewFlagsStorage.isDraggingFastScroller(FastScroller.FastScrollerType.Catalog)
+      viewFlagsStorage.isDraggingFastScroller(FastScroller.FastScrollerControllerType.Catalog)
     val isDraggingThreadScroller =
-      viewFlagsStorage.isDraggingFastScroller(FastScroller.FastScrollerType.Thread)
+      viewFlagsStorage.isDraggingFastScroller(FastScroller.FastScrollerControllerType.Thread)
     val isDraggingCatalogOrThreadFastScroller =
       isDraggingCatalogScroller || isDraggingThreadScroller
 

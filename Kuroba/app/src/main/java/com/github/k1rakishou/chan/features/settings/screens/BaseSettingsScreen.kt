@@ -15,10 +15,10 @@ abstract class BaseSettingsScreen(
 ) {
   private var initialized = false
 
-  fun build(): SettingsScreen.SettingsScreenBuilder {
+  suspend fun build(): SettingsScreen.SettingsScreenBuilder {
     return SettingsScreen.SettingsScreenBuilder(
       screenIdentifier = identifier,
-      buildFunction = fun(): SettingsScreen {
+      buildFunction = {
         val screen = SettingsScreen(
           title = context.getString(screenTitle),
           screenIdentifier = identifier
@@ -28,7 +28,7 @@ abstract class BaseSettingsScreen(
         check(groups.isNotEmpty()) { "No groups were built" }
 
         groups.forEach { settingsGroup -> screen += settingsGroup }
-        return screen
+        screen
       }
     )
   }
@@ -45,6 +45,6 @@ abstract class BaseSettingsScreen(
     initialized = false
   }
 
-  abstract fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder>
+  abstract suspend fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder>
 
 }

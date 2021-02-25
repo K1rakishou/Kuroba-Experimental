@@ -108,81 +108,85 @@ class BooleanSettingV2 : SettingV2() {
       identifier: SettingsIdentifier,
       setting: Setting<Boolean>,
       dependsOnSetting: BooleanSetting? = null,
-      topDescriptionIdFunc: (() -> Int)? = null,
-      topDescriptionStringFunc: (() -> String)? = null,
-      bottomDescriptionIdFunc: (() -> Int)? = null,
-      bottomDescriptionStringFunc: (() -> String)? = null,
+      topDescriptionIdFunc: (suspend () -> Int)? = null,
+      topDescriptionStringFunc: (suspend () -> String)? = null,
+      bottomDescriptionIdFunc: (suspend () -> Int)? = null,
+      bottomDescriptionStringFunc: (suspend () -> String)? = null,
       checkChangedCallback: ((Boolean) -> Unit)? = null,
       requiresRestart: Boolean = false,
       requiresUiRefresh: Boolean = false,
       notificationType: SettingNotificationType? = null
     ): SettingV2Builder {
+
+      suspend fun buildFunc(updateCounter: Int): BooleanSettingV2 {
+        require(notificationType != SettingNotificationType.Default) {
+          "Can't use default notification type here"
+        }
+
+        if (topDescriptionIdFunc != null && topDescriptionStringFunc != null) {
+          throw IllegalArgumentException("Both topDescriptionFuncs are not null!")
+        }
+
+        if (bottomDescriptionIdFunc != null && bottomDescriptionStringFunc != null) {
+          throw IllegalArgumentException("Both bottomDescriptionFuncs are not null!")
+        }
+
+        val booleanSettingV2 = BooleanSettingV2()
+
+        val topDescResult = listOf(
+          topDescriptionIdFunc,
+          topDescriptionStringFunc
+        ).mapNotNull { func -> func?.invoke() }
+          .lastOrNull()
+
+        booleanSettingV2.topDescription = when (topDescResult) {
+          is Int -> context.getString(topDescResult as Int)
+          is String -> topDescResult as String
+          null -> throw IllegalArgumentException("Both topDescriptionFuncs are null!")
+          else -> throw IllegalStateException("Bad topDescResult: $topDescResult")
+        }
+
+        val bottomDescResult = listOf(
+          bottomDescriptionIdFunc,
+          bottomDescriptionStringFunc
+        ).mapNotNull { func -> func?.invoke() }
+          .lastOrNull()
+
+        booleanSettingV2.bottomDescription = when (bottomDescResult) {
+          is Int -> context.getString(bottomDescResult as Int)
+          is String -> bottomDescResult as String
+          null -> null
+          else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
+        }
+
+        booleanSettingV2.requiresRestart = requiresRestart
+        booleanSettingV2.requiresUiRefresh = requiresUiRefresh
+        booleanSettingV2.notificationType = notificationType
+
+        booleanSettingV2.isChecked = setting.get()
+        booleanSettingV2.settingsIdentifier = identifier
+        booleanSettingV2.setting = setting
+
+        dependsOnSetting?.let { setting ->
+          booleanSettingV2.subscribeToChanges(setting)
+        }
+
+        checkChangedCallback?.let { callback ->
+          booleanSettingV2.callback = fun(): Boolean {
+            val newValue = booleanSettingV2.defaultCallback.invoke()
+            callback.invoke(newValue)
+
+            return newValue
+          }
+        }
+
+        return booleanSettingV2
+      }
+
+
       return SettingV2Builder(
         settingsIdentifier = identifier,
-        buildFunction = fun(updateCounter: Int): BooleanSettingV2 {
-          require(notificationType != SettingNotificationType.Default) {
-            "Can't use default notification type here"
-          }
-
-          if (topDescriptionIdFunc != null && topDescriptionStringFunc != null) {
-            throw IllegalArgumentException("Both topDescriptionFuncs are not null!")
-          }
-
-          if (bottomDescriptionIdFunc != null && bottomDescriptionStringFunc != null) {
-            throw IllegalArgumentException("Both bottomDescriptionFuncs are not null!")
-          }
-
-          val booleanSettingV2 = BooleanSettingV2()
-
-          val topDescResult = listOf(
-            topDescriptionIdFunc,
-            topDescriptionStringFunc
-          ).mapNotNull { func -> func?.invoke() }
-            .lastOrNull()
-
-          booleanSettingV2.topDescription = when (topDescResult) {
-            is Int -> context.getString(topDescResult as Int)
-            is String -> topDescResult as String
-            null -> throw IllegalArgumentException("Both topDescriptionFuncs are null!")
-            else -> throw IllegalStateException("Bad topDescResult: $topDescResult")
-          }
-
-          val bottomDescResult = listOf(
-            bottomDescriptionIdFunc,
-            bottomDescriptionStringFunc
-          ).mapNotNull { func -> func?.invoke() }
-            .lastOrNull()
-
-          booleanSettingV2.bottomDescription = when (bottomDescResult) {
-            is Int -> context.getString(bottomDescResult as Int)
-            is String -> bottomDescResult as String
-            null -> null
-            else -> throw IllegalStateException("Bad bottomDescResult: $bottomDescResult")
-          }
-
-          booleanSettingV2.requiresRestart = requiresRestart
-          booleanSettingV2.requiresUiRefresh = requiresUiRefresh
-          booleanSettingV2.notificationType = notificationType
-
-          booleanSettingV2.isChecked = setting.get()
-          booleanSettingV2.settingsIdentifier = identifier
-          booleanSettingV2.setting = setting
-
-          dependsOnSetting?.let { setting ->
-            booleanSettingV2.subscribeToChanges(setting)
-          }
-
-          checkChangedCallback?.let { callback ->
-            booleanSettingV2.callback = fun(): Boolean {
-              val newValue = booleanSettingV2.defaultCallback.invoke()
-              callback.invoke(newValue)
-
-              return newValue
-            }
-          }
-
-          return booleanSettingV2
-        }
+        buildFunction = ::buildFunc
       )
     }
   }
