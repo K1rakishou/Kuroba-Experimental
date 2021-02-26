@@ -12,9 +12,11 @@ import androidx.annotation.RequiresApi
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getScreenOrientation
+import javax.inject.Inject
 
 
 @RequiresApi(Build.VERSION_CODES.Q)
@@ -26,6 +28,9 @@ class AdjustAndroid10GestureZonesController(context: Context) : Controller(conte
   private var presenting = false
   private var attachSide: AttachSide? = null
   private var skipZone: ExclusionZone? = null
+
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private val globalLayoutListener = object : ViewTreeObserver.OnGlobalLayoutListener {
     override fun onGlobalLayout() {
@@ -94,17 +99,16 @@ class AdjustAndroid10GestureZonesController(context: Context) : Controller(conte
     val prevLayoutParams = addZoneButton.layoutParams as RelativeLayout.LayoutParams
 
     when (attachSide) {
-      AttachSide.Bottom -> {
-        prevLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP)
-        prevLayoutParams.topMargin = TOP_BUTTON_MARGIN
-        prevLayoutParams.bottomMargin = 0
-      }
       AttachSide.Top -> {
         prevLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM)
         prevLayoutParams.topMargin = 0
-        prevLayoutParams.bottomMargin = BOTTOM_BUTTON_MARGIN
+        prevLayoutParams.bottomMargin = BOTTOM_BUTTON_MARGIN + globalWindowInsetsManager.bottom()
       }
-      else -> return
+      else -> {
+        prevLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_TOP)
+        prevLayoutParams.topMargin = TOP_BUTTON_MARGIN + globalWindowInsetsManager.top()
+        prevLayoutParams.bottomMargin = 0
+      }
     }
 
     addZoneButton.layoutParams = prevLayoutParams

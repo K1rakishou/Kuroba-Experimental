@@ -20,7 +20,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
-import android.view.GestureDetector
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
@@ -143,10 +142,15 @@ class MainController(
   private lateinit var divider: ColorizableDivider
   private lateinit var bottomMenuPanel: BottomMenuPanel
 
-  private val bottomNavViewGestureDetector = GestureDetector(
-    context,
-    BottomNavViewGestureListener(onSwipedUp = { globalViewStateManager.onBottomNavViewSwipeUpGestureTriggered() })
-  )
+  private val bottomNavViewGestureDetector by lazy {
+    return@lazy BottomNavViewLongTapSwipeUpGestureDetector(
+      context = context,
+      bottomNavView = bottomNavView,
+      onSwipedUpAfterLongPress = {
+        globalViewStateManager.onBottomNavViewSwipeUpGestureTriggered()
+      }
+    )
+  }
 
   private val drawerPresenter by lazy {
     DrawerPresenter(
@@ -240,10 +244,20 @@ class MainController(
       return@setOnNavigationItemSelectedListener true
     }
 
+    bottomNavView.setOnOuterInterceptTouchEventListener { event ->
+      if (bottomNavView.selectedItemId == R.id.action_browse) {
+        return@setOnOuterInterceptTouchEventListener bottomNavViewGestureDetector.onInterceptTouchEvent(event)
+      }
+
+      return@setOnOuterInterceptTouchEventListener false
+    }
+
     bottomNavView.setOnOuterTouchEventListener { event ->
       if (bottomNavView.selectedItemId == R.id.action_browse) {
-        bottomNavViewGestureDetector.onTouchEvent(event)
+        return@setOnOuterTouchEventListener bottomNavViewGestureDetector.onTouchEvent(event)
       }
+
+      return@setOnOuterTouchEventListener false
     }
 
     EpoxyTouchHelper
@@ -329,6 +343,7 @@ class MainController(
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     drawerPresenter.onDestroy()
     compositeDisposable.clear()
+    bottomNavViewGestureDetector.cleanup()
   }
 
   override fun onInsetsChanged() {

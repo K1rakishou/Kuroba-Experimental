@@ -59,6 +59,22 @@ class ScreenRectF {
     ScreenRectF(rect.left, rect.bottom, rect.width(), rect.height(), minSize, maxSize)
   }
 
+  constructor(x: Float, y: Float, width: Float, height: Float) {
+    this.minSize = 0f
+    this.maxSize = Float.MAX_VALUE
+
+    require(width >= minSize) { "width must be >= minSize!" }
+    require(height >= minSize) { "height must be >= minSize!" }
+
+    require(width <= maxSize) { "width must be <= MAXIMUM_SIZE!" }
+    require(height <= maxSize) { "height must be <= MAXIMUM_SIZE!" }
+
+    this._x = x
+    this._y = y
+    this._width = width
+    this._height = height
+  }
+
   constructor(x: Float, y: Float, width: Float, height: Float, minSize: Float, maxSize: Float) {
     this.minSize = minSize
     this.maxSize = maxSize

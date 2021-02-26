@@ -27,7 +27,8 @@ class HidingBottomNavigationView @JvmOverloads constructor(
   private var isCollapseLocked = false
   private var maxViewHeight: Int = 0
 
-  private var listener: ((MotionEvent) -> Unit)? = null
+  private var interceptTouchEventListener: ((MotionEvent) -> Boolean)? = null
+  private var touchEventListener: ((MotionEvent) -> Boolean)? = null
 
   init {
     setOnApplyWindowInsetsListener(null)
@@ -100,7 +101,10 @@ class HidingBottomNavigationView @JvmOverloads constructor(
     }
 
     if (ev != null) {
-      listener?.invoke(ev)
+      val result = interceptTouchEventListener?.invoke(ev)
+      if (result == true) {
+        return true
+      }
     }
 
     return super.onInterceptTouchEvent(ev)
@@ -112,11 +116,22 @@ class HidingBottomNavigationView @JvmOverloads constructor(
       return false
     }
 
+    if (event != null) {
+      val result = touchEventListener?.invoke(event)
+      if (result == true) {
+        return true
+      }
+    }
+
     return super.onTouchEvent(event)
   }
 
-  fun setOnOuterTouchEventListener(listener: (MotionEvent) -> Unit) {
-    this.listener = listener
+  fun setOnOuterInterceptTouchEventListener(listener: (MotionEvent) -> Boolean) {
+    this.interceptTouchEventListener = listener
+  }
+
+  fun setOnOuterTouchEventListener(listener: (MotionEvent) -> Boolean) {
+    this.touchEventListener = listener
   }
 
   override fun onAttachedToWindow() {
