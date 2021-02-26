@@ -327,24 +327,24 @@ abstract class ThreadController(
     filtersController.showFilterDialog(filter)
   }
 
-  override fun onLostFocus(controllerType: ThreadSlideController.ThreadControllerType) {
+  override fun onLostFocus(wasFocused: ThreadSlideController.ThreadControllerType) {
     if (isDevBuild()) {
-      check(controllerType == threadControllerType) {
-        "ThreadControllerTypes do not match! controllerType=$controllerType, current=$threadControllerType"
+      check(wasFocused == threadControllerType) {
+        "ThreadControllerTypes do not match! wasFocused=$wasFocused, current=$threadControllerType"
       }
     }
 
-    threadLayout.lostFocus(controllerType)
+    threadLayout.lostFocus(wasFocused)
   }
 
-  override fun onGainedFocus(controllerType: ThreadSlideController.ThreadControllerType) {
+  override fun onGainedFocus(nowFocused: ThreadSlideController.ThreadControllerType) {
     if (isDevBuild()) {
-      check(controllerType == threadControllerType) {
-        "ThreadControllerTypes do not match! controllerType=$controllerType, current=$threadControllerType"
+      check(nowFocused == threadControllerType) {
+        "ThreadControllerTypes do not match! nowFocused=$nowFocused, current=$threadControllerType"
       }
     }
 
-    threadLayout.gainedFocus(controllerType)
+    threadLayout.gainedFocus(nowFocused)
   }
 
   override fun threadBackPressed(): Boolean {

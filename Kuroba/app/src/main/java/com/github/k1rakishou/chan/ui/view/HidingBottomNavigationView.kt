@@ -27,6 +27,8 @@ class HidingBottomNavigationView @JvmOverloads constructor(
   private var isCollapseLocked = false
   private var maxViewHeight: Int = 0
 
+  private var listener: ((MotionEvent) -> Unit)? = null
+
   init {
     setOnApplyWindowInsetsListener(null)
   }
@@ -97,6 +99,10 @@ class HidingBottomNavigationView @JvmOverloads constructor(
       return true
     }
 
+    if (ev != null) {
+      listener?.invoke(ev)
+    }
+
     return super.onInterceptTouchEvent(ev)
   }
 
@@ -107,6 +113,10 @@ class HidingBottomNavigationView @JvmOverloads constructor(
     }
 
     return super.onTouchEvent(event)
+  }
+
+  fun setOnOuterTouchEventListener(listener: (MotionEvent) -> Unit) {
+    this.listener = listener
   }
 
   override fun onAttachedToWindow() {

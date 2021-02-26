@@ -1907,17 +1907,34 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.onRestoreRemovedPostsClicked(currentChanDescriptor!!, selectedPosts)
   }
 
-  fun gainedFocus(threadControllerType: ThreadSlideController.ThreadControllerType) {
+  fun lostFocus(wasFocused: ThreadSlideController.ThreadControllerType) {
     if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SLIDE) {
       // If we are not in SLIDE layout mode, then we don't need to check the state of SlidingPaneLayout
       currentFocusedController = CurrentFocusedController.None
       return
     }
 
-    currentFocusedController = when (threadControllerType) {
+    currentFocusedController = when (wasFocused) {
+      ThreadSlideController.ThreadControllerType.Catalog -> CurrentFocusedController.Thread
+      ThreadSlideController.ThreadControllerType.Thread -> CurrentFocusedController.Catalog
+    }
+  }
+
+  fun gainedFocus(nowFocused: ThreadSlideController.ThreadControllerType) {
+    if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SLIDE) {
+      // If we are not in SLIDE layout mode, then we don't need to check the state of SlidingPaneLayout
+      currentFocusedController = CurrentFocusedController.None
+      return
+    }
+
+    currentFocusedController = when (nowFocused) {
       ThreadSlideController.ThreadControllerType.Catalog -> CurrentFocusedController.Catalog
       ThreadSlideController.ThreadControllerType.Thread -> CurrentFocusedController.Thread
     }
+  }
+
+  fun currentFocusedController(): CurrentFocusedController {
+    return currentFocusedController
   }
 
   enum class CurrentFocusedController {

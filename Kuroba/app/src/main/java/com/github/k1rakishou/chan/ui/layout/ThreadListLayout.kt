@@ -738,15 +738,24 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     return false
   }
 
+  fun lostFocus(wasFocused: ThreadSlideController.ThreadControllerType) {
+    threadPresenter?.lostFocus(wasFocused)
+  }
+
   fun gainedFocus(
-    threadControllerType: ThreadSlideController.ThreadControllerType,
+    nowFocused: ThreadSlideController.ThreadControllerType,
     isThreadVisible: Boolean
   ) {
-    threadPresenter?.gainedFocus(threadControllerType)
+    threadPresenter?.gainedFocus(nowFocused)
 
     if (isThreadVisible) {
       showToolbarIfNeeded()
     }
+  }
+
+  override fun currentFocusedController(): ThreadPresenter.CurrentFocusedController {
+    return threadPresenter?.currentFocusedController()
+      ?: ThreadPresenter.CurrentFocusedController.None
   }
 
   override fun openReply(open: Boolean) {

@@ -329,13 +329,14 @@ class ThreadLayout @JvmOverloads constructor(
     presenter.normalLoad(showLoading = true)
   }
 
-  fun lostFocus(threadControllerType: ThreadSlideController.ThreadControllerType) {
-    replyButton.lostFocus(threadControllerType)
+  fun lostFocus(wasFocused: ThreadSlideController.ThreadControllerType) {
+    replyButton.lostFocus(wasFocused)
+    threadListLayout.lostFocus(wasFocused)
   }
 
-  fun gainedFocus(threadControllerType: ThreadSlideController.ThreadControllerType) {
-    replyButton.gainedFocus(threadControllerType)
-    threadListLayout.gainedFocus(threadControllerType, visible == Visible.THREAD)
+  fun gainedFocus(nowFocused: ThreadSlideController.ThreadControllerType) {
+    replyButton.gainedFocus(nowFocused)
+    threadListLayout.gainedFocus(nowFocused, visible == Visible.THREAD)
   }
 
   fun setPostViewMode(postViewMode: PostViewMode) {

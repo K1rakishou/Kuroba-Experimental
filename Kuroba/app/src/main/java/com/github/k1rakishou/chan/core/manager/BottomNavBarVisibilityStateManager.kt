@@ -64,7 +64,7 @@ class BottomNavBarVisibilityStateManager {
   companion object {
     private const val TAG = "BottomNavBarVisibilityStateManager"
 
-    private const val CatalogReplyViewBit = 1 shl 0
-    private const val ThreadReplyViewBit = 1 shl 1
+    private const val CatalogReplyViewBit = 1
+    private const val ThreadReplyViewBit = 2
   }
 }

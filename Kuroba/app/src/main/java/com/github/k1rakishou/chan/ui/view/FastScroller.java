@@ -40,7 +40,7 @@ import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.github.k1rakishou.ChanSettings;
-import com.github.k1rakishou.chan.core.manager.ViewFlagsStorage;
+import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.core_themes.ChanTheme;
 import com.github.k1rakishou.core_themes.ThemeEngine;
@@ -157,7 +157,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
     @Inject
     ThemeEngine themeEngine;
     @Inject
-    ViewFlagsStorage viewFlagsStorage;
+    GlobalViewStateManager globalViewStateManager;
 
     public FastScroller(
             FastScrollerControllerType fastScrollerControllerType,
@@ -547,7 +547,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
                 requestRedraw();
 
                 if (thumbDragListener != null) {
-                    viewFlagsStorage.updateIsDraggingFastScroller(fastScrollerControllerType, true);
+                    globalViewStateManager.updateIsDraggingFastScroller(fastScrollerControllerType, true);
                     thumbDragListener.onDragStarted();
                 }
 
@@ -560,7 +560,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
             requestRedraw();
 
             if (thumbDragListener != null) {
-                viewFlagsStorage.updateIsDraggingFastScroller(fastScrollerControllerType, false);
+                globalViewStateManager.updateIsDraggingFastScroller(fastScrollerControllerType, false);
                 thumbDragListener.onDragEnded();
             }
         } else if (me.getAction() == MotionEvent.ACTION_MOVE && mState == STATE_DRAGGING) {

@@ -29,6 +29,7 @@ import android.text.TextWatcher
 import android.util.AndroidRuntimeException
 import android.util.AttributeSet
 import android.view.ActionMode
+import android.view.GestureDetector
 import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
@@ -47,6 +48,7 @@ import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
@@ -54,12 +56,13 @@ import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.CommentEditingHistory.CommentInputState
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.KeyboardStateListener
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.manager.ViewFlagsStorage
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
+import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
@@ -99,6 +102,7 @@ import com.github.k1rakishou.chan.utils.doIgnoringTextWatcher
 import com.github.k1rakishou.chan.utils.setAlphaFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.findAllChildren
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
@@ -106,6 +110,9 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.prefs.StringSetting
 import com.google.android.material.textview.MaterialTextView
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import javax.inject.Inject
@@ -146,7 +153,7 @@ class ReplyLayout @JvmOverloads constructor(
   @Inject
   lateinit var staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository
   @Inject
-  lateinit var viewFlagsStorage: ViewFlagsStorage
+  lateinit var globalViewStateManager: GlobalViewStateManager
 
   private var threadListLayoutCallbacks: ThreadListLayoutCallbacks? = null
   private var threadListLayoutFilesCallback: ReplyLayoutFilesArea.ThreadListLayoutCallbacks? = null
@@ -161,7 +168,7 @@ class ReplyLayout @JvmOverloads constructor(
   private lateinit var currentFile: ColorizableTextView
 
   // Reply views:
-  private lateinit var replyInputLayout: View
+  private lateinit var replyInputLayout: ViewGroup
   private lateinit var replyInputMessage: MaterialTextView
   private lateinit var replyInputHolder: FrameLayout
   private lateinit var name: ColorizableEditText
@@ -197,6 +204,19 @@ class ReplyLayout @JvmOverloads constructor(
   private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(coroutineScope)
   private val wrappingModeUpdateDebouncer = Debouncer(false)
   private val replyLayoutMessageToast = CancellableToast()
+
+  private val replyLayoutGestureDetector = GestureDetector(
+    context,
+    ReplyLayoutGestureListener(
+      onSwipedUp = { presenter.expandOrCollapse(expand = true) },
+      onSwipedDown = {
+        if (!presenter.expandOrCollapse(expand = false)) {
+          threadListLayoutCallbacks?.openReply(open = false)
+        }
+      }
+    )
+  )
+
   private val closeMessageRunnable = Runnable {
     animateReplyInputMessage(appearance = false)
   }
@@ -282,6 +302,7 @@ class ReplyLayout @JvmOverloads constructor(
     threadListLayoutCallbacks?.updateRecyclerViewPaddings()
   }
 
+  @SuppressLint("ClickableViewAccessibility")
   override fun onFinishInflate() {
     super.onFinishInflate()
 
@@ -293,7 +314,7 @@ class ReplyLayout @JvmOverloads constructor(
     this.currentOrientation = resources.configuration.orientation
 
     // Inflate reply input
-    replyInputLayout = AppModuleAndroidUtils.inflate(context, R.layout.layout_reply_input, this, false)
+    replyInputLayout = AppModuleAndroidUtils.inflate(context, R.layout.layout_reply_input, this, false) as ViewGroup
     replyInputMessage = replyInputLayout.findViewById(R.id.reply_input_message)
     replyInputHolder = replyInputLayout.findViewById(R.id.reply_input_holder)
     name = replyInputLayout.findViewById(R.id.name)
@@ -316,6 +337,21 @@ class ReplyLayout @JvmOverloads constructor(
     more = replyInputLayout.findViewById(R.id.more)
     submit = replyInputLayout.findViewById(R.id.submit)
     replyLayoutFilesArea = replyInputLayout.findViewById(R.id.reply_layout_files_area)
+
+    replyInputLayout
+      .findAllChildren<View>()
+      .forEach { child ->
+        if (child is ReplyInputEditText) {
+          child.setOuterOnTouchListener { event ->
+            replyLayoutGestureDetector.onTouchEvent(event)
+          }
+        } else {
+          child.setOnTouchListener { v, event ->
+            replyLayoutGestureDetector.onTouchEvent(event)
+            return@setOnTouchListener false
+          }
+        }
+      }
 
     progressLayout = AppModuleAndroidUtils.inflate(context, R.layout.layout_reply_progress, this, false)
     currentProgress = progressLayout.findViewById(R.id.current_progress)
@@ -413,7 +449,34 @@ class ReplyLayout @JvmOverloads constructor(
     presenter.create(this)
     replyLayoutFilesArea.onCreate()
 
-    onThemeChanged()
+    coroutineScope.launch {
+      globalViewStateManager.listenForBottomNavViewSwipeUpGestures()
+        .debounce(250L)
+        .collect {
+          if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+            // We have both controllers always focused when in SPLIT layout, so just do nothing here
+            return@collect
+          }
+
+          val isCatalogReplyLayout = presenter.isCatalogReplyLayout()
+            ?: return@collect
+
+          val currentFocusedController = threadListLayoutCallbacks?.currentFocusedController()
+            ?: ThreadPresenter.CurrentFocusedController.None
+
+          val canOpen = when (currentFocusedController) {
+            ThreadPresenter.CurrentFocusedController.Catalog -> isCatalogReplyLayout
+            ThreadPresenter.CurrentFocusedController.Thread -> !isCatalogReplyLayout
+            ThreadPresenter.CurrentFocusedController.None -> return@collect
+          }
+
+          if (!canOpen) {
+            return@collect
+          }
+
+          threadListLayoutCallbacks?.openReply(open = true)
+        }
+    }
   }
 
   fun onCreate(
@@ -422,6 +485,25 @@ class ReplyLayout @JvmOverloads constructor(
   ) {
     this.threadListLayoutCallbacks = replyLayoutCallback
     this.threadListLayoutFilesCallback = threadListLayoutCallbacks
+  }
+
+  fun onDestroy() {
+    this.threadListLayoutCallbacks = null
+    this.threadListLayoutFilesCallback = null
+
+    comment.cleanup()
+    presenter.unbindReplyImages()
+    captchaHolder.clearCallbacks()
+    cleanup()
+
+    coroutineScope.cancelChildren()
+    rendezvousCoroutineExecutor.stop()
+    presenter.destroy()
+  }
+
+  fun cleanup() {
+    presenter.unbindChanDescriptor()
+    removeCallbacks(closeMessageRunnable)
   }
 
   fun onOpen(open: Boolean) {
@@ -444,8 +526,13 @@ class ReplyLayout @JvmOverloads constructor(
         ThreadSlideController.ThreadControllerType.Thread
       }
 
-      viewFlagsStorage.updateIsReplyLayoutOpened(threadControllerType, open)
+      globalViewStateManager.updateIsReplyLayoutOpened(threadControllerType, open)
     }
+  }
+
+  @SuppressLint("ClickableViewAccessibility")
+  override fun onTouchEvent(event: MotionEvent): Boolean {
+    return true
   }
 
   suspend fun bindLoadable(chanDescriptor: ChanDescriptor) {
@@ -514,25 +601,6 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun showReplyLayoutMessage(message: String, duration: Int) {
     openMessage(message, duration)
-  }
-
-  fun onDestroy() {
-    this.threadListLayoutCallbacks = null
-    this.threadListLayoutFilesCallback = null
-
-    comment.cleanup()
-    presenter.unbindReplyImages()
-    captchaHolder.clearCallbacks()
-    cleanup()
-
-    coroutineScope.cancelChildren()
-    rendezvousCoroutineExecutor.stop()
-    presenter.destroy()
-  }
-
-  fun cleanup() {
-    presenter.unbindChanDescriptor()
-    removeCallbacks(closeMessageRunnable)
   }
 
   fun onBack(): Boolean {
@@ -688,11 +756,6 @@ class ReplyLayout @JvmOverloads constructor(
     comment.text?.insert(comment.selectionEnd, after)
     comment.text?.insert(selectionStart, before)
 
-    return true
-  }
-
-  @SuppressLint("ClickableViewAccessibility")
-  override fun onTouchEvent(event: MotionEvent): Boolean {
     return true
   }
 
@@ -1305,6 +1368,7 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   interface ThreadListLayoutCallbacks {
+    fun currentFocusedController(): ThreadPresenter.CurrentFocusedController
     fun highlightPostNos(postNos: Set<Long>)
     fun openReply(open: Boolean)
     fun showThread(threadDescriptor: ThreadDescriptor)

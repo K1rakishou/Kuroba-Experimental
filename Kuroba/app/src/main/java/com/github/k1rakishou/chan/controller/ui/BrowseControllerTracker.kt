@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.controller.ui
 import android.content.Context
 import android.view.MotionEvent
 import android.view.ViewParent
-import com.github.k1rakishou.chan.core.manager.ViewFlagsStorage
+import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.ui.controller.BrowseController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
@@ -13,7 +13,7 @@ import kotlin.math.max
 
 class BrowseControllerTracker(
   context: Context,
-  private val viewFlagsStorage: ViewFlagsStorage,
+  private val globalViewStateManager: GlobalViewStateManager,
   private val browseController: BrowseController,
   private val navigationController: NavigationController
 ) : ControllerTracker(context) {
@@ -26,7 +26,7 @@ class BrowseControllerTracker(
       return false
     }
 
-    if (viewFlagsStorage.isReplyLayoutOpened(ThreadSlideController.ThreadControllerType.Catalog)) {
+    if (globalViewStateManager.isReplyLayoutOpened(ThreadSlideController.ThreadControllerType.Catalog)) {
       return false
     }
 

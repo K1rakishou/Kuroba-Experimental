@@ -35,7 +35,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
-import com.github.k1rakishou.chan.core.manager.ViewFlagsStorage
+import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -75,7 +75,7 @@ open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
-  lateinit var viewFlagsStorage: ViewFlagsStorage
+  lateinit var globalViewStateManager: GlobalViewStateManager
 
   constructor(context: Context) : super(context) {
     init()
@@ -113,9 +113,9 @@ open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
     val isCached = imageLoaderV2.isImageCachedLocally(url)
 
     val isDraggingCatalogScroller =
-      viewFlagsStorage.isDraggingFastScroller(FastScroller.FastScrollerControllerType.Catalog)
+      globalViewStateManager.isDraggingFastScroller(FastScroller.FastScrollerControllerType.Catalog)
     val isDraggingThreadScroller =
-      viewFlagsStorage.isDraggingFastScroller(FastScroller.FastScrollerControllerType.Thread)
+      globalViewStateManager.isDraggingFastScroller(FastScroller.FastScrollerControllerType.Thread)
     val isDraggingCatalogOrThreadFastScroller =
       isDraggingCatalogScroller || isDraggingThreadScroller
 

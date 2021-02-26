@@ -197,6 +197,15 @@ class ReplyPresenter @Inject constructor(
     return false
   }
 
+  fun expandOrCollapse(expand: Boolean): Boolean {
+    if (this.isExpanded == expand) {
+      return false
+    }
+
+    onMoreClicked()
+    return true
+  }
+
   fun onMoreClicked() {
     this.isExpanded = this.isExpanded.not()
 

@@ -54,6 +54,7 @@ class ReplyInputEditText @JvmOverloads constructor(
   private var plainTextPaste = false
   private var showLoadingViewFunc: ((Int) -> Unit)? = null
   private var hideLoadingViewFunc: (() -> Unit)? = null
+  private var outerOnTouchListener: ((MotionEvent) -> Unit)? = null
 
   private val kurobaScope = KurobaCoroutineScope()
   private var activeJob: Job? = null
@@ -63,6 +64,8 @@ class ReplyInputEditText @JvmOverloads constructor(
       .inject(this)
 
     setOnTouchListener { view, event ->
+      outerOnTouchListener?.invoke(event)
+
       if (hasFocus()) {
         view.parent.requestDisallowInterceptTouchEvent(true)
 
@@ -76,6 +79,10 @@ class ReplyInputEditText @JvmOverloads constructor(
 
       return@setOnTouchListener false
     }
+  }
+
+  fun setOuterOnTouchListener(onTouchListener: (MotionEvent) -> Unit) {
+    this.outerOnTouchListener = onTouchListener
   }
 
   fun setSelectionChangedListener(listener: SelectionChangedListener?) {

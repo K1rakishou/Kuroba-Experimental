@@ -14,13 +14,13 @@ import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManage
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager;
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager;
+import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager;
 import com.github.k1rakishou.chan.core.manager.UpdateManager;
-import com.github.k1rakishou.chan.core.manager.ViewFlagsStorage;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper;
 import com.github.k1rakishou.core_themes.ThemeEngine;
@@ -131,7 +131,7 @@ public class ActivityModule {
 
     @PerActivity
     @Provides
-    public ViewFlagsStorage provideViewFlagsStorage() {
-        return new ViewFlagsStorage();
+    public GlobalViewStateManager provideViewFlagsStorage() {
+        return new GlobalViewStateManager();
     }
 }

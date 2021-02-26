@@ -715,16 +715,16 @@ open class ViewThreadController(
     // no-op
   }
 
-  override fun onLostFocus(controllerType: ThreadSlideController.ThreadControllerType) {
-    super.onLostFocus(controllerType)
-    check(controllerType == threadControllerType) { "Unexpected controllerType: $controllerType" }
+  override fun onLostFocus(wasFocused: ThreadSlideController.ThreadControllerType) {
+    super.onLostFocus(wasFocused)
+    check(wasFocused == threadControllerType) { "Unexpected controllerType: $wasFocused" }
 
     super.onSearchVisibilityChanged(false)
   }
 
-  override fun onGainedFocus(controllerType: ThreadSlideController.ThreadControllerType) {
-    super.onGainedFocus(controllerType)
-    check(controllerType == threadControllerType) { "Unexpected controllerType: $controllerType" }
+  override fun onGainedFocus(nowFocused: ThreadSlideController.ThreadControllerType) {
+    super.onGainedFocus(nowFocused)
+    check(nowFocused == threadControllerType) { "Unexpected controllerType: $nowFocused" }
 
     historyNavigationManager.moveNavElementToTop(threadDescriptor)
   }

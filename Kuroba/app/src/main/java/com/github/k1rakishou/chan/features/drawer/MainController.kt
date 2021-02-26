@@ -16,9 +16,11 @@
  */
 package com.github.k1rakishou.chan.features.drawer
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.view.GestureDetector
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
@@ -37,6 +39,7 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
@@ -128,6 +131,8 @@ class MainController(
   lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var imageSaverV2: ImageSaverV2
+  @Inject
+  lateinit var globalViewStateManager: GlobalViewStateManager
 
   private lateinit var rootLayout: TouchBlockingFrameLayout
   private lateinit var container: FrameLayout
@@ -137,6 +142,11 @@ class MainController(
   private lateinit var bottomNavView: HidingBottomNavigationView
   private lateinit var divider: ColorizableDivider
   private lateinit var bottomMenuPanel: BottomMenuPanel
+
+  private val bottomNavViewGestureDetector = GestureDetector(
+    context,
+    BottomNavViewGestureListener(onSwipedUp = { globalViewStateManager.onBottomNavViewSwipeUpGestureTriggered() })
+  )
 
   private val drawerPresenter by lazy {
     DrawerPresenter(
@@ -200,6 +210,7 @@ class MainController(
     component.inject(this)
   }
 
+  @SuppressLint("ClickableViewAccessibility")
   override fun onCreate() {
     super.onCreate()
 
@@ -227,6 +238,12 @@ class MainController(
 
       onNavigationItemSelectedListener(menuItem)
       return@setOnNavigationItemSelectedListener true
+    }
+
+    bottomNavView.setOnOuterTouchEventListener { event ->
+      if (bottomNavView.selectedItemId == R.id.action_browse) {
+        bottomNavViewGestureDetector.onTouchEvent(event)
+      }
     }
 
     EpoxyTouchHelper
