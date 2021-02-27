@@ -597,7 +597,7 @@ class BookmarksController(
       }
 
       val bookmarkWidth = ChanSettings.bookmarkGridViewWidth.get()
-      val screenWidth = getDisplaySize().x
+      val screenWidth = getDisplaySize(context).x
       val spanCount = (screenWidth / bookmarkWidth).coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
 
       epoxyRecyclerView.layoutManager = GridLayoutManager(context, spanCount).apply {

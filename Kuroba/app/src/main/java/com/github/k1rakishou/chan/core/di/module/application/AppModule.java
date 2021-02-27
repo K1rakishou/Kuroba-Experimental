@@ -173,8 +173,15 @@ public class AppModule {
 
     @Provides
     @Singleton
-    public Android10GesturesExclusionZonesHolder provideAndroid10GesturesHolder(Gson gson) {
-        return new Android10GesturesExclusionZonesHolder(gson, getMinScreenSize(), getMaxScreenSize());
+    public Android10GesturesExclusionZonesHolder provideAndroid10GesturesHolder(
+            Context appContext,
+            Gson gson
+    ) {
+        return new Android10GesturesExclusionZonesHolder(
+                gson,
+                getMinScreenSize(appContext),
+                getMaxScreenSize(appContext)
+        );
     }
 
     @Provides

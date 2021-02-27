@@ -31,7 +31,7 @@ class BottomNavViewLongTapSwipeUpGestureDetector(
   private var velocityTracker: VelocityTracker? = null
 
   private val scope = KurobaCoroutineScope()
-  private val longPressTimeout = (ViewConfiguration.getLongPressTimeout().toFloat() / 0.9f).toLong()
+  private val longPressTimeout = (ViewConfiguration.getLongPressTimeout().toFloat() / 1.5f).toLong()
 
   init {
     val viewConfiguration = ViewConfiguration.get(context)
@@ -68,7 +68,9 @@ class BottomNavViewLongTapSwipeUpGestureDetector(
 
         longPressDetectionJob = scope.launch {
           delay(longPressTimeout)
+
           longPressed = true
+          bottomNavView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         }
       }
       MotionEvent.ACTION_MOVE -> {
@@ -146,7 +148,6 @@ class BottomNavViewLongTapSwipeUpGestureDetector(
 
     tracking = true
 
-    bottomNavView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
     bottomNavView.requestDisallowInterceptTouchEvent(true)
 
     initialTouchEvent?.recycle()
@@ -163,6 +164,14 @@ class BottomNavViewLongTapSwipeUpGestureDetector(
       // this method was already called previously
       return
     }
+
+    blocked = false
+    longPressed = false
+
+    initialTouchEvent?.recycle()
+    initialTouchEvent = null
+
+    cancelLongPressDetection()
 
     bottomNavView.requestDisallowInterceptTouchEvent(false)
 

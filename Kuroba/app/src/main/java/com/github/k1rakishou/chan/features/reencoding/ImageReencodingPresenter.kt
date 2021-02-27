@@ -105,7 +105,7 @@ class ImageReencodingPresenter(
   }
 
   fun loadImagePreview() {
-    val displaySize = getDisplaySize()
+    val displaySize = getDisplaySize(context)
 
     val imageSize = ImageLoaderV2.ImageSize.FixedImageSize(
       width = displaySize.x,

@@ -187,7 +187,7 @@ public class CaptchaLayout
         html = html.replace("__site_key__", siteKey);
         html = html.replace("__theme__", themeEngine.getChanTheme().isLightTheme() ? "light" : "dark");
 
-        Point displaySize = getDisplaySize();
+        Point displaySize = getDisplaySize(getContext());
         boolean isSplitMode = ChanSettings.layoutMode.get() == SPLIT
                 || (ChanSettings.layoutMode.get() == AUTO && isTablet());
 

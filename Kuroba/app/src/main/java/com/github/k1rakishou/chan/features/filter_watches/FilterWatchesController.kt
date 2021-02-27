@@ -234,7 +234,7 @@ class FilterWatchesController(
     }
 
     val bookmarkWidth = ChanSettings.bookmarkGridViewWidth.get()
-    val screenWidth = AndroidUtils.getDisplaySize().x
+    val screenWidth = AndroidUtils.getDisplaySize(context).x
     val spanCount = (screenWidth / bookmarkWidth).coerceIn(
       BookmarksController.MIN_SPAN_COUNT,
       BookmarksController.MAX_SPAN_COUNT

@@ -396,6 +396,7 @@ sealed class BehaviorScreen(
 
     object AutoRefreshThread : GeneralGroup("auto_refresh_thread")
     object ControllerSwipeable : GeneralGroup("controller_swipeable")
+    object ReplyLayoutOpenCloseGestures : GeneralGroup("reply_layout_open_close_gestures")
     object OpenLinkConfirmation : GeneralGroup("open_link_confirmation")
     object CaptchaSetup : GeneralGroup("catpcha_setup")
     object JsCaptchaCookiesEditor : GeneralGroup("js_captcha_cookies_editor")

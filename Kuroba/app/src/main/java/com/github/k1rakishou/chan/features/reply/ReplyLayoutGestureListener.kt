@@ -16,6 +16,37 @@ class ReplyLayoutGestureListener(
   private val onSwipedDown: () -> Unit
 ) : GestureDetector.SimpleOnGestureListener() {
   private val viewHitRect = Rect()
+  private var hasScrollableChildThatCanScrollMore = false
+
+  fun onCurrentEventEnded() {
+    hasScrollableChildThatCanScrollMore = false
+  }
+
+  override fun onScroll(
+    e1: MotionEvent?,
+    e2: MotionEvent?,
+    distanceX: Float,
+    distanceY: Float
+  ): Boolean {
+    if (e1 == null || e2 == null) {
+      return false
+    }
+
+    if (hasScrollableChildThatCanScrollMore) {
+      return false
+    }
+
+    val startX = e1.rawX
+    val startY = e1.rawY
+    val endY = e2.rawY
+    val swipingUp = startY > endY
+
+    if (hasAnyScrollingChildThatCanScroll(startX, startY, swipingUp)) {
+      hasScrollableChildThatCanScrollMore = true
+    }
+
+    return super.onScroll(e1, e2, distanceX, distanceY)
+  }
 
   override fun onFling(
     e1: MotionEvent?,
@@ -23,81 +54,95 @@ class ReplyLayoutGestureListener(
     velocityX: Float,
     velocityY: Float
   ): Boolean {
-    if (e1 != null && e2 != null) {
-      val startY = e1.rawY
-      val endY = e2.rawY
-
-      val diffX = e2.rawX - e1.rawX
-      val diffY = endY - startY
-
-      val isSwipeUpOrDown = (abs(velocityY) > FLING_MIN_VELOCITY)
-        && (abs(diffY) > abs(diffX * 2))
-        && (abs(diffY) > MIN_Y_TRAVEL_DIST)
-
-      if (isSwipeUpOrDown) {
-        val swipingUp = startY > endY
-        var hasScrollableChildThatCanScrollMore = false
-
-        // If the initial ACTION_DOWN event has hit a scrollable view (in ReplyLayout there are
-        // multiple of them, like NestedScrollView, RecyclerView or AppCompatEditText) we need to
-        // check whether that view can be scrolled towards the direction of swipe. If it can we need
-        // to ignore this Swipe gesture.
-        replyLayout.iterateAllChildrenBreadthFirstWhile { childView ->
-          if (childView.visibility != View.VISIBLE) {
-            return@iterateAllChildrenBreadthFirstWhile ViewIterationResult.SkipChildren
-          }
-
-          childView.getGlobalVisibleRect(viewHitRect)
-
-          if (!viewHitRect.contains(e1.rawX.toInt(), e1.rawY.toInt())) {
-            // If we didn't hit the view then skip it and it's children
-            return@iterateAllChildrenBreadthFirstWhile ViewIterationResult.SkipChildren
-          }
-
-          // Figure out whether the view still can scroll towards the same direction as the current
-          // fling gesture and if it can then do nothing.
-
-          if (swipingUp) {
-            // Trying to swipe up so we need to check whether a view can scroll bottom
-            if (childView.canScrollVertically(1)) {
-              hasScrollableChildThatCanScrollMore = true
-            }
-          } else {
-            // Trying to swipe down so we need to check whether a view can scroll top
-            if (childView.canScrollVertically(-1)) {
-              hasScrollableChildThatCanScrollMore = true
-            }
-          }
-
-          if (hasScrollableChildThatCanScrollMore) {
-            // We found a view that still can scroll towards the direction of swipe,
-            // exit and ignore this swipe
-            return@iterateAllChildrenBreadthFirstWhile ViewIterationResult.Exit
-          }
-
-          if (childView is RecyclerView) {
-            // Ignore RecyclerView's children
-            return@iterateAllChildrenBreadthFirstWhile ViewIterationResult.SkipChildren
-          }
-
-          return@iterateAllChildrenBreadthFirstWhile ViewIterationResult.Continue
-        }
-
-        if (!hasScrollableChildThatCanScrollMore) {
-          if (swipingUp) {
-            onSwipedUp()
-          } else {
-            onSwipedDown()
-          }
-        }
-      }
+    if (e1 == null || e2 == null) {
+      return true
     }
 
-    return super.onFling(e1, e2, velocityX, velocityY)
+    if (hasScrollableChildThatCanScrollMore) {
+      return false
+    }
+
+    val startY = e1.rawY
+    val endY = e2.rawY
+
+    val diffX = e2.rawX - e1.rawX
+    val diffY = endY - startY
+
+    val isSwipeUpOrDown = (abs(velocityY) > FLING_MIN_VELOCITY)
+      && (abs(diffY) > abs(diffX))
+      && (abs(diffY) > MIN_Y_TRAVEL_DIST)
+
+    if (!isSwipeUpOrDown) {
+      return false
+    }
+
+    val swipingUp = startY > endY
+    if (swipingUp) {
+      onSwipedUp()
+    } else {
+      onSwipedDown()
+    }
+
+    return true
+  }
+
+  // If the initial ACTION_DOWN event has hit a scrollable view (in ReplyLayout there are
+  // multiple of them, like NestedScrollView, RecyclerView or AppCompatEditText) we need to
+  // check whether that view can be scrolled towards the direction of swipe. If it can we need
+  // to ignore this Swipe gesture.
+  private fun hasAnyScrollingChildThatCanScroll(
+    rawX: Float,
+    rawY: Float,
+    swipingUp: Boolean,
+  ): Boolean {
+    var hasScrollableChildThatCanScrollMore = false
+
+    replyLayout.iterateAllChildrenBreadthFirstWhile { childView ->
+      if (childView.visibility != View.VISIBLE) {
+        return@iterateAllChildrenBreadthFirstWhile ViewIterationResult.SkipChildren
+      }
+
+      childView.getGlobalVisibleRect(viewHitRect)
+
+      if (!viewHitRect.contains(rawX.toInt(), rawY.toInt())) {
+        // If we didn't hit the view then skip it and it's children
+        return@iterateAllChildrenBreadthFirstWhile ViewIterationResult.SkipChildren
+      }
+
+      // Figure out whether the view still can scroll towards the same direction as the current
+      // fling gesture and if it can then do nothing.
+
+      if (swipingUp) {
+        // Trying to swipe up so we need to check whether a view can scroll bottom
+        if (childView.canScrollVertically(1)) {
+          hasScrollableChildThatCanScrollMore = true
+        }
+      } else {
+        // Trying to swipe down so we need to check whether a view can scroll top
+        if (childView.canScrollVertically(-1)) {
+          hasScrollableChildThatCanScrollMore = true
+        }
+      }
+
+      if (hasScrollableChildThatCanScrollMore) {
+        // We found a view that still can scroll towards the direction of swipe,
+        // exit and ignore this swipe
+        return@iterateAllChildrenBreadthFirstWhile ViewIterationResult.Exit
+      }
+
+      if (childView is RecyclerView) {
+        // Ignore RecyclerView's children
+        return@iterateAllChildrenBreadthFirstWhile ViewIterationResult.SkipChildren
+      }
+
+      return@iterateAllChildrenBreadthFirstWhile ViewIterationResult.Continue
+    }
+
+    return hasScrollableChildThatCanScrollMore
   }
 
   companion object {
-    private val FLING_MIN_VELOCITY = dp(800f)
-    private val MIN_Y_TRAVEL_DIST = dp(80f)
+    private val FLING_MIN_VELOCITY = dp(600f)
+    private val MIN_Y_TRAVEL_DIST = dp(30f)
   }
 }

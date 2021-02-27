@@ -36,7 +36,7 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
     super.onAttachedToWindow()
 
     if (!isInEditMode) {
-      val (displayWidth, displayHeight) = AndroidUtils.getDisplaySize()
+      val (displayWidth, displayHeight) = AndroidUtils.getDisplaySize(context)
       this.maxWidth = displayWidth
       this.maxHeight = displayHeight
     }

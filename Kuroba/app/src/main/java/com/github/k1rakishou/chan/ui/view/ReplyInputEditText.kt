@@ -66,7 +66,6 @@ class ReplyInputEditText @JvmOverloads constructor(
     setOnTouchListener { view, event ->
       val handled = outerOnTouchListener?.invoke(event) ?: false
       if (handled) {
-        // Doesn't really matter since we always return false in ReplyLayoutGestureListener.onFling()
         return@setOnTouchListener true
       }
 

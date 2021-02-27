@@ -191,7 +191,7 @@ public class ImageOptionsController
         preview.setOnClickListener(v -> {
             boolean isCurrentlyVisible = optionsHolder.getVisibility() == VISIBLE;
             optionsHolder.setVisibility(isCurrentlyVisible ? GONE : VISIBLE);
-            Point p = getDisplaySize();
+            Point p = getDisplaySize(context);
             int dimX1 = isCurrentlyVisible ? p.x : MATCH_PARENT;
             int dimY1 = isCurrentlyVisible ? p.y : dp(300);
             preview.setLayoutParams(new LinearLayout.LayoutParams(dimX1, dimY1, 0));

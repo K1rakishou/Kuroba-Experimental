@@ -245,6 +245,10 @@ class MainController(
     }
 
     bottomNavView.setOnOuterInterceptTouchEventListener { event ->
+      if (!ChanSettings.replyLayoutOpenCloseGestures.get()) {
+        return@setOnOuterInterceptTouchEventListener false
+      }
+
       if (bottomNavView.selectedItemId == R.id.action_browse) {
         return@setOnOuterInterceptTouchEventListener bottomNavViewGestureDetector.onInterceptTouchEvent(event)
       }
@@ -253,6 +257,10 @@ class MainController(
     }
 
     bottomNavView.setOnOuterTouchEventListener { event ->
+      if (!ChanSettings.replyLayoutOpenCloseGestures.get()) {
+        return@setOnOuterTouchEventListener false
+      }
+
       if (bottomNavView.selectedItemId == R.id.action_browse) {
         return@setOnOuterTouchEventListener bottomNavViewGestureDetector.onTouchEvent(event)
       }

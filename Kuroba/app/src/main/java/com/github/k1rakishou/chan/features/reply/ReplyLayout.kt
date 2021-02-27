@@ -205,17 +205,19 @@ class ReplyLayout @JvmOverloads constructor(
   private val wrappingModeUpdateDebouncer = Debouncer(false)
   private val replyLayoutMessageToast = CancellableToast()
 
+  private val replyLayoutGestureListener = ReplyLayoutGestureListener(
+    replyLayout = this,
+    onSwipedUp = { presenter.expandOrCollapse(expand = true) },
+    onSwipedDown = {
+      if (!presenter.expandOrCollapse(expand = false)) {
+        threadListLayoutCallbacks?.openReply(open = false)
+      }
+    }
+  )
+
   private val replyLayoutGestureDetector = GestureDetector(
     context,
-    ReplyLayoutGestureListener(
-      replyLayout = this,
-      onSwipedUp = { presenter.expandOrCollapse(expand = true) },
-      onSwipedDown = {
-        if (!presenter.expandOrCollapse(expand = false)) {
-          threadListLayoutCallbacks?.openReply(open = false)
-        }
-      }
-    )
+    replyLayoutGestureListener
   )
 
   private val closeMessageRunnable = Runnable {
@@ -344,15 +346,31 @@ class ReplyLayout @JvmOverloads constructor(
       .forEach { child ->
         if (child is ReplyInputEditText) {
           child.setOuterOnTouchListener { event ->
-            replyLayoutGestureDetector.onTouchEvent(event)
+            if (!ChanSettings.replyLayoutOpenCloseGestures.get()) {
+              return@setOuterOnTouchListener false
+            }
+
+            val result = replyLayoutGestureDetector.onTouchEvent(event)
+
+            if (event.actionMasked == MotionEvent.ACTION_CANCEL || event.actionMasked == MotionEvent.ACTION_UP) {
+              replyLayoutGestureListener.onCurrentEventEnded()
+            }
+
+            return@setOuterOnTouchListener result
           }
         } else {
           child.setOnTouchListener { v, event ->
-            if (replyLayoutGestureDetector.onTouchEvent(event)) {
-              return@setOnTouchListener true
+            if (!ChanSettings.replyLayoutOpenCloseGestures.get()) {
+              return@setOnTouchListener false
             }
 
-            return@setOnTouchListener false
+            val result = replyLayoutGestureDetector.onTouchEvent(event)
+
+            if (event.actionMasked == MotionEvent.ACTION_CANCEL || event.actionMasked == MotionEvent.ACTION_UP) {
+              replyLayoutGestureListener.onCurrentEventEnded()
+            }
+
+            return@setOnTouchListener result
           }
         }
       }
@@ -390,12 +408,6 @@ class ReplyLayout @JvmOverloads constructor(
 
     comment.addTextChangedListener(this)
     comment.setSelectionChangedListener(this)
-    comment.setOnFocusChangeListener { _, focused: Boolean ->
-      if (!focused) {
-        AndroidUtils.hideKeyboard(comment)
-      }
-    }
-
     comment.setPlainTextPaste(true)
     comment.setShowLoadingViewFunc { textId ->
       threadListLayoutFilesCallback?.showLoadingView({}, textId)
@@ -457,11 +469,6 @@ class ReplyLayout @JvmOverloads constructor(
       globalViewStateManager.listenForBottomNavViewSwipeUpGestures()
         .debounce(250L)
         .collect {
-          if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-            // We have both controllers always focused when in SPLIT layout, so just do nothing here
-            return@collect
-          }
-
           val isCatalogReplyLayout = presenter.isCatalogReplyLayout()
             ?: return@collect
 
@@ -516,10 +523,17 @@ class ReplyLayout @JvmOverloads constructor(
     if (open) {
       replyLayoutFilesArea.updateLayoutManager()
       updateCommentButtonsHolderVisibility()
+
+      if (proxyStorage.isDirty()) {
+        openMessage(getString(R.string.reply_proxy_list_is_dirty_message), 10000)
+      }
     }
 
-    if (open && proxyStorage.isDirty()) {
-      openMessage(getString(R.string.reply_proxy_list_is_dirty_message), 10000)
+    if (open) {
+      comment.isFocusable = true
+    } else {
+      comment.isFocusable = false
+      comment.clearFocus()
     }
 
     val isCatalogReplyLayout = presenter.isCatalogReplyLayout()

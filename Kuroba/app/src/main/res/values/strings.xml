@@ -666,6 +666,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_post_default_name">Default post name</string>
     <string name="setting_auto_refresh_thread">Auto refresh threads</string>
     <string name="setting_controller_swipeable">Allow screens to be swiped away</string>
+    <string name="setting_controller_reply_layout_gestures">Allow Reply Layout gesture control</string>
+    <string name="setting_controller_reply_layout_gestures_description">This setting enables the following gestures: \n1. Longtap bottom navigation view + swipe up to open Reply Layout. \n2. Swipe up Reply Layout to expand it. \n3. Swipe down expanded Reply Layout to collapse it or if it is already collapsed to close it. \n\nBasically allows you to control Reply Layout with only gestures (You can even hide the reply button completely). Some gestures (Longtap + swipe up) do not work with SPLIT layout.</string>
     <string name="setting_open_link_confirmation">Ask before opening links</string>
     <string name="setting_captcha_setup">Captcha Settings</string>
     <string name="setting_captcha_setup_description">Captcha settings are per-site configurable. Tap for site setup.</string>

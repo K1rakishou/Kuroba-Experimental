@@ -336,7 +336,8 @@ class AppearanceSettingsScreen(
           identifier = AppearanceScreen.LayoutGroup.EnableReplyFAB,
           topDescriptionIdFunc = { R.string.setting_enable_reply_fab },
           bottomDescriptionIdFunc = { R.string.setting_enable_reply_fab_description },
-          setting = ChanSettings.enableReplyFab
+          setting = ChanSettings.enableReplyFab,
+          requiresRestart = true
         )
 
         group += BooleanSettingV2.createBuilder(
