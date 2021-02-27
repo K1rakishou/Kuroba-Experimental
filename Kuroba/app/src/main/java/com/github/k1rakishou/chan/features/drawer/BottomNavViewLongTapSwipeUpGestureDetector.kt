@@ -80,8 +80,6 @@ class BottomNavViewLongTapSwipeUpGestureDetector(
         }
 
         if (!blocked && longPressed) {
-          cancelLongPressDetection()
-
           startTracking(event)
           return true
         }

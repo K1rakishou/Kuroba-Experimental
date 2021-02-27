@@ -208,6 +208,7 @@ class ReplyLayout @JvmOverloads constructor(
   private val replyLayoutGestureDetector = GestureDetector(
     context,
     ReplyLayoutGestureListener(
+      replyLayout = this,
       onSwipedUp = { presenter.expandOrCollapse(expand = true) },
       onSwipedDown = {
         if (!presenter.expandOrCollapse(expand = false)) {
@@ -347,7 +348,10 @@ class ReplyLayout @JvmOverloads constructor(
           }
         } else {
           child.setOnTouchListener { v, event ->
-            replyLayoutGestureDetector.onTouchEvent(event)
+            if (replyLayoutGestureDetector.onTouchEvent(event)) {
+              return@setOnTouchListener true
+            }
+
             return@setOnTouchListener false
           }
         }

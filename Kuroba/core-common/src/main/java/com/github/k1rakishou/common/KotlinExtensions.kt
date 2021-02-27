@@ -9,6 +9,7 @@ import android.text.TextUtils
 import android.text.style.CharacterStyle
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.children
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
@@ -419,7 +420,7 @@ fun <T : View> View.findAllChildren(): Set<T> {
   val children = hashSetOf<View>()
   children += this
 
-  findChildrenRecursively(children, this) { true }
+  iterateChildrenRecursivelyDeepFirst(children, this) { true }
   return children as Set<T>
 }
 
@@ -430,11 +431,12 @@ fun <T : View> View.findChildren(predicate: (View) -> Boolean): Set<T> {
     children += this
   }
 
-  findChildrenRecursively(children, this, predicate)
+  iterateChildrenRecursivelyDeepFirst(children, this, predicate)
   return children as Set<T>
 }
 
-fun findChildrenRecursively(children: HashSet<View>, view: View, predicate: (View) -> Boolean) {
+
+fun iterateChildrenRecursivelyDeepFirst(children: HashSet<View>, view: View, predicate: (View) -> Boolean) {
   if (view !is ViewGroup) {
     return
   }
@@ -446,9 +448,37 @@ fun findChildrenRecursively(children: HashSet<View>, view: View, predicate: (Vie
     }
 
     if (child is ViewGroup) {
-      findChildrenRecursively(children, child, predicate)
+      iterateChildrenRecursivelyDeepFirst(children, child, predicate)
     }
   }
+}
+
+fun View.iterateAllChildrenBreadthFirstWhile(iterator: (View) -> ViewIterationResult) {
+  val queue = LinkedList<View>()
+  queue.add(this)
+
+  while (queue.isNotEmpty()) {
+    val child = queue.pop()
+
+    val result = iterator(child)
+    if (result == ViewIterationResult.Exit) {
+      return
+    }
+
+    if (result == ViewIterationResult.SkipChildren) {
+      continue
+    }
+
+    if (child is ViewGroup) {
+      queue.addAll(child.children.toList())
+    }
+  }
+}
+
+enum class ViewIterationResult {
+  Continue,
+  SkipChildren,
+  Exit
 }
 
 fun View.updateHeight(newHeight: Int) {

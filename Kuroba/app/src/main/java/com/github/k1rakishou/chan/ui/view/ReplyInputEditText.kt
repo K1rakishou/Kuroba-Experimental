@@ -54,7 +54,7 @@ class ReplyInputEditText @JvmOverloads constructor(
   private var plainTextPaste = false
   private var showLoadingViewFunc: ((Int) -> Unit)? = null
   private var hideLoadingViewFunc: (() -> Unit)? = null
-  private var outerOnTouchListener: ((MotionEvent) -> Unit)? = null
+  private var outerOnTouchListener: ((MotionEvent) -> Boolean)? = null
 
   private val kurobaScope = KurobaCoroutineScope()
   private var activeJob: Job? = null
@@ -64,7 +64,11 @@ class ReplyInputEditText @JvmOverloads constructor(
       .inject(this)
 
     setOnTouchListener { view, event ->
-      outerOnTouchListener?.invoke(event)
+      val handled = outerOnTouchListener?.invoke(event) ?: false
+      if (handled) {
+        // Doesn't really matter since we always return false in ReplyLayoutGestureListener.onFling()
+        return@setOnTouchListener true
+      }
 
       if (hasFocus()) {
         view.parent.requestDisallowInterceptTouchEvent(true)
@@ -81,7 +85,7 @@ class ReplyInputEditText @JvmOverloads constructor(
     }
   }
 
-  fun setOuterOnTouchListener(onTouchListener: (MotionEvent) -> Unit) {
+  fun setOuterOnTouchListener(onTouchListener: (MotionEvent) -> Boolean) {
     this.outerOnTouchListener = onTouchListener
   }
 
