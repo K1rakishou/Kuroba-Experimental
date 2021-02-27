@@ -61,7 +61,6 @@ public class CardPostCell
 
     private static final int COMMENT_MAX_LENGTH_GRID = 200;
     private static final int COMMENT_MAX_LENGTH_STAGGER = 500;
-    public static final int HI_RES_THUMBNAIL_SIZE = dp(160);
 
     @Inject
     ThemeEngine themeEngine;
@@ -253,20 +252,9 @@ public class CardPostCell
         if (firstPostImage != null && !ChanSettings.textOnly.get()) {
             thumbView.setVisibility(VISIBLE);
 
-            ImageLoaderV2.ImageSize imageSize;
-
-            if (ChanSettings.highResCells.get()) {
-                imageSize = new ImageLoaderV2.ImageSize.FixedImageSize(
-                        Math.max(HI_RES_THUMBNAIL_SIZE, thumbView.getWidth()),
-                        Math.max(HI_RES_THUMBNAIL_SIZE, thumbView.getHeight())
-                );
-            } else {
-                imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(thumbView);
-            }
-
             thumbView.bindPostImage(
                     firstPostImage,
-                    imageSize
+                    ImageLoaderV2.ImageSize.MeasurableImageSize.create(thumbView)
             );
         } else {
             thumbView.setVisibility(GONE);

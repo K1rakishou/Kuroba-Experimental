@@ -23,7 +23,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
-import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
@@ -64,21 +63,9 @@ public class AlbumViewCell
         // now)
         thumbnailView.overrideShowPrefetchLoadingIndicator(false);
 
-
-        ImageLoaderV2.ImageSize imageSize;
-
-        if (ChanSettings.highResCells.get()) {
-            imageSize = new ImageLoaderV2.ImageSize.FixedImageSize(
-                    CardPostCell.HI_RES_THUMBNAIL_SIZE,
-                    CardPostCell.HI_RES_THUMBNAIL_SIZE
-            );
-        } else {
-            imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(thumbnailView);
-        }
-
         thumbnailView.bindPostImage(
                 postImage,
-                imageSize
+                ImageLoaderV2.ImageSize.MeasurableImageSize.create(thumbnailView)
         );
 
         String details = postImage.getExtension().toUpperCase()
