@@ -37,12 +37,14 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.ui.view.LoadView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
+import com.github.k1rakishou.chan.utils.RecyclerUtils;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPost;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 import com.github.k1rakishou.model.data.post.PostIndexed;
+import com.github.k1rakishou.persist_state.IndexAndTop;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +58,7 @@ import static com.github.k1rakishou.core_themes.ThemeEngine.isDarkColor;
 
 public class PostRepliesController
         extends BaseFloatingController implements ThemeEngine.ThemeChangesListener {
-    private static final LruCache<Long, Integer> scrollPositionCache = new LruCache<>(128);
+    private static final LruCache<Long, IndexAndTop> scrollPositionCache = new LruCache<>(128);
 
     @Inject
     ThemeEngine themeEngine;
@@ -225,9 +227,11 @@ public class PostRepliesController
         );
 
         repliesAdapter.setHasStableIds(true);
+        repliesAdapter.setData(data);
+
         repliesView.setLayoutManager(new LinearLayoutManager(context));
         repliesView.getRecycledViewPool().setMaxRecycledViews(RepliesAdapter.POST_REPLY_VIEW_TYPE, 0);
-        repliesAdapter.setData(data);
+        repliesView.setAdapter(repliesAdapter);
 
         loadView.setFadeDuration(first ? 0 : 150);
         loadView.setView(dataView);
@@ -243,42 +247,19 @@ public class PostRepliesController
             return;
         }
 
-        RecyclerView.LayoutManager layoutManager = repliesView.getLayoutManager();
-        if (layoutManager == null) {
-            return;
-        }
-
-        if (!(layoutManager instanceof LinearLayoutManager)) {
-            return;
-        }
-
-        LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
-        int position = linearLayoutManager.findFirstVisibleItemPosition();
-
-        if (position == RecyclerView.NO_POSITION) {
-            return;
-        }
-
-        scrollPositionCache.put(displayingData.forPost.postNo(), position);
+        scrollPositionCache.put(
+                displayingData.forPost.postNo(),
+                RecyclerUtils.getIndexAndTop(repliesView)
+        );
     }
 
     private void restoreScrollPosition(long postNo) {
-        RecyclerView.LayoutManager layoutManager = repliesView.getLayoutManager();
-        if (layoutManager == null) {
-            return;
-        }
-
-        if (!(layoutManager instanceof LinearLayoutManager)) {
-            return;
-        }
-
-        Integer scrollPosition = scrollPositionCache.get(postNo);
+        IndexAndTop scrollPosition = scrollPositionCache.get(postNo);
         if (scrollPosition == null) {
             return;
         }
 
-        LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
-        linearLayoutManager.scrollToPosition(scrollPosition);
+        RecyclerUtils.restoreScrollPosition(repliesView, scrollPosition);
     }
 
     private static class RepliesAdapter extends RecyclerView.Adapter<ReplyViewHolder> {

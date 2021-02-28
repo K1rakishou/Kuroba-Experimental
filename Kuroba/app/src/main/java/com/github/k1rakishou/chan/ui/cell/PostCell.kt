@@ -115,7 +115,8 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   private var singleImageMode = false
   private var detailsSizePx = 0
   private var iconSizePx = 0
-  private var paddingPx = 0
+  private var horizPaddingPx = 0
+  private var vertPaddingPx = 0
   private var postIndex = 0
   private var markedNo: Long = 0
 
@@ -340,11 +341,13 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
 
     val textSizeSp = ChanSettings.fontSize.get().toInt()
     val endPadding = dp(16f)
-    paddingPx = dp(textSizeSp - 6.toFloat())
+
+    horizPaddingPx = dp(textSizeSp - 6.toFloat())
+    vertPaddingPx = dp(textSizeSp - 10.toFloat())
 
     title = findViewById(R.id.title)
     postFilesInfoContainer = findViewById(R.id.post_files_info_container)
-    postFilesInfoContainer.setPadding(paddingPx, 0, endPadding, 0)
+    postFilesInfoContainer.setPadding(horizPaddingPx, 0, endPadding, 0)
     icons = findViewById(R.id.icons)
     comment = findViewById(R.id.comment)
     replies = findViewById(R.id.replies)
@@ -353,29 +356,29 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     postAttentionLabel = findViewById(R.id.post_attention_label)
     detailsSizePx = sp(textSizeSp - 4.toFloat())
     title.textSize = textSizeSp.toFloat()
-    title.setPadding(paddingPx, paddingPx, endPadding, 0)
+    title.setPadding(horizPaddingPx, vertPaddingPx, endPadding, 0)
     iconSizePx = sp(textSizeSp - 3.toFloat())
     icons.height = sp(textSizeSp.toFloat())
     icons.setSpacing(dp(4f))
-    icons.setPadding(paddingPx, dp(4f), paddingPx, 0)
+    icons.setPadding(horizPaddingPx, vertPaddingPx, horizPaddingPx, 0)
 
     findViewById<ConstraintLayout>(R.id.post_single_image_comment_container)
-      ?.setPadding(paddingPx, 0, endPadding, 0)
+      ?.setPadding(horizPaddingPx, 0, endPadding, 0)
 
     comment.textSize = textSizeSp.toFloat()
     replies.textSize = textSizeSp.toFloat()
 
     if (singleImageMode) {
-      comment.setPadding(0, paddingPx, paddingPx, 0)
-      replies.setPadding(0, 0, paddingPx, paddingPx)
+      comment.setPadding(0, vertPaddingPx, horizPaddingPx, 0)
+      replies.setPadding(0, 0, horizPaddingPx, vertPaddingPx)
     } else {
-      comment.setPadding(paddingPx, paddingPx, paddingPx, 0)
-      replies.setPadding(paddingPx, 0, paddingPx, paddingPx)
+      comment.setPadding(horizPaddingPx, vertPaddingPx, horizPaddingPx, 0)
+      replies.setPadding(horizPaddingPx, 0, horizPaddingPx, vertPaddingPx)
     }
 
     val dividerParams = divider.layoutParams as MarginLayoutParams
-    dividerParams.leftMargin = paddingPx
-    dividerParams.rightMargin = paddingPx
+    dividerParams.leftMargin = horizPaddingPx
+    dividerParams.rightMargin = horizPaddingPx
     divider.layoutParams = dividerParams
 
     val repliesClickListener = OnClickListener {
@@ -689,22 +692,33 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     val leftPadding = if (singleImageMode) {
       0
     } else {
-      paddingPx
+      horizPaddingPx
     }
 
     if (post.postIcons.isNotEmpty()) {
-      comment.setPadding(leftPadding, paddingPx, paddingPx, 0)
+      comment.setPadding(leftPadding, vertPaddingPx, horizPaddingPx, 0)
     } else {
-      comment.setPadding(leftPadding, paddingPx / 2, paddingPx, 0)
+      if (singleImageMode) {
+        comment.setPadding(leftPadding, vertPaddingPx, horizPaddingPx, 0)
+      } else {
+        comment.setPadding(leftPadding, vertPaddingPx / 2, horizPaddingPx, 0)
+      }
     }
 
     comment.typeface = Typeface.DEFAULT
     comment.setTextColor(theme.textColorPrimary)
 
-    val newVisibility = if (commentText.isEmpty() && post.postImagesCount == 0) {
-      View.GONE
-    } else {
-      View.VISIBLE
+    val newVisibility = when {
+      commentText.isEmpty() -> {
+        if (singleImageMode || post.postImagesCount == 0) {
+          View.GONE
+        } else {
+          View.VISIBLE
+        }
+      }
+      else -> {
+        View.VISIBLE
+      }
     }
 
     comment.setVisibilityFast(newVisibility)
@@ -767,13 +781,13 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     replies.text = text
 
     AndroidUtils.updatePaddings(comment, -1, -1, -1, 0)
-    AndroidUtils.updatePaddings(replies, -1, -1, paddingPx, -1)
+    AndroidUtils.updatePaddings(replies, -1, -1, vertPaddingPx, -1)
   }
 
   private fun bindRepliesText() {
     replies.setVisibilityFast(View.GONE)
 
-    AndroidUtils.updatePaddings(comment, -1, -1, -1, paddingPx)
+    AndroidUtils.updatePaddings(comment, -1, -1, -1, vertPaddingPx)
     AndroidUtils.updatePaddings(replies, -1, -1, 0, -1)
   }
 
@@ -1469,6 +1483,6 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     private val THUMBNAIL_BOTTOM_MARGIN = dp(5f)
     private val THUMBNAIL_TOP_MARGIN = dp(4f)
     private val THUMBNAIL_LEFT_MARGIN = dp(4f)
-    private val MULTIPLE_THUMBNAILS_MIDDLE_MARGIN = dp(1f)
+    private val MULTIPLE_THUMBNAILS_MIDDLE_MARGIN = dp(2f)
   }
 }
