@@ -247,10 +247,7 @@ class ProxyStorage(
 
           if (!proxiesFile.exists()) {
             if (!proxiesFile.createNewFile()) {
-              Logger.e(
-                TAG,
-                "saveProxiesInternal() failed to create proxies file: ${proxiesFile.absolutePath}"
-              )
+              Logger.e(TAG, "saveProxiesInternal() failed to create proxies file: ${proxiesFile.absolutePath}")
               return@synchronized false
             }
           }

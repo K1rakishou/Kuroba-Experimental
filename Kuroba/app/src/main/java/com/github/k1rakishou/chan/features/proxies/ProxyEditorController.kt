@@ -157,7 +157,7 @@ class ProxyEditorController(
     }
   }
 
-  private suspend fun saveProxy(): Boolean {
+  suspend fun saveProxy(): Boolean {
     val proxyAddress = proxyAddress.text?.toString()
 
     if (proxyAddress == null || !isValidAddress(proxyAddress)) {
@@ -170,6 +170,8 @@ class ProxyEditorController(
       proxyPortTIL.error = getString(R.string.controller_proxy_editor_proxy_port_is_not_valid)
       return false
     }
+
+    val newProxyKey = ProxyStorage.ProxyKey(proxyAddress, proxyPort)
 
     val proxyType = when (proxyType.checkedRadioButtonId) {
       R.id.proxy_type_http -> ProxyStorage.KurobaProxyType.HTTP
@@ -208,6 +210,20 @@ class ProxyEditorController(
     if (supportedSelectors.isEmpty()) {
       showToast(R.string.controller_proxy_editor_proxy_no_actions_selected)
       return false
+    }
+
+    if (proxyKey != null && proxyKey != newProxyKey) {
+      val success = proxyStorage.deleteProxies(listOf(proxyKey))
+        .safeUnwrap { error ->
+          Logger.e(TAG, "proxyStorage.deleteProxies($proxyKey) error", error)
+          showToast("Failed to delete old proxy, error=${error.errorMessageOrClassName()}")
+          return false
+        }
+
+      if (!success) {
+        showToast("Failed to delete old proxy")
+        return false
+      }
     }
 
     val order = proxyStorage.getNewProxyOrder()
