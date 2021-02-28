@@ -79,18 +79,16 @@ class RangeSettingUpdaterController(
     currentValueInput.inputType = InputType.TYPE_CLASS_NUMBER
 
     this.textWatcher = currentValueInput.doAfterTextChanged { editable ->
-      val floatValue = editable?.toString()?.toFloatOrNull() ?: -1f
-      if (slider.value == floatValue) {
+      val floatValue = editable?.toString()?.toFloatOrNull()
+      if (floatValue == null || slider.value == floatValue) {
         return@doAfterTextChanged
       }
 
       if (floatValue < minValue) {
-        currentValueInput.mySetText(minValue.toString())
         return@doAfterTextChanged
       }
 
       if (floatValue > maxValue) {
-        currentValueInput.mySetText(maxValue.toString())
         return@doAfterTextChanged
       }
 
@@ -112,8 +110,7 @@ class RangeSettingUpdaterController(
   }
 
   private fun ColorizableEditText.mySetText(text: CharSequence) {
-    setText(text)
-    setSelection(text.length)
+    editableText.replace(0, editableText.length, text)
   }
 
   override fun onDestroy() {
