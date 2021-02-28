@@ -9,9 +9,9 @@ import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import okhttp3.HttpUrl
 import java.util.regex.Pattern
 
-class FoolFuukaEndpoints(
+open class FoolFuukaEndpoints(
   site: CommonSite,
-  private val rootUrl: HttpUrl
+  protected val rootUrl: HttpUrl
 ) : CommonSite.CommonEndpoints(site) {
 
   override fun catalog(boardDescriptor: BoardDescriptor): HttpUrl {

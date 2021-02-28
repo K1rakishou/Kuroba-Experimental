@@ -213,6 +213,7 @@ class GlobalSearchController(context: Context)
       bindClickCallback {
         val boardsSupportingSearch = archivesManager.getBoardsSupportingSearch(selectedSiteDescriptor)
         if (boardsSupportingSearch.isEmpty()) {
+          showToast(R.string.no_boards_supporting_search_found)
           return@bindClickCallback
         }
 

@@ -14,7 +14,8 @@ enum class ArchiveType(
     ArchivedMoe("archived.moe"),
     TheBarchive("thebarchive.com"),
     ArchiveOfSins("archiveofsins.com"),
-    TokyoChronos("tokyochronos.net");
+    TokyoChronos("tokyochronos.net"),
+    WakarimasenMoe("archive.wakarimasen.moe");
 
     companion object {
         private val map = hashMapOf(
@@ -30,6 +31,7 @@ enum class ArchiveType(
             TheBarchive.domain to TheBarchive,
             ArchiveOfSins.domain to ArchiveOfSins,
             TokyoChronos.domain to TokyoChronos,
+            WakarimasenMoe.domain to WakarimasenMoe,
         )
 
         fun hasDomain(domain: String): Boolean {

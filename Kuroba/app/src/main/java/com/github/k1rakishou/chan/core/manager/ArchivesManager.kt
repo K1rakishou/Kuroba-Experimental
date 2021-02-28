@@ -61,6 +61,7 @@ open class ArchivesManager(
     put("thebarchive.com", 10)
     put("archiveofsins.com", 11)
     put("tokyochronos.net", 12)
+    put("archive.wakarimasen.moe", 13)
   }
 
   fun initialize() {
@@ -154,9 +155,15 @@ open class ArchivesManager(
     val archiveData = getArchiveDataByArchiveDescriptor(archiveDescriptor)
       ?: return null
 
+    val threadEndpointFormat = if (archiveDescriptor.domain == ArchiveType.WakarimasenMoe.domain) {
+      WAKARIMASEN_THREAD_ENDPOINT_FORMAT
+    } else {
+      FOOLFUUKA_THREAD_ENDPOINT_FORMAT
+    }
+
     return String.format(
       Locale.ENGLISH,
-      FOOLFUUKA_THREAD_ENDPOINT_FORMAT,
+      threadEndpointFormat,
       archiveData.domain,
       threadDescriptor.boardCode(),
       threadDescriptor.threadNo
@@ -175,7 +182,16 @@ open class ArchivesManager(
         return@read emptySet()
       }
 
-      return@read archiveData.boardsSupporingSearch.map { boardCode ->
+      // For some reason in archives.json file, that we use to work with archives, Wakarimasen
+      // archive is listed as one not supporting search while in reality it does. So for some time
+      // we are going to use this hack.
+      val boardsSupporingSearch = if (archiveData.getArchiveDescriptor().archiveType == ArchiveType.WakarimasenMoe) {
+        archiveData.supportedBoards ?: emptySet()
+      } else {
+        archiveData.boardsSupporingSearch ?: emptySet()
+      }
+
+      return@read boardsSupporingSearch.map { boardCode ->
         return@map BoardDescriptor.create(siteDescriptor, boardCode)
       }.toSet()
     }
@@ -265,13 +281,13 @@ open class ArchivesManager(
     private val realDomain: String,
     @Expose
     @SerializedName("boards")
-    val supportedBoards: Set<String>,
+    val supportedBoards: Set<String>?,
     @Expose
     @SerializedName("files")
     val supportedFiles: Set<String>,
     @Expose
     @SerializedName("search")
-    val boardsSupporingSearch: Set<String>
+    val boardsSupporingSearch: Set<String>?
   ) {
     @Expose(serialize = false, deserialize = false)
     private var archiveDescriptor: ArchiveDescriptor? = null
@@ -308,7 +324,10 @@ open class ArchivesManager(
       val isTheSameArchive = boardDescriptor.siteDescriptor.siteName == domain
       val supportsThisSite = supportedSites?.contains(boardDescriptor.siteDescriptor) ?: false
 
-      return (isTheSameArchive || supportsThisSite) && boardDescriptor.boardCode in supportedBoards
+      val boards = supportedBoards
+        ?: emptySet()
+
+      return (isTheSameArchive || supportsThisSite) && boardDescriptor.boardCode in boards
     }
 
     private fun getSanitizedDomain(): String {
@@ -337,6 +356,8 @@ open class ArchivesManager(
 
     // wakarimasen.moe uses a slightly different request url
     // https://archive.wakarimasen.moe/_/api/chan/thread/&board=a&num=216913439
+
+    private const val WAKARIMASEN_THREAD_ENDPOINT_FORMAT = "https://%s/_/api/chan/thread/&board=%s&num=%d"
 
     private const val WWW_PREFIX = "www."
   }

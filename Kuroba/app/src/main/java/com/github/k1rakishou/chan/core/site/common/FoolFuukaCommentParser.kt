@@ -81,10 +81,13 @@ class FoolFuukaCommentParser(
       ArchiveType.ArchivedMoe -> ARCHIVED_MOE_DEFAULT_QUOTE_PATTERN
       ArchiveType.ArchiveOfSins -> ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN
       ArchiveType.TokyoChronos -> TOKYO_CHRONOS_DEFAULT_QUOTE_PATTERN
+      ArchiveType.WakarimasenMoe -> WAKARIMASEN_DEFAULT_QUOTE_PATTERN
+
+      // Not a FoolFuuka archive
+      ArchiveType.Warosu,
 
       // See ArchivesManager.disabledArchives
       ArchiveType.TheBarchive,
-      ArchiveType.Warosu,
       ArchiveType.Bstats -> null
     }
   }
@@ -118,6 +121,7 @@ class FoolFuukaCommentParser(
     private val ARCHIVED_MOE_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archived\\.moe\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
     private val ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archiveofsins\\.com\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
     private val TOKYO_CHRONOS_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?tokyochronos\\.net\\/(.*?)\\/thread\\/(\\d+)(?:#)?(\\d+)?\\/?")
+    private val WAKARIMASEN_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archive.wakarimasen\\.moe\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
 
     @JvmField
     val ALL_ARCHIVE_LINKS_PATTERNS_MAP = mapOf<ArchiveType, Pattern>(
@@ -129,7 +133,8 @@ class FoolFuukaCommentParser(
       ArchiveType.B4k to B4K_DEFAULT_QUOTE_PATTERN,
       ArchiveType.ArchivedMoe to ARCHIVED_MOE_DEFAULT_QUOTE_PATTERN,
       ArchiveType.ArchiveOfSins to ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN,
-      ArchiveType.TokyoChronos to TOKYO_CHRONOS_DEFAULT_QUOTE_PATTERN
+      ArchiveType.TokyoChronos to TOKYO_CHRONOS_DEFAULT_QUOTE_PATTERN,
+      ArchiveType.WakarimasenMoe to WAKARIMASEN_DEFAULT_QUOTE_PATTERN,
     )
 
     private val FULL_QUOTE_PATTERN = Pattern.compile("/(\\w+)/\\w+/(\\d+)/?#p?(\\d+)")

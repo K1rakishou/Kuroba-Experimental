@@ -31,6 +31,7 @@ import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.ForPlebs
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.Nyafuu
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.RebeccaBlackTech
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.TokyoChronos
+import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.WakarimasenMoe
 import com.github.k1rakishou.chan.core.site.sites.fuuka.sites.Warosu
 import com.github.k1rakishou.chan.core.site.sites.kun8.Kun8
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -63,6 +64,7 @@ object SiteRegistry {
     URL_HANDLERS.add(ArchiveOfSins.URL_HANDLER)
     URL_HANDLERS.add(TokyoChronos.URL_HANDLER)
     URL_HANDLERS.add(Warosu.URL_HANDLER)
+    URL_HANDLERS.add(WakarimasenMoe.URL_HANDLER)
 
     addSiteToSiteClassesMap(Chan4.SITE_NAME, Chan4::class.java)
     addSiteToSiteClassesMap(Lainchan.SITE_NAME, Lainchan::class.java)
@@ -81,6 +83,7 @@ object SiteRegistry {
     addSiteToSiteClassesMap(ArchiveOfSins.SITE_NAME, ArchiveOfSins::class.java)
     addSiteToSiteClassesMap(TokyoChronos.SITE_NAME, TokyoChronos::class.java)
     addSiteToSiteClassesMap(Warosu.SITE_NAME, Warosu::class.java)
+    addSiteToSiteClassesMap(WakarimasenMoe.SITE_NAME, WakarimasenMoe::class.java)
   }
 
   private fun addSiteToSiteClassesMap(siteName: String, siteClass: Class<out Site>) {
