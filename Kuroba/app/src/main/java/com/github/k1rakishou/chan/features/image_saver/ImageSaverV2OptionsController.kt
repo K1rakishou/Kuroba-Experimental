@@ -297,7 +297,7 @@ class ImageSaverV2OptionsController(
 
   private fun pathContainsBadSymbols(subDir: String): Boolean {
     for (char in subDir) {
-      if (char.isLetterOrDigit() || char == '\\' || char == '_') {
+      if (char.isLetterOrDigit() || char == '\\' || char == '_' || char == '-') {
         continue
       }
 
@@ -309,7 +309,7 @@ class ImageSaverV2OptionsController(
 
   private fun fileNameContainsBadSymbols(fileName: String): Boolean {
     for (char in fileName) {
-      if (char.isLetterOrDigit() || char == '_') {
+      if (char.isLetterOrDigit() || char == '_' || char == '-') {
         continue
       }
 

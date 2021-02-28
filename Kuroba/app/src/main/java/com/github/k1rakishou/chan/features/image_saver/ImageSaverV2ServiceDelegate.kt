@@ -229,6 +229,7 @@ class ImageSaverV2ServiceDelegate(
               .ignore()
 
             val notificationSummary = extractNotificationSummaryText(
+              imageDownloadInputData = imageDownloadInputData,
               currentChanPostImage = currentChanPostImage,
               imageDownloadRequests = imageDownloadRequests,
               isCompleted = false
@@ -255,6 +256,7 @@ class ImageSaverV2ServiceDelegate(
       }
     } finally {
       val notificationSummary = extractNotificationSummaryText(
+        imageDownloadInputData = imageDownloadInputData,
         currentChanPostImage = currentChanPostImage,
         imageDownloadRequests = imageDownloadRequests,
         isCompleted = true
@@ -285,12 +287,31 @@ class ImageSaverV2ServiceDelegate(
   }
 
   private fun extractNotificationSummaryText(
+    imageDownloadInputData: ImageSaverV2Service.ImageDownloadInputData,
     currentChanPostImage: AtomicReference<ChanPostImage>,
     imageDownloadRequests: List<ImageDownloadRequest>,
     isCompleted: Boolean
   ): String? {
     return currentChanPostImage.get()?.let { chanPostImage ->
       if (!isCompleted || imageDownloadRequests.size <= 1) {
+        val imageNameOptions = ImageSaverV2Options.ImageNameOptions.fromRawValue(
+          imageDownloadInputData.imageSaverV2Options.imageNameOptions
+        )
+
+        val imageFileName = when (imageNameOptions) {
+          ImageSaverV2Options.ImageNameOptions.UseServerFileName -> chanPostImage.serverFilename
+          ImageSaverV2Options.ImageNameOptions.UseOriginalFileName -> chanPostImage.filename
+        }
+
+        if (imageFileName.isNotNullNorBlank()) {
+          val extension = chanPostImage.extension
+          if (extension.isNullOrBlank()) {
+            return@let imageFileName
+          }
+
+          return@let "$imageFileName.$extension"
+        }
+
         return@let chanPostImage.imageUrl?.pathSegments?.lastOrNull()
       }
 
