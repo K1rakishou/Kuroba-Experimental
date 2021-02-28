@@ -37,6 +37,8 @@ open class ChanPost(
   @Synchronized
   fun postNo(): Long = postDescriptor.postNo
   @Synchronized
+  fun postSubNo(): Long = postDescriptor.postSubNo
+  @Synchronized
   fun firstImage(): ChanPostImage? = postImages.firstOrNull()
 
   @Synchronized

@@ -23,6 +23,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:orientation="horizontal"
     tools:ignore="RtlHardcoded,RtlSymmetry,NotSibling">
 
+    <View
+        android:id="@+id/post_attention_label"
+        android:layout_width="@dimen/post_attention_label_width"
+        android:layout_height="match_parent"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="2dp"
+        android:visibility="invisible"
+        tools:background="#800000"
+        tools:visibility="visible" />
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
@@ -32,20 +42,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:weightSum="1"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
-
-            <View
-                android:id="@+id/post_attention_label"
-                android:layout_width="@dimen/post_attention_label_width"
-                android:layout_height="match_parent"
-                android:layout_marginTop="2dp"
-                android:layout_marginBottom="2dp"
-                android:visibility="invisible"
-                tools:background="#800000"
-                tools:visibility="visible" />
 
             <LinearLayout
                 android:id="@+id/thumbnails_container"
@@ -111,33 +110,43 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                         tools:layout_height="32dp"
                         tools:layout_width="match_parent" />
 
-                    <TextView
-                        android:id="@+id/comment"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/icons"
-                        tools:text="@string/lorem_ipsum" />
-
-                    <TextView
-                        android:id="@+id/replies"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/comment"
-                        app:singleLine="true"
-                        android:paddingTop="4dp"
-                        android:paddingBottom="2dp"
-                        tools:text="234 replies, 123 image " />
-
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
         </LinearLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/post_single_image_comment_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/post_attention_label"
+            app:layout_constraintTop_toBottomOf="@+id/inner_linear_layout">
+
+            <TextView
+                android:id="@+id/comment"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/icons"
+                tools:text="@string/lorem_ipsum" />
+
+            <TextView
+                android:id="@+id/replies"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/comment"
+                app:singleLine="true"
+                android:paddingTop="4dp"
+                android:paddingBottom="2dp"
+                tools:text="234 replies, 123 image " />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <View
             android:id="@+id/divider"
@@ -145,7 +154,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_height="1dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/inner_linear_layout" />
+            app:layout_constraintTop_toBottomOf="@+id/post_single_image_comment_container" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

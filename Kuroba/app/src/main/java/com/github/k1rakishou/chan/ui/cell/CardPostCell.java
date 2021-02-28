@@ -43,6 +43,8 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPost;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -112,47 +114,6 @@ public class CardPostCell
         themeEngine.removeListener(this);
     }
 
-    @Override
-    protected void onFinishInflate() {
-        super.onFinishInflate();
-
-        FixedRatioLinearLayout content = findViewById(R.id.card_content);
-
-        if (canEnableCardPostCellRatio()) {
-            content.setEnabled(true);
-            content.setRatio(9f / 18f);
-        } else {
-            content.setEnabled(false);
-        }
-
-        thumbView = findViewById(R.id.thumbnail);
-        thumbView.setRatio(16f / 13f);
-        thumbView.setOnClickListener(this);
-        thumbView.setOnLongClickListener(this);
-        title = findViewById(R.id.title);
-        comment = findViewById(R.id.comment);
-        replies = findViewById(R.id.replies);
-        options = findViewById(R.id.options);
-
-        AndroidUtils.setBoundlessRoundRippleBackground(options);
-        filterMatchColor = findViewById(R.id.filter_match_color);
-
-        setOnClickListener(this);
-        setCompact(compact);
-
-        options.setOnClickListener(v -> {
-            List<FloatingListMenuItem> items = new ArrayList<>();
-
-            if (callback != null && post != null) {
-                callback.onPopulatePostOptions(post, items);
-
-                if (items.size() > 0) {
-                    callback.showPostOptions(post, inPopup, items);
-                }
-            }
-        });
-    }
-
     private boolean canEnableCardPostCellRatio() {
         return ChanSettings.boardViewMode.get() == ChanSettings.PostViewMode.CARD
                 && ChanSettings.boardGridSpanCount.get() != 1;
@@ -177,6 +138,29 @@ public class CardPostCell
         return false;
     }
 
+    @Override
+    public boolean postDataDiffers(
+            @NotNull ChanDescriptor chanDescriptor,
+            @NotNull ChanPost post,
+            int postIndex,
+            @NotNull PostCellInterface.PostCellCallback callback,
+            boolean inPopup,
+            boolean highlighted,
+            boolean selected,
+            long markedNo,
+            boolean showDivider,
+            @NotNull ChanSettings.PostViewMode postViewMode,
+            boolean compact,
+            boolean stub,
+            @NotNull ChanTheme theme
+    ) {
+        if (post.equals(this.post) && theme.equals(this.theme) && inPopup == this.inPopup) {
+            return false;
+        }
+
+        return true;
+    }
+
     public void setPost(
             ChanDescriptor chanDescriptor,
             final ChanPost post,
@@ -189,9 +173,26 @@ public class CardPostCell
             boolean showDivider,
             ChanSettings.PostViewMode postViewMode,
             boolean compact,
+            boolean stub,
             ChanTheme theme
     ) {
-        if (post.equals(this.post) && theme.equals(this.theme) && inPopup == this.inPopup) {
+        boolean postDataDiffers = postDataDiffers(
+                chanDescriptor,
+                post,
+                postIndex,
+                callback,
+                inPopup,
+                highlighted,
+                selected,
+                markedNo,
+                showDivider,
+                postViewMode,
+                compact,
+                stub,
+                theme
+        );
+
+        if (!postDataDiffers) {
             return;
         }
 
@@ -200,6 +201,7 @@ public class CardPostCell
         this.theme = theme;
         this.callback = callback;
 
+        preBindPost(post);
         bindPost(post);
 
         if (this.compact != compact) {
@@ -239,8 +241,51 @@ public class CardPostCell
             callback.onPostUnbind(post, isActuallyRecycling);
         }
 
+        this.thumbView = null;
         this.post = null;
         this.callback = null;
+    }
+
+    private void preBindPost(ChanPost post) {
+        if (thumbView != null) {
+            return;
+        }
+
+        FixedRatioLinearLayout content = findViewById(R.id.card_content);
+
+        if (canEnableCardPostCellRatio()) {
+            content.setEnabled(true);
+            content.setRatio(9f / 18f);
+        } else {
+            content.setEnabled(false);
+        }
+
+        thumbView = findViewById(R.id.thumbnail);
+        thumbView.setRatio(16f / 13f);
+        thumbView.setOnClickListener(this);
+        thumbView.setOnLongClickListener(this);
+        title = findViewById(R.id.title);
+        comment = findViewById(R.id.comment);
+        replies = findViewById(R.id.replies);
+        options = findViewById(R.id.options);
+
+        AndroidUtils.setBoundlessRoundRippleBackground(options);
+        filterMatchColor = findViewById(R.id.filter_match_color);
+
+        setOnClickListener(this);
+        setCompact(compact);
+
+        options.setOnClickListener(v -> {
+            List<FloatingListMenuItem> items = new ArrayList<>();
+
+            if (callback != null && post != null) {
+                callback.onPopulatePostOptions(post, items);
+
+                if (items.size() > 0) {
+                    callback.showPostOptions(post, inPopup, items);
+                }
+            }
+        });
     }
 
     private void bindPost(ChanPost post) {

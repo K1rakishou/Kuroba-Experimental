@@ -34,8 +34,8 @@ import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.View.OnClickListener
 import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.RelativeLayout
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import coil.request.Disposable
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.PostViewMode
@@ -94,12 +94,12 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   @Inject
   lateinit var themeEngine: ThemeEngine
 
-  private lateinit var relativeLayoutContainer: RelativeLayout
+  private var thumbnailContainer: LinearLayout? = null
   private lateinit var title: TextView
+  private lateinit var postFilesInfoContainer: LinearLayout
   private lateinit var icons: PostIcons
   private lateinit var comment: TextView
   private lateinit var replies: TextView
-  private lateinit var repliesAdditionalArea: View
   private lateinit var options: ImageView
   private lateinit var divider: View
   private lateinit var postAttentionLabel: View
@@ -112,6 +112,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   private var post: ChanPost? = null
   private var callback: PostCellCallback? = null
 
+  private var singleImageMode = false
   private var detailsSizePx = 0
   private var iconSizePx = 0
   private var paddingPx = 0
@@ -141,6 +142,16 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int)
     : super(context, attrs, defStyleAttr)
 
+  init {
+    AppModuleAndroidUtils.extractActivityComponent(context)
+      .inject(this)
+
+    gestureDetector = GestureDetector(context, DoubleTapGestureListener())
+
+    linkClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostLinkColor, 1.3f)
+    quoteClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostQuoteColor, 1.3f)
+  }
+
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
     themeEngine.addListener(this)
@@ -149,85 +160,6 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
     themeEngine.removeListener(this)
-  }
-
-  override fun onFinishInflate() {
-    super.onFinishInflate()
-
-    AppModuleAndroidUtils.extractActivityComponent(context)
-      .inject(this)
-
-    val textSizeSp = ChanSettings.fontSize.get().toInt()
-
-    relativeLayoutContainer = findViewById(R.id.relative_layout_container)
-    title = findViewById(R.id.title)
-    icons = findViewById(R.id.icons)
-    comment = findViewById(R.id.comment)
-    replies = findViewById(R.id.replies)
-    repliesAdditionalArea = findViewById(R.id.replies_additional_area)
-    options = findViewById(R.id.options)
-    divider = findViewById(R.id.divider)
-    postAttentionLabel = findViewById(R.id.post_attention_label)
-    paddingPx = dp(textSizeSp - 6.toFloat())
-    detailsSizePx = sp(textSizeSp - 4.toFloat())
-    title.textSize = textSizeSp.toFloat()
-    title.setPadding(paddingPx, paddingPx, dp(16f), 0)
-    iconSizePx = sp(textSizeSp - 3.toFloat())
-    icons.height = sp(textSizeSp.toFloat())
-    icons.setSpacing(dp(4f))
-    icons.setPadding(paddingPx, dp(4f), paddingPx, 0)
-
-    comment.textSize = textSizeSp.toFloat()
-    comment.setPadding(paddingPx, paddingPx, paddingPx, 0)
-
-    replies.textSize = textSizeSp.toFloat()
-    replies.setPadding(paddingPx, 0, paddingPx, paddingPx)
-
-    val dividerParams = divider.layoutParams as RelativeLayout.LayoutParams
-    dividerParams.leftMargin = paddingPx
-    dividerParams.rightMargin = paddingPx
-    divider.layoutParams = dividerParams
-
-    val repliesClickListener = OnClickListener {
-      if (replies.visibility == View.VISIBLE && threadMode) {
-        post?.let { post ->
-          if (post.repliesFromCount > 0) {
-            callback?.onShowPostReplies(post)
-          }
-        }
-      }
-    }
-
-    replies.setOnClickListener(repliesClickListener)
-    repliesAdditionalArea.setOnClickListener(repliesClickListener)
-
-    options.setOnClickListener {
-      val items = ArrayList<FloatingListMenuItem>()
-      if (callback != null) {
-        post?.let { post ->
-          callback?.onPopulatePostOptions(post, items)
-
-          if (items.size > 0) {
-            callback?.showPostOptions(post, inPopup, items)
-          }
-        }
-      }
-    }
-
-    setOnClickListener {
-      if (ignoreNextOnClick) {
-        ignoreNextOnClick = false
-      } else {
-        post?.let { post ->
-          callback?.onPostClicked(post)
-        }
-      }
-    }
-
-    gestureDetector = GestureDetector(context, DoubleTapGestureListener())
-
-    linkClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostLinkColor, 1.3f)
-    quoteClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostQuoteColor, 1.3f)
   }
 
   override fun onPostRecycled(isActuallyRecycling: Boolean) {
@@ -247,6 +179,42 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     replies.invalidate()
   }
 
+  override fun postDataDiffers(
+    chanDescriptor: ChanDescriptor,
+    post: ChanPost,
+    postIndex: Int,
+    callback: PostCellCallback,
+    inPopup: Boolean,
+    highlighted: Boolean,
+    selected: Boolean,
+    markedNo: Long,
+    showDivider: Boolean,
+    postViewMode: PostViewMode,
+    compact: Boolean,
+    stub: Boolean,
+    theme: ChanTheme
+  ): Boolean {
+    val filterHash = postFilterManager.getFilterHash(post.postDescriptor)
+    val hasColoredFilter = postFilterManager.getFilterHighlightedColor(post.postDescriptor) != 0
+
+    if (this.post != null
+      && this.post == post
+      && this.inPopup == inPopup
+      && this.highlighted == highlighted
+      && this.postSelected == selected
+      && this.markedNo == markedNo
+      && this.showDivider == showDivider
+      && this.filterHash == filterHash
+      && this.theme == theme
+      && this.postIndex == postIndex
+      && this.hasColoredFilter == hasColoredFilter
+    ) {
+      return false
+    }
+
+    return true
+  }
+
   @SuppressLint("ClickableViewAccessibility")
   override fun setPost(
     chanDescriptor: ChanDescriptor,
@@ -260,26 +228,30 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     showDivider: Boolean,
     postViewMode: PostViewMode,
     compact: Boolean,
+    stub: Boolean,
     theme: ChanTheme
   ) {
-    val filterHash = postFilterManager.getFilterHash(post.postDescriptor)
+    val postDataDiffers = postDataDiffers(
+      chanDescriptor,
+      post,
+      postIndex,
+      callback,
+      inPopup,
+      highlighted,
+      selected,
+      markedNo,
+      showDivider,
+      postViewMode,
+      compact,
+      stub,
+      theme
+    )
 
-    if (this.post != null
-      && this.post == post
-      && this.inPopup == inPopup
-      && this.highlighted == highlighted
-      && this.postSelected == selected
-      && this.markedNo == markedNo
-      && this.showDivider == showDivider
-      && this.filterHash == filterHash
-      && this.theme == theme
-      && this.postIndex == postIndex
-    ) {
+    if (!postDataDiffers) {
       return
     }
 
     this.callback = callback
-
     this.chanDescriptor = chanDescriptor
     this.post = post
     this.inPopup = inPopup
@@ -287,11 +259,14 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     this.postSelected = selected
     this.markedNo = markedNo
     this.showDivider = showDivider
-    this.filterHash = filterHash
     this.theme = theme
     this.postIndex = postIndex
+    this.singleImageMode = post.postImages.size == 1
 
-    hasColoredFilter = postFilterManager.getFilterHighlightedColor(post.postDescriptor) != 0
+    this.filterHash = postFilterManager.getFilterHash(post.postDescriptor)
+    this.hasColoredFilter = postFilterManager.getFilterHighlightedColor(post.postDescriptor) != 0
+
+    preBindPost(post)
     bindPost(post)
 
     if (inPopup) {
@@ -352,7 +327,91 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       threadBookmarkViewPost(post)
     }
 
+    thumbnailContainer = null
     callback = null
+  }
+
+  private fun preBindPost(post: ChanPost) {
+    if (thumbnailContainer != null) {
+      return
+    }
+
+    thumbnailContainer = findViewById(R.id.thumbnails_container)
+
+    val textSizeSp = ChanSettings.fontSize.get().toInt()
+    val endPadding = dp(16f)
+    paddingPx = dp(textSizeSp - 6.toFloat())
+
+    title = findViewById(R.id.title)
+    postFilesInfoContainer = findViewById(R.id.post_files_info_container)
+    postFilesInfoContainer.setPadding(paddingPx, 0, endPadding, 0)
+    icons = findViewById(R.id.icons)
+    comment = findViewById(R.id.comment)
+    replies = findViewById(R.id.replies)
+    options = findViewById(R.id.options)
+    divider = findViewById(R.id.divider)
+    postAttentionLabel = findViewById(R.id.post_attention_label)
+    detailsSizePx = sp(textSizeSp - 4.toFloat())
+    title.textSize = textSizeSp.toFloat()
+    title.setPadding(paddingPx, paddingPx, endPadding, 0)
+    iconSizePx = sp(textSizeSp - 3.toFloat())
+    icons.height = sp(textSizeSp.toFloat())
+    icons.setSpacing(dp(4f))
+    icons.setPadding(paddingPx, dp(4f), paddingPx, 0)
+
+    findViewById<ConstraintLayout>(R.id.post_single_image_comment_container)
+      ?.setPadding(paddingPx, 0, endPadding, 0)
+
+    comment.textSize = textSizeSp.toFloat()
+    replies.textSize = textSizeSp.toFloat()
+
+    if (singleImageMode) {
+      comment.setPadding(0, paddingPx, paddingPx, 0)
+      replies.setPadding(0, 0, paddingPx, paddingPx)
+    } else {
+      comment.setPadding(paddingPx, paddingPx, paddingPx, 0)
+      replies.setPadding(paddingPx, 0, paddingPx, paddingPx)
+    }
+
+    val dividerParams = divider.layoutParams as MarginLayoutParams
+    dividerParams.leftMargin = paddingPx
+    dividerParams.rightMargin = paddingPx
+    divider.layoutParams = dividerParams
+
+    val repliesClickListener = OnClickListener {
+      if (replies.visibility == View.VISIBLE && threadMode) {
+        post.let { post ->
+          if (post.repliesFromCount > 0) {
+            callback?.onShowPostReplies(post)
+          }
+        }
+      }
+    }
+
+    replies.setOnClickListener(repliesClickListener)
+
+    options.setOnClickListener {
+      val items = ArrayList<FloatingListMenuItem>()
+      if (callback != null) {
+        post.let { post ->
+          callback?.onPopulatePostOptions(post, items)
+
+          if (items.size > 0) {
+            callback?.showPostOptions(post, inPopup, items)
+          }
+        }
+      }
+    }
+
+    setOnClickListener {
+      if (ignoreNextOnClick) {
+        ignoreNextOnClick = false
+      } else {
+        post.let { post ->
+          callback?.onPostClicked(post)
+        }
+      }
+    }
   }
 
   private fun bindPost(post: ChanPost) {
@@ -364,14 +423,15 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     threadMode = callback?.getCurrentChanDescriptor()?.isThreadDescriptor() ?: false
     setPostLinkableListener(post, true)
 
-    repliesAdditionalArea.isClickable = threadMode
     options.setColorFilter(theme.postDetailsColor)
     replies.isClickable = threadMode
 
+    val selectableItemBackground =
+      themeEngine.getAttributeResource(android.R.attr.selectableItemBackground)
     val selectableItemBackgroundBorderless =
       themeEngine.getAttributeResource(android.R.attr.selectableItemBackgroundBorderless)
 
-    replies.setBackgroundResource(selectableItemBackgroundBorderless)
+    replies.setBackgroundResource(selectableItemBackground)
     options.setBackgroundResource(selectableItemBackgroundBorderless)
 
     replies.setTextColor(theme.textColorSecondary)
@@ -384,6 +444,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     bindPostAttentionLabel(theme, post)
     bindThumbnails(post)
     bindTitle(theme, post)
+    bindPostFilesInfo(theme, post)
     bindIcons(theme, post)
 
     val commentText = getCommentText(post)
@@ -514,6 +575,18 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     }
 
     titleParts.add(date)
+    title.text = TextUtils.concat(*titleParts.toTypedArray())
+  }
+
+  private fun bindPostFilesInfo(theme: ChanTheme, post: ChanPost) {
+    postFilesInfoContainer.removeAllViews()
+
+    if (post.postImages.isEmpty()) {
+      postFilesInfoContainer.setVisibilityFast(View.GONE)
+      return
+    }
+
+    postFilesInfoContainer.setVisibilityFast(View.VISIBLE)
 
     for (image in post.postImages) {
       val postFileName = ChanSettings.postFilename.get()
@@ -551,8 +624,6 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
         )
       }
 
-      titleParts.add(fileInfo)
-
       if (postFileName) {
         fileInfo.setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, fileInfo.length, 0)
         fileInfo.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfo.length, 0)
@@ -563,9 +634,19 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
         fileInfo.setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, fileInfo.length, 0)
         fileInfo.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfo.length, 0)
       }
-    }
 
-    title.text = TextUtils.concat(*titleParts.toTypedArray())
+      val textView = TextView(context)
+      textView.layoutParams = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
+        LinearLayout.LayoutParams.WRAP_CONTENT
+      )
+
+      textView.setSingleLine()
+      textView.ellipsize = TextUtils.TruncateAt.MIDDLE
+      textView.text = fileInfo
+
+      postFilesInfoContainer.addView(textView)
+    }
   }
 
   private fun calculatePostTime(post: ChanPost): CharSequence {
@@ -605,10 +686,16 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   }
 
   private fun bindPostComment(theme: ChanTheme, post: ChanPost, commentText: CharSequence) {
-    if (post.postIcons.isNotEmpty()) {
-      comment.setPadding(paddingPx, paddingPx, paddingPx, 0)
+    val leftPadding = if (singleImageMode) {
+      0
     } else {
-      comment.setPadding(paddingPx, paddingPx / 2, paddingPx, 0)
+      paddingPx
+    }
+
+    if (post.postIcons.isNotEmpty()) {
+      comment.setPadding(leftPadding, paddingPx, paddingPx, 0)
+    } else {
+      comment.setPadding(leftPadding, paddingPx / 2, paddingPx, 0)
     }
 
     comment.typeface = Typeface.DEFAULT
@@ -655,7 +742,6 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
 
   private fun bindRepliesWithImageCountText(post: ChanPost, repliesFromSize: Int) {
     replies.setVisibilityFast(View.VISIBLE)
-    repliesAdditionalArea.setVisibilityFast(View.VISIBLE)
 
     val replyCount = if (threadMode) {
       repliesFromSize
@@ -685,8 +771,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   }
 
   private fun bindRepliesText() {
-    replies.visibility = View.GONE
-    repliesAdditionalArea.visibility = View.GONE
+    replies.setVisibilityFast(View.GONE)
 
     AndroidUtils.updatePaddings(comment, -1, -1, -1, paddingPx)
     AndroidUtils.updatePaddings(replies, -1, -1, 0, -1)
@@ -765,49 +850,38 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   }
 
   private fun bindThumbnails(post: ChanPost) {
+    if (thumbnailContainer == null) {
+      return
+    }
+
     for (thumbnailView in thumbnailViews) {
       thumbnailView.unbindPostImage()
-      relativeLayoutContainer.removeView(thumbnailView)
+      thumbnailContainer!!.removeView(thumbnailView)
     }
 
     thumbnailViews.clear()
 
     // Places the thumbnails below each other.
-    // The placement is done using the RelativeLayout BELOW rule, with generated view ids.
     if (post.postImagesCount <= 0 || ChanSettings.textOnly.get()) {
       return
     }
 
-    var lastId = 0
-    var generatedId = 1
-    var first = true
+    var generatedId = -1000 // Do not use -1 because it's View.NO_ID
 
-    for (i in 0 until post.postImagesCount) {
-      val image = post.postImages[i]
-      if (image == null || image.imageUrl == null && image.actualThumbnailUrl == null) {
+    for (index in 0 until post.postImagesCount) {
+      val image = post.postImages[index]
+      if (image.imageUrl == null && image.actualThumbnailUrl == null) {
         continue
       }
 
       val thumbnailView = PostImageThumbnailView(context)
 
       // Set the correct id.
-      // The first thumbnail uses thumbnail_view so that the layout can offset to that.
-      val idToSet = if (first) {
-        R.id.thumbnail_view
-      } else {
-        generatedId++
-      }
+      thumbnailView.id = generatedId--
 
-      thumbnailView.id = idToSet
-
-      val layoutParams = RelativeLayout.LayoutParams(CELL_POST_THUMBNAIL_SIZE, CELL_POST_THUMBNAIL_SIZE)
-      layoutParams.alignWithParent = true
-
-      if (!first) {
-        layoutParams.addRule(RelativeLayout.BELOW, lastId)
-      }
-
+      val layoutParams = LinearLayout.LayoutParams(CELL_POST_THUMBNAIL_SIZE, CELL_POST_THUMBNAIL_SIZE)
       val imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(thumbnailView)
+
       thumbnailView.bindPostImage(image, imageSize)
       thumbnailView.isClickable = true
 
@@ -825,31 +899,27 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
 
       thumbnailView.setRounding(THUMBNAIL_ROUNDING)
 
-      val bottomMargin = if (i + 1 == post.postImagesCount) {
-        THUMBNAIL_BOTTOM_MARGIN
-      } else {
-        0
+      val bottomMargin = when {
+        index == post.postImages.lastIndex -> THUMBNAIL_BOTTOM_MARGIN
+        !singleImageMode -> MULTIPLE_THUMBNAILS_MIDDLE_MARGIN
+        else -> 0
       }
 
-      val topMargin = if (first) {
-        THUMBNAIL_TOP_MARGIN
-      } else {
-        0
+      val topMargin = when {
+        index == 0 -> THUMBNAIL_TOP_MARGIN
+        !singleImageMode -> MULTIPLE_THUMBNAILS_MIDDLE_MARGIN
+        else -> 0
       }
 
       layoutParams.setMargins(
         THUMBNAIL_LEFT_MARGIN,
         topMargin,
         0,
-        // 1 extra for bottom divider
         bottomMargin
       )
 
-      relativeLayoutContainer.addView(thumbnailView, layoutParams)
+      thumbnailContainer!!.addView(thumbnailView, layoutParams)
       thumbnailViews.add(thumbnailView)
-
-      lastId = idToSet
-      first = false
     }
   }
 
@@ -1399,5 +1469,6 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     private val THUMBNAIL_BOTTOM_MARGIN = dp(5f)
     private val THUMBNAIL_TOP_MARGIN = dp(4f)
     private val THUMBNAIL_LEFT_MARGIN = dp(4f)
+    private val MULTIPLE_THUMBNAILS_MIDDLE_MARGIN = dp(1f)
   }
 }

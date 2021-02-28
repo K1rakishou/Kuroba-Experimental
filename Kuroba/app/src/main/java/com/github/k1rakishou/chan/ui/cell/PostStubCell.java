@@ -41,6 +41,8 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPost;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -107,8 +109,121 @@ public class PostStubCell
     }
 
     @Override
-    protected void onFinishInflate() {
-        super.onFinishInflate();
+    public void onClick(View v) {
+        if (v == this) {
+            if (callback != null) {
+                callback.onPostClicked(post);
+            }
+        }
+    }
+
+    @Override
+    public void onPostRecycled(boolean isActuallyRecycling) {
+        unbindPost(isActuallyRecycling);
+    }
+
+    private void unbindPost(boolean isActuallyRecycling) {
+        if (callback != null) {
+            callback.onPostUnbind(post, isActuallyRecycling);
+        }
+
+        title = null;
+        callback = null;
+    }
+
+    @Override
+    public boolean postDataDiffers(
+            @NotNull ChanDescriptor chanDescriptor,
+            @NotNull ChanPost post,
+            int postIndex,
+            @NotNull PostCellInterface.PostCellCallback callback,
+            boolean inPopup,
+            boolean highlighted,
+            boolean selected,
+            long markedNo,
+            boolean showDivider,
+            @NotNull ChanSettings.PostViewMode postViewMode,
+            boolean compact,
+            boolean stub,
+            @NotNull ChanTheme theme
+    ) {
+        int filterHash = postFilterManager.getFilterHash(post.getPostDescriptor());
+
+        if (post.equals(this.post)
+                && theme.equals(this.theme)
+                && this.filterHash == filterHash
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public void setPost(
+            ChanDescriptor chanDescriptor,
+            final ChanPost post,
+            final int postIndex,
+            PostCellInterface.PostCellCallback callback,
+            boolean inPopup,
+            boolean highlighted,
+            boolean selected,
+            long markedNo,
+            boolean showDivider,
+            ChanSettings.PostViewMode postViewMode,
+            boolean compact,
+            boolean stub,
+            ChanTheme theme
+    ) {
+        boolean postDataDiffers = postDataDiffers(
+                chanDescriptor,
+                post,
+                postIndex,
+                callback,
+                inPopup,
+                highlighted,
+                selected,
+                markedNo,
+                showDivider,
+                postViewMode,
+                compact,
+                stub,
+                theme
+        );
+
+        if (!postDataDiffers) {
+            return;
+        }
+
+        this.theme = theme;
+        this.post = post;
+        this.inPopup = inPopup;
+        this.callback = callback;
+        this.postViewMode = postViewMode;
+        this.showDivider = showDivider;
+        this.filterHash = postFilterManager.getFilterHash(post.getPostDescriptor());;
+
+        preBindPost(post);
+        bindPost(post);
+        onThemeChanged();
+    }
+
+    public ChanPost getPost() {
+        return post;
+    }
+
+    public ThumbnailView getThumbnailView(ChanPostImage postImage) {
+        return null;
+    }
+
+    @Override
+    public boolean hasOverlappingRendering() {
+        return false;
+    }
+
+    private void preBindPost(ChanPost post) {
+        if (title != null) {
+            return;
+        }
 
         title = findViewById(R.id.title);
         options = findViewById(R.id.options);
@@ -142,76 +257,6 @@ public class PostStubCell
         });
     }
 
-    @Override
-    public void onClick(View v) {
-        if (v == this) {
-            if (callback != null) {
-                callback.onPostClicked(post);
-            }
-        }
-    }
-
-    @Override
-    public void onPostRecycled(boolean isActuallyRecycling) {
-        unbindPost(isActuallyRecycling);
-    }
-
-    private void unbindPost(boolean isActuallyRecycling) {
-        if (callback != null) {
-            callback.onPostUnbind(post, isActuallyRecycling);
-        }
-
-        callback = null;
-    }
-
-    public void setPost(
-            ChanDescriptor chanDescriptor,
-            final ChanPost post,
-            final int currentPostIndex,
-            PostCellInterface.PostCellCallback callback,
-            boolean inPopup,
-            boolean highlighted,
-            boolean selected,
-            long markedNo,
-            boolean showDivider,
-            ChanSettings.PostViewMode postViewMode,
-            boolean compact,
-            ChanTheme theme
-    ) {
-        int filterHash = postFilterManager.getFilterHash(post.getPostDescriptor());
-
-        if (post.equals(this.post)
-                && theme.equals(this.theme)
-                && this.filterHash == filterHash
-        ) {
-            return;
-        }
-
-        this.theme = theme;
-        this.post = post;
-        this.inPopup = inPopup;
-        this.callback = callback;
-        this.postViewMode = postViewMode;
-        this.showDivider = showDivider;
-        this.filterHash = filterHash;
-
-        bindPost(post);
-        onThemeChanged();
-    }
-
-    public ChanPost getPost() {
-        return post;
-    }
-
-    public ThumbnailView getThumbnailView(ChanPostImage postImage) {
-        return null;
-    }
-
-    @Override
-    public boolean hasOverlappingRendering() {
-        return false;
-    }
-
     private void bindPost(ChanPost post) {
         if (callback == null) {
             throw new NullPointerException("Callback is null during bindPost()");
@@ -220,12 +265,7 @@ public class PostStubCell
         if (!TextUtils.isEmpty(post.getSubject())) {
             title.setText(post.getSubject());
         } else {
-            CharSequence titleText = post.getPostComment().comment();
-            if (titleText.length() > TITLE_MAX_LENGTH) {
-                titleText = titleText.subSequence(0, TITLE_MAX_LENGTH);
-            }
-
-            title.setText(titleText);
+            title.setText(getPostStubTitle(post));
         }
 
         boolean isGridOrStagger = postViewMode == ChanSettings.PostViewMode.CARD
@@ -237,9 +277,43 @@ public class PostStubCell
                         : (showDivider ? VISIBLE : GONE)
         );
 
+        setOnClickListener(v -> {
+            if (callback != null) {
+                callback.onUnhidePostClick(post);
+            }
+        });
+
         if (callback != null) {
             callback.onPostBind(post);
         }
+    }
+
+    private CharSequence getPostStubTitle(ChanPost post) {
+        CharSequence titleText = post.getPostComment().comment();
+
+        if (titleText.length() == 0) {
+            ChanPostImage firstImage = post.firstImage();
+            if (firstImage != null) {
+                String fileName = firstImage.getFilename();
+                if (TextUtils.isEmpty(fileName)) {
+                    fileName = firstImage.getServerFilename();
+                }
+
+                String extension = firstImage.getExtension();
+
+                if (TextUtils.isEmpty(extension)) {
+                    return fileName;
+                }
+
+                return fileName + "." + extension;
+            }
+        }
+
+        if (titleText.length() > TITLE_MAX_LENGTH) {
+            return titleText.subSequence(0, TITLE_MAX_LENGTH);
+        }
+
+        return titleText;
     }
 
     @Override

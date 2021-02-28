@@ -40,8 +40,25 @@ interface PostCellInterface {
     showDivider: Boolean,
     postViewMode: PostViewMode,
     compact: Boolean,
+    stub: Boolean,
     theme: ChanTheme
   )
+
+  fun postDataDiffers(
+    chanDescriptor: ChanDescriptor,
+    post: ChanPost,
+    postIndex: Int,
+    callback: PostCellCallback,
+    inPopup: Boolean,
+    highlighted: Boolean,
+    selected: Boolean,
+    markedNo: Long,
+    showDivider: Boolean,
+    postViewMode: PostViewMode,
+    compact: Boolean,
+    stub: Boolean,
+    theme: ChanTheme
+  ): Boolean
 
   /**
    * @param isActuallyRecycling is only true when the view holder that is getting passed into the
@@ -74,5 +91,6 @@ interface PostCellInterface {
     fun getPage(originalPostDescriptor: PostDescriptor): BoardPage?
     fun hasAlreadySeenPost(post: ChanPost): Boolean
     fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>)
+    fun onUnhidePostClick(post: ChanPost)
   }
 }

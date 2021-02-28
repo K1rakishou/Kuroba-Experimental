@@ -58,7 +58,7 @@ import com.github.k1rakishou.chan.features.reply.ReplyPresenter
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
-import com.github.k1rakishou.chan.ui.cell.PostCellInterface
+import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.PostStubCell
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
@@ -138,9 +138,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
       while (i < j) {
         val child = parent.getChildAt(i)
-        if (child is PostCellInterface) {
-          val postView = child as PostCellInterface
-          val post = postView.getPost()
+        if (child is GenericPostCell) {
+          val post = child.getPost()
 
           if (post == null || !post.isOP() || post.postImages.isEmpty()) {
             i++
@@ -992,14 +991,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     for (i in 0 until layoutManager.childCount) {
       val view = layoutManager.getChildAt(i)
 
-      if (view is PostCellInterface) {
-        val postView = view as PostCellInterface
-        val post = postView.getPost()
-
+      if (view is GenericPostCell) {
+        val post = view.getPost()
         if (post != null) {
           for (image in post.postImages) {
             if (image.equalUrl(postImage)) {
-              return postView.getThumbnailView(postImage!!)
+              return view.getThumbnailView(postImage!!)
             }
           }
         }

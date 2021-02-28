@@ -27,6 +27,7 @@ import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
+import com.github.k1rakishou.chan.ui.cell.GenericPostCell;
 import com.github.k1rakishou.chan.ui.cell.PostCell;
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface;
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell;
@@ -46,7 +47,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -115,41 +115,23 @@ public class PostAdapter
                 android.R.attr.selectableItemBackgroundBorderless
         );
 
+        themeEngine.preloadAttributeResource(
+                recyclerView.getContext(),
+                android.R.attr.selectableItemBackground
+        );
+
         setHasStableIds(true);
     }
 
+    @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         Context inflateContext = parent.getContext();
         switch (viewType) {
             case TYPE_POST:
-                int layout = 0;
-                switch (postViewMode) {
-                    case LIST:
-                        layout = R.layout.cell_post;
-                        break;
-                    case CARD:
-                    case STAGGER:
-                        layout = R.layout.cell_post_card;
-                        break;
-                }
-
-                PostCellInterface postCell = (PostCellInterface) inflate(
-                        inflateContext,
-                        layout,
-                        parent,
-                        false
-                );
-
-                return new PostViewHolder(postCell);
             case TYPE_POST_STUB:
-                PostCellInterface postCellStub = (PostCellInterface) inflate(
-                        inflateContext,
-                        R.layout.cell_post_stub,
-                        parent,
-                        false
-                );
-                return new PostViewHolder(postCellStub);
+                boolean stub = viewType == TYPE_POST_STUB;
+                return new PostViewHolder(new GenericPostCell(inflateContext), stub);
             case TYPE_LAST_SEEN:
                 return new LastSeenViewHolder(
                         themeEngine,
@@ -180,7 +162,7 @@ public class PostAdapter
             case TYPE_POST:
             case TYPE_POST_STUB:
                 if (chanDescriptor == null) {
-                    throw new IllegalStateException("catalogDescriptor cannot be null");
+                    throw new IllegalStateException("chanDescriptor cannot be null");
                 }
 
                 PostViewHolder postViewHolder = (PostViewHolder) holder;
@@ -189,7 +171,7 @@ public class PostAdapter
                 PostIndexed postIndexed = indexedDisplayList.get(postPosition);
                 boolean highlight = shouldHighlightPost(post);
 
-                PostCellInterface postCell = ((PostCellInterface) postViewHolder.itemView);
+                GenericPostCell postCell = ((GenericPostCell) postViewHolder.itemView);
 
                 postCell.setPost(
                         chanDescriptor,
@@ -203,12 +185,10 @@ public class PostAdapter
                         true,
                         postViewMode,
                         compact,
+                        postViewHolder.stub,
                         chanTheme
                 );
 
-                if (itemViewType == TYPE_POST_STUB) {
-                    holder.itemView.setOnClickListener(v -> postAdapterCallback.onUnhidePostClick(post));
-                }
                 break;
             case TYPE_STATUS:
                 ((ThreadStatusCell) holder.itemView).update();
@@ -267,7 +247,7 @@ public class PostAdapter
         } else {
             ChanPost post = displayList.get(getPostPosition(position));
             int repliesFromCount = post.getRepliesFromCount();
-            return ((long) repliesFromCount << 32L) + post.postNo() + (compact ? 1L : 0L);
+            return ((long) repliesFromCount << 32L) + post.postNo() + post.postSubNo() + (compact ? 1L : 0L);
         }
     }
 
@@ -296,9 +276,11 @@ public class PostAdapter
      */
     @Override
     public void onViewRecycled(@NonNull RecyclerView.ViewHolder holder) {
-        if (holder.itemView instanceof PostCellInterface) {
-            ChanPost post = ((PostCellInterface) holder.itemView).getPost();
-            Objects.requireNonNull(post);
+        if (holder.itemView instanceof GenericPostCell) {
+            ChanPost post = ((GenericPostCell) holder.itemView).getPost();
+            if (post == null) {
+                return;
+            }
 
             long postNo = post.postNo();
             boolean isActuallyRecycling = !updatingPosts.remove(postNo);
@@ -316,7 +298,7 @@ public class PostAdapter
              * id exists in the HashSet. If it exists in the HashSet that means that it was
              * (most likely) us calling notifyItemChanged that triggered onViewRecycled call.
              * */
-            ((PostCellInterface) holder.itemView).onPostRecycled(isActuallyRecycling);
+            ((GenericPostCell) holder.itemView).onPostRecycled(isActuallyRecycling);
         }
     }
 
@@ -588,8 +570,12 @@ public class PostAdapter
     }
 
     public static class PostViewHolder extends RecyclerView.ViewHolder {
-        public PostViewHolder(PostCellInterface postView) {
-            super((View) postView);
+        public final boolean stub;
+
+        public PostViewHolder(GenericPostCell genericPostCell, boolean stub) {
+            super((View) genericPostCell);
+
+            this.stub = stub;
         }
     }
 
@@ -616,6 +602,5 @@ public class PostAdapter
 
     public interface PostAdapterCallback {
         @Nullable ChanDescriptor getCurrentChanDescriptor();
-        void onUnhidePostClick(ChanPost post);
     }
 }

@@ -21,6 +21,7 @@ import android.util.AttributeSet;
 import android.widget.LinearLayout;
 
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
+import com.github.k1rakishou.common.AndroidUtils;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import javax.inject.Inject;
@@ -28,6 +29,9 @@ import javax.inject.Inject;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 
 public class PostRepliesContainer extends LinearLayout implements ThemeEngine.ThemeChangesListener {
+    private static final int MAX_WIDTH = dp(380);
+    private static final int HORIZ_PADDING = dp(24);
+    private int maxWidth = MAX_WIDTH;
 
     @Inject
     ThemeEngine themeEngine;
@@ -45,6 +49,11 @@ public class PostRepliesContainer extends LinearLayout implements ThemeEngine.Th
     public PostRepliesContainer(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init();
+
+        int minScreenSizeWithPaddings = AndroidUtils.getMinScreenSize(context) - HORIZ_PADDING;
+        if (maxWidth > minScreenSizeWithPaddings) {
+            maxWidth = minScreenSizeWithPaddings;
+        }
     }
 
     private void init() {
@@ -73,12 +82,9 @@ public class PostRepliesContainer extends LinearLayout implements ThemeEngine.Th
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int maxWidth = dp(600);
-
-        if (MeasureSpec.getSize(widthMeasureSpec) > maxWidth) {
-            widthMeasureSpec = MeasureSpec.makeMeasureSpec(maxWidth, MeasureSpec.getMode(widthMeasureSpec));
-        }
-
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        super.onMeasure(
+                MeasureSpec.makeMeasureSpec(maxWidth, MeasureSpec.EXACTLY),
+                heightMeasureSpec
+        );
     }
 }

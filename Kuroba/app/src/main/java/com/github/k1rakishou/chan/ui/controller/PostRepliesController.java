@@ -31,7 +31,7 @@ import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter;
-import com.github.k1rakishou.chan.ui.cell.PostCellInterface;
+import com.github.k1rakishou.chan.ui.cell.GenericPostCell;
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.ui.view.LoadView;
@@ -111,8 +111,7 @@ public class PostRepliesController
         super.onDestroy();
 
         themeEngine.removeListener(this);
-        forceRecycleAllReplyViews();
-        repliesView.setAdapter(null);
+        repliesView.swapAdapter(null, true);
     }
 
     @Override
@@ -146,14 +145,6 @@ public class PostRepliesController
         }
     }
 
-    private void forceRecycleAllReplyViews() {
-        RecyclerView.Adapter<?> adapter = repliesView.getAdapter();
-        if (adapter instanceof RepliesAdapter) {
-            repliesView.getRecycledViewPool().clear();
-            ((RepliesAdapter) adapter).clear();
-        }
-    }
-
     public ThumbnailView getThumbnail(ChanPostImage postImage) {
         if (repliesView == null) {
             return null;
@@ -163,14 +154,14 @@ public class PostRepliesController
 
         for (int i = 0; i < repliesView.getChildCount(); i++) {
             View view = repliesView.getChildAt(i);
-            if (view instanceof PostCellInterface) {
-                PostCellInterface postView = (PostCellInterface) view;
-                ChanPost post = postView.getPost();
+            if (view instanceof GenericPostCell) {
+                GenericPostCell genericPostCell = (GenericPostCell) view;
+                ChanPost post = genericPostCell.getPost();
 
                 if (post != null) {
                     for (ChanPostImage image : post.getPostImages()) {
                         if (image.equalUrl(postImage)) {
-                            thumbnail = postView.getThumbnailView(postImage);
+                            thumbnail = genericPostCell.getThumbnailView(postImage);
                         }
                     }
                 }
@@ -235,7 +226,6 @@ public class PostRepliesController
 
         repliesAdapter.setHasStableIds(true);
         repliesView.setLayoutManager(new LinearLayoutManager(context));
-        repliesView.setAdapter(repliesAdapter);
         repliesView.getRecycledViewPool().setMaxRecycledViews(RepliesAdapter.POST_REPLY_VIEW_TYPE, 0);
         repliesAdapter.setData(data);
 
@@ -292,7 +282,7 @@ public class PostRepliesController
     }
 
     private static class RepliesAdapter extends RecyclerView.Adapter<ReplyViewHolder> {
-        public static final int POST_REPLY_VIEW_TYPE = 0;
+        public static final int POST_REPLY_VIEW_TYPE = 10;
 
         private ThreadPresenter presenter;
         private ChanDescriptor chanDescriptor;
@@ -312,9 +302,7 @@ public class PostRepliesController
         @NonNull
         @Override
         public ReplyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View view = inflate(parent.getContext(), R.layout.cell_post, parent, false);
-
-            return new ReplyViewHolder(view);
+            return new ReplyViewHolder(new GenericPostCell(parent.getContext()));
         }
 
         @Override
@@ -344,13 +332,14 @@ public class PostRepliesController
         public long getItemId(int position) {
             PostIndexed post = data.posts.get(position);
             int repliesFromCount = post.getPost().getRepliesFromCount();
-            return ((long) repliesFromCount << 32L) + post.getPost().postNo();
+            return ((long) repliesFromCount << 32L) + post.getPost().postNo() + post.getPost().postSubNo();
         }
 
         @Override
         public void onViewRecycled(@NonNull ReplyViewHolder holder) {
-            if (holder.itemView instanceof PostCellInterface) {
-                ((PostCellInterface) holder.itemView).onPostRecycled(true);
+            if (holder.itemView instanceof GenericPostCell) {
+                GenericPostCell genericPostCell = ((GenericPostCell) holder.itemView);
+                genericPostCell.onPostRecycled(true);
             }
         }
 
@@ -383,12 +372,12 @@ public class PostRepliesController
     }
 
     private static class ReplyViewHolder extends RecyclerView.ViewHolder {
-        private PostCellInterface postCellInterface;
+        private GenericPostCell genericPostCell;
 
-        public ReplyViewHolder(@NonNull View itemView) {
-            super(itemView);
+        public ReplyViewHolder(@NonNull GenericPostCell itemView) {
+            super((View) itemView);
 
-            this.postCellInterface = (PostCellInterface) itemView;
+            this.genericPostCell = (GenericPostCell) itemView;
         }
 
         public void onBind(
@@ -402,7 +391,7 @@ public class PostRepliesController
         ) {
             boolean showDivider = position < itemCount - 1;
 
-            postCellInterface.setPost(
+            genericPostCell.setPost(
                     chanDescriptor,
                     post.getPost(),
                     post.getPostIndex(),
@@ -413,6 +402,7 @@ public class PostRepliesController
                     markedNo,
                     showDivider,
                     ChanSettings.PostViewMode.LIST,
+                    false,
                     false,
                     themeEngine.getChanTheme()
             );
