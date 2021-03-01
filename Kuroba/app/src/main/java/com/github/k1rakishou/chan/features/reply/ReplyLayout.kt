@@ -170,7 +170,7 @@ class ReplyLayout @JvmOverloads constructor(
   // Reply views:
   private lateinit var replyInputLayout: ViewGroup
   private lateinit var replyInputMessage: MaterialTextView
-  private lateinit var replyInputHolder: FrameLayout
+  private lateinit var replyInputMessageHolder: FrameLayout
   private lateinit var name: ColorizableEditText
   private lateinit var subject: ColorizableEditText
   private lateinit var flag: ColorizableTextView
@@ -257,7 +257,12 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   override fun onThemeChanged() {
-    replyInputHolder.setBackgroundColor(themeEngine.chanTheme.backColor)
+    val replyInputMessageHolderBackColor = if (themeEngine.chanTheme.isBackColorDark) {
+      ThemeEngine.manipulateColor(themeEngine.chanTheme.backColor, 1.2f)
+    } else {
+      ThemeEngine.manipulateColor(themeEngine.chanTheme.backColor, .8f)
+    }
+    replyInputMessageHolder.setBackgroundColor(replyInputMessageHolderBackColor)
 
     commentCounter.setTextColor(themeEngine.chanTheme.textColorSecondary)
     val tintColor = themeEngine.resolveTintColor(themeEngine.chanTheme.isBackColorDark)
@@ -319,7 +324,7 @@ class ReplyLayout @JvmOverloads constructor(
     // Inflate reply input
     replyInputLayout = AppModuleAndroidUtils.inflate(context, R.layout.layout_reply_input, this, false) as ViewGroup
     replyInputMessage = replyInputLayout.findViewById(R.id.reply_input_message)
-    replyInputHolder = replyInputLayout.findViewById(R.id.reply_input_holder)
+    replyInputMessageHolder = replyInputLayout.findViewById(R.id.reply_input_message_holder)
     name = replyInputLayout.findViewById(R.id.name)
     subject = replyInputLayout.findViewById(R.id.subject)
     flag = replyInputLayout.findViewById(R.id.flag)
@@ -1007,14 +1012,14 @@ class ReplyLayout @JvmOverloads constructor(
     val valueAnimator = if (appearance) {
       ValueAnimator.ofFloat(0f, 1f).apply {
         doOnStart {
-          replyInputHolder.setAlphaFast(0f)
-          replyInputHolder.setVisibilityFast(View.VISIBLE)
+          replyInputMessageHolder.setAlphaFast(0f)
+          replyInputMessageHolder.setVisibilityFast(View.VISIBLE)
         }
       }
     } else {
       ValueAnimator.ofFloat(1f, 0f).apply {
         doOnEnd {
-          replyInputHolder.setVisibilityFast(View.GONE)
+          replyInputMessageHolder.setVisibilityFast(View.GONE)
           presenter.removeFloatingReplyMessageClickAction()
         }
       }
@@ -1023,7 +1028,7 @@ class ReplyLayout @JvmOverloads constructor(
     valueAnimator.setDuration(200)
     valueAnimator.addUpdateListener { animator ->
       val alpha = animator.animatedValue as Float
-      replyInputHolder.alpha = alpha
+      replyInputMessageHolder.alpha = alpha
     }
     valueAnimator.start()
   }
