@@ -148,7 +148,7 @@ class FilterWatcherCoordinator(
 
       WorkManager
         .getInstance(appContext)
-        .enqueueUniqueWork(tag, ExistingWorkPolicy.REPLACE, workRequest)
+        .enqueueUniqueWork(tag, ExistingWorkPolicy.APPEND_OR_REPLACE, workRequest)
         .result
         .await()
 
@@ -183,15 +183,9 @@ class FilterWatcherCoordinator(
         .setConstraints(constraints)
         .build()
 
-      val existingWorkPolicy = if (replaceExisting) {
-        ExistingWorkPolicy.REPLACE
-      } else {
-        ExistingWorkPolicy.KEEP
-      }
-
       WorkManager
         .getInstance(appContext)
-        .enqueueUniqueWork(tag, existingWorkPolicy, workRequest)
+        .enqueueUniqueWork(tag, ExistingWorkPolicy.APPEND_OR_REPLACE, workRequest)
         .result
         .await()
 

@@ -186,8 +186,7 @@ class ReplyNotificationsHelper(
     )
 
     if (!hasUnseenReplies) {
-      Logger.d(TAG, "showNotificationForReplies() showSummaryNotification() returned false, " +
-        "no unseen replies to show notifications for")
+      Logger.d(TAG, "showNotificationForReplies() showSummaryNotification() hasUnseenReplies==false")
       return emptyMap()
     }
 

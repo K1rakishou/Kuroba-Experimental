@@ -207,7 +207,7 @@ class BookmarkWatcherCoordinator(
 
       WorkManager
         .getInstance(appContext)
-        .enqueueUniqueWork(tag, ExistingWorkPolicy.REPLACE, workRequest)
+        .enqueueUniqueWork(tag, ExistingWorkPolicy.APPEND_OR_REPLACE, workRequest)
         .result
         .await()
 
