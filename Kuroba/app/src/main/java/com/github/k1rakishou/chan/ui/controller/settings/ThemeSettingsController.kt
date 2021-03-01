@@ -138,6 +138,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
     override fun onPostSelectionQuoted(post: ChanPost, quoted: CharSequence) {}
     override fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>) {}
     override fun onUnhidePostClick(post: ChanPost) {}
+    override fun currentSpanCount(): Int = 1
 
     override fun getCurrentChanDescriptor(): ChanDescriptor? {
       return dummyThreadDescriptor

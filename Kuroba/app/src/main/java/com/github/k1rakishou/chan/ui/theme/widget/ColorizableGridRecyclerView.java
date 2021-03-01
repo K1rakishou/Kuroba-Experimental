@@ -31,6 +31,9 @@ import javax.inject.Inject;
  * view with the value set by {@link #setSpanWidth(int)}.
  */
 public class ColorizableGridRecyclerView extends ColorizableRecyclerView {
+    private static final int DEFAULT_SPAN_COUNT = 3;
+    private static final int MAX_SPAN_COUNT = 5;
+    public static final int HI_RES_CELLS_MAX_SPAN_COUNT = 3;
 
     @Inject
     ThemeEngine themeEngine;
@@ -38,6 +41,7 @@ public class ColorizableGridRecyclerView extends ColorizableRecyclerView {
     private GridLayoutManager gridLayoutManager;
     private int spanWidth;
     private int realSpanWidth;
+    private int currentSpanCount;
 
     public ColorizableGridRecyclerView(Context context) {
         super(context);
@@ -88,13 +92,29 @@ public class ColorizableGridRecyclerView extends ColorizableRecyclerView {
         return realSpanWidth;
     }
 
+    public int getCurrentSpanCount() {
+        return currentSpanCount;
+    }
+
     @Override
     protected void onMeasure(int widthSpec, int heightSpec) {
         super.onMeasure(widthSpec, heightSpec);
-        int spanCount = Math.max(1, getMeasuredWidth() / spanWidth);
+
+        int spanCount = DEFAULT_SPAN_COUNT;
+        if (spanWidth > 0) {
+            spanCount = Math.max(1, getMeasuredWidth() / spanWidth);
+        }
+
+        if (spanCount > MAX_SPAN_COUNT) {
+            spanCount = MAX_SPAN_COUNT;
+        }
+
+        this.currentSpanCount = spanCount;
+
         gridLayoutManager.setSpanCount(spanCount);
         int oldRealSpanWidth = realSpanWidth;
         realSpanWidth = getMeasuredWidth() / spanCount;
+
         if (realSpanWidth != oldRealSpanWidth) {
             getAdapter().notifyDataSetChanged();
         }

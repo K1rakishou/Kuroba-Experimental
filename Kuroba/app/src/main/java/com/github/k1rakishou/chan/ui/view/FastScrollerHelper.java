@@ -23,6 +23,8 @@ public class FastScrollerHelper {
             PostInfoMapItemDecoration postInfoMapItemDecoration,
             int toolbarPaddingTop
     ) {
+        recyclerView.setVerticalScrollBarEnabled(false);
+
         return new FastScroller(
                 fastScrollerControllerType,
                 recyclerView,

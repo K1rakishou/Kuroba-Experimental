@@ -37,6 +37,7 @@ import com.google.android.exoplayer2.util.MimeTypes
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.FileOutputStream
+import java.io.IOException
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.ExperimentalTime
@@ -122,9 +123,27 @@ class ImageLoaderV2(
 
       try {
         val startTime = System.currentTimeMillis()
-
         var isFromCache = true
-        var imageResult = tryLoadFromCacheOrNull(context, url, imageSize)
+
+        var imageResult = try {
+          tryLoadFromCacheOrNull(context, url, imageSize)
+        } catch (error: CancellationException) {
+          if (verboseLogs) {
+            Logger.e(TAG, "tryLoadFromCacheOrNull() canceled '$url'")
+          }
+
+          withContext(Dispatchers.Main + NonCancellable) {
+            handleFailure(
+              actualListener = imageListenerParam,
+              context = context,
+              imageSize = imageSize,
+              transformations = transformations,
+              throwable = ImageLoadingCancellation(url)
+            )
+          }
+
+          return@launch
+        }
 
         if (verboseLogs && imageResult is SuccessResult) {
           Logger.d(TAG, "Loaded '$url' from cache, $imageSize, bitmap size = " +
@@ -133,7 +152,26 @@ class ImageLoaderV2(
 
         if (imageResult == null) {
           isFromCache = false
-          imageResult = loadFromNetworkInternal(context, url)
+
+          imageResult = try {
+            loadFromNetworkInternal(context, url)
+          } catch (error: CancellationException) {
+            if (verboseLogs) {
+              Logger.e(TAG, "loadFromNetworkInternal() canceled '$url'")
+            }
+
+            withContext(Dispatchers.Main + NonCancellable) {
+              handleFailure(
+                actualListener = imageListenerParam,
+                context = context,
+                imageSize = imageSize,
+                transformations = transformations,
+                throwable = ImageLoadingCancellation(url)
+              )
+            }
+
+            return@launch
+          }
 
           if (imageResult is SuccessResult) {
             if (verboseLogs) {
@@ -141,9 +179,29 @@ class ImageLoaderV2(
                 "${imageResult.drawable.intrinsicWidth}x${imageResult.drawable.intrinsicHeight}")
             }
 
-            cacheResultBitmapOnDisk(url, imageResult.drawable)
-              .peekError { error -> Logger.e(TAG, "loadFromNetwork() Failed to cache result on disk", error) }
-              .ignore()
+            try {
+              runInterruptible { cacheResultBitmapOnDisk(url, imageResult.drawable) }
+            } catch (error: Throwable) {
+              if (error is CancellationException) {
+                if (verboseLogs) {
+                  Logger.e(TAG, "cacheResultBitmapOnDisk() canceled '$url'")
+                }
+
+                withContext(Dispatchers.Main + NonCancellable) {
+                  handleFailure(
+                    actualListener = imageListenerParam,
+                    context = context,
+                    imageSize = imageSize,
+                    transformations = transformations,
+                    throwable = ImageLoadingCancellation(url)
+                  )
+                }
+
+                return@launch
+              }
+
+              throw error
+            }
           }
         }
 
@@ -156,7 +214,13 @@ class ImageLoaderV2(
             "time=${endTime}ms, errorMsg='$errorMsg'")
 
           withContext(Dispatchers.Main) {
-            handleFailure(imageListenerParam, context, imageSize, transformations, imageResult)
+            handleFailure(
+              actualListener = imageListenerParam,
+              context = context,
+              imageSize = imageSize,
+              transformations = transformations,
+              throwable = imageResult.throwable
+            )
           }
 
           return@launch
@@ -177,6 +241,16 @@ class ImageLoaderV2(
 
           Logger.e(TAG, "Failed to apply transformations '$url' $imageSize, " +
             "transformations: ${transformationKeys}, fromCache=$isFromCache")
+
+          withContext(Dispatchers.Main) {
+            handleFailure(
+              actualListener = imageListenerParam,
+              context = context,
+              imageSize = imageSize,
+              transformations = transformations,
+              throwable = IOException("applyTransformationsToDrawable() returned null")
+            )
+          }
 
           return@launch
         }
@@ -203,6 +277,23 @@ class ImageLoaderV2(
         if (error.isExceptionImportant()) {
           Logger.e(TAG, "loadFromNetwork() error", error)
         }
+
+        withContext(Dispatchers.Main) {
+          when (imageListenerParam) {
+            is ImageListenerParam.SimpleImageListener -> {
+              handleFailure(
+                actualListener = imageListenerParam,
+                context = context,
+                imageSize = imageSize,
+                transformations = transformations,
+                throwable = error
+              )
+            }
+            is ImageListenerParam.FailureAwareImageListener -> {
+              imageListenerParam.listener.onResponseError(error)
+            }
+          }
+        }
       } finally {
         completableDeferred.complete(Unit)
       }
@@ -214,31 +305,31 @@ class ImageLoaderV2(
     )
   }
 
-  private fun cacheResultBitmapOnDisk(url: String, drawable: Drawable): ModularResult<Unit> {
+  private fun cacheResultBitmapOnDisk(url: String, drawable: Drawable) {
     BackgroundUtils.ensureBackgroundThread()
 
-    return Try {
-      val newCacheFile = cacheHandler.getOrCreateCacheFile(url)
-      if (newCacheFile == null) {
-        Logger.e(TAG, "cacheResultBitmapOnDisk() getOrCreateCacheFile() returned null")
-        return@Try
-      }
+    var newCacheFile = cacheHandler.getOrCreateCacheFile(url)
+    if (newCacheFile == null) {
+      Logger.e(TAG, "cacheResultBitmapOnDisk() getOrCreateCacheFile1() returned null")
+      return
+    }
 
-      val cacheFile = File(newCacheFile.getFullPath())
+    try {
+      if (cacheHandler.isAlreadyDownloaded(newCacheFile)) {
+        cacheHandler.deleteCacheFile(newCacheFile)
 
-      if (cacheFile.exists()) {
-        if (!cacheFile.delete()) {
-          Logger.e(TAG, "cacheResultBitmapOnDisk() '$url' failed to delete old cache file ${cacheFile.absolutePath}")
-        }
-
-        if (!cacheFile.createNewFile()) {
-          Logger.e(TAG, "cacheResultBitmapOnDisk() '$url' failed to create new cache file ${cacheFile.absolutePath}")
+        newCacheFile = cacheHandler.getOrCreateCacheFile(url)
+        if (newCacheFile == null) {
+          throw IOException("cacheResultBitmapOnDisk() getOrCreateCacheFile2() returned null")
         }
       }
 
       val bitmap = drawable.toBitmap()
 
-      FileOutputStream(cacheFile).use { fos ->
+      val outputStream = fileManager.getOutputStream(newCacheFile)
+        ?: throw IOException("fileManager.getOutputStream(newCacheFile) returned null")
+
+      outputStream.use { fos ->
         bitmap.compress(Bitmap.CompressFormat.PNG, 95, fos)
       }
 
@@ -248,6 +339,9 @@ class ImageLoaderV2(
       if (verboseLogs) {
         Logger.d(TAG, "cacheResultBitmapOnDisk() '$url' done, success: $success")
       }
+    } catch (error: Throwable) {
+      cacheHandler.deleteCacheFile(newCacheFile)
+      throw error
     }
   }
 
@@ -256,7 +350,7 @@ class ImageLoaderV2(
     context: Context,
     imageSize: ImageSize,
     transformations: List<Transformation>,
-    imageResult: ErrorResult
+    throwable: Throwable
   ) {
     BackgroundUtils.ensureMainThread()
 
@@ -266,7 +360,7 @@ class ImageLoaderV2(
           context,
           imageSize,
           transformations,
-          imageResult.throwable,
+          throwable,
           actualListener.notFoundDrawableId,
           actualListener.errorDrawableId
         )
@@ -274,8 +368,6 @@ class ImageLoaderV2(
         actualListener.listener.onResponse(errorDrawable)
       }
       is ImageListenerParam.FailureAwareImageListener -> {
-        val throwable = imageResult.throwable
-
         if (throwable.isNotFoundError()) {
           actualListener.listener.onNotFound()
         } else {
@@ -330,11 +422,11 @@ class ImageLoaderV2(
     context: Context,
     imageSize: ImageSize,
     transformations: List<Transformation>,
-    throwable: Throwable,
+    throwable: Throwable?,
     notFoundDrawableId: Int,
     errorDrawableId: Int
   ): BitmapDrawable {
-    if (throwable.isNotFoundError()) {
+    if (throwable != null && throwable.isNotFoundError()) {
       if (notFoundDrawableId != R.drawable.ic_image_not_found) {
         val drawable = loadFromResources(context, notFoundDrawableId, imageSize, Scale.FIT, transformations)
         if (drawable != null) {
@@ -1060,6 +1152,8 @@ class ImageLoaderV2(
       return bitmapDrawable.opacity
     }
   }
+
+  class ImageLoadingCancellation(url: String) : IOException("Image loading canceled '$url'")
 
   companion object {
     private const val TAG = "ImageLoaderV2"

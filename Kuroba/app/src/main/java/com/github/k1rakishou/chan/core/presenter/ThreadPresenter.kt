@@ -1655,6 +1655,10 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.unhideOrUnremovePost(post)
   }
 
+  override fun currentSpanCount(): Int {
+    return threadPresenterCallback?.currentSpanCount() ?: 1
+  }
+
   private suspend fun saveUnsavePost(post: ChanPost) {
     val descriptor = currentChanDescriptor
       ?: return
@@ -2024,6 +2028,7 @@ class ThreadPresenter @Inject constructor(
     fun presentController(controller: Controller, animate: Boolean)
     fun showToolbar()
     fun showAvailableArchivesList(threadDescriptor: ChanDescriptor.ThreadDescriptor)
+    fun currentSpanCount(): Int
   }
 
   companion object {

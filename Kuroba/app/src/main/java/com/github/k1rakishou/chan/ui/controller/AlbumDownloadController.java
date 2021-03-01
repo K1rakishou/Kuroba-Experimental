@@ -25,6 +25,7 @@ import android.view.animation.Interpolator;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -34,7 +35,6 @@ import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.helper.DialogFactory;
-import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2;
@@ -43,6 +43,8 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButto
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
+import com.github.k1rakishou.chan.ui.view.FastScroller;
+import com.github.k1rakishou.chan.ui.view.FastScrollerHelper;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.utils.RecyclerUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
@@ -73,6 +75,10 @@ public class AlbumDownloadController
 
     private List<AlbumDownloadItem> items = new ArrayList<>();
     private static final Interpolator slowdown = new DecelerateInterpolator(3f);
+    private boolean allChecked = true;
+
+    @Nullable
+    private FastScroller fastScroller;
 
     @Inject
     ImageSaverV2 imageSaverV2;
@@ -84,8 +90,6 @@ public class AlbumDownloadController
     FileCacheV2 fileCacheV2;
     @Inject
     FileManager fileManager;
-
-    private boolean allChecked = true;
 
     @Override
     protected void injectDependencies(@NotNull ActivityComponent component) {
@@ -114,9 +118,17 @@ public class AlbumDownloadController
         GridLayoutManager gridLayoutManager = new GridLayoutManager(context, 3);
         recyclerView.setLayoutManager(gridLayoutManager);
         recyclerView.setSpanWidth(dp(90));
+        recyclerView.getRecycledViewPool().setMaxRecycledViews(AlbumAdapter.ALBUM_CELL_TYPE, 0);
 
         AlbumAdapter adapter = new AlbumAdapter();
         recyclerView.setAdapter(adapter);
+
+        fastScroller = FastScrollerHelper.create(
+                FastScroller.FastScrollerControllerType.Album,
+                recyclerView,
+                null,
+                0
+        );
 
         globalWindowInsetsManager.addInsetsUpdatesListener(this);
         requireNavController().requireToolbar().addToolbarHeightUpdatesCallback(this);
@@ -130,6 +142,13 @@ public class AlbumDownloadController
 
         globalWindowInsetsManager.removeInsetsUpdatesListener(this);
         requireNavController().requireToolbar().removeToolbarHeightUpdatesCallback(this);
+
+        if (fastScroller != null) {
+            fastScroller.onCleanup();
+            fastScroller = null;
+        }
+
+        recyclerView.swapAdapter(null, true);
     }
 
     @Override
@@ -143,12 +162,14 @@ public class AlbumDownloadController
 
     @Override
     public void onInsetsChanged() {
+        int bottomPadding = globalWindowInsetsManager.bottom() * 2;
+
         KotlinExtensionsKt.updatePaddings(
                 recyclerView,
                 null,
-                null,
+                FastScrollerHelper.FAST_SCROLLER_WIDTH,
                 requireNavController().requireToolbar().getToolbarHeight(),
-                globalWindowInsetsManager.bottom()
+                bottomPadding
         );
 
         KotlinExtensionsKt.updateMargins(
@@ -158,7 +179,7 @@ public class AlbumDownloadController
                 null,
                 null,
                 null,
-                globalWindowInsetsManager.bottom()
+                bottomPadding
         );
     }
 
@@ -278,8 +299,9 @@ public class AlbumDownloadController
         }
     }
 
-    private class AlbumAdapter
-            extends RecyclerView.Adapter<AlbumDownloadCell> {
+    private class AlbumAdapter extends RecyclerView.Adapter<AlbumDownloadCell> {
+        public static final int ALBUM_CELL_TYPE = 1;
+
         public AlbumAdapter() {
             setHasStableIds(true);
         }
@@ -295,10 +317,11 @@ public class AlbumDownloadController
         public void onBindViewHolder(AlbumDownloadCell holder, int position) {
             AlbumDownloadItem item = items.get(position);
 
-            ImageLoaderV2.ImageSize imageSize =
-                    ImageLoaderV2.ImageSize.MeasurableImageSize.create(holder.thumbnailView);
+            holder.thumbnailView.bindPostImage(
+                    item.postImage,
+                    recyclerView.getCurrentSpanCount() <= ColorizableGridRecyclerView.HI_RES_CELLS_MAX_SPAN_COUNT
+            );
 
-            holder.thumbnailView.bindPostImage(item.postImage, imageSize);
             setItemChecked(holder, item.checked, false);
         }
 

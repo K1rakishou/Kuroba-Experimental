@@ -108,29 +108,26 @@ public class PostImageThumbnailView extends ThumbnailView {
         this.showPrefetchLoadingIndicator = value;
     }
 
-    public void bindPostImage(
-            @NonNull ChanPostImage postImage,
-            ImageLoaderV2.ImageSize imageSize
-    ) {
+    public void bindPostImage(@NonNull ChanPostImage postImage, boolean canUseHighResCells) {
         if (postImage.equals(this.postImage)) {
             return;
         }
 
         this.postImage = postImage;
 
-        String url = getUrl(postImage);
+        String url = getUrl(postImage, canUseHighResCells);
         if (url == null || TextUtils.isEmpty(url)) {
             unbindPostImage();
             return;
         }
 
-        setUrl(url, imageSize);
+        bindImageUrl(url, ImageLoaderV2.ImageSize.MeasurableImageSize.create(this));
     }
 
     public void unbindPostImage() {
         this.postImage = null;
 
-        unbindImageView();
+        unbindImageUrl();
         compositeDisposable.clear();
     }
 
@@ -167,7 +164,7 @@ public class PostImageThumbnailView extends ThumbnailView {
     }
 
     @Nullable
-    private String getUrl(ChanPostImage postImage) {
+    private String getUrl(ChanPostImage postImage, boolean canUseHighResCells) {
         HttpUrl thumbnailUrl = postImage.getThumbnailUrl();
         if (thumbnailUrl == null) {
             Logger.e(TAG, "getUrl() postImage: " + postImage.toString() + ", has no thumbnail url");
@@ -176,7 +173,7 @@ public class PostImageThumbnailView extends ThumbnailView {
 
         String url = postImage.getThumbnailUrl().toString();
 
-        boolean highRes = ChanSettings.highResCells.get();
+        boolean highRes = canUseHighResCells && ChanSettings.highResCells.get();
         // TODO(KurobaEx v0.6.0): add "&& ImageViewerPresenter.canAutoLoad(postImage)"
         //  once CacheHandler.cacheFileExists starts working without the need to access the disk.
 

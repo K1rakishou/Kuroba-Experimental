@@ -22,6 +22,7 @@ import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -38,6 +39,8 @@ import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationContro
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
+import com.github.k1rakishou.chan.ui.view.FastScroller;
+import com.github.k1rakishou.chan.ui.view.FastScrollerHelper;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
@@ -67,6 +70,9 @@ public class AlbumViewController
     private int targetIndex = -1;
     private ChanDescriptor chanDescriptor;
 
+    @Nullable
+    private FastScroller fastScroller;
+
     @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
 
@@ -89,12 +95,19 @@ public class AlbumViewController
         recyclerView.setHasFixedSize(true);
         GridLayoutManager gridLayoutManager = new GridLayoutManager(context, 3);
         recyclerView.setLayoutManager(gridLayoutManager);
-        recyclerView.setHasFixedSize(true);
         recyclerView.setSpanWidth(dp(120));
         recyclerView.setItemAnimator(null);
-        AlbumAdapter albumAdapter = new AlbumAdapter(chanDescriptor);
+        AlbumAdapter albumAdapter = new AlbumAdapter();
         recyclerView.setAdapter(albumAdapter);
         recyclerView.scrollToPosition(targetIndex);
+        recyclerView.getRecycledViewPool().setMaxRecycledViews(AlbumAdapter.ALBUM_CELL_TYPE, 0);
+
+        fastScroller = FastScrollerHelper.create(
+                FastScroller.FastScrollerControllerType.Album,
+                recyclerView,
+                null,
+                0
+        );
 
         requireNavController().requireToolbar().addToolbarHeightUpdatesCallback(this);
         globalWindowInsetsManager.addInsetsUpdatesListener(this);
@@ -108,6 +121,13 @@ public class AlbumViewController
 
         requireNavController().requireToolbar().removeToolbarHeightUpdatesCallback(this);
         globalWindowInsetsManager.removeInsetsUpdatesListener(this);
+
+        if (fastScroller != null) {
+            fastScroller.onCleanup();
+            fastScroller = null;
+        }
+
+        recyclerView.swapAdapter(null, true);
     }
 
     @Override
@@ -124,13 +144,18 @@ public class AlbumViewController
         KotlinExtensionsKt.updatePaddings(
                 recyclerView,
                 null,
-                null,
+                FastScrollerHelper.FAST_SCROLLER_WIDTH,
                 requireNavController().requireToolbar().getToolbarHeight(),
-                globalWindowInsetsManager.bottom()
+                globalWindowInsetsManager.bottom() * 2
         );
     }
 
-    public void setImages(ChanDescriptor chanDescriptor, List<ChanPostImage> postImages, int index, String title) {
+    public void setImages(
+            ChanDescriptor chanDescriptor,
+            List<ChanPostImage> postImages,
+            int index,
+            String title
+    ) {
         this.chanDescriptor = chanDescriptor;
         this.postImages = postImages;
 
@@ -221,12 +246,15 @@ public class AlbumViewController
     }
 
     private class AlbumAdapter extends RecyclerView.Adapter<AlbumItemCellHolder> {
-        private ChanDescriptor chanDescriptor;
+        public static final int ALBUM_CELL_TYPE = 1;
 
-        public AlbumAdapter(ChanDescriptor chanDescriptor) {
+        public AlbumAdapter() {
             setHasStableIds(true);
+        }
 
-            this.chanDescriptor = chanDescriptor;
+        @Override
+        public int getItemViewType(int position) {
+            return ALBUM_CELL_TYPE;
         }
 
         @Override
@@ -241,8 +269,16 @@ public class AlbumViewController
             ChanPostImage postImage = postImages.get(position);
 
             if (postImage != null) {
-                holder.cell.setPostImage(postImage);
+                holder.cell.bindPostImage(
+                        postImage,
+                        recyclerView.getCurrentSpanCount() <= ColorizableGridRecyclerView.HI_RES_CELLS_MAX_SPAN_COUNT
+                );
             }
+        }
+
+        @Override
+        public void onViewRecycled(@NonNull AlbumItemCellHolder holder) {
+            holder.cell.unbindPostImage();
         }
 
         @Override

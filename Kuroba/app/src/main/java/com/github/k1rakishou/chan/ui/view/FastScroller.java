@@ -231,11 +231,6 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
         this.thumbDragListener = listener;
     }
 
-    public void onCleanup() {
-        themeEngine.removeListener(this);
-        thumbDragListener = null;
-    }
-
     public void attachToRecyclerView(@Nullable RecyclerView recyclerView) {
         if (mRecyclerView == recyclerView) {
             return; // nothing to do
@@ -253,6 +248,13 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
         mRecyclerView.addItemDecoration(this);
         mRecyclerView.addOnItemTouchListener(this);
         mRecyclerView.addOnScrollListener(mOnScrollListener);
+    }
+
+    public void onCleanup() {
+        themeEngine.removeListener(this);
+        thumbDragListener = null;
+
+        destroyCallbacks();
     }
 
     public void destroyCallbacks() {
@@ -695,6 +697,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
     public enum FastScrollerControllerType {
         Catalog,
         Thread,
-        Bookmarks
+        Bookmarks,
+        Album
     }
 }

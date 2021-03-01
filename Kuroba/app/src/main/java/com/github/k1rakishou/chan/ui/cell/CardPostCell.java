@@ -26,10 +26,10 @@ import android.widget.TextView;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
 import com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
@@ -296,10 +296,9 @@ public class CardPostCell
         ChanPostImage firstPostImage = post.firstImage();
         if (firstPostImage != null && !ChanSettings.textOnly.get()) {
             thumbView.setVisibility(VISIBLE);
-
             thumbView.bindPostImage(
                     firstPostImage,
-                    ImageLoaderV2.ImageSize.MeasurableImageSize.create(thumbView)
+                    callback.currentSpanCount() <= ColorizableGridRecyclerView.HI_RES_CELLS_MAX_SPAN_COUNT
             );
         } else {
             thumbView.setVisibility(GONE);

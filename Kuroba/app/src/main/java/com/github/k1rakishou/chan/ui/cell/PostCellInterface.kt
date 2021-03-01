@@ -92,5 +92,6 @@ interface PostCellInterface {
     fun hasAlreadySeenPost(post: ChanPost): Boolean
     fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>)
     fun onUnhidePostClick(post: ChanPost)
+    fun currentSpanCount(): Int
   }
 }

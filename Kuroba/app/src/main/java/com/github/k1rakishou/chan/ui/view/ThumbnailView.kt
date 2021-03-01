@@ -31,18 +31,23 @@ import android.view.View
 import android.view.animation.Interpolator
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import coil.request.Disposable
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.io.IOException
+import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 
-open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
+open class ThumbnailView : View {
   private var requestDisposable: Disposable? = null
   private var circular = false
   private var rounding = 0
@@ -68,7 +73,13 @@ open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
   private val tmpTextRect = Rect()
   private val alphaAnimator = AnimatorSet()
   private val debouncer = Debouncer(false)
-  private val kurobaScope = KurobaCoroutineScope()
+  private var kurobaScope: KurobaCoroutineScope? = null
+
+  private val ioErrorAttempts = AtomicInteger(0)
+  private val verboseLogs = ChanSettings.verboseLogs.get()
+
+  private var imageUrl: String? = null
+  private var imageSize: ImageLoaderV2.ImageSize? = null
 
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
@@ -98,77 +109,47 @@ open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
     textPaint.textSize = AppModuleAndroidUtils.sp(14f).toFloat()
   }
 
-  fun setUrl(url: String, imageSize: ImageLoaderV2.ImageSize) {
-    unbindImageView()
-
-    kurobaScope.launch {
-      setUrlInternal(url, imageSize)
-    }
+  fun bindImageUrl(url: String) {
+    bindImageUrl(url, ImageLoaderV2.ImageSize.MeasurableImageSize.create(this))
   }
 
-  private suspend fun setUrlInternal(
-    url: String,
-    imageSize: ImageLoaderV2.ImageSize
-  ) {
-    val isCached = imageLoaderV2.isImageCachedLocally(url)
+  fun bindImageUrl(url: String, imageSize: ImageLoaderV2.ImageSize) {
+    if (url != this.imageUrl) {
+      if (this.imageUrl != null) {
+        unbindImageUrl()
+      }
 
-    val isDraggingCatalogScroller =
-      globalViewStateManager.isDraggingFastScroller(FastScroller.FastScrollerControllerType.Catalog)
-    val isDraggingThreadScroller =
-      globalViewStateManager.isDraggingFastScroller(FastScroller.FastScrollerControllerType.Thread)
-    val isDraggingCatalogOrThreadFastScroller =
-      isDraggingCatalogScroller || isDraggingThreadScroller
-
-    if (!isDraggingCatalogOrThreadFastScroller && isCached) {
-      requestDisposable?.dispose()
-      requestDisposable = null
-
-      requestDisposable = imageLoaderV2.loadFromNetwork(
-        context,
-        url,
-        imageSize,
-        emptyList(),
-        this@ThumbnailView
-      )
-
-      return
+      ioErrorAttempts.set(MAX_RELOAD_ATTEMPTS)
+      kurobaScope = KurobaCoroutineScope()
     }
 
-    debouncer.post({
-      requestDisposable?.dispose()
-      requestDisposable = null
+    this.imageUrl = url
+    this.imageSize = imageSize
 
-      requestDisposable = imageLoaderV2.loadFromNetwork(
-        context,
-        url,
-        imageSize,
-        emptyList(),
-        this@ThumbnailView
-      )
-    }, IMAGE_REQUEST_DEBOUNCER_TIMEOUT_MS)
+    kurobaScope!!.launch { setUrlInternal(url, imageSize) }
   }
 
-  fun setUrl(url: String?) {
-    if (url == null) {
-      unbindImageView()
-      return
-    }
-
-    setUrl(url, ImageLoaderV2.ImageSize.UnknownImageSize)
-  }
-
-  protected fun unbindImageView() {
+  fun unbindImageUrl() {
     debouncer.clear()
 
     requestDisposable?.dispose()
     requestDisposable = null
 
+    kurobaScope?.cancel()
+    kurobaScope = null
+
+    cleanupImage()
+  }
+
+  private fun cleanupImage() {
     error = false
     alphaAnimator.end()
 
-    kurobaScope.cancelChildren()
+    imageUrl = null
+    imageSize = null
+
     setImageBitmap(null)
-    return
+    invalidate()
   }
 
   fun setCircular(circular: Boolean) {
@@ -217,25 +198,6 @@ open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
     }
   }
 
-  override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
-    setImageBitmap(drawable.bitmap)
-    onImageSet(isImmediate)
-  }
-
-  override fun onNotFound() {
-    error = true
-    errorText = AppModuleAndroidUtils.getString(R.string.thumbnail_load_failed_404)
-    onImageSet(false)
-    invalidate()
-  }
-
-  override fun onResponseError(error: Throwable) {
-    this.error = true
-    errorText = AppModuleAndroidUtils.getString(R.string.thumbnail_load_failed_network)
-    onImageSet(false)
-    invalidate()
-  }
-
   override fun onSetAlpha(alpha: Int): Boolean {
     if (error) {
       textPaint.alpha = alpha
@@ -251,6 +213,22 @@ open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
     super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     calculate = true
     foregroundCalculate = true
+  }
+
+  override fun setOnClickListener(listener: OnClickListener?) {
+    if (listener == null) {
+      super.setOnClickListener(listener)
+      return
+    }
+
+    super.setOnClickListener { view ->
+      if (error && imageUrl != null && imageSize != null) {
+        bindImageUrl(imageUrl!!, imageSize!!)
+        return@setOnClickListener
+      }
+
+      listener.onClick(view)
+    }
   }
 
   override fun onDraw(canvas: Canvas) {
@@ -357,6 +335,91 @@ open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
     }
   }
 
+  private suspend fun setUrlInternal(
+    url: String,
+    imageSize: ImageLoaderV2.ImageSize
+  ) {
+    val isCached = imageLoaderV2.isImageCachedLocally(url)
+
+    val isDraggingCatalogScroller =
+      globalViewStateManager.isDraggingFastScroller(FastScroller.FastScrollerControllerType.Catalog)
+    val isDraggingThreadScroller =
+      globalViewStateManager.isDraggingFastScroller(FastScroller.FastScrollerControllerType.Thread)
+    val isDraggingCatalogOrThreadFastScroller =
+      isDraggingCatalogScroller || isDraggingThreadScroller
+
+    val listener = object : ImageLoaderV2.FailureAwareImageListener {
+      override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
+        if (url != this@ThumbnailView.imageUrl) {
+          return
+        }
+
+        setImageBitmap(drawable.bitmap)
+        onImageSet(isImmediate)
+        invalidate()
+      }
+
+      override fun onNotFound() {
+        if (url != this@ThumbnailView.imageUrl) {
+          return
+        }
+
+        this@ThumbnailView.error = true
+        this@ThumbnailView.errorText = AppModuleAndroidUtils.getString(R.string.thumbnail_load_failed_404)
+
+        onImageSet(false)
+        invalidate()
+      }
+
+      override fun onResponseError(error: Throwable) {
+        if (url != this@ThumbnailView.imageUrl) {
+          return
+        }
+
+        val isIoError = error is IOException
+        val isScopeActive = kurobaScope?.isActive ?: false
+
+        if (verboseLogs) {
+          Logger.d(TAG, "onResponseError() error: ${error.errorMessageOrClassName()}, " +
+            "isIoError=$isIoError, isScopeActive=$isScopeActive, remainingAttempts=${ioErrorAttempts.get()}"
+          )
+        }
+
+        if (isIoError && ioErrorAttempts.decrementAndGet() > 0 && isScopeActive) {
+          bindImageUrl(url, imageSize)
+        } else {
+          this@ThumbnailView.error = true
+          this@ThumbnailView.errorText =
+            AppModuleAndroidUtils.getString(R.string.thumbnail_load_failed_network)
+
+          onImageSet(false)
+          invalidate()
+        }
+      }
+    }
+
+    fun loadImage() {
+      if (url != this.imageUrl) {
+        requestDisposable?.dispose()
+        requestDisposable = null
+      }
+
+      requestDisposable = imageLoaderV2.loadFromNetwork(
+        context,
+        url,
+        imageSize,
+        emptyList(),
+        listener
+      )
+    }
+
+    if (!isDraggingCatalogOrThreadFastScroller && isCached) {
+      loadImage()
+    } else {
+      debouncer.post({ loadImage() }, IMAGE_REQUEST_DEBOUNCER_TIMEOUT_MS)
+    }
+  }
+
   private fun onImageSet(isImmediate: Boolean) {
     if (!isImmediate) {
       alpha = 0f
@@ -395,6 +458,7 @@ open class ThumbnailView : View, ImageLoaderV2.FailureAwareImageListener {
   companion object {
     private const val TAG = "ThumbnailView"
     private const val IMAGE_REQUEST_DEBOUNCER_TIMEOUT_MS = 250L
+    private const val MAX_RELOAD_ATTEMPTS = 5
 
     private val INTERPOLATOR: Interpolator = FastOutSlowInInterpolator()
   }

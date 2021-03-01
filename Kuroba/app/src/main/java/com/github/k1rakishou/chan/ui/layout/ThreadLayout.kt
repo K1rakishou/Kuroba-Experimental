@@ -86,6 +86,7 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.android.synthetic.main.controller_save_location.view.*
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -896,6 +897,10 @@ class ThreadLayout @JvmOverloads constructor(
 
   override fun showAvailableArchivesList(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     callback.showAvailableArchivesList(threadDescriptor)
+  }
+
+  override fun currentSpanCount(): Int {
+    return threadListLayout.currentSpanCount
   }
 
   override fun showNewPostsNotification(show: Boolean, newPostsCount: Int) {

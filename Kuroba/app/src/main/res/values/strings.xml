@@ -225,7 +225,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="image_pick_delegate_select_file_picker">Select a file picker to open a file…</string>
     <string name="action_confirm_exit">Tap back again to exit</string>
 
-    <string name="thumbnail_load_failed_network">Error</string>
+    <string name="thumbnail_load_failed_network">Error. Click to reload.</string>
     <string name="thumbnail_load_failed_404">404</string>
     <string name="image_preview_failed">Failed to show image</string>
     <string name="image_preview_failed_oom">Failed to show image (out of memory)</string>

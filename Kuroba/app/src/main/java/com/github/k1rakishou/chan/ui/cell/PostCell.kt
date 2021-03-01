@@ -313,6 +313,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     for (view in thumbnailViews) {
       view.unbindPostImage()
     }
+    thumbnailViews.clear()
 
     if (post != null) {
       setPostLinkableListener(post, false)
@@ -870,9 +871,9 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
 
     for (thumbnailView in thumbnailViews) {
       thumbnailView.unbindPostImage()
-      thumbnailContainer!!.removeView(thumbnailView)
     }
 
+    thumbnailContainer!!.removeAllViews()
     thumbnailViews.clear()
 
     // Places the thumbnails below each other.
@@ -893,10 +894,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       // Set the correct id.
       thumbnailView.id = generatedId--
 
-      val layoutParams = LinearLayout.LayoutParams(CELL_POST_THUMBNAIL_SIZE, CELL_POST_THUMBNAIL_SIZE)
-      val imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(thumbnailView)
-
-      thumbnailView.bindPostImage(image, imageSize)
+      thumbnailView.bindPostImage(image, true)
       thumbnailView.isClickable = true
 
       // Always set the click listener to avoid check the file cache (which will touch the
@@ -924,6 +922,11 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
         !singleImageMode -> MULTIPLE_THUMBNAILS_MIDDLE_MARGIN
         else -> 0
       }
+
+      val layoutParams = LinearLayout.LayoutParams(
+        CELL_POST_THUMBNAIL_SIZE,
+        CELL_POST_THUMBNAIL_SIZE
+      )
 
       layoutParams.setMargins(
         THUMBNAIL_LEFT_MARGIN,

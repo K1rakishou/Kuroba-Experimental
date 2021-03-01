@@ -24,7 +24,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
@@ -32,8 +31,7 @@ import com.github.k1rakishou.model.data.post.ChanPostImage;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize;
 
-public class AlbumViewCell
-        extends FrameLayout {
+public class AlbumViewCell extends FrameLayout {
     private ChanPostImage postImage;
     private PostImageThumbnailView thumbnailView;
     private TextView text;
@@ -57,16 +55,12 @@ public class AlbumViewCell
         text = findViewById(R.id.text);
     }
 
-    public void setPostImage(@NonNull ChanPostImage postImage) {
+    public void bindPostImage(@NonNull ChanPostImage postImage, boolean canUseHighResCells) {
         this.postImage = postImage;
         // We don't want to show the prefetch loading indicator in album thumbnails (at least for
         // now)
         thumbnailView.overrideShowPrefetchLoadingIndicator(false);
-
-        thumbnailView.bindPostImage(
-                postImage,
-                ImageLoaderV2.ImageSize.MeasurableImageSize.create(thumbnailView)
-        );
+        thumbnailView.bindPostImage(postImage, canUseHighResCells);
 
         String details = postImage.getExtension().toUpperCase()
                 + " "
@@ -78,6 +72,10 @@ public class AlbumViewCell
 
         // if -1, linked image, no info
         text.setText(postImage.isInlined() ? postImage.getExtension().toUpperCase() : details);
+    }
+
+    public void unbindPostImage() {
+        thumbnailView.unbindPostImage();
     }
 
     public ChanPostImage getPostImage() {

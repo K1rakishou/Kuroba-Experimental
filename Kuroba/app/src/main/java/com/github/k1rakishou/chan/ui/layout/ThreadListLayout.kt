@@ -197,6 +197,20 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       return intArrayOf(index, top)
     }
 
+  val currentSpanCount: Int
+    get() {
+      if (layoutManager == null) {
+        return 1
+      }
+
+      return when (postViewMode) {
+        PostViewMode.LIST -> 1
+        PostViewMode.CARD -> (layoutManager as GridLayoutManager).spanCount
+        PostViewMode.STAGGER -> (layoutManager as StaggeredGridLayoutManager).spanCount
+        null -> 1
+      }
+    }
+
   private val topAdapterPosition: Int
     get() {
       if (layoutManager == null) {

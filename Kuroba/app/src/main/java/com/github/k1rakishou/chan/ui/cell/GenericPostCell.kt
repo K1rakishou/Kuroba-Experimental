@@ -98,6 +98,7 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
       )
 
       AppModuleAndroidUtils.inflate(context, newLayoutId, postCellView, true)
+      this.layoutId = newLayoutId
     }
 
     getChildPostCell()!!.setPost(
@@ -143,9 +144,6 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
 
   override fun onPostRecycled(isActuallyRecycling: Boolean) {
     getChildPostCell()?.onPostRecycled(isActuallyRecycling)
-
-    removeAllViews()
-    layoutId = null
   }
 
   override fun getPost(): ChanPost? {
