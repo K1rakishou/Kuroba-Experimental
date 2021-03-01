@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeParser
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.ExternalFile
 import com.github.k1rakishou.model.KurobaDatabase
@@ -49,6 +50,11 @@ class ImportBackupFileUseCase(
           handleDatabaseFile(fileName, zipInputStream)
         } else if (fileName.endsWith(".xml")) {
           handleSharedPrefsFile(fileName, zipInputStream)
+        } else if (
+          fileName.contains(ThemeParser.LIGHT_THEME_FILE_NAME) ||
+          fileName.contains(ThemeParser.DARK_THEME_FILE_NAME)
+        ) {
+          handleThemeFile(fileName, zipInputStream)
         } else {
           Logger.e(TAG, "Unknown file: $fileName")
           zipInputStream.closeEntry()
@@ -68,6 +74,17 @@ class ImportBackupFileUseCase(
     }
 
     Logger.d(TAG, "Import success!")
+  }
+
+  private fun handleThemeFile(fileName: String, zipInputStream: ZipInputStream) {
+    val themeFile = File(AndroidUtils.getFilesDir(), fileName)
+    if (!themeFile.exists()) {
+      check(themeFile.createNewFile()) { "Failed to create ${themeFile.absolutePath}" }
+    }
+
+    themeFile.outputStream().use { outputStream ->
+      zipInputStream.copyTo(outputStream, ExportBackupFileUseCase.BUFFER_SIZE)
+    }
   }
 
   private fun handleSharedPrefsFile(fileName: String, zipInputStream: ZipInputStream) {

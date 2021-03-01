@@ -70,6 +70,10 @@ public class AndroidUtils {
         return application.getFilesDir().getParentFile();
     }
 
+    public static File getFilesDir() {
+        return application.getFilesDir();
+    }
+
     public static Context getAppContext() {
         return application;
     }

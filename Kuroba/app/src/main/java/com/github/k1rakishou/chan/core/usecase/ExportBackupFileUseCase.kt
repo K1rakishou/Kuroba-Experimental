@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeParser
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.ExternalFile
 import com.github.k1rakishou.model.KurobaDatabase
@@ -39,6 +40,16 @@ class ExportBackupFileUseCase(
 
     val databases = appContext.databaseList()
     val filesToExport = mutableListOf<File>()
+
+    val lightThemeFile = File(appContext.filesDir, ThemeParser.LIGHT_THEME_FILE_NAME)
+    if (lightThemeFile.exists() && lightThemeFile.length() > 0) {
+      filesToExport += lightThemeFile
+    }
+
+    val darkThemeFile = File(appContext.filesDir, ThemeParser.DARK_THEME_FILE_NAME)
+    if (darkThemeFile.exists() && darkThemeFile.length() > 0) {
+      filesToExport += darkThemeFile
+    }
 
     filesToExport += databases.mapNotNull { databaseName ->
       if (!databaseName.contains(KurobaDatabase.DATABASE_NAME, ignoreCase = true)) {
