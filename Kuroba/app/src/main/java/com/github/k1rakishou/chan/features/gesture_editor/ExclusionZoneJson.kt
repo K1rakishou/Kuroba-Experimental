@@ -21,7 +21,9 @@ data class ExclusionZone(
   val left: Int,
   val right: Int,
   val top: Int,
-  val bottom: Int
+  val bottom: Int,
+  val minScreenSize: Int,
+  val maxScreenSize: Int
 ) {
   private val _zoneRect = Rect(left, top, right, bottom)
   val zoneRect: Rect

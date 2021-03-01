@@ -63,6 +63,8 @@ class NavigationControllerContainerLayout : FrameLayout {
   private fun preInit() {
     AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
+
+    exclusionZonesHolder.removeInvalidZones(context)
   }
 
   fun initThreadControllerTracking(

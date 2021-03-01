@@ -99,7 +99,7 @@ class ExclusionZoneSettingsDelegate(
       },
       negativeButtonText = getString(R.string.remove),
       onNegativeButtonClickListener = { dialog ->
-        exclusionZonesHolder.removeZone(orientation, attachSide)
+        exclusionZonesHolder.removeZone(context, orientation, attachSide)
         showToast(context, R.string.setting_exclusion_zones_zone_remove_message)
         dialog.dismiss()
       }

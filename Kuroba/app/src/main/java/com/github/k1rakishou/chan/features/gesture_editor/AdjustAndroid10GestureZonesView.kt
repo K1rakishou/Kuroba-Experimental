@@ -102,6 +102,7 @@ class AdjustAndroid10GestureZonesView @JvmOverloads constructor(
     val editableZone = checkNotNull(currentEditableZone) { "currentEditableZone is null" }
 
     exclusionZonesHolder.addZone(
+      context,
       orientation,
       editableZone.getCurrentAttachSide(),
       editableZone.getCurrentZone().asRect()

@@ -56,8 +56,6 @@ import kotlinx.coroutines.CoroutineScope;
 
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getAvailableSpaceInBytes;
 import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
-import static com.github.k1rakishou.common.AndroidUtils.getMaxScreenSize;
-import static com.github.k1rakishou.common.AndroidUtils.getMinScreenSize;
 
 @Module
 public class AppModule {
@@ -174,14 +172,9 @@ public class AppModule {
     @Provides
     @Singleton
     public Android10GesturesExclusionZonesHolder provideAndroid10GesturesHolder(
-            Context appContext,
             Gson gson
     ) {
-        return new Android10GesturesExclusionZonesHolder(
-                gson,
-                getMinScreenSize(appContext),
-                getMaxScreenSize(appContext)
-        );
+        return new Android10GesturesExclusionZonesHolder(gson);
     }
 
     @Provides
