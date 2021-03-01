@@ -161,7 +161,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
     AndroidUtils.init(this)
     AppModuleAndroidUtils.init(this)
-    Logger.init(tagPrefix)
+    Logger.init(tagPrefix, isDevBuild())
     ChanSettings.init(createChanSettingsInfo())
     PersistableChanState.init(createPersistableChanStateInfo())
 
@@ -189,7 +189,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     job.cancelChildren()
     applicationScope = CoroutineScope(job + Dispatchers.Main + CoroutineName("Chan"))
 
-    val isDev = AppModuleAndroidUtils.isDevBuild()
+    val isDev = isDevBuild()
     val flavorType = AppModuleAndroidUtils.getFlavorType()
 
     if (isDev) {
@@ -446,7 +446,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       applicationId = BuildConfig.APPLICATION_ID,
       isTablet = isTablet(),
       defaultFilterOrderName = PostsFilter.Order.BUMP.orderName,
-      isDevBuild = AppModuleAndroidUtils.isDevBuild(),
+      isDevBuild = isDevBuild(),
       isBetaBuild = AppModuleAndroidUtils.isBetaBuild(),
       bookmarkGridViewInfo = BookmarkGridViewInfo(
         getDimen(R.dimen.thread_grid_bookmark_view_default_width),

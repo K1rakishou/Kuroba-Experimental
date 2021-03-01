@@ -28,6 +28,7 @@ import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchState;
@@ -55,6 +56,8 @@ public class PostImageThumbnailView extends ThumbnailView {
     PrefetchImageDownloadIndicatorManager prefetchImageDownloadIndicatorManager;
     @Inject
     ThemeEngine themeEngine;
+    @Inject
+    CacheHandler cacheHandler;
 
     private ChanPostImage postImage;
     private float ratio = 0f;
@@ -174,6 +177,9 @@ public class PostImageThumbnailView extends ThumbnailView {
         String url = postImage.getThumbnailUrl().toString();
 
         boolean highRes = ChanSettings.highResCells.get();
+        // TODO(KurobaEx v0.6.0): add "&& ImageViewerPresenter.canAutoLoad(postImage)"
+        //  once CacheHandler.cacheFileExists starts working without the need to access the disk.
+
         boolean hasImageUrl = postImage.getImageUrl() != null;
         boolean revealingSpoilers = !postImage.getSpoiler() || ChanSettings.removeImageSpoilers.get();
 
@@ -200,11 +206,13 @@ public class PostImageThumbnailView extends ThumbnailView {
             int x = (int) (getWidth() / 2.0 - playIcon.getIntrinsicWidth() * scalar);
             int y = (int) (getHeight() / 2.0 - playIcon.getIntrinsicHeight() * scalar);
 
-            bounds.set(x,
+            bounds.set(
+                    x,
                     y,
                     x + playIcon.getIntrinsicWidth() * iconScale,
                     y + playIcon.getIntrinsicHeight() * iconScale
             );
+
             playIcon.setBounds(bounds);
             playIcon.draw(canvas);
         }

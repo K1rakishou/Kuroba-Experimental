@@ -113,6 +113,40 @@ public class ImageViewerPresenter
     private boolean muted = ChanSettings.videoDefaultMuted.get() &&
             (ChanSettings.headsetDefaultMuted.get() || !getAudioManager().isWiredHeadsetOn());
 
+    public static boolean canAutoLoad(CacheHandler cacheHandler, ChanPostImage postImage) {
+        if (postImage.isInlined()) {
+            return false;
+        }
+
+        HttpUrl imageUrl = postImage.getImageUrl();
+        if (imageUrl == null) {
+            return false;
+        }
+
+        ChanPostImageType postImageType = postImage.getType();
+        if (postImageType == null) {
+            return false;
+        }
+
+        if (cacheHandler.cacheFileExists(imageUrl.toString())) {
+            // Auto load the image when it is cached
+            return true;
+        }
+
+        switch (postImageType) {
+            case GIF:
+            case STATIC:
+                return shouldLoadForNetworkType(ChanSettings.imageAutoLoadNetwork.get());
+            case MOVIE:
+                return shouldLoadForNetworkType(ChanSettings.videoAutoLoadNetwork.get());
+            case PDF:
+            case SWF:
+                return false;
+            default:
+                throw new IllegalArgumentException("Not handled " + postImageType.name());
+        }
+    }
+
     public ImageViewerPresenter(Context context, Callback callback) {
         this.context = context;
         this.callback = callback;
@@ -320,7 +354,7 @@ public class ImageViewerPresenter
     private void onLowResInCenter() {
         ChanPostImage postImage = images.get(selectedPosition);
 
-        if (canAutoLoad(postImage) && (!postImage.getSpoiler() || ChanSettings.revealImageSpoilers.get())) {
+        if (canAutoLoad(cacheHandler, postImage) && (!postImage.getSpoiler() || ChanSettings.revealImageSpoilers.get())) {
             if (postImage.getType() == ChanPostImageType.STATIC) {
                 callback.setImageMode(postImage, BIGIMAGE, true);
             } else if (postImage.getType() == ChanPostImageType.GIF) {
@@ -434,7 +468,7 @@ public class ImageViewerPresenter
     }
 
     private void doPreloading(ChanPostImage postImage) {
-        boolean allowedToPreload = canAutoLoad(postImage);
+        boolean allowedToPreload = canAutoLoad(cacheHandler, postImage);
         if (!allowedToPreload) {
             return;
         }
@@ -546,7 +580,7 @@ public class ImageViewerPresenter
         }
 
         ChanPostImage postImage = images.get(selectedPosition);
-        if (canAutoLoad(postImage) && (!postImage.getSpoiler() || ChanSettings.revealImageSpoilers.get())) {
+        if (canAutoLoad(cacheHandler, postImage) && (!postImage.getSpoiler() || ChanSettings.revealImageSpoilers.get())) {
             if (postImage.getType() == ChanPostImageType.MOVIE && callback.getImageMode(postImage) != VIDEO) {
                 callback.setImageMode(postImage, VIDEO, true);
                 return;
@@ -683,40 +717,6 @@ public class ImageViewerPresenter
         if (multiImageView.getPostImage() == currentPostImage) {
             callback.showVolumeMenuItem(true, muted);
             callback.setVolume(currentPostImage, muted);
-        }
-    }
-
-    private boolean canAutoLoad(ChanPostImage postImage) {
-        if (postImage.isInlined()) {
-            return false;
-        }
-
-        HttpUrl imageUrl = postImage.getImageUrl();
-        if (imageUrl == null) {
-            return false;
-        }
-
-        if (cacheHandler.cacheFileExists(imageUrl.toString())) {
-            // Auto load the image when it is cached
-            return true;
-        }
-
-        ChanPostImageType postImageType = postImage.getType();
-        if (postImageType == null) {
-            return false;
-        }
-
-        switch (postImageType) {
-            case GIF:
-            case STATIC:
-                return shouldLoadForNetworkType(ChanSettings.imageAutoLoadNetwork.get());
-            case MOVIE:
-                return shouldLoadForNetworkType(ChanSettings.videoAutoLoadNetwork.get());
-            case PDF:
-            case SWF:
-                return false;
-            default:
-                throw new IllegalArgumentException("Not handled " + postImageType.name());
         }
     }
 
