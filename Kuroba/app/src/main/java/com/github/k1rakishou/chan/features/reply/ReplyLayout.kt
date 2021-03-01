@@ -465,6 +465,8 @@ class ReplyLayout @JvmOverloads constructor(
     presenter.create(this)
     replyLayoutFilesArea.onCreate()
 
+    onThemeChanged()
+
     coroutineScope.launch {
       globalViewStateManager.listenForBottomNavViewSwipeUpGestures()
         .debounce(250L)
