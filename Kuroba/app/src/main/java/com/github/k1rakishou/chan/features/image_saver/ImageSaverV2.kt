@@ -165,6 +165,12 @@ class ImageSaverV2(
       }
     }
 
+    shareFilesDir.listFiles()
+      ?.forEach { prevShareFile ->
+        val success = prevShareFile.delete()
+        Logger.d(TAG, "share() deleting previous share file: '${prevShareFile.absolutePath}', success: $success")
+      }
+
     val extension = if (postImage.extension == null) {
       ""
     } else {
@@ -201,6 +207,7 @@ class ImageSaverV2(
         }
       }
     } catch (error: Throwable) {
+      Logger.e(TAG, "share() error while downloading file ${postImage.imageUrl}", error)
       fileManager.delete(outputFileRaw)
       throw error
     }
@@ -217,7 +224,7 @@ class ImageSaverV2(
       intent.putExtra(Intent.EXTRA_STREAM, uri)
       openIntent(intent)
 
-      Logger.e(TAG, "share() success url=${postImage.imageUrl}, file=${outputFile.absolutePath}")
+      Logger.d(TAG, "share() success url=${postImage.imageUrl}, file=${outputFile.absolutePath}")
     }
   }
 
