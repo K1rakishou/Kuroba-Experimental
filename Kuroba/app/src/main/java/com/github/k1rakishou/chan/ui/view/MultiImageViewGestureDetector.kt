@@ -49,10 +49,12 @@ class MultiImageViewGestureDetector(
   override fun onFling(e1: MotionEvent, e2: MotionEvent, vx: Float, vy: Float): Boolean {
     val diffY = e2.y - e1.y
     val diffX = e2.x - e1.x
+    val timeDelta = e2.eventTime - e1.eventTime
 
     val motionEventIsOk = abs(diffY) > FLING_DIFF_Y_THRESHOLD
+      && abs(diffY) > abs(diffX)
       && abs(vy) > FLING_VELOCITY_Y_THRESHOLD
-      && abs(diffX) < FLING_DIST_X_THRESHOLD
+      && timeDelta >= 0 && timeDelta <= MAX_SWIPE_DURATION_MS
 
     if (!motionEventIsOk) {
       return false
@@ -178,8 +180,9 @@ class MultiImageViewGestureDetector(
   }
 
   companion object {
-    private val FLING_DIFF_Y_THRESHOLD = dp(100f).toFloat()
+    private const val MAX_SWIPE_DURATION_MS = 120L
+
+    private val FLING_DIFF_Y_THRESHOLD = dp(75f).toFloat()
     private val FLING_VELOCITY_Y_THRESHOLD = dp(300f).toFloat()
-    private val FLING_DIST_X_THRESHOLD = dp(75f).toFloat()
   }
 }
