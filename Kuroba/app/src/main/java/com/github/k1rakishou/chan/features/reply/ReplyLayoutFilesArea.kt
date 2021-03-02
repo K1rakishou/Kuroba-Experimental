@@ -24,6 +24,7 @@ import com.github.k1rakishou.chan.features.reply.epoxy.epoxyAttachNewFileButtonW
 import com.github.k1rakishou.chan.features.reply.epoxy.epoxyReplyFileView
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextViewWrapHeight
+import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.chan.ui.helper.picker.AbstractFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
@@ -66,6 +67,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   lateinit var boardManager: BoardManager
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
+  @Inject
+  lateinit var runtimePermissionsHelper: RuntimePermissionsHelper
 
   private val controller = ReplyFilesEpoxyController()
   private val epoxyRecyclerView: ColorizableEpoxyRecyclerView
@@ -81,7 +84,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
       boardManager,
       imageLoaderV2,
       postingLimitationsInfoManager,
-      imagePickHelper
+      imagePickHelper,
+      runtimePermissionsHelper
     )
   }
 

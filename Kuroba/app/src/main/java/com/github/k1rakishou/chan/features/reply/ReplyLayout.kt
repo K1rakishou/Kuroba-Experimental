@@ -1271,6 +1271,7 @@ class ReplyLayout @JvmOverloads constructor(
             R.string.reply_comment_button_sjis
           )
         }
+
         return true
       }
 

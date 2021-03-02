@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.features.reply
 
+import android.Manifest
 import android.content.Context
 import androidx.exifinterface.media.ExifInterface
 import com.github.k1rakishou.chan.R
@@ -20,6 +21,7 @@ import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.features.reply.data.ReplyNewAttachable
 import com.github.k1rakishou.chan.features.reply.data.SpoilerInfo
 import com.github.k1rakishou.chan.features.reply.data.TooManyAttachables
+import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.PickedFile
@@ -43,9 +45,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.*
+import kotlin.coroutines.resume
 
 class ReplyLayoutFilesAreaPresenter(
   private val appConstants: AppConstants,
@@ -53,7 +57,8 @@ class ReplyLayoutFilesAreaPresenter(
   private val boardManager: BoardManager,
   private val imageLoaderV2: ImageLoaderV2,
   private val postingLimitationsInfoManager: PostingLimitationsInfoManager,
-  private val imagePickHelper: ImagePickHelper
+  private val imagePickHelper: ImagePickHelper,
+  private val runtimePermissionsHelper: RuntimePermissionsHelper
 ) : BasePresenter<ReplyLayoutFilesAreaView>() {
   private val pickFilesExecutor = RendezvousCoroutineExecutor(scope)
   private val refreshFilesExecutor = DebouncingCoroutineExecutor(scope)
@@ -88,6 +93,12 @@ class ReplyLayoutFilesAreaPresenter(
       handleStateUpdate {
         val chanDescriptor = boundChanDescriptor
           ?: return@handleStateUpdate
+
+        val granted = requestPermissionIfNeededSuspend()
+        if (!granted) {
+          withView { showGenericErrorToast("Permission was not granted") }
+          return@handleStateUpdate
+        }
 
         val job = SupervisorJob()
         val cancellationFunc = { job.cancel() }
@@ -511,6 +522,20 @@ class ReplyLayoutFilesAreaPresenter(
             withView { requestReplyLayoutWrappingModeUpdate() }
           }
         }
+      }
+    }
+  }
+
+  private suspend fun requestPermissionIfNeededSuspend(): Boolean {
+    val permission = Manifest.permission.READ_EXTERNAL_STORAGE
+
+    if (runtimePermissionsHelper.hasPermission(permission)) {
+      return true
+    }
+
+    return suspendCancellableCoroutine<Boolean> { cancellableContinuation ->
+      runtimePermissionsHelper.requestPermission(permission) { granted ->
+        cancellableContinuation.resume(granted)
       }
     }
   }

@@ -306,7 +306,8 @@ object MediaUtils {
    */
   fun getImageDims(file: File): Pair<Int, Int>? {
     try {
-      val bitmap = BitmapFactory.decodeStream(FileInputStream(file))
+      val bitmap = FileInputStream(file)
+        .use { fis -> BitmapFactory.decodeStream(fis) }
 
       try {
         return Pair(bitmap.width, bitmap.height)
@@ -325,14 +326,21 @@ object MediaUtils {
 
     try {
       return runInterruptible {
-        val metadataRetriever = MediaMetadataRetriever()
+        MediaMetadataRetriever().use { metadataRetriever ->
+          when (inputFile) {
+            is InputFile.FileUri -> metadataRetriever.setDataSource(
+              inputFile.applicationContext,
+              inputFile.uri
+            )
+            is InputFile.JavaFile -> metadataRetriever.setDataSource(
+              inputFile.file.absolutePath
+            )
+          }
 
-        when (inputFile) {
-          is InputFile.FileUri -> metadataRetriever.setDataSource(inputFile.applicationContext, inputFile.uri)
-          is InputFile.JavaFile ->  metadataRetriever.setDataSource(inputFile.file.absolutePath)
+          return@runInterruptible metadataRetriever.extractMetadata(
+            MediaMetadataRetriever.METADATA_KEY_MIMETYPE
+          )
         }
-
-        return@runInterruptible metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE)
       }
     } catch (exception: Throwable) {
       if (exception is CancellationException) {

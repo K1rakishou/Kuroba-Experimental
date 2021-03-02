@@ -178,7 +178,7 @@ class LocalFilePicker(
 
   private fun getUriOrNull(intent: Intent): Uri? {
     if (intent.data != null) {
-      return intent.data
+      return intent.data!!
     }
 
     val clipData = intent.clipData
