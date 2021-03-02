@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.core.manager
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.ui.animation.PostCellAnimator
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
@@ -127,7 +128,7 @@ class SeenPostsManager(
       // We need this time check so that we don't remove the unseen post label right after
       // all loaders have completed loading and updated the post.
       val deltaTime = System.currentTimeMillis() - seenPost.insertedAt.millis
-      hasSeenPost = deltaTime > OnDemandContentLoaderManager.MAX_LOADER_LOADING_TIME_MS
+      hasSeenPost = deltaTime > PostCellAnimator.UnseenPostIndicatorFadeAnimation.ANIMATIONS_TOTAL_TIME
     }
 
     return hasSeenPost

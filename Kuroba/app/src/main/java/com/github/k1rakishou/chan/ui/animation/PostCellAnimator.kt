@@ -40,6 +40,8 @@ object PostCellAnimator {
     companion object {
       private const val ALPHA_ANIMATION_DELAY_MS = 2_000L
       private const val ALPHA_ANIMATION_DURATION = 2_000L
+
+      const val ANIMATIONS_TOTAL_TIME = ALPHA_ANIMATION_DELAY_MS + ALPHA_ANIMATION_DURATION
     }
   }
 
