@@ -176,7 +176,6 @@ class ImageDownloadRequestLocalSource(
   suspend fun deleteOldAndHangedInQueueStatus() {
     ensureInTransaction()
 
-    // TODO(KurobaEx / @Testme!!!):
     imageDownloadRequestDao.deleteOlderThan(WEEK_AGO)
     imageDownloadRequestDao.deleteWithStatus(ImageDownloadRequest.Status.Queued.rawValue)
   }

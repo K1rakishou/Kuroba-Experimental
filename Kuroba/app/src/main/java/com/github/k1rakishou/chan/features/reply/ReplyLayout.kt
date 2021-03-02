@@ -117,8 +117,6 @@ import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import javax.inject.Inject
 
-// TODO(KurobaEx): When catalog reply is opened and we open any thread via "tabs" the opened thread
-//  will be glitched, it won't have the bottomNavBar because we have a replyLayout opened.
 class ReplyLayout @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,

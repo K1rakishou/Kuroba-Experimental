@@ -42,7 +42,6 @@ class Warosu : BaseFuukaSite() {
   }
 
   companion object {
-    // TODO(KurobaEx): warosu has no favicon???
     val FAVICON_URL: HttpUrl = "https://archiveofsins.com/favicon.ico".toHttpUrl()
     val ROOT: String = "https://warosu.org/"
     val ROOT_URL: HttpUrl = ROOT.toHttpUrl()

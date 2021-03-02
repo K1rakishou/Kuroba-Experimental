@@ -262,8 +262,7 @@ public class AndroidUtils {
     }
 
     public static boolean isAndroid11() {
-        // TODO(KurobaEx): update this magic number to Build.VERSION_CODES.R once we target API 30
-        return Build.VERSION.SDK_INT >= 30;
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R;
     }
 
     public static boolean isAndroid10() {

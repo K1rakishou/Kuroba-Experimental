@@ -884,9 +884,6 @@ class CacheHandler(
     BackgroundUtils.ensureBackgroundThread()
 
     val grouped = directoryFiles
-      // TODO(FileCacheV2): this can be optimized.
-      //  Instead of calling getName in a loop for every file it is a better idea to
-      //  implement getNameBatched in FSAF and use it instead.
       .map { file -> Pair(file, fileManager.getName(file)) }
       .filter { (_, fileName) ->
         // Either cache file or cache meta

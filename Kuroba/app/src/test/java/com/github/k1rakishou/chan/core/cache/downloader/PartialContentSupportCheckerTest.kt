@@ -130,10 +130,6 @@ class PartialContentSupportCheckerTest {
     }
   }
 
-  // FIXME: this test takes at least 300ms because I can't, for some reason, use TestScheduler
-  //  with advanceTimeBy() operator because it just fails every time. Gotta figure out how to
-  //  properly use TestScheduler to shift the time for the timeout() operator so it can be
-  //  triggered without having to wait 300+ms.
   @Test
   fun `test HEAD request timeout should return supportsPartialContentDownload == false`() {
     withServer { server ->
@@ -177,7 +173,6 @@ class PartialContentSupportCheckerTest {
     }
   }
 
-  // FIXME: the same problem as with the test above ^^^
   @Test
   fun `test request cancellation`() {
     withServer { server ->
@@ -228,7 +223,6 @@ class PartialContentSupportCheckerTest {
     }
   }
 
-  // FIXME: the same problem as with the test above ^^^
   @Test
   fun `test request stop`() {
     withServer { server ->

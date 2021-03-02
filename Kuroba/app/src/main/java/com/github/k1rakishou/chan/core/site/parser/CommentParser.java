@@ -272,7 +272,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
                 || handlerLink.getType() == PostLinkable.Type.DEAD) {
             Long postNo = handlerLink.getLinkValue().extractLongOrNull();
 
-            // TODO(KurobaEx): archive ghost posts
+            // TODO(KurobaEx / @GhostPosts): archive ghost posts
             Long postSubNo = 0L;
 
             if (postNo != null) {

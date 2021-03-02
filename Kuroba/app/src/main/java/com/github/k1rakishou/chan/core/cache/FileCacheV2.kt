@@ -267,11 +267,6 @@ class FileCacheV2(
     return cancelableDownload
   }
 
-  // FIXME: if a request is added, then immediately canceled, and after that the same request is
-  //  added again, then in case of the first one not being fast enough to get cancelled before
-  //  the second one is added - the two of them will get merged and get canceled together.
-  //  Maybe I could add a new flag and right in the end when handling terminal events
-  //  I could check whether this flag is true or not and if it is re-add this request again?
   private fun getOrCreateCancelableDownload(
     url: String,
     callback: FileCacheListener?,
