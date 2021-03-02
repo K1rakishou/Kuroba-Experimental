@@ -95,6 +95,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -316,13 +317,6 @@ class MainController(
     onThemeChanged()
   }
 
-  private fun HidingBottomNavigationView.disableTooltips() {
-    menu.forEach { menuItem ->
-      val view = findViewById<View>(menuItem.itemId)
-      TooltipCompat.setTooltipText(view, null)
-    }
-  }
-
   override fun onShow() {
     super.onShow()
 
@@ -471,18 +465,6 @@ class MainController(
     bottomNavBarAwareNavigationController.pushController(controller)
   }
 
-  fun setSettingsMenuItemSelected() {
-    bottomNavView.menu.findItem(R.id.action_settings)?.isChecked = true
-  }
-
-  fun setBookmarksMenuItemSelected() {
-    bottomNavView.menu.findItem(R.id.action_bookmarks)?.isChecked = true
-  }
-
-  fun setGlobalSearchMenuItemSelected() {
-    bottomNavView.menu.findItem(R.id.action_search)?.isChecked = true
-  }
-
   suspend fun loadThread(
     descriptor: ChanDescriptor.ThreadDescriptor,
     closeAllNonMainControllers: Boolean = false,
@@ -609,7 +591,7 @@ class MainController(
 
     // Hack! To reset the bottomNavView's checked item to "browse" when pressing back one either
     // of the bottomNavView's child controllers (Bookmarks or Settings)
-    bottomNavView.menu.findItem(R.id.action_browse)?.isChecked = true
+    setBrowseMenuItemSelected()
     setDrawerEnabled(true)
   }
 
@@ -627,6 +609,22 @@ class MainController(
     return bottomMenuPanel.onBack()
   }
 
+  fun setBrowseMenuItemSelected() {
+    bottomNavView.updateMenuItem(R.id.action_browse) { isChecked = true }
+  }
+
+  fun setSettingsMenuItemSelected() {
+    bottomNavView.updateMenuItem(R.id.action_settings) { isChecked = true }
+  }
+
+  fun setBookmarksMenuItemSelected() {
+    bottomNavView.updateMenuItem(R.id.action_bookmarks) { isChecked = true }
+  }
+
+  fun setGlobalSearchMenuItemSelected() {
+    bottomNavView.updateMenuItem(R.id.action_search) { isChecked = true }
+  }
+
   fun setDrawerEnabled(enabled: Boolean) {
     val lockMode = if (enabled) {
       DrawerLayout.LOCK_MODE_UNLOCKED
@@ -639,6 +637,37 @@ class MainController(
     if (!enabled) {
       drawerLayout.closeDrawer(drawer)
     }
+  }
+
+  fun showResolveDuplicateImagesController(uniqueId: String, imageSaverOptionsJson: String) {
+    val alreadyPresenting = isAlreadyPresenting { controller -> controller is ResolveDuplicateImagesController }
+    if (alreadyPresenting) {
+      return
+    }
+
+    val resolveDuplicateImagesController = ResolveDuplicateImagesController(
+      context,
+      uniqueId,
+      imageSaverOptionsJson
+    )
+
+    presentController(resolveDuplicateImagesController)
+  }
+
+  fun showImageSaverV2OptionsController(uniqueId: String) {
+    val alreadyPresenting = isAlreadyPresenting { controller -> controller is ImageSaverV2OptionsController }
+    if (alreadyPresenting) {
+      return
+    }
+
+    val options = ImageSaverV2OptionsController.Options.ResultDirAccessProblems(
+      uniqueId,
+      onRetryClicked = { imageSaverV2Options -> imageSaverV2.restartUncompleted(uniqueId, imageSaverV2Options) },
+      onCancelClicked = { imageSaverV2.deleteDownload(uniqueId) }
+    )
+
+    val imageSaverV2OptionsController = ImageSaverV2OptionsController(context, options)
+    presentController(imageSaverV2OptionsController)
   }
 
   private fun onBookmarksBadgeStateChanged(state: DrawerPresenter.BookmarksBadgeState) {
@@ -854,35 +883,19 @@ class MainController(
     }
   }
 
-  fun showResolveDuplicateImagesController(uniqueId: String, imageSaverOptionsJson: String) {
-    val alreadyPresenting = isAlreadyPresenting { controller -> controller is ResolveDuplicateImagesController }
-    if (alreadyPresenting) {
-      return
+  private fun BottomNavigationView.updateMenuItem(menuItemId: Int, updater: MenuItem.() -> Unit) {
+    bottomNavView.menu.findItem(menuItemId)?.let { menuItem ->
+      updater(menuItem)
     }
 
-    val resolveDuplicateImagesController = ResolveDuplicateImagesController(
-      context,
-      uniqueId,
-      imageSaverOptionsJson
-    )
-
-    presentController(resolveDuplicateImagesController)
+    disableTooltips()
   }
 
-  fun showImageSaverV2OptionsController(uniqueId: String) {
-    val alreadyPresenting = isAlreadyPresenting { controller -> controller is ImageSaverV2OptionsController }
-    if (alreadyPresenting) {
-      return
+  private fun BottomNavigationView.disableTooltips() {
+    menu.forEach { menuItem ->
+      val view = findViewById<View>(menuItem.itemId)
+      TooltipCompat.setTooltipText(view, null)
     }
-
-    val options = ImageSaverV2OptionsController.Options.ResultDirAccessProblems(
-      uniqueId,
-      onRetryClicked = { imageSaverV2Options -> imageSaverV2.restartUncompleted(uniqueId, imageSaverV2Options) },
-      onCancelClicked = { imageSaverV2.deleteDownload(uniqueId) }
-    )
-
-    val imageSaverV2OptionsController = ImageSaverV2OptionsController(context, options)
-    presentController(imageSaverV2OptionsController)
   }
 
   companion object {

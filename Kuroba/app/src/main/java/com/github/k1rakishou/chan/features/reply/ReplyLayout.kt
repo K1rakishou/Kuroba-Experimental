@@ -111,7 +111,6 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescript
 import com.github.k1rakishou.prefs.StringSetting
 import com.google.android.material.textview.MaterialTextView
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
@@ -312,11 +311,6 @@ class ReplyLayout @JvmOverloads constructor(
   override fun onFinishInflate() {
     super.onFinishInflate()
 
-    if (!isInEditMode) {
-      AppModuleAndroidUtils.extractActivityComponent(context)
-        .inject(this)
-    }
-
     this.currentOrientation = resources.configuration.orientation
 
     // Inflate reply input
@@ -344,47 +338,7 @@ class ReplyLayout @JvmOverloads constructor(
     submit = replyInputLayout.findViewById(R.id.submit)
     replyLayoutFilesArea = replyInputLayout.findViewById(R.id.reply_layout_files_area)
 
-    replyInputLayout
-      .findAllChildren<View>()
-      .forEach { child ->
-        if (child is ReplyInputEditText) {
-          child.setOuterOnTouchListener { event ->
-            if (!ChanSettings.replyLayoutOpenCloseGestures.get()) {
-              return@setOuterOnTouchListener false
-            }
-
-            if (event.actionMasked == MotionEvent.ACTION_DOWN || event.actionMasked == MotionEvent.ACTION_MOVE) {
-              replyLayoutGestureListener.onActionDownOrMove()
-            }
-
-            val result = replyLayoutGestureDetector.onTouchEvent(event)
-
-            if (event.actionMasked == MotionEvent.ACTION_CANCEL || event.actionMasked == MotionEvent.ACTION_UP) {
-              replyLayoutGestureListener.onActionUpOrCancel()
-            }
-
-            return@setOuterOnTouchListener result
-          }
-        } else {
-          child.setOnTouchListener { v, event ->
-            if (!ChanSettings.replyLayoutOpenCloseGestures.get()) {
-              return@setOnTouchListener false
-            }
-
-            if (event.actionMasked == MotionEvent.ACTION_DOWN || event.actionMasked == MotionEvent.ACTION_MOVE) {
-              replyLayoutGestureListener.onActionDownOrMove()
-            }
-
-            val result = replyLayoutGestureDetector.onTouchEvent(event)
-
-            if (event.actionMasked == MotionEvent.ACTION_CANCEL || event.actionMasked == MotionEvent.ACTION_UP) {
-              replyLayoutGestureListener.onActionUpOrCancel()
-            }
-
-            return@setOnTouchListener result
-          }
-        }
-      }
+    passChildMotionEventsToDetectors()
 
     progressLayout = AppModuleAndroidUtils.inflate(context, R.layout.layout_reply_progress, this, false)
     currentProgress = progressLayout.findViewById(R.id.current_progress)
@@ -460,11 +414,7 @@ class ReplyLayout @JvmOverloads constructor(
     )
     AndroidUtils.setBoundlessRoundRippleBackground(captchaHardReset)
     captchaHardReset.setOnClickListener(this)
-    moreDropdown = DropdownArrowDrawable(
-      dp(16f),
-      dp(16f),
-      false
-    )
+    moreDropdown = DropdownArrowDrawable(dp(16f), dp(16f), false)
 
     submit.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_send_white_24dp))
     more.setImageDrawable(moreDropdown)
@@ -472,43 +422,27 @@ class ReplyLayout @JvmOverloads constructor(
     captchaHardReset.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_refresh_white_24dp))
     setView(replyInputLayout)
     elevation = dp(4f).toFloat()
-
-    presenter.create(this)
-    replyLayoutFilesArea.onCreate()
-
-    onThemeChanged()
-
-    coroutineScope.launch {
-      globalViewStateManager.listenForBottomNavViewSwipeUpGestures()
-        .debounce(250L)
-        .collect {
-          val isCatalogReplyLayout = presenter.isCatalogReplyLayout()
-            ?: return@collect
-
-          val currentFocusedController = threadListLayoutCallbacks?.currentFocusedController()
-            ?: ThreadPresenter.CurrentFocusedController.None
-
-          val canOpen = when (currentFocusedController) {
-            ThreadPresenter.CurrentFocusedController.Catalog -> isCatalogReplyLayout
-            ThreadPresenter.CurrentFocusedController.Thread -> !isCatalogReplyLayout
-            ThreadPresenter.CurrentFocusedController.None -> return@collect
-          }
-
-          if (!canOpen) {
-            return@collect
-          }
-
-          threadListLayoutCallbacks?.openReply(open = true)
-        }
-    }
   }
 
   fun onCreate(
     replyLayoutCallback: ThreadListLayoutCallbacks,
     threadListLayoutCallbacks: ReplyLayoutFilesArea.ThreadListLayoutCallbacks
   ) {
+    AppModuleAndroidUtils.extractActivityComponent(context)
+      .inject(this)
+
     this.threadListLayoutCallbacks = replyLayoutCallback
     this.threadListLayoutFilesCallback = threadListLayoutCallbacks
+
+    presenter.create(this)
+    replyLayoutFilesArea.onCreate()
+
+    coroutineScope.launch {
+      globalViewStateManager.listenForBottomNavViewSwipeUpGestures()
+        .collect { processBottomNavViewSwipeUpEvents() }
+    }
+
+    onThemeChanged()
   }
 
   fun onDestroy() {
@@ -1197,6 +1131,71 @@ class ReplyLayout @JvmOverloads constructor(
     if (!blockSelectionChange) {
       presenter.onSelectionChanged()
     }
+  }
+
+  private fun processBottomNavViewSwipeUpEvents() {
+    val isCatalogReplyLayout = presenter.isCatalogReplyLayout()
+      ?: return
+
+    val currentFocusedController = threadListLayoutCallbacks?.currentFocusedController()
+      ?: ThreadPresenter.CurrentFocusedController.None
+
+    val canOpen = when (currentFocusedController) {
+      ThreadPresenter.CurrentFocusedController.Catalog -> isCatalogReplyLayout
+      ThreadPresenter.CurrentFocusedController.Thread -> !isCatalogReplyLayout
+      ThreadPresenter.CurrentFocusedController.None -> return
+    }
+
+    if (!canOpen) {
+      return
+    }
+
+    threadListLayoutCallbacks?.openReply(open = true)
+  }
+
+  @SuppressLint("ClickableViewAccessibility")
+  private fun passChildMotionEventsToDetectors() {
+    replyInputLayout
+      .findAllChildren<View>()
+      .forEach { child ->
+        if (child is ReplyInputEditText) {
+          child.setOuterOnTouchListener { event ->
+            if (!ChanSettings.replyLayoutOpenCloseGestures.get()) {
+              return@setOuterOnTouchListener false
+            }
+
+            if (event.actionMasked == MotionEvent.ACTION_DOWN || event.actionMasked == MotionEvent.ACTION_MOVE) {
+              replyLayoutGestureListener.onActionDownOrMove()
+            }
+
+            val result = replyLayoutGestureDetector.onTouchEvent(event)
+
+            if (event.actionMasked == MotionEvent.ACTION_CANCEL || event.actionMasked == MotionEvent.ACTION_UP) {
+              replyLayoutGestureListener.onActionUpOrCancel()
+            }
+
+            return@setOuterOnTouchListener result
+          }
+        } else {
+          child.setOnTouchListener { v, event ->
+            if (!ChanSettings.replyLayoutOpenCloseGestures.get()) {
+              return@setOnTouchListener false
+            }
+
+            if (event.actionMasked == MotionEvent.ACTION_DOWN || event.actionMasked == MotionEvent.ACTION_MOVE) {
+              replyLayoutGestureListener.onActionDownOrMove()
+            }
+
+            val result = replyLayoutGestureDetector.onTouchEvent(event)
+
+            if (event.actionMasked == MotionEvent.ACTION_CANCEL || event.actionMasked == MotionEvent.ACTION_UP) {
+              replyLayoutGestureListener.onActionUpOrCancel()
+            }
+
+            return@setOnTouchListener result
+          }
+        }
+      }
   }
 
   private fun setupCommentContextMenu() {

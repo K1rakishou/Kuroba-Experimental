@@ -4,8 +4,8 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
 class GlobalViewStateManager {
@@ -33,7 +33,7 @@ class GlobalViewStateManager {
     return replyLayoutOpenStateMap[threadControllerType] ?: false
   }
 
-  fun listenForBottomNavViewSwipeUpGestures(): Flow<Unit> {
+  fun listenForBottomNavViewSwipeUpGestures(): SharedFlow<Unit> {
     return replyLayoutOpenStateRelay.asSharedFlow()
   }
 
