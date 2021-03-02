@@ -427,7 +427,10 @@ class ImageSaverV2Service : Service() {
   private fun NotificationCompat.Builder.addResolveFailedDownloadsAction(
     imageSaverDelegateResult: ImageSaverV2ServiceDelegate.ImageSaverDelegateResult
   ): NotificationCompat.Builder {
-    val canShowRetryAction = imageSaverDelegateResult.completed && imageSaverDelegateResult.failedRequests > 0
+    val canShowRetryAction = imageSaverDelegateResult.completed
+      && imageSaverDelegateResult.hasRequestsThatCanBeRetried
+      && imageSaverDelegateResult.failedRequests > 0
+
     if (canShowRetryAction) {
       val intent = Intent(applicationContext, ImageSaverBroadcastReceiver::class.java).apply {
         setAction(ACTION_TYPE_RETRY_FAILED)

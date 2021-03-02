@@ -146,6 +146,7 @@ class ImageSaverV2ServiceDelegate(
     val currentChanPostImage = AtomicReference<ChanPostImage>(null)
     val hasResultDirAccessErrors = AtomicBoolean(false)
     val hasOutOfDiskSpaceErrors = AtomicBoolean(false)
+    val hasRequestsThatCanBeRetried = AtomicBoolean(false)
     val completedRequests = AtomicInteger(0)
     val failedRequests = AtomicInteger(0)
     val duplicates = AtomicInteger(0)
@@ -194,7 +195,8 @@ class ImageSaverV2ServiceDelegate(
         duplicates = duplicates.get(),
         failedRequests = failedRequests.get(),
         hasResultDirAccessErrors = hasResultDirAccessErrors.get(),
-        hasOutOfDiskSpaceErrors = hasOutOfDiskSpaceErrors.get()
+        hasOutOfDiskSpaceErrors = hasOutOfDiskSpaceErrors.get(),
+        hasRequestsThatCanBeRetried = hasRequestsThatCanBeRetried.get()
       )
 
       val concurrency = when {
@@ -214,6 +216,7 @@ class ImageSaverV2ServiceDelegate(
                   imageDownloadRequest,
                   hasResultDirAccessErrors,
                   hasOutOfDiskSpaceErrors,
+                  hasRequestsThatCanBeRetried,
                   currentChanPostImage,
                   canceledRequests,
                   duplicates,
@@ -250,7 +253,8 @@ class ImageSaverV2ServiceDelegate(
               duplicates = duplicates.get(),
               failedRequests = failedRequests.get(),
               hasResultDirAccessErrors = hasResultDirAccessErrors.get(),
-              hasOutOfDiskSpaceErrors = hasOutOfDiskSpaceErrors.get()
+              hasOutOfDiskSpaceErrors = hasOutOfDiskSpaceErrors.get(),
+              hasRequestsThatCanBeRetried = hasRequestsThatCanBeRetried.get()
             )
           }
       }
@@ -278,6 +282,7 @@ class ImageSaverV2ServiceDelegate(
         failedRequests = failedRequests.get(),
         hasResultDirAccessErrors = hasResultDirAccessErrors.get(),
         hasOutOfDiskSpaceErrors = hasOutOfDiskSpaceErrors.get(),
+        hasRequestsThatCanBeRetried = hasRequestsThatCanBeRetried.get()
       )
 
       mutex.withLock { activeDownloads.remove(imageDownloadInputData.uniqueId) }
@@ -335,6 +340,7 @@ class ImageSaverV2ServiceDelegate(
     imageDownloadRequest: ImageDownloadRequest,
     hasResultDirAccessErrors: AtomicBoolean,
     hasOutOfDiskSpaceErrors: AtomicBoolean,
+    hasRequestsThatCanBeRetried: AtomicBoolean,
     currentChanPostImage: AtomicReference<ChanPostImage>,
     canceledRequests: AtomicInteger,
     duplicates: AtomicInteger,
@@ -370,6 +376,10 @@ class ImageSaverV2ServiceDelegate(
       is DownloadImageResult.Failure -> {
         // Some error happened
         failedRequests.incrementAndGet()
+
+        if (downloadImageResult.canRetry) {
+          hasRequestsThatCanBeRetried.set(true)
+        }
       }
       is DownloadImageResult.Success -> {
         // Image successfully downloaded
@@ -492,7 +502,8 @@ class ImageSaverV2ServiceDelegate(
     duplicates: Int,
     failedRequests: Int,
     hasResultDirAccessErrors: Boolean,
-    hasOutOfDiskSpaceErrors: Boolean
+    hasOutOfDiskSpaceErrors: Boolean,
+    hasRequestsThatCanBeRetried: Boolean
   ) {
     BackgroundUtils.ensureBackgroundThread()
 
@@ -507,7 +518,8 @@ class ImageSaverV2ServiceDelegate(
       duplicates = duplicates,
       failedRequests = failedRequests,
       hasResultDirAccessErrors = hasResultDirAccessErrors,
-      hasOutOfDiskSpaceErrors =  hasOutOfDiskSpaceErrors
+      hasOutOfDiskSpaceErrors =  hasOutOfDiskSpaceErrors,
+      hasRequestsThatCanBeRetried = hasRequestsThatCanBeRetried
     )
 
     notificationUpdatesFlow.emit(imageSaverDelegateResult)
@@ -841,7 +853,8 @@ class ImageSaverV2ServiceDelegate(
     val duplicates: Int,
     val failedRequests: Int,
     val hasResultDirAccessErrors: Boolean,
-    val hasOutOfDiskSpaceErrors: Boolean
+    val hasOutOfDiskSpaceErrors: Boolean,
+    val hasRequestsThatCanBeRetried: Boolean
   ) {
 
     fun hasAnyErrors(): Boolean {
