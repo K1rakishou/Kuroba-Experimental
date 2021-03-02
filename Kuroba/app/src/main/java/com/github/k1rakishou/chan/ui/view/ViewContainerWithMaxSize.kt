@@ -22,8 +22,11 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
-  var maxWidth: Int = 0
-  var maxHeight: Int = 0
+  private var displayWidth: Int = 0
+  private var displayHeight: Int = 0
+
+  var desiredWidth: Int = 0
+  var desiredHeight: Int = 0
 
   init {
     if (!isInEditMode) {
@@ -36,19 +39,28 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
     super.onAttachedToWindow()
 
     if (!isInEditMode) {
-      val (displayWidth, displayHeight) = AndroidUtils.getDisplaySize(context)
-      this.maxWidth = displayWidth
-      this.maxHeight = displayHeight
+      val (dispWidth, dispHeight) = AndroidUtils.getDisplaySize(context)
+      this.displayWidth = dispWidth
+      this.displayHeight = dispHeight
+
+      if (this.desiredWidth <= 0 || this.desiredWidth > dispWidth) {
+        this.desiredWidth = dispWidth
+      }
+
+      if (this.desiredHeight <= 0 || this.desiredHeight > dispHeight) {
+        this.desiredHeight = dispHeight
+      }
     }
   }
 
   override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-    super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+    var newWidth = MeasureSpec.getSize(widthMeasureSpec)
+    var newHeight = MeasureSpec.getSize(heightMeasureSpec)
 
-    var width = MeasureSpec.getSize(widthMeasureSpec)
-    var height = MeasureSpec.getSize(heightMeasureSpec)
-
-    if (!isInEditMode) {
+    if (isInEditMode) {
+      newWidth = (newWidth / 1.2f).toInt()
+      newHeight = (newHeight / 1.2f).toInt()
+    } else {
       val horizontalPaddings = globalWindowInsetsManager.left() +
         globalWindowInsetsManager.right() +
         paddingStart +
@@ -63,30 +75,16 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
         marginTop +
         marginBottom
 
-      val maxWidthWithPaddings = if (maxWidth <= 0) {
-        0
-      } else {
-        maxWidth - horizontalPaddings
-      }
+      newWidth = desiredWidth.coerceIn(0, displayWidth) - horizontalPaddings
+      newHeight = desiredHeight.coerceIn(0, displayHeight) - verticalPaddings
 
-      val maxHeightWithPaddings = if (maxHeight <= 0) {
-        0
-      } else {
-        maxHeight - verticalPaddings
-      }
-
-      if (maxWidthWithPaddings in 1 until width) {
-        width = maxWidthWithPaddings
-      }
-
-      if (maxHeightWithPaddings in 1 until height) {
-        height = maxHeightWithPaddings
-      }
+      require(newWidth > 0) { "Bad newWidth: $newWidth" }
+      require(newHeight > 0) { "Bad newHeight: $newHeight" }
     }
 
-    setMeasuredDimension(
-      MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-      MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY)
+    super.onMeasure(
+      MeasureSpec.makeMeasureSpec(newWidth, MeasureSpec.EXACTLY),
+      heightMeasureSpec
     )
   }
 
