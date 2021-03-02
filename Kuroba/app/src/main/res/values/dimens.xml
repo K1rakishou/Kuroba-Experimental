@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <dimen name="grid_card_margin">2dp</dimen>
     <dimen name="grid_card_corner_radius">2dp</dimen>
 
-    <dimen name="cell_post_thumbnail_size">92dp</dimen>
+    <dimen name="cell_post_thumbnail_size">102dp</dimen>
     <dimen name="post_attention_label_width">5dp</dimen>
     <dimen name="history_entry_thread_image_size">48dp</dimen>
     <dimen name="history_entry_site_image_size">20dp</dimen>

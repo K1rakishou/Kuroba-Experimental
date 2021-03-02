@@ -132,16 +132,6 @@ class ImageLoaderV2(
             Logger.e(TAG, "tryLoadFromCacheOrNull() canceled '$url'")
           }
 
-          withContext(Dispatchers.Main + NonCancellable) {
-            handleFailure(
-              actualListener = imageListenerParam,
-              context = context,
-              imageSize = imageSize,
-              transformations = transformations,
-              throwable = ImageLoadingCancellation(url)
-            )
-          }
-
           return@launch
         }
 
@@ -160,16 +150,6 @@ class ImageLoaderV2(
               Logger.e(TAG, "loadFromNetworkInternal() canceled '$url'")
             }
 
-            withContext(Dispatchers.Main + NonCancellable) {
-              handleFailure(
-                actualListener = imageListenerParam,
-                context = context,
-                imageSize = imageSize,
-                transformations = transformations,
-                throwable = ImageLoadingCancellation(url)
-              )
-            }
-
             return@launch
           }
 
@@ -185,16 +165,6 @@ class ImageLoaderV2(
               if (error is CancellationException) {
                 if (verboseLogs) {
                   Logger.e(TAG, "cacheResultBitmapOnDisk() canceled '$url'")
-                }
-
-                withContext(Dispatchers.Main + NonCancellable) {
-                  handleFailure(
-                    actualListener = imageListenerParam,
-                    context = context,
-                    imageSize = imageSize,
-                    transformations = transformations,
-                    throwable = ImageLoadingCancellation(url)
-                  )
                 }
 
                 return@launch
@@ -1152,8 +1122,6 @@ class ImageLoaderV2(
       return bitmapDrawable.opacity
     }
   }
-
-  class ImageLoadingCancellation(url: String) : IOException("Image loading canceled '$url'")
 
   companion object {
     private const val TAG = "ImageLoaderV2"

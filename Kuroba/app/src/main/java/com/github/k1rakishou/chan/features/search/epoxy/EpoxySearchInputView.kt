@@ -51,7 +51,7 @@ class EpoxySearchInputView @JvmOverloads constructor(
 
   @ModelProp
   fun setHint(hint: String) {
-    searchInputLayout.hint = hint
+    searchInputEditText.hint = hint
   }
 
   @ModelProp(ModelProp.Option.NullOnRecycle, ModelProp.Option.IgnoreRequireHashCode)

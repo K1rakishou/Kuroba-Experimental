@@ -103,15 +103,11 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   private lateinit var options: ImageView
   private lateinit var divider: View
   private lateinit var postAttentionLabel: View
-  private lateinit var gestureDetector: GestureDetector
   private lateinit var chanDescriptor: ChanDescriptor
-  private lateinit var linkClickSpan: ColorizableBackgroundColorSpan
-  private lateinit var quoteClickSpan: ColorizableBackgroundColorSpan
   private lateinit var theme: ChanTheme
 
   private var post: ChanPost? = null
   private var callback: PostCellCallback? = null
-
   private var singleImageMode = false
   private var detailsSizePx = 0
   private var iconSizePx = 0
@@ -128,6 +124,10 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   private var postSelected = false
   private var showDivider = false
   private var filterHash = 0
+
+  private val gestureDetector: GestureDetector
+  private val linkClickSpan: ColorizableBackgroundColorSpan
+  private val quoteClickSpan: ColorizableBackgroundColorSpan
 
   private val thumbnailViews: MutableList<PostImageThumbnailView> = ArrayList(1)
   private val commentMovementMethod = PostViewMovementMethod()

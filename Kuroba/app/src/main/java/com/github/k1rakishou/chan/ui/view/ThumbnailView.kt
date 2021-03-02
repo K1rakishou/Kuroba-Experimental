@@ -339,18 +339,11 @@ open class ThumbnailView : View {
     url: String,
     imageSize: ImageLoaderV2.ImageSize
   ) {
-    val isCached = imageLoaderV2.isImageCachedLocally(url)
-
-    val isDraggingCatalogScroller =
-      globalViewStateManager.isDraggingFastScroller(FastScroller.FastScrollerControllerType.Catalog)
-    val isDraggingThreadScroller =
-      globalViewStateManager.isDraggingFastScroller(FastScroller.FastScrollerControllerType.Thread)
-    val isDraggingCatalogOrThreadFastScroller =
-      isDraggingCatalogScroller || isDraggingThreadScroller
-
     val listener = object : ImageLoaderV2.FailureAwareImageListener {
       override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
         if (url != this@ThumbnailView.imageUrl) {
+          // Request was canceled (probably because the parent view was unbound) so we don't
+          // want to do anything here
           return
         }
 
@@ -361,6 +354,8 @@ open class ThumbnailView : View {
 
       override fun onNotFound() {
         if (url != this@ThumbnailView.imageUrl) {
+          // Request was canceled (probably because the parent view was unbound) so we don't
+          // want to do anything here
           return
         }
 
@@ -373,6 +368,8 @@ open class ThumbnailView : View {
 
       override fun onResponseError(error: Throwable) {
         if (url != this@ThumbnailView.imageUrl) {
+          // Request was canceled (probably because the parent view was unbound) so we don't
+          // want to do anything here
           return
         }
 
@@ -389,8 +386,7 @@ open class ThumbnailView : View {
           bindImageUrl(url, imageSize)
         } else {
           this@ThumbnailView.error = true
-          this@ThumbnailView.errorText =
-            AppModuleAndroidUtils.getString(R.string.thumbnail_load_failed_network)
+          this@ThumbnailView.errorText = AppModuleAndroidUtils.getString(R.string.thumbnail_load_failed_network)
 
           onImageSet(false)
           invalidate()
@@ -412,6 +408,15 @@ open class ThumbnailView : View {
         listener
       )
     }
+
+    val isCached = imageLoaderV2.isImageCachedLocally(url)
+
+    val isDraggingCatalogScroller =
+      globalViewStateManager.isDraggingFastScroller(FastScroller.FastScrollerControllerType.Catalog)
+    val isDraggingThreadScroller =
+      globalViewStateManager.isDraggingFastScroller(FastScroller.FastScrollerControllerType.Thread)
+    val isDraggingCatalogOrThreadFastScroller =
+      isDraggingCatalogScroller || isDraggingThreadScroller
 
     if (!isDraggingCatalogOrThreadFastScroller && isCached) {
       loadImage()
