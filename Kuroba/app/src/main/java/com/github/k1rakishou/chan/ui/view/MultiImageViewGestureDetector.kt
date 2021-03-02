@@ -180,7 +180,7 @@ class MultiImageViewGestureDetector(
   }
 
   companion object {
-    private const val MAX_SWIPE_DURATION_MS = 120L
+    private const val MAX_SWIPE_DURATION_MS = 300L
 
     private val FLING_DIFF_Y_THRESHOLD = dp(75f).toFloat()
     private val FLING_VELOCITY_Y_THRESHOLD = dp(300f).toFloat()
