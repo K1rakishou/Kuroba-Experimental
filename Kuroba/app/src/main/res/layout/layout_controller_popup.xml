@@ -20,11 +20,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:layout_height="match_parent"
     android:background="#88000000">
 
-    <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
-        android:id="@+id/container"
-        android:layout_width="600dp"
-        android:layout_height="600dp"
+    <com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
+        android:id="@+id/width_constraint_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_gravity="center"
-        android:elevation="4dp" />
+        android:elevation="4dp">
+
+        <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
+            android:id="@+id/container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize>
 
 </com.github.k1rakishou.chan.ui.layout.PopupControllerContainer>

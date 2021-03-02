@@ -27,6 +27,7 @@ import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
@@ -141,12 +142,18 @@ public class AlbumViewController
 
     @Override
     public void onInsetsChanged() {
+        int bottomPadding = globalWindowInsetsManager.bottom();
+
+        if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+            bottomPadding = 0;
+        }
+
         KotlinExtensionsKt.updatePaddings(
                 recyclerView,
                 null,
                 FastScrollerHelper.FAST_SCROLLER_WIDTH,
                 requireNavController().requireToolbar().getToolbarHeight(),
-                globalWindowInsetsManager.bottom() * 2
+                bottomPadding
         );
     }
 

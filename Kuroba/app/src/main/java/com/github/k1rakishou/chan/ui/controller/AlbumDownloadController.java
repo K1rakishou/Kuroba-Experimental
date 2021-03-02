@@ -30,6 +30,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
@@ -162,7 +163,11 @@ public class AlbumDownloadController
 
     @Override
     public void onInsetsChanged() {
-        int bottomPadding = globalWindowInsetsManager.bottom() * 2;
+        int bottomPadding = globalWindowInsetsManager.bottom();
+
+        if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+            bottomPadding = 0;
+        }
 
         KotlinExtensionsKt.updatePaddings(
                 recyclerView,
@@ -179,7 +184,7 @@ public class AlbumDownloadController
                 null,
                 null,
                 null,
-                bottomPadding
+                globalWindowInsetsManager.bottom()
         );
     }
 

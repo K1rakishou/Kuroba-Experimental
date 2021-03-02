@@ -115,6 +115,7 @@ import com.github.k1rakishou.chan.ui.epoxy.EpoxyTextViewWrapHeight;
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
 import com.github.k1rakishou.chan.ui.layout.FilesLayout;
 import com.github.k1rakishou.chan.ui.layout.FilterLayout;
+import com.github.k1rakishou.chan.ui.layout.PopupControllerContainer;
 import com.github.k1rakishou.chan.ui.layout.PostRepliesContainer;
 import com.github.k1rakishou.chan.ui.layout.ReportProblemLayout;
 import com.github.k1rakishou.chan.ui.layout.SearchLayout;
@@ -339,6 +340,7 @@ public interface ActivityComponent {
     void inject(AttachNewFileButton attachNewFileButton);
     void inject(OptionalSwipeViewPager optionalSwipeViewPager);
     void inject(FastScroller fastScroller);
+    void inject(PopupControllerContainer popupControllerContainer);
 
     @Subcomponent.Builder
     interface Builder {

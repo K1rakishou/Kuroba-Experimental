@@ -20,42 +20,43 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.FrameLayout;
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 
-public class PopupControllerContainer
-        extends FrameLayout {
+import javax.inject.Inject;
+
+
+public class PopupControllerContainer extends FrameLayout {
+
+    @Inject
+    GlobalWindowInsetsManager globalWindowInsetsManager;
+
     public PopupControllerContainer(Context context) {
         super(context);
+        init(context);
     }
 
     public PopupControllerContainer(Context context, AttributeSet attrs) {
         super(context, attrs);
+        init(context);
     }
 
     public PopupControllerContainer(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        init(context);
+    }
+
+    private void init(Context context) {
+        AppModuleAndroidUtils.extractActivityComponent(context)
+                .inject(this);
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
-        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
         int heightSize = MeasureSpec.getSize(heightMeasureSpec);
-
         FrameLayout.LayoutParams child = (LayoutParams) getChildAt(0).getLayoutParams();
 
-        if (widthMode == MeasureSpec.EXACTLY && widthSize < dp(600)) {
-            child.width = widthSize;
-        } else {
-            child.width = dp(600);
-        }
-
-        if (heightMode == MeasureSpec.EXACTLY && heightSize < dp(600)) {
-            child.height = heightSize;
-        } else {
-            child.height = dp(600);
-        }
+        child.height = heightSize - (globalWindowInsetsManager.top() + globalWindowInsetsManager.bottom());
 
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }

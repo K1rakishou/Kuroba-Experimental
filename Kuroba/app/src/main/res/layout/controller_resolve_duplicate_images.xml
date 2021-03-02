@@ -9,8 +9,10 @@
     android:focusable="true">
 
     <com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
+        android:id="@+id/width_constraint_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_gravity="center"
         android:layout_margin="16dp">
 
         <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
@@ -47,7 +49,7 @@
                     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
                         android:id="@+id/select_all_from_server"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_weight="0.5"
                         android:gravity="center"
                         android:text="@string/image_saver_images_from_server"/>
@@ -55,9 +57,9 @@
                     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
                         android:id="@+id/select_all_local"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_weight="0.5"
-                        android:gravity="center"
+                        android:gravity="center_vertical"
                         android:text="@string/image_saver_local_images_on_disk" />
 
                 </LinearLayout>
