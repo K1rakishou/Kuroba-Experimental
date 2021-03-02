@@ -46,7 +46,7 @@ android {
         buildConfigField "String", "BUILD_NUMBER", "\"" + getCurrentBuildNumber() + "\""
 
         versionCode 600
-        versionName "v6.0.0"
+        versionName "v0.6.0"
 
         applicationVariants.all { variant ->
             variant.outputs.all {
