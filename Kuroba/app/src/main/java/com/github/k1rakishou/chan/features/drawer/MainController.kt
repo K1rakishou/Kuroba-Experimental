@@ -25,7 +25,9 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import androidx.appcompat.widget.TooltipCompat
 import androidx.core.view.GravityCompat
+import androidx.core.view.forEach
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.epoxy.EpoxyTouchHelper
@@ -231,6 +233,7 @@ class MainController(
 
     bottomNavView.selectedItemId = R.id.action_browse
     bottomNavView.elevation = dp(4f).toFloat()
+    bottomNavView.disableTooltips()
 
     // Must be above bottomNavView
     bottomMenuPanel.elevation = dp(6f).toFloat()
@@ -311,6 +314,13 @@ class MainController(
 
     themeEngine.addListener(this)
     onThemeChanged()
+  }
+
+  private fun HidingBottomNavigationView.disableTooltips() {
+    menu.forEach { menuItem ->
+      val view = findViewById<View>(menuItem.itemId)
+      TooltipCompat.setTooltipText(view, null)
+    }
   }
 
   override fun onShow() {

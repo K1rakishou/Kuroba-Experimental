@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.reply
 
 import android.graphics.Rect
+import android.os.SystemClock
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -16,10 +17,19 @@ class ReplyLayoutGestureListener(
   private val onSwipedDown: () -> Unit
 ) : GestureDetector.SimpleOnGestureListener() {
   private val viewHitRect = Rect()
-  private var hasScrollableChildThatCanScrollMore = false
 
-  fun onCurrentEventEnded() {
-    hasScrollableChildThatCanScrollMore = false
+  private var blockGesture = false
+  private var downTime = -1L
+
+  fun onActionDownOrMove() {
+    if (downTime == -1L) {
+      downTime = SystemClock.uptimeMillis()
+    }
+  }
+
+  fun onActionUpOrCancel() {
+    downTime = -1L
+    blockGesture = false
   }
 
   override fun onScroll(
@@ -28,11 +38,11 @@ class ReplyLayoutGestureListener(
     distanceX: Float,
     distanceY: Float
   ): Boolean {
-    if (e1 == null || e2 == null) {
+    if (blockGesture) {
       return false
     }
 
-    if (hasScrollableChildThatCanScrollMore) {
+    if (e1 == null || e2 == null) {
       return false
     }
 
@@ -42,10 +52,10 @@ class ReplyLayoutGestureListener(
     val swipingUp = startY > endY
 
     if (hasAnyScrollingChildThatCanScroll(startX, startY, swipingUp)) {
-      hasScrollableChildThatCanScrollMore = true
+      blockGesture = true
     }
 
-    return super.onScroll(e1, e2, distanceX, distanceY)
+    return false
   }
 
   override fun onFling(
@@ -54,16 +64,21 @@ class ReplyLayoutGestureListener(
     velocityX: Float,
     velocityY: Float
   ): Boolean {
+    if (blockGesture) {
+      return false
+    }
+
     if (e1 == null || e2 == null) {
       return true
     }
 
-    if (hasScrollableChildThatCanScrollMore) {
-      return false
-    }
-
     val startY = e1.rawY
     val endY = e2.rawY
+
+    val deltaTime = SystemClock.uptimeMillis() - downTime
+    if (deltaTime < 0 || deltaTime > MAX_SWIPE_DURATION_MS) {
+      return false
+    }
 
     val diffX = e2.rawX - e1.rawX
     val diffY = endY - startY
@@ -142,6 +157,8 @@ class ReplyLayoutGestureListener(
   }
 
   companion object {
+    private const val MAX_SWIPE_DURATION_MS = 120L
+
     private val FLING_MIN_VELOCITY = dp(600f)
     private val MIN_Y_TRAVEL_DIST = dp(30f)
   }

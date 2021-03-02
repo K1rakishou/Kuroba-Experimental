@@ -353,10 +353,14 @@ class ReplyLayout @JvmOverloads constructor(
               return@setOuterOnTouchListener false
             }
 
+            if (event.actionMasked == MotionEvent.ACTION_DOWN || event.actionMasked == MotionEvent.ACTION_MOVE) {
+              replyLayoutGestureListener.onActionDownOrMove()
+            }
+
             val result = replyLayoutGestureDetector.onTouchEvent(event)
 
             if (event.actionMasked == MotionEvent.ACTION_CANCEL || event.actionMasked == MotionEvent.ACTION_UP) {
-              replyLayoutGestureListener.onCurrentEventEnded()
+              replyLayoutGestureListener.onActionUpOrCancel()
             }
 
             return@setOuterOnTouchListener result
@@ -367,10 +371,14 @@ class ReplyLayout @JvmOverloads constructor(
               return@setOnTouchListener false
             }
 
+            if (event.actionMasked == MotionEvent.ACTION_DOWN || event.actionMasked == MotionEvent.ACTION_MOVE) {
+              replyLayoutGestureListener.onActionDownOrMove()
+            }
+
             val result = replyLayoutGestureDetector.onTouchEvent(event)
 
             if (event.actionMasked == MotionEvent.ACTION_CANCEL || event.actionMasked == MotionEvent.ACTION_UP) {
-              replyLayoutGestureListener.onCurrentEventEnded()
+              replyLayoutGestureListener.onActionUpOrCancel()
             }
 
             return@setOnTouchListener result
