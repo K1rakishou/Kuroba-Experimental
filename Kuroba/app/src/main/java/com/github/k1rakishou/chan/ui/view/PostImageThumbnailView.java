@@ -231,18 +231,19 @@ public class PostImageThumbnailView extends ThumbnailView {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         if (ratio == 0f) {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        } else {
-            int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-            if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.EXACTLY
-                    && (heightMode == MeasureSpec.UNSPECIFIED || heightMode == MeasureSpec.AT_MOST)) {
-                int width = MeasureSpec.getSize(widthMeasureSpec);
+            return;
+        }
 
-                super.onMeasure(widthMeasureSpec,
-                        MeasureSpec.makeMeasureSpec((int) (width / ratio), MeasureSpec.EXACTLY)
-                );
-            } else {
-                super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-            }
+        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.EXACTLY
+                && (heightMode == MeasureSpec.UNSPECIFIED || heightMode == MeasureSpec.AT_MOST)) {
+            int width = MeasureSpec.getSize(widthMeasureSpec);
+
+            super.onMeasure(widthMeasureSpec,
+                    MeasureSpec.makeMeasureSpec((int) (width / ratio), MeasureSpec.EXACTLY)
+            );
+        } else {
+            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         }
     }
 

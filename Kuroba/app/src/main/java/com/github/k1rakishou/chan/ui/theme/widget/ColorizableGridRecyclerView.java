@@ -20,6 +20,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 
 import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.core_themes.ThemeEngine;
@@ -39,6 +40,8 @@ public class ColorizableGridRecyclerView extends ColorizableRecyclerView {
     ThemeEngine themeEngine;
 
     private GridLayoutManager gridLayoutManager;
+    private StaggeredGridLayoutManager staggeredGridLayoutManager;
+
     private int spanWidth;
     private int realSpanWidth;
     private int currentSpanCount;
@@ -65,9 +68,19 @@ public class ColorizableGridRecyclerView extends ColorizableRecyclerView {
         }
     }
 
-    public void setLayoutManager(GridLayoutManager gridLayoutManager) {
-        this.gridLayoutManager = gridLayoutManager;
-        super.setLayoutManager(gridLayoutManager);
+    public void setLayoutManager(LayoutManager layoutManager) {
+        if (layoutManager instanceof StaggeredGridLayoutManager) {
+            this.staggeredGridLayoutManager = (StaggeredGridLayoutManager) layoutManager;
+            this.gridLayoutManager = null;
+        } else if (layoutManager instanceof GridLayoutManager) {
+            this.gridLayoutManager = (GridLayoutManager) layoutManager;
+            this.staggeredGridLayoutManager = null;
+        } else {
+            throw new IllegalArgumentException("Unexpected layout manager "
+                    + layoutManager.getClass().getSimpleName());
+        }
+
+        super.setLayoutManager(layoutManager);
     }
 
     @Override
@@ -111,7 +124,12 @@ public class ColorizableGridRecyclerView extends ColorizableRecyclerView {
 
         this.currentSpanCount = spanCount;
 
-        gridLayoutManager.setSpanCount(spanCount);
+        if (gridLayoutManager != null) {
+            gridLayoutManager.setSpanCount(spanCount);
+        } else if (staggeredGridLayoutManager != null) {
+            staggeredGridLayoutManager.setSpanCount(spanCount);
+        }
+
         int oldRealSpanWidth = realSpanWidth;
         realSpanWidth = getMeasuredWidth() / spanCount;
 

@@ -35,6 +35,7 @@ public class AlbumViewCell extends FrameLayout {
     private ChanPostImage postImage;
     private PostImageThumbnailView thumbnailView;
     private TextView text;
+    private float ratio = 0f;
 
     public AlbumViewCell(Context context) {
         this(context, null);
@@ -55,7 +56,11 @@ public class AlbumViewCell extends FrameLayout {
         text = findViewById(R.id.text);
     }
 
-    public void bindPostImage(@NonNull ChanPostImage postImage, boolean canUseHighResCells) {
+    public void bindPostImage(
+            @NonNull ChanPostImage postImage,
+            boolean canUseHighResCells,
+            boolean isStaggeredGridMode
+    ) {
         this.postImage = postImage;
         // We don't want to show the prefetch loading indicator in album thumbnails (at least for
         // now)
@@ -72,6 +77,23 @@ public class AlbumViewCell extends FrameLayout {
 
         // if -1, linked image, no info
         text.setText(postImage.isInlined() ? postImage.getExtension().toUpperCase() : details);
+
+        if (isStaggeredGridMode) {
+            setRatioFromImageDimensions();
+        } else {
+            ratio = 0f;
+        }
+    }
+
+    public void setRatioFromImageDimensions() {
+        int imageWidth = postImage.getImageWidth();
+        int imageHeight = postImage.getImageHeight();
+
+        if (imageWidth <= 0 || imageHeight <= 0) {
+            return;
+        }
+
+        this.ratio = ((float) imageWidth / (float) imageHeight);
     }
 
     public void unbindPostImage() {
@@ -88,17 +110,28 @@ public class AlbumViewCell extends FrameLayout {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
+        if (ratio == 0f) {
+            int heightMode = MeasureSpec.getMode(heightMeasureSpec);
 
-        if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.EXACTLY
-                && (heightMode == MeasureSpec.UNSPECIFIED
-                || heightMode == MeasureSpec.AT_MOST)) {
-            int width = MeasureSpec.getSize(widthMeasureSpec);
-            int height = width + dp(32);
+            if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.EXACTLY
+                    && (heightMode == MeasureSpec.UNSPECIFIED
+                    || heightMode == MeasureSpec.AT_MOST)) {
+                int width = MeasureSpec.getSize(widthMeasureSpec);
+                int height = width + dp(32);
 
-            super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
-        } else {
-            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+                super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
+            } else {
+                super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+            }
+
+            return;
         }
+
+        int width = MeasureSpec.getSize(widthMeasureSpec);
+
+        super.onMeasure(
+                widthMeasureSpec,
+                MeasureSpec.makeMeasureSpec((int) (width / ratio), MeasureSpec.EXACTLY)
+        );
     }
 }

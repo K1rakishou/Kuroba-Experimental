@@ -36,6 +36,8 @@ object PersistableChanState {
   @JvmStatic
   lateinit var viewThreadBookmarksGridMode: BooleanSetting
   @JvmStatic
+  lateinit var albumLayoutGridMode: BooleanSetting
+  @JvmStatic
   lateinit var shittyPhonesBackgroundLimitationsExplanationDialogShown: BooleanSetting
   @JvmStatic
   lateinit var bookmarksRecyclerIndexAndTop: StringSetting
@@ -75,11 +77,18 @@ object PersistableChanState {
       previousVersion = IntegerSetting(provider, "previous_version", persistableChanStateInfo.versionCode)
       updateCheckTime = LongSetting(provider, "update_check_time", 0L)
       previousDevHash = StringSetting(provider, "previous_dev_hash", persistableChanStateInfo.commitHash)
+
       viewThreadBookmarksGridMode = BooleanSetting(
         provider,
         "view_thread_bookmarks_grid_mode",
         true
       )
+
+      albumLayoutGridMode = BooleanSetting(
+        provider,
+        "album_layout_grid_mode",
+        false
+      );
 
       shittyPhonesBackgroundLimitationsExplanationDialogShown =
         BooleanSetting(

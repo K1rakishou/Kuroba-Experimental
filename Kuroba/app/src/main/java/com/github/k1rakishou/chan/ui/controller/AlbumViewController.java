@@ -24,8 +24,10 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
@@ -49,6 +51,7 @@ import com.github.k1rakishou.common.AndroidUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
+import com.github.k1rakishou.persist_state.PersistableChanState;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -68,14 +71,19 @@ public class AlbumViewController
         WindowInsetsListener,
         Toolbar.ToolbarHeightUpdatesCallback {
     private static final int DEFAULT_SPAN_WIDTH = dp(120);
-    private ColorizableGridRecyclerView recyclerView;
 
+    private static final int ACTION_DOWNLOAD = 0;
+    private static final int ACTION_TOGGLE_LAYOUT_MODE = 1;
+
+    private ColorizableGridRecyclerView recyclerView;
     private List<ChanPostImage> postImages;
     private int targetIndex = -1;
     private ChanDescriptor chanDescriptor;
 
     @Nullable
     private FastScroller fastScroller;
+
+    private AlbumAdapter albumAdapter;
 
     @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
@@ -98,15 +106,10 @@ public class AlbumViewController
         recyclerView = view.findViewById(R.id.recycler_view);
         recyclerView.setHasFixedSize(true);
 
-        SpanInfo spanInfo = getSpanCountAndSpanWidth();
-
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(context, spanInfo.spanCount);
-        recyclerView.setLayoutManager(gridLayoutManager);
-        recyclerView.setSpanWidth(spanInfo.spanWidth);
-        recyclerView.setItemAnimator(null);
-        AlbumAdapter albumAdapter = new AlbumAdapter();
+        albumAdapter = new AlbumAdapter();
         recyclerView.setAdapter(albumAdapter);
-        recyclerView.scrollToPosition(targetIndex);
+
+        updateRecyclerView(false);
 
         fastScroller = FastScrollerHelper.create(
                 FastScroller.FastScrollerControllerType.Album,
@@ -119,6 +122,30 @@ public class AlbumViewController
         globalWindowInsetsManager.addInsetsUpdatesListener(this);
 
         onInsetsChanged();
+    }
+
+    private void updateRecyclerView(boolean reloading) {
+        SpanInfo spanInfo = getSpanCountAndSpanWidth();
+
+        if (PersistableChanState.getAlbumLayoutGridMode().get()) {
+            GridLayoutManager gridLayoutManager = new GridLayoutManager(context, spanInfo.spanCount);
+            recyclerView.setLayoutManager(gridLayoutManager);
+        } else {
+            StaggeredGridLayoutManager staggeredGridLayoutManager = new StaggeredGridLayoutManager(
+                    spanInfo.spanCount,
+                    StaggeredGridLayoutManager.VERTICAL
+            );
+
+            recyclerView.setLayoutManager(staggeredGridLayoutManager);
+        }
+
+        recyclerView.setSpanWidth(spanInfo.spanWidth);
+        recyclerView.setItemAnimator(null);
+        recyclerView.scrollToPosition(targetIndex);
+
+        if (reloading) {
+            albumAdapter.refresh();
+        }
     }
 
     private SpanInfo getSpanCountAndSpanWidth() {
@@ -189,11 +216,22 @@ public class AlbumViewController
         this.postImages = postImages;
 
         // Navigation
-        Drawable downloadDrawable = context.getDrawable(R.drawable.ic_file_download_white_24dp);
+        Drawable downloadDrawable = ContextCompat.getDrawable(context, R.drawable.ic_file_download_white_24dp);
         downloadDrawable.setTint(Color.WHITE);
 
+        Drawable gridDrawable;
+
+        if (PersistableChanState.getAlbumLayoutGridMode().get()) {
+            gridDrawable = ContextCompat.getDrawable(context, R.drawable.ic_baseline_view_quilt_24);
+        } else {
+            gridDrawable = ContextCompat.getDrawable(context, R.drawable.ic_baseline_view_comfy_24);
+        }
+
+        gridDrawable.setTint(Color.WHITE);
+
         navigation.buildMenu()
-                .withItem(Integer.MAX_VALUE, downloadDrawable, this::downloadAlbumClicked)
+                .withItem(ACTION_TOGGLE_LAYOUT_MODE, gridDrawable, this::toggleLayoutModeClicked)
+                .withItem(ACTION_DOWNLOAD, downloadDrawable, this::downloadAlbumClicked)
                 .build();
 
         navigation.title = title;
@@ -205,6 +243,24 @@ public class AlbumViewController
         AlbumDownloadController albumDownloadController = new AlbumDownloadController(context);
         albumDownloadController.setPostImages(postImages);
         navigationController.pushController(albumDownloadController);
+    }
+
+    private void toggleLayoutModeClicked(ToolbarMenuItem item) {
+        PersistableChanState.getAlbumLayoutGridMode().toggle();
+        updateRecyclerView(true);
+
+        ToolbarMenuItem menuItem = navigation.findItem(ACTION_TOGGLE_LAYOUT_MODE);
+
+        Drawable gridDrawable;
+
+        if (PersistableChanState.getAlbumLayoutGridMode().get()) {
+            gridDrawable = ContextCompat.getDrawable(context, R.drawable.ic_baseline_view_quilt_24);
+        } else {
+            gridDrawable = ContextCompat.getDrawable(context, R.drawable.ic_baseline_view_comfy_24);
+        }
+
+        gridDrawable.setTint(Color.WHITE);
+        menuItem.setImage(gridDrawable);
     }
 
     @Nullable
@@ -298,9 +354,15 @@ public class AlbumViewController
             ChanPostImage postImage = postImages.get(position);
 
             if (postImage != null) {
+                boolean canUseHighResCells =
+                        recyclerView.getCurrentSpanCount() <= ColorizableGridRecyclerView.HI_RES_CELLS_MAX_SPAN_COUNT;
+                boolean isStaggeredGridMode =
+                        recyclerView.getLayoutManager() instanceof StaggeredGridLayoutManager;
+
                 holder.cell.bindPostImage(
                         postImage,
-                        recyclerView.getCurrentSpanCount() <= ColorizableGridRecyclerView.HI_RES_CELLS_MAX_SPAN_COUNT
+                        canUseHighResCells,
+                        isStaggeredGridMode
                 );
             }
         }
@@ -319,6 +381,10 @@ public class AlbumViewController
         public long getItemId(int position) {
             return position;
         }
+
+        public void refresh() {
+            notifyDataSetChanged();
+        }
     }
 
     private class AlbumItemCellHolder
@@ -330,6 +396,7 @@ public class AlbumViewController
         public AlbumItemCellHolder(View itemView) {
             super(itemView);
             cell = (AlbumViewCell) itemView;
+
             thumbnailView = itemView.findViewById(R.id.thumbnail_view);
             thumbnailView.setOnClickListener(this);
         }
