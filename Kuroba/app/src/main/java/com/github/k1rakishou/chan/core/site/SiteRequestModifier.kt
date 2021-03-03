@@ -14,16 +14,81 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.core.site;
+package com.github.k1rakishou.chan.core.site
 
-import android.webkit.WebView;
+import android.webkit.WebView
+import androidx.annotation.CallSuper
+import coil.request.ImageRequest
+import com.github.k1rakishou.chan.core.site.http.HttpCall
+import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import okhttp3.Request
 
-import com.github.k1rakishou.chan.core.site.http.HttpCall;
+abstract class SiteRequestModifier<T : Site>(
+  protected val site: T,
+  protected val appConstants: AppConstants
+) {
+  protected val cookieHeaderKey = "Cookie"
+  protected val userAgentHeaderKey = "User-Agent"
 
-import okhttp3.Request;
+  @CallSuper
+  open fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
+    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
+  }
 
-public interface SiteRequestModifier {
-    void modifyHttpCall(HttpCall httpCall, Request.Builder requestBuilder);
+  @CallSuper
+  open fun modifyWebView(webView: WebView) {
+  }
 
-    void modifyWebView(WebView webView);
+  @CallSuper
+  open fun modifyThumbnailGetRequest(site: T, requestBuilder: ImageRequest.Builder) {
+    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
+  }
+
+  @CallSuper
+  open fun modifyCatalogOrThreadGetRequest(
+    site: T,
+    chanDescriptor: ChanDescriptor,
+    requestBuilder: Request.Builder
+  ) {
+    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
+  }
+
+  @CallSuper
+  open fun modifyFullImageHeadRequest(
+    site: T,
+    requestBuilder: Request.Builder
+  ) {
+    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
+  }
+
+  @CallSuper
+  open fun modifyFullImageGetRequest(
+    site: T,
+    requestBuilder: Request.Builder
+  ) {
+    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
+  }
+
+  @CallSuper
+  open fun modifyMediaDownloadRequest(
+    site: T,
+    requestBuilder: Request.Builder
+  ) {
+    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
+  }
+
+  @CallSuper
+  open fun modifyVideoStreamRequest(
+    site: T,
+    requestProperties: MutableMap<String, String>
+  ) {
+    requestProperties.put(userAgentHeaderKey, appConstants.userAgent)
+  }
+
+  @CallSuper
+  open fun modifySearchGetRequest(site: T, requestBuilder: Request.Builder) {
+    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
+  }
+
 }

@@ -64,6 +64,7 @@ import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator;
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherDelegate;
 import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.SiteRegistry;
+import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator;
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager;
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
@@ -612,6 +613,7 @@ public class ManagerModule {
             AppConstants appConstants,
             RealDownloaderOkHttpClient downloaderOkHttpClient,
             FileManager fileManager,
+            SiteResolver siteResolver,
             ChanPostImageRepository chanPostImageRepository,
             ImageDownloadRequestRepository imageDownloadRequestRepository
     ) {
@@ -622,6 +624,7 @@ public class ManagerModule {
                 downloaderOkHttpClient,
                 NotificationManagerCompat.from(appContext),
                 fileManager,
+                siteResolver,
                 chanPostImageRepository,
                 imageDownloadRequestRepository
         );

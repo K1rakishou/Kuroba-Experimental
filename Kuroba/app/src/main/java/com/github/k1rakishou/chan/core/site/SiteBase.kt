@@ -182,7 +182,10 @@ abstract class SiteBase : Site, CoroutineScope {
   override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? {
     return when (settingId) {
       SiteSetting.SiteSettingId.CloudFlareClearanceCookie -> cloudFlareClearanceCookie as T
+      // 4chan only
       SiteSetting.SiteSettingId.CountryFlag -> null
+      // 2ch.hk only
+      SiteSetting.SiteSettingId.DvachUserCodeCookie -> null
     }
   }
 

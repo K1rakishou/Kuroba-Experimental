@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.core.diagnostics.AnrSupervisor;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
 import com.github.k1rakishou.chan.core.manager.ReportManager;
+import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate;
@@ -122,7 +123,8 @@ public class AppModule {
             ThemeEngine themeEngine,
             AppConstants appConstants,
             CacheHandler cacheHandler,
-            FileManager fileManager
+            FileManager fileManager,
+            SiteResolver siteResolver
     ) {
         return new ImageLoaderV2(
                 ChanSettings.verboseLogs.get(),
@@ -132,7 +134,8 @@ public class AppModule {
                 replyManager,
                 themeEngine,
                 cacheHandler,
-                fileManager
+                fileManager,
+                siteResolver
         );
     }
 

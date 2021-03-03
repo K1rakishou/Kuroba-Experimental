@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
-import android.webkit.WebView
+import coil.request.ImageRequest
+import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
 import com.github.k1rakishou.chan.core.site.Site
@@ -28,6 +29,7 @@ import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInf
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -59,14 +61,18 @@ class Dvach : CommonSite() {
 
   private lateinit var passCode: StringSetting
   private lateinit var passCookie: StringSetting
+  private lateinit var userCodeCookie: StringSetting
   private lateinit var captchaType: OptionsSetting<Chan4.CaptchaType>
   private lateinit var passCodeInfo: JsonSetting<DvachPasscodeInfo>
+
+  private val siteRequestModifier by lazy { DvachSiteRequestModifier(this, appConstants) }
 
   override fun initialize() {
     super.initialize()
 
     passCode = StringSetting(prefs, "preference_pass_code", "")
     passCookie = StringSetting(prefs, "preference_pass_cookie", "")
+    userCodeCookie = StringSetting(prefs, "user_code_cookie", "")
 
     captchaType = OptionsSetting(
       prefs,
@@ -101,6 +107,14 @@ class Dvach : CommonSite() {
     )
 
     return settings
+  }
+
+  override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? {
+    return when (settingId) {
+      // Used for hidden boards accessing
+      SiteSetting.SiteSettingId.DvachUserCodeCookie -> userCodeCookie as T
+      else -> super.getSettingBySettingId(settingId)
+    }
   }
 
   override fun setParser(commentParser: CommentParser) {
@@ -321,7 +335,7 @@ class Dvach : CommonSite() {
       }
 
     })
-    setRequestModifier(siteRequestModifier)
+    setRequestModifier(siteRequestModifier as SiteRequestModifier<Site>)
     setApi(DvachApi(siteManager, boardManager, this))
     setParser(DvachCommentParser(mockReplyManager))
 
@@ -429,17 +443,85 @@ class Dvach : CommonSite() {
     }
   }
 
-  private val siteRequestModifier = object : SiteRequestModifier {
+  class DvachSiteRequestModifier(
+    site: Dvach,
+    appConstants: AppConstants
+  ) : SiteRequestModifier<Dvach>(site, appConstants) {
 
     override fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
-      if (actions().isLoggedIn()) {
-        requestBuilder.addHeader("Cookie", "passcode_auth=" + passCookie.get())
+      super.modifyHttpCall(httpCall, requestBuilder)
+
+      if (site.actions().isLoggedIn()) {
+        requestBuilder.addHeader(cookieHeaderKey, "passcode_auth=" + site.passCookie.get())
       }
+
+      addUserCodeCookie(site, requestBuilder)
     }
 
-    override fun modifyWebView(webView: WebView?) {
+    override fun modifyThumbnailGetRequest(site: Dvach, requestBuilder: ImageRequest.Builder) {
+      super.modifyThumbnailGetRequest(site, requestBuilder)
+
+      val userCodeCookie = site.userCodeCookie.get()
+      if (userCodeCookie.isEmpty()) {
+        return
+      }
+
+      requestBuilder.addHeader(cookieHeaderKey, "${USER_CODE_COOKIE_KEY}=${userCodeCookie}")
     }
 
+    override fun modifyCatalogOrThreadGetRequest(
+      site: Dvach,
+      chanDescriptor: ChanDescriptor,
+      requestBuilder: Request.Builder
+    ) {
+      super.modifyCatalogOrThreadGetRequest(site, chanDescriptor, requestBuilder)
+
+      addUserCodeCookie(site, requestBuilder)
+    }
+
+    override fun modifyFullImageHeadRequest(site: Dvach, requestBuilder: Request.Builder) {
+      super.modifyFullImageHeadRequest(site, requestBuilder)
+
+      addUserCodeCookie(site, requestBuilder)
+    }
+
+    override fun modifyFullImageGetRequest(site: Dvach, requestBuilder: Request.Builder) {
+      super.modifyFullImageGetRequest(site, requestBuilder)
+
+      addUserCodeCookie(site, requestBuilder)
+    }
+
+    override fun modifyMediaDownloadRequest(site: Dvach, requestBuilder: Request.Builder) {
+      super.modifyMediaDownloadRequest(site, requestBuilder)
+
+      addUserCodeCookie(site, requestBuilder)
+    }
+
+    override fun modifyVideoStreamRequest(
+      site: Dvach,
+      requestProperties: MutableMap<String, String>
+    ) {
+      super.modifyVideoStreamRequest(site, requestProperties)
+
+      val userCodeCookie = site.userCodeCookie.get()
+      if (userCodeCookie.isEmpty()) {
+        return
+      }
+
+      requestProperties.put(cookieHeaderKey, "${USER_CODE_COOKIE_KEY}=${userCodeCookie}")
+    }
+
+    private fun addUserCodeCookie(
+      site: Dvach,
+      requestBuilder: Request.Builder
+    ) {
+      val userCodeCookie = site.userCodeCookie.get()
+      if (userCodeCookie.isEmpty()) {
+        return
+      }
+
+      requestBuilder.addHeader(cookieHeaderKey, "${USER_CODE_COOKIE_KEY}=${userCodeCookie}")
+    }
   }
 
   companion object {
@@ -448,6 +530,8 @@ class Dvach : CommonSite() {
     val SITE_DESCRIPTOR = SiteDescriptor(SITE_NAME)
     const val CAPTCHA_KEY = "6LeQYz4UAAAAAL8JCk35wHSv6cuEV5PyLhI6IxsM"
     const val DEFAULT_MAX_FILE_SIZE = 20480 * 1024 // 20MB
+
+    const val USER_CODE_COOKIE_KEY = "usercode_auth"
 
     @JvmField
     val URL_HANDLER: CommonSiteUrlHandler = object : CommonSiteUrlHandler() {

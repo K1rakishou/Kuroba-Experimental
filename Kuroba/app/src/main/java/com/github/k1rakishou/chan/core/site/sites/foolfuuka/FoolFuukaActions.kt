@@ -99,15 +99,15 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
       .addEncodedPathSegment(searchParams.getCurrentPage().toString())
       .build()
 
-    val request = Request.Builder()
+    val requestBuilder = Request.Builder()
       .url(searchUrl)
-      .addHeader("User-Agent", site.appConstants.userAgent)
       .get()
-      .build()
+
+    site.requestModifier().modifySearchGetRequest(site, requestBuilder)
 
     return FoolFuukaSearchRequest(
       searchParams,
-      request,
+      requestBuilder.build(),
       site.proxiedOkHttpClient
     ).execute()
   }

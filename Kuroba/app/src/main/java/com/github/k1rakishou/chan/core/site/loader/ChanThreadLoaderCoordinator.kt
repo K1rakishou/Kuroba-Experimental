@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.loader.internal.ChanPostPersister
 import com.github.k1rakishou.chan.core.site.loader.internal.DatabasePostLoader
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsUseCase
@@ -82,7 +83,8 @@ class ChanThreadLoaderCoordinator(
   private val appConstants: AppConstants,
   private val postFilterManager: PostFilterManager,
   private val verboseLogsEnabled: Boolean,
-  private val boardManager: BoardManager
+  private val boardManager: BoardManager,
+  private val siteResolver: SiteResolver
 ) : CoroutineScope {
   private val job = SupervisorJob()
 
@@ -146,11 +148,19 @@ class ChanThreadLoaderCoordinator(
       BackgroundUtils.ensureBackgroundThread()
 
       return@withContext Try {
-        val request = Request.Builder()
+        val requestBuilder = Request.Builder()
           .url(url)
           .get()
-          .header("User-Agent", appConstants.userAgent)
-          .build()
+
+        siteResolver.findSiteForUrl(url)?.let { site ->
+          site.requestModifier()?.modifyCatalogOrThreadGetRequest(
+            site = site,
+            chanDescriptor = chanDescriptor,
+            requestBuilder = requestBuilder
+          )
+        }
+
+        val request = requestBuilder.build()
 
         val (response, requestDuration) = try {
           measureTimedValue { proxiedOkHttpClient.okHttpClient().suspendCall(request) }

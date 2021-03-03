@@ -39,7 +39,8 @@ sealed class SiteSetting(
 
   enum class SiteSettingId {
     CloudFlareClearanceCookie,
-    CountryFlag
+    CountryFlag,
+    DvachUserCodeCookie
   }
 
 }

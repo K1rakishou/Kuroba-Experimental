@@ -17,7 +17,6 @@
 package com.github.k1rakishou.chan.core.site.common
 
 import android.text.TextUtils
-import android.webkit.WebView
 import androidx.annotation.CallSuper
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
@@ -57,7 +56,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
 import java.lang.Long.toHexString
@@ -74,7 +72,7 @@ abstract class CommonSite : SiteBase() {
   private var endpoints: CommonEndpoints? = null
   private var actions: CommonActions? = null
   private var api: CommonApi? = null
-  private var requestModifier: SiteRequestModifier? = null
+  private var requestModifier: SiteRequestModifier<Site>? = null
   private var postingLimitationInfo: SitePostingLimitationInfo? = null
   
   @JvmField
@@ -114,8 +112,8 @@ abstract class CommonSite : SiteBase() {
       throw NullPointerException("setParser not called")
     }
     if (requestModifier == null) {
-      requestModifier = object : CommonRequestModifier() {
-        // No-op implementation.
+      requestModifier = object : SiteRequestModifier<Site>(this, appConstants) {
+        // Default implementation.
       }
     }
     if (postingLimitationInfo == null) {
@@ -169,7 +167,7 @@ abstract class CommonSite : SiteBase() {
     this.api = api
   }
 
-  fun setRequestModifier(requestModifier: SiteRequestModifier?) {
+  fun setRequestModifier(requestModifier: SiteRequestModifier<Site>) {
     this.requestModifier = requestModifier
   }
 
@@ -224,7 +222,7 @@ abstract class CommonSite : SiteBase() {
     return actions!!
   }
   
-  override fun requestModifier(): SiteRequestModifier {
+  override fun requestModifier(): SiteRequestModifier<Site> {
     return requestModifier!!
   }
   
@@ -598,11 +596,6 @@ abstract class CommonSite : SiteBase() {
       return site.postParser
     }
 
-  }
-  
-  abstract inner class CommonRequestModifier : SiteRequestModifier {
-    override fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {}
-    override fun modifyWebView(webView: WebView) {}
   }
   
   companion object {

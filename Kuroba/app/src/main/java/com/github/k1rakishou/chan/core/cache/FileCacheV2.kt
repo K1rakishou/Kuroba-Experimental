@@ -78,6 +78,7 @@ class FileCacheV2(
 
   private val chunkDownloader = ChunkDownloader(
     downloaderOkHttpClient,
+    siteResolver,
     activeDownloads,
     verboseLogs,
     appConstants

@@ -5,6 +5,8 @@ import android.util.Range;
 
 import androidx.annotation.Nullable;
 
+import com.github.k1rakishou.chan.core.site.Site;
+import com.github.k1rakishou.chan.core.site.SiteRequestModifier;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_logger.Logger;
@@ -22,7 +24,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Original implementation by https://github.com/ekisu
@@ -241,6 +245,7 @@ public class WebmStreamingDataSource extends BaseDataSource {
 
     public WebmStreamingDataSource(
             @Nullable Uri uri,
+            @Nullable Site site,
             RawFile file,
             long fileLength,
             FileManager fileManager,
@@ -250,7 +255,20 @@ public class WebmStreamingDataSource extends BaseDataSource {
         super(/* isNetwork= */ true);
         Logger.d(TAG, "WebmStreamingDataSource");
 
-        this.dataSource = new DefaultHttpDataSourceFactory(appConstants.getUserAgent())
+        DefaultHttpDataSourceFactory defaultHttpDataSourceFactory = new DefaultHttpDataSourceFactory();
+
+        Map<String, String> requestProperties = new HashMap<>();
+
+        if (site != null) {
+            SiteRequestModifier<Site> requestModifier = site.requestModifier();
+            if (requestModifier != null) {
+                requestModifier.modifyVideoStreamRequest(site, requestProperties);
+            }
+        }
+
+        defaultHttpDataSourceFactory.setDefaultRequestProperties(requestProperties);
+
+        this.dataSource = defaultHttpDataSourceFactory
                 .createDataSource();
 
         this.verboseLogs = verboseLogs;

@@ -68,6 +68,8 @@ open class Chan4 : SiteBase() {
   private lateinit var captchaType: OptionsSetting<CaptchaType>
   lateinit var flagType: StringSetting
 
+  private val siteRequestModifier by lazy { Chan4SiteRequestModifier(this, appConstants) }
+
   override fun initialize() {
     super.initialize()
 
@@ -233,36 +235,6 @@ open class Chan4 : SiteBase() {
     }
   }
 
-  private val siteRequestModifier: SiteRequestModifier = object : SiteRequestModifier {
-
-    override fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
-      if (actions().isLoggedIn()) {
-        val passTokenSetting = passToken
-        requestBuilder.addHeader("Cookie", "pass_id=" + passTokenSetting.get())
-      }
-    }
-
-    override fun modifyWebView(webView: WebView) {
-      val sys = HttpUrl.Builder()
-        .scheme("https")
-        .host("sys.4chan.org")
-        .build()
-
-      val cookieManager = CookieManager.getInstance()
-      cookieManager.removeAllCookies(null)
-
-      if (actions().isLoggedIn()) {
-        val passTokenSetting = passToken
-        val passCookies = arrayOf("pass_enabled=1;", "pass_id=" + passTokenSetting.get() + ";")
-        val domain = sys.scheme + "://" + sys.host + "/"
-
-        for (cookie in passCookies) {
-          cookieManager.setCookie(domain, cookie)
-        }
-      }
-    }
-  }
-
   @OptIn(InternalCoroutinesApi::class)
   private val actions: SiteActions = object : SiteActions {
 
@@ -423,14 +395,14 @@ open class Chan4 : SiteBase() {
         .addQueryParameter("o", page.toString())
         .build()
 
-      val request = Request.Builder()
+      val requestBuilder = Request.Builder()
         .url(searchUrl)
-        .addHeader("User-Agent", appConstants.userAgent)
         .get()
-        .build()
+
+      this@Chan4.requestModifier().modifySearchGetRequest(this@Chan4, requestBuilder)
 
       return Chan4SearchRequest(
-        request,
+        requestBuilder.build(),
         proxiedOkHttpClient,
         searchParams
       ).execute()
@@ -480,8 +452,8 @@ open class Chan4 : SiteBase() {
     return endpoints
   }
 
-  override fun requestModifier(): SiteRequestModifier {
-    return siteRequestModifier
+  override fun requestModifier(): SiteRequestModifier<Site> {
+    return siteRequestModifier as SiteRequestModifier<Site>
   }
 
   override fun chanReader(): ChanReader {
@@ -542,6 +514,43 @@ open class Chan4 : SiteBase() {
   }
 
   override fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.SimpleQuerySearch
+
+  class Chan4SiteRequestModifier(
+    site: Chan4,
+    appConstants: AppConstants
+  ) : SiteRequestModifier<Chan4>(site, appConstants) {
+
+    override fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
+      super.modifyHttpCall(httpCall, requestBuilder)
+
+      if (site.actions().isLoggedIn()) {
+        val passTokenSetting = site.passToken
+        requestBuilder.addHeader("Cookie", "pass_id=" + passTokenSetting.get())
+      }
+    }
+
+    override fun modifyWebView(webView: WebView) {
+      super.modifyWebView(webView)
+
+      val sys = HttpUrl.Builder()
+        .scheme("https")
+        .host("sys.4chan.org")
+        .build()
+
+      val cookieManager = CookieManager.getInstance()
+      cookieManager.removeAllCookies(null)
+
+      if (site.actions().isLoggedIn()) {
+        val passTokenSetting = site.passToken
+        val passCookies = arrayOf("pass_enabled=1;", "pass_id=" + passTokenSetting.get() + ";")
+        val domain = sys.scheme + "://" + sys.host + "/"
+
+        for (cookie in passCookies) {
+          cookieManager.setCookie(domain, cookie)
+        }
+      }
+    }
+  }
 
   @DoNotStrip
   enum class CaptchaType(val value: String) : OptionSettingItem {

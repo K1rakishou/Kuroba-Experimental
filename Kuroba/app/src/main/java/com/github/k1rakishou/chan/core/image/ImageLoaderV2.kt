@@ -23,6 +23,7 @@ import coil.transform.Transformation
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.manager.ReplyManager
+import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.ui.widget.FixedViewSizeResolver
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -52,7 +53,8 @@ class ImageLoaderV2(
   private val replyManager: ReplyManager,
   private val themeEngine: ThemeEngine,
   private val cacheHandler: CacheHandler,
-  private val fileManager: FileManager
+  private val fileManager: FileManager,
+  private val siteResolver: SiteResolver
 ) {
   private var imageNotFoundDrawable: CachedTintedErrorDrawable? = null
   private var imageErrorLoadingDrawable: CachedTintedErrorDrawable? = null
@@ -424,12 +426,18 @@ class ImageLoaderV2(
     BackgroundUtils.ensureBackgroundThread()
     val lifecycle = context.getLifecycleFromContext()
 
+    val site = siteResolver.findSiteForUrl(url)
+    val requestModifier = site?.requestModifier()
+
     val request = with(ImageRequest.Builder(context)) {
       lifecycle(lifecycle)
       allowHardware(false)
       allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
       data(url)
-      addHeader("User-Agent", appConstants.userAgent)
+
+      if (site != null && requestModifier != null) {
+        requestModifier.modifyThumbnailGetRequest(site, this)
+      }
 
       build()
     }

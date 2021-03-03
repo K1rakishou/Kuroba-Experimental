@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.cache.downloader
 
 import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.cache.downloader.DownloaderUtils.isCancellationError
+import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import io.reactivex.BackpressureStrategy
@@ -14,6 +15,7 @@ import java.io.IOException
 
 internal class ChunkDownloader(
   private val downloaderOkHttpClient: DownloaderOkHttpClient,
+  private val siteResolver: SiteResolver,
   private val activeDownloads: ActiveDownloads,
   private val verboseLogs: Boolean,
   private val appConstants: AppConstants
@@ -36,9 +38,12 @@ internal class ChunkDownloader(
       log(TAG, "Start downloading url=$url, chunk ${chunk.start}..${chunk.end}")
     }
 
-    val builder = Request.Builder()
+    val requestBuilder = Request.Builder()
       .url(url)
-      .header("User-Agent", appConstants.userAgent)
+
+    siteResolver.findSiteForUrl(url)?.let { site ->
+      site.requestModifier()?.modifyFullImageGetRequest(site, requestBuilder)
+    }
 
     if (!chunk.isWholeFile()) {
       // If chunk.isWholeFile == true that means that either the file size is too small
@@ -47,10 +52,10 @@ internal class ChunkDownloader(
       // or the user turned off chunked file downloading, or we couldn't send HEAD request
       // (it was timed out) so we should download it normally.
       // In other words, if chunk.isWholeFile == true then we don't use the "Range" header.
-      builder.header("Range", "bytes=" + chunk.start + "-" + chunk.end)
+      requestBuilder.header("Range", "bytes=" + chunk.start + "-" + chunk.end)
     }
 
-    val httpRequest = builder.build()
+    val httpRequest = requestBuilder.build()
     val startTime = System.currentTimeMillis()
 
     return Flowable.create<Response>({ emitter ->

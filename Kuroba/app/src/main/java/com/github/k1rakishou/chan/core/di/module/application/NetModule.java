@@ -120,6 +120,7 @@ public class NetModule {
     @Singleton
     public WebmStreamingSource provideWebmStreamingSource(
             SiteManager siteManager,
+            SiteResolver siteResolver,
             FileManager fileManager,
             FileCacheV2 fileCacheV2,
             CacheHandler cacheHandler,
@@ -127,6 +128,7 @@ public class NetModule {
     ) {
         return new WebmStreamingSource(
                 siteManager,
+                siteResolver,
                 fileManager,
                 fileCacheV2,
                 cacheHandler,

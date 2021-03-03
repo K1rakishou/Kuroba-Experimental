@@ -78,7 +78,7 @@ public class ReportController extends Controller implements RequiresNoBottomNavB
         try {
             WebView webView = new WebView(context);
 
-            SiteRequestModifier siteRequestModifier = site.requestModifier();
+            SiteRequestModifier<Site> siteRequestModifier = site.requestModifier();
             if (siteRequestModifier != null) {
                 siteRequestModifier.modifyWebView(webView);
             }

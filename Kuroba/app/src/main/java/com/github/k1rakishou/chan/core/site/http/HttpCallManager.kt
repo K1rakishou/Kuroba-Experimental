@@ -57,7 +57,7 @@ class HttpCallManager @Inject constructor(
           offer(HttpCall.HttpCallWithProgressResult.Progress(fileIndex, totalFiles, percent))
         }
 
-        httpCall.site.requestModifier().modifyHttpCall(httpCall, requestBuilder)
+        httpCall.site.requestModifier()?.modifyHttpCall(httpCall, requestBuilder)
 
         when (val httpCallResult = makeHttpCallInternal(requestBuilder, httpCall)) {
           is HttpCall.HttpCallResult.Success -> {
@@ -80,7 +80,7 @@ class HttpCallManager @Inject constructor(
     val requestBuilder = Request.Builder()
     
     httpCall.setup(requestBuilder, null)
-    httpCall.site.requestModifier().modifyHttpCall(httpCall, requestBuilder)
+    httpCall.site.requestModifier()?.modifyHttpCall(httpCall, requestBuilder)
     
     return makeHttpCallInternal(requestBuilder, httpCall)
   }

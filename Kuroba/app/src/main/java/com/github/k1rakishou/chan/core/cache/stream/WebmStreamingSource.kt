@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.core.cache.FileCacheListener
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.cache.MediaSourceCallback
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils.runOnMainThread
 import com.github.k1rakishou.common.AppConstants
@@ -25,6 +26,7 @@ import java.io.IOException
 
 class WebmStreamingSource(
   private val siteManager: SiteManager,
+  private val siteResolver: SiteResolver,
   private val fileManager: FileManager,
   private val fileCacheV2: FileCacheV2,
   private val cacheHandler: CacheHandler,
@@ -48,6 +50,7 @@ class WebmStreamingSource(
 
     val fileCacheSource = WebmStreamingDataSource(
       uri,
+      siteResolver.findSiteForUrl(videoUrl),
       rawFile,
       fileLengthInBytes.toLong(),
       fileManager,

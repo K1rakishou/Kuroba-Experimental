@@ -5,6 +5,7 @@ import androidx.annotation.GuardedBy
 import androidx.core.app.NotificationManagerCompat
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
+import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
@@ -55,6 +56,7 @@ class ImageSaverV2ServiceDelegate(
   private val downloaderOkHttpClient: RealDownloaderOkHttpClient,
   private val notificationManagerCompat: NotificationManagerCompat,
   private val fileManager: FileManager,
+  private val siteResolver: SiteResolver,
   private val chanPostImageRepository: ChanPostImageRepository,
   private val imageDownloadRequestRepository: ImageDownloadRequestRepository
 ) {
@@ -767,12 +769,14 @@ class ImageSaverV2ServiceDelegate(
   suspend fun downloadFileIntoFile(imageUrl: HttpUrl, outputFile: AbstractFile) {
     BackgroundUtils.ensureBackgroundThread()
 
-    val request = Request.Builder()
+    val requestBuilder = Request.Builder()
       .url(imageUrl)
-      .header("User-Agent", appConstants.userAgent)
-      .build()
 
-    val response = downloaderOkHttpClient.okHttpClient().suspendCall(request)
+    siteResolver.findSiteForUrl(imageUrl.toString())?.let { site ->
+      site.requestModifier().modifyMediaDownloadRequest(site, requestBuilder)
+    }
+
+    val response = downloaderOkHttpClient.okHttpClient().suspendCall(requestBuilder.build())
 
     if (!response.isSuccessful) {
       if (response.code == 404) {

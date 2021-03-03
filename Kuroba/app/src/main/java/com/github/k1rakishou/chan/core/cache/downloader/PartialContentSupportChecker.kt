@@ -116,12 +116,13 @@ internal class PartialContentSupportChecker(
 
     Logger.d(TAG, "Sending HEAD request to url ($url)")
 
-    val headRequest = Request.Builder()
+    val headRequestBuilder = Request.Builder()
       .head()
-      .header("User-Agent", appConstants.userAgent)
       .url(url)
-      .build()
 
+    site?.let { it.requestModifier()?.modifyFullImageHeadRequest(it, headRequestBuilder) }
+
+    val headRequest = headRequestBuilder.build()
     val startTime = System.currentTimeMillis()
 
     return Single.create<PartialContentCheckResult> { emitter ->

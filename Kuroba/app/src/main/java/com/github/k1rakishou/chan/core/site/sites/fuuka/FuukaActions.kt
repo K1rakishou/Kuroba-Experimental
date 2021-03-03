@@ -102,16 +102,16 @@ class FuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
       .tryAddSearchParam("search_subject", searchParams.subject)
       .build()
 
-    val request = Request.Builder()
+    val requestBuilder = Request.Builder()
       .url(searchUrl)
-      .addHeader("User-Agent", site.appConstants.userAgent)
       .get()
-      .build()
+
+    site.requestModifier().modifySearchGetRequest(site, requestBuilder)
 
     return FuukaSearchRequest(
       ChanSettings.verboseLogs.get(),
       searchParams,
-      request,
+      requestBuilder.build(),
       site.proxiedOkHttpClient
     ).execute()
   }

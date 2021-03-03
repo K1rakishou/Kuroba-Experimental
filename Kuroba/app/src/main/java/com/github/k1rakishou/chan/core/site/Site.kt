@@ -129,7 +129,7 @@ interface Site {
   fun boardFeature(boardFeature: BoardFeature, board: ChanBoard): Boolean
   fun settings(): List<SiteSetting>
   fun endpoints(): SiteEndpoints
-  fun requestModifier(): SiteRequestModifier
+  fun requestModifier(): SiteRequestModifier<Site>
   fun chanReader(): ChanReader
   fun actions(): SiteActions
   fun commentParserType(): CommentParserType

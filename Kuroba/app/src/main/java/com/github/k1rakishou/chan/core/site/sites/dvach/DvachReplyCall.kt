@@ -18,7 +18,7 @@ package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import android.text.TextUtils
 import com.github.k1rakishou.chan.core.manager.ReplyManager
-import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.common.CommonReplyHttpCall
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody.ProgressRequestListener
@@ -29,6 +29,8 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import com.github.k1rakishou.prefs.StringSetting
+import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -39,7 +41,7 @@ import java.util.*
 import java.util.regex.Pattern
 
 class DvachReplyCall internal constructor(
-  site: Site,
+  site: Dvach,
   replyChanDescriptor: ChanDescriptor,
   private val replyManager: ReplyManager
 ) : CommonReplyHttpCall(site, replyChanDescriptor) {
@@ -160,6 +162,8 @@ class DvachReplyCall internal constructor(
 
       replyResponse.postNo = postMessageMatcher.group(1).toInt().toLong()
       replyResponse.posted = true
+
+      storeUserCodeCookieIfNeeded(response.headers)
       return
     }
 
@@ -170,11 +174,42 @@ class DvachReplyCall internal constructor(
       replyResponse.threadNo = threadNo.toLong()
       replyResponse.postNo = threadNo.toLong()
       replyResponse.posted = true
+
+      storeUserCodeCookieIfNeeded(response.headers)
       return
     }
 
     Logger.e(TAG, "Couldn't handle server response! response = \"$result\"")
     replyResponse.errorMessage = "Failed to post, see the logs for more info"
+  }
+
+  // usercode_auth=1234567890abcdef
+  private fun storeUserCodeCookieIfNeeded(headers: Headers) {
+    val userCodeSetting = site.getSettingBySettingId<StringSetting>(
+      SiteSetting.SiteSettingId.DvachUserCodeCookie
+    )
+
+    if (userCodeSetting == null || userCodeSetting.get().isNotEmpty()) {
+      return
+    }
+
+    val userCodeCookie = headers
+      .firstOrNull { cookie -> cookie.second.startsWith(Dvach.USER_CODE_COOKIE_KEY) }
+
+    if (userCodeCookie == null) {
+      return
+    }
+
+    val userCodeCookieValue = userCodeCookie.second
+      .split(";")
+      .firstOrNull { value -> value.startsWith(Dvach.USER_CODE_COOKIE_KEY) }
+      ?.removePrefix("${Dvach.USER_CODE_COOKIE_KEY}=")
+
+    if (userCodeCookieValue == null || userCodeCookieValue.isEmpty()) {
+      return
+    }
+
+    userCodeSetting.set(userCodeCookieValue)
   }
 
   companion object {
