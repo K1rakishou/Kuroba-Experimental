@@ -594,9 +594,10 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_layout_mode_slide">Slide mode</string>
     <string name="setting_layout_mode_phone">Phone mode</string>
     <string name="setting_layout_mode_split">Split mode</string>
-    <string name="setting_board_grid_span_count">Catalog mode column count</string>
-    <string name="setting_board_grid_span_count_default">Auto</string>
-    <string name="setting_board_grid_span_count_item">%1$d columns</string>
+    <string name="setting_board_grid_span_count">Catalog mode columns count</string>
+    <string name="setting_album_span_count">Album columns count</string>
+    <string name="setting_span_count_default">Auto</string>
+    <string name="setting_span_count_item">%1$d columns</string>
     <string name="setting_never_hide_toolbar">Never hide the toolbar</string>
     <string name="setting_enable_reply_fab">Enable the reply button</string>
     <string name="setting_bottom_js_captcha">Bottom captcha</string>

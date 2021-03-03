@@ -119,7 +119,6 @@ public class AlbumDownloadController
         GridLayoutManager gridLayoutManager = new GridLayoutManager(context, 3);
         recyclerView.setLayoutManager(gridLayoutManager);
         recyclerView.setSpanWidth(dp(90));
-        recyclerView.getRecycledViewPool().setMaxRecycledViews(AlbumAdapter.ALBUM_CELL_TYPE, 0);
 
         AlbumAdapter adapter = new AlbumAdapter();
         recyclerView.setAdapter(adapter);

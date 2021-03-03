@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
+import com.github.k1rakishou.chan.features.settings.screens.AppearanceSettingsScreen;
 import com.github.k1rakishou.chan.ui.cell.AlbumViewCell;
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController;
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController;
@@ -44,6 +45,7 @@ import com.github.k1rakishou.chan.ui.view.FastScroller;
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
+import com.github.k1rakishou.common.AndroidUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
@@ -65,6 +67,7 @@ public class AlbumViewController
         RequiresNoBottomNavBar,
         WindowInsetsListener,
         Toolbar.ToolbarHeightUpdatesCallback {
+    private static final int DEFAULT_SPAN_WIDTH = dp(120);
     private ColorizableGridRecyclerView recyclerView;
 
     private List<ChanPostImage> postImages;
@@ -94,14 +97,16 @@ public class AlbumViewController
         view = inflate(context, R.layout.controller_album_view);
         recyclerView = view.findViewById(R.id.recycler_view);
         recyclerView.setHasFixedSize(true);
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(context, 3);
+
+        SpanInfo spanInfo = getSpanCountAndSpanWidth();
+
+        GridLayoutManager gridLayoutManager = new GridLayoutManager(context, spanInfo.spanCount);
         recyclerView.setLayoutManager(gridLayoutManager);
-        recyclerView.setSpanWidth(dp(120));
+        recyclerView.setSpanWidth(spanInfo.spanWidth);
         recyclerView.setItemAnimator(null);
         AlbumAdapter albumAdapter = new AlbumAdapter();
         recyclerView.setAdapter(albumAdapter);
         recyclerView.scrollToPosition(targetIndex);
-        recyclerView.getRecycledViewPool().setMaxRecycledViews(AlbumAdapter.ALBUM_CELL_TYPE, 0);
 
         fastScroller = FastScrollerHelper.create(
                 FastScroller.FastScrollerControllerType.Album,
@@ -114,6 +119,23 @@ public class AlbumViewController
         globalWindowInsetsManager.addInsetsUpdatesListener(this);
 
         onInsetsChanged();
+    }
+
+    private SpanInfo getSpanCountAndSpanWidth() {
+        int albumSpanCount = ChanSettings.albumSpanCount.get();
+        int albumSpanWith = DEFAULT_SPAN_WIDTH;
+
+        int displayWidth = AndroidUtils.getDisplaySize(context).x;
+
+        if (albumSpanCount == 0) {
+            albumSpanCount = displayWidth / DEFAULT_SPAN_WIDTH;
+        } else {
+            albumSpanWith = displayWidth / albumSpanCount;
+        }
+
+        albumSpanCount = AppearanceSettingsScreen.clampColumnsCount(albumSpanCount);
+
+        return new SpanInfo(albumSpanCount, albumSpanWith);
     }
 
     @Override
@@ -317,6 +339,16 @@ public class AlbumViewController
             int adapterPosition = getAdapterPosition();
             ChanPostImage postImage = postImages.get(adapterPosition);
             openImage(this, postImage);
+        }
+    }
+
+    private class SpanInfo {
+        public final int spanCount;
+        public final int spanWidth;
+
+        public SpanInfo(int spanCount, int spanWidth) {
+            this.spanCount = spanCount;
+            this.spanWidth = spanWidth;
         }
     }
 }

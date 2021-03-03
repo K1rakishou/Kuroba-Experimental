@@ -301,6 +301,7 @@ sealed class AppearanceScreen(
 
     object LayoutMode : LayoutGroup("layout_mode")
     object CatalogColumnsCount : LayoutGroup("catalog_columns_count")
+    object AlbumColumnsCount : LayoutGroup("album_columns_count")
     object NeverHideToolbar : LayoutGroup("never_hide_toolbar")
     object EnableReplyFAB : LayoutGroup("enable_reply_fab")
     object BottomJsCaptcha : LayoutGroup("bottom_js_captcha")
