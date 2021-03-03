@@ -144,7 +144,6 @@ class ChanThreadLoaderCoordinator(
 
     return withContext(Dispatchers.IO) {
       BackgroundUtils.ensureBackgroundThread()
-      chanPostRepository.awaitUntilInitialized()
 
       return@withContext Try {
         val request = Request.Builder()

@@ -63,7 +63,16 @@ class ChanPostRepository(
     }
   }
 
-  suspend fun awaitUntilInitialized() = suspendableInitializer.awaitUntilInitialized()
+  @OptIn(ExperimentalTime::class)
+  suspend fun awaitUntilInitialized() {
+    if (isReady()) {
+      return
+    }
+
+    Logger.d(TAG, "ChanPostRepository is not ready yet, waiting...")
+    val duration = measureTime { suspendableInitializer.awaitUntilInitialized() }
+    Logger.d(TAG, "ChanPostRepository initialization completed, took $duration")
+  }
 
   fun isReady() = suspendableInitializer.isInitialized()
 

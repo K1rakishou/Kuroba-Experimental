@@ -269,6 +269,8 @@ class ThreadPresenter @Inject constructor(
   private suspend fun onChanTickerTick(chanDescriptor: ChanDescriptor) {
     Logger.d(TAG, "onChanTickerTick($chanDescriptor)")
 
+    chanPostRepository.awaitUntilInitialized()
+
     when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> preloadThreadInfo(chanDescriptor)
       is ChanDescriptor.CatalogDescriptor -> preloadCatalogInfo(chanDescriptor)
@@ -296,7 +298,7 @@ class ThreadPresenter @Inject constructor(
       }
 
       ModularResult.Try { jobs.awaitAll() }
-        .peekError { error -> Logger.e(TAG, "requestThreadInitialData() error", error) }
+        .peekError { error -> Logger.e(TAG, "preloadThreadInfo() error", error) }
         .ignore()
     }
 
@@ -320,7 +322,7 @@ class ThreadPresenter @Inject constructor(
       }
 
       ModularResult.Try { jobs.awaitAll() }
-        .peekError { error -> Logger.e(TAG, "requestCatalogInitialData() error", error) }
+        .peekError { error -> Logger.e(TAG, "preloadCatalogInfo() error", error) }
         .ignore()
     }
 

@@ -356,9 +356,15 @@ public class CardPostCell
 
     @Override
     public void onThemeChanged() {
-        comment.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
-        replies.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
-        options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getPostDetailsColor()));
+        if (comment != null) {
+            comment.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
+        }
+        if (replies != null) {
+            replies.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+        }
+        if (options != null) {
+            options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getPostDetailsColor()));
+        }
     }
 
     private void setCompact(boolean compact) {
