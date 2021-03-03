@@ -374,14 +374,35 @@ class ReportManager(
       appendLine("Development Build: " + AppModuleAndroidUtils.getVerifiedBuildType().name)
       appendLine("Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL)
       appendLine("------------------------------")
+      appendLine("Layout mode: ${ChanSettings.getCurrentLayoutMode().name}")
+      appendLine("Board view mode: ${ChanSettings.boardViewMode.get()}")
       appendLine("Prefetching enabled: ${ChanSettings.autoLoadThreadImages.get()}")
+      appendLine("Disk cache size megabytes: ${ChanSettings.diskCacheSizeMegabytes.get()}")
+      appendLine("Prefetch disk cache size megabytes: ${ChanSettings.prefetchDiskCacheSizeMegabytes.get()}")
       appendLine("Hi-res thumbnails enabled: ${ChanSettings.highResCells.get()}")
-      appendLine("Youtube titles and durations parsing enabled: ${ChanSettings.parseYoutubeTitlesAndDuration.get()}")
       appendLine("WEBM streaming enabled: ${ChanSettings.videoStream.get()}")
       appendLine("ImageSaver root directory: ${PersistableChanState.imageSaverV2PersistedOptions.get().rootDirectoryUri}")
-      appendLine("Phone layout mode: ${ChanSettings.getCurrentLayoutMode().name}")
+      appendLine("Current layout mode: ${ChanSettings.getCurrentLayoutMode().name}")
       appendLine("OkHttp IPv6 support enabled: ${ChanSettings.okHttpAllowIpv6.get()}")
       appendLine("OkHttp HTTP/2 support enabled: ${ChanSettings.okHttpAllowHttp2.get()}")
+      appendLine("CloudFlare force preload enabled: ${ChanSettings.cloudflareForcePreload.get()}")
+
+      appendLine("Foreground watcher enabled: ${ChanSettings.watchEnabled.get()}")
+      if (ChanSettings.watchEnabled.get()) {
+        appendLine("Watch foreground interval: ${ChanSettings.watchForegroundInterval.get()}")
+        appendLine("Watch foreground adaptive interval: ${ChanSettings.watchForegroundAdaptiveInterval.get()}")
+      }
+
+      appendLine("Background watcher enabled: ${ChanSettings.watchBackground.get()}")
+      if (ChanSettings.watchBackground.get()) {
+        appendLine("Watch background interval: ${ChanSettings.watchBackgroundInterval.get()}")
+      }
+
+      appendLine("Filter watch enabled: ${ChanSettings.filterWatchEnabled.get()}")
+      if (ChanSettings.filterWatchEnabled.get()) {
+        appendLine("Filter watch interval: ${ChanSettings.filterWatchInterval.get()}")
+      }
+
       appendLine("------------------------------")
     }
   }

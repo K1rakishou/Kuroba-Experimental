@@ -94,8 +94,12 @@ class CardPostCell : ColorizableCardView, PostCellInterface, View.OnClickListene
   }
 
   private fun canEnableCardPostCellRatio(): Boolean {
-    return (ChanSettings.boardViewMode.get() == PostViewMode.CARD
-      && ChanSettings.boardGridSpanCount.get() != 1)
+    if (callback == null) {
+      return false
+    }
+
+    return ChanSettings.boardViewMode.get() == PostViewMode.GRID
+      && callback?.currentSpanCount() != 1
   }
 
   override fun onClick(v: View) {

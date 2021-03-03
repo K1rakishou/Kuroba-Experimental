@@ -320,7 +320,7 @@ class AppearanceSettingsScreen(
             }
           },
           requiresUiRefresh = true,
-          setting = ChanSettings.boardGridSpanCount
+          setting = ChanSettings.catalogSpanCount
         )
 
         group += BooleanSettingV2.createBuilder(

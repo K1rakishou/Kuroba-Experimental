@@ -257,7 +257,7 @@ class BrowseController(
 
     val modeStringId = when (ChanSettings.boardViewMode.get()) {
       PostViewMode.LIST -> R.string.action_switch_catalog_grid
-      PostViewMode.CARD -> R.string.action_switch_catalog_stagger
+      PostViewMode.GRID -> R.string.action_switch_catalog_stagger
       PostViewMode.STAGGER -> R.string.action_switch_board
     }
 
@@ -473,8 +473,8 @@ class BrowseController(
     var postViewMode = ChanSettings.boardViewMode.get()
 
     postViewMode = when (postViewMode) {
-      PostViewMode.LIST -> PostViewMode.CARD
-      PostViewMode.CARD -> PostViewMode.STAGGER
+      PostViewMode.LIST -> PostViewMode.GRID
+      PostViewMode.GRID -> PostViewMode.STAGGER
       PostViewMode.STAGGER -> PostViewMode.LIST
     }
 
@@ -482,7 +482,7 @@ class BrowseController(
 
     val viewModeText = when (postViewMode) {
       PostViewMode.LIST -> R.string.action_switch_catalog_grid
-      PostViewMode.CARD -> R.string.action_switch_catalog_stagger
+      PostViewMode.GRID -> R.string.action_switch_catalog_stagger
       PostViewMode.STAGGER -> R.string.action_switch_board
     }
 

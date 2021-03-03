@@ -135,7 +135,7 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
           return R.layout.cell_post
         }
       }
-      PostViewMode.CARD,
+      PostViewMode.GRID,
       PostViewMode.STAGGER -> {
         return R.layout.cell_post_card
       }

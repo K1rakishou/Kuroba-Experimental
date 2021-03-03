@@ -205,7 +205,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
       return when (postViewMode) {
         PostViewMode.LIST -> 1
-        PostViewMode.CARD -> (layoutManager as GridLayoutManager).spanCount
+        PostViewMode.GRID -> (layoutManager as GridLayoutManager).spanCount
         PostViewMode.STAGGER -> (layoutManager as StaggeredGridLayoutManager).spanCount
         null -> 1
       }
@@ -219,7 +219,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
       when (postViewMode) {
         PostViewMode.LIST -> return (layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-        PostViewMode.CARD -> return (layoutManager as GridLayoutManager).findFirstVisibleItemPosition()
+        PostViewMode.GRID -> return (layoutManager as GridLayoutManager).findFirstVisibleItemPosition()
         PostViewMode.STAGGER -> {
           val positions = (layoutManager as StaggeredGridLayoutManager).findFirstVisibleItemPositions(null)
           if (positions.isEmpty()) {
@@ -246,7 +246,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
       when (postViewMode) {
         PostViewMode.LIST -> return (layoutManager as LinearLayoutManager).findLastCompletelyVisibleItemPosition()
-        PostViewMode.CARD -> return (layoutManager as GridLayoutManager).findLastCompletelyVisibleItemPosition()
+        PostViewMode.GRID -> return (layoutManager as GridLayoutManager).findLastCompletelyVisibleItemPosition()
         PostViewMode.STAGGER -> {
           val positions = (layoutManager as StaggeredGridLayoutManager).findLastCompletelyVisibleItemPositions(null)
           if (positions.isEmpty()) {
@@ -482,7 +482,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     super.onMeasure(widthMeasureSpec, heightMeasureSpec)
 
     val cardWidth = getDimen(R.dimen.grid_card_width)
-    val gridCountSetting = ChanSettings.boardGridSpanCount.get()
+    val gridCountSetting = ChanSettings.catalogSpanCount.get()
     val compactMode: Boolean
 
     if (gridCountSetting > 0) {
@@ -493,7 +493,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       compactMode = false
     }
 
-    if (postViewMode == PostViewMode.CARD) {
+    if (postViewMode == PostViewMode.GRID) {
       postAdapter.setCompact(compactMode)
       (layoutManager as GridLayoutManager).spanCount = spanCount
     } else if (postViewMode == PostViewMode.STAGGER) {
@@ -531,7 +531,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
         setBackgroundColor(themeEngine.chanTheme.backColor)
       }
-      PostViewMode.CARD -> {
+      PostViewMode.GRID -> {
         val gridLayoutManager: GridLayoutManager = object : GridLayoutManager(
           context,
           spanCount,
@@ -642,7 +642,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
               top
             )
           }
-          PostViewMode.CARD -> {
+          PostViewMode.GRID -> {
             (layoutManager as GridLayoutManager).scrollToPositionWithOffset(
               index,
               top
@@ -678,7 +678,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
                 0
               )
             }
-            PostViewMode.CARD -> {
+            PostViewMode.GRID -> {
               (layoutManager as GridLayoutManager).scrollToPositionWithOffset(
                 position,
                 0
@@ -956,7 +956,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     when (postViewMode) {
       PostViewMode.LIST -> return topView.top != toolbarHeight()
       PostViewMode.STAGGER,
-      PostViewMode.CARD -> return if (topView is PostStubCell) {
+      PostViewMode.GRID -> return if (topView is PostStubCell) {
         // PostStubCell does not have grid_card_margin
         topView.top != toolbarHeight() + dp(1f)
       } else {
@@ -1263,7 +1263,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   private fun setRecyclerViewPadding() {
-    val defaultPadding = if (postViewMode == PostViewMode.CARD || postViewMode == PostViewMode.STAGGER) {
+    val defaultPadding = if (postViewMode == PostViewMode.GRID || postViewMode == PostViewMode.STAGGER) {
       dp(1f)
     } else {
       0

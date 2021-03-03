@@ -144,7 +144,7 @@ public class ChanSettings {
 
     public enum PostViewMode implements OptionSettingItem {
         LIST("list"),
-        CARD("grid"),
+        GRID("grid"),
         STAGGER("stagger");
 
         String name;
@@ -243,7 +243,7 @@ public class ChanSettings {
 
     // Layout
     public static OptionsSetting<LayoutMode> layoutMode;
-    public static IntegerSetting boardGridSpanCount;
+    public static IntegerSetting catalogSpanCount;
     public static BooleanSetting neverHideToolbar;
     public static BooleanSetting enableReplyFab;
     public static BooleanSetting captchaOnBottom;
@@ -398,7 +398,7 @@ public class ChanSettings {
 
             //Layout
             layoutMode = new OptionsSetting<>(provider, "preference_layout_mode", LayoutMode.class, LayoutMode.AUTO);
-            boardGridSpanCount = new IntegerSetting(provider, "preference_board_grid_span_count", 0);
+            catalogSpanCount = new IntegerSetting(provider, "preference_board_grid_span_count", 0);
             neverHideToolbar = new BooleanSetting(provider, "preference_never_hide_toolbar", false);
             enableReplyFab = new BooleanSetting(provider, "preference_enable_reply_fab", true);
             captchaOnBottom = new BooleanSetting(provider, "captcha_on_bottom", true);
