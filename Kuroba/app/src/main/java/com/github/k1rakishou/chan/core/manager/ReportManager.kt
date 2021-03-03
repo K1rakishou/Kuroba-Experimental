@@ -377,15 +377,15 @@ class ReportManager(
       appendLine("Layout mode: ${ChanSettings.getCurrentLayoutMode().name}")
       appendLine("Board view mode: ${ChanSettings.boardViewMode.get()}")
       appendLine("Prefetching enabled: ${ChanSettings.autoLoadThreadImages.get()}")
-      appendLine("Disk cache size megabytes: ${ChanSettings.diskCacheSizeMegabytes.get()}")
-      appendLine("Prefetch disk cache size megabytes: ${ChanSettings.prefetchDiskCacheSizeMegabytes.get()}")
       appendLine("Hi-res thumbnails enabled: ${ChanSettings.highResCells.get()}")
+      appendLine("Disk cache size megabytes: ${ChanSettings.diskCacheSizeMegabytes.get()}")
+      appendLine("CloudFlare force preload enabled: ${ChanSettings.cloudflareForcePreload.get()}")
+      appendLine("Prefetch disk cache size megabytes: ${ChanSettings.prefetchDiskCacheSizeMegabytes.get()}")
       appendLine("WEBM streaming enabled: ${ChanSettings.videoStream.get()}")
       appendLine("ImageSaver root directory: ${PersistableChanState.imageSaverV2PersistedOptions.get().rootDirectoryUri}")
       appendLine("Current layout mode: ${ChanSettings.getCurrentLayoutMode().name}")
       appendLine("OkHttp IPv6 support enabled: ${ChanSettings.okHttpAllowIpv6.get()}")
       appendLine("OkHttp HTTP/2 support enabled: ${ChanSettings.okHttpAllowHttp2.get()}")
-      appendLine("CloudFlare force preload enabled: ${ChanSettings.cloudflareForcePreload.get()}")
 
       appendLine("Foreground watcher enabled: ${ChanSettings.watchEnabled.get()}")
       if (ChanSettings.watchEnabled.get()) {

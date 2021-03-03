@@ -456,7 +456,9 @@ open class ThumbnailView : View {
       calculate = false
     }
 
+    imageLoaderV2.returnBitmapBackIntoPool(this.bitmap)
     this.bitmap = bitmap
+
     invalidate()
   }
 

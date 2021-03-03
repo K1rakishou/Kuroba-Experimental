@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
-import coil.request.ImageRequest
 import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
@@ -458,15 +457,10 @@ class Dvach : CommonSite() {
       addUserCodeCookie(site, requestBuilder)
     }
 
-    override fun modifyThumbnailGetRequest(site: Dvach, requestBuilder: ImageRequest.Builder) {
+    override fun modifyThumbnailGetRequest(site: Dvach, requestBuilder: Request.Builder) {
       super.modifyThumbnailGetRequest(site, requestBuilder)
 
-      val userCodeCookie = site.userCodeCookie.get()
-      if (userCodeCookie.isEmpty()) {
-        return
-      }
-
-      requestBuilder.addHeader(cookieHeaderKey, "${USER_CODE_COOKIE_KEY}=${userCodeCookie}")
+      addUserCodeCookie(site, requestBuilder)
     }
 
     override fun modifyCatalogOrThreadGetRequest(

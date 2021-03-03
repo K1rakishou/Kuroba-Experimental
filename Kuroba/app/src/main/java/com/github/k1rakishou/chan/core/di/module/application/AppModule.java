@@ -124,7 +124,8 @@ public class AppModule {
             AppConstants appConstants,
             CacheHandler cacheHandler,
             FileManager fileManager,
-            SiteResolver siteResolver
+            SiteResolver siteResolver,
+            CoilOkHttpClient coilOkHttpClient
     ) {
         return new ImageLoaderV2(
                 ChanSettings.verboseLogs.get(),
@@ -135,7 +136,8 @@ public class AppModule {
                 themeEngine,
                 cacheHandler,
                 fileManager,
-                siteResolver
+                siteResolver,
+                coilOkHttpClient
         );
     }
 

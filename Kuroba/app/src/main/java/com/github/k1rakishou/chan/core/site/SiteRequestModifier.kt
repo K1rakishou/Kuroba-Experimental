@@ -18,7 +18,6 @@ package com.github.k1rakishou.chan.core.site
 
 import android.webkit.WebView
 import androidx.annotation.CallSuper
-import coil.request.ImageRequest
 import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -41,7 +40,7 @@ abstract class SiteRequestModifier<T : Site>(
   }
 
   @CallSuper
-  open fun modifyThumbnailGetRequest(site: T, requestBuilder: ImageRequest.Builder) {
+  open fun modifyThumbnailGetRequest(site: T, requestBuilder: Request.Builder) {
     requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
   }
 
