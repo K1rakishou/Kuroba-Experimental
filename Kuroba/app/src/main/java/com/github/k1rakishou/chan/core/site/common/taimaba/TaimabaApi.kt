@@ -162,6 +162,7 @@ class TaimabaApi(
         .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, true, board.customSpoilers, args))
         .imageUrl(endpoints.imageUrl(builder, args))
         .filename(Parser.unescapeEntities(fileName, false))
+        .serverFilename(fileName)
         .extension(fileExt)
         .imageWidth(fileWidth)
         .imageHeight(fileHeight)
