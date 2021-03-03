@@ -21,7 +21,7 @@ class FuukaSearchRequest(
 ) : HtmlReaderRequest<SearchResult>(request, proxiedOkHttpClient) {
   private val commandBuffer = FuukaSearchRequestParseCommandBufferBuilder().getBuilder().build()
 
-  override suspend fun readHtml(document: Document): SearchResult {
+  override suspend fun readHtml(url: String, document: Document): SearchResult {
     val collector = FuukaSearchRequestParseCommandBufferBuilder.FuukaSearchPageCollector(
       verboseLogs,
       searchParams.boardDescriptor
@@ -34,7 +34,8 @@ class FuukaSearchRequest(
       parserCommandExecutor.executeCommands(
         document,
         commandBuffer,
-        collector
+        collector,
+        url
       )
     } catch (error: Throwable) {
       Logger.e(TAG, "parserCommandExecutor.executeCommands() error", error)

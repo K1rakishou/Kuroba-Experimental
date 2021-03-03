@@ -16,6 +16,7 @@ object YoutubeLinkExtractContentParser : IExtractContentParser {
   private val parserCommandBuffer = createParserCommandBuffer()
 
   override fun parse(
+    url: String,
     mediaServiceType: MediaServiceType,
     videoId: GenericVideoId,
     responseBody: ResponseBody
@@ -35,7 +36,8 @@ object YoutubeLinkExtractContentParser : IExtractContentParser {
       parserCommandExecutor.executeCommands(
         document,
         parserCommandBuffer,
-        collector
+        collector,
+        url
       )
     }
 

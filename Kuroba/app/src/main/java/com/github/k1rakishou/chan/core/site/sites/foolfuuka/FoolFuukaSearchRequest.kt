@@ -350,7 +350,7 @@ class FoolFuukaSearchRequest(
     }
   }
 
-  override suspend fun readHtml(document: Document): SearchResult {
+  override suspend fun readHtml(url: String, document: Document): SearchResult {
     val collector = FoolFuukaSearchPageCollector()
     val parserCommandExecutor = KurobaHtmlParserCommandExecutor<FoolFuukaSearchPageCollector>()
 
@@ -358,7 +358,8 @@ class FoolFuukaSearchRequest(
       parserCommandExecutor.executeCommands(
         document,
         commandBuffer,
-        collector
+        collector,
+        url
       )
     } catch (error: Throwable) {
       Logger.e(TAG, "parserCommandExecutor.executeCommands() error", error)

@@ -21,6 +21,7 @@ object SoundCloudLinkExtractContentParser : IExtractContentParser {
   private val albumLinkParserCommandBuffer = createAlbumParserCommandBuffer()
 
   override fun parse(
+    url: String,
     mediaServiceType: MediaServiceType,
     videoId: GenericVideoId,
     responseBody: ResponseBody
@@ -30,11 +31,12 @@ object SoundCloudLinkExtractContentParser : IExtractContentParser {
     if (videoId.isAlbumLink) {
       return parseAlbumLink(mediaServiceType, videoId, responseBody)
     } else {
-      return parseNormalLink(mediaServiceType, videoId, responseBody)
+      return parseNormalLink(url, mediaServiceType, videoId, responseBody)
     }
   }
 
   private fun parseNormalLink(
+    url: String,
     mediaServiceType: MediaServiceType,
     videoId: SoundCloudVideoId,
     responseBody: ResponseBody
@@ -52,7 +54,8 @@ object SoundCloudLinkExtractContentParser : IExtractContentParser {
       parserCommandExecutor.executeCommands(
         document,
         normalLinkParserCommandBuffer,
-        collector
+        collector,
+        url
       )
     }
 

@@ -49,9 +49,10 @@ abstract class HtmlReaderRequest<T>(
       try {
         return@withContext response.body!!.use { body ->
           return@use body.byteStream().use { inputStream ->
-            val htmlDocument = Jsoup.parse(inputStream, StandardCharsets.UTF_8.name(), request.url.toString())
+            val url = request.url.toString()
 
-            return@use HtmlReaderResponse.Success(readHtml(htmlDocument))
+            val htmlDocument = Jsoup.parse(inputStream, StandardCharsets.UTF_8.name(), url)
+            return@use HtmlReaderResponse.Success(readHtml(url, htmlDocument))
           }
         }
       } catch (error: Throwable) {
@@ -60,7 +61,7 @@ abstract class HtmlReaderRequest<T>(
     }
   }
 
-  protected abstract suspend fun readHtml(document: Document): T
+  protected abstract suspend fun readHtml(url: String, document: Document): T
 
   sealed class HtmlReaderResponse<out T> {
     class Success<out T>(val result: T) : HtmlReaderResponse<T>()

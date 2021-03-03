@@ -33,7 +33,7 @@ class Chan4SearchRequest(
   private val searchParams: Chan4SearchParams
 ) : HtmlReaderRequest<SearchResult>(request, proxiedOkHttpClient) {
 
-  override suspend fun readHtml(document: Document): SearchResult {
+  override suspend fun readHtml(url: String, document: Document): SearchResult {
     BackgroundUtils.ensureBackgroundThread()
 
     val searchEntries = mutableListOf<SearchEntry>()

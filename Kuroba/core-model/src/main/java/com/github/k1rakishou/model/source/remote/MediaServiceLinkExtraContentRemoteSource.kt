@@ -42,6 +42,7 @@ open class MediaServiceLinkExtraContentRemoteSource(
       }
 
       return@Try extractMediaServiceLinkExtraInfo(
+        requestUrl,
         mediaServiceType,
         videoId,
         response
@@ -50,6 +51,7 @@ open class MediaServiceLinkExtraContentRemoteSource(
   }
 
   private fun extractMediaServiceLinkExtraInfo(
+    url: String,
     mediaServiceType: MediaServiceType,
     videoId: GenericVideoId,
     response: Response
@@ -63,7 +65,7 @@ open class MediaServiceLinkExtraContentRemoteSource(
         }
 
         return@use when (mediaServiceType.apiType) {
-          ApiType.Html -> useHtmlParser(mediaServiceType, videoId, body)
+          ApiType.Html -> useHtmlParser(url, mediaServiceType, videoId, body)
           ApiType.Json -> throw NotImplementedError("Not implemented because all current fetchers use HTML")
         }
       }
@@ -71,19 +73,20 @@ open class MediaServiceLinkExtraContentRemoteSource(
   }
 
   private fun useHtmlParser(
+    url: String,
     mediaServiceType: MediaServiceType,
     videoId: GenericVideoId,
     body: ResponseBody
   ): MediaServiceLinkExtraInfo {
     return when (mediaServiceType) {
       MediaServiceType.SoundCloud -> {
-        SoundCloudLinkExtractContentParser.parse(mediaServiceType, videoId, body)
+        SoundCloudLinkExtractContentParser.parse(url, mediaServiceType, videoId, body)
       }
       MediaServiceType.Streamable -> {
-        StreamableLinkExtractContentParser.parse(mediaServiceType, videoId, body)
+        StreamableLinkExtractContentParser.parse(url, mediaServiceType, videoId, body)
       }
       MediaServiceType.Youtube -> {
-        YoutubeLinkExtractContentParser.parse(mediaServiceType, videoId, body)
+        YoutubeLinkExtractContentParser.parse(url, mediaServiceType, videoId, body)
       }
     }
   }

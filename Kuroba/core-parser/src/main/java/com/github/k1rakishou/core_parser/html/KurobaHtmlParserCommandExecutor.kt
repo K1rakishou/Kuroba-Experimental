@@ -31,7 +31,8 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
   fun executeCommands(
     document: Document,
     kurobaParserCommands: List<KurobaParserCommand<T>>,
-    collector: T
+    collector: T,
+    url: String? = null
   ) {
     parserState.clear()
 
@@ -39,14 +40,15 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
       return
     }
 
-    executeCommandsInternal(document, kurobaParserCommands, collector)
+    executeCommandsInternal(document, kurobaParserCommands, collector, url)
   }
 
   @SuppressLint("LongLogTag")
   private fun executeCommandsInternal(
     document: Document,
     kurobaParserCommands: List<KurobaParserCommand<T>>,
-    collector: T
+    collector: T,
+    url: String? = null
   ) {
     var commandIndex = 0
     var nodeIndex = 0
@@ -86,22 +88,27 @@ class KurobaHtmlParserCommandExecutor<T : KurobaHtmlParserCollector>(
           }
 
           if (!executed) {
-            val nodesDumped = buildString {
-              appendLine()
-              appendLine("Nodes: ")
+            val nodesDumped = if (debugMode) {
+              buildString {
+                appendLine()
+                appendLine("Nodes: ")
 
-              appendLine("{")
+                appendLine("{")
 
-              for (index in start until nodes.size) {
-                val node = nodes[index]
-                appendLine(node.toString())
+                for (index in start until nodes.size) {
+                  val node = nodes[index]
+                  appendLine(node.toString())
+                }
+
+                appendLine("}")
               }
-
-              appendLine("}")
+            } else {
+              ""
             }
 
             throw HtmlParsingException("Failed to execute command: $command, " +
-              "nodesCount: ${nodes.size}, startIndex=$start, commandIndex=$commandIndex, $nodesDumped")
+              "nodesCount: ${nodes.size}, startIndex=$start, commandIndex=$commandIndex, " +
+              "(url='$url') $nodesDumped")
           }
 
           ++commandIndex

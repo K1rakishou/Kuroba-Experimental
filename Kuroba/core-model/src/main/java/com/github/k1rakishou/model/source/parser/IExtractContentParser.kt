@@ -7,6 +7,7 @@ import okhttp3.ResponseBody
 
 interface IExtractContentParser {
   fun parse(
+    url: String,
     mediaServiceType: MediaServiceType,
     videoId: GenericVideoId,
     responseBody: ResponseBody
