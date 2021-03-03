@@ -300,7 +300,12 @@ class CardPostCell : ColorizableCardView, PostCellInterface, View.OnClickListene
     var commentMaxLength = COMMENT_MAX_LENGTH_GRID
 
     if (ChanSettings.boardViewMode.get() == PostViewMode.STAGGER) {
-      commentMaxLength = COMMENT_MAX_LENGTH_STAGGER
+      val spanCount = callback!!.currentSpanCount()
+
+      // The higher the spanCount the lower the commentMaxLength
+      // (but COMMENT_MAX_LENGTH_GRID is the minimum)
+      commentMaxLength = COMMENT_MAX_LENGTH_GRID +
+        ((COMMENT_MAX_LENGTH_STAGGER - COMMENT_MAX_LENGTH_GRID) / spanCount)
     }
 
     commentText = commentText.ellipsizeEnd(commentMaxLength)
