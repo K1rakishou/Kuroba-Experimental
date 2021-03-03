@@ -14,374 +14,385 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.ui.cell;
+package com.github.k1rakishou.chan.ui.cell
 
-import android.content.Context;
-import android.content.res.ColorStateList;
-import android.text.TextUtils;
-import android.util.AttributeSet;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.content.Context
+import android.content.res.ColorStateList
+import android.text.TextUtils
+import android.util.AttributeSet
+import android.view.View
+import android.view.View.OnLongClickListener
+import android.widget.ImageView
+import android.widget.TextView
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.ChanSettings.PostViewMode
+import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.ui.adapter.PostsFilter.Order.Companion.isNotBumpOrder
+import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
+import com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView
+import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView
+import com.github.k1rakishou.chan.ui.view.ThumbnailView
+import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.ellipsizeEnd
+import com.github.k1rakishou.core_themes.ChanTheme
+import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostImage
+import java.util.*
+import javax.inject.Inject
 
-import com.github.k1rakishou.ChanSettings;
-import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.core.manager.PostFilterManager;
-import com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout;
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView;
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView;
-import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
-import com.github.k1rakishou.chan.ui.view.ThumbnailView;
-import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
-import com.github.k1rakishou.common.AndroidUtils;
-import com.github.k1rakishou.common.KotlinExtensionsKt;
-import com.github.k1rakishou.core_themes.ChanTheme;
-import com.github.k1rakishou.core_themes.ThemeEngine;
-import com.github.k1rakishou.model.data.board.pages.BoardPage;
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
-import com.github.k1rakishou.model.data.post.ChanPost;
-import com.github.k1rakishou.model.data.post.ChanPostImage;
+class CardPostCell : ColorizableCardView, PostCellInterface, View.OnClickListener,
+  OnLongClickListener, ThemeChangesListener {
 
-import org.jetbrains.annotations.NotNull;
+  @Inject
+  lateinit var postFilterManager: PostFilterManager
 
-import java.util.ArrayList;
-import java.util.List;
+  private var theme: ChanTheme? = null
+  private var post: ChanPost? = null
+  private var callback: PostCellCallback? = null
+  private var compact = false
+  private var inPopup = false
+  private var thumbView: PostImageThumbnailView? = null
+  private var prevPostImage: ChanPostImage? = null
+  private var title: TextView? = null
+  private var comment: TextView? = null
+  private var replies: TextView? = null
+  private var options: ImageView? = null
+  private var filterMatchColor: View? = null
 
-import javax.inject.Inject;
+  constructor(context: Context) : super(context) {
+    init()
+  }
 
-import static com.github.k1rakishou.chan.ui.adapter.PostsFilter.Order.isNotBumpOrder;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
+  constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
+    init()
+  }
 
-public class CardPostCell
-        extends ColorizableCardView
-        implements PostCellInterface,
-        View.OnClickListener,
-        View.OnLongClickListener,
-        ThemeEngine.ThemeChangesListener {
+  constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+    init()
+  }
 
-    private static final int COMMENT_MAX_LENGTH_GRID = 200;
-    private static final int COMMENT_MAX_LENGTH_STAGGER = 500;
+  private fun init() {
+    AppModuleAndroidUtils.extractActivityComponent(context)
+      .inject(this)
+  }
 
-    @Inject
-    ThemeEngine themeEngine;
-    @Inject
-    PostFilterManager postFilterManager;
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    themeEngine.addListener(this)
+  }
 
-    private ChanTheme theme;
-    private ChanPost post;
-    private PostCellInterface.PostCellCallback callback;
-    private boolean compact = false;
-    private boolean inPopup = false;
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+    themeEngine.removeListener(this)
+  }
 
-    private PostImageThumbnailView thumbView;
-    private TextView title;
-    private TextView comment;
-    private TextView replies;
-    private ImageView options;
-    private View filterMatchColor;
+  private fun canEnableCardPostCellRatio(): Boolean {
+    return (ChanSettings.boardViewMode.get() == PostViewMode.CARD
+      && ChanSettings.boardGridSpanCount.get() != 1)
+  }
 
-    public CardPostCell(Context context) {
-        super(context);
-        init();
+  override fun onClick(v: View) {
+    if (post == null) {
+      return
     }
 
-    public CardPostCell(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init();
+    if (v === thumbView) {
+      callback?.onThumbnailClicked(post!!.firstImage()!!, thumbView!!)
+    } else if (v === this) {
+      callback?.onPostClicked(post!!)
+    }
+  }
+
+  override fun onLongClick(v: View): Boolean {
+    if (post == null) {
+      return false
     }
 
-    public CardPostCell(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        init();
+    if (v === thumbView) {
+      callback?.onThumbnailLongClicked(post!!.firstImage()!!, thumbView!!)
+      return true
     }
 
-    private void init() {
-        AppModuleAndroidUtils.extractActivityComponent(getContext())
-                .inject(this);
+    return false
+  }
+
+  override fun postDataDiffers(
+    chanDescriptor: ChanDescriptor,
+    post: ChanPost,
+    postIndex: Int,
+    callback: PostCellCallback,
+    inPopup: Boolean,
+    highlighted: Boolean,
+    selected: Boolean,
+    markedNo: Long,
+    showDivider: Boolean,
+    postViewMode: PostViewMode,
+    compact: Boolean,
+    stub: Boolean,
+    theme: ChanTheme
+  ): Boolean {
+    if (post == this.post && theme == this.theme && inPopup == this.inPopup) {
+      return false
     }
 
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        themeEngine.addListener(this);
+    return true
+  }
+
+  override fun setPost(
+    chanDescriptor: ChanDescriptor,
+    post: ChanPost,
+    postIndex: Int,
+    callback: PostCellCallback,
+    inPopup: Boolean,
+    highlighted: Boolean,
+    selected: Boolean,
+    markedNo: Long,
+    showDivider: Boolean,
+    postViewMode: PostViewMode,
+    compact: Boolean,
+    stub: Boolean,
+    theme: ChanTheme
+  ) {
+    val postDataDiffers = postDataDiffers(
+      chanDescriptor,
+      post,
+      postIndex,
+      callback,
+      inPopup,
+      highlighted,
+      selected,
+      markedNo,
+      showDivider,
+      postViewMode,
+      compact,
+      stub,
+      theme
+    )
+
+    if (!postDataDiffers) {
+      return
     }
 
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-        themeEngine.removeListener(this);
+    this.inPopup = inPopup
+    this.post = post
+    this.theme = theme
+    this.callback = callback
+
+    preBindPost(post)
+    bindPost(post)
+
+    if (this.compact != compact) {
+      this.compact = compact
+      setCompact(compact)
     }
 
-    private boolean canEnableCardPostCellRatio() {
-        return ChanSettings.boardViewMode.get() == ChanSettings.PostViewMode.CARD
-                && ChanSettings.boardGridSpanCount.get() != 1;
+    onThemeChanged()
+  }
+
+  override fun getPost(): ChanPost? {
+    return post
+  }
+
+  override fun getThumbnailView(postImage: ChanPostImage): ThumbnailView? {
+    return thumbView
+  }
+
+  override fun hasOverlappingRendering(): Boolean {
+    return false
+  }
+
+  override fun onPostRecycled(isActuallyRecycling: Boolean) {
+    unbindPost(isActuallyRecycling)
+  }
+
+  private fun unbindPost(isActuallyRecycling: Boolean) {
+    if (post == null) {
+      return
     }
 
-    @Override
-    public void onClick(View v) {
-        if (v == thumbView) {
-            callback.onThumbnailClicked(post.firstImage(), thumbView);
-        } else if (v == this) {
-            callback.onPostClicked(post);
+    unbindPostImage()
+
+    if (callback != null) {
+      callback!!.onPostUnbind(post!!, isActuallyRecycling)
+    }
+
+    thumbView = null
+    post = null
+    callback = null
+  }
+
+  private fun preBindPost(post: ChanPost?) {
+    if (thumbView != null) {
+      return
+    }
+
+    val content: FixedRatioLinearLayout = findViewById(R.id.card_content)
+    if (canEnableCardPostCellRatio()) {
+      content.isEnabled = true
+      content.setRatio(9f / 18f)
+    } else {
+      content.isEnabled = false
+    }
+
+    thumbView = findViewById<PostImageThumbnailView>(R.id.thumbnail).apply {
+      setRatio(16f / 13f)
+      setOnClickListener(this@CardPostCell)
+      setOnLongClickListener(this@CardPostCell)
+    }
+
+    title = findViewById(R.id.title)
+    comment = findViewById(R.id.comment)
+    replies = findViewById(R.id.replies)
+    options = findViewById(R.id.options)
+    AndroidUtils.setBoundlessRoundRippleBackground(options)
+    filterMatchColor = findViewById(R.id.filter_match_color)
+
+    setOnClickListener(this)
+    setCompact(compact)
+
+    options!!.setOnClickListener({
+      val items = mutableListOf<FloatingListMenuItem>()
+
+      if (callback != null && post != null) {
+        callback!!.onPopulatePostOptions(post, items)
+
+        if (items.isNotEmpty()) {
+          callback!!.showPostOptions(post, inPopup, items)
         }
+      }
+    })
+  }
+
+  private fun bindPost(post: ChanPost) {
+    if (callback == null) {
+      throw NullPointerException("Callback is null during bindPost()")
     }
 
-    @Override
-    public boolean onLongClick(View v) {
-        if (v == thumbView) {
-            callback.onThumbnailLongClicked(post.firstImage(), thumbView);
-            return true;
-        }
+    bindPostThumbnails(post)
 
-        return false;
+    val filterHighlightedColor = postFilterManager.getFilterHighlightedColor(
+      post.postDescriptor
+    )
+
+    if (filterHighlightedColor != 0) {
+      filterMatchColor!!.visibility = VISIBLE
+      filterMatchColor!!.setBackgroundColor(filterHighlightedColor)
+    } else {
+      filterMatchColor!!.visibility = GONE
     }
 
-    @Override
-    public boolean postDataDiffers(
-            @NotNull ChanDescriptor chanDescriptor,
-            @NotNull ChanPost post,
-            int postIndex,
-            @NotNull PostCellInterface.PostCellCallback callback,
-            boolean inPopup,
-            boolean highlighted,
-            boolean selected,
-            long markedNo,
-            boolean showDivider,
-            @NotNull ChanSettings.PostViewMode postViewMode,
-            boolean compact,
-            boolean stub,
-            @NotNull ChanTheme theme
-    ) {
-        if (post.equals(this.post) && theme.equals(this.theme) && inPopup == this.inPopup) {
-            return false;
-        }
-
-        return true;
+    if (!TextUtils.isEmpty(post.subject)) {
+      title!!.visibility = VISIBLE
+      title!!.text = post.subject
+    } else {
+      title!!.visibility = GONE
+      title!!.setText(null)
     }
 
-    public void setPost(
-            ChanDescriptor chanDescriptor,
-            final ChanPost post,
-            final int postIndex,
-            PostCellInterface.PostCellCallback callback,
-            boolean inPopup,
-            boolean highlighted,
-            boolean selected,
-            long markedNo,
-            boolean showDivider,
-            ChanSettings.PostViewMode postViewMode,
-            boolean compact,
-            boolean stub,
-            ChanTheme theme
-    ) {
-        boolean postDataDiffers = postDataDiffers(
-                chanDescriptor,
-                post,
-                postIndex,
-                callback,
-                inPopup,
-                highlighted,
-                selected,
-                markedNo,
-                showDivider,
-                postViewMode,
-                compact,
-                stub,
-                theme
-        );
+    var commentText = post.postComment.comment()
+    var commentMaxLength = COMMENT_MAX_LENGTH_GRID
 
-        if (!postDataDiffers) {
-            return;
-        }
-
-        this.inPopup = inPopup;
-        this.post = post;
-        this.theme = theme;
-        this.callback = callback;
-
-        preBindPost(post);
-        bindPost(post);
-
-        if (this.compact != compact) {
-            this.compact = compact;
-            setCompact(compact);
-        }
-
-        onThemeChanged();
+    if (ChanSettings.boardViewMode.get() == PostViewMode.STAGGER) {
+      commentMaxLength = COMMENT_MAX_LENGTH_STAGGER
     }
 
-    public ChanPost getPost() {
-        return post;
+    commentText = commentText.ellipsizeEnd(commentMaxLength)
+    comment!!.text = commentText
+
+    var status = AppModuleAndroidUtils.getString(
+      R.string.card_stats,
+      post.catalogRepliesCount,
+      post.catalogImagesCount
+    )
+    if (!ChanSettings.neverShowPages.get()) {
+      val boardPage = callback!!.getPage(post.postDescriptor)
+      if (boardPage != null && isNotBumpOrder(ChanSettings.boardOrder.get())) {
+        status += " Pg " + boardPage.currentPage
+      }
     }
 
-    public ThumbnailView getThumbnailView(ChanPostImage postImage) {
-        return thumbView;
+    replies!!.text = status
+    if (callback != null) {
+      callback!!.onPostBind(post)
+    }
+  }
+
+  private fun bindPostThumbnails(post: ChanPost) {
+    val firstPostImage = post.firstImage()
+
+    if (firstPostImage == null || ChanSettings.textOnly.get()) {
+      thumbView!!.visibility = GONE
+      thumbView!!.unbindPostImage()
+      return
     }
 
-    @Override
-    public boolean hasOverlappingRendering() {
-        return false;
+    if (firstPostImage == prevPostImage) {
+      return
     }
 
-    @Override
-    public void onPostRecycled(boolean isActuallyRecycling) {
-        unbindPost(isActuallyRecycling);
+    thumbView!!.visibility = VISIBLE
+
+    thumbView!!.bindPostImage(
+      firstPostImage,
+      callback!!.currentSpanCount() <= ColorizableGridRecyclerView.HI_RES_CELLS_MAX_SPAN_COUNT
+    )
+
+    this.prevPostImage = firstPostImage.copy()
+  }
+
+  private fun unbindPostImage() {
+    thumbView?.unbindPostImage()
+    prevPostImage = null
+  }
+
+  override fun onThemeChanged() {
+    comment?.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    replies?.setTextColor(themeEngine.chanTheme.textColorSecondary)
+    options?.imageTintList = ColorStateList.valueOf(themeEngine.chanTheme.postDetailsColor)
+  }
+
+  private fun setCompact(compact: Boolean) {
+    val textReduction = if (compact) {
+      -2
+    } else {
+      0
     }
 
-    private void unbindPost(boolean isActuallyRecycling) {
-        if (post == null) {
-            return;
-        }
+    val textSizeSp = ChanSettings.fontSize.get().toInt() + textReduction
 
-        thumbView.unbindPostImage();
+    title!!.textSize = textSizeSp.toFloat()
+    comment!!.textSize = textSizeSp.toFloat()
+    replies!!.textSize = textSizeSp.toFloat()
 
-        if (callback != null) {
-            callback.onPostUnbind(post, isActuallyRecycling);
-        }
-
-        this.thumbView = null;
-        this.post = null;
-        this.callback = null;
+    val p = if (compact) {
+      AppModuleAndroidUtils.dp(3f)
+    } else {
+      AppModuleAndroidUtils.dp(8f)
     }
 
-    private void preBindPost(ChanPost post) {
-        if (thumbView != null) {
-            return;
-        }
+    // Same as the layout.
+    title!!.setPadding(p, p, p, 0)
+    comment!!.setPadding(p, p, p, 0)
+    replies!!.setPadding(p, p / 2, p, p)
 
-        FixedRatioLinearLayout content = findViewById(R.id.card_content);
-
-        if (canEnableCardPostCellRatio()) {
-            content.setEnabled(true);
-            content.setRatio(9f / 18f);
-        } else {
-            content.setEnabled(false);
-        }
-
-        thumbView = findViewById(R.id.thumbnail);
-        thumbView.setRatio(16f / 13f);
-        thumbView.setOnClickListener(this);
-        thumbView.setOnLongClickListener(this);
-        title = findViewById(R.id.title);
-        comment = findViewById(R.id.comment);
-        replies = findViewById(R.id.replies);
-        options = findViewById(R.id.options);
-
-        AndroidUtils.setBoundlessRoundRippleBackground(options);
-        filterMatchColor = findViewById(R.id.filter_match_color);
-
-        setOnClickListener(this);
-        setCompact(compact);
-
-        options.setOnClickListener(v -> {
-            List<FloatingListMenuItem> items = new ArrayList<>();
-
-            if (callback != null && post != null) {
-                callback.onPopulatePostOptions(post, items);
-
-                if (items.size() > 0) {
-                    callback.showPostOptions(post, inPopup, items);
-                }
-            }
-        });
+    val optionsPadding = if (compact) {
+      0
+    } else {
+      AppModuleAndroidUtils.dp(5f)
     }
 
-    private void bindPost(ChanPost post) {
-        if (callback == null) {
-            throw new NullPointerException("Callback is null during bindPost()");
-        }
+    options!!.setPadding(0, optionsPadding, optionsPadding, 0)
+  }
 
-        ChanPostImage firstPostImage = post.firstImage();
-        if (firstPostImage != null && !ChanSettings.textOnly.get()) {
-            thumbView.setVisibility(VISIBLE);
-            thumbView.bindPostImage(
-                    firstPostImage,
-                    callback.currentSpanCount() <= ColorizableGridRecyclerView.HI_RES_CELLS_MAX_SPAN_COUNT
-            );
-        } else {
-            thumbView.setVisibility(GONE);
-            thumbView.unbindPostImage();
-        }
-
-        int filterHighlightedColor = postFilterManager.getFilterHighlightedColor(
-                post.getPostDescriptor()
-        );
-
-        if (filterHighlightedColor != 0) {
-            filterMatchColor.setVisibility(VISIBLE);
-            filterMatchColor.setBackgroundColor(filterHighlightedColor);
-        } else {
-            filterMatchColor.setVisibility(GONE);
-        }
-
-        if (!TextUtils.isEmpty(post.getSubject())) {
-            title.setVisibility(VISIBLE);
-            title.setText(post.getSubject());
-        } else {
-            title.setVisibility(GONE);
-            title.setText(null);
-        }
-
-        CharSequence commentText = post.getPostComment().comment();
-        int commentMaxLength = COMMENT_MAX_LENGTH_GRID;
-
-        if (ChanSettings.boardViewMode.get() == ChanSettings.PostViewMode.STAGGER) {
-            commentMaxLength = COMMENT_MAX_LENGTH_STAGGER;
-        }
-
-        commentText = KotlinExtensionsKt.ellipsizeEnd(commentText, commentMaxLength);
-        comment.setText(commentText);
-
-        String status = getString(
-                R.string.card_stats,
-                post.getCatalogRepliesCount(),
-                post.getCatalogImagesCount()
-        );
-
-        if (!ChanSettings.neverShowPages.get()) {
-            BoardPage boardPage = callback.getPage(post.getPostDescriptor());
-            if (boardPage != null && isNotBumpOrder(ChanSettings.boardOrder.get())) {
-                status += " Pg " + boardPage.getCurrentPage();
-            }
-        }
-
-        replies.setText(status);
-
-        if (callback != null) {
-            callback.onPostBind(post);
-        }
-    }
-
-    @Override
-    public void onThemeChanged() {
-        if (comment != null) {
-            comment.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
-        }
-        if (replies != null) {
-            replies.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
-        }
-        if (options != null) {
-            options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getPostDetailsColor()));
-        }
-    }
-
-    private void setCompact(boolean compact) {
-        int textReduction = compact ? -2 : 0;
-        int textSizeSp = Integer.parseInt(ChanSettings.fontSize.get()) + textReduction;
-        title.setTextSize(textSizeSp);
-        comment.setTextSize(textSizeSp);
-        replies.setTextSize(textSizeSp);
-
-        int p = compact ? dp(3) : dp(8);
-
-        // Same as the layout.
-        title.setPadding(p, p, p, 0);
-        comment.setPadding(p, p, p, 0);
-        replies.setPadding(p, p / 2, p, p);
-
-        int optionsPadding = compact ? 0 : dp(5);
-        options.setPadding(0, optionsPadding, optionsPadding, 0);
-    }
+  companion object {
+    private const val COMMENT_MAX_LENGTH_GRID = 200
+    private const val COMMENT_MAX_LENGTH_STAGGER = 500
+  }
 }

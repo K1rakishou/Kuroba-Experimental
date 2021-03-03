@@ -57,6 +57,31 @@ class ChanPostImage(
     ownerPostDescriptor = postDescriptor
   }
 
+  @Synchronized
+  fun copy(): ChanPostImage {
+    return ChanPostImage(
+      serverFilename = serverFilename,
+      actualThumbnailUrl = actualThumbnailUrl,
+      spoilerThumbnailUrl = spoilerThumbnailUrl,
+      imageUrl = imageUrl,
+      filename = filename,
+      extension = extension,
+      imageWidth = imageWidth,
+      imageHeight = imageHeight,
+      spoiler = spoiler,
+      isInlined = isInlined,
+      fileSize = size,
+      fileHash = fileHash,
+      type = type
+    ).also { newPostImage ->
+      if (::ownerPostDescriptor.isInitialized) {
+        newPostImage.ownerPostDescriptor = ownerPostDescriptor
+      }
+
+      newPostImage.isPrefetched = isPrefetched
+    }
+  }
+
   fun canBeUsedForCloudflarePreloading(): Boolean {
     if (isInlined) {
       return false

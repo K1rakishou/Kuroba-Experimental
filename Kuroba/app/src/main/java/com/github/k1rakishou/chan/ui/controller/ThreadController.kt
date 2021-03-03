@@ -335,6 +335,7 @@ abstract class ThreadController(
     }
 
     threadLayout.lostFocus(wasFocused)
+    controllerNavigationManager.onControllerSwipedFrom(this)
   }
 
   override fun onGainedFocus(nowFocused: ThreadSlideController.ThreadControllerType) {
@@ -345,6 +346,7 @@ abstract class ThreadController(
     }
 
     threadLayout.gainedFocus(nowFocused)
+    controllerNavigationManager.onControllerSwipedTo(this)
   }
 
   override fun threadBackPressed(): Boolean {

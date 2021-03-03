@@ -60,6 +60,7 @@ import com.github.k1rakishou.chan.utils.ViewUtils.setEditTextCursorColor
 import com.github.k1rakishou.chan.utils.ViewUtils.setHandlesColors
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.isNotNullNorEmpty
+import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_spannable.*
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ChanThemeColorId
@@ -130,6 +131,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   private val quoteClickSpan: ColorizableBackgroundColorSpan
 
   private val thumbnailViews: MutableList<PostImageThumbnailView> = ArrayList(1)
+  private val prevChanPostImages = mutableListWithCap<ChanPostImage>(1)
   private val commentMovementMethod = PostViewMovementMethod()
   private val titleMovementMethod = PostViewFastMovementMethod()
   private val unseenPostIndicatorFadeOutAnimation = createUnseenPostIndicatorFadeAnimation()
@@ -310,10 +312,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   private fun unbindPost(post: ChanPost?, isActuallyRecycling: Boolean) {
     icons.cancelRequests()
 
-    for (view in thumbnailViews) {
-      view.unbindPostImage()
-    }
-    thumbnailViews.clear()
+    unbindPostImages()
 
     if (post != null) {
       setPostLinkableListener(post, false)
@@ -869,23 +868,22 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       return
     }
 
-    for (thumbnailView in thumbnailViews) {
-      thumbnailView.unbindPostImage()
-    }
-
-    thumbnailContainer!!.removeAllViews()
-    thumbnailViews.clear()
-
-    // Places the thumbnails below each other.
-    if (post.postImagesCount <= 0 || ChanSettings.textOnly.get()) {
+    if (post.postImages.isEmpty() || ChanSettings.textOnly.get()) {
+      unbindPostImages()
       return
     }
 
+    if (thumbnailViews.isNotEmpty() && this.prevChanPostImages == post.postImages) {
+      // Images are already bound and haven't changed since the last bind, do nothing
+      return
+    }
+
+    unbindPostImages()
+
     var generatedId = -1000 // Do not use -1 because it's View.NO_ID
 
-    for (index in 0 until post.postImagesCount) {
-      val image = post.postImages[index]
-      if (image.imageUrl == null && image.actualThumbnailUrl == null) {
+    for ((imageIndex, postImage) in post.postImages.withIndex()) {
+      if (postImage.imageUrl == null && postImage.actualThumbnailUrl == null) {
         continue
       }
 
@@ -894,7 +892,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       // Set the correct id.
       thumbnailView.id = generatedId--
 
-      thumbnailView.bindPostImage(image, true)
+      thumbnailView.bindPostImage(postImage, true)
       thumbnailView.isClickable = true
 
       // Always set the click listener to avoid check the file cache (which will touch the
@@ -902,23 +900,23 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       // the necessary checks when clicking an image anyway, so no point in doing them
       // twice and more importantly inside RecyclerView bind call
       thumbnailView.setOnClickListener {
-        callback?.onThumbnailClicked(image, thumbnailView)
+        callback?.onThumbnailClicked(postImage, thumbnailView)
       }
       thumbnailView.setOnLongClickListener {
-        callback?.onThumbnailLongClicked(image, thumbnailView)
+        callback?.onThumbnailLongClicked(postImage, thumbnailView)
         return@setOnLongClickListener true
       }
 
       thumbnailView.setRounding(THUMBNAIL_ROUNDING)
 
       val bottomMargin = when {
-        index == post.postImages.lastIndex -> THUMBNAIL_BOTTOM_MARGIN
+        imageIndex == post.postImages.lastIndex -> THUMBNAIL_BOTTOM_MARGIN
         !singleImageMode -> MULTIPLE_THUMBNAILS_MIDDLE_MARGIN
         else -> 0
       }
 
       val topMargin = when {
-        index == 0 -> THUMBNAIL_TOP_MARGIN
+        imageIndex == 0 -> THUMBNAIL_TOP_MARGIN
         !singleImageMode -> MULTIPLE_THUMBNAILS_MIDDLE_MARGIN
         else -> 0
       }
@@ -938,6 +936,21 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       thumbnailContainer!!.addView(thumbnailView, layoutParams)
       thumbnailViews.add(thumbnailView)
     }
+
+    this.prevChanPostImages.addAll(post.postImages)
+  }
+
+  private fun unbindPostImages() {
+    for (thumbnailView in thumbnailViews) {
+      thumbnailView.unbindPostImage()
+    }
+
+    if (thumbnailContainer!!.childCount != 0) {
+      thumbnailContainer!!.removeAllViews()
+    }
+
+    thumbnailViews.clear()
+    prevChanPostImages.clear()
   }
 
   private fun setPostLinkableListener(post: ChanPost, bind: Boolean) {

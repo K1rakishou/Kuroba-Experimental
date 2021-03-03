@@ -503,6 +503,8 @@ class MainController(
   }
 
   fun closeAllNonMainControllers() {
+    controllerNavigationManager.onCloseAllNonMainControllers()
+
     var currentNavController = top
       ?: return
 
