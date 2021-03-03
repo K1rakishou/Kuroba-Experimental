@@ -177,7 +177,6 @@ class PageRequestManager(
 
     launch {
       // Otherwise, get the site for the board and request the pages for it
-      Logger.d(TAG, "Requesting new board pages for /${boardDescriptor.boardCode}/")
       requestBoard(boardDescriptor)
     }
 
@@ -207,7 +206,6 @@ class PageRequestManager(
       val lastUpdateTime = lastUpdate ?: 0L
 
       if (lastUpdateTime + UPDATE_INTERVAL <= System.currentTimeMillis()) {
-        Logger.d(TAG, "Requesting existing board pages for /${board.boardCode()}/")
         requestBoard(boardDescriptor)
       }
     }
@@ -226,6 +224,8 @@ class PageRequestManager(
     if (contains) {
       return
     }
+
+    Logger.d(TAG, "Requesting new board pages for /${boardDescriptor.boardCode}/")
 
     siteManager.awaitUntilInitialized()
 
