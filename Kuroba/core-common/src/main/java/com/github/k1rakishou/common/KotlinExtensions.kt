@@ -17,15 +17,22 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
+import java.io.InterruptedIOException
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Matcher
@@ -330,7 +337,16 @@ fun Throwable.errorMessageOrClassName(): String {
 fun Throwable.isExceptionImportant(): Boolean {
   return when (this) {
     is CancellationException -> false
+    is InterruptedIOException -> false
     else -> true
+  }
+}
+
+fun Throwable.isCoroutineCancellationException(): Boolean {
+  return when (this) {
+    is CancellationException -> true
+    is InterruptedIOException -> true
+    else -> false
   }
 }
 
@@ -657,24 +673,31 @@ fun StringBuilder.appendIfNotEmpty(text: String): StringBuilder {
   return this
 }
 
+@Suppress("UnnecessaryVariable")
 suspend fun <T : Any> doIoTaskWithAttempts(attempts: Int, task: suspend (Int) -> T): T {
   require(attempts > 0) { "Bad attempts count: $attempts" }
   val retries = AtomicInteger(0)
 
-  while (true) {
-    try {
-      // Try to execute a task
-      val result = task(retries.incrementAndGet())
+  return coroutineScope {
+    while (true) {
+      ensureActive()
 
-      // If no exceptions were thrown then just exit
-      return result
-    } catch (error: IOException) {
-      // If any kind of IOException was thrown then retry until we either succeed or exhaust all
-      // attempts
-      if (retries.get() >= attempts) {
-        throw error
+      try {
+        // Try to execute a task
+        val result = task(retries.incrementAndGet())
+
+        // If no exceptions were thrown then just exit
+        return@coroutineScope result
+      } catch (error: IOException) {
+        // If any kind of IOException was thrown then retry until we either succeed or exhaust all
+        // attempts
+        if (retries.get() >= attempts) {
+          throw error
+        }
       }
     }
+
+    throw RuntimeException("Shouldn't be called")
   }
 }
 
@@ -693,4 +716,11 @@ fun Bitmap.recycleSafe() {
   if (!isRecycled) {
     recycle()
   }
+}
+
+// This is absolutely ridiculous but kinda makes sense. Basically Mutex.withLock won't be executed
+// and will throw CancellationException if the parent job is canceled. This may lead to very nasty
+// bugs. So to avoid them here is a function that guarantees that withLock { ... } will be executed.
+suspend fun <T> Mutex.withLockNonCancellable(owner: Any? = null, action: suspend () -> T): T {
+  return withContext(NonCancellable) { withLock(owner) { action.invoke() } }
 }

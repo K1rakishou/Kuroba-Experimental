@@ -32,6 +32,9 @@ import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize;
 
 public class AlbumViewCell extends FrameLayout {
+    private static final float MAX_RATIO = 2f;
+    private static final float MIN_RATIO = .4f;
+
     private ChanPostImage postImage;
     private PostImageThumbnailView thumbnailView;
     private TextView text;
@@ -94,6 +97,14 @@ public class AlbumViewCell extends FrameLayout {
         }
 
         this.ratio = ((float) imageWidth / (float) imageHeight);
+
+        if (this.ratio > MAX_RATIO) {
+            this.ratio = MAX_RATIO;
+        }
+
+        if (this.ratio < MIN_RATIO) {
+            this.ratio = MIN_RATIO;
+        }
     }
 
     public void unbindPostImage() {

@@ -192,7 +192,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     val isDev = isDevBuild()
     val flavorType = AppModuleAndroidUtils.getFlavorType()
 
-    if (isDev) {
+    if (isDev && ENABLE_STRICT_MODE) {
       StrictMode.setThreadPolicy(
         StrictMode.ThreadPolicy.Builder()
           .detectAll()
@@ -491,6 +491,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
   companion object {
     private const val TAG = "Chan"
+    private const val ENABLE_STRICT_MODE = false
+
     private lateinit var applicationComponent: ApplicationComponent
 
     @JvmStatic

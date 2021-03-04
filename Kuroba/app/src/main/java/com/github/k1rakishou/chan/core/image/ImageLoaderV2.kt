@@ -8,10 +8,12 @@ import android.graphics.ColorFilter
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
+import android.util.LruCache
 import android.view.View
 import androidx.annotation.DrawableRes
+import androidx.annotation.GuardedBy
 import androidx.core.graphics.drawable.toBitmap
+import androidx.lifecycle.Lifecycle
 import coil.ImageLoader
 import coil.annotation.ExperimentalCoilApi
 import coil.bitmap.BitmapPool
@@ -35,8 +37,10 @@ import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileManager
+import com.github.k1rakishou.fsaf.file.RawFile
 import com.google.android.exoplayer2.util.MimeTypes
 import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
 import okhttp3.Request
 import java.io.File
 import java.io.FileOutputStream
@@ -59,6 +63,11 @@ class ImageLoaderV2(
   private val siteResolver: SiteResolver,
   private val coilOkHttpClient: CoilOkHttpClient
 ) {
+  private val mutex = Mutex()
+
+  @GuardedBy("mutex")
+  private val activeRequests = LruCache<String, ActiveRequest>(1024)
+
   private var imageNotFoundDrawable: CachedTintedErrorDrawable? = null
   private var imageErrorLoadingDrawable: CachedTintedErrorDrawable? = null
 
@@ -68,12 +77,6 @@ class ImageLoaderV2(
       val downloaded = cacheHandler.isAlreadyDownloaded(url)
 
       return@withContext exists && downloaded
-    }
-  }
-
-  fun returnBitmapBackIntoPool(bitmap: Bitmap?) {
-    if (bitmap != null) {
-      imageLoader.bitmapPool.put(bitmap)
     }
   }
 
@@ -92,7 +95,7 @@ class ImageLoaderV2(
       context = context,
       url = url,
       imageSize = imageSize,
-      transformations = transformations,
+      inputTransformations = transformations,
       imageListenerParam = ImageListenerParam.SimpleImageListener(
         listener = listener,
         errorDrawableId = errorDrawableId,
@@ -114,7 +117,7 @@ class ImageLoaderV2(
       context = context,
       url = requestUrl,
       imageSize = imageSize,
-      transformations = transformations,
+      inputTransformations = transformations,
       imageListenerParam = ImageListenerParam.FailureAwareImageListener(listener)
     )
   }
@@ -123,7 +126,7 @@ class ImageLoaderV2(
     context: Context,
     url: String,
     imageSize: ImageSize,
-    transformations: List<Transformation>,
+    inputTransformations: List<Transformation>,
     imageListenerParam: ImageListenerParam
   ): Disposable {
     BackgroundUtils.ensureMainThread()
@@ -135,98 +138,143 @@ class ImageLoaderV2(
       try {
         val startTime = System.currentTimeMillis()
         var isFromCache = true
-        var imageFile = tryLoadFromCacheOrNull(url)
 
-        if (verboseLogs && imageFile != null) {
-          Logger.d(TAG, "Loaded '$url' from cache, $imageSize")
+        // 1. Enqueue a new request (or add a callback to an old request if there is already a
+        // request with this url).
+        val alreadyHasActiveRequest = mutex.withLockNonCancellable {
+          var activeRequest = activeRequests.get(url)
+          if (activeRequest == null) {
+            // Create new ActiveRequest is it's not created yet
+            activeRequest = ActiveRequest(url)
+            activeRequests.put(url, activeRequest)
+          }
+
+          // Add all the listeners into this request (there may be multiple of them)
+          return@withLockNonCancellable activeRequest.addImageListener(
+            imageListenerParam = imageListenerParam,
+            imageSize = imageSize,
+            transformations = inputTransformations
+          )
         }
 
+        if (alreadyHasActiveRequest) {
+          // Another request with the same url is already running, wait until the other request is
+          // completed, it will invoke all callbacks.
+
+          if (verboseLogs) {
+            Logger.d(TAG, "Request '$url' is already active, waiting for it's completion")
+          }
+
+          return@launch
+        }
+
+        // 2. Check whether we have this bitmap cached on the disk
+        var imageFile = tryLoadFromDiskCacheOrNull(url)
+
+        if (verboseLogs && imageFile != null) {
+          Logger.d(TAG, "Loaded '$url' from disk cache, $imageSize")
+        }
+
+        // 3. Failed to find this bitmap in the disk cache. Load it from the network.
         if (imageFile == null) {
           isFromCache = false
 
           imageFile = loadFromNetworkInternal(
             context = context,
             url = url,
-            imageSize = imageSize,
-            transformations = transformations,
-            imageListenerParam = imageListenerParam
+            imageSize = imageSize
           )
 
+          if (imageFile != null && verboseLogs) {
+            Logger.d(TAG, "Loaded '$url' from network")
+          }
+
           if (imageFile == null) {
-            Logger.e(TAG, "Failed to load image '$url' from both disk and network")
+            val errorMessage = "Failed to load image '$url' from disk and network"
+
+            Logger.e(TAG, errorMessage)
+            notifyListenersFailure(context, url, IOException(errorMessage))
+
             return@launch
           }
         }
 
-        val finalBitmapDrawable = loadImageFromDiskWithTransformations(
-          url = url,
-          context = context,
-          imageFile = imageFile,
-          transformations = transformations,
-          imageSize = imageSize
-        )
+        // 4. We have this image on disk, now we need to reload it from disk, apply transformations
+        // with size and notify all listeners.
+        val activeListeners = mutex.withLockNonCancellable {
+          val activeRequests = activeRequests.get(url)
+            ?: return@withLockNonCancellable null
 
-        if (finalBitmapDrawable == null) {
-          val transformationKeys = transformations.joinToString { transformation -> transformation.key() }
+          return@withLockNonCancellable activeRequests.consumeAllListeners()
+        }
 
-          Logger.e(TAG, "Failed to apply transformations '$url' $imageSize, " +
-            "transformations: ${transformationKeys}, fromCache=$isFromCache")
-
-          withContext(Dispatchers.Main) {
-            handleFailure(
-              actualListener = imageListenerParam,
-              context = context,
-              imageSize = imageSize,
-              transformations = transformations,
-              throwable = IOException("applyTransformationsToDrawable() returned null")
-            )
+        if (activeListeners == null || activeListeners.isEmpty()) {
+          if (verboseLogs) {
+            Logger.e(TAG, "Failed to load '$url', activeListeners is null or empty")
           }
 
           return@launch
         }
 
-        withContext(Dispatchers.Main) {
-          if (verboseLogs) {
-            val endTime = System.currentTimeMillis() - startTime
+        activeListeners.forEach { activeListener ->
+          val resultBitmapDrawable = applyTransformationsToDrawable(
+            context,
+            context.getLifecycleFromContext(),
+            imageFile,
+            activeListener,
+            url
+          )
 
-            Logger.d(TAG, "Loaded '$url' $imageSize, bitmap size = " +
-              "${finalBitmapDrawable.intrinsicWidth}x${finalBitmapDrawable.intrinsicHeight}, " +
-              "transformations: ${transformations.size}, fromCache=$isFromCache, time=${endTime}ms")
+          mutex.withLockNonCancellable {
+            val activeRequest = activeRequests.get(url)
+              ?: return@withLockNonCancellable
+
+            if (activeRequest.removeImageListenerParam(imageListenerParam)) {
+              activeRequests.remove(url)
+            }
           }
 
-          when (imageListenerParam) {
-            is ImageListenerParam.SimpleImageListener -> {
-              imageListenerParam.listener.onResponse(finalBitmapDrawable)
-            }
-            is ImageListenerParam.FailureAwareImageListener -> {
-              imageListenerParam.listener.onResponse(finalBitmapDrawable, isFromCache)
+          if (resultBitmapDrawable == null) {
+            val transformationKeys = activeListener.transformations
+              .joinToString { transformation -> transformation.key() }
+
+            Logger.e(TAG, "Failed to apply transformations '$url' $imageSize, " +
+              "transformations: ${transformationKeys}, fromCache=$isFromCache")
+
+            handleFailure(
+              actualListener = activeListener.imageListenerParam,
+              context = context,
+              imageSize = activeListener.imageSize,
+              transformations = activeListener.transformations,
+              throwable = IOException("applyTransformationsToDrawable() returned null")
+            )
+
+            return@forEach
+          }
+
+          withContext(Dispatchers.Main) {
+            when (val listenerParam = activeListener.imageListenerParam) {
+              is ImageListenerParam.SimpleImageListener -> {
+                listenerParam.listener.onResponse(resultBitmapDrawable)
+              }
+              is ImageListenerParam.FailureAwareImageListener -> {
+                listenerParam.listener.onResponse(resultBitmapDrawable, isFromCache)
+              }
             }
           }
         }
+
+        val endTime = System.currentTimeMillis() - startTime
+        Logger.d(TAG, "Loaded '$url', fromCache=${isFromCache}, time=${endTime}ms")
       } catch (error: Throwable) {
-        if (error is CancellationException) {
+        notifyListenersFailure(context, url, error)
+
+        if (error.isCoroutineCancellationException()) {
           return@launch
         }
 
         if (error.isExceptionImportant()) {
           Logger.e(TAG, "loadFromNetwork() error", error)
-        }
-
-        withContext(Dispatchers.Main) {
-          when (imageListenerParam) {
-            is ImageListenerParam.SimpleImageListener -> {
-              handleFailure(
-                actualListener = imageListenerParam,
-                context = context,
-                imageSize = imageSize,
-                transformations = transformations,
-                throwable = error
-              )
-            }
-            is ImageListenerParam.FailureAwareImageListener -> {
-              imageListenerParam.listener.onResponseError(error)
-            }
-          }
         }
       } finally {
         completableDeferred.complete(Unit)
@@ -239,25 +287,77 @@ class ImageLoaderV2(
     )
   }
 
+  private suspend fun applyTransformationsToDrawable(
+    context: Context,
+    lifecycle: Lifecycle?,
+    imageFile: File?,
+    activeListener: ActiveListener,
+    url: String
+  ): BitmapDrawable? {
+    val request = with(ImageRequest.Builder(context)) {
+      lifecycle(lifecycle)
+      allowHardware(true)
+      allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
+      data(imageFile)
+      scale(Scale.FIT)
+      transformations(activeListener.transformations + RESIZE_TRANSFORMATION)
+      applyImageSize(activeListener.imageSize)
+
+      build()
+    }
+
+    return when (val result = imageLoader.execute(request)) {
+      is SuccessResult -> {
+        val bitmap = result.drawable.toBitmap()
+
+        if (verboseLogs) {
+          Logger.d(TAG, "applyTransformationsToDrawable() done, url='$url', " +
+              "bitmap.size=${bitmap.width}x${bitmap.height}")
+        }
+
+        BitmapDrawable(context.resources, bitmap)
+      }
+      is ErrorResult -> {
+        Logger.e(TAG, "applyTransformationsToDrawable() error", result.throwable)
+        null
+      }
+    }
+  }
+
+  private suspend fun notifyListenersFailure(
+    context: Context,
+    url: String,
+    error: Throwable
+  ) {
+    val listeners = mutex.withLockNonCancellable { activeRequests.get(url)?.consumeAllListeners() }
+    if (listeners == null) {
+      return
+    }
+
+    listeners.forEach { listener ->
+      handleFailure(
+        actualListener = listener.imageListenerParam,
+        context = context,
+        imageSize = listener.imageSize,
+        transformations = listener.transformations,
+        throwable = error
+      )
+    }
+  }
+
   private suspend fun loadFromNetworkInternal(
     context: Context,
     url: String,
     imageSize: ImageSize,
-    transformations: List<Transformation>,
-    imageListenerParam: ImageListenerParam
   ): File? {
     BackgroundUtils.ensureBackgroundThread()
 
     try {
-      val imageFileFromNetwork = loadFromNetworkInternalIntoFile(url)
-
-      if (verboseLogs && imageFileFromNetwork != null) {
-        Logger.d(TAG, "Loaded '$url' from network")
-      }
-
-      return imageFileFromNetwork
+      return loadFromNetworkIntoFile(url)
     } catch (error: Throwable) {
-      if (error is CancellationException) {
+      notifyListenersFailure(context, url, error)
+
+      if (error.isCoroutineCancellationException()) {
         if (verboseLogs) {
           Logger.e(TAG, "loadFromNetworkInternal() canceled '$url'")
         }
@@ -265,61 +365,14 @@ class ImageLoaderV2(
         return null
       }
 
-      Logger.d(TAG, "Failed to load '$url' $imageSize, " +
-        "transformations: ${transformations.size}, fromCache=false")
-
-      withContext(Dispatchers.Main) {
-        handleFailure(
-          actualListener = imageListenerParam,
-          context = context,
-          imageSize = imageSize,
-          transformations = transformations,
-          throwable = error
-        )
+      if (error.isNotFoundError() || !error.isExceptionImportant()) {
+        Logger.e(TAG, "Failed to load '$url' $imageSize, fromCache=false, error: ${error.errorMessageOrClassName()}")
+      } else {
+        Logger.e(TAG, "Failed to load '$url' $imageSize, fromCache=false", error)
       }
     }
 
     return null
-  }
-
-  private fun cacheResultBitmapOnDisk(url: String, drawable: Drawable) {
-    BackgroundUtils.ensureBackgroundThread()
-
-    var newCacheFile = cacheHandler.getOrCreateCacheFile(url)
-    if (newCacheFile == null) {
-      Logger.e(TAG, "cacheResultBitmapOnDisk() getOrCreateCacheFile1() returned null")
-      return
-    }
-
-    try {
-      if (cacheHandler.isAlreadyDownloaded(newCacheFile)) {
-        cacheHandler.deleteCacheFile(newCacheFile)
-
-        newCacheFile = cacheHandler.getOrCreateCacheFile(url)
-        if (newCacheFile == null) {
-          throw IOException("cacheResultBitmapOnDisk() getOrCreateCacheFile2() returned null")
-        }
-      }
-
-      val bitmap = drawable.toBitmap()
-
-      val outputStream = fileManager.getOutputStream(newCacheFile)
-        ?: throw IOException("fileManager.getOutputStream(newCacheFile) returned null")
-
-      outputStream.use { fos ->
-        bitmap.compress(Bitmap.CompressFormat.PNG, 95, fos)
-      }
-
-      val success = cacheHandler.markFileDownloaded(newCacheFile)
-      cacheHandler.fileWasAdded(fileManager.getLength(newCacheFile))
-
-      if (verboseLogs) {
-        Logger.d(TAG, "cacheResultBitmapOnDisk() '$url' done, success: $success")
-      }
-    } catch (error: Throwable) {
-      cacheHandler.deleteCacheFile(newCacheFile)
-      throw error
-    }
   }
 
   private suspend fun handleFailure(
@@ -329,67 +382,31 @@ class ImageLoaderV2(
     transformations: List<Transformation>,
     throwable: Throwable
   ) {
-    BackgroundUtils.ensureMainThread()
-
-    when (actualListener) {
-      is ImageListenerParam.SimpleImageListener -> {
-        val errorDrawable = loadErrorDrawableByException(
-          context,
-          imageSize,
-          transformations,
-          throwable,
-          actualListener.notFoundDrawableId,
-          actualListener.errorDrawableId
-        )
-
-        actualListener.listener.onResponse(errorDrawable)
-      }
-      is ImageListenerParam.FailureAwareImageListener -> {
-        if (throwable.isNotFoundError()) {
-          actualListener.listener.onNotFound()
-        } else {
-          actualListener.listener.onResponseError(throwable)
-        }
-      }
-    }
-  }
-
-  private suspend fun loadImageFromDiskWithTransformations(
-    url: String,
-    context: Context,
-    imageFile: File,
-    transformations: List<Transformation>,
-    imageSize: ImageSize
-  ): BitmapDrawable? {
-    BackgroundUtils.ensureBackgroundThread()
-
-    val lifecycle = context.getLifecycleFromContext()
-
-    val request = with(ImageRequest.Builder(context)) {
-      lifecycle(lifecycle)
-      allowHardware(true)
-      allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
-      data(imageFile)
-      transformations(transformations + RESIZE_TRANSFORMATION)
-      applyImageSize(imageSize)
-
-      build()
+    if (throwable.isCoroutineCancellationException()) {
+      return
     }
 
-    when (val result = imageLoader.execute(request)) {
-      is SuccessResult -> {
-        val bitmap = result.drawable.toBitmap()
+    withContext(Dispatchers.Main.immediate) {
+      when (actualListener) {
+        is ImageListenerParam.SimpleImageListener -> {
+          val errorDrawable = loadErrorDrawableByException(
+            context,
+            imageSize,
+            transformations,
+            throwable,
+            actualListener.notFoundDrawableId,
+            actualListener.errorDrawableId
+          )
 
-        if (verboseLogs) {
-          Logger.d(TAG, "applyTransformationsToDrawable() done, url='$url', " +
-            "bitmap.size=${bitmap.width}x${bitmap.height}")
+          actualListener.listener.onResponse(errorDrawable)
         }
-
-        return BitmapDrawable(context.resources, bitmap)
-      }
-      is ErrorResult -> {
-        Logger.e(TAG, "applyTransformationsToDrawable() error", result.throwable)
-        return null
+        is ImageListenerParam.FailureAwareImageListener -> {
+          if (throwable.isNotFoundError()) {
+            actualListener.listener.onNotFound()
+          } else {
+            actualListener.listener.onResponseError(throwable)
+          }
+        }
       }
     }
   }
@@ -424,16 +441,38 @@ class ImageLoaderV2(
   }
 
   @Throws(HttpException::class)
-  private suspend fun loadFromNetworkInternalIntoFile(url: String): File? {
+  private suspend fun loadFromNetworkIntoFile(url: String): File? {
     BackgroundUtils.ensureBackgroundThread()
-
-    val site = siteResolver.findSiteForUrl(url)
-    val requestModifier = site?.requestModifier()
 
     val cacheFile = cacheHandler.getOrCreateCacheFile(url)
     if (cacheFile == null) {
+      Logger.e(TAG, "loadFromNetworkInternalIntoFile() cacheHandler.getOrCreateCacheFile('$url') -> null")
       return null
     }
+
+    val success = try {
+      loadFromNetworkIntoFileInternal(url, cacheFile)
+    } catch (error: Throwable) {
+      cacheHandler.deleteCacheFile(cacheFile)
+
+      if (error.isCoroutineCancellationException()) {
+        return null
+      }
+
+      throw error
+    }
+
+    if (!success) {
+      cacheHandler.deleteCacheFile(cacheFile)
+      return null
+    }
+
+    return File(cacheFile.getFullPath())
+  }
+
+  private suspend fun loadFromNetworkIntoFileInternal(url: String, cacheFile: RawFile): Boolean {
+    val site = siteResolver.findSiteForUrl(url)
+    val requestModifier = site?.requestModifier()
 
     val requestBuilder = Request.Builder()
       .url(url)
@@ -445,44 +484,38 @@ class ImageLoaderV2(
 
     val response = coilOkHttpClient.okHttpClient().suspendCall(requestBuilder.build())
     if (!response.isSuccessful) {
+      Logger.e(TAG, "loadFromNetworkInternalIntoFile() bad response code: ${response.code}")
+
       if (response.code == 404) {
         throw HttpException(response)
       }
 
-      return null
+      return false
     }
 
-    val resultFile = try {
-      runInterruptible {
-        val responseBody = response.body
-        if (responseBody == null) {
-          return@runInterruptible null
+    runInterruptible {
+      val responseBody = response.body
+        ?: throw IOException("Response body is null")
+      val outputStream = fileManager.getOutputStream(cacheFile)
+        ?: throw IOException("Failed to get output stream")
+
+      responseBody.byteStream().use { inputStream ->
+        outputStream.use { os ->
+          inputStream.copyTo(os)
         }
-
-        val outputStream = fileManager.getOutputStream(cacheFile)
-          ?: throw IOException("Failed to get output stream")
-
-        responseBody.byteStream().use { inputStream ->
-          outputStream.use { os ->
-            inputStream.copyTo(os)
-          }
-        }
-
-        return@runInterruptible cacheFile
       }
-    } catch (error: CancellationException) {
-      cacheHandler.deleteCacheFile(cacheFile)
-      return null
     }
 
-    if (resultFile == null) {
-      return null
+    if (!cacheHandler.markFileDownloaded(cacheFile)) {
+      throw IOException("Failed to mark file '${cacheFile.getFullPath()}' as downloaded")
     }
 
-    return File(resultFile.getFullPath())
+    cacheHandler.fileWasAdded(fileManager.getLength(cacheFile))
+
+    return true
   }
 
-  private fun tryLoadFromCacheOrNull(url: String): File? {
+  private fun tryLoadFromDiskCacheOrNull(url: String): File? {
     BackgroundUtils.ensureBackgroundThread()
 
     val cacheFile = cacheHandler.getCacheFileOrNull(url)
@@ -799,7 +832,7 @@ class ImageLoaderV2(
             previewBitmap.compress(Bitmap.CompressFormat.JPEG, 95, fos)
           }
         }
-      } catch (error: CancellationException) {
+      } catch (error: Throwable) {
         previewFileOnDisk.delete()
         throw error
       }
@@ -843,7 +876,7 @@ class ImageLoaderV2(
       }
 
       videoFrameDecodeMaybe.errorOrNull()?.let { error ->
-        if (error is CancellationException) {
+        if (error.isCoroutineCancellationException()) {
           throw error
         }
       }
@@ -1153,6 +1186,43 @@ class ImageLoaderV2(
 
     override fun getOpacity(): Int {
       return bitmapDrawable.opacity
+    }
+  }
+
+  private class ActiveListener(
+    val imageListenerParam: ImageListenerParam,
+    val imageSize: ImageSize,
+    val transformations: List<Transformation>
+  )
+
+  private data class ActiveRequest(val url: String) {
+    private val listeners = hashSetOf<ActiveListener>()
+
+    @Synchronized
+    fun addImageListener(
+      imageListenerParam: ImageListenerParam,
+      imageSize: ImageSize,
+      transformations: List<Transformation>
+    ): Boolean {
+      listeners += ActiveListener(imageListenerParam, imageSize, transformations)
+      return listeners.size > 1
+    }
+
+    @Synchronized
+    fun consumeAllListeners(): Set<ActiveListener> {
+      val imageListenersCopy = listeners.toSet()
+      listeners.clear()
+
+      return imageListenersCopy
+    }
+
+    @Synchronized
+    fun removeImageListenerParam(imageListenerParam: ImageListenerParam): Boolean {
+      val removed = listeners.removeIfKt { activeListener ->
+        activeListener.imageListenerParam === imageListenerParam
+      }
+
+      return listeners.isEmpty()
     }
   }
 

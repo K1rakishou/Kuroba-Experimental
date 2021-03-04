@@ -20,6 +20,7 @@ import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.isCoroutineCancellationException
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runInterruptible
@@ -343,7 +344,7 @@ object MediaUtils {
         }
       }
     } catch (exception: Throwable) {
-      if (exception is CancellationException) {
+      if (exception.isCoroutineCancellationException()) {
         throw exception
       }
 
