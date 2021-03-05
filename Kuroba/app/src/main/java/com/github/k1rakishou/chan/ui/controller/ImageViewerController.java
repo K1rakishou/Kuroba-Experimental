@@ -260,6 +260,13 @@ public class ImageViewerController
         }
 
         menuBuilder.withItem(VOLUME_ID, R.drawable.ic_volume_off_white_24dp, this::volumeClicked);
+
+        menuBuilder.withItem(
+                ACTION_RELOAD,
+                R.drawable.ic_refresh_white_24dp,
+                this::forceReload
+        );
+
         menuBuilder.withItem(
                 SAVE_ID,
                 R.drawable.ic_file_download_white_24dp,
@@ -327,11 +334,6 @@ public class ImageViewerController
                 ACTION_IMAGE_ROTATE,
                 R.string.action_image_rotate,
                 this::rotateImage
-        );
-        overflowBuilder.withSubItem(
-                ACTION_RELOAD,
-                R.string.action_reload,
-                this::forceReload
         );
 
         overflowBuilder.build().build();
@@ -502,7 +504,7 @@ public class ImageViewerController
         });
     }
 
-    private void forceReload(ToolbarMenuSubItem item) {
+    private void forceReload(ToolbarMenuItem item) {
         ToolbarMenuItem menuItem = navigation.findItem(SAVE_ID);
         if (menuItem != null && presenter.forceReload()) {
             menuItem.setEnabled(false);
