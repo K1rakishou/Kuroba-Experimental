@@ -363,7 +363,7 @@ class BookmarksController(
       .withItem(R.drawable.ic_search_white_24dp) {
         (navigationController as ToolbarNavigationController).showSearch()
       }
-      .withItem(ACTION_CHANGE_VIEW_BOOKMARK_MODE, R.drawable.ic_baseline_view_list_24) {
+      .withItem(ACTION_CHANGE_VIEW_BOOKMARK_MODE, getBookmarksModeChangeToolbarButtonDrawableId()) {
         onChangeViewModeClicked()
       }
       .withItem(ACTION_OPEN_SORT_SETTINGS, R.drawable.ic_baseline_sort_24) {
@@ -885,19 +885,20 @@ class BookmarksController(
   }
 
   private fun onViewBookmarksModeChanged() {
-    navigation.findItem(ACTION_CHANGE_VIEW_BOOKMARK_MODE)?.let { menuItem ->
-      val drawableId = when (PersistableChanState.viewThreadBookmarksGridMode.get()) {
-        // Should be a reverse of whatever viewThreadBookmarksGridMode currently is because the
-        // button's meaning is to switch into that mode, not show the current mode
-        false -> R.drawable.ic_baseline_view_comfy_24
-        true -> R.drawable.ic_baseline_view_list_24
-      }
-
-      menuItem.setImage(drawableId)
-    }
+    navigation.findItem(ACTION_CHANGE_VIEW_BOOKMARK_MODE)
+      ?.setImage(getBookmarksModeChangeToolbarButtonDrawableId())
 
     navigation.findSubItem(ACTION_SET_GRID_BOOKMARK_VIEW_WIDTH)?.let { menuSubItem ->
       menuSubItem.visible = PersistableChanState.viewThreadBookmarksGridMode.get()
+    }
+  }
+
+  private fun getBookmarksModeChangeToolbarButtonDrawableId(): Int {
+    return when (PersistableChanState.viewThreadBookmarksGridMode.get()) {
+      // Should be a reverse of whatever viewThreadBookmarksGridMode currently is because the
+      // button's meaning is to switch into that mode, not show the current mode
+      false -> R.drawable.ic_baseline_view_comfy_24
+      true -> R.drawable.ic_baseline_view_list_24
     }
   }
 
