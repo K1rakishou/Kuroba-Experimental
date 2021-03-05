@@ -20,7 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:id="@+id/card_view"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="@dimen/grid_card_margin"
     card_view:cardCornerRadius="@dimen/grid_card_corner_radius"
     card_view:cardElevation="2dp">
 

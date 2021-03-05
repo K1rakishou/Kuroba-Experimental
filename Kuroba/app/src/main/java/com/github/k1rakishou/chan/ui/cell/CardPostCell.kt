@@ -47,8 +47,11 @@ import com.github.k1rakishou.model.data.post.ChanPostImage
 import java.util.*
 import javax.inject.Inject
 
-class CardPostCell : ColorizableCardView, PostCellInterface, View.OnClickListener,
-  OnLongClickListener, ThemeChangesListener {
+class CardPostCell : ColorizableCardView,
+  PostCellInterface,
+  View.OnClickListener,
+  OnLongClickListener,
+  ThemeChangesListener {
 
   @Inject
   lateinit var postFilterManager: PostFilterManager
@@ -142,7 +145,7 @@ class CardPostCell : ColorizableCardView, PostCellInterface, View.OnClickListene
     stub: Boolean,
     theme: ChanTheme
   ): Boolean {
-    if (post == this.post && theme == this.theme && inPopup == this.inPopup) {
+    if (post == this.post && theme == this.theme && inPopup == this.inPopup && this.compact == compact) {
       return false
     }
 
@@ -188,14 +191,10 @@ class CardPostCell : ColorizableCardView, PostCellInterface, View.OnClickListene
     this.post = post
     this.theme = theme
     this.callback = callback
+    this.compact = compact
 
     preBindPost(post)
     bindPost(post)
-
-    if (this.compact != compact) {
-      this.compact = compact
-      setCompact(compact)
-    }
 
     onThemeChanged()
   }

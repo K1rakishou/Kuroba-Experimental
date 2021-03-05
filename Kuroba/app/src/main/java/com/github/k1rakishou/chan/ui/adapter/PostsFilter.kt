@@ -122,9 +122,9 @@ class PostsFilter(
     ACTIVITY("activity");
 
     companion object {
-      fun find(name: String): Order? {
-
+      fun find(name: String): Order {
         return values().firstOrNull { it.orderName == name }
+          ?: BUMP
       }
 
       @JvmStatic

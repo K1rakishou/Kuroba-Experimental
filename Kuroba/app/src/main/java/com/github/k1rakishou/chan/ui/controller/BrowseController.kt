@@ -109,11 +109,12 @@ class BrowseController(
     // Initialization
     serializedCoroutineExecutor = SerializedCoroutineExecutor(mainScope)
 
+    threadLayout.setPostViewMode(ChanSettings.boardViewMode.get())
+
     serializedCoroutineExecutor.post {
       val boardOrder = ChanSettings.boardOrder.get()
-      order = PostsFilter.Order.find(boardOrder) ?: PostsFilter.Order.BUMP
+      order = PostsFilter.Order.find(boardOrder)
 
-      threadLayout.setPostViewMode(ChanSettings.boardViewMode.get())
       threadLayout.presenter.setOrder(order, isManuallyChangedOrder = false)
     }
   }
@@ -309,10 +310,7 @@ class BrowseController(
 
   @Suppress("MoveLambdaOutsideParentheses")
   private fun NavigationItem.MenuOverflowBuilder.addSortMenu(): NavigationItem.MenuOverflowBuilder {
-    var currentOrder = PostsFilter.Order.find(ChanSettings.boardOrder.get())
-    if (currentOrder == null) {
-      currentOrder = PostsFilter.Order.BUMP
-    }
+    val currentOrder = PostsFilter.Order.find(ChanSettings.boardOrder.get())
 
     withNestedOverflow(ACTION_SORT, R.string.action_sort, true)
       .addNestedCheckableItem(

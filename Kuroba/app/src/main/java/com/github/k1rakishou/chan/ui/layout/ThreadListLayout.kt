@@ -65,7 +65,6 @@ import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
@@ -77,6 +76,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
@@ -266,9 +266,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       return -1
     }
 
+  private val gridModeSpaceItemDecoration = GridModeSpaceItemDecoration()
+
   private lateinit var replyLayout: ReplyLayout
   private lateinit var searchStatus: TextView
-  private lateinit var recyclerView: ColorizableRecyclerView
+  private lateinit var recyclerView: RecyclerView
   private lateinit var postAdapter: PostAdapter
 
   private val compositeDisposable = CompositeDisposable()
@@ -329,15 +331,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     themeEngine.removeListener(this)
   }
 
-  override fun onThemeChanged() {
-    setBackgroundColor(themeEngine.chanTheme.backColor)
-    replyLayout.setBackgroundColor(themeEngine.chanTheme.backColor)
-    searchStatus.setBackgroundColor(themeEngine.chanTheme.backColor)
-
-    searchStatus.setTextColor(themeEngine.chanTheme.textColorSecondary)
-    searchStatus.typeface = themeEngine.chanTheme.mainFont
-  }
-
   override fun onFinishInflate() {
     super.onFinishInflate()
 
@@ -354,6 +347,34 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     replyLayout.layoutParams = params
 
     onThemeChanged()
+  }
+
+  override fun onThemeChanged() {
+    val backColor = kotlin.run {
+      if (postViewMode != null && postViewMode != PostViewMode.LIST) {
+        if (themeEngine.chanTheme.backColor == 0) {
+          return@run themeEngine.chanTheme.backColor
+        }
+
+        val factor = if (themeEngine.chanTheme.isBackColorDark) {
+          1.2f
+        } else {
+          0.9f
+        }
+
+        return@run ThemeEngine.manipulateColor(themeEngine.chanTheme.backColor, factor)
+      }
+
+      return@run themeEngine.chanTheme.backColor
+    }
+
+    setBackgroundColorFast(backColor)
+
+    replyLayout.setBackgroundColorFast(themeEngine.chanTheme.backColor)
+    searchStatus.setBackgroundColorFast(themeEngine.chanTheme.backColor)
+
+    searchStatus.setTextColor(themeEngine.chanTheme.textColorSecondary)
+    searchStatus.typeface = themeEngine.chanTheme.mainFont
   }
 
   fun onCreate(
@@ -384,6 +405,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     recyclerView.recycledViewPool.setMaxRecycledViews(PostAdapter.TYPE_POST, 0)
     recyclerView.addOnScrollListener(scrollListener)
 
+    recyclerView.addItemDecoration(gridModeSpaceItemDecoration)
+
     setFastScroll(false)
     attachToolbarScroll(true)
 
@@ -405,6 +428,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     setFastScroll(false)
 
     forceRecycleAllPostViews()
+    recyclerView.removeItemDecoration(gridModeSpaceItemDecoration)
     recyclerView.swapAdapter(null, true)
     threadPresenter = null
   }
@@ -583,6 +607,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     recyclerView.recycledViewPool.clear()
     postAdapter.setPostViewMode(postViewMode)
+
+    // Trigger theme update because some colors depend on postViewMode
+    onThemeChanged()
   }
 
   suspend fun showPosts(
@@ -935,32 +962,38 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       return true
     }
 
-    val topView = layoutManager?.findViewByPosition(0)
+    val genericPostCellView = layoutManager?.findViewByPosition(0) as? GenericPostCell
+      ?: return true
+    val genericPostCellChildView = genericPostCellView.getChildPostCellView()
       ?: return true
 
     if (searchOpen) {
       val searchExtraHeight = findViewById<View>(R.id.search_status).height
 
       return if (postViewMode == PostViewMode.LIST) {
-        topView.top != searchExtraHeight
+        genericPostCellView.top != searchExtraHeight
       } else {
-        if (topView is PostStubCell) {
+        if (genericPostCellChildView is PostStubCell) {
           // PostStubCell does not have grid_card_margin
-          topView.top != searchExtraHeight + dp(1f)
+          genericPostCellView.top != searchExtraHeight + dp(1f)
         } else {
-          topView.top != getDimen(R.dimen.grid_card_margin) + dp(1f) + searchExtraHeight
+          genericPostCellView.top != getDimen(R.dimen.grid_card_margin) + dp(1f) + searchExtraHeight
         }
       }
     }
 
     when (postViewMode) {
-      PostViewMode.LIST -> return topView.top != toolbarHeight()
+      PostViewMode.LIST -> {
+        return genericPostCellView.top != toolbarHeight()
+      }
       PostViewMode.STAGGER,
-      PostViewMode.GRID -> return if (topView is PostStubCell) {
-        // PostStubCell does not have grid_card_margin
-        topView.top != toolbarHeight() + dp(1f)
-      } else {
-        topView.top != getDimen(R.dimen.grid_card_margin) + dp(1f) + toolbarHeight()
+      PostViewMode.GRID -> {
+        if (genericPostCellChildView is PostStubCell) {
+          // PostStubCell does not have grid_card_margin
+          return genericPostCellView.top != toolbarHeight() + dp(1f)
+        } else {
+          return genericPostCellView.top != getDimen(R.dimen.grid_card_margin) + dp(1f) + toolbarHeight()
+        }
       }
     }
     
@@ -973,8 +1006,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   fun smoothScrollNewPosts(displayPosition: Int) {
     if (layoutManager !is LinearLayoutManager) {
-      Logger.wtf(TAG, "Layout manager is grid inside thread??")
-      return
+      throw IllegalStateException("Layout manager is grid inside thread??")
     }
 
     (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
@@ -1353,6 +1385,24 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   fun onImageOptionsComplete() {
     replyLayout.onImageOptionsComplete()
+  }
+
+  class GridModeSpaceItemDecoration : ItemDecoration() {
+    override fun getItemOffsets(
+      outRect: Rect,
+      view: View,
+      parent: RecyclerView,
+      state: RecyclerView.State
+    ) {
+      if (view is GenericPostCell) {
+        val margins = view.getMargins()
+
+        outRect.left = margins
+        outRect.right = margins
+        outRect.top = margins
+        outRect.bottom = margins
+      }
+    }
   }
 
   interface ThreadListLayoutPresenterCallback {

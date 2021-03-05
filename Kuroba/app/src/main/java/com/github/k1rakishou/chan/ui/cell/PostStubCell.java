@@ -318,7 +318,12 @@ public class PostStubCell
 
     @Override
     public void onThemeChanged() {
-        title.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
-        options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getPostDetailsColor()));
+        if (title != null) {
+            title.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
+        }
+
+        if (options != null) {
+            options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getPostDetailsColor()));
+        }
     }
 }

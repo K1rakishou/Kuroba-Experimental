@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.ui.cell
 
 import android.content.Context
+import android.view.View
 import android.widget.FrameLayout
 import com.github.k1rakishou.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.R
@@ -14,11 +15,25 @@ import com.github.k1rakishou.model.data.post.ChanPostImage
 class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterface {
   private var layoutId: Int? = null
 
+  private val gridModeMargins = context.resources.getDimension(R.dimen.grid_card_margin).toInt()
+
   init {
     layoutParams = FrameLayout.LayoutParams(
       FrameLayout.LayoutParams.MATCH_PARENT,
       FrameLayout.LayoutParams.WRAP_CONTENT
     )
+  }
+
+  fun getMargins(): Int {
+    val childPostCell = getChildPostCell()
+      ?: return 0
+
+    return when (childPostCell) {
+      is PostCell,
+      is PostStubCell -> 0
+      is CardPostCell -> gridModeMargins
+      else -> throw IllegalStateException("Unknown childPostCell: ${childPostCell.javaClass.simpleName}")
+    }
   }
 
   override fun postDataDiffers(
@@ -157,6 +172,14 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
   private fun getChildPostCell(): PostCellInterface? {
     if (childCount != 0) {
       return getChildAt(0) as PostCellInterface
+    }
+
+    return null
+  }
+
+  fun getChildPostCellView(): View? {
+    if (childCount != 0) {
+      return getChildAt(0)
     }
 
     return null
