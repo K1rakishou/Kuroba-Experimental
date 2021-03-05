@@ -174,7 +174,7 @@ public class PostImageThumbnailView extends ThumbnailView {
         String url = postImage.getThumbnailUrl().toString();
 
         boolean highRes = canUseHighResCells && ChanSettings.highResCells.get();
-        // TODO(KurobaEx v0.6.0): add "&& ImageViewerPresenter.canAutoLoad(postImage)"
+        // TODO(KurobaEx v0.7.0): add "&& ImageViewerPresenter.canAutoLoad(postImage)"
         //  once CacheHandler.cacheFileExists starts working without the need to access the disk.
 
         boolean hasImageUrl = postImage.getImageUrl() != null;
