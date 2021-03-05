@@ -1,5 +1,6 @@
 package com.github.k1rakishou.model.repository
 
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -541,13 +542,13 @@ class ChanPostRepository(
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }
 
-        // Delete 1/3 of the posts in the database
-        val toDeleteCount = if (forced) {
-          totalAmountOfPostsInDatabase / 3
+        val postsInDatabaseToUse = if (forced) {
+          totalAmountOfPostsInDatabase
         } else {
-          max(totalAmountOfPostsInDatabase, maxPostsAmount) / 3
+          max(totalAmountOfPostsInDatabase, maxPostsAmount)
         }
 
+        val toDeleteCount = (postsInDatabaseToUse / (100f / ChanSettings.databasePostsCleanupRemovePercent.get().toFloat())).toInt()
         if (toDeleteCount <= 0) {
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }
@@ -592,13 +593,13 @@ class ChanPostRepository(
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }
 
-        // Delete 1/3 of the threads in the database
-        val toDeleteCount = if (forced) {
-          totalAmountOfThreadsInDatabase / 3
+        val threadsInDatabaseToUse = if (forced) {
+          totalAmountOfThreadsInDatabase
         } else {
-          max(totalAmountOfThreadsInDatabase, maxThreadsAmount) / 3
+          max(totalAmountOfThreadsInDatabase, maxThreadsAmount)
         }
 
+        val toDeleteCount = (threadsInDatabaseToUse / (100f / ChanSettings.databasePostsCleanupRemovePercent.get().toFloat())).toInt()
         if (toDeleteCount <= 0) {
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }

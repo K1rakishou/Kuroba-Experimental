@@ -227,7 +227,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       maxThreadsInDatabaseSettingValue = ChanSettings.databaseMaxThreadsCount.get()
     )
 
-    logAppConstants(appConstants)
+    logAppConstantsAndSettings(appConstants)
 
     val okHttpDns = okHttpDns
     val okHttpProtocols = okHttpProtocols
@@ -372,10 +372,12 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     }
   }
 
-  private fun logAppConstants(appConstants: AppConstants) {
+  private fun logAppConstantsAndSettings(appConstants: AppConstants) {
     Logger.d(TAG, "maxPostsCountInPostsCache = " + appConstants.maxPostsCountInPostsCache)
     Logger.d(TAG, "maxAmountOfPostsInDatabase = " + appConstants.maxAmountOfPostsInDatabase)
     Logger.d(TAG, "maxAmountOfThreadsInDatabase = " + appConstants.maxAmountOfThreadsInDatabase)
+    Logger.d(TAG, "diskCacheCleanupRemovePercent = " + ChanSettings.diskCacheCleanupRemovePercent.get())
+    Logger.d(TAG, "databasePostsCleanupRemovePercent = " + ChanSettings.databasePostsCleanupRemovePercent.get())
     Logger.d(TAG, "userAgent = " + appConstants.userAgent)
     Logger.d(TAG, "kurobaExUserAgent = " + appConstants.kurobaExUserAgent)
   }

@@ -53,6 +53,16 @@ class CachingSettingsScreen(
           setting = ChanSettings.databaseMaxThreadsCount
         )
 
+        group += RangeSettingV2.createBuilder(
+          context = context,
+          identifier = CachingScreen.DatabaseCacheSizeGroup.DatabasePostsCleanupRemovePercent,
+          topDescriptionIdFunc = { R.string.database_posts_cleanup_remove_percent },
+          bottomDescriptionIdFunc = { R.string.database_posts_cleanup_remove_percent_description },
+          currentValueStringFunc = { "${ChanSettings.databasePostsCleanupRemovePercent.get()}%" },
+          requiresRestart = true,
+          setting = ChanSettings.databasePostsCleanupRemovePercent
+        )
+
         group
       }
     )
@@ -87,6 +97,16 @@ class CachingSettingsScreen(
           currentValueStringFunc = { "${ChanSettings.prefetchDiskCacheSizeMegabytes.get()} MB" },
           requiresRestart = true,
           setting = ChanSettings.prefetchDiskCacheSizeMegabytes
+        )
+
+        group += RangeSettingV2.createBuilder(
+          context = context,
+          identifier = CachingScreen.MediaCacheSizeGroup.MediaCacheCleanupRemoveFilesPercent,
+          topDescriptionIdFunc = { R.string.media_cache_cleanup_remove_percent },
+          bottomDescriptionIdFunc = { R.string.media_cache_cleanup_remove_percent_description },
+          currentValueStringFunc = { "${ChanSettings.diskCacheCleanupRemovePercent.get()}%" },
+          requiresRestart = true,
+          setting = ChanSettings.diskCacheCleanupRemovePercent
         )
 
         group

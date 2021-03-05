@@ -707,21 +707,21 @@ Re-enable this permission in the app settings if you permanently disabled it."
 
     <!-- Media cache size group -->
     <string name="settings_media_cache_size">Media cache size</string>
-
     <string name="normal_cache_size_title">Media disk cache size</string>
     <string name="normal_cache_size_description">The maximum size of all files stored in the cache before it gets cleaned up. Disk cache is used to reduce the amount of network requests to show media. It\'s also helpful when you have no internet connection or if a media was deleted from the server (you will be able to see it until it\' remove from the cache).</string>
-
     <string name="prefetch_cache_size_title">Prefetch media disk cache size</string>
     <string name="prefetch_cache_size_description">The same as above but it\'s only used when media prefetching setting is turned on. Since you are basically downloading media files and you hover over them you will need a more spacious cache.</string>
+    <string name="media_cache_cleanup_remove_percent">Percent of cached files to remove upon cleanup</string>
+    <string name="media_cache_cleanup_remove_percent_description">Percent of cached files that will be removed from the disk upon cache clean up. The higher this setting the more files will be removed at a time which may result in app having delays when viewing media (Because all access to the cache is blocked when clean up procedure is running). The media cache size setting may also affect this. On the other hand the clean up procedure will be executed with higher intervals.</string>
 
     <!-- Database size group -->
     <string name="settings_database_cache_size">Database cache size</string>
-
     <string name="database_max_posts">Max posts count in the database</string>
     <string name="database_max_posts_description">All posts are stored in the database (so you can access threads even without internet connection). This setting regulates the maximum amount of posts in the database before we start running periodic cleanup routines. Posts in bookmarked threads/Original Posts are ignored by cleanup routines.</string>
-
     <string name="database_max_threads">Max threads count in the database</string>
     <string name="database_max_threads_description">Same as above. One \"thread\" in database means the original post plus some other thread information. When a thread is deleted from the database, all the information associated with it is deleted as well (like all posts associated with that thread).</string>
+    <string name="database_posts_cleanup_remove_percent">Percent of posts/threads to remove upon cleanup</string>
+    <string name="database_posts_cleanup_remove_percent_description">Percent of posts/threads that will be removed from the database upon database cleanup. The higher this setting the more posts/threads will be removed at a time which may result in app taking more time to start up (Because all access to posts/threads database tables is blocked when clean up procedure is running). The max posts/threads in the database setting may also affect this. On the other hand the clean up procedure will be executed with higher intervals.</string>
 
     <!-- Media video options group -->
     <string name="setting_video_options">Video options</string>

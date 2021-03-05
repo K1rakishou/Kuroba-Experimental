@@ -627,6 +627,7 @@ sealed class CachingScreen(
 
     object NormalCacheSize : MediaCacheSizeGroup("normal_cache_size")
     object PrefetchCacheSize : MediaCacheSizeGroup("prefetch_cache_size")
+    object MediaCacheCleanupRemoveFilesPercent : MediaCacheSizeGroup("media_cache_cleanup_remove_files_percent")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = MediaScreen.getScreenIdentifier()
@@ -642,6 +643,7 @@ sealed class CachingScreen(
 
     object MaxDatabasePostsCount : DatabaseCacheSizeGroup("max_database_posts")
     object MaxDatabaseThreadsCount : DatabaseCacheSizeGroup("max_database_threads")
+    object DatabasePostsCleanupRemovePercent : DatabaseCacheSizeGroup("database_posts_cleanup_remove_percent")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = MediaScreen.getScreenIdentifier()

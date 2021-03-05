@@ -438,7 +438,8 @@ class CacheHandler(
         }
 
         Logger.d(TAG, "Deleted $cacheFileName and it's meta $cacheMetaFileName, " +
-          "fileSize = $fileSize, cache size = ${size.get()}")
+          "fileSize = ${ChanPostUtils.getReadableFileSize(fileSize)}, " +
+          "cache size = ${ChanPostUtils.getReadableFileSize(size.get())}")
       }
 
       return true
@@ -787,7 +788,6 @@ class CacheHandler(
     }
 
     val start = System.currentTimeMillis()
-    Logger.d(TAG, "trim() started")
 
     // LastModified doesn't work on some platforms/phones
     // (https://issuetracker.google.com/issues/36930892)
@@ -797,18 +797,24 @@ class CacheHandler(
     // the creation time from the meta file to sort cache files in ascending order (from the
     // oldest cache file to the newest).
 
-    val sortedFiles = groupFilterAndSortFiles(directoryFiles)
     var totalDeleted = 0L
     var filesDeleted = 0
+
+    val sortedFiles = groupFilterAndSortFiles(directoryFiles)
     val now = System.currentTimeMillis()
 
-    val sizeToFree = size.get().let { currentCacheSize ->
-      if (currentCacheSize > fileCacheDiskSizeBytes) {
-        currentCacheSize / 2
-      } else {
-        fileCacheDiskSizeBytes / 2
-      }
+    val currentCacheSizeToUse = if (size.get() > fileCacheDiskSizeBytes) {
+      size.get()
+    } else {
+      fileCacheDiskSizeBytes
     }
+
+    val sizeToFree = (currentCacheSizeToUse / (100f / ChanSettings.diskCacheCleanupRemovePercent.get().toFloat())).toLong()
+
+    Logger.d(TAG, "trim() started, " +
+      "currentCacheSize=${ChanPostUtils.getReadableFileSize(size.get())}, " +
+      "fileCacheDiskSizeBytes=${ChanPostUtils.getReadableFileSize(fileCacheDiskSizeBytes)}, " +
+      "sizeToFree=${ChanPostUtils.getReadableFileSize(sizeToFree)}")
 
     // We either delete all files we can in the cache directory or at most half of the cache
     for (cacheFile in sortedFiles) {

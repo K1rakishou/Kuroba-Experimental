@@ -378,9 +378,16 @@ class ReportManager(
       appendLine("Board view mode: ${ChanSettings.boardViewMode.get()}")
       appendLine("Prefetching enabled: ${ChanSettings.autoLoadThreadImages.get()}")
       appendLine("Hi-res thumbnails enabled: ${ChanSettings.highResCells.get()}")
-      appendLine("Disk cache size megabytes: ${ChanSettings.diskCacheSizeMegabytes.get()}")
       appendLine("CloudFlare force preload enabled: ${ChanSettings.cloudflareForcePreload.get()}")
-      appendLine("Prefetch disk cache size megabytes: ${ChanSettings.prefetchDiskCacheSizeMegabytes.get()}")
+
+      appendLine("diskCacheSizeMegabytes: ${ChanSettings.diskCacheSizeMegabytes.get()}")
+      appendLine("prefetchDiskCacheSizeMegabytes: ${ChanSettings.prefetchDiskCacheSizeMegabytes.get()}")
+      appendLine("diskCacheCleanupRemovePercent: ${ChanSettings.diskCacheCleanupRemovePercent.get()}")
+
+      appendLine("databaseMaxPostsCount: ${ChanSettings.databaseMaxPostsCount.get()}")
+      appendLine("databaseMaxThreadsCount: ${ChanSettings.databaseMaxThreadsCount.get()}")
+      appendLine("databasePostsCleanupRemovePercent: ${ChanSettings.databasePostsCleanupRemovePercent.get()}")
+
       appendLine("WEBM streaming enabled: ${ChanSettings.videoStream.get()}")
       appendLine("ImageSaver root directory: ${PersistableChanState.imageSaverV2PersistedOptions.get().rootDirectoryUri}")
       appendLine("Current layout mode: ${ChanSettings.getCurrentLayoutMode().name}")
