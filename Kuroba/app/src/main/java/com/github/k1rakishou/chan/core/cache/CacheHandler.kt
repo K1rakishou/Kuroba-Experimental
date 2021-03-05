@@ -42,7 +42,7 @@ import java.io.IOException
 import java.io.PrintWriter
 import java.util.*
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit.MINUTES
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
@@ -1005,8 +1005,8 @@ class CacheHandler(
     internal const val CACHE_META_EXTENSION = "cache_meta"
     internal const val CHUNK_CACHE_EXTENSION = "chunk"
 
-    private val MIN_CACHE_FILE_LIFE_TIME = MINUTES.toMillis(5)
-    private val MIN_TRIM_INTERVAL = MINUTES.toMillis(1)
+    private val MIN_CACHE_FILE_LIFE_TIME = TimeUnit.MINUTES.toMillis(1)
+    private val MIN_TRIM_INTERVAL = TimeUnit.SECONDS.toMillis(15)
 
     private val CACHE_FILE_COMPARATOR = Comparator<CacheFile> { cacheFile1, cacheFile2 ->
       cacheFile1.createdOn.compareTo(cacheFile2.createdOn)

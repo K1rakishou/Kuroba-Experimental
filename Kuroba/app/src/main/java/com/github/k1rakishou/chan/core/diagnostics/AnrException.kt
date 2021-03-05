@@ -12,7 +12,7 @@ class AnrException(thread: Thread) : Exception("ANR detected") {
     stackTrace = thread.stackTrace
   }
 
-  fun collectAllStackTraces(reportFooter: String): ByteArrayOutputStream? {
+  fun collectAllStackTraces(reportFooter: String, excludedThread: Thread): ByteArrayOutputStream? {
     val bos = ByteArrayOutputStream(4096)
     val ps = PrintStream(bos)
 
@@ -23,11 +23,16 @@ class AnrException(thread: Thread) : Exception("ANR detected") {
     return bos
   }
 
-  private fun printProcessMap(ps: PrintStream, reportFooter: String): Boolean {
+  private fun printProcessMap(ps: PrintStream, reportFooter: String, excludedThread: Thread): Boolean {
     val stackTraces = Thread.getAllStackTraces()
 
-    val mainThread = stackTraces.keys.firstOrNull { thread -> thread == Looper.getMainLooper().thread }
-    checkNotNull(mainThread) { "Couldn't find main thread???!!!" }
+    val mainThread = stackTraces.keys
+      .firstOrNull { thread -> thread === Looper.getMainLooper().thread }
+
+    if (mainThread == null) {
+      // Something is very wrong
+      return false
+    }
 
     // Sometimes ANR detection is triggered the main thread is not actually blocked
     // (because of coroutines or some other shit) so we need to check that the main thread is actually
@@ -47,6 +52,10 @@ class AnrException(thread: Thread) : Exception("ANR detected") {
     }
 
     for (thread in stackTraces.keys) {
+      if (thread === excludedThread) {
+        continue
+      }
+
       if (stackTraces[thread]?.size ?: 0 > 0) {
         printThread(ps, Locale.getDefault(), thread, stackTraces[thread]!!)
         ps.println()

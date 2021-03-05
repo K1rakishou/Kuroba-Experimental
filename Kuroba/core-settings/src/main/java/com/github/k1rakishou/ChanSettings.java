@@ -525,8 +525,8 @@ public class ChanSettings {
             diskCacheSizeMegabytes = new RangeSetting(provider, "disk_cache_size", 512, diskCacheSizeGetMin(), 1024);
             prefetchDiskCacheSizeMegabytes = new RangeSetting(provider, "prefetch_disk_cache_size", 1024, diskCacheSizePrefetchGetMin(), 2048);
 
-            databaseMaxPostsCount = new RangeSetting(provider, "database_max_posts_count", 125000, 15000, 500000);
-            databaseMaxThreadsCount = new RangeSetting(provider, "database_max_threads_count", 12500, 1500, 50000);
+            databaseMaxPostsCount = new RangeSetting(provider, "database_max_posts_count", 125000, databaseMinPostsCount(), 500000);
+            databaseMaxThreadsCount = new RangeSetting(provider, "database_max_threads_count", 12500, databaseMinThreadsCount(), 50000);
             //endregion
 
             //region EXPERIMENTAL
@@ -617,6 +617,22 @@ public class ChanSettings {
             Logger.e(TAG, "Error while initializing the settings", error);
             throw error;
         }
+    }
+
+    private static int databaseMinThreadsCount() {
+        if (chanSettingsInfo.isDevBuild()) {
+            return 100;
+        }
+
+        return 1500;
+    }
+
+    private static int databaseMinPostsCount() {
+        if (chanSettingsInfo.isDevBuild()) {
+            return 1000;
+        }
+
+        return 15000;
     }
 
     private static int diskCacheSizePrefetchGetMin() {
