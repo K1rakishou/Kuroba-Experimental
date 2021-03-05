@@ -31,8 +31,7 @@ internal class ReportFilesListArrayAdapter(
       "Item with position $position is null! Items count = ${count}"
     }
 
-    val cellView = LayoutInflater.from(context).inflate(
-        R.layout.cell_crashlog_item, parent, false)
+    val cellView = LayoutInflater.from(context).inflate(R.layout.cell_crashlog_item, parent, false)
     val fileNameView = cellView.findViewById<ColorizableTextView>(R.id.cell_crashlog_file_name)
     val checkBox = cellView.findViewById<AppCompatCheckBox>(R.id.cell_crashlog_send_checkbox)
     val clickArea = cellView.findViewById<FrameLayout>(R.id.cell_crashlog_click_area)

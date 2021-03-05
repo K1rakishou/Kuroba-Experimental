@@ -310,9 +310,6 @@ public class ChanSettings {
     //endregion
 
     //region MEDIA
-    // Saving
-    public static RangeSetting diskCacheSizeMegabytes;
-    public static RangeSetting prefetchDiskCacheSizeMegabytes;
 
     // Video settings
     public static BooleanSetting videoAutoLoop;
@@ -327,6 +324,14 @@ public class ChanSettings {
     public static OptionsSetting<ImageClickPreloadStrategy> imageClickPreloadStrategy;
     public static BooleanSetting autoLoadThreadImages;
     public static BooleanSetting showPrefetchLoadingIndicator;
+    //endregion
+
+    //region CACHING
+    public static RangeSetting diskCacheSizeMegabytes;
+    public static RangeSetting prefetchDiskCacheSizeMegabytes;
+
+    public static RangeSetting databaseMaxPostsCount;
+    public static RangeSetting databaseMaxThreadsCount;
     //endregion
 
     //region EXPERIMENTAL
@@ -487,9 +492,6 @@ public class ChanSettings {
             //endregion
 
             //region MEDIA
-            // Saving
-            diskCacheSizeMegabytes = new RangeSetting(provider, "disk_cache_size", 512, diskCacheSizeGetMin(), 1024);
-            prefetchDiskCacheSizeMegabytes = new RangeSetting(provider, "prefetch_disk_cache_size", 1024, diskCacheSizePrefetchGetMin(), 2048);
 
             // Video Settings
             videoAutoLoop = new BooleanSetting(provider, "preference_video_loop", true);
@@ -517,6 +519,14 @@ public class ChanSettings {
             autoLoadThreadImages = new BooleanSetting(provider, "preference_auto_load_thread", false);
             showPrefetchLoadingIndicator = new BooleanSetting(provider, "show_prefetch_loading_indicator", false);
             cloudflareForcePreload = new BooleanSetting(provider, "cloudflare_force_preload", false);
+            //endregion
+
+            //region CACHING
+            diskCacheSizeMegabytes = new RangeSetting(provider, "disk_cache_size", 512, diskCacheSizeGetMin(), 1024);
+            prefetchDiskCacheSizeMegabytes = new RangeSetting(provider, "prefetch_disk_cache_size", 1024, diskCacheSizePrefetchGetMin(), 2048);
+
+            databaseMaxPostsCount = new RangeSetting(provider, "database_max_posts_count", 125000, 15000, 500000);
+            databaseMaxThreadsCount = new RangeSetting(provider, "database_max_threads_count", 12500, 1500, 50000);
             //endregion
 
             //region EXPERIMENTAL

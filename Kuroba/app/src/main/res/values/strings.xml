@@ -522,6 +522,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_import_export_description">Import/Export application backup file</string>
     <string name="settings_security">Security</string>
     <string name="settings_security_description">Proxy settings, etc.</string>
+    <string name="settings_caching">Caching</string>
+    <string name="settings_caching_description">Media cache/database cache</string>
     <string name="settings_experimental_settings">⚠ EXPERIMENTAL ⚠</string>
     <string name="settings_experimental_settings_description">These settings may be in an unstable state. They are for testing. They may break the app and you may have to reset the app data. Use them at your own risk if you are really interested in some feature. Backup everything beforehand.</string>
 
@@ -703,14 +705,23 @@ Note that for country code filtering, troll country codes should be prepended wi
 Re-enable this permission in the app settings if you permanently disabled it."
     </string>
 
-    <!-- Cache size group -->
-    <string name="settings_cache_size">Cache size</string>
+    <!-- Media cache size group -->
+    <string name="settings_media_cache_size">Media cache size</string>
 
     <string name="normal_cache_size_title">Media disk cache size</string>
     <string name="normal_cache_size_description">The maximum size of all files stored in the cache before it gets cleaned up. Disk cache is used to reduce the amount of network requests to show media. It\'s also helpful when you have no internet connection or if a media was deleted from the server (you will be able to see it until it\' remove from the cache).</string>
 
     <string name="prefetch_cache_size_title">Prefetch media disk cache size</string>
     <string name="prefetch_cache_size_description">The same as above but it\'s only used when media prefetching setting is turned on. Since you are basically downloading media files and you hover over them you will need a more spacious cache.</string>
+
+    <!-- Database size group -->
+    <string name="settings_database_cache_size">Database cache size</string>
+
+    <string name="database_max_posts">Max posts count in the database</string>
+    <string name="database_max_posts_description">All posts are stored in the database (so you can access threads even without internet connection). This setting regulates the maximum amount of posts in the database before we start running periodic cleanup routines. Posts in bookmarked threads/Original Posts are ignored by cleanup routines.</string>
+
+    <string name="database_max_threads">Max threads count in the database</string>
+    <string name="database_max_threads_description">Same as above. One \"thread\" in database means the original post plus some other thread information. When a thread is deleted from the database, all the information associated with it is deleted as well (like all posts associated with that thread).</string>
 
     <!-- Media video options group -->
     <string name="setting_video_options">Video options</string>

@@ -7,7 +7,6 @@ import com.github.k1rakishou.chan.features.settings.MediaScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.RangeSettingV2
 
 class MediaSettingsScreen(
   context: Context
@@ -19,7 +18,6 @@ class MediaSettingsScreen(
 
   override suspend fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
-      buildCacheSizeSettingGroup(),
       buildVideoSettingsGroup(),
       buildLoadingSettingsGroup()
     )
@@ -172,39 +170,4 @@ class MediaSettingsScreen(
     )
   }
 
-  private fun buildCacheSizeSettingGroup(): SettingsGroup.SettingsGroupBuilder {
-    val identifier = MediaScreen.CacheSizeGroup
-
-    return SettingsGroup.SettingsGroupBuilder(
-      groupIdentifier = identifier,
-      buildFunction = {
-        val group = SettingsGroup(
-          groupTitle = context.getString(R.string.settings_cache_size),
-          groupIdentifier = identifier
-        )
-
-        group += RangeSettingV2.createBuilder(
-          context = context,
-          identifier = MediaScreen.CacheSizeGroup.NormalCacheSize,
-          topDescriptionIdFunc = { R.string.normal_cache_size_title },
-          bottomDescriptionIdFunc = { R.string.normal_cache_size_description },
-          currentValueStringFunc = { "${ChanSettings.diskCacheSizeMegabytes.get()} MB" },
-          requiresRestart = true,
-          setting = ChanSettings.diskCacheSizeMegabytes
-        )
-
-        group += RangeSettingV2.createBuilder(
-          context = context,
-          identifier = MediaScreen.CacheSizeGroup.PrefetchCacheSize,
-          topDescriptionIdFunc = { R.string.prefetch_cache_size_title },
-          bottomDescriptionIdFunc = { R.string.prefetch_cache_size_description },
-          currentValueStringFunc = { "${ChanSettings.prefetchDiskCacheSizeMegabytes.get()} MB" },
-          requiresRestart = true,
-          setting = ChanSettings.prefetchDiskCacheSizeMegabytes
-        )
-
-        group
-      }
-    )
-  }
 }

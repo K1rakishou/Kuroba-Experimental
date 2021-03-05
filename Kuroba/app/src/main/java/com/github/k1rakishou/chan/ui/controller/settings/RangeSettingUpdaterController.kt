@@ -67,6 +67,7 @@ class RangeSettingUpdaterController(
     slider.valueFrom = minValue.toFloat()
     slider.valueTo = maxValue.toFloat()
     slider.value = currentValue.toFloat()
+    slider.setLabelFormatter { value -> value.toInt().toString() }
 
     slider.addOnChangeListener { _, value, _ ->
       currentValueInput.mySetText(value.toInt().toString())

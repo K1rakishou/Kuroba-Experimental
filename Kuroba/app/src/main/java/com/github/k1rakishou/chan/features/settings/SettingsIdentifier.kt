@@ -101,6 +101,7 @@ sealed class MainScreen(
     object ImportExport : MainGroup("import_export")
     object Filters : MainGroup("filters")
     object Security : MainGroup("security")
+    object Caching : MainGroup("caching")
     object Experimental : MainGroup("experimental")
 
     companion object : IGroupIdentifier() {
@@ -474,21 +475,6 @@ sealed class MediaScreen(
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
 
-  sealed class CacheSizeGroup(
-    settingsId: String,
-    groupIdentifier: GroupIdentifier = CacheSizeGroup.getGroupIdentifier()
-  ) : IGroup,
-    MediaScreen(groupIdentifier, SettingIdentifier(settingsId)) {
-
-    object NormalCacheSize : CacheSizeGroup("normal_cache_size")
-    object PrefetchCacheSize : CacheSizeGroup("prefetch_cache_size")
-
-    companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = MediaScreen.getScreenIdentifier()
-      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("cache_size_group")
-    }
-  }
-
   sealed class VideoGroup(
     settingsId: String,
     groupIdentifier: GroupIdentifier = getGroupIdentifier()
@@ -577,7 +563,7 @@ sealed class ImportExportScreen(
 }
 
 // ================================================================
-// ================= SecuritySettingsScreen ===================
+// ================= SecuritySettingsScreen =======================
 // ================================================================
 
 sealed class SecurityScreen(
@@ -604,6 +590,54 @@ sealed class SecurityScreen(
 
   companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("security_screen")
+  }
+}
+
+// ================================================================
+// ================= CachingSettingsScreen =======================
+// ================================================================
+
+sealed class CachingScreen(
+  groupIdentifier: GroupIdentifier,
+  settingIdentifier: SettingIdentifier,
+  screenIdentifier: ScreenIdentifier = SecurityScreen.getScreenIdentifier()
+) :
+  IScreen,
+  SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
+
+  sealed class MediaCacheSizeGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = MediaCacheSizeGroup.getGroupIdentifier()
+  ) : IGroup,
+    CachingScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object NormalCacheSize : MediaCacheSizeGroup("normal_cache_size")
+    object PrefetchCacheSize : MediaCacheSizeGroup("prefetch_cache_size")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = MediaScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("media_cache_size_group")
+    }
+  }
+
+  sealed class DatabaseCacheSizeGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = MediaCacheSizeGroup.getGroupIdentifier()
+  ) : IGroup,
+    CachingScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object MaxDatabasePostsCount : DatabaseCacheSizeGroup("max_database_posts")
+    object MaxDatabaseThreadsCount : DatabaseCacheSizeGroup("max_database_threads")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = MediaScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("database_cache_size_group")
+    }
+  }
+
+
+  companion object : IScreenIdentifier() {
+    override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("caching_screen")
   }
 }
 

@@ -8,11 +8,13 @@ import java.io.File
 open class AppConstants(
   context: Context,
   private val flavorType: AndroidUtils.FlavorType,
-  val kurobaExUserAgent: String
+  val kurobaExUserAgent: String,
+  maxPostsInDatabaseSettingValue: Int,
+  maxThreadsInDatabaseSettingValue: Int
 ) {
   val maxPostsCountInPostsCache: Int
-  val maxAmountOfPostsInDatabase: Int
-  val maxAmountOfThreadsInDatabase: Int
+  val maxAmountOfPostsInDatabase: Int = maxPostsInDatabaseSettingValue
+  val maxAmountOfThreadsInDatabase: Int = maxThreadsInDatabaseSettingValue
   val userAgent: String
   val processorsCount: Int
   val proxiesFileName = PROXIES_FILE_NAME
@@ -51,20 +53,6 @@ open class AppConstants(
 
   init {
     val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
-
-    maxAmountOfPostsInDatabase = if (flavorType == AndroidUtils.FlavorType.Dev) {
-      // For easy testing
-      5000
-    } else {
-      125_000
-    }
-
-    maxAmountOfThreadsInDatabase = if (flavorType == AndroidUtils.FlavorType.Dev) {
-      // For easy testing
-      500
-    } else {
-      12_500
-    }
 
     maxPostsCountInPostsCache = calculatePostsCountForPostsCacheDependingOnDeviceRam(activityManager)
     userAgent = String.format(USER_AGENT_FORMAT, Build.VERSION.RELEASE, Build.MODEL)

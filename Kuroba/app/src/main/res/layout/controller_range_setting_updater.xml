@@ -61,9 +61,9 @@
 
                 <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
                     android:id="@+id/controller_range_setting_updater_current_value_input"
-                    android:layout_width="64dp"
+                    android:layout_width="102dp"
                     android:layout_height="wrap_content"
-                    android:maxLength="4"
+                    android:maxLength="8"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toStartOf="@+id/controller_range_setting_updater_max_value_text_view"
                     app:layout_constraintStart_toEndOf="@+id/controller_range_setting_updater_min_value_text_view"

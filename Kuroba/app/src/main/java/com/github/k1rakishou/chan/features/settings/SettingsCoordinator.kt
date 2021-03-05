@@ -183,6 +183,8 @@ class SettingsCoordinator(
     )
   }
 
+  private val cachingSettingsScreen by lazy { CachingSettingsScreen(context) }
+
   private val onSearchEnteredSubject = BehaviorProcessor.create<String>()
   private val renderSettingsSubject = PublishProcessor.create<RenderAction>()
 
@@ -235,6 +237,7 @@ class SettingsCoordinator(
     importExportSettingsScreen.onCreate()
     mediaSettingsScreen.onCreate()
     securitySettingsScreen.onCreate()
+    cachingSettingsScreen.onCreate()
   }
 
   fun onDestroy() {
@@ -248,6 +251,7 @@ class SettingsCoordinator(
     importExportSettingsScreen.onDestroy()
     mediaSettingsScreen.onDestroy()
     securitySettingsScreen.onDestroy()
+    cachingSettingsScreen.onDestroy()
 
     screenStack.clear()
 
@@ -420,6 +424,7 @@ class SettingsCoordinator(
     graph += importExportSettingsScreen.build()
     graph += mediaSettingsScreen.build()
     graph += securitySettingsScreen.build()
+    graph += cachingSettingsScreen.build()
 
     return graph
   }

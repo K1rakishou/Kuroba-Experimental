@@ -219,7 +219,14 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       append(BuildConfig.BUILD_NUMBER)
     }
 
-    val appConstants = AppConstants(applicationContext, flavorType, kurobaExUserAgent)
+    val appConstants = AppConstants(
+      context = applicationContext,
+      flavorType = flavorType,
+      kurobaExUserAgent = kurobaExUserAgent,
+      maxPostsInDatabaseSettingValue = ChanSettings.databaseMaxPostsCount.get(),
+      maxThreadsInDatabaseSettingValue = ChanSettings.databaseMaxThreadsCount.get()
+    )
+
     logAppConstants(appConstants)
 
     val okHttpDns = okHttpDns
