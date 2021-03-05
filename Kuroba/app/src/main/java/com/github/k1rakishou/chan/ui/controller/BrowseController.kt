@@ -23,6 +23,7 @@ import android.view.View
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.Animation
 import android.view.animation.RotateAnimation
+import android.widget.Toast
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.R
@@ -31,8 +32,10 @@ import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.presenter.BrowsePresenter
+import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.features.setup.BoardSelectionController
 import com.github.k1rakishou.chan.features.setup.SiteSettingsController
@@ -80,6 +83,10 @@ class BrowseController(
   lateinit var historyNavigationManager: HistoryNavigationManager
   @Inject
   lateinit var dialogFactory: DialogFactory
+  @Inject
+  lateinit var siteResolver: SiteResolver
+  @Inject
+  lateinit var chanThreadViewableInfoManager: ChanThreadViewableInfoManager
 
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
@@ -268,6 +275,7 @@ class BrowseController(
       .addDevMenu()
       .withSubItem(ACTION_OPEN_BROWSER, R.string.action_open_browser, { item -> openBrowserClicked(item) })
       .withSubItem(ACTION_OPEN_THREAD_BY_ID, R.string.action_open_thread_by_id, { item -> openThreadById(item) })
+      .withSubItem(ACTION_OPEN_THREAD_BY_URL, R.string.action_open_thread_by_url, { item -> openThreadByUrl(item) })
       .withSubItem(ACTION_SHARE, R.string.action_share, { item -> shareClicked(item) })
       .withSubItem(ACTION_SCROLL_TO_TOP, R.string.action_scroll_to_top, { item -> upClicked(item) })
       .withSubItem(ACTION_SCROLL_TO_BOTTOM, R.string.action_scroll_to_bottom, { item -> downClicked(item) })
@@ -492,6 +500,19 @@ class BrowseController(
     handleShareOrOpenInBrowser(false)
   }
 
+  private fun openThreadByUrl(item: ToolbarMenuSubItem) {
+    if (chanDescriptor == null) {
+      return
+    }
+
+    dialogFactory.createSimpleDialogWithInput(
+      context = context,
+      titleTextId = R.string.browse_controller_enter_thread_url,
+      onValueEntered = { input: String -> openThreadByUrlInternal(input) },
+      inputType = DialogFactory.DialogInputType.String
+    )
+  }
+
   private fun openThreadById(item: ToolbarMenuSubItem) {
     if (chanDescriptor == null) {
       return
@@ -504,6 +525,38 @@ class BrowseController(
       onValueEntered = { input: String -> openThreadByIdInternal(input) },
       inputType = DialogFactory.DialogInputType.Integer
     )
+  }
+
+  private fun openThreadByUrlInternal(input: String) {
+    mainScope.launch {
+      val chanDescriptorResult = siteResolver.resolveChanDescriptorForUrl(input)
+      if (chanDescriptorResult == null) {
+        showToast(
+          getString(R.string.open_link_not_matched, input),
+          Toast.LENGTH_LONG
+        )
+        
+        return@launch
+      }
+
+      val resolvedChanDescriptor = chanDescriptorResult.chanDescriptor
+      if (resolvedChanDescriptor !is ThreadDescriptor) {
+        showToast(
+          getString(R.string.open_link_not_thread_link, input),
+          Toast.LENGTH_LONG
+        )
+
+        return@launch
+      }
+
+      if (chanDescriptorResult.markedPostNo > 0L) {
+        chanThreadViewableInfoManager.update(resolvedChanDescriptor, true) { chanThreadViewableInfo ->
+          chanThreadViewableInfo.markedPostNo = chanDescriptorResult.markedPostNo
+        }
+      }
+
+      showThread(resolvedChanDescriptor, false)
+    }
   }
 
   private fun openThreadByIdInternal(input: String) {
@@ -776,6 +829,7 @@ class BrowseController(
     private const val ACTION_SCROLL_TO_TOP = 907
     private const val ACTION_SCROLL_TO_BOTTOM = 908
     private const val ACTION_OPEN_THREAD_BY_ID = 909
+    private const val ACTION_OPEN_THREAD_BY_URL = 910
     // TODO(KurobaEx): add action "open is a separate (new?) tab"
 
     private const val SORT_MODE_BUMP = 1000

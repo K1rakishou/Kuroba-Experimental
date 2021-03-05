@@ -25,7 +25,6 @@ import com.github.k1rakishou.chan.ui.controller.BrowseController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.NotificationConstants
-import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -237,11 +236,13 @@ class StartActivityStartupHandlerHelper(
 
     Logger.d(TAG, "restoreFromUrl(), url = $data")
 
-    val chanDescriptorResult = siteResolver.resolveChanDescriptorForUrl(data.toString())
+    val url = data.toString()
+    val chanDescriptorResult = siteResolver.resolveChanDescriptorForUrl(url)
+
     if (chanDescriptorResult == null) {
       Toast.makeText(
         context,
-        getString(R.string.open_link_not_matched, AndroidUtils.getApplicationLabel()),
+        getString(R.string.open_link_not_matched, url),
         Toast.LENGTH_LONG
       ).show()
 
