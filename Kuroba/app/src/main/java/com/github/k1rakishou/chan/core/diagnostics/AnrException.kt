@@ -16,7 +16,7 @@ class AnrException(thread: Thread) : Exception("ANR detected") {
     val bos = ByteArrayOutputStream(4096)
     val ps = PrintStream(bos)
 
-    if (!printProcessMap(ps, reportFooter)) {
+    if (!printProcessMap(ps, reportFooter, excludedThread)) {
       return null
     }
 

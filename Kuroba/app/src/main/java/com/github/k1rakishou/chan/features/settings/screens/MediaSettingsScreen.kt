@@ -19,7 +19,32 @@ class MediaSettingsScreen(
   override suspend fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
       buildVideoSettingsGroup(),
-      buildLoadingSettingsGroup()
+      buildLoadingSettingsGroup(),
+      buildMiscSettingsGroup()
+    )
+  }
+
+  private fun buildMiscSettingsGroup(): SettingsGroup.SettingsGroupBuilder {
+    val identifier = MediaScreen.MiscGroup
+
+    return SettingsGroup.SettingsGroupBuilder(
+      groupIdentifier = identifier,
+      buildFunction = {
+        val group = SettingsGroup(
+          groupTitle = context.getString(R.string.settings_group_misc),
+          groupIdentifier = identifier
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = MediaScreen.MiscGroup.AlwaysRandomizeFileNameWhenPickingFiles,
+          topDescriptionIdFunc = { R.string.setting_always_randomize_picked_files_names },
+          bottomDescriptionIdFunc = { R.string.setting_always_randomize_picked_files_names_description },
+          setting = ChanSettings.alwaysRandomizePickedFilesNames,
+        )
+
+        group
+      }
     )
   }
 

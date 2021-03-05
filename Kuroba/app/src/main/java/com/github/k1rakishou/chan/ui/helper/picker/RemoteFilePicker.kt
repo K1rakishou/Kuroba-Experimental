@@ -60,9 +60,7 @@ class RemoteFilePicker(
       }
 
       val downloadedFile = (downloadedFileMaybe as ModularResult.Value).value
-
-      val fileName = imageUrl.pathSegments.lastOrNull()
-        ?: getDefaultFileName()
+      val fileName = getRemoteFileName(imageUrl)
 
       val copyResult = copyDownloadedFileToReplyFileStorage(
         downloadedFile,

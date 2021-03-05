@@ -3,15 +3,19 @@ package com.github.k1rakishou.chan.ui.helper.picker
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.IOUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import okhttp3.HttpUrl
 import java.io.FileInputStream
 import java.io.IOException
 
@@ -69,19 +73,47 @@ abstract class AbstractFilePicker<T>(
       return@use null
     }
 
+    if (ChanSettings.alwaysRandomizePickedFilesNames.get()) {
+      return getRandomFileName(fileName ?: uri.lastPathSegment)
+    }
+
     if (fileName == null) {
       // As per the comment on OpenableColumns.DISPLAY_NAME:
       // If this is not provided then the name should default to the last segment
       // of the file's URI.
       fileName = uri.lastPathSegment
-        ?: getDefaultFileName()
+        ?: getRandomFileNameWithoutExtension()
     }
 
     return fileName
   }
 
-  protected fun getDefaultFileName(): String {
+  protected fun getRemoteFileName(url: HttpUrl): String {
+    val actualFileName = url.pathSegments.lastOrNull()
+
+    if (ChanSettings.alwaysRandomizePickedFilesNames.get()) {
+      return getRandomFileName(actualFileName)
+    }
+
+    return actualFileName
+      ?: getRandomFileNameWithoutExtension()
+  }
+
+  private fun getRandomFileNameWithoutExtension(): String {
     return System.currentTimeMillis().toString()
+  }
+
+  private fun getRandomFileName(fileNameToExtractExtensionFrom: String?): String {
+    val extension = fileNameToExtractExtensionFrom?.let { StringUtils.extractFileNameExtension(it) }
+
+    return buildString {
+      append(getRandomFileNameWithoutExtension())
+
+      if (extension.isNotNullNorEmpty()) {
+        append(".")
+        append(extension)
+      }
+    }
   }
 
   private fun copyExternalFileIntoReplyFile(

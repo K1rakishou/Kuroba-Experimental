@@ -511,6 +511,20 @@ sealed class MediaScreen(
     }
   }
 
+  sealed class MiscGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = getGroupIdentifier()
+  ) : IGroup,
+    MediaScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object AlwaysRandomizeFileNameWhenPickingFiles : MiscGroup("always_randomize_file_name_when_picking_files")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = MediaScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("misc_group")
+    }
+  }
+
   companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("media_screen")
   }

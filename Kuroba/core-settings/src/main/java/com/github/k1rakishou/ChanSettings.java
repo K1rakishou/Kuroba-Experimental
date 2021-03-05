@@ -324,6 +324,9 @@ public class ChanSettings {
     public static OptionsSetting<ImageClickPreloadStrategy> imageClickPreloadStrategy;
     public static BooleanSetting autoLoadThreadImages;
     public static BooleanSetting showPrefetchLoadingIndicator;
+
+    // Misc
+    public static BooleanSetting alwaysRandomizePickedFilesNames;
     //endregion
 
     //region CACHING
@@ -519,6 +522,9 @@ public class ChanSettings {
             autoLoadThreadImages = new BooleanSetting(provider, "preference_auto_load_thread", false);
             showPrefetchLoadingIndicator = new BooleanSetting(provider, "show_prefetch_loading_indicator", false);
             cloudflareForcePreload = new BooleanSetting(provider, "cloudflare_force_preload", false);
+
+            // Misc
+            alwaysRandomizePickedFilesNames = new BooleanSetting(provider, "always_randomized_picked_files_names", false);
             //endregion
 
             //region CACHING

@@ -746,6 +746,12 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="setting_auto_load_thread_images">Enable media prefetching</string>
     <string name="setting_auto_load_thread_images_description">Loads all images or videos in a thread immediately. Uses it\'s own setting for the cache size which is greater than the regular cache size.</string>
 
+    <!-- Misc group -->
+    <string name="settings_group_misc">Misc settings</string>
+    <string name="setting_always_randomize_picked_files_names">Always randomize picked files names</string>
+    <string name="setting_always_randomize_picked_files_names_description">Current timestamp in milliseconds will be used as the name of any picked file</string>
+
+
     <!-- Save location settings -->
     <string name="setting_folder_pick_ok">Choose</string>
     <string name="setting_folder_navigate_up">Up</string>
