@@ -355,7 +355,7 @@ public class AlbumViewController
 
             if (postImage != null) {
                 boolean canUseHighResCells =
-                        recyclerView.getCurrentSpanCount() <= ColorizableGridRecyclerView.HI_RES_CELLS_MAX_SPAN_COUNT;
+                        ColorizableGridRecyclerView.canUseHighResCells(recyclerView.getCurrentSpanCount());
                 boolean isStaggeredGridMode =
                         recyclerView.getLayoutManager() instanceof StaggeredGridLayoutManager;
 

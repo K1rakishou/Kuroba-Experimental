@@ -349,7 +349,7 @@ class CardPostCell : ColorizableCardView,
 
     thumbView!!.bindPostImage(
       firstPostImage,
-      callback!!.currentSpanCount() <= ColorizableGridRecyclerView.HI_RES_CELLS_MAX_SPAN_COUNT
+      ColorizableGridRecyclerView.canUseHighResCells(callback!!.currentSpanCount())
     )
 
     this.prevPostImage = firstPostImage.copy()

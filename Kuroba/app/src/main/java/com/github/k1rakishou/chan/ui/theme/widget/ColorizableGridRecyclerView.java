@@ -34,7 +34,8 @@ import javax.inject.Inject;
 public class ColorizableGridRecyclerView extends ColorizableRecyclerView {
     private static final int DEFAULT_SPAN_COUNT = 3;
     private static final int MAX_SPAN_COUNT = 5;
-    public static final int HI_RES_CELLS_MAX_SPAN_COUNT = 3;
+    private static final int HI_RES_CELLS_MAX_SPAN_COUNT_PHONE = 3;
+    private static final int HI_RES_CELLS_MAX_SPAN_COUNT_TABLET = 5;
 
     @Inject
     ThemeEngine themeEngine;
@@ -66,6 +67,14 @@ public class ColorizableGridRecyclerView extends ColorizableRecyclerView {
             AppModuleAndroidUtils.extractActivityComponent(getContext())
                     .inject(this);
         }
+    }
+
+    public static boolean canUseHighResCells(int currentSpanCount) {
+        if (AppModuleAndroidUtils.isTablet()) {
+            return currentSpanCount <= HI_RES_CELLS_MAX_SPAN_COUNT_TABLET;
+        }
+
+        return currentSpanCount <= HI_RES_CELLS_MAX_SPAN_COUNT_PHONE;
     }
 
     public void setLayoutManager(LayoutManager layoutManager) {

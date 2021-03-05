@@ -311,6 +311,11 @@ public class AlbumDownloadController
         }
 
         @Override
+        public int getItemViewType(int position) {
+            return ALBUM_CELL_TYPE;
+        }
+
+        @Override
         public AlbumDownloadCell onCreateViewHolder(ViewGroup parent, int viewType) {
             View view = inflate(parent.getContext(), R.layout.cell_album_download, parent, false);
 
@@ -323,7 +328,7 @@ public class AlbumDownloadController
 
             holder.thumbnailView.bindPostImage(
                     item.postImage,
-                    recyclerView.getCurrentSpanCount() <= ColorizableGridRecyclerView.HI_RES_CELLS_MAX_SPAN_COUNT
+                    ColorizableGridRecyclerView.canUseHighResCells(recyclerView.getCurrentSpanCount())
             );
 
             setItemChecked(holder, item.checked, false);
