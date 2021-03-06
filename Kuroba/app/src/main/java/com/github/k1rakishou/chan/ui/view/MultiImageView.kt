@@ -74,7 +74,9 @@ import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.analytics.AnalyticsListener
 import com.google.android.exoplayer2.audio.AudioListener
+import com.google.android.exoplayer2.decoder.DecoderCounters
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.ui.PlayerView
@@ -139,13 +141,21 @@ class MultiImageView @JvmOverloads constructor(
   private val gestureDetector: GestureDetector
 
   private val defaultMuteState: Boolean
-    private get() = (ChanSettings.videoDefaultMuted.get() &&
+    get() = (ChanSettings.videoDefaultMuted.get() &&
       (ChanSettings.headsetDefaultMuted.get() || !AndroidUtils.getAudioManager().isWiredHeadsetOn))
 
   var postImage: ChanPostImage? = null
     private set
   var mode = Mode.UNLOADED
     private set
+
+  private val audioAnalyticsListener = object : AnalyticsListener {
+    override fun onAudioEnabled(eventTime: AnalyticsListener.EventTime, counters: DecoderCounters) {
+      if (exoPlayer != null) {
+        callback?.onAudioLoaded(this@MultiImageView)
+      }
+    }
+  }
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -228,6 +238,8 @@ class MultiImageView @JvmOverloads constructor(
     if (exoPlayer != null) {
       // ExoPlayer will keep loading resources if we don't release it here.
       releaseStreamCallbacks()
+      exoPlayer?.analyticsCollector?.removeListener(audioAnalyticsListener)
+
       exoPlayer?.release()
       exoPlayer = null
     }
@@ -819,7 +831,9 @@ class MultiImageView @JvmOverloads constructor(
   }
 
   private fun createExoPlayer(source: MediaSource): SimpleExoPlayer {
-    return SimpleExoPlayer.Builder(context).build().apply {
+    val builder = SimpleExoPlayer.Builder(context)
+
+    return builder.build().apply {
       setMediaSource(source)
       prepare()
 
@@ -835,16 +849,8 @@ class MultiImageView @JvmOverloads constructor(
         1f
       }
 
-      addAudioListener(this@MultiImageView)
+      analyticsCollector.addListener(audioAnalyticsListener)
       playWhenReady = true
-    }
-  }
-
-  override fun onAudioSessionIdChanged(audioSessionId: Int) {
-    super.onAudioSessionIdChanged(audioSessionId)
-
-    if (exoPlayer != null && exoPlayer?.audioFormat != null) {
-      callback?.onAudioLoaded(this)
     }
   }
 
