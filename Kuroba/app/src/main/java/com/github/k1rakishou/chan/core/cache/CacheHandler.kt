@@ -62,6 +62,7 @@ import java.util.concurrent.atomic.AtomicLong
  * as all media files retrieved via [ImageLoaderV2]
  */
 class CacheHandler(
+  private val verboseLogs: Boolean,
   private val fileManager: FileManager,
   private val cacheDirFile: RawFile,
   private val chunksCacheDirFile: RawFile,
@@ -437,9 +438,11 @@ class CacheHandler(
           size.set(0L)
         }
 
-        Logger.d(TAG, "Deleted $cacheFileName and it's meta $cacheMetaFileName, " +
-          "fileSize = ${ChanPostUtils.getReadableFileSize(fileSize)}, " +
-          "cache size = ${ChanPostUtils.getReadableFileSize(size.get())}")
+        if (verboseLogs) {
+          Logger.d(TAG, "Deleted $cacheFileName and it's meta $cacheMetaFileName, " +
+            "fileSize = ${ChanPostUtils.getReadableFileSize(fileSize)}, " +
+            "cache size = ${ChanPostUtils.getReadableFileSize(size.get())}")
+        }
       }
 
       return true
@@ -845,6 +848,11 @@ class CacheHandler(
         totalDeleted += fileSize
         ++filesDeleted
       }
+
+      if (System.currentTimeMillis() - start > MAX_TRIM_TIME_MS) {
+        Logger.d(TAG, "Exiting trim() early, the time bound exceeded")
+        break
+      }
     }
 
     recalculateSize()
@@ -999,6 +1007,7 @@ class CacheHandler(
 
     private const val CURRENT_META_FILE_VERSION = 1
     private const val CACHE_FILE_META_HEADER_SIZE = 4
+    private const val MAX_TRIM_TIME_MS = 2_000L
 
     // I don't think it will ever get this big but just in case don't forget to update it if it
     // ever gets

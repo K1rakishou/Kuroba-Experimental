@@ -89,6 +89,7 @@ public class NetModule {
         RawFile chunksCacheDirFile = fileManager.fromRawFile(new File(cacheDir, FILE_CHUNKS_CACHE_DIR));
 
         return new CacheHandler(
+                ChanSettings.verboseLogs.get(),
                 fileManager,
                 cacheDirFile,
                 chunksCacheDirFile,
