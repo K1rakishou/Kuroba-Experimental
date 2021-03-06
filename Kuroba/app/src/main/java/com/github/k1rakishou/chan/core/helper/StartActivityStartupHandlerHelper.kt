@@ -128,10 +128,25 @@ class StartActivityStartupHandlerHelper(
 
   private fun getThreadToOpen(): ChanDescriptor.ThreadDescriptor? {
     val loadLastOpenedThreadUponAppStart = ChanSettings.loadLastOpenedThreadUponAppStart.get()
-    Logger.d(TAG, "getThreadToOpen, loadLastOpenedThreadUponAppStart=$loadLastOpenedThreadUponAppStart")
+    Logger.d(TAG, "getThreadToOpen(), loadLastOpenedThreadUponAppStart=$loadLastOpenedThreadUponAppStart")
 
     if (loadLastOpenedThreadUponAppStart) {
-      return historyNavigationManager.getNavElementAtTop()?.descriptor()?.threadDescriptorOrNull()
+      val threadDescriptor = historyNavigationManager.getNavElementAtTop()
+        ?.descriptor()
+        ?.threadDescriptorOrNull()
+
+      if (threadDescriptor == null) {
+        Logger.d(TAG, "getThreadToOpen() -> historyNavigationManager.getNavElementAtTop() -> null")
+        return null
+      }
+
+      val boardDescriptor = threadDescriptor.boardDescriptor
+
+      if (!checkSiteAndBoardExistsAndActive("getThreadToOpen()", boardDescriptor)) {
+        return null
+      }
+
+      return threadDescriptor
     }
 
     return null
@@ -139,15 +154,54 @@ class StartActivityStartupHandlerHelper(
 
   private fun getBoardToOpen(): BoardDescriptor? {
     val loadLastOpenedBoardUponAppStart = ChanSettings.loadLastOpenedBoardUponAppStart.get()
-    Logger.d(TAG, "getBoardToOpen, loadLastOpenedBoardUponAppStart=$loadLastOpenedBoardUponAppStart")
+    Logger.d(TAG, "getBoardToOpen(), loadLastOpenedBoardUponAppStart=$loadLastOpenedBoardUponAppStart")
 
     if (loadLastOpenedBoardUponAppStart) {
-      return historyNavigationManager.getFirstCatalogNavElement()?.descriptor()?.boardDescriptor()
+      val boardDescriptor = historyNavigationManager.getFirstCatalogNavElement()
+        ?.descriptor()
+        ?.boardDescriptor()
+
+      if (boardDescriptor == null) {
+        Logger.d(TAG, "getBoardToOpen() -> historyNavigationManager.getFirstCatalogNavElement() -> null")
+        return null
+      }
+
+      if (!checkSiteAndBoardExistsAndActive("getBoardToOpen()", boardDescriptor)) {
+        return null
+      }
+
+      return boardDescriptor
     }
 
     return siteManager.firstSiteDescriptor()?.let { firstSiteDescriptor ->
       return@let boardManager.firstBoardDescriptor(firstSiteDescriptor)
     }
+  }
+
+  private fun checkSiteAndBoardExistsAndActive(tag: String, boardDescriptor: BoardDescriptor): Boolean {
+    val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+    if (site == null) {
+      Logger.d(TAG, "$tag siteManager.bySiteDescriptor(${boardDescriptor.siteDescriptor}) -> null")
+      return false
+    }
+
+    if (!siteManager.isSiteActive(boardDescriptor.siteDescriptor)) {
+      Logger.d(TAG, "$tag siteManager.isSiteActive(${boardDescriptor.siteDescriptor}) -> false")
+      return false
+    }
+
+    val chanBoard = boardManager.byBoardDescriptor(boardDescriptor)
+    if (chanBoard == null) {
+      Logger.d(TAG, "$tag boardManager.byBoardDescriptor($boardDescriptor) -> null")
+      return false
+    }
+
+    if (!chanBoard.active) {
+      Logger.d(TAG, "$tag board ${boardDescriptor} is not active")
+      return false
+    }
+
+    return true
   }
 
   suspend fun onNewIntentInternal(intent: Intent?): Boolean {

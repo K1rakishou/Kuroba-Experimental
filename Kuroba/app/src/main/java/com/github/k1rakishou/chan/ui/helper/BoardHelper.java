@@ -16,6 +16,10 @@
  */
 package com.github.k1rakishou.chan.ui.helper;
 
+import android.text.TextUtils;
+
+import androidx.annotation.Nullable;
+
 import com.github.k1rakishou.model.data.board.ChanBoard;
 
 import org.jsoup.parser.Parser;
@@ -27,7 +31,11 @@ public class BoardHelper {
         return getName(board.boardCode(), board.getName());
     }
 
-    public static String getName(String boardCode, String boardName) {
+    public static String getName(String boardCode, @Nullable String boardName) {
+        if (TextUtils.isEmpty(boardName)) {
+            return "/" + boardCode + "/";
+        }
+
         return "/" + boardCode + "/ \u2013 " + boardName;
     }
 

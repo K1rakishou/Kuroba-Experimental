@@ -6,7 +6,8 @@ import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.CommonSite.CommonApi
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
-import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
+import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
+import com.github.k1rakishou.chan.core.site.parser.processor.IChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.jsonArray
@@ -59,7 +60,7 @@ class DvachApi internal constructor(
   override suspend fun loadCatalog(
     request: Request,
     responseBody: ResponseBody,
-    chanReaderProcessor: ChanReaderProcessor
+    chanReaderProcessor: IChanReaderProcessor
   ) {
     readBodyJson(responseBody) { jsonReader ->
       iterateThreadsInCatalog(jsonReader) { reader ->
@@ -72,7 +73,7 @@ class DvachApi internal constructor(
   private suspend fun readPostObject(
     reader: JsonReader,
     dvachExtraThreadInfo: DvachExtraThreadInfo?,
-    chanReaderProcessor: ChanReaderProcessor
+    chanReaderProcessor: IChanReaderProcessor
   ) {
     val builder = ChanPostBuilder()
     builder.boardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())

@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.usecase.CreateBoardManuallyUseCase
 import com.github.k1rakishou.chan.features.setup.data.BoardCellData
 import com.github.k1rakishou.chan.features.setup.data.BoardsSetupControllerState
 import com.github.k1rakishou.chan.ui.helper.BoardHelper
@@ -12,7 +13,9 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -26,7 +29,8 @@ import kotlin.coroutines.resume
 class BoardsSetupPresenter(
   private val siteDescriptor: SiteDescriptor,
   private val siteManager: SiteManager,
-  private val boardManager: BoardManager
+  private val boardManager: BoardManager,
+  private val createBoardManuallyUseCase: CreateBoardManuallyUseCase
 ) : BasePresenter<BoardsSetupView>() {
   private val suspendDebouncer = DebouncingCoroutineExecutor(scope)
   private val stateSubject = PublishProcessor.create<BoardsSetupControllerState>()
@@ -43,6 +47,108 @@ class BoardsSetupPresenter(
       }
       .onErrorReturn { error -> BoardsSetupControllerState.Error(error.errorMessageOrClassName()) }
       .hide()
+  }
+
+  fun createBoardManually(boardCode: String) {
+    scope.launch(Dispatchers.Default) {
+      withView { showLoadingView() }
+
+      boardManager.awaitUntilInitialized()
+      siteManager.awaitUntilInitialized()
+
+      val boardDescriptor = BoardDescriptor.create(siteDescriptor, boardCode)
+      val catalogDescriptor = ChanDescriptor.CatalogDescriptor(boardDescriptor)
+
+      if (boardManager.byBoardDescriptor(boardDescriptor) != null) {
+        withView {
+          showMessageToast("Board /$boardCode/ already exists! You need to add it via AddBoards menu.")
+          hideLoadingView()
+        }
+        return@launch
+      }
+
+      when (val result = createBoardManuallyUseCase.execute(catalogDescriptor)) {
+        is CreateBoardManuallyUseCase.Result.FailedToFindSite -> {
+          val errorMessage = "Failed to find site: ${result.siteDescriptor.siteName}"
+
+          withView {
+            Logger.e(TAG, errorMessage)
+            showMessageToast(errorMessage)
+          }
+        }
+        is CreateBoardManuallyUseCase.Result.BadResponse -> {
+          val errorMessage = "Bad server response code: ${result.code}"
+
+          withView {
+            Logger.e(TAG, errorMessage)
+            showMessageToast(errorMessage)
+          }
+        }
+        is CreateBoardManuallyUseCase.Result.UnknownError -> {
+          withView {
+            Logger.e(TAG, "createBoardManuallyUseCase.execute($catalogDescriptor) error", result.throwable)
+
+            showMessageToast("createBoardManuallyUseCase.execute($catalogDescriptor), " +
+              "error=${result.throwable.errorMessageOrClassName()}")
+          }
+        }
+        is CreateBoardManuallyUseCase.Result.FailedToParseAnyThreads -> {
+          val errorMessage = "Failed to parse any threads, most likely " +
+            "the board '/${result.chanDescriptor.boardCode()}/' does not exists"
+
+          withView {
+            Logger.e(TAG, errorMessage)
+            showMessageToast(errorMessage)
+          }
+        }
+        is CreateBoardManuallyUseCase.Result.Success -> {
+          Logger.d(TAG, "createBoardManuallyUseCase.execute($catalogDescriptor) success")
+
+          addNewBoardAndActivate(boardDescriptor)
+        }
+      }
+
+      withView { hideLoadingView() }
+    }
+  }
+
+  private suspend fun addNewBoardAndActivate(boardDescriptor: BoardDescriptor) {
+    val newBoard = ChanBoard.create(boardDescriptor, null)
+
+    if (!boardManager.createOrUpdateBoards(listOf(newBoard))) {
+      val errorMessage = "Failed to create board ${newBoard} in the database"
+
+      withView {
+        Logger.e(TAG, errorMessage)
+        showMessageToast(errorMessage)
+      }
+
+      return
+    }
+
+    val activateResult = boardManager.activateDeactivateBoards(
+      siteDescriptor = boardDescriptor.siteDescriptor,
+      boardDescriptorsSet = linkedSetOf(boardDescriptor),
+      activate = true
+    )
+
+    if (!activateResult) {
+      val errorMessage = "Failed to activate board ${newBoard}"
+
+      withView {
+        Logger.e(TAG, errorMessage)
+        showMessageToast(errorMessage)
+      }
+
+      return
+    }
+
+    withView {
+      val boardCode = boardDescriptor.boardCode
+
+      Logger.d(TAG, "addNewBoardAndActivate($boardDescriptor) success")
+      showMessageToast("Successfully created board /${boardCode}/")
+    }
   }
 
   fun updateBoardsFromServerAndDisplayActive() {

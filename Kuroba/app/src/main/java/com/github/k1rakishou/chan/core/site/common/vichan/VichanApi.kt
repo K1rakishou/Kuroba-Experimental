@@ -6,7 +6,8 @@ import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.CommonSite.CommonApi
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
-import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
+import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
+import com.github.k1rakishou.chan.core.site.parser.processor.IChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.mutableListWithCap
@@ -56,7 +57,7 @@ class VichanApi(
   override suspend fun loadCatalog(
     request: Request,
     responseBody: ResponseBody,
-    chanReaderProcessor: ChanReaderProcessor
+    chanReaderProcessor: IChanReaderProcessor
   ) {
     readBodyJson(responseBody) { jsonReader ->
       vichanReaderExtensions.iterateThreadsInCatalog(jsonReader) { reader ->
@@ -66,7 +67,7 @@ class VichanApi(
   }
 
   @Throws(Exception::class)
-  private suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
+  private suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: IChanReaderProcessor) {
     val builder = ChanPostBuilder()
     builder.boardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
 

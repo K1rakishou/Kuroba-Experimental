@@ -5,6 +5,7 @@ import android.content.Context
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Toast
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
@@ -14,16 +15,20 @@ import com.airbnb.epoxy.EpoxyViewHolder
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.usecase.CreateBoardManuallyUseCase
 import com.github.k1rakishou.chan.features.setup.data.BoardsSetupControllerState
 import com.github.k1rakishou.chan.features.setup.epoxy.EpoxyBoardView
 import com.github.k1rakishou.chan.features.setup.epoxy.EpoxyBoardViewModel_
 import com.github.k1rakishou.chan.features.setup.epoxy.epoxyBoardView
+import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.helper.BoardHelper
+import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
@@ -41,6 +46,10 @@ class BoardsSetupController(
   lateinit var siteManager: SiteManager
   @Inject
   lateinit var boardManager: BoardManager
+  @Inject
+  lateinit var dialogFactory: DialogFactory
+  @Inject
+  lateinit var createBoardManuallyUseCase: CreateBoardManuallyUseCase
 
   private val controller = BoardsEpoxyController()
 
@@ -52,7 +61,15 @@ class BoardsSetupController(
     BoardsSetupPresenter(
       siteDescriptor = siteDescriptor,
       siteManager = siteManager,
-      boardManager = boardManager
+      boardManager = boardManager,
+      createBoardManuallyUseCase = createBoardManuallyUseCase
+    )
+  }
+
+  private val loadingViewController by lazy {
+    LoadingViewController(
+      context,
+      true,
     )
   }
 
@@ -114,6 +131,17 @@ class BoardsSetupController(
     super.onCreate()
     navigation.title = context.getString(R.string.controller_boards_setup_title, siteDescriptor.siteName)
 
+    val canCreateBoardsManually = siteManager.bySiteDescriptor(siteDescriptor)
+      ?.canCreateBoardsManually ?: false
+
+    if (canCreateBoardsManually) {
+      navigation.buildMenu(ConstraintLayoutBiasPair.TopRight)
+        .withItem(R.drawable.ic_create_white_24dp) {
+          onCreateBoardManuallyClicked()
+        }
+        .build()
+    }
+
     view = inflate(context, R.layout.controller_boards_setup)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
     epoxyRecyclerView.setController(controller)
@@ -135,6 +163,22 @@ class BoardsSetupController(
 
     presenter.onCreate(this)
     presenter.updateBoardsFromServerAndDisplayActive()
+  }
+
+  private fun onCreateBoardManuallyClicked() {
+    dialogFactory.createSimpleDialogWithInput(
+      context = context,
+      titleTextId = R.string.controller_enter_board_code,
+      inputType = DialogFactory.DialogInputType.String,
+      onValueEntered = { boardCode ->
+        if (boardCode.isEmpty()) {
+          showToast(R.string.controller_board_code_is_empty)
+          return@createSimpleDialogWithInput
+        }
+
+        presenter.createBoardManually(boardCode)
+      }
+    )
   }
 
   override fun onDestroy() {
@@ -182,6 +226,18 @@ class BoardsSetupController(
     }
 
     controller.requestModelBuild()
+  }
+
+  override fun showLoadingView() {
+    presentController(loadingViewController, animated = false)
+  }
+
+  override fun hideLoadingView() {
+    loadingViewController.stopPresenting()
+  }
+
+  override fun showMessageToast(message: String) {
+    showToast(message, Toast.LENGTH_LONG)
   }
 
   private inner class BoardsEpoxyController : EpoxyController() {

@@ -49,7 +49,7 @@ data class ChanBoard(
     const val DEFAULT_CATALOG_SIZE = 150
 
     @JvmStatic
-    fun create(boardDescriptor: BoardDescriptor, boardName: String): ChanBoard {
+    fun create(boardDescriptor: BoardDescriptor, boardName: String?): ChanBoard {
       return ChanBoard(
         boardDescriptor = boardDescriptor,
         name = boardName

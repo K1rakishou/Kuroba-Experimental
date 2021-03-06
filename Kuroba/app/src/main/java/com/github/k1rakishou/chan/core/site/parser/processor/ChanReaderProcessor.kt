@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.core.site.parser
+package com.github.k1rakishou.chan.core.site.parser.processor
 
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.options.ChanReadOptions
@@ -31,23 +31,26 @@ import kotlinx.coroutines.sync.withLock
 class ChanReaderProcessor(
   private val chanPostRepository: ChanPostRepository,
   private val chanReadOptions: ChanReadOptions,
-  val chanDescriptor: ChanDescriptor
-) {
+  override val chanDescriptor: ChanDescriptor
+) : IChanReaderProcessor {
   private val toParse = mutableListWithCap<ChanPostBuilder>(64)
   private val postOrderedList = mutableListWithCap<PostDescriptor>(64)
   private var op: ChanPostBuilder? = null
 
+  override val canUseEmptyBoardIfBoardDoesNotExist: Boolean
+    get() = false
+
   private val lock = Mutex()
 
-  suspend fun setOp(op: ChanPostBuilder?) {
+  override suspend fun setOp(op: ChanPostBuilder?) {
     lock.withLock { this.op = op }
   }
 
-  suspend fun getOp(): ChanPostBuilder? {
+  override suspend fun getOp(): ChanPostBuilder? {
     return lock.withLock { this.op }
   }
 
-  suspend fun addPost(postBuilder: ChanPostBuilder) {
+  override suspend fun addPost(postBuilder: ChanPostBuilder) {
     lock.withLock {
       if (differsFromCached(postBuilder)) {
         toParse.add(postBuilder)
@@ -57,7 +60,7 @@ class ChanReaderProcessor(
     }
   }
 
-  suspend fun applyChanReadOptions() {
+  override suspend fun applyChanReadOptions() {
     if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
       return
     }
@@ -94,18 +97,18 @@ class ChanReaderProcessor(
     }
   }
 
-  suspend fun getToParse(): List<ChanPostBuilder> {
+  override suspend fun getToParse(): List<ChanPostBuilder> {
     return lock.withLock { toParse }
   }
 
-  suspend fun getThreadDescriptors(): List<ChanDescriptor.ThreadDescriptor> {
+  override suspend fun getThreadDescriptors(): List<ChanDescriptor.ThreadDescriptor> {
     return lock.withLock {
       return@withLock toParse
         .map { chanPostBuilder -> chanPostBuilder.postDescriptor.threadDescriptor() }
     }
   }
 
-  suspend fun getTotalPostsCount(): Int {
+  override suspend fun getTotalPostsCount(): Int {
     return lock.withLock { postOrderedList.size }
   }
 

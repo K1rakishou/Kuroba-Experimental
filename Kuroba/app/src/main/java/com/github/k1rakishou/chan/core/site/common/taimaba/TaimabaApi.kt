@@ -5,7 +5,8 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.CommonSite.CommonApi
-import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
+import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
+import com.github.k1rakishou.chan.core.site.parser.processor.IChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
@@ -54,7 +55,7 @@ class TaimabaApi(
   override suspend fun loadCatalog(
     request: Request,
     responseBody: ResponseBody,
-    chanReaderProcessor: ChanReaderProcessor
+    chanReaderProcessor: IChanReaderProcessor
   ) {
     readBodyJson(responseBody) { jsonReader ->
       vichanReaderExtensions.iterateThreadsInCatalog(jsonReader) { reader ->
@@ -64,7 +65,7 @@ class TaimabaApi(
   }
 
   @Throws(Exception::class)
-  private suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: ChanReaderProcessor) {
+  private suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: IChanReaderProcessor) {
     val builder = ChanPostBuilder()
     builder.boardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
 

@@ -30,6 +30,9 @@ import com.github.k1rakishou.model.data.site.SiteBoards
 
 @DoNotStrip
 interface Site {
+  val canCreateBoardsManually: Boolean
+    get() = false
+
   enum class SiteFeature {
     /**
      * This site supports posting. (Or rather, we've implemented support for it.)

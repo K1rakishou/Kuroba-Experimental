@@ -4,8 +4,8 @@ import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsUseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
-import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.PostParser
+import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.options.ChanCacheOptions

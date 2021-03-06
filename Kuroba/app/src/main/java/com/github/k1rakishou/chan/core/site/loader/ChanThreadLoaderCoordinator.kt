@@ -30,8 +30,8 @@ import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsUs
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ReloadPostsFromDatabaseUseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
-import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.PostParser
+import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult

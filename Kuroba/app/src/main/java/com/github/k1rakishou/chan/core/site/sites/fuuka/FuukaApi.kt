@@ -3,7 +3,8 @@ package com.github.k1rakishou.chan.core.site.sites.fuuka
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.site.common.CommonClientException
 import com.github.k1rakishou.chan.core.site.common.CommonSite
-import com.github.k1rakishou.chan.core.site.parser.ChanReaderProcessor
+import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
+import com.github.k1rakishou.chan.core.site.parser.processor.IChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCollector
@@ -71,7 +72,7 @@ class FuukaApi(
   override suspend fun loadCatalog(
     request: Request,
     responseBody: ResponseBody,
-    chanReaderProcessor: ChanReaderProcessor
+    chanReaderProcessor: IChanReaderProcessor
   ) {
     throw CommonClientException("Catalog is not supported for site ${site.name()}")
   }

@@ -4,6 +4,7 @@ import android.content.Context;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
+import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.BookmarksManager;
@@ -16,6 +17,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase;
+import com.github.k1rakishou.chan.core.usecase.CreateBoardManuallyUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
@@ -195,6 +197,18 @@ public class UseCaseModule {
         return new ImportBackupFileUseCase(
                 appContext,
                 fileManager
+        );
+    }
+
+    @Provides
+    @Singleton
+    public CreateBoardManuallyUseCase provideCreateBoardManuallyUseCase(
+            SiteManager siteManager,
+            RealProxiedOkHttpClient proxiedOkHttpClient
+    ) {
+        return new CreateBoardManuallyUseCase(
+                siteManager,
+                proxiedOkHttpClient
         );
     }
 

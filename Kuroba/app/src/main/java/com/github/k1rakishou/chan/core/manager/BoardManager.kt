@@ -142,7 +142,7 @@ class BoardManager(
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
 
-    val updated = lock.write {
+    val updated = synchronized(this) {
       var updated = false
 
       boards.forEach { board ->
@@ -171,7 +171,7 @@ class BoardManager(
         updated = true
       }
 
-      return@write updated
+      return@synchronized updated
     }
 
     ensureBoardsAndOrdersConsistency()
@@ -205,14 +205,14 @@ class BoardManager(
     val boardDescriptors = boardDescriptorsSet
       .sortedBy { boardDescriptor -> boardDescriptor.boardCode }
 
-    val changed = lock.write {
-      // Very bad, but whatever we only do this in one place where it's not critical
-      val result = boardRepository.activateDeactivateBoards(
-        siteDescriptor,
-        boardDescriptors,
-        activate
-      )
+    // Very bad, but whatever we only do this in one place where it's not critical
+    val result = boardRepository.activateDeactivateBoards(
+      siteDescriptor,
+      boardDescriptors,
+      activate
+    )
 
+    val changed = lock.write {
       if (result is ModularResult.Error) {
         Logger.e(TAG, "boardRepository.activateDeactivateBoard() error", result.error)
         return@write false
@@ -252,6 +252,12 @@ class BoardManager(
     }
 
     if (!changed) {
+      boardRepository.activateDeactivateBoards(
+        siteDescriptor,
+        boardDescriptors,
+        activate.not()
+      )
+
       return false
     }
 
