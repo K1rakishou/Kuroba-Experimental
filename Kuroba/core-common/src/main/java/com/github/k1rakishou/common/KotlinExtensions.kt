@@ -724,3 +724,17 @@ fun Bitmap.recycleSafe() {
 suspend fun <T> Mutex.withLockNonCancellable(owner: Any? = null, action: suspend () -> T): T {
   return withContext(NonCancellable) { withLock(owner) { action.invoke() } }
 }
+
+suspend fun OkHttpClient.readResponseAsString(request: Request): ModularResult<String> {
+  return Try {
+    val response = suspendCall(request)
+    if (!response.isSuccessful) {
+      throw IOException("Bad response code: ${response.code}")
+    }
+
+    val responseBody = response.body
+      ?: throw IOException("Response has no body")
+
+    return@Try responseBody.string()
+  }
+}

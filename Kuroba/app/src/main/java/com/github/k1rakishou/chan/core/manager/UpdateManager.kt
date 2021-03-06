@@ -53,6 +53,7 @@ import com.github.k1rakishou.common.AndroidUtils.FlavorType
 import com.github.k1rakishou.common.AndroidUtils.getAppFileProvider
 import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
 import com.github.k1rakishou.common.exhaustive
+import com.github.k1rakishou.common.readResponseAsString
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
@@ -212,12 +213,12 @@ class UpdateManager(
   private suspend fun updateBeta(manual: Boolean) {
     BackgroundUtils.ensureBackgroundThread()
 
-    val request = Request.Builder()
+    val getLatestApkUuidRequest = Request.Builder()
       .url(BuildConfig.DEV_API_ENDPOINT + "/latest_apk_uuid")
       .get()
       .build()
 
-    val response = BetaUpdateApiRequest(request, proxiedOkHttpClient).execute()
+    val response = BetaUpdateApiRequest(getLatestApkUuidRequest, proxiedOkHttpClient).execute()
 
     coroutineScope {
       withContext(Dispatchers.Main) {
@@ -246,7 +247,7 @@ class UpdateManager(
     }
   }
 
-  private fun onSuccessfullyGotLatestApkUuid(
+  private suspend fun onSuccessfullyGotLatestApkUuid(
     response: BetaUpdateApiRequest.DevUpdateApiResponse,
     manual: Boolean
   ) {
@@ -269,11 +270,24 @@ class UpdateManager(
         return
       }
 
+      val changelogUrl = BuildConfig.GITHUB_CHANGELOGS_ENDPOINT + versionCode + ".txt"
+
+      val request = Request.Builder()
+        .get()
+        .url(changelogUrl)
+        .build()
+
+      val changelog = proxiedOkHttpClient.okHttpClient().readResponseAsString(request)
+        .mapErrorToValue { error ->
+          Logger.e(TAG, "Failed to read changelog for version: $versionCode", error)
+          return@mapErrorToValue "New dev build; see commits!"
+        }
+
       val fauxResponse = ReleaseUpdateApiResponse()
       fauxResponse.versionCode = versionCode
       fauxResponse.versionCodeString = "v$versionCode-${commitHash.take(8)}"
       fauxResponse.apkURL = (BuildConfig.DEV_API_ENDPOINT + "/apk/" + versionCode + "_" + commitHash + ".apk").toHttpUrl()
-      fauxResponse.body = SpannableStringBuilder.valueOf("New dev build; see commits!")
+      fauxResponse.body = SpannableStringBuilder.valueOf(changelog)
 
       processUpdateApiResponse(fauxResponse, manual)
     } catch (e: Exception) {
