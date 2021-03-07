@@ -182,16 +182,10 @@ open class ArchivesManager(
         return@read emptySet()
       }
 
-      // For some reason in archives.json file, that we use to work with archives, Wakarimasen
-      // archive is listed as one not supporting search while in reality it does. So for some time
-      // we are going to use this hack.
-      val boardsSupporingSearch = if (archiveData.getArchiveDescriptor().archiveType == ArchiveType.WakarimasenMoe) {
-        archiveData.supportedBoards ?: emptySet()
-      } else {
-        archiveData.boardsSupporingSearch ?: emptySet()
-      }
+      val boardsSupportingSearch = archiveData.boardsSupporingSearch
+        ?: emptySet()
 
-      return@read boardsSupporingSearch.map { boardCode ->
+      return@read boardsSupportingSearch.map { boardCode ->
         return@map BoardDescriptor.create(siteDescriptor, boardCode)
       }.toSet()
     }
