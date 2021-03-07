@@ -464,6 +464,8 @@ internal class FuukaApiThreadPostParseCommandBufferBuilder(
 
       val postSubNo = matcher.groupOrNull(4)
       if (postSubNo.isNotNullNorEmpty()) {
+        // TODO(KurobaEx / @GhostPosts):
+
         if (verboseLogs) {
           Logger.d(TAG, "Skipping ghost post $href")
         }

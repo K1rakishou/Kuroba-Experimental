@@ -153,7 +153,7 @@ class ChanThreadLoaderCoordinator(
           .get()
 
         siteResolver.findSiteForUrl(url)?.let { site ->
-          site.requestModifier()?.modifyCatalogOrThreadGetRequest(
+          site.requestModifier().modifyCatalogOrThreadGetRequest(
             site = site,
             chanDescriptor = chanDescriptor,
             requestBuilder = requestBuilder

@@ -48,22 +48,6 @@ open class ArchivesManager(
   @GuardedBy("lock")
   private val allArchiveDescriptors = mutableListOf<ArchiveDescriptor>()
 
-  private val archiveDescriptorIdMap = hashMapOf<String, Long>().apply {
-    put("archive.4plebs.org", 1)
-    put("archive.nyafuu.org", 2)
-    put("archive.rebeccablacktech.com", 3)
-    put("warosu.org", 4)
-    put("desuarchive.org", 5)
-    put("boards.fireden.net", 6)
-    put("arch.b4k.co", 7)
-    put("archive.b-stats.org", 8)
-    put("archived.moe", 9)
-    put("thebarchive.com", 10)
-    put("archiveofsins.com", 11)
-    put("tokyochronos.net", 12)
-    put("archive.wakarimasen.moe", 13)
-  }
-
   fun initialize() {
     Logger.d(TAG, "ArchivesManager.initialize()")
 
@@ -76,17 +60,8 @@ open class ArchivesManager(
     val result = Try {
       val allArchives = loadArchives()
 
-      val archiveDescriptors = allArchives.mapNotNull { archive ->
-        require(archiveDescriptorIdMap.isNotEmpty()) { "archiveDescriptorIdMap is empty" }
-
-        val archiveId = archiveDescriptorIdMap[archive.domain]
-        if (archiveId == null) {
-          Logger.e(TAG, "Couldn't find archiveId for archive with domain: ${archive.domain}")
-          return@mapNotNull null
-        }
-
-        return@mapNotNull ArchiveDescriptor(
-          archiveId,
+      val archiveDescriptors = allArchives.map { archive ->
+        return@map ArchiveDescriptor(
           archive.name,
           archive.domain,
           ArchiveType.byDomain(archive.domain)

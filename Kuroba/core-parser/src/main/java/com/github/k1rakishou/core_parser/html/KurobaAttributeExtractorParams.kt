@@ -35,6 +35,11 @@ class KurobaAttributeExtractorParams(
 
     extractAttributeValues.forEach { extractable ->
       when (extractable) {
+        is ExtractAttributeWithMatcher -> {
+          resultMap[extractable.key] = childNode.attributes()
+            .firstOrNull { attribute -> extractable.matcher.matches(attribute.value) }
+            ?.value
+        }
         is ExtractAttribute -> {
           resultMap[extractable.attrKey] = childNode.attrOrNull(extractable.attrKey.key)
         }

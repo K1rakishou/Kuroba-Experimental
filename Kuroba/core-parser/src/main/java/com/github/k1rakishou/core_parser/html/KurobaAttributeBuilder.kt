@@ -25,6 +25,18 @@ class KurobaAttributeBuilder {
   }
 
   @KurobaHtmlParserDsl
+  fun extractAttrValueByMatcher(key: String, matcher: KurobaMatcher.PatternMatcher): KurobaAttributeBuilder {
+    val extractable = ExtractAttributeWithMatcher(AttributeKey(key), matcher)
+
+    check(!extractAttributeValues.contains(extractable)) {
+      "extractAttributeValues already contains extractable: ${extractable}"
+    }
+
+    extractAttributeValues += extractable
+    return this
+  }
+
+  @KurobaHtmlParserDsl
   fun extractAttrValueByKey(attrKey: String): KurobaAttributeBuilder {
     val extractable = ExtractAttribute(AttributeKey(attrKey))
 
@@ -69,6 +81,8 @@ class KurobaAttributeBuilder {
 }
 
 interface IExtractable
+
+data class ExtractAttributeWithMatcher(val key: AttributeKey, val matcher: KurobaMatcher.PatternMatcher) : IExtractable
 
 data class ExtractAttribute(val attrKey: AttributeKey) : IExtractable
 

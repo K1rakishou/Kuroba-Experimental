@@ -3,10 +3,10 @@ package com.github.k1rakishou.chan.core.site.sites.fuuka.sites
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteIcon
-import com.github.k1rakishou.chan.core.site.common.FuukaCommentParser
 import com.github.k1rakishou.chan.core.site.sites.fuuka.BaseFuukaSite
 import com.github.k1rakishou.chan.core.site.sites.fuuka.FuukaActions
 import com.github.k1rakishou.chan.core.site.sites.fuuka.FuukaApi
+import com.github.k1rakishou.chan.core.site.sites.fuuka.FuukaCommentParser
 import com.github.k1rakishou.chan.core.site.sites.fuuka.FuukaEndpoints
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.common.DoNotStrip

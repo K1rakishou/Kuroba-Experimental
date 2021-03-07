@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.site.common
+package com.github.k1rakishou.chan.core.site.sites.foolfuuka
 
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
@@ -85,6 +85,7 @@ class FoolFuukaCommentParser(
 
       // Not a FoolFuuka archive
       ArchiveType.Warosu,
+      ArchiveType.Yukila,
 
       // See ArchivesManager.disabledArchives
       ArchiveType.TheBarchive,

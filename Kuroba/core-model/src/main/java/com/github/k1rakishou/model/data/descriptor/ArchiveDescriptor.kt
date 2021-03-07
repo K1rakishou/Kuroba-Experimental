@@ -3,7 +3,6 @@ package com.github.k1rakishou.model.data.descriptor
 import com.github.k1rakishou.common.data.ArchiveType
 
 class ArchiveDescriptor(
-  val archiveId: Long,
   val name: String,
   val domain: String,
   val archiveType: ArchiveType

@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.core.manager.PostFilterManager;
 import com.github.k1rakishou.chan.core.site.parser.CommentParser;
 import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper;
 import com.github.k1rakishou.chan.core.site.parser.PostParser;
+import com.github.k1rakishou.chan.core.site.sites.foolfuuka.FoolFuukaCommentParser;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.common.data.ArchiveType;
 import com.github.k1rakishou.core_logger.Logger;

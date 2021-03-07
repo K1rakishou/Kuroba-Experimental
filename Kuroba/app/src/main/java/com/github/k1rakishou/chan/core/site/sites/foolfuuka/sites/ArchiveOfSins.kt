@@ -2,9 +2,9 @@ package com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites
 
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteIcon
-import com.github.k1rakishou.chan.core.site.common.FoolFuukaCommentParser
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.FoolFuukaActions
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.FoolFuukaApi
+import com.github.k1rakishou.chan.core.site.sites.foolfuuka.FoolFuukaCommentParser
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.FoolFuukaEndpoints
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.data.ArchiveType

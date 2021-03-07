@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.TokyoChronos
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.WakarimasenMoe
 import com.github.k1rakishou.chan.core.site.sites.fuuka.sites.Warosu
 import com.github.k1rakishou.chan.core.site.sites.kun8.Kun8
+import com.github.k1rakishou.chan.core.site.sites.yukila.Yukila
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import java.util.*
 
@@ -65,6 +66,7 @@ object SiteRegistry {
     URL_HANDLERS.add(TokyoChronos.URL_HANDLER)
     URL_HANDLERS.add(Warosu.URL_HANDLER)
     URL_HANDLERS.add(WakarimasenMoe.URL_HANDLER)
+    URL_HANDLERS.add(Yukila.URL_HANDLER)
 
     addSiteToSiteClassesMap(Chan4.SITE_NAME, Chan4::class.java)
     addSiteToSiteClassesMap(Lainchan.SITE_NAME, Lainchan::class.java)
@@ -84,6 +86,7 @@ object SiteRegistry {
     addSiteToSiteClassesMap(TokyoChronos.SITE_NAME, TokyoChronos::class.java)
     addSiteToSiteClassesMap(Warosu.SITE_NAME, Warosu::class.java)
     addSiteToSiteClassesMap(WakarimasenMoe.SITE_NAME, WakarimasenMoe::class.java)
+    addSiteToSiteClassesMap(Yukila.SITE_NAME, Yukila::class.java)
   }
 
   private fun addSiteToSiteClassesMap(siteName: String, siteClass: Class<out Site>) {

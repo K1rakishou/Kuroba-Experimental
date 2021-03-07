@@ -56,10 +56,18 @@ object ArchiveThreadMapper {
     archivePostMedia: ArchivePostMedia
   ): ChanPostImage? {
     val imageUrl = archivePostMedia.imageUrl?.toHttpUrl()
+    val thumbnailUrl = archivePostMedia.thumbnailUrl?.toHttpUrl()
+
+    val spoilerThumbnailUrl = if (archivePostMedia.spoiler) {
+      thumbnailUrl
+    } else {
+      null
+    }
 
     return ChanPostImageBuilder()
       .serverFilename(archivePostMedia.serverFilename)
-      .thumbnailUrl(archivePostMedia.thumbnailUrl!!.toHttpUrl())
+      .thumbnailUrl(thumbnailUrl)
+      .spoilerThumbnailUrl(spoilerThumbnailUrl)
       .filename(archivePostMedia.filename)
       .extension(archivePostMedia.extension)
       .imageWidth(archivePostMedia.imageWidth)
@@ -67,7 +75,7 @@ object ArchiveThreadMapper {
       .size(archivePostMedia.size)
       .fileHash(archivePostMedia.fileHashBase64, true)
       .imageUrl(imageUrl)
-      .spoiler(false)
+      .spoiler(archivePostMedia.spoiler)
       .build()
   }
 

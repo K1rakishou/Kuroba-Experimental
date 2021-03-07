@@ -5,6 +5,7 @@ import android.util.Base64;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -79,6 +80,10 @@ public class StringUtils {
      */
     public static String fileNameRemoveBadCharacters(String filename) {
         return filename.replaceAll(" ", "_").replaceAll(RESERVED_CHARACTERS_FILE, "");
+    }
+
+    public static String encodeBase64(String input) {
+        return Base64.encodeToString(input.getBytes(StandardCharsets.UTF_8), Base64.DEFAULT);
     }
 
     @Nullable

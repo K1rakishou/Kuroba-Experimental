@@ -569,7 +569,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         return getFullQuotePattern().matcher(href);
     }
 
-    protected String extractQuote(String href, ChanPostBuilder post) {
+    protected String extractQuote(@NonNull String href, @NonNull ChanPostBuilder post) {
         if (href.matches(defaultQuoteRegex)) {
             // gets us something like /board/ or /thread/postno#quoteno
             // hacky fix for 4chan having two domains but the same API

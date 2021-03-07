@@ -1,8 +1,6 @@
 package com.github.k1rakishou.chan.core.site
 
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
-import com.github.k1rakishou.chan.core.site.common.FoolFuukaCommentParser
-import com.github.k1rakishou.chan.core.site.common.FuukaCommentParser
 import com.github.k1rakishou.chan.core.site.common.taimaba.TaimabaCommentParser
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
@@ -10,6 +8,9 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.parser.ICommentParser
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.core.site.sites.dvach.DvachCommentParser
+import com.github.k1rakishou.chan.core.site.sites.foolfuuka.FoolFuukaCommentParser
+import com.github.k1rakishou.chan.core.site.sites.fuuka.FuukaCommentParser
+import com.github.k1rakishou.chan.core.site.sites.yukila.YukilaCommentParser
 
 class ParserRepository(
   private val mockReplyManager: MockReplyManager,
@@ -24,6 +25,7 @@ class ParserRepository(
     parsers[CommentParserType.FoolFuukaParser] = FoolFuukaCommentParser(mockReplyManager, archivesManager)
     parsers[CommentParserType.TaimabaParser] = TaimabaCommentParser(mockReplyManager)
     parsers[CommentParserType.VichanParser] = VichanCommentParser(mockReplyManager)
+    parsers[CommentParserType.YukilaParser] = YukilaCommentParser(mockReplyManager)
   }
 
   @Synchronized

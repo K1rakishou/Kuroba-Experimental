@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.site.sites.fuuka
+package com.github.k1rakishou.chan.core.site.sites.yukila
 
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.site.common.CommonClientException
@@ -20,12 +20,13 @@ import com.google.gson.stream.JsonReader
 import okhttp3.Request
 import okhttp3.ResponseBody
 
-class FuukaApi(
+class YukilaApi(
   site: CommonSite
 ) : CommonSite.CommonApi(site) {
+
   private val verboseLogs by lazy { ChanSettings.verboseLogs.get() }
 
-  private val threadParseCommandBuffer = FuukaApiThreadPostParseCommandBufferBuilder(verboseLogs)
+  private val threadParseCommandBuffer = YukilaApiThreadPostParseCommandBufferBuilder(verboseLogs)
     .getBuilder()
     .build()
 
@@ -47,7 +48,8 @@ class FuukaApi(
         parserCommandExecutor.executeCommands(
           document,
           threadParseCommandBuffer,
-          collector
+          collector,
+          url = request.url.toString()
         )
       } catch (error: Throwable) {
         Logger.e(TAG, "parserCommandExecutor.executeCommands() error", error)
@@ -115,6 +117,6 @@ class FuukaApi(
   }
 
   companion object {
-    private const val TAG = "FuukaApi"
+    private const val TAG = "YukilaApi"
   }
 }

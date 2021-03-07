@@ -73,6 +73,7 @@ Screenshots can be found [here](https://github.com/K1rakishou/Kuroba-Experimenta
 - TokyoChronos
 - Warosu
 - Wakarimasen.moe
+- Yuki.la
 
 ## License
 [Kuroba is GPLv3](https://github.com/K1rakishou/Kuroba-Experimental/blob/develop/COPYING.txt), [licenses of the used libraries.](https://github.com/K1rakishou/Kuroba-Experimental/blob/develop/Kuroba/app/src/main/assets/html/licenses.html)
