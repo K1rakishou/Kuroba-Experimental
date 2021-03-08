@@ -1480,15 +1480,12 @@ class ThreadPresenter @Inject constructor(
       }
 
       if (linkable.type == PostLinkable.Type.DEAD) {
-        val descriptor = currentChanDescriptor
-          ?: return@post
-        val postNo = linkable.linkableValue.extractLongOrNull()
+        val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
           ?: return@post
 
-        val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
-          descriptor,
-          postNo
-        )
+        if (linkable.linkableValue.extractLongOrNull() == null) {
+          return@post
+        }
 
         threadPresenterCallback?.showAvailableArchivesList(threadDescriptor)
         return@post
