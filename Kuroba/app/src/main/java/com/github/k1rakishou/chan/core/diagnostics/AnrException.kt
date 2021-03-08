@@ -34,23 +34,6 @@ class AnrException(thread: Thread) : Exception("ANR detected") {
       return false
     }
 
-    // Sometimes ANR detection is triggered the main thread is not actually blocked
-    // (because of coroutines or some other shit) so we need to check that the main thread is actually
-    // blocked or is waiting for something.
-    val continueDump = when (mainThread.state) {
-      null,
-      Thread.State.NEW,
-      Thread.State.RUNNABLE,
-      Thread.State.TERMINATED -> false
-      Thread.State.BLOCKED,
-      Thread.State.WAITING,
-      Thread.State.TIMED_WAITING -> true
-    }
-
-    if (!continueDump) {
-      return false
-    }
-
     for (thread in stackTraces.keys) {
       if (thread === excludedThread) {
         continue
@@ -87,9 +70,5 @@ class AnrException(thread: Thread) : Exception("ANR detected") {
         )
       )
     }
-  }
-
-  companion object {
-    private const val TAG = "AnrException"
   }
 }

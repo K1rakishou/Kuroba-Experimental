@@ -7,8 +7,12 @@ import java.util.concurrent.Executors
 class AnrSupervisor(
   private val reportManager: ReportManager
 ) {
-  private val executor = Executors.newSingleThreadExecutor()
-  private val supervisor: AnrSupervisorRunnable = AnrSupervisorRunnable(reportManager)
+  private val executor = Executors.newSingleThreadExecutor({ runnable ->
+    return@newSingleThreadExecutor Thread(runnable)
+      .apply { name = "AnrSupervisorThread" }
+  })
+
+  private val supervisor = AnrSupervisorRunnable(reportManager)
 
   @Synchronized
   fun start() {

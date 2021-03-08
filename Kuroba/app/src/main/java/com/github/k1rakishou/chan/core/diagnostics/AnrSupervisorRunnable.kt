@@ -5,7 +5,8 @@ import android.os.Looper
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.core_logger.Logger
-import okhttp3.internal.wait
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
 // Taken from https://medium.com/@cwurthner/detecting-anrs-e6139f475acb
@@ -31,24 +32,23 @@ class AnrSupervisorRunnable(
 
     while (!Thread.interrupted()) {
       try {
-        val callback = AnrSupervisorCallback()
+        val countDownLatch = CountDownLatch(1)
 
-        synchronized(callback) {
-          handler.post(callback)
-          callback.javaWait(currentAnrDetectionThreshold.get())
+        handler.post {
+          countDownLatch.countDown()
+        }
 
-          if (!callback.isCalled) {
-            if (ChanSettings.collectANRs.get()) {
-              val stackTracesByteStream = AnrException(handler.looper.thread)
-                .collectAllStackTraces(reportManager.getReportFooter(), Thread.currentThread())
+        if (!countDownLatch.await(currentAnrDetectionThreshold.get(), TimeUnit.MILLISECONDS)) {
+          if (ChanSettings.collectANRs.get()) {
+            val stackTracesByteStream = AnrException(handler.looper.thread)
+              .collectAllStackTraces(reportManager.getReportFooter(), Thread.currentThread())
 
-              if (stackTracesByteStream != null) {
-                reportManager.storeAnr(stackTracesByteStream)
-              }
+            if (stackTracesByteStream != null) {
+              reportManager.storeAnr(stackTracesByteStream)
             }
-
-            callback.wait()
           }
+
+          countDownLatch.await()
         }
 
         checkStopped()
@@ -84,8 +84,6 @@ class AnrSupervisorRunnable(
     Logger.d(TAG, "Revert stopping...")
     stopped = false
   }
-
-  private fun Any.javaWait(timeout: Long) = (this as Object).wait(timeout)
 
   companion object {
     private const val TAG = "AnrSupervisorRunnable"
