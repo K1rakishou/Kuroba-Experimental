@@ -1,4 +1,4 @@
-v0.6.3-beta
+v0.6.3-release
 TLDR version:
 - Beta apks are now built without "debuggable" flag.
 - New media downloader.
