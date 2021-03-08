@@ -4,7 +4,7 @@ TLDR version:
 - New media downloader.
 - Reply layout gestures.
 - ANR detection system.
-- New 4chan archive (wakarimasen.moe).
+- New 4chan archives (wakarimasen.moe, yuki.la).
 
 Full version:
 - Add basic support for yuki.la 4chan archive (no search, unfortunately, because the search implemented dynamically using JavaScript and it would be a huge pain in the ass to add support for that).
