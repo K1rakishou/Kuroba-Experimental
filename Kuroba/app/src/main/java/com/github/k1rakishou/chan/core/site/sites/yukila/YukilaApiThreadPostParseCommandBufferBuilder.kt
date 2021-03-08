@@ -49,14 +49,19 @@ class YukilaApiThreadPostParseCommandBufferBuilder(
                     }
                   }
 
-                  loopWhile(predicate = {
-                    tag(KurobaMatcher.TagMatcher.tagWithNameAttributeMatcher("div"))
-                    attr("class", KurobaMatcher.PatternMatcher.stringEquals("postContainer replyContainer"))
-                  }) {
-                    div(matchableBuilderFunc = { attr("class", KurobaMatcher.PatternMatcher.stringEquals("postContainer replyContainer")) })
+                  executeIf(
+                    predicate = { attr("class", KurobaMatcher.PatternMatcher.stringEquals("postContainer replyContainer")) },
+                    resetNodeIndex = true
+                  ) {
+                    loopWhile(predicate = {
+                      tag(KurobaMatcher.TagMatcher.tagWithNameAttributeMatcher("div"))
+                      attr("class", KurobaMatcher.PatternMatcher.stringEquals("postContainer replyContainer"))
+                    }) {
+                      div(matchableBuilderFunc = { attr("class", KurobaMatcher.PatternMatcher.stringEquals("postContainer replyContainer")) })
 
-                    nest {
-                      parsePost(isOriginalPost = false)
+                      nest {
+                        parsePost(isOriginalPost = false)
+                      }
                     }
                   }
                 }
@@ -331,34 +336,11 @@ class YukilaApiThreadPostParseCommandBufferBuilder(
         )
       }
 
-      span(matchableBuilderFunc = { attr("class", KurobaMatcher.PatternMatcher.stringEquals("nameBlock")) })
-
-      nest {
-        span(
-          matchableBuilderFunc = { attr("class", KurobaMatcher.PatternMatcher.stringEquals("name")) },
-          attrExtractorBuilderFunc = { extractText() },
-          extractorFunc = { node, extractedAttributeValues, archiveThreadPostCollector ->
-            archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
-              archivePost.name = extractedAttributeValues.getText() ?: ""
-            }
-          }
-        )
-
-        executeIf(
-          predicate = { attr("class", KurobaMatcher.PatternMatcher.stringEquals("postertrip")) },
-          resetNodeIndex = false
-        ) {
-          span(
-            matchableBuilderFunc = { attr("class", KurobaMatcher.PatternMatcher.stringEquals("postertrip")) },
-            attrExtractorBuilderFunc = { extractText() },
-            extractorFunc = { node, extractedAttributeValues, archiveThreadPostCollector ->
-              archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
-                archivePost.tripcode = extractedAttributeValues.getText() ?: ""
-              }
-            }
-          )
-        }
-      }
+      executeIfElse(
+        predicate = { attr("class", KurobaMatcher.PatternMatcher.stringEquals("nameBlock capcodeMod")) },
+        ifBranchBuilder = { parseNameWithModCapcode() },
+        elseBranchBuilder = { parseName() }
+      )
 
       span(
         matchableBuilderFunc = { attr("class", KurobaMatcher.PatternMatcher.stringEquals("dateTime")) },
@@ -378,6 +360,110 @@ class YukilaApiThreadPostParseCommandBufferBuilder(
             }
 
             archivePost.unixTimestampSeconds = dateTimeSeconds
+          }
+        }
+      )
+
+      executeIf(
+        predicate = { attr("class", KurobaMatcher.PatternMatcher.stringEqualsIgnoreCase("postNum desktop")) }
+      ) {
+        span(matchableBuilderFunc = { attr("class", KurobaMatcher.PatternMatcher.stringEqualsIgnoreCase("postNum desktop")) })
+
+        nest {
+          executeIf(
+            predicate = { attr("title", KurobaMatcher.PatternMatcher.stringEqualsIgnoreCase("Sticky")) },
+            resetNodeIndex = true
+          ) {
+            tag(
+              tagName = "img",
+              matchableBuilderFunc = { anyTag() },
+              attrExtractorBuilderFunc = { expectAttrWithValue("title", KurobaMatcher.PatternMatcher.stringEqualsIgnoreCase("Sticky")) },
+              extractorFunc = { node, extractedAttributeValues, archiveThreadPostCollector ->
+                archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
+                  archivePost.sticky = true
+                }
+              }
+            )
+          }
+
+          executeIf(
+            predicate = { attr("title", KurobaMatcher.PatternMatcher.stringEqualsIgnoreCase("Closed")) },
+            resetNodeIndex = true
+          ) {
+            tag(
+              tagName = "img",
+              matchableBuilderFunc = { anyTag() },
+              attrExtractorBuilderFunc = { expectAttrWithValue("title", KurobaMatcher.PatternMatcher.stringEqualsIgnoreCase("Closed")) },
+              extractorFunc = { node, extractedAttributeValues, archiveThreadPostCollector ->
+                archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
+                  archivePost.closed = true
+                }
+              }
+            )
+          }
+        }
+      }
+    }
+
+    return this
+  }
+
+  private fun KurobaParserCommandBuilder<YukilaApi.ArchiveThreadPostCollector>.parseName():
+    KurobaParserCommandBuilder<YukilaApi.ArchiveThreadPostCollector> {
+    span(matchableBuilderFunc = { attr("class", KurobaMatcher.PatternMatcher.stringEquals("nameBlock")) })
+
+    nest {
+      span(
+        matchableBuilderFunc = { attr("class", KurobaMatcher.PatternMatcher.stringEquals("name")) },
+        attrExtractorBuilderFunc = { extractText() },
+        extractorFunc = { node, extractedAttributeValues, archiveThreadPostCollector ->
+          archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
+            archivePost.name = extractedAttributeValues.getText() ?: ""
+          }
+        }
+      )
+
+      executeIf(
+        predicate = { attr("class", KurobaMatcher.PatternMatcher.stringEquals("postertrip")) },
+        resetNodeIndex = false
+      ) {
+        span(
+          matchableBuilderFunc = { attr("class", KurobaMatcher.PatternMatcher.stringEquals("postertrip")) },
+          attrExtractorBuilderFunc = { extractText() },
+          extractorFunc = { node, extractedAttributeValues, archiveThreadPostCollector ->
+            archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
+              archivePost.tripcode = extractedAttributeValues.getText() ?: ""
+            }
+          }
+        )
+      }
+    }
+
+    return this
+  }
+
+  private fun KurobaParserCommandBuilder<YukilaApi.ArchiveThreadPostCollector>.parseNameWithModCapcode():
+    KurobaParserCommandBuilder<YukilaApi.ArchiveThreadPostCollector> {
+
+    span(matchableBuilderFunc = { attr("class", KurobaMatcher.PatternMatcher.stringEquals("nameBlock capcodeMod")) })
+
+    nest {
+      span(
+        matchableBuilderFunc = { attr("class", KurobaMatcher.PatternMatcher.stringEquals("name capcode")) },
+        attrExtractorBuilderFunc = { extractText() },
+        extractorFunc = { node, extractedAttributeValues, archiveThreadPostCollector ->
+          archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
+            archivePost.name = extractedAttributeValues.getText() ?: ""
+          }
+        }
+      )
+
+      tag(
+        tagName = "strong",
+        matchableBuilderFunc = { attr("class", KurobaMatcher.PatternMatcher.stringContains("capcode")) },
+        extractorFunc = { node, extractedAttributeValues, archiveThreadPostCollector ->
+          archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
+            archivePost.moderatorCapcode = extractedAttributeValues.getText() ?: ""
           }
         }
       )
