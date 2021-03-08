@@ -42,8 +42,8 @@ import java.util.*
 @DoNotStrip
 class Chan420 : CommonSite() {
   private val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
-    siteSendsCorrectFileSizeInBytes = false,
-    canFileHashBeTrusted = false
+    enabled = true,
+    siteSendsCorrectFileSizeInBytes = false
   )
   
   override fun setup() {

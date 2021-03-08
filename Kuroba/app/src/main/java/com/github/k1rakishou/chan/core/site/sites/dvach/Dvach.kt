@@ -52,10 +52,9 @@ import java.util.*
 @DoNotStrip
 class Dvach : CommonSite() {
   private val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
+    enabled = true,
     // 2ch.hk sends file size in KB
-    siteSendsCorrectFileSizeInBytes = false,
-    // 2ch.hk sometimes sends an incorrect file hash
-    canFileHashBeTrusted = false
+    siteSendsCorrectFileSizeInBytes = false
   )
 
   private lateinit var passCode: StringSetting

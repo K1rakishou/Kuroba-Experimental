@@ -18,8 +18,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 class Warosu : BaseFuukaSite() {
   private val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
     enabled = true,
-    siteSendsCorrectFileSizeInBytes = false,
-    canFileHashBeTrusted = false
+    siteSendsCorrectFileSizeInBytes = false
   )
 
   override fun rootUrl(): HttpUrl = ROOT_URL

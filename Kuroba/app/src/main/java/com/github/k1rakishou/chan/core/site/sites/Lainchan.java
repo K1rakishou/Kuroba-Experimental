@@ -82,7 +82,7 @@ public class Lainchan extends CommonSite {
     };
 
     public Lainchan() {
-        chunkDownloaderSiteProperties = new ChunkDownloaderSiteProperties(true, true, true);
+        chunkDownloaderSiteProperties = new ChunkDownloaderSiteProperties(true, true);
     }
 
     @Override

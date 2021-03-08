@@ -9,11 +9,5 @@ data class ChunkDownloaderSiteProperties(
    * (or something else) you will have to look into the thread json of a concrete site.
    * If a site uses Vichan or Futaba chan engine then they most likely send file size in bytes.
    * */
-  val siteSendsCorrectFileSizeInBytes: Boolean,
-
-  /**
-   * Some sites (Wired-7) may send incorrect file md5 to us (sometimes) so we have no other way other
-   * than file md5 disabling for such sites
-   * */
-  val canFileHashBeTrusted: Boolean
+  val siteSendsCorrectFileSizeInBytes: Boolean
 )

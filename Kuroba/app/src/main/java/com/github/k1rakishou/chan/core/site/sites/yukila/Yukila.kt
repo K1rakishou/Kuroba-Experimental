@@ -14,8 +14,7 @@ class Yukila : CommonSite() {
 
   private val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
     enabled = true,
-    siteSendsCorrectFileSizeInBytes = false,
-    canFileHashBeTrusted = false
+    siteSendsCorrectFileSizeInBytes = false
   )
 
   override fun setup() {

@@ -10,8 +10,7 @@ import okhttp3.HttpUrl
 abstract class BaseFoolFuukaSite : CommonSite() {
   private val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
     enabled = true,
-    siteSendsCorrectFileSizeInBytes = true,
-    canFileHashBeTrusted = true
+    siteSendsCorrectFileSizeInBytes = true
   )
 
   abstract fun rootUrl(): HttpUrl

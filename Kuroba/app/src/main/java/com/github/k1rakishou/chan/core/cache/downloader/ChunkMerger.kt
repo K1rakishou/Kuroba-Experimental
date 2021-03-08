@@ -2,12 +2,9 @@ package com.github.k1rakishou.chan.core.cache.downloader
 
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.site.SiteResolver
-import com.github.k1rakishou.chan.utils.HashingUtil
 import com.github.k1rakishou.fsaf.FileManager
-import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.RawFile
 import io.reactivex.Flowable
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 
 internal class ChunkMerger(
@@ -78,55 +75,12 @@ internal class ChunkMerger(
         }
       }
 
-      if (canSiteFileHashBeTrusted(url)) {
-        val expectedFileHash = activeDownloads.get(url)?.extraInfo?.fileHash
-        if (expectedFileHash != null) {
-          compareFileHashes(url, output, expectedFileHash)
-        }
-      }
-
       // Mark file as downloaded
       markFileAsDownloaded(url)
 
       val requestTime = System.currentTimeMillis() - requestStartTime
       return@fromCallable ChunkDownloadEvent.Success(output, requestTime)
     }
-  }
-
-  /**
-   * Some sites may sometimes send us incorrect file md5 hashes, just skip the hash check for them
-   * */
-  private fun canSiteFileHashBeTrusted(url: String): Boolean {
-    val host = url.toHttpUrlOrNull()?.host
-    if (host == null) {
-      logError(TAG, "Bad url, can't extract host: $url")
-      return false
-    }
-
-    return siteResolver.findSiteForUrl(host)
-      ?.getChunkDownloaderSiteProperties()
-      ?.canFileHashBeTrusted
-      ?: false
-  }
-
-  private fun compareFileHashes(url: String, output: AbstractFile, expectedFileHash: String) {
-    fileManager.getInputStream(output)?.use { inputStream ->
-      val actualFileHash = HashingUtil.inputStreamHash(inputStream)
-
-      if (!expectedFileHash.equals(actualFileHash, ignoreCase = true)) {
-        throw FileCacheException.FileHashesAreDifferent(
-          url,
-          fileManager.getName(output),
-          expectedFileHash,
-          actualFileHash
-        )
-      }
-    } ?: throw FileCacheException.CouldNotGetInputStreamException(
-      output.getFullPath(),
-      true,
-      fileManager.isFile(output),
-      fileManager.canRead(output)
-    )
   }
 
   private fun markFileAsDownloaded(url: String) {

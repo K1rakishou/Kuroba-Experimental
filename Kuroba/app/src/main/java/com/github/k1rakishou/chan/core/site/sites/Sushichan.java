@@ -85,7 +85,7 @@ public class Sushichan
     };
 
     public Sushichan() {
-        chunkDownloaderSiteProperties = new ChunkDownloaderSiteProperties(true, true, true);
+        chunkDownloaderSiteProperties = new ChunkDownloaderSiteProperties(true, true);
     }
 
     @Override

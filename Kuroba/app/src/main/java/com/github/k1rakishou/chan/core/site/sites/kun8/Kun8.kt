@@ -31,8 +31,7 @@ import okhttp3.Request
 class Kun8 : CommonSite() {
   private val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
     enabled = false,
-    siteSendsCorrectFileSizeInBytes = false,
-    canFileHashBeTrusted = false
+    siteSendsCorrectFileSizeInBytes = false
   )
 
   override fun setup() {

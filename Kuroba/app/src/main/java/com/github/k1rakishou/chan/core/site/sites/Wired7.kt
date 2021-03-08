@@ -54,9 +54,7 @@ import java.util.regex.Pattern
 class Wired7 : CommonSite() {
   private val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
     enabled = true,
-    // Wired-7 sends incorrect file md5 hash sometimes
-    siteSendsCorrectFileSizeInBytes = true,
-    canFileHashBeTrusted = false
+    siteSendsCorrectFileSizeInBytes = true
   )
 
   override fun setup() {

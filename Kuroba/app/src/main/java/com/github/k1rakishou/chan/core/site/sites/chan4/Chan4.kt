@@ -94,8 +94,8 @@ open class Chan4 : SiteBase() {
     )
 
     chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
-      siteSendsCorrectFileSizeInBytes = true,
-      canFileHashBeTrusted = true
+      enabled = true,
+      siteSendsCorrectFileSizeInBytes = true
     )
   }
 
