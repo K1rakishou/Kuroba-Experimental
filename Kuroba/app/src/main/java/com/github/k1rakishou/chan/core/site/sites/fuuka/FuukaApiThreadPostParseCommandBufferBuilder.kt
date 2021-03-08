@@ -273,132 +273,73 @@ internal class FuukaApiThreadPostParseCommandBufferBuilder(
         )
       }
 
-      span(matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("postername")) })
-
-      nest {
-        span(
-          matchableBuilderFunc = {
-            attr(
-              "itemprop",
-              KurobaMatcher.PatternMatcher.stringEquals("name")
-            )
-          },
-          attrExtractorBuilderFunc = { extractText() },
-          extractorFunc = { _, extractedAttributeValues, archiveThreadPostCollector ->
-            archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
-              val name = extractedAttributeValues.getText()
-              if (name == null) {
-                Logger.e(TAG, "Failed to extract name")
-                return@let
-              }
-
-              archivePost.name = name
-            }
-          }
-        )
-      }
-
-      executeIf(predicate = { className(KurobaMatcher.PatternMatcher.stringEquals("postertrip")) }) {
-        span(
-          matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("postertrip")) },
-          attrExtractorBuilderFunc = { extractText() },
-          extractorFunc = { node, extractedAttributeValues, archiveThreadPostCollector ->
-            archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
-              val tripcode = extractedAttributeValues.getText()
-              if (tripcode == null) {
-                Logger.e(TAG, "Failed to extract tripcode")
-                return@let
-              }
-
-              archivePost.name = Parser.unescapeEntities(tripcode, false)
-            }
-          }
-        )
-      }
-
-      span(
-        matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("posttime")) },
-        attrExtractorBuilderFunc = { extractAttrValueByKey("title") },
-        extractorFunc = { node, extractedAttributeValues, archiveThreadPostCollector ->
-          archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
-            val title = extractedAttributeValues.getAttrValue("title")
-            val timestamp = title?.toLongOrNull()
-
-            if (timestamp == null) {
-              Logger.e(TAG, "Failed to extract unixTimestampSeconds, title='$title'")
-              return@let
-            }
-
-            archivePost.unixTimestampSeconds = timestamp / 1000L
-          }
-        }
-      )
+      extractPostPosterInfoInternal()
     }
   }
 
   private fun KurobaParserCommandBuilder<FuukaApi.ArchiveThreadPostCollector>.extractRegularPostPosterInfo() {
     nest {
-      span(matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("postername")) })
+      extractPostPosterInfoInternal()
+    }
+  }
 
-      nest {
-        span(
-          matchableBuilderFunc = {
-            attr(
-              "itemprop",
-              KurobaMatcher.PatternMatcher.stringEquals("name")
-            )
-          },
-          attrExtractorBuilderFunc = { extractText() },
-          extractorFunc = { _, extractedAttributeValues, archiveThreadPostCollector ->
-            archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
-              val name = extractedAttributeValues.getText()
-              if (name == null) {
-                Logger.e(TAG, "Failed to extract name")
-                return@let
-              }
+  private fun KurobaParserCommandBuilder<FuukaApi.ArchiveThreadPostCollector>.extractPostPosterInfoInternal():
+    KurobaParserCommandBuilder<FuukaApi.ArchiveThreadPostCollector> {
+    span(matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringContainsIgnoreCase("postername")) })
 
-              archivePost.name = name
-            }
-          }
-        )
-      }
-
-      executeIf(predicate = { className(KurobaMatcher.PatternMatcher.stringEquals("postertrip")) }) {
-        span(
-          matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("postertrip")) },
-          attrExtractorBuilderFunc = { extractText() },
-          extractorFunc = { node, extractedAttributeValues, archiveThreadPostCollector ->
-            archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
-              val tripcode = extractedAttributeValues.getText()
-              if (tripcode == null) {
-                Logger.e(TAG, "Failed to extract tripcode")
-                return@let
-              }
-
-              archivePost.name = Parser.unescapeEntities(tripcode, false)
-            }
-          }
-        )
-      }
-
+    nest {
       span(
-        matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("posttime")) },
-        attrExtractorBuilderFunc = { extractAttrValueByKey("title") },
-        extractorFunc = { node, extractedAttributeValues, archiveThreadPostCollector ->
+        matchableBuilderFunc = { attr("itemprop", KurobaMatcher.PatternMatcher.stringEquals("name")) },
+        attrExtractorBuilderFunc = { extractText() },
+        extractorFunc = { _, extractedAttributeValues, archiveThreadPostCollector ->
           archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
-            val title = extractedAttributeValues.getAttrValue("title")
-            val timestamp = title?.toLongOrNull()
-
-            if (timestamp == null) {
-              Logger.e(TAG, "Failed to extract unixTimestampSeconds, title='$title'")
+            val name = extractedAttributeValues.getText()
+            if (name == null) {
+              Logger.e(TAG, "Failed to extract name")
               return@let
             }
 
-            archivePost.unixTimestampSeconds = timestamp / 1000
+            archivePost.name = name
           }
         }
       )
     }
+
+    executeIf(predicate = { className(KurobaMatcher.PatternMatcher.stringEquals("postertrip")) }) {
+      span(
+        matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("postertrip")) },
+        attrExtractorBuilderFunc = { extractText() },
+        extractorFunc = { node, extractedAttributeValues, archiveThreadPostCollector ->
+          archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
+            val tripcode = extractedAttributeValues.getText()
+            if (tripcode == null) {
+              Logger.e(TAG, "Failed to extract tripcode")
+              return@let
+            }
+
+            archivePost.name = Parser.unescapeEntities(tripcode, false)
+          }
+        }
+      )
+    }
+
+    return span(
+      matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("posttime")) },
+      attrExtractorBuilderFunc = { extractAttrValueByKey("title") },
+      extractorFunc = { node, extractedAttributeValues, archiveThreadPostCollector ->
+        archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
+          val title = extractedAttributeValues.getAttrValue("title")
+          val timestamp = title?.toLongOrNull()
+
+          if (timestamp == null) {
+            Logger.e(TAG, "Failed to extract unixTimestampSeconds, title='$title'")
+            return@let
+          }
+
+          archivePost.unixTimestampSeconds = timestamp / 1000L
+        }
+      }
+    )
   }
 
   private fun KurobaParserCommandBuilder<FuukaApi.ArchiveThreadPostCollector>.tryExtractRegularPostMediaLink() {

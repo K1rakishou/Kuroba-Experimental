@@ -829,10 +829,14 @@ class ThreadPresenter @Inject constructor(
           return
         }
 
-        val opThumbnailUrl = chanThreadManager.getChanThread(localChanDescriptor)
+        var opThumbnailUrl = chanThreadManager.getChanThread(localChanDescriptor)
           ?.getOriginalPost()
           ?.firstImage()
           ?.actualThumbnailUrl
+
+        if (opThumbnailUrl == null) {
+          opThumbnailUrl = siteManager.bySiteDescriptor(localChanDescriptor.siteDescriptor())?.icon()?.url
+        }
 
         val title = ChanPostUtils.getTitle(
           chanOriginalPost,

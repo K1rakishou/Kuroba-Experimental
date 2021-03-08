@@ -142,7 +142,7 @@ class StartActivityStartupHandlerHelper(
 
       val boardDescriptor = threadDescriptor.boardDescriptor
 
-      if (!checkSiteAndBoardExistsAndActive("getThreadToOpen()", boardDescriptor)) {
+      if (!checkSiteExistsAndActive("getThreadToOpen()", boardDescriptor)) {
         return null
       }
 
@@ -166,7 +166,7 @@ class StartActivityStartupHandlerHelper(
         return null
       }
 
-      if (!checkSiteAndBoardExistsAndActive("getBoardToOpen()", boardDescriptor)) {
+      if (!checkSiteExistsAndActive("getBoardToOpen()", boardDescriptor)) {
         return null
       }
 
@@ -178,7 +178,7 @@ class StartActivityStartupHandlerHelper(
     }
   }
 
-  private fun checkSiteAndBoardExistsAndActive(tag: String, boardDescriptor: BoardDescriptor): Boolean {
+  private fun checkSiteExistsAndActive(tag: String, boardDescriptor: BoardDescriptor): Boolean {
     val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
     if (site == null) {
       Logger.d(TAG, "$tag siteManager.bySiteDescriptor(${boardDescriptor.siteDescriptor}) -> null")
@@ -187,17 +187,6 @@ class StartActivityStartupHandlerHelper(
 
     if (!siteManager.isSiteActive(boardDescriptor.siteDescriptor)) {
       Logger.d(TAG, "$tag siteManager.isSiteActive(${boardDescriptor.siteDescriptor}) -> false")
-      return false
-    }
-
-    val chanBoard = boardManager.byBoardDescriptor(boardDescriptor)
-    if (chanBoard == null) {
-      Logger.d(TAG, "$tag boardManager.byBoardDescriptor($boardDescriptor) -> null")
-      return false
-    }
-
-    if (!chanBoard.active) {
-      Logger.d(TAG, "$tag board ${boardDescriptor} is not active")
       return false
     }
 
