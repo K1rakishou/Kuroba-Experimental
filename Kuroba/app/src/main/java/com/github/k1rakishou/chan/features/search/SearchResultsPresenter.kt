@@ -195,10 +195,28 @@ internal class SearchResultsPresenter(
       is SearchParameters.AdvancedSearchParameters -> {
         when (params) {
           is SearchParameters.FuukaSearchParameters -> {
-            FuukaSearchParams(params.boardDescriptor!!, params.query, params.subject, currentPage)
+            val searchBoard = params.searchBoard!!
+            check(searchBoard is SearchBoard.SingleBoard) { "Can only use SearchBoard.SingleBoard here!" }
+            val boardDescriptor = searchBoard.boardDescriptor
+
+            FuukaSearchParams(
+              boardDescriptor = boardDescriptor,
+              query = params.query,
+              subject = params.subject,
+              page = currentPage
+            )
           }
           is SearchParameters.FoolFuukaSearchParameters -> {
-            FoolFuukaSearchParams(params.boardDescriptor!!, params.query, params.subject, currentPage)
+            val searchBoard = params.searchBoard!!
+            check(searchBoard is SearchBoard.SingleBoard) { "Can only use SearchBoard.SingleBoard here!" }
+            val boardDescriptor = searchBoard.boardDescriptor
+
+            FoolFuukaSearchParams(
+              boardDescriptor = boardDescriptor,
+              query = params.query,
+              subject = params.subject,
+              page = currentPage
+            )
           }
           else -> throw IllegalStateException("Unknown params: ${params.javaClass.simpleName}")
         }

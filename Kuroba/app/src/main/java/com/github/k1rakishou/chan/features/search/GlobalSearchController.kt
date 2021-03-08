@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.site.sites.search.SearchBoard
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerState
 import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerStateData
@@ -26,7 +27,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import java.lang.ref.WeakReference
 import javax.inject.Inject
@@ -173,18 +173,6 @@ class GlobalSearchController(context: Context)
     renderSearchButton(dataState.sitesWithSearch, dataState.searchParameters)
   }
 
-  private fun EpoxyController.renderSearchButton(
-    sitesWithSearch: SitesWithSearch,
-    searchParameters: SearchParameters
-  ) {
-    epoxySearchButtonView {
-      id("global_search_button_view")
-      onButtonClickListener {
-        presenter.onSearchButtonClicked(sitesWithSearch.selectedSite, searchParameters)
-      }
-    }
-  }
-
   private fun EpoxyController.renderFoolFuukaSearch(dataState: GlobalSearchControllerStateData): Boolean {
     val sitesWithSearch = dataState.sitesWithSearch
     val searchParameters = dataState.searchParameters as SearchParameters.AdvancedSearchParameters
@@ -195,8 +183,37 @@ class GlobalSearchController(context: Context)
 
     var initialQuery = searchParameters.query
     var initialSubjectQuery = searchParameters.subject
-    var selectedBoard = searchParameters.boardDescriptor
-    var selectedBoardCode = selectedBoard?.boardCode
+    var selectedBoard = searchParameters.searchBoard
+    var selectedBoardCode = selectedBoard?.boardCode()
+
+    fun createFuukaOrFoolFuukaSearchParams(
+      siteDescriptor: SiteDescriptor,
+      query: String,
+      subject: String,
+      searchBoard: SearchBoard?,
+    ): SearchParameters.AdvancedSearchParameters {
+      val searchType = siteManager.bySiteDescriptor(siteDescriptor)?.siteGlobalSearchType()
+      checkNotNull(searchType) { "searchType is null! siteDescriptor=${siteDescriptor}" }
+
+      when (searchType) {
+        SiteGlobalSearchType.SearchNotSupported,
+        SiteGlobalSearchType.SimpleQuerySearch,
+        SiteGlobalSearchType.FuukaSearch -> {
+          return SearchParameters.FuukaSearchParameters(
+            query = query,
+            subject = subject,
+            searchBoard = searchBoard
+          )
+        }
+        SiteGlobalSearchType.FoolFuukaSearch -> {
+          return SearchParameters.FoolFuukaSearchParameters(
+            query = query,
+            subject = subject,
+            searchBoard = searchBoard
+          )
+        }
+      }
+    }
 
     if (resetSearchParameters) {
       initialQuery = ""
@@ -219,14 +236,15 @@ class GlobalSearchController(context: Context)
 
         val controller = SelectBoardForSearchController(
           context = context,
-          prevSelectedBoard = searchParameters.boardDescriptor,
+          archiveSupportSearchOnAllBoards = false,
+          prevSelectedBoard = searchParameters.searchBoard,
           siteDescriptor = selectedSiteDescriptor,
-          onBoardSelected = { boardDescriptor ->
-            val updatedSearchParameters = createAdvancedSearchParamsBySite(
+          onBoardSelected = { searchBoard ->
+            val updatedSearchParameters = createFuukaOrFoolFuukaSearchParams(
               siteDescriptor = selectedSiteDescriptor,
               query = initialQuery,
               subject = initialSubjectQuery,
-              boardDescriptor = boardDescriptor
+              searchBoard = searchBoard
             )
 
             presenter.reloadWithSearchParameters(updatedSearchParameters, sitesWithSearch)
@@ -242,11 +260,11 @@ class GlobalSearchController(context: Context)
       initialQuery(initialSubjectQuery)
       hint(context.getString(R.string.post_subject_search_query_hint))
       onTextEnteredListener { subjectQuery ->
-        val updatedSearchParameters = createAdvancedSearchParamsBySite(
+        val updatedSearchParameters = createFuukaOrFoolFuukaSearchParams(
           siteDescriptor = selectedSiteDescriptor,
           query = initialQuery,
           subject = subjectQuery,
-          boardDescriptor = selectedBoard
+          searchBoard = selectedBoard
         )
 
         presenter.reloadWithSearchParameters(updatedSearchParameters, sitesWithSearch)
@@ -260,11 +278,11 @@ class GlobalSearchController(context: Context)
       initialQuery(initialQuery)
       hint(context.getString(R.string.post_comment_search_query_hint))
       onTextEnteredListener { commentQuery ->
-        val updatedSearchParameters = createAdvancedSearchParamsBySite(
+        val updatedSearchParameters = createFuukaOrFoolFuukaSearchParams(
           siteDescriptor = selectedSiteDescriptor,
           query = commentQuery,
           subject = initialSubjectQuery,
-          boardDescriptor = selectedBoard
+          searchBoard = selectedBoard
         )
 
         presenter.reloadWithSearchParameters(updatedSearchParameters, sitesWithSearch)
@@ -273,11 +291,11 @@ class GlobalSearchController(context: Context)
       onUnbind { _, view -> removeViewFromInputViewRefSet(view) }
     }
 
-    return createAdvancedSearchParamsBySite(
+    return createFuukaOrFoolFuukaSearchParams(
       siteDescriptor = selectedSiteDescriptor,
       query = initialQuery,
       subject = initialSubjectQuery,
-      boardDescriptor = selectedBoard
+      searchBoard = selectedBoard
     ).isValid()
   }
 
@@ -312,33 +330,14 @@ class GlobalSearchController(context: Context)
     ).isValid()
   }
 
-  private fun createAdvancedSearchParamsBySite(
-    siteDescriptor: SiteDescriptor,
-    query: String,
-    subject: String,
-    boardDescriptor: BoardDescriptor?,
-  ): SearchParameters.AdvancedSearchParameters {
-    val searchType = siteManager.bySiteDescriptor(siteDescriptor)?.siteGlobalSearchType()
-    checkNotNull(searchType) { "searchType is null! siteDescriptor=${siteDescriptor}" }
-
-    when (searchType) {
-      SiteGlobalSearchType.SearchNotSupported,
-      SiteGlobalSearchType.SimpleQuerySearch -> {
-        throw IllegalStateException("Only advanced search must be used here!")
-      }
-      SiteGlobalSearchType.FuukaSearch -> {
-        return SearchParameters.FuukaSearchParameters(
-          query = query,
-          subject = subject,
-          boardDescriptor = boardDescriptor
-        )
-      }
-      SiteGlobalSearchType.FoolFuukaSearch -> {
-        return SearchParameters.FoolFuukaSearchParameters(
-          query = query,
-          subject = subject,
-          boardDescriptor = boardDescriptor
-        )
+  private fun EpoxyController.renderSearchButton(
+    sitesWithSearch: SitesWithSearch,
+    searchParameters: SearchParameters
+  ) {
+    epoxySearchButtonView {
+      id("global_search_button_view")
+      onButtonClickListener {
+        presenter.onSearchButtonClicked(sitesWithSearch.selectedSite, searchParameters)
       }
     }
   }

@@ -1,12 +1,12 @@
 package com.github.k1rakishou.chan.core.site.sites.foolfuuka
 
-import android.text.SpannableStringBuilder
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.site.sites.search.FoolFuukaSearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.site.sites.search.SearchEntry
-import com.github.k1rakishou.chan.core.site.sites.search.SearchEntryPost
+import com.github.k1rakishou.chan.core.site.sites.search.SearchEntryPostBuilder
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -18,9 +18,6 @@ import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCommandBufferBuild
 import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCommandExecutor
 import com.github.k1rakishou.core_parser.html.KurobaMatcher
 import com.github.k1rakishou.core_parser.html.KurobaParserCommandBuilder
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import org.joda.time.DateTime
@@ -95,7 +92,9 @@ class FoolFuukaSearchRequest(
         matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("btn-toggle-post")) },
         attrExtractorBuilderFunc = { extractAttrValueByKey("data-thread-num") },
         extractorFunc = { node, extractedAttributeValues, foolFuukaSearchPageCollector ->
-          foolFuukaSearchPageCollector.searchResults.add(SearchEntryPostBuilder())
+          foolFuukaSearchPageCollector.searchResults += SearchEntryPostBuilder(
+            foolFuukaSearchPageCollector.verboseLogs
+          )
 
           foolFuukaSearchPageCollector.lastOrNull()!!.threadNo =
             extractedAttributeValues.getAttrValue("data-thread-num")?.toLongOrNull()
@@ -351,7 +350,7 @@ class FoolFuukaSearchRequest(
   }
 
   override suspend fun readHtml(url: String, document: Document): SearchResult {
-    val collector = FoolFuukaSearchPageCollector()
+    val collector = FoolFuukaSearchPageCollector(ChanSettings.verboseLogs.get())
     val parserCommandExecutor = KurobaHtmlParserCommandExecutor<FoolFuukaSearchPageCollector>()
 
     try {
@@ -438,95 +437,12 @@ class FoolFuukaSearchRequest(
   }
 
   internal data class FoolFuukaSearchPageCollector(
+    val verboseLogs: Boolean,
     val searchResults: MutableList<SearchEntryPostBuilder> = mutableListOf(),
     val pages: MutableList<Int> = mutableListOf(),
     var foundEntriesRaw: String? = null
   ) : KurobaHtmlParserCollector {
     fun lastOrNull(): SearchEntryPostBuilder? = searchResults.lastOrNull()
-  }
-
-  internal class SearchEntryPostBuilder {
-    var siteName: String? = null
-    var boardCode: String? = null
-    var threadNo: Long? = null
-    var postNo: Long? = null
-
-    var isOp: Boolean? = null
-    var name: String? = null
-    var tripcode: String? = null
-    var subject: String? = null
-    var dateTime: DateTime? = null
-    var commentRaw: String? = null
-
-    val postImageUrlRawList = mutableListOf<HttpUrl>()
-
-    val postDescriptor: PostDescriptor?
-      get() {
-        if (siteName == null || boardCode == null || threadNo == null || postNo == null) {
-          return null
-        }
-
-        return PostDescriptor.Companion.create(siteName!!, boardCode!!, threadNo!!, postNo!!)
-      }
-
-    fun threadDescriptor(): ChanDescriptor.ThreadDescriptor {
-      checkNotNull(isOp) { "isOp is null!" }
-      checkNotNull(postDescriptor) { "postDescriptor is null!" }
-      check(isOp!!) { "Must be OP!" }
-
-      return postDescriptor!!.threadDescriptor()
-    }
-
-    fun hasMissingInfo(): Boolean {
-      return isOp == null || postDescriptor == null || dateTime == null
-    }
-
-    fun toSearchEntryPost(): SearchEntryPost {
-      if (hasMissingInfo()) {
-        throw IllegalStateException("Some info is missing! isOp=$isOp, postDescriptor=$postDescriptor, " +
-          "dateTime=$dateTime, commentRaw=$commentRaw")
-      }
-
-      return SearchEntryPost(
-        isOp!!,
-        buildFullName(name, tripcode),
-        subject?.let { SpannableStringBuilder(it) },
-        postDescriptor!!,
-        dateTime!!,
-        postImageUrlRawList,
-        commentRaw?.let { SpannableStringBuilder(it) }
-      )
-    }
-
-    private fun buildFullName(name: String?, tripcode: String?): SpannableStringBuilder? {
-      if (name.isNullOrEmpty() && tripcode.isNullOrEmpty()) {
-        return null
-      }
-
-      val ssb = SpannableStringBuilder()
-
-      if (name != null) {
-        ssb.append(name)
-      }
-
-      if (tripcode != null) {
-        if (ssb.isNotEmpty()) {
-          ssb.append(" ")
-        }
-
-        ssb.append("'")
-          .append(tripcode)
-          .append("'")
-      }
-
-      return ssb
-    }
-
-    override fun toString(): String {
-      return "SearchEntryPostBuilder(isOp=$isOp, postDescriptor=$postDescriptor, dateTime=${dateTime?.millis}, " +
-        "postImageUrlRawList=$postImageUrlRawList, commentRaw=$commentRaw)"
-    }
-
   }
 
   companion object {

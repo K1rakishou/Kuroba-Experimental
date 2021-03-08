@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.site.sites.yukila
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.SiteActions
@@ -11,8 +10,7 @@ import com.github.k1rakishou.chan.core.site.common.MultipartHttpCall
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
-import com.github.k1rakishou.chan.core.site.sites.fuuka.FuukaSearchRequest
-import com.github.k1rakishou.chan.core.site.sites.search.FuukaSearchParams
+import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.common.ModularResult
@@ -22,8 +20,6 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import okhttp3.HttpUrl
-import okhttp3.Request
 
 class YukilaActions(site: CommonSite) : CommonSite.CommonActions(site) {
 
@@ -86,49 +82,10 @@ class YukilaActions(site: CommonSite) : CommonSite.CommonActions(site) {
     )
   }
 
-  // TODO(KurobaEx v0.6.0):
   override suspend fun <T : SearchParams> search(
     searchParams: T
   ): HtmlReaderRequest.HtmlReaderResponse<SearchResult> {
-    searchParams as FuukaSearchParams
-
-    // https://warosu.org/g/?offset=0&ghost=no&task=search&search_text=test&search_subject=test123
-    val searchUrl = requireNotNull(site.endpoints().search())
-      .newBuilder()
-      .addEncodedPathSegment(searchParams.boardDescriptor.boardCode)
-      .addQueryParameter("offset", (searchParams.getCurrentPage() * FUUKA_SEARCH_ENTRIES_PER_PAGE).toString())
-      // TODO(KurobaEx / @GhostPosts): ghost posts are not supported yet
-      .addQueryParameter("ghost", "no")
-      .addQueryParameter("task", "search")
-      .tryAddSearchParam("search_text", searchParams.query)
-      .tryAddSearchParam("search_subject", searchParams.subject)
-      .build()
-
-    val requestBuilder = Request.Builder()
-      .url(searchUrl)
-      .get()
-
-    site.requestModifier().modifySearchGetRequest(site, requestBuilder)
-
-    return FuukaSearchRequest(
-      ChanSettings.verboseLogs.get(),
-      searchParams,
-      requestBuilder.build(),
-      site.proxiedOkHttpClient
-    ).execute()
-  }
-
-  private fun HttpUrl.Builder.tryAddSearchParam(paramName: String, paramValue: String): HttpUrl.Builder {
-    if (paramValue.isEmpty()) {
-      return this
-    }
-
-    return this.addQueryParameter(paramName, paramValue)
-  }
-
-  companion object {
-    // TODO(KurobaEx v0.6.0):
-    private const val FUUKA_SEARCH_ENTRIES_PER_PAGE = 24
+    return HtmlReaderRequest.HtmlReaderResponse.Success(SearchResult.Failure(SearchError.NotImplemented))
   }
 
 }

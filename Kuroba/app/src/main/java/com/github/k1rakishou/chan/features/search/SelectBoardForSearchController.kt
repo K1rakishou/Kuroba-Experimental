@@ -7,19 +7,20 @@ import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.site.sites.search.SearchBoard
 import com.github.k1rakishou.chan.features.search.epoxy.epoxySelectableBoardItemView
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.core_themes.ThemeEngine
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import javax.inject.Inject
 
 class SelectBoardForSearchController(
   context: Context,
+  private val archiveSupportSearchOnAllBoards: Boolean,
   private val siteDescriptor: SiteDescriptor,
-  private val prevSelectedBoard: BoardDescriptor?,
-  private val onBoardSelected: (BoardDescriptor) -> Unit
+  private val prevSelectedBoard: SearchBoard?,
+  private val onBoardSelected: (SearchBoard) -> Unit
 ) : BaseFloatingController(context), ThemeEngine.ThemeChangesListener {
 
   @Inject
@@ -64,9 +65,18 @@ class SelectBoardForSearchController(
   }
 
   private fun renderArchiveSiteBoardsSupportingSearch() {
-    val boardsSupportingSearch = archivesManager.getBoardsSupportingSearch(siteDescriptor)
-      .toList()
-      .sortedBy { boardDescriptor -> boardDescriptor.boardCode }
+    val boardsSupportingSearch = mutableListOf<SearchBoard>()
+
+    if (archiveSupportSearchOnAllBoards) {
+      boardsSupportingSearch += SearchBoard.AllBoards
+    }
+
+    boardsSupportingSearch.addAll(
+      archivesManager.getBoardsSupportingSearch(siteDescriptor)
+        .toList()
+        .sortedBy { boardDescriptor -> boardDescriptor.boardCode }
+        .map { boardDescriptor -> SearchBoard.SingleBoard(boardDescriptor) }
+    )
 
     if (boardsSupportingSearch.isEmpty()) {
       pop()
@@ -76,15 +86,16 @@ class SelectBoardForSearchController(
     recyclerView.withModels {
       val backColor = themeEngine.chanTheme.backColor
 
-      boardsSupportingSearch.forEach { boardDescriptor ->
-        val siteBackgroundColor = getBoardItemBackgroundColor(boardDescriptor, backColor)
+      boardsSupportingSearch.forEach { searchBoard ->
+        val siteBackgroundColor = getBoardItemBackgroundColor(searchBoard, backColor)
+        val searchBoardCodeText = searchBoard.boardCode()
 
         epoxySelectableBoardItemView {
-          id("epoxy_selectable_board_item_view_${boardDescriptor}")
-          bindBoardName(boardDescriptor.boardCode)
+          id("epoxy_selectable_board_item_view_${searchBoardCodeText}")
+          bindBoardName(searchBoardCodeText)
           itemBackgroundColor(siteBackgroundColor)
           bindClickCallback {
-            onBoardSelected(boardDescriptor)
+            onBoardSelected(searchBoard)
             pop()
           }
         }
@@ -92,8 +103,8 @@ class SelectBoardForSearchController(
     }
   }
 
-  private fun getBoardItemBackgroundColor(boardDescriptor: BoardDescriptor, backColor: Int): Int {
-    if (boardDescriptor != prevSelectedBoard) {
+  private fun getBoardItemBackgroundColor(searchBoard: SearchBoard, backColor: Int): Int {
+    if (searchBoard != prevSelectedBoard) {
       return backColor
     }
 

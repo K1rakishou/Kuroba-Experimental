@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
+import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.common.data.ArchiveType
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
@@ -29,6 +30,8 @@ class Yukila : CommonSite() {
     setApi(YukilaApi(this))
     setParser(YukilaCommentParser(mockReplyManager))
   }
+
+  override fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.SearchNotSupported
 
   override fun commentParserType() = CommentParserType.Default
 

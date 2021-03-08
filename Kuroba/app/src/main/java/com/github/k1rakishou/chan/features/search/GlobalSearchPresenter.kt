@@ -167,14 +167,14 @@ internal class GlobalSearchPresenter(
         return SearchParameters.FuukaSearchParameters(
           query = "",
           subject = "",
-          boardDescriptor = null
+          searchBoard = null
         )
       }
       SiteGlobalSearchType.FoolFuukaSearch -> {
         return SearchParameters.FoolFuukaSearchParameters(
           query = "",
           subject = "",
-          boardDescriptor = null
+          searchBoard = null
         )
       }
     }

@@ -17,7 +17,6 @@ class YukilaEndpoints(
     throw IllegalStateException("Catalog is not supported by ${site.name()}")
   }
 
-  // TODO(KurobaEx v0.6.0):
   override fun thread(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
     return rootUrl.newBuilder()
       .addPathSegment(threadDescriptor.boardCode())
@@ -39,9 +38,8 @@ class YukilaEndpoints(
     throw NotImplementedError("thumbnailUrl")
   }
 
-  // TODO(KurobaEx v0.6.0):
   override fun search(): HttpUrl {
-    return rootUrl
+    throw NotImplementedError("search")
   }
 
   override fun icon(icon: String, arg: Map<String, String>?): HttpUrl {

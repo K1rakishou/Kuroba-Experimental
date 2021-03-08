@@ -1,8 +1,8 @@
 package com.github.k1rakishou.chan.features.search.data
 
 import com.github.k1rakishou.chan.core.site.SiteIcon
+import com.github.k1rakishou.chan.core.site.sites.search.SearchBoard
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 
 internal sealed class GlobalSearchControllerState {
@@ -66,13 +66,13 @@ sealed class SearchParameters {
   abstract class AdvancedSearchParameters(
     override val query: String,
     val subject: String,
-    val boardDescriptor: BoardDescriptor?
+    val searchBoard: SearchBoard?
   ) : SearchParameters() {
 
     override fun getCurrentQuery(): String {
       return buildString {
-        if (boardDescriptor != null) {
-          append("/${boardDescriptor.boardCode}/")
+        if (searchBoard != null) {
+          append("/${searchBoard.boardCode()}/")
         }
 
         if (subject.isNotEmpty()) {
@@ -94,7 +94,7 @@ sealed class SearchParameters {
     }
 
     override fun isValid(): Boolean {
-      if (boardDescriptor == null) {
+      if (searchBoard == null) {
         return false
       }
 
@@ -112,7 +112,7 @@ sealed class SearchParameters {
       }
 
       throw IllegalStateException("FoolFuukaSearchParameters are not valid! " +
-        "query='$query', subject='$subject', boardDescriptor='$boardDescriptor'")
+        "query='$query', subject='$subject', searchBoard='$searchBoard'")
     }
 
     override fun equals(other: Any?): Boolean {
@@ -123,7 +123,7 @@ sealed class SearchParameters {
 
       if (query != other.query) return false
       if (subject != other.subject) return false
-      if (boardDescriptor != other.boardDescriptor) return false
+      if (searchBoard != other.searchBoard) return false
 
       return true
     }
@@ -131,13 +131,13 @@ sealed class SearchParameters {
     override fun hashCode(): Int {
       var result = query.hashCode()
       result = 31 * result + subject.hashCode()
-      result = 31 * result + (boardDescriptor?.hashCode() ?: 0)
+      result = 31 * result + (searchBoard?.hashCode() ?: 0)
       return result
     }
 
     override fun toString(): String {
       return "AdvancedSearchParameters(type='${this.javaClass.simpleName}', query='$query', " +
-        "subject='$subject', boardDescriptor=$boardDescriptor)"
+        "subject='$subject', searchBoard=$searchBoard)"
     }
 
   }
@@ -145,14 +145,14 @@ sealed class SearchParameters {
   class FuukaSearchParameters(
     query: String,
     subject: String,
-    boardDescriptor: BoardDescriptor?
-  ) : AdvancedSearchParameters(query, subject, boardDescriptor)
+    searchBoard: SearchBoard?
+  ) : AdvancedSearchParameters(query, subject, searchBoard)
 
   class FoolFuukaSearchParameters(
     query: String,
     subject: String,
-    boardDescriptor: BoardDescriptor?
-  ) : AdvancedSearchParameters(query, subject, boardDescriptor)
+    searchBoard: SearchBoard?
+  ) : AdvancedSearchParameters(query, subject, searchBoard)
 
   companion object {
     const val MIN_SEARCH_QUERY_LENGTH = 2
