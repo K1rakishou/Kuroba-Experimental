@@ -373,7 +373,7 @@ class ChanThreadsCache(
         "accessTimes size=${accessTimes.size}, " +
         "totalPostsCount=${totalPostsCount}")
 
-    val threadDescriptorsToDelete = mutableListOf<ChanDescriptor.ThreadDescriptor>()
+    val threadDescriptorsToClean = mutableListOf<ChanDescriptor.ThreadDescriptor>()
     var amountOfPostsToEvict = amountToEvictParam
 
     for (threadDescriptor in threadDescriptorsSorted) {
@@ -383,19 +383,28 @@ class ChanThreadsCache(
 
       val count = chanThreads[threadDescriptor]?.postsCount ?: 0
 
-      threadDescriptorsToDelete += threadDescriptor
+      threadDescriptorsToClean += threadDescriptor
       amountOfPostsToEvict -= count
     }
 
-    Logger.d(TAG, "Evicting ${threadDescriptorsToDelete.size} threads, " +
+    Logger.d(TAG, "Evicting ${threadDescriptorsToClean.size} threads, " +
         "postsToEvict=${amountToEvictParam - amountOfPostsToEvict}")
 
-    if (threadDescriptorsToDelete.isEmpty()) {
+    if (threadDescriptorsToClean.isEmpty()) {
       Logger.d(TAG, "threadDescriptorsToDelete is empty")
       return
     }
 
-    deleteThreads(threadDescriptorsToDelete)
+    threadDescriptorsToClean.forEach { threadDescriptor ->
+      val chanThread = chanThreads[threadDescriptor]
+        ?: return@forEach
+
+      chanThread.cleanup()
+
+      if (chanThreads.size > IMMUNE_EMPTY_THREADS && !chanThread.hasAtLeastOnePost()) {
+        chanThreads.remove(threadDescriptor)
+      }
+    }
   }
 
   companion object {
@@ -407,6 +416,8 @@ class ChanThreadsCache(
     // threads and will leave 6 threads in the cache. But with immune threads it will only evict
     // posts for 6 oldest threads, always leaving the freshest 10 untouched.
     const val IMMUNE_THREADS_COUNT = 8
+
+    private const val IMMUNE_EMPTY_THREADS = 1024
 
     // 15 seconds
     private val EVICTION_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(15)

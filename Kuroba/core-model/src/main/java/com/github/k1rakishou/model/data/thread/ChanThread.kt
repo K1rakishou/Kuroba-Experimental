@@ -2,6 +2,7 @@ package com.github.k1rakishou.model.data.thread
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.common.MurmurHashUtils
+import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -380,8 +381,7 @@ class ChanThread(
 
   fun getPostDescriptorRelativeTo(postDescriptor: PostDescriptor, offset: Int): PostDescriptor? {
     return lock.read {
-      val currentPostIndex =
-        threadPosts.indexOfFirst { post -> post.postDescriptor == postDescriptor }
+      val currentPostIndex = threadPosts.indexOfFirst { post -> post.postDescriptor == postDescriptor }
       if (currentPostIndex < 0) {
         return@read null
       }
@@ -413,6 +413,50 @@ class ChanThread(
 
   fun hasAtLeastOnePost(): Boolean {
     return lock.read { threadPosts.isNotEmpty() }
+  }
+
+  fun cleanup() {
+    lock.write {
+      val chanOriginalPost = threadPosts.firstOrNull()
+      if (chanOriginalPost == null) {
+        threadPosts.clear()
+        postsByPostDescriptors.clear()
+        rawPostHashesMap.clear()
+
+        return@write
+      }
+
+      val onlyHasOriginalPost = threadPosts.size == 1 && threadPosts.firstOrNull() === chanOriginalPost
+      if (onlyHasOriginalPost) {
+        return@write
+      }
+
+      threadPosts.mutableIteration { mutableIterator, chanPost ->
+        if (chanPost !== chanOriginalPost) {
+          mutableIterator.remove()
+        }
+
+        return@mutableIteration true
+      }
+
+      postsByPostDescriptors.mutableIteration { mutableIterator, entry ->
+        val chanPost = entry.value
+        if (chanPost !== chanOriginalPost) {
+          mutableIterator.remove()
+        }
+
+        return@mutableIteration true
+      }
+
+      rawPostHashesMap.mutableIteration { mutableIterator, entry ->
+        val postDescriptor = entry.key
+        if (postDescriptor != chanOriginalPost.postDescriptor) {
+          mutableIterator.remove()
+        }
+
+        return@mutableIteration true
+      }
+    }
   }
 
   private fun mergePosts(oldChanPost: ChanPost, newPost: ChanPost): ChanPost {

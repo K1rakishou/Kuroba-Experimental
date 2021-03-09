@@ -184,6 +184,16 @@ inline fun <E> MutableList<E>.mutableIteration(func: (MutableIterator<E>, E) -> 
   }
 }
 
+inline fun <K, V> MutableMap<K, V>.mutableIteration(func: (MutableIterator<Map.Entry<K, V>>, Map.Entry<K, V>) -> Boolean) {
+  val iterator = this.iterator()
+
+  while (iterator.hasNext()) {
+    if (!func(iterator, iterator.next())) {
+      return
+    }
+  }
+}
+
 public val <T> List<T>.lastIndexOrNull: Int?
   get() {
     if (this.isEmpty()) {
