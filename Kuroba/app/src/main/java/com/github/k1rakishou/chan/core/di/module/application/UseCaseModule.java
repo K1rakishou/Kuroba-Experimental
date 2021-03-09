@@ -32,6 +32,7 @@ import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.repository.ChanFilterWatchRepository;
 import com.github.k1rakishou.model.repository.ChanPostRepository;
 import com.github.k1rakishou.model.repository.DatabaseMetaRepository;
+import com.google.gson.Gson;
 
 import javax.inject.Singleton;
 
@@ -98,6 +99,7 @@ public class UseCaseModule {
     @Provides
     @Singleton
     public KurobaSettingsImportUseCase provideKurobaSettingsImportUseCase(
+            Gson gson,
             FileManager fileManager,
             SiteManager siteManager,
             BoardManager boardManager,
@@ -107,6 +109,7 @@ public class UseCaseModule {
             ChanPostRepository chanPostRepository
     ) {
         return new KurobaSettingsImportUseCase(
+                gson,
                 fileManager,
                 siteManager,
                 boardManager,

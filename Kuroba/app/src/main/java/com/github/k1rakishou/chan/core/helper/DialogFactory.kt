@@ -35,6 +35,7 @@ class DialogFactory(
     descriptionText: String? = null,
     onPositiveButtonClickListener: (() -> Unit) = { },
     positiveButtonTextId: Int = R.string.ok,
+    onDismissListener: () -> Unit = { },
     cancelable: Boolean = true
   ) {
     if (!applicationVisibilityManager.isAppInForeground()) {
@@ -54,7 +55,10 @@ class DialogFactory(
 
     builder
       .create()
-      .apply { setOnShowListener { dialogInterface -> dialogInterface.applyColors() } }
+      .apply {
+        setOnShowListener { dialogInterface -> dialogInterface.applyColors() }
+        setOnDismissListener { onDismissListener.invoke() }
+      }
       .show()
   }
 
@@ -75,6 +79,7 @@ class DialogFactory(
     neutralButtonText: String? = null,
     onNegativeButtonClickListener: ((DialogInterface) -> Unit) = { },
     negativeButtonText: String = getString(R.string.cancel),
+    onDismissListener: () -> Unit = { },
     dialogModifier: (AlertDialog) -> Unit = { }
   ): AlertDialog? {
     if (!applicationVisibilityManager.isAppInForeground()) {
@@ -101,6 +106,7 @@ class DialogFactory(
     dialog
       .apply {
         setOnShowListener { dialogInterface -> dialogInterface.applyColors() }
+        setOnDismissListener { onDismissListener() }
         dialogModifier(this)
       }
       .show()
@@ -352,6 +358,7 @@ class DialogFactory(
     private var onNegativeButtonClickListener: ((DialogInterface) -> Unit) = { }
     private var negativeButtonText: String = getString(R.string.cancel)
     private var dialogModifier: (AlertDialog) -> Unit = { }
+    private var dismissListener: () -> Unit = { }
 
     fun withTitle(titleTextId: Int): Builder {
       this.titleTextId = titleTextId
@@ -424,6 +431,11 @@ class DialogFactory(
       return this
     }
 
+    fun withDismissListener(dismissListener: () -> Unit): Builder {
+      this.dismissListener = dismissListener
+      return this
+    }
+
     fun create(): AlertDialog? {
       return dialogFactory.createSimpleConfirmationDialog(
         context,
@@ -441,6 +453,7 @@ class DialogFactory(
         neutralButtonTextId,
         onNegativeButtonClickListener,
         negativeButtonText,
+        dismissListener,
         dialogModifier
       )
     }

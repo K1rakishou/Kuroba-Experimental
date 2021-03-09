@@ -34,6 +34,8 @@ import com.github.k1rakishou.model.data.filter.ChanFilter
 import com.github.k1rakishou.model.data.filter.FilterAction
 import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import com.google.gson.stream.JsonReader
 import kotlinx.coroutines.CompletableDeferred
 import okhttp3.HttpUrl
@@ -44,6 +46,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 class KurobaSettingsImportUseCase(
+  private val gson: Gson,
   private val fileManager: FileManager,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
@@ -56,6 +59,9 @@ class KurobaSettingsImportUseCase(
   override suspend fun execute(parameter: ExternalFile): ModularResult<Unit> {
     return Try {
       val siteIdMap = readSiteIdMap(parameter)
+      if (siteIdMap.isEmpty()) {
+        throw KurobaSettingsImportException.FailedToProcessSites()
+      }
 
       val parcelFileDescriptor = fileManager.getParcelFileDescriptor(parameter, FileDescriptorMode.Read)
         ?: throw IOException("Failed to get ParcelFileDescriptor")
@@ -127,6 +133,10 @@ class KurobaSettingsImportUseCase(
           else -> skipValue()
         }
       }
+    }
+
+    if (boardsToActivate.isEmpty()) {
+      throw KurobaSettingsImportException.NoBoardsFoundInTheFile()
     }
 
     val siteDescriptorsToActivate = boardsToActivate
@@ -512,15 +522,32 @@ class KurobaSettingsImportUseCase(
 
                   while (hasNext()) {
                     when (nextName()) {
-                      "class_id" -> classId = nextIntOrNull()
+                      "configuration" -> {
+                        val configurationJson = nextStringOrNull()
+
+                        val kurobaSiteConfiguration = try {
+                          gson.fromJson(configurationJson, KurobaSiteConfiguration::class.java)
+                        } catch (error: Throwable) {
+                          Logger.e(TAG, "Failed to convert configurationJson ($configurationJson) " +
+                            "into KurobaSiteConfiguration class")
+
+                          null
+                        }
+
+                        val internalSiteId = kurobaSiteConfiguration?.internalSiteId
+                        if (internalSiteId == null) {
+                          Logger.d(TAG, "internalSiteId, configurationJson ($configurationJson)")
+                        } else {
+                          classId = internalSiteId
+                        }
+                      }
                       "site_id" -> databaseSiteId = nextIntOrNull()
                       else -> skipValue()
                     }
                   }
 
                   if (classId == null || databaseSiteId == null) {
-                    Logger.e(TAG, "readSiteIdMap() Failed to read exported site: classId=$classId," +
-                      " databaseSiteId=$databaseSiteId")
+                    Logger.e(TAG, "readSiteIdMap() Failed to read exported site: classId=$classId, databaseSiteId=$databaseSiteId")
                     return@jsonObject
                   }
 
@@ -662,6 +689,11 @@ class KurobaSettingsImportUseCase(
     }
   }
 
+  private data class KurobaSiteConfiguration(
+    @SerializedName("internal_site_id")
+    val internalSiteId: Int?,
+  )
+
   companion object {
     private const val TAG = "KurobaSettingsImportUseCase"
 
@@ -684,4 +716,8 @@ sealed class KurobaSettingsImportException(message: String) : Exception(message)
   )
 
   class ParsingException(message: String) : KurobaSettingsImportException(message)
+
+  class FailedToProcessSites : Exception("Failed to process Kuroba sites!")
+
+  class NoBoardsFoundInTheFile : Exception("No boards found in the settings file!")
 }

@@ -5,11 +5,13 @@ import android.net.Uri
 import android.widget.Toast
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.activity.StartActivity
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
@@ -29,6 +31,7 @@ class ImportExportSettingsDelegate(
   private val navigationController: NavigationController,
   private val fileChooser: FileChooser,
   private val fileManager: FileManager,
+  private val dialogFactory: DialogFactory,
   private val importExportRepository: ImportExportRepository
 ) {
   private val loadingViewController = LoadingViewController(context, true)
@@ -131,7 +134,12 @@ class ImportExportSettingsDelegate(
           showToast(context, "Import error: ${result.error}")
         }
         is ModularResult.Value -> {
-          (context as StartActivity).restartApp()
+          dialogFactory.createSimpleInformationDialog(
+            context = context,
+            titleText = "Import success!",
+            descriptionText = "The app will be restarted once this dialog is closed",
+            onDismissListener = { (context as StartActivity).restartApp() }
+          )
         }
       }
     }
@@ -158,10 +166,21 @@ class ImportExportSettingsDelegate(
       when (result) {
         is ModularResult.Error -> {
           Logger.e(TAG, "Import from Kuroba error", result.error)
-          showToast(context, "Import from Kuroba error: ${result.error}")
+
+          dialogFactory.createSimpleInformationDialog(
+            context = context,
+            titleText = "Import from Kuroba failure!",
+            descriptionText = "Import from Kuroba error!\n" +
+              "See logs for more info!\nError: ${result.error.errorMessageOrClassName()}"
+          )
         }
         is ModularResult.Value -> {
-          (context as StartActivity).restartApp()
+          dialogFactory.createSimpleInformationDialog(
+            context = context,
+            titleText = "Import from Kuroba success!",
+            descriptionText = "The app will be restarted once this dialog is closed",
+            onDismissListener = { (context as StartActivity).restartApp() }
+          )
         }
       }
     }

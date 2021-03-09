@@ -33,6 +33,7 @@ class ImportExportSettingsScreen(
       navigationController,
       fileChooser,
       fileManager,
+      dialogFactory,
       importExportRepository
     )
   }
