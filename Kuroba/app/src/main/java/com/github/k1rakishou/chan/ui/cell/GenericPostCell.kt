@@ -1,12 +1,14 @@
 package com.github.k1rakishou.chan.ui.cell
 
 import android.content.Context
+import android.os.SystemClock
 import android.view.View
 import android.widget.FrameLayout
 import com.github.k1rakishou.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -69,6 +71,46 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
     stub: Boolean,
     theme: ChanTheme
   ) {
+    val startTime = SystemClock.elapsedRealtime()
+
+    setPostCellInternal(
+      chanDescriptor = chanDescriptor,
+      post = post,
+      postIndex = postIndex,
+      callback = callback,
+      inPopup = inPopup,
+      highlighted = highlighted,
+      selected = selected,
+      markedNo = markedNo,
+      showDivider = showDivider,
+      postViewMode = postViewMode,
+      compact = compact,
+      stub = stub,
+      theme = theme
+    )
+
+    val deltaTime = SystemClock.elapsedRealtime() - startTime
+
+    if (AppModuleAndroidUtils.isDevBuild()) {
+      Logger.d(TAG, "postDescriptor=${post.postDescriptor} bind took ${deltaTime}ms")
+    }
+  }
+
+  private fun setPostCellInternal(
+    chanDescriptor: ChanDescriptor,
+    post: ChanPost,
+    postIndex: Int,
+    callback: PostCellInterface.PostCellCallback,
+    inPopup: Boolean,
+    highlighted: Boolean,
+    selected: Boolean,
+    markedNo: Long,
+    showDivider: Boolean,
+    postViewMode: PostViewMode,
+    compact: Boolean,
+    stub: Boolean,
+    theme: ChanTheme
+  ) {
     val childPostCell = getChildPostCell()
 
     val postDataDiffers = childPostCell?.postDataDiffers(
@@ -106,9 +148,9 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
 
       addView(
         postCellView,
-        FrameLayout.LayoutParams(
-          FrameLayout.LayoutParams.MATCH_PARENT,
-          FrameLayout.LayoutParams.WRAP_CONTENT
+        LayoutParams(
+          LayoutParams.MATCH_PARENT,
+          LayoutParams.WRAP_CONTENT
         )
       )
 
@@ -183,5 +225,9 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
     }
 
     return null
+  }
+
+  companion object {
+    private const val TAG = "GenericPostCell"
   }
 }

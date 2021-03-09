@@ -299,7 +299,7 @@ class ChanThreadsCache(
     deleteThreads(listOf(threadDescriptor))
   }
 
-  fun deleteThreads(threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) {
+  private fun deleteThreads(threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) {
     lock.write {
       threadDescriptors.forEach { threadDescriptor ->
         chanThreads.remove(threadDescriptor)
@@ -333,12 +333,18 @@ class ChanThreadsCache(
       return
     }
 
-    // Evict 35% of the cache
-    val amountToEvict = (currentTotalPostsCount / 100) * 35
+    val amountToEvict = (currentTotalPostsCount - maxCacheSize) + (maxCacheSize / 2)
     if (amountToEvict > 0) {
-      Logger.d(TAG, "evictOld start (posts: ${currentTotalPostsCount}/${maxCacheSize})")
+      Logger.d(TAG, "evictOld start " +
+        "(currentTotalPostsCount: ${currentTotalPostsCount}/ max:${maxCacheSize}, " +
+        "threads with posts: ${amountOfThreadsWithMoreThanOnPost}, total threads: ${getCachedThreadsCount()})")
+
       val time = measureTime { evictOld(amountToEvict) }
-      Logger.d(TAG, "evictOld end (posts: ${currentTotalPostsCount}/${maxCacheSize}), took ${time}")
+
+      Logger.d(TAG, "evictOld end " +
+        "(currentTotalPostsCount: ${getTotalCachedPostsCount()}/ max:${maxCacheSize}), " +
+        "threads with posts: ${getThreadsWithMoreThanOnePostCount()}), total threads: ${getCachedThreadsCount()}" +
+        " took ${time}")
     }
 
     lastEvictInvokeTime.set(System.currentTimeMillis())
@@ -400,9 +406,9 @@ class ChanThreadsCache(
     // posts from 10 threads. Without considering the immune threads it will evict posts for 10
     // threads and will leave 6 threads in the cache. But with immune threads it will only evict
     // posts for 6 oldest threads, always leaving the freshest 10 untouched.
-    const val IMMUNE_THREADS_COUNT = 15
+    const val IMMUNE_THREADS_COUNT = 8
 
-    // 1 minute
-    private val EVICTION_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(1)
+    // 15 seconds
+    private val EVICTION_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(15)
   }
 }
