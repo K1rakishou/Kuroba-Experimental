@@ -237,10 +237,18 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   override fun onKeyboardStateChanged() {
+    if (this.visibility == View.GONE) {
+      return
+    }
+
     updateWrappingMode()
   }
 
   override fun onInsetsChanged() {
+    if (this.visibility == View.GONE) {
+      return
+    }
+
     updateWrappingMode()
   }
 
@@ -614,7 +622,15 @@ class ReplyLayout @JvmOverloads constructor(
       layoutParams = newLayoutParams
     }
 
-    replyLayoutFilesArea.onWrappingModeChanged(matchParent)
+    val compactMode = if (!matchParent && globalWindowInsetsManager.isKeyboardOpened) {
+      val displayHeight = AndroidUtils.getDisplaySize(context).y
+
+      this.height + globalWindowInsetsManager.keyboardHeight + newPaddingTop > displayHeight
+    } else {
+      false
+    }
+
+    replyLayoutFilesArea.onWrappingModeChanged(matchParent, compactMode)
   }
 
   private fun needUpdateLayoutParams(

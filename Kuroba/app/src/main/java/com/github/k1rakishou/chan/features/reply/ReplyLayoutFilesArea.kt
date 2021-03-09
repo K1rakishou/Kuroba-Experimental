@@ -145,9 +145,13 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     epoxyRecyclerView.swapAdapter(null, true)
   }
 
-  fun onWrappingModeChanged(matchParent: Boolean) {
+  fun onWrappingModeChanged(matchParent: Boolean, compactMode: Boolean) {
     if (presenter.hasAttachedFiles()) {
-      val attachNewFileButtonHeight = getDimen(R.dimen.attach_new_file_button_height)
+      val attachNewFileButtonHeight = if (compactMode) {
+        getDimen(R.dimen.attach_new_file_button_height_compact)
+      } else {
+        getDimen(R.dimen.attach_new_file_button_height)
+      }
 
       epoxyRecyclerView.updateLayoutParams<ConstraintLayout.LayoutParams> {
         if (matchParent) {
