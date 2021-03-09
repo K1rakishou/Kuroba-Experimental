@@ -33,6 +33,7 @@ class AnrSupervisorRunnable(
     while (!Thread.interrupted()) {
       try {
         val countDownLatch = CountDownLatch(1)
+        val startTime = System.currentTimeMillis()
 
         handler.post {
           countDownLatch.countDown()
@@ -50,6 +51,13 @@ class AnrSupervisorRunnable(
 
           countDownLatch.await()
         }
+
+        val endTime = System.currentTimeMillis() - startTime
+        if (LOG_EXECUTION_TIMES) {
+          Logger.d(TAG, "handler.post() task execution took ${endTime}ms")
+        }
+
+        Thread.sleep(1000)
 
         checkStopped()
       } catch (e: InterruptedException) {
@@ -87,7 +95,9 @@ class AnrSupervisorRunnable(
 
   companion object {
     private const val TAG = "AnrSupervisorRunnable"
-    private const val ANR_DETECTED_THRESHOLD_APP_START_MS = 5000L
-    private const val ANR_DETECTED_THRESHOLD_NORMAL_MS = 2500L
+    private const val ANR_DETECTED_THRESHOLD_APP_START_MS = 7000L
+    private const val ANR_DETECTED_THRESHOLD_NORMAL_MS = 3000L
+
+    private const val LOG_EXECUTION_TIMES = false
   }
 }

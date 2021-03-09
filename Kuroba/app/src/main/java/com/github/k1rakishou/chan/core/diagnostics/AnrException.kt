@@ -25,12 +25,29 @@ class AnrException(thread: Thread) : Exception("ANR detected") {
 
   private fun printProcessMap(ps: PrintStream, reportFooter: String, excludedThread: Thread): Boolean {
     val stackTraces = Thread.getAllStackTraces()
+    val actualMainThread = Looper.getMainLooper().thread
 
-    val mainThread = stackTraces.keys
+    var mainThread = stackTraces.keys
       .firstOrNull { thread -> thread === Looper.getMainLooper().thread }
 
     if (mainThread == null) {
-      // Something is very wrong
+      mainThread = actualMainThread
+    }
+
+    // Sometimes ANR detection is triggered the main thread is not actually blocked
+    // (because of coroutines or some other shit) so we need to check that the main thread is actually
+    // blocked or is waiting for something.
+    val continueDump = when (mainThread.state) {
+      null,
+      Thread.State.NEW,
+      Thread.State.RUNNABLE,
+      Thread.State.TERMINATED -> false
+      Thread.State.BLOCKED,
+      Thread.State.WAITING,
+      Thread.State.TIMED_WAITING -> true
+    }
+
+    if (!continueDump) {
       return false
     }
 
