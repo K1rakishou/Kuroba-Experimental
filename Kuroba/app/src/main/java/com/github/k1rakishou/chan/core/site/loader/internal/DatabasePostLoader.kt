@@ -38,7 +38,7 @@ internal class DatabasePostLoader(
       ?: return null
 
     val reloadedPosts = reloadPostsFromDatabaseUseCase.reloadCatalogThreads(
-      currentCatalogSnapshot.catalogThreadDescriptors
+      currentCatalogSnapshot.catalogThreadDescriptorList
     )
 
     if (reloadedPosts.isEmpty()) {

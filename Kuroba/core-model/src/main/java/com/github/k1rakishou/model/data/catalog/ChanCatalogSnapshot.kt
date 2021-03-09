@@ -8,6 +8,17 @@ data class ChanCatalogSnapshot(
   val chanCatalogSnapshotEntryList: List<ChanCatalogSnapshotEntry>
 ) {
 
+  val catalogThreadDescriptorList by lazy {
+    return@lazy chanCatalogSnapshotEntryList
+      .map { chanCatalogSnapshotEntry -> chanCatalogSnapshotEntry.threadDescriptor }
+  }
+
+  val catalogThreadDescriptorSet by lazy {
+    return@lazy chanCatalogSnapshotEntryList
+      .map { chanCatalogSnapshotEntry -> chanCatalogSnapshotEntry.threadDescriptor }
+      .toSet()
+  }
+
   init {
     var prevOrder = Int.MIN_VALUE
 
@@ -24,11 +35,6 @@ data class ChanCatalogSnapshot(
 
       prevOrder = chanCatalogSnapshotEntry.order
     }
-  }
-
-  val catalogThreadDescriptors by lazy {
-    return@lazy chanCatalogSnapshotEntryList
-      .map { chanCatalogSnapshotEntry -> chanCatalogSnapshotEntry.threadDescriptor }
   }
 
   fun isEmpty(): Boolean = chanCatalogSnapshotEntryList.isEmpty()

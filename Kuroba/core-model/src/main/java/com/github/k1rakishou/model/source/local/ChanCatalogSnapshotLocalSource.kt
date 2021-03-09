@@ -29,7 +29,7 @@ class ChanCatalogSnapshotLocalSource(
       chanCatalogSnapshot.boardDescriptor
     ) ?: return
 
-    val chanCatalogSnapshotEntityList = chanCatalogSnapshot.catalogThreadDescriptors
+    val chanCatalogSnapshotEntityList = chanCatalogSnapshot.catalogThreadDescriptorList
       .mapIndexed { order, threadDescriptor ->
         return@mapIndexed ChanCatalogSnapshotEntity(
           boardId.id,
