@@ -32,6 +32,7 @@ import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchState;
+import com.github.k1rakishou.chan.core.presenter.ImageViewerPresenter;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
@@ -173,9 +174,10 @@ public class PostImageThumbnailView extends ThumbnailView {
 
         String url = postImage.getThumbnailUrl().toString();
 
-        boolean highRes = canUseHighResCells && ChanSettings.highResCells.get();
-        // TODO(KurobaEx v0.7.0): add "&& ImageViewerPresenter.canAutoLoad(postImage)"
-        //  once CacheHandler.cacheFileExists starts working without the need to access the disk.
+        boolean highRes = canUseHighResCells
+                && ChanSettings.highResCells.get()
+                && postImage.canBeUsedAsHighResolutionThumbnail()
+                && ImageViewerPresenter.canAutoLoad(cacheHandler, postImage);
 
         boolean hasImageUrl = postImage.getImageUrl() != null;
         boolean revealingSpoilers = !postImage.getSpoiler() || ChanSettings.removeImageSpoilers.get();

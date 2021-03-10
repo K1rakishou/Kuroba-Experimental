@@ -471,6 +471,8 @@ class ImageLoaderV2(
   }
 
   private suspend fun loadFromNetworkIntoFileInternal(url: String, cacheFile: RawFile): Boolean {
+    BackgroundUtils.ensureBackgroundThread()
+
     val site = siteResolver.findSiteForUrl(url)
     val requestModifier = site?.requestModifier()
 

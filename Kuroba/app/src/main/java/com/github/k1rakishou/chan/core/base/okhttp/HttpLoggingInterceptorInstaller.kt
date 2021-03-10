@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.base.okhttp
 
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import okhttp3.OkHttpClient
 
@@ -11,7 +12,7 @@ object HttpLoggingInterceptorInstaller {
     okHttpClientBuilder: OkHttpClient.Builder,
     httpLoggingInterceptorLazy: HttpLoggingInterceptorLazy
   ) {
-    if (!isDevBuild()) {
+    if (!isDevBuild() || !AppConstants.loggingInterceptorEnabled) {
       return
     }
 

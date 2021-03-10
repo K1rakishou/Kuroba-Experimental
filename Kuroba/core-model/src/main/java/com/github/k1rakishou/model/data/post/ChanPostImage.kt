@@ -94,6 +94,22 @@ class ChanPostImage(
     return imageUrl != null
   }
 
+  fun canBeUsedAsHighResolutionThumbnail(): Boolean {
+    if (isInlined) {
+      return false
+    }
+
+    if (size > MAX_PREFETCH_FILE_SIZE) {
+      return false
+    }
+
+    if (imageWidth > MAX_IMAGE_SIZE || imageHeight > MAX_IMAGE_SIZE) {
+      return false
+    }
+
+    return true
+  }
+
   fun equalUrl(other: ChanPostImage?): Boolean {
     if (other == null) {
       return false
@@ -170,7 +186,9 @@ class ChanPostImage(
   }
 
   companion object {
-    // 10 MB
-    const val MAX_PREFETCH_FILE_SIZE = 10 * (1024 * 1024).toLong()
+    // 5 MB
+    const val MAX_PREFETCH_FILE_SIZE = 5 * (1024 * 1024).toLong()
+
+    const val MAX_IMAGE_SIZE = 4096
   }
 }

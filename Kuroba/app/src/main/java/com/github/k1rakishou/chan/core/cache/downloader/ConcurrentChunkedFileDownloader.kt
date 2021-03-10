@@ -32,6 +32,8 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
     url: String,
     supportsPartialContentDownload: Boolean
   ): Flowable<FileDownloadResult> {
+    BackgroundUtils.ensureBackgroundThread()
+
     val output = activeDownloads.get(url)
       ?.getOutputFile()
       ?: activeDownloads.throwCancellationException(url)
@@ -148,6 +150,8 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
     partialContentCheckResult: PartialContentCheckResult,
     output: RawFile
   ): Flowable<FileDownloadResult> {
+    BackgroundUtils.ensureBackgroundThread()
+
     if (verboseLogs) {
       log(TAG, "File ($url) was split into chunks: ${chunks}")
     }

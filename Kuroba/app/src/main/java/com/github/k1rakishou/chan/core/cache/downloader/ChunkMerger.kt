@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.cache.downloader
 
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.site.SiteResolver
+import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.RawFile
 import io.reactivex.Flowable
@@ -21,6 +22,8 @@ internal class ChunkMerger(
     output: RawFile,
     requestStartTime: Long
   ): Flowable<ChunkDownloadEvent> {
+    BackgroundUtils.ensureBackgroundThread()
+
     return Flowable.fromCallable {
       if (verboseLogs) {
         log(TAG, "mergeChunksIntoCacheFile called ($url), " +
@@ -84,6 +87,8 @@ internal class ChunkMerger(
   }
 
   private fun markFileAsDownloaded(url: String) {
+    BackgroundUtils.ensureBackgroundThread()
+
     val request = checkNotNull(activeDownloads.get(url)) {
       "Active downloads does not have url: ${url} even though it was just downloaded"
     }

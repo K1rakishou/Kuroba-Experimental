@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.core.cache
 
 import android.os.Environment
+import androidx.annotation.GuardedBy
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -25,6 +26,7 @@ import com.github.k1rakishou.chan.utils.ConversionUtils.intToCharArray
 import com.github.k1rakishou.chan.utils.HashingUtil
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.StringUtils
+import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mbytesToBytes
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
@@ -84,6 +86,11 @@ class CacheHandler(
   @Suppress("JoinDeclarationAndAssignment")
   private val fileCacheDiskSizeBytes: Long
 
+  @GuardedBy("this")
+  private val filesOnDiskCache = hashSetWithCap<String>(128)
+  @GuardedBy("this")
+  private val fullyDownloadedFiles = hashSetWithCap<String>(128)
+
   init {
     fileCacheDiskSizeBytes = if (autoLoadThreadImages) {
       ChanSettings.prefetchDiskCacheSizeMegabytes.get().mbytesToBytes()
@@ -99,6 +106,8 @@ class CacheHandler(
 
   @Synchronized
   fun getCacheFileOrNull(url: String): RawFile? {
+    BackgroundUtils.ensureBackgroundThread()
+
     createDirectories()
     val cacheFile = getCacheFileInternal(url)
 
@@ -125,6 +134,8 @@ class CacheHandler(
    * */
   @Synchronized
   fun getOrCreateCacheFile(url: String): RawFile? {
+    BackgroundUtils.ensureBackgroundThread()
+
     createDirectories()
     var cacheFile = getCacheFileInternal(url)
 
@@ -155,6 +166,7 @@ class CacheHandler(
         }
       }
 
+      filesOnDiskCache.add(fileManager.getName(cacheFile))
       return cacheFile
     } catch (error: IOException) {
       Logger.e(TAG, "Error while trying to get or create cache file", error)
@@ -165,8 +177,9 @@ class CacheHandler(
 
   @Synchronized
   fun getChunkCacheFileOrNull(chunkStart: Long, chunkEnd: Long, url: String): RawFile? {
-    val chunkCacheFile = getChunkCacheFileInternal(chunkStart, chunkEnd, url)
+    BackgroundUtils.ensureBackgroundThread()
 
+    val chunkCacheFile = getChunkCacheFileInternal(chunkStart, chunkEnd, url)
     if (fileManager.exists(chunkCacheFile)) {
       return chunkCacheFile
     }
@@ -176,8 +189,9 @@ class CacheHandler(
 
   @Synchronized
   fun getOrCreateChunkCacheFile(chunkStart: Long, chunkEnd: Long, url: String): RawFile? {
-    val chunkCacheFile = getChunkCacheFileInternal(chunkStart, chunkEnd, url)
+    BackgroundUtils.ensureBackgroundThread()
 
+    val chunkCacheFile = getChunkCacheFileInternal(chunkStart, chunkEnd, url)
     if (fileManager.exists(chunkCacheFile)) {
       if (!fileManager.delete(chunkCacheFile)) {
         throw IOException("Couldn't delete old chunk cache file")
@@ -189,7 +203,8 @@ class CacheHandler(
 
   @Synchronized
   fun cacheFileExists(fileUrl: String): Boolean {
-    return fileManager.exists(getCacheFileInternal(fileUrl))
+    val fileName = formatCacheFileName(hashUrl(fileUrl))
+    return filesOnDiskCache.contains(fileName)
   }
 
   @Synchronized
@@ -199,6 +214,7 @@ class CacheHandler(
 
   @Synchronized
   fun isAlreadyDownloaded(fileUrl: String): Boolean {
+    BackgroundUtils.ensureBackgroundThread()
     return isAlreadyDownloaded(getCacheFileInternal(fileUrl))
   }
 
@@ -211,15 +227,22 @@ class CacheHandler(
    * */
   @Synchronized
   fun isAlreadyDownloaded(cacheFile: RawFile): Boolean {
+    BackgroundUtils.ensureBackgroundThread()
+
     try {
       createDirectories()
+
+      val cacheFileName = fileManager.getName(cacheFile)
+      if (fullyDownloadedFiles.contains(cacheFileName)) {
+        return true
+      }
 
       if (!fileManager.exists(cacheFile)) {
         deleteCacheFile(cacheFile)
         return false
       }
 
-      if (!fileManager.getName(cacheFile).endsWith(CACHE_EXTENSION)) {
+      if (!cacheFileName.endsWith(CACHE_EXTENSION)) {
         Logger.e(TAG, "Not a cache file! file = " + cacheFile.getFullPath())
         deleteCacheFile(cacheFile)
         return false
@@ -227,20 +250,13 @@ class CacheHandler(
 
       val cacheFileMetaFile = getCacheFileMetaByCacheFile(cacheFile)
       if (cacheFileMetaFile == null) {
-        Logger.e(
-          TAG, "Couldn't get cache file meta by cache file, " +
-          "file = ${cacheFile.getFullPath()}"
-        )
+        Logger.e(TAG, "Couldn't get cache file meta by cache file, file = ${cacheFile.getFullPath()}")
         deleteCacheFile(cacheFile)
         return false
       }
 
       if (!fileManager.exists(cacheFileMetaFile)) {
-        Logger.e(
-          TAG, "Cache file meta does not exist, " +
-          "cacheFileMetaFile = ${cacheFileMetaFile.getFullPath()}"
-        )
-
+        Logger.e(TAG, "Cache file meta does not exist, cacheFileMetaFile = ${cacheFileMetaFile.getFullPath()}")
         deleteCacheFile(cacheFile)
         return false
       }
@@ -257,7 +273,12 @@ class CacheHandler(
         return false
       }
 
-      return cacheFileMeta.isDownloaded
+      val isDownloaded = cacheFileMeta.isDownloaded
+      if (isDownloaded) {
+        fullyDownloadedFiles += cacheFileName
+      }
+
+      return isDownloaded
     } catch (error: Throwable) {
       Logger.e(TAG, "Error while trying to check whether the file is already downloaded", error)
       deleteCacheFile(cacheFile)
@@ -271,6 +292,8 @@ class CacheHandler(
    * */
   @Synchronized
   fun markFileDownloaded(output: AbstractFile): Boolean {
+    BackgroundUtils.ensureBackgroundThread()
+
     try {
       createDirectories()
 
@@ -295,6 +318,8 @@ class CacheHandler(
 
       if (!updateResult) {
         deleteCacheFile(output)
+      } else {
+        fullyDownloadedFiles += fileManager.getName(output)
       }
 
       return updateResult
@@ -365,11 +390,7 @@ class CacheHandler(
     if (fileManager.exists(cacheDirFile) && fileManager.isDirectory(cacheDirFile)) {
       for (file in fileManager.listFiles(cacheDirFile)) {
         if (!deleteCacheFile(file)) {
-          Logger.d(
-            TAG,
-            "Could not delete cache file while clearing" +
-              " cache ${fileManager.getName(file)}"
-          )
+          Logger.d(TAG, "Could not delete cache file while clearing cache ${fileManager.getName(file)}")
         }
       }
     }
@@ -377,14 +398,13 @@ class CacheHandler(
     if (fileManager.exists(chunksCacheDirFile) && fileManager.isDirectory(chunksCacheDirFile)) {
       for (file in fileManager.listFiles(chunksCacheDirFile)) {
         if (!fileManager.delete(file)) {
-          Logger.d(
-            TAG,
-            "Could not delete cache chunk file while clearing" +
-              " cache ${fileManager.getName(file)}"
-          )
+          Logger.d(TAG, "Could not delete cache chunk file while clearing cache ${fileManager.getName(file)}")
         }
       }
     }
+
+    filesOnDiskCache.clear()
+    fullyDownloadedFiles.clear()
 
     recalculateSize()
   }
@@ -402,7 +422,6 @@ class CacheHandler(
 
   private fun deleteCacheFile(fileName: String): Boolean {
     val originalFileName = StringUtils.removeExtensionFromFileName(fileName)
-
     if (originalFileName.isEmpty()) {
       Logger.e(TAG, "Couldn't parse original file name, fileName = $fileName")
       return false
@@ -424,6 +443,9 @@ class CacheHandler(
     if (!deleteCacheFileMetaResult) {
       Logger.e(TAG, "Failed to delete cache file meta = ${cacheMetaFile.getFullPath()}")
     }
+
+    filesOnDiskCache.remove(cacheFileName)
+    fullyDownloadedFiles.remove(cacheFileName)
 
     if (deleteCacheFileResult && deleteCacheFileMetaResult) {
       val fileSize = if (cacheFileSize < 0) {
@@ -752,13 +774,14 @@ class CacheHandler(
     executor.execute { recalculateSize() }
   }
 
-  @Synchronized
   private fun recalculateSize() {
     var calculatedSize: Long = 0
 
     if (!recalculationRunning.compareAndSet(false, true)) {
       return
     }
+
+    synchronized(this) { filesOnDiskCache.clear() }
 
     try {
       val files = fileManager.listFiles(cacheDirFile)
@@ -769,6 +792,7 @@ class CacheHandler(
         }
 
         calculatedSize += fileManager.getLength(file)
+        filesOnDiskCache.add(fileManager.getName(file))
       }
 
       size.set(calculatedSize)
@@ -777,12 +801,11 @@ class CacheHandler(
     }
   }
 
-  @Synchronized
   private fun trim() {
     BackgroundUtils.ensureBackgroundThread()
     createDirectories()
 
-    val directoryFiles = fileManager.listFiles(cacheDirFile)
+    val directoryFiles = synchronized(this) { fileManager.listFiles(cacheDirFile) }
     // Don't try to trim empty directories or just two files in it.
     // Two (not one) because for every cache file we now have a cache file meta with some
     // additional info.
@@ -1007,7 +1030,7 @@ class CacheHandler(
 
     private const val CURRENT_META_FILE_VERSION = 1
     private const val CACHE_FILE_META_HEADER_SIZE = 4
-    private const val MAX_TRIM_TIME_MS = 2_000L
+    private const val MAX_TRIM_TIME_MS = 500L
 
     // I don't think it will ever get this big but just in case don't forget to update it if it
     // ever gets
