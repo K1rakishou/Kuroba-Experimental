@@ -97,7 +97,13 @@ class Chan4PagesRequest(
       }
     }
     
-    return ThreadNoTimeModPair(ChanDescriptor.ThreadDescriptor(boardDescriptor, no), modified)
+    return ThreadNoTimeModPair(
+      threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+        boardDescriptor = boardDescriptor,
+        threadNo = no
+      ),
+      modified = modified
+    )
   }
 
   companion object {

@@ -30,6 +30,7 @@ class BoardDescriptor private constructor(
   }
 
   companion object {
+    // TODO(KurobaEx v0.7.0): use a growable array instead of array list here to get rid of @Synchronized
     private val CACHE = mutableListWithCap<BoardDescriptor>(128)
 
     @JvmStatic
@@ -38,6 +39,7 @@ class BoardDescriptor private constructor(
     }
 
     @JvmStatic
+    @Synchronized
     fun create(siteName: String, boardCodeInput: String): BoardDescriptor {
       val boardCode = boardCodeInput.intern()
 

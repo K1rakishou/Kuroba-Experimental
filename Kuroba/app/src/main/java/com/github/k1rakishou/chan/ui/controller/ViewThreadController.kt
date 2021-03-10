@@ -515,7 +515,7 @@ open class ViewThreadController(
 
   private suspend fun showBoardInternal(boardDescriptor: BoardDescriptor, animated: Boolean) {
     Logger.d(TAG, "showBoardInternal($boardDescriptor, $animated)")
-    historyNavigationManager.moveNavElementToTop(CatalogDescriptor(boardDescriptor))
+    historyNavigationManager.moveNavElementToTop(CatalogDescriptor.create(boardDescriptor))
 
     if (doubleNavigationController != null && doubleNavigationController?.getLeftController() is BrowseController) {
       val browseController = doubleNavigationController!!.getLeftController() as BrowseController

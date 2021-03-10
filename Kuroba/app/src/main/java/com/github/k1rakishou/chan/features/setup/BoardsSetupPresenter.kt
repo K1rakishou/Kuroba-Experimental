@@ -57,7 +57,7 @@ class BoardsSetupPresenter(
       siteManager.awaitUntilInitialized()
 
       val boardDescriptor = BoardDescriptor.create(siteDescriptor, boardCode)
-      val catalogDescriptor = ChanDescriptor.CatalogDescriptor(boardDescriptor)
+      val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(boardDescriptor)
 
       if (boardManager.byBoardDescriptor(boardDescriptor) != null) {
         withView {

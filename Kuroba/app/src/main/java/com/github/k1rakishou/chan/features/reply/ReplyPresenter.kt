@@ -713,9 +713,9 @@ class ReplyPresenter @Inject constructor(
 
     bindChanDescriptor(newThreadDescriptor)
 
-    val bookmarkThreadDescriptor = ChanDescriptor.ThreadDescriptor(
-      newThreadDescriptor.boardDescriptor(),
-      threadNo
+    val bookmarkThreadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+      boardDescriptor = newThreadDescriptor.boardDescriptor(),
+      threadNo = threadNo
     )
 
     val createBookmarkResult = bookmarksManager.createBookmark(

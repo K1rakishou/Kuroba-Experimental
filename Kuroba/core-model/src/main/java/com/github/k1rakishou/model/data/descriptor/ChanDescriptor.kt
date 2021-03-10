@@ -1,5 +1,7 @@
 package com.github.k1rakishou.model.data.descriptor
 
+import com.github.k1rakishou.common.mutableListWithCap
+
 sealed class ChanDescriptor {
   abstract fun isThreadDescriptor(): Boolean
   abstract fun isCatalogDescriptor(): Boolean
@@ -26,12 +28,12 @@ sealed class ChanDescriptor {
         this
       }
       is CatalogDescriptor -> {
-        ThreadDescriptor(boardDescriptor, threadNo!!)
+        ThreadDescriptor.create(boardDescriptor, threadNo!!)
       }
     }
   }
 
-  class ThreadDescriptor(
+  class ThreadDescriptor private constructor(
     val boardDescriptor: BoardDescriptor,
     val threadNo: Long
   ) : ChanDescriptor() {
@@ -42,7 +44,7 @@ sealed class ChanDescriptor {
     override fun siteName(): String = boardDescriptor.siteDescriptor.siteName
     override fun boardCode(): String = boardDescriptor.boardCode
     override fun threadDescriptorOrNull(): ThreadDescriptor? = this
-    override fun catalogDescriptor(): CatalogDescriptor = CatalogDescriptor(boardDescriptor)
+    override fun catalogDescriptor(): CatalogDescriptor = CatalogDescriptor.create(boardDescriptor)
     override fun threadNoOrNull(): Long? = threadNo
     override fun siteDescriptor(): SiteDescriptor = boardDescriptor.siteDescriptor
     override fun boardDescriptor(): BoardDescriptor = boardDescriptor
@@ -72,11 +74,14 @@ sealed class ChanDescriptor {
     }
 
     companion object {
+      // TODO(KurobaEx v0.7.0): use a growable array instead of array list here to get rid of @Synchronized
+      private val CACHE = mutableListWithCap<ThreadDescriptor>(256)
+
       @JvmStatic
       fun create(siteName: String, boardCode: String, threadNo: Long): ThreadDescriptor {
         require(threadNo > 0) { "Bad threadId: $threadNo" }
 
-        return ThreadDescriptor(BoardDescriptor.create(siteName, boardCode), threadNo)
+        return create(BoardDescriptor.create(siteName, boardCode), threadNo)
       }
 
       @JvmStatic
@@ -85,10 +90,25 @@ sealed class ChanDescriptor {
       }
 
       @JvmStatic
+      @Synchronized
       fun create(boardDescriptor: BoardDescriptor, threadNo: Long): ThreadDescriptor {
         require(threadNo > 0) { "Bad threadId: $threadNo" }
 
-        return ThreadDescriptor(boardDescriptor, threadNo)
+        for (threadDescriptor in CACHE) {
+          if (threadDescriptor.boardDescriptor === boardDescriptor
+            && threadDescriptor.threadNo == threadNo
+          ) {
+            return threadDescriptor
+          }
+        }
+
+        val newThreadDescriptor = ThreadDescriptor(
+          boardDescriptor,
+          threadNo
+        )
+
+        CACHE.add(newThreadDescriptor)
+        return newThreadDescriptor
       }
 
       fun fromDescriptorParcelable(descriptorParcelable: DescriptorParcelable): ThreadDescriptor {
@@ -103,7 +123,7 @@ sealed class ChanDescriptor {
     }
   }
 
-  class CatalogDescriptor(
+  class CatalogDescriptor private constructor(
     val boardDescriptor: BoardDescriptor
   ) : ChanDescriptor() {
     override fun isThreadDescriptor(): Boolean = false
@@ -139,6 +159,8 @@ sealed class ChanDescriptor {
     }
 
     companion object {
+      // TODO(KurobaEx v0.7.0): use a growable array instead of array list here to get rid of @Synchronized
+      private val CACHE = mutableListWithCap<CatalogDescriptor>(64)
 
       fun fromDescriptorParcelable(descriptorParcelable: DescriptorParcelable): CatalogDescriptor {
         require(!descriptorParcelable.isThreadDescriptor()) { "Not a catalog descriptor type" }
@@ -150,8 +172,30 @@ sealed class ChanDescriptor {
       }
 
       @JvmStatic
-      fun create(siteName: String, boardCode: String): CatalogDescriptor {
-        return CatalogDescriptor(BoardDescriptor.create(siteName, boardCode))
+      fun create(boardDescriptor: BoardDescriptor): CatalogDescriptor {
+        return create(boardDescriptor.siteName(), boardDescriptor.boardCode)
+      }
+
+      @JvmStatic
+      @Synchronized
+      fun create(siteNameInput: String, boardCodeInput: String): CatalogDescriptor {
+        val siteName = siteNameInput.intern()
+        val boardCode = boardCodeInput.intern()
+
+        for (catalogDescriptor in CACHE) {
+          if (catalogDescriptor.boardDescriptor.siteName() === siteName
+            && catalogDescriptor.boardDescriptor.boardCode === boardCode
+          ) {
+            return catalogDescriptor
+          }
+        }
+
+        val newCatalogDescriptor = CatalogDescriptor(
+          BoardDescriptor.create(siteName, boardCode)
+        )
+
+        CACHE.add(newCatalogDescriptor)
+        return newCatalogDescriptor
       }
     }
   }

@@ -37,8 +37,10 @@ class SiteDescriptor private constructor(
   }
 
   companion object {
+    // TODO(KurobaEx v0.7.0): use a growable array instead of array list here to get rid of @Synchronized
     private val CACHE = mutableListWithCap<SiteDescriptor>(24)
 
+    @Synchronized
     fun create(siteNameInput: String): SiteDescriptor {
       val siteName = siteNameInput.intern()
 

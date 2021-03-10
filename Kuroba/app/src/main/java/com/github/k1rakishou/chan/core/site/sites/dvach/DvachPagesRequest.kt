@@ -90,9 +90,9 @@ class DvachPagesRequest(
     }
 
     return ThreadNoTimeModPair(
-      threadDescriptor = ChanDescriptor.ThreadDescriptor(
-        chanBoard.boardDescriptor,
-        no
+      threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+        boardDescriptor = chanBoard.boardDescriptor,
+        threadNo = no
       ),
       modified = modified
     )

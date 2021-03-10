@@ -634,7 +634,7 @@ class BrowseController(
       val board = boardManager.byBoardDescriptor(boardDescriptor)
         ?: return@launch
 
-      historyNavigationManager.moveNavElementToTop(CatalogDescriptor(boardDescriptor))
+      historyNavigationManager.moveNavElementToTop(CatalogDescriptor.create(boardDescriptor))
       boardManager.updateCurrentBoard(boardDescriptor)
 
       navigation.title = "/" + boardDescriptor.boardCode + "/"
@@ -660,7 +660,7 @@ class BrowseController(
     // links when in catalog and stuff.
   }
 
-  override suspend fun openThreadInArchive(threadDescriptor: ThreadDescriptor) {
+  override suspend fun openThreadInArchive(threadToOpenDescriptor: ThreadDescriptor) {
     // no-op
   }
 

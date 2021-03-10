@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.site.parser
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import java.util.*
 
@@ -28,9 +27,10 @@ open class MockReplyManager {
 
   fun addMockReply(siteName: String, boardCode: String, opNo: Long, postNo: Long) {
     synchronized(this) {
-      val threadDescriptor = ChanDescriptor.ThreadDescriptor(
-        BoardDescriptor.create(siteName, boardCode),
-        opNo
+      val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+        siteName = siteName,
+        boardCode = boardCode,
+        threadNo = opNo
       )
 
       if (!mockReplyMultiMap.containsKey(threadDescriptor)) {
@@ -44,9 +44,10 @@ open class MockReplyManager {
 
   fun getLastMockReply(siteName: String, boardCode: String, opNo: Long): Long {
     return synchronized(this) {
-      val threadDescriptor = ChanDescriptor.ThreadDescriptor(
-        BoardDescriptor.create(siteName, boardCode),
-        opNo
+      val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+        siteName = siteName,
+        boardCode = boardCode,
+        threadNo = opNo
       )
 
       val repliesQueue = mockReplyMultiMap[threadDescriptor]
