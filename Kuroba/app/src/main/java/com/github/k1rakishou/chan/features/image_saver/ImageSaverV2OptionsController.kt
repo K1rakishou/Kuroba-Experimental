@@ -167,16 +167,17 @@ class ImageSaverV2OptionsController(
             return
           }
 
+          val newDirUriString = uri.toString()
+
           currentSetting.rootDirectoryUri?.let { dirUriString ->
-            if (uri.toString() == dirUriString) {
+            if (newDirUriString == dirUriString || dirUriString.contains(newDirUriString)) {
               return@let
             }
 
-            val dirUri = Uri.parse(dirUriString)
-            fileChooser.forgetSAFTree(dirUri)
+            fileChooser.forgetSAFTree(Uri.parse(dirUriString))
           }
 
-          currentSetting.rootDirectoryUri = uri.toString()
+          currentSetting.rootDirectoryUri = newDirUriString
           applyOptionsToView()
         }
       })
