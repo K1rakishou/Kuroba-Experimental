@@ -90,7 +90,7 @@ object SiteRegistry {
   }
 
   private fun addSiteToSiteClassesMap(siteName: String, siteClass: Class<out Site>) {
-    val siteDescriptor = SiteDescriptor(siteName)
+    val siteDescriptor = SiteDescriptor.create(siteName)
 
     require(!SITE_CLASSES_MAP.contains(siteDescriptor)) {
       "Site $siteName already added! Make sure that no sites share the same name!"

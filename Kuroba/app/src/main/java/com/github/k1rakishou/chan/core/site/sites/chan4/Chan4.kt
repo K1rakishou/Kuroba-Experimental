@@ -568,7 +568,7 @@ open class Chan4 : SiteBase() {
 
   companion object {
     const val SITE_NAME = "4chan"
-    val SITE_DESCRIPTOR = SiteDescriptor(SITE_NAME)
+    val SITE_DESCRIPTOR = SiteDescriptor.create(SITE_NAME)
 
     @JvmStatic
     val URL_HANDLER: SiteUrlHandler = object : SiteUrlHandler {

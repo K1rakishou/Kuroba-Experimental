@@ -14,7 +14,7 @@ object ChanBoardMapper {
     }
 
     val boardDescriptor = BoardDescriptor(
-      SiteDescriptor(chanBoardFull.chanBoardIdEntity.ownerSiteName),
+      SiteDescriptor.create(chanBoardFull.chanBoardIdEntity.ownerSiteName),
       chanBoardFull.chanBoardIdEntity.boardCode
     )
 

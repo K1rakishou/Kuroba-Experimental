@@ -191,7 +191,7 @@ abstract class CommonSite : SiteBase() {
   }
   
   override fun siteDescriptor(): SiteDescriptor {
-    return SiteDescriptor(name())
+    return SiteDescriptor.create(name())
   }
   
   override fun icon(): SiteIcon {

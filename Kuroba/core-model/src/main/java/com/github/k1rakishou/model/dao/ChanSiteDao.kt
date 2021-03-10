@@ -36,7 +36,7 @@ abstract class ChanSiteDao {
 
   suspend fun createDefaultsIfNecessary(allSiteDescriptors: Collection<SiteDescriptor>) {
     val existingSiteDescriptors = selectAllSiteIdEntities()
-      .map { chanSiteIdEntity -> SiteDescriptor(chanSiteIdEntity.siteName) }
+      .map { chanSiteIdEntity -> SiteDescriptor.create(chanSiteIdEntity.siteName) }
       .toSet()
 
     val chanSiteIdEntityList = allSiteDescriptors

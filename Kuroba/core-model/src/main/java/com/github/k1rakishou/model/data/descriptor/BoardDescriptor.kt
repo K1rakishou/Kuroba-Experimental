@@ -37,7 +37,7 @@ class BoardDescriptor(
     @JvmStatic
     fun create(siteName: String, boardCode: String): BoardDescriptor {
       return BoardDescriptor(
-        SiteDescriptor(siteName),
+        SiteDescriptor.create(siteName),
         boardCode
       )
     }

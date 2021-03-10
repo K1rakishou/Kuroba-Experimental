@@ -1,6 +1,8 @@
 package com.github.k1rakishou.model.data.descriptor
 
-class SiteDescriptor(
+import com.github.k1rakishou.common.mutableListWithCap
+
+class SiteDescriptor private constructor(
   val siteName: String
 ) {
   fun is4chan(): Boolean {
@@ -32,6 +34,25 @@ class SiteDescriptor(
 
   override fun toString(): String {
     return "SD{$siteName}"
+  }
+
+  companion object {
+    private val CACHE = mutableListWithCap<SiteDescriptor>(24)
+
+    fun create(siteNameInput: String): SiteDescriptor {
+      val siteName = siteNameInput.intern()
+
+      for (siteDescriptor in CACHE) {
+        if (siteDescriptor.siteName === siteName) {
+          return siteDescriptor
+        }
+      }
+
+      val newSiteDescriptor = SiteDescriptor(siteName)
+      CACHE.add(newSiteDescriptor)
+
+      return newSiteDescriptor
+    }
   }
 
 }

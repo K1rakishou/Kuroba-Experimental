@@ -1498,7 +1498,7 @@ class ThreadPresenter @Inject constructor(
         val archiveDescriptor = archivesManager.getArchiveDescriptorByArchiveType(archiveThreadLink.archiveType)
           ?: return@post
 
-        val isSiteEnabled = siteManager.bySiteDescriptor(SiteDescriptor(archiveDescriptor.domain))?.enabled()
+        val isSiteEnabled = siteManager.bySiteDescriptor(SiteDescriptor.create(archiveDescriptor.domain))?.enabled()
           ?: false
 
         if (!isSiteEnabled) {

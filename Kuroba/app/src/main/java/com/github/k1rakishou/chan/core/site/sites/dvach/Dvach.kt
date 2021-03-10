@@ -520,7 +520,7 @@ class Dvach : CommonSite() {
   companion object {
     private const val TAG = "Dvach"
     const val SITE_NAME = "2ch.hk"
-    val SITE_DESCRIPTOR = SiteDescriptor(SITE_NAME)
+    val SITE_DESCRIPTOR = SiteDescriptor.create(SITE_NAME)
     const val CAPTCHA_KEY = "6LeQYz4UAAAAAL8JCk35wHSv6cuEV5PyLhI6IxsM"
     const val DEFAULT_MAX_FILE_SIZE = 20480 * 1024 // 20MB
 

@@ -599,7 +599,7 @@ class Chan4SearchRequest(
     private val PAGE_VALUE_PATTERN = Pattern.compile("&o=(\\d+)")
     private val TOTAL_ENTRIES_FOUND_PATTERN = Pattern.compile("4chan Search `.*` (\\d+) comment")
 
-    private val SITE_DESCRIPTOR = SiteDescriptor("4chan")
+    private val SITE_DESCRIPTOR = SiteDescriptor.create("4chan")
   }
 
 }

@@ -9,7 +9,7 @@ object ChanSiteMapper {
 
   fun fromChanSiteEntity(chanSiteFull: ChanSiteFull): ChanSiteData {
     return ChanSiteData(
-      SiteDescriptor(chanSiteFull.chanSiteIdEntity.siteName),
+      SiteDescriptor.create(chanSiteFull.chanSiteIdEntity.siteName),
       chanSiteFull.chanSiteEntity.siteActive
     )
   }

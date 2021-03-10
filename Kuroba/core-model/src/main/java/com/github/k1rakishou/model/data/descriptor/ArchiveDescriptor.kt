@@ -7,7 +7,7 @@ class ArchiveDescriptor(
   val domain: String,
   val archiveType: ArchiveType
 ) {
-  val siteDescriptor by lazy { SiteDescriptor(domain) }
+  val siteDescriptor by lazy { SiteDescriptor.create(domain) }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

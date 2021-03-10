@@ -73,7 +73,7 @@ class GsonModule {
           }
         }
 
-        return SiteDescriptor(
+        return SiteDescriptor.create(
           requireNotNull(siteName) { "siteName is null" }
         )
       }
