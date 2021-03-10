@@ -604,7 +604,7 @@ class KurobaSettingsImportUseCase(
             return@jsonObject
           }
 
-          val boardDescriptor = BoardDescriptor(SiteDescriptor.create(siteName), boardCode)
+          val boardDescriptor = BoardDescriptor.create(siteName, boardCode)
           func(boardDescriptor)
         }
       }
@@ -643,7 +643,7 @@ class KurobaSettingsImportUseCase(
               "siteIdMap=${siteIdMapToString(siteIdMap)}"
           )
 
-        return@map BoardDescriptor(SiteDescriptor.create(siteName), boardCode)
+        return@map BoardDescriptor.create(siteName, boardCode)
       }
       .toSet()
   }

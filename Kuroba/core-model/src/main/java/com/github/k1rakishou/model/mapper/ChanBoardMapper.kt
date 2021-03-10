@@ -2,7 +2,6 @@ package com.github.k1rakishou.model.mapper
 
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardEntity
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardFull
 
@@ -13,8 +12,8 @@ object ChanBoardMapper {
       return null
     }
 
-    val boardDescriptor = BoardDescriptor(
-      SiteDescriptor.create(chanBoardFull.chanBoardIdEntity.ownerSiteName),
+    val boardDescriptor = BoardDescriptor.create(
+      chanBoardFull.chanBoardIdEntity.ownerSiteName,
       chanBoardFull.chanBoardIdEntity.boardCode
     )
 

@@ -6,7 +6,6 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.entity.chan.site.ChanSiteIdEntity
 
 @Entity(
@@ -49,7 +48,7 @@ data class ChanBoardIdEntity(
   val boardCode: String
 ) {
 
-  fun boardDescriptor(): BoardDescriptor = BoardDescriptor(SiteDescriptor.create(ownerSiteName), boardCode)
+  fun boardDescriptor(): BoardDescriptor = BoardDescriptor.create(ownerSiteName, boardCode)
 
   companion object {
     const val TABLE_NAME = "chan_board_id"

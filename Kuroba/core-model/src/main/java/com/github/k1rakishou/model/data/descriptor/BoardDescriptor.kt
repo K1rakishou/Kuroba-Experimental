@@ -1,6 +1,8 @@
 package com.github.k1rakishou.model.data.descriptor
 
-class BoardDescriptor(
+import com.github.k1rakishou.common.mutableListWithCap
+
+class BoardDescriptor private constructor(
   val siteDescriptor: SiteDescriptor,
   val boardCode: String
 ) {
@@ -28,18 +30,30 @@ class BoardDescriptor(
   }
 
   companion object {
+    private val CACHE = mutableListWithCap<BoardDescriptor>(128)
 
     @JvmStatic
     fun create(siteDescriptor: SiteDescriptor, boardCode: String): BoardDescriptor {
-      return BoardDescriptor(siteDescriptor, boardCode)
+      return create(siteDescriptor.siteName, boardCode)
     }
 
     @JvmStatic
-    fun create(siteName: String, boardCode: String): BoardDescriptor {
-      return BoardDescriptor(
+    fun create(siteName: String, boardCodeInput: String): BoardDescriptor {
+      val boardCode = boardCodeInput.intern()
+
+      for (boardDescriptor in CACHE) {
+        if (boardDescriptor.siteDescriptor.siteName === siteName && boardDescriptor.boardCode === boardCode) {
+          return boardDescriptor
+        }
+      }
+
+      val newBoardDescriptor = BoardDescriptor(
         SiteDescriptor.create(siteName),
         boardCode
       )
+
+      CACHE.add(newBoardDescriptor)
+      return newBoardDescriptor
     }
   }
 }

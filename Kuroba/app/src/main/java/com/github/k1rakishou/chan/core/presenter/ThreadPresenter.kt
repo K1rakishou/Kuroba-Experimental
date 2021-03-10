@@ -427,7 +427,7 @@ class ThreadPresenter @Inject constructor(
     Logger.d(TAG, "openThreadInArchive($threadDescriptor, $archiveDescriptor)")
 
     val archiveThreadDescriptor = ChanDescriptor.ThreadDescriptor(
-      boardDescriptor = BoardDescriptor(
+      boardDescriptor = BoardDescriptor.create(
         siteDescriptor = archiveDescriptor.siteDescriptor,
         boardCode = threadDescriptor.boardDescriptor.boardCode
       ),

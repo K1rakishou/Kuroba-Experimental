@@ -607,7 +607,7 @@ class ReplyPresenter @Inject constructor(
       return
     }
 
-    val boardDescriptor = BoardDescriptor(siteDescriptor, replyResponse.boardCode)
+    val boardDescriptor = BoardDescriptor.create(siteDescriptor, replyResponse.boardCode)
 
     val localBoard = boardManager.byBoardDescriptor(boardDescriptor)
     if (localBoard == null) {
