@@ -113,7 +113,6 @@ import com.github.k1rakishou.chan.ui.epoxy.EpoxySimpleGroupView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyTextView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyTextViewWrapHeight;
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
-import com.github.k1rakishou.chan.ui.layout.FilesLayout;
 import com.github.k1rakishou.chan.ui.layout.FilterLayout;
 import com.github.k1rakishou.chan.ui.layout.PopupControllerContainer;
 import com.github.k1rakishou.chan.ui.layout.PostRepliesContainer;
@@ -329,7 +328,6 @@ public interface ActivityComponent {
     void inject(ImageOptionsHelper imageOptionsHelper);
     void inject(ImageReencodingPresenter imageReencodingPresenter);
     void inject(ImageViewerPresenter imageViewerPresenter);
-    void inject(FilesLayout filesLayout);
     void inject(LoadingBar loadingBar);
     void inject(ThreadSlidingPaneLayout threadSlidingPaneLayout);
     void inject(PostStubCell postStubCell);
