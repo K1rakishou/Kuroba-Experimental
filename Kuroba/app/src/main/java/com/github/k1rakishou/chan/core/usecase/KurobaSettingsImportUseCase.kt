@@ -331,7 +331,7 @@ class KurobaSettingsImportUseCase(
 
     if (
       boardCode.isNullOrEmpty() ||
-      threadNo == null ||
+      (threadNo == null || threadNo!! <= 0) ||
       databaseSiteId == null
     ) {
       Logger.e(TAG, "readSimpleBookmarks() Failed to read simple thread bookmark: boardCode=${boardCode}, " +
@@ -352,9 +352,9 @@ class KurobaSettingsImportUseCase(
     }
 
     val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
-      siteName,
-      boardCode!!,
-      threadNo!!.toLong()
+      siteName = siteName,
+      boardCode = boardCode!!,
+      threadNo = threadNo!!.toLong()
     )
 
     func(BookmarksManager.SimpleThreadBookmark(threadDescriptor, title, thumbnailUrl))
@@ -388,9 +388,9 @@ class KurobaSettingsImportUseCase(
           if (boardCode.isNullOrEmpty() ||
             hide == null ||
             hideRepliesToThisPost == null ||
-            postNo == null ||
+            (postNo == null || postNo <= 0) ||
             databaseSiteId == null ||
-            threadNo == null ||
+            (threadNo == null || threadNo <= 0) ||
             wholeThread == null
           ) {
             Logger.e(TAG, "readPostHides() Failed to read post hide info: boardCode=${boardCode}, " +
