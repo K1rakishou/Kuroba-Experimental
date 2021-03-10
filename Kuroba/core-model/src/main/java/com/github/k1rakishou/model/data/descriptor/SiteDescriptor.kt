@@ -1,6 +1,6 @@
 package com.github.k1rakishou.model.data.descriptor
 
-import com.github.k1rakishou.common.mutableListWithCap
+import com.github.k1rakishou.common.datastructure.LockFreeGrowableArray
 
 class SiteDescriptor private constructor(
   val siteName: String
@@ -37,23 +37,15 @@ class SiteDescriptor private constructor(
   }
 
   companion object {
-    // TODO(KurobaEx v0.7.0): use a growable array instead of array list here to get rid of @Synchronized
-    private val CACHE = mutableListWithCap<SiteDescriptor>(24)
+    private val CACHE = LockFreeGrowableArray<SiteDescriptor>(24)
 
-    @Synchronized
     fun create(siteNameInput: String): SiteDescriptor {
       val siteName = siteNameInput.intern()
 
-      for (siteDescriptor in CACHE) {
-        if (siteDescriptor.siteName === siteName) {
-          return siteDescriptor
-        }
-      }
-
-      val newSiteDescriptor = SiteDescriptor(siteName)
-      CACHE.add(newSiteDescriptor)
-
-      return newSiteDescriptor
+      return CACHE.getOrCreate(
+        comparatorFunc = { siteDescriptor -> siteDescriptor.siteName === siteName  },
+        instrantiatorFunc = { SiteDescriptor(siteName) }
+      )
     }
   }
 

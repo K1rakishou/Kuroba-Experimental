@@ -1,6 +1,6 @@
 package com.github.k1rakishou.model.data.descriptor
 
-import com.github.k1rakishou.common.mutableListWithCap
+import com.github.k1rakishou.common.datastructure.LockFreeGrowableArray
 
 class BoardDescriptor private constructor(
   val siteDescriptor: SiteDescriptor,
@@ -30,8 +30,7 @@ class BoardDescriptor private constructor(
   }
 
   companion object {
-    // TODO(KurobaEx v0.7.0): use a growable array instead of array list here to get rid of @Synchronized
-    private val CACHE = mutableListWithCap<BoardDescriptor>(128)
+    private val CACHE = LockFreeGrowableArray<BoardDescriptor>(128)
 
     @JvmStatic
     fun create(siteDescriptor: SiteDescriptor, boardCode: String): BoardDescriptor {
@@ -39,23 +38,17 @@ class BoardDescriptor private constructor(
     }
 
     @JvmStatic
-    @Synchronized
     fun create(siteName: String, boardCodeInput: String): BoardDescriptor {
       val boardCode = boardCodeInput.intern()
 
-      for (boardDescriptor in CACHE) {
-        if (boardDescriptor.siteDescriptor.siteName === siteName && boardDescriptor.boardCode === boardCode) {
-          return boardDescriptor
+      return CACHE.getOrCreate(
+        comparatorFunc = { boardDescriptor ->
+          boardDescriptor.siteDescriptor.siteName === siteName && boardDescriptor.boardCode === boardCode
+        },
+        instrantiatorFunc = {
+          BoardDescriptor(SiteDescriptor.create(siteName), boardCode)
         }
-      }
-
-      val newBoardDescriptor = BoardDescriptor(
-        SiteDescriptor.create(siteName),
-        boardCode
       )
-
-      CACHE.add(newBoardDescriptor)
-      return newBoardDescriptor
     }
   }
 }

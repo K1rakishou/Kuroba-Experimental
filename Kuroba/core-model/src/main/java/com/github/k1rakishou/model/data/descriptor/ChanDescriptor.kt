@@ -1,6 +1,6 @@
 package com.github.k1rakishou.model.data.descriptor
 
-import com.github.k1rakishou.common.mutableListWithCap
+import com.github.k1rakishou.common.datastructure.LockFreeGrowableArray
 
 sealed class ChanDescriptor {
   abstract fun isThreadDescriptor(): Boolean
@@ -74,8 +74,7 @@ sealed class ChanDescriptor {
     }
 
     companion object {
-      // TODO(KurobaEx v0.7.0): use a growable array instead of array list here to get rid of @Synchronized
-      private val CACHE = mutableListWithCap<ThreadDescriptor>(256)
+      private val CACHE = LockFreeGrowableArray<ThreadDescriptor>(256)
 
       @JvmStatic
       fun create(siteName: String, boardCode: String, threadNo: Long): ThreadDescriptor {
@@ -90,25 +89,16 @@ sealed class ChanDescriptor {
       }
 
       @JvmStatic
-      @Synchronized
       fun create(boardDescriptor: BoardDescriptor, threadNo: Long): ThreadDescriptor {
         require(threadNo > 0) { "Bad threadId: $threadNo" }
 
-        for (threadDescriptor in CACHE) {
-          if (threadDescriptor.boardDescriptor === boardDescriptor
-            && threadDescriptor.threadNo == threadNo
-          ) {
-            return threadDescriptor
-          }
-        }
-
-        val newThreadDescriptor = ThreadDescriptor(
-          boardDescriptor,
-          threadNo
+        return CACHE.getOrCreate(
+          comparatorFunc = { threadDescriptor ->
+            threadDescriptor.boardDescriptor === boardDescriptor
+              && threadDescriptor.threadNo == threadNo
+          },
+          instrantiatorFunc = { ThreadDescriptor(boardDescriptor, threadNo) }
         )
-
-        CACHE.add(newThreadDescriptor)
-        return newThreadDescriptor
       }
 
       fun fromDescriptorParcelable(descriptorParcelable: DescriptorParcelable): ThreadDescriptor {
@@ -159,8 +149,7 @@ sealed class ChanDescriptor {
     }
 
     companion object {
-      // TODO(KurobaEx v0.7.0): use a growable array instead of array list here to get rid of @Synchronized
-      private val CACHE = mutableListWithCap<CatalogDescriptor>(64)
+      private val CACHE = LockFreeGrowableArray<CatalogDescriptor>(64)
 
       fun fromDescriptorParcelable(descriptorParcelable: DescriptorParcelable): CatalogDescriptor {
         require(!descriptorParcelable.isThreadDescriptor()) { "Not a catalog descriptor type" }
@@ -177,25 +166,17 @@ sealed class ChanDescriptor {
       }
 
       @JvmStatic
-      @Synchronized
       fun create(siteNameInput: String, boardCodeInput: String): CatalogDescriptor {
         val siteName = siteNameInput.intern()
         val boardCode = boardCodeInput.intern()
 
-        for (catalogDescriptor in CACHE) {
-          if (catalogDescriptor.boardDescriptor.siteName() === siteName
-            && catalogDescriptor.boardDescriptor.boardCode === boardCode
-          ) {
-            return catalogDescriptor
-          }
-        }
-
-        val newCatalogDescriptor = CatalogDescriptor(
-          BoardDescriptor.create(siteName, boardCode)
+        return CACHE.getOrCreate(
+          comparatorFunc = { catalogDescriptor ->
+            catalogDescriptor.boardDescriptor.siteName() === siteName
+              && catalogDescriptor.boardDescriptor.boardCode === boardCode
+          },
+          instrantiatorFunc = { CatalogDescriptor(BoardDescriptor.create(siteName, boardCode)) }
         )
-
-        CACHE.add(newCatalogDescriptor)
-        return newCatalogDescriptor
       }
     }
   }
