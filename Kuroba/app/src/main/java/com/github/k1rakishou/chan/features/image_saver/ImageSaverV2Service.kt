@@ -454,7 +454,11 @@ class ImageSaverV2Service : Service() {
   private fun NotificationCompat.Builder.addOnNotificationCloseAction(
     imageSaverDelegateResult: ImageSaverV2ServiceDelegate.ImageSaverDelegateResult
   ): NotificationCompat.Builder {
-    if (imageSaverDelegateResult.completed) {
+    val canUseDeleteIntent = imageSaverDelegateResult.completed
+      && imageSaverDelegateResult.hasOnlyCompletedRequests()
+      && !imageSaverDelegateResult.hasAnyErrors()
+
+    if (canUseDeleteIntent) {
       val intent = Intent(applicationContext, ImageSaverBroadcastReceiver::class.java).apply {
         setAction(ACTION_TYPE_DELETE)
 
@@ -483,7 +487,14 @@ class ImageSaverV2Service : Service() {
       && !imageSaverDelegateResult.hasAnyErrors()
 
     if (canAutoDismiss) {
-      setTimeoutAfter(NOTIFICATION_AUTO_DISMISS_TIMEOUT_MS)
+      if (AndroidUtils.isAndroidO()) {
+        setTimeoutAfter(NOTIFICATION_AUTO_DISMISS_TIMEOUT_MS)
+      } else {
+        imageSaverV2ServiceDelegate.enqueueDeleteNotification(
+          imageSaverDelegateResult.uniqueId,
+          NOTIFICATION_AUTO_DISMISS_TIMEOUT_MS
+        )
+      }
     }
 
     return this

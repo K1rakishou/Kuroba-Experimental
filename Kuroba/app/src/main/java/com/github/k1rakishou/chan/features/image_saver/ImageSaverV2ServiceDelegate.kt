@@ -28,13 +28,16 @@ import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
@@ -44,6 +47,7 @@ import okhttp3.HttpUrl
 import okhttp3.Request
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -67,6 +71,8 @@ class ImageSaverV2ServiceDelegate(
 
   @GuardedBy("mutex")
   private val activeNotificationIdQueue = LinkedList<String>()
+
+  private val cancelNotificationJobMap = ConcurrentHashMap<String, Job>()
 
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
@@ -111,6 +117,12 @@ class ImageSaverV2ServiceDelegate(
       if (!activeDownloads.containsKey(uniqueId)) {
         activeDownloads[uniqueId] = DownloadContext()
       }
+
+      // If we were waiting the timeout before auto-closing the notification, we need to cancel it
+      // since we are restarting the download request. Otherwise the notification may get hidden
+      // while we preparing to start downloading it.
+      cancelNotificationJobMap[uniqueId]?.cancel()
+      cancelNotificationJobMap.remove(uniqueId)
 
       // Otherwise the download already exist, just wait until it's completed. But this shouldn't
       // really happen since we always check duplicate requests in the database before even starting
@@ -805,6 +817,17 @@ class ImageSaverV2ServiceDelegate(
     imageDownloadInputData: ImageSaverV2Service.ImageDownloadInputData
   ): DownloadContext? {
     return mutex.withLock { activeDownloads.get(imageDownloadInputData.uniqueId) }
+  }
+
+  fun enqueueDeleteNotification(uniqueId: String, timeoutMs: Long) {
+    val job = appScope.launch {
+      delay(timeoutMs)
+
+      cancelNotificationJobMap.remove(uniqueId)
+      ImageSaverV2Service.cancelNotification(notificationManagerCompat, uniqueId)
+    }
+
+    cancelNotificationJobMap[uniqueId] = job
   }
 
   class ResultFileAccessError(val resultFileUri: String) : Exception("Failed to access result file: $resultFileUri")

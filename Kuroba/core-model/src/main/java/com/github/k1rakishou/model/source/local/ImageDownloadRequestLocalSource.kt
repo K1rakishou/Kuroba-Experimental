@@ -176,11 +176,11 @@ class ImageDownloadRequestLocalSource(
   suspend fun deleteOldAndHangedInQueueStatus() {
     ensureInTransaction()
 
-    imageDownloadRequestDao.deleteOlderThan(WEEK_AGO)
+    imageDownloadRequestDao.deleteOlderThan(DAY_AGO)
     imageDownloadRequestDao.deleteWithStatus(ImageDownloadRequest.Status.Queued.rawValue)
   }
 
   companion object {
-    private val WEEK_AGO = DateTime.now().minus(Period.weeks(1))
+    private val DAY_AGO = DateTime.now().minus(Period.days(1))
   }
 }
