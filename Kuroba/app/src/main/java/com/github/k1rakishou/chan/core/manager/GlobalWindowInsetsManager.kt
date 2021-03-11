@@ -1,9 +1,16 @@
 package com.github.k1rakishou.chan.core.manager
 
+import android.content.Context
+import android.graphics.Point
 import android.graphics.Rect
+import android.view.MotionEvent
 import androidx.core.view.WindowInsetsCompat
+import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBias
+import com.github.k1rakishou.common.AndroidUtils
 
 class GlobalWindowInsetsManager {
+  private val displaySize = Point(0, 0)
+
   private var initialized = false
 
   var isKeyboardOpened = false
@@ -11,13 +18,20 @@ class GlobalWindowInsetsManager {
   var keyboardHeight = 0
     private set
 
-  private val currentInsets = Rect()
+  private var lastTouchCoordinates = Point(0, 0)
 
+  private val currentInsets = Rect()
   private val callbacksAwaitingInsetsDispatch = ArrayList<Runnable>()
   private val callbacksAwaitingKeyboardHidden = ArrayList<Runnable>()
   private val callbacksAwaitingKeyboardVisible = ArrayList<Runnable>()
   private val insetsUpdatesListeners = HashSet<WindowInsetsListener>()
   private val keyboardUpdatesListeners = HashSet<KeyboardStateListener>()
+
+  fun updateDisplaySize(context: Context) {
+    val dispSize = AndroidUtils.getDisplaySize(context)
+
+    displaySize.set(dispSize.x, dispSize.y)
+  }
 
   fun addInsetsUpdatesListener(listener: WindowInsetsListener) {
     insetsUpdatesListeners += listener
@@ -50,6 +64,23 @@ class GlobalWindowInsetsManager {
       callbacksAwaitingKeyboardHidden.forEach { it.run() }
       callbacksAwaitingKeyboardHidden.clear()
     }
+  }
+
+  fun updateLastTouchCoordinates(event: MotionEvent?) {
+    if (event == null || event.pointerCount != 1) {
+      return
+    }
+
+    lastTouchCoordinates.set(event.rawX.toInt(), event.rawY.toInt())
+  }
+
+  fun lastTouchCoordinates(): Point = lastTouchCoordinates
+
+  fun lastTouchCoordinatesAsConstraintLayoutBias(): ConstraintLayoutBias {
+    val horizBias = lastTouchCoordinates.x.toFloat() / displaySize.x.coerceAtLeast(1).toFloat()
+    val vertBias = lastTouchCoordinates.y.toFloat() / displaySize.y.coerceAtLeast(1).toFloat()
+
+    return ConstraintLayoutBias(horizBias, vertBias)
   }
 
   fun updateKeyboardHeight(height: Int) {

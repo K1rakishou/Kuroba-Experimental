@@ -24,6 +24,7 @@ import android.content.res.Configuration
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -175,6 +176,8 @@ class StartActivity : AppCompatActivity(),
       .activityModule(ActivityModule())
       .build()
       .also { component -> component.inject(this) }
+
+    globalWindowInsetsManager.updateDisplaySize(this)
 
     themeEngine.addListener(this)
     themeEngine.refreshViews()
@@ -475,6 +478,11 @@ class StartActivity : AppCompatActivity(),
     }
 
     return stack.peek().dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
+  }
+
+  override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
+    globalWindowInsetsManager.updateLastTouchCoordinates(ev)
+    return super.dispatchTouchEvent(ev)
   }
 
   override fun onSaveInstanceState(outState: Bundle) {

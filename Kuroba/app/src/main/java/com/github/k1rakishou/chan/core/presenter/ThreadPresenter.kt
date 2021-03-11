@@ -48,7 +48,6 @@ import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutPresenterCallback
-import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
@@ -104,7 +103,8 @@ class ThreadPresenter @Inject constructor(
   private val postHideHelper: PostHideHelper,
   private val chanThreadManager: ChanThreadManager,
   private val chanPostBuilderCache: ChanPostBuilderCache,
-  private val imageSaverV2: ImageSaverV2
+  private val imageSaverV2: ImageSaverV2,
+  private val globalWindowInsetsManager: GlobalWindowInsetsManager
 ) : PostAdapterCallback,
   PostCellCallback,
   ThreadStatusCell.Callback,
@@ -1076,16 +1076,6 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    val gravity = if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-      when (currentChanDescriptor) {
-        is ChanDescriptor.CatalogDescriptor -> ConstraintLayoutBiasPair.Left
-        is ChanDescriptor.ThreadDescriptor -> ConstraintLayoutBiasPair.Right
-        else -> return
-      }
-    } else {
-      ConstraintLayoutBiasPair.Bottom
-    }
-
     val items = mutableListOf<FloatingListMenuItem>()
     items += createMenuItem(THUMBNAIL_COPY_URL, R.string.action_copy_image_url)
     items += createMenuItem(SHARE_MEDIA_FILE_CONTENT, R.string.action_share_content)
@@ -1094,7 +1084,7 @@ class ThreadPresenter @Inject constructor(
 
     val floatingListMenuController = FloatingListMenuController(
       context,
-      gravity,
+      globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items,
       { item -> onThumbnailOptionClicked(item.key as Int, postImage) }
     )
@@ -1536,19 +1526,9 @@ class ThreadPresenter @Inject constructor(
     inPopup: Boolean,
     items: List<FloatingListMenuItem>
   ) {
-    val gravity = if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-      when (currentChanDescriptor) {
-        is ChanDescriptor.CatalogDescriptor -> ConstraintLayoutBiasPair.BottomLeft
-        is ChanDescriptor.ThreadDescriptor -> ConstraintLayoutBiasPair.BottomRight
-        else -> return
-      }
-    } else {
-      ConstraintLayoutBiasPair.Bottom
-    }
-
     val floatingListMenuController = FloatingListMenuController(
       context,
-      gravity,
+      globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items,
       { item -> onPostOptionClicked(post, (item.key as Int), inPopup) }
     )

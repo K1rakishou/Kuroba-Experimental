@@ -43,6 +43,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.helper.DialogFactory;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.k1rakishou.chan.ui.layout.FilterLayout;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
@@ -86,6 +87,8 @@ public class FiltersController
     DialogFactory dialogFactory;
     @Inject
     BoardManager boardManager;
+    @Inject
+    GlobalWindowInsetsManager globalWindowInsetsManager;
 
     private ColorizableRecyclerView recyclerView;
     private ColorizableFloatingActionButton add;
@@ -146,7 +149,8 @@ public class FiltersController
         navigation.setTitle(R.string.filters_screen);
         navigation.swipeable = false;
 
-        navigation.buildMenu()
+        navigation
+                .buildMenu(context)
                 .withItem(R.drawable.ic_search_white_24dp, this::searchClicked)
                 .withItem(R.drawable.ic_help_outline_white_24dp, this::helpClicked)
                 .build();

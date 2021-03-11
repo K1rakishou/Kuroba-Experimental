@@ -254,7 +254,8 @@ public class ImageViewerController
     }
 
     private void buildMenu() {
-        NavigationItem.MenuBuilder menuBuilder = navigation.buildMenu();
+        NavigationItem.MenuBuilder menuBuilder = navigation.buildMenu(context);
+
         if (goPostCallback != null) {
             menuBuilder.withItem(R.drawable.ic_subdirectory_arrow_left_white_24dp, this::goPostClicked);
         }

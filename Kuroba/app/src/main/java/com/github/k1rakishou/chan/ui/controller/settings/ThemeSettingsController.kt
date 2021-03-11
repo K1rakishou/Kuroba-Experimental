@@ -43,6 +43,7 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
@@ -52,7 +53,6 @@ import com.github.k1rakishou.chan.ui.adapter.PostAdapter
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
-import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
@@ -117,6 +117,8 @@ class ThemeSettingsController(context: Context) : Controller(context),
   lateinit var fileChooser: FileChooser
   @Inject
   lateinit var dialogFactory: DialogFactory
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private val dummyBoardDescriptor =
     BoardDescriptor.create("test_site", "test_board")
@@ -185,7 +187,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
 
     if (AndroidUtils.isAndroid10()) {
       navigation
-        .buildMenu(ConstraintLayoutBiasPair.TopRight)
+        .buildMenu(context)
         .withOverflow(navigationController, this)
         .withCheckableSubItem(
           ACTION_IGNORE_DARK_NIGHT_MODE,
@@ -666,7 +668,8 @@ class ThemeSettingsController(context: Context) : Controller(context),
     val item = NavigationItem()
     item.title = theme.name
     item.hasBack = false
-    item.buildMenu(ConstraintLayoutBiasPair.TopRight)
+
+    item.buildMenu(context)
       .withOverflow(navigationController, this)
       .addSubItems(theme.isDarkTheme)
       .build()

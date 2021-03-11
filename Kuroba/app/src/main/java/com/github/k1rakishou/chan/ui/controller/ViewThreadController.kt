@@ -31,6 +31,7 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.B
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.BookmarksDeleted
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.BookmarksInitialized
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
@@ -39,7 +40,6 @@ import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
-import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
@@ -87,6 +87,8 @@ open class ViewThreadController(
   lateinit var chanThreadManager: ChanThreadManager
   @Inject
   lateinit var threadFollowHistoryManager: ThreadFollowHistoryManager
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private var pinItemPinned = false
   private var threadDescriptor: ThreadDescriptor = startingThreadDescriptor
@@ -164,14 +166,7 @@ open class ViewThreadController(
   }
 
   protected fun buildMenu() {
-    val gravity = if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-      ConstraintLayoutBiasPair.TopRight
-    } else {
-      ConstraintLayoutBiasPair.Top
-    }
-
-    val menuBuilder = navigation.buildMenu(gravity)
-
+    val menuBuilder = navigation.buildMenu(context)
     if (!ChanSettings.textOnly.get()) {
       menuBuilder
         .withItem(ACTION_ALBUM, R.drawable.ic_image_white_24dp) { item -> albumClicked(item) }
@@ -350,7 +345,7 @@ open class ViewThreadController(
 
     val floatingListMenuController = FloatingListMenuController(
       context,
-      ConstraintLayoutBiasPair.TopRight,
+      globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items,
       itemClickListener = { clickedItem ->
         val archiveDescriptor = (clickedItem.key as? ArchiveDescriptor)

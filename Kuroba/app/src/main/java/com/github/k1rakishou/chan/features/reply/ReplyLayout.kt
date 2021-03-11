@@ -82,7 +82,6 @@ import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout
-import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowDrawable
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
@@ -696,7 +695,7 @@ class ReplyLayout @JvmOverloads constructor(
 
     val floatingListMenuController = FloatingListMenuController(
       context,
-      ConstraintLayoutBiasPair.Center,
+      globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       floatingListMenuItems,
       { floatingListMenuItem ->
         val flagInfo = floatingListMenuItem.value as? StaticBoardFlagInfoRepository.FlagInfo

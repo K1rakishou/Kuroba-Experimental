@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkForegroundWatcher
@@ -43,7 +44,6 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyExpandableGroupView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
-import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
@@ -91,6 +91,8 @@ class BookmarksController(
   lateinit var archivesManager: ArchivesManager
   @Inject
   lateinit var bookmarkForegroundWatcher: BookmarkForegroundWatcher
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var swipeRefreshLayout: KurobaSwipeRefreshLayout
@@ -355,7 +357,7 @@ class BookmarksController(
     navigationItem.title = getString(R.string.controller_bookmarks)
     navigationItem.swipeable = false
 
-    navigationItem.buildMenu(ConstraintLayoutBiasPair.TopRight)
+    navigationItem.buildMenu(context)
       .withMenuItemClickInterceptor {
         exitReorderingModeIfActive()
         return@withMenuItemClickInterceptor true
@@ -544,7 +546,7 @@ class BookmarksController(
   private fun onSetGridBookmarkViewWidthClicked() {
     val rangeSettingUpdaterController = RangeSettingUpdaterController(
       context = context,
-      constraintLayoutBiasPair = ConstraintLayoutBiasPair.TopRight,
+      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       title = getString(R.string.controller_bookmarks_set_grid_view_width_text),
       minValue = context.resources.getDimension(R.dimen.thread_grid_bookmark_view_min_width).toInt(),
       maxValue = context.resources.getDimension(R.dimen.thread_grid_bookmark_view_max_width).toInt(),

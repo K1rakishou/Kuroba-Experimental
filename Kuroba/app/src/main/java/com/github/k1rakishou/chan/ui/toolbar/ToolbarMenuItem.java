@@ -16,6 +16,7 @@
  */
 package com.github.k1rakishou.chan.ui.toolbar;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.TransitionDrawable;
@@ -26,16 +27,19 @@ import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController;
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController;
-import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.core_logger.Logger;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.inject.Inject;
 
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
@@ -56,11 +60,14 @@ public class ToolbarMenuItem {
     public int id;
     public boolean visible = true;
     public boolean enabled = true;
-    public ConstraintLayoutBiasPair constraintLayoutBiasPair = ConstraintLayoutBiasPair.Center;
     public Drawable drawable;
     public final List<ToolbarMenuSubItem> subItems = new ArrayList<>();
+
     private ClickCallback clickCallback;
     private ClickCallback longClickCallback;
+
+    @Inject
+    GlobalWindowInsetsManager globalWindowInsetsManager;
 
     @Nullable
     private ToobarThreedotMenuCallback threedotMenuCallback;
@@ -71,14 +78,16 @@ public class ToolbarMenuItem {
     private ImageView view;
 
     public ToolbarMenuItem(
+            Context context,
             int id,
             int drawable,
             ClickCallback clickCallback
     ) {
-        this(id, ResourcesCompat.getDrawable(getRes(), drawable, null), clickCallback);
+        this(context, id, ResourcesCompat.getDrawable(getRes(), drawable, null), clickCallback);
     }
 
     public ToolbarMenuItem(
+            Context context,
             int id,
             Drawable drawable,
             ClickCallback clickCallback
@@ -86,9 +95,12 @@ public class ToolbarMenuItem {
         this.id = id;
         this.drawable = drawable;
         this.clickCallback = clickCallback;
+
+        init(context);
     }
 
     public ToolbarMenuItem(
+            Context context,
             int id,
             Drawable drawable,
             ClickCallback clickCallback,
@@ -98,9 +110,12 @@ public class ToolbarMenuItem {
         this.drawable = drawable;
         this.clickCallback = clickCallback;
         this.longClickCallback = longClickCallback;
+
+        init(context);
     }
 
     public ToolbarMenuItem(
+            Context context,
             int id,
             int drawable,
             ClickCallback clickCallback,
@@ -112,23 +127,13 @@ public class ToolbarMenuItem {
         this.clickCallback = clickCallback;
         this.navigationController = navigationController;
         this.threedotMenuCallback = threedotMenuCallback;
-        this.constraintLayoutBiasPair = ConstraintLayoutBiasPair.Center;
+
+        init(context);
     }
 
-    public ToolbarMenuItem(
-            int id,
-            int drawable,
-            ConstraintLayoutBiasPair constraintLayoutBiasPair,
-            ClickCallback clickCallback,
-            @NonNull NavigationController navigationController,
-            @Nullable ToobarThreedotMenuCallback threedotMenuCallback
-    ) {
-        this.id = id;
-        this.drawable = ResourcesCompat.getDrawable(getRes(), drawable, null);
-        this.clickCallback = clickCallback;
-        this.navigationController = navigationController;
-        this.threedotMenuCallback = threedotMenuCallback;
-        this.constraintLayoutBiasPair = constraintLayoutBiasPair;
+    private void init(Context context) {
+        AppModuleAndroidUtils.extractActivityComponent(context)
+                .inject(this);
     }
 
     public void attach(ImageView view) {
@@ -280,7 +285,7 @@ public class ToolbarMenuItem {
 
         return new FloatingListMenuController(
                 view.getContext(),
-                constraintLayoutBiasPair,
+                globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
                 floatingListMenuItems,
                 itemClickListener,
                 menuDismissListener

@@ -25,6 +25,7 @@ import androidx.annotation.Nullable;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem;
 import com.github.k1rakishou.chan.utils.IOUtils;
@@ -49,6 +50,8 @@ public class LogsController extends Controller {
 
     @Inject
     ThemeEngine themeEngine;
+    @Inject
+    GlobalWindowInsetsManager globalWindowInsetsManager;
 
     private ColorizableTextView logTextView;
     private String logText;
@@ -68,7 +71,8 @@ public class LogsController extends Controller {
 
         navigation.setTitle(R.string.settings_logs_screen);
 
-        navigation.buildMenu()
+        navigation
+                .buildMenu(context)
                 .withOverflow(navigationController)
                 .withSubItem(
                         ACTION_LOGS_COPY,

@@ -108,7 +108,7 @@ public class AlbumDownloadController
         view = inflate(context, R.layout.controller_album_download);
 
         updateTitle();
-        navigation.buildMenu()
+        navigation.buildMenu(context)
                 .withItem(R.drawable.ic_select_all_white_24dp, this::onCheckAllClicked)
                 .build();
 

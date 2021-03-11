@@ -3,12 +3,12 @@ package com.github.k1rakishou.chan.features.settings
 import android.content.Context
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.RangeSettingV2
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.settings.RangeSettingUpdaterController
-import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.core_logger.Logger
@@ -20,6 +20,8 @@ abstract class BaseSettingsController(
 
   @Inject
   lateinit var dialogFactory: DialogFactory
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   protected fun showListDialog(settingV2: ListSettingV2<*>, onItemClicked: (Any?) -> Unit) {
     val items = settingV2.items.mapIndexed { index, item ->
@@ -34,7 +36,7 @@ abstract class BaseSettingsController(
     val controller = FloatingListMenuController(
       context = context,
       items = items,
-      constraintLayoutBiasPair = ConstraintLayoutBiasPair.Center,
+      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       itemClickListener = { clickedItem ->
         settingV2.updateSetting(clickedItem.value)
         onItemClicked(clickedItem.value)
@@ -52,7 +54,7 @@ abstract class BaseSettingsController(
   ) {
     val rangeSettingUpdaterController = RangeSettingUpdaterController(
       context = context,
-      constraintLayoutBiasPair = ConstraintLayoutBiasPair.Center,
+      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       title = rangeSettingV2.topDescription,
       minValue = rangeSettingV2.min,
       maxValue = rangeSettingV2.max,

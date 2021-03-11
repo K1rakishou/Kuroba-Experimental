@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
@@ -27,7 +28,6 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyTextViewWrapHeight
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.chan.ui.helper.picker.AbstractFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
-import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -69,6 +69,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   lateinit var imageLoaderV2: ImageLoaderV2
   @Inject
   lateinit var runtimePermissionsHelper: RuntimePermissionsHelper
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private val controller = ReplyFilesEpoxyController()
   private val epoxyRecyclerView: ColorizableEpoxyRecyclerView
@@ -320,7 +322,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
     val floatingListMenuController = FloatingListMenuController(
       context = context,
-      constraintLayoutBiasPair = ConstraintLayoutBiasPair.Bottom,
+      globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = floatingListMenuItems,
       itemClickListener = { item -> onAttachFileItemClicked(item) }
     )
@@ -365,7 +367,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
     val floatingListMenuController = FloatingListMenuController(
       context = context,
-      constraintLayoutBiasPair = ConstraintLayoutBiasPair.Bottom,
+      globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = floatingListMenuItems,
       itemClickListener = { item -> onPickFileItemClicked(item) }
     )

@@ -31,9 +31,9 @@ import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload;
 import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager;
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.site.ImageSearch;
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController;
-import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair;
 import com.github.k1rakishou.chan.ui.view.MultiImageView;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
@@ -95,6 +95,8 @@ public class ImageViewerPresenter
     BoardManager boardManager;
     @Inject
     Chan4CloudFlareImagePreloaderManager chan4CloudFlareImagePreloaderManager;
+    @Inject
+    GlobalWindowInsetsManager globalWindowInsetsManager;
 
     private boolean entering = true;
     private boolean exiting = false;
@@ -776,7 +778,7 @@ public class ImageViewerPresenter
 
         FloatingListMenuController floatingListMenuController = new FloatingListMenuController(
                 context,
-                ConstraintLayoutBiasPair.Center,
+                globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
                 items,
                 item -> {
                     for (ImageSearch imageSearch : ImageSearch.engines) {

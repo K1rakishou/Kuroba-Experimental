@@ -24,7 +24,6 @@ import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationCont
 import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage
-import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
@@ -72,7 +71,7 @@ class MainSettingsControllerV2(
     view = inflate(context, R.layout.controller_settings_main)
     epoxyRecyclerView = view.findViewById(R.id.settings_recycler_view)
 
-    navigation.buildMenu(ConstraintLayoutBiasPair.TopRight)
+    navigation.buildMenu(context)
       .withItem(R.drawable.ic_search_white_24dp) {
         (navigationController as ToolbarNavigationController).showSearch()
       }

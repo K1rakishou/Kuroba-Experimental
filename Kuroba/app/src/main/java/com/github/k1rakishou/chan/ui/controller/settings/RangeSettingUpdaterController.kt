@@ -9,7 +9,7 @@ import androidx.core.widget.doAfterTextChanged
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
-import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
+import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBias
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
@@ -18,7 +18,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 
 class RangeSettingUpdaterController(
   context: Context,
-  private val constraintLayoutBiasPair: ConstraintLayoutBiasPair = ConstraintLayoutBiasPair.TopRight,
+  private val constraintLayoutBias: ConstraintLayoutBias,
   private val title: String,
   private val minValue: Int,
   private val maxValue: Int,
@@ -60,8 +60,8 @@ class RangeSettingUpdaterController(
 
     val cardView = view.findViewById<ColorizableCardView>(R.id.controller_range_setting_updater_card_view)
     cardView.updateLayoutParams<ConstraintLayout.LayoutParams> {
-      horizontalBias = constraintLayoutBiasPair.horizontalBias
-      verticalBias = constraintLayoutBiasPair.verticalBias
+      horizontalBias = constraintLayoutBias.horizontalBias
+      verticalBias = constraintLayoutBias.verticalBias
     }
 
     slider.valueFrom = minValue.toFloat()

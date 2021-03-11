@@ -17,6 +17,7 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.usecase.CreateBoardManuallyUseCase
 import com.github.k1rakishou.chan.features.setup.data.BoardsSetupControllerState
@@ -28,7 +29,6 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.helper.BoardHelper
-import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
@@ -50,6 +50,8 @@ class BoardsSetupController(
   lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var createBoardManuallyUseCase: CreateBoardManuallyUseCase
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private val controller = BoardsEpoxyController()
 
@@ -135,7 +137,7 @@ class BoardsSetupController(
       ?.canCreateBoardsManually ?: false
 
     if (canCreateBoardsManually) {
-      navigation.buildMenu(ConstraintLayoutBiasPair.TopRight)
+      navigation.buildMenu(context)
         .withItem(R.drawable.ic_create_white_24dp) {
           onCreateBoardManuallyClicked()
         }

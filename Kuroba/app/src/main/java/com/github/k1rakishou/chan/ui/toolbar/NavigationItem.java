@@ -16,6 +16,7 @@
  */
 package com.github.k1rakishou.chan.ui.toolbar;
 
+import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.view.View;
 
@@ -23,7 +24,6 @@ import androidx.annotation.NonNull;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController;
-import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBiasPair;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +38,7 @@ import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
  * The navigation properties for a Controller. Controls common properties that parent controllers
  * need to know, such as the title of the controller.
  * <p>
- * This is also used to set up the toolbar menu, see {@link #buildMenu(ConstraintLayoutBiasPair)}.
+ * This is also used to set up the toolbar menu, see {@link #buildMenu(Context)}.
  */
 public class NavigationItem {
     public String title = "";
@@ -71,12 +71,8 @@ public class NavigationItem {
         this.title = title;
     }
 
-    public MenuBuilder buildMenu() {
-        return new MenuBuilder(ConstraintLayoutBiasPair.TopRight, this);
-    }
-
-    public MenuBuilder buildMenu(ConstraintLayoutBiasPair constraintLayoutBiasPair) {
-        return new MenuBuilder(constraintLayoutBiasPair, this);
+    public MenuBuilder buildMenu(Context context) {
+        return new MenuBuilder(context, this);
     }
 
     public void setMiddleMenu(ToolbarMiddleMenu middleMenu) {
@@ -115,11 +111,11 @@ public class NavigationItem {
     public static class MenuBuilder {
         private final NavigationItem navigationItem;
         private final ToolbarMenu menu;
-        private ConstraintLayoutBiasPair constraintLayoutBiasPair;
+        private final Context context;
 
-        public MenuBuilder(ConstraintLayoutBiasPair constraintLayoutBiasPair, NavigationItem navigationItem) {
+        public MenuBuilder(Context context, NavigationItem navigationItem) {
             this.navigationItem = navigationItem;
-            this.constraintLayoutBiasPair = constraintLayoutBiasPair;
+            this.context = context;
             menu = new ToolbarMenu();
         }
 
@@ -128,11 +124,11 @@ public class NavigationItem {
         }
 
         public MenuBuilder withItem(int id, int drawable, ToolbarMenuItem.ClickCallback clickCallback) {
-            return withItem(new ToolbarMenuItem(id, drawable, clickCallback));
+            return withItem(new ToolbarMenuItem(context, id, drawable, clickCallback));
         }
 
         public MenuBuilder withItem(int id, Drawable drawable, ToolbarMenuItem.ClickCallback clickCallback) {
-            return withItem(new ToolbarMenuItem(id, drawable, clickCallback));
+            return withItem(new ToolbarMenuItem(context, id, drawable, clickCallback));
         }
 
         public MenuBuilder withItem(
@@ -141,7 +137,7 @@ public class NavigationItem {
                 ToolbarMenuItem.ClickCallback clickCallback,
                 ToolbarMenuItem.ClickCallback longClickCallback
         ) {
-            return withItem(new ToolbarMenuItem(id, getDrawable(drawable), clickCallback, longClickCallback));
+            return withItem(new ToolbarMenuItem(context, id, getDrawable(drawable), clickCallback, longClickCallback));
         }
 
         public MenuBuilder withItem(
@@ -150,11 +146,10 @@ public class NavigationItem {
                 ToolbarMenuItem.ClickCallback clickCallback,
                 ToolbarMenuItem.ClickCallback longClickCallback
         ) {
-            return withItem(new ToolbarMenuItem(id, drawable, clickCallback, longClickCallback));
+            return withItem(new ToolbarMenuItem(context, id, drawable, clickCallback, longClickCallback));
         }
 
         public MenuBuilder withItem(ToolbarMenuItem menuItem) {
-            menuItem.constraintLayoutBiasPair = constraintLayoutBiasPair;
             menu.addItem(menuItem);
             return this;
         }
@@ -173,9 +168,9 @@ public class NavigationItem {
         public MenuOverflowBuilder withOverflow(NavigationController navigationController) {
             return new MenuOverflowBuilder(this,
                     new ToolbarMenuItem(
+                            context,
                             ToolbarMenu.OVERFLOW_ID,
                             R.drawable.ic_more_vert_white_24dp,
-                            constraintLayoutBiasPair,
                             ToolbarMenuItem::showSubmenu,
                             navigationController,
                             null
@@ -189,9 +184,9 @@ public class NavigationItem {
         ) {
             return new MenuOverflowBuilder(this,
                     new ToolbarMenuItem(
+                            context,
                             ToolbarMenu.OVERFLOW_ID,
                             R.drawable.ic_more_vert_white_24dp,
-                            constraintLayoutBiasPair,
                             ToolbarMenuItem::showSubmenu,
                             navigationController,
                             threedotMenuCallback

@@ -151,6 +151,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout;
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarContainer;
+import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.ui.view.FastScroller;
 import com.github.k1rakishou.chan.ui.view.FloatingMenu;
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton;
@@ -339,6 +340,7 @@ public interface ActivityComponent {
     void inject(OptionalSwipeViewPager optionalSwipeViewPager);
     void inject(FastScroller fastScroller);
     void inject(PopupControllerContainer popupControllerContainer);
+    void inject(ToolbarMenuItem toolbarMenuItem);
 
     @Subcomponent.Builder
     interface Builder {

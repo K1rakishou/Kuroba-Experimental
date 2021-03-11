@@ -229,7 +229,7 @@ public class AlbumViewController
 
         gridDrawable.setTint(Color.WHITE);
 
-        navigation.buildMenu()
+        navigation.buildMenu(context)
                 .withItem(ACTION_TOGGLE_LAYOUT_MODE, gridDrawable, this::toggleLayoutModeClicked)
                 .withItem(ACTION_DOWNLOAD, downloadDrawable, this::downloadAlbumClicked)
                 .build();
