@@ -436,6 +436,7 @@ class MainSettingsControllerV2(
     if (groupSettingIndex != settingsGroup.lastIndex()) {
       epoxyDividerView {
         id("epoxy_divider_${globalSettingIndex}")
+        updateMargins(null)
       }
     }
   }

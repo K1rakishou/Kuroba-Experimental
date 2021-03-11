@@ -80,7 +80,10 @@ class GlobalWindowInsetsManager {
     val horizBias = lastTouchCoordinates.x.toFloat() / displaySize.x.coerceAtLeast(1).toFloat()
     val vertBias = lastTouchCoordinates.y.toFloat() / displaySize.y.coerceAtLeast(1).toFloat()
 
-    return ConstraintLayoutBias(horizBias, vertBias)
+    return ConstraintLayoutBias(
+      horizBias.coerceIn(0f, 1f),
+      vertBias.coerceIn(0f, 1f)
+    )
   }
 
   fun updateKeyboardHeight(height: Int) {

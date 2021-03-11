@@ -4,10 +4,12 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.ui.epoxy.EpoxyDividerView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.epoxyCheckableFloatingListMenuRow
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.epoxyFloatingListMenuRow
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 
 class FloatingListMenu @JvmOverloads constructor(
   context: Context,
@@ -89,10 +91,18 @@ class FloatingListMenu @JvmOverloads constructor(
         if (index != items.lastIndex) {
           epoxyDividerView {
             id("epoxy_divider_${index}")
+            updateMargins(MARGINS)
           }
         }
       }
     }
+  }
+
+  companion object {
+    private val MARGINS = EpoxyDividerView.Margins(
+      left = dp(8f),
+      right = dp(8f)
+    )
   }
 
 }

@@ -590,6 +590,8 @@ class StartActivity : AppCompatActivity(),
     if (AndroidUtils.isAndroid10() && !ChanSettings.ignoreDarkNightMode.get()) {
       applyLightDarkThemeIfNeeded(newConfig)
     }
+
+    globalWindowInsetsManager.updateDisplaySize(this)
   }
 
   private fun applyLightDarkThemeIfNeeded(newConfig: Configuration) {

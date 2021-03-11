@@ -172,6 +172,7 @@ class ProxySetupController(
             if (index != state.proxyEntryViewList.lastIndex) {
               epoxyDividerView {
                 id("epoxy_proxy_view_divider_${proxyEntryView.proxyKeyString()}")
+                updateMargins(null)
               }
             }
           }

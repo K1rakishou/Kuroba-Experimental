@@ -6,8 +6,11 @@ import androidx.core.view.updateLayoutParams
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBias
+import com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenu
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 
 open class FloatingListMenuController @JvmOverloads constructor(
   context: Context,
@@ -36,7 +39,14 @@ open class FloatingListMenuController @JvmOverloads constructor(
       itemClickListener.invoke(clickedItem)
     }
 
-    floatingListMenu.updateLayoutParams<ConstraintLayout.LayoutParams> {
+    val viewContainerWithMaxSize = view.findViewById<ViewContainerWithMaxSize>(R.id.container)
+    viewContainerWithMaxSize.desiredWidth = if (isTablet()) {
+      dp(400f)
+    } else {
+      dp(320f)
+    }
+
+    viewContainerWithMaxSize.updateLayoutParams<ConstraintLayout.LayoutParams> {
       horizontalBias = constraintLayoutBias.horizontalBias
       verticalBias = constraintLayoutBias.verticalBias
     }

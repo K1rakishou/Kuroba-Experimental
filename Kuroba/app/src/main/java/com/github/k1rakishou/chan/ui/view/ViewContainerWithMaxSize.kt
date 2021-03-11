@@ -26,7 +26,16 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
   private var displayHeight: Int = 0
 
   var desiredWidth: Int = 0
+    set(value) {
+      field = value
+      requestLayout()
+    }
+
   var desiredHeight: Int = 0
+    set(value) {
+      field = value
+      requestLayout()
+    }
 
   init {
     if (!isInEditMode) {
