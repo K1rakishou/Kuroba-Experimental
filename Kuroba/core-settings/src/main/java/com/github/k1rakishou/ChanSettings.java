@@ -253,6 +253,7 @@ public class ChanSettings {
 
     //Post
     public static StringSetting fontSize;
+    public static RangeSetting postCellThumbnailSizePercents;
     public static BooleanSetting postFullDate;
     public static BooleanSetting postFileInfo;
     public static BooleanSetting postFilename;
@@ -425,6 +426,7 @@ public class ChanSettings {
 
             // Post
             fontSize = new StringSetting(provider, "preference_font", chanSettingsInfo.isTablet() ? "16" : "14");
+            postCellThumbnailSizePercents = new RangeSetting(provider, "post_cell_thumbnail_size_percents", 75, 50, 100);
             postFullDate = new BooleanSetting(provider, "preference_post_full_date", false);
             postFileInfo = new BooleanSetting(provider, "preference_post_file_info", true);
             postFilename = new BooleanSetting(provider, "preference_post_filename", true);

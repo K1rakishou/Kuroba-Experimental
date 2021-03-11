@@ -880,6 +880,8 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
 
     unbindPostImages()
 
+    val cellPostThumbnailSize = calculateCurrentCellPostThumbnailSize()
+
     var generatedId = -1000 // Do not use -1 because it's View.NO_ID
 
     for ((imageIndex, postImage) in post.postImages.withIndex()) {
@@ -921,13 +923,10 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
         else -> 0
       }
 
-      val layoutParams = LinearLayout.LayoutParams(
-        CELL_POST_THUMBNAIL_SIZE,
-        CELL_POST_THUMBNAIL_SIZE
-      )
+      val layoutParams = LinearLayout.LayoutParams(cellPostThumbnailSize, cellPostThumbnailSize)
 
       layoutParams.setMargins(
-        THUMBNAIL_LEFT_MARGIN,
+        horizPaddingPx,
         topMargin,
         0,
         bottomMargin
@@ -938,6 +937,13 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     }
 
     this.prevChanPostImages.addAll(post.postImages)
+  }
+
+  private fun calculateCurrentCellPostThumbnailSize(): Int {
+    val onePercent = getDimen(R.dimen.cell_post_thumbnail_size_max).toFloat() / 100f
+    val newSize = ChanSettings.postCellThumbnailSizePercents.get() * onePercent
+
+    return newSize.toInt()
   }
 
   private fun unbindPostImages() {
@@ -1494,11 +1500,9 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       BitmapFactory.decodeResource(getRes(), R.drawable.error_icon)
     )
 
-    private val CELL_POST_THUMBNAIL_SIZE = getDimen(R.dimen.cell_post_thumbnail_size)
     private val THUMBNAIL_ROUNDING = dp(2f)
     private val THUMBNAIL_BOTTOM_MARGIN = dp(5f)
     private val THUMBNAIL_TOP_MARGIN = dp(4f)
-    private val THUMBNAIL_LEFT_MARGIN = dp(4f)
     private val MULTIPLE_THUMBNAILS_MIDDLE_MARGIN = dp(2f)
   }
 }

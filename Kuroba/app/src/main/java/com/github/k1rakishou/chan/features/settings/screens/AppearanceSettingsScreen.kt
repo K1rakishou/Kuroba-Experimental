@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.RangeSettingV2
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.settings.ThemeSettingsController
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -127,6 +128,15 @@ class AppearanceSettingsScreen(
           },
           setting = ChanSettings.fontSize,
           requiresUiRefresh = true
+        )
+
+        group += RangeSettingV2.createBuilder(
+          context = context,
+          identifier = AppearanceScreen.PostGroup.PostCellThumbnailSizePercent,
+          topDescriptionIdFunc = { R.string.setting_post_cell_thumbnail_size },
+          currentValueStringFunc = { "${ChanSettings.postCellThumbnailSizePercents.get()}%" },
+          requiresUiRefresh = true,
+          setting = ChanSettings.postCellThumbnailSizePercents
         )
 
         group += BooleanSettingV2.createBuilder(
