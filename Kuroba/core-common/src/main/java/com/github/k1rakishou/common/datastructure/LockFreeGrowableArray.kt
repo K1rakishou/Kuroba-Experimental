@@ -15,7 +15,7 @@ class LockFreeGrowableArray<T>(
   @Volatile
   private var array: Array<T?> = arrayOfNulls<Any?>(initialSize) as Array<T?>
 
-  fun getOrCreate(comparatorFunc: (T) -> Boolean, instrantiatorFunc: () -> T): T {
+  fun getOrCreate(comparatorFunc: (T) -> Boolean, instantiatorFunc: () -> T): T {
     var index = 0
 
     while (true) {
@@ -33,7 +33,7 @@ class LockFreeGrowableArray<T>(
       }
     }
 
-    val newValue = instrantiatorFunc()
+    val newValue = instantiatorFunc()
     push(newValue)
 
     return newValue

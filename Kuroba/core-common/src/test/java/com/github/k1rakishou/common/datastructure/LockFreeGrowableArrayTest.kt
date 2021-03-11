@@ -16,7 +16,7 @@ class LockFreeGrowableArrayTest {
     repeat(count) { value ->
       arrayCache.getOrCreate(
         comparatorFunc = { v -> v == value },
-        instrantiatorFunc = { value }
+        instantiatorFunc = { value }
       )
     }
 
@@ -45,7 +45,7 @@ class LockFreeGrowableArrayTest {
       futures += executor.submit {
         arrayCache.getOrCreate(
           comparatorFunc = { v -> v == value },
-          instrantiatorFunc = { value }
+          instantiatorFunc = { value }
         )
       }
     }

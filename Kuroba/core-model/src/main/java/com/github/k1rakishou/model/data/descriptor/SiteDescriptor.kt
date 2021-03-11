@@ -44,7 +44,7 @@ class SiteDescriptor private constructor(
 
       return CACHE.getOrCreate(
         comparatorFunc = { siteDescriptor -> siteDescriptor.siteName === siteName  },
-        instrantiatorFunc = { SiteDescriptor(siteName) }
+        instantiatorFunc = { SiteDescriptor(siteName) }
       )
     }
   }

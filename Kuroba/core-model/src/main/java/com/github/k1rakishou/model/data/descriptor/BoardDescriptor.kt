@@ -45,7 +45,7 @@ class BoardDescriptor private constructor(
         comparatorFunc = { boardDescriptor ->
           boardDescriptor.siteDescriptor.siteName === siteName && boardDescriptor.boardCode === boardCode
         },
-        instrantiatorFunc = {
+        instantiatorFunc = {
           BoardDescriptor(SiteDescriptor.create(siteName), boardCode)
         }
       )

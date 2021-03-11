@@ -97,7 +97,7 @@ sealed class ChanDescriptor {
             threadDescriptor.boardDescriptor === boardDescriptor
               && threadDescriptor.threadNo == threadNo
           },
-          instrantiatorFunc = { ThreadDescriptor(boardDescriptor, threadNo) }
+          instantiatorFunc = { ThreadDescriptor(boardDescriptor, threadNo) }
         )
       }
 
@@ -175,7 +175,7 @@ sealed class ChanDescriptor {
             catalogDescriptor.boardDescriptor.siteName() === siteName
               && catalogDescriptor.boardDescriptor.boardCode === boardCode
           },
-          instrantiatorFunc = { CatalogDescriptor(BoardDescriptor.create(siteName, boardCode)) }
+          instantiatorFunc = { CatalogDescriptor(BoardDescriptor.create(siteName, boardCode)) }
         )
       }
     }
