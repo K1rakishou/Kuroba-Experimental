@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.helper
 
+import android.app.AlertDialog
 import android.app.ProgressDialog
 import android.content.Context
 import android.content.DialogInterface
@@ -7,15 +8,17 @@ import android.graphics.drawable.ColorDrawable
 import android.text.InputType
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.view.inputmethod.EditorInfo
+import android.widget.Button
 import android.widget.LinearLayout
-import android.widget.ListAdapter
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
+import com.github.k1rakishou.chan.ui.controller.dialog.KurobaAlertDialogHostController
+import com.github.k1rakishou.chan.ui.controller.dialog.KurobaAlertDialogHostControllerCallbacks
+import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
+import com.github.k1rakishou.chan.ui.widget.dialog.KurobaAlertDialog
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.ViewUtils.changeProgressColor
@@ -28,6 +31,8 @@ class DialogFactory(
   private val themeEngine: ThemeEngine
 ) {
 
+  lateinit var navigationController: NavigationController
+
   @JvmOverloads
   fun createSimpleInformationDialog(
     context: Context,
@@ -37,29 +42,34 @@ class DialogFactory(
     positiveButtonTextId: Int = R.string.ok,
     onDismissListener: () -> Unit = { },
     cancelable: Boolean = true
-  ) {
+  ): KurobaAlertDialog.AlertDialogHandle? {
     if (!applicationVisibilityManager.isAppInForeground()) {
-      return
+      return null
     }
 
-    val builder = AlertDialog.Builder(context)
-      .setTitle(titleText)
-      .setPositiveButton(positiveButtonTextId) { _, _ ->
-        onPositiveButtonClickListener.invoke()
-      }
-      .setCancelable(cancelable)
+    val alertDialogHandle = AlertDialogHandleImpl()
 
-    if (descriptionText != null) {
-      builder.setMessage(descriptionText)
+    showKurobaAlertDialogHostController(
+      context = context,
+      cancelable = cancelable,
+      onDismissListener = onDismissListener,
+    ) { viewGroup, callbacks ->
+      val builder = KurobaAlertDialog.Builder(context)
+        .setTitle(titleText)
+        .setPositiveButton(positiveButtonTextId) { _, _ ->
+          onPositiveButtonClickListener.invoke()
+        }
+        .setCancelable(cancelable)
+
+      if (descriptionText != null) {
+        builder.setMessage(descriptionText)
+      }
+
+      builder
+        .create(viewGroup, callbacks, alertDialogHandle)
     }
 
-    builder
-      .create()
-      .apply {
-        setOnShowListener { dialogInterface -> dialogInterface.applyColors() }
-        setOnDismissListener { onDismissListener.invoke() }
-      }
-      .show()
+    return alertDialogHandle
   }
 
   @JvmOverloads
@@ -69,8 +79,6 @@ class DialogFactory(
     titleText: CharSequence? = null,
     descriptionTextId: Int? = null,
     descriptionText: CharSequence? = null,
-    adapter: ListAdapter? = null,
-    listener: ((DialogInterface, Int) -> Unit)? = null,
     customView: View? = null,
     cancelable: Boolean = true,
     onPositiveButtonClickListener: ((DialogInterface) -> Unit) = { },
@@ -79,66 +87,35 @@ class DialogFactory(
     neutralButtonText: String? = null,
     onNegativeButtonClickListener: ((DialogInterface) -> Unit) = { },
     negativeButtonText: String = getString(R.string.cancel),
-    onDismissListener: () -> Unit = { },
-    dialogModifier: (AlertDialog) -> Unit = { }
-  ): AlertDialog? {
+    onDismissListener: () -> Unit = { }
+  ): KurobaAlertDialog.AlertDialogHandle? {
     if (!applicationVisibilityManager.isAppInForeground()) {
       return null
     }
 
-    val builder = AlertDialog.Builder(context)
-      .setAdapterInternal(adapter, listener)
-      .setCustomViewInternal(customView)
-      .setTitleInternal(titleTextId, titleText)
-      .setDescriptionInternal(descriptionTextId, descriptionText)
-      .setPositiveButton(positiveButtonText) { dialog, _ ->
-        onPositiveButtonClickListener.invoke(dialog)
-      }
-      .setNeutralButtonInternal(neutralButtonText, onNeutralButtonClickListener)
-      .setNegativeButton(negativeButtonText) { dialog, _ ->
-        onNegativeButtonClickListener.invoke(dialog)
-      }
-      .setCancelable(cancelable)
+    val alertDialogHandle = AlertDialogHandleImpl()
 
-    val dialog = builder
-      .create()
-
-    dialog
-      .apply {
-        setOnShowListener { dialogInterface -> dialogInterface.applyColors() }
-        setOnDismissListener { onDismissListener() }
-        dialogModifier(this)
-      }
-      .show()
-
-    return dialog
-  }
-
-  @JvmOverloads
-  fun createDialogWithAdapter(
-    context: Context,
-    adapter: ListAdapter,
-    clickListener: ((DialogInterface, Int) -> Unit) = { _, _ -> },
-    titleTextId: Int? = null,
-    titleText: CharSequence? = null,
-    descriptionTextId: Int? = null,
-    descriptionText: CharSequence? = null,
-    dialogModifier: (AlertDialog) -> Unit = { }
-  ) {
-    if (!applicationVisibilityManager.isAppInForeground()) {
-      return
+    showKurobaAlertDialogHostController(
+      context = context,
+      cancelable = true,
+      onDismissListener = onDismissListener
+    ) { viewGroup, callbacks ->
+      KurobaAlertDialog.Builder(context)
+        .setCustomViewInternal(customView)
+        .setTitleInternal(titleTextId, titleText)
+        .setDescriptionInternal(descriptionTextId, descriptionText)
+        .setPositiveButton(positiveButtonText) { dialog, _ ->
+          onPositiveButtonClickListener.invoke(dialog)
+        }
+        .setNeutralButtonInternal(neutralButtonText, onNeutralButtonClickListener)
+        .setNegativeButton(negativeButtonText) { dialog, _ ->
+          onNegativeButtonClickListener.invoke(dialog)
+        }
+        .setCancelable(cancelable)
+        .create(viewGroup, callbacks, alertDialogHandle)
     }
 
-    AlertDialog.Builder(context)
-      .setTitleInternal(titleTextId, titleText)
-      .setDescriptionInternal(descriptionTextId, descriptionText)
-      .setAdapter(adapter) { dialog, selectedIndex -> clickListener(dialog, selectedIndex) }
-      .create()
-      .apply {
-        setOnShowListener { dialogInterface -> dialogInterface.applyColors() }
-        dialogModifier(this)
-      }
-      .show()
+    return alertDialogHandle
   }
 
   @JvmOverloads
@@ -153,60 +130,75 @@ class DialogFactory(
     onCanceled: (() -> Unit)? = null,
     defaultValue: String? = null,
     positiveButtonTextId: Int = R.string.ok,
-    negativeButtonTextId: Int = R.string.cancel,
-    dialogModifier: (AlertDialog) -> Unit = { }
-  ) {
+    negativeButtonTextId: Int = R.string.cancel
+  ): KurobaAlertDialog.AlertDialogHandle? {
     if (!applicationVisibilityManager.isAppInForeground()) {
-      return
+      return null
     }
 
-    val container = LinearLayout(context)
-    container.setPadding(dp(24f), dp(8f), dp(24f), 0)
+    val alertDialogHandle = AlertDialogHandleImpl()
 
-    val editText = ColorizableEditText(context)
-    editText.imeOptions = EditorInfo.IME_FLAG_NO_FULLSCREEN
-    editText.setText(defaultValue ?: "")
-    editText.isSingleLine = true
-    editText.inputType = when (inputType) {
-      DialogInputType.String -> InputType.TYPE_CLASS_TEXT
-      DialogInputType.Integer -> InputType.TYPE_CLASS_NUMBER
-    }.exhaustive
-    editText.setSelection(editText.text?.length ?: 0)
+    showKurobaAlertDialogHostController(
+      context,
+      cancelable = true,
+      onDismissListener = { }
+    ) { viewGroup, callbacks ->
+      val container = LinearLayout(context)
+      container.setPadding(dp(24f), dp(8f), dp(24f), 0)
 
-    container.addView(
-      editText,
-      ViewGroup.LayoutParams.MATCH_PARENT,
-      ViewGroup.LayoutParams.WRAP_CONTENT
-    )
+      val editText = ColorizableEditText(context)
+      editText.imeOptions = EditorInfo.IME_FLAG_NO_FULLSCREEN
+      editText.setText(defaultValue ?: "")
+      editText.isSingleLine = true
+      editText.inputType = when (inputType) {
+        DialogInputType.String -> InputType.TYPE_CLASS_TEXT
+        DialogInputType.Integer -> InputType.TYPE_CLASS_NUMBER
+      }.exhaustive
+      editText.setSelection(editText.text?.length ?: 0)
 
-    val dialog: AlertDialog = AlertDialog.Builder(context)
-      .setPositiveButton(positiveButtonTextId) { _, _ ->
-        onValueEntered(editText.text.toString())
-      }
-      .setNegativeButton(negativeButtonTextId) { _, _ -> onCanceled?.invoke() }
-      .setTitleInternal(titleTextId, titleText)
-      .setDescriptionInternal(descriptionTextId, descriptionText)
-      .setView(container)
-      .setCancelable(true)
-      .create()
-      .apply {
-        setOnShowListener { dialogInterface -> dialogInterface.applyColors() }
-        dialogModifier(this)
-      }
+      container.addView(
+        editText,
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
+      )
 
-    dialog.window!!
-      .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE)
+      KurobaAlertDialog.Builder(context)
+        .setPositiveButton(positiveButtonTextId) { _, _ ->
+          onValueEntered(editText.text.toString())
+        }
+        .setNegativeButton(negativeButtonTextId) { _, _ -> onCanceled?.invoke() }
+        .setTitleInternal(titleTextId, titleText)
+        .setDescriptionInternal(descriptionTextId, descriptionText)
+        .setView(container)
+        .setCancelable(true)
+        .create(viewGroup, callbacks, alertDialogHandle)
 
-    editText.requestFocus()
+      editText.requestFocus()
+    }
 
-    dialog
-      .show()
+    return alertDialogHandle
   }
 
-  private fun AlertDialog.Builder.setDescriptionInternal(
+  private fun showKurobaAlertDialogHostController(
+    context: Context,
+    cancelable: Boolean,
+    onDismissListener: () -> Unit,
+    onViewReady: (ViewGroup, KurobaAlertDialogHostControllerCallbacks) -> Unit
+  ) {
+    navigationController.presentController(
+      KurobaAlertDialogHostController(
+        context = context,
+        cancelable = cancelable,
+        onDismissListener = onDismissListener,
+        onReady = { viewGroup, callbacks -> onViewReady(viewGroup, callbacks) }
+      )
+    )
+  }
+
+  private fun KurobaAlertDialog.Builder.setDescriptionInternal(
     descriptionTextId: Int?,
     descriptionText: CharSequence?
-  ): AlertDialog.Builder {
+  ): KurobaAlertDialog.Builder {
     if (descriptionText != null) {
       setMessage(descriptionText)
       return this
@@ -220,10 +212,10 @@ class DialogFactory(
     return this
   }
 
-  private fun AlertDialog.Builder.setTitleInternal(
+  private fun KurobaAlertDialog.Builder.setTitleInternal(
     titleTextId: Int?,
     titleText: CharSequence?
-  ): AlertDialog.Builder {
+  ): KurobaAlertDialog.Builder {
     if (titleText != null) {
       setTitle(titleText)
       return this
@@ -237,10 +229,10 @@ class DialogFactory(
     return this
   }
 
-  private fun AlertDialog.Builder.setNeutralButtonInternal(
+  private fun KurobaAlertDialog.Builder.setNeutralButtonInternal(
     neutralButtonText: String?,
     onNeutralButtonClickListener: (DialogInterface) -> Unit
-  ): AlertDialog.Builder {
+  ): KurobaAlertDialog.Builder {
     if (neutralButtonText != null) {
       setNeutralButton(neutralButtonText) { dialog, _ -> onNeutralButtonClickListener(dialog) }
     }
@@ -248,7 +240,7 @@ class DialogFactory(
     return this
   }
 
-  private fun AlertDialog.Builder.setCustomViewInternal(customView: View?): AlertDialog.Builder {
+  private fun KurobaAlertDialog.Builder.setCustomViewInternal(customView: View?): KurobaAlertDialog.Builder {
     if (customView != null) {
       setView(customView)
     }
@@ -256,18 +248,7 @@ class DialogFactory(
     return this
   }
 
-  private fun AlertDialog.Builder.setAdapterInternal(
-    adapter: ListAdapter?,
-    listener: ((DialogInterface, Int) -> Unit)?
-  ): AlertDialog.Builder {
-    if (adapter != null) {
-      setAdapter(adapter) { dialog, index -> listener!!.invoke(dialog, index) }
-    }
-
-    return this
-  }
-
-  fun applyColorsOld(dialog: android.app.AlertDialog): android.app.AlertDialog {
+  fun applyColorsToDialog(dialog: AlertDialog): AlertDialog {
     val view = dialog.window
       ?: return dialog
 
@@ -303,40 +284,6 @@ class DialogFactory(
     return dialog
   }
 
-  private fun DialogInterface.applyColors(): AlertDialog {
-    this as AlertDialog
-
-    val view = window
-      ?: return this
-
-    view.setBackgroundDrawable(ColorDrawable(themeEngine.chanTheme.backColor))
-
-    getButton(DialogInterface.BUTTON_POSITIVE)?.let { button ->
-      button.setTextColor(themeEngine.chanTheme.textColorPrimary)
-      button.invalidate()
-    }
-
-    getButton(DialogInterface.BUTTON_NEGATIVE)?.let { button ->
-      button.setTextColor(themeEngine.chanTheme.textColorPrimary)
-      button.invalidate()
-    }
-
-    getButton(DialogInterface.BUTTON_NEUTRAL)?.let { button ->
-      button.setTextColor(themeEngine.chanTheme.textColorPrimary)
-      button.invalidate()
-    }
-
-    findViewById<TextView>(R.id.alertTitle)?.let { title ->
-      title.setTextColor(themeEngine.chanTheme.textColorPrimary)
-    }
-
-    findViewById<TextView>(android.R.id.message)?.let { title ->
-      title.setTextColor(themeEngine.chanTheme.textColorPrimary)
-    }
-
-    return this
-  }
-
   enum class DialogInputType {
     String,
     Integer
@@ -348,8 +295,6 @@ class DialogFactory(
     private var descriptionTextId: Int? = null
     private var descriptionText: CharSequence? = null
     private var cancelable: Boolean = true
-    private var adapter: ListAdapter? = null
-    private var adapterListener: ((DialogInterface, Int) -> Unit)? = null
     private var customView: View? = null
     private var onPositiveButtonClickListener: ((DialogInterface) -> Unit) = { }
     private var positiveButtonText: String = getString(R.string.ok)
@@ -357,7 +302,6 @@ class DialogFactory(
     private var neutralButtonTextId: String? = null
     private var onNegativeButtonClickListener: ((DialogInterface) -> Unit) = { }
     private var negativeButtonText: String = getString(R.string.cancel)
-    private var dialogModifier: (AlertDialog) -> Unit = { }
     private var dismissListener: () -> Unit = { }
 
     fun withTitle(titleTextId: Int): Builder {
@@ -382,12 +326,6 @@ class DialogFactory(
 
     fun withCancelable(cancelable: Boolean): Builder {
       this.cancelable = cancelable
-      return this
-    }
-
-    fun withAdapter(adapter: ListAdapter, listener: (DialogInterface, Int) -> Unit): Builder {
-      this.adapter = adapter
-      this.adapterListener = listener
       return this
     }
 
@@ -426,25 +364,18 @@ class DialogFactory(
       return this
     }
 
-    fun withDialogModifier(dialogModifier: (AlertDialog) -> Unit): Builder {
-      this.dialogModifier = dialogModifier
-      return this
-    }
-
     fun withDismissListener(dismissListener: () -> Unit): Builder {
       this.dismissListener = dismissListener
       return this
     }
 
-    fun create(): AlertDialog? {
+    fun create(): KurobaAlertDialog.AlertDialogHandle? {
       return dialogFactory.createSimpleConfirmationDialog(
         context,
         titleTextId,
         titleText,
         descriptionTextId,
         descriptionText,
-        adapter,
-        adapterListener,
         customView,
         cancelable,
         onPositiveButtonClickListener,
@@ -453,8 +384,7 @@ class DialogFactory(
         neutralButtonTextId,
         onNegativeButtonClickListener,
         negativeButtonText,
-        dismissListener,
-        dialogModifier
+        dismissListener
       )
     }
 
@@ -467,4 +397,23 @@ class DialogFactory(
     }
   }
 
+  class AlertDialogHandleImpl : KurobaAlertDialog.AlertDialogHandle {
+    private var dismissed = false
+    private var dialog: KurobaAlertDialog? = null
+
+    override fun isAlreadyDismissed(): Boolean = dismissed
+
+    override fun setDialog(dialog: KurobaAlertDialog?) {
+      this.dialog = dialog
+    }
+
+    override fun getButton(buttonId: Int): Button? {
+      return dialog?.getButton(buttonId)
+    }
+
+    override fun dismiss() {
+      dialog?.dismiss()
+      dismissed = true
+    }
+  }
 }

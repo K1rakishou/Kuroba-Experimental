@@ -36,7 +36,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.helper.DialogFactory;
@@ -301,7 +300,7 @@ public class FilterLayout
         final ColorPickerView colorPickerView = new ColorPickerView(getContext());
         colorPickerView.setColor(chanFilterMutable.getColor());
 
-        AlertDialog dialog = DialogFactory.Builder.newBuilder(getContext(), dialogFactory)
+        DialogFactory.Builder.newBuilder(getContext(), dialogFactory)
                 .withTitle(R.string.filter_color_pick)
                 .withCustomView(colorPickerView)
                 .withNegativeButtonTextId(R.string.cancel)
@@ -312,12 +311,6 @@ public class FilterLayout
                     return Unit.INSTANCE;
                 })
                 .create();
-
-        if (dialog != null) {
-            dialog
-                    .getWindow()
-                    .setLayout(dp(300), dp(300));
-        }
     }
 
     private void onHelpClicked() {

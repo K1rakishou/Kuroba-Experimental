@@ -23,8 +23,6 @@ import android.os.Build
 import android.util.AttributeSet
 import android.view.KeyEvent
 import android.view.View
-import android.widget.AdapterView.OnItemClickListener
-import android.widget.ArrayAdapter
 import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -60,7 +58,6 @@ import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper.RemovedPostsCallbacks
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutCallback
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
 import com.github.k1rakishou.chan.ui.view.LoadView
@@ -619,43 +616,6 @@ class ThreadLayout @JvmOverloads constructor(
 
   override fun filterPostTripcode(tripcode: CharSequence?) {
     callback.openFilterForType(FilterType.TRIPCODE, tripcode.toString())
-  }
-
-  override fun filterPostImageHash(post: ChanPost) {
-    if (post.postImages.isEmpty()) {
-      return
-    }
-
-    if (post.postImages.size == 1) {
-      callback.openFilterForType(FilterType.IMAGE, post.firstImage()?.fileHash)
-      return
-    }
-
-    val hashList = ColorizableListView(context)
-
-    val dialog = dialogFactory.createSimpleConfirmationDialog(
-      context = context,
-      titleText = "Select an image to filter.",
-      customView = hashList,
-      cancelable = true,
-    )
-
-    if (dialog == null) {
-      return
-    }
-
-    val hashes: MutableList<String> = ArrayList()
-    for (image in post.postImages) {
-      if (!image.isInlined && image.fileHash != null) {
-        hashes.add(image.fileHash!!)
-      }
-    }
-
-    hashList.adapter = ArrayAdapter(context, android.R.layout.simple_list_item_1, hashes)
-    hashList.onItemClickListener = OnItemClickListener { _, _, position: Int, _ ->
-      callback.openFilterForType(FilterType.IMAGE, hashes[position])
-      dialog.dismiss()
-    }
   }
 
   override fun selectPost(post: Long) {

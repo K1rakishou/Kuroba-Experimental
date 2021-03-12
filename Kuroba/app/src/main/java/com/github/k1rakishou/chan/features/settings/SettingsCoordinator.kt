@@ -89,6 +89,8 @@ class SettingsCoordinator(
   lateinit var proxyStorage: ProxyStorage
   @Inject
   lateinit var importExportRepository: ImportExportRepository
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private val scope = KurobaCoroutineScope()
   private val settingBuilderExecutor = SerializedCoroutineExecutor(scope)
@@ -135,6 +137,7 @@ class SettingsCoordinator(
       context,
       navigationController,
       exclusionZonesHolder,
+      globalWindowInsetsManager,
       dialogFactory
     )
   }

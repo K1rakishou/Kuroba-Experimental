@@ -97,6 +97,7 @@ import com.github.k1rakishou.chan.ui.controller.ThreadSlideController;
 import com.github.k1rakishou.chan.ui.controller.ViewThreadController;
 import com.github.k1rakishou.chan.ui.controller.crashlogs.ReviewReportFilesController;
 import com.github.k1rakishou.chan.ui.controller.crashlogs.ViewFullCrashLogController;
+import com.github.k1rakishou.chan.ui.controller.dialog.KurobaAlertDialogHostController;
 import com.github.k1rakishou.chan.ui.controller.navigation.BottomNavBarAwareNavigationController;
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController;
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController;
@@ -167,6 +168,7 @@ import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanel;
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.EpoxyCheckableFloatingListMenuRow;
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.EpoxyFloatingListMenuRow;
 import com.github.k1rakishou.chan.ui.view.sorting.BookmarkSortingItemView;
+import com.github.k1rakishou.chan.ui.widget.dialog.KurobaAlertController;
 
 import dagger.BindsInstance;
 import dagger.Subcomponent;
@@ -228,6 +230,7 @@ public interface ActivityComponent {
     void inject(FilterWatchesController filterWatchesController);
     void inject(ImageSaverV2OptionsController imageSaverV2OptionsController);
     void inject(ResolveDuplicateImagesController resolveDuplicateImagesController);
+    void inject(KurobaAlertDialogHostController kurobaAlertDialogHostController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);
@@ -341,6 +344,7 @@ public interface ActivityComponent {
     void inject(FastScroller fastScroller);
     void inject(PopupControllerContainer popupControllerContainer);
     void inject(ToolbarMenuItem toolbarMenuItem);
+    void inject(KurobaAlertController kurobaAlertController);
 
     @Subcomponent.Builder
     interface Builder {

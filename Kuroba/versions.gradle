@@ -20,5 +20,5 @@ versions.epoxy = '4.3.1'
 versions.jsoup = "1.13.1"
 versions.rxjava = "2.2.20"
 versions.rxandroid = "2.1.1"
-versions.fsaf = "v1.1-alpha2"
+versions.fsaf = "v1.1"
 ext.versions = versions

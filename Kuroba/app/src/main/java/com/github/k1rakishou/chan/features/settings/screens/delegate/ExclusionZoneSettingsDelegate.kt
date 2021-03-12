@@ -3,15 +3,17 @@ package com.github.k1rakishou.chan.features.settings.screens.delegate
 import android.content.Context
 import android.content.res.Configuration
 import android.os.Build
-import android.widget.ArrayAdapter
 import androidx.annotation.RequiresApi
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10GestureZonesController
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.gesture_editor.AttachSide
 import com.github.k1rakishou.chan.features.gesture_editor.ExclusionZone
+import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
+import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getScreenOrientation
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
@@ -21,20 +23,9 @@ class ExclusionZoneSettingsDelegate(
   private val context: Context,
   private val navigationController: NavigationController,
   private val exclusionZonesHolder: Android10GesturesExclusionZonesHolder,
+  private val globalWindowInsetsManager: GlobalWindowInsetsManager,
   private val dialogFactory: DialogFactory
 ) {
-  private val arrayAdapter = ArrayAdapter<String>(context, android.R.layout.simple_list_item_1)
-
-  init {
-    //  !!!!!!!!!!!!!!!!!!!!!!!!!!
-    //  When changing the following list don't forget to update indexes in LEFT_ZONES_INDEXES,
-    //  RIGHT_ZONES_INDEXES
-    //  !!!!!!!!!!!!!!!!!!!!!!!!!!
-    arrayAdapter.add(context.getString(R.string.setting_exclusion_zones_left_zone_portrait))
-    arrayAdapter.add(context.getString(R.string.setting_exclusion_zones_right_zone_portrait))
-    arrayAdapter.add(context.getString(R.string.setting_exclusion_zones_left_zone_landscape))
-    arrayAdapter.add(context.getString(R.string.setting_exclusion_zones_right_zone_landscape))
-  }
 
   @Suppress("MoveLambdaOutsideParentheses")
   fun showZonesDialog() {
@@ -42,15 +33,28 @@ class ExclusionZoneSettingsDelegate(
       return
     }
 
-    dialogFactory.createDialogWithAdapter(
+    val items = mutableListOf<FloatingListMenuItem>().apply {
+      //  !!!!!!!!!!!!!!!!!!!!!!!!!!
+      //  When changing the following list don't forget to update indexes in LEFT_ZONES_INDEXES,
+      //  RIGHT_ZONES_INDEXES
+      //  !!!!!!!!!!!!!!!!!!!!!!!!!!
+      add(FloatingListMenuItem(0, context.getString(R.string.setting_exclusion_zones_left_zone_portrait)))
+      add(FloatingListMenuItem(1, context.getString(R.string.setting_exclusion_zones_right_zone_portrait)))
+      add(FloatingListMenuItem(2, context.getString(R.string.setting_exclusion_zones_left_zone_landscape)))
+      add(FloatingListMenuItem(3, context.getString(R.string.setting_exclusion_zones_right_zone_landscape)))
+    }
+
+    val floatingListMenuController = FloatingListMenuController(
       context = context,
-      titleTextId = R.string.setting_exclusion_zones_actions_dialog_title,
-      adapter = arrayAdapter,
-      clickListener = { dialog, selectedIndex ->
+      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+      items = items,
+      itemClickListener = { item ->
+        val selectedIndex = item.key as Int
         onOptionClicked(selectedIndex)
-        dialog.dismiss()
       }
     )
+
+    navigationController.presentController(floatingListMenuController)
   }
 
   @RequiresApi(Build.VERSION_CODES.Q)

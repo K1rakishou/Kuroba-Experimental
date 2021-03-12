@@ -267,6 +267,8 @@ class StartActivity : AppCompatActivity(),
     listenForWindowInsetsChanges()
 
     mainNavigationController = StyledToolbarNavigationController(this)
+    dialogFactory.navigationController = mainNavigationController
+
     setupLayout()
 
     setContentView(mainController.view)

@@ -41,9 +41,9 @@ open class FloatingListMenuController @JvmOverloads constructor(
 
     val viewContainerWithMaxSize = view.findViewById<ViewContainerWithMaxSize>(R.id.container)
     viewContainerWithMaxSize.desiredWidth = if (isTablet()) {
-      dp(400f)
+      TABLET_WIDTH
     } else {
-      dp(320f)
+      NORMAL_WIDTH
     }
 
     viewContainerWithMaxSize.updateLayoutParams<ConstraintLayout.LayoutParams> {
@@ -88,5 +88,10 @@ open class FloatingListMenuController @JvmOverloads constructor(
   }
 
   override fun getLayoutId(): Int = R.layout.controller_floating_list_menu
+
+  companion object {
+    private val TABLET_WIDTH = dp(400f)
+    private val NORMAL_WIDTH = dp(320f)
+  }
 
 }

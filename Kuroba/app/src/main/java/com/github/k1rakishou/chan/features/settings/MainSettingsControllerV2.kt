@@ -274,7 +274,7 @@ class MainSettingsControllerV2(
             settingEnabled(true)
 
             clickListener {
-              settingsCoordinator.post {
+              postThrowable {
                 when (val clickAction = settingV2.callback.invoke()) {
                   SettingClickAction.NoAction -> {
                     // no-op
@@ -437,6 +437,16 @@ class MainSettingsControllerV2(
       epoxyDividerView {
         id("epoxy_divider_${globalSettingIndex}")
         updateMargins(null)
+      }
+    }
+  }
+
+  private fun postThrowable(func: suspend () -> Unit) {
+    settingsCoordinator.post {
+      try {
+        func()
+      } catch (error: Throwable) {
+        throw RuntimeException(error)
       }
     }
   }

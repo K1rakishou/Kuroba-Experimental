@@ -29,6 +29,10 @@ class SerializedCoroutineExecutor(
         try {
           serializedAction.action()
         } catch (error: Throwable) {
+          if (error is RuntimeException) {
+            throw error
+          }
+
           Logger.e(TAG, "serializedAction unhandled exception", error)
         }
       }

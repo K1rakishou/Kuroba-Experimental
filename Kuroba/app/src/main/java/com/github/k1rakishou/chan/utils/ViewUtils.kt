@@ -19,6 +19,7 @@ import java.lang.reflect.Field
 object ViewUtils {
   private const val TAG = "ViewUtils"
 
+  @JvmStatic
   fun TextView.setEditTextCursorColor(theme: ChanTheme) {
     val accentColorWithAlpha = ColorUtils.setAlphaComponent(
       theme.accentColor,
@@ -67,6 +68,7 @@ object ViewUtils {
     }
   }
 
+  @JvmStatic
   fun TextView.setHandlesColors(theme: ChanTheme) {
     val accentColorWithAlpha = ColorUtils.setAlphaComponent(
       theme.accentColor,

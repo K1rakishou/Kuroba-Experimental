@@ -1191,10 +1191,6 @@ class ThreadPresenter @Inject constructor(
         menu.add(createMenuItem(POST_OPTION_HIGHLIGHT_TRIPCODE, R.string.post_highlight_tripcode))
         menu.add(createMenuItem(POST_OPTION_FILTER_TRIPCODE, R.string.post_filter_tripcode))
       }
-
-      if (site.siteFeature(Site.SiteFeature.IMAGE_FILE_HASH) && post.postImages.isNotEmpty()) {
-        menu.add(createMenuItem(POST_OPTION_FILTER_IMAGE_HASH, R.string.post_filter_image_hash))
-      }
     }
 
     val siteDescriptor = post.postDescriptor.boardDescriptor().siteDescriptor
@@ -1276,7 +1272,6 @@ class ThreadPresenter @Inject constructor(
         }
         POST_OPTION_HIGHLIGHT_TRIPCODE -> threadPresenterCallback?.highlightPostTripcode(post.tripcode)
         POST_OPTION_FILTER_TRIPCODE -> threadPresenterCallback?.filterPostTripcode(post.tripcode)
-        POST_OPTION_FILTER_IMAGE_HASH -> threadPresenterCallback?.filterPostImageHash(post)
         POST_OPTION_DELETE -> requestDeletePost(post)
         POST_OPTION_SAVE -> saveUnsavePost(post)
         POST_OPTION_BOOKMARK -> {
@@ -1969,7 +1964,6 @@ class ThreadPresenter @Inject constructor(
     fun highlightPostId(id: String)
     fun highlightPostTripcode(tripcode: CharSequence?)
     fun filterPostTripcode(tripcode: CharSequence?)
-    fun filterPostImageHash(post: ChanPost)
     fun selectPost(post: Long)
     fun showSearch(show: Boolean)
     fun setSearchStatus(query: String?, setEmptyText: Boolean, hideKeyboard: Boolean)
@@ -2031,7 +2025,6 @@ class ThreadPresenter @Inject constructor(
     private const val POST_OPTION_REMOVE = 14
     private const val POST_OPTION_MOCK_REPLY = 15
     private const val POST_OPTION_FILTER_TRIPCODE = 100
-    private const val POST_OPTION_FILTER_IMAGE_HASH = 101
 
     private const val THUMBNAIL_COPY_URL = 1000
     private const val SHARE_MEDIA_FILE_CONTENT = 1001

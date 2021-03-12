@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.ui.view
 
 import android.content.Context
+import android.content.res.Configuration
 import android.util.AttributeSet
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.graphics.component1
@@ -48,18 +49,13 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
     super.onAttachedToWindow()
 
     if (!isInEditMode) {
-      val (dispWidth, dispHeight) = AndroidUtils.getDisplaySize(context)
-      this.displayWidth = dispWidth
-      this.displayHeight = dispHeight
-
-      if (this.desiredWidth <= 0 || this.desiredWidth > dispWidth) {
-        this.desiredWidth = dispWidth
-      }
-
-      if (this.desiredHeight <= 0 || this.desiredHeight > dispHeight) {
-        this.desiredHeight = dispHeight
-      }
+      calculateSizes()
     }
+  }
+
+  override fun onConfigurationChanged(newConfig: Configuration?) {
+    calculateSizes()
+    requestLayout()
   }
 
   override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -95,6 +91,20 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
       MeasureSpec.makeMeasureSpec(newWidth, MeasureSpec.EXACTLY),
       heightMeasureSpec
     )
+  }
+
+  private fun calculateSizes() {
+    val (dispWidth, dispHeight) = AndroidUtils.getDisplaySize(context)
+    this.displayWidth = dispWidth
+    this.displayHeight = dispHeight
+
+    if (this.desiredWidth <= 0 || this.desiredWidth > dispWidth) {
+      this.desiredWidth = dispWidth
+    }
+
+    if (this.desiredHeight <= 0 || this.desiredHeight > dispHeight) {
+      this.desiredHeight = dispHeight
+    }
   }
 
 }

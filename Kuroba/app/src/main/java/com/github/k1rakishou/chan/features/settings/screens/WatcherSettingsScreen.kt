@@ -2,9 +2,7 @@ package com.github.k1rakishou.chan.features.settings.screens
 
 import android.content.Context
 import android.text.SpannableString
-import android.text.method.LinkMovementMethod
 import android.text.util.Linkify
-import android.widget.TextView
 import androidx.core.text.util.LinkifyCompat
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -287,13 +285,7 @@ class WatcherSettingsScreen(
     dialogFactory.createSimpleConfirmationDialog(
       context = context,
       titleTextId = R.string.setting_watch_background_limitations_dialog_title,
-      descriptionText = descriptionText,
-      dialogModifier = { dialog ->
-        (dialog.findViewById<TextView>(android.R.id.message))?.apply {
-          setLinkTextColor(themeEngine.chanTheme.postLinkColor)
-          movementMethod = LinkMovementMethod.getInstance()
-        }
-      }
+      descriptionText = descriptionText
     )
 
     PersistableChanState.shittyPhonesBackgroundLimitationsExplanationDialogShown.set(true)

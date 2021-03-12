@@ -682,7 +682,7 @@ class UpdateManager(
           setProgressNumberFormat("")
 
           show()
-          dialogFactory.applyColorsOld(this)
+          dialogFactory.applyColorsToDialog(this)
         }
 
         doUpdate(responseRelease)

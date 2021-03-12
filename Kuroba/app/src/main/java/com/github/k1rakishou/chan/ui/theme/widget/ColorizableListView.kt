@@ -9,7 +9,7 @@ import com.github.k1rakishou.core_themes.IColorizableWidget
 import com.github.k1rakishou.core_themes.ThemeEngine
 import javax.inject.Inject
 
-class ColorizableListView @JvmOverloads constructor(
+open class ColorizableListView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   val defStyleAttr: Int = android.R.attr.listViewStyle

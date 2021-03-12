@@ -4,6 +4,7 @@ import android.content.Context
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.settings.ExperimentalScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
@@ -18,6 +19,7 @@ class ExperimentalSettingsScreen(
   context: Context,
   private val navigationController: NavigationController,
   private val exclusionZonesHolder: Android10GesturesExclusionZonesHolder,
+  private val globalWindowInsetsManager: GlobalWindowInsetsManager,
   private val dialogFactory: DialogFactory
 ) : BaseSettingsScreen(
   context,
@@ -29,6 +31,7 @@ class ExperimentalSettingsScreen(
       context,
       navigationController,
       exclusionZonesHolder,
+      globalWindowInsetsManager,
       dialogFactory
     )
   }

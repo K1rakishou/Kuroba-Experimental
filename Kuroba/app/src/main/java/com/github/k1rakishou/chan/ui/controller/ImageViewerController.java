@@ -33,12 +33,9 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.animation.DecelerateInterpolator;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 
 import com.davemorrissey.labs.subscaleview.ImageViewState;
 import com.github.k1rakishou.ChanSettings;
@@ -54,7 +51,6 @@ import com.github.k1rakishou.chan.core.presenter.ImageViewerPresenter;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController;
 import com.github.k1rakishou.chan.ui.adapter.ImageViewerAdapter;
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableListView;
 import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem;
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
@@ -66,6 +62,7 @@ import com.github.k1rakishou.chan.ui.view.MultiImageView;
 import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.TransitionImageView;
+import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
 import com.github.k1rakishou.chan.utils.FullScreenUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.common.ModularResult;
@@ -81,6 +78,7 @@ import com.github.k1rakishou.persist_state.PersistableChanState;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -483,26 +481,38 @@ public class ImageViewerController
     private void rotateImage(ToolbarMenuSubItem item) {
         String[] rotateOptions = {"Clockwise", "Flip", "Counterclockwise"};
         Integer[] rotateInts = {90, 180, -90};
-        ListView rotateImageList = new ColorizableListView(context);
 
-        AlertDialog dialog = DialogFactory.Builder.newBuilder(context, dialogFactory)
-                .withCustomView(rotateImageList)
-                .withCancelable(true)
-                .create();
+        List<FloatingListMenuItem> items = new ArrayList<>();
 
-        if (dialog == null) {
-            return;
+        for (int i = 0; i < 3; ++i) {
+            items.add(
+                    new FloatingListMenuItem(
+                            i,
+                            rotateOptions[i],
+                            rotateInts[i],
+                            true,
+                            true,
+                            Collections.emptyList()
+                    )
+            );
         }
 
-        rotateImageList.setAdapter(new ArrayAdapter<>(context, android.R.layout.simple_list_item_1, rotateOptions));
-        rotateImageList.setOnItemClickListener((parent, view, position, id) -> {
-            ImageViewerAdapter adapter = (ImageViewerAdapter) pager.getAdapter();
-            if (adapter != null) {
-                adapter.rotateImage(presenter.getCurrentPostImage(), rotateInts[position]);
-            }
+        FloatingListMenuController floatingListMenuController = new FloatingListMenuController(
+                context,
+                globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+                items,
+                clickedFloatingListMenuItem -> {
+                    ImageViewerAdapter adapter = (ImageViewerAdapter) pager.getAdapter();
+                    if (adapter != null) {
+                        int rotateValue = (int) clickedFloatingListMenuItem.getValue();
+                        adapter.rotateImage(presenter.getCurrentPostImage(), rotateValue);
+                    }
 
-            dialog.dismiss();
-        });
+                    return Unit.INSTANCE;
+                }
+        );
+
+        navigationController.presentController(floatingListMenuController);
     }
 
     private void forceReload(ToolbarMenuItem item) {

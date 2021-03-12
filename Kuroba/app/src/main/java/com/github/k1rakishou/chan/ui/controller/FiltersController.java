@@ -18,6 +18,7 @@ package com.github.k1rakishou.chan.ui.controller;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.drawable.Drawable;
 import android.text.Html;
 import android.text.TextUtils;
@@ -29,7 +30,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 import androidx.recyclerview.widget.ItemTouchHelper;
@@ -49,6 +49,7 @@ import com.github.k1rakishou.chan.ui.layout.FilterLayout;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
+import com.github.k1rakishou.chan.ui.widget.dialog.KurobaAlertDialog;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.filter.ChanFilter;
@@ -249,7 +250,10 @@ public class FiltersController
 
         final FilterLayout filterLayout = (FilterLayout) inflate(context, R.layout.layout_filter, null);
 
-        AlertDialog alertDialog = DialogFactory.Builder.newBuilder(context, dialogFactory)
+        KurobaAlertDialog.AlertDialogHandle alertDialogHandle = DialogFactory.Builder.newBuilder(
+                context,
+                dialogFactory
+        )
                 .withCustomView(filterLayout)
                 .withPositiveButtonTextId(R.string.save)
                 .withOnPositiveButtonClickListener((dialog) -> {
@@ -275,15 +279,15 @@ public class FiltersController
                 })
                 .create();
 
-        if (alertDialog == null) {
+        if (alertDialogHandle == null) {
             // App is in background
             return;
         }
 
         filterLayout
                 .setCallback(enabled -> {
-                    alertDialog
-                            .getButton(AlertDialog.BUTTON_POSITIVE)
+                    alertDialogHandle
+                            .getButton(DialogInterface.BUTTON_POSITIVE)
                             .setEnabled(enabled);
                 });
 
