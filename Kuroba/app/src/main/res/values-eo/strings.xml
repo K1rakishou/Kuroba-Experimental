@@ -1,1 +1,1252 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
 
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+<resources>
+    <plurals name="posts">
+        <item quantity="one">%d afiŝo</item>
+        <item quantity="other">%d afiŝoj</item>
+    </plurals>
+    <plurals name="reply">
+        <item quantity="one">%d respondo</item>
+        <item quantity="other">%d respondoj</item>
+    </plurals>
+    <plurals name="image">
+        <item quantity="one">%d bildo</item>
+        <item quantity="other">%d bildoj</item>
+    </plurals>
+    <plurals name="board">
+        <item quantity="one">%d board</item>
+        <item quantity="other">%d boards</item>
+    </plurals>
+    <plurals name="type">
+        <item quantity="one">%d tipo</item>
+        <item quantity="other">%d tipoj</item>
+    </plurals>
+    <plurals name="bookmark">
+        <item quantity="one">%d legosigno</item>
+        <item quantity="other">%d legosignoj</item>
+    </plurals>
+    <plurals name="filter">
+        <item quantity="one">%d filter</item>
+        <item quantity="other">%d filters</item>
+    </plurals>
+    <plurals name="site">
+        <item quantity="one">%d retejo</item>
+        <item quantity="other">%d retejoj</item>
+    </plurals>
+    <plurals name="thread_new_posts">
+        <item quantity="one">%d nova afiŝo</item>
+        <item quantity="other">%d novaj afiŝoj</item>
+    </plurals>
+    <plurals name="post_hidden">
+	    <item quantity="one">%1$d afiŝo kaŝita</item>
+        <item quantity="other">%1$d afiŝoj kaŝitaj</item>
+    </plurals>
+    <plurals name="post_removed">
+        <item quantity="one">%1$d afiŝo forigita</item>
+        <item quantity="other">%1$d afiŝoj forigitaj</item>
+    </plurals>
+    <plurals name="watch_title">
+        <item quantity="one">Spektas unu fadenon</item>
+        <item quantity="other">Spektas %d fadenojn</item>
+    </plurals>
+    <plurals name="download_title">
+        <item quantity="one">Elŝutas unu fadenon</item>
+        <item quantity="other">Elŝutas %d fadenojn</item>
+    </plurals>
+
+    <plurals name="watch_new_quotes">
+        <item quantity="one">%d new post quoting you</item>
+        <item quantity="other">%d new posts quoting you</item>
+    </plurals>
+    <plurals name="watch_new_quoting">
+        <item quantity="one">%1$d new post, %2$d quoting you</item>
+        <item quantity="other">%1$d new posts, %2$d quoting you</item>
+    </plurals>
+
+    <string-array name="setting_watch_sounds">
+        <item>Ĉiuj afiŝoj</item>
+        <item>Only posts quoting you</item>
+    </string-array>
+
+    <string name="empty" />
+    <string name="cancel">Nuligi</string>
+    <string name="add">Aldoni</string>
+    <string name="close">Fermi</string>
+    <string name="back">Reen</string>
+    <string name="ok">Bone</string>
+    <string name="delete">Forigi</string>
+    <string name="undo">Malfari</string>
+    <string name="reset">Reset</string>
+    <string name="done">Farita</string>
+    <string name="continue_text">Daŭrigi</string>
+    <string name="create">Krei</string>
+    <string name="do_not">Ne</string>
+    <string name="move">Move</string>
+    <string name="edit">Redakti</string>
+    <string name="remove">Forigi</string>
+    <string name="yes">Jes</string>
+    <string name="no">Ne</string>
+    <string name="save">Konservi</string>
+    <string name="send">Sendi</string>
+    <string name="success">Sukceso</string>
+    <string name="error">Eraro</string>
+    <string name="help">Helpo</string>
+    <string name="more">Pli</string>
+    <string name="retry">Reprovi</string>
+    <string name="apply">Apliki</string>
+    <string name="clear">Purigi</string>
+    <string name="resolve">Resolve</string>
+    <string name="unhandled_error">Unhandled error!</string>
+    <string name="unknown_error">Nekonata eraro</string>
+    <string name="loading">Ŝargas…</string>
+
+    <string name="mark_as_my_post">Marki kiel mia afiŝo</string>
+    <string name="unmark_as_my_post">Malmarki kiel mia afiŝo</string>
+
+    <string name="bottom_menu_item_reorder">Reorder</string>
+    <string name="bottom_menu_item_delete">Forigi</string>
+
+    <string name="permission_app_settings">Aplikaĵaj agordoj</string>
+    <string name="permission_grant">Grant</string>
+
+    <string name="menu_search">Serĉi</string>
+    <string name="menu_bookmarks">Legosignoj</string>
+    <string name="menu_browse">Foliumi</string>
+    <string name="menu_settings">Agordoj</string>
+
+    <string name="restart_the_app">Restart the app</string>
+
+    <string name="update_later">Poste</string>
+    <string name="update_none">Already on the latest %1$s version.</string>
+    <string name="update_check_failed">Failed to check for updates.</string>
+    <string name="update_install">Instali</string>
+    <string name="update_install_download_failed">Elŝutado malsukcesis</string>
+    <string name="update_install_download_failed_description">Reason: %1$s</string>
+    <string name="update_install_download_failed_canceled">Reason: canceled</string>
+    <string name="update_install_download_failed_see_logs">See logs for more info</string>
+    <string name="update_retry_title">Retry update</string>
+    <string name="update_already_updated">Already updated</string>
+    <string name="update_retry">%1$s was not updated yet. Tap \"retry\" to retry the install.</string>
+    <string name="update_retry_button">Reprovi</string>
+    <string name="update_storage_permission_required_title">Storage permission required</string>
+    <string name="update_storage_permission_required">
+"Permission to access storage is required for installing the update.
+
+Re-enable this permission in the app settings if you permanently disabled it."</string>
+
+    <string name="seconds">%d sekundoj</string>
+    <string name="minutes">%d minutoj</string>
+    <string name="hours">%d horoj</string>
+    <string name="card_stats">%1$dR %2$dI</string>
+    <string name="action_reload">Reload</string>
+    <string name="action_force_reload">Force reload</string>
+    <string name="action_pin">Legosigni</string>
+    <string name="action_view_removed_posts">View removed posts</string>
+    <string name="action_open_thread_in_archive">Malfermi fadenon en arkivo</string>
+    <string name="action_open_browser">Malfermi en foliumilo</string>
+    <string name="action_change_gestures">Change image viewer gestures</string>
+    <string name="action_open_thread_by_id">Open thread by it\'s ID</string>
+    <string name="action_open_thread_by_url">Malfermi fadenon per ligilo</string>
+    <string name="action_share">Konigi</string>
+    <string name="action_share_url">Konigi dosiera ligilo</string>
+    <string name="action_go_to_post">Iri al afiŝo</string>
+    <string name="action_scrollbar_post_highlights">Scrollbar post highlights</string>
+    <string name="action_thread_options">Thread options</string>
+    <string name="action_allow_image_transparency">Allow image transparency</string>
+    <string name="action_image_rotate">Rotate image</string>
+    <string name="action_search">Serĉi</string>
+    <string name="action_search_image">Bilda serĉi</string>
+    <string name="action_switch_catalog_grid">Catalog (grid) mode</string>
+    <string name="action_switch_catalog_stagger">Catalog (stagger) mode</string>
+    <string name="action_switch_board">Board mode</string>
+
+    <string name="action_import_light_theme">Enporti Helan etoson</string>
+    <string name="action_import_light_theme_from_clipboard">Enporti Helan etoson el tondejo</string>
+    <string name="action_import_dark_theme">Enporti Malhelan etoson</string>
+    <string name="action_import_dark_theme_from_clipboard">Enporti Malhelan etoson el tondejo</string>
+    <string name="action_export_light_theme">Elporti Helan etoson</string>
+    <string name="action_export_dark_theme">Elporti Malhelan etoson</string>
+    <string name="action_reset_light_theme">Reset Light theme</string>
+    <string name="action_reset_dark_theme">Reset Dark theme</string>
+    <string name="action_ignore_dark_night_mode">Ignore system Day/Night mode</string>
+
+    <string name="action_mark_replies_your_posts_on_scrollbar">Highlight my posts</string>
+    <string name="action_mark_replies_to_your_posts_on_scrollbar">Highlight (You)s</string>
+    <string name="action_mark_cross_thread_quotes_on_scrollbar">Highlight cross-thread replies</string>
+    <string name="action_use_scrolling_text_for_thread_title">Use scrolling text for thread title</string>
+
+    <string name="action_scroll_to_top">Suprigi</string>
+    <string name="action_scroll_to_bottom">Malsuprigi</string>
+    <string name="action_sort">Ordigi</string>
+    <string name="action_browse_dev_menu">Dev menu</string>
+    <string name="action_rename_pin">Alinomi legosignon</string>
+    <string name="action_rename">Alinomi</string>
+    <string name="action_reply">Respondi</string>
+    <string name="action_copy_image_url">Kopii dosieran ligilon</string>
+    <string name="action_share_content">Konigi dosieran enhavon</string>
+    <string name="action_download_content">Elŝuti dosieron</string>
+    <string name="action_download_content_with_options">Elŝuti dosieron (montri opciojn)</string>
+
+    <string name="open_link_not_matched">Ne povas malfermi ĉi tiun ligilon: \'%1$s\'.</string>
+    <string name="open_link_not_thread_link">Ĉi tio ne estas fadena ligilo: \'%1$s\'.</string>
+
+    <string name="dev_bookmark_every_thread">Legosigni ĉiujn fadenojn</string>
+    <string name="dev_cache_every_thread">Cache every thread</string>
+
+    <string name="order_bump">Bump order</string>
+    <string name="order_reply">Nombro de respondoj</string>
+    <string name="order_image">Nombro de bildoj</string>
+    <string name="order_newest">La plej nova</string>
+    <string name="order_oldest">La plej malnova</string>
+    <string name="order_modified">Lasta respondo</string>
+    <string name="order_activity">Thread activity</string>
+
+    <string name="search_hint">Serĉu</string>
+    <string name="search_results">Trovis %1$s por \"%2$s\"</string>
+    <string name="search_empty">Search subjects, comments, names, and filenames</string>
+    <string name="open_link_confirmation">Ĉu malfermi ĉi tiun ligilon?</string>
+    <string name="open_thread_confirmation">Ĉu malfermi ĉi tiun fadenon?</string>
+    <string name="open_link_failed">Neniu aplikaĵo trovis por malfermi ĉi tiun ligilon</string>
+    <string name="open_link_failed_url">Neniu aplikaĵo trovis por malfermi ligilon \"%1$s\"</string>
+    <string name="open_link_failed_url_additional_info">Neniu aplikaĵo trovis por malfermi ligilon \"%1$s\" (%2$s)</string>
+    <string name="open_file_picker_failed">No file picker applications were found</string>
+    <string name="image_pick_delegate_select_file_picker">Select a file picker to open a file…</string>
+    <string name="action_confirm_exit">Tap back again to exit</string>
+
+    <string name="thumbnail_load_failed_network">Click to reload</string>
+    <string name="thumbnail_load_failed_404">Ne trovita</string>
+    <string name="image_preview_failed">Failed to show image</string>
+    <string name="image_preview_failed_oom">Failed to show image (out of memory)</string>
+    <string name="image_failed_big_image">Failed to show image (deep-zoom loading failed)</string>
+    <string name="image_not_found">Bildo ne trovita</string>
+    <string name="image_spoiler_filename">Spoilered file</string>
+    <string name="image_hidden_filename">Kaŝita dosiero</string>
+    <string name="thread_boards_search_hint">Serĉu</string>
+    <string name="thread_load_failed_ssl">HTTPS-a eraro</string>
+    <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
+    <string name="thread_load_failed_cloud_flare_detected">Rejected by CloudFlare.</string>
+    <string name="thread_load_failed_network">Reta eraro</string>
+    <string name="thread_load_failed_parsing">API parse error</string>
+    <string name="thread_load_failed_server">Server error</string>
+    <string name="thread_load_failed_not_found">404 ne trovita</string>
+    <string name="thread_refresh_error_text_title">Error while trying to update thread:</string>
+    <string name="thread_refresh_bar_inactive">Tap to refresh</string>
+    <string name="thread_refresh_countdown">Ŝargado en %1$ds</string>
+    <string name="thread_load_failed_retry">Reprovi</string>
+    <string name="thread_load_failed_open_in_archive">Malfermi en arkivo</string>
+    <string name="thread_archived">Arkivita</string>
+    <string name="thread_closed">Fermita</string>
+    <string name="thread_deleted">Forigita</string>
+    <string name="thread_page_no">Paĝo</string>
+
+    <string name="thread_new_posts_goto">Vidi</string>
+    <string name="thread_empty_select">Bonvolu elekti fadenon</string>
+
+    <string name="thread_empty_setup_feature" translatable="false">&#128564;</string>
+    <string name="thread_empty_setup_title">Nenio por montri</string>
+    <string name="thread_empty_setup_body">Add a site to begin browsing</string>
+    <string name="thread_empty_setup_hint">Aldoni retejo ĉi tie</string>
+
+    <string name="setup_sites_empty">No sites added</string>
+    <string name="setup_sites_description">Add a site by its URL or name</string>
+
+    <string name="setup_sites_site_description">%s aldonita</string>
+    <string name="setup_site_title">Configure %s</string>
+    <string name="setup_site_group_general">General</string>
+
+    <string name="setup_site_boards">Set up boards</string>
+    <string name="setup_site_boards_description">%s aldonita</string>
+    <string name="setup_site_group_login">Authentication</string>
+    <string name="setup_site_login">Login</string>
+    <string name="setup_site_login_description_enabled">Logged in</string>
+    <string name="setup_site_third_party_archives">Third-party archives</string>
+    <string name="setup_site_setup_archives_title">Setup archives</string>
+    <string name="setup_site_setup_archives_description">These archives are for restoring deleted posts/images in a thread\n\nTotal archives: %1$d (-%2$d)\nEnabled archives: %3$d\nWorking archives: %4$d</string>
+
+    <string name="setup_site_login_description_disabled">Malŝaltita</string>
+    <string name="setup_board_title">Configure boards of %s</string>
+    <string name="setup_board_empty">No boards added</string>
+    <string name="setup_board_removed">\"%s\" forigita</string>
+    <string name="setup_board_added">%s aldonita</string>
+    <string name="setup_board_select_all">Elekti ĉiujn</string>
+    <string name="filter_enabled">Ŝaltita</string>
+    <string name="filter_filter">Filter</string>
+    <string name="filter_action">Action</string>
+    <string name="filter_pattern">Pattern</string>
+    <string name="filter_match_test">Test the pattern</string>
+    <string name="filter_boards">Boards</string>
+    <string name="filter_types">Tipoj</string>
+    <string name="filter_hide">Kaŝi afiŝon</string>
+    <string name="filter_color">Highlight post</string>
+    <string name="filter_remove">Forigi afiŝon</string>
+    <string name="filter_watch">Spekti afiŝon</string>
+    <string name="filter_invalid_pattern">Invalid pattern</string>
+    <string name="filter_all_currently_active_boards">(All currently added boards)</string>
+
+    <string name="filter_preview">Test your filter</string>
+    <string name="filter_no_matches">Does not match</string>
+    <string name="filter_matches">Matches</string>
+    <string name="filter_color_pick">Pick color</string>
+    <string name="filter_help_title">Filter help</string>
+    <string name="filter_watch_check_all_warning_title">Watch filter and \"Check all boards\" combination warning</string>
+    <string name="filter_watch_check_all_warning_description">"Selecting \"Check all boards\" means that if you add more boards in the future, the filter will automatically be applied to those boards as well. \n\nSometimes this is a desired behavior (like when creating filters to hide/remove/highlight posts you will probably want those filters to automatically work on all boards you may or may not add in the future, so that you don\'t have to update filters every time you add new boards). On the other hand, this is very bad when combined with \"watch\" filters because, due to how they work, we have to execute a separate network request for each board (to download board's current thread list) which consumes battery and network traffic. So if you add 100 boards afterwards, then 100 requests will be executed on every filter watches update cycle. \n\nBe very careful when using the combination of watch filters together with \"check all boards\". I decided to allow this combination to work because it may be useful in some rare cases. This warning will be shown every time you create a watch filter so you don\'t forget about it.</string>
+    <string name="filter_pattern_is_empty">Filter pattern is empty</string>
+    <string name="filter_cannot_compile_filter_pattern">Cannot compile filter pattern</string>
+    <string name="filter_type_not_allowed_with_watch_filters">Filter type (%1$s) is not allowed in combination with watch filter action. Only COMMENT and/or SUBJECT types are allowed!</string>
+    <string name="filter_no_filter_type_selected">No filter type selected</string>
+    <string name="filter_no_boards_selected">No boards selected</string>
+    <string name="filter_identical_filter_detected">Identical filter already exists. Existing filter index=%1$d</string>
+    <string name="filter_watcher_disabled_message">Filter watch filter was successfully created but filter watcher is disabled so nothing is going to happen. You need to enable filter watcher in the settings</string>
+
+    <string name="filter_help">
+<![CDATA[
+Filters act on a given pattern and a place to search the pattern.<br>
+If the pattern matches, then the post can be hidden, removed, highlighted, or automatically bookmarked.<br>
+<p>
+    These filters are pattern based, and have three modes:<br>
+    <br>
+    1. The pattern <tt>foo bar</tt> will match text that has any of the words in it. It will match <i>foo</i> or <i>bar</i>, but not <i>foobar</i>.
+    Placing a * allows any character to be filled in: <tt>f*o</tt> will match both <i>foo</i> and <i>foooo</i>, but not <i>foobar</i><br>
+    <br>
+    2. Quoting your pattern with <tt>\"</tt> (like <tt>\"foo bar\"</tt>) will match the text exactly.
+    <i>foo bar</i> will match, but <i>foo</i> will not.<br>
+    <br>
+    3. Regular expressions. <tt>/^>implying/</tt> for example. You can use <tt>/^>ImPlYiNg/<b>i</b></tt> to make the regex case insensitive.
+</p>
+<br>
+Note that for country code filtering, troll country codes should be prepended with "t_". In addition, a country code filter automatically implies the case insensitive flag for regex.
+]]>
+    </string>
+
+    <string name="filters_controller_help_message">
+        <![CDATA[You can use Regex101 for more comprehensive explanations
+            of your regular expressions, or as a playground for figuring out an expression. Use Javascript to test.<br><br>
+            Actions do the following:<br>
+            <b>Hide:</b> Replace the post with a stub. You can tap it to un-hide it.<br>
+            <b>Highlight:</b> A colored bar of your choosing will appear on the left hand side of this post.<br>
+            <b>Remove:</b> Remove this post. It won\'t be visible at all.<br>
+            <b>Watch:</b> If you have the thread watcher enabled and background watching on,
+            catalogs will be periodically checked based on your interval setting and any OP that matches the filter will be put into your bookmarks.
+            Any catalogs loaded by the you navigating to them from the board select popup will also be checked.<br><br>
+            Enabled filters have priority from top to bottom. Filter precedence for actions is as follows:<br>
+            1) Capcode or sticky<br>
+            2) OP<br>
+            3) Saved replies (your posts)<br>
+            4) Tripcode<br>
+            5) Name<br>
+            6) Comment<br>
+            7) ID<br>
+            8) Subject<br>
+            9) Country Code<br>
+            10) Filename"]]>
+    </string>
+    <string name="filters_controller_open_regex101">Open regex101</string>
+
+    <string name="epoxy_proxy_view_address">Address: %1$s</string>
+    <string name="epoxy_proxy_view_port">Port: %1$s</string>
+    <string name="epoxy_proxy_view_type">Type: %1$s</string>
+    <string name="epoxy_proxy_view_supported_site">Supported sites: %1$s</string>
+    <string name="epoxy_proxy_view_supported_actions">Supported actions: %1$s</string>
+
+    <string name="controller_bookmarks_sorting_by_creation_time">Sort by creation time</string>
+    <string name="controller_bookmarks_sorting_by_unread_replies">Sort by unread replies</string>
+    <string name="controller_bookmarks_sorting_by_unread_posts">Sort by unread posts</string>
+    <string name="controller_bookmarks_sorting_custom">Custom sort order</string>
+    <string name="controller_bookmarks_move_not_active_bookmarks_to_bottom">Move not active bookmarks to bottom</string>
+    <string name="controller_bookmarks_move_bookmarks_with_unread_replies_to_top">Move bookmarks with unread replies to top</string>
+
+    <string name="controller_bookmarks_set_grid_view_width_text">Bookmark views width when in grid mode (pixels).</string>
+
+    <string name="controller_image_viewer_title">Image viewer gestures settings</string>
+    <string name="controller_image_viewer_swipe_up_gesture_action">Swipe up gesture action</string>
+    <string name="controller_image_viewer_swipe_down_action">Swipe down gesture action</string>
+    <string name="controller_image_viewer_close_image">Close image</string>
+    <string name="controller_image_viewer_save_image">Save image</string>
+    <string name="controller_image_viewer_disabled">Disabled</string>
+
+    <string name="controller_image_save_options_image_name_options">Image name options</string>
+    <string name="controller_image_save_options_image_name_options_use_server_name">Use server file name</string>
+    <string name="controller_image_save_options_image_name_options_use_original_name">Use original file name</string>
+    <string name="controller_image_save_options_duplicate_resolution_options">Duplicate resolution options</string>
+    <string name="controller_image_save_options_duplicate_resolution_options_ask">Ask what to do</string>
+    <string name="controller_image_save_options_duplicate_resolution_options_overwrite">Overwrite already existing image</string>
+    <string name="controller_image_save_options_duplicate_resolution_options_skip">Skip image</string>
+    <string name="controller_image_save_options_root_dir">Root directory:</string>
+    <string name="controller_image_save_options_output_dir_append_site_name">Append site name</string>
+    <string name="controller_image_save_options_output_dir_append_board_code">Append board code</string>
+    <string name="controller_image_save_options_output_dir_append_thread_id">Append thread id</string>
+    <string name="controller_image_save_options_additional_dirs">Additional directories (\'\\\' separated)</string>
+    <string name="controller_image_save_options_output_file">Output file</string>
+    <string name="controller_image_save_options_override_file_name">Override file name (without extension)</string>
+    <string name="controller_image_save_options_click_to_set_root_dir">Click to set root directory</string>
+    <string name="controller_image_save_options_root_dir_not_set">Root dir is not set!</string>
+    <string name="controller_image_save_options_file_name_is_blank">File name is blank!</string>
+    <string name="controller_image_save_options_file_name_bad_symbols">File name contains bad symbols! Only letters/numbers/\'_\' and \'-\' symbols are allowed!</string>
+    <string name="controller_image_save_options_sub_dirs_are_not_valid">Sub dirs are not valid!</string>
+    <string name="controller_image_save_options_canceled_with_reason">Canceled: %1$s</string>
+
+    <string name="board_check_all">Kontroli ĉiujn</string>
+
+    <string name="archive_title">%s arkivo</string>
+    <string name="archive_error">Error loading archive</string>
+
+    <string name="drawer_pinned">Legosignitaj fadenoj</string>
+    <string name="drawer_pin_removed">\"%1$s\" forigita</string>
+    <string name="drawer_pin_with_saved_thread_removed">Removed pin \"%1$s\" with saved thread</string>
+    <string name="drawer_pins_cleared">%1$s cleared</string>
+    <string name="drawer_pins_non_cleared">No bookmarks cleared</string>
+    <string name="drawer_pins_non_cleared_try_all">No bookmarks cleared. Hold to remove all.</string>
+
+    <string name="post_highlight_id">Highlight ID</string>
+    <string name="post_highlight_tripcode">Highlight tripcode</string>
+    <string name="post_filter_tripcode">Filter tripcode</string>
+    <string name="post_filter_image_hash">Filter image hash</string>
+    <string name="post_text_copied">Text copied to clipboard</string>
+    <string name="post_quote">Quote</string>
+    <string name="post_quote_text">Quote text</string>
+    <string name="post_info">Info</string>
+    <string name="post_info_title">Post info</string>
+    <string name="post_show_links">Show links</string>
+    <string name="post_share">Konigi</string>
+    <string name="post_copy_text">Kopii tekston</string>
+    <string name="post_report">Report</string>
+    <string name="post_hide">Kaŝi</string>
+    <string name="post_remove">Forigi</string>
+    <string name="post_web_search">Web search</string>
+    <string name="post_posting_is_not_supported">Posting is not supported for this site</string>
+
+    <string name="thread_hidden">Thread hidden</string>
+    <string name="thread_removed">Thread removed</string>
+    <string name="post_delete">Forigi</string>
+    <string name="reply_name">Nomo</string>
+    <string name="reply_options">Opcioj</string>
+    <string name="reply_flag">Flag</string>
+    <string name="reply_subject">Subject</string>
+    <string name="reply_comment_thread">Komenti respondon</string>
+    <string name="reply_comment_board">Komenti novan fadenon</string>
+    <string name="reply_file_name">Dosiernomon</string>
+    <string name="reply_file_too_big">Warning: File size too big (%1$s / %2$s)</string>
+    <string name="reply_webm_too_big">Warning: WebM size too big (%1$s / %2$s)</string>
+    <string name="reply_file_open_unknown_error">Failed to open file: unknown error</string>
+    <string name="reply_file_open_failed_to_copy_picked_file">Failed to open file: failed to copy picked file</string>
+    <string name="reply_file_open_reply_draft_not_found">Failed to open file: reply draft not found</string>
+    <string name="reply_file_open_no_file_pickers_found">Failed to open file: no file pickers found</string>
+    <string name="reply_file_open_filed_to_create_pick_file">Failed to open file: failed to create pick file</string>
+    <string name="reply_file_open_clipboard_error">Failed to open file: clipboard access error</string>
+    <string name="reply_file_open_failed_to_load_remote_file">Failed to open file: failed to load remote file</string>
+    <string name="reply_spoiler_image">Spoiler image</string>
+    <string name="reply_no_preview">No preview</string>
+    <string name="reply_submit">Afiŝi</string>
+    <string name="reply_error">Eraro dum afiŝado</string>
+    <string name="reply_error_message">Eraro dum afiŝado: %s</string>
+    <string name="reply_error_message_timer_reply">Error posting: You must wait %d seconds before posting a reply.</string>
+    <string name="reply_error_message_timer_thread">Error posting: You must wait %d seconds before posting a thread.</string>
+    <string name="reply_success">Sukcese afiŝis</string>
+    <string name="reply_captcha_text">Tajpu la tekston</string>
+    <string name="reply_comment_button_quote" translatable="false">&gt;</string>
+    <string name="reply_comment_button_spoiler">Spoiler</string>
+    <string name="reply_comment_button_code">Kodo</string>
+    <string name="reply_comment_button_eqn">Eqn</string>
+    <string name="reply_comment_button_math">Math</string>
+    <string name="reply_comment_button_sjis">SJIS</string>
+    <string name="reply_comment_button_spoiler_tag">[s]</string>
+    <string name="reply_comment_button_code_tag">[c]</string>
+    <string name="reply_comment_button_eqn_tag">[eqn]</string>
+    <string name="reply_comment_button_math_tag">[math]</string>
+    <string name="reply_comment_button_sjis_tag">[sjis]</string>
+    <string name="reply_attach_long_click_hint">Long tap to attach image by it\'s URL from the clipboard</string>
+    <string name="reply_proxy_list_is_dirty_message">You recently changed your proxy list and didn\'t restart the app. There is a possibility that the next post you make will use a wrong proxy or no proxy at all (that depends on what you\'ve changed). Restart the app to make sure everything works as expected.</string>
+    <string name="reply_flag_format">Flag: %1$s</string>
+
+    <string name="delete_confirm">Ĉu forigi vian afiŝon?</string>
+    <string name="delete_wait">Forigas afiŝon…</string>
+    <string name="delete_success">Afiŝo forigita</string>
+    <string name="delete_image_only">Nur forigi la bildon</string>
+    <string name="delete_error">Eraro dum afiŝa forigado: %1$s</string>
+    <string name="delete_error_post_is_not_saved">Error deleting post: No information found that this post is yours</string>
+    <string name="delete_error_unknown">Nekonata eraro dum forigado de afiŝo</string>
+
+    <string name="watch_pause_pins">Stop watching</string>
+    <string name="watch_idle">Sen novajn afiŝojn</string>
+
+    <string name="filters_screen">Filters</string>
+
+    <string name="album_download_screen">Elekti bildojn (%1$d / %2$d)</string>
+    <string name="album_download_none_checked">Bonvolu elekti bildojn por elŝuti</string>
+    <string name="album_download_no_suitable_images">No suitable images to download were found (not inlined, not hidden)</string>
+    <string name="image_saver_album_download_success">Finished saving images; downloaded to %1$s</string>
+
+    <string name="report_screen">Report %1$s</string>
+
+    <string name="bookmark_watcher_summary">Watching %1$d thread(s) (%2$d deleted, %3$d archived)</string>
+    <string name="bookmark_watcher_title">Spektas fadeno(j)n</string>
+
+    <string name="image_save_notification_downloading">Elŝutas bildoj…</string>
+    <string name="image_save_notification_cancel">Tap to cancel</string>
+    <string name="image_save_saved">Bildo konservita</string>
+    <string name="image_saver_saved_as_message">Konservita kiel \"%1$s\"</string>
+
+    <string name="thread_page_limit">Thread hit last page</string>
+
+    <string name="drawer_settings">Agordoj</string>
+    <string name="drawer_history">Historio</string>
+
+    <!-- Main settings -->
+    <string name="settings_screen">Agordoj</string>
+
+    <!-- Main "Settings" group -->
+    <string name="settings_group_settings">Agordoj</string>
+    <string name="settings_watch">Thread/Filter watchers</string>
+    <string name="settings_watch_summary_enabled">Thread/Filter watcher settings can be found here.</string>
+    <string name="settings_sites">Retejoj</string>
+    <string name="settings_appearance">Apero</string>
+    <string name="settings_appearance_description">Theme, layout, fonts, etc.</string>
+    <string name="settings_behavior">Agado</string>
+    <string name="settings_behavior_description">Thread refresh, captcha, etc.</string>
+    <string name="settings_media">Aŭdivdaĵoj</string>
+    <string name="settings_media_description">Save location, auto loading, etc.</string>
+    <string name="settings_filters">Filters</string>
+    <string name="settings_import_export">Enporti/Elporti</string>
+    <string name="settings_import_export_description">Import/Export application backup file</string>
+    <string name="settings_security">Sekureco</string>
+    <string name="settings_security_description">Proxy settings, etc.</string>
+    <string name="settings_caching">Caching</string>
+    <string name="settings_caching_description">Media cache/database cache</string>
+    <string name="settings_experimental_settings">⚠ EKSPERIMENTALA ⚠</string>
+    <string name="settings_experimental_settings_description">These settings may be in an unstable state. They are for testing. They may break the app and you may have to reset the app data. Use them at your own risk if you are really interested in some feature. Backup everything beforehand.</string>
+
+    <!-- Thread watcher -->
+    <string name="setting_watch_summary_disabled">Malŝaltita</string>
+
+    <string name="settings_screen_watch">Thread watcher/filter watcher settings</string>
+    <string name="settings_thread_watcher_group">Fadena spektanto</string>
+    <string name="setting_watch_info">To watch bookmarks for new posts, turn the thread watcher on.</string>
+    <string name="setting_watch_enable_thread_watcher">Enable thread watcher</string>
+    <string name="setting_watch_enable_thread_watcher_description">Watch bookmarks when app is in the foreground</string>
+    <string name="setting_watch_enable_background">Enable background thread watcher</string>
+    <string name="setting_watch_enable_background_description">Watch bookmarks when app is either in foreground or background</string>
+    <string name="setting_watch_background_timeout">Background update interval</string>
+    <string name="setting_watch_background_timeout_description">The interval between updates when the app is in the background</string>
+    <string name="setting_watch_foreground_timeout">Foreground update interval</string>
+    <string name="setting_watch_foreground_timeout_description">The interval between updates when the app is in the foreground</string>
+    <string name="setting_watch_foreground_adaptive_timer">Use adaptive interval for foreground watcher</string>
+    <string name="setting_watch_foreground_adaptive_timer_description">When turned on additional %1$d seconds will be added to foreground update interval for every 10 active bookmarks you have meaning the more active bookmarks you have the less often the bookmark updates will become (which is good for battery)</string>
+    <string name="setting_background_watcher_test_option">%1$s (Option for testing. You are not supposed to see this)</string>
+    <string name="setting_background_watcher_very_bad_option">%1$s (Terrible for battery. Don\'t tell me I didn\'t warn you!)</string>
+    <string name="setting_background_watcher_non_optimal_option">%1$s (More frequent updates, bad for battery)</string>
+    <string name="setting_background_watcher_optimal_option">%1$s (Less frequent updates, good for battery)</string>
+
+    <string name="setting_reply_notifications">Respondaj sciigoj</string>
+    <string name="setting_reply_notifications_description">Notify when your posts are being replied to</string>
+    <string name="setting_reply_notifications_use_sound">Uzi sonon por respondaj sciigoj</string>
+    <string name="setting_thread_page_limit_notify">Last page notifications</string>
+    <string name="setting_thread_page_limit_notify_description">Notify when threads hit the last page</string>
+    <string name="setting_thread_page_limit_notify_use_sound">Use sound for last page notifications</string>
+    <string name="setting_watch_background_limitations_dialog_title">Regarding background limitation of certain phone models…</string>
+    <string name="setting_watch_background_limitations_dialog_description">It appears that your phone model is one of the models with known problems related to app background execution limitations. If you ever notice that you have no notifications (even though they are supposed to be) when the app is in background, then check this link out for possible solutions:\n\n%1$s"</string>
+
+    <!-- Filter watcher -->
+    <string name="settings_filter_watcher_group">Filter watcher</string>
+    <string name="setting_watch_enable_filter_watcher">Enable filter watcher</string>
+    <string name="setting_watch_enable_filter_watcher_description">Automatically bookmark threads that match regex patterns. Enabling this setting will make the watcher work in both foreground/background due to huge update intervals.</string>
+    <string name="setting_filter_watcher_foreground_timeout">Filter watcher update interval</string>
+    <string name="setting_filter_watcher_foreground_timeout_description">The interval between updates</string>
+
+    <string name="settings_group_about">Pri</string>
+    <string name="settings_update_check">Tap to check for updates</string>
+    <string name="settings_updates_are_disabled">Updates are disabled</string>
+    <string name="settings_report">Report</string>
+    <string name="settings_report_description">Report a problem/crash</string>
+    <string name="settings_collect_crash_logs">Collect crash logs</string>
+    <string name="settings_collect_crash_logs_description">By enabling this setting, the app will start collecting crash logs. They are NOT uploaded automatically. Crash logs only collect the stacktrace itself, app version and basic OS information. You can review and upload them manually (or delete) by clicking the \"Report\" setting.</string>
+    <string name="settings_collect_anrs">Collect ANR repors</string>
+    <string name="settings_collect_anrs_description">Same as with crashlogs. When enabling this setting ANRs will be collected but not uploaded. ANR means Application Not Responding reports. They will be formed every time the app hangs for more than 2.5 seconds. At that time a thread stack dump will be collected and stored into a file. This may help developers to fix those hangs/freezes/deadlocks so please report them. You can review and upload them manually (or delete) by clicking the \"Report\" setting.</string>
+    <string name="settings_find_app_on_github">Find %1$s on GitHub</string>
+    <string name="settings_find_app_on_github_bottom">View the source code, give feedback, submit bug reports</string>
+    <string name="settings_about_license">Released under the GNU GPLv3 license</string>
+    <string name="settings_about_license_description">Tap to see license</string>
+    <string name="settings_about_licenses">Open Source Licenses</string>
+    <string name="settings_about_licenses_description">Legal information about licenses</string>
+
+    <!-- Main About group -->
+    <string name="settings_developer">Programistaj agordoj</string>
+    <string name="settings_screen_appearance">Apero</string>
+    <string name="settings_group_appearance">Apero</string>
+    <string name="setting_theme">Etoso</string>
+    <string name="setting_full_screen_mode">Allow image viewer full screen mode</string>
+
+    <!-- Appearance -->
+    <string name="settings_group_layout">Layout</string>
+    <string name="setting_layout_mode">Layout mode</string>
+    <string name="setting_layout_mode_auto">Aŭtomate</string>
+
+    <!-- Appearance layout group -->
+    <string name="setting_layout_mode_slide">Slide mode</string>
+    <string name="setting_layout_mode_phone">Phone mode</string>
+    <string name="setting_layout_mode_split">Split mode</string>
+    <string name="setting_board_grid_span_count">Catalog mode columns count</string>
+    <string name="setting_album_span_count">Album columns count</string>
+    <string name="setting_span_count_default">Aŭtomata</string>
+    <string name="setting_span_count_item">%1$d columns</string>
+    <string name="setting_never_hide_toolbar">Never hide the toolbar</string>
+    <string name="setting_enable_reply_fab">Enable the reply button</string>
+    <string name="setting_bottom_js_captcha">Bottom captcha</string>
+    <string name="setting_bottom_js_captcha_description">Makes the JS captcha float to the bottom of the screen</string>
+    <string name="setting_enable_reply_fab_description">Disabling replaces the round button with a menu option</string>
+    <string name="setting_enable_reply_count">Enable the reply counter</string>
+    <string name="setting_font_size">Tipara grando</string>
+    <string name="setting_font_size_default">(defaŭlta)</string>
+    <string name="setting_never_show_pages">Never show page number</string>
+    <string name="setting_never_show_pages_bottom">Never display the page number in the catalog</string>
+    <string name="setting_enable_draggable_scrollbars">Draggable scrollbars</string>
+    <string name="setting_enable_draggable_scrollbars_bottom">Enable draggable scrollbars for fast scrolling</string>
+
+    <string name="setting_enable_draggable_scrollbars_disabled">Disabled (Regular, non-draggable scrollbars)</string>
+    <string name="setting_enable_draggable_scrollbars_scroll_by_dragging_thumb">Scroll only when dragging thumb</string>
+    <string name="setting_enable_draggable_scrollbars_scroll_by_clicking_track">Scroll by clicking any point of track</string>
+
+
+    <!-- Appearance post group -->
+    <string name="setting_post_full_date">Montri la tutan daton en afiŝoj</string>
+    <string name="setting_post_file_info">Montri dosierinformo en afiŝoj</string>
+    <string name="setting_post_filename">Montri dosiernomo en afiŝoj</string>
+    <string name="settings_group_images">Bildoj</string>
+    <string name="setting_text_only">Nurteksta reĝimo</string>
+    <string name="setting_text_only_description">Remove images when in board and thread view</string>
+    <string name="settings_reveal_text_spoilers">Reveal text spoilers</string>
+    <string name="settings_reveal_text_spoilers_description">Makes the spoiler text appear tapped</string>
+    <string name="setting_anonymize">Make everyone Anonymous</string>
+    <string name="setting_anonymize_description">Sets everyone\'s name field to be \"Anonymous\"</string>
+    <string name="setting_show_anonymous_name">Always show \"Anonymous\" name</string>
+    <string name="setting_show_anonymous_name_description">Displays \"Anonymous\" rather than an empty field</string>
+    <string name="setting_anonymize_ids">Hide IDs</string>
+
+    <!-- Appearance post links group -->
+    <string name="setting_group_post_links">Afiŝaj ligiloj</string>
+    <string name="setting_youtube_title_and_durations">Parse Youtube titles and durations</string>
+    <string name="setting_youtube_title_and_durations_description">Replaces Youtube links with their titles and appends video duration\n\n%1$s</string>
+    <string name="setting_soundcloud_title_and_durations">Parse SoundCloud titles and durations</string>
+    <string name="setting_soundcloud_title_and_durations_description">Replaces SoundCloud links with their titles and appends video duration\n\n%1$s</string>
+    <string name="setting_streamable_title_and_durations">Parse Streamable titles and durations</string>
+    <string name="setting_streamable_title_and_durations_description">Replaces Streamable links with their titles and appends video duration\n\n%1$s</string>
+    <string name="setting_show_link_along_with_title_and_duration_title">Show the link along with video title and duration</string>
+    <string name="setting_show_link_along_with_title_and_duration_description">When disabled only the video title and duration will be shown</string>
+
+    <!-- Appearance gallery group -->
+    <string name="setting_hide_images">Kaŝi bildojn</string>
+    <string name="setting_hide_images_description">Hides images with a special spoiler image. If you want to save on data, turn this on.</string>
+    <string name="settings_remove_image_spoilers">Remove image spoilers</string>
+    <string name="settings_remove_image_spoilers_description">Always reveal spoiler thumbnails and images</string>
+    <string name="settings_reveal_image_spoilers">Auto reveal image spoilers</string>
+    <string name="setting_images_high_res">High resolution cells</string>
+    <string name="setting_images_high_res_description">Make the album view and card catalog images higher resolution by pre-rescaling full size images</string>
+    <string name="setting_image_link_loading_title">Enable image link loading</string>
+    <string name="setting_image_link_loading_description">Adds any JPG, PNG, GIF, WEBP, BMP, PDF, WEBM, or MP4 files linked in posts as internally viewable post attachments, with a special spoiler image due to no thumbnails being available</string>
+    <string name="setting_fetch_inlined_file_sizes_title">Fetch the file size for inlined files</string>
+    <string name="setting_fetch_inlined_file_sizes_description">A HEAD request will be sent for inlined files to try to get the Content-Length header which value will be used as the file size.\n\n⚠⚠⚠ WARNING ⚠⚠⚠\n\nBy enabling this setting you may accidentally leak your IP address to IP logger site. Only enable this if you don\'t care about leaking your IP address.</string>
+    <string name="setting_fetch_image_opacity">Image opacity</string>
+    <string name="setting_fetch_image_opacity_description">Default state for image transparency in the viewer</string>
+
+    <!-- Behavior general group -->
+    <string name="settings_screen_behavior">Agado</string>
+    <string name="settings_group_general">Ĝeneralaj</string>
+    <string name="setting_clear_post_hides">Clear all post hides</string>
+    <string name="setting_cleared_post_hides">Cleared all post hides</string>
+    <string name="settings_group_reply">Respondo</string>
+    <string name="setting_post_pin">Bookmark thread on post</string>
+    <string name="setting_post_default_name">Defaŭlta afiŝa nomo</string>
+    <string name="setting_auto_refresh_thread">Auto refresh threads</string>
+    <string name="setting_controller_swipeable">Allow screens to be swiped away</string>
+    <string name="setting_controller_reply_layout_gestures">Allow Reply Layout gesture control</string>
+    <string name="setting_controller_reply_layout_gestures_description">This setting enables the following gestures: \n1. Longtap bottom navigation view + swipe up to open Reply Layout. \n2. Swipe up Reply Layout to expand it. \n3. Swipe down expanded Reply Layout to collapse it or if it is already collapsed to close it. \n\nBasically allows you to control Reply Layout with only gestures (You can even hide the reply button completely). Some gestures (Longtap + swipe up) do not work with SPLIT layout.</string>
+    <string name="setting_open_link_confirmation">Ask before opening links</string>
+    <string name="setting_captcha_setup">Captcha Settings</string>
+    <string name="setting_captcha_setup_description">Captcha settings are per-site configurable. Tap for site setup.</string>
+    <string name="setting_js_captcha_cookies_title">JS captcha cookies</string>
+    <string name="setting_js_captcha_cookies_description">By inputting your desktop browser captcha cookies, captcha solving may become easier</string>
+    <string name="setting_load_last_opened_board_upon_app_start_title">Restore last opened board upon app start</string>
+    <string name="setting_load_last_opened_board_upon_app_start_description">When turned on, upon app start the last visited board will be automatically opened (New KurobaEx behavior). Turning this option off will cause loading the first board from the board selection list (Default Clover/Kuroba behavior)</string>
+    <string name="setting_load_last_opened_thread_upon_app_start_title">Restore last opened thread upon app start</string>
+    <string name="setting_load_last_opened_thread_upon_app_start_description">When turned on, upon app start the last visited thread will be automatically opened (New KurobaEx behavior). When turned off no thread will be automatically opened upon app start (Default Clover/Kuroba behavior)</string>
+
+    <!-- Behavior post group -->
+    <string name="settings_group_post">Afiŝo</string>
+    <string name="setting_volume_key_scrolling">Volume keys scroll content</string>
+    <string name="setting_tap_no_rely">Tap the post number to reply</string>
+    <string name="setting_mark_unseen_posts_title">Mark unseen posts</string>
+    <string name="setting_mark_unseen_posts_duration">Adds a left-side label for every yet unseen post. Only shows unseen posts in threads.</string>
+
+    <!-- Other settings group -->
+    <string name="setting_other_settings_group">Aliaj Opcioj</string>
+    <string name="setting_full_screen_rotation">Allow full sensor rotation</string>
+    <string name="settings_show_copy_apk_dialog_title">Show copy apk dialog when downloading an update</string>
+    <string name="settings_show_copy_apk_dialog_message">Every time you download a new update a dialog with suggestion to copy that apk to some other directory will be shown</string>
+
+    <!-- Media general group -->
+    <string name="settings_screen_media">Audvidaĵoj</string>
+
+    <string name="save_location_screen">Konservi lokon</string>
+    <string name="save_location_storage_permission_required_title">Storage permission required</string>
+    <string name="save_location_storage_permission_required">
+"Permission to access storage is required for browsing files.
+
+Re-enable this permission in the app settings if you permanently disabled it."
+    </string>
+
+    <!-- Media cache size group -->
+    <string name="settings_media_cache_size">Media cache size</string>
+    <string name="normal_cache_size_title">Media disk cache size</string>
+    <string name="normal_cache_size_description">The maximum size of all files stored in the cache before it gets cleaned up. Disk cache is used to reduce the amount of network requests to show media. It\'s also helpful when you have no internet connection or if a media was deleted from the server (you will be able to see it until it\' remove from the cache).</string>
+    <string name="prefetch_cache_size_title">Prefetch media disk cache size</string>
+    <string name="prefetch_cache_size_description">The same as above but it\'s only used when media prefetching setting is turned on. Since you are basically downloading media files and you hover over them you will need a more spacious cache.</string>
+    <string name="media_cache_cleanup_remove_percent">Percent of cached files to remove upon cleanup</string>
+    <string name="media_cache_cleanup_remove_percent_description">Percent of cached files that will be removed from the disk upon cache clean up. The higher this setting the more files will be removed at a time which may result in app having delays when viewing media (Because all access to the cache is blocked when clean up procedure is running). The media cache size setting may also affect this. On the other hand the clean up procedure will be executed with higher intervals.</string>
+
+    <!-- Database size group -->
+    <string name="settings_database_cache_size">Database cache size</string>
+    <string name="database_max_posts">Max posts count in the database</string>
+    <string name="database_max_posts_description">All posts are stored in the database (so you can access threads even without internet connection). This setting regulates the maximum amount of posts in the database before we start running periodic cleanup routines. Posts in bookmarked threads/Original Posts are ignored by cleanup routines.</string>
+    <string name="database_max_threads">Max threads count in the database</string>
+    <string name="database_max_threads_description">Same as above. One \"thread\" in database means the original post plus some other thread information. When a thread is deleted from the database, all the information associated with it is deleted as well (like all posts associated with that thread).</string>
+    <string name="database_posts_cleanup_remove_percent">Percent of posts/threads to remove upon cleanup</string>
+    <string name="database_posts_cleanup_remove_percent_description">Percent of posts/threads that will be removed from the database upon database cleanup. The higher this setting the more posts/threads will be removed at a time which may result in app taking more time to start up (Because all access to posts/threads database tables is blocked when clean up procedure is running). The max posts/threads in the database setting may also affect this. On the other hand the clean up procedure will be executed with higher intervals.</string>
+
+    <!-- Media video options group -->
+    <string name="setting_video_options">Video options</string>
+    <string name="setting_video_auto_loop">Enable automatic video-looping</string>
+    <string name="setting_video_default_muted">Start videos muted</string>
+    <string name="setting_video_default_muted_description">If a video has audio, mute it by default</string>
+    <string name="setting_headset_default_muted">Mute headset videos</string>
+    <string name="setting_headset_default_muted_description">Mute the video even if a wired headset is connected</string>
+    <string name="setting_video_open_external">Play videos with external player</string>
+    <string name="setting_video_open_external_description">Play videos in an external media player app</string>
+    <string name="setting_video_stream">Stream videos</string>
+    <string name="setting_video_stream_description">Attempt to stream videos, instead of downloading them completely. (Works really bad with 4chan servers)</string>
+
+    <!-- Media loading group -->
+    <string name="setting_image_auto_load">Automatically load images</string>
+    <string name="setting_video_auto_load">Automatically load videos</string>
+    <string name="settings_group_media_loading">Media loading</string>
+    <string name="setting_image_auto_load_all">Always</string>
+    <string name="setting_image_auto_load_wifi">Wi-Fi only</string>
+    <string name="setting_image_auto_load_none">Never</string>
+    <string name="setting_video_auto_loop_description">Automatically loop video content</string>
+    <string name="setting_auto_load_thread_images">Enable media prefetching</string>
+    <string name="setting_auto_load_thread_images_description">Loads all images or videos in a thread immediately. Uses it\'s own setting for the cache size which is greater than the regular cache size.</string>
+
+    <!-- Misc group -->
+    <string name="settings_group_misc">Misc settings</string>
+    <string name="setting_always_randomize_picked_files_names">Always randomize picked files names</string>
+    <string name="setting_always_randomize_picked_files_names_description">Current timestamp in milliseconds will be used as the name of any picked file</string>
+
+
+    <!-- Save location settings -->
+    <string name="setting_folder_pick_ok">Choose</string>
+    <string name="setting_folder_navigate_up">Up</string>
+    <string name="save_new_folder">Add a new folder</string>
+    <string name="new_folder_hint">Folder name</string>
+
+    <!-- Database summary settings -->
+    <string name="settings_database_summary">Database summary</string>
+    <string name="settings_clear_inlined_files_table">Clear inlined files info table</string>
+    <string name="settings_clear_link_info_table">Clear external link extra info table</string>
+    <string name="settings_clear_seen_posts_table">Clear seen posts table</string>
+    <string name="settings_trigger_thread_cleanup">Trigger thread cleanup</string>
+    <string name="settings_trigger_post_cleanup">Trigger post cleanup</string>
+
+    <!-- Theme settings -->
+    <string name="settings_logs_screen">Logs</string>
+    <string name="settings_logs_copy">Copy</string>
+
+    <!-- Developer settings -->
+    <string name="settings_open_logs">View logs</string>
+    <string name="settings_enable_verbose_logs">Enable verbose logs</string>
+    <string name="settings_disable_verbose_logs">Disable verbose logs</string>
+    <string name="settings_crash_app">Crash the app</string>
+    <string name="settings_clear_file_cache">Clear file cache</string>
+    <string name="settings_clear_file_cache_bottom_description">Currently %1$d MB</string>
+    <string name="settings_dump_thread_stack">Dump active thread stack traces to log</string>
+    <string name="settings_reset_thread_open_counter">Reset thread open counter</string>
+    <string name="settings_crash_on_safe_throw_enabled">Crash on safe throw (ENABLED)</string>
+    <string name="settings_crash_on_safe_throw_disabled">Crash on safe throw (DISABLED)</string>
+    <string name="settings_simulate_app_updated">Simulate app updated</string>
+    <string name="settings_simulate_app_updated_bottom">Makes the app think it\'s updated to the latest version. This will be reset the next time you manually check for updates</string>
+    <string name="settings_simulate_app_not_updated">Simulate app not updated</string>
+    <string name="settings_simulate_app_not_updated_bottom">Makes the app think it\'s NOT updated to the latest version. This will be reset the next time you manually check for updates</string>
+    <string name="settings_auto_theme_switcher">Auto theme switcher</string>
+    <string name="settings_auto_theme_switcher_bottom">Toggles light/dark theme with a slight delay (5 seconds) ad infinitum (Or until app restart). Is used for dynamic themes testing. \n\nCurrent status: %1$s</string>
+
+    <!-- Security settings -->
+    <string name="settings_screen_security">Security</string>
+    <string name="settings_screen_security_proxy_group">Proxy</string>
+    <string name="settings_screen_security_proxy">Proxy settings</string>
+    <string name="settings_screen_security_proxy_description">%1$d proxies enabled</string>
+
+    <!-- Experimental settings -->
+    <string name="experimental_settings_group">Experimental settings</string>
+    <string name="settings_concurrent_file_downloading_name">Concurrent chunked file downloading</string>
+    <string name="settings_concurrent_file_downloading_description">Split file downloads into chunks and download them concurrently, when possible; makes loading times shorter when viewing them in the gallery. Determines the number of chunks to split files into.</string>
+    <string name="setting_exclusion_zones_editor">Android 10 gesture exclusion zones</string>
+    <string name="setting_exclusion_zones_editor_description">Adjust zones where Android 10 gestures will be disabled. \n\nYou will have to rotate your phone/tablet to set zones for different orientations. \nYou will have to restart the app for the changes to be applied!</string>
+    <string name="setting_exclusion_zones_reset_zones">Reset exclusion zones</string>
+    <string name="setting_exclusion_zones_reset_zones_description">All exclusion zones will be deleted; the app will be restarted</string>
+    <string name="setting_allow_okhttp_http2">Allow OkHttp to use HTTP/2 protocol</string>
+    <string name="setting_allow_okhttp_ipv6">Allow OkHttp to use IPv6</string>
+    <string name="setting_allow_okhttp_http2_ipv6_description">Disabling this setting may resolve issues with images not loading whatsoever in some rare cases. Try disabling this setting if images refuse to start loading.</string>
+    <string name="setting_cloudflare_preloading_dialog_title">Cloudflare image preloading (4chan only)</string>
+    <string name="setting_cloudflare_preloading_dialog_description">This option will be forcing Cloudflare to preload all currently visible images in a thread. No images will be downloaded on your phone and no additional traffic will be used. Only HEAD requests will be sent for every image in the thread which will force Cloudflare to cache those images. This SHOULD make subsequent image downloads way faster because you will be loading them from Cloudflare servers, not 4chan\'s. This feature works similar to how media prefetching works (you don\'t need to click anything, just scroll through the thread like you always do).</string>
+
+    <!-- Import/Export settings -->
+    <string name="import_or_export_settings">Import/Export application backup</string>
+    <string name="export_settings">Export backup file</string>
+    <string name="export_settings_to_a_file">Export application database and other files that are used to persist application state into a zip file.</string>
+    <string name="import_settings">Import backup file</string>
+    <string name="import_settings_from_a_file">Restore application state from backup file. This is only supposed to work on the same application version or higher (downgrades are not supported).</string>
+
+    <string name="import_from_kuroba">Import from Kuroba</string>
+    <string name="import_settings_from_kuroba">Import Bookmarks/Filters/Filters/Hidden posts and threads/Added sites and boards and some other stuff from Kuroba (the settings file must be exported on 4.13.X-release version of Kuroba, other versions probably won\'t work). Settings are not imported since they differ too much. You need to clear the app data beforehand.</string>
+
+    <string name="settings_logs_copied_to_clipboard">Copied to clipboard</string>
+    <string name="settings_screen_pass_title">%1$s pass</string>
+    <string name="setting_pass_token">Token</string>
+    <string name="setting_pass_pin">PIN</string>
+    <string name="setting_passcode">Passcode</string>
+    <string name="setting_pass_authenticated">Device authorized!</string>
+    <string name="setting_pass_login">Submit</string>
+    <string name="setting_pass_logout">Logout</string>
+    <string name="setting_pass_error">Connection error</string>
+    <string name="setting_posting_limits_info_refresh_success">Posting limits info refreshed</string>
+    <string name="setting_posting_limits_info_refresh_failure">Failed to refresh posting limits info</string>
+
+    <string name="setting_pass_bottom_description">"
+<![CDATA[
+Forgot your 4chan Pass login details?<br>
+<a href=\"https://www.4chan.org/pass?reset\">Go here to reset your PIN.</a><br>
+<br>
+Don't have a 4chan Pass?<br>
+<a href=\"https://www.4chan.org/pass\">Tap here to learn more.</a>
+]]>
+    "</string>
+
+    <string name="settings_screen_theme">Themes</string>
+    <string name="image_quality">Image quality: %1$d</string>
+
+    <string name="site_settings_not_site_found">No site found with siteDescriptor: %1$s</string>
+    <string name="site_settings_site_is_not_active">Site %1$s is not active. It\'s either completely disabled or you need to activate it first</string>
+
+    <string name="archives_settings_title">Archives settings</string>
+    <string name="archives_settings_repository_error">Repository error: %1$s</string>
+    <string name="archives_settings_archive_is_disabled">Archive is disabled</string>
+    <string name="archives_settings_archive_is_disabled_permanently">Archive is disabled because something doesn\'t work as expected. Maybe it will be enabled some time in the future</string>
+    <string name="archives_settings_archive_is_working">Archive is working normally</string>
+
+    <string name="archives_settings_help_message">
+        <![CDATA[All these archives are used to retrieve deleted posts/images in a thread.<br>
+            All archives are disabled by default, you need to enable them manually.<br>
+            Most of the time you want to enable <b>all</b> of the archives.
+            If one archive is unavailable for some reason, the other one may be used instead
+            (only if they both support the same board).<br><br>
+
+            When fetching posts from an archive, if there was an error (for example an archive was
+            unavailable) the error is stored so that it can be used to calculate a score. The score
+            is used to determine what archive to use when multiple enabled archives support the
+            same board. <br><br>
+
+            Results of the last 5 last fetches are stored and used for the score calculation, which
+            means that if all 5 fetches succeeded then the archive will have the highest score.
+            Such archives are marked with "WORKING" status. If there was at least one error over the
+            last 5 fetches then such archive is marked with "EXPERIENCING PROBLEMS" error. If all
+            5 fetches resulted in an error then such archive will be marked as "NOT WORKING". Most
+            of the scores are used mostly for notifying the user of what\'s going on. Only the
+            "NOT WORKING" score will disable an archive until all the previous fetch results are
+            not valid anymore (this takes like 30 minutes).<br><br>
+
+            When determining what archive to use we go down from an archive with the highest score
+            to the lowest. If an archive with the highest score does not support files for the board
+            and the next archive supports them then the next archive will be used (since archives
+            that supports files have higher priority). The score resets every 30 minutes for all
+            archives.<br><br>
+
+            You can also manually delete fetch results to change the score so that an archive can
+            be used again if you don\'t want to wait until it\'s done automatically.<br><br>
+
+            If one of the archives for some reason does not load at all (blocked by an ISP) you can
+            just disable it so we don\'t use it\'s score to figure out what archive to use (because
+            requests for blocked sites will just end up in failures with huge timeouts).]]>
+    </string>
+
+    <string name="thread_presenter_no_archives_enabled">No archives are enabled for the current thread. You can enable them in the site settings.</string>
+    <string name="thread_presenter_failed_to_delete_thread">Failed to delete thread</string>
+    <string name="thread_presenter_error_while_trying_to_get_archive_descriptor">Error while trying get archive descriptor by thread descriptor</string>
+    <string name="thread_presenter_no_archives_for_thread">No archives were found for the current thread. This means that all archives supporting current board are disabled (In this case you can enable them in site settings) or all archives supporting current board are not working (See archives settings in site settings)</string>
+    <string name="thread_presenter_no_available_archives">No archives are currently available to use. You can only use an archive once in %1$d minutes per thread. Time until any of archives are available again: %2$s</string>
+    <string name="thread_presenter_no_archives_found_to_open_thread">No archives found to open %1$s. Check that you have enabled archives to open this thread. It is also possible that no archives support this site/board.</string>
+
+    <string name="thread_presenter_started_preloading_images">Started preloading %1$d images</string>
+    <string name="thread_presenter_all_images_already_preloaded">All images have already been preloaded</string>
+    <string name="thread_presenter_already_in_progress">Already in progress</string>
+    <string name="thread_presenter_done_preloading">Done preloading, preloaded: %1$d, errors: %2$d</string>
+
+    <string name="scale_reduce">Reduce: %1$dx%2$d to %3$dx%4$d (%5$d%%)</string>
+    <string name="could_not_decode_image_bitmap">Could not decode image bitmap</string>
+    <string name="could_not_apply_image_options">Could not apply new image options (error message is %1$s)</string>
+    <string name="could_not_reencode_image">Could not reencode image</string>
+    <string name="image_options_change_image_checksum">Change image checksum</string>
+    <string name="image_options_fix_exif">Fix EXIF orientation</string>
+    <string name="image_options_remove_metadata">Remove metadata</string>
+    <string name="image_options_re_encode">Re-encode</string>
+    <string name="reencode_image_re_encode_image_text">Re-encode image</string>
+    <string name="reencode_image_as_is">AS IS (%1$s)</string>
+    <string name="reencode_image_as_jpeg">AS JPEG</string>
+    <string name="reencode_image_as_png">AS PNG</string>
+    <string name="reencode_image_image_quality_100_default_text">Image quality: 100</string>
+    <string name="reencode_image_reduce_default_text">Reduce: 0%</string>
+
+    <string name="controller_bookmarks">Bookmarks</string>
+    <string name="controller_bookmarks_with_stats">Bookmarks (%1$d/%2$d)</string>
+    <string name="controller_selected_n_bookmarks">Selected %1$d bookmarks</string>
+    <string name="controller_bookmarks_bookmarks_are_empty">You haven\'t bookmarked any threads yet</string>
+    <string name="controller_bookmarks_nothing_found_by_search_query">Nothing found by search query \"%1$s\"</string>
+    <string name="controller_bookmarks_prune_inactive_bookmarks">Prune inactive bookmarks</string>
+    <string name="controller_bookmarks_prune_confirmation_message">Are you sure you want to prune all inactive bookmarks?</string>
+    <string name="controller_bookmarks_clear_all_bookmarks">Clear all bookmarks</string>
+    <string name="controller_bookmarks_set_grid_bookmark_view_width">Set grid bookmark view width</string>
+    <string name="controller_bookmarks_clear_all_bookmarks_confirmation_message">Are you sure you want to clear ALL bookmarks?</string>
+    <string name="controller_bookmarks_mark_all_bookmarks_as_seen">Mark all bookmarks as seen and clear all notifications</string>
+    <string name="controller_bookmarks_prune">Prune</string>
+    <string name="controller_bookmarks_clear">Clear</string>
+    <string name="controller_bookmarks_bookmark_of_archived_thread">(Archive)</string>
+    <string name="controller_bookmarks_watcher_disabled">(Watcher disabled)</string>
+    <string name="controller_bookmarks_delete_selected_bookmarks_title">Are you sure you want to delete %1$d bookmarks?</string>
+
+    <string name="controller_filter_watches">Filter watches</string>
+
+    <string name="controller_sites_setup_no_sites">No sites loaded, this shouldn\'t happen</string>
+    <string name="controller_sites_setup_archives_group">Archives (%1$d/%2$d)</string>
+
+    <string name="controller_boards_setup_no_boards">No boards added</string>
+    <string name="controller_boards_setup_title">Configure boards of %1$s</string>
+    <string name="controller_boards_setup_boards_updated">Boards updated</string>
+    <string name="controller_enter_board_code">Enter board code (just text, without \'/\')</string>
+    <string name="controller_board_code_is_empty">Board code is empty</string>
+
+    <string name="controller_add_boards_no_boards">No boards found</string>
+    <string name="controller_add_boards_check_all">Check all</string>
+
+    <string name="controller_boards_selection_no_boards">No boards found</string>
+    <string name="controller_boards_selection_sites">Sites</string>
+
+    <string name="controller_sites_title">Sites</string>
+
+    <string name="controller_site_settings_title">Configure %1$s</string>
+
+    <string name="controller_proxy_setup_title">Proxy setup</string>
+    <string name="controller_proxy_setup_no_proxies">You haven\'t added any proxies yet</string>
+    <string name="controller_proxy_setup_failed_to_enable_disable_proxy">Failed to enable/disable proxy, error = %1$s</string>
+    <string name="controller_proxy_setup_failed_to_delete_proxies">Failed to delete proxies, error = %1$s</string>
+    <string name="controller_proxy_setup_proxy_editing_notification">Adding/Removing or updating proxies requires application restart</string>
+    <string name="controller_proxy_setup_selected_n_proxies">Selected %1$d proxies</string>
+    <string name="controller_proxy_setup_delete_selected_proxies_title">Are you sure you want to delete %1$d proxies?</string>
+
+    <string name="controller_proxy_editor_title">Proxy editor</string>
+    <string name="controller_proxy_editor_proxy_address">Proxy address</string>
+    <string name="controller_proxy_editor_proxy_port">Proxy port</string>
+    <string name="controller_proxy_editor_proxy_type">Proxy type</string>
+    <string name="controller_proxy_editor_proxy_type_http">HTTP</string>
+    <string name="controller_proxy_editor_proxy_type_socks">SOCKS</string>
+    <string name="controller_proxy_editor_enable_on_sites">Enable on sites</string>
+    <string name="controller_proxy_editor_actions">Actions</string>
+    <string name="controller_proxy_editor_enable_for">Enable for</string>
+    <string name="controller_proxy_editor_cannot_add_new_proxy">Cannot add new proxy</string>
+    <string name="controller_proxy_editor_proxy_added">New proxy added. Restart the app</string>
+    <string name="controller_proxy_editor_proxy_updated">Proxy updated. Restart the app</string>
+    <string name="controller_proxy_editor_proxy_deleted">Proxy deleted. Restart the app</string>
+    <string name="controller_proxy_editor_proxy_address_is_not_valid">Proxy address is not valid</string>
+    <string name="controller_proxy_editor_proxy_port_is_not_valid">Proxy port is not valid</string>
+    <string name="controller_proxy_editor_proxy_type_is_not_valid">Proxy type is not valid</string>
+    <string name="controller_proxy_editor_proxy_no_sites_selected">No sites selected</string>
+    <string name="controller_proxy_editor_proxy_no_actions_selected">No actions selected</string>
+    <string name="controller_proxy_editor_enable_for_site_requests">Enable for site requests (Posting/Captcha/Json fetching etc)</string>
+    <string name="controller_proxy_editor_enable_for_media_previews">Enable for media preview loading (Post thumbnails/bookmarks/tabs/etc thumbnails/site icons etc)</string>
+    <string name="controller_proxy_editor_enable_for_full_media">Enable for full media loading</string>
+    <string name="controller_proxy_editor_failed_to_persist_new_proxy_error">Failed to persist new proxy, error = %1$s</string>
+    <string name="controller_proxy_editor_failed_to_persist_new_proxy_unknown_error">Failed to persist new proxy, unknown error see logs</string>
+
+    <string name="controller_search">Global search</string>
+    <string name="controller_search_empty_sites">No sites supporting search found</string>
+    <string name="controller_search_search_input_hint">Enter search query</string>
+
+    <string name="controller_search_searching">Searching %1$s for \"%2$s\"</string>
+    <string name="controller_search_results">%1$s \"%2$s\" found total: %3$d</string>
+    <string name="controller_search_results_unknown">%1$s \"%2$s\" found total: unknown</string>
+    <string name="controller_search_results_end_of_list">End of results</string>
+
+    <string name="successfully_exported_text">Exported successfully"</string>
+    <string name="import_warning_title">Warning</string>
+    <string name="import_warning_text">You are about to import settings/saved pins/filters/hidden posts from a file.
+        The file must be located at \"%1$s\" and have a name \"%2$s\".
+        This will clear all your existing settings/pins/threads and replace them with the ones from the file.
+        You MAY LOSE some of your settings/pins/hidden threads if you are trying to import a file created with a different app version (upgrade or downgrade).
+        The app will be restarted. \nAre you sure you want to continue?
+    </string>
+    <string name="error_external_storage_is_not_mounted">External storage is not mounted</string>
+    <string name="could_not_create_dir_for_export_error_text">Could not create directory for export file %1$s; you probably won\'t be able to export settings</string>
+
+    <string name="apply_to_replies">Apply to replies</string>
+    <string name="only_on_op">Only on OP</string>
+    <string name="apply_to_saved">Apply to own posts</string>
+
+    <string name="browse_controller_title_app_setup">App Setup</string>
+    <string name="browse_controller_subtitle">Tap for site/board setup</string>
+    <string name="browse_controller_cannot_open_board">Cannot open board, it does not exist in the BoardRepository. Are you trying to open a board you didn\'t manually add?</string>
+    <string name="browse_controller_cannot_open_thread">Cannot open thread, it does not exist in the database. This is most likely a bug.</string>
+    <string name="browse_controller_cannot_open_thread_not_a_thread">Cannot open thread, bad loadable mode: %1$d</string>
+    <string name="browse_controller_enter_thread_id">Enter thread id (the OP number, e.g. 123456789)</string>
+    <string name="browse_controller_enter_thread_url">Enter thread url</string>
+    <string name="browse_controller_enter_thread_id_msg">The thread must belong to a board you are currently on, otherwise it won\'t be found</string>
+    <string name="browse_controller_error_parsing_thread_id">Error parsing thread id, it should only contain numbers</string>
+
+    <string name="thread_layout_hide_whole_chain">Hide whole chain</string>
+    <string name="thread_layout_remove_whole_chain">Remove whole chain</string>
+    <string name="thread_layout_hide_post">Hide post</string>
+    <string name="thread_layout_remove_post">Remove post</string>
+    <string name="thread_layout_hide_whole_chain_as_well">Would you like to hide the whole reply chain as well?</string>
+    <string name="thread_layout_remove_whole_chain_as_well">Would you like to remove the whole reply chain as well?</string>
+    <string name="restore_posts">Restore posts</string>
+    <string name="restored_n_posts">Restored %1$d posts</string>
+    <string name="no_removed_posts_for_current_thread">No removed posts found for the current thread</string>
+    <string name="select_all">Select all</string>
+    <string name="settings_captcha_group">Captcha</string>
+    <string name="settings_use_new_captcha_window">Use new captcha window for no-js captcha</string>
+    <string name="settings_use_real_google_cookies_description">When enabled, a GET request to google.com will be executed to get a cookie, which will be used for captcha authentication.
+        The hardcoded ones sometimes will make you re-enter the captcha dozens of times.
+        Those cookies will be updated automatically (every three months).
+        You may update them manually if you want.
+    </string>
+
+    <!-- Captcha settings -->
+    <string name="captcha_layout_v2_verify_button_text">Verify</string>
+    <string name="captcha_layout_v2_use_old_captcha">Use old\ncaptcha</string>
+
+    <string name="captcha_layout_v2_you_have_to_select_at_least_one_image">You have to select at least one image (if you see a captcha that does not have any matching images, then it is probably a bug; fill an issue and use the old captcha)</string>
+    <string name="captcha_layout_v2_verification_already_in_progress">Verification is already in progress</string>
+    <string name="captcha_layout_v2_captcha_request_is_already_in_progress">Captcha request is already in progress</string>
+    <string name="captcha_layout_v2_you_are_requesting_captcha_too_fast">You are requesting captcha too fast</string>
+    <string name="captcha_layout_v2_refresh_cookies">Refresh cookies</string>
+    <string name="image_url_copied_to_clipboard">Image URL copied to clipboard</string>
+
+    <string name="could_not_remove_site_error_message">Could not remove site %1$s (error message: %2$s)</string>
+
+    <string name="reply_comment_empty">Reply is empty (no comment body, no files attached).</string>
+    <string name="reply_failed_to_prepare_reply">Failed to prepare reply.</string>
+    <string name="image_reencode_format_error">Something is wrong with this file</string>
+    <string name="filter_removed_undo">Removed filter %1$s</string>
+    <string name="image_url_get_attempt">Getting image from clipboard URL…</string>
+    <string name="image_url_get_failed">Failed to get image from clipboard, reason = %1$s</string>
+    <string name="image_url_get_success">Got image from clipboard</string>
+
+    <string name="view_thread_controller_thread_downloading_requires_write_permission">Thread downloading requires the WRITE_EXTERNAL_STORAGE permission</string>
+    <string name="view_thread_controller_enter_post_id">Enter post id to scroll to</string>
+
+    <string name="warning">Warning</string>
+
+    <string name="drawer_controller_at_least_one_pin_has_download_flag">At least one pin has the \"Download\" flag, which makes this delete operation irreversible (because this operation will delete all of the saved thread\'s files from the disk). Do you really want to delete all pins?</string>
+    <string name="drawer_controller_do_not_delete">Do not delete</string>
+    <string name="drawer_controller_delete_all_pins">Delete all pins</string>
+    <string name="drawer_controller_navigation_history_is_empty">Navigation history is empty.\n\nOpen a board or a thread to add it here (Additionally, check drawer settings)</string>
+    <string name="drawer_controller_move_last_accessed_thread_to_top">Move last accessed thread/catalog to top</string>
+    <string name="drawer_controller_show_bookmarks">Show bookmarked threads</string>
+    <string name="drawer_controller_show_navigation_history">Show navigation history</string>
+    <string name="drawer_controller_clear_nav_history">Clear navigation history</string>
+    <string name="drawer_controller_clear_nav_history_dialog_title">Clear navigation history?</string>
+
+    <string name="thread_layout_background_watcher_is_disabled_message">Thread is currently being downloaded, but the background watcher is disabled so it won\'t be incrementally updated. To enable incremental thread updating, you have to enable the background thread watcher.</string>
+    <string name="cannot_open_in_browser_already_deleted">Can\'t open this thread in a browser</string>
+    <string name="cannot_shared_thread_already_deleted">Can\'t share this thread</string>
+    <string name="thread_follow_history_has_been_cleared">Thread follow history has been cleared</string>
+    <string name="thread_loading_error_title">Failed to load thread</string>
+
+    <string name="setting_youtube_dur_title">Enable Youtube durations</string>
+    <string name="setting_youtube_dur_description">Adds duration parsing to Youtube titles; does not do anything with titles off</string>
+    <string name="pdf_not_viewable">PDFs are not internally viewable; you can still download this file.</string>
+    <string name="swf_not_viewable">SWFs are not internally viewable; you can still download this file.</string>
+
+    <string name="lorem_ipsum">
+        The standard Lorem Ipsum passage, used since the 1500s
+"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+    </string>
+    <string name="report_controller_report_an_error_problem">Report an error/crash/other problem</string>
+    <string name="report_controller_i_have_a_problem_with">I have a problem with:</string>
+    <string name="report_controller_problem_description">Problem description:</string>
+    <string name="report_controller_attach_logs">Attach logs</string>
+    <string name="report_controller_no_logs">No logs</string>
+    <string name="report_controller_cancel">Cancel</string>
+    <string name="report_controller_send_report">Send report</string>
+    <string name="report_controller_title_cannot_be_empty_error">Title cannot be empty!</string>
+    <string name="report_controller_description_cannot_be_empty_error">If description is empty, logs cannot be empty!</string>
+    <string name="report_controller_logs_are_empty_error">\"Attach logs\" option is checked, but logs are empty!</string>
+    <string name="report_controller_sending_report_message">Sending report…</string>
+    <string name="report_controller_report_sent_message">Sent \;)</string>
+    <string name="report_controller_error_while_trying_to_send_report">Error while trying to send report: %1$s</string>
+
+    <string name="theme_settings_controller_failed_to_open_output_file">Failed to open output file</string>
+    <string name="theme_settings_controller_failed_to_open_theme_file">Failed to open theme file</string>
+    <string name="theme_settings_controller_failed_to_export_theme">Failed to export theme: %1$s</string>
+    <string name="theme_settings_controller_failed_to_import_theme">Failed to import theme: %1$s</string>
+    <string name="theme_settings_controller_failed_to_parse_some_fields_title">Failed to parse some fields! Check their correctness.</string>
+    <string name="theme_settings_controller_failed_to_parse_some_fields_description">Theme cannot be applied because it contains errors! You can use services such as https://jsonformatter.org/ to make sure the JSON is correct. Additionally check the colors.</string>
+    <string name="theme_settings_controller_failed_to_parse_bad_name">Bad theme name: \"%1$s\"</string>
+    <string name="theme_settings_controller_failed_to_reset_theme">Failed to reset theme</string>
+    <string name="theme_settings_controller_wrong_theme_type">You cannot import \"%1$s\" theme into \"%2$s\" theme slot</string>
+    <string name="theme_settings_controller_canceled">Canceled: %1$s</string>
+    <string name="theme_settings_controller_theme">%1$s theme</string>
+    <string name="theme_settings_controller_theme_light">Light</string>
+    <string name="theme_settings_controller_theme_dark">Dark</string>
+
+    <string name="layout_reply_files_area_too_many_attachables_text">Too many files to display them all at once (%1$d out of %2$d max). Upload or delete some of them to display the rest.</string>
+    <string name="layout_reply_files_area_open_in_editor_action">Open in editor</string>
+    <string name="layout_reply_files_area_delete_file_action">Delete this file</string>
+    <string name="layout_reply_files_area_delete_selected_files_action">Delete selected files</string>
+    <string name="layout_reply_files_area_remove_file_name">Remove file name of selected files</string>
+    <string name="layout_reply_files_area_remove_file_metadata">Remove metadata of selected files</string>
+    <string name="layout_reply_files_area_change_checksum">Change checksum of selected files</string>
+    <string name="layout_reply_files_area_select_all">Select all files</string>
+    <string name="layout_reply_files_area_unselect_all">Unselect all files</string>
+    <string name="layout_reply_files_area_removing_metadata">Removing metadata</string>
+    <string name="layout_reply_files_area_changing_checksum">Changing checksum</string>
+    <string name="layout_reply_files_area_updating_selection">Updating selection</string>
+    <string name="layout_reply_files_area_selected_out_of_allowed">Selected %1$d out of %2$d allowed on this board (total files count: %3$d)</string>
+
+    <string name="layout_reply_files_area_pick_local_file_show_pickers">Pick local file (show all file pickers)</string>
+    <string name="layout_reply_files_area_pick_remote_file">Pick remote file (by file url)</string>
+
+    <string name="reply_notifications_new_replies_total_stats">You have %1$d replies in %2$d thread(s)</string>
+    <string name="reply_notifications_new_replies_in_thread">You have %1$d new replies in thread %2$d</string>
+    <string name="reply_notifications_reply_format">Reply from %1$d to post %2$d</string>
+    <string name="last_page_notification_threads_hit_last_page_format">%1$d thread(s) hit last page</string>
+
+    <string name="hsid_cookie_text">HSID</string>
+    <string name="ssid_cookie_text">SSID</string>
+    <string name="sid_cookie_text">SID</string>
+    <string name="nid_cookie_text">NID</string>
+    <string name="js_captcha_cookies_editor_save_and_apply_text">Save and apply</string>
+    <string name="js_captcha_cookies_editor_make_sure_to_double_check_all_the_parameters_message">Make sure to double check all parameters! (And symbols like periods)</string>
+    <string name="js_captcha_cookies_editor_format_hint_message">Enter the values. No need to prepend them with \"HSID=…\", \"SSID=…\" etc.</string>
+    <string name="js_captcha_cookies_editor_controller_title">JS Captcha cookies editor</string>
+    <string name="cookies_editor_bad_cookie">%1$s cookie is not set!</string>
+    <string name="cookies_editor_failed_parse">Failed to parse cookies, re-enter them correctly!</string>
+
+    <string name="mock_reply">Mock reply</string>
+    <string name="review_report_files_controller_title">Review report files</string>
+    <string name="settings_report_suggest_sending_logs_title">You have %1$d collected report files</string>
+    <string name="settings_report_suggest_sending_logs_message">Would you like to review and maybe send them to developers?</string>
+    <string name="settings_report_review_button_text">Review report files</string>
+    <string name="settings_report_review_later_button_text">Review later</string>
+    <string name="settings_report_delete_all_report_files">Delete all report files</string>
+    <string name="deleted_n_report_files">Deleted %1$d report file(s)</string>
+    <string name="sent_n_report_files">Sent %1$d report file(s)</string>
+
+    <string name="media_settings_base_dir_reset_message">Base directory reset to default</string>
+    <string name="media_settings_could_not_create_default_baseDir">Could not create default base dir: %1$s</string>
+    <string name="media_settings_image_click_preload_strategy">Image preload strategy</string>
+    <string name="media_settings_image_click_preload_strategy_description">When opening up an image pager, determines what image(s) should be preloaded next.</string>
+
+    <string name="board_search_links_are_disabled">Board search links are disabled for now</string>
+    <string name="site_uses_dynamic_boards">"Unable to go to board (site likely has dynamic boards). Add the board using the boards menu first."</string>
+    <string name="archive_is_not_enabled">Archive \"%1$s\" is not enabled or does not exist</string>
+
+    <string name="update_manager_copy_apk_title">Copy apk?</string>
+    <string name="update_manager_copy_apk_message">Would you like to store this apk?</string>
+    <string name="update_manager_could_not_convert_uri">Couldn\'t convert uri (%1$s) into an ExternalFile</string>
+    <string name="update_manager_input_file_does_not_exist">Input apk file (%1$s) does not exist</string>
+    <string name="update_manager_output_file_does_not_exist">Output file (%1$s) does not exist</string>
+    <string name="update_manager_could_not_copy_apk">Couldn\'t copy file contents from file (%1$s) into (%2$s)</string>
+    <string name="update_manager_apk_copied">Apk successfully copied</string>
+
+    <string name="could_not_initialized_captcha">Couldn\'t initialize captcha, reason: %1$s</string>
+    <string name="fail_reason_webview_is_not_installed">WebView is not installed</string>
+    <string name="fail_reason_some_part_of_webview_not_initialized">Some part of WebViewChromium couldn\'t get initialized: (%1$s)</string>
+
+    <string name="setting_enable_image_link_loading">Enable image link loading</string>
+    <string name="setting_enable_image_link_loading_description">Adds any JPG, PNG, GIF, WEBM, MP4, PDF, BMP, WEBP, MP3, SWF, M4A, OGG, or FLAC files linked in posts as internally viewable post attachments, with a special spoiler image due to no thumbnails being available</string>
+    <string name="add_new_zone">Add new zone</string>
+    <string name="setting_exclusion_zones_left_zone_portrait">Left zone (Portrait orientation)</string>
+    <string name="setting_exclusion_zones_right_zone_portrait">Right zone (Portrait orientation)</string>
+    <string name="setting_exclusion_zones_left_zone_landscape">Left zone (Landscape orientation)</string>
+    <string name="setting_exclusion_zones_right_zone_landscape">Right zone (Landscape orientation)</string>
+    <string name="setting_exclusion_zones_actions_dialog_title">Android 10 exclusion zones actions</string>
+    <string name="setting_exclusion_zones_wrong_phone_orientation">Wrong phone orientation, you need to rotate your phone 90 degrees to any side before using this option.</string>
+    <string name="setting_exclusion_zones_edit_or_remove_zone_title">Edit or remove zone?</string>
+    <string name="setting_exclusion_zones_zone_remove_message">Zone removed. Restart the app for the changes to kick in.</string>
+    <string name="setting_exclusion_zones_zone_added_message">New exclusion zone added. Restart the app for the changes to kick in.</string>
+
+    <string name="image_saver_resolve_duplicate_images">Resolve duplicate images</string>
+    <string name="image_saver_resolve_duplicate_images_explanation">Select images that you want to retain. In case of selecting server image, the local duplicate will be overwritten with server image. In case of selecting local image, it will be left as is.</string>
+    <string name="image_saver_images_from_server">Images from server</string>
+    <string name="image_saver_local_images_on_disk">Local images on disk</string>
+    <string name="image_saver_out_of_disk_space">Out of disk space!</string>
+    <string name="image_saver_failed_to_access_root_dir">Failed to access root directory!\nClick \"show settings\" and then check that it exists and you have access to it!</string>
+    <string name="image_saver_root_dir_is_inaccessible">Root directory is inaccessible</string>
+    <string name="image_saver_root_uri_is_not_a_dir">Uri \'%1$s\' is not a directory</string>
+    <string name="image_saver_root_dir_uri_does_not_exist">Directory \'%1$s\' does not exist</string>
+    <string name="image_saver_show_images_saver_settings">Show settings</string>
+    <string name="image_saver_navigate">Navigate</string>
+    <string name="image_saver_resolve_duplicates">Resolve duplicates</string>
+    <string name="image_saver_downloading_images">Downloading images</string>
+    <string name="image_saver_no_unresolved_images_found">No unresolved duplicate images were found</string>
+    <string name="image_saver_finished_downloading_images_success">Successfully finished downloading %1$d images</string>
+    <string name="image_saver_finished_downloading_images_progress">Downloading %1$d/%2$d images</string>
+    <string name="image_saver_finished_downloading_images_with_errors">Finished downloading %1$d images with errors</string>
+
+    <string name="bookmarks_tab_title">Bookmarks</string>
+    <string name="filter_watches_tab_title">Filter watches</string>
+
+    <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
+    <string name="file_has_exif_data">This file has exif data. Consider re-encoding it before posting.</string>
+    <string name="image_from_archive">(From archive)</string>
+    <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>
+    <string name="updater_is_disabled_for_dev_builds">Updater is disabled for dev builds</string>
+    <string name="updater_is_disabled_for_fdroid_builds">Updater is disabled for F-Droid builds</string>
+    <string name="see_changelog_for_this_version">Changelog</string>
+    <string name="doing_heavy_lifting_please_wait">Doing heavy lifting, please wait…</string>
+    <string name="decoding_reply_file_preview">Decoding file preview, this may take some time</string>
+    <string name="downloading_file">Downloading file, this may take some time</string>
+    <string name="upload_file_x_out_of_y">Uploading file %1$d out of %2$d</string>
+    <string name="enter_image_video_url">Enter image/video url</string>
+    <string name="refresh_posting_limits_info">Refresh posting limits info</string>
+    <string name="must_be_logged_in">Must be logged in</string>
+
+    <string name="share_success_start">New media share intent, processing…</string>
+    <string name="share_is_in_progress">Share is already in progress</string>
+    <string name="share_success_message">Added %1$d new file(s) to reply file storage</string>
+    <string name="share_error_message">Failed to add new file(s), see logs for more info</string>
+    <string name="attached_file_info">Attached file info</string>
+    <string name="reply_layout_comment_change_history_cleared">Comment change history cleared</string>
+    <string name="android_day_night_mode_dialog_title">Android 10 Day/Night mode</string>
+    <string name="android_day_night_mode_dialog_description">On Android 10 (and above) you may want to enable "Ignore system Day/Night mode" setting. Otherwise the app theme will be based on your system Day/Night mode which may seem as an unexpected behavior.</string>
+    <string name="no_links_found">No links found in post</string>
+    <string name="click_to_select_board">Click to select a board</string>
+    <string name="selected_board_code">Selected board: /%1$s/</string>
+    <string name="post_subject_search_query_hint">Post subject search query</string>
+    <string name="post_comment_search_query_hint">Post comment search query</string>
+    <string name="no_boards_supporting_search_found">No boards supporting search found</string>
+    <string name="cloud_flare_cookie_setting_title">CloudFlare cookie</string>
+    <string name="cloud_flare_cookie_setting_description">If a site is hosted by CloudFlare and has anti-ddos checks enabled the application will automatically try to pass them and store CloudFlare clearance cookie that will be used to access site normally without having to pass checks every singe time. You will see a cookie here and will be able to edit/remove it if you ever need to do that. When removing a cookie (making it empty) a new cookie will be requested on the next site access. If a site does not use CloudFlare then this setting will always be empty.</string>
+    <string name="no_filter_watched_threads">You have no filter watched threads here yet (They may be in the update process)</string>
+    <string name="the_app_will_be_restarted">The app will be restarted when exiting the settings screen</string>
+
+</resources>
