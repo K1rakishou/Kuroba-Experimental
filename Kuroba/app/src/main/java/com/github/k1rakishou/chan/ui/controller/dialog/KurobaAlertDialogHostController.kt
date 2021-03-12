@@ -2,11 +2,11 @@ package com.github.k1rakishou.chan.ui.controller.dialog
 
 import android.content.Context
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
+import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
 import com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
@@ -29,7 +29,7 @@ class KurobaAlertDialogHostController(
   override fun onCreate() {
     super.onCreate()
 
-    view.findViewById<FrameLayout>(R.id.dialog_container).let { dialogContainer ->
+    view.findViewById<TouchBlockingFrameLayout>(R.id.dialog_container).let { dialogContainer ->
       onReady(dialogContainer, this)
     }
 

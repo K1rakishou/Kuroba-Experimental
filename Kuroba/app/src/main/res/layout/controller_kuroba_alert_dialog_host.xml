@@ -40,14 +40,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <FrameLayout
+            <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
                 android:id="@+id/dialog_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
                 <include layout="@layout/layout_kuroba_alert_dialog" />
 
-            </FrameLayout>
+            </com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout>
 
         </com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView>
 
