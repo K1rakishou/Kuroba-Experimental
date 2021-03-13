@@ -264,7 +264,6 @@ public class PostRepliesController
                     repliesData.forPostWithDescriptor.getPostNo(),
                     showDivider,
                     ChanSettings.PostViewMode.LIST,
-                    ChanSettings.PostViewMode.LIST,
                     PostsFilter.Order.BUMP,
                     true,
                     false,

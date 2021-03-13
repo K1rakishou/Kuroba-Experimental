@@ -308,14 +308,15 @@ class PostAdapter(
     notifyDataSetChanged()
   }
 
-  fun setPostViewMode(postViewMode: PostViewMode) {
-    threadCellData.setPostViewMode(postViewMode)
-    notifyDataSetChanged()
+  fun setBoardPostViewMode(boardPostViewMode: PostViewMode) {
+    threadCellData.setBoardPostViewMode(boardPostViewMode)
+    // No need to call notifyDataSetChanged() since we should reload posts from the cache anyway
   }
 
   fun setCompact(compact: Boolean) {
     threadCellData.setCompact(compact)
-    notifyDataSetChanged()
+    // No need to call notifyDataSetChanged() since we are doing this now BEFORE the posts are added
+    // into the adapter and BEFORE the initial notifyDataSetChanged().
   }
 
   fun getScrollPosition(displayPosition: Int): Int {

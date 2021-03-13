@@ -29,7 +29,7 @@ class ThreadCellData(
   private var currentTheme: ChanTheme = initialTheme
   private var _inPopup: Boolean = false
   private var _compact: Boolean = false
-  private var _postViewMode: ChanSettings.PostViewMode = ChanSettings.PostViewMode.LIST
+  private var _boardPostViewMode: ChanSettings.PostViewMode = ChanSettings.boardViewMode.get()
   private var _markedNo: Long = -1L
   private var _showDivider: Boolean = true
 
@@ -79,7 +79,6 @@ class ThreadCellData(
 
     val resultList = mutableListWithCap<PostCellData>(postIndexedList.size)
     val fontSize = ChanSettings.fontSize.get().toInt()
-    val boardViewMode = ChanSettings.boardViewMode.get()
     val boardPostsSortOrder = PostsFilter.Order.find(ChanSettings.boardOrder.get())
     val neverShowPages = ChanSettings.neverShowPages.get()
 
@@ -90,8 +89,7 @@ class ThreadCellData(
         chanDescriptor = chanDescriptor,
         post = postIndexed.post,
         postIndex = postIndexed.postIndex,
-        fontSize = fontSize,
-        stub = postFilterManager.getFilterStub(postDescriptor),
+        textSizeSp = fontSize,
         theme = theme,
         inPopup = _inPopup,
         highlighted = isPostHighlighted(postDescriptor),
@@ -99,10 +97,10 @@ class ThreadCellData(
         markedNo = _markedNo,
         showDivider = _showDivider,
         compact = _compact,
-        postViewMode = _postViewMode,
-        boardViewMode = boardViewMode,
+        boardPostViewMode = _boardPostViewMode,
         boardPostsSortOrder = boardPostsSortOrder,
         neverShowPages = neverShowPages,
+        stub = postFilterManager.getFilterStub(postDescriptor),
         filterHash = postFilterManager.getFilterHash(postDescriptor),
         filterHighlightedColor = postFilterManager.getFilterHighlightedColor(postDescriptor)
       )
@@ -132,66 +130,66 @@ class ThreadCellData(
     error = null
   }
 
-  fun setPostViewMode(postViewMode: ChanSettings.PostViewMode) {
-    _postViewMode = postViewMode
-    postCellDataList.forEach { postCellData -> postCellData.postViewMode = postViewMode }
+  fun setBoardPostViewMode(boardPostViewMode: ChanSettings.PostViewMode) {
+    _boardPostViewMode = boardPostViewMode
+
+    postCellDataList.forEach { postCellData ->
+      if (postCellData.boardPostViewMode != boardPostViewMode) {
+        postCellData.boardPostViewMode = boardPostViewMode
+        postCellData.resetCommentTextCache()
+      }
+    }
   }
 
   fun setCompact(compact: Boolean) {
     _compact = compact
-    postCellDataList.forEach { postCellData -> postCellData.compact = compact }
+    postCellDataList.forEach { postCellData ->
+      postCellData.compact = compact
+      postCellData.resetCatalogRepliesTextCache()
+    }
   }
 
   fun selectPosts(postDescriptors: Set<PostDescriptor>) {
-    if (postDescriptors.isEmpty()) {
-      selectedPosts.clear()
-    } else {
-      selectedPosts.addAll(postDescriptors)
-    }
+    selectedPosts.clear()
+    selectedPosts.addAll(postDescriptors)
 
     updatePostSelection()
   }
 
   fun highlightPosts(postDescriptors: Set<PostDescriptor>) {
-    if (postDescriptors.isEmpty()) {
-      highlightedPosts.clear()
-    } else {
-      highlightedPosts.addAll(postDescriptors)
-      highlightedPostsByPostId.clear()
-      highlightedPostsByTripcode.clear()
-    }
+    highlightedPosts.clear()
+    highlightedPosts.addAll(postDescriptors)
+
+    highlightedPostsByPostId.clear()
+    highlightedPostsByTripcode.clear()
 
     updatePostHighlighting()
   }
 
   fun highlightPostsByPostId(postId: String?) {
-    if (postId == null) {
-      highlightedPostsByPostId.clear()
-    } else {
-      val postDescriptors = postCellDataList
-        .filter { postCellData -> postCellData.post.posterId == postId }
-        .map { postCellData -> postCellData.postDescriptor }
+    val postDescriptors = postCellDataList
+      .filter { postCellData -> postCellData.post.posterId == postId }
+      .map { postCellData -> postCellData.postDescriptor }
 
-      highlightedPostsByPostId.addAll(postDescriptors)
-      highlightedPosts.clear()
-      highlightedPostsByTripcode.clear()
-    }
+    highlightedPostsByPostId.clear()
+    highlightedPostsByPostId.addAll(postDescriptors)
+
+    highlightedPosts.clear()
+    highlightedPostsByTripcode.clear()
 
     updatePostHighlighting()
   }
 
   fun highlightPostsByTripcode(tripcode: CharSequence?) {
-    if (tripcode == null) {
-      highlightedPostsByTripcode.clear()
-    } else {
-      val postDescriptors = postCellDataList
-        .filter { postCellData -> postCellData.post.tripcode == tripcode }
-        .map { postCellData -> postCellData.postDescriptor }
+    val postDescriptors = postCellDataList
+      .filter { postCellData -> postCellData.post.tripcode == tripcode }
+      .map { postCellData -> postCellData.postDescriptor }
 
-      highlightedPostsByTripcode.addAll(postDescriptors)
-      highlightedPostsByPostId.clear()
-      highlightedPosts.clear()
-    }
+    highlightedPostsByTripcode.clear()
+    highlightedPostsByTripcode.addAll(postDescriptors)
+
+    highlightedPostsByPostId.clear()
+    highlightedPosts.clear()
 
     updatePostHighlighting()
   }

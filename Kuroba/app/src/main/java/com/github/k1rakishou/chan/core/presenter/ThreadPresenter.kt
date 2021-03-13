@@ -328,7 +328,7 @@ class ThreadPresenter @Inject constructor(
     Logger.d(TAG, "preloadCatalogInfo($catalogDescriptor) end")
   }
 
-  fun quickReload(showLoading: Boolean = false, requestNewPosts: Boolean = true) {
+  override fun quickReload(showLoading: Boolean, requestNewPosts: Boolean) {
     BackgroundUtils.ensureMainThread()
     Logger.d(TAG, "quickReload($showLoading, $requestNewPosts)")
 

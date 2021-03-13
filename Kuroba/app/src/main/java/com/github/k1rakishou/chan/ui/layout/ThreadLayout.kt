@@ -337,8 +337,8 @@ class ThreadLayout @JvmOverloads constructor(
     threadListLayout.gainedFocus(nowFocused, visible == Visible.THREAD)
   }
 
-  fun setPostViewMode(postViewMode: PostViewMode) {
-    threadListLayout.setPostViewMode(postViewMode)
+  fun setBoardPostViewMode(boardPostViewMode: PostViewMode, reloadPosts: Boolean = false) {
+    threadListLayout.setBoardPostViewMode(boardPostViewMode, reloadPosts)
   }
 
   override fun replyLayoutOpen(open: Boolean) {

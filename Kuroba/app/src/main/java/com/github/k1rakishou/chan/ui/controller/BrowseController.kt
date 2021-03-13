@@ -118,7 +118,7 @@ class BrowseController(
     // Initialization
     serializedCoroutineExecutor = SerializedCoroutineExecutor(mainScope)
 
-    threadLayout.setPostViewMode(ChanSettings.boardViewMode.get())
+    threadLayout.setBoardPostViewMode(ChanSettings.boardViewMode.get())
 
     serializedCoroutineExecutor.post {
       val boardOrder = ChanSettings.boardOrder.get()
@@ -489,7 +489,7 @@ class BrowseController(
     }
 
     item.text = getString(viewModeText)
-    threadLayout.setPostViewMode(postViewMode)
+    threadLayout.setBoardPostViewMode(postViewMode, reloadPosts = true)
   }
 
   private fun openBrowserClicked(item: ToolbarMenuSubItem) {

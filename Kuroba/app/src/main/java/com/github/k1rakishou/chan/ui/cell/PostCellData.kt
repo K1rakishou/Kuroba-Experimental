@@ -7,6 +7,7 @@ import android.text.format.DateUtils
 import android.text.style.UnderlineSpan
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.base.RecalculatableLazy
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -22,30 +23,34 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
-import java.text.BreakIterator
 import java.util.*
 
 data class PostCellData(
   val chanDescriptor: ChanDescriptor,
   val post: ChanPost,
   val postIndex: Int,
-  var fontSize: Int,
+  var textSizeSp: Int,
   var inPopup: Boolean,
   var highlighted: Boolean,
   var postSelected: Boolean,
   var markedNo: Long,
   var showDivider: Boolean,
-  var postViewMode: ChanSettings.PostViewMode,
-  var boardViewMode: ChanSettings.PostViewMode,
+  var boardPostViewMode: ChanSettings.PostViewMode,
   var boardPostsSortOrder: PostsFilter.Order,
   var neverShowPages: Boolean,
   var compact: Boolean,
   var stub: Boolean,
   var theme: ChanTheme,
   var filterHash: Int,
-  var filterHighlightedColor: Int,
+  var filterHighlightedColor: Int
 ) {
   var postCellCallback: PostCellInterface.PostCellCallback? = null
+
+  private var detailsSizePxPrecalculated: Int? = null
+  private var postTitlePrecalculated: CharSequence? = null
+  private var postFileInfoMapPrecalculated: Map<ChanPostImage, CharSequence>? = null
+  private var commentTextPrecalculated: CharSequence? = null
+  private var catalogRepliesTextPrecalculated: CharSequence? = null
 
   val postNo: Long
     get() = post.postNo()
@@ -80,28 +85,71 @@ data class PostCellData(
   val singleImageMode: Boolean
     get() = post.postImages.size == 1
 
-  private val _detailsSizePx = lazy { AppModuleAndroidUtils.sp(textSizeSp - 4.toFloat()) }
-  private val _postTitle = lazy { calculatePostTitle() }
-  private val _postFileInfoMap = lazy { calculatePostFileInfoMap() }
-  private val _commentText = lazy { calculateCommentText() }
-  private val _catalogRepliesText = lazy { calculateCatalogRepliesText() }
+  private val _detailsSizePx = RecalculatableLazy { detailsSizePxPrecalculated ?: AppModuleAndroidUtils.sp(textSizeSp - 4.toFloat()) }
+  private val _postTitle = RecalculatableLazy { postTitlePrecalculated ?: calculatePostTitle() }
+  private val _postFileInfoMap = RecalculatableLazy { postFileInfoMapPrecalculated ?: calculatePostFileInfoMap() }
+  private val _commentText = RecalculatableLazy { commentTextPrecalculated ?: calculateCommentText() }
+  private val _catalogRepliesText = RecalculatableLazy { catalogRepliesTextPrecalculated ?: calculateCatalogRepliesText() }
 
-  val textSizeSp = fontSize
-  val detailsSizePx by lazy { _detailsSizePx.value }
-  val postTitle by lazy { _postTitle.value }
-  val postFileInfoMap by lazy { _postFileInfoMap.value }
-  val commentText by lazy { _commentText.value }
-  val catalogRepliesText by lazy { _catalogRepliesText.value }
+  val detailsSizePx: Int
+    get() = _detailsSizePx.value()
+  val postTitle: CharSequence
+    get() = _postTitle.value()
+  val postFileInfoMap: Map<ChanPostImage, CharSequence>
+    get() = _postFileInfoMap.value()
+  val commentText: CharSequence
+    get() = _commentText.value()
+  val catalogRepliesText
+    get() = _catalogRepliesText.value()
+
+  fun resetCommentTextCache() {
+    commentTextPrecalculated = null
+    _commentText.resetValue()
+  }
+
+  fun resetCatalogRepliesTextCache() {
+    catalogRepliesTextPrecalculated = null
+    _catalogRepliesText.resetValue()
+  }
 
   suspend fun preload() {
     BackgroundUtils.ensureBackgroundThread()
 
     // Force lazily evaluated values to get calculated and cached
-    _detailsSizePx.value
-    _postTitle.value
-    _postFileInfoMap.value
-    _commentText.value
-    _catalogRepliesText.value
+    _detailsSizePx.value()
+    _postTitle.value()
+    _postFileInfoMap.value()
+    _commentText.value()
+    _catalogRepliesText.value()
+  }
+
+  fun fullCopy(): PostCellData {
+    return PostCellData(
+      chanDescriptor,
+      post,
+      postIndex,
+      textSizeSp,
+      inPopup,
+      highlighted,
+      postSelected,
+      markedNo,
+      showDivider,
+      boardPostViewMode,
+      boardPostsSortOrder,
+      neverShowPages,
+      compact,
+      stub,
+      theme,
+      filterHash,
+      filterHighlightedColor
+    ).also { newPostCellData ->
+      newPostCellData.postCellCallback = postCellCallback
+      newPostCellData.detailsSizePxPrecalculated = detailsSizePxPrecalculated
+      newPostCellData.postTitlePrecalculated = postTitlePrecalculated
+      newPostCellData.postFileInfoMapPrecalculated = postFileInfoMapPrecalculated?.toMap()
+      newPostCellData.commentTextPrecalculated = commentTextPrecalculated
+      newPostCellData.catalogRepliesTextPrecalculated = catalogRepliesTextPrecalculated
+    }
   }
 
   fun cleanup() {
@@ -268,47 +316,50 @@ data class PostCellData(
   }
 
   private fun calculateCommentText(): CharSequence {
-    if (postViewMode == ChanSettings.PostViewMode.LIST) {
-      if (!threadMode && post.postComment.comment().length > COMMENT_MAX_LENGTH_BOARD) {
-        return truncatePostComment(post)
+    if (boardPostViewMode == ChanSettings.PostViewMode.LIST) {
+      if (threadMode || post.postComment.comment().length <= COMMENT_MAX_LENGTH_BOARD) {
+        return post.postComment.comment()
       }
 
-      return post.postComment.comment()
-    } else {
-      val commentText = post.postComment.comment()
-      var commentMaxLength = COMMENT_MAX_LENGTH_GRID
-
-      if (boardViewMode == ChanSettings.PostViewMode.STAGGER) {
-        val spanCount = postCellCallback!!.currentSpanCount()
-
-        // The higher the spanCount the lower the commentMaxLength
-        // (but COMMENT_MAX_LENGTH_GRID is the minimum)
-        commentMaxLength = COMMENT_MAX_LENGTH_GRID + ((COMMENT_MAX_LENGTH_STAGGER - COMMENT_MAX_LENGTH_GRID) / spanCount)
-      }
-
-      return commentText.ellipsizeEnd(commentMaxLength)
-    }
-  }
-
-  private fun truncatePostComment(post: ChanPost): CharSequence {
-    val postComment = post.postComment.comment()
-    val bi = BreakIterator.getWordInstance()
-
-    bi.setText(postComment.toString())
-    val precedingBoundary = bi.following(COMMENT_MAX_LENGTH_BOARD)
-
-    // Fallback to old method in case the comment does not have any spaces/individual words
-    val commentText = if (precedingBoundary > 0) {
-      postComment.subSequence(0, precedingBoundary)
-    } else {
-      postComment.subSequence(0, COMMENT_MAX_LENGTH_BOARD)
+      return post.postComment.comment().ellipsizeEnd(COMMENT_MAX_LENGTH_BOARD)
     }
 
-    // append ellipsis
-    return TextUtils.concat(commentText, "\u2026")
+    val commentText = post.postComment.comment()
+    var commentMaxLength = COMMENT_MAX_LENGTH_GRID
+
+    if (boardPostViewMode == ChanSettings.PostViewMode.STAGGER) {
+      val spanCount = postCellCallback!!.currentSpanCount()
+
+      // The higher the spanCount the lower the commentMaxLength
+      // (but COMMENT_MAX_LENGTH_STAGGER_MINIMUM is the minimum)
+      commentMaxLength = COMMENT_MAX_LENGTH_STAGGER_MINIMUM +
+        ((COMMENT_MAX_LENGTH_STAGGER - COMMENT_MAX_LENGTH_STAGGER_MINIMUM) / spanCount)
+    }
+
+    if (commentText.length <= commentMaxLength) {
+      return commentText
+    }
+
+    return commentText.ellipsizeEnd(commentMaxLength)
   }
 
   private fun calculateCatalogRepliesText(): String {
+    if (compact) {
+      var status = AppModuleAndroidUtils.getString(
+        R.string.card_stats,
+        catalogRepliesCount,
+        catalogImagesCount
+      )
+      if (!ChanSettings.neverShowPages.get()) {
+        val boardPage = postCellCallback?.getPage(postDescriptor)
+        if (boardPage != null && boardPostsSortOrder != PostsFilter.Order.BUMP) {
+          status += " Pg " + boardPage.currentPage
+        }
+      }
+
+      return status
+    }
+
     val replyCount = if (threadMode) {
       repliesFromCount
     } else {
@@ -324,11 +375,11 @@ data class PostCellData(
     val catalogRepliesTextBuilder = StringBuilder(64)
     catalogRepliesTextBuilder.append(repliesCountText)
 
-    if (!threadMode && post.catalogImagesCount > 0) {
+    if (!threadMode && catalogImagesCount > 0) {
       val imagesCountText = AppModuleAndroidUtils.getQuantityString(
         R.plurals.image,
-        post.catalogImagesCount,
-        post.catalogImagesCount
+        catalogImagesCount,
+        catalogImagesCount
       )
 
       catalogRepliesTextBuilder
@@ -352,7 +403,8 @@ data class PostCellData(
 
   companion object {
     private const val COMMENT_MAX_LENGTH_BOARD = 350
-    private const val COMMENT_MAX_LENGTH_GRID = 200
+    private const val COMMENT_MAX_LENGTH_GRID = 50
+    private const val COMMENT_MAX_LENGTH_STAGGER_MINIMUM = 100
     private const val COMMENT_MAX_LENGTH_STAGGER = 500
     private const val POST_STUB_TITLE_MAX_LENGTH = 100
   }

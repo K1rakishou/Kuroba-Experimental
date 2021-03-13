@@ -35,6 +35,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.util.ChanPostUtils
 import java.util.*
 import javax.inject.Inject
 
@@ -111,7 +112,7 @@ class PostStubCell : RelativeLayout, PostCellInterface, View.OnClickListener, Th
 
     preBindPost(postCellData)
 
-    this.postCellData = postCellData
+    this.postCellData = postCellData.fullCopy()
     this.callback = postCellData.postCellCallback
 
     bindPost(postCellData)
@@ -142,7 +143,7 @@ class PostStubCell : RelativeLayout, PostCellInterface, View.OnClickListener, Th
 
     AndroidUtils.setBoundlessRoundRippleBackground(options)
 
-    val textSizeSp = postCellData.fontSize
+    val textSizeSp = postCellData.textSizeSp
     title.textSize = textSizeSp.toFloat()
 
     val paddingPx = AppModuleAndroidUtils.dp((textSizeSp - 6).toFloat())
@@ -173,10 +174,10 @@ class PostStubCell : RelativeLayout, PostCellInterface, View.OnClickListener, Th
       throw NullPointerException("Callback is null during bindPost()")
     }
 
-    title.text = postCellData.postTitle
+    ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.postTitle, title)
 
-    val isGridOrStagger = (postCellData.postViewMode === ChanSettings.PostViewMode.GRID
-      || postCellData.postViewMode === ChanSettings.PostViewMode.STAGGER)
+    val isGridOrStagger = (postCellData.boardPostViewMode === ChanSettings.PostViewMode.GRID
+      || postCellData.boardPostViewMode === ChanSettings.PostViewMode.STAGGER)
 
     divider.visibility = if (isGridOrStagger) {
       GONE

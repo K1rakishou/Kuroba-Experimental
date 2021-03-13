@@ -62,7 +62,7 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
 
     val newLayoutId = getLayoutId(
       postCellData.stub,
-      postCellData.postViewMode,
+      postCellData.boardPostViewMode,
       postCellData.post
     )
 

@@ -34,8 +34,6 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.text.PrecomputedTextCompat
-import androidx.core.widget.TextViewCompat
 import coil.request.Disposable
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -65,6 +63,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.util.ChanPostUtils
 import okhttp3.HttpUrl
 import java.io.IOException
 import java.util.*
@@ -174,7 +173,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
 
     preBindPost(postCellData)
 
-    this.postCellData = postCellData
+    this.postCellData = postCellData.fullCopy()
     this.postCellCallback = postCellData.postCellCallback
 
     bindPost(postCellData)
@@ -346,7 +345,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
 
     bindPostAttentionLabel(postCellData)
     bindThumbnails(postCellData)
-    bindTitle(postCellData)
+    ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.postTitle, title)
     bindPostFilesInfo(postCellData)
     bindIcons(postCellData)
     bindPostComment(postCellData)
@@ -470,10 +469,6 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     }
   }
 
-  private fun bindTitle(postCellData: PostCellData) {
-    wrapTextIntoPrecomputedText(postCellData.postTitle, title)
-  }
-
   private fun bindPostFilesInfo(postCellData: PostCellData) {
     postFilesInfoContainer.removeAllViews()
 
@@ -498,19 +493,10 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
         "Failed to find pre-calculated file info for image ${image} of post ${postCellData.postDescriptor}"
       }
 
-      wrapTextIntoPrecomputedText(postFileInfoText, textView)
+      ChanPostUtils.wrapTextIntoPrecomputedText(postFileInfoText, textView)
 
       postFilesInfoContainer.addView(textView)
     }
-  }
-
-  private fun wrapTextIntoPrecomputedText(text: CharSequence, textView: TextView) {
-    val precomputedTextCompat = PrecomputedTextCompat.create(
-      text,
-      TextViewCompat.getTextMetricsParams(textView)
-    )
-
-    TextViewCompat.setPrecomputedText(textView, precomputedTextCompat)
   }
 
   private fun bindPostComment(postCellData: PostCellData) {
@@ -597,7 +583,8 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
 
   @SuppressLint("ClickableViewAccessibility")
   private fun bindCatalogPost(postCellData: PostCellData) {
-    comment.setText(postCellData.commentText, TextView.BufferType.SPANNABLE)
+    ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.commentText, comment)
+
     comment.setOnTouchListener(null)
     comment.isClickable = false
 

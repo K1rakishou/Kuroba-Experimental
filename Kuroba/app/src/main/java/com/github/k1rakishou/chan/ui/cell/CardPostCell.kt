@@ -28,7 +28,6 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
-import com.github.k1rakishou.chan.ui.adapter.PostsFilter.Order.Companion.isNotBumpOrder
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
@@ -41,6 +40,7 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.util.ChanPostUtils
 import java.util.*
 import javax.inject.Inject
 
@@ -91,13 +91,13 @@ class CardPostCell : ColorizableCardView,
     themeEngine.removeListener(this)
   }
 
-  private fun canEnableCardPostCellRatio(): Boolean {
-    if (callback == null) {
+  private fun canEnableCardPostCellRatio(postCellData: PostCellData): Boolean {
+    if (postCellData.postCellCallback == null) {
       return false
     }
 
     return ChanSettings.boardViewMode.get() == PostViewMode.GRID
-      && callback?.currentSpanCount() != 1
+      && postCellData.postCellCallback?.currentSpanCount() != 1
   }
 
   override fun onClick(v: View) {
@@ -137,9 +137,8 @@ class CardPostCell : ColorizableCardView,
 
     preBindPost(postCellData)
 
-    this.postCellData = postCellData
+    this.postCellData = postCellData.fullCopy()
     this.callback = postCellData.postCellCallback
-
     bindPost(postCellData)
 
     onThemeChanged()
@@ -183,8 +182,8 @@ class CardPostCell : ColorizableCardView,
       return
     }
 
-    val content: FixedRatioLinearLayout = findViewById(R.id.card_content)
-    if (canEnableCardPostCellRatio()) {
+    val content = findViewById<FixedRatioLinearLayout>(R.id.card_content)
+    if (canEnableCardPostCellRatio(postCellData)) {
       content.isEnabled = true
       content.setRatio(9f / 18f)
     } else {
@@ -205,7 +204,7 @@ class CardPostCell : ColorizableCardView,
     filterMatchColor = findViewById(R.id.filter_match_color)
 
     setOnClickListener(this)
-    setCompact(postCellData.compact)
+    setCompact(postCellData)
 
     options!!.setOnClickListener({
       val items = mutableListOf<FloatingListMenuItem>()
@@ -223,10 +222,7 @@ class CardPostCell : ColorizableCardView,
   private fun bindPost(postCellData: PostCellData) {
     bindPostThumbnails(postCellData)
 
-    val filterHighlightedColor = postFilterManager.getFilterHighlightedColor(
-      postCellData.postDescriptor
-    )
-
+    val filterHighlightedColor = postCellData.filterHighlightedColor
     if (filterHighlightedColor != 0) {
       filterMatchColor!!.visibility = VISIBLE
       filterMatchColor!!.setBackgroundColor(filterHighlightedColor)
@@ -236,27 +232,15 @@ class CardPostCell : ColorizableCardView,
 
     if (!TextUtils.isEmpty(postCellData.post.subject)) {
       title!!.visibility = VISIBLE
-      title!!.text = postCellData.post.subject
+      ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.post.subject, title!!)
     } else {
       title!!.visibility = GONE
-      title!!.setText(null)
+      title!!.text = null
     }
 
-    comment!!.text = postCellData.commentText
+    ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.commentText, comment!!)
+    ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.catalogRepliesText, replies!!)
 
-    var status = AppModuleAndroidUtils.getString(
-      R.string.card_stats,
-      postCellData.catalogRepliesCount,
-      postCellData.catalogImagesCount
-    )
-    if (!ChanSettings.neverShowPages.get()) {
-      val boardPage = callback!!.getPage(postCellData.postDescriptor)
-      if (boardPage != null && isNotBumpOrder(ChanSettings.boardOrder.get())) {
-        status += " Pg " + boardPage.currentPage
-      }
-    }
-
-    replies!!.text = status
     if (callback != null) {
       callback!!.onPostBind(postCellData.postDescriptor)
     }
@@ -296,14 +280,16 @@ class CardPostCell : ColorizableCardView,
     options?.imageTintList = ColorStateList.valueOf(themeEngine.chanTheme.postDetailsColor)
   }
 
-  private fun setCompact(compact: Boolean) {
+  private fun setCompact(postCellData: PostCellData) {
+    val compact = postCellData.compact
+
     val textReduction = if (compact) {
       -2
     } else {
       0
     }
 
-    val textSizeSp = ChanSettings.fontSize.get().toInt() + textReduction
+    val textSizeSp = postCellData.textSizeSp + textReduction
 
     title!!.textSize = textSizeSp.toFloat()
     comment!!.textSize = textSizeSp.toFloat()

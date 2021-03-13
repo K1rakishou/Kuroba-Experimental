@@ -202,7 +202,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         return 1
       }
 
-      return when (postViewMode) {
+      return when (boardPostViewMode) {
         PostViewMode.LIST -> 1
         PostViewMode.GRID -> (layoutManager as GridLayoutManager).spanCount
         PostViewMode.STAGGER -> (layoutManager as StaggeredGridLayoutManager).spanCount
@@ -216,7 +216,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         return -1
       }
 
-      when (postViewMode) {
+      when (boardPostViewMode) {
         PostViewMode.LIST -> return (layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
         PostViewMode.GRID -> return (layoutManager as GridLayoutManager).findFirstVisibleItemPosition()
         PostViewMode.STAGGER -> {
@@ -243,7 +243,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         return -1
       }
 
-      when (postViewMode) {
+      when (boardPostViewMode) {
         PostViewMode.LIST -> return (layoutManager as LinearLayoutManager).findLastCompletelyVisibleItemPosition()
         PostViewMode.GRID -> return (layoutManager as GridLayoutManager).findLastCompletelyVisibleItemPosition()
         PostViewMode.STAGGER -> {
@@ -289,7 +289,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private var postInfoMapItemDecoration: PostInfoMapItemDecoration? = null
   private var callback: ThreadListLayoutPresenterCallback? = null
   private var threadListLayoutCallback: ThreadListLayoutCallback? = null
-  private var postViewMode: PostViewMode? = null
+  private var boardPostViewMode: PostViewMode? = null
   private var spanCount = 2
   private var searchOpen = false
   private var prevLastPostNo = 0L
@@ -350,7 +350,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   override fun onThemeChanged() {
     val backColor = kotlin.run {
-      if (postViewMode != null && postViewMode != PostViewMode.LIST) {
+      if (boardPostViewMode != null && boardPostViewMode != PostViewMode.LIST) {
         if (themeEngine.chanTheme.backColor == 0) {
           return@run themeEngine.chanTheme.backColor
         }
@@ -505,34 +505,29 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     val cardWidth = getDimen(R.dimen.grid_card_width)
     val gridCountSetting = ChanSettings.catalogSpanCount.get()
-    val compactMode: Boolean
 
     if (gridCountSetting > 0) {
       spanCount = gridCountSetting
-      compactMode = measuredWidth / spanCount < dp(120f)
     } else {
       spanCount = max(1, (measuredWidth.toFloat() / cardWidth).roundToInt())
-      compactMode = false
     }
 
-    if (postViewMode == PostViewMode.GRID) {
-      postAdapter.setCompact(compactMode)
+    if (boardPostViewMode == PostViewMode.GRID) {
       (layoutManager as GridLayoutManager).spanCount = spanCount
-    } else if (postViewMode == PostViewMode.STAGGER) {
-      postAdapter.setCompact(compactMode)
+    } else if (boardPostViewMode == PostViewMode.STAGGER) {
       (layoutManager as StaggeredGridLayoutManager).spanCount = spanCount
     }
   }
 
-  fun setPostViewMode(postViewMode: PostViewMode) {
-    if (this.postViewMode == postViewMode) {
+  fun setBoardPostViewMode(boardPostViewMode: PostViewMode, requestNewPosts: Boolean) {
+    if (this.boardPostViewMode == boardPostViewMode) {
       return
     }
 
-    this.postViewMode = postViewMode
+    this.boardPostViewMode = boardPostViewMode
     layoutManager = null
 
-    when (postViewMode) {
+    when (boardPostViewMode) {
       PostViewMode.LIST -> {
         val linearLayoutManager: LinearLayoutManager = object : LinearLayoutManager(context) {
           override fun requestChildRectangleOnScreen(
@@ -604,10 +599,14 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
 
     recyclerView.recycledViewPool.clear()
-    postAdapter.setPostViewMode(postViewMode)
+    postAdapter.setBoardPostViewMode(boardPostViewMode)
 
     // Trigger theme update because some colors depend on postViewMode
     onThemeChanged()
+
+    if (requestNewPosts) {
+      callback?.quickReload(showLoading = false, requestNewPosts = false)
+    }
   }
 
   suspend fun showPosts(
@@ -633,6 +632,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     setFastScroll(true)
     val posts = chanThreadManager.getMutableListOfPosts(descriptor)
 
+    postAdapter.setCompact(boardPostViewMode != PostViewMode.LIST)
     postAdapter.setThread(
       descriptor,
       themeEngine.chanTheme,
@@ -660,7 +660,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     if (markedPost == null && initial) {
       chanThreadViewableInfoManager.view(chanDescriptor) { (_, index, top) ->
-        when (postViewMode) {
+        when (boardPostViewMode) {
           PostViewMode.LIST -> {
             (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
               index,
@@ -696,7 +696,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         recyclerView.post {
           highlightPost(markedPost.postDescriptor)
 
-          when (postViewMode) {
+          when (boardPostViewMode) {
             PostViewMode.LIST -> {
               (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
                 position,
@@ -968,7 +968,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     if (searchOpen) {
       val searchExtraHeight = findViewById<View>(R.id.search_status).height
 
-      return if (postViewMode == PostViewMode.LIST) {
+      return if (boardPostViewMode == PostViewMode.LIST) {
         genericPostCellView.top != searchExtraHeight
       } else {
         if (genericPostCellChildView is PostStubCell) {
@@ -980,7 +980,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       }
     }
 
-    when (postViewMode) {
+    when (boardPostViewMode) {
       PostViewMode.LIST -> {
         return genericPostCellView.top != toolbarHeight()
       }
@@ -1297,7 +1297,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   private fun setRecyclerViewPadding() {
-    val defaultPadding = if (postViewMode == PostViewMode.GRID || postViewMode == PostViewMode.STAGGER) {
+    val defaultPadding = if (boardPostViewMode == PostViewMode.GRID || boardPostViewMode == PostViewMode.STAGGER) {
       dp(1f)
     } else {
       0
@@ -1410,6 +1410,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   interface ThreadListLayoutPresenterCallback {
     suspend fun showThread(threadDescriptor: ThreadDescriptor)
     fun requestNewPostLoad()
+    fun quickReload(showLoading: Boolean = false, requestNewPosts: Boolean = true)
     suspend fun onListScrolledToBottom()
   }
 

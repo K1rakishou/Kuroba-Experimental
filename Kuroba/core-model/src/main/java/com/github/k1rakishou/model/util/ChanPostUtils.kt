@@ -2,6 +2,9 @@ package com.github.k1rakishou.model.util
 
 import android.annotation.SuppressLint
 import android.text.TextUtils
+import android.widget.TextView
+import androidx.core.text.PrecomputedTextCompat
+import androidx.core.widget.TextViewCompat
 import com.github.k1rakishou.common.MurmurHashUtils
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
@@ -216,6 +219,24 @@ object ChanPostUtils {
           findPostWithRepliesRecursive(replyId, posts, postsSet)
         }
       }
+    }
+  }
+
+  fun wrapTextIntoPrecomputedText(text: CharSequence?, textView: TextView) {
+    if (text.isNullOrEmpty()) {
+      textView.setText(text, TextView.BufferType.SPANNABLE)
+      return
+    }
+
+    val precomputedTextCompat = PrecomputedTextCompat.create(
+      text,
+      TextViewCompat.getTextMetricsParams(textView)
+    )
+
+    try {
+      TextViewCompat.setPrecomputedText(textView, precomputedTextCompat)
+    } catch (ignored: Throwable) {
+      textView.setText(text, TextView.BufferType.SPANNABLE)
     }
   }
 

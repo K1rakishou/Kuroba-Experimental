@@ -637,7 +637,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
     )
 
     adapter.setThread(dummyThreadDescriptor, theme, indexPosts(posts))
-    adapter.setPostViewMode(ChanSettings.PostViewMode.LIST)
+    adapter.setBoardPostViewMode(ChanSettings.PostViewMode.LIST)
     postsView.adapter = adapter
 
     val bottomNavView = BottomNavigationView(context)
