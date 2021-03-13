@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.core.loader.impl.external_media_service.SoundC
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.StreamableMediaServiceExtraInfoFetcher;
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.YoutubeMediaServiceExtraInfoFetcher;
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager;
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.k1rakishou.model.repository.InlinedFileInfoRepository;
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository;
@@ -35,12 +36,14 @@ public class LoaderModule {
             FileCacheV2 fileCacheV2,
             CacheHandler cacheHandler,
             PrefetchImageDownloadIndicatorManager prefetchImageDownloadIndicatorManager,
+            ChanThreadManager chanThreadManager,
             @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
         return new PrefetchLoader(
                 Schedulers.from(onDemandContentLoaderExecutor),
                 fileCacheV2,
                 cacheHandler,
+                chanThreadManager,
                 prefetchImageDownloadIndicatorManager
         );
     }
@@ -49,11 +52,13 @@ public class LoaderModule {
     @Singleton
     public InlinedFileInfoLoader provideInlinedFileInfoLoader(
             InlinedFileInfoRepository inlinedFileInfoRepository,
+            ChanThreadManager chanThreadManager,
             @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
         return new InlinedFileInfoLoader(
                 Schedulers.from(onDemandContentLoaderExecutor),
-                inlinedFileInfoRepository
+                inlinedFileInfoRepository,
+                chanThreadManager
         );
     }
 
@@ -97,6 +102,7 @@ public class LoaderModule {
             YoutubeMediaServiceExtraInfoFetcher youtubeMediaServiceExtraInfoFetcher,
             SoundCloudMediaServiceExtraInfoFetcher soundCloudMediaServiceExtraInfoFetcher,
             StreamableMediaServiceExtraInfoFetcher streamableMediaServiceExtraInfoFetcher,
+            ChanThreadManager chanThreadManager,
             @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
         List<ExternalMediaServiceExtraInfoFetcher> fetchers = new ArrayList<>();
@@ -106,6 +112,7 @@ public class LoaderModule {
 
         return new PostExtraContentLoader(
                 Schedulers.from(onDemandContentLoaderExecutor),
+                chanThreadManager,
                 fetchers
         );
     }

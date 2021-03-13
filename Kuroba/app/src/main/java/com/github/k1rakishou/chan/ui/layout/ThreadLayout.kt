@@ -557,14 +557,14 @@ class ThreadLayout @JvmOverloads constructor(
     callback.setBoard(boardDescriptor, animated)
   }
 
-  override fun showPostsPopup(forPost: ChanPost, posts: List<ChanPost>) {
+  override fun showPostsPopup(postDescriptor: PostDescriptor, posts: List<ChanPost>) {
     if (this.focusedChild != null) {
       val currentFocus = this.focusedChild
       AndroidUtils.hideKeyboard(currentFocus)
       currentFocus.clearFocus()
     }
 
-    postPopupHelper.showPosts(forPost, posts)
+    postPopupHelper.showPosts(postDescriptor, posts)
   }
 
   override fun hidePostsPopup() {
@@ -618,8 +618,8 @@ class ThreadLayout @JvmOverloads constructor(
     callback.openFilterForType(FilterType.TRIPCODE, tripcode.toString())
   }
 
-  override fun selectPost(post: Long) {
-    threadListLayout.selectPost(post)
+  override fun selectPost(postDescriptor: PostDescriptor?) {
+    threadListLayout.selectPost(postDescriptor)
   }
 
   override fun showSearch(show: Boolean) {
@@ -650,7 +650,7 @@ class ThreadLayout @JvmOverloads constructor(
     }, OPEN_REPLY_DELAY_MS)
   }
 
-  override fun quote(post: ChanPost, text: CharSequence) {
+  override fun quote(postDescriptor: PostDescriptor, text: CharSequence) {
     if (!canOpenReplyLayout()) {
       showToast(context, R.string.post_posting_is_not_supported)
       return
@@ -666,7 +666,7 @@ class ThreadLayout @JvmOverloads constructor(
 
     postDelayed({
       openReplyInternal(true)
-      threadListLayout.replyPresenter.quote(post, text)
+      threadListLayout.replyPresenter.quote(postDescriptor, text)
     }, OPEN_REPLY_DELAY_MS)
   }
 
@@ -829,14 +829,14 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
-  override fun onPostUpdated(post: ChanPost) {
+  override fun onPostUpdated(postDescriptor: PostDescriptor) {
     BackgroundUtils.ensureMainThread()
 
     if (postPopupHelper.isOpen) {
-      postPopupHelper.onPostUpdated(post)
+      postPopupHelper.onPostUpdated(postDescriptor)
     }
 
-    threadListLayout.onPostUpdated(post)
+    threadListLayout.onPostUpdated(postDescriptor)
   }
 
   override fun presentController(

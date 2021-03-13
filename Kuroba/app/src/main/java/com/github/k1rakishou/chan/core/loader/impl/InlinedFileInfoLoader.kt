@@ -4,9 +4,11 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader
 import com.github.k1rakishou.chan.core.loader.PostLoaderData
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.InlinedFileInfo
+import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.LoaderType
 import com.github.k1rakishou.model.repository.InlinedFileInfoRepository
@@ -19,11 +21,17 @@ import kotlinx.coroutines.supervisorScope
 
 class InlinedFileInfoLoader(
   private val scheduler: Scheduler,
-  private val inlinedFileInfoRepository: InlinedFileInfoRepository
+  private val inlinedFileInfoRepository: InlinedFileInfoRepository,
+  private val chanThreadManager: ChanThreadManager
 ) : OnDemandContentLoader(LoaderType.InlinedFileInfoLoader) {
 
   override fun isCached(postLoaderData: PostLoaderData): Single<Boolean> {
-    val inlinedFiles = postLoaderData.post.postImages.filter { postImage ->
+    val post = chanThreadManager.getPost(postLoaderData.postDescriptor)
+    if (post == null) {
+      return Single.just(false)
+    }
+
+    val inlinedFiles = post.postImages.filter { postImage ->
       return@filter postImage.isInlined && postImage.imageUrl != null
     }
 
@@ -40,7 +48,8 @@ class InlinedFileInfoLoader(
   override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
     BackgroundUtils.ensureBackgroundThread()
 
-    if (postLoaderData.post.isContentLoadedForLoader(loaderType)) {
+    val post = chanThreadManager.getPost(postLoaderData.postDescriptor)
+    if (post == null || post.isContentLoadedForLoader(loaderType)) {
       return rejected()
     }
 
@@ -48,7 +57,7 @@ class InlinedFileInfoLoader(
       return rejected()
     }
 
-    val inlinedImages = postLoaderData.post.postImages.filter { postImage ->
+    val inlinedImages = post.postImages.filter { postImage ->
       return@filter postImage.isInlined && postImage.imageUrl != null
     }
 
@@ -56,7 +65,7 @@ class InlinedFileInfoLoader(
       return rejected()
     }
 
-    return rxSingle { updateInlinedImagesFileSizes(inlinedImages, postLoaderData) }
+    return rxSingle { updateInlinedImagesFileSizes(post, inlinedImages) }
       .subscribeOn(scheduler)
       .onErrorReturnItem(LoaderResult.Failed(loaderType))
   }
@@ -68,8 +77,8 @@ class InlinedFileInfoLoader(
   }
 
   private suspend fun updateInlinedImagesFileSizes(
-    inlinedImages: List<ChanPostImage>,
-    postLoaderData: PostLoaderData
+    post: ChanPost,
+    inlinedImages: List<ChanPostImage>
   ): LoaderResult {
     BackgroundUtils.ensureBackgroundThread()
 
@@ -92,10 +101,10 @@ class InlinedFileInfoLoader(
         "fileSize is null when it shouldn't be!"
       }
 
-      postLoaderData.post.updatePostImageSize(fileUrl, fileSize)
+      post.updatePostImageSize(fileUrl, fileSize)
     }
 
-    postLoaderData.post.setContentLoadedForLoader(loaderType)
+    post.setContentLoadedForLoader(loaderType)
     return LoaderResult.Succeeded(loaderType, true)
   }
 

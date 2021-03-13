@@ -95,6 +95,7 @@ import com.github.k1rakishou.persist_state.PersistableChanState
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -126,9 +127,9 @@ class ThemeSettingsController(context: Context) : Controller(context),
     ChanDescriptor.ThreadDescriptor.create("test_site", "test_board", 1234567890L)
 
   private val dummyPostCallback: PostCellCallback = object : PostCellCallback {
-    override fun onPostBind(post: ChanPost) {}
-    override fun onPostUnbind(post: ChanPost, isActuallyRecycling: Boolean) {}
-    override fun onPostClicked(post: ChanPost) {}
+    override fun onPostBind(postDescriptor: PostDescriptor) {}
+    override fun onPostUnbind(postDescriptor: PostDescriptor, isActuallyRecycling: Boolean) {}
+    override fun onPostClicked(postDescriptor: PostDescriptor) {}
     override fun onPostDoubleClicked(post: ChanPost) {}
     override fun onThumbnailClicked(postImage: ChanPostImage, thumbnail: ThumbnailView) {}
     override fun onThumbnailLongClicked(postImage: ChanPostImage, thumbnail: ThumbnailView) {}
@@ -137,20 +138,19 @@ class ThemeSettingsController(context: Context) : Controller(context),
     override fun onPostOptionClicked(post: ChanPost, id: Any, inPopup: Boolean) {}
     override fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable) {}
     override fun onPostNoClicked(post: ChanPost) {}
-    override fun onPostSelectionQuoted(post: ChanPost, quoted: CharSequence) {}
+    override fun onPostSelectionQuoted(postDescriptor: PostDescriptor, quoted: CharSequence) {}
     override fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>) {}
     override fun onUnhidePostClick(post: ChanPost) {}
     override fun currentSpanCount(): Int = 1
 
-    override fun getCurrentChanDescriptor(): ChanDescriptor? {
-      return dummyThreadDescriptor
-    }
+    override val currentChanDescriptor: ChanDescriptor?
+      get() = dummyThreadDescriptor
 
     override fun getPage(originalPostDescriptor: PostDescriptor): BoardPage? {
       return null
     }
 
-    override fun hasAlreadySeenPost(post: ChanPost): Boolean {
+    override fun hasAlreadySeenPost(postDescriptor: PostDescriptor): Boolean {
       return false
     }
   }
@@ -509,6 +509,10 @@ class ThemeSettingsController(context: Context) : Controller(context),
 
       themeMap[position] = theme
 
+      return runBlocking { createSimpleThreadViewInternal(theme) }
+    }
+
+    private suspend fun createSimpleThreadViewInternal(theme: ChanTheme): CoordinatorLayout {
       return createSimpleThreadView(theme)
     }
 
@@ -517,7 +521,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
     }
   }
 
-  private fun createSimpleThreadView(
+  private suspend fun createSimpleThreadView(
     theme: ChanTheme
   ): CoordinatorLayout {
     val parser = CommentParser(mockReplyManager)
@@ -606,12 +610,10 @@ class ThemeSettingsController(context: Context) : Controller(context),
     postsView.layoutManager = layoutManager
 
     val adapter = PostAdapter(
-      postFilterManager,
       postsView,
       object : PostAdapterCallback {
-        override fun getCurrentChanDescriptor(): ChanDescriptor? {
-          return dummyThreadDescriptor
-        }
+        override val currentChanDescriptor: ChanDescriptor?
+          get() = dummyThreadDescriptor
       },
       dummyPostCallback,
       object : ThreadStatusCell.Callback {
@@ -619,9 +621,8 @@ class ThemeSettingsController(context: Context) : Controller(context),
           return 0
         }
 
-        override fun getCurrentChanDescriptor(): ChanDescriptor? {
-          return null
-        }
+        override val currentChanDescriptor: ChanDescriptor?
+          get() = null
 
         override fun getPage(originalPostDescriptor: PostDescriptor): BoardPage? {
           return null
@@ -635,7 +636,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
       }
     )
 
-    adapter.setThread(dummyThreadDescriptor, indexPosts(posts), theme)
+    adapter.setThread(dummyThreadDescriptor, theme, indexPosts(posts))
     adapter.setPostViewMode(ChanSettings.PostViewMode.LIST)
     postsView.adapter = adapter
 
@@ -645,10 +646,10 @@ class ThemeSettingsController(context: Context) : Controller(context),
     bottomNavView.selectedItemId = R.id.action_browse
     bottomNavView.setBackgroundColor(theme.primaryColor)
 
-    val uncheckedColor = if (ThemeEngine.isBlackOrAlmostBlackColor(themeEngine.chanTheme.primaryColor)) {
+    val uncheckedColor = if (ThemeEngine.isBlackOrAlmostBlackColor(theme.primaryColor)) {
       Color.DKGRAY
     } else {
-      ThemeEngine.manipulateColor(themeEngine.chanTheme.primaryColor, .7f)
+      ThemeEngine.manipulateColor(theme.primaryColor, .7f)
     }
 
     bottomNavView.itemIconTintList = ColorStateList(

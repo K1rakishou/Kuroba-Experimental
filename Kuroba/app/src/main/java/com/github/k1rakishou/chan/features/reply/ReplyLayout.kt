@@ -107,6 +107,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.prefs.StringSetting
 import com.google.android.material.textview.MaterialTextView
 import kotlinx.coroutines.flow.collect
@@ -1138,8 +1139,8 @@ class ReplyLayout @JvmOverloads constructor(
     presenter.switchPage(ReplyPresenter.Page.AUTHENTICATION, false, autoReply)
   }
 
-  override fun highlightPostNos(postNos: Set<Long>) {
-    threadListLayoutCallbacks?.highlightPostNos(postNos)
+  override fun highlightPosts(postDescriptors: Set<PostDescriptor>) {
+    threadListLayoutCallbacks?.highlightPosts(postDescriptors)
   }
 
   override fun onSelectionChanged() {
@@ -1415,7 +1416,7 @@ class ReplyLayout @JvmOverloads constructor(
 
   interface ThreadListLayoutCallbacks {
     fun currentFocusedController(): ThreadPresenter.CurrentFocusedController
-    fun highlightPostNos(postNos: Set<Long>)
+    fun highlightPosts(postDescriptors: Set<PostDescriptor>)
     fun openReply(open: Boolean)
     fun showThread(threadDescriptor: ThreadDescriptor)
     fun requestNewPostLoad()

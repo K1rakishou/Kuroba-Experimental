@@ -14,316 +14,198 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.ui.cell;
+package com.github.k1rakishou.chan.ui.cell
 
-import android.content.Context;
-import android.content.res.ColorStateList;
-import android.text.TextUtils;
-import android.util.AttributeSet;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
+import android.content.Context
+import android.content.res.ColorStateList
+import android.util.AttributeSet
+import android.view.View
+import android.widget.ImageView
+import android.widget.RelativeLayout
+import android.widget.TextView
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
+import com.github.k1rakishou.chan.ui.view.ThumbnailView
+import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
+import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostImage
+import java.util.*
+import javax.inject.Inject
 
-import androidx.annotation.Nullable;
+class PostStubCell : RelativeLayout, PostCellInterface, View.OnClickListener, ThemeChangesListener {
+  @Inject
+  lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var postFilterManager: PostFilterManager
 
-import com.github.k1rakishou.ChanSettings;
-import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.core.manager.PostFilterManager;
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider;
-import com.github.k1rakishou.chan.ui.view.ThumbnailView;
-import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
-import com.github.k1rakishou.common.AndroidUtils;
-import com.github.k1rakishou.core_themes.ChanTheme;
-import com.github.k1rakishou.core_themes.ThemeEngine;
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
-import com.github.k1rakishou.model.data.post.ChanPost;
-import com.github.k1rakishou.model.data.post.ChanPostImage;
+  private var postCellData: PostCellData? = null
+  private var callback: PostCellInterface.PostCellCallback? = null
 
-import org.jetbrains.annotations.NotNull;
+  private lateinit var title: TextView
+  private lateinit var divider: ColorizableDivider
+  private lateinit var options: ImageView
 
-import java.util.ArrayList;
-import java.util.List;
+  constructor(context: Context?) : super(context) {
+    init()
+  }
 
-import javax.inject.Inject;
+  constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs) {
+    init()
+  }
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+  constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+    init()
+  }
 
-public class PostStubCell
-        extends RelativeLayout
-        implements PostCellInterface,
-        View.OnClickListener,
-        ThemeEngine.ThemeChangesListener {
+  private fun init() {
+    AppModuleAndroidUtils.extractActivityComponent(context)
+      .inject(this)
+  }
 
-    private static final int TITLE_MAX_LENGTH = 100;
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    themeEngine.addListener(this)
+  }
 
-    @Inject
-    ThemeEngine themeEngine;
-    @Inject
-    PostFilterManager postFilterManager;
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+    themeEngine.removeListener(this)
+  }
 
-    private ChanTheme theme;
-    private ChanPost post;
-    private ChanSettings.PostViewMode postViewMode;
-    private boolean showDivider;
-    @Nullable
-    private PostCellInterface.PostCellCallback callback;
-    private int filterHash = -1;
+  override fun onClick(v: View) {
+    if (v === this) {
+      if (callback != null) {
+        callback?.onPostClicked(postCellData!!.postDescriptor)
+      }
+    }
+  }
 
-    private TextView title;
-    private ColorizableDivider divider;
-    private ImageView options;
-    private boolean inPopup;
+  override fun onPostRecycled(isActuallyRecycling: Boolean) {
+    unbindPost(isActuallyRecycling)
+  }
 
-    public PostStubCell(Context context) {
-        super(context);
-        init();
+  private fun unbindPost(isActuallyRecycling: Boolean) {
+    if (callback != null) {
+      callback?.onPostUnbind(postCellData!!.postDescriptor, isActuallyRecycling)
     }
 
-    public PostStubCell(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        init();
+    callback = null
+    postCellData = null
+  }
+
+  override fun postDataDiffers(postCellData: PostCellData): Boolean {
+    return postCellData != this.postCellData
+  }
+
+  override fun setPost(postCellData: PostCellData) {
+    val postDataDiffers = postDataDiffers(postCellData)
+    if (!postDataDiffers) {
+      return
     }
 
-    public PostStubCell(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        init();
+    preBindPost(postCellData)
+
+    this.postCellData = postCellData
+    this.callback = postCellData.postCellCallback
+
+    bindPost(postCellData)
+
+    onThemeChanged()
+  }
+
+  override fun getPost(): ChanPost? {
+    return postCellData?.post
+  }
+
+  override fun getThumbnailView(postImage: ChanPostImage): ThumbnailView? {
+    return null
+  }
+
+  override fun hasOverlappingRendering(): Boolean {
+    return false
+  }
+
+  private fun preBindPost(postCellData: PostCellData) {
+    if (this.postCellData != null) {
+      return
     }
 
-    private void init() {
-        AppModuleAndroidUtils.extractActivityComponent(getContext())
-                .inject(this);
-    }
+    title = findViewById(R.id.title)
+    options = findViewById(R.id.options)
+    divider = findViewById(R.id.divider)
 
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        themeEngine.addListener(this);
-    }
+    AndroidUtils.setBoundlessRoundRippleBackground(options)
 
-    @Override
-    protected void onDetachedFromWindow() {
-        super.onDetachedFromWindow();
-        themeEngine.removeListener(this);
-    }
+    val textSizeSp = postCellData.fontSize
+    title.textSize = textSizeSp.toFloat()
 
-    @Override
-    public void onClick(View v) {
-        if (v == this) {
-            if (callback != null) {
-                callback.onPostClicked(post);
-            }
+    val paddingPx = AppModuleAndroidUtils.dp((textSizeSp - 6).toFloat())
+    title.setPadding(paddingPx, 0, 0, 0)
+
+    val dividerParams = divider.layoutParams as LayoutParams
+    dividerParams.leftMargin = paddingPx
+    dividerParams.rightMargin = paddingPx
+    divider.layoutParams = dividerParams
+
+    setOnClickListener(this)
+
+    options.setOnClickListener({
+      val items = ArrayList<FloatingListMenuItem>()
+
+      if (callback != null) {
+        callback!!.onPopulatePostOptions(postCellData.post, items)
+
+        if (items.size > 0) {
+          callback!!.showPostOptions(postCellData.post, postCellData.inPopup, items)
         }
+      }
+    })
+  }
+
+  private fun bindPost(postCellData: PostCellData) {
+    if (callback == null) {
+      throw NullPointerException("Callback is null during bindPost()")
     }
 
-    @Override
-    public void onPostRecycled(boolean isActuallyRecycling) {
-        unbindPost(isActuallyRecycling);
+    title.text = postCellData.postTitle
+
+    val isGridOrStagger = (postCellData.postViewMode === ChanSettings.PostViewMode.GRID
+      || postCellData.postViewMode === ChanSettings.PostViewMode.STAGGER)
+
+    divider.visibility = if (isGridOrStagger) {
+      GONE
+    } else {
+      if (postCellData.showDivider) {
+        VISIBLE
+      } else {
+        GONE
+      }
     }
 
-    private void unbindPost(boolean isActuallyRecycling) {
-        if (callback != null) {
-            callback.onPostUnbind(post, isActuallyRecycling);
-        }
-
-        title = null;
-        callback = null;
+    setOnClickListener {
+      if (callback != null) {
+        callback!!.onUnhidePostClick(postCellData.post)
+      }
     }
 
-    @Override
-    public boolean postDataDiffers(
-            @NotNull ChanDescriptor chanDescriptor,
-            @NotNull ChanPost post,
-            int postIndex,
-            @NotNull PostCellInterface.PostCellCallback callback,
-            boolean inPopup,
-            boolean highlighted,
-            boolean selected,
-            long markedNo,
-            boolean showDivider,
-            @NotNull ChanSettings.PostViewMode postViewMode,
-            boolean compact,
-            boolean stub,
-            @NotNull ChanTheme theme
-    ) {
-        int filterHash = postFilterManager.getFilterHash(post.getPostDescriptor());
+    if (callback != null) {
+      callback!!.onPostBind(postCellData.postDescriptor)
+    }
+  }
 
-        if (post.equals(this.post)
-                && theme.equals(this.theme)
-                && this.filterHash == filterHash
-        ) {
-            return false;
-        }
-
-        return true;
+  override fun onThemeChanged() {
+    if (::title.isInitialized) {
+      title.setTextColor(themeEngine.chanTheme.textColorSecondary)
     }
 
-    public void setPost(
-            ChanDescriptor chanDescriptor,
-            final ChanPost post,
-            final int postIndex,
-            PostCellInterface.PostCellCallback callback,
-            boolean inPopup,
-            boolean highlighted,
-            boolean selected,
-            long markedNo,
-            boolean showDivider,
-            ChanSettings.PostViewMode postViewMode,
-            boolean compact,
-            boolean stub,
-            ChanTheme theme
-    ) {
-        boolean postDataDiffers = postDataDiffers(
-                chanDescriptor,
-                post,
-                postIndex,
-                callback,
-                inPopup,
-                highlighted,
-                selected,
-                markedNo,
-                showDivider,
-                postViewMode,
-                compact,
-                stub,
-                theme
-        );
-
-        if (!postDataDiffers) {
-            return;
-        }
-
-        this.theme = theme;
-        this.post = post;
-        this.inPopup = inPopup;
-        this.callback = callback;
-        this.postViewMode = postViewMode;
-        this.showDivider = showDivider;
-        this.filterHash = postFilterManager.getFilterHash(post.getPostDescriptor());;
-
-        preBindPost(post);
-        bindPost(post);
-        onThemeChanged();
+    if (::options.isInitialized) {
+      options.imageTintList = ColorStateList.valueOf(themeEngine.chanTheme.postDetailsColor)
     }
-
-    public ChanPost getPost() {
-        return post;
-    }
-
-    public ThumbnailView getThumbnailView(ChanPostImage postImage) {
-        return null;
-    }
-
-    @Override
-    public boolean hasOverlappingRendering() {
-        return false;
-    }
-
-    private void preBindPost(ChanPost post) {
-        if (title != null) {
-            return;
-        }
-
-        title = findViewById(R.id.title);
-        options = findViewById(R.id.options);
-        AndroidUtils.setBoundlessRoundRippleBackground(options);
-
-        divider = findViewById(R.id.divider);
-
-        int textSizeSp = Integer.parseInt(ChanSettings.fontSize.get());
-        title.setTextSize(textSizeSp);
-
-        int paddingPx = dp(textSizeSp - 6);
-        title.setPadding(paddingPx, 0, 0, 0);
-
-        RelativeLayout.LayoutParams dividerParams = (RelativeLayout.LayoutParams) divider.getLayoutParams();
-        dividerParams.leftMargin = paddingPx;
-        dividerParams.rightMargin = paddingPx;
-        divider.setLayoutParams(dividerParams);
-
-        setOnClickListener(this);
-
-        options.setOnClickListener(v -> {
-            List<FloatingListMenuItem> items = new ArrayList<>();
-
-            if (callback != null && post != null) {
-                callback.onPopulatePostOptions(post, items);
-
-                if (items.size() > 0) {
-                    callback.showPostOptions(post, inPopup, items);
-                }
-            }
-        });
-    }
-
-    private void bindPost(ChanPost post) {
-        if (callback == null) {
-            throw new NullPointerException("Callback is null during bindPost()");
-        }
-
-        if (!TextUtils.isEmpty(post.getSubject())) {
-            title.setText(post.getSubject());
-        } else {
-            title.setText(getPostStubTitle(post));
-        }
-
-        boolean isGridOrStagger = postViewMode == ChanSettings.PostViewMode.GRID
-                || postViewMode == ChanSettings.PostViewMode.STAGGER;
-
-        divider.setVisibility(
-                isGridOrStagger
-                        ? GONE
-                        : (showDivider ? VISIBLE : GONE)
-        );
-
-        setOnClickListener(v -> {
-            if (callback != null) {
-                callback.onUnhidePostClick(post);
-            }
-        });
-
-        if (callback != null) {
-            callback.onPostBind(post);
-        }
-    }
-
-    private CharSequence getPostStubTitle(ChanPost post) {
-        CharSequence titleText = post.getPostComment().comment();
-
-        if (titleText.length() == 0) {
-            ChanPostImage firstImage = post.firstImage();
-            if (firstImage != null) {
-                String fileName = firstImage.getFilename();
-                if (TextUtils.isEmpty(fileName)) {
-                    fileName = firstImage.getServerFilename();
-                }
-
-                String extension = firstImage.getExtension();
-
-                if (TextUtils.isEmpty(extension)) {
-                    return fileName;
-                }
-
-                return fileName + "." + extension;
-            }
-        }
-
-        if (titleText.length() > TITLE_MAX_LENGTH) {
-            return titleText.subSequence(0, TITLE_MAX_LENGTH);
-        }
-
-        return titleText;
-    }
-
-    @Override
-    public void onThemeChanged() {
-        if (title != null) {
-            title.setTextColor(themeEngine.getChanTheme().getTextColorSecondary());
-        }
-
-        if (options != null) {
-            options.setImageTintList(ColorStateList.valueOf(themeEngine.getChanTheme().getPostDetailsColor()));
-        }
-    }
+  }
 }

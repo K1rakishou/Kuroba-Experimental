@@ -135,7 +135,7 @@ class ThreadStatusCell(
     clickThrottler.post(1_000L, {
       error = null
 
-      if (callback?.getCurrentChanDescriptor() != null) {
+      if (callback?.currentChanDescriptor != null) {
         callback?.onListStatusClicked()
       }
 
@@ -163,7 +163,7 @@ class ThreadStatusCell(
 
   @SuppressLint("SetTextI18n")
   suspend fun updateInternal() {
-    val chanDescriptor = callback?.getCurrentChanDescriptor()
+    val chanDescriptor = callback?.currentChanDescriptor
       ?: return
 
     if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
@@ -322,9 +322,10 @@ class ThreadStatusCell(
   }
 
   interface Callback {
+    val currentChanDescriptor: ChanDescriptor?
+
     suspend fun timeUntilLoadMoreMs(): Long
     fun isWatching(): Boolean
-    fun getCurrentChanDescriptor(): ChanDescriptor?
     fun getPage(originalPostDescriptor: PostDescriptor): BoardPage?
     fun onListStatusClicked()
   }

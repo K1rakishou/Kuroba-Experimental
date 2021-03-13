@@ -30,8 +30,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
+import com.github.k1rakishou.chan.core.manager.PostFilterManager;
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter;
+import com.github.k1rakishou.chan.ui.adapter.PostsFilter;
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell;
+import com.github.k1rakishou.chan.ui.cell.PostCellData;
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.ui.view.LoadView;
@@ -62,6 +65,8 @@ public class PostRepliesController
 
     @Inject
     ThemeEngine themeEngine;
+    @Inject
+    PostFilterManager postFilterManager;
 
     private PostPopupHelper postPopupHelper;
     private ThreadPresenter presenter;
@@ -173,7 +178,7 @@ public class PostRepliesController
         return thumbnail;
     }
 
-    public void onPostUpdated(@NotNull ChanPost post) {
+    public void onPostUpdated(@NotNull PostDescriptor postDescriptor) {
         BackgroundUtils.ensureMainThread();
 
         RecyclerView.Adapter<?> adapter = repliesView.getAdapter();
@@ -182,7 +187,7 @@ public class PostRepliesController
         }
 
         RepliesAdapter repliesAdapter = (RepliesAdapter) adapter;
-        repliesAdapter.onPostUpdated(post);
+        repliesAdapter.onPostUpdated(postDescriptor);
     }
 
     public void setPostRepliesData(ChanDescriptor chanDescriptor, PostPopupHelper.RepliesData data) {
@@ -220,14 +225,9 @@ public class PostRepliesController
         repliesBackText = dataView.findViewById(R.id.replies_back_icon);
         repliesCloseText = dataView.findViewById(R.id.replies_close_icon);
 
-        RepliesAdapter repliesAdapter = new RepliesAdapter(
-                presenter,
-                chanDescriptor,
-                themeEngine
-        );
-
+        RepliesAdapter repliesAdapter = new RepliesAdapter();
         repliesAdapter.setHasStableIds(true);
-        repliesAdapter.setData(data);
+        repliesAdapter.setData(calculatePostCellDataList(chanDescriptor, data));
 
         repliesView.setLayoutManager(new LinearLayoutManager(context));
         repliesView.getRecycledViewPool().setMaxRecycledViews(RepliesAdapter.POST_REPLY_VIEW_TYPE, 0);
@@ -237,9 +237,48 @@ public class PostRepliesController
         loadView.setView(dataView);
 
         first = false;
-        restoreScrollPosition(data.forPost.postNo());
+        restoreScrollPosition(data.forPostWithDescriptor.getPostNo());
 
         onThemeChanged();
+    }
+
+    private List<PostCellData> calculatePostCellDataList(
+            ChanDescriptor chanDescriptor,
+            PostPopupHelper.RepliesData repliesData
+    ) {
+        List<PostCellData> postCellDataList = new ArrayList<>(repliesData.posts.size());
+        int totalPostsCount = repliesData.posts.size();
+
+        for (int postIndex = 0; postIndex < totalPostsCount; postIndex++) {
+            boolean showDivider = postIndex < totalPostsCount - 1;
+            PostIndexed postIndexed = repliesData.posts.get(postIndex);
+
+            PostCellData postCellData = new PostCellData(
+                    chanDescriptor,
+                    postIndexed.getPost(),
+                    postIndexed.getPostIndex(),
+                    Integer.parseInt(ChanSettings.fontSize.get()),
+                    true,
+                    false,
+                    false,
+                    repliesData.forPostWithDescriptor.getPostNo(),
+                    showDivider,
+                    ChanSettings.PostViewMode.LIST,
+                    ChanSettings.PostViewMode.LIST,
+                    PostsFilter.Order.BUMP,
+                    true,
+                    false,
+                    false,
+                    themeEngine.chanTheme,
+                    postFilterManager.getFilterHash(postIndexed.getPost().getPostDescriptor()),
+                    postFilterManager.getFilterHighlightedColor(postIndexed.getPost().getPostDescriptor())
+            );
+            postCellData.setPostCellCallback(presenter);
+
+            postCellDataList.add(postCellData);
+        }
+
+        return postCellDataList;
     }
 
     private void storeScrollPosition() {
@@ -248,7 +287,7 @@ public class PostRepliesController
         }
 
         scrollPositionCache.put(
-                displayingData.forPost.postNo(),
+                displayingData.forPostWithDescriptor.getPostNo(),
                 RecyclerUtils.getIndexAndTop(repliesView)
         );
     }
@@ -265,20 +304,7 @@ public class PostRepliesController
     private static class RepliesAdapter extends RecyclerView.Adapter<ReplyViewHolder> {
         public static final int POST_REPLY_VIEW_TYPE = 10;
 
-        private ThreadPresenter presenter;
-        private ChanDescriptor chanDescriptor;
-        private PostPopupHelper.RepliesData data;
-        private ThemeEngine themeEngine;
-
-        public RepliesAdapter(
-                ThreadPresenter presenter,
-                ChanDescriptor chanDescriptor,
-                ThemeEngine themeEngine
-        ) {
-            this.presenter = presenter;
-            this.chanDescriptor = chanDescriptor;
-            this.themeEngine = themeEngine;
-        }
+        private List<PostCellData> postCellDataList = new ArrayList<>(64);
 
         @NonNull
         @Override
@@ -288,15 +314,7 @@ public class PostRepliesController
 
         @Override
         public void onBindViewHolder(@NonNull ReplyViewHolder holder, int position) {
-            holder.onBind(
-                    presenter,
-                    chanDescriptor,
-                    data.posts.get(position),
-                    data.forPost.postNo(),
-                    position,
-                    getItemCount(),
-                    themeEngine
-            );
+            holder.onBind(postCellDataList.get(position));
         }
 
         @Override
@@ -306,14 +324,14 @@ public class PostRepliesController
 
         @Override
         public int getItemCount() {
-            return data.posts.size();
+            return postCellDataList.size();
         }
 
         @Override
         public long getItemId(int position) {
-            PostIndexed post = data.posts.get(position);
-            int repliesFromCount = post.getPost().getRepliesFromCount();
-            return ((long) repliesFromCount << 32L) + post.getPost().postNo() + post.getPost().postSubNo();
+            ChanPost post = postCellDataList.get(position).getPost();
+            int repliesFromCount = post.getRepliesFromCount();
+            return ((long) repliesFromCount << 32L) + post.postNo() + post.postSubNo();
         }
 
         @Override
@@ -324,8 +342,10 @@ public class PostRepliesController
             }
         }
 
-        public void setData(PostPopupHelper.RepliesData data) {
-            this.data = new PostPopupHelper.RepliesData(data.forPost, new ArrayList<>(data.posts));
+        public void setData(List<PostCellData> postCellDataList) {
+            this.postCellDataList.clear();
+            this.postCellDataList.addAll(postCellDataList);
+
             notifyDataSetChanged();
         }
 
@@ -334,17 +354,15 @@ public class PostRepliesController
         }
 
         public void clear() {
-            data.posts.clear();
+            this.postCellDataList.clear();
             notifyDataSetChanged();
         }
 
-        public void onPostUpdated(ChanPost post) {
-            List<PostIndexed> posts = data.posts;
+        public void onPostUpdated(PostDescriptor postDescriptor) {
+            for (int postIndex = 0; postIndex < postCellDataList.size(); postIndex++) {
+                PostCellData postCellData = postCellDataList.get(postIndex);
 
-            for (int postIndex = 0; postIndex < posts.size(); postIndex++) {
-                PostIndexed chanPost = posts.get(postIndex);
-
-                if (chanPost.getPost().getPostDescriptor() == post.getPostDescriptor()) {
+                if (postCellData.getPost().getPostDescriptor() == postDescriptor) {
                     notifyItemChanged(postIndex);
                     return;
                 }
@@ -361,32 +379,8 @@ public class PostRepliesController
             this.genericPostCell = (GenericPostCell) itemView;
         }
 
-        public void onBind(
-                ThreadPresenter presenter,
-                ChanDescriptor chanDescriptor,
-                PostIndexed post,
-                long markedNo,
-                int position,
-                int itemCount,
-                ThemeEngine themeEngine
-        ) {
-            boolean showDivider = position < itemCount - 1;
-
-            genericPostCell.setPost(
-                    chanDescriptor,
-                    post.getPost(),
-                    post.getPostIndex(),
-                    presenter,
-                    true,
-                    false,
-                    false,
-                    markedNo,
-                    showDivider,
-                    ChanSettings.PostViewMode.LIST,
-                    false,
-                    false,
-                    themeEngine.getChanTheme()
-            );
+        public void onBind(PostCellData postCellData) {
+            genericPostCell.setPost(postCellData);
         }
     }
 

@@ -84,7 +84,6 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineName
@@ -389,7 +388,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
 
     postAdapter = PostAdapter(
-      postFilterManager,
       recyclerView,
       threadPresenter as PostAdapterCallback,
       threadPresenter as PostCellCallback,
@@ -637,8 +635,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     postAdapter.setThread(
       descriptor,
-      filter.applyFilter(descriptor, posts),
-      themeEngine.chanTheme
+      themeEngine.chanTheme,
+      filter.applyFilter(descriptor, posts)
     )
 
     val chanDescriptor = currentChanDescriptorOrNull()
@@ -1096,11 +1094,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     recyclerView.scrollToPosition(scrollPosition)
   }
 
-  fun highlightPost(postDescriptor: PostDescriptor?) {
-    postAdapter.highlightPost(postDescriptor)
-  }
-
-  fun highlightPostId(id: String?) {
+  fun highlightPostId(id: String) {
     postAdapter.highlightPostId(id)
   }
 
@@ -1108,12 +1102,20 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     postAdapter.highlightPostTripcode(tripcode)
   }
 
-  fun selectPost(post: Long) {
-    postAdapter.selectPost(post)
+  fun selectPost(postDescriptor: PostDescriptor?) {
+    if (postDescriptor == null) {
+      postAdapter.selectPosts(emptySet())
+    } else {
+      postAdapter.selectPosts(setOf(postDescriptor))
+    }
   }
 
-  override fun highlightPostNos(postNos: Set<Long>) {
-    postAdapter.highlightPostNos(postNos)
+  fun highlightPost(postDescriptor: PostDescriptor) {
+    highlightPosts(setOf(postDescriptor))
+  }
+
+  override fun highlightPosts(postDescriptors: Set<PostDescriptor>) {
+    postAdapter.highlightPosts(postDescriptors)
   }
 
   override fun showThread(threadDescriptor: ThreadDescriptor) {
@@ -1373,9 +1375,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     recyclerView.removeItemDecoration(PARTY)
   }
 
-  fun onPostUpdated(post: ChanPost) {
+  fun onPostUpdated(postDescriptor: PostDescriptor) {
     BackgroundUtils.ensureMainThread()
-    postAdapter.updatePost(post)
+    postAdapter.updatePost(postDescriptor)
   }
 
   fun isErrorShown(): Boolean {

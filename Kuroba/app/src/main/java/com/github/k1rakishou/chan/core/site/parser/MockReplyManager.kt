@@ -26,6 +26,10 @@ open class MockReplyManager {
   private val mockReplyMultiMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, LinkedList<Long>>()
 
   fun addMockReply(siteName: String, boardCode: String, opNo: Long, postNo: Long) {
+    if (opNo <= 0 || postNo <= 0) {
+      return
+    }
+
     synchronized(this) {
       val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
         siteName = siteName,
@@ -43,6 +47,10 @@ open class MockReplyManager {
   }
 
   fun getLastMockReply(siteName: String, boardCode: String, opNo: Long): Long {
+    if (opNo <= 0) {
+      return -1L
+    }
+
     return synchronized(this) {
       val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
         siteName = siteName,

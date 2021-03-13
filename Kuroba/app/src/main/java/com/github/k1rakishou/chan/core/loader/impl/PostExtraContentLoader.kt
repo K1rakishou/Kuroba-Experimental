@@ -9,12 +9,14 @@ import com.github.k1rakishou.chan.core.loader.impl.post_comment.CommentPostLinka
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.CommentSpanUpdater
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.LinkInfoRequest
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.SpanUpdateBatch
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.media.GenericVideoId
+import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.LoaderType
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
@@ -23,6 +25,7 @@ import java.util.concurrent.TimeUnit
 
 internal class PostExtraContentLoader(
   private val scheduler: Scheduler,
+  private val chanThreadManager: ChanThreadManager,
   private val linkExtraInfoFetchers: List<ExternalMediaServiceExtraInfoFetcher>
 ) : OnDemandContentLoader(LoaderType.PostExtraContentLoader) {
 
@@ -49,7 +52,10 @@ internal class PostExtraContentLoader(
   }
 
   private fun extractVideoIds(postLoaderData: PostLoaderData): List<GenericVideoId> {
-    val comment = postLoaderData.post.postComment.originalComment()
+    val post = chanThreadManager.getPost(postLoaderData.postDescriptor)
+      ?: return emptyList()
+
+    val comment = post.postComment.originalComment()
     if (comment.isEmpty() || comment !is Spanned) {
       return emptyList()
     }
@@ -66,11 +72,16 @@ internal class PostExtraContentLoader(
   override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
     BackgroundUtils.ensureBackgroundThread()
 
-    if (postLoaderData.post.isContentLoadedForLoader(loaderType)) {
+    val post = chanThreadManager.getPost(postLoaderData.postDescriptor)
+    if (post == null) {
       return rejected()
     }
 
-    val comment = postLoaderData.post.postComment.originalComment()
+    if (post.isContentLoadedForLoader(loaderType)) {
+      return rejected()
+    }
+
+    val comment = post.postComment.originalComment()
     if (comment.isEmpty() || comment !is Spanned) {
       return rejected()
     }
@@ -101,7 +112,7 @@ internal class PostExtraContentLoader(
               return@flatMap failed()
             }
 
-            return@flatMap updateSpans(spanUpdateBatchList, postLoaderData)
+            return@flatMap updateSpans(post, spanUpdateBatchList)
           }
           .doOnError { error -> Logger.e(TAG, "Internal unhandled error", error) }
           .onErrorResumeNext { failed() }
@@ -117,16 +128,13 @@ internal class PostExtraContentLoader(
   }
 
   private fun updateSpans(
-    spanUpdateBatchList: List<SpanUpdateBatch>,
-    postLoaderData: PostLoaderData
+    post: ChanPost,
+    spanUpdateBatchList: List<SpanUpdateBatch>
   ): Single<LoaderResult> {
     BackgroundUtils.ensureBackgroundThread()
 
     val updated = try {
-      CommentSpanUpdater.updateSpansForPostComment(
-        postLoaderData.post,
-        spanUpdateBatchList
-      )
+      CommentSpanUpdater.updateSpansForPostComment(post, spanUpdateBatchList)
     } catch (error: Throwable) {
       Logger.e(TAG, "Unknown error while trying to update spans for post comment", error)
       return failed()
@@ -137,7 +145,7 @@ internal class PostExtraContentLoader(
       return rejected()
     }
 
-    postLoaderData.post.setContentLoadedForLoader(loaderType)
+    post.setContentLoadedForLoader(loaderType)
     // Something was updated we need to redraw the post, so return success
     return succeeded(true)
   }

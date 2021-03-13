@@ -45,6 +45,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterType
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -175,8 +176,8 @@ abstract class ThreadController(
     threadLayout.presenter.showNoContent()
   }
 
-  fun selectPost(post: Long) {
-    threadLayout.presenter.selectPost(post)
+  fun selectPost(postDescriptor: PostDescriptor?) {
+    threadLayout.presenter.selectPost(postDescriptor)
   }
 
   override fun onBack(): Boolean {

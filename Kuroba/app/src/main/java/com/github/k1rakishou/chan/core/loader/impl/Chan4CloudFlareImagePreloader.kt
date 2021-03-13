@@ -14,7 +14,7 @@ class Chan4CloudFlareImagePreloader(
 
   override fun isCached(postLoaderData: PostLoaderData): Single<Boolean> {
     val isCached = chan4CloudFlareImagePreloaderManager.isCached(
-      postLoaderData.post.postDescriptor
+      postLoaderData.postDescriptor
     )
 
     return Single.just(isCached)
@@ -23,7 +23,7 @@ class Chan4CloudFlareImagePreloader(
   override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
     BackgroundUtils.ensureBackgroundThread()
 
-    if (!chan4CloudFlareImagePreloaderManager.startLoading(postLoaderData.post.postDescriptor)) {
+    if (!chan4CloudFlareImagePreloaderManager.startLoading(postLoaderData.postDescriptor)) {
       return rejected()
     }
 
@@ -31,7 +31,7 @@ class Chan4CloudFlareImagePreloader(
   }
 
   override fun cancelLoading(postLoaderData: PostLoaderData) {
-    chan4CloudFlareImagePreloaderManager.cancelLoading(postLoaderData.post.postDescriptor)
+    chan4CloudFlareImagePreloaderManager.cancelLoading(postLoaderData.postDescriptor)
   }
 
   companion object {

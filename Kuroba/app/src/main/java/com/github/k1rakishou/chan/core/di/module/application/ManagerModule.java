@@ -228,6 +228,7 @@ public class ManagerModule {
             PostExtraContentLoader postExtraContentLoader,
             InlinedFileInfoLoader inlinedFileInfoLoader,
             Chan4CloudFlareImagePreloader chan4CloudFlareImagePreloader,
+            ChanThreadManager chanThreadManager,
             @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
         HashSet<OnDemandContentLoader> loaders = new HashSet<>();
@@ -238,7 +239,8 @@ public class ManagerModule {
 
         return new OnDemandContentLoaderManager(
                 Schedulers.from(onDemandContentLoaderExecutor),
-                loaders
+                loaders,
+                chanThreadManager
         );
     }
 

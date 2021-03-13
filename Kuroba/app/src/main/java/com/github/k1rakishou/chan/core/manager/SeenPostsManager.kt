@@ -10,7 +10,7 @@ import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.SeenPost
 import com.github.k1rakishou.model.repository.SeenPostRepository
 import kotlinx.coroutines.CoroutineScope
@@ -72,8 +72,8 @@ class SeenPostsManager(
     }
   }
 
-  fun onPostBind(chanDescriptor: ChanDescriptor, post: ChanPost) {
-    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+  fun onPostBind(postDescriptor: PostDescriptor) {
+    if (postDescriptor.descriptor is ChanDescriptor.CatalogDescriptor) {
       return
     }
 
@@ -82,11 +82,11 @@ class SeenPostsManager(
     }
 
     serializedCoroutineExecutor.post {
-      val threadDescriptor = post.postDescriptor.descriptor as ChanDescriptor.ThreadDescriptor
+      val threadDescriptor = postDescriptor.descriptor as ChanDescriptor.ThreadDescriptor
 
       val seenPost = SeenPost(
         threadDescriptor,
-        post.postDescriptor.postNo,
+        postDescriptor.postNo,
         DateTime.now()
       )
 
@@ -102,11 +102,11 @@ class SeenPostsManager(
     }
   }
 
-  fun onPostUnbind(chanDescriptor: ChanDescriptor, post: ChanPost) {
+  fun onPostUnbind(postDescriptor: PostDescriptor) {
     // No-op (maybe something will be added here in the future)
   }
 
-  fun hasAlreadySeenPost(chanDescriptor: ChanDescriptor, post: ChanPost): Boolean {
+  fun hasAlreadySeenPost(chanDescriptor: ChanDescriptor, postDescriptor: PostDescriptor): Boolean {
     if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
       return true
     }
@@ -116,10 +116,11 @@ class SeenPostsManager(
     }
 
     val threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
-    val postNo = post.postNo()
 
     val seenPost = lock.read {
-      seenPostsMap[threadDescriptor]?.firstOrNull { seenPost -> seenPost.postNo == postNo }
+      // TODO(KurobaEx / @GhostPosts):
+      seenPostsMap[threadDescriptor]
+        ?.firstOrNull { seenPost -> seenPost.postNo == postDescriptor.postNo }
     }
 
     var hasSeenPost = false

@@ -16,11 +16,9 @@
  */
 package com.github.k1rakishou.chan.ui.cell
 
-import com.github.k1rakishou.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.core_spannable.PostLinkable
-import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.board.pages.BoardPage
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -28,37 +26,8 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 
 interface PostCellInterface {
-  fun setPost(
-    chanDescriptor: ChanDescriptor,
-    post: ChanPost,
-    postIndex: Int,
-    callback: PostCellCallback,
-    inPopup: Boolean,
-    highlighted: Boolean,
-    selected: Boolean,
-    markedNo: Long,
-    showDivider: Boolean,
-    postViewMode: PostViewMode,
-    compact: Boolean,
-    stub: Boolean,
-    theme: ChanTheme
-  )
-
-  fun postDataDiffers(
-    chanDescriptor: ChanDescriptor,
-    post: ChanPost,
-    postIndex: Int,
-    callback: PostCellCallback,
-    inPopup: Boolean,
-    highlighted: Boolean,
-    selected: Boolean,
-    markedNo: Long,
-    showDivider: Boolean,
-    postViewMode: PostViewMode,
-    compact: Boolean,
-    stub: Boolean,
-    theme: ChanTheme
-  ): Boolean
+  fun setPost(postCellData: PostCellData)
+  fun postDataDiffers(postCellData: PostCellData): Boolean
 
   /**
    * @param isActuallyRecycling is only true when the view holder that is getting passed into the
@@ -70,15 +39,15 @@ interface PostCellInterface {
   fun getThumbnailView(postImage: ChanPostImage): ThumbnailView?
 
   interface PostCellCallback {
-    fun getCurrentChanDescriptor(): ChanDescriptor?
+    val currentChanDescriptor: ChanDescriptor?
 
     // Only used in PostCell and CardPostCell
-    fun onPostBind(post: ChanPost)
+    fun onPostBind(postDescriptor: PostDescriptor)
 
     // Only used in PostCell and CardPostCell
-    fun onPostUnbind(post: ChanPost, isActuallyRecycling: Boolean)
+    fun onPostUnbind(postDescriptor: PostDescriptor, isActuallyRecycling: Boolean)
 
-    fun onPostClicked(post: ChanPost)
+    fun onPostClicked(postDescriptor: PostDescriptor)
     fun onPostDoubleClicked(post: ChanPost)
     fun onThumbnailClicked(postImage: ChanPostImage, thumbnail: ThumbnailView)
     fun onThumbnailLongClicked(postImage: ChanPostImage, thumbnail: ThumbnailView)
@@ -87,9 +56,9 @@ interface PostCellInterface {
     fun onPostOptionClicked(post: ChanPost, id: Any, inPopup: Boolean)
     fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable)
     fun onPostNoClicked(post: ChanPost)
-    fun onPostSelectionQuoted(post: ChanPost, quoted: CharSequence)
+    fun onPostSelectionQuoted(postDescriptor: PostDescriptor, quoted: CharSequence)
     fun getPage(originalPostDescriptor: PostDescriptor): BoardPage?
-    fun hasAlreadySeenPost(post: ChanPost): Boolean
+    fun hasAlreadySeenPost(postDescriptor: PostDescriptor): Boolean
     fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>)
     fun onUnhidePostClick(post: ChanPost)
     fun currentSpanCount(): Int

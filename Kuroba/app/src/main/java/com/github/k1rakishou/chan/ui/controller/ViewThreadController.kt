@@ -651,10 +651,9 @@ open class ViewThreadController(
     }
 
     if (chanDescriptor is ThreadDescriptor) {
-      val threadNo = chanDescriptor.threadNo
-      threadController.selectPost(threadNo)
+      threadController.selectPost(chanDescriptor.toOriginalPostDescriptor())
     } else {
-      threadController.selectPost(-1L)
+      threadController.selectPost(null)
     }
   }
 

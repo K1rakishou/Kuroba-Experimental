@@ -38,10 +38,7 @@ import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.ellipsizeEnd
-import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import java.util.*
@@ -56,11 +53,9 @@ class CardPostCell : ColorizableCardView,
   @Inject
   lateinit var postFilterManager: PostFilterManager
 
-  private var theme: ChanTheme? = null
-  private var post: ChanPost? = null
+  private var postCellData: PostCellData? = null
   private var callback: PostCellCallback? = null
-  private var compact = false
-  private var inPopup = false
+
   private var thumbView: PostImageThumbnailView? = null
   private var prevPostImage: ChanPostImage? = null
   private var title: TextView? = null
@@ -106,101 +101,52 @@ class CardPostCell : ColorizableCardView,
   }
 
   override fun onClick(v: View) {
-    if (post == null) {
+    if (postCellData == null) {
       return
     }
 
     if (v === thumbView) {
-      callback?.onThumbnailClicked(post!!.firstImage()!!, thumbView!!)
+      callback?.onThumbnailClicked(postCellData!!.post.firstImage()!!, thumbView!!)
     } else if (v === this) {
-      callback?.onPostClicked(post!!)
+      callback?.onPostClicked(postCellData!!.postDescriptor)
     }
   }
 
   override fun onLongClick(v: View): Boolean {
-    if (post == null) {
+    if (postCellData == null) {
       return false
     }
 
     if (v === thumbView) {
-      callback?.onThumbnailLongClicked(post!!.firstImage()!!, thumbView!!)
+      callback?.onThumbnailLongClicked(postCellData!!.post.firstImage()!!, thumbView!!)
       return true
     }
 
     return false
   }
 
-  override fun postDataDiffers(
-    chanDescriptor: ChanDescriptor,
-    post: ChanPost,
-    postIndex: Int,
-    callback: PostCellCallback,
-    inPopup: Boolean,
-    highlighted: Boolean,
-    selected: Boolean,
-    markedNo: Long,
-    showDivider: Boolean,
-    postViewMode: PostViewMode,
-    compact: Boolean,
-    stub: Boolean,
-    theme: ChanTheme
-  ): Boolean {
-    if (post == this.post && theme == this.theme && inPopup == this.inPopup && this.compact == compact) {
-      return false
-    }
-
-    return true
+  override fun postDataDiffers(postCellData: PostCellData): Boolean {
+    return postCellData != this.postCellData
   }
 
-  override fun setPost(
-    chanDescriptor: ChanDescriptor,
-    post: ChanPost,
-    postIndex: Int,
-    callback: PostCellCallback,
-    inPopup: Boolean,
-    highlighted: Boolean,
-    selected: Boolean,
-    markedNo: Long,
-    showDivider: Boolean,
-    postViewMode: PostViewMode,
-    compact: Boolean,
-    stub: Boolean,
-    theme: ChanTheme
-  ) {
-    val postDataDiffers = postDataDiffers(
-      chanDescriptor,
-      post,
-      postIndex,
-      callback,
-      inPopup,
-      highlighted,
-      selected,
-      markedNo,
-      showDivider,
-      postViewMode,
-      compact,
-      stub,
-      theme
-    )
-
+  override fun setPost(postCellData: PostCellData) {
+    val postDataDiffers = postDataDiffers(postCellData)
     if (!postDataDiffers) {
       return
     }
 
-    this.inPopup = inPopup
-    this.post = post
-    this.theme = theme
-    this.callback = callback
-    this.compact = compact
+    preBindPost(postCellData)
 
-    preBindPost(post)
-    bindPost(post)
+    this.postCellData = postCellData
+    this.callback = postCellData.postCellCallback
+
+    bindPost(postCellData)
 
     onThemeChanged()
   }
 
   override fun getPost(): ChanPost? {
-    return post
+    return postCellData?.post
   }
 
   override fun getThumbnailView(postImage: ChanPostImage): ThumbnailView? {
@@ -216,23 +162,24 @@ class CardPostCell : ColorizableCardView,
   }
 
   private fun unbindPost(isActuallyRecycling: Boolean) {
-    if (post == null) {
+    if (postCellData == null) {
       return
     }
 
     unbindPostImage()
 
     if (callback != null) {
-      callback!!.onPostUnbind(post!!, isActuallyRecycling)
+      callback!!.onPostUnbind(postCellData!!.postDescriptor, isActuallyRecycling)
     }
 
     thumbView = null
-    post = null
-    callback = null
+
+    this.callback = null
+    this.postCellData = null
   }
 
-  private fun preBindPost(post: ChanPost?) {
-    if (thumbView != null) {
+  private fun preBindPost(postCellData: PostCellData) {
+    if (this.postCellData != null) {
       return
     }
 
@@ -258,30 +205,26 @@ class CardPostCell : ColorizableCardView,
     filterMatchColor = findViewById(R.id.filter_match_color)
 
     setOnClickListener(this)
-    setCompact(compact)
+    setCompact(postCellData.compact)
 
     options!!.setOnClickListener({
       val items = mutableListOf<FloatingListMenuItem>()
 
-      if (callback != null && post != null) {
-        callback!!.onPopulatePostOptions(post, items)
+      if (callback != null) {
+        callback!!.onPopulatePostOptions(postCellData.post, items)
 
         if (items.isNotEmpty()) {
-          callback!!.showPostOptions(post, inPopup, items)
+          callback!!.showPostOptions(postCellData.post, postCellData.inPopup, items)
         }
       }
     })
   }
 
-  private fun bindPost(post: ChanPost) {
-    if (callback == null) {
-      throw NullPointerException("Callback is null during bindPost()")
-    }
-
-    bindPostThumbnails(post)
+  private fun bindPost(postCellData: PostCellData) {
+    bindPostThumbnails(postCellData)
 
     val filterHighlightedColor = postFilterManager.getFilterHighlightedColor(
-      post.postDescriptor
+      postCellData.postDescriptor
     )
 
     if (filterHighlightedColor != 0) {
@@ -291,36 +234,23 @@ class CardPostCell : ColorizableCardView,
       filterMatchColor!!.visibility = GONE
     }
 
-    if (!TextUtils.isEmpty(post.subject)) {
+    if (!TextUtils.isEmpty(postCellData.post.subject)) {
       title!!.visibility = VISIBLE
-      title!!.text = post.subject
+      title!!.text = postCellData.post.subject
     } else {
       title!!.visibility = GONE
       title!!.setText(null)
     }
 
-    var commentText = post.postComment.comment()
-    var commentMaxLength = COMMENT_MAX_LENGTH_GRID
-
-    if (ChanSettings.boardViewMode.get() == PostViewMode.STAGGER) {
-      val spanCount = callback!!.currentSpanCount()
-
-      // The higher the spanCount the lower the commentMaxLength
-      // (but COMMENT_MAX_LENGTH_GRID is the minimum)
-      commentMaxLength = COMMENT_MAX_LENGTH_GRID +
-        ((COMMENT_MAX_LENGTH_STAGGER - COMMENT_MAX_LENGTH_GRID) / spanCount)
-    }
-
-    commentText = commentText.ellipsizeEnd(commentMaxLength)
-    comment!!.text = commentText
+    comment!!.text = postCellData.commentText
 
     var status = AppModuleAndroidUtils.getString(
       R.string.card_stats,
-      post.catalogRepliesCount,
-      post.catalogImagesCount
+      postCellData.catalogRepliesCount,
+      postCellData.catalogImagesCount
     )
     if (!ChanSettings.neverShowPages.get()) {
-      val boardPage = callback!!.getPage(post.postDescriptor)
+      val boardPage = callback!!.getPage(postCellData.postDescriptor)
       if (boardPage != null && isNotBumpOrder(ChanSettings.boardOrder.get())) {
         status += " Pg " + boardPage.currentPage
       }
@@ -328,12 +258,12 @@ class CardPostCell : ColorizableCardView,
 
     replies!!.text = status
     if (callback != null) {
-      callback!!.onPostBind(post)
+      callback!!.onPostBind(postCellData.postDescriptor)
     }
   }
 
-  private fun bindPostThumbnails(post: ChanPost) {
-    val firstPostImage = post.firstImage()
+  private fun bindPostThumbnails(postCellData: PostCellData) {
+    val firstPostImage = postCellData.post.firstImage()
 
     if (firstPostImage == null || ChanSettings.textOnly.get()) {
       thumbView!!.visibility = GONE
@@ -397,10 +327,5 @@ class CardPostCell : ColorizableCardView,
     }
 
     options!!.setPadding(0, optionsPadding, optionsPadding, 0)
-  }
-
-  companion object {
-    private const val COMMENT_MAX_LENGTH_GRID = 200
-    private const val COMMENT_MAX_LENGTH_STAGGER = 500
   }
 }

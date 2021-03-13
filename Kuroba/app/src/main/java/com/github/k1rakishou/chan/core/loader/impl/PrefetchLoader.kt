@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader
 import com.github.k1rakishou.chan.core.loader.PostLoaderData
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -25,12 +26,18 @@ class PrefetchLoader(
   private val scheduler: Scheduler,
   private val fileCacheV2: FileCacheV2,
   private val cacheHandler: CacheHandler,
+  private val chanThreadManager: ChanThreadManager,
   private val prefetchImageDownloadIndicatorManager: PrefetchImageDownloadIndicatorManager
 ) : OnDemandContentLoader(LoaderType.PrefetchLoader) {
 
   override fun isCached(postLoaderData: PostLoaderData): Single<Boolean> {
     return Single.fromCallable {
-      return@fromCallable postLoaderData.post.postImages
+      val post = chanThreadManager.getPost(postLoaderData.postDescriptor)
+      if (post == null) {
+        return@fromCallable false
+      }
+
+      return@fromCallable post.postImages
         .filter { postImage -> postImage.canBeUsedForPrefetch() }
         .all { postImage ->
           val fileUrl = postImage.imageUrl?.toString()
@@ -46,12 +53,16 @@ class PrefetchLoader(
   override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
     BackgroundUtils.ensureBackgroundThread()
 
-    val post = postLoaderData.post
-    val chanDescriptor = postLoaderData.chanDescriptor
+    val post = chanThreadManager.getPost(postLoaderData.postDescriptor)
+    if (post == null) {
+      return rejected()
+    }
 
+    val chanDescriptor = postLoaderData.postDescriptor.descriptor
     val prefetchList = tryGetPrefetchBatch(chanDescriptor, post)
+
     if (prefetchList.isEmpty()) {
-      postLoaderData.post.postImages.forEach { postImage -> onPrefetchCompleted(postImage, false) }
+      post.postImages.forEach { postImage -> onPrefetchCompleted(postImage, false) }
       return rejected()
     }
 
@@ -86,7 +97,7 @@ class PrefetchLoader(
         }
 
         override fun onSuccess(file: RawFile) {
-          postLoaderData.post.setContentLoadedForLoader(loaderType)
+          post.setContentLoadedForLoader(loaderType)
           onPrefetchCompleted(prefetch.postImage)
         }
 

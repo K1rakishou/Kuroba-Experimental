@@ -43,6 +43,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanSavedReply
 import com.github.k1rakishou.model.repository.ChanPostRepository
@@ -427,14 +428,14 @@ class ReplyPresenter @Inject constructor(
       null
     }
 
-    handleQuote(post, comment)
+    handleQuote(post.postDescriptor, comment)
   }
 
-  fun quote(post: ChanPost, text: CharSequence) {
-    handleQuote(post, text.toString())
+  fun quote(postDescriptor: PostDescriptor, text: CharSequence) {
+    handleQuote(postDescriptor, text.toString())
   }
 
-  private fun handleQuote(post: ChanPost, textQuote: String?) {
+  private fun handleQuote(postDescriptor: PostDescriptor, textQuote: String?) {
     val chanDescriptor = currentChanDescriptor
       ?: return
 
@@ -442,7 +443,7 @@ class ReplyPresenter @Inject constructor(
     val selectStart = callback.selectionStart
 
     val resultLength = replyManager.readReply(chanDescriptor) { reply ->
-      return@readReply reply.handleQuote(selectStart, post.postNo(), textQuote)
+      return@readReply reply.handleQuote(selectStart, postDescriptor.postNo, textQuote)
     }
 
     callback.loadDraftIntoViews(chanDescriptor)
@@ -456,7 +457,7 @@ class ReplyPresenter @Inject constructor(
 
     commentEditingHistory.clear()
 
-    callback.highlightPostNos(emptySet())
+    callback.highlightPosts(emptySet())
     callback.openMessage(null)
     callback.setExpanded(expanded = false, isCleaningUp = true)
     callback.openSubject(false)
@@ -777,15 +778,17 @@ class ReplyPresenter @Inject constructor(
       }
 
       // Find all occurrences of >>\d+ with start and end between selectionStart
-      val selectedQuotes = mutableSetOf<Long>()
+      val selectedQuotes = mutableSetOf<PostDescriptor>()
 
       while (matcher.find()) {
         val quote = matcher.group().substring(2)
-        selectedQuotes += quote.toLongOrNull()
+        val postNo = quote.toLongOrNull()
           ?: continue
+
+        selectedQuotes += PostDescriptor.create(chanDescriptor, postNo)
       }
 
-      callback.highlightPostNos(selectedQuotes)
+      callback.highlightPosts(selectedQuotes)
     }, 250)
   }
 
@@ -832,7 +835,7 @@ class ReplyPresenter @Inject constructor(
     fun openCommentMathButton(open: Boolean)
     fun openCommentSJISButton(open: Boolean)
     fun updateCommentCount(count: Int, maxCount: Int, over: Boolean)
-    fun highlightPostNos(postNos: Set<Long>)
+    fun highlightPosts(postDescriptors: Set<PostDescriptor>)
     fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     fun focusComment()
     fun onUploadingProgress(fileIndex: Int, totalFiles: Int,percent: Int)

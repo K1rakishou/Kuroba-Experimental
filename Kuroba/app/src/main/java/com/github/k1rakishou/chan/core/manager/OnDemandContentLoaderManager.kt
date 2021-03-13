@@ -10,7 +10,6 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import com.github.k1rakishou.model.data.post.ChanPost
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -23,7 +22,8 @@ import kotlin.concurrent.write
 
 class OnDemandContentLoaderManager(
   private val workerScheduler: Scheduler,
-  private val loaders: Set<OnDemandContentLoader>
+  private val loaders: Set<OnDemandContentLoader>,
+  private val chanThreadManager: ChanThreadManager
 ) {
   private val rwLock = ReentrantReadWriteLock()
 
@@ -65,16 +65,16 @@ class OnDemandContentLoaderManager(
    * Also, updates [Post.onDemandContentLoadedMap] for the current post.
    * */
   private fun addDelayIfSomethingIsNotCachedYet(postLoaderData: PostLoaderData): Flowable<PostLoaderData> {
-    val chanDescriptor = postLoaderData.chanDescriptor
-    val post = postLoaderData.post
+    val postDescriptor = postLoaderData.postDescriptor
 
-    if (post.allLoadersCompletedLoading()) {
+    val post = chanThreadManager.getPost(postDescriptor)
+    if (post == null || post.allLoadersCompletedLoading()) {
       return Flowable.just(postLoaderData)
     }
 
     val loadersCachedResultFlowable = Flowable.fromIterable(loaders)
       .flatMapSingle { loader ->
-        return@flatMapSingle loader.isCached(PostLoaderData(chanDescriptor, post))
+        return@flatMapSingle loader.isCached(PostLoaderData(postDescriptor))
           .onErrorReturnItem(false)
       }
       .toList()
@@ -118,7 +118,7 @@ class OnDemandContentLoaderManager(
           .onErrorReturnItem(LoaderResult.Failed(loader.loaderType))
       }
       .toList()
-      .map { results -> LoaderBatchResult(postLoaderData.chanDescriptor, postLoaderData.post, results) }
+      .map { results -> LoaderBatchResult(postLoaderData.postDescriptor, results) }
       .doOnSuccess(postUpdateRxQueue::onNext)
       .map { Unit }
       .toFlowable()
@@ -133,12 +133,12 @@ class OnDemandContentLoaderManager(
       .hide()
   }
 
-  fun onPostBind(chanDescriptor: ChanDescriptor, post: ChanPost) {
+  fun onPostBind(postDescriptor: PostDescriptor) {
     BackgroundUtils.ensureMainThread()
     check(loaders.isNotEmpty()) { "No loaders!" }
 
-    val postDescriptor = PostDescriptor.create(chanDescriptor, post.postNo())
-    val postLoaderData = PostLoaderData(chanDescriptor, post)
+    val chanDescriptor = postDescriptor.descriptor
+    val postLoaderData = PostLoaderData(postDescriptor)
 
     val alreadyAdded = rwLock.write {
       if (!activeLoaders.containsKey(chanDescriptor)) {
@@ -160,7 +160,7 @@ class OnDemandContentLoaderManager(
     postLoaderRxQueue.onNext(postLoaderData)
   }
 
-  fun onPostUnbind(chanDescriptor: ChanDescriptor, post: ChanPost, isActuallyRecycling: Boolean) {
+  fun onPostUnbind(postDescriptor: PostDescriptor, isActuallyRecycling: Boolean) {
     BackgroundUtils.ensureMainThread()
     check(loaders.isNotEmpty()) { "No loaders!" }
 
@@ -170,10 +170,8 @@ class OnDemandContentLoaderManager(
       return
     }
 
-    val postDescriptor = PostDescriptor.create(chanDescriptor, post.postNo())
-
     rwLock.write {
-      val postLoaderData = activeLoaders[chanDescriptor]?.remove(postDescriptor)
+      val postLoaderData = activeLoaders[postDescriptor.descriptor]?.remove(postDescriptor)
         ?: return@write null
 
       loaders.forEach { loader -> loader.cancelLoading(postLoaderData) }
@@ -206,12 +204,10 @@ class OnDemandContentLoaderManager(
 
   private fun isStillActive(postLoaderData: PostLoaderData): Boolean {
     return rwLock.read {
-      val postDescriptor = PostDescriptor.create(
-        postLoaderData.chanDescriptor,
-        postLoaderData.post.postNo()
-      )
+      val chanDescriptor = postLoaderData.postDescriptor.descriptor
+      val postDescriptor = postLoaderData.postDescriptor
 
-      return@read activeLoaders[postLoaderData.chanDescriptor]?.containsKey(postDescriptor)
+      return@read activeLoaders[chanDescriptor]?.containsKey(postDescriptor)
         ?: false
     }
   }

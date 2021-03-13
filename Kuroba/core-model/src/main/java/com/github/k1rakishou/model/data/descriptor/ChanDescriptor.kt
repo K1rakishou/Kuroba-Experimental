@@ -49,6 +49,10 @@ sealed class ChanDescriptor {
     override fun siteDescriptor(): SiteDescriptor = boardDescriptor.siteDescriptor
     override fun boardDescriptor(): BoardDescriptor = boardDescriptor
 
+    fun toOriginalPostDescriptor(): PostDescriptor {
+      return PostDescriptor.create(this, threadNo)
+    }
+
     override fun serializeToString(): String {
       return "TD_${boardDescriptor.siteName()}_${boardDescriptor.boardCode}_${threadNo}"
     }

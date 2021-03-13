@@ -59,8 +59,8 @@ public class PostPopupHelper {
         this.callback = callback;
     }
 
-    public void showPosts(ChanPost forPost, List<ChanPost> posts) {
-        RepliesData data = new RepliesData(forPost, indexPosts(posts));
+    public void showPosts(PostDescriptor postDescriptor, List<ChanPost> posts) {
+        RepliesData data = new RepliesData(postDescriptor, indexPosts(posts));
         dataQueue.add(data);
 
         if (dataQueue.size() == 1) {
@@ -96,9 +96,9 @@ public class PostPopupHelper {
         return postIndexedList;
     }
 
-    public void onPostUpdated(@NotNull ChanPost post) {
+    public void onPostUpdated(@NotNull PostDescriptor postDescriptor) {
         BackgroundUtils.ensureMainThread();
-        presentingController.onPostUpdated(post);
+        presentingController.onPostUpdated(postDescriptor);
     }
 
     public void pop() {
@@ -163,10 +163,10 @@ public class PostPopupHelper {
 
     public static class RepliesData {
         public List<PostIndexed> posts;
-        public ChanPost forPost;
+        public PostDescriptor forPostWithDescriptor;
 
-        public RepliesData(ChanPost forPost, List<PostIndexed> posts) {
-            this.forPost = forPost;
+        public RepliesData(PostDescriptor postDescriptor, List<PostIndexed> posts) {
+            this.forPostWithDescriptor =  postDescriptor;
             this.posts = posts;
         }
     }
