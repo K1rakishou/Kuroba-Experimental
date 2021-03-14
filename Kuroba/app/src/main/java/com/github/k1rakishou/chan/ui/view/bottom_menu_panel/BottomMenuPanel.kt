@@ -250,9 +250,7 @@ class BottomMenuPanel @JvmOverloads constructor(
   }
 
   fun hide() {
-    require(state != State.NotInitialized) { "state is NotInitialized!" }
-
-    if (state == State.Hidden) {
+    if (state == State.Hidden || state == State.NotInitialized) {
       return
     }
 
