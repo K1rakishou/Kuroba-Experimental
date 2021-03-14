@@ -1735,14 +1735,41 @@ class ThreadPresenter @Inject constructor(
   }
 
   private fun showPostInfo(post: ChanPost) {
-    val text = StringBuilder()
+    val text = StringBuilder(128)
+
+    val descriptor = post.postDescriptor.descriptor
+
+    text
+      .append("Site name: ")
+      .appendLine(descriptor.siteName())
+      .append("Board code: ")
+      .appendLine(descriptor.boardCode())
+
+    if (descriptor is ChanDescriptor.ThreadDescriptor) {
+      text
+        .append("Thread id: ")
+        .appendLine(descriptor.threadNo)
+    }
+
+    siteManager.bySiteDescriptor(post.postDescriptor.siteDescriptor())?.let { site ->
+      text
+        .append("Full post link: ")
+        .append(site.resolvable().desktopUrl(descriptor, post.postDescriptor.postNo))
+        .appendLine()
+    }
+
+    text.appendLine()
 
     for (image in post.postImages) {
       text
-        .append("Filename: ")
+        .append("Original file name: ")
         .append(image.filename)
         .append(".")
-        .append(image.extension)
+        .appendLine(image.extension)
+        .append("Server file name: ")
+        .append(image.serverFilename)
+        .append(".")
+        .appendLine(image.extension)
 
       if (image.isInlined) {
         text.append("\nLinked file")
@@ -1763,6 +1790,8 @@ class ThreadPresenter @Inject constructor(
 
       text.append("\n")
     }
+
+    text.appendLine()
 
     text
       .append("Posted: ")

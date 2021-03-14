@@ -479,9 +479,9 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun showPostInfo(info: String) {
-    dialogFactory.createSimpleConfirmationDialog(
+    dialogFactory.createSimpleInformationDialog(
       context = context,
-      titleTextId = R.string.post_info_title,
+      titleText = getString(R.string.post_info_title),
       descriptionText = info
     )
   }
