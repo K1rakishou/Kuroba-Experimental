@@ -1079,7 +1079,8 @@ class ThreadPresenter @Inject constructor(
     }
 
     val items = mutableListOf<FloatingListMenuItem>()
-    items += createMenuItem(THUMBNAIL_COPY_URL, R.string.action_copy_image_url)
+    items += createMenuItem(IMAGE_COPY_FULL_URL, R.string.action_copy_image_full_url)
+    items += createMenuItem(IMAGE_COPY_THUMBNAIL_URL, R.string.action_copy_image_thumbnail_url)
     items += createMenuItem(SHARE_MEDIA_FILE_CONTENT, R.string.action_share_content)
     items += createMenuItem(DOWNLOAD_MEDIA_FILE_CONTENT, R.string.action_download_content)
     items += createMenuItem(DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT, R.string.action_download_content_with_options)
@@ -1099,12 +1100,20 @@ class ThreadPresenter @Inject constructor(
     postImage: ChanPostImage
   ) {
     when (id) {
-      THUMBNAIL_COPY_URL -> {
+      IMAGE_COPY_FULL_URL -> {
         if (postImage.imageUrl == null) {
           return
         }
 
         AndroidUtils.setClipboardContent("Image URL", postImage.imageUrl.toString())
+        showToast(context, R.string.image_url_copied_to_clipboard)
+      }
+      IMAGE_COPY_THUMBNAIL_URL -> {
+        if (postImage.actualThumbnailUrl == null) {
+          return
+        }
+
+        AndroidUtils.setClipboardContent("Thumbnail URL", postImage.actualThumbnailUrl.toString())
         showToast(context, R.string.image_url_copied_to_clipboard)
       }
       SHARE_MEDIA_FILE_CONTENT -> {
@@ -2028,10 +2037,11 @@ class ThreadPresenter @Inject constructor(
     private const val POST_OPTION_MOCK_REPLY = 15
     private const val POST_OPTION_FILTER_TRIPCODE = 100
 
-    private const val THUMBNAIL_COPY_URL = 1000
-    private const val SHARE_MEDIA_FILE_CONTENT = 1001
-    private const val DOWNLOAD_MEDIA_FILE_CONTENT = 1002
-    private const val DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT = 1003
+    private const val IMAGE_COPY_FULL_URL = 1000
+    private const val IMAGE_COPY_THUMBNAIL_URL = 1001
+    private const val SHARE_MEDIA_FILE_CONTENT = 1002
+    private const val DOWNLOAD_MEDIA_FILE_CONTENT = 1003
+    private const val DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT = 1004
   }
 
 }

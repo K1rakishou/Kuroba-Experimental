@@ -196,7 +196,8 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_rename_pin">Rename bookmark</string>
     <string name="action_rename">Rename</string>
     <string name="action_reply">Reply</string>
-    <string name="action_copy_image_url">Copy file url</string>
+    <string name="action_copy_image_full_url">Copy full image url</string>
+    <string name="action_copy_image_thumbnail_url">Copy image thumbnail url</string>
     <string name="action_share_content">Share file content</string>
     <string name="action_download_content">Download file</string>
     <string name="action_download_content_with_options">Download file (show options)</string>
@@ -1048,7 +1049,7 @@ Don't have a 4chan Pass?<br>
     <string name="captcha_layout_v2_captcha_request_is_already_in_progress">Captcha request is already in progress</string>
     <string name="captcha_layout_v2_you_are_requesting_captcha_too_fast">You are requesting captcha too fast</string>
     <string name="captcha_layout_v2_refresh_cookies">Refresh cookies</string>
-    <string name="image_url_copied_to_clipboard">Image URL copied to clipboard</string>
+    <string name="image_url_copied_to_clipboard">URL copied to clipboard</string>
 
     <string name="could_not_remove_site_error_message">Could not remove site %1$s (error message: %2$s)</string>
 
