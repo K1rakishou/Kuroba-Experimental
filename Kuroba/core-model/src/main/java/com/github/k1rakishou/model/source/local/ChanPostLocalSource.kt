@@ -661,7 +661,7 @@ class ChanPostLocalSource(
         break
       }
 
-      val threadBatch = chanThreadDao.selectThreadsWithPostsOtherThanOp(offset, THREADS_IN_BATCH)
+      val threadBatch = chanThreadDao.selectThreadsWithPostsOtherThanOp(offset, ENTITIES_IN_BATCH)
       if (threadBatch.isEmpty()) {
         Logger.d(TAG, "deleteOldPosts() selectThreadsWithPostsOtherThanOp returned empty list")
         return DeleteResult(deletedTotal, skippedTotal)
@@ -721,7 +721,7 @@ class ChanPostLocalSource(
         break
       }
 
-      val threadBatch = chanThreadDao.selectOldThreads(offset, THREADS_IN_BATCH)
+      val threadBatch = chanThreadDao.selectOldThreads(offset, ENTITIES_IN_BATCH)
       if (threadBatch.isEmpty()) {
         Logger.d(TAG, "deleteOldThreads() selectOldThreads returned empty list")
         return DeleteResult(deletedTotal, skippedTotal)
@@ -773,7 +773,7 @@ class ChanPostLocalSource(
   data class DeleteResult(val deletedTotal: Int = 0, val skippedTotal: Int = 0)
 
   companion object {
-    private const val THREADS_IN_BATCH = 256
+    private const val ENTITIES_IN_BATCH = KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE
 
     private val TEN_SECONDS = TimeUnit.SECONDS.toMillis(10)
   }

@@ -1,6 +1,11 @@
 package com.github.k1rakishou.model.dao
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Transaction
+import androidx.room.Update
 import com.github.k1rakishou.model.entity.chan.filter.ChanFilterBoardConstraintEntity
 import com.github.k1rakishou.model.entity.chan.filter.ChanFilterEntity
 import com.github.k1rakishou.model.entity.chan.filter.ChanFilterFull
@@ -18,6 +23,7 @@ abstract class ChanFilterDao {
   @Update(onConflict = OnConflictStrategy.IGNORE)
   abstract suspend fun updateMany(chanFilterEntityList: List<ChanFilterEntity>)
 
+  @Transaction
   @Query("""
     SELECT *
     FROM ${ChanFilterEntity.TABLE_NAME} cfe

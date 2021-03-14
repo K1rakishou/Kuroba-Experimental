@@ -3,6 +3,7 @@ package com.github.k1rakishou.model.entity.chan.filter
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkEntity
 
 @Entity(
@@ -26,6 +27,9 @@ import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkEntity
       onUpdate = ForeignKey.CASCADE,
       onDelete = ForeignKey.CASCADE
     ),
+  ],
+  indices = [
+    Index(ChanFilterWatchGroupEntity.OWNER_THREAD_BOOKMARK_DATABASE_ID_COLUMN_NAME)
   ]
 )
 data class ChanFilterWatchGroupEntity(

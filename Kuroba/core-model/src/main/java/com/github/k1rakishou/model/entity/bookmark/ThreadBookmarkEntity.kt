@@ -1,6 +1,10 @@
 package com.github.k1rakishou.model.entity.bookmark
 
-import androidx.room.*
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
 import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
 import okhttp3.HttpUrl
 import org.joda.time.DateTime
@@ -26,6 +30,7 @@ import java.util.*
   ],
   indices = [
     Index(ThreadBookmarkEntity.CREATED_ON_COLUMN_NAME),
+    Index(ThreadBookmarkEntity.OWNER_GROUP_ID_COLUMN_NAME),
     Index(
       value = [ThreadBookmarkEntity.OWNER_THREAD_ID_COLUMN_NAME],
       unique = true

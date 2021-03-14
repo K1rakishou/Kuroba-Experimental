@@ -5,6 +5,8 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.RoomWarnings
+import androidx.room.Transaction
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardIdEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostEntity
@@ -69,6 +71,8 @@ abstract class ChanPostDao {
     chanPostIds: Set<Long>
   ): List<PostDescriptorDatabaseObject>
 
+  @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+  @Transaction
   @Query("""
         SELECT *
         FROM ${ChanPostIdEntity.TABLE_NAME} cp_id
@@ -84,6 +88,8 @@ abstract class ChanPostDao {
     """)
   protected abstract suspend fun selectAllByThreadIdGrouped(ownerThreadId: Long): List<ChanPostFull>
 
+  @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+  @Transaction
   @Query("""
         SELECT *
         FROM ${ChanPostIdEntity.TABLE_NAME} cp_id
@@ -96,6 +102,8 @@ abstract class ChanPostDao {
     """)
   protected abstract suspend fun selectOriginalPostGrouped(ownerThreadId: Long): List<ChanPostFull>
 
+  @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+  @Transaction
   @Query("""
         SELECT *
         FROM ${ChanPostIdEntity.TABLE_NAME} cp_id
@@ -138,6 +146,7 @@ abstract class ChanPostDao {
     """)
   abstract suspend fun deletePostsByThreadIds(ownerThreadIds: Set<Long>): Int
 
+  @Transaction
   @Query("SELECT *FROM ${ChanPostIdEntity.TABLE_NAME}")
   abstract suspend fun testGetAll(): List<ChanPostFull>
 

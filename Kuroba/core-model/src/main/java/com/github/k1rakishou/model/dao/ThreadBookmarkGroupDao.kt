@@ -1,7 +1,17 @@
 package com.github.k1rakishou.model.dao
 
-import androidx.room.*
-import com.github.k1rakishou.model.entity.bookmark.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.RoomWarnings
+import androidx.room.Transaction
+import androidx.room.Update
+import com.github.k1rakishou.model.entity.bookmark.BookmarkThreadDescriptor
+import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkEntity
+import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkGroupEntity
+import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkGroupEntryEntity
+import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkGroupWithEntries
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardIdEntity
 import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
 
@@ -17,6 +27,8 @@ abstract class ThreadBookmarkGroupDao {
   @Update(onConflict = OnConflictStrategy.REPLACE)
   abstract suspend fun updateMany(threadBookmarkGroupEntryEntityList: List<ThreadBookmarkGroupEntryEntity>)
 
+  @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+  @Transaction
   @Query("""
     SELECT *
     FROM ${ThreadBookmarkGroupEntity.TABLE_NAME} groups

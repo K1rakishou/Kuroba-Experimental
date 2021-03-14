@@ -4,6 +4,8 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.RoomWarnings
+import androidx.room.Transaction
 import androidx.room.Update
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.entity.chan.site.ChanSiteEntity
@@ -25,6 +27,8 @@ abstract class ChanSiteDao {
   @Query("SELECT * FROM ${ChanSiteIdEntity.TABLE_NAME}")
   abstract suspend fun selectAllSiteIdEntities(): List<ChanSiteIdEntity>
 
+  @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+  @Transaction
   @Query("""
     SELECT * 
     FROM ${ChanSiteIdEntity.TABLE_NAME} csie
