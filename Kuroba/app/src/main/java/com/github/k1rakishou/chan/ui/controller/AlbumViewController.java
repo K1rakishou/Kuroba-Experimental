@@ -390,14 +390,14 @@ public class AlbumViewController
     private class AlbumItemCellHolder
             extends RecyclerView.ViewHolder
             implements View.OnClickListener {
-        private AlbumViewCell cell;
-        private PostImageThumbnailView thumbnailView;
+        private final AlbumViewCell cell;
+        private final PostImageThumbnailView thumbnailView;
 
         public AlbumItemCellHolder(View itemView) {
             super(itemView);
-            cell = (AlbumViewCell) itemView;
 
-            thumbnailView = itemView.findViewById(R.id.thumbnail_view);
+            cell = (AlbumViewCell) itemView;
+            thumbnailView = (PostImageThumbnailView) cell.getThumbnailView();
             thumbnailView.setOnClickListener(this);
         }
 

@@ -12,7 +12,7 @@ import com.github.k1rakishou.chan.core.loader.impl.external_media_service.Stream
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.YoutubeMediaServiceExtraInfoFetcher;
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
-import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager;
+import com.github.k1rakishou.chan.core.manager.PrefetchStateManager;
 import com.github.k1rakishou.model.repository.InlinedFileInfoRepository;
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository;
 
@@ -35,7 +35,7 @@ public class LoaderModule {
     public PrefetchLoader providePrefetchLoader(
             FileCacheV2 fileCacheV2,
             CacheHandler cacheHandler,
-            PrefetchImageDownloadIndicatorManager prefetchImageDownloadIndicatorManager,
+            PrefetchStateManager prefetchStateManager,
             ChanThreadManager chanThreadManager,
             @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
@@ -44,7 +44,7 @@ public class LoaderModule {
                 fileCacheV2,
                 cacheHandler,
                 chanThreadManager,
-                prefetchImageDownloadIndicatorManager
+                prefetchStateManager
         );
     }
 

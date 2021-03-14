@@ -25,14 +25,17 @@ class ChanPostImage(
     get() = ChanSettings.hideImages.get()
 
   val size: Long = fileSize
-    get() = loadedFileSize ?: field
+    get() = _loadedFileSize ?: field
 
   @get:Synchronized
   @set:Synchronized
   lateinit var ownerPostDescriptor: PostDescriptor
     private set
 
-  private var loadedFileSize: Long? = null
+  private var _loadedFileSize: Long? = null
+
+  val loadedFileSize: Long?
+    get() = _loadedFileSize
 
   @get:Synchronized
   @set:Synchronized
@@ -40,7 +43,7 @@ class ChanPostImage(
 
   @Synchronized
   fun setSize(newSize: Long) {
-    loadedFileSize = newSize
+    _loadedFileSize = newSize
   }
 
   @Synchronized

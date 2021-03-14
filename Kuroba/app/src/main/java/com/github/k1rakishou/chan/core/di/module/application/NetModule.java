@@ -93,7 +93,7 @@ public class NetModule {
                 fileManager,
                 cacheDirFile,
                 chunksCacheDirFile,
-                ChanSettings.autoLoadThreadImages.get()
+                ChanSettings.prefetchMedia.get()
         );
     }
 

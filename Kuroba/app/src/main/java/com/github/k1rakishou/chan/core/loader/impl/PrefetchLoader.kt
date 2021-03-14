@@ -8,7 +8,7 @@ import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader
 import com.github.k1rakishou.chan.core.loader.PostLoaderData
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
-import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager
+import com.github.k1rakishou.chan.core.manager.PrefetchStateManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.fsaf.file.AbstractFile
@@ -27,7 +27,7 @@ class PrefetchLoader(
   private val fileCacheV2: FileCacheV2,
   private val cacheHandler: CacheHandler,
   private val chanThreadManager: ChanThreadManager,
-  private val prefetchImageDownloadIndicatorManager: PrefetchImageDownloadIndicatorManager
+  private val prefetchStateManager: PrefetchStateManager
 ) : OnDemandContentLoader(LoaderType.PrefetchLoader) {
 
   override fun isCached(postLoaderData: PostLoaderData): Single<Boolean> {
@@ -149,23 +149,31 @@ class PrefetchLoader(
   }
 
   private fun onPrefetchStarted(postImage: ChanPostImage) {
-    prefetchImageDownloadIndicatorManager.onPrefetchStarted(postImage)
+    prefetchStateManager.onPrefetchStarted(postImage)
   }
 
   private fun onPrefetchProgress(postImage: ChanPostImage, progress: Float) {
-    prefetchImageDownloadIndicatorManager.onPrefetchProgress(postImage, progress)
+    prefetchStateManager.onPrefetchProgress(postImage, progress)
   }
 
   private fun onPrefetchCompleted(postImage: ChanPostImage, success: Boolean = true) {
     if (success) {
-      postImage.isPrefetched = true
+      val post = chanThreadManager.getPost(postImage.ownerPostDescriptor)
+      if (post != null) {
+        val chanPostImage = post.postImages
+          .firstOrNull { chanPostImage -> chanPostImage.equalUrl(postImage) }
+
+        if (chanPostImage != null) {
+          chanPostImage.isPrefetched = true
+        }
+      }
     }
 
-    prefetchImageDownloadIndicatorManager.onPrefetchCompleted(postImage)
+    prefetchStateManager.onPrefetchCompleted(postImage)
   }
 
   private fun isSuitableForPrefetch(): Boolean {
-    return ChanSettings.autoLoadThreadImages.get()
+    return ChanSettings.prefetchMedia.get()
   }
 
   private fun ChanPostImage.canBeUsedForPrefetch(): Boolean {

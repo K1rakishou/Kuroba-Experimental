@@ -24,9 +24,13 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
+
+import javax.inject.Inject;
 
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize;
@@ -34,6 +38,9 @@ import static com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
 public class AlbumViewCell extends FrameLayout {
     private static final float MAX_RATIO = 2f;
     private static final float MIN_RATIO = .4f;
+
+    @Inject
+    OnDemandContentLoaderManager onDemandContentLoaderManager;
 
     private ChanPostImage postImage;
     private PostImageThumbnailView thumbnailView;
@@ -55,8 +62,16 @@ public class AlbumViewCell extends FrameLayout {
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
+
+        init(getContext());
+
         thumbnailView = findViewById(R.id.thumbnail_view);
         text = findViewById(R.id.text);
+    }
+
+    private void init(Context context) {
+        AppModuleAndroidUtils.extractActivityComponent(context)
+                .inject(this);
     }
 
     public void bindPostImage(
@@ -65,9 +80,6 @@ public class AlbumViewCell extends FrameLayout {
             boolean isStaggeredGridMode
     ) {
         this.postImage = postImage;
-        // We don't want to show the prefetch loading indicator in album thumbnails (at least for
-        // now)
-        thumbnailView.overrideShowPrefetchLoadingIndicator(false);
         thumbnailView.bindPostImage(postImage, canUseHighResCells);
 
         String details = postImage.getExtension().toUpperCase()
@@ -78,7 +90,6 @@ public class AlbumViewCell extends FrameLayout {
                 + " "
                 + getReadableFileSize(postImage.getSize());
 
-        // if -1, linked image, no info
         text.setText(postImage.isInlined() ? postImage.getExtension().toUpperCase() : details);
 
         if (isStaggeredGridMode) {
@@ -86,6 +97,13 @@ public class AlbumViewCell extends FrameLayout {
         } else {
             ratio = 0f;
         }
+
+        onDemandContentLoaderManager.onPostBind(postImage.getOwnerPostDescriptor());
+    }
+
+    public void unbindPostImage() {
+        thumbnailView.unbindPostImage();
+        onDemandContentLoaderManager.onPostUnbind(postImage.getOwnerPostDescriptor(), true);
     }
 
     public void setRatioFromImageDimensions() {
@@ -105,10 +123,6 @@ public class AlbumViewCell extends FrameLayout {
         if (this.ratio < MIN_RATIO) {
             this.ratio = MIN_RATIO;
         }
-    }
-
-    public void unbindPostImage() {
-        thumbnailView.unbindPostImage();
     }
 
     public ChanPostImage getPostImage() {

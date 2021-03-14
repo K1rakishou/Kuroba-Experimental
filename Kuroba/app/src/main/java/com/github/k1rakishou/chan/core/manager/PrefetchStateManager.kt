@@ -6,7 +6,7 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 
-class PrefetchImageDownloadIndicatorManager {
+class PrefetchStateManager {
   private val prefetchStateProcessor = PublishProcessor.create<PrefetchState>().toSerialized()
 
   fun onPrefetchStarted(postImage: ChanPostImage) {

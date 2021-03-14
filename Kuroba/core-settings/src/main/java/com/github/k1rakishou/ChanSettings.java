@@ -323,7 +323,7 @@ public class ChanSettings {
     public static OptionsSetting<NetworkContentAutoLoadMode> imageAutoLoadNetwork;
     public static OptionsSetting<NetworkContentAutoLoadMode> videoAutoLoadNetwork;
     public static OptionsSetting<ImageClickPreloadStrategy> imageClickPreloadStrategy;
-    public static BooleanSetting autoLoadThreadImages;
+    public static BooleanSetting prefetchMedia;
     public static BooleanSetting showPrefetchLoadingIndicator;
 
     // Misc
@@ -523,7 +523,7 @@ public class ChanSettings {
                     ImageClickPreloadStrategy.class,
                     ImageClickPreloadStrategy.PreloadNext
             );
-            autoLoadThreadImages = new BooleanSetting(provider, "preference_auto_load_thread", false);
+            prefetchMedia = new BooleanSetting(provider, "preference_auto_load_thread", false);
             showPrefetchLoadingIndicator = new BooleanSetting(provider, "show_prefetch_loading_indicator", false);
             cloudflareForcePreload = new BooleanSetting(provider, "cloudflare_force_preload", false);
 

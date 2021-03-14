@@ -71,6 +71,7 @@ import com.github.k1rakishou.chan.ui.captcha.GenericWebViewAuthenticationLayout;
 import com.github.k1rakishou.chan.ui.captcha.LegacyCaptchaLayout;
 import com.github.k1rakishou.chan.ui.captcha.v1.CaptchaNojsLayoutV1;
 import com.github.k1rakishou.chan.ui.captcha.v2.CaptchaNoJsLayoutV2;
+import com.github.k1rakishou.chan.ui.cell.AlbumViewCell;
 import com.github.k1rakishou.chan.ui.cell.CardPostCell;
 import com.github.k1rakishou.chan.ui.cell.PostCell;
 import com.github.k1rakishou.chan.ui.cell.PostStubCell;
@@ -308,6 +309,7 @@ public interface ActivityComponent {
     void inject(Toolbar toolbar);
     void inject(ThreadStatusCell threadStatusCell);
     void inject(PostCell postCell);
+    void inject(AlbumViewCell albumViewCell);
     void inject(NavigationControllerContainerLayout navigationControllerContainerLayout);
     void inject(BookmarksPresenter bookmarksPresenter);
     void inject(BaseThreadBookmarkViewHolder baseThreadBookmarkViewHolder);

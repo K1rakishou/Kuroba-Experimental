@@ -121,7 +121,7 @@ class MediaSettingsScreen(
           identifier = MediaScreen.LoadingGroup.AutoLoadThreadImages,
           topDescriptionIdFunc = { R.string.setting_auto_load_thread_images },
           bottomDescriptionIdFunc = { R.string.setting_auto_load_thread_images_description },
-          setting = ChanSettings.autoLoadThreadImages,
+          setting = ChanSettings.prefetchMedia,
           requiresRestart = true
         )
 
@@ -130,7 +130,7 @@ class MediaSettingsScreen(
           identifier = MediaScreen.LoadingGroup.ShowPrefetchLoadingIndicator,
           topDescriptionIdFunc = { R.string.setting_show_prefetch_loading_indicator_title },
           setting = ChanSettings.showPrefetchLoadingIndicator,
-          dependsOnSetting = ChanSettings.autoLoadThreadImages
+          dependsOnSetting = ChanSettings.prefetchMedia
         )
 
         group

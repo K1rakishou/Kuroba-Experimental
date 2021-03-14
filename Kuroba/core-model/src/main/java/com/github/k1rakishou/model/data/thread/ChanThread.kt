@@ -11,6 +11,7 @@ import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.LoaderType
+import com.github.k1rakishou.model.util.ChanPostUtils
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.Comparator
@@ -473,7 +474,7 @@ class ChanThread(
       chanPostId = oldChanPost.chanPostId,
       postDescriptor = oldChanPost.postDescriptor,
       repliesFrom = oldChanPost.repliesFrom,
-      postImages = newPost.postImages,
+      postImages = mergePostImages(newPost.postImages, oldChanPost.postImages),
       postIcons = newPost.postIcons,
       repliesTo = newPost.repliesTo,
       timestamp = newPost.timestamp,
@@ -509,7 +510,7 @@ class ChanThread(
       chanPostId = oldChanOriginalPost.chanPostId,
       postDescriptor = oldChanOriginalPost.postDescriptor,
       repliesFrom = oldChanOriginalPost.repliesFrom,
-      postImages = newChanOriginalPost.postImages,
+      postImages = mergePostImages(newChanOriginalPost.postImages, oldChanOriginalPost.postImages),
       postIcons = newChanOriginalPost.postIcons,
       repliesTo = newChanOriginalPost.repliesTo,
       postComment = newChanOriginalPost.postComment,
@@ -519,8 +520,8 @@ class ChanThread(
       posterId = newChanOriginalPost.posterId,
       moderatorCapcode = newChanOriginalPost.moderatorCapcode,
       isSavedReply = newChanOriginalPost.isSavedReply,
-      catalogRepliesCount = newChanOriginalPost.catalogRepliesCount,
-      catalogImagesCount = newChanOriginalPost.catalogImagesCount,
+      catalogRepliesCount = Math.max(oldChanOriginalPost.catalogRepliesCount, newChanOriginalPost.catalogRepliesCount),
+      catalogImagesCount = Math.max(oldChanOriginalPost.catalogImagesCount, newChanOriginalPost.catalogImagesCount),
       timestamp = Math.max(oldChanOriginalPost.timestamp, newChanOriginalPost.timestamp),
       uniqueIps = Math.max(oldChanOriginalPost.uniqueIps, newChanOriginalPost.uniqueIps),
       lastModified = Math.max(oldChanOriginalPost.lastModified, newChanOriginalPost.lastModified),
@@ -532,6 +533,32 @@ class ChanThread(
     handlePostContentLoadedMap(mergedOriginalPost, oldChanOriginalPost)
     mergedOriginalPost.setPostDeleted(oldChanOriginalPost.deleted)
     return mergedOriginalPost
+  }
+
+  private fun mergePostImages(
+    newPostImages: List<ChanPostImage>,
+    oldPostImages: List<ChanPostImage>
+  ): List<ChanPostImage> {
+    if (!ChanPostUtils.postImagesDiffer(newPostImages, oldPostImages)) {
+      return oldPostImages
+    }
+
+    val resultList = mutableListWithCap<ChanPostImage>(newPostImages.size)
+    resultList.addAll(newPostImages)
+
+    resultList.forEach { newPostImage ->
+      val oldPostImage = oldPostImages
+        .firstOrNull { postImage -> postImage.equalUrl(newPostImage) }
+        ?: return@forEach
+
+      newPostImage.isPrefetched = oldPostImage.isPrefetched
+
+      if (oldPostImage.loadedFileSize != null) {
+        newPostImage.setSize(oldPostImage.loadedFileSize!!)
+      }
+    }
+
+    return newPostImages
   }
 
   private fun handlePostContentLoadedMap(

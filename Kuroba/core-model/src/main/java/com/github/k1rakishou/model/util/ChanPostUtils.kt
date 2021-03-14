@@ -155,25 +155,31 @@ object ChanPostUtils {
     return false
   }
 
-  private fun postImagesDiffer(
-    postImages: List<ChanPostImage>,
-    chanPostImages: List<ChanPostImage>
+  fun postImagesDiffer(
+    postImages1: List<ChanPostImage>,
+    postImages2: List<ChanPostImage>
   ): Boolean {
-    if (postImages.size != chanPostImages.size) {
+    if (postImages1.size != postImages2.size) {
       return true
     }
 
-    for (i in postImages.indices) {
-      val postImage = postImages[i]
-      val chanPostImage = chanPostImages[i]
+    for (i in postImages1.indices) {
+      val postImage1 = postImages1[i]
+      val postImage2 = postImages2[i]
 
-      if (postImage.type != chanPostImage.type) {
+      if (postImage1.type != postImage2.type) {
         return true
       }
-      if (postImage.imageUrl != chanPostImage.imageUrl) {
+      if (postImage1.imageUrl != postImage2.imageUrl) {
         return true
       }
-      if (postImage.actualThumbnailUrl != chanPostImage.actualThumbnailUrl) {
+      if (postImage1.actualThumbnailUrl != postImage2.actualThumbnailUrl) {
+        return true
+      }
+      if (postImage1.isPrefetched != postImage2.isPrefetched) {
+        return true
+      }
+      if (postImage1.loadedFileSize != postImage2.loadedFileSize) {
         return true
       }
     }

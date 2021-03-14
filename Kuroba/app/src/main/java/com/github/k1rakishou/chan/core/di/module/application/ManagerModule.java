@@ -49,7 +49,7 @@ import com.github.k1rakishou.chan.core.manager.PageRequestManager;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
 import com.github.k1rakishou.chan.core.manager.PostHideManager;
 import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager;
-import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager;
+import com.github.k1rakishou.chan.core.manager.PrefetchStateManager;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
 import com.github.k1rakishou.chan.core.manager.ReportManager;
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager;
@@ -259,8 +259,8 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public PrefetchImageDownloadIndicatorManager providePrefetchIndicatorAnimationManager() {
-        return new PrefetchImageDownloadIndicatorManager();
+    public PrefetchStateManager providePrefetchIndicatorAnimationManager() {
+        return new PrefetchStateManager();
     }
 
     @Provides

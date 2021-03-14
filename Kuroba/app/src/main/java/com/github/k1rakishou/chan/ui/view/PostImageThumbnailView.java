@@ -30,8 +30,8 @@ import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
-import com.github.k1rakishou.chan.core.manager.PrefetchImageDownloadIndicatorManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchState;
+import com.github.k1rakishou.chan.core.manager.PrefetchStateManager;
 import com.github.k1rakishou.chan.core.presenter.ImageViewerPresenter;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.core_logger.Logger;
@@ -54,15 +54,20 @@ public class PostImageThumbnailView extends ThumbnailView {
     private static final int prefetchIndicatorSize = dp(16);
 
     @Inject
-    PrefetchImageDownloadIndicatorManager prefetchImageDownloadIndicatorManager;
+    PrefetchStateManager prefetchStateManager;
     @Inject
     ThemeEngine themeEngine;
     @Inject
     CacheHandler cacheHandler;
 
+    @Nullable
     private ChanPostImage postImage;
+    @Nullable
+    private Boolean canUseHighResCells;
+
     private float ratio = 0f;
-    private boolean showPrefetchLoadingIndicator;
+    private boolean prefetchingEnabled = false;
+    private boolean showPrefetchLoadingIndicator = false;
     private boolean prefetching = false;
     private final Rect bounds = new Rect();
     private final Rect circularProgressDrawableBounds = new Rect();
@@ -86,35 +91,46 @@ public class PostImageThumbnailView extends ThumbnailView {
         AppModuleAndroidUtils.extractActivityComponent(getContext())
                 .inject(this);
 
+        setWillNotDraw(false);
+
         this.playIcon = getDrawable(R.drawable.ic_play_circle_outline_white_24dp);
-        this.showPrefetchLoadingIndicator = ChanSettings.autoLoadThreadImages.get()
+        this.prefetchingEnabled = ChanSettings.prefetchMedia.get();
+    }
+
+    public void bindPostImage(@NonNull ChanPostImage postImage, boolean canUseHighResCells) {
+        bindPostImage(postImage, canUseHighResCells, false);
+    }
+
+    private void bindPostImage(
+            @NonNull ChanPostImage postImage,
+            boolean canUseHighResCells,
+            boolean forcedAfterPrefetchFinished
+    ) {
+        if (postImage.equals(this.postImage) && !forcedAfterPrefetchFinished) {
+            return;
+        }
+
+        this.showPrefetchLoadingIndicator = ChanSettings.prefetchMedia.get()
                 && ChanSettings.showPrefetchLoadingIndicator.get();
 
         if (showPrefetchLoadingIndicator) {
             segmentedCircleDrawable = new SegmentedCircleDrawable();
             segmentedCircleDrawable.setColor(themeEngine.getChanTheme().getAccentColor());
             segmentedCircleDrawable.setAlpha(192);
-            segmentedCircleDrawable.percentage(.0f);
+            segmentedCircleDrawable.percentage(0f);
+        }
 
-            Disposable disposable = prefetchImageDownloadIndicatorManager.listenForPrefetchStateUpdates()
-                    .filter((prefetchState) -> showPrefetchLoadingIndicator && postImage != null)
+        if (prefetchingEnabled) {
+            Disposable disposable = prefetchStateManager.listenForPrefetchStateUpdates()
+                    .filter((prefetchState) -> postImage != null)
                     .filter((prefetchState) -> prefetchState.getPostImage().equalUrl(postImage))
                     .subscribe(this::onPrefetchStateChanged);
 
             compositeDisposable.add(disposable);
         }
-    }
-
-    public void overrideShowPrefetchLoadingIndicator(boolean value) {
-        this.showPrefetchLoadingIndicator = value;
-    }
-
-    public void bindPostImage(@NonNull ChanPostImage postImage, boolean canUseHighResCells) {
-        if (postImage.equals(this.postImage)) {
-            return;
-        }
 
         this.postImage = postImage;
+        this.canUseHighResCells = canUseHighResCells;
 
         String url = getUrl(postImage, canUseHighResCells);
         if (url == null || TextUtils.isEmpty(url)) {
@@ -127,17 +143,20 @@ public class PostImageThumbnailView extends ThumbnailView {
 
     public void unbindPostImage() {
         this.postImage = null;
+        this.canUseHighResCells = null;
 
         unbindImageUrl();
         compositeDisposable.clear();
     }
 
     private void onPrefetchStateChanged(PrefetchState prefetchState) {
-        if (!showPrefetchLoadingIndicator && segmentedCircleDrawable != null) {
+        if (!prefetchingEnabled) {
             return;
         }
 
-        if (prefetchState instanceof PrefetchState.PrefetchStarted) {
+        boolean canShowProgress = showPrefetchLoadingIndicator && segmentedCircleDrawable != null;
+
+        if (canShowProgress && prefetchState instanceof PrefetchState.PrefetchStarted) {
             prefetching = true;
 
             segmentedCircleDrawable.percentage(1f);
@@ -145,7 +164,7 @@ public class PostImageThumbnailView extends ThumbnailView {
             return;
         }
 
-        if (prefetchState instanceof PrefetchState.PrefetchProgress) {
+        if (canShowProgress && prefetchState instanceof PrefetchState.PrefetchProgress) {
             if (!prefetching) {
                 return;
             }
@@ -154,13 +173,18 @@ public class PostImageThumbnailView extends ThumbnailView {
 
             segmentedCircleDrawable.percentage(progress);
             invalidate();
-
             return;
         }
 
         if (prefetchState instanceof PrefetchState.PrefetchCompleted) {
-            prefetching = false;
-            invalidate();
+            if (canShowProgress) {
+                prefetching = false;
+                invalidate();
+            }
+
+            if (postImage != null && (canUseHighResCells != null && canUseHighResCells)) {
+                bindPostImage(postImage, canUseHighResCells, true);
+            }
         }
     }
 
@@ -181,8 +205,10 @@ public class PostImageThumbnailView extends ThumbnailView {
 
         boolean hasImageUrl = postImage.getImageUrl() != null;
         boolean revealingSpoilers = !postImage.getSpoiler() || ChanSettings.removeImageSpoilers.get();
+        boolean prefetchingDisabledOrAlreadyPrefetched =
+                !ChanSettings.prefetchMedia.get() || postImage.isPrefetched();
 
-        if (highRes && hasImageUrl && revealingSpoilers) {
+        if (highRes && hasImageUrl && revealingSpoilers && prefetchingDisabledOrAlreadyPrefetched) {
             url = (postImage.getType() == ChanPostImageType.STATIC
                     ? postImage.getImageUrl()
                     : postImage.getThumbnailUrl()).toString();
