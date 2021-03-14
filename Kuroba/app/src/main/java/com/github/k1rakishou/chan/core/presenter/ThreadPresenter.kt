@@ -30,6 +30,7 @@ import com.github.k1rakishou.chan.core.helper.ChanThreadTicker
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
 import com.github.k1rakishou.chan.core.helper.PostHideHelper
 import com.github.k1rakishou.chan.core.loader.LoaderBatchResult
+import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.loader.LoaderResult.Succeeded
 import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.site.Site
@@ -643,7 +644,7 @@ class ThreadPresenter @Inject constructor(
     BackgroundUtils.ensureMainThread()
 
     if (threadPresenterCallback != null && needUpdatePost(batchResult)) {
-      threadPresenterCallback?.onPostUpdated(batchResult.postDescriptor)
+      threadPresenterCallback?.onPostUpdated(batchResult.postDescriptor, batchResult.results)
     }
   }
 
@@ -2000,7 +2001,7 @@ class ThreadPresenter @Inject constructor(
       selectedPosts: List<PostDescriptor>
     )
 
-    fun onPostUpdated(postDescriptor: PostDescriptor)
+    fun onPostUpdated(postDescriptor: PostDescriptor, results: List<LoaderResult>)
     fun presentController(controller: Controller, animate: Boolean)
     fun showToolbar()
     fun showAvailableArchivesList(threadDescriptor: ChanDescriptor.ThreadDescriptor)

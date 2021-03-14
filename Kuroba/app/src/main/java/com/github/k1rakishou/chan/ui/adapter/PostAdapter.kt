@@ -21,6 +21,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
@@ -330,11 +331,13 @@ class PostAdapter(
     return chanDescriptor != null
   }
 
-  fun updatePost(postDescriptor: PostDescriptor) {
+  fun updatePost(postDescriptor: PostDescriptor, results: List<LoaderResult>) {
     BackgroundUtils.ensureMainThread()
 
     val postIndex = threadCellData.getPostCellDataIndexToUpdate(postDescriptor)
       ?: return
+
+    threadCellData.onPostUpdated(postDescriptor, results)
 
     updatingPosts.add(postDescriptor.postNo)
     notifyItemChanged(postIndex)

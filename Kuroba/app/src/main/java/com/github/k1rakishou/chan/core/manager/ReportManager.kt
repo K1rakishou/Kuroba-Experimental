@@ -374,7 +374,7 @@ class ReportManager(
       appendLine("Development Build: " + AppModuleAndroidUtils.getVerifiedBuildType().name)
       appendLine("Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL)
       appendLine("------------------------------")
-      appendLine("Layout mode: ${ChanSettings.getCurrentLayoutMode().name}")
+      appendLine("Current layout mode: ${ChanSettings.getCurrentLayoutMode().name}")
       appendLine("Board view mode: ${ChanSettings.boardViewMode.get()}")
       appendLine("Prefetching enabled: ${ChanSettings.autoLoadThreadImages.get()}")
       appendLine("Hi-res thumbnails enabled: ${ChanSettings.highResCells.get()}")
@@ -390,7 +390,6 @@ class ReportManager(
 
       appendLine("WEBM streaming enabled: ${ChanSettings.videoStream.get()}")
       appendLine("ImageSaver root directory: ${PersistableChanState.imageSaverV2PersistedOptions.get().rootDirectoryUri}")
-      appendLine("Current layout mode: ${ChanSettings.getCurrentLayoutMode().name}")
       appendLine("OkHttp IPv6 support enabled: ${ChanSettings.okHttpAllowIpv6.get()}")
       appendLine("OkHttp HTTP/2 support enabled: ${ChanSettings.okHttpAllowHttp2.get()}")
 

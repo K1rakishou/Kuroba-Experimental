@@ -112,6 +112,11 @@ data class PostCellData(
     _catalogRepliesText.resetValue()
   }
 
+  fun resetPostFileInfoMapCache() {
+    postFileInfoMapPrecalculated = null
+    _postFileInfoMap.resetValue()
+  }
+
   suspend fun preload() {
     BackgroundUtils.ensureBackgroundThread()
 

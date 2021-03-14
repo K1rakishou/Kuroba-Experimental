@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.ui.helper;
 import android.content.Context;
 
 import com.github.k1rakishou.chan.controller.Controller;
+import com.github.k1rakishou.chan.core.loader.LoaderResult;
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter;
 import com.github.k1rakishou.chan.ui.controller.PostRepliesController;
@@ -96,9 +97,9 @@ public class PostPopupHelper {
         return postIndexedList;
     }
 
-    public void onPostUpdated(@NotNull PostDescriptor postDescriptor) {
+    public void onPostUpdated(@NotNull PostDescriptor postDescriptor, List<LoaderResult> results) {
         BackgroundUtils.ensureMainThread();
-        presentingController.onPostUpdated(postDescriptor);
+        presentingController.onPostUpdated(postDescriptor, results);
     }
 
     public void pop() {

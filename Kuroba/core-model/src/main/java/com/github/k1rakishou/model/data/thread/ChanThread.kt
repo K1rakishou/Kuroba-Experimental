@@ -32,6 +32,7 @@ class ChanThread(
   @GuardedBy("lock")
   private val postsByPostDescriptors = mutableMapOf<PostDescriptor, ChanPost>()
   @GuardedBy("lock")
+  // Stores hashes of unparsed post comments, the way we got the from the server, without any spans added yet.
   private val rawPostHashesMap = mutableMapOf<PostDescriptor, MurmurHashUtils.Murmur3Hash>()
   @GuardedBy("lock")
   private var lastAccessTime = System.currentTimeMillis()

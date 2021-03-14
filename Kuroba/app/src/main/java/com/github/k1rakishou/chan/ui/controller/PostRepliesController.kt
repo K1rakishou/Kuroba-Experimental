@@ -14,378 +14,344 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.ui.controller;
+package com.github.k1rakishou.chan.ui.controller
 
-import android.content.Context;
-import android.graphics.drawable.Drawable;
-import android.util.LruCache;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
+import android.content.Context
+import android.util.LruCache
+import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.loader.LoaderResult
+import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
+import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
+import com.github.k1rakishou.chan.ui.cell.GenericPostCell
+import com.github.k1rakishou.chan.ui.cell.PostCellData
+import com.github.k1rakishou.chan.ui.cell.PostCellInterface
+import com.github.k1rakishou.chan.ui.cell.ThreadCellData
+import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
+import com.github.k1rakishou.chan.ui.helper.PostPopupHelper.RepliesData
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView
+import com.github.k1rakishou.chan.ui.view.LoadView
+import com.github.k1rakishou.chan.ui.view.ThumbnailView
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.RecyclerUtils.getIndexAndTop
+import com.github.k1rakishou.chan.utils.RecyclerUtils.restoreScrollPosition
+import com.github.k1rakishou.core_themes.ChanTheme
+import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
+import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.data.post.PostIndexed
+import com.github.k1rakishou.persist_state.IndexAndTop
+import java.util.*
+import javax.inject.Inject
 
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
+class PostRepliesController(
+  context: Context,
+  private val postPopupHelper: PostPopupHelper,
+  private val presenter: ThreadPresenter
+) : BaseFloatingController(context), ThemeChangesListener {
 
-import com.github.k1rakishou.ChanSettings;
-import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
-import com.github.k1rakishou.chan.core.manager.PostFilterManager;
-import com.github.k1rakishou.chan.core.presenter.ThreadPresenter;
-import com.github.k1rakishou.chan.ui.adapter.PostsFilter;
-import com.github.k1rakishou.chan.ui.cell.GenericPostCell;
-import com.github.k1rakishou.chan.ui.cell.PostCellData;
-import com.github.k1rakishou.chan.ui.helper.PostPopupHelper;
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
-import com.github.k1rakishou.chan.ui.view.LoadView;
-import com.github.k1rakishou.chan.ui.view.ThumbnailView;
-import com.github.k1rakishou.chan.utils.BackgroundUtils;
-import com.github.k1rakishou.chan.utils.RecyclerUtils;
-import com.github.k1rakishou.core_themes.ThemeEngine;
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
-import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
-import com.github.k1rakishou.model.data.post.ChanPost;
-import com.github.k1rakishou.model.data.post.ChanPostImage;
-import com.github.k1rakishou.model.data.post.PostIndexed;
-import com.github.k1rakishou.persist_state.IndexAndTop;
+  @Inject
+  lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var postFilterManager: PostFilterManager
+  @Inject
+  lateinit var chanThreadViewableInfoManager: ChanThreadViewableInfoManager
 
-import org.jetbrains.annotations.NotNull;
+  private lateinit var loadView: LoadView
 
-import java.util.ArrayList;
-import java.util.List;
+  private var repliesView: ColorizableRecyclerView? = null
+  private var displayingData: RepliesData? = null
+  private var first = true
+  private var repliesBackText: TextView? = null
+  private var repliesCloseText: TextView? = null
 
-import javax.inject.Inject;
+  private val scope = KurobaCoroutineScope()
+  private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(scope)
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
-import static com.github.k1rakishou.core_themes.ThemeEngine.isDarkColor;
+  val postRepliesData: List<PostDescriptor>
+    get() {
+      val postDescriptors: MutableList<PostDescriptor> = ArrayList()
+      for (post in displayingData!!.posts) {
+        postDescriptors.add(post.post.postDescriptor)
+      }
 
-public class PostRepliesController
-        extends BaseFloatingController implements ThemeEngine.ThemeChangesListener {
-    private static final LruCache<Long, IndexAndTop> scrollPositionCache = new LruCache<>(128);
-
-    @Inject
-    ThemeEngine themeEngine;
-    @Inject
-    PostFilterManager postFilterManager;
-
-    private PostPopupHelper postPopupHelper;
-    private ThreadPresenter presenter;
-    private LoadView loadView;
-    private ColorizableRecyclerView repliesView;
-    private PostPopupHelper.RepliesData displayingData;
-    private boolean first = true;
-
-    private TextView repliesBackText;
-    private TextView repliesCloseText;
-
-    @Override
-    protected int getLayoutId() {
-        return R.layout.layout_post_replies_container;
+      return postDescriptors
     }
 
-    @Override
-    protected void injectDependencies(@NotNull ActivityComponent component) {
-        component.inject(this);
+  override fun getLayoutId(): Int {
+    return R.layout.layout_post_replies_container
+  }
+
+  override fun injectDependencies(component: ActivityComponent) {
+    component.inject(this)
+  }
+
+  override fun onCreate() {
+    super.onCreate()
+
+    // Clicking outside the popup view
+    view.setOnClickListener { postPopupHelper.pop() }
+    loadView = view.findViewById(R.id.loadview)
+    themeEngine.addListener(this)
+  }
+
+  override fun onShow() {
+    super.onShow()
+    onThemeChanged()
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+
+    themeEngine.removeListener(this)
+    repliesView?.swapAdapter(null, true)
+
+    scope.cancelChildren()
+  }
+
+  override fun onThemeChanged() {
+    if (!::themeEngine.isInitialized) {
+      return
     }
 
-    public PostRepliesController(Context context, PostPopupHelper postPopupHelper, ThreadPresenter presenter) {
-        super(context);
+    val isDarkColor = isDarkColor(themeEngine.chanTheme.backColor)
+    val backDrawable = themeEngine.getDrawableTinted(context, R.drawable.ic_arrow_back_white_24dp, isDarkColor)
+    val doneDrawable = themeEngine.getDrawableTinted(context, R.drawable.ic_done_white_24dp, isDarkColor)
 
-        this.postPopupHelper = postPopupHelper;
-        this.presenter = presenter;
+    if (repliesBackText != null) {
+      repliesBackText?.setTextColor(themeEngine.chanTheme.textColorPrimary)
+      repliesBackText?.setCompoundDrawablesWithIntrinsicBounds(backDrawable, null, null, null)
     }
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
-
-        // Clicking outside the popup view
-        view.setOnClickListener(v -> postPopupHelper.pop());
-
-        loadView = view.findViewById(R.id.loadview);
-        themeEngine.addListener(this);
+    if (repliesCloseText != null) {
+      repliesCloseText?.setTextColor(themeEngine.chanTheme.textColorPrimary)
+      repliesCloseText?.setCompoundDrawablesWithIntrinsicBounds(doneDrawable, null, null, null)
     }
 
-    @Override
-    public void onShow() {
-        super.onShow();
+    if (repliesView != null) {
+      val adapter = repliesView?.adapter
+      if (adapter is RepliesAdapter) {
+        adapter.refresh()
+      }
+    }
+  }
 
-        onThemeChanged();
+  fun getThumbnail(postImage: ChanPostImage): ThumbnailView? {
+    if (repliesView == null) {
+      return null
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
+    var thumbnail: ThumbnailView? = null
+    for (i in 0 until repliesView!!.childCount) {
+      val view = repliesView!!.getChildAt(i)
 
-        themeEngine.removeListener(this);
-        repliesView.swapAdapter(null, true);
-    }
+      if (view is GenericPostCell) {
+        val genericPostCell = view
+        val post = genericPostCell.getPost()
 
-    @Override
-    public void onThemeChanged() {
-        if (themeEngine == null) {
-            return;
-        }
-
-        boolean isDarkColor = isDarkColor(themeEngine.chanTheme.getBackColor());
-
-        Drawable backDrawable =
-                themeEngine.getDrawableTinted(context, R.drawable.ic_arrow_back_white_24dp, isDarkColor);
-        Drawable doneDrawable =
-                themeEngine.getDrawableTinted(context, R.drawable.ic_done_white_24dp, isDarkColor);
-
-        if (repliesBackText != null) {
-            repliesBackText.setTextColor(themeEngine.chanTheme.getTextColorPrimary());
-            repliesBackText.setCompoundDrawablesWithIntrinsicBounds(backDrawable, null, null, null);
-        }
-
-        if (repliesCloseText != null) {
-            repliesCloseText.setTextColor(themeEngine.chanTheme.getTextColorPrimary());
-            repliesCloseText.setCompoundDrawablesWithIntrinsicBounds(doneDrawable, null, null, null);
-        }
-
-        if (repliesView != null) {
-            RecyclerView.Adapter<?> adapter = repliesView.getAdapter();
-            if (adapter instanceof RepliesAdapter) {
-                ((RepliesAdapter) adapter).refresh();
+        if (post != null) {
+          for (image in post.postImages) {
+            if (image.equalUrl(postImage)) {
+              thumbnail = genericPostCell.getThumbnailView(postImage)
             }
+          }
         }
+      }
     }
 
-    public ThumbnailView getThumbnail(ChanPostImage postImage) {
-        if (repliesView == null) {
-            return null;
-        }
+    return thumbnail
+  }
 
-        ThumbnailView thumbnail = null;
+  fun onPostUpdated(postDescriptor: PostDescriptor, results: List<LoaderResult>) {
+    BackgroundUtils.ensureMainThread()
 
-        for (int i = 0; i < repliesView.getChildCount(); i++) {
-            View view = repliesView.getChildAt(i);
-            if (view instanceof GenericPostCell) {
-                GenericPostCell genericPostCell = (GenericPostCell) view;
-                ChanPost post = genericPostCell.getPost();
+    val adapter = repliesView?.adapter as? RepliesAdapter
+      ?: return
 
-                if (post != null) {
-                    for (ChanPostImage image : post.getPostImages()) {
-                        if (image.equalUrl(postImage)) {
-                            thumbnail = genericPostCell.getThumbnailView(postImage);
-                        }
-                    }
-                }
-            }
-        }
+    adapter.onPostUpdated(postDescriptor, results)
+  }
 
-        return thumbnail;
+  fun setPostRepliesData(chanDescriptor: ChanDescriptor, data: RepliesData) {
+    rendezvousCoroutineExecutor.post { displayData(chanDescriptor, data) }
+  }
+
+  fun scrollTo(displayPosition: Int) {
+    repliesView?.smoothScrollToPosition(displayPosition)
+  }
+
+  private suspend fun displayData(chanDescriptor: ChanDescriptor, data: RepliesData) {
+    storeScrollPosition()
+    displayingData = data
+
+    val dataView = AppModuleAndroidUtils.inflate(context, R.layout.layout_post_replies_bottombuttons)
+    dataView.id = R.id.post_replies_data_view_id
+
+    repliesView = dataView.findViewById(R.id.post_list)
+
+    val repliesBack = dataView.findViewById<View>(R.id.replies_back)
+    repliesBack.setOnClickListener { postPopupHelper.pop() }
+
+    val repliesClose = dataView.findViewById<View>(R.id.replies_close)
+    repliesClose.setOnClickListener { postPopupHelper.popAll() }
+
+    repliesBackText = dataView.findViewById(R.id.replies_back_icon)
+    repliesCloseText = dataView.findViewById(R.id.replies_close_icon)
+
+    val repliesAdapter = RepliesAdapter(
+      presenter,
+      chanDescriptor,
+      data.forPostWithDescriptor,
+      chanThreadViewableInfoManager,
+      postFilterManager,
+      themeEngine.chanTheme
+    )
+
+    repliesAdapter.setHasStableIds(true)
+    repliesAdapter.setData(data.posts, themeEngine.chanTheme)
+
+    repliesView!!.layoutManager = LinearLayoutManager(context)
+    repliesView!!.recycledViewPool.setMaxRecycledViews(RepliesAdapter.POST_REPLY_VIEW_TYPE, 0)
+    repliesView!!.adapter = repliesAdapter
+
+    loadView.setFadeDuration(if (first) 0 else 150)
+    loadView.setView(dataView)
+
+    first = false
+
+    restoreScrollPosition(data.forPostWithDescriptor.postNo)
+    onThemeChanged()
+  }
+
+  private fun storeScrollPosition() {
+    if (displayingData == null || repliesView == null) {
+      return
     }
 
-    public void onPostUpdated(@NotNull PostDescriptor postDescriptor) {
-        BackgroundUtils.ensureMainThread();
+    scrollPositionCache.put(
+      displayingData!!.forPostWithDescriptor.postNo,
+      getIndexAndTop(repliesView!!)
+    )
+  }
 
-        RecyclerView.Adapter<?> adapter = repliesView.getAdapter();
-        if (!(adapter instanceof RepliesAdapter)) {
-            return;
-        }
+  private fun restoreScrollPosition(postNo: Long) {
+    val scrollPosition = scrollPositionCache[postNo]
+      ?: return
+    repliesView!!.restoreScrollPosition(scrollPosition)
+  }
 
-        RepliesAdapter repliesAdapter = (RepliesAdapter) adapter;
-        repliesAdapter.onPostUpdated(postDescriptor);
+  private class RepliesAdapter(
+    private val postCellCallback: PostCellInterface.PostCellCallback,
+    private val chanDescriptor: ChanDescriptor,
+    private val clickedPostDescriptor: PostDescriptor,
+    chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
+    postFilterManager: PostFilterManager,
+    initialTheme: ChanTheme
+  ) : RecyclerView.Adapter<ReplyViewHolder>() {
+
+    private val threadCellData = ThreadCellData(
+      chanThreadViewableInfoManager,
+      postFilterManager,
+      initialTheme
+    )
+
+    init {
+      threadCellData.defaultInPopup = true
+      threadCellData.defaultIsCompact = false
+      threadCellData.defaultBoardPostViewMode = ChanSettings.PostViewMode.LIST
+      threadCellData.defaultMarkedNo = clickedPostDescriptor.postNo
+      threadCellData.defaultStubFunc = { false }
     }
 
-    public void setPostRepliesData(ChanDescriptor chanDescriptor, PostPopupHelper.RepliesData data) {
-        displayData(chanDescriptor, data);
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReplyViewHolder {
+      return ReplyViewHolder(GenericPostCell(parent.context))
     }
 
-    public List<PostDescriptor> getPostRepliesData() {
-        List<PostDescriptor> postDescriptors = new ArrayList<>();
-
-        for (PostIndexed post : displayingData.posts) {
-            postDescriptors.add(post.getPost().getPostDescriptor());
-        }
-
-        return postDescriptors;
+    override fun onBindViewHolder(holder: ReplyViewHolder, position: Int) {
+      holder.onBind(threadCellData.getPostCellData(position))
     }
 
-    public void scrollTo(int displayPosition) {
-        repliesView.smoothScrollToPosition(displayPosition);
+    override fun getItemViewType(position: Int): Int {
+      return POST_REPLY_VIEW_TYPE
     }
 
-    private void displayData(ChanDescriptor chanDescriptor, final PostPopupHelper.RepliesData data) {
-        storeScrollPosition();
-        displayingData = data;
-
-        View dataView = inflate(context, R.layout.layout_post_replies_bottombuttons);
-        dataView.setId(R.id.post_replies_data_view_id);
-
-        repliesView = dataView.findViewById(R.id.post_list);
-        View repliesBack = dataView.findViewById(R.id.replies_back);
-        repliesBack.setOnClickListener(v -> postPopupHelper.pop());
-
-        View repliesClose = dataView.findViewById(R.id.replies_close);
-        repliesClose.setOnClickListener(v -> postPopupHelper.popAll());
-
-        repliesBackText = dataView.findViewById(R.id.replies_back_icon);
-        repliesCloseText = dataView.findViewById(R.id.replies_close_icon);
-
-        RepliesAdapter repliesAdapter = new RepliesAdapter();
-        repliesAdapter.setHasStableIds(true);
-        repliesAdapter.setData(calculatePostCellDataList(chanDescriptor, data));
-
-        repliesView.setLayoutManager(new LinearLayoutManager(context));
-        repliesView.getRecycledViewPool().setMaxRecycledViews(RepliesAdapter.POST_REPLY_VIEW_TYPE, 0);
-        repliesView.setAdapter(repliesAdapter);
-
-        loadView.setFadeDuration(first ? 0 : 150);
-        loadView.setView(dataView);
-
-        first = false;
-        restoreScrollPosition(data.forPostWithDescriptor.getPostNo());
-
-        onThemeChanged();
+    override fun getItemCount(): Int {
+      return threadCellData.postsCount()
     }
 
-    private List<PostCellData> calculatePostCellDataList(
-            ChanDescriptor chanDescriptor,
-            PostPopupHelper.RepliesData repliesData
-    ) {
-        List<PostCellData> postCellDataList = new ArrayList<>(repliesData.posts.size());
-        int totalPostsCount = repliesData.posts.size();
+    override fun getItemId(position: Int): Long {
+      val post = threadCellData.getPostCellData(position).post
+      val repliesFromCount = post.repliesFromCount
 
-        for (int postIndex = 0; postIndex < totalPostsCount; postIndex++) {
-            boolean showDivider = postIndex < totalPostsCount - 1;
-            PostIndexed postIndexed = repliesData.posts.get(postIndex);
-
-            PostCellData postCellData = new PostCellData(
-                    chanDescriptor,
-                    postIndexed.getPost(),
-                    postIndexed.getPostIndex(),
-                    Integer.parseInt(ChanSettings.fontSize.get()),
-                    true,
-                    false,
-                    false,
-                    repliesData.forPostWithDescriptor.getPostNo(),
-                    showDivider,
-                    ChanSettings.PostViewMode.LIST,
-                    PostsFilter.Order.BUMP,
-                    true,
-                    false,
-                    false,
-                    themeEngine.chanTheme,
-                    postFilterManager.getFilterHash(postIndexed.getPost().getPostDescriptor()),
-                    postFilterManager.getFilterHighlightedColor(postIndexed.getPost().getPostDescriptor())
-            );
-            postCellData.setPostCellCallback(presenter);
-
-            postCellDataList.add(postCellData);
-        }
-
-        return postCellDataList;
+      return (repliesFromCount.toLong() shl 32) +
+        post.postNo() +
+        post.postSubNo()
     }
 
-    private void storeScrollPosition() {
-        if (displayingData == null) {
-            return;
-        }
-
-        scrollPositionCache.put(
-                displayingData.forPostWithDescriptor.getPostNo(),
-                RecyclerUtils.getIndexAndTop(repliesView)
-        );
+    override fun onViewRecycled(holder: ReplyViewHolder) {
+      if (holder.itemView is GenericPostCell) {
+        holder.itemView.onPostRecycled(true)
+      }
     }
 
-    private void restoreScrollPosition(long postNo) {
-        IndexAndTop scrollPosition = scrollPositionCache.get(postNo);
-        if (scrollPosition == null) {
-            return;
-        }
+    suspend fun setData(postIndexedList: List<PostIndexed>, theme: ChanTheme) {
+      threadCellData.updateThreadData(postCellCallback, chanDescriptor, postIndexedList, theme)
 
-        RecyclerUtils.restoreScrollPosition(repliesView, scrollPosition);
+      notifyDataSetChanged()
     }
 
-    private static class RepliesAdapter extends RecyclerView.Adapter<ReplyViewHolder> {
-        public static final int POST_REPLY_VIEW_TYPE = 10;
-
-        private List<PostCellData> postCellDataList = new ArrayList<>(64);
-
-        @NonNull
-        @Override
-        public ReplyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            return new ReplyViewHolder(new GenericPostCell(parent.getContext()));
-        }
-
-        @Override
-        public void onBindViewHolder(@NonNull ReplyViewHolder holder, int position) {
-            holder.onBind(postCellDataList.get(position));
-        }
-
-        @Override
-        public int getItemViewType(int position) {
-            return POST_REPLY_VIEW_TYPE;
-        }
-
-        @Override
-        public int getItemCount() {
-            return postCellDataList.size();
-        }
-
-        @Override
-        public long getItemId(int position) {
-            ChanPost post = postCellDataList.get(position).getPost();
-            int repliesFromCount = post.getRepliesFromCount();
-            return ((long) repliesFromCount << 32L) + post.postNo() + post.postSubNo();
-        }
-
-        @Override
-        public void onViewRecycled(@NonNull ReplyViewHolder holder) {
-            if (holder.itemView instanceof GenericPostCell) {
-                GenericPostCell genericPostCell = ((GenericPostCell) holder.itemView);
-                genericPostCell.onPostRecycled(true);
-            }
-        }
-
-        public void setData(List<PostCellData> postCellDataList) {
-            this.postCellDataList.clear();
-            this.postCellDataList.addAll(postCellDataList);
-
-            notifyDataSetChanged();
-        }
-
-        public void refresh() {
-            notifyDataSetChanged();
-        }
-
-        public void clear() {
-            this.postCellDataList.clear();
-            notifyDataSetChanged();
-        }
-
-        public void onPostUpdated(PostDescriptor postDescriptor) {
-            for (int postIndex = 0; postIndex < postCellDataList.size(); postIndex++) {
-                PostCellData postCellData = postCellDataList.get(postIndex);
-
-                if (postCellData.getPost().getPostDescriptor() == postDescriptor) {
-                    notifyItemChanged(postIndex);
-                    return;
-                }
-            }
-        }
+    fun refresh() {
+      notifyDataSetChanged()
     }
 
-    private static class ReplyViewHolder extends RecyclerView.ViewHolder {
-        private GenericPostCell genericPostCell;
-
-        public ReplyViewHolder(@NonNull GenericPostCell itemView) {
-            super((View) itemView);
-
-            this.genericPostCell = (GenericPostCell) itemView;
-        }
-
-        public void onBind(PostCellData postCellData) {
-            genericPostCell.setPost(postCellData);
-        }
+    fun clear() {
+      threadCellData.cleanup()
+      notifyDataSetChanged()
     }
 
-    @Override
-    public boolean onBack() {
-        postPopupHelper.pop();
-        return true;
+    fun onPostUpdated(postDescriptor: PostDescriptor, results: List<LoaderResult>) {
+      val postCellDataIndex = threadCellData.getPostCellDataIndex(postDescriptor)
+      if (postCellDataIndex == null) {
+        return
+      }
+
+      threadCellData.onPostUpdated(postDescriptor, results)
+      notifyItemChanged(postCellDataIndex)
     }
+
+    companion object {
+      const val POST_REPLY_VIEW_TYPE = 10
+    }
+
+  }
+
+  private class ReplyViewHolder(itemView: GenericPostCell) : RecyclerView.ViewHolder(itemView) {
+    private val genericPostCell = itemView
+
+    fun onBind(postCellData: PostCellData) {
+      genericPostCell.setPost(postCellData)
+    }
+
+  }
+
+  override fun onBack(): Boolean {
+    postPopupHelper.pop()
+    return true
+  }
+
+  companion object {
+    private val scrollPositionCache = LruCache<Long, IndexAndTop>(128)
+  }
 }

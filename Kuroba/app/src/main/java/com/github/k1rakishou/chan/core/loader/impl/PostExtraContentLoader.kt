@@ -77,7 +77,7 @@ internal class PostExtraContentLoader(
       return rejected()
     }
 
-    if (post.isContentLoadedForLoader(loaderType)) {
+    if (chanThreadManager.isContentLoadedForLoader(postLoaderData.postDescriptor, loaderType)) {
       return rejected()
     }
 
@@ -134,7 +134,11 @@ internal class PostExtraContentLoader(
     BackgroundUtils.ensureBackgroundThread()
 
     val updated = try {
-      CommentSpanUpdater.updateSpansForPostComment(post, spanUpdateBatchList)
+      CommentSpanUpdater.updateSpansForPostComment(
+        chanThreadManager = chanThreadManager,
+        postDescriptor = post.postDescriptor,
+        spanUpdateBatchList = spanUpdateBatchList
+      )
     } catch (error: Throwable) {
       Logger.e(TAG, "Unknown error while trying to update spans for post comment", error)
       return failed()
@@ -145,7 +149,7 @@ internal class PostExtraContentLoader(
       return rejected()
     }
 
-    post.setContentLoadedForLoader(loaderType)
+    chanThreadManager.setContentLoadedForLoader(post.postDescriptor, loaderType)
     // Something was updated we need to redraw the post, so return success
     return succeeded(true)
   }

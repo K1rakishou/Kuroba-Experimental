@@ -15,6 +15,7 @@ import com.github.k1rakishou.model.data.catalog.ChanCatalog
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.LoaderType
 import com.github.k1rakishou.model.data.thread.ChanThread
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
@@ -355,6 +356,38 @@ class ChanThreadManager(
       chanReadOptions,
       site.chanReader()
     )
+  }
+
+  fun isContentLoadedForLoader(postDescriptor: PostDescriptor, loaderType: LoaderType): Boolean {
+    when (val descriptor = postDescriptor.descriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        return chanThreadsCache.getCatalog(descriptor)
+          ?.getPost(postDescriptor)
+          ?.isContentLoadedForLoader(loaderType)
+          ?: false
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        return chanThreadsCache.getThread(descriptor)
+          ?.getPost(postDescriptor)
+          ?.isContentLoadedForLoader(loaderType)
+          ?: false
+      }
+    }
+  }
+
+  fun setContentLoadedForLoader(postDescriptor: PostDescriptor, loaderType: LoaderType) {
+    when (val descriptor = postDescriptor.descriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        chanThreadsCache.getCatalog(descriptor)
+          ?.getPost(postDescriptor)
+          ?.setContentLoadedForLoader(loaderType)
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        chanThreadsCache.getThread(descriptor)
+          ?.getPost(postDescriptor)
+          ?.setContentLoadedForLoader(loaderType)
+      }
+    }
   }
 
   companion object {

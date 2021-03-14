@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -829,14 +830,14 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
-  override fun onPostUpdated(postDescriptor: PostDescriptor) {
+  override fun onPostUpdated(postDescriptor: PostDescriptor, results: List<LoaderResult>) {
     BackgroundUtils.ensureMainThread()
 
     if (postPopupHelper.isOpen) {
-      postPopupHelper.onPostUpdated(postDescriptor)
+      postPopupHelper.onPostUpdated(postDescriptor, results)
     }
 
-    threadListLayout.onPostUpdated(postDescriptor)
+    threadListLayout.onPostUpdated(postDescriptor, results)
   }
 
   override fun presentController(

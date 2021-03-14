@@ -6,12 +6,13 @@ import android.text.Spanned
 import android.text.style.CharacterStyle
 import android.text.style.ImageSpan
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.common.setSpanSafe
-import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
 import org.joda.time.Period
 import org.joda.time.format.PeriodFormatterBuilder
@@ -51,11 +52,14 @@ internal object CommentSpanUpdater {
 
   @Synchronized
   fun updateSpansForPostComment(
-    post: ChanPost,
+    chanThreadManager: ChanThreadManager,
+    postDescriptor: PostDescriptor,
     spanUpdateBatchList: List<SpanUpdateBatch>
   ): Boolean {
     BackgroundUtils.ensureBackgroundThread()
 
+    val post = chanThreadManager.getPost(postDescriptor)
+      ?: return false
     val ssb = SpannableStringBuilder(post.postComment.originalComment())
     val groupedSpanUpdates = groupSpanUpdatesByOldSpans(spanUpdateBatchList)
 

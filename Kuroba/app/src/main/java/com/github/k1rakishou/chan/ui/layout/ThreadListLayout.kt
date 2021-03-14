@@ -44,6 +44,7 @@ import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
+import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
@@ -753,7 +754,32 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     when (event.keyCode) {
       KeyEvent.KEYCODE_VOLUME_UP,
       KeyEvent.KEYCODE_VOLUME_DOWN -> {
+        if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+          // Both controllers are always focused when in SPLIT layout mode
+          return false
+        }
+
         if (!ChanSettings.volumeKeysScrolling.get()) {
+          return false
+        }
+
+        val currentFocusedController = threadPresenter?.currentFocusedController()
+          ?: ThreadPresenter.CurrentFocusedController.None
+
+        val currentChanDescriptor = threadPresenter?.currentChanDescriptor
+          ?: return false
+
+        val canScroll = when (currentFocusedController) {
+          ThreadPresenter.CurrentFocusedController.Catalog -> {
+            currentChanDescriptor is ChanDescriptor.CatalogDescriptor
+          }
+          ThreadPresenter.CurrentFocusedController.Thread -> {
+            currentChanDescriptor is ThreadDescriptor
+          }
+          ThreadPresenter.CurrentFocusedController.None -> false
+        }
+
+        if (!canScroll) {
           return false
         }
 
@@ -1375,9 +1401,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     recyclerView.removeItemDecoration(PARTY)
   }
 
-  fun onPostUpdated(postDescriptor: PostDescriptor) {
+  fun onPostUpdated(postDescriptor: PostDescriptor, results: List<LoaderResult>) {
     BackgroundUtils.ensureMainThread()
-    postAdapter.updatePost(postDescriptor)
+    postAdapter.updatePost(postDescriptor, results)
   }
 
   fun isErrorShown(): Boolean {

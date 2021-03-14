@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.ui.cell
 
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
@@ -9,6 +10,7 @@ import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.LoaderType
 import com.github.k1rakishou.model.data.post.PostIndexed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,11 +29,15 @@ class ThreadCellData(
   private var _chanDescriptor: ChanDescriptor? = null
   private var postCellCallback: PostCellInterface.PostCellCallback? = null
   private var currentTheme: ChanTheme = initialTheme
-  private var _inPopup: Boolean = false
-  private var _compact: Boolean = false
-  private var _boardPostViewMode: ChanSettings.PostViewMode = ChanSettings.boardViewMode.get()
-  private var _markedNo: Long = -1L
-  private var _showDivider: Boolean = true
+
+  var defaultInPopup: Boolean = false
+  var defaultIsCompact: Boolean = false
+  var defaultBoardPostViewMode: ChanSettings.PostViewMode = ChanSettings.boardViewMode.get()
+  var defaultMarkedNo: Long = -1L
+  var defaultNeverShowPages: Boolean = ChanSettings.neverShowPages.get()
+
+  var defaultShowDividerFunc = { postIndex: Int, totalPostsCount: Int -> postIndex < totalPostsCount - 1 }
+  var defaultStubFunc = { postDescriptor: PostDescriptor -> postFilterManager.getFilterStub(postDescriptor) }
 
   var error: String? = null
   var selectedPost: PostDescriptor? = null
@@ -66,7 +72,9 @@ class ThreadCellData(
     this.postCellDataList.clear()
     this.postCellDataList.addAll(newPostCellDataList)
 
-    this.lastSeenIndicatorPosition = getLastSeenIndicatorPosition(chanDescriptor) ?: -1
+    if (!defaultInPopup) {
+      this.lastSeenIndicatorPosition = getLastSeenIndicatorPosition(chanDescriptor) ?: -1
+    }
   }
 
   private suspend fun postIndexedListToPostCellDataList(
@@ -77,12 +85,12 @@ class ThreadCellData(
   ): List<PostCellData> {
     BackgroundUtils.ensureBackgroundThread()
 
-    val resultList = mutableListWithCap<PostCellData>(postIndexedList.size)
+    val totalPostsCount = postIndexedList.size
+    val resultList = mutableListWithCap<PostCellData>(totalPostsCount)
     val fontSize = ChanSettings.fontSize.get().toInt()
     val boardPostsSortOrder = PostsFilter.Order.find(ChanSettings.boardOrder.get())
-    val neverShowPages = ChanSettings.neverShowPages.get()
 
-    postIndexedList.forEach { postIndexed ->
+    postIndexedList.forEachIndexed { orderInList, postIndexed ->
       val postDescriptor = postIndexed.post.postDescriptor
 
       val postCellData = PostCellData(
@@ -91,16 +99,16 @@ class ThreadCellData(
         postIndex = postIndexed.postIndex,
         textSizeSp = fontSize,
         theme = theme,
-        inPopup = _inPopup,
+        inPopup = defaultInPopup,
         highlighted = isPostHighlighted(postDescriptor),
         postSelected = isPostSelected(postDescriptor),
-        markedNo = _markedNo,
-        showDivider = _showDivider,
-        compact = _compact,
-        boardPostViewMode = _boardPostViewMode,
+        markedNo = defaultMarkedNo,
+        showDivider = defaultShowDividerFunc.invoke(orderInList, totalPostsCount),
+        compact = defaultIsCompact,
+        boardPostViewMode = defaultBoardPostViewMode,
         boardPostsSortOrder = boardPostsSortOrder,
-        neverShowPages = neverShowPages,
-        stub = postFilterManager.getFilterStub(postDescriptor),
+        neverShowPages = defaultNeverShowPages,
+        stub = defaultStubFunc.invoke(postDescriptor),
         filterHash = postFilterManager.getFilterHash(postDescriptor),
         filterHighlightedColor = postFilterManager.getFilterHighlightedColor(postDescriptor)
       )
@@ -126,12 +134,12 @@ class ThreadCellData(
     postCellDataList.clear()
     selectedPost = null
     lastSeenIndicatorPosition = -1
-    _markedNo = -1
+    defaultMarkedNo = -1
     error = null
   }
 
   fun setBoardPostViewMode(boardPostViewMode: ChanSettings.PostViewMode) {
-    _boardPostViewMode = boardPostViewMode
+    defaultBoardPostViewMode = boardPostViewMode
 
     postCellDataList.forEach { postCellData ->
       if (postCellData.boardPostViewMode != boardPostViewMode) {
@@ -142,10 +150,34 @@ class ThreadCellData(
   }
 
   fun setCompact(compact: Boolean) {
-    _compact = compact
+    defaultIsCompact = compact
     postCellDataList.forEach { postCellData ->
       postCellData.compact = compact
       postCellData.resetCatalogRepliesTextCache()
+    }
+  }
+
+  fun onPostUpdated(postDescriptor: PostDescriptor, results: List<LoaderResult>) {
+    val postCellData = postCellDataList
+      .firstOrNull { postCellData -> postCellData.postDescriptor == postDescriptor }
+
+    if (postCellData == null) {
+      return
+    }
+
+    results.forEach { loaderResult ->
+      if (loaderResult !is LoaderResult.Succeeded) {
+        return@forEach
+      }
+
+      when (loaderResult.loaderType) {
+        LoaderType.PostExtraContentLoader -> postCellData.resetCommentTextCache()
+        LoaderType.InlinedFileInfoLoader -> postCellData.resetPostFileInfoMapCache()
+        LoaderType.PrefetchLoader,
+        LoaderType.Chan4CloudFlareImagePreLoader -> {
+          // no-op
+        }
+      }
     }
   }
 
@@ -196,6 +228,17 @@ class ThreadCellData(
 
   fun getPostCellData(index: Int): PostCellData {
     return postCellDataList.get(getPostPosition(index))
+  }
+
+  fun getPostCellDataIndex(postDescriptor: PostDescriptor): Int? {
+    val index = postCellDataList
+      .indexOfFirst { postCellData -> postCellData.postDescriptor == postDescriptor }
+
+    if (index < 0) {
+      return null
+    }
+
+    return index
   }
 
   fun getPostCellDataIndexToUpdate(postDescriptor: PostDescriptor): Int? {
@@ -256,6 +299,10 @@ class ThreadCellData(
   }
 
   private fun showStatusView(): Boolean {
+    if (defaultInPopup) {
+      return false
+    }
+
     val chanDescriptor = postCellCallback?.currentChanDescriptor
     // the chanDescriptor can be null while this adapter is used between cleanup and the removal
     // of the recyclerview from the view hierarchy, although it's rare.

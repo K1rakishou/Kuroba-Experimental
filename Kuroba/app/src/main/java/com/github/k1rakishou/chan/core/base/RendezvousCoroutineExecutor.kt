@@ -6,6 +6,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
@@ -21,7 +22,11 @@ class RendezvousCoroutineExecutor(
   private val scope: CoroutineScope,
   private val dispatcher: CoroutineDispatcher = Dispatchers.Main
 ) {
-  private val channel = Channel<SerializedAction>(Channel.RENDEZVOUS)
+  private val channel = Channel<SerializedAction>(
+    capacity = Channel.RENDEZVOUS,
+    onBufferOverflow = BufferOverflow.DROP_OLDEST
+  )
+
   private var job: Job? = null
 
   init {

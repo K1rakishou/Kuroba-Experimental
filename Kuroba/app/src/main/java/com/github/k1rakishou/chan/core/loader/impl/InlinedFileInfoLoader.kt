@@ -49,7 +49,7 @@ class InlinedFileInfoLoader(
     BackgroundUtils.ensureBackgroundThread()
 
     val post = chanThreadManager.getPost(postLoaderData.postDescriptor)
-    if (post == null || post.isContentLoadedForLoader(loaderType)) {
+    if (post == null || chanThreadManager.isContentLoadedForLoader(post.postDescriptor, loaderType)) {
       return rejected()
     }
 
@@ -104,7 +104,7 @@ class InlinedFileInfoLoader(
       post.updatePostImageSize(fileUrl, fileSize)
     }
 
-    post.setContentLoadedForLoader(loaderType)
+    chanThreadManager.setContentLoadedForLoader(post.postDescriptor, loaderType)
     return LoaderResult.Succeeded(loaderType, true)
   }
 
