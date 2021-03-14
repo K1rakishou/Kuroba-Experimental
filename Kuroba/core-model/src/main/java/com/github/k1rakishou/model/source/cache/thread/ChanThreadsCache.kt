@@ -54,7 +54,7 @@ class ChanThreadsCache(
 
   /**
    * Inserts [originalPosts] into the memory cache by either adding them as new or updating old ones.
-   * Returns as list of updated posts.
+   * Returns a list of updated posts.
    * */
   fun putManyCatalogPostsIntoCache(originalPosts: List<ChanOriginalPost>): List<ChanOriginalPost> {
     if (originalPosts.isEmpty()) {

@@ -89,7 +89,7 @@ open class AppConstants(
     private const val ONE_MEGABYTE = 1 * 1024 * 1024
     private const val AVERAGE_POST_MEMORY_SIZE = 2048
 
-    private const val MINIMUM_POSTS_CACHE_POSTS_COUNT = 16 * 1024
+    private const val MINIMUM_POSTS_CACHE_POSTS_COUNT = 10 * 1024
     private const val DEV_BUILD_POSTS_CACHE_COUNT = 3000
 
     private const val USER_AGENT_FORMAT =
