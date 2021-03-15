@@ -19,6 +19,8 @@ package com.github.k1rakishou.chan.utils;
 import android.os.Handler;
 import android.os.Looper;
 
+import androidx.core.os.HandlerCompat;
+
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.core_logger.Logger;
@@ -42,6 +44,14 @@ public class BackgroundUtils {
 
     public static void runOnMainThread(Runnable runnable, long delay) {
         mainHandler.postDelayed(runnable, delay);
+    }
+
+    public static void runOnMainThreadWithToken(long delay, Object token, Runnable runnable) {
+        HandlerCompat.postDelayed(mainHandler, runnable, token, delay);
+    }
+
+    public static void cancelAllByToken(Object token) {
+        mainHandler.removeCallbacksAndMessages(token);
     }
 
     public static boolean isMainThread() {

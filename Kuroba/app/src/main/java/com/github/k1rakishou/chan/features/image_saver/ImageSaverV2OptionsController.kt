@@ -42,7 +42,7 @@ class ImageSaverV2OptionsController(
   private lateinit var appendThreadId: ColorizableCheckBox
   private lateinit var rootDir: ColorizableTextView
   private lateinit var customFileName: ColorizableEditText
-  private lateinit var outputFile: ColorizableEditText
+  private lateinit var resultPath: ColorizableEditText
   private lateinit var outputDirFile: ColorizableTextInputLayout
   private lateinit var additionalDirs: ColorizableEditText
   private lateinit var customFileNameTil: ColorizableTextInputLayout
@@ -83,7 +83,7 @@ class ImageSaverV2OptionsController(
     appendBoardCode = view.findViewById(R.id.append_board_code)
     appendThreadId = view.findViewById(R.id.append_thread_id)
     additionalDirs = view.findViewById(R.id.additional_directories)
-    outputFile = view.findViewById(R.id.output_file)
+    resultPath = view.findViewById(R.id.result_path)
     outputDirFile = view.findViewById(R.id.output_file_til)
     customFileName = view.findViewById(R.id.custom_file_name)
     customFileNameTil = view.findViewById(R.id.custom_file_name_til)
@@ -117,7 +117,7 @@ class ImageSaverV2OptionsController(
         additionalDirs.isEnabled = false
 
         outputDirFile.isEnabled = false
-        outputFile.isEnabled = false
+        resultPath.isEnabled = false
 
         saveButton.setText(R.string.retry)
       }
@@ -332,7 +332,7 @@ class ImageSaverV2OptionsController(
   private fun applyOptionsToView() {
     val currentImageSaverSetting = currentSetting
     
-    outputFile.error = null
+    resultPath.error = null
     customFileName.error = null
     additionalDirs.error = null
 
@@ -360,19 +360,7 @@ class ImageSaverV2OptionsController(
     val chanPostImage = options.chanPostImageOrNull()
 
     val currentFileNameString = if (chanPostImage != null) {
-      val currentFileNameString = if (overriddenFileName != null) {
-        overriddenFileName
-      } else {
-        when (currentImageSaverSetting.imageNameOptions) {
-          ImageSaverV2Options.ImageNameOptions.UseServerFileName.rawValue -> {
-            chanPostImage.serverFilename
-          }
-          ImageSaverV2Options.ImageNameOptions.UseOriginalFileName.rawValue -> {
-            chanPostImage.filename
-          }
-          else -> throw IllegalArgumentException("Unknown imageNameOptions: ${currentImageSaverSetting.imageNameOptions}")
-        }
-      }
+      val currentFileNameString = getCurrentFileName(currentImageSaverSetting, chanPostImage)
 
       customFileName.doIgnoringTextWatcher(fileNameTextWatcher) {
         text?.replace(0, text!!.length, currentFileNameString)
@@ -409,7 +397,7 @@ class ImageSaverV2OptionsController(
     }
 
     if (rootDirectoryUriString.isNullOrBlank()) {
-      outputFile.error = context.getString(R.string.controller_image_save_options_root_dir_not_set)
+      resultPath.error = context.getString(R.string.controller_image_save_options_root_dir_not_set)
       enableDisableSaveButton(enable = false)
       return
     }
@@ -437,7 +425,7 @@ class ImageSaverV2OptionsController(
       }
     }
 
-    outputFile.setText(outputDirText)
+    resultPath.setText(outputDirText)
 
     if (chanPostImage != null) {
       if (currentFileNameString.isNullOrBlank()) {
@@ -446,16 +434,36 @@ class ImageSaverV2OptionsController(
         return
       }
 
-      if (fileNameContainsBadSymbols(currentFileNameString)) {
-        customFileName.error = context.getString(R.string.controller_image_save_options_file_name_bad_symbols)
-        enableDisableSaveButton(enable = false)
-        return
-      }
-
       // fallthrough
     }
 
     enableDisableSaveButton(enable = true)
+  }
+
+  private fun getCurrentFileName(
+    currentImageSaverSetting: ImageSaverV2Options,
+    chanPostImage: ChanPostImage
+  ): String {
+    val fileName = if (overriddenFileName != null) {
+      overriddenFileName!!
+    } else {
+      when (currentImageSaverSetting.imageNameOptions) {
+        ImageSaverV2Options.ImageNameOptions.UseServerFileName.rawValue -> {
+          chanPostImage.serverFilename
+        }
+        ImageSaverV2Options.ImageNameOptions.UseOriginalFileName.rawValue -> {
+          chanPostImage.filename
+        }
+        else -> throw IllegalArgumentException("Unknown imageNameOptions: ${currentImageSaverSetting.imageNameOptions}")
+      }
+    }
+
+    val fixedFileName = fileName?.replace(" ", "_")
+    if (fixedFileName.isNullOrEmpty()) {
+      return chanPostImage.serverFilename
+    }
+
+    return fixedFileName
   }
 
   private fun enableDisableSaveButton(enable: Boolean) {

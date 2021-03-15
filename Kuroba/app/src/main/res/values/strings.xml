@@ -391,12 +391,11 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="controller_image_save_options_output_dir_append_board_code">Append board code</string>
     <string name="controller_image_save_options_output_dir_append_thread_id">Append thread id</string>
     <string name="controller_image_save_options_additional_dirs">Additional directories (\'\\\' separated)</string>
-    <string name="controller_image_save_options_output_file">Result path</string>
+    <string name="controller_image_save_options_result_path">Result path</string>
     <string name="controller_image_save_options_override_file_name">Override file name (without extension)</string>
     <string name="controller_image_save_options_click_to_set_root_dir">Click HERE to set root directory</string>
     <string name="controller_image_save_options_root_dir_not_set">Root directory is not set!</string>
     <string name="controller_image_save_options_file_name_is_blank">File name is blank!</string>
-    <string name="controller_image_save_options_file_name_bad_symbols">File name contains bad symbols! Only letters/numbers/\'_\' and \'-\' symbols are allowed!</string>
     <string name="controller_image_save_options_sub_dirs_are_not_valid">Sub directories are not valid!</string>
     <string name="controller_image_save_options_canceled_with_reason">Canceled: %1$s</string>
 

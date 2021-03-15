@@ -293,6 +293,10 @@ public class AndroidUtils {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
     }
 
+    public static boolean isAndroidN() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.N;
+    }
+
     public static boolean isAndroidNMR1() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1;
     }
