@@ -21,26 +21,21 @@ import android.app.SearchManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.*
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
+import android.os.SystemClock
 import android.text.*
 import android.text.method.LinkMovementMethod
 import android.text.style.ClickableSpan
 import android.util.AttributeSet
 import android.view.*
-import android.view.GestureDetector.SimpleOnGestureListener
-import android.view.View.OnClickListener
-import android.widget.ImageView
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
-import coil.request.Disposable
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
-import com.github.k1rakishou.chan.core.image.ImageLoaderV2.FailureAwareImageListener
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -61,11 +56,8 @@ import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ChanThemeColorId
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.post.ChanPost
-import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
-import okhttp3.HttpUrl
-import java.io.IOException
 import java.util.*
 import javax.inject.Inject
 
@@ -86,13 +78,15 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   @Inject
   lateinit var themeEngine: ThemeEngine
 
+  private lateinit var postCellRootContainer: LinearLayout
   private lateinit var thumbnailContainer: LinearLayout
   private lateinit var title: TextView
   private lateinit var postFilesInfoContainer: LinearLayout
   private lateinit var icons: PostIcons
   private lateinit var comment: TextView
   private lateinit var replies: TextView
-  private lateinit var options: ImageView
+  private lateinit var goToPostButtonContainer: FrameLayout
+  private lateinit var goToPostButton: AppCompatImageView
   private lateinit var divider: View
   private lateinit var postAttentionLabel: View
 
@@ -103,8 +97,6 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   private var horizPaddingPx = 0
   private var vertPaddingPx = 0
 
-  private var ignoreNextOnClick = false
-  private val gestureDetector: GestureDetector
   private val linkClickSpan: ColorizableBackgroundColorSpan
   private val quoteClickSpan: ColorizableBackgroundColorSpan
 
@@ -112,6 +104,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   private val prevChanPostImages = mutableListWithCap<ChanPostImage>(1)
   private val commentMovementMethod = PostViewMovementMethod()
   private val titleMovementMethod = PostViewFastMovementMethod()
+  private val postCommentLongtapDetector = PostCommentLongtapDetector(this)
   private val unseenPostIndicatorFadeOutAnimation = createUnseenPostIndicatorFadeAnimation()
 
   constructor(context: Context?)
@@ -126,8 +119,6 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
-
-    gestureDetector = GestureDetector(context, DoubleTapGestureListener())
 
     linkClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostLinkColor, 1.3f)
     quoteClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostQuoteColor, 1.3f)
@@ -158,6 +149,13 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     title.invalidate()
     comment.invalidate()
     replies.invalidate()
+
+    goToPostButton.setImageDrawable(
+      themeEngine.tintDrawable(
+        goToPostButton.drawable,
+        themeEngine.chanTheme.isBackColorDark
+      )
+    )
   }
 
   override fun postDataDiffers(postCellData: PostCellData): Boolean {
@@ -178,10 +176,6 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
 
     bindPost(postCellData)
 
-    if (postCellData.inPopup) {
-      setOnTouchListener { _, ev -> gestureDetector.onTouchEvent(ev) }
-    }
-
     onThemeChanged()
   }
 
@@ -190,22 +184,16 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   }
 
   override fun getThumbnailView(postImage: ChanPostImage): ThumbnailView? {
-    if (postCellData == null) {
+    if (postCellData == null || ChanSettings.textOnly.get()) {
       return null
     }
 
-    val isTextOnly = ChanSettings.textOnly.get()
-
-    for (i in postCellData!!.postImages.indices) {
-      if (!postCellData!!.postImages[i].equalUrl(postImage)) {
+    for (index in postCellData!!.postImages.indices) {
+      if (!postCellData!!.postImages[index].equalUrl(postImage)) {
         continue
       }
 
-      return if (isTextOnly) {
-        null
-      } else {
-        thumbnailViews[i]
-      }
+      return thumbnailViews[index]
     }
 
     return null
@@ -238,12 +226,14 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     this.postCellData = null
   }
 
+  @SuppressLint("ClickableViewAccessibility")
   private fun preBindPost(postCellData: PostCellData) {
     if (this.postCellData != null) {
       return
     }
 
     thumbnailContainer = findViewById(R.id.thumbnails_container)
+    postCellRootContainer = findViewById(R.id.post_cell)
 
     val textSizeSp = postCellData.textSizeSp
     val endPadding = dp(16f)
@@ -257,7 +247,6 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     icons = findViewById(R.id.icons)
     comment = findViewById(R.id.comment)
     replies = findViewById(R.id.replies)
-    options = findViewById(R.id.options)
     divider = findViewById(R.id.divider)
     postAttentionLabel = findViewById(R.id.post_attention_label)
     title.textSize = textSizeSp.toFloat()
@@ -266,6 +255,8 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     icons.height = sp(textSizeSp.toFloat())
     icons.setSpacing(dp(4f))
     icons.setPadding(horizPaddingPx, vertPaddingPx, horizPaddingPx, 0)
+    goToPostButtonContainer = findViewById(R.id.go_to_post_button_container)
+    goToPostButton = findViewById(R.id.go_to_post_button)
 
     findViewById<ConstraintLayout>(R.id.post_single_image_comment_container)
       ?.setPadding(horizPaddingPx, 0, endPadding, 0)
@@ -286,7 +277,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     dividerParams.rightMargin = horizPaddingPx
     divider.layoutParams = dividerParams
 
-    val repliesClickListener = OnClickListener {
+    replies.setOnThrottlingClickListener {
       if (replies.visibility == View.VISIBLE && postCellData.threadMode) {
         postCellData.post.let { post ->
           if (post.repliesFromCount > 0) {
@@ -296,28 +287,23 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       }
     }
 
-    replies.setOnClickListener(repliesClickListener)
-
-    options.setOnClickListener {
-      val items = ArrayList<FloatingListMenuItem>()
-      if (postCellCallback != null) {
-        postCellData.post.let { post ->
-          postCellCallback?.onPopulatePostOptions(postCellData.post, items)
-
-          if (items.size > 0) {
-            postCellCallback?.showPostOptions(postCellData.post, postCellData.inPopup, items)
-          }
-        }
-      }
+    setOnLongClickListener {
+      showPostFloatingListMenu(postCellData)
+      return@setOnLongClickListener true
     }
 
-    setOnClickListener {
-      if (ignoreNextOnClick) {
-        ignoreNextOnClick = false
-      } else {
-        postCellData.post.let { post ->
-          postCellCallback?.onPostClicked(post.postDescriptor)
-        }
+    setOnThrottlingClickListener {
+      postCellCallback?.onPostClicked(postCellData.post.postDescriptor)
+    }
+  }
+
+  private fun showPostFloatingListMenu(postCellData: PostCellData) {
+    val items = ArrayList<FloatingListMenuItem>()
+    if (postCellCallback != null) {
+      postCellCallback?.onPopulatePostOptions(postCellData.post, items)
+
+      if (items.size > 0) {
+        postCellCallback?.showPostOptions(postCellData.post, postCellData.inPopup, items)
       }
     }
   }
@@ -325,17 +311,13 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   private fun bindPost(postCellData: PostCellData) {
     setPostLinkableListener(postCellData, true)
 
-    options.setColorFilter(postCellData.theme.postDetailsColor)
     replies.isClickable = postCellData.threadMode
 
     val selectableItemBackground =
       themeEngine.getAttributeResource(android.R.attr.selectableItemBackground)
-    val selectableItemBackgroundBorderless =
-      themeEngine.getAttributeResource(android.R.attr.selectableItemBackgroundBorderless)
 
+    postCellRootContainer.setBackgroundResource(selectableItemBackground)
     replies.setBackgroundResource(selectableItemBackground)
-    options.setBackgroundResource(selectableItemBackgroundBorderless)
-
     replies.setTextColor(postCellData.theme.textColorSecondary)
     divider.setBackgroundColor(postCellData.theme.dividerColor)
 
@@ -365,6 +347,8 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       bindRepliesText()
     }
 
+    bindGoToPostButton(postCellData)
+
     val dividerVisibility = if (postCellData.showDivider) {
       View.VISIBLE
     } else {
@@ -380,6 +364,21 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
 
     if (postCellData.chanDescriptor.isThreadDescriptor()) {
       threadBookmarkViewPost(postCellData)
+    }
+  }
+
+  private fun bindGoToPostButton(postCellData: PostCellData) {
+    if (postCellData.inPopup) {
+      goToPostButtonContainer.setVisibilityFast(VISIBLE)
+
+      goToPostButtonContainer.setOnClickListener {
+        this.postCellData?.let { pcd ->
+          postCellCallback?.onPostDoubleClicked(pcd.post)
+        }
+      }
+    } else {
+      goToPostButtonContainer.setVisibilityFast(GONE)
+      goToPostButtonContainer.setOnClickListener(null)
     }
   }
 
@@ -459,9 +458,6 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       }
       post.isSavedReply -> {
         setBackgroundColorFast(theme.postSavedReplyColor)
-      }
-      postData.threadMode -> {
-        setBackgroundResource(0)
       }
       else -> {
         setBackgroundResource(R.drawable.item_background)
@@ -583,8 +579,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
 
   @SuppressLint("ClickableViewAccessibility")
   private fun bindCatalogPost(postCellData: PostCellData) {
-    ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.commentText, comment)
-
+    comment.setText(postCellData.commentText, TextView.BufferType.SPANNABLE)
     comment.setOnTouchListener(null)
     comment.isClickable = false
 
@@ -597,11 +592,22 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   private fun bindThreadPost(postCellData: PostCellData) {
     val theme = postCellData.theme
 
-    comment.setTextIsSelectable(true)
-    comment.setText(postCellData.commentText, TextView.BufferType.SPANNABLE)
+    comment.setOnTouchListener { _, event ->
+      postCommentLongtapDetector.passTouchEvent(event)
+      return@setOnTouchListener false
+    }
+    comment.isClickable = false
 
+    comment.setText(postCellData.commentText, TextView.BufferType.SPANNABLE)
     comment.setHandlesColors(theme)
     comment.setEditTextCursorColor(theme)
+
+    // Sets focusable to auto, clickable and longclickable to true.
+    comment.movementMethod = commentMovementMethod
+
+    if (ChanSettings.tapNoReply.get()) {
+      title.movementMethod = titleMovementMethod
+    }
 
     comment.customSelectionActionModeCallback = object : ActionMode.Callback {
       private var quoteMenuItem: MenuItem? = null
@@ -643,16 +649,6 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       }
 
       override fun onDestroyActionMode(mode: ActionMode) {}
-    }
-
-    // Sets focusable to auto, clickable and longclickable to true.
-    comment.movementMethod = commentMovementMethod
-
-    // And this sets clickable to appropriate values again.
-    comment.setOnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
-
-    if (ChanSettings.tapNoReply.get()) {
-      title.movementMethod = titleMovementMethod
     }
   }
 
@@ -720,7 +716,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       layoutParams.setMargins(
         horizPaddingPx,
         topMargin,
-        0,
+        horizPaddingPx,
         bottomMargin
       )
 
@@ -782,11 +778,89 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     }
   }
 
+  private inner class PostCommentLongtapDetector(
+    private val postCell: PostCell
+  ) {
+    private val scaledTouchSlop = ViewConfiguration.get(postCell.context).scaledTouchSlop
+
+    private var blocking = false
+    private var cancelSent = false
+    private var initialTouchEvent: MotionEvent? = null
+
+    fun passTouchEvent(event: MotionEvent) {
+      if (event.pointerCount != 1) {
+        return
+      }
+
+      val action = event.actionMasked
+      val blockedByFlags = blocking || cancelSent || initialTouchEvent != null
+
+      if ((action != MotionEvent.ACTION_UP && action != MotionEvent.ACTION_CANCEL) && blockedByFlags) {
+        return
+      }
+
+      when (action) {
+        MotionEvent.ACTION_DOWN -> {
+          if (commentMovementMethod.touchOverlapsAnyClickableSpan(comment, event)) {
+            blocking = true
+            sendCancel(event)
+            return
+          }
+
+          initialTouchEvent = MotionEvent.obtain(event)
+          postCell.onTouchEvent(event)
+        }
+        MotionEvent.ACTION_MOVE -> {
+          val deltaX = Math.abs(event.x - initialTouchEvent!!.x)
+          val deltaY = Math.abs(event.y - initialTouchEvent!!.y)
+
+          if (deltaX > scaledTouchSlop || deltaY > scaledTouchSlop) {
+            blocking = true
+            sendCancel(event)
+            return
+          }
+        }
+        MotionEvent.ACTION_UP,
+        MotionEvent.ACTION_CANCEL -> {
+          postCell.requestDisallowInterceptTouchEvent(false)
+          sendCancel(event)
+
+          blocking = false
+          cancelSent = false
+
+          initialTouchEvent?.recycle()
+          initialTouchEvent = null
+        }
+      }
+    }
+
+    private fun sendCancel(event: MotionEvent) {
+      if (cancelSent) {
+        return
+      }
+
+      cancelSent = true
+
+      val motionEvent = MotionEvent.obtain(
+        SystemClock.uptimeMillis(),
+        SystemClock.uptimeMillis(),
+        MotionEvent.ACTION_CANCEL,
+        event.x,
+        event.y,
+        event.metaState
+      )
+
+      postCell.onTouchEvent(motionEvent)
+      motionEvent.recycle()
+    }
+
+  }
+
   /**
    * A MovementMethod that searches for PostLinkables.<br></br>
    * See [PostLinkable] for more information.
    */
-  inner class PostViewMovementMethod : LinkMovementMethod() {
+  private inner class PostViewMovementMethod : LinkMovementMethod() {
 
     override fun onTouchEvent(widget: TextView, buffer: Spannable, event: MotionEvent): Boolean {
       val action = event.actionMasked
@@ -810,30 +884,60 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       val line = layout.getLineForVertical(y)
       val off = layout.getOffsetForHorizontal(line, x.toFloat())
       val links = buffer.getSpans(off, off, ClickableSpan::class.java)
-      val link = ArrayList<ClickableSpan>()
 
-      Collections.addAll(link, *links)
-
-      if (link.size > 0) {
-        onClickableSpanClicked(widget, buffer, action, link)
+      if (links.isNotEmpty()) {
+        onClickableSpanClicked(widget, buffer, action, links.toMutableList())
         return true
       }
 
       buffer.removeSpan(linkClickSpan)
       buffer.removeSpan(quoteClickSpan)
-      return true
+
+      return false
+    }
+
+    fun touchOverlapsAnyClickableSpan(textView: TextView, event: MotionEvent): Boolean {
+      val action = event.actionMasked
+
+      if (action != MotionEvent.ACTION_UP
+        && action != MotionEvent.ACTION_CANCEL
+        && action != MotionEvent.ACTION_DOWN
+      ) {
+        return true
+      }
+
+      var x = event.x.toInt()
+      var y = event.y.toInt()
+
+      val buffer = if (textView.text is Spannable) {
+        textView.text as Spannable
+      } else {
+        SpannableString(textView.text)
+      }
+
+      x -= textView.totalPaddingLeft
+      y -= textView.totalPaddingTop
+      x += textView.scrollX
+      y += textView.scrollY
+
+      val layout = textView.layout
+      val line = layout.getLineForVertical(y)
+      val off = layout.getOffsetForHorizontal(line, x.toFloat())
+      val links = buffer.getSpans(off, off, ClickableSpan::class.java)
+
+      return links.isNotEmpty()
     }
 
     private fun onClickableSpanClicked(
       widget: TextView,
       buffer: Spannable,
       action: Int,
-      link: MutableList<ClickableSpan>
+      links: MutableList<ClickableSpan>
     ) {
-      val clickableSpan1 = link[0]
+      val clickableSpan1 = links[0]
 
-      val clickableSpan2 = if (link.size > 1) {
-        link[1]
+      val clickableSpan2 = if (links.size > 1) {
+        links[1]
       } else {
         null
       }
@@ -851,7 +955,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       }
 
       if (action == MotionEvent.ACTION_UP) {
-        handleActionUp(linkable1, linkable2, link, widget, buffer)
+        handleActionUp(linkable1, linkable2, links, widget, buffer)
         return
       }
 
@@ -880,12 +984,10 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     private fun handleActionUp(
       linkable1: PostLinkable?,
       linkable2: PostLinkable?,
-      link: MutableList<ClickableSpan>,
+      links: MutableList<ClickableSpan>,
       widget: TextView,
       buffer: Spannable
     ) {
-      ignoreNextOnClick = true
-
       if (linkable2 == null && linkable1 != null) {
         // regular, non-spoilered link
         if (postCellData != null) {
@@ -904,7 +1006,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
           } else {
             // linkable2 is the link and we're spoilered; don't do the click event
             // on the link yet
-            link.remove(linkable2)
+            links.remove(linkable2)
           }
         } else if (linkable2.type === PostLinkable.Type.SPOILER) {
           if (linkable2.isSpoilerVisible) {
@@ -916,7 +1018,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
           } else {
             // linkable1 is the link and we're spoilered; don't do the click event
             // on the link yet
-            link.remove(linkable1)
+            links.remove(linkable1)
           }
         } else {
           // weird case where a double stack of linkables, but isn't spoilered
@@ -930,7 +1032,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
 
       // do onclick on all spoiler postlinkables afterwards, so that we don't update the
       // spoiler state early
-      for (clickableSpan in link) {
+      for (clickableSpan in links) {
         if (clickableSpan !is PostLinkable) {
           continue
         }
@@ -1003,286 +1105,8 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
 
   }
 
-  class PostIcons @JvmOverloads constructor(
-    context: Context,
-    attrs: AttributeSet? = null,
-    defStyleAttr: Int = 0
-  ) : View(context, attrs, defStyleAttr) {
-    private var iconsHeight = 0
-    private var spacing = 0
-    private var icons = 0
-    private var previousIcons = 0
-    private val drawRect = RectF()
-    private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val textRect = Rect()
-    private var httpIconTextColor = 0
-    private var httpIconTextSize = 0
-    private var httpIcons = mutableListOf<PostIconsHttpIcon>()
-
-    init {
-      textPaint.typeface = Typeface.create(null as String?, Typeface.ITALIC)
-      visibility = GONE
-    }
-
-    fun setHeight(height: Int) {
-      this.iconsHeight = height
-    }
-
-    fun setSpacing(spacing: Int) {
-      this.spacing = spacing
-    }
-
-    fun edit() {
-      previousIcons = icons
-      httpIcons.clear()
-    }
-
-    fun apply() {
-      if (previousIcons == icons) {
-        return
-      }
-
-      // Require a layout only if the height changed
-      if (previousIcons == 0 || icons == 0) {
-        visibility = if (icons == 0) {
-          GONE
-        } else {
-          VISIBLE
-        }
-
-        requestLayout()
-      }
-
-      invalidate()
-    }
-
-    fun setHttpIcons(
-      imageLoaderV2: ImageLoaderV2,
-      icons: List<ChanPostHttpIcon>,
-      theme: ChanTheme,
-      size: Int
-    ) {
-      httpIconTextColor = theme.postDetailsColor
-      httpIconTextSize = size
-      httpIcons = ArrayList(icons.size)
-
-      for (icon in icons) {
-        // this is for country codes
-        val codeIndex = icon.iconName.indexOf('/')
-        val name = icon.iconName.substring(0, if (codeIndex != -1) codeIndex else icon.iconName.length)
-
-        val postIconsHttpIcon = PostIconsHttpIcon(
-          context,
-          this,
-          imageLoaderV2,
-          name,
-          icon.iconUrl
-        )
-
-        httpIcons.add(postIconsHttpIcon)
-        postIconsHttpIcon.request()
-      }
-    }
-
-    fun cancelRequests() {
-      if (httpIcons.isEmpty()) {
-        return
-      }
-
-      for (httpIcon in httpIcons) {
-        httpIcon.cancel()
-      }
-
-      httpIcons.clear()
-    }
-
-    operator fun set(icon: Int, enable: Boolean) {
-      icons = if (enable) {
-        icons or icon
-      } else {
-        icons and icon.inv()
-      }
-    }
-
-    operator fun get(icon: Int): Boolean {
-      return icons and icon == icon
-    }
-
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-      val measureHeight = if (icons == 0) {
-        0
-      } else {
-        iconsHeight + paddingTop + paddingBottom
-      }
-
-      setMeasuredDimension(
-        widthMeasureSpec,
-        MeasureSpec.makeMeasureSpec(measureHeight, MeasureSpec.EXACTLY)
-      )
-    }
-
-    override fun onDraw(canvas: Canvas) {
-      if (icons != 0) {
-        canvas.save()
-        canvas.translate(paddingLeft.toFloat(), paddingTop.toFloat())
-
-        var offset = 0
-        if (get(STICKY)) {
-          offset += drawBitmapDrawable(canvas, stickyIcon, offset)
-        }
-
-        if (get(CLOSED)) {
-          offset += drawBitmapDrawable(canvas, closedIcon, offset)
-        }
-
-        if (get(DELETED)) {
-          offset += drawBitmapDrawable(canvas, trashIcon, offset)
-        }
-
-        if (get(ARCHIVED)) {
-          offset += drawBitmapDrawable(canvas, archivedIcon, offset)
-        }
-
-        if (get(HTTP_ICONS) && httpIcons.isNotEmpty()) {
-          for (httpIcon in httpIcons) {
-            if (httpIcon.drawable == null) {
-              continue
-            }
-
-            offset += drawDrawable(canvas, httpIcon.drawable, offset)
-
-            textPaint.color = httpIconTextColor
-            textPaint.textSize = httpIconTextSize.toFloat()
-            textPaint.getTextBounds(httpIcon.name, 0, httpIcon.name.length, textRect)
-
-            val y = iconsHeight / 2f - textRect.exactCenterY()
-            canvas.drawText(httpIcon.name, offset.toFloat(), y, textPaint)
-            offset += textRect.width() + spacing
-          }
-        }
-
-        canvas.restore()
-      }
-    }
-
-    private fun drawBitmapDrawable(canvas: Canvas, bitmapDrawable: BitmapDrawable, offset: Int): Int {
-      val bitmap = bitmapDrawable.bitmap
-      val width = (iconsHeight.toFloat() / bitmap.height * bitmap.width).toInt()
-      drawRect[offset.toFloat(), 0f, offset + width.toFloat()] = iconsHeight.toFloat()
-      canvas.drawBitmap(bitmap, null, drawRect, null)
-      return width + spacing
-    }
-
-    private fun drawDrawable(canvas: Canvas, drawable: Drawable?, offset: Int): Int {
-      val width = (iconsHeight.toFloat() / drawable!!.intrinsicHeight * drawable.intrinsicWidth).toInt()
-      drawable.setBounds(offset, 0, offset + width, iconsHeight)
-      drawable.draw(canvas)
-      return width + spacing
-    }
-
-    companion object {
-      const val STICKY = 0x1
-      const val CLOSED = 0x2
-      const val DELETED = 0x4
-      const val ARCHIVED = 0x8
-      const val HTTP_ICONS = 0x10
-    }
-
-  }
-
-  private class PostIconsHttpIcon(
-    context: Context,
-    postIcons: PostIcons,
-    imageLoaderV2: ImageLoaderV2,
-    name: String,
-    url: HttpUrl
-  ) : FailureAwareImageListener {
-    private val context: Context
-    private val postIcons: PostIcons
-    private val url: HttpUrl
-    private var requestDisposable: Disposable? = null
-
-    var drawable: Drawable? = null
-      private set
-
-    val name: String
-
-    private val imageLoaderV2: ImageLoaderV2
-
-    init {
-      require(context is StartActivity) {
-        "Bad context type! Must be StartActivity, actual: ${context.javaClass.simpleName}"
-      }
-
-      this.context = context
-      this.postIcons = postIcons
-      this.name = name
-      this.url = url
-      this.imageLoaderV2 = imageLoaderV2
-    }
-
-    fun request() {
-      cancel()
-
-      requestDisposable = imageLoaderV2.loadFromNetwork(
-        context,
-        url.toString(),
-        ImageLoaderV2.ImageSize.UnknownImageSize,
-        emptyList(),
-        this
-      )
-    }
-
-    fun cancel() {
-      requestDisposable?.dispose()
-      requestDisposable = null
-    }
-
-    override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
-      this.drawable = drawable
-      postIcons.invalidate()
-    }
-
-    override fun onNotFound() {
-      onResponseError(IOException("Not found"))
-    }
-
-    override fun onResponseError(error: Throwable) {
-      drawable = errorIcon
-      postIcons.invalidate()
-    }
-
-  }
-
-  private inner class DoubleTapGestureListener : SimpleOnGestureListener() {
-    override fun onDoubleTap(e: MotionEvent): Boolean {
-      if (postCellData != null) {
-        val post = postCellData!!.post
-        postCellCallback?.onPostDoubleClicked(post)
-      }
-
-      return true
-    }
-  }
-
   companion object {
     private const val TAG = "PostCell"
-
-    private val stickyIcon = MediaUtils.bitmapToDrawable(
-      BitmapFactory.decodeResource(getRes(), R.drawable.sticky_icon)
-    )
-    private val closedIcon = MediaUtils.bitmapToDrawable(
-      BitmapFactory.decodeResource(getRes(), R.drawable.closed_icon)
-    )
-    private val trashIcon = MediaUtils.bitmapToDrawable(
-      BitmapFactory.decodeResource(getRes(), R.drawable.trash_icon)
-    )
-    private val archivedIcon = MediaUtils.bitmapToDrawable(
-      BitmapFactory.decodeResource(getRes(), R.drawable.archived_icon)
-    )
-    private val errorIcon = MediaUtils.bitmapToDrawable(
-      BitmapFactory.decodeResource(getRes(), R.drawable.error_icon)
-    )
 
     private val THUMBNAIL_ROUNDING = dp(2f)
     private val THUMBNAIL_BOTTOM_MARGIN = dp(5f)

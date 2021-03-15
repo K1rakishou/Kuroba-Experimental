@@ -163,6 +163,38 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
+        group += ListSettingV2.createBuilder<ChanSettings.PostThumbnailAlignmentMode>(
+          context = context,
+          identifier = AppearanceScreen.LayoutGroup.CatalogPostThumbnailAlignmentMode,
+          topDescriptionIdFunc = { R.string.setting_catalog_post_thumbnail_alignment_mode },
+          bottomDescriptionStringFunc = { itemName -> itemName },
+          items = ChanSettings.PostThumbnailAlignmentMode.values().toList(),
+          itemNameMapper = { layoutMode ->
+            when (layoutMode) {
+              ChanSettings.PostThumbnailAlignmentMode.AlignLeft -> context.getString(R.string.setting_post_thumbnail_alignment_mode_left)
+              ChanSettings.PostThumbnailAlignmentMode.AlignRight -> context.getString(R.string.setting_post_thumbnail_alignment_mode_right)
+            }
+          },
+          requiresUiRefresh = true,
+          setting = ChanSettings.catalogPostThumbnailAlignmentMode
+        )
+
+        group += ListSettingV2.createBuilder<ChanSettings.PostThumbnailAlignmentMode>(
+          context = context,
+          identifier = AppearanceScreen.LayoutGroup.ThreadPostThumbnailAlignmentMode,
+          topDescriptionIdFunc = { R.string.setting_thread_post_thumbnail_alignment_mode },
+          bottomDescriptionStringFunc = { itemName -> itemName },
+          items = ChanSettings.PostThumbnailAlignmentMode.values().toList(),
+          itemNameMapper = { layoutMode ->
+            when (layoutMode) {
+              ChanSettings.PostThumbnailAlignmentMode.AlignLeft -> context.getString(R.string.setting_post_thumbnail_alignment_mode_left)
+              ChanSettings.PostThumbnailAlignmentMode.AlignRight -> context.getString(R.string.setting_post_thumbnail_alignment_mode_right)
+            }
+          },
+          requiresUiRefresh = true,
+          setting = ChanSettings.threadPostThumbnailAlignmentMode
+        )
+
         group += BooleanSettingV2.createBuilder(
           context = context,
           identifier = AppearanceScreen.PostGroup.TextOnly,

@@ -27,30 +27,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignBottom="@id/options"
-        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
         android:layout_alignParentTop="true"
-        android:layout_toLeftOf="@id/options"
+        android:layout_alignParentEnd="true"
         android:gravity="center_vertical"
         android:singleLine="true" />
-
-    <ImageView
-        android:id="@+id/options"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentRight="true"
-        android:layout_gravity="top|right"
-        android:padding="4dp"
-        android:src="@drawable/ic_overflow"
-        tools:ignore="ContentDescription,RtlHardcoded" />
 
     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
         android:id="@+id/divider"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_below="@id/options"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentRight="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true" />
 
 </com.github.k1rakishou.chan.ui.cell.PostStubCell>

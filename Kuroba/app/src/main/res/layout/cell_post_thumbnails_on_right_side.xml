@@ -47,31 +47,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 tools:background="#800000"
                 tools:visibility="visible" />
 
-            <LinearLayout
-                android:id="@+id/thumbnails_container"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                tools:ignore="UnknownIdInLayout"
-                tools:layout_height="64dp"
-                tools:layout_width="64dp" />
-
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/post_right_part_content"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <ImageView
-                    android:id="@+id/options"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:layout_gravity="end"
-                    android:padding="4dp"
-                    android:src="@drawable/ic_more_vert_24dp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent"
-                    tools:ignore="ContentDescription" />
+                android:layout_weight="1">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
@@ -84,7 +64,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                         android:id="@+id/title"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="32dp"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
@@ -100,16 +79,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/title" />
 
-                    <view
+                    <com.github.k1rakishou.chan.ui.cell.PostIcons
                         android:id="@+id/icons"
-                        class="com.github.k1rakishou.chan.ui.cell.PostCell$PostIcons"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintStart_toStartOf="@+id/post_files_info_container"
                         app:layout_constraintTop_toBottomOf="@+id/post_files_info_container"
                         tools:layout_height="32dp"
-                        tools:layout_width="match_parent" />
+                        tools:visibility="visible" />
 
                     <TextView
                         android:id="@+id/comment"
@@ -125,17 +103,43 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
+                        android:padding="4dp"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/comment"
                         app:singleLine="true"
-                        android:paddingTop="4dp"
-                        android:paddingBottom="2dp"
                         tools:text="234 replies, 123 image " />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
+
+            <LinearLayout
+                android:id="@+id/thumbnails_container"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                tools:layout_height="64dp"
+                tools:layout_width="64dp" />
+
+            <FrameLayout
+                android:id="@+id/go_to_post_button_container"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:background="?attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/go_to_post_button"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center_vertical"
+                    android:src="@drawable/ic_baseline_navigate_next_24" />
+
+            </FrameLayout>
 
         </LinearLayout>
 

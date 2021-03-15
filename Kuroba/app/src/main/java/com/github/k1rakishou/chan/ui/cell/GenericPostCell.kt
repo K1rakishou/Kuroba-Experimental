@@ -4,11 +4,13 @@ import android.content.Context
 import android.os.SystemClock
 import android.view.View
 import android.widget.FrameLayout
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 
@@ -71,20 +73,15 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
 
       val postCellView = when (newLayoutId) {
         R.layout.cell_post_stub -> PostStubCell(context)
-        R.layout.cell_post,
-        R.layout.cell_post_single_image -> PostCell(context)
+        R.layout.cell_post_thumbnails_on_left_side,
+        R.layout.cell_post_thumbnails_on_right_side,
+        R.layout.cell_post_single_thumbnail_on_right_side,
+        R.layout.cell_post_single_thumbnail_on_left_side -> PostCell(context)
         R.layout.cell_post_card -> CardPostCell(context)
         else -> throw IllegalStateException("Unknown layoutId: $newLayoutId")
       }
 
-      addView(
-        postCellView,
-        LayoutParams(
-          LayoutParams.MATCH_PARENT,
-          LayoutParams.WRAP_CONTENT
-        )
-      )
-
+      addView(postCellView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
       AppModuleAndroidUtils.inflate(context, newLayoutId, postCellView, true)
       this.layoutId = newLayoutId
     }
@@ -101,12 +98,30 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
       return R.layout.cell_post_stub
     }
 
+    val postAlignmentMode = when (post.postDescriptor.descriptor) {
+      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostThumbnailAlignmentMode.get()
+      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostThumbnailAlignmentMode.get()
+    }
+
+    checkNotNull(postAlignmentMode) { "postAlignmentMode is null" }
+
     when (postViewMode) {
       PostViewMode.LIST -> {
-        if (post.postImages.size == 1) {
-          return R.layout.cell_post_single_image
-        } else {
-          return R.layout.cell_post
+        when (postAlignmentMode) {
+          ChanSettings.PostThumbnailAlignmentMode.AlignLeft -> {
+            if (post.postImages.size == 1) {
+              return R.layout.cell_post_single_thumbnail_on_left_side
+            } else {
+              return R.layout.cell_post_thumbnails_on_left_side
+            }
+          }
+          ChanSettings.PostThumbnailAlignmentMode.AlignRight -> {
+            if (post.postImages.size == 1) {
+              return R.layout.cell_post_single_thumbnail_on_right_side
+            } else {
+              return R.layout.cell_post_thumbnails_on_right_side
+            }
+          }
         }
       }
       PostViewMode.GRID,

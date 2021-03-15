@@ -4,22 +4,22 @@ import android.view.View
 import java.util.*
 
 private const val clickDelay = 350L
-private val clickTimeStorage = WeakHashMap<View, Long>()
+private val regularClicksTimeStorage = WeakHashMap<View, Long>()
 
 fun View.setOnThrottlingClickListener(listener: View.OnClickListener?) {
   if (listener == null) {
-    clickTimeStorage.remove(this)
+    regularClicksTimeStorage.remove(this)
     setOnClickListener(null)
     return
   }
 
   setOnClickListener { view ->
     val now = System.currentTimeMillis()
-    val lastClickTime = clickTimeStorage[this]
+    val lastClickTime = regularClicksTimeStorage[this]
 
     if (lastClickTime == null) {
       listener.onClick(view)
-      clickTimeStorage[this] = now
+      regularClicksTimeStorage[this] = now
 
       return@setOnClickListener
     }
@@ -29,6 +29,6 @@ fun View.setOnThrottlingClickListener(listener: View.OnClickListener?) {
     }
 
     listener.onClick(view)
-    clickTimeStorage[this] = now
+    regularClicksTimeStorage[this] = now
   }
 }

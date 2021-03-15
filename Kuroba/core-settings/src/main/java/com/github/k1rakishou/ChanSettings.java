@@ -52,6 +52,22 @@ public class ChanSettings {
         initInternal();
     }
 
+    public enum PostThumbnailAlignmentMode implements OptionSettingItem {
+        AlignLeft("align_left"),
+        AlignRight("align_right");
+
+        String key;
+
+        PostThumbnailAlignmentMode(String key) {
+            this.key = key;
+        }
+
+        @Override
+        public String getKey() {
+            return key;
+        }
+    }
+
     public enum FastScrollerType implements OptionSettingItem {
         Disabled("disabled"),
         ScrollByDraggingThumb("scroll_by_dragging_thumb"),
@@ -257,6 +273,8 @@ public class ChanSettings {
     public static BooleanSetting postFullDate;
     public static BooleanSetting postFileInfo;
     public static BooleanSetting postFilename;
+    public static OptionsSetting<PostThumbnailAlignmentMode> catalogPostThumbnailAlignmentMode;
+    public static OptionsSetting<PostThumbnailAlignmentMode> threadPostThumbnailAlignmentMode;
     public static BooleanSetting textOnly;
     public static BooleanSetting revealTextSpoilers;
     public static BooleanSetting anonymize;
@@ -430,6 +448,8 @@ public class ChanSettings {
             postFullDate = new BooleanSetting(provider, "preference_post_full_date", false);
             postFileInfo = new BooleanSetting(provider, "preference_post_file_info", true);
             postFilename = new BooleanSetting(provider, "preference_post_filename", true);
+            catalogPostThumbnailAlignmentMode = new OptionsSetting<>(provider, "catalog_post_thumbnail_alignment_mode", PostThumbnailAlignmentMode.class, PostThumbnailAlignmentMode.AlignLeft);
+            threadPostThumbnailAlignmentMode = new OptionsSetting<>(provider, "thread_post_thumbnail_alignment_mode", PostThumbnailAlignmentMode.class, PostThumbnailAlignmentMode.AlignLeft);
             textOnly = new BooleanSetting(provider, "preference_text_only", false);
             revealTextSpoilers = new BooleanSetting(provider, "preference_reveal_text_spoilers", false);
             anonymize = new BooleanSetting(provider, "preference_anonymize", false);

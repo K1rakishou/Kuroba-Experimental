@@ -17,12 +17,9 @@
 package com.github.k1rakishou.chan.ui.cell
 
 import android.content.Context
-import android.content.res.ColorStateList
 import android.text.TextUtils
 import android.util.AttributeSet
 import android.view.View
-import android.view.View.OnLongClickListener
-import android.widget.ImageView
 import android.widget.TextView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.PostViewMode
@@ -36,7 +33,6 @@ import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -47,7 +43,6 @@ import javax.inject.Inject
 class CardPostCell : ColorizableCardView,
   PostCellInterface,
   View.OnClickListener,
-  OnLongClickListener,
   ThemeChangesListener {
 
   @Inject
@@ -61,7 +56,6 @@ class CardPostCell : ColorizableCardView,
   private var title: TextView? = null
   private var comment: TextView? = null
   private var replies: TextView? = null
-  private var options: ImageView? = null
   private var filterMatchColor: View? = null
 
   constructor(context: Context) : super(context) {
@@ -110,19 +104,6 @@ class CardPostCell : ColorizableCardView,
     } else if (v === this) {
       callback?.onPostClicked(postCellData!!.postDescriptor)
     }
-  }
-
-  override fun onLongClick(v: View): Boolean {
-    if (postCellData == null) {
-      return false
-    }
-
-    if (v === thumbView) {
-      callback?.onThumbnailLongClicked(postCellData!!.post.firstImage()!!, thumbView!!)
-      return true
-    }
-
-    return false
   }
 
   override fun postDataDiffers(postCellData: PostCellData): Boolean {
@@ -193,20 +174,16 @@ class CardPostCell : ColorizableCardView,
     thumbView = findViewById<PostImageThumbnailView>(R.id.thumbnail).apply {
       setRatio(16f / 13f)
       setOnClickListener(this@CardPostCell)
-      setOnLongClickListener(this@CardPostCell)
     }
 
     title = findViewById(R.id.title)
     comment = findViewById(R.id.comment)
     replies = findViewById(R.id.replies)
-    options = findViewById(R.id.options)
-    AndroidUtils.setBoundlessRoundRippleBackground(options)
     filterMatchColor = findViewById(R.id.filter_match_color)
 
-    setOnClickListener(this)
     setCompact(postCellData)
 
-    options!!.setOnClickListener({
+    setOnClickListener({
       val items = mutableListOf<FloatingListMenuItem>()
 
       if (callback != null) {
@@ -266,6 +243,15 @@ class CardPostCell : ColorizableCardView,
       ColorizableGridRecyclerView.canUseHighResCells(callback!!.currentSpanCount())
     )
 
+    thumbView!!.setOnLongClickListener {
+      if (this.postCellData == null) {
+        return@setOnLongClickListener false
+      }
+
+      callback?.onThumbnailLongClicked(this.postCellData!!.post.firstImage()!!, thumbView!!)
+      return@setOnLongClickListener true
+    }
+
     this.prevPostImage = firstPostImage.copy()
   }
 
@@ -277,7 +263,6 @@ class CardPostCell : ColorizableCardView,
   override fun onThemeChanged() {
     comment?.setTextColor(themeEngine.chanTheme.textColorPrimary)
     replies?.setTextColor(themeEngine.chanTheme.textColorSecondary)
-    options?.imageTintList = ColorStateList.valueOf(themeEngine.chanTheme.postDetailsColor)
   }
 
   private fun setCompact(postCellData: PostCellData) {
@@ -305,13 +290,5 @@ class CardPostCell : ColorizableCardView,
     title!!.setPadding(p, p, p, 0)
     comment!!.setPadding(p, p, p, 0)
     replies!!.setPadding(p, p / 2, p, p)
-
-    val optionsPadding = if (compact) {
-      0
-    } else {
-      AppModuleAndroidUtils.dp(5f)
-    }
-
-    options!!.setPadding(0, optionsPadding, optionsPadding, 0)
   }
 }

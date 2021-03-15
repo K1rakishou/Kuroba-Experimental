@@ -17,10 +17,8 @@
 package com.github.k1rakishou.chan.ui.cell
 
 import android.content.Context
-import android.content.res.ColorStateList
 import android.util.AttributeSet
 import android.view.View
-import android.widget.ImageView
 import android.widget.RelativeLayout
 import android.widget.TextView
 import com.github.k1rakishou.ChanSettings
@@ -30,7 +28,6 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -50,7 +47,6 @@ class PostStubCell : RelativeLayout, PostCellInterface, View.OnClickListener, Th
 
   private lateinit var title: TextView
   private lateinit var divider: ColorizableDivider
-  private lateinit var options: ImageView
 
   constructor(context: Context?) : super(context) {
     init()
@@ -138,10 +134,7 @@ class PostStubCell : RelativeLayout, PostCellInterface, View.OnClickListener, Th
     }
 
     title = findViewById(R.id.title)
-    options = findViewById(R.id.options)
     divider = findViewById(R.id.divider)
-
-    AndroidUtils.setBoundlessRoundRippleBackground(options)
 
     val textSizeSp = postCellData.textSizeSp
     title.textSize = textSizeSp.toFloat()
@@ -156,7 +149,7 @@ class PostStubCell : RelativeLayout, PostCellInterface, View.OnClickListener, Th
 
     setOnClickListener(this)
 
-    options.setOnClickListener({
+    setOnLongClickListener({
       val items = ArrayList<FloatingListMenuItem>()
 
       if (callback != null) {
@@ -166,6 +159,8 @@ class PostStubCell : RelativeLayout, PostCellInterface, View.OnClickListener, Th
           callback!!.showPostOptions(postCellData.post, postCellData.inPopup, items)
         }
       }
+
+      return@setOnLongClickListener true
     })
   }
 
@@ -203,10 +198,6 @@ class PostStubCell : RelativeLayout, PostCellInterface, View.OnClickListener, Th
   override fun onThemeChanged() {
     if (::title.isInitialized) {
       title.setTextColor(themeEngine.chanTheme.textColorSecondary)
-    }
-
-    if (::options.isInitialized) {
-      options.imageTintList = ColorStateList.valueOf(themeEngine.chanTheme.postDetailsColor)
     }
   }
 }
