@@ -62,11 +62,7 @@ class FloatingListMenu @JvmOverloads constructor(
                 checked(item.isCurrentlySelected)
 
                 callback {
-                  if (item.more.isNotEmpty()) {
-                    stackCallback?.invoke(item.more)
-                  } else {
-                    itemClickListener?.invoke(item)
-                  }
+                  itemClickListener?.invoke(item)
                 }
               }
             }
@@ -75,6 +71,7 @@ class FloatingListMenu @JvmOverloads constructor(
                 id("epoxy_floating_list_menu_row_${item.key.hashCode()}")
                 title(item.name)
                 settingEnabled(item.enabled)
+                hasMoreItems(item.more.isNotEmpty())
 
                 callback {
                   if (item.more.isNotEmpty()) {

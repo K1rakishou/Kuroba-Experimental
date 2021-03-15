@@ -19,12 +19,22 @@
         <TextView
             android:id="@+id/title"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
             android:maxLines="2"
             android:ellipsize="end"
             android:textSize="16sp"
             tools:text="@string/lorem_ipsum"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/more_items"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="8dp"
+            android:layout_gravity="center_vertical"
+            android:visibility="gone"
+            android:src="@drawable/ic_baseline_navigate_next_24"
+            tools:visibility="visible"/>
 
     </LinearLayout>
 

@@ -7,11 +7,13 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.appcompat.widget.AppCompatImageView
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.core_themes.ThemeEngine
 import javax.inject.Inject
 
@@ -27,6 +29,7 @@ class EpoxyFloatingListMenuRow @JvmOverloads constructor(
 
   private val holder: LinearLayout
   private val title: TextView
+  private val moreItemsIcon: AppCompatImageView
 
   init {
     View.inflate(context, R.layout.epoxy_floating_list_menu_row, this)
@@ -36,6 +39,7 @@ class EpoxyFloatingListMenuRow @JvmOverloads constructor(
 
     holder = findViewById(R.id.holder)
     title = findViewById(R.id.title)
+    moreItemsIcon = findViewById(R.id.more_items)
   }
 
   override fun onAttachedToWindow() {
@@ -50,6 +54,16 @@ class EpoxyFloatingListMenuRow @JvmOverloads constructor(
 
   override fun onThemeChanged() {
     updateTitleColor()
+
+    if (moreItemsIcon.visibility == View.VISIBLE) {
+      moreItemsIcon.setImageDrawable(
+        themeEngine.getDrawableTinted(
+          context,
+          R.drawable.ic_baseline_navigate_next_24,
+          ThemeEngine.isDarkColor(themeEngine.chanTheme.backColor)
+        )
+      )
+    }
   }
 
   @ModelProp
@@ -73,6 +87,17 @@ class EpoxyFloatingListMenuRow @JvmOverloads constructor(
       holder.isClickable = false
       holder.isFocusable = false
     }
+  }
+
+  @ModelProp
+  fun hasMoreItems(moreItems: Boolean) {
+    val visibility = if (moreItems) {
+      View.VISIBLE
+    } else {
+      View.GONE
+    }
+
+    moreItemsIcon.setVisibilityFast(visibility)
   }
 
   @CallbackProp
