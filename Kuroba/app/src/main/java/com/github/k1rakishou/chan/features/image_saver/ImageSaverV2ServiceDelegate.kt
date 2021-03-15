@@ -596,7 +596,7 @@ class ImageSaverV2ServiceDelegate(
       return ResultFile.FailedToOpenResultDir(rootDirectory.clone(segments).getFullPath())
     }
 
-    segments += FileSegment(fileName)
+    segments += FileSegment(fileName.replace(" ", "_"))
 
     val resultFile = rootDirectory.clone(segments)
     val resultFileUri = Uri.parse(resultFile.getFullPath())

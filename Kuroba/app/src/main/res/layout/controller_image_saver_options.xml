@@ -68,7 +68,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:inputType="text"
-                                android:maxLines="1" />
+                                android:maxLines="3" />
 
                         </com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout>
 
@@ -109,10 +109,10 @@
                             android:id="@+id/output_file_til"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:hint="@string/controller_image_save_options_output_file">
+                            android:hint="@string/controller_image_save_options_result_path">
 
                             <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
-                                android:id="@+id/output_file"
+                                android:id="@+id/result_path"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:editable="false"
