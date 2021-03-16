@@ -213,15 +213,9 @@ class ImageSaverV2ServiceDelegate(
         hasRequestsThatCanBeRetried = hasRequestsThatCanBeRetried.get()
       )
 
-      val concurrency = when {
-        imageDownloadRequests.size > 128 -> 8
-        imageDownloadRequests.size > 64 -> 6
-        else -> 4
-      }
-
       supervisorScope {
         imageDownloadRequests
-          .chunked(concurrency)
+          .chunked(appConstants.processorsCount * 2)
           .forEach { imageDownloadRequestBatch ->
             val updatedImageDownloadRequestBatch = imageDownloadRequestBatch.map { imageDownloadRequest ->
               return@map appScope.async(Dispatchers.IO) {
@@ -245,31 +239,40 @@ class ImageSaverV2ServiceDelegate(
               .peekError { error -> Logger.e(TAG, "imageDownloadRequestRepository.updateMany() error", error) }
               .ignore()
 
-            val notificationSummary = extractNotificationSummaryText(
-              imageDownloadInputData = imageDownloadInputData,
-              currentChanPostImage = currentChanPostImage,
-              imageDownloadRequests = imageDownloadRequests,
-              isCompleted = false
-            )
+            val canceledNow = (getDownloadContext(imageDownloadInputData)?.isCanceled() ?: true)
+              || hasResultDirAccessErrors.get() || hasOutOfDiskSpaceErrors.get()
 
-            // Progress event
-            emitNotificationUpdate(
-              uniqueId = imageDownloadInputData.uniqueId,
-              imageSaverOptionsJson = imageDownloadInputData.imageSaverOptionsJson,
-              completed = false,
-              notificationSummary = notificationSummary,
-              totalImagesCount = imageDownloadInputData.requestsCount(),
-              canceledRequests = canceledRequests.get(),
-              completedRequests = completedRequestsToDownloadedImagesResult(
-                completedRequests,
-                outputDirUri
-              ),
-              duplicates = duplicates.get(),
-              failedRequests = failedRequests.get(),
-              hasResultDirAccessErrors = hasResultDirAccessErrors.get(),
-              hasOutOfDiskSpaceErrors = hasOutOfDiskSpaceErrors.get(),
-              hasRequestsThatCanBeRetried = hasRequestsThatCanBeRetried.get()
-            )
+            if (!canceledNow) {
+              val notificationSummary = extractNotificationSummaryText(
+                imageDownloadInputData = imageDownloadInputData,
+                currentChanPostImage = currentChanPostImage,
+                imageDownloadRequests = imageDownloadRequests,
+                isCompleted = false
+              )
+
+              // Progress event
+              emitNotificationUpdate(
+                uniqueId = imageDownloadInputData.uniqueId,
+                imageSaverOptionsJson = imageDownloadInputData.imageSaverOptionsJson,
+                completed = false,
+                notificationSummary = notificationSummary,
+                totalImagesCount = imageDownloadInputData.requestsCount(),
+                canceledRequests = canceledRequests.get(),
+                completedRequests = completedRequestsToDownloadedImagesResult(
+                  completedRequests,
+                  outputDirUri
+                ),
+                duplicates = duplicates.get(),
+                failedRequests = failedRequests.get(),
+                hasResultDirAccessErrors = hasResultDirAccessErrors.get(),
+                hasOutOfDiskSpaceErrors = hasOutOfDiskSpaceErrors.get(),
+                hasRequestsThatCanBeRetried = hasRequestsThatCanBeRetried.get()
+              )
+
+              // Wait a little bit to let other systems access the disk and stuff (otherwise they may
+              // get locked for quite some time, like for 5 seconds in some cases).
+              delay(500L)
+            }
           }
       }
     } finally {
@@ -665,7 +668,10 @@ class ImageSaverV2ServiceDelegate(
     BackgroundUtils.ensureBackgroundThread()
 
     return ModularResult.Try {
-      val canceled = getDownloadContext(imageDownloadInputData)?.isCanceled() ?: true
+      val canceled = getDownloadContext(imageDownloadInputData)
+        ?.isCanceled()
+        ?: true
+
       if (hasResultDirAccessErrors.get() || hasOutOfDiskSpaceErrors.get() || canceled) {
         return@Try DownloadImageResult.Canceled(imageDownloadRequest)
       }

@@ -227,7 +227,6 @@ class ImageSaverV2Service : Service() {
         "completed=${imageSaverDelegateResult.completed}")
     }
 
-    val ongoing = imageSaverDelegateResult.completed.not()
     val totalToDownloadCount = imageSaverDelegateResult.totalImagesCount
     val processedCount = imageSaverDelegateResult.processedCount()
 
@@ -270,7 +269,7 @@ class ImageSaverV2Service : Service() {
     )
       .setContentTitle(title)
       .setSmallIcon(smallIcon)
-      .setOngoing(ongoing)
+      .setOngoing(imageSaverDelegateResult.completed.not())
       .setAutoCancel(false)
       .setSound(null)
       .setStyle(style)

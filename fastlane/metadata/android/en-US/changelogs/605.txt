@@ -1,0 +1,68 @@
+v0.6.5-release
+TLDR version:
+- Beta apks are now built without "debuggable" flag.
+- New media downloader.
+- Reply layout gestures.
+- ANR detection system.
+- New 4chan archives (wakarimasen.moe, yuki.la).
+
+Full version:
+- Fix broken workaround for a 4chan.org bug where a post sometimes not showing up on the site even though the server tells us that the posting was successful (some weird 4chan bug that happens when trying to make a post with certain user-agents).
+- Automatically close media downloader's notifications on phones with Android API below 26 (where there is not notification.setTimeout() API). This is only for single media downloads, batch downloads (album downloads) will not be closed automatically.
+- CacheHandler optimizations. Do not globally lock everything when doing the cache trim operation which may result in everything getting locked for quite some time (up to a second in some cases). Use in-memory cache for files stored in the on-disk cache for quick access.
+- Relax file name/dir name requirements a little bit for media downloads. It's not possible to use any symbols in directory/file name (except spaces, they will be automatically replaced with '_' symbols).
+
+v0.6.4-release
+- Adjustments for ANR detection to avoid lots of false positives.
+- Some changes for in-memory thread cache. Reduce the amount of cached threads slightly, fix a bug where cached catalog threads could be evicted from the cache when not supposed to. Increase the amount of threads deleted from the cache upon each cleanup operation.
+- Fix a bug where Kuroba sites would be incorrectly processed when using "Import from Kuroba" feature which results in nothing being imported.
+- Introduce "compact mode" for attached files layout which reduces it's height on phones with small screens.
+
+v0.6.3-release:
+- Add basic support for yuki.la 4chan archive (no search, unfortunately, because the search implemented dynamically using JavaScript and it would be a huge pain in the ass to add support for that).
+- Fix post parsing for warosu when a post has moderator capcode.
+- Fix a bug when clicking DEAD link where we would try to open wrong thread.
+
+v0.6.2-beta:
+- Fix videos having no audio.
+- Add ability to manually add 4chan boards that are not in the boards.json yet.
+- Show changelog for beta versions.
+
+v0.6.1-beta
+- 2ch.hk full support for hidden boards (media/posting/etc).
+- Add album columns count setting.
+- Add StaggeredGridLayout layout mode for album.
+- Add setting for max database posts count/max database threads count.
+- Add setting to always use random (current time stamp in ms) file name for all imported files.
+- Add contrast color to recyclerview in catalog when view mode is GRID or STAGGERED GRID.
+- Add settings to control how many files/posts/threads will be removed from the caches upon clean up.
+- Add ability to open thread by url.
+- Fix BookmarksController toggle layout mode button having incorrect drawable sometimes.
+- Fix thumbnails sometimes stuck in "error" state.
+- Fix post thumbnails flickering when they shouldn't.
+- Fix NPE when switching themes.
+- Fix crash on tablets where a wrong type of RecyclerView was used.
+- Fix not being able to access 420chan.
+
+v0.6.0-beta
+- ***This is only for BETA apks! Release/F-Droid versions are not affected***. Beta apk are now built as release apks (without the "debuggable" flag) making them more performant. The downside here is that you will have to manually update to version v0.6.0 (or higher) from any version below 0.6.0, meaning you have to uninstall previous version first (Don't forget that you can export full app backup and then import it back after updating).
+- Completely rewritten media downloader. Now it allows downloading media completely in background (even while the main app is dead). Allows checking and resolving duplicate images (file name checks), allows re-downloading failed to download images with single click. Lots of settings.
+- Add Reply layout gestures (Longtap BottomNavView + swipe up to open, swipe up/down to expand/collapse/close reply layout). Enabled by default, can be disabled in the settings.
+- ANR (Application Not Responding) detection system. Works the same way as the crash reporting system. Enabled by default, can be disabled any time. Nothing is sent automatically, you need to do that manually. ANR reports will help fixing application freezes/deadlocks/etc.
+- New FastScroller mode: only scroll when FastScroller's thumb is dragged as opposed to scroll-by-touching any part of scrollbar. Should help eliminating accidental scrolls for people with curved screens.
+- Increase the default size of all kinds of PostCell thumbnails (both for phones and tablets).
+- Add ability to display post comment under PostCell thumbnail when a post has only one thumbnail (Shift post format v2).
+- Add support for archive.wakarimasen.moe.
+- Adjust some controller view sizes for tablets, making them bigger.
+- Fix couple of bugs related to bitmap decoding being interrupted which could result in us storing corrupted images which would always render as "Error" text.
+- Fix Bookmark background watcher sometimes getting stopped right after it is started.
+- Fix a bug where shared files would always have "shared_file" name.
+- Fix backup import/export not handling theme files.
+- Fix RangeSettingUpdaterController making it easier to input value via keyboard.
+- Fix reply attach files sometimes disappearing when any exception occurs during post data upload.
+- Fix a bug where PostCell thumbnail would have an image of a lower resolution than the size of thumbnail itself when high resolution setting is turned on. 
+- Fix filter watching and navigation history conflicts, where threads bookmarked by filter watches could replace the top of the navigation history which then could lead to wrong thread being restored upon app start.
+- Fix image viewer getting stuck with no video controls if the image viewer fullscreen mode is disabled and the last time any image was opened we were in the fullscreen mode. 
+- Fix a bug where it was impossible to pick files via some file pickers.
+- Fix couple of places that could lead to deadlocks.
+- Other minor fixes and adjustments.
