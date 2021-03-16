@@ -57,7 +57,7 @@ class HttpCallManager @Inject constructor(
           offer(HttpCall.HttpCallWithProgressResult.Progress(fileIndex, totalFiles, percent))
         }
 
-        httpCall.site.requestModifier()?.modifyHttpCall(httpCall, requestBuilder)
+        httpCall.site.requestModifier().modifyHttpCall(httpCall, requestBuilder)
 
         when (val httpCallResult = makeHttpCallInternal(requestBuilder, httpCall)) {
           is HttpCall.HttpCallResult.Success -> {
@@ -80,7 +80,7 @@ class HttpCallManager @Inject constructor(
     val requestBuilder = Request.Builder()
     
     httpCall.setup(requestBuilder, null)
-    httpCall.site.requestModifier()?.modifyHttpCall(httpCall, requestBuilder)
+    httpCall.site.requestModifier().modifyHttpCall(httpCall, requestBuilder)
     
     return makeHttpCallInternal(requestBuilder, httpCall)
   }
@@ -94,7 +94,6 @@ class HttpCallManager @Inject constructor(
     return withContext(Dispatchers.IO) {
       val request = requestBuilder
         .build()
-        .setHeaderIfNotSetAlready("User-Agent", appConstants.userAgent)
 
       val (response, duration) = Try {
         return@Try measureTimedValue { proxiedOkHttpClient.okHttpClient().suspendCall(request) }
@@ -123,16 +122,6 @@ class HttpCallManager @Inject constructor(
     }
   }
 
-  private fun Request.setHeaderIfNotSetAlready(headerName: String, headerValue: String): Request {
-    if (header(headerName) == null) {
-      return newBuilder()
-        .header(headerName, headerValue)
-        .build()
-    }
-
-    return this
-  }
-  
   companion object {
     private const val TAG = "HttpCallManager"
   }

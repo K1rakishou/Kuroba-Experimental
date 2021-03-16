@@ -77,7 +77,6 @@ public abstract class CommonReplyHttpCall extends HttpCall {
         requestBuilder.url(replyUrl);
         requestBuilder.addHeader("Referer", replyUrl.toString());
 
-        modifyRequestBuilder(requestBuilder);
         requestBuilder.post(formBuilder.build());
     }
 
@@ -132,8 +131,4 @@ public abstract class CommonReplyHttpCall extends HttpCall {
             MultipartBody.Builder builder,
             @Nullable ProgressRequestBody.ProgressRequestListener progressListener
     ) throws IOException;
-
-    protected void modifyRequestBuilder(Request.Builder requestBuilder) {
-
-    }
 }

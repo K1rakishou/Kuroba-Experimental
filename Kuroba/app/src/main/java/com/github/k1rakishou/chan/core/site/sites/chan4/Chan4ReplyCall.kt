@@ -32,7 +32,6 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescrip
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
-import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.IOException
 import java.util.*
@@ -134,12 +133,5 @@ class Chan4ReplyCall(
     }
 
     formBuilder.addFormDataPart("upfile", replyFileMeta.fileName, requestBody)
-  }
-
-  override fun modifyRequestBuilder(requestBuilder: Request.Builder) {
-    // Use different user-agent for 4chan because it has some weird bug where a post with an image
-    // won't show up in a thread if one of "real" user agents in used. This only happens on 4chan
-    // boards but for easiness sake we use this for both 4chan and 4channel boards.
-    requestBuilder.addHeader("User-Agent", appConstants.kurobaExUserAgent)
   }
 }
