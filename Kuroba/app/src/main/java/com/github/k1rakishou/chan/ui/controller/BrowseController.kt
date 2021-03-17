@@ -60,6 +60,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -546,7 +547,7 @@ class BrowseController(
       }
 
       if (chanDescriptorResult.markedPostNo > 0L) {
-        chanThreadViewableInfoManager.update(resolvedChanDescriptor, true) { chanThreadViewableInfo ->
+        chanThreadViewableInfoManager.update(resolvedChanDescriptor, createEmptyWhenNull = true) { chanThreadViewableInfo ->
           chanThreadViewableInfo.markedPostNo = chanDescriptorResult.markedPostNo
         }
       }
@@ -651,9 +652,13 @@ class BrowseController(
     }
   }
 
-  override suspend fun showExternalThread(threadToOpenDescriptor: ThreadDescriptor) {
+  override suspend fun showPostInExternalThread(postDescriptor: PostDescriptor) {
     // no-op, we shouldn't be able to open external threads from catalog because we can't click
     // links when in catalog and stuff.
+  }
+
+  override suspend fun openExternalThread(postDescriptor: PostDescriptor) {
+    // no-op
   }
 
   override suspend fun openThreadInArchive(threadToOpenDescriptor: ThreadDescriptor) {

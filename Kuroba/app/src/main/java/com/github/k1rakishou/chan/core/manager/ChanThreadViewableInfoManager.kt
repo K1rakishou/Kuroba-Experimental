@@ -112,6 +112,8 @@ class ChanThreadViewableInfoManager(
     update(chanDescriptor, false, mutator)
   }
 
+  // Prefer this method with "createEmptyWhenNull==true" when possible, otherwise the scroll position may
+  // not be remembered.
   fun update(chanDescriptor: ChanDescriptor, createEmptyWhenNull: Boolean, mutator: (ChanThreadViewableInfo) -> Unit) {
     if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
       return

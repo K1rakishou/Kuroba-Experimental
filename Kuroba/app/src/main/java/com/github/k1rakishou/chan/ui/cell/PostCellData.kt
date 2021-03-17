@@ -32,7 +32,7 @@ data class PostCellData(
   var textSizeSp: Int,
   var highlighted: Boolean,
   var postSelected: Boolean,
-  var markedNo: Long,
+  private var markedPostNo: Long?,
   var showDivider: Boolean,
   var boardPostViewMode: ChanSettings.PostViewMode,
   var boardPostsSortOrder: PostsFilter.Order,
@@ -90,6 +90,8 @@ data class PostCellData(
     get() = postViewMode != PostViewMode.Normal
   val isSelectionMode: Boolean
     get() = postViewMode == PostViewMode.PostSelection
+  val markedNo: Long
+    get() = markedPostNo ?: -1
 
   private val _detailsSizePx = RecalculatableLazy { detailsSizePxPrecalculated ?: AppModuleAndroidUtils.sp(textSizeSp - 4.toFloat()) }
   private val _postTitle = RecalculatableLazy { postTitlePrecalculated ?: calculatePostTitle() }
@@ -423,6 +425,7 @@ data class PostCellData(
   enum class PostViewMode {
     Normal,
     RepliesPopup,
+    ExternalPostsPopup,
     PostSelection;
 
     fun canShowLastSeenIndicator(): Boolean {
@@ -442,7 +445,7 @@ data class PostCellData(
     }
 
     fun canShowGoToPostButton(): Boolean {
-      if (this == RepliesPopup) {
+      if (this == RepliesPopup || this == ExternalPostsPopup) {
         return true
       }
 

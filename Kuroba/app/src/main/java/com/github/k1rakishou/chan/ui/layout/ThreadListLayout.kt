@@ -682,61 +682,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
           }
         }
       }
-
-      return
     }
-
-    if (markedPost != null) {
-      chanThreadViewableInfoManager.getAndConsumeMarkedPostNo(chanDescriptor) { postNo ->
-        val position = getPostPositionInAdapter(postNo)
-        if (position < 0) {
-          return@getAndConsumeMarkedPostNo
-        }
-
-        // Delay because for some reason recycler doesn't scroll to the post sometimes
-        recyclerView.post {
-          highlightPost(markedPost.postDescriptor)
-
-          when (boardPostViewMode) {
-            PostViewMode.LIST -> {
-              (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
-                position,
-                0
-              )
-            }
-            PostViewMode.GRID -> {
-              (layoutManager as GridLayoutManager).scrollToPositionWithOffset(
-                position,
-                0
-              )
-            }
-            PostViewMode.STAGGER -> {
-              (layoutManager as StaggeredGridLayoutManager).scrollToPositionWithOffset(
-                position,
-                0
-              )
-            }
-          }
-        }
-      }
-
-      return
-    }
-  }
-
-  private fun getPostPositionInAdapter(postNo: Long): Int {
-    var position = -1
-    val postDescriptors = postAdapter.displayList
-
-    for (i in postDescriptors.indices) {
-      val postDescriptor = postDescriptors[i]
-      if (postDescriptor.postNo == postNo) {
-        position = i
-        break
-      }
-    }
-
-    return position
   }
 
   fun onBack(): Boolean {

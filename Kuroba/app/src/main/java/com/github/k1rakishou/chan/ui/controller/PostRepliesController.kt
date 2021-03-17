@@ -232,7 +232,7 @@ class PostRepliesController(
 
     first = false
 
-    restoreScrollPosition(data.forPostWithDescriptor.postNo)
+    restoreScrollPosition(data.forPostWithDescriptor?.postNo)
     onThemeChanged()
   }
 
@@ -241,15 +241,23 @@ class PostRepliesController(
       return
     }
 
+    val postNo = displayingData!!.forPostWithDescriptor?.postNo
+      ?: return
+
     scrollPositionCache.put(
-      displayingData!!.forPostWithDescriptor.postNo,
+      postNo,
       getIndexAndTop(repliesView!!)
     )
   }
 
-  private fun restoreScrollPosition(postNo: Long) {
+  private fun restoreScrollPosition(postNo: Long?) {
+    if (postNo == null) {
+      return
+    }
+
     val scrollPosition = scrollPositionCache[postNo]
       ?: return
+
     repliesView!!.restoreScrollPosition(scrollPosition)
   }
 
@@ -257,7 +265,7 @@ class PostRepliesController(
     private val postAdditionalData: PostCellData.PostAdditionalData,
     private val postCellCallback: PostCellInterface.PostCellCallback,
     private val chanDescriptor: ChanDescriptor,
-    private val clickedPostDescriptor: PostDescriptor,
+    private val clickedPostDescriptor: PostDescriptor?,
     chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
     postFilterManager: PostFilterManager,
     initialTheme: ChanTheme
@@ -273,7 +281,7 @@ class PostRepliesController(
       threadCellData.postAdditionalData = postAdditionalData
       threadCellData.defaultIsCompact = false
       threadCellData.defaultBoardPostViewMode = ChanSettings.PostViewMode.LIST
-      threadCellData.defaultMarkedNo = clickedPostDescriptor.postNo
+      threadCellData.defaultMarkedNo = clickedPostDescriptor?.postNo
       threadCellData.defaultShowDividerFunc = { postIndex: Int, totalPostsCount: Int -> postIndex < totalPostsCount - 1 }
       threadCellData.defaultStubFunc = { false }
     }

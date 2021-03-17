@@ -437,7 +437,7 @@ class ThreadPresenter @Inject constructor(
       // Take the current thread's scroll position and set it for the thread we are about to open
       val currentThreadIndexAndTop = chanThreadViewableInfoManager.getIndexAndTop(threadDescriptor)
       if (currentThreadIndexAndTop != null) {
-        chanThreadViewableInfoManager.update(archiveThreadDescriptor, true) { chanThreadViewableInfo ->
+        chanThreadViewableInfoManager.update(archiveThreadDescriptor, createEmptyWhenNull = true) { chanThreadViewableInfo ->
           chanThreadViewableInfo.listViewIndex = currentThreadIndexAndTop.index
           chanThreadViewableInfo.listViewTop = currentThreadIndexAndTop.top
         }
@@ -763,12 +763,15 @@ class ThreadPresenter @Inject constructor(
 
   private fun handleMarkedPost(markedPostNo: Long) {
     val markedPost = chanThreadManager.findPostByPostNo(currentChanDescriptor, markedPostNo)
-      ?: return
+    if (markedPost == null) {
+      Logger.e(TAG, "handleMarkedPost() Failed to find post ($currentChanDescriptor, $markedPostNo)")
+      return
+    }
 
     highlightPost(markedPost.postDescriptor)
 
     if (BackgroundUtils.isInForeground()) {
-      BackgroundUtils.runOnMainThread({ scrollToPost(markedPost.postDescriptor, false) }, 100)
+      BackgroundUtils.runOnMainThread({ scrollToPost(markedPost.postDescriptor, false) }, 250)
     }
   }
 
@@ -957,8 +960,12 @@ class ThreadPresenter @Inject constructor(
   @JvmOverloads
   fun scrollToPostByPostNo(postNo: Long, smooth: Boolean = true) {
     var position = -1
+
     val posts = threadPresenterCallback?.displayingPostDescriptors
-      ?: return
+    if (posts == null || posts.isEmpty()) {
+      Logger.e(TAG, "scrollToPostByPostNo($postNo) posts are null or empty")
+      return
+    }
 
     for (i in posts.indices) {
       val post = posts[i]
@@ -1018,6 +1025,12 @@ class ThreadPresenter @Inject constructor(
     }
 
     serializedCoroutineExecutor.post {
+      val isExternalThread = currentChanDescriptor != post.postDescriptor.descriptor
+      if (isExternalThread) {
+        threadPresenterCallback?.openExternalThread(post.postDescriptor)
+        return@post
+      }
+
       if (searchVisible) {
         this.searchQuery = null
 
@@ -1367,12 +1380,12 @@ class ThreadPresenter @Inject constructor(
 
   override fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable) {
     serializedCoroutineExecutor.post {
-      if (!isBound) {
+      if (!isBound || currentChanDescriptor == null) {
         return@post
       }
 
-      val currentThreadDescriptor = currentChanDescriptor
-        ?: return@post
+      val isExternalThread = post.postDescriptor.descriptor != currentChanDescriptor
+      val currentThreadDescriptor = post.postDescriptor.descriptor
       val siteName = currentThreadDescriptor.siteName()
 
       if (ChanSettings.verboseLogs.get()) {
@@ -1388,8 +1401,14 @@ class ThreadPresenter @Inject constructor(
 
         val linked = chanThreadManager.findPostByPostNo(currentThreadDescriptor, postId)
         if (linked != null) {
+          val postViewMode = if (isExternalThread) {
+            PostCellData.PostViewMode.ExternalPostsPopup
+          } else {
+            PostCellData.PostViewMode.RepliesPopup
+          }
+
           threadPresenterCallback?.showPostsPopup(
-            PostCellData.PostAdditionalData.NoAdditionalData(PostCellData.PostViewMode.RepliesPopup),
+            PostCellData.PostAdditionalData.NoAdditionalData(postViewMode),
             post.postDescriptor,
             listOf(linked)
           )
@@ -1420,17 +1439,14 @@ class ThreadPresenter @Inject constructor(
         val board = boardManager.byBoardDescriptor(boardDescriptor)
 
         if (board != null) {
-          val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+          val postDescriptor = PostDescriptor.create(
             siteName,
             threadLink.board,
-            threadLink.threadId
+            threadLink.threadId,
+            threadLink.postId
           )
 
-          chanThreadViewableInfoManager.update(threadDescriptor) { chanThreadViewableInfo ->
-            chanThreadViewableInfo.markedPostNo = threadLink.postId
-          }
-
-          threadPresenterCallback?.showExternalThread(threadDescriptor)
+          threadPresenterCallback?.showPostInExternalThread(postDescriptor)
         }
 
         return@post
@@ -1513,7 +1529,7 @@ class ThreadPresenter @Inject constructor(
 
         val postNo = archiveThreadLink.postId
         if (postNo != null) {
-          chanThreadViewableInfoManager.update(threadDescriptor) { chanThreadViewableInfo ->
+          chanThreadViewableInfoManager.update(threadDescriptor, createEmptyWhenNull = true) { chanThreadViewableInfo ->
             chanThreadViewableInfo.markedPostNo = postNo
           }
         }
@@ -1562,13 +1578,15 @@ class ThreadPresenter @Inject constructor(
   }
 
   override fun onShowPostReplies(post: ChanPost) {
-    if (!isBound) {
+    if (!isBound || currentChanDescriptor == null) {
       return
     }
 
-    val posts: MutableList<ChanPost> = ArrayList()
-    val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
+    val posts = ArrayList<ChanPost>()
+    val threadDescriptor = post.postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
       ?: return
+
+    val isExternalThread = post.postDescriptor.descriptor != currentChanDescriptor
 
     post.iterateRepliesFrom { replyPostNo ->
       val replyPost = chanThreadManager.findPostByPostNo(threadDescriptor, replyPostNo)
@@ -1578,8 +1596,14 @@ class ThreadPresenter @Inject constructor(
     }
 
     if (posts.size > 0) {
+      val postViewMode = if (isExternalThread) {
+        PostCellData.PostViewMode.ExternalPostsPopup
+      } else {
+        PostCellData.PostViewMode.RepliesPopup
+      }
+
       threadPresenterCallback?.showPostsPopup(
-        PostCellData.PostAdditionalData.NoAdditionalData(PostCellData.PostViewMode.RepliesPopup),
+        PostCellData.PostAdditionalData.NoAdditionalData(postViewMode),
         post.postDescriptor,
         posts
       )
@@ -1991,7 +2015,8 @@ class ThreadPresenter @Inject constructor(
     fun showPostLinkables(post: ChanPost)
     fun clipboardPost(post: ChanPost)
     suspend fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
-    suspend fun showExternalThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
+    suspend fun showPostInExternalThread(postDescriptor: PostDescriptor)
+    suspend fun openExternalThread(postDescriptor: PostDescriptor)
     suspend fun openThreadInArchive(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
     suspend fun setBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
@@ -1999,7 +2024,7 @@ class ThreadPresenter @Inject constructor(
     fun openReportView(post: ChanPost)
     fun showPostsPopup(
       postAdditionalData: PostCellData.PostAdditionalData,
-      postDescriptor: PostDescriptor,
+      postDescriptor: PostDescriptor?,
       posts: List<ChanPost>
     )
     fun hidePostsPopup()

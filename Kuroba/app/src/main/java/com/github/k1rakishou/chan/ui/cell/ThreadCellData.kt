@@ -34,7 +34,7 @@ class ThreadCellData(
     PostCellData.PostAdditionalData.NoAdditionalData(PostCellData.PostViewMode.Normal)
   var defaultIsCompact: Boolean = false
   var defaultBoardPostViewMode: ChanSettings.PostViewMode = ChanSettings.boardViewMode.get()
-  var defaultMarkedNo: Long = -1L
+  var defaultMarkedNo: Long? = null
   var defaultNeverShowPages: Boolean = ChanSettings.neverShowPages.get()
 
   var defaultShowDividerFunc = { postIndex: Int, totalPostsCount: Int -> true }
@@ -106,7 +106,7 @@ class ThreadCellData(
         postAdditionalData = postAdditionalData,
         highlighted = isPostHighlighted(postDescriptor),
         postSelected = isPostSelected(postDescriptor),
-        markedNo = defaultMarkedNo,
+        markedPostNo = defaultMarkedNo,
         showDivider = defaultShowDividerFunc.invoke(orderInList, totalPostsCount),
         compact = defaultIsCompact,
         boardPostViewMode = defaultBoardPostViewMode,
@@ -138,7 +138,7 @@ class ThreadCellData(
     postCellDataList.clear()
     selectedPost = null
     lastSeenIndicatorPosition = -1
-    defaultMarkedNo = -1
+    defaultMarkedNo = null
     error = null
   }
 

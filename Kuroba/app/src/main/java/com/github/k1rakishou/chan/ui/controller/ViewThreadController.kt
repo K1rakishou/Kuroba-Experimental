@@ -31,10 +31,13 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.B
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.BookmarksDeleted
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.BookmarksInitialized
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
+import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
+import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
@@ -52,18 +55,24 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink
 import com.github.k1rakishou.chan.utils.SharingUtils.getUrlForSharing
 import com.github.k1rakishou.chan.utils.plusAssign
+import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.isNotNullNorEmpty
+import com.github.k1rakishou.common.options.ChanCacheOptions
 import com.github.k1rakishou.common.options.ChanLoadOptions
+import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.util.ChanPostUtils
 import io.reactivex.android.schedulers.AndroidSchedulers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 open class ViewThreadController(
@@ -89,6 +98,8 @@ open class ViewThreadController(
   lateinit var threadFollowHistoryManager: ThreadFollowHistoryManager
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var chanThreadViewableInfoManager: ChanThreadViewableInfoManager
 
   private var pinItemPinned = false
   private var threadDescriptor: ThreadDescriptor = startingThreadDescriptor
@@ -460,12 +471,89 @@ open class ViewThreadController(
     }
   }
 
-  override suspend fun showExternalThread(threadToOpenDescriptor: ThreadDescriptor) {
-    Logger.d(TAG, "showExternalThread($threadDescriptor, $threadToOpenDescriptor)")
+  override suspend fun showPostInExternalThread(postDescriptor: PostDescriptor) {
+    Logger.d(TAG, "showExternalThread($threadDescriptor, $postDescriptor)")
 
-    val fullThreadName = threadToOpenDescriptor.siteName() + "/" +
+    val threadDescriptor = postDescriptor.descriptor
+    if (threadDescriptor !is ThreadDescriptor) {
+      showToast("Can only open external threads via this method, descriptor=${threadDescriptor}")
+      return
+    }
+
+    val cancellationFlag = AtomicBoolean(false)
+
+    val loadingController = LoadingViewController(context, true, "Loading thread '${threadDescriptor}'")
+    loadingController.enableBack { cancellationFlag.set(true) }
+    presentController(loadingController)
+
+    chanThreadManager.loadThreadOrCatalog(
+      chanDescriptor = threadDescriptor,
+      requestNewPostsFromServer = true,
+      chanLoadOptions = ChanLoadOptions.RetainAll,
+      chanCacheOptions = ChanCacheOptions.StoreEverywhere,
+      chanReadOptions = ChanReadOptions.default()
+    ) { threadLoadResult ->
+      loadingController.stopPresenting()
+
+      if (cancellationFlag.get()) {
+        showToast("'${threadDescriptor}' thread loading canceled")
+        return@loadThreadOrCatalog
+      }
+
+      val postToShow = chanThreadManager.getPost(postDescriptor)
+      if (postToShow == null) {
+        showToast("Failed to load external thread '$threadDescriptor', no post ${postDescriptor} in the cache")
+        return@loadThreadOrCatalog
+      }
+
+      when (threadLoadResult) {
+        is ThreadLoadResult.Error -> {
+          Logger.e(TAG, "Failed to load external thread '$threadDescriptor'", threadLoadResult.exception)
+
+          showToast("Failed to load external thread '$threadDescriptor', " +
+            "error: ${threadLoadResult.exception.errorMessageOrClassName()}")
+
+          return@loadThreadOrCatalog
+        }
+        is ThreadLoadResult.Loaded -> {
+          threadLayout.showPostsPopup(
+            PostCellData.PostAdditionalData.NoAdditionalData(PostCellData.PostViewMode.ExternalPostsPopup),
+            null,
+            listOf(postToShow)
+          )
+        }
+      }
+    }
+  }
+
+  override suspend fun openExternalThread(postDescriptor: PostDescriptor) {
+    Logger.d(TAG, "openExternalThread($postDescriptor)")
+
+    val currentThreadDescriptor = threadDescriptor
+    val threadToOpenDescriptor = postDescriptor.descriptor as? ThreadDescriptor
+      ?: return
+
+    val originalPostDescriptor = PostDescriptor.create(
+      postDescriptor.descriptor,
+      postDescriptor.getThreadNo()
+    )
+
+    val threadTitle = chanThreadManager.getPost(originalPostDescriptor)?.let { originalPost ->
+      ChanPostUtils.getTitle(originalPost, postDescriptor.descriptor)
+    }
+
+    val fullPostLink = threadToOpenDescriptor.siteName() + "/" +
       threadToOpenDescriptor.boardCode() + "/" +
-      threadToOpenDescriptor.threadNo
+      threadToOpenDescriptor.threadNo + "/" +
+      postDescriptor.postNo
+
+    val fullThreadName = buildString {
+      if (threadTitle.isNotNullNorEmpty()) {
+        appendLine(threadTitle)
+      }
+
+      append(fullPostLink)
+    }
 
     dialogFactory.createSimpleConfirmationDialog(
       context = context,
@@ -475,10 +563,14 @@ open class ViewThreadController(
       positiveButtonText = getString(R.string.ok),
       onPositiveButtonClickListener = {
         mainScope.launch(Dispatchers.Main.immediate) {
-          Logger.d(TAG, "showExternalThread() loading external thread $threadToOpenDescriptor " +
-              "from opened thread $threadDescriptor")
+          Logger.d(TAG, "openExternalThread() loading external thread $postDescriptor " +
+            "from opened thread $currentThreadDescriptor")
 
-          threadFollowHistoryManager.pushThreadDescriptor(threadDescriptor)
+          chanThreadViewableInfoManager.update(threadToOpenDescriptor, createEmptyWhenNull = true) { chanThreadViewableInfo ->
+            chanThreadViewableInfo.markedPostNo = postDescriptor.postNo
+          }
+
+          threadFollowHistoryManager.pushThreadDescriptor(currentThreadDescriptor)
           loadThread(threadToOpenDescriptor, openingExternalThread = true)
         }
       }

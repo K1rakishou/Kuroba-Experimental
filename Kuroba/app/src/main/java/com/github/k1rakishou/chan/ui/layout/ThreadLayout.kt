@@ -535,10 +535,16 @@ class ThreadLayout @JvmOverloads constructor(
     callback.showThread(threadDescriptor, true)
   }
 
-  override suspend fun showExternalThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    Logger.d(TAG, "showExternalThread($threadDescriptor)")
+  override suspend fun showPostInExternalThread(postDescriptor: PostDescriptor) {
+    Logger.d(TAG, "showPostInExternalThread($postDescriptor)")
 
-    callback.showExternalThread(threadDescriptor)
+    callback.showPostInExternalThread(postDescriptor)
+  }
+
+  override suspend fun openExternalThread(postDescriptor: PostDescriptor) {
+    Logger.d(TAG, "openExternalThread($postDescriptor)")
+
+    callback.openExternalThread(postDescriptor)
   }
 
   override suspend fun openThreadInArchive(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
@@ -561,7 +567,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   override fun showPostsPopup(
     postAdditionalData: PostCellData.PostAdditionalData,
-    postDescriptor: PostDescriptor,
+    postDescriptor: PostDescriptor?,
     posts: List<ChanPost>
   ) {
     if (this.focusedChild != null) {
@@ -1084,7 +1090,8 @@ class ThreadLayout @JvmOverloads constructor(
     val toolbar: Toolbar?
 
     suspend fun showThread(descriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
-    suspend fun showExternalThread(threadToOpenDescriptor: ChanDescriptor.ThreadDescriptor)
+    suspend fun showPostInExternalThread(postDescriptor: PostDescriptor)
+    suspend fun openExternalThread(postDescriptor: PostDescriptor)
     suspend fun openThreadInArchive(threadToOpenDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean)
     suspend fun setBoard(descriptor: BoardDescriptor, animated: Boolean)

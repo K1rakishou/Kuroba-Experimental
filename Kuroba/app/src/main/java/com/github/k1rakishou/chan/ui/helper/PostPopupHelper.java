@@ -33,6 +33,7 @@ import com.github.k1rakishou.model.data.post.ChanPostImage;
 import com.github.k1rakishou.model.data.post.PostIndexed;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -63,7 +64,7 @@ public class PostPopupHelper {
 
     public void showPosts(
             PostCellData.PostAdditionalData postAdditionalData,
-            PostDescriptor postDescriptor,
+            @Nullable PostDescriptor postDescriptor,
             List<ChanPost> posts
     ) {
         RepliesData data = new RepliesData(postAdditionalData, postDescriptor, indexPosts(posts));
@@ -170,15 +171,15 @@ public class PostPopupHelper {
     public static class RepliesData {
         public final PostCellData.PostAdditionalData postAdditionalData;
         public final List<PostIndexed> posts;
-        public final PostDescriptor forPostWithDescriptor;
+        public final @Nullable PostDescriptor forPostWithDescriptor;
 
         public RepliesData(
                 PostCellData.PostAdditionalData postAdditionalData,
-                PostDescriptor postDescriptor,
+                @Nullable PostDescriptor postDescriptor,
                 List<PostIndexed> posts
         ) {
             this.postAdditionalData = postAdditionalData;
-            this.forPostWithDescriptor =  postDescriptor;
+            this.forPostWithDescriptor = postDescriptor;
             this.posts = posts;
         }
     }
