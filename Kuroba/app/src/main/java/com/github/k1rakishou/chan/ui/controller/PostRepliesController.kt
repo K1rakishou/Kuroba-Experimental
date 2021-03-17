@@ -274,6 +274,7 @@ class PostRepliesController(
       threadCellData.defaultIsCompact = false
       threadCellData.defaultBoardPostViewMode = ChanSettings.PostViewMode.LIST
       threadCellData.defaultMarkedNo = clickedPostDescriptor.postNo
+      threadCellData.defaultShowDividerFunc = { postIndex: Int, totalPostsCount: Int -> postIndex < totalPostsCount - 1 }
       threadCellData.defaultStubFunc = { false }
     }
 

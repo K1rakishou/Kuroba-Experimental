@@ -37,7 +37,7 @@ class ThreadCellData(
   var defaultMarkedNo: Long = -1L
   var defaultNeverShowPages: Boolean = ChanSettings.neverShowPages.get()
 
-  var defaultShowDividerFunc = { postIndex: Int, totalPostsCount: Int -> postIndex < totalPostsCount - 1 }
+  var defaultShowDividerFunc = { postIndex: Int, totalPostsCount: Int -> true }
   var defaultStubFunc = { postDescriptor: PostDescriptor -> postFilterManager.getFilterStub(postDescriptor) }
 
   var error: String? = null
