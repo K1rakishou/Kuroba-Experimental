@@ -5,5 +5,6 @@ public class CommentParserConstants {
     public static final String SAVED_REPLY_OTHER_SUFFIX = " (You)";
     public static final String OP_REPLY_SUFFIX = " (OP)";
     public static final String DEAD_REPLY_SUFFIX = " (DEAD)";
-    public static final String EXTERNAL_THREAD_LINK_SUFFIX = " \u2192"; // arrow to the right
+    public static final char ARROW_TO_THE_RIGHT = '\u2192';
+    public static final String EXTERNAL_THREAD_LINK_SUFFIX = " " + ARROW_TO_THE_RIGHT;
 }

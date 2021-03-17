@@ -263,28 +263,34 @@ class CardPostCell : ColorizableCardView,
 
   private fun setCompact(postCellData: PostCellData) {
     val compact = postCellData.compact
+    val moreThanThreeSpans =
+      (postCellData.postCellCallback?.currentSpanCount() ?: 1) >= SMALL_FONT_SIZE_SPAN_COUNT
 
-    val textReduction = if (compact) {
-      -2
-    } else {
-      0
+    var textReduction = 0
+    if (compact && moreThanThreeSpans) {
+      textReduction = COMPACT_MODE_TEXT_REDUCTION_SP
     }
 
-    val textSizeSp = postCellData.textSizeSp + textReduction
+    val textSizeSp = postCellData.textSizeSp - textReduction
 
     title!!.textSize = textSizeSp.toFloat()
     comment!!.textSize = textSizeSp.toFloat()
     replies!!.textSize = textSizeSp.toFloat()
 
-    val p = if (compact) {
+    val padding = if (compact) {
       AppModuleAndroidUtils.dp(3f)
     } else {
       AppModuleAndroidUtils.dp(8f)
     }
 
     // Same as the layout.
-    title!!.setPadding(p, p, p, 0)
-    comment!!.setPadding(p, p, p, 0)
-    replies!!.setPadding(p, p / 2, p, p)
+    title!!.setPadding(padding, padding, padding, 0)
+    comment!!.setPadding(padding, padding, padding, 0)
+    replies!!.setPadding(padding, padding / 2, padding, padding)
+  }
+
+  companion object {
+    private const val SMALL_FONT_SIZE_SPAN_COUNT = 3
+    private const val COMPACT_MODE_TEXT_REDUCTION_SP = 2
   }
 }

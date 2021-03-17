@@ -28,6 +28,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -139,8 +140,8 @@ class PostStubCell : RelativeLayout, PostCellInterface, View.OnClickListener, Th
     val textSizeSp = postCellData.textSizeSp
     title.textSize = textSizeSp.toFloat()
 
-    val paddingPx = AppModuleAndroidUtils.dp((textSizeSp - 6).toFloat())
-    title.setPadding(paddingPx, 0, 0, 0)
+    val paddingPx = dp((textSizeSp - 6).toFloat())
+    title.setPadding(paddingPx, VERTICAL_PADDING, 0, VERTICAL_PADDING)
 
     val dividerParams = divider.layoutParams as LayoutParams
     dividerParams.leftMargin = paddingPx
@@ -199,5 +200,9 @@ class PostStubCell : RelativeLayout, PostCellInterface, View.OnClickListener, Th
     if (::title.isInitialized) {
       title.setTextColor(themeEngine.chanTheme.textColorSecondary)
     }
+  }
+
+  companion object {
+    private val VERTICAL_PADDING = dp(4f)
   }
 }

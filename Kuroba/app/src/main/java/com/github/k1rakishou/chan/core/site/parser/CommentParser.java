@@ -260,12 +260,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         }
 
         if (handlerLink.getType() == PostLinkable.Type.THREAD) {
-            handlerLink.setKey(
-                    TextUtils.concat(
-                            handlerLink.getKey(),
-                            CommentParserConstants.EXTERNAL_THREAD_LINK_SUFFIX
-                    )
-            );
+            handlerLink.setKey(appendExternalThreadSuffixIfNeeded(handlerLink.getKey()));
         }
 
         if (handlerLink.getType() == PostLinkable.Type.QUOTE
@@ -299,6 +294,22 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         post.addLinkable(pl);
 
         spannableStringBuilder.append(res);
+    }
+
+    private CharSequence appendExternalThreadSuffixIfNeeded(CharSequence handlerLinkKey) {
+        if (TextUtils.isEmpty(handlerLinkKey)) {
+            return handlerLinkKey;
+        }
+
+        char lastChar = handlerLinkKey.charAt(handlerLinkKey.length() - 1);
+        if (lastChar == CommentParserConstants.ARROW_TO_THE_RIGHT) {
+            return handlerLinkKey;
+        }
+
+        return TextUtils.concat(
+                handlerLinkKey,
+                CommentParserConstants.EXTERNAL_THREAD_LINK_SUFFIX
+        );
     }
 
     protected void appendSuffixes(
