@@ -156,7 +156,7 @@ class PostStubCell : RelativeLayout, PostCellInterface, View.OnClickListener, Th
         callback!!.onPopulatePostOptions(postCellData.post, items)
 
         if (items.size > 0) {
-          callback!!.showPostOptions(postCellData.post, postCellData.inPopup, items)
+          callback!!.showPostOptions(postCellData.post, postCellData.isInPopup, items)
         }
       }
 

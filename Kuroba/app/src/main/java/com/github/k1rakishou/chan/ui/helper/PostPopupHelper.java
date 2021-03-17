@@ -22,6 +22,7 @@ import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.loader.LoaderResult;
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter;
+import com.github.k1rakishou.chan.ui.cell.PostCellData;
 import com.github.k1rakishou.chan.ui.controller.PostRepliesController;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
@@ -60,8 +61,12 @@ public class PostPopupHelper {
         this.callback = callback;
     }
 
-    public void showPosts(PostDescriptor postDescriptor, List<ChanPost> posts) {
-        RepliesData data = new RepliesData(postDescriptor, indexPosts(posts));
+    public void showPosts(
+            PostCellData.PostAdditionalData postAdditionalData,
+            PostDescriptor postDescriptor,
+            List<ChanPost> posts
+    ) {
+        RepliesData data = new RepliesData(postAdditionalData, postDescriptor, indexPosts(posts));
         dataQueue.add(data);
 
         if (dataQueue.size() == 1) {
@@ -163,10 +168,16 @@ public class PostPopupHelper {
     }
 
     public static class RepliesData {
-        public List<PostIndexed> posts;
-        public PostDescriptor forPostWithDescriptor;
+        public final PostCellData.PostAdditionalData postAdditionalData;
+        public final List<PostIndexed> posts;
+        public final PostDescriptor forPostWithDescriptor;
 
-        public RepliesData(PostDescriptor postDescriptor, List<PostIndexed> posts) {
+        public RepliesData(
+                PostCellData.PostAdditionalData postAdditionalData,
+                PostDescriptor postDescriptor,
+                List<PostIndexed> posts
+        ) {
+            this.postAdditionalData = postAdditionalData;
             this.forPostWithDescriptor =  postDescriptor;
             this.posts = posts;
         }

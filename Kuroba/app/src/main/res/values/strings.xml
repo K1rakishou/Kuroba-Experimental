@@ -418,6 +418,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="post_text_copied">Text copied to clipboard</string>
     <string name="post_quote">Quote</string>
     <string name="post_quote_text">Quote text</string>
+    <string name="post_select_text">Select text</string>
     <string name="post_info">Info</string>
     <string name="post_info_title">Post info</string>
     <string name="post_show_links">Show links</string>
@@ -518,7 +519,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_behavior">Behavior</string>
     <string name="settings_behavior_description">Thread refresh, captcha, etc.</string>
     <string name="settings_media">Media</string>
-    <string name="settings_media_description">Save location, auto loading, etc.</string>
+    <string name="settings_media_description">Video, media loading, etc.</string>
     <string name="settings_filters">Filters</string>
     <string name="settings_import_export">Import/Export</string>
     <string name="settings_import_export_description">Import/Export application backup file</string>

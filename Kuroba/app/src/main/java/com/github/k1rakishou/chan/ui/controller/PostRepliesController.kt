@@ -211,6 +211,7 @@ class PostRepliesController(
     repliesCloseText = dataView.findViewById(R.id.replies_close_icon)
 
     val repliesAdapter = RepliesAdapter(
+      data.postAdditionalData,
       presenter,
       chanDescriptor,
       data.forPostWithDescriptor,
@@ -253,6 +254,7 @@ class PostRepliesController(
   }
 
   private class RepliesAdapter(
+    private val postAdditionalData: PostCellData.PostAdditionalData,
     private val postCellCallback: PostCellInterface.PostCellCallback,
     private val chanDescriptor: ChanDescriptor,
     private val clickedPostDescriptor: PostDescriptor,
@@ -268,7 +270,7 @@ class PostRepliesController(
     )
 
     init {
-      threadCellData.defaultInPopup = true
+      threadCellData.postAdditionalData = postAdditionalData
       threadCellData.defaultIsCompact = false
       threadCellData.defaultBoardPostViewMode = ChanSettings.PostViewMode.LIST
       threadCellData.defaultMarkedNo = clickedPostDescriptor.postNo

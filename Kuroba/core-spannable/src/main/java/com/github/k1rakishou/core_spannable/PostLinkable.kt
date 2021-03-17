@@ -28,7 +28,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 
 /**
  * A Clickable span that handles post clicks. These are created in PostParser for post quotes,
- * spoilers etc. PostCell has a [PostCell.PostViewMovementMethod], that searches spans at the
+ * spoilers etc. PostCell has a [PostViewMovementMethod], that searches spans at the
  * location the TextView was tapped, and handled if it was a PostLinkable.
  */
 @DoNotStrip

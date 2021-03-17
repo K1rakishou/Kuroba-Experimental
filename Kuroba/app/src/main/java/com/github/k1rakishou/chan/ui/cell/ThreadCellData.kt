@@ -30,7 +30,8 @@ class ThreadCellData(
   private var postCellCallback: PostCellInterface.PostCellCallback? = null
   private var currentTheme: ChanTheme = initialTheme
 
-  var defaultInPopup: Boolean = false
+  var postAdditionalData: PostCellData.PostAdditionalData =
+    PostCellData.PostAdditionalData.NoAdditionalData(PostCellData.PostViewMode.Normal)
   var defaultIsCompact: Boolean = false
   var defaultBoardPostViewMode: ChanSettings.PostViewMode = ChanSettings.boardViewMode.get()
   var defaultMarkedNo: Long = -1L
@@ -45,6 +46,9 @@ class ThreadCellData(
 
   val chanDescriptor: ChanDescriptor?
     get() = _chanDescriptor
+
+  private val postViewMode: PostCellData.PostViewMode
+    get() = postAdditionalData.postViewMode
 
   override fun iterator(): Iterator<PostCellData> {
     return postCellDataList.iterator()
@@ -72,7 +76,7 @@ class ThreadCellData(
     this.postCellDataList.clear()
     this.postCellDataList.addAll(newPostCellDataList)
 
-    if (!defaultInPopup) {
+    if (postViewMode.canShowLastSeenIndicator()) {
       this.lastSeenIndicatorPosition = getLastSeenIndicatorPosition(chanDescriptor) ?: -1
     }
   }
@@ -99,7 +103,7 @@ class ThreadCellData(
         postIndex = postIndexed.postIndex,
         textSizeSp = fontSize,
         theme = theme,
-        inPopup = defaultInPopup,
+        postAdditionalData = postAdditionalData,
         highlighted = isPostHighlighted(postDescriptor),
         postSelected = isPostSelected(postDescriptor),
         markedNo = defaultMarkedNo,
@@ -250,7 +254,7 @@ class ThreadCellData(
     }
 
     if (lastSeenIndicatorPosition in 0..postIndex) {
-      ++postIndex;
+      ++postIndex
     }
 
     if (postIndex < 0 && postIndex > postsCount()) {
@@ -299,7 +303,7 @@ class ThreadCellData(
   }
 
   private fun showStatusView(): Boolean {
-    if (defaultInPopup) {
+    if (!postViewMode.canShowThreadStatusCell()) {
       return false
     }
 

@@ -30,7 +30,6 @@ data class PostCellData(
   val post: ChanPost,
   val postIndex: Int,
   var textSizeSp: Int,
-  var inPopup: Boolean,
   var highlighted: Boolean,
   var postSelected: Boolean,
   var markedNo: Long,
@@ -42,8 +41,9 @@ data class PostCellData(
   var stub: Boolean,
   var theme: ChanTheme,
   var filterHash: Int,
-  var filterHighlightedColor: Int
-) {
+  var filterHighlightedColor: Int,
+  var postAdditionalData: PostAdditionalData
+  ) {
   var postCellCallback: PostCellInterface.PostCellCallback? = null
 
   private var detailsSizePxPrecalculated: Int? = null
@@ -84,6 +84,12 @@ data class PostCellData(
     get() = post.repliesFromCount
   val singleImageMode: Boolean
     get() = post.postImages.size == 1
+  val postViewMode: PostViewMode
+    get() = postAdditionalData.postViewMode
+  val isInPopup: Boolean
+    get() = postViewMode != PostViewMode.Normal
+  val isSelectionMode: Boolean
+    get() = postViewMode == PostViewMode.PostSelection
 
   private val _detailsSizePx = RecalculatableLazy { detailsSizePxPrecalculated ?: AppModuleAndroidUtils.sp(textSizeSp - 4.toFloat()) }
   private val _postTitle = RecalculatableLazy { postTitlePrecalculated ?: calculatePostTitle() }
@@ -134,7 +140,6 @@ data class PostCellData(
       post,
       postIndex,
       textSizeSp,
-      inPopup,
       highlighted,
       postSelected,
       markedNo,
@@ -146,7 +151,8 @@ data class PostCellData(
       stub,
       theme,
       filterHash,
-      filterHighlightedColor
+      filterHighlightedColor,
+      postAdditionalData
     ).also { newPostCellData ->
       newPostCellData.postCellCallback = postCellCallback
       newPostCellData.detailsSizePxPrecalculated = detailsSizePxPrecalculated
@@ -404,6 +410,44 @@ data class PostCellData(
     }
 
     return catalogRepliesTextBuilder.toString()
+  }
+
+  sealed class PostAdditionalData(
+    val postViewMode: PostViewMode
+  ) {
+
+    class NoAdditionalData(postViewMode: PostViewMode) : PostAdditionalData(postViewMode)
+
+  }
+
+  enum class PostViewMode {
+    Normal,
+    RepliesPopup,
+    PostSelection;
+
+    fun canShowLastSeenIndicator(): Boolean {
+      if (this == Normal) {
+        return true
+      }
+
+      return false
+    }
+
+    fun canShowThreadStatusCell(): Boolean {
+      if (this == Normal) {
+        return true
+      }
+
+      return false
+    }
+
+    fun canShowGoToPostButton(): Boolean {
+      if (this == RepliesPopup) {
+        return true
+      }
+
+      return false
+    }
   }
 
   companion object {

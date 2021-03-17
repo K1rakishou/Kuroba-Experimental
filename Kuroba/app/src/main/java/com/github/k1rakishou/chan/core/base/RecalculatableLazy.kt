@@ -1,9 +1,16 @@
 package com.github.k1rakishou.chan.core.base
 
 class RecalculatableLazy<T>(val initializer: () -> T) {
+  @Volatile
   private var cachedValue: T? = null
 
-  fun isInitialized(): Boolean = cachedValue != null
+  fun isInitialized(): Boolean {
+    if (cachedValue == null) {
+      return synchronized(this) { cachedValue == null }
+    }
+
+    return true
+  }
 
   fun valueOrNull(): T? {
     if (!isInitialized()) {

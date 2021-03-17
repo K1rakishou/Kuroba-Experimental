@@ -44,6 +44,7 @@ import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
+import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
@@ -1011,7 +1012,7 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  override fun onPostDoubleClicked(post: ChanPost) {
+  override fun onGoToPostButtonClicked(post: ChanPost) {
     if (!isBound || currentChanDescriptor is ChanDescriptor.CatalogDescriptor) {
       return
     }
@@ -1387,7 +1388,11 @@ class ThreadPresenter @Inject constructor(
 
         val linked = chanThreadManager.findPostByPostNo(currentThreadDescriptor, postId)
         if (linked != null) {
-          threadPresenterCallback?.showPostsPopup(post.postDescriptor, listOf(linked))
+          threadPresenterCallback?.showPostsPopup(
+            PostCellData.PostAdditionalData.NoAdditionalData(PostCellData.PostViewMode.RepliesPopup),
+            post.postDescriptor,
+            listOf(linked)
+          )
         }
 
         return@post
@@ -1573,7 +1578,11 @@ class ThreadPresenter @Inject constructor(
     }
 
     if (posts.size > 0) {
-      threadPresenterCallback?.showPostsPopup(post.postDescriptor, posts)
+      threadPresenterCallback?.showPostsPopup(
+        PostCellData.PostAdditionalData.NoAdditionalData(PostCellData.PostViewMode.RepliesPopup),
+        post.postDescriptor,
+        posts
+      )
     }
   }
 
@@ -1988,7 +1997,11 @@ class ThreadPresenter @Inject constructor(
     suspend fun setBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
     fun openLink(link: String)
     fun openReportView(post: ChanPost)
-    fun showPostsPopup(postDescriptor: PostDescriptor, posts: List<ChanPost>)
+    fun showPostsPopup(
+      postAdditionalData: PostCellData.PostAdditionalData,
+      postDescriptor: PostDescriptor,
+      posts: List<ChanPost>
+    )
     fun hidePostsPopup()
     fun showImages(
       images: List<ChanPostImage>,

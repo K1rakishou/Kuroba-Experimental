@@ -130,7 +130,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
     override fun onPostBind(postDescriptor: PostDescriptor) {}
     override fun onPostUnbind(postDescriptor: PostDescriptor, isActuallyRecycling: Boolean) {}
     override fun onPostClicked(postDescriptor: PostDescriptor) {}
-    override fun onPostDoubleClicked(post: ChanPost) {}
+    override fun onGoToPostButtonClicked(post: ChanPost) {}
     override fun onThumbnailClicked(postImage: ChanPostImage, thumbnail: ThumbnailView) {}
     override fun onThumbnailLongClicked(postImage: ChanPostImage, thumbnail: ThumbnailView) {}
     override fun onShowPostReplies(post: ChanPost) {}

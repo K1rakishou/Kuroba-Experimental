@@ -32,6 +32,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.widget.TextViewCompat
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
@@ -42,6 +43,7 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.ui.animation.PostCellAnimator.createUnseenPostIndicatorFadeAnimation
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
+import com.github.k1rakishou.chan.ui.view.PostCommentTextView
 import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
@@ -83,7 +85,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   private lateinit var title: TextView
   private lateinit var postFilesInfoContainer: LinearLayout
   private lateinit var icons: PostIcons
-  private lateinit var comment: TextView
+  private lateinit var comment: PostCommentTextView
   private lateinit var replies: TextView
   private lateinit var goToPostButtonContainer: FrameLayout
   private lateinit var goToPostButton: AppCompatImageView
@@ -92,7 +94,8 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
 
   private var postCellData: PostCellData? = null
   private var postCellCallback: PostCellCallback? = null
-
+  private var needAllowParentToInterceptTouchEvents = false
+  private var needAllowParentToInterceptTouchEventsDownEventEnded = false
   private var iconSizePx = 0
   private var horizPaddingPx = 0
   private var vertPaddingPx = 0
@@ -104,8 +107,55 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   private val prevChanPostImages = mutableListWithCap<ChanPostImage>(1)
   private val commentMovementMethod = PostViewMovementMethod()
   private val titleMovementMethod = PostViewFastMovementMethod()
-  private val postCommentLongtapDetector = PostCommentLongtapDetector(this)
+  private val postCommentLongtapDetector = PostCommentLongtapDetector(context)
   private val unseenPostIndicatorFadeOutAnimation = createUnseenPostIndicatorFadeAnimation()
+  private val doubleTapGestureDetector = GestureDetector(context, PostCellDoubleTapDetector())
+
+  private val customSelectionActionModeCallback = object : ActionMode.Callback {
+    private var quoteMenuItem: MenuItem? = null
+    private var webSearchItem: MenuItem? = null
+    private var processed = false
+
+    override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
+      quoteMenuItem = menu.add(Menu.NONE, R.id.post_selection_action_quote, 0, R.string.post_quote)
+      webSearchItem = menu.add(Menu.NONE, R.id.post_selection_action_search, 1, R.string.post_web_search)
+      return true
+    }
+
+    override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean {
+      return true
+    }
+
+    override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
+      val selection = comment.text.subSequence(comment.selectionStart, comment.selectionEnd)
+
+      if (item === quoteMenuItem) {
+        if (postCellCallback != null && postCellData != null) {
+          postCellCallback?.onPostSelectionQuoted(postCellData!!.postDescriptor, selection)
+          processed = true
+        }
+      } else if (item === webSearchItem) {
+        val searchIntent = Intent(Intent.ACTION_WEB_SEARCH)
+        searchIntent.putExtra(SearchManager.QUERY, selection.toString())
+        openIntent(searchIntent)
+        processed = true
+      }
+
+      if (processed) {
+        mode.finish()
+        processed = false
+        return true
+      }
+
+      return false
+    }
+
+    override fun onDestroyActionMode(mode: ActionMode) {
+      if (::comment.isInitialized) {
+        comment.endSelectionMode()
+      }
+    }
+  }
 
   constructor(context: Context?)
     : super(context)
@@ -258,6 +308,8 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     goToPostButtonContainer = findViewById(R.id.go_to_post_button_container)
     goToPostButton = findViewById(R.id.go_to_post_button)
 
+    postCommentLongtapDetector.postCellContainer = postCellRootContainer
+
     findViewById<ConstraintLayout>(R.id.post_single_image_comment_container)
       ?.setPadding(horizPaddingPx, 0, endPadding, 0)
 
@@ -277,53 +329,94 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     dividerParams.rightMargin = horizPaddingPx
     divider.layoutParams = dividerParams
 
-    replies.setOnThrottlingClickListener {
-      if (replies.visibility == View.VISIBLE && postCellData.threadMode) {
-        postCellData.post.let { post ->
-          if (post.repliesFromCount > 0) {
-            postCellCallback?.onShowPostReplies(post)
+    setOnClickListener(null)
+    setOnLongClickListener(null)
+
+    if (postCellData.isSelectionMode) {
+      replies.setOnClickListener(null)
+      postCellRootContainer.setOnLongClickListener(null)
+      postCellRootContainer.setOnClickListener(null)
+    } else {
+      replies.setOnThrottlingClickListener {
+        if (replies.visibility == View.VISIBLE && postCellData.threadMode) {
+          postCellData.post.let { post ->
+            if (post.repliesFromCount > 0) {
+              postCellCallback?.onShowPostReplies(post)
+            }
           }
         }
       }
-    }
 
-    setOnLongClickListener {
-      showPostFloatingListMenu(postCellData)
-      return@setOnLongClickListener true
-    }
+      postCellRootContainer.setOnLongClickListener {
+        requestParentDisallowInterceptTouchEvents(true)
+        showPostFloatingListMenu(postCellData)
+        return@setOnLongClickListener true
+      }
 
-    setOnThrottlingClickListener {
-      postCellCallback?.onPostClicked(postCellData.post.postDescriptor)
+      postCellRootContainer.setOnThrottlingClickListener {
+        postCellCallback?.onPostClicked(postCellData.post.postDescriptor)
+      }
     }
   }
 
+  override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
+    val action = ev.actionMasked
+
+    if (action == MotionEvent.ACTION_DOWN){
+      if (needAllowParentToInterceptTouchEvents && needAllowParentToInterceptTouchEventsDownEventEnded) {
+        requestParentDisallowInterceptTouchEvents(false)
+      }
+    } else if (action == MotionEvent.ACTION_CANCEL || action == MotionEvent.ACTION_UP) {
+      if (needAllowParentToInterceptTouchEvents) {
+        needAllowParentToInterceptTouchEventsDownEventEnded = true
+      }
+    }
+
+    return super.onInterceptTouchEvent(ev)
+  }
+
+  private fun requestParentDisallowInterceptTouchEvents(disallow: Boolean) {
+    if (disallow) {
+      needAllowParentToInterceptTouchEvents = true
+    } else {
+      needAllowParentToInterceptTouchEvents = false
+      needAllowParentToInterceptTouchEventsDownEventEnded = false
+    }
+
+    this@PostCell.parent.requestDisallowInterceptTouchEvent(disallow)
+  }
+
   private fun showPostFloatingListMenu(postCellData: PostCellData) {
+    if (postCellData.isSelectionMode) {
+      return
+    }
+
     val items = ArrayList<FloatingListMenuItem>()
     if (postCellCallback != null) {
       postCellCallback?.onPopulatePostOptions(postCellData.post, items)
 
       if (items.size > 0) {
-        postCellCallback?.showPostOptions(postCellData.post, postCellData.inPopup, items)
+        postCellCallback?.showPostOptions(postCellData.post, postCellData.isInPopup, items)
       }
     }
   }
 
   private fun bindPost(postCellData: PostCellData) {
-    setPostLinkableListener(postCellData, true)
+    postCellRootContainer.isClickable = true
+    postCellRootContainer.isLongClickable = true
 
-    replies.isClickable = postCellData.threadMode
+    if (postCellData.isSelectionMode) {
+      setPostLinkableListener(postCellData, false)
+      replies.isClickable = false
+    } else {
+      setPostLinkableListener(postCellData, true)
+      replies.isClickable = postCellData.threadMode
+    }
 
-    val selectableItemBackground =
-      themeEngine.getAttributeResource(android.R.attr.selectableItemBackground)
+    bindBackgroundResources(postCellData)
 
-    postCellRootContainer.setBackgroundResource(selectableItemBackground)
-    replies.setBackgroundResource(selectableItemBackground)
     replies.setTextColor(postCellData.theme.textColorSecondary)
     divider.setBackgroundColor(postCellData.theme.dividerColor)
-
-    if (!postCellData.threadMode) {
-      replies.setBackgroundResource(0)
-    }
 
     bindPostAttentionLabel(postCellData)
     bindThumbnails(postCellData)
@@ -331,17 +424,12 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     bindPostFilesInfo(postCellData)
     bindIcons(postCellData)
     bindPostComment(postCellData)
-
-    if (postCellData.threadMode) {
-      bindThreadPost(postCellData)
-    } else {
-      bindCatalogPost(postCellData)
-    }
+    bindPostContent(postCellData, postCellData.threadMode)
 
     val canBindReplies = (!postCellData.threadMode && postCellData.catalogRepliesCount > 0)
       || postCellData.repliesFromCount > 0
 
-    if (canBindReplies) {
+    if (!postCellData.isSelectionMode && canBindReplies) {
       bindRepliesWithImageCountText(postCellData)
     } else {
       bindRepliesText()
@@ -367,13 +455,31 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     }
   }
 
+  private fun bindBackgroundResources(postCellData: PostCellData) {
+    if (postCellData.isSelectionMode) {
+      postCellRootContainer.setBackgroundResource(0)
+      replies.setBackgroundResource(0)
+    } else {
+      val selectableItemBackground =
+        themeEngine.getAttributeResource(android.R.attr.selectableItemBackground)
+
+      postCellRootContainer.setBackgroundResource(selectableItemBackground)
+
+      if (postCellData.threadMode) {
+        replies.setBackgroundResource(selectableItemBackground)
+      } else {
+        replies.setBackgroundResource(0)
+      }
+    }
+  }
+
   private fun bindGoToPostButton(postCellData: PostCellData) {
-    if (postCellData.inPopup) {
+    if (postCellData.postViewMode.canShowGoToPostButton()) {
       goToPostButtonContainer.setVisibilityFast(VISIBLE)
 
       goToPostButtonContainer.setOnClickListener {
         this.postCellData?.let { pcd ->
-          postCellCallback?.onPostDoubleClicked(pcd.post)
+          postCellCallback?.onGoToPostButtonClicked(pcd.post)
         }
       }
     } else {
@@ -383,6 +489,10 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   }
 
   private fun threadBookmarkViewPost(postCellData: PostCellData) {
+    if (postCellData.isInPopup) {
+      return
+    }
+
     val threadDescriptor = postCellData.chanDescriptor.threadDescriptorOrNull()
     val postNo = postCellData.postDescriptor.postNo
 
@@ -398,7 +508,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   }
 
   private fun startAttentionLabelFadeOutAnimation(postCellData: PostCellData) {
-    if (postCellCallback == null) {
+    if (postCellCallback == null || postCellData.isSelectionMode) {
       return
     }
 
@@ -418,8 +528,12 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     }
   }
 
-  private fun bindPostAttentionLabel( postCellData: PostCellData) {
+  private fun bindPostAttentionLabel(postCellData: PostCellData) {
     if (postCellCallback == null) {
+      return
+    }
+
+    if (postCellData.isSelectionMode) {
       return
     }
 
@@ -578,78 +692,51 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   }
 
   @SuppressLint("ClickableViewAccessibility")
-  private fun bindCatalogPost(postCellData: PostCellData) {
-    comment.setText(postCellData.commentText, TextView.BufferType.SPANNABLE)
-    comment.setOnTouchListener(null)
-    comment.isClickable = false
-
-    // Sets focusable to auto, clickable and longclickable to false.
-    comment.movementMethod = null
-    title.movementMethod = null
-  }
-
-  @SuppressLint("ClickableViewAccessibility")
-  private fun bindThreadPost(postCellData: PostCellData) {
+  private fun bindPostContent(postCellData: PostCellData, isThreadMode: Boolean) {
     val theme = postCellData.theme
 
-    comment.setOnTouchListener { _, event ->
-      postCommentLongtapDetector.passTouchEvent(event)
-      return@setOnTouchListener false
-    }
-    comment.isClickable = false
-
     comment.setText(postCellData.commentText, TextView.BufferType.SPANNABLE)
+
+    if (postCellData.isSelectionMode) {
+      comment.customSelectionActionModeCallback = null
+      comment.customTouchEventListener(null)
+      comment.customMovementMethod(null)
+      title.movementMethod = null
+    } else {
+      if (isThreadMode) {
+        comment.customMovementMethod(commentMovementMethod)
+
+        if (ChanSettings.tapNoReply.get()) {
+          title.movementMethod = titleMovementMethod
+        }
+
+        TextViewCompat.setCustomSelectionActionModeCallback(comment, customSelectionActionModeCallback)
+
+        comment.customTouchEventListener { _, event ->
+          doubleTapGestureDetector.onTouchEvent(event)
+          postCommentLongtapDetector.passTouchEvent(event)
+          return@customTouchEventListener false
+        }
+
+        comment.setTextIsSelectable(true)
+      } else {
+        comment.customMovementMethod(null)
+        title.movementMethod = null
+        comment.customSelectionActionModeCallback = null
+
+        comment.customTouchEventListener { _, event ->
+          postCommentLongtapDetector.passTouchEvent(event)
+          return@customTouchEventListener false
+        }
+
+        comment.setTextIsSelectable(false)
+      }
+    }
+
+    comment.isClickable = true
+
     comment.setHandlesColors(theme)
     comment.setEditTextCursorColor(theme)
-
-    // Sets focusable to auto, clickable and longclickable to true.
-    comment.movementMethod = commentMovementMethod
-
-    if (ChanSettings.tapNoReply.get()) {
-      title.movementMethod = titleMovementMethod
-    }
-
-    comment.customSelectionActionModeCallback = object : ActionMode.Callback {
-      private var quoteMenuItem: MenuItem? = null
-      private var webSearchItem: MenuItem? = null
-      private var processed = false
-
-      override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
-        quoteMenuItem = menu.add(Menu.NONE, R.id.post_selection_action_quote, 0, R.string.post_quote)
-        webSearchItem = menu.add(Menu.NONE, R.id.post_selection_action_search, 1, R.string.post_web_search)
-        return true
-      }
-
-      override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean {
-        return true
-      }
-
-      override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
-        val selection = comment.text.subSequence(comment.selectionStart, comment.selectionEnd)
-
-        if (item === quoteMenuItem) {
-          if (postCellCallback != null) {
-            postCellCallback?.onPostSelectionQuoted(postCellData.postDescriptor, selection)
-            processed = true
-          }
-        } else if (item === webSearchItem) {
-          val searchIntent = Intent(Intent.ACTION_WEB_SEARCH)
-          searchIntent.putExtra(SearchManager.QUERY, selection.toString())
-          openIntent(searchIntent)
-          processed = true
-        }
-
-        return if (processed) {
-          mode.finish()
-          processed = false
-          true
-        } else {
-          false
-        }
-      }
-
-      override fun onDestroyActionMode(mode: ActionMode) {}
-    }
   }
 
   private fun bindThumbnails(postCellData: PostCellData) {
@@ -683,18 +770,31 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       thumbnailView.id = generatedId--
 
       thumbnailView.bindPostImage(postImage, true)
-      thumbnailView.isClickable = true
 
-      // Always set the click listener to avoid check the file cache (which will touch the
-      // disk and if you are not lucky enough it may freeze for quite a while). We do all
-      // the necessary checks when clicking an image anyway, so no point in doing them
-      // twice and more importantly inside RecyclerView bind call
-      thumbnailView.setOnClickListener {
-        postCellCallback?.onThumbnailClicked(postImage, thumbnailView)
-      }
-      thumbnailView.setOnLongClickListener {
-        postCellCallback?.onThumbnailLongClicked(postImage, thumbnailView)
-        return@setOnLongClickListener true
+      if (postCellData.isSelectionMode) {
+        thumbnailView.setOnClickListener(null)
+        thumbnailView.setOnLongClickListener(null)
+
+        // We need to explicitly set clickable/long clickable to false here because calling
+        // setOnClickListener/setOnLongClickListener will automatically set them to true even if
+        // the listeners are null.
+        thumbnailView.isClickable = false
+        thumbnailView.isLongClickable = false
+      } else {
+        thumbnailView.isClickable = true
+
+        // Always set the click listener to avoid check the file cache (which will touch the
+        // disk and if you are not lucky enough it may freeze for quite a while). We do all
+        // the necessary checks when clicking an image anyway, so no point in doing them
+        // twice and more importantly inside RecyclerView bind call
+        thumbnailView.setOnClickListener {
+          postCellCallback?.onThumbnailClicked(postImage, thumbnailView)
+        }
+        thumbnailView.setOnLongClickListener {
+          requestParentDisallowInterceptTouchEvents(true)
+          postCellCallback?.onThumbnailLongClicked(postImage, thumbnailView)
+          return@setOnLongClickListener true
+        }
       }
 
       thumbnailView.setRounding(THUMBNAIL_ROUNDING)
@@ -779,13 +879,15 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   }
 
   private inner class PostCommentLongtapDetector(
-    private val postCell: PostCell
+    private val context: Context
   ) {
-    private val scaledTouchSlop = ViewConfiguration.get(postCell.context).scaledTouchSlop
+    private val scaledTouchSlop = ViewConfiguration.get(context).scaledTouchSlop
 
     private var blocking = false
-    private var cancelSent = false
+    private var upOrCancelSent = false
     private var initialTouchEvent: MotionEvent? = null
+
+    var postCellContainer: LinearLayout? = null
 
     fun passTouchEvent(event: MotionEvent) {
       if (event.pointerCount != 1) {
@@ -793,7 +895,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       }
 
       val action = event.actionMasked
-      val blockedByFlags = blocking || cancelSent || initialTouchEvent != null
+      val blockedByFlags = blocking || upOrCancelSent || initialTouchEvent != null
 
       if ((action != MotionEvent.ACTION_UP && action != MotionEvent.ACTION_CANCEL) && blockedByFlags) {
         return
@@ -803,30 +905,35 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
         MotionEvent.ACTION_DOWN -> {
           if (commentMovementMethod.touchOverlapsAnyClickableSpan(comment, event)) {
             blocking = true
-            sendCancel(event)
+            sendUpOrCancel(event)
             return
           }
 
           initialTouchEvent = MotionEvent.obtain(event)
-          postCell.onTouchEvent(event)
+          postCellContainer?.onTouchEvent(event)
         }
         MotionEvent.ACTION_MOVE -> {
+          if (initialTouchEvent == null) {
+            blocking = true
+            sendUpOrCancel(event)
+            return
+          }
+
           val deltaX = Math.abs(event.x - initialTouchEvent!!.x)
           val deltaY = Math.abs(event.y - initialTouchEvent!!.y)
 
           if (deltaX > scaledTouchSlop || deltaY > scaledTouchSlop) {
             blocking = true
-            sendCancel(event)
+            sendUpOrCancel(event)
             return
           }
         }
         MotionEvent.ACTION_UP,
         MotionEvent.ACTION_CANCEL -> {
-          postCell.requestDisallowInterceptTouchEvent(false)
-          sendCancel(event)
+          sendUpOrCancel(event)
 
           blocking = false
-          cancelSent = false
+          upOrCancelSent = false
 
           initialTouchEvent?.recycle()
           initialTouchEvent = null
@@ -834,23 +941,29 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       }
     }
 
-    private fun sendCancel(event: MotionEvent) {
-      if (cancelSent) {
+    private fun sendUpOrCancel(event: MotionEvent) {
+      if (upOrCancelSent) {
         return
       }
 
-      cancelSent = true
+      upOrCancelSent = true
+
+      val action = if (blocking || event.actionMasked == MotionEvent.ACTION_CANCEL) {
+        MotionEvent.ACTION_CANCEL
+      } else {
+        MotionEvent.ACTION_UP
+      }
 
       val motionEvent = MotionEvent.obtain(
         SystemClock.uptimeMillis(),
         SystemClock.uptimeMillis(),
-        MotionEvent.ACTION_CANCEL,
+        action,
         event.x,
         event.y,
         event.metaState
       )
 
-      postCell.onTouchEvent(motionEvent)
+      postCellContainer?.onTouchEvent(motionEvent)
       motionEvent.recycle()
     }
 
@@ -1086,7 +1199,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   class PostNumberClickableSpan(
     private var postCellCallback: PostCellCallback?,
     private var post: ChanPost?
-  ) : ClickableSpan(), ClearableSpan {
+  ) : ClickableSpan() {
 
     override fun onClick(widget: View) {
       post?.let { post ->
@@ -1098,11 +1211,20 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       ds.isUnderlineText = false
     }
 
-    override fun onClear() {
-      postCellCallback = null
-      post = null
-    }
+  }
 
+  private inner class PostCellDoubleTapDetector : GestureDetector.SimpleOnGestureListener() {
+    override fun onDoubleTap(e: MotionEvent): Boolean {
+      val touchOverlapsAnyClickableSpan = commentMovementMethod.touchOverlapsAnyClickableSpan(comment, e)
+      if (touchOverlapsAnyClickableSpan) {
+        return true
+      }
+
+      comment.startSelectionMode(e.x, e.y)
+      requestParentDisallowInterceptTouchEvents(true)
+
+      return true
+    }
   }
 
   companion object {

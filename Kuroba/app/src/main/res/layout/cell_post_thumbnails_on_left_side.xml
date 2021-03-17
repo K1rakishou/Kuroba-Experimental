@@ -96,7 +96,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                         tools:layout_height="32dp"
                         tools:layout_width="match_parent" />
 
-                    <TextView
+                    <com.github.k1rakishou.chan.ui.view.PostCommentTextView
                         android:id="@+id/comment"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"

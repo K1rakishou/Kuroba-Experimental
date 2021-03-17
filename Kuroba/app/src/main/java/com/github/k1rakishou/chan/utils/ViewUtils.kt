@@ -4,6 +4,9 @@ import android.annotation.SuppressLint
 import android.app.ProgressDialog
 import android.graphics.drawable.Drawable
 import android.os.Build
+import android.os.SystemClock
+import android.view.MotionEvent
+import android.view.View
 import android.widget.AbsListView
 import android.widget.EdgeEffect
 import android.widget.TextView
@@ -192,6 +195,12 @@ object ViewUtils {
       (f2.get(this) as? TextView)?.let { progressPercent -> progressPercent.setTextColor(theme.textColorSecondary) }
     } catch (ignored: Exception) {
     }
+  }
+
+  fun View.emulateMotionEvent(downTime: Long, action: Int, x: Float, y: Float) {
+    val motionEvent = MotionEvent.obtain(downTime, SystemClock.uptimeMillis(), action, x, y, 0)
+    onTouchEvent(motionEvent)
+    motionEvent.recycle()
   }
 
 }

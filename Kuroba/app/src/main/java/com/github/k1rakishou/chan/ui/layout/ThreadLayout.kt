@@ -50,6 +50,7 @@ import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper.ImageReencodingHelperCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
+import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.controller.CloudFlareBypassController
 import com.github.k1rakishou.chan.ui.controller.PostLinksController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
@@ -558,14 +559,18 @@ class ThreadLayout @JvmOverloads constructor(
     callback.setBoard(boardDescriptor, animated)
   }
 
-  override fun showPostsPopup(postDescriptor: PostDescriptor, posts: List<ChanPost>) {
+  override fun showPostsPopup(
+    postAdditionalData: PostCellData.PostAdditionalData,
+    postDescriptor: PostDescriptor,
+    posts: List<ChanPost>
+  ) {
     if (this.focusedChild != null) {
       val currentFocus = this.focusedChild
       AndroidUtils.hideKeyboard(currentFocus)
       currentFocus.clearFocus()
     }
 
-    postPopupHelper.showPosts(postDescriptor, posts)
+    postPopupHelper.showPosts(postAdditionalData, postDescriptor, posts)
   }
 
   override fun hidePostsPopup() {

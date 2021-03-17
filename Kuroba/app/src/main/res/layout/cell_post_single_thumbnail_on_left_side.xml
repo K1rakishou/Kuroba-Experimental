@@ -103,7 +103,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             app:layout_constraintStart_toEndOf="@id/post_attention_label"
             app:layout_constraintTop_toBottomOf="@+id/inner_linear_layout">
 
-            <TextView
+            <com.github.k1rakishou.chan.ui.view.PostCommentTextView
                 android:id="@+id/comment"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

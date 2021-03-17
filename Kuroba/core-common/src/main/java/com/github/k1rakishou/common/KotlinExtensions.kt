@@ -7,8 +7,10 @@ import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.TextUtils
 import android.text.style.CharacterStyle
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewParent
 import androidx.core.view.children
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.google.gson.stream.JsonReader
@@ -412,6 +414,20 @@ fun View.updatePaddings(
   setPadding(left, top, right, bottom)
 }
 
+fun View.findParent(predicate: (ViewParent) -> Boolean): ViewParent? {
+  var currentParent = this.parent
+
+  while (currentParent != null) {
+    if (predicate(currentParent)) {
+      return currentParent
+    }
+
+    currentParent = currentParent.parent
+  }
+
+  return null
+}
+
 fun View.findChild(predicate: (View) -> Boolean): View? {
   if (predicate(this)) {
     return this
@@ -747,4 +763,8 @@ suspend fun OkHttpClient.readResponseAsString(request: Request): ModularResult<S
 
     return@Try responseBody.string()
   }
+}
+
+fun MotionEvent.isActionUpOrCancel(): Boolean {
+  return actionMasked == MotionEvent.ACTION_UP || actionMasked == MotionEvent.ACTION_CANCEL
 }

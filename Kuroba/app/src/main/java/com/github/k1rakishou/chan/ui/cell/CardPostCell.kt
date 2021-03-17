@@ -42,7 +42,6 @@ import javax.inject.Inject
 
 class CardPostCell : ColorizableCardView,
   PostCellInterface,
-  View.OnClickListener,
   ThemeChangesListener {
 
   @Inject
@@ -92,18 +91,6 @@ class CardPostCell : ColorizableCardView,
 
     return ChanSettings.boardViewMode.get() == PostViewMode.GRID
       && postCellData.postCellCallback?.currentSpanCount() != 1
-  }
-
-  override fun onClick(v: View) {
-    if (postCellData == null) {
-      return
-    }
-
-    if (v === thumbView) {
-      callback?.onThumbnailClicked(postCellData!!.post.firstImage()!!, thumbView!!)
-    } else if (v === this) {
-      callback?.onPostClicked(postCellData!!.postDescriptor)
-    }
   }
 
   override fun postDataDiffers(postCellData: PostCellData): Boolean {
@@ -173,7 +160,9 @@ class CardPostCell : ColorizableCardView,
 
     thumbView = findViewById<PostImageThumbnailView>(R.id.thumbnail).apply {
       setRatio(16f / 13f)
-      setOnClickListener(this@CardPostCell)
+      setOnClickListener {
+        callback?.onThumbnailClicked(postCellData.post.firstImage()!!, thumbView!!)
+      }
     }
 
     title = findViewById(R.id.title)
@@ -183,16 +172,23 @@ class CardPostCell : ColorizableCardView,
 
     setCompact(postCellData)
 
-    setOnClickListener({
+    setOnClickListener {
+      callback?.onPostClicked(postCellData.postDescriptor)
+    }
+
+    setOnLongClickListener({
       val items = mutableListOf<FloatingListMenuItem>()
 
       if (callback != null) {
         callback!!.onPopulatePostOptions(postCellData.post, items)
 
         if (items.isNotEmpty()) {
-          callback!!.showPostOptions(postCellData.post, postCellData.inPopup, items)
+          callback!!.showPostOptions(postCellData.post, postCellData.isInPopup, items)
+          return@setOnLongClickListener true
         }
       }
+
+      return@setOnLongClickListener false
     })
   }
 
