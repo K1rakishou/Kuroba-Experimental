@@ -695,7 +695,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   private fun bindPostContent(postCellData: PostCellData, isThreadMode: Boolean) {
     val theme = postCellData.theme
 
-    comment.setText(postCellData.commentText, TextView.BufferType.SPANNABLE)
+    ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.commentText, comment)
 
     if (postCellData.isSelectionMode) {
       comment.customSelectionActionModeCallback = null
