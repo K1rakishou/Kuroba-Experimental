@@ -211,7 +211,7 @@ class CardPostCell : ColorizableCardView,
       title!!.text = null
     }
 
-    ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.commentText, comment!!)
+    comment!!.setText(postCellData.commentText, TextView.BufferType.SPANNABLE)
     ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.catalogRepliesText, replies!!)
 
     if (callback != null) {

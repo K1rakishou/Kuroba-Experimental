@@ -694,8 +694,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   @SuppressLint("ClickableViewAccessibility")
   private fun bindPostContent(postCellData: PostCellData, isThreadMode: Boolean) {
     val theme = postCellData.theme
-
-    ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.commentText, comment)
+    comment.setText(postCellData.commentText, TextView.BufferType.SPANNABLE)
 
     if (postCellData.isSelectionMode) {
       comment.customSelectionActionModeCallback = null
@@ -740,7 +739,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   }
 
   private fun bindThumbnails(postCellData: PostCellData) {
-    if (thumbnailContainer == null) {
+    if (!::thumbnailContainer.isInitialized) {
       return
     }
 
