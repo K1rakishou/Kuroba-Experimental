@@ -18,6 +18,8 @@ package com.github.k1rakishou.chan.ui.helper;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.loader.LoaderResult;
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
@@ -63,22 +65,23 @@ public class PostPopupHelper {
     }
 
     public void showPosts(
+            @NonNull ChanDescriptor.ThreadDescriptor threadDescriptor,
             PostCellData.PostAdditionalData postAdditionalData,
             @Nullable PostDescriptor postDescriptor,
             List<ChanPost> posts
     ) {
-        RepliesData data = new RepliesData(postAdditionalData, postDescriptor, indexPosts(posts));
+        RepliesData data = new RepliesData(threadDescriptor, postAdditionalData, postDescriptor, indexPosts(posts));
         dataQueue.add(data);
 
         if (dataQueue.size() == 1) {
             present();
         }
 
-        if (presenter.getCurrentChanDescriptor() == null) {
-            throw new IllegalStateException("Thread loadable cannot be null");
+        if (threadDescriptor == null) {
+            throw new IllegalStateException("Thread descriptor cannot be null");
         }
 
-        presentingController.setPostRepliesData(presenter.getCurrentChanDescriptor(), data);
+        presentingController.setPostRepliesData(threadDescriptor, data);
     }
 
     private List<PostIndexed> indexPosts(List<ChanPost> posts) {
@@ -103,6 +106,15 @@ public class PostPopupHelper {
         return postIndexedList;
     }
 
+    @Nullable
+    public RepliesData topOrNull() {
+        if (dataQueue.isEmpty()) {
+            return null;
+        }
+
+        return dataQueue.get(dataQueue.size() - 1);
+    }
+
     public void onPostUpdated(@NotNull PostDescriptor postDescriptor, List<LoaderResult> results) {
         BackgroundUtils.ensureMainThread();
         presentingController.onPostUpdated(postDescriptor, results);
@@ -114,13 +126,15 @@ public class PostPopupHelper {
         }
 
         if (dataQueue.size() > 0) {
-            if (presenter.getCurrentChanDescriptor() == null) {
-                throw new IllegalStateException("Thread loadable cannot be null");
+            RepliesData repliesData = dataQueue.get(dataQueue.size() - 1);
+
+            if (repliesData.threadDescriptor == null) {
+                throw new IllegalStateException("Thread descriptor cannot be null");
             }
 
             presentingController.setPostRepliesData(
-                    presenter.getCurrentChanDescriptor(),
-                    dataQueue.get(dataQueue.size() - 1)
+                    repliesData.threadDescriptor,
+                    repliesData
             );
         } else {
             dismiss();
@@ -128,6 +142,8 @@ public class PostPopupHelper {
     }
 
     public void popAll() {
+        PostRepliesController.clearScrollPositionCache();
+
         dataQueue.clear();
         dismiss();
     }
@@ -169,15 +185,18 @@ public class PostPopupHelper {
     }
 
     public static class RepliesData {
+        public final ChanDescriptor.ThreadDescriptor threadDescriptor;
         public final PostCellData.PostAdditionalData postAdditionalData;
         public final List<PostIndexed> posts;
         public final @Nullable PostDescriptor forPostWithDescriptor;
 
         public RepliesData(
+                ChanDescriptor.ThreadDescriptor threadDescriptor,
                 PostCellData.PostAdditionalData postAdditionalData,
                 @Nullable PostDescriptor postDescriptor,
                 List<PostIndexed> posts
         ) {
+            this.threadDescriptor = threadDescriptor;
             this.postAdditionalData = postAdditionalData;
             this.forPostWithDescriptor = postDescriptor;
             this.posts = posts;

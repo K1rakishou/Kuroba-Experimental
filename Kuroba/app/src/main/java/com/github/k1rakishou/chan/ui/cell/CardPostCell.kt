@@ -33,6 +33,7 @@ import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -170,6 +171,11 @@ class CardPostCell : ColorizableCardView,
     replies = findViewById(R.id.replies)
     filterMatchColor = findViewById(R.id.filter_match_color)
 
+    val selectableItemBackground =
+      themeEngine.getAttributeResource(android.R.attr.selectableItemBackground)
+
+    replies!!.setBackgroundResource(selectableItemBackground)
+
     setCompact(postCellData)
 
     setOnClickListener {
@@ -190,6 +196,10 @@ class CardPostCell : ColorizableCardView,
 
       return@setOnLongClickListener false
     })
+
+    replies!!.setOnThrottlingClickListener {
+      callback?.onPreviewThreadPostsClicked(postCellData.post)
+    }
   }
 
   private fun bindPost(postCellData: PostCellData) {

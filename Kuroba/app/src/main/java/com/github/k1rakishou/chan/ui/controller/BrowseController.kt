@@ -32,7 +32,6 @@ import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.presenter.BrowsePresenter
@@ -83,11 +82,7 @@ class BrowseController(
   @Inject
   lateinit var historyNavigationManager: HistoryNavigationManager
   @Inject
-  lateinit var dialogFactory: DialogFactory
-  @Inject
   lateinit var siteResolver: SiteResolver
-  @Inject
-  lateinit var chanThreadViewableInfoManager: ChanThreadViewableInfoManager
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
@@ -652,15 +647,6 @@ class BrowseController(
     }
   }
 
-  override suspend fun showPostInExternalThread(postDescriptor: PostDescriptor) {
-    // no-op, we shouldn't be able to open external threads from catalog because we can't click
-    // links when in catalog and stuff.
-  }
-
-  override suspend fun openExternalThread(postDescriptor: PostDescriptor) {
-    // no-op
-  }
-
   override suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean) {
     mainScope.launch(Dispatchers.Main.immediate) {
       Logger.d(TAG, "showBoard($descriptor, $animated)")
@@ -676,6 +662,22 @@ class BrowseController(
 
       setBoard(descriptor)
       initialized = true
+    }
+  }
+
+  override suspend fun showPostsInExternalThread(
+    postDescriptor: PostDescriptor,
+    isPreviewingCatalogThread: Boolean
+  ) {
+    showPostsInExternalThreadHelper.showPostsInExternalThread(postDescriptor, isPreviewingCatalogThread)
+  }
+
+  override suspend fun openExternalThread(postDescriptor: PostDescriptor) {
+    val descriptor = chanDescriptor
+      ?: return
+
+    openExternalThreadHelper.openExternalThread(descriptor, postDescriptor) { threadDescriptor ->
+      mainScope.launch { showThread(descriptor = threadDescriptor, animated = true) }
     }
   }
 

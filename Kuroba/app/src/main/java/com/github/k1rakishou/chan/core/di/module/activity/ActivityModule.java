@@ -134,4 +134,5 @@ public class ActivityModule {
     public GlobalViewStateManager provideViewFlagsStorage() {
         return new GlobalViewStateManager();
     }
+
 }

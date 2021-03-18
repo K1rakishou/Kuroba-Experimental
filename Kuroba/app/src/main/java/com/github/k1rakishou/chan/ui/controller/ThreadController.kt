@@ -23,17 +23,23 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout.OnRefreshListener
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibility
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityListener
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
 import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.controller.ImageViewerController.ImageViewerCallback
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController.ToolbarSearchCallback
+import com.github.k1rakishou.chan.ui.helper.OpenExternalThreadHelper
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage
+import com.github.k1rakishou.chan.ui.helper.ShowPostsInExternalThreadHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
@@ -75,8 +81,19 @@ abstract class ThreadController(
   lateinit var applicationVisibilityManager: ApplicationVisibilityManager
   @Inject
   lateinit var filterOutHiddenImagesUseCase: FilterOutHiddenImagesUseCase
+  @Inject
+  lateinit var chanThreadManager: ChanThreadManager
+  @Inject
+  lateinit var dialogFactory: DialogFactory
+  @Inject
+  lateinit var chanThreadViewableInfoManager: ChanThreadViewableInfoManager
+  @Inject
+  lateinit var threadFollowHistoryManager: ThreadFollowHistoryManager
 
   protected lateinit var threadLayout: ThreadLayout
+  protected lateinit var showPostsInExternalThreadHelper: ShowPostsInExternalThreadHelper
+  protected lateinit var openExternalThreadHelper: OpenExternalThreadHelper
+
   private lateinit var swipeRefreshLayout: KurobaSwipeRefreshLayout
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
@@ -113,6 +130,25 @@ abstract class ThreadController(
     applicationVisibilityManager.addListener(this)
 
     toolbar?.addToolbarHeightUpdatesCallback(this)
+
+    showPostsInExternalThreadHelper = ShowPostsInExternalThreadHelper(
+      context = context,
+      scope = mainScope,
+      postPopupHelper = threadLayout.popupHelper,
+      chanThreadManager = chanThreadManager,
+      presentControllerFunc = { controller -> presentController(controller) },
+      showAvailableArchivesListFunc = { postDescriptor -> showAvailableArchivesList(postDescriptor) },
+      showToastFunc = { message -> showToast(message) }
+    )
+
+    openExternalThreadHelper = OpenExternalThreadHelper(
+      context = context,
+      postPopupHelper = threadLayout.popupHelper,
+      chanThreadManager = chanThreadManager,
+      dialogFactory = dialogFactory,
+      chanThreadViewableInfoManager = chanThreadViewableInfoManager,
+      threadFollowHistoryManager = threadFollowHistoryManager
+    )
 
     onThemeChanged()
     themeEngine.addListener(this)

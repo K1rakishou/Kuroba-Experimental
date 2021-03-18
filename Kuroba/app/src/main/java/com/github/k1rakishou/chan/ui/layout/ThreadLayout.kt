@@ -183,6 +183,9 @@ class ThreadLayout @JvmOverloads constructor(
   override val currentPosition: IntArray?
     get() = threadListLayout.indexAndTop
 
+  val popupHelper: PostPopupHelper
+    get() = postPopupHelper
+
   val presenterOrNull: ThreadPresenter?
     get() {
       if (!::presenter.isInitialized) {
@@ -538,7 +541,19 @@ class ThreadLayout @JvmOverloads constructor(
   override suspend fun showPostInExternalThread(postDescriptor: PostDescriptor) {
     Logger.d(TAG, "showPostInExternalThread($postDescriptor)")
 
-    callback.showPostInExternalThread(postDescriptor)
+    callback.showPostsInExternalThread(
+      postDescriptor = postDescriptor,
+      isPreviewingCatalogThread = false
+    )
+  }
+
+  override suspend fun previewCatalogThread(postDescriptor: PostDescriptor) {
+    Logger.d(TAG, "showPostInExternalThread($postDescriptor)")
+
+    callback.showPostsInExternalThread(
+      postDescriptor = postDescriptor,
+      isPreviewingCatalogThread = true
+    )
   }
 
   override suspend fun openExternalThread(postDescriptor: PostDescriptor) {
@@ -560,6 +575,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun showPostsPopup(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
     postAdditionalData: PostCellData.PostAdditionalData,
     postDescriptor: PostDescriptor?,
     posts: List<ChanPost>
@@ -570,7 +586,7 @@ class ThreadLayout @JvmOverloads constructor(
       currentFocus.clearFocus()
     }
 
-    postPopupHelper.showPosts(postAdditionalData, postDescriptor, posts)
+    postPopupHelper.showPosts(threadDescriptor, postAdditionalData, postDescriptor, posts)
   }
 
   override fun hidePostsPopup() {
@@ -869,6 +885,14 @@ class ThreadLayout @JvmOverloads constructor(
     return threadListLayout.currentSpanCount
   }
 
+  override fun getTopPostRepliesDataOrNull(): PostPopupHelper.RepliesData? {
+    if (!::postPopupHelper.isInitialized) {
+      return null
+    }
+
+    return postPopupHelper.topOrNull()
+  }
+
   override fun showNewPostsNotification(show: Boolean, newPostsCount: Int) {
     if (!show) {
       dismissSnackbar()
@@ -1084,7 +1108,7 @@ class ThreadLayout @JvmOverloads constructor(
     val toolbar: Toolbar?
 
     suspend fun showThread(descriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
-    suspend fun showPostInExternalThread(postDescriptor: PostDescriptor)
+    suspend fun showPostsInExternalThread(postDescriptor: PostDescriptor, isPreviewingCatalogThread: Boolean)
     suspend fun openExternalThread(postDescriptor: PostDescriptor)
     suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean)
     suspend fun setBoard(descriptor: BoardDescriptor, animated: Boolean)

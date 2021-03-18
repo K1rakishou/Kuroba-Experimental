@@ -117,7 +117,13 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     private var processed = false
 
     override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
-      quoteMenuItem = menu.add(Menu.NONE, R.id.post_selection_action_quote, 0, R.string.post_quote)
+      val threadPreviewMode = postCellData?.threadPreviewMode
+        ?: return false
+
+      if (!threadPreviewMode) {
+        quoteMenuItem = menu.add(Menu.NONE, R.id.post_selection_action_quote, 0, R.string.post_quote)
+      }
+
       webSearchItem = menu.add(Menu.NONE, R.id.post_selection_action_search, 1, R.string.post_web_search)
       return true
     }
@@ -338,19 +344,27 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       postCellRootContainer.setOnClickListener(null)
     } else {
       replies.setOnThrottlingClickListener {
-        if (replies.visibility == View.VISIBLE && postCellData.threadMode) {
-          postCellData.post.let { post ->
+        if (replies.visibility == View.VISIBLE) {
+          val post = postCellData.post
+
+          if (postCellData.threadMode) {
             if (post.repliesFromCount > 0) {
               postCellCallback?.onShowPostReplies(post)
             }
+          } else {
+            postCellCallback?.onPreviewThreadPostsClicked(post)
           }
         }
       }
 
-      postCellRootContainer.setOnLongClickListener {
-        requestParentDisallowInterceptTouchEvents(true)
-        showPostFloatingListMenu(postCellData)
-        return@setOnLongClickListener true
+      if (postCellData.isSelectionMode || postCellData.threadPreviewMode) {
+        postCellRootContainer.setOnLongClickListener(null)
+      } else {
+        postCellRootContainer.setOnLongClickListener {
+          requestParentDisallowInterceptTouchEvents(true)
+          showPostFloatingListMenu(postCellData)
+          return@setOnLongClickListener true
+        }
       }
 
       postCellRootContainer.setOnThrottlingClickListener {
@@ -387,7 +401,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   }
 
   private fun showPostFloatingListMenu(postCellData: PostCellData) {
-    if (postCellData.isSelectionMode) {
+    if (postCellData.isSelectionMode || postCellData.threadPreviewMode) {
       return
     }
 
@@ -410,7 +424,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       replies.isClickable = false
     } else {
       setPostLinkableListener(postCellData, true)
-      replies.isClickable = postCellData.threadMode
+      replies.isClickable = true
     }
 
     bindBackgroundResources(postCellData)
@@ -464,12 +478,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
         themeEngine.getAttributeResource(android.R.attr.selectableItemBackground)
 
       postCellRootContainer.setBackgroundResource(selectableItemBackground)
-
-      if (postCellData.threadMode) {
-        replies.setBackgroundResource(selectableItemBackground)
-      } else {
-        replies.setBackgroundResource(0)
-      }
+      replies.setBackgroundResource(selectableItemBackground)
     }
   }
 
@@ -705,7 +714,8 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       if (isThreadMode) {
         comment.customMovementMethod(commentMovementMethod)
 
-        if (ChanSettings.tapNoReply.get()) {
+        if (ChanSettings.tapNoReply.get()
+          && postCellData.postViewMode == PostCellData.PostViewMode.Normal) {
           title.movementMethod = titleMovementMethod
         }
 

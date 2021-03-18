@@ -90,6 +90,8 @@ data class PostCellData(
     get() = postViewMode != PostViewMode.Normal
   val isSelectionMode: Boolean
     get() = postViewMode == PostViewMode.PostSelection
+  val threadPreviewMode: Boolean
+    get() = postViewMode == PostViewMode.ExternalPostsPopup
   val markedNo: Long
     get() = markedPostNo ?: -1
 

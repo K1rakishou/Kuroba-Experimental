@@ -2,6 +2,7 @@ package com.github.k1rakishou.model.data.thread
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.common.MurmurHashUtils
+import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
@@ -651,6 +652,37 @@ class ChanThread(
         prevPostNo = chanPost1.postNo()
       }
     }
+  }
+
+  fun slicePosts(vararg rangesArg: IntRange): List<ChanPost> {
+    require(rangesArg.isNotEmpty()) { "ranges must not be empty" }
+
+    val ranges = rangesArg.toList()
+    val totalCount = ranges.sumBy { range -> Math.max(0, range.last - range.first) }
+
+    if (totalCount == 0) {
+      return emptyList()
+    }
+
+    val duplicatesSet = hashSetWithCap<PostDescriptor>(totalCount)
+    val resultList = mutableListWithCap<ChanPost>(totalCount)
+
+    lock.read {
+      ranges.forEach { range ->
+        range.forEach { index ->
+          val post = threadPosts.getOrNull(index)
+            ?: return@forEach
+
+          if (!duplicatesSet.add(post.postDescriptor)) {
+            return@forEach
+          }
+
+          resultList += post
+        }
+      }
+    }
+
+    return resultList
   }
 
   companion object {

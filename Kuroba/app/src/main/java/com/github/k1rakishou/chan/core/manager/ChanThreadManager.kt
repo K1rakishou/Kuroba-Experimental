@@ -243,6 +243,22 @@ class ChanThreadManager(
     return chanThreadsCache.getThread(postDescriptor.threadDescriptor())?.getPost(postDescriptor)
   }
 
+  fun getCatalogPreviewPosts(threadDescriptor: ChanDescriptor.ThreadDescriptor): List<ChanPost> {
+    val chanThread = chanThreadsCache.getThread(threadDescriptor)
+      ?: return emptyList()
+
+    val postsCount = chanThread.postsCount
+
+    if (postsCount < CATALOG_PREVIEW_POSTS_COUNT) {
+      return chanThread.slicePosts(0..CATALOG_PREVIEW_POSTS_COUNT)
+    }
+
+    return chanThread.slicePosts(
+      0 until 1,
+      (postsCount - CATALOG_PREVIEW_POSTS_COUNT)..postsCount
+    )
+  }
+
   fun <T> iteratePostIndexes(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     input: Collection<T>,
@@ -392,5 +408,6 @@ class ChanThreadManager(
 
   companion object {
     private const val TAG = "ChanThreadManager"
+    private const val CATALOG_PREVIEW_POSTS_COUNT = 6 // Original post + 5 last posts
   }
 }

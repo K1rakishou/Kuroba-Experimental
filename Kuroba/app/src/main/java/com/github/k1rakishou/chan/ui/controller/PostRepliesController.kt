@@ -184,16 +184,16 @@ class PostRepliesController(
     adapter.onPostUpdated(postDescriptor, results)
   }
 
-  fun setPostRepliesData(chanDescriptor: ChanDescriptor, data: RepliesData) {
-    rendezvousCoroutineExecutor.post { displayData(chanDescriptor, data) }
+  fun setPostRepliesData(threadDescriptor: ChanDescriptor.ThreadDescriptor, data: RepliesData) {
+    rendezvousCoroutineExecutor.post { displayData(threadDescriptor, data) }
   }
 
   fun scrollTo(displayPosition: Int) {
     repliesView?.smoothScrollToPosition(displayPosition)
   }
 
-  private suspend fun displayData(chanDescriptor: ChanDescriptor, data: RepliesData) {
-    storeScrollPosition()
+  private suspend fun displayData(threadDescriptor: ChanDescriptor.ThreadDescriptor, data: RepliesData) {
+    storeScrollPosition(threadDescriptor, data)
     displayingData = data
 
     val dataView = AppModuleAndroidUtils.inflate(context, R.layout.layout_post_replies_bottombuttons)
@@ -213,7 +213,7 @@ class PostRepliesController(
     val repliesAdapter = RepliesAdapter(
       data.postAdditionalData,
       presenter,
-      chanDescriptor,
+      threadDescriptor,
       data.forPostWithDescriptor,
       chanThreadViewableInfoManager,
       postFilterManager,
@@ -232,17 +232,20 @@ class PostRepliesController(
 
     first = false
 
-    restoreScrollPosition(data.forPostWithDescriptor?.postNo)
+    restoreScrollPosition(threadDescriptor, data)
     onThemeChanged()
   }
 
-  private fun storeScrollPosition() {
-    if (displayingData == null || repliesView == null) {
+  private fun storeScrollPosition(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    repliesData: RepliesData
+  ) {
+    if (repliesView == null) {
       return
     }
 
-    val postNo = displayingData!!.forPostWithDescriptor?.postNo
-      ?: return
+    val postNo = repliesData.forPostWithDescriptor?.postNo
+      ?: threadDescriptor.threadNo
 
     scrollPositionCache.put(
       postNo,
@@ -250,10 +253,12 @@ class PostRepliesController(
     )
   }
 
-  private fun restoreScrollPosition(postNo: Long?) {
-    if (postNo == null) {
-      return
-    }
+  private fun restoreScrollPosition(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    repliesData: RepliesData
+  ) {
+    val postNo = repliesData.forPostWithDescriptor?.postNo
+      ?: threadDescriptor.threadNo
 
     val scrollPosition = scrollPositionCache[postNo]
       ?: return
@@ -364,5 +369,10 @@ class PostRepliesController(
 
   companion object {
     private val scrollPositionCache = LruCache<Long, IndexAndTop>(128)
+
+    @JvmStatic
+    fun clearScrollPositionCache() {
+      scrollPositionCache.evictAll()
+    }
   }
 }

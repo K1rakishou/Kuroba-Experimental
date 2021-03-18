@@ -49,6 +49,7 @@ import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
+import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutPresenterCallback
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
@@ -985,6 +986,12 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
+    val topRepliesData = threadPresenterCallback?.getTopPostRepliesDataOrNull()
+    if (topRepliesData != null &&
+      topRepliesData.postAdditionalData.postViewMode == PostCellData.PostViewMode.ExternalPostsPopup) {
+      return
+    }
+
     serializedCoroutineExecutor.post {
       val newThreadDescriptor = currentChanDescriptor!!.toThreadDescriptor(postDescriptor.postNo)
       highlightPost(postDescriptor)
@@ -994,7 +1001,7 @@ class ThreadPresenter @Inject constructor(
   }
 
   override fun onGoToPostButtonClicked(post: ChanPost) {
-    if (!isBound || currentChanDescriptor is ChanDescriptor.CatalogDescriptor) {
+    if (!isBound) {
       return
     }
 
@@ -1384,6 +1391,7 @@ class ThreadPresenter @Inject constructor(
           }
 
           threadPresenterCallback?.showPostsPopup(
+            currentThreadDescriptor,
             PostCellData.PostAdditionalData.NoAdditionalData(postViewMode),
             post.postDescriptor,
             listOf(linked)
@@ -1579,10 +1587,17 @@ class ThreadPresenter @Inject constructor(
       }
 
       threadPresenterCallback?.showPostsPopup(
+        threadDescriptor,
         PostCellData.PostAdditionalData.NoAdditionalData(postViewMode),
         post.postDescriptor,
         posts
       )
+    }
+  }
+
+  override fun onPreviewThreadPostsClicked(post: ChanPost) {
+    serializedCoroutineExecutor.post {
+      threadPresenterCallback?.previewCatalogThread(post.postDescriptor)
     }
   }
 
@@ -1992,12 +2007,14 @@ class ThreadPresenter @Inject constructor(
     fun clipboardPost(post: ChanPost)
     suspend fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showPostInExternalThread(postDescriptor: PostDescriptor)
+    suspend fun previewCatalogThread(postDescriptor: PostDescriptor)
     suspend fun openExternalThread(postDescriptor: PostDescriptor)
     suspend fun showBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
     suspend fun setBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
     fun openLink(link: String)
     fun openReportView(post: ChanPost)
     fun showPostsPopup(
+      threadDescriptor: ChanDescriptor.ThreadDescriptor,
       postAdditionalData: PostCellData.PostAdditionalData,
       postDescriptor: PostDescriptor?,
       posts: List<ChanPost>
@@ -2057,6 +2074,7 @@ class ThreadPresenter @Inject constructor(
     fun showToolbar()
     fun showAvailableArchivesList(postDescriptor: PostDescriptor)
     fun currentSpanCount(): Int
+    fun getTopPostRepliesDataOrNull(): PostPopupHelper.RepliesData?
   }
 
   companion object {
