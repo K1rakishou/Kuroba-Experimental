@@ -422,28 +422,23 @@ class ThreadPresenter @Inject constructor(
   }
 
   fun openThreadInArchive(
-    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    postDescriptor: PostDescriptor,
     archiveDescriptor: ArchiveDescriptor
   ) {
-    Logger.d(TAG, "openThreadInArchive($threadDescriptor, $archiveDescriptor)")
+    Logger.d(TAG, "openThreadInArchive($postDescriptor, $archiveDescriptor)")
 
-    val archiveThreadDescriptor = ChanDescriptor.ThreadDescriptor.create(
-      siteName = archiveDescriptor.siteDescriptor.siteName,
-      boardCode = threadDescriptor.boardDescriptor.boardCode,
-      threadNo = threadDescriptor.threadNo,
-    )
+    val threadDescriptor = postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
+      ?: return
 
     launch {
-      // Take the current thread's scroll position and set it for the thread we are about to open
-      val currentThreadIndexAndTop = chanThreadViewableInfoManager.getIndexAndTop(threadDescriptor)
-      if (currentThreadIndexAndTop != null) {
-        chanThreadViewableInfoManager.update(archiveThreadDescriptor, createEmptyWhenNull = true) { chanThreadViewableInfo ->
-          chanThreadViewableInfo.listViewIndex = currentThreadIndexAndTop.index
-          chanThreadViewableInfo.listViewTop = currentThreadIndexAndTop.top
-        }
-      }
+      val archivePostDescriptor = PostDescriptor.create(
+        siteName = archiveDescriptor.siteDescriptor.siteName,
+        boardCode = threadDescriptor.boardDescriptor.boardCode,
+        threadNo = threadDescriptor.threadNo,
+        postNo = postDescriptor.postNo
+      )
 
-      threadPresenterCallback?.openThreadInArchive(archiveThreadDescriptor)
+      threadPresenterCallback?.openThreadInArchive(archivePostDescriptor)
     }
   }
 
@@ -1384,8 +1379,10 @@ class ThreadPresenter @Inject constructor(
         return@post
       }
 
+      val currentThreadDescriptor = post.postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
+        ?: return@post
+
       val isExternalThread = post.postDescriptor.descriptor != currentChanDescriptor
-      val currentThreadDescriptor = post.postDescriptor.descriptor
       val siteName = currentThreadDescriptor.siteName()
 
       if (ChanSettings.verboseLogs.get()) {
@@ -1502,7 +1499,7 @@ class ThreadPresenter @Inject constructor(
           return@post
         }
 
-        threadPresenterCallback?.showAvailableArchivesList(threadDescriptor)
+        threadPresenterCallback?.showAvailableArchivesList(threadDescriptor.toOriginalPostDescriptor())
         return@post
       }
 
@@ -1521,20 +1518,14 @@ class ThreadPresenter @Inject constructor(
           return@post
         }
 
-        val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
-          archiveDescriptor.domain,
-          archiveThreadLink.board,
-          archiveThreadLink.threadId
+        val archivePostDescriptor = PostDescriptor.create(
+          siteName = archiveDescriptor.siteDescriptor.siteName,
+          boardCode = currentThreadDescriptor.boardDescriptor().boardCode,
+          threadNo = currentThreadDescriptor.threadNo,
+          postNo = archiveThreadLink.postIdOrThreadId()
         )
 
-        val postNo = archiveThreadLink.postId
-        if (postNo != null) {
-          chanThreadViewableInfoManager.update(threadDescriptor, createEmptyWhenNull = true) { chanThreadViewableInfo ->
-            chanThreadViewableInfo.markedPostNo = postNo
-          }
-        }
-
-        threadPresenterCallback?.openThreadInArchive(threadDescriptor)
+        threadPresenterCallback?.openThreadInArchive(archivePostDescriptor)
         return@post
       }
     }
@@ -2017,7 +2008,7 @@ class ThreadPresenter @Inject constructor(
     suspend fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showPostInExternalThread(postDescriptor: PostDescriptor)
     suspend fun openExternalThread(postDescriptor: PostDescriptor)
-    suspend fun openThreadInArchive(threadDescriptor: ChanDescriptor.ThreadDescriptor)
+    suspend fun openThreadInArchive(postDescriptor: PostDescriptor)
     suspend fun showBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
     suspend fun setBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
     fun openLink(link: String)
@@ -2080,7 +2071,7 @@ class ThreadPresenter @Inject constructor(
     fun onPostUpdated(postDescriptor: PostDescriptor, results: List<LoaderResult>)
     fun presentController(controller: Controller, animate: Boolean)
     fun showToolbar()
-    fun showAvailableArchivesList(threadDescriptor: ChanDescriptor.ThreadDescriptor)
+    fun showAvailableArchivesList(postDescriptor: PostDescriptor)
     fun currentSpanCount(): Int
   }
 

@@ -70,6 +70,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.util.ChanPostUtils
 import io.reactivex.android.schedulers.AndroidSchedulers
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -214,7 +215,7 @@ open class ViewThreadController(
         ACTION_OPEN_THREAD_IN_ARCHIVE,
         R.string.action_open_thread_in_archive,
         archivesManager.supports(threadDescriptor)
-      ) { showAvailableArchives(threadDescriptor) }
+      ) { showAvailableArchives(threadDescriptor.toOriginalPostDescriptor()) }
       .withSubItem(
         ACTION_OPEN_BROWSER,
         R.string.action_open_browser
@@ -320,8 +321,11 @@ open class ViewThreadController(
     )
   }
 
-  private fun showAvailableArchives(descriptor: ThreadDescriptor) {
-    Logger.d(TAG, "showAvailableArchives($descriptor)")
+  private fun showAvailableArchives(postDescriptor: PostDescriptor) {
+    Logger.d(TAG, "showAvailableArchives($postDescriptor)")
+
+    val descriptor = postDescriptor.descriptor as? ThreadDescriptor
+      ?: return
 
     val supportedArchiveDescriptors = archivesManager.getSupportedArchiveDescriptors(descriptor)
       .filter { archiveDescriptor ->
@@ -362,7 +366,7 @@ open class ViewThreadController(
         val archiveDescriptor = (clickedItem.key as? ArchiveDescriptor)
           ?: return@FloatingListMenuController
 
-        threadLayout.presenter.openThreadInArchive(descriptor, archiveDescriptor)
+        threadLayout.presenter.openThreadInArchive(postDescriptor, archiveDescriptor)
       }
     )
 
@@ -481,49 +485,67 @@ open class ViewThreadController(
     }
 
     val cancellationFlag = AtomicBoolean(false)
-
     val loadingController = LoadingViewController(context, true, "Loading thread '${threadDescriptor}'")
-    loadingController.enableBack { cancellationFlag.set(true) }
-    presentController(loadingController)
 
-    chanThreadManager.loadThreadOrCatalog(
-      chanDescriptor = threadDescriptor,
-      requestNewPostsFromServer = true,
-      chanLoadOptions = ChanLoadOptions.RetainAll,
-      chanCacheOptions = ChanCacheOptions.StoreEverywhere,
-      chanReadOptions = ChanReadOptions.default()
-    ) { threadLoadResult ->
-      loadingController.stopPresenting()
+    val job = mainScope.launch {
+      coroutineContext[Job]?.invokeOnCompletion {
+        loadingController.stopPresenting()
 
-      if (cancellationFlag.get()) {
-        showToast("'${threadDescriptor}' thread loading canceled")
-        return@loadThreadOrCatalog
+        if (cancellationFlag.get()) {
+          showToast("'${threadDescriptor}' thread loading canceled")
+        }
       }
 
-      val postToShow = chanThreadManager.getPost(postDescriptor)
-      if (postToShow == null) {
-        showToast("Failed to load external thread '$threadDescriptor', no post ${postDescriptor} in the cache")
-        return@loadThreadOrCatalog
-      }
+      chanThreadManager.loadThreadOrCatalog(
+        chanDescriptor = threadDescriptor,
+        requestNewPostsFromServer = true,
+        chanLoadOptions = ChanLoadOptions.RetainAll,
+        chanCacheOptions = ChanCacheOptions.StoreEverywhere,
+        chanReadOptions = ChanReadOptions.default()
+      ) { threadLoadResult ->
+        loadingController.stopPresenting()
 
-      when (threadLoadResult) {
-        is ThreadLoadResult.Error -> {
-          Logger.e(TAG, "Failed to load external thread '$threadDescriptor'", threadLoadResult.exception)
-
-          showToast("Failed to load external thread '$threadDescriptor', " +
-            "error: ${threadLoadResult.exception.errorMessageOrClassName()}")
-
+        if (cancellationFlag.get()) {
+          showToast("'${threadDescriptor}' thread loading canceled")
           return@loadThreadOrCatalog
         }
-        is ThreadLoadResult.Loaded -> {
-          threadLayout.showPostsPopup(
-            PostCellData.PostAdditionalData.NoAdditionalData(PostCellData.PostViewMode.ExternalPostsPopup),
-            null,
-            listOf(postToShow)
-          )
+
+        val postToShow = chanThreadManager.getPost(postDescriptor)
+        if (postToShow == null) {
+          showAvailableArchivesList(postDescriptor)
+          return@loadThreadOrCatalog
+        }
+
+        when (threadLoadResult) {
+          is ThreadLoadResult.Error -> {
+            if (threadLoadResult.exception.isCoroutineCancellationError()) {
+              return@loadThreadOrCatalog
+            }
+
+            Logger.e(TAG, "Failed to load external thread '$threadDescriptor'", threadLoadResult.exception)
+
+            showToast("Failed to load external thread '$threadDescriptor', " +
+              "error: ${threadLoadResult.exception.errorMessageOrClassName()}")
+
+            return@loadThreadOrCatalog
+          }
+          is ThreadLoadResult.Loaded -> {
+            threadLayout.showPostsPopup(
+              PostCellData.PostAdditionalData.NoAdditionalData(PostCellData.PostViewMode.ExternalPostsPopup),
+              null,
+              listOf(postToShow)
+            )
+          }
         }
       }
     }
+
+    loadingController.enableBack {
+      cancellationFlag.set(true)
+      job.cancel()
+    }
+
+    presentController(loadingController)
   }
 
   override suspend fun openExternalThread(postDescriptor: PostDescriptor) {
@@ -566,9 +588,10 @@ open class ViewThreadController(
           Logger.d(TAG, "openExternalThread() loading external thread $postDescriptor " +
             "from opened thread $currentThreadDescriptor")
 
-          chanThreadViewableInfoManager.update(threadToOpenDescriptor, createEmptyWhenNull = true) { chanThreadViewableInfo ->
-            chanThreadViewableInfo.markedPostNo = postDescriptor.postNo
-          }
+          chanThreadViewableInfoManager.update(
+            threadToOpenDescriptor,
+            createEmptyWhenNull = true
+          ) { chanThreadViewableInfo -> chanThreadViewableInfo.markedPostNo = postDescriptor.postNo }
 
           threadFollowHistoryManager.pushThreadDescriptor(currentThreadDescriptor)
           loadThread(threadToOpenDescriptor, openingExternalThread = true)
@@ -577,9 +600,17 @@ open class ViewThreadController(
     )
   }
 
-  override suspend fun openThreadInArchive(threadToOpenDescriptor: ThreadDescriptor) {
+  override suspend fun openThreadInArchive(postDescriptor: PostDescriptor) {
     mainScope.launch(Dispatchers.Main.immediate) {
-      Logger.d(TAG, "openThreadInArchive($threadToOpenDescriptor)")
+      Logger.d(TAG, "openThreadInArchive($postDescriptor)")
+
+      val threadToOpenDescriptor = postDescriptor.descriptor as? ThreadDescriptor
+        ?: return@launch
+
+      chanThreadViewableInfoManager.update(
+        threadToOpenDescriptor,
+        createEmptyWhenNull = true
+      ) { chanThreadViewableInfo -> chanThreadViewableInfo.markedPostNo = postDescriptor.postNo }
 
       threadFollowHistoryManager.pushThreadDescriptor(threadDescriptor)
       loadThread(threadToOpenDescriptor, openingExternalThread = true)
@@ -789,8 +820,8 @@ open class ViewThreadController(
     showToast(R.string.thread_follow_history_has_been_cleared)
   }
 
-  override fun showAvailableArchivesList(threadDescriptor: ThreadDescriptor) {
-    showAvailableArchives(threadDescriptor)
+  override fun showAvailableArchivesList(postDescriptor: PostDescriptor) {
+    showAvailableArchives(postDescriptor)
   }
 
   override fun onMenuShown() {

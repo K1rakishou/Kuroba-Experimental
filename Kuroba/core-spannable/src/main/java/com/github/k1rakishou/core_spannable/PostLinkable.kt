@@ -177,6 +177,10 @@ open class PostLinkable(
       val postId: Long?
     ) : Value() {
 
+      fun postIdOrThreadId(): Long {
+        return postId ?: threadId
+      }
+
       fun urlText(): String {
         return buildString {
           append(">>>")

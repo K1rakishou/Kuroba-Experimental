@@ -323,12 +323,12 @@ abstract class Controller(@JvmField var context: Context) {
     controller.onCreate()
     controller.attachToView(contentView)
     controller.onShow()
+    (context as StartActivity).pushController(controller)
 
     if (animated) {
       val transition = FadeInTransition()
       transition.to = controller
       transition.setCallback {
-        (context as StartActivity).pushController(controller)
         controllerNavigationManager.onControllerPresented(controller)
       }
       transition.perform()
@@ -336,7 +336,6 @@ abstract class Controller(@JvmField var context: Context) {
       return
     }
 
-    (context as StartActivity).pushController(controller)
     controllerNavigationManager.onControllerPresented(controller)
   }
 
@@ -353,6 +352,11 @@ abstract class Controller(@JvmField var context: Context) {
   }
 
   open fun stopPresenting(animated: Boolean) {
+    val startActivity = (context as StartActivity)
+    if (!startActivity.containsController(this)) {
+      return
+    }
+
     if (animated) {
       val transition = FadeOutTransition()
       transition.from = this
@@ -362,7 +366,7 @@ abstract class Controller(@JvmField var context: Context) {
       finishPresenting()
     }
 
-    (context as StartActivity).popController(this)
+    startActivity.popController(this)
     presentedByController?.presentingThisController = null
     controllerNavigationManager.onControllerUnpresented(this)
   }

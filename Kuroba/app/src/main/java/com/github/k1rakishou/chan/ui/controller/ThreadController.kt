@@ -358,7 +358,7 @@ abstract class ThreadController(
     // no-op
   }
 
-  override fun showAvailableArchivesList(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+  override fun showAvailableArchivesList(postDescriptor: PostDescriptor) {
     // no-op
   }
 

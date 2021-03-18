@@ -273,9 +273,9 @@ class ThreadLayout @JvmOverloads constructor(
     if (v === errorRetryButton) {
       presenter.normalLoad()
     } else if (v === openThreadInArchiveButton) {
-      val descriptor = presenter.currentChanDescriptor
-      if (descriptor is ChanDescriptor.ThreadDescriptor) {
-        callback.showAvailableArchivesList(descriptor)
+      val threadDescriptor = presenter.currentChanDescriptor
+      if (threadDescriptor is ChanDescriptor.ThreadDescriptor) {
+        callback.showAvailableArchivesList(threadDescriptor.toOriginalPostDescriptor())
       }
     } else if (v === replyButton) {
       // Give some time for the keyboard to show up because we need keyboards' insets for proper
@@ -547,10 +547,10 @@ class ThreadLayout @JvmOverloads constructor(
     callback.openExternalThread(postDescriptor)
   }
 
-  override suspend fun openThreadInArchive(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    Logger.d(TAG, "openThreadInArchive($threadDescriptor)")
+  override suspend fun openThreadInArchive(postDescriptor: PostDescriptor) {
+    Logger.d(TAG, "openThreadInArchive($postDescriptor)")
 
-    callback.openThreadInArchive(threadDescriptor)
+    callback.openThreadInArchive(postDescriptor)
   }
 
   override suspend fun showBoard(boardDescriptor: BoardDescriptor, animated: Boolean) {
@@ -867,8 +867,8 @@ class ThreadLayout @JvmOverloads constructor(
     }, SCROLL_TO_BOTTOM_DEBOUNCE_TIMEOUT_MS)
   }
 
-  override fun showAvailableArchivesList(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    callback.showAvailableArchivesList(threadDescriptor)
+  override fun showAvailableArchivesList(postDescriptor: PostDescriptor) {
+    callback.showAvailableArchivesList(postDescriptor)
   }
 
   override fun currentSpanCount(): Int {
@@ -1092,7 +1092,7 @@ class ThreadLayout @JvmOverloads constructor(
     suspend fun showThread(descriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
     suspend fun showPostInExternalThread(postDescriptor: PostDescriptor)
     suspend fun openExternalThread(postDescriptor: PostDescriptor)
-    suspend fun openThreadInArchive(threadToOpenDescriptor: ChanDescriptor.ThreadDescriptor)
+    suspend fun openThreadInArchive(postDescriptor: PostDescriptor)
     suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean)
     suspend fun setBoard(descriptor: BoardDescriptor, animated: Boolean)
 
@@ -1113,7 +1113,7 @@ class ThreadLayout @JvmOverloads constructor(
     fun openFilterForType(type: FilterType, filterText: String?)
     fun threadBackPressed(): Boolean
     fun threadBackLongPressed()
-    fun showAvailableArchivesList(threadDescriptor: ChanDescriptor.ThreadDescriptor)
+    fun showAvailableArchivesList(postDescriptor: PostDescriptor)
   }
 
   companion object {

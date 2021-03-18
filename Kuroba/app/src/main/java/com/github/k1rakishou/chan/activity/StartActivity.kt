@@ -576,7 +576,11 @@ class StartActivity : AppCompatActivity(),
     return null
   }
 
-  fun popController(controller: Controller?) {
+  fun containsController(controller: Controller): Boolean {
+    return stack.contains(controller)
+  }
+
+  fun popController(controller: Controller) {
     // we permit removal of things not on the top of the stack, but everything gets shifted down
     // so the top of the stack remains the same
     stack.remove(controller)

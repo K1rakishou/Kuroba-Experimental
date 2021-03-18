@@ -661,7 +661,7 @@ class BrowseController(
     // no-op
   }
 
-  override suspend fun openThreadInArchive(threadToOpenDescriptor: ThreadDescriptor) {
+  override suspend fun openThreadInArchive(postDescriptor: PostDescriptor) {
     // no-op
   }
 
