@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.settings.MediaScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 
 class MediaSettingsScreen(
@@ -18,6 +19,7 @@ class MediaSettingsScreen(
 
   override suspend fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
+      buildMediaSavingSettingsGroup(),
       buildVideoSettingsGroup(),
       buildLoadingSettingsGroup(),
       buildMiscSettingsGroup()
@@ -188,6 +190,30 @@ class MediaSettingsScreen(
           topDescriptionIdFunc = { R.string.setting_video_stream },
           bottomDescriptionIdFunc = { R.string.setting_video_stream_description },
           setting = ChanSettings.videoStream
+        )
+
+        group
+      }
+    )
+  }
+
+  private fun buildMediaSavingSettingsGroup(): SettingsGroup.SettingsGroupBuilder {
+    val identifier = MediaScreen.MediaSavingGroup
+
+    return SettingsGroup.SettingsGroupBuilder(
+      groupIdentifier = identifier,
+      buildFunction = {
+        val group = SettingsGroup(
+          groupTitle = context.getString(R.string.setting_save_location),
+          groupIdentifier = identifier
+        )
+
+        group += LinkSettingV2.createBuilder(
+          context = context,
+          identifier =  MediaScreen.MediaSavingGroup.SaveLocation,
+          topDescriptionIdFunc = { R.string.setting_save_location },
+          bottomDescriptionIdFunc = { R.string.setting_save_location_description },
+          callback = {  }
         )
 
         group

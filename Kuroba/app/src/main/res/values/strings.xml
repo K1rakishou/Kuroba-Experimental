@@ -743,6 +743,11 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="setting_video_stream">Stream videos</string>
     <string name="setting_video_stream_description">Attempt to stream videos, instead of downloading them completely. (Works really bad with 4chan servers)</string>
 
+    <!-- Save location group -->
+    <string name="setting_save_location">Save location</string>
+    <string name="setting_save_location_description">Save location was moved to a different place. You need to either long click any thumbnail and then click "Download image (Show options)" or long click the \"download\" icon in image viewer.</string>
+
+
     <!-- Media loading group -->
     <string name="setting_image_auto_load">Automatically load images</string>
     <string name="setting_video_auto_load">Automatically load videos</string>

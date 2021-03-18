@@ -478,11 +478,24 @@ sealed class MediaScreen(
   IScreen,
   SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
 
+  sealed class MediaSavingGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = getGroupIdentifier()
+  ) : IGroup, MediaScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object SaveLocation : MediaSavingGroup("save_location")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = MediaScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("media_group")
+    }
+
+  }
+
   sealed class VideoGroup(
     settingsId: String,
     groupIdentifier: GroupIdentifier = getGroupIdentifier()
-  ) : IGroup,
-    MediaScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+  ) : IGroup, MediaScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
     object VideoAutoLoop : VideoGroup("video_auto_loop")
     object VideoDefaultMuted : VideoGroup("video_default_muted")
