@@ -91,6 +91,16 @@ class PostRepliesController(
       return postDescriptors
     }
 
+  private val scrollListener = object : RecyclerView.OnScrollListener() {
+    override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+      super.onScrollStateChanged(recyclerView, newState)
+
+      if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+        storeScrollPositionForVisiblePopup()
+      }
+    }
+  }
+
   override fun getLayoutId(): Int {
     return R.layout.layout_post_replies_container
   }
@@ -117,6 +127,8 @@ class PostRepliesController(
     super.onDestroy()
 
     themeEngine.removeListener(this)
+
+    repliesView?.removeOnScrollListener(scrollListener)
     repliesView?.swapAdapter(null, true)
 
     scope.cancelChildren()
@@ -193,7 +205,6 @@ class PostRepliesController(
   }
 
   private suspend fun displayData(threadDescriptor: ChanDescriptor.ThreadDescriptor, data: RepliesData) {
-    storeScrollPosition(threadDescriptor, data)
     displayingData = data
 
     val dataView = AppModuleAndroidUtils.inflate(context, R.layout.layout_post_replies_bottombuttons)
@@ -226,6 +237,7 @@ class PostRepliesController(
     repliesView!!.layoutManager = LinearLayoutManager(context)
     repliesView!!.recycledViewPool.setMaxRecycledViews(RepliesAdapter.POST_REPLY_VIEW_TYPE, 0)
     repliesView!!.adapter = repliesAdapter
+    repliesView!!.addOnScrollListener(scrollListener)
 
     loadView.setFadeDuration(if (first) 0 else 150)
     loadView.setView(dataView)
@@ -236,16 +248,17 @@ class PostRepliesController(
     onThemeChanged()
   }
 
-  private fun storeScrollPosition(
-    threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    repliesData: RepliesData
-  ) {
+  private fun storeScrollPositionForVisiblePopup() {
     if (repliesView == null) {
       return
     }
 
-    val postNo = repliesData.forPostWithDescriptor?.postNo
-      ?: threadDescriptor.threadNo
+    val postNo = displayingData?.forPostWithDescriptor?.postNo
+      ?: displayingData?.threadDescriptor?.threadNo
+
+    if (postNo == null) {
+      return
+    }
 
     scrollPositionCache.put(
       postNo,
@@ -257,6 +270,10 @@ class PostRepliesController(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     repliesData: RepliesData
   ) {
+    if (repliesView == null) {
+      return
+    }
+
     val postNo = repliesData.forPostWithDescriptor?.postNo
       ?: threadDescriptor.threadNo
 

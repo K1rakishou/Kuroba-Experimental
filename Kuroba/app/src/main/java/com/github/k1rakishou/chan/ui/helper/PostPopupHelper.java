@@ -142,8 +142,6 @@ public class PostPopupHelper {
     }
 
     public void popAll() {
-        PostRepliesController.clearScrollPositionCache();
-
         dataQueue.clear();
         dismiss();
     }
@@ -171,6 +169,8 @@ public class PostPopupHelper {
     }
 
     private void dismiss() {
+        PostRepliesController.clearScrollPositionCache();
+
         if (presentingController != null) {
             presentingController.stopPresenting();
             presentingController = null;
