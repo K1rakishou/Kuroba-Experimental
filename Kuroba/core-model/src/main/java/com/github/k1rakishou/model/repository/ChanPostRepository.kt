@@ -230,7 +230,10 @@ class ChanPostRepository(
         )
 
         if (catalogPosts.isNotEmpty()) {
-          chanThreadsCache.putManyCatalogPostsIntoCache(catalogPosts)
+          chanThreadsCache.putManyCatalogPostsIntoCache(
+            originalPosts = catalogPosts,
+            cacheOptions = ChanCacheOptions.default()
+          )
         }
 
         return@tryWithTransaction catalogPosts
@@ -273,7 +276,10 @@ class ChanPostRepository(
         )
 
         if (catalogPostsFromDatabase.isNotEmpty()) {
-          chanThreadsCache.putManyCatalogPostsIntoCache(catalogPostsFromDatabase)
+          chanThreadsCache.putManyCatalogPostsIntoCache(
+            originalPosts = catalogPostsFromDatabase,
+            cacheOptions = ChanCacheOptions.default()
+          )
         }
 
         Logger.d(TAG, "getCatalogOriginalPosts() found ${originalPostsFromCache.size} posts in " +
@@ -311,7 +317,10 @@ class ChanPostRepository(
         )
 
         if (catalogPostsFromDatabase.isNotEmpty()) {
-          chanThreadsCache.putManyCatalogPostsIntoCache(catalogPostsFromDatabase.values.toList())
+          chanThreadsCache.putManyCatalogPostsIntoCache(
+            originalPosts = catalogPostsFromDatabase.values.toList(),
+            cacheOptions = ChanCacheOptions.default()
+          )
         }
 
         val tempMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanOriginalPost>(
@@ -350,8 +359,8 @@ class ChanPostRepository(
 
           if (postsFromDatabase.isNotEmpty()) {
             chanThreadsCache.putManyThreadPostsIntoCache(
-              postsFromDatabase,
-              ChanCacheOptions.StoreInMemory
+              posts = postsFromDatabase,
+              cacheOptions = ChanCacheOptions.default()
             )
           }
         }
@@ -382,8 +391,8 @@ class ChanPostRepository(
         }
 
         chanThreadsCache.putManyThreadPostsIntoCache(
-          postsFromDatabase,
-          ChanCacheOptions.StoreInMemory
+          posts = postsFromDatabase,
+          cacheOptions = ChanCacheOptions.default()
         )
 
         return@tryWithTransaction postsFromDatabase
@@ -478,7 +487,11 @@ class ChanPostRepository(
       return 0
     }
 
-    val postsToStoreIntoDatabase = chanThreadsCache.putManyCatalogPostsIntoCache(posts)
+    val postsToStoreIntoDatabase = chanThreadsCache.putManyCatalogPostsIntoCache(
+      originalPosts = posts,
+      cacheOptions = cacheOptions
+    )
+
     if (postsToStoreIntoDatabase.isNotEmpty()) {
       localSource.insertManyOriginalPosts(postsToStoreIntoDatabase, cacheOptions)
     }

@@ -16,6 +16,7 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.thread.ChanThread
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.model.util.ensureBackgroundThread
+import org.joda.time.Period
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
@@ -56,7 +57,10 @@ class ChanThreadsCache(
    * Inserts [originalPosts] into the memory cache by either adding them as new or updating old ones.
    * Returns a list of updated posts.
    * */
-  fun putManyCatalogPostsIntoCache(originalPosts: List<ChanOriginalPost>): List<ChanOriginalPost> {
+  fun putManyCatalogPostsIntoCache(
+    originalPosts: List<ChanOriginalPost>,
+    cacheOptions: ChanCacheOptions
+  ): List<ChanOriginalPost> {
     if (originalPosts.isEmpty()) {
       return emptyList()
     }
@@ -75,7 +79,11 @@ class ChanThreadsCache(
         val threadDescriptor = chanOriginalPost.postDescriptor.threadDescriptor()
 
         if (!chanThreads.containsKey(threadDescriptor)) {
-          chanThreads[threadDescriptor] = ChanThread(isDevBuild, threadDescriptor)
+          chanThreads[threadDescriptor] = ChanThread(
+            isDevBuild = isDevBuild,
+            threadDescriptor = threadDescriptor,
+            initialLastAccessTime = getLastThreadAccessTime(cacheOptions)
+          )
         }
 
         chanThreads[threadDescriptor]!!.setOrUpdateOriginalPost(chanOriginalPost)
@@ -115,7 +123,11 @@ class ChanThreadsCache(
       val threadDescriptor = originalPost.postDescriptor.descriptor as ChanDescriptor.ThreadDescriptor
 
       if (!chanThreads.containsKey(threadDescriptor)) {
-        chanThreads[threadDescriptor] = ChanThread(isDevBuild, threadDescriptor)
+        chanThreads[threadDescriptor] = ChanThread(
+          isDevBuild = isDevBuild,
+          threadDescriptor = threadDescriptor,
+          initialLastAccessTime = getLastThreadAccessTime(cacheOptions)
+        )
       }
 
       if (cacheOptions.canStoreInMemory()) {
@@ -314,6 +326,21 @@ class ChanThreadsCache(
     }
   }
 
+  private fun getLastThreadAccessTime(cacheOptions: ChanCacheOptions): Long {
+    val now = System.currentTimeMillis()
+
+    if (cacheOptions.canAddInFrontOfTheMemoryCache()) {
+      // This will normally add the thread at the beginning of the eviction queue (default behavior).
+      return now
+    }
+
+    // This will make it so that this thread will be evicted first on the next eviction routine
+    // execution. This is needed for thread previewing to work correctly. If the user then opens this
+    // thread normally the lastAccessedTime will be set to the current time so the thread will be
+    // moved to top of the eviction queue.
+    return now - ONE_YEAR_PERIOD_MILLIS
+  }
+
   @OptIn(ExperimentalTime::class)
   private fun runOldPostEvictionRoutineIfNeeded() {
     require(lock.isWriteLocked) { "Lock must be write locked!" }
@@ -424,5 +451,7 @@ class ChanThreadsCache(
 
     // 15 seconds
     private val EVICTION_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(15)
+
+    private val ONE_YEAR_PERIOD_MILLIS = Period.years(1).millis
   }
 }

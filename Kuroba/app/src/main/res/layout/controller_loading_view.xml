@@ -28,8 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     app:layout_constraintTop_toTopOf="parent">
 
     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
-        android:layout_width="256dp"
-        android:layout_height="96dp"
+        android:layout_width="320dp"
+        android:layout_height="140dp"
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginTop="8dp"

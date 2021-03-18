@@ -661,10 +661,6 @@ class BrowseController(
     // no-op
   }
 
-  override suspend fun openThreadInArchive(postDescriptor: PostDescriptor) {
-    // no-op
-  }
-
   override suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean) {
     mainScope.launch(Dispatchers.Main.immediate) {
       Logger.d(TAG, "showBoard($descriptor, $animated)")

@@ -367,7 +367,7 @@ class ThreadPresenter @Inject constructor(
     showLoading: Boolean = false,
     requestNewPostsFromServer: Boolean = true,
     chanLoadOptions: ChanLoadOptions = ChanLoadOptions.RetainAll,
-    chanCacheOptions: ChanCacheOptions = ChanCacheOptions.StoreEverywhere,
+    chanCacheOptions: ChanCacheOptions = ChanCacheOptions.default(),
     chanReadOptions: ChanReadOptions = ChanReadOptions.default()
   ) {
     BackgroundUtils.ensureMainThread()
@@ -418,27 +418,6 @@ class ThreadPresenter @Inject constructor(
         chanThreadLoadingState = ChanThreadLoadingState.Loaded
         currentLoadThreadJob = null
       }
-    }
-  }
-
-  fun openThreadInArchive(
-    postDescriptor: PostDescriptor,
-    archiveDescriptor: ArchiveDescriptor
-  ) {
-    Logger.d(TAG, "openThreadInArchive($postDescriptor, $archiveDescriptor)")
-
-    val threadDescriptor = postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
-      ?: return
-
-    launch {
-      val archivePostDescriptor = PostDescriptor.create(
-        siteName = archiveDescriptor.siteDescriptor.siteName,
-        boardCode = threadDescriptor.boardDescriptor.boardCode,
-        threadNo = threadDescriptor.threadNo,
-        postNo = postDescriptor.postNo
-      )
-
-      threadPresenterCallback?.openThreadInArchive(archivePostDescriptor)
     }
   }
 
@@ -1495,11 +1474,17 @@ class ThreadPresenter @Inject constructor(
         val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
           ?: return@post
 
-        if (linkable.linkableValue.extractLongOrNull() == null) {
+        val postNo = linkable.linkableValue.extractLongOrNull()
+        if (postNo == null || postNo <= 0L) {
           return@post
         }
 
-        threadPresenterCallback?.showAvailableArchivesList(threadDescriptor.toOriginalPostDescriptor())
+        val archivePostDescriptor = PostDescriptor.create(
+          chanDescriptor = threadDescriptor,
+          postNo = postNo
+        )
+
+        threadPresenterCallback?.showAvailableArchivesList(archivePostDescriptor)
         return@post
       }
 
@@ -1520,12 +1505,12 @@ class ThreadPresenter @Inject constructor(
 
         val archivePostDescriptor = PostDescriptor.create(
           siteName = archiveDescriptor.siteDescriptor.siteName,
-          boardCode = currentThreadDescriptor.boardDescriptor().boardCode,
-          threadNo = currentThreadDescriptor.threadNo,
+          boardCode = archiveThreadLink.board,
+          threadNo = archiveThreadLink.threadId,
           postNo = archiveThreadLink.postIdOrThreadId()
         )
 
-        threadPresenterCallback?.openThreadInArchive(archivePostDescriptor)
+        threadPresenterCallback?.showPostInExternalThread(archivePostDescriptor)
         return@post
       }
     }
@@ -2008,7 +1993,6 @@ class ThreadPresenter @Inject constructor(
     suspend fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showPostInExternalThread(postDescriptor: PostDescriptor)
     suspend fun openExternalThread(postDescriptor: PostDescriptor)
-    suspend fun openThreadInArchive(postDescriptor: PostDescriptor)
     suspend fun showBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
     suspend fun setBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
     fun openLink(link: String)

@@ -177,7 +177,7 @@ class BrowsePresenter @Inject constructor(
           chanDescriptor = threadDescriptor,
           requestNewPostsFromServer = true,
           chanLoadOptions = ChanLoadOptions.RetainAll,
-          chanCacheOptions = ChanCacheOptions.StoreEverywhere,
+          chanCacheOptions = ChanCacheOptions.default(),
           chanReadOptions = ChanReadOptions.default(),
           onReloaded = {
             activeThreads.remove(threadDescriptor)

@@ -281,10 +281,10 @@ class ChanThreadLoaderCoordinator(
         }
 
         val (threadLoadResult, _) = chanPostPersister.persistPosts(
-          chanReaderProcessor,
-          ChanCacheOptions.StoreEverywhere,
-          threadDescriptor,
-          postParser
+          chanReaderProcessor = chanReaderProcessor,
+          cacheOptions = ChanCacheOptions.default(),
+          chanDescriptor = threadDescriptor,
+          postParser = postParser
         )
 
         return@Try threadLoadResult

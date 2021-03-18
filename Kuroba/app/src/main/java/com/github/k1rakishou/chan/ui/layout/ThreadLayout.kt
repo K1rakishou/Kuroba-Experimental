@@ -547,12 +547,6 @@ class ThreadLayout @JvmOverloads constructor(
     callback.openExternalThread(postDescriptor)
   }
 
-  override suspend fun openThreadInArchive(postDescriptor: PostDescriptor) {
-    Logger.d(TAG, "openThreadInArchive($postDescriptor)")
-
-    callback.openThreadInArchive(postDescriptor)
-  }
-
   override suspend fun showBoard(boardDescriptor: BoardDescriptor, animated: Boolean) {
     Logger.d(TAG, "showBoard($boardDescriptor, $animated)")
 
@@ -1092,7 +1086,6 @@ class ThreadLayout @JvmOverloads constructor(
     suspend fun showThread(descriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
     suspend fun showPostInExternalThread(postDescriptor: PostDescriptor)
     suspend fun openExternalThread(postDescriptor: PostDescriptor)
-    suspend fun openThreadInArchive(postDescriptor: PostDescriptor)
     suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean)
     suspend fun setBoard(descriptor: BoardDescriptor, animated: Boolean)
 

@@ -24,7 +24,8 @@ import kotlin.concurrent.write
 
 class ChanThread(
   private val isDevBuild: Boolean,
-  val threadDescriptor: ChanDescriptor.ThreadDescriptor
+  val threadDescriptor: ChanDescriptor.ThreadDescriptor,
+  initialLastAccessTime: Long
 ) {
   private val lock = ReentrantReadWriteLock()
 
@@ -36,7 +37,7 @@ class ChanThread(
   // Stores hashes of unparsed post comments, the way we got the from the server, without any spans added yet.
   private val rawPostHashesMap = mutableMapOf<PostDescriptor, MurmurHashUtils.Murmur3Hash>()
   @GuardedBy("lock")
-  private var lastAccessTime = System.currentTimeMillis()
+  private var lastAccessTime = initialLastAccessTime
 
   val postsCount: Int
     get() = lock.read { threadPosts.size }

@@ -57,6 +57,7 @@ import com.github.k1rakishou.chan.utils.SharingUtils.getUrlForSharing
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorEmpty
+import com.github.k1rakishou.common.options.ChanCacheOption
 import com.github.k1rakishou.common.options.ChanCacheOptions
 import com.github.k1rakishou.common.options.ChanLoadOptions
 import com.github.k1rakishou.common.options.ChanReadOptions
@@ -363,10 +364,19 @@ open class ViewThreadController(
       globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items,
       itemClickListener = { clickedItem ->
-        val archiveDescriptor = (clickedItem.key as? ArchiveDescriptor)
-          ?: return@FloatingListMenuController
+        mainScope.launch {
+          val archiveDescriptor = (clickedItem.key as? ArchiveDescriptor)
+            ?: return@launch
 
-        threadLayout.presenter.openThreadInArchive(postDescriptor, archiveDescriptor)
+          val externalArchivePostDescriptor = PostDescriptor.create(
+            archiveDescriptor.domain,
+            postDescriptor.descriptor.boardCode(),
+            postDescriptor.getThreadNo(),
+            postDescriptor.postNo
+          )
+
+          showPostInExternalThread(externalArchivePostDescriptor)
+        }
       }
     )
 
@@ -476,11 +486,10 @@ open class ViewThreadController(
   }
 
   override suspend fun showPostInExternalThread(postDescriptor: PostDescriptor) {
-    Logger.d(TAG, "showExternalThread($threadDescriptor, $postDescriptor)")
+    Logger.d(TAG, "showPostInExternalThread($threadDescriptor, $postDescriptor)")
 
     val threadDescriptor = postDescriptor.descriptor
     if (threadDescriptor !is ThreadDescriptor) {
-      showToast("Can only open external threads via this method, descriptor=${threadDescriptor}")
       return
     }
 
@@ -496,11 +505,24 @@ open class ViewThreadController(
         }
       }
 
+      val chanCacheOptions = ChanCacheOptions.singleOption(
+        // We don't want to cache the posts we are previewing in the database.
+        ChanCacheOption.StoreInMemory,
+        // This is important to not use ChanCacheOption.CanAddInFrontOfTheMemoryCache flag for this
+        // feature to work correctly. Basically we may end up in a situation where the user walks
+        // down a very long cross-thread link path which may end up in the thread he was
+        // originally in getting evicted from the cache (evictOld operation) which in turn may
+        // result in the thread appearing empty (until the next update). To avoid this situation we do
+        // not want to add threads we are previewing in the beginning of the eviction queue.
+        // We want the original thread to always be in the beginning so it cannot be evicted while
+        // we are walking the cross-thread link path.
+      )
+
       chanThreadManager.loadThreadOrCatalog(
         chanDescriptor = threadDescriptor,
         requestNewPostsFromServer = true,
         chanLoadOptions = ChanLoadOptions.RetainAll,
-        chanCacheOptions = ChanCacheOptions.StoreEverywhere,
+        chanCacheOptions = chanCacheOptions,
         chanReadOptions = ChanReadOptions.default()
       ) { threadLoadResult ->
         loadingController.stopPresenting()
@@ -510,33 +532,34 @@ open class ViewThreadController(
           return@loadThreadOrCatalog
         }
 
+        if (threadLoadResult is ThreadLoadResult.Error && !threadLoadResult.exception.isNotFound) {
+          if (threadLoadResult.exception.isCoroutineCancellationError()) {
+            showToast("'${threadDescriptor}' thread loading canceled")
+            return@loadThreadOrCatalog
+          }
+
+          Logger.e(TAG, "showPostInExternalThread() Failed to load external " +
+            "thread '$threadDescriptor'", threadLoadResult.exception)
+
+          showToast("Failed to load external thread '$threadDescriptor', " +
+            "error: ${threadLoadResult.exception.errorMessageOrClassName()}")
+
+          return@loadThreadOrCatalog
+        }
+
+        threadLoadResult as ThreadLoadResult.Loaded
+
         val postToShow = chanThreadManager.getPost(postDescriptor)
         if (postToShow == null) {
           showAvailableArchivesList(postDescriptor)
           return@loadThreadOrCatalog
         }
 
-        when (threadLoadResult) {
-          is ThreadLoadResult.Error -> {
-            if (threadLoadResult.exception.isCoroutineCancellationError()) {
-              return@loadThreadOrCatalog
-            }
-
-            Logger.e(TAG, "Failed to load external thread '$threadDescriptor'", threadLoadResult.exception)
-
-            showToast("Failed to load external thread '$threadDescriptor', " +
-              "error: ${threadLoadResult.exception.errorMessageOrClassName()}")
-
-            return@loadThreadOrCatalog
-          }
-          is ThreadLoadResult.Loaded -> {
-            threadLayout.showPostsPopup(
-              PostCellData.PostAdditionalData.NoAdditionalData(PostCellData.PostViewMode.ExternalPostsPopup),
-              null,
-              listOf(postToShow)
-            )
-          }
-        }
+        threadLayout.showPostsPopup(
+          PostCellData.PostAdditionalData.NoAdditionalData(PostCellData.PostViewMode.ExternalPostsPopup),
+          null,
+          listOf(postToShow)
+        )
       }
     }
 
@@ -571,7 +594,11 @@ open class ViewThreadController(
 
     val fullThreadName = buildString {
       if (threadTitle.isNotNullNorEmpty()) {
-        appendLine(threadTitle)
+        append('\'')
+        append(threadTitle)
+        append('\'')
+        appendLine()
+        appendLine()
       }
 
       append(fullPostLink)
@@ -598,23 +625,6 @@ open class ViewThreadController(
         }
       }
     )
-  }
-
-  override suspend fun openThreadInArchive(postDescriptor: PostDescriptor) {
-    mainScope.launch(Dispatchers.Main.immediate) {
-      Logger.d(TAG, "openThreadInArchive($postDescriptor)")
-
-      val threadToOpenDescriptor = postDescriptor.descriptor as? ThreadDescriptor
-        ?: return@launch
-
-      chanThreadViewableInfoManager.update(
-        threadToOpenDescriptor,
-        createEmptyWhenNull = true
-      ) { chanThreadViewableInfo -> chanThreadViewableInfo.markedPostNo = postDescriptor.postNo }
-
-      threadFollowHistoryManager.pushThreadDescriptor(threadDescriptor)
-      loadThread(threadToOpenDescriptor, openingExternalThread = true)
-    }
   }
 
   override suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean) {
