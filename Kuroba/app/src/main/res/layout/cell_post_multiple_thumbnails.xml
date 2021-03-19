@@ -47,14 +47,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 tools:background="#800000"
                 tools:visibility="visible" />
 
-            <LinearLayout
-                android:id="@+id/thumbnails_container"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                tools:layout_height="64dp"
-                tools:layout_width="64dp" />
-
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/post_right_part_content"
                 android:layout_width="match_parent"
@@ -76,25 +68,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                         app:layout_constraintTop_toTopOf="parent"
                         tools:text="Thread Subject" />
 
-                    <LinearLayout
-                        android:id="@+id/post_files_info_container"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:visibility="gone"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/title" />
-
                     <com.github.k1rakishou.chan.ui.cell.PostIcons
                         android:id="@+id/icons"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/post_files_info_container"
+                        app:layout_constraintTop_toBottomOf="@+id/title"
                         tools:layout_height="32dp"
                         tools:layout_width="match_parent" />
+
+                    <com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailViewsContainer
+                        android:id="@+id/thumbnails_container"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/icons" />
 
                     <com.github.k1rakishou.chan.ui.view.PostCommentTextView
                         android:id="@+id/comment"
@@ -102,7 +92,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                         android:layout_height="wrap_content"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/icons"
+                        app:layout_constraintTop_toBottomOf="@+id/thumbnails_container"
                         tools:text="@string/lorem_ipsum" />
 
                     <TextView

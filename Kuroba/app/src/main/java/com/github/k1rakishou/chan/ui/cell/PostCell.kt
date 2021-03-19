@@ -31,7 +31,6 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.widget.TextViewCompat
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -44,15 +43,14 @@ import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.ui.animation.PostCellAnimator.createUnseenPostIndicatorFadeAnimation
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.view.PostCommentTextView
-import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView
-import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
+import com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailViewsContainer
+import com.github.k1rakishou.chan.ui.view.post_thumbnail.ThumbnailView
 import com.github.k1rakishou.chan.utils.*
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
 import com.github.k1rakishou.chan.utils.ViewUtils.setEditTextCursorColor
 import com.github.k1rakishou.chan.utils.ViewUtils.setHandlesColors
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_spannable.*
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ChanThemeColorId
@@ -63,7 +61,10 @@ import com.github.k1rakishou.model.util.ChanPostUtils
 import java.util.*
 import javax.inject.Inject
 
-class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListener {
+class PostCell : LinearLayout,
+  PostCellInterface,
+  ThemeEngine.ThemeChangesListener,
+  PostImageThumbnailViewsContainer.PostCellThumbnailCallbacks {
 
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
@@ -81,9 +82,8 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   lateinit var themeEngine: ThemeEngine
 
   private lateinit var postCellRootContainer: LinearLayout
-  private lateinit var thumbnailContainer: LinearLayout
+  private lateinit var postImageThumbnailViewsContainer: PostImageThumbnailViewsContainer
   private lateinit var title: TextView
-  private lateinit var postFilesInfoContainer: LinearLayout
   private lateinit var icons: PostIcons
   private lateinit var comment: PostCommentTextView
   private lateinit var replies: TextView
@@ -103,8 +103,6 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   private val linkClickSpan: ColorizableBackgroundColorSpan
   private val quoteClickSpan: ColorizableBackgroundColorSpan
 
-  private val thumbnailViews: MutableList<PostImageThumbnailView> = ArrayList(1)
-  private val prevChanPostImages = mutableListWithCap<ChanPostImage>(1)
   private val commentMovementMethod = PostViewMovementMethod()
   private val titleMovementMethod = PostViewFastMovementMethod()
   private val postCommentLongtapDetector = PostCommentLongtapDetector(context)
@@ -244,15 +242,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       return null
     }
 
-    for (index in postCellData!!.postImages.indices) {
-      if (!postCellData!!.postImages[index].equalUrl(postImage)) {
-        continue
-      }
-
-      return thumbnailViews[index]
-    }
-
-    return null
+    return postImageThumbnailViewsContainer.getThumbnailView(postImage)
   }
 
   override fun hasOverlappingRendering(): Boolean {
@@ -262,7 +252,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
   private fun unbindPost(postCellData: PostCellData?, isActuallyRecycling: Boolean) {
     icons.cancelRequests()
 
-    unbindPostImages()
+    postImageThumbnailViewsContainer.unbindContainer()
 
     if (postCellData != null) {
       setPostLinkableListener(postCellData, false)
@@ -288,7 +278,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
       return
     }
 
-    thumbnailContainer = findViewById(R.id.thumbnails_container)
+    postImageThumbnailViewsContainer = findViewById(R.id.thumbnails_container)
     postCellRootContainer = findViewById(R.id.post_cell)
 
     val textSizeSp = postCellData.textSizeSp
@@ -298,8 +288,6 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     vertPaddingPx = dp(textSizeSp - 10.toFloat())
 
     title = findViewById(R.id.title)
-    postFilesInfoContainer = findViewById(R.id.post_files_info_container)
-    postFilesInfoContainer.setPadding(horizPaddingPx, 0, endPadding, 0)
     icons = findViewById(R.id.icons)
     comment = findViewById(R.id.comment)
     replies = findViewById(R.id.replies)
@@ -313,22 +301,12 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     icons.setPadding(horizPaddingPx, vertPaddingPx, horizPaddingPx, 0)
     goToPostButtonContainer = findViewById(R.id.go_to_post_button_container)
     goToPostButton = findViewById(R.id.go_to_post_button)
-
-    postCommentLongtapDetector.postCellContainer = postCellRootContainer
-
-    findViewById<ConstraintLayout>(R.id.post_single_image_comment_container)
-      ?.setPadding(horizPaddingPx, 0, endPadding, 0)
-
     comment.textSize = textSizeSp.toFloat()
     replies.textSize = textSizeSp.toFloat()
+    replies.setPadding(horizPaddingPx, 0, horizPaddingPx, vertPaddingPx)
 
-    if (postCellData.singleImageMode) {
-      comment.setPadding(0, vertPaddingPx, horizPaddingPx, 0)
-      replies.setPadding(0, 0, horizPaddingPx, vertPaddingPx)
-    } else {
-      comment.setPadding(horizPaddingPx, vertPaddingPx, horizPaddingPx, 0)
-      replies.setPadding(horizPaddingPx, 0, horizPaddingPx, vertPaddingPx)
-    }
+    postCommentLongtapDetector.postCellContainer = postCellRootContainer
+    postImageThumbnailViewsContainer.preBind(this, postCellData, horizPaddingPx, vertPaddingPx)
 
     val dividerParams = divider.layoutParams as MarginLayoutParams
     dividerParams.leftMargin = horizPaddingPx
@@ -389,7 +367,7 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     return super.onInterceptTouchEvent(ev)
   }
 
-  private fun requestParentDisallowInterceptTouchEvents(disallow: Boolean) {
+  override fun requestParentDisallowInterceptTouchEvents(disallow: Boolean) {
     if (disallow) {
       needAllowParentToInterceptTouchEvents = true
     } else {
@@ -433,9 +411,8 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     divider.setBackgroundColor(postCellData.theme.dividerColor)
 
     bindPostAttentionLabel(postCellData)
-    bindThumbnails(postCellData)
+    postImageThumbnailViewsContainer.bindPostImages(postCellData)
     ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.postTitle, title)
-    bindPostFilesInfo(postCellData)
     bindIcons(postCellData)
     bindPostComment(postCellData)
     bindPostContent(postCellData, postCellData.threadMode)
@@ -588,53 +565,17 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
     }
   }
 
-  private fun bindPostFilesInfo(postCellData: PostCellData) {
-    postFilesInfoContainer.removeAllViews()
-
-    if (postCellData.postImages.isEmpty()) {
-      postFilesInfoContainer.setVisibilityFast(View.GONE)
-      return
-    }
-
-    postFilesInfoContainer.setVisibilityFast(View.VISIBLE)
-
-    for (image in postCellData.postImages) {
-      val textView = TextView(context)
-      textView.layoutParams = LinearLayout.LayoutParams(
-        LinearLayout.LayoutParams.MATCH_PARENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      )
-
-      textView.setSingleLine()
-      textView.ellipsize = TextUtils.TruncateAt.MIDDLE
-
-      val postFileInfoText = checkNotNull(postCellData.postFileInfoMap[image]) {
-        "Failed to find pre-calculated file info for image ${image} of post ${postCellData.postDescriptor}"
-      }
-
-      ChanPostUtils.wrapTextIntoPrecomputedText(postFileInfoText, textView)
-
-      postFilesInfoContainer.addView(textView)
-    }
-  }
-
   private fun bindPostComment(postCellData: PostCellData) {
     val theme = postCellData.theme
     val commentText = postCellData.commentText
 
-    val leftPadding = if (postCellData.singleImageMode) {
-      0
-    } else {
-      horizPaddingPx
-    }
-
     if (postCellData.postIcons.isNotEmpty()) {
-      comment.setPadding(leftPadding, vertPaddingPx, horizPaddingPx, 0)
+      comment.setPadding(horizPaddingPx, vertPaddingPx, horizPaddingPx, 0)
     } else {
       if (postCellData.singleImageMode) {
-        comment.setPadding(leftPadding, vertPaddingPx, horizPaddingPx, 0)
+        comment.setPadding(horizPaddingPx, vertPaddingPx, horizPaddingPx, 0)
       } else {
-        comment.setPadding(leftPadding, vertPaddingPx / 2, horizPaddingPx, 0)
+        comment.setPadding(horizPaddingPx, vertPaddingPx / 2, horizPaddingPx, 0)
       }
     }
 
@@ -656,7 +597,6 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
 
     comment.setVisibilityFast(newVisibility)
   }
-
 
   @Suppress("ReplaceGetOrSet")
   private fun bindIcons(postCellData: PostCellData) {
@@ -746,114 +686,6 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
 
     comment.setHandlesColors(theme)
     comment.setEditTextCursorColor(theme)
-  }
-
-  private fun bindThumbnails(postCellData: PostCellData) {
-    if (!::thumbnailContainer.isInitialized) {
-      return
-    }
-
-    if (postCellData.postImages.isEmpty() || ChanSettings.textOnly.get()) {
-      unbindPostImages()
-      return
-    }
-
-    if (thumbnailViews.isNotEmpty() && this.prevChanPostImages == postCellData.postImages) {
-      // Images are already bound and haven't changed since the last bind, do nothing
-      return
-    }
-
-    unbindPostImages()
-
-    val cellPostThumbnailSize = calculateCurrentCellPostThumbnailSize()
-    var generatedId = -1000 // Do not use -1 because it's View.NO_ID
-
-    for ((imageIndex, postImage) in postCellData.postImages.withIndex()) {
-      if (postImage.imageUrl == null && postImage.actualThumbnailUrl == null) {
-        continue
-      }
-
-      val thumbnailView = PostImageThumbnailView(context)
-
-      // Set the correct id.
-      thumbnailView.id = generatedId--
-
-      thumbnailView.bindPostImage(postImage, true)
-
-      if (postCellData.isSelectionMode) {
-        thumbnailView.setOnClickListener(null)
-        thumbnailView.setOnLongClickListener(null)
-
-        // We need to explicitly set clickable/long clickable to false here because calling
-        // setOnClickListener/setOnLongClickListener will automatically set them to true even if
-        // the listeners are null.
-        thumbnailView.isClickable = false
-        thumbnailView.isLongClickable = false
-      } else {
-        thumbnailView.isClickable = true
-
-        // Always set the click listener to avoid check the file cache (which will touch the
-        // disk and if you are not lucky enough it may freeze for quite a while). We do all
-        // the necessary checks when clicking an image anyway, so no point in doing them
-        // twice and more importantly inside RecyclerView bind call
-        thumbnailView.setOnClickListener {
-          postCellCallback?.onThumbnailClicked(postImage, thumbnailView)
-        }
-        thumbnailView.setOnLongClickListener {
-          requestParentDisallowInterceptTouchEvents(true)
-          postCellCallback?.onThumbnailLongClicked(postImage, thumbnailView)
-          return@setOnLongClickListener true
-        }
-      }
-
-      thumbnailView.setRounding(THUMBNAIL_ROUNDING)
-
-      val bottomMargin = when {
-        imageIndex == postCellData.postImages.lastIndex -> THUMBNAIL_BOTTOM_MARGIN
-        !postCellData.singleImageMode -> MULTIPLE_THUMBNAILS_MIDDLE_MARGIN
-        else -> 0
-      }
-
-      val topMargin = when {
-        imageIndex == 0 -> THUMBNAIL_TOP_MARGIN
-        !postCellData.singleImageMode -> MULTIPLE_THUMBNAILS_MIDDLE_MARGIN
-        else -> 0
-      }
-
-      val layoutParams = LinearLayout.LayoutParams(cellPostThumbnailSize, cellPostThumbnailSize)
-
-      layoutParams.setMargins(
-        horizPaddingPx,
-        topMargin,
-        horizPaddingPx,
-        bottomMargin
-      )
-
-      thumbnailContainer.addView(thumbnailView, layoutParams)
-      thumbnailViews.add(thumbnailView)
-    }
-
-    this.prevChanPostImages.addAll(postCellData.postImages)
-  }
-
-  private fun calculateCurrentCellPostThumbnailSize(): Int {
-    val onePercent = getDimen(R.dimen.cell_post_thumbnail_size_max).toFloat() / 100f
-    val newSize = ChanSettings.postCellThumbnailSizePercents.get() * onePercent
-
-    return newSize.toInt()
-  }
-
-  private fun unbindPostImages() {
-    for (thumbnailView in thumbnailViews) {
-      thumbnailView.unbindPostImage()
-    }
-
-    if (thumbnailContainer.childCount != 0) {
-      thumbnailContainer.removeAllViews()
-    }
-
-    thumbnailViews.clear()
-    prevChanPostImages.clear()
   }
 
   private fun setPostLinkableListener(postCellData: PostCellData, bind: Boolean) {
@@ -1238,10 +1070,5 @@ class PostCell : LinearLayout, PostCellInterface, ThemeEngine.ThemeChangesListen
 
   companion object {
     private const val TAG = "PostCell"
-
-    private val THUMBNAIL_ROUNDING = dp(2f)
-    private val THUMBNAIL_BOTTOM_MARGIN = dp(5f)
-    private val THUMBNAIL_TOP_MARGIN = dp(4f)
-    private val MULTIPLE_THUMBNAILS_MIDDLE_MARGIN = dp(2f)
   }
 }

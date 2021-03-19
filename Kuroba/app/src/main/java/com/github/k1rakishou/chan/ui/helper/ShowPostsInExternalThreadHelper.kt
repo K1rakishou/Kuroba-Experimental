@@ -80,7 +80,20 @@ class ShowPostsInExternalThreadHelper(
           return@loadThreadOrCatalog
         }
 
-        if (threadLoadResult is ThreadLoadResult.Error && !threadLoadResult.exception.isNotFound) {
+        val originalPostDescriptor = PostDescriptor.create(
+          siteName = postDescriptor.siteDescriptor().siteName,
+          boardCode = postDescriptor.boardDescriptor().boardCode,
+          threadNo = postDescriptor.postNo,
+          postNo = postDescriptor.postNo
+        )
+
+        if (threadLoadResult is ThreadLoadResult.Error) {
+          if (threadLoadResult.exception.isNotFound) {
+            showToastFunc("Failed to open ${postDescriptor} server returned 404")
+            showAvailableArchivesListFunc(originalPostDescriptor)
+            return@loadThreadOrCatalog
+          }
+
           if (threadLoadResult.exception.isCoroutineCancellationError()) {
             showToastFunc("'${threadDescriptor}' thread loading canceled")
             return@loadThreadOrCatalog
@@ -94,8 +107,6 @@ class ShowPostsInExternalThreadHelper(
 
           return@loadThreadOrCatalog
         }
-
-        threadLoadResult as ThreadLoadResult.Loaded
 
         val postsToShow = if (isPreviewingCatalogThread) {
           chanThreadManager.getCatalogPreviewPosts(threadDescriptor)
@@ -111,13 +122,6 @@ class ShowPostsInExternalThreadHelper(
               "There is something wrong with this post link.")
             return@loadThreadOrCatalog
           }
-
-          val originalPostDescriptor = PostDescriptor.create(
-            siteName = postDescriptor.siteDescriptor().siteName,
-            boardCode = postDescriptor.boardDescriptor().boardCode,
-            threadNo = postDescriptor.postNo,
-            postNo = postDescriptor.postNo
-          )
 
           showToastFunc("Failed to open ${postDescriptor} as a post, trying to open it as a thread")
           showAvailableArchivesListFunc(originalPostDescriptor)

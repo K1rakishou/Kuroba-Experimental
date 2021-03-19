@@ -43,7 +43,7 @@ import com.github.k1rakishou.chan.ui.helper.ShowPostsInExternalThreadHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
-import com.github.k1rakishou.chan.ui.view.ThumbnailView
+import com.github.k1rakishou.chan.ui.view.post_thumbnail.ThumbnailView
 import com.github.k1rakishou.chan.ui.widget.KurobaSwipeRefreshLayout
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate

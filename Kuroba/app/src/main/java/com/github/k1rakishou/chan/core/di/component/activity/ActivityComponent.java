@@ -160,14 +160,15 @@ import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton;
 import com.github.k1rakishou.chan.ui.view.LoadingBar;
 import com.github.k1rakishou.chan.ui.view.MultiImageView;
 import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager;
-import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ReplyInputEditText;
-import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize;
 import com.github.k1rakishou.chan.ui.view.attach.AttachNewFileButton;
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanel;
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.EpoxyCheckableFloatingListMenuRow;
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.EpoxyFloatingListMenuRow;
+import com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailView;
+import com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailViewContainer;
+import com.github.k1rakishou.chan.ui.view.post_thumbnail.ThumbnailView;
 import com.github.k1rakishou.chan.ui.view.sorting.BookmarkSortingItemView;
 import com.github.k1rakishou.chan.ui.widget.dialog.KurobaAlertController;
 
@@ -347,6 +348,7 @@ public interface ActivityComponent {
     void inject(PopupControllerContainer popupControllerContainer);
     void inject(ToolbarMenuItem toolbarMenuItem);
     void inject(KurobaAlertController kurobaAlertController);
+    void inject(PostImageThumbnailViewContainer postImageThumbnailViewContainer);
 
     @Subcomponent.Builder
     interface Builder {

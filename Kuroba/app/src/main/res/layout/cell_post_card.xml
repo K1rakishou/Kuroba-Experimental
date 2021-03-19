@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <com.github.k1rakishou.chan.ui.view.PostImageThumbnailView
+            <com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailView
                 android:id="@+id/thumbnail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />

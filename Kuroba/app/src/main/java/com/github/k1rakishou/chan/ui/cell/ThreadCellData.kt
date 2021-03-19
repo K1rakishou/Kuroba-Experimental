@@ -176,7 +176,7 @@ class ThreadCellData(
 
       when (loaderResult.loaderType) {
         LoaderType.PostExtraContentLoader -> postCellData.resetCommentTextCache()
-        LoaderType.InlinedFileInfoLoader -> postCellData.resetPostFileInfoMapCache()
+        LoaderType.InlinedFileInfoLoader,
         LoaderType.PrefetchLoader,
         LoaderType.Chan4CloudFlareImagePreLoader -> {
           // no-op

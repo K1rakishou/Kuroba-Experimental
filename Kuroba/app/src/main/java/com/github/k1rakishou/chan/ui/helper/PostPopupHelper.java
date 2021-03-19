@@ -26,7 +26,7 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter;
 import com.github.k1rakishou.chan.ui.cell.PostCellData;
 import com.github.k1rakishou.chan.ui.controller.PostRepliesController;
-import com.github.k1rakishou.chan.ui.view.ThumbnailView;
+import com.github.k1rakishou.chan.ui.view.post_thumbnail.ThumbnailView;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor;

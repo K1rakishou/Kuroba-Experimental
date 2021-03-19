@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.ui.view;
+package com.github.k1rakishou.chan.ui.view.post_thumbnail;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -22,6 +22,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.AttributeSet;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,11 +34,14 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.PrefetchState;
 import com.github.k1rakishou.chan.core.manager.PrefetchStateManager;
 import com.github.k1rakishou.chan.core.presenter.ImageViewerPresenter;
+import com.github.k1rakishou.chan.ui.view.SegmentedCircleDrawable;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 import com.github.k1rakishou.model.data.post.ChanPostImageType;
+
+import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 
@@ -48,7 +52,7 @@ import okhttp3.HttpUrl;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDrawable;
 
-public class PostImageThumbnailView extends ThumbnailView {
+public class PostImageThumbnailView extends ThumbnailView implements PostImageThumbnailViewContract {
     private static final String TAG = "PostImageThumbnailView";
     private static final float prefetchIndicatorMargin = dp(4);
     private static final int prefetchIndicatorSize = dp(16);
@@ -97,8 +101,63 @@ public class PostImageThumbnailView extends ThumbnailView {
         this.prefetchingEnabled = ChanSettings.prefetchMedia.get();
     }
 
+    @Override
     public void bindPostImage(@NonNull ChanPostImage postImage, boolean canUseHighResCells) {
         bindPostImage(postImage, canUseHighResCells, false);
+    }
+
+    @Override
+    public int getViewId() {
+        return this.getId();
+    }
+
+    @Override
+    public void setViewId(int id) {
+        this.setId(id);
+    }
+
+    @NonNull
+    @Override
+    public ThumbnailView getThumbnailView() {
+        return this;
+    }
+
+    @Override
+    public boolean equalUrls(@NotNull ChanPostImage chanPostImage) {
+        if (this.postImage == null) {
+            return false;
+        }
+
+        return this.postImage.equalUrl(chanPostImage);
+    }
+
+    @Override
+    public void setImageClickable(boolean clickable) {
+        setClickable(clickable);
+    }
+
+    @Override
+    public void setImageLongClickable(boolean longClickable) {
+        setLongClickable(longClickable);
+    }
+
+    @Override
+    public void setImageClickListener(@Nullable View.OnClickListener listener) {
+        setOnClickListener(listener);
+    }
+
+    @Override
+    public void setImageLongClickListener(@Nullable View.OnLongClickListener listener) {
+        setOnLongClickListener(listener);
+    }
+
+    @Override
+    public void unbindPostImage() {
+        this.postImage = null;
+        this.canUseHighResCells = null;
+
+        unbindImageUrl();
+        compositeDisposable.clear();
     }
 
     private void bindPostImage(
@@ -139,14 +198,6 @@ public class PostImageThumbnailView extends ThumbnailView {
         }
 
         bindImageUrl(url, ImageLoaderV2.ImageSize.MeasurableImageSize.create(this));
-    }
-
-    public void unbindPostImage() {
-        this.postImage = null;
-        this.canUseHighResCells = null;
-
-        unbindImageUrl();
-        compositeDisposable.clear();
     }
 
     private void onPrefetchStateChanged(PrefetchState prefetchState) {

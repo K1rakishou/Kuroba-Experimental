@@ -25,8 +25,8 @@ import androidx.annotation.NonNull;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager;
-import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
-import com.github.k1rakishou.chan.ui.view.ThumbnailView;
+import com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailView;
+import com.github.k1rakishou.chan.ui.view.post_thumbnail.ThumbnailView;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 

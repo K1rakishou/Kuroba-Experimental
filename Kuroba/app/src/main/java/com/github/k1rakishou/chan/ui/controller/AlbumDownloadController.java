@@ -46,7 +46,7 @@ import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.ui.view.FastScroller;
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper;
-import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView;
+import com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailView;
 import com.github.k1rakishou.chan.utils.RecyclerUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.fsaf.FileManager;

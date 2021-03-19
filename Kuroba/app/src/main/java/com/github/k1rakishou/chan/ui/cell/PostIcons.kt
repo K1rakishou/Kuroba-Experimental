@@ -38,6 +38,15 @@ class PostIcons @JvmOverloads constructor(
   init {
     textPaint.typeface = Typeface.create(null as String?, Typeface.ITALIC)
     visibility = GONE
+
+    if (isInEditMode) {
+      edit()
+      set(DELETED, true)
+      set(STICKY, true)
+      set(CLOSED, true)
+      set(ARCHIVED, true)
+      apply()
+    }
   }
 
   fun setHeight(height: Int) {

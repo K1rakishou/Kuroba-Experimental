@@ -1,10 +1,8 @@
 package com.github.k1rakishou.chan.ui.cell
 
 import android.text.SpannableString
-import android.text.SpannableStringBuilder
 import android.text.TextUtils
 import android.text.format.DateUtils
-import android.text.style.UnderlineSpan
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.RecalculatableLazy
@@ -48,7 +46,6 @@ data class PostCellData(
 
   private var detailsSizePxPrecalculated: Int? = null
   private var postTitlePrecalculated: CharSequence? = null
-  private var postFileInfoMapPrecalculated: Map<ChanPostImage, CharSequence>? = null
   private var commentTextPrecalculated: CharSequence? = null
   private var catalogRepliesTextPrecalculated: CharSequence? = null
 
@@ -87,7 +84,7 @@ data class PostCellData(
   val postViewMode: PostViewMode
     get() = postAdditionalData.postViewMode
   val isInPopup: Boolean
-    get() = postViewMode != PostViewMode.Normal
+    get() = postViewMode == PostViewMode.RepliesPopup || postViewMode == PostViewMode.ExternalPostsPopup
   val isSelectionMode: Boolean
     get() = postViewMode == PostViewMode.PostSelection
   val threadPreviewMode: Boolean
@@ -97,7 +94,6 @@ data class PostCellData(
 
   private val _detailsSizePx = RecalculatableLazy { detailsSizePxPrecalculated ?: AppModuleAndroidUtils.sp(textSizeSp - 4.toFloat()) }
   private val _postTitle = RecalculatableLazy { postTitlePrecalculated ?: calculatePostTitle() }
-  private val _postFileInfoMap = RecalculatableLazy { postFileInfoMapPrecalculated ?: calculatePostFileInfoMap() }
   private val _commentText = RecalculatableLazy { commentTextPrecalculated ?: calculateCommentText() }
   private val _catalogRepliesText = RecalculatableLazy { catalogRepliesTextPrecalculated ?: calculateCatalogRepliesText() }
 
@@ -105,8 +101,6 @@ data class PostCellData(
     get() = _detailsSizePx.value()
   val postTitle: CharSequence
     get() = _postTitle.value()
-  val postFileInfoMap: Map<ChanPostImage, CharSequence>
-    get() = _postFileInfoMap.value()
   val commentText: CharSequence
     get() = _commentText.value()
   val catalogRepliesText
@@ -122,18 +116,12 @@ data class PostCellData(
     _catalogRepliesText.resetValue()
   }
 
-  fun resetPostFileInfoMapCache() {
-    postFileInfoMapPrecalculated = null
-    _postFileInfoMap.resetValue()
-  }
-
   suspend fun preload() {
     BackgroundUtils.ensureBackgroundThread()
 
     // Force lazily evaluated values to get calculated and cached
     _detailsSizePx.value()
     _postTitle.value()
-    _postFileInfoMap.value()
     _commentText.value()
     _catalogRepliesText.value()
   }
@@ -161,7 +149,6 @@ data class PostCellData(
       newPostCellData.postCellCallback = postCellCallback
       newPostCellData.detailsSizePxPrecalculated = detailsSizePxPrecalculated
       newPostCellData.postTitlePrecalculated = postTitlePrecalculated
-      newPostCellData.postFileInfoMapPrecalculated = postFileInfoMapPrecalculated?.toMap()
       newPostCellData.commentTextPrecalculated = commentTextPrecalculated
       newPostCellData.catalogRepliesTextPrecalculated = catalogRepliesTextPrecalculated
     }
@@ -253,81 +240,6 @@ data class PostCellData(
       DateUtils.SECOND_IN_MILLIS,
       0
     )
-  }
-
-  private fun calculatePostFileInfoMap(): Map<ChanPostImage, CharSequence> {
-    val postFileInfoMap = mutableMapOf<ChanPostImage, CharSequence>()
-
-    for (image in postImages) {
-      val postFileName = ChanSettings.postFilename.get()
-      val postFileInfo = ChanSettings.postFileInfo.get()
-      val fileInfo = SpannableStringBuilder()
-
-      if (postFileName) {
-        fileInfo.append(getFilename(image))
-      }
-
-      if (postFileInfo) {
-        fileInfo.append(
-          if (postFileName) {
-            " "
-          } else {
-            "\n"
-          }
-        )
-
-        fileInfo.append(image.extension?.toUpperCase(Locale.ENGLISH) ?: "")
-        fileInfo.append(
-          if (image.isInlined) {
-            ""
-          } else {
-            " " + ChanPostUtils.getReadableFileSize(image.size)
-          }
-        )
-
-        fileInfo.append(
-          if (image.isInlined) {
-            ""
-          } else {
-            " " + image.imageWidth + "x" + image.imageHeight
-          }
-        )
-      }
-
-      if (postFileName) {
-        fileInfo.setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, fileInfo.length, 0)
-        fileInfo.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfo.length, 0)
-        fileInfo.setSpan(UnderlineSpan(), 0, fileInfo.length, 0)
-      }
-
-      if (postFileInfo) {
-        fileInfo.setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, fileInfo.length, 0)
-        fileInfo.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfo.length, 0)
-      }
-
-      postFileInfoMap[image] = fileInfo
-    }
-
-    return postFileInfoMap
-  }
-
-  private fun getFilename(image: ChanPostImage): String {
-    val stringBuilder = StringBuilder()
-    // that special character forces it to be left-to-right, as textDirection didn't want
-    // to be obeyed
-    stringBuilder.append('\u200E')
-
-    if (image.spoiler) {
-      if (image.hidden) {
-        stringBuilder.append(AppModuleAndroidUtils.getString(R.string.image_hidden_filename))
-      } else {
-        stringBuilder.append(AppModuleAndroidUtils.getString(R.string.image_spoiler_filename))
-      }
-    } else {
-      stringBuilder.append(image.filename)
-    }
-
-    return stringBuilder.toString()
   }
 
   private fun calculateCommentText(): CharSequence {

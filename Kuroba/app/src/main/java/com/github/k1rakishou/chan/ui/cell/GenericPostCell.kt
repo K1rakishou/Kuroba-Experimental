@@ -7,7 +7,7 @@ import android.widget.FrameLayout
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.PostViewMode
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.ui.view.ThumbnailView
+import com.github.k1rakishou.chan.ui.view.post_thumbnail.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -62,21 +62,16 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
       return
     }
 
-    val newLayoutId = getLayoutId(
-      postCellData.stub,
-      postCellData.boardPostViewMode,
-      postCellData.post
-    )
+    val newLayoutId = getLayoutId(postCellData)
 
     if (childCount != 1 || newLayoutId != layoutId) {
       removeAllViews()
 
       val postCellView = when (newLayoutId) {
         R.layout.cell_post_stub -> PostStubCell(context)
-        R.layout.cell_post_thumbnails_on_left_side,
-        R.layout.cell_post_thumbnails_on_right_side,
-        R.layout.cell_post_single_thumbnail_on_right_side,
-        R.layout.cell_post_single_thumbnail_on_left_side -> PostCell(context)
+        R.layout.cell_post_multiple_thumbnails,
+        R.layout.cell_post_zero_or_single_thumbnails_on_right_side,
+        R.layout.cell_post_zero_or_single_thumbnails_on_left_side -> PostCell(context)
         R.layout.cell_post_card -> CardPostCell(context)
         else -> throw IllegalStateException("Unknown layoutId: $newLayoutId")
       }
@@ -89,16 +84,16 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
     getChildPostCell()!!.setPost(postCellData)
   }
 
-  private fun getLayoutId(
-    stub: Boolean,
-    postViewMode: PostViewMode,
-    post: ChanPost
-  ): Int {
+  private fun getLayoutId(postCellData: PostCellData): Int {
+    val stub = postCellData.stub
+    val postViewMode = postCellData.boardPostViewMode
+    val post = postCellData.post
+
     if (stub) {
       return R.layout.cell_post_stub
     }
 
-    val postAlignmentMode = when (post.postDescriptor.descriptor) {
+    val postAlignmentMode = when (postCellData.chanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostThumbnailAlignmentMode.get()
       is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostThumbnailAlignmentMode.get()
     }
@@ -107,21 +102,17 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
 
     when (postViewMode) {
       PostViewMode.LIST -> {
-        when (postAlignmentMode) {
-          ChanSettings.PostThumbnailAlignmentMode.AlignLeft -> {
-            if (post.postImages.size == 1) {
-              return R.layout.cell_post_single_thumbnail_on_left_side
-            } else {
-              return R.layout.cell_post_thumbnails_on_left_side
+        if (post.postImages.size <= 1) {
+          when (postAlignmentMode) {
+            ChanSettings.PostThumbnailAlignmentMode.AlignLeft -> {
+              return R.layout.cell_post_zero_or_single_thumbnails_on_left_side
+            }
+            ChanSettings.PostThumbnailAlignmentMode.AlignRight -> {
+              return R.layout.cell_post_zero_or_single_thumbnails_on_right_side
             }
           }
-          ChanSettings.PostThumbnailAlignmentMode.AlignRight -> {
-            if (post.postImages.size == 1) {
-              return R.layout.cell_post_single_thumbnail_on_right_side
-            } else {
-              return R.layout.cell_post_thumbnails_on_right_side
-            }
-          }
+        } else {
+          return R.layout.cell_post_multiple_thumbnails
         }
       }
       PostViewMode.GRID,

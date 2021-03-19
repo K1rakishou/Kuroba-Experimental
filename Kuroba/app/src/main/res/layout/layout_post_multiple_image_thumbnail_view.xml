@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true">
+
+    <com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailView
+        android:id="@+id/actual_thumbnail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:layout_height="64dp"
+        tools:layout_width="64dp" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/file_info_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="8dp"
+        android:paddingEnd="4dp"
+        app:layout_constraintHorizontal_bias="0"
+        app:layout_constraintBottom_toBottomOf="@+id/actual_thumbnail"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/actual_thumbnail"
+        app:layout_constraintTop_toTopOf="@+id/actual_thumbnail"
+        tools:layout_height="64dp"
+        tools:layout_width="@dimen/cell_post_thumbnail_container_file_info_size">
+
+        <TextView
+            android:id="@+id/thumbnail_file_extension"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:textSize="@dimen/post_multiple_image_thumbnail_view_info_text_size_max"
+            app:layout_constraintBottom_toTopOf="@+id/thumbnail_file_dimens"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="spread"
+            tools:text="JPG"/>
+
+        <TextView
+            android:id="@+id/thumbnail_file_dimens"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:textSize="@dimen/post_multiple_image_thumbnail_view_info_text_size_max"
+            app:layout_constraintBottom_toTopOf="@+id/thumbnail_file_size"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/thumbnail_file_extension"
+            tools:text="2.89 MB"/>
+
+        <TextView
+            android:id="@+id/thumbnail_file_size"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:textSize="@dimen/post_multiple_image_thumbnail_view_info_text_size_max"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/thumbnail_file_dimens"
+            tools:text="14032x33024"/>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

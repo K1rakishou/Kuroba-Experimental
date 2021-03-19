@@ -29,9 +29,9 @@ import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView
-import com.github.k1rakishou.chan.ui.view.PostImageThumbnailView
-import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
+import com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailView
+import com.github.k1rakishou.chan.ui.view.post_thumbnail.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
