@@ -174,6 +174,10 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_switch_catalog_stagger">Catalog (stagger) mode</string>
     <string name="action_switch_board">Board mode</string>
 
+    <string name="action_copy_link_text">Copy link text</string>
+    <string name="action_copy_link_value">Copy link value</string>
+    <string name="action_copy_link_show_post_options">Show post options</string>
+
     <string name="action_import_light_theme">Import Light theme</string>
     <string name="action_import_light_theme_from_clipboard">Import Light theme from clipboard</string>
     <string name="action_import_dark_theme">Import Dark theme</string>
@@ -1064,6 +1068,8 @@ Don't have a 4chan Pass?<br>
     <string name="image_url_copied_to_clipboard">URL copied to clipboard</string>
     <string name="image_file_name_copied_to_clipboard">File name copied to clipboard</string>
     <string name="image_file_hash_copied_to_clipboard">File hash HEX copied to clipboard</string>
+    <string name="link_text_copied_to_clipboard">Link text copied to clipboard</string>
+    <string name="link_value_copied_to_clipboard">Link value copied to clipboard</string>
 
     <string name="could_not_remove_site_error_message">Could not remove site %1$s (error message: %2$s)</string>
 

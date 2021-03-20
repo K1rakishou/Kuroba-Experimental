@@ -21,6 +21,8 @@ import android.app.SearchManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.*
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import android.text.*
 import android.text.method.LinkMovementMethod
@@ -817,15 +819,45 @@ class PostCell : LinearLayout,
    * A MovementMethod that searches for PostLinkables.<br></br>
    * See [PostLinkable] for more information.
    */
-  private inner class PostViewMovementMethod : LinkMovementMethod() {
+  private inner class PostViewMovementMethod() : LinkMovementMethod() {
+    private val handler = Handler(Looper.getMainLooper())
+    private val longPressTimeout = ViewConfiguration.getLongPressTimeout().toLong()
+
+    private var longClicking = false
+    private var skipNextUpEvent = false
+    private var performLinkLongClick: PerformalLinkLongClick? = null
 
     override fun onTouchEvent(widget: TextView, buffer: Spannable, event: MotionEvent): Boolean {
       val action = event.actionMasked
+
+      if (action == MotionEvent.ACTION_DOWN) {
+        skipNextUpEvent = false
+      }
+
+      if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+        if (performLinkLongClick != null) {
+          handler.removeCallbacks(performLinkLongClick!!)
+
+          longClicking = false
+          performLinkLongClick = null
+        }
+
+        if (skipNextUpEvent) {
+          return true
+        }
+      }
 
       if (action != MotionEvent.ACTION_UP
         && action != MotionEvent.ACTION_CANCEL
         && action != MotionEvent.ACTION_DOWN
       ) {
+        return true
+      }
+
+      if (action == MotionEvent.ACTION_CANCEL) {
+        buffer.removeSpan(linkClickSpan)
+        buffer.removeSpan(quoteClickSpan)
+
         return true
       }
 
@@ -840,10 +872,21 @@ class PostCell : LinearLayout,
       val layout = widget.layout
       val line = layout.getLineForVertical(y)
       val off = layout.getOffsetForHorizontal(line, x.toFloat())
-      val links = buffer.getSpans(off, off, ClickableSpan::class.java)
+      val clickableSpans = buffer.getSpans(off, off, ClickableSpan::class.java).toList()
 
-      if (links.isNotEmpty()) {
-        onClickableSpanClicked(widget, buffer, action, links.toMutableList())
+      if (clickableSpans.isNotEmpty()) {
+        onClickableSpanClicked(widget, buffer, action, clickableSpans)
+
+        if (action == MotionEvent.ACTION_DOWN && performLinkLongClick == null) {
+          val postLinkables = clickableSpans.filterIsInstance<PostLinkable>()
+          if (postLinkables.isNotEmpty()) {
+            if (checkCanLongTapThisPostLinkables(postLinkables)) {
+              performLinkLongClick = PerformalLinkLongClick(postLinkables)
+              handler.postDelayed(performLinkLongClick!!, longPressTimeout)
+            }
+          }
+        }
+
         return true
       }
 
@@ -851,6 +894,20 @@ class PostCell : LinearLayout,
       buffer.removeSpan(quoteClickSpan)
 
       return false
+    }
+
+    private fun checkCanLongTapThisPostLinkables(postLinkables: List<PostLinkable>): Boolean {
+      for (postLinkable in postLinkables) {
+        if (postLinkable.type == PostLinkable.Type.SPOILER) {
+          if (!postLinkable.isSpoilerVisible) {
+            // We are touching a non-revealed spoiler. We can't long click here, the user need
+            // to reveal the spoiler first.
+            return false
+          }
+        }
+      }
+
+      return true
     }
 
     fun touchOverlapsAnyClickableSpan(textView: TextView, event: MotionEvent): Boolean {
@@ -889,12 +946,12 @@ class PostCell : LinearLayout,
       widget: TextView,
       buffer: Spannable,
       action: Int,
-      links: MutableList<ClickableSpan>
+      clickableSpans: List<ClickableSpan>
     ) {
-      val clickableSpan1 = links[0]
+      val clickableSpan1 = clickableSpans[0]
 
-      val clickableSpan2 = if (links.size > 1) {
-        links[1]
+      val clickableSpan2 = if (clickableSpans.size > 1) {
+        clickableSpans[1]
       } else {
         null
       }
@@ -912,7 +969,16 @@ class PostCell : LinearLayout,
       }
 
       if (action == MotionEvent.ACTION_UP) {
-        handleActionUp(linkable1, linkable2, links, widget, buffer)
+        if (!longClicking) {
+          handleActionUpForClickOrLongClick(
+            linkable1 = linkable1,
+            linkable2 = linkable2,
+            links = clickableSpans.toMutableList(),
+            widget = widget,
+            buffer = buffer
+          )
+        }
+
         return
       }
 
@@ -929,27 +995,38 @@ class PostCell : LinearLayout,
           buffer.getSpanEnd(clickableSpan1),
           0
         )
-        return
-      }
 
-      if (action == MotionEvent.ACTION_CANCEL) {
-        buffer.removeSpan(linkClickSpan)
-        buffer.removeSpan(quoteClickSpan)
+        return
       }
     }
 
-    private fun handleActionUp(
+    private fun handleActionUpForClickOrLongClick(
       linkable1: PostLinkable?,
       linkable2: PostLinkable?,
       links: MutableList<ClickableSpan>,
       widget: TextView,
       buffer: Spannable
     ) {
+
+      fun fireCallback(post: ChanPost, linkable: PostLinkable) {
+        if (longClicking) {
+          skipNextUpEvent = true
+
+          val isInPopup = postCellData?.isInPopup
+            ?: return
+
+          comment.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+          postCellCallback?.onPostLinkableLongClicked(post, linkable, isInPopup)
+        } else {
+          postCellCallback?.onPostLinkableClicked(post, linkable)
+        }
+      }
+
       if (linkable2 == null && linkable1 != null) {
         // regular, non-spoilered link
         if (postCellData != null) {
           val post = postCellData!!.post
-          postCellCallback?.onPostLinkableClicked(post, linkable1)
+          fireCallback(post, linkable1)
         }
       } else if (linkable2 != null && linkable1 != null) {
         // spoilered link, figure out which span is the spoiler
@@ -958,7 +1035,7 @@ class PostCell : LinearLayout,
             // linkable2 is the link and we're unspoilered
             if (postCellData != null) {
               val post = postCellData!!.post
-              postCellCallback?.onPostLinkableClicked(post, linkable2)
+              fireCallback(post, linkable2)
             }
           } else {
             // linkable2 is the link and we're spoilered; don't do the click event
@@ -970,7 +1047,7 @@ class PostCell : LinearLayout,
             // linkable 1 is the link and we're unspoilered
             if (postCellData != null) {
               val post = postCellData!!.post
-              postCellCallback?.onPostLinkableClicked(post, linkable1)
+              fireCallback(post, linkable1)
             }
           } else {
             // linkable1 is the link and we're spoilered; don't do the click event
@@ -982,7 +1059,7 @@ class PostCell : LinearLayout,
           // (some 4chan stickied posts)
           if (postCellData != null) {
             val post = postCellData!!.post
-            postCellCallback?.onPostLinkableClicked(post, linkable1)
+            fireCallback(post, linkable1)
           }
         }
       }
@@ -1002,6 +1079,45 @@ class PostCell : LinearLayout,
       buffer.removeSpan(linkClickSpan)
       buffer.removeSpan(quoteClickSpan)
     }
+
+    private inner class PerformalLinkLongClick(
+      private val clickedSpans: List<ClickableSpan>
+    ) : Runnable {
+
+      override fun run() {
+        val clickableSpan1 = clickedSpans[0]
+
+        val clickableSpan2 = if (clickedSpans.size > 1) {
+          clickedSpans[1]
+        } else {
+          null
+        }
+
+        val linkable1 = if (clickableSpan1 is PostLinkable) {
+          clickableSpan1
+        } else {
+          null
+        }
+
+        val linkable2 = if (clickableSpan2 is PostLinkable) {
+          clickableSpan2
+        } else {
+          null
+        }
+
+        longClicking = true
+
+        handleActionUpForClickOrLongClick(
+          linkable1 = linkable1,
+          linkable2 = linkable2,
+          links = clickedSpans.toMutableList(),
+          widget = comment,
+          buffer = comment.text as Spannable
+        )
+      }
+
+    }
+
   }
 
   /**

@@ -1282,12 +1282,14 @@ class ThreadPresenter @Inject constructor(
   }
 
   private fun createMenuItem(
-    postOptionPin: Int,
-    @StringRes stringId: Int
+    menuItemId: Int,
+    @StringRes stringId: Int,
+    value: Any? = null
   ): FloatingListMenuItem {
     return FloatingListMenuItem(
-      postOptionPin,
-      context.getString(stringId)
+      menuItemId,
+      context.getString(stringId),
+      value
     )
   }
 
@@ -1563,6 +1565,179 @@ class ThreadPresenter @Inject constructor(
         threadPresenterCallback?.showPostInExternalThread(archivePostDescriptor)
         return@post
       }
+    }
+  }
+
+  override fun onPostLinkableLongClicked(post: ChanPost, linkable: PostLinkable, inPopup: Boolean) {
+    serializedCoroutineExecutor.post {
+      if (!isBound || currentChanDescriptor == null) {
+        return@post
+      }
+
+      val floatingListMenuItems = mutableListOf<FloatingListMenuItem>()
+      val postChanDescriptor = post.postDescriptor.descriptor
+
+      val site = siteManager.bySiteDescriptor(post.postDescriptor.siteDescriptor())
+        ?: return@post
+
+      when (linkable.type) {
+        PostLinkable.Type.SPOILER -> {
+          // This shouldn't happen but just in case.
+          return@post
+        }
+        PostLinkable.Type.DEAD,
+        PostLinkable.Type.QUOTE -> {
+          floatingListMenuItems += createMenuItem(
+            menuItemId = COPY_LINK_TEXT,
+            stringId = R.string.action_copy_link_text,
+            value = linkable.key
+          )
+
+          val postNo = linkable.linkableValue.extractLongOrNull()
+          if (postNo != null) {
+            val desktopUrl = site.resolvable().desktopUrl(postChanDescriptor, postNo)
+            floatingListMenuItems += createMenuItem(
+              menuItemId = COPY_LINK_VALUE,
+              stringId = R.string.action_copy_link_value,
+              value = desktopUrl
+            )
+          }
+        }
+        PostLinkable.Type.LINK -> {
+          val link = (linkable.linkableValue as? PostLinkable.Value.StringValue)?.value
+          if (link != null) {
+            floatingListMenuItems += createMenuItem(
+              menuItemId = COPY_LINK_VALUE,
+              stringId = R.string.action_copy_link_value,
+              value = link
+            )
+          }
+        }
+        PostLinkable.Type.THREAD -> {
+          val threadLink = linkable.linkableValue as? PostLinkable.Value.ThreadLink
+          if (threadLink != null) {
+            val boardDescriptor = BoardDescriptor.create(site.name(), threadLink.board)
+            val board = boardManager.byBoardDescriptor(boardDescriptor)
+
+            if (board != null) {
+              val linkPostDescriptor = PostDescriptor.create(
+                site.name(),
+                threadLink.board,
+                threadLink.threadId,
+                threadLink.postId
+              )
+
+              val desktopUrl = site.resolvable().desktopUrl(
+                chanDescriptor = linkPostDescriptor.descriptor,
+                postNo = linkPostDescriptor.postNo
+              )
+
+              floatingListMenuItems += createMenuItem(
+                menuItemId = COPY_LINK_VALUE,
+                stringId = R.string.action_copy_link_value,
+                value = desktopUrl
+              )
+            }
+          }
+        }
+        PostLinkable.Type.BOARD -> {
+          val link = (linkable.linkableValue as? PostLinkable.Value.StringValue)?.value
+          if (link != null) {
+            val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(
+              BoardDescriptor.create(site.name(), link.toString())
+            )
+
+            val desktopUrl = site.resolvable().desktopUrl(catalogDescriptor, null)
+
+            floatingListMenuItems += createMenuItem(
+              menuItemId = COPY_LINK_VALUE,
+              stringId = R.string.action_copy_link_value,
+              value = desktopUrl
+            )
+          }
+
+        }
+        PostLinkable.Type.SEARCH -> {
+          val searchLink = linkable.linkableValue as? PostLinkable.Value.SearchLink
+          if (searchLink != null) {
+            val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(
+              BoardDescriptor.create(site.name(), searchLink.board)
+            )
+
+            val desktopUrl = site.resolvable().desktopUrl(catalogDescriptor, null)
+
+            floatingListMenuItems += createMenuItem(
+              menuItemId = COPY_LINK_VALUE,
+              stringId = R.string.action_copy_link_value,
+              value = desktopUrl
+            )
+          }
+        }
+        PostLinkable.Type.ARCHIVE -> {
+          val archiveThreadLink = (linkable.linkableValue as? PostLinkable.Value.ArchiveThreadLink)
+          if (archiveThreadLink != null) {
+            val archiveDescriptor = archivesManager.getArchiveDescriptorByArchiveType(
+              archiveThreadLink.archiveType
+            )
+
+            if (archiveDescriptor != null) {
+              val archivePostDescriptor = PostDescriptor.create(
+                siteName = archiveDescriptor.siteDescriptor.siteName,
+                boardCode = archiveThreadLink.board,
+                threadNo = archiveThreadLink.threadId,
+                postNo = archiveThreadLink.postIdOrThreadId()
+              )
+
+              val desktopUrl = site.resolvable().desktopUrl(
+                archivePostDescriptor.descriptor,
+                archivePostDescriptor.postNo
+              )
+
+              floatingListMenuItems += createMenuItem(
+                menuItemId = COPY_LINK_VALUE,
+                stringId = R.string.action_copy_link_value,
+                value = desktopUrl
+              )
+            }
+          }
+        }
+      }
+
+      floatingListMenuItems += createMenuItem(
+        menuItemId = SHOW_POST_MENU_OPTIONS,
+        stringId = R.string.action_copy_link_show_post_options
+      )
+
+      val floatingListMenuController = FloatingListMenuController(
+        context = context,
+        constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+        items = floatingListMenuItems,
+        itemClickListener = { clickedItem ->
+          val id = clickedItem.key as Int
+          val value = (clickedItem.value as? String) ?: ""
+
+          when (id) {
+            COPY_LINK_TEXT -> {
+              AndroidUtils.setClipboardContent("Link text", value)
+              showToast(context, R.string.link_text_copied_to_clipboard)
+            }
+            COPY_LINK_VALUE -> {
+              AndroidUtils.setClipboardContent("Link value", value)
+              showToast(context, R.string.link_value_copied_to_clipboard)
+            }
+            SHOW_POST_MENU_OPTIONS -> {
+              val postMenuOptions = mutableListOf<FloatingListMenuItem>()
+              onPopulatePostOptions(post, postMenuOptions)
+
+              if (postMenuOptions.size > 0) {
+                showPostOptions(post, inPopup, postMenuOptions)
+              }
+            }
+          }
+        }
+      )
+
+      threadPresenterCallback?.presentController(floatingListMenuController, true)
     }
   }
 
@@ -2150,6 +2325,10 @@ class ThreadPresenter @Inject constructor(
     private const val IMAGE_COPY_ORIGINAL_FILE_NAME = 1005
     private const val IMAGE_COPY_SERVER_FILE_NAME = 1006
     private const val IMAGE_COPY_MD5_HASH_HEX = 1007
+
+    private const val COPY_LINK_TEXT = 2000
+    private const val COPY_LINK_VALUE = 2001
+    private const val SHOW_POST_MENU_OPTIONS = 2002
 
     private const val THUMBNAIL_LONG_CLICK_MENU_HEADER_KEY = "thumbnail_copy_menu_header"
   }
