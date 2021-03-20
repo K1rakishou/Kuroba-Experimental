@@ -42,7 +42,11 @@ class ShowPostsInExternalThreadHelper(
     }
 
     val cancellationFlag = AtomicBoolean(false)
-    val loadingController = LoadingViewController(context, true, "Loading thread '${threadDescriptor}'")
+    val loadingController = LoadingViewController(
+      context,
+      true,
+      "Loading thread '${threadDescriptor.userReadableString()}'"
+    )
 
     val job = scope.launch {
       coroutineContext[Job]?.invokeOnCompletion {

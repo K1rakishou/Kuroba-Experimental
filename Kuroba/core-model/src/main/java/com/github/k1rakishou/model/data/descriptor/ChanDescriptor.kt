@@ -15,6 +15,7 @@ sealed class ChanDescriptor {
   abstract fun boardDescriptor(): BoardDescriptor
   abstract fun siteDescriptor(): SiteDescriptor
   abstract fun serializeToString(): String
+  abstract fun userReadableString(): String
 
   @JvmOverloads
   fun toThreadDescriptor(threadNo: Long? = null): ThreadDescriptor {
@@ -55,6 +56,10 @@ sealed class ChanDescriptor {
 
     override fun serializeToString(): String {
       return "TD_${boardDescriptor.siteName()}_${boardDescriptor.boardCode}_${threadNo}"
+    }
+
+    override fun userReadableString(): String {
+      return "${boardDescriptor.siteDescriptor.siteName}/${boardDescriptor.boardCode}/$threadNo"
     }
 
     override fun equals(other: Any?): Boolean {
@@ -133,6 +138,10 @@ sealed class ChanDescriptor {
 
     override fun serializeToString(): String {
       return "CD_${boardDescriptor.siteName()}_${boardDescriptor.boardCode}"
+    }
+
+    override fun userReadableString(): String {
+      return "${boardDescriptor.siteName()}_${boardDescriptor.boardCode}"
     }
 
     override fun equals(other: Any?): Boolean {
