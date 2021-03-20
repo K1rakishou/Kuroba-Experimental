@@ -123,6 +123,8 @@ class CacheHandler(
       return cacheFile
     } catch (error: IOException) {
       Logger.e(TAG, "Error while trying to get cache file", error)
+
+      createDirectories(forced = true)
       deleteCacheFile(cacheFile)
       return null
     }
@@ -142,8 +144,7 @@ class CacheHandler(
     try {
       if (!fileManager.exists(cacheFile)) {
         val createdFile = fileManager.create(cacheFile) as RawFile?
-          ?: throw IOException(
-            "Couldn't create cache file, path = ${cacheFile.getFullPath()}")
+          ?: throw IOException("Couldn't create cache file, path = ${cacheFile.getFullPath()}")
 
         cacheFile = createdFile
       }
@@ -170,6 +171,8 @@ class CacheHandler(
       return cacheFile
     } catch (error: IOException) {
       Logger.e(TAG, "Error while trying to get or create cache file", error)
+
+      createDirectories(forced = true)
       deleteCacheFile(cacheFile)
       return null
     }
@@ -698,8 +701,8 @@ class CacheHandler(
     )
   }
 
-  private fun createDirectories() {
-    if (!directoriesChecked.compareAndSet(false, true)) {
+  private fun createDirectories(forced: Boolean = false) {
+    if (!forced && !directoriesChecked.compareAndSet(false, true)) {
       return
     }
 
