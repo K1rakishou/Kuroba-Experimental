@@ -45,6 +45,8 @@ class ImageSaverV2(
     uniqueId: String,
     overrideImageSaverV2Options: ImageSaverV2Options? = null
   ) {
+    Logger.d(TAG, "restartUncompleted('$uniqueId', $overrideImageSaverV2Options)")
+
     try {
       val imageSaverV2Options = overrideImageSaverV2Options
         ?: PersistableChanState.imageSaverV2PersistedOptions.get().copy()
@@ -60,6 +62,8 @@ class ImageSaverV2(
   }
 
   fun deleteDownload(uniqueId: String) {
+    Logger.d(TAG, "deleteDownload('$uniqueId')")
+
     rendezvousCoroutineExecutor.post {
       imageSaverV2ServiceDelegate.deleteDownload(uniqueId)
     }
@@ -67,6 +71,7 @@ class ImageSaverV2(
 
   fun save(imageSaverV2Options: ImageSaverV2Options, postImage: ChanPostImage, newFileName: String?) {
     checkInputs(listOf(postImage))
+    Logger.d(TAG, "save('$imageSaverV2Options', imageUrl='${postImage.imageUrl}', newFileName='$newFileName')")
 
     rendezvousCoroutineExecutor.post {
       val uniqueId = calculateUniqueId(listOf(postImage))
@@ -91,6 +96,8 @@ class ImageSaverV2(
 
       if (actualImageDownloadRequest == null) {
         // This request is already active
+        Logger.d(TAG, "save('$imageSaverV2Options', imageUrl='${postImage.imageUrl}', " +
+          "newFileName='$newFileName') request is already active")
         return@post
       }
 
@@ -104,6 +111,7 @@ class ImageSaverV2(
 
   fun saveMany(imageSaverV2Options: ImageSaverV2Options, postImages: Collection<ChanPostImage>) {
     checkInputs(postImages)
+    Logger.d(TAG, "saveMany('$imageSaverV2Options', postImagesCount=${postImages.size})")
 
     rendezvousCoroutineExecutor.post {
       val uniqueId = calculateUniqueId(postImages)
@@ -135,6 +143,7 @@ class ImageSaverV2(
 
       if (actualImageDownloadRequests.isEmpty()) {
         // This request is already active
+        Logger.d(TAG, "saveMany('$imageSaverV2Options', postImagesCount=${postImages.size})")
         return@post
       }
 
@@ -148,6 +157,7 @@ class ImageSaverV2(
 
   fun share(postImage: ChanPostImage, onShareResult: (ModularResult<Unit>) -> Unit) {
     checkInputs(listOf(postImage))
+    Logger.d(TAG, "share('${postImage.imageUrl}')")
 
     rendezvousCoroutineExecutor.post {
       val result = ModularResult.Try { shareInternal(postImage) }
@@ -157,10 +167,12 @@ class ImageSaverV2(
 
   @Suppress("BlockingMethodInNonBlockingContext")
   private suspend fun shareInternal(postImage: ChanPostImage) {
+    Logger.d(TAG, "shareInternal('${postImage.imageUrl}')")
+
     val shareFilesDir = File(getAppContext().cacheDir, SHARE_FILES_DIR_NAME)
     if (!shareFilesDir.exists()) {
       if (!shareFilesDir.mkdirs()) {
-        Logger.e(TAG, "share() failed to create share files dir, path=" + shareFilesDir.absolutePath)
+        Logger.e(TAG, "shareInternal() failed to create share files dir, path=" + shareFilesDir.absolutePath)
         return
       }
     }
@@ -168,7 +180,9 @@ class ImageSaverV2(
     shareFilesDir.listFiles()
       ?.forEach { prevShareFile ->
         val success = prevShareFile.delete()
-        Logger.d(TAG, "share() deleting previous share file: '${prevShareFile.absolutePath}', success: $success")
+
+        Logger.d(TAG, "shareInternal() deleting previous share " +
+          "file: '${prevShareFile.absolutePath}', success: $success")
       }
 
     val extension = if (postImage.extension == null) {
@@ -178,17 +192,17 @@ class ImageSaverV2(
     }
 
     val fileName = postImage.serverFilename + extension
-
     val outputFile = File(shareFilesDir, fileName)
+
     if (outputFile.exists()) {
       if (!outputFile.delete()) {
-        Logger.e(TAG, "share() failed to delete ${outputFile.absolutePath}")
+        Logger.e(TAG, "shareInternal() failed to delete ${outputFile.absolutePath}")
         return
       }
     }
 
     if (!outputFile.createNewFile()) {
-      Logger.e(TAG, "share() failed to create ${outputFile.absolutePath}")
+      Logger.e(TAG, "shareInternal() failed to create ${outputFile.absolutePath}")
       return
     }
 
@@ -207,10 +221,12 @@ class ImageSaverV2(
         }
       }
     } catch (error: Throwable) {
-      Logger.e(TAG, "share() error while downloading file ${postImage.imageUrl}", error)
+      Logger.e(TAG, "shareInternal() error while downloading file ${postImage.imageUrl}", error)
       fileManager.delete(outputFileRaw)
       throw error
     }
+
+    Logger.d(TAG, "shareInternal('${postImage.imageUrl}') file downloaded")
 
     withContext(Dispatchers.Main) {
       val uri = FileProvider.getUriForFile(
@@ -224,7 +240,7 @@ class ImageSaverV2(
       intent.putExtra(Intent.EXTRA_STREAM, uri)
       openIntent(intent)
 
-      Logger.d(TAG, "share() success url=${postImage.imageUrl}, file=${outputFile.absolutePath}")
+      Logger.d(TAG, "shareInternal() success url=${postImage.imageUrl}, file=${outputFile.absolutePath}")
     }
   }
 
@@ -236,10 +252,8 @@ class ImageSaverV2(
     val imageSaverV2OptionsJson = gson.toJson(imageSaverV2Options)
     ImageSaverV2Service.startService(appContext, uniqueId, downloadType, imageSaverV2OptionsJson)
 
-    if (verboseLogs) {
-      Logger.d(TAG, "startBackgroundBookmarkWatchingWorkIfNeeded() " +
-          "uniqueId='$uniqueId', imageSaverV2Options=$imageSaverV2Options")
-    }
+    Logger.d(TAG, "startBackgroundBookmarkWatchingWorkIfNeeded() " +
+      "uniqueId='$uniqueId', imageSaverV2Options=$imageSaverV2Options, downloadType=$downloadType")
   }
 
   private fun calculateUniqueId(postImages: Collection<ChanPostImage>): String {
