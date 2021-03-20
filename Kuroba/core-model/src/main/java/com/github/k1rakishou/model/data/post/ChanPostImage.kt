@@ -2,6 +2,7 @@ package com.github.k1rakishou.model.data.post
 
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -147,6 +148,37 @@ class ChanPostImage(
     }
 
     return "$serverFilename.$extension"
+  }
+
+  fun formatFullOriginalFileName(): String? {
+    if (filename.isNullOrEmpty()) {
+      return null
+    }
+
+    return buildString {
+      append(filename)
+
+      if (extension.isNotNullNorEmpty()) {
+        append(".")
+        append(extension)
+      }
+    }
+  }
+
+
+  fun formatFullServerFileName(): String? {
+    if (serverFilename.isNullOrEmpty()) {
+      return null
+    }
+
+    return buildString {
+      append(serverFilename)
+
+      if (extension.isNotNullNorEmpty()) {
+        append(".")
+        append(extension)
+      }
+    }
   }
 
   override fun equals(other: Any?): Boolean {

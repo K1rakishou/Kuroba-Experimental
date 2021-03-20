@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.epoxyCheckableFloatingListMenuRow
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.epoxyFloatingListMenuRow
+import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.epoxyHeaderListMenuRow
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 
 class FloatingListMenu @JvmOverloads constructor(
@@ -38,6 +39,7 @@ class FloatingListMenu @JvmOverloads constructor(
 
   fun setItems(newItems: List<FloatingListMenuItem>) {
     require(newItems.isNotEmpty()) { "Items cannot be empty!" }
+    checkItemHeaders(newItems)
 
     this.menuItems.clear()
     this.menuItems.addAll(newItems)
@@ -54,6 +56,12 @@ class FloatingListMenu @JvmOverloads constructor(
       items.forEachIndexed { index, item ->
         if (item.visible) {
           when (item) {
+            is HeaderFloatingListMenuItem -> {
+              epoxyHeaderListMenuRow {
+                id("epoxy_header_floating_list_menu_item_row_${item.key.hashCode()}")
+                title(item.name)
+              }
+            }
             is CheckableFloatingListMenuItem -> {
               epoxyCheckableFloatingListMenuRow {
                 id("epoxy_checkable_floating_list_menu_row_${item.key.hashCode()}")
@@ -91,6 +99,18 @@ class FloatingListMenu @JvmOverloads constructor(
             updateMargins(MARGINS)
           }
         }
+      }
+    }
+  }
+
+  private fun checkItemHeaders(newItems: List<FloatingListMenuItem>) {
+    newItems.forEachIndexed { index, item ->
+      if (item is HeaderFloatingListMenuItem && index != 0) {
+        throw IllegalArgumentException("HeaderFloatingListMenuItem can only be the first item of the list!")
+      }
+
+      if (item.more.isNotEmpty()) {
+        checkItemHeaders(item.more)
       }
     }
   }

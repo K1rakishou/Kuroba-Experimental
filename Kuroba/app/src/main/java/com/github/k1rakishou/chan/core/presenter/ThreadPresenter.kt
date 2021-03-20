@@ -52,6 +52,7 @@ import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutPresenterCallback
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
+import com.github.k1rakishou.chan.ui.view.floating_menu.HeaderFloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.post_thumbnail.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -1073,9 +1074,32 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
+    val fullImageName = buildString {
+      append((postImage.filename ?: postImage.serverFilename))
+
+      if (postImage.extension.isNotNullNorEmpty()) {
+        append(".")
+        append(postImage.extension!!)
+      }
+    }
+
     val items = mutableListOf<FloatingListMenuItem>()
+    items += HeaderFloatingListMenuItem(THUMBNAIL_LONG_CLICK_MENU_HEADER_KEY, fullImageName)
     items += createMenuItem(IMAGE_COPY_FULL_URL, R.string.action_copy_image_full_url)
     items += createMenuItem(IMAGE_COPY_THUMBNAIL_URL, R.string.action_copy_image_thumbnail_url)
+
+    if (postImage.formatFullOriginalFileName().isNotNullNorEmpty()) {
+      items += createMenuItem(IMAGE_COPY_ORIGINAL_FILE_NAME, R.string.action_copy_image_original_name)
+    }
+
+    if (postImage.formatFullServerFileName().isNotNullNorEmpty()) {
+      items += createMenuItem(IMAGE_COPY_SERVER_FILE_NAME, R.string.action_copy_image_server_name)
+    }
+
+    if (postImage.fileHash.isNotNullNorEmpty()) {
+      items += createMenuItem(IMAGE_COPY_MD5_HASH_HEX, R.string.action_copy_image_file_hash_hex)
+    }
+
     items += createMenuItem(SHARE_MEDIA_FILE_CONTENT, R.string.action_share_content)
     items += createMenuItem(DOWNLOAD_MEDIA_FILE_CONTENT, R.string.action_download_content)
     items += createMenuItem(DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT, R.string.action_download_content_with_options)
@@ -1110,6 +1134,18 @@ class ThreadPresenter @Inject constructor(
 
         AndroidUtils.setClipboardContent("Thumbnail URL", postImage.actualThumbnailUrl.toString())
         showToast(context, R.string.image_url_copied_to_clipboard)
+      }
+      IMAGE_COPY_ORIGINAL_FILE_NAME -> {
+        AndroidUtils.setClipboardContent("Original file name", postImage.formatFullOriginalFileName())
+        showToast(context, R.string.image_file_name_copied_to_clipboard)
+      }
+      IMAGE_COPY_SERVER_FILE_NAME -> {
+        AndroidUtils.setClipboardContent("Server file name", postImage.formatFullServerFileName())
+        showToast(context, R.string.image_file_name_copied_to_clipboard)
+      }
+      IMAGE_COPY_MD5_HASH_HEX -> {
+        AndroidUtils.setClipboardContent("File hash HEX", postImage.fileHash)
+        showToast(context, R.string.image_file_hash_copied_to_clipboard)
       }
       SHARE_MEDIA_FILE_CONTENT -> {
         imageSaverV2.share(postImage) { result ->
@@ -2102,6 +2138,11 @@ class ThreadPresenter @Inject constructor(
     private const val SHARE_MEDIA_FILE_CONTENT = 1002
     private const val DOWNLOAD_MEDIA_FILE_CONTENT = 1003
     private const val DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT = 1004
+    private const val IMAGE_COPY_ORIGINAL_FILE_NAME = 1005
+    private const val IMAGE_COPY_SERVER_FILE_NAME = 1006
+    private const val IMAGE_COPY_MD5_HASH_HEX = 1007
+
+    private const val THUMBNAIL_LONG_CLICK_MENU_HEADER_KEY = "thumbnail_copy_menu_header"
   }
 
 }

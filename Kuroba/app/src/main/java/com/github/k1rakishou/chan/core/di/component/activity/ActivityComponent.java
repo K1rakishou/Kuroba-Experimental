@@ -166,6 +166,7 @@ import com.github.k1rakishou.chan.ui.view.attach.AttachNewFileButton;
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanel;
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.EpoxyCheckableFloatingListMenuRow;
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.EpoxyFloatingListMenuRow;
+import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.EpoxyHeaderListMenuRow;
 import com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailViewContainer;
 import com.github.k1rakishou.chan.ui.view.post_thumbnail.ThumbnailView;
@@ -282,6 +283,7 @@ public interface ActivityComponent {
     void inject(EpoxyTextView epoxyTextView);
     void inject(EpoxyCheckableFloatingListMenuRow epoxyCheckableFloatingListMenuRow);
     void inject(EpoxyFloatingListMenuRow epoxyFloatingListMenuRow);
+    void inject(EpoxyHeaderListMenuRow epoxyHeaderListMenuRow);
     void inject(EpoxyHistoryHeaderView epoxyHistoryHeaderView);
     void inject(EpoxyReplyFileView epoxyReplyFileView);
     void inject(EpoxyAttachNewFileButtonView epoxyAttachNewFileButtonView);
