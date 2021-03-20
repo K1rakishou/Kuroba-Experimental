@@ -744,7 +744,10 @@ class PostCell : LinearLayout,
 
       when (action) {
         MotionEvent.ACTION_DOWN -> {
-          if (commentMovementMethod.touchOverlapsAnyClickableSpan(comment, event)) {
+          val postCommentMovementMethod = comment.movementMethod as? PostViewMovementMethod
+
+          if (postCommentMovementMethod != null
+            && postCommentMovementMethod.touchOverlapsAnyClickableSpan(comment, event)) {
             blocking = true
             sendUpOrCancel(event)
             return
