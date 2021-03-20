@@ -80,12 +80,19 @@ class ChanPostLocalSource(
 
     val chanThreadIds = chanOriginalPostList.map { chanPost ->
       val threadNo = chanPost.postDescriptor.getThreadNo()
+      val chanThreadEntity = ChanThreadMapper.toEntity(threadNo, chanBoardEntity.boardId, chanPost)
 
-      return@map chanThreadDao.insertOrUpdate(
+      val chanThreadId = chanThreadDao.insertOrUpdate(
         chanBoardEntity.boardId,
         threadNo,
-        ChanThreadMapper.toEntity(threadNo, chanBoardEntity.boardId, chanPost)
+        chanThreadEntity
       )
+
+      check(chanThreadId >= 0) {
+        "insertManyOriginalPosts() Failed to insertOrUpdate thread $threadNo. " +
+          "chanThreadEntity=$chanThreadEntity, chanPost=$chanPost, chanBoardEntity=$chanBoardEntity"
+      }
+      return@map chanThreadId
     }
 
     if (cacheOptions.canStoreInDatabase()) {
@@ -121,11 +128,18 @@ class ChanPostLocalSource(
       originalPost.postDescriptor.descriptor.boardCode()
     )
 
+    val chanThreadEntity = ChanThreadMapper.toEntity(threadNo, chanBoardEntity.boardId, originalPost)
+
     val chanThreadId = chanThreadDao.insertOrUpdate(
       chanBoardEntity.boardId,
       threadNo,
-      ChanThreadMapper.toEntity(threadNo, chanBoardEntity.boardId, originalPost)
+      chanThreadEntity
     )
+
+    check(chanThreadId >= 0) {
+      "insertPosts() Failed to insertOrUpdate thread $threadNo. chanThreadEntity=$chanThreadEntity, " +
+        "originalPost=$originalPost, chanBoardEntity=$chanBoardEntity"
+    }
 
     if (cacheOptions.canStoreInDatabase()) {
       val chanPostIdEntities = chanPostList.map { chanPost ->
