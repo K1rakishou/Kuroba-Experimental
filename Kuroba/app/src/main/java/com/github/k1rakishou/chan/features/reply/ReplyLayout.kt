@@ -102,6 +102,7 @@ import com.github.k1rakishou.chan.utils.setAlphaFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.findAllChildren
+import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
@@ -219,6 +220,126 @@ class ReplyLayout @JvmOverloads constructor(
 
   private val closeMessageRunnable = Runnable {
     animateReplyInputMessage(appearance = false)
+  }
+
+  private val customSelectionActionCallback = object : ActionMode.Callback {
+    private var quoteMenuItem: MenuItem? = null
+    private var spoilerMenuItem: MenuItem? = null
+    private var codeMenuItem: MenuItem? = null
+    private var mathMenuItem: MenuItem? = null
+    private var eqnMenuItem: MenuItem? = null
+    private var sjisMenuItem: MenuItem? = null
+    private var processed = false
+
+    override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
+      val chanDescriptor = threadListLayoutCallbacks?.getCurrentChanDescriptor()
+        ?: return true
+
+      val chanBoard = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
+        ?: return true
+
+      val is4chan = chanDescriptor.siteDescriptor().is4chan()
+      val boardCode = chanDescriptor.boardCode()
+
+      // menu item cleanup, these aren't needed for this
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (menu.size() > 0) {
+          menu.removeItem(android.R.id.shareText)
+        }
+      }
+
+      // setup standard items
+      // >greentext
+      quoteMenuItem = menu.add(Menu.NONE, R.id.reply_selection_action_quote, 1, R.string.post_quote)
+
+      // [spoiler] tags
+      if (chanBoard.spoilers) {
+        spoilerMenuItem = menu.add(
+          Menu.NONE,
+          R.id.reply_selection_action_spoiler,
+          2,
+          R.string.reply_comment_button_spoiler
+        )
+      }
+
+      // setup specific items in a submenu
+      val otherMods = menu.addSubMenu("Modify")
+
+      // g [code]
+      if (is4chan && boardCode == "g") {
+        codeMenuItem = otherMods.add(
+          Menu.NONE,
+          R.id.reply_selection_action_code,
+          1,
+          R.string.reply_comment_button_code
+        )
+      }
+
+      // sci [eqn] and [math]
+      if (is4chan && boardCode == "sci") {
+        eqnMenuItem = otherMods.add(
+          Menu.NONE,
+          R.id.reply_selection_action_eqn,
+          2,
+          R.string.reply_comment_button_eqn
+        )
+        mathMenuItem = otherMods.add(
+          Menu.NONE,
+          R.id.reply_selection_action_math,
+          3,
+          R.string.reply_comment_button_math
+        )
+      }
+
+      // jp and vip [sjis]
+      if (is4chan && (boardCode == "jp" || boardCode == "vip")) {
+        sjisMenuItem = otherMods.add(
+          Menu.NONE,
+          R.id.reply_selection_action_sjis,
+          4,
+          R.string.reply_comment_button_sjis
+        )
+      }
+
+      return true
+    }
+
+    override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean {
+      return true
+    }
+
+    override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
+      when {
+        item === quoteMenuItem -> {
+          processed = insertQuote()
+        }
+        item === spoilerMenuItem -> {
+          processed = insertTags("[spoiler]", "[/spoiler]")
+        }
+        item === codeMenuItem -> {
+          processed = insertTags("[code]", "[/code]")
+        }
+        item === eqnMenuItem -> {
+          processed = insertTags("[eqn]", "[/eqn]")
+        }
+        item === mathMenuItem -> {
+          processed = insertTags("[math]", "[/math]")
+        }
+        item === sjisMenuItem -> {
+          processed = insertTags("[sjis]", "[/sjis]")
+        }
+      }
+
+      if (processed) {
+        mode.finish()
+        processed = false
+        return true
+      }
+
+      return false
+    }
+
+    override fun onDestroyActionMode(mode: ActionMode) {}
   }
 
   override val chanDescriptor: ChanDescriptor?
@@ -389,7 +510,7 @@ class ReplyLayout @JvmOverloads constructor(
       threadListLayoutFilesCallback?.hideLoadingView()
     }
 
-    setupCommentContextMenu()
+    comment.customSelectionActionModeCallback = customSelectionActionCallback
 
     AndroidUtils.setBoundlessRoundRippleBackground(more)
     more.setOnClickListener(this)
@@ -754,6 +875,11 @@ class ReplyLayout @JvmOverloads constructor(
 
     authenticationLayout!!.initialize(site, callback, autoReply)
     authenticationLayout!!.reset()
+
+    (authenticationLayout as? View)?.let { captchaView ->
+      val topPadding = threadListLayoutCallbacks?.searchStatusHeight() ?: 0
+      captchaView.updatePaddings(top = topPadding)
+    }
   }
 
   private fun createAuthenticationLayout(
@@ -1214,129 +1340,6 @@ class ReplyLayout @JvmOverloads constructor(
       }
   }
 
-  private fun setupCommentContextMenu() {
-    comment.customSelectionActionModeCallback = object : ActionMode.Callback {
-      private var quoteMenuItem: MenuItem? = null
-      private var spoilerMenuItem: MenuItem? = null
-      private var codeMenuItem: MenuItem? = null
-      private var mathMenuItem: MenuItem? = null
-      private var eqnMenuItem: MenuItem? = null
-      private var sjisMenuItem: MenuItem? = null
-      private var processed = false
-
-      override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
-        val chanDescriptor = threadListLayoutCallbacks?.getCurrentChanDescriptor()
-          ?: return true
-
-        val chanBoard = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
-          ?: return true
-
-        val is4chan = chanDescriptor.siteDescriptor().is4chan()
-        val boardCode = chanDescriptor.boardCode()
-
-        // menu item cleanup, these aren't needed for this
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-          if (menu.size() > 0) {
-            menu.removeItem(android.R.id.shareText)
-          }
-        }
-
-        // setup standard items
-        // >greentext
-        quoteMenuItem =
-          menu.add(Menu.NONE, R.id.reply_selection_action_quote, 1, R.string.post_quote)
-
-        // [spoiler] tags
-        if (chanBoard.spoilers) {
-          spoilerMenuItem = menu.add(
-            Menu.NONE,
-            R.id.reply_selection_action_spoiler,
-            2,
-            R.string.reply_comment_button_spoiler
-          )
-        }
-
-        // setup specific items in a submenu
-        val otherMods = menu.addSubMenu("Modify")
-
-        // g [code]
-        if (is4chan && boardCode == "g") {
-          codeMenuItem = otherMods.add(
-            Menu.NONE,
-            R.id.reply_selection_action_code,
-            1,
-            R.string.reply_comment_button_code
-          )
-        }
-
-        // sci [eqn] and [math]
-        if (is4chan && boardCode == "sci") {
-          eqnMenuItem = otherMods.add(
-            Menu.NONE,
-            R.id.reply_selection_action_eqn,
-            2,
-            R.string.reply_comment_button_eqn
-          )
-          mathMenuItem = otherMods.add(
-            Menu.NONE,
-            R.id.reply_selection_action_math,
-            3,
-            R.string.reply_comment_button_math
-          )
-        }
-
-        // jp and vip [sjis]
-        if (is4chan && (boardCode == "jp" || boardCode == "vip")) {
-          sjisMenuItem = otherMods.add(
-            Menu.NONE,
-            R.id.reply_selection_action_sjis,
-            4,
-            R.string.reply_comment_button_sjis
-          )
-        }
-
-        return true
-      }
-
-      override fun onPrepareActionMode(mode: ActionMode, menu: Menu): Boolean {
-        return true
-      }
-
-      override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
-        when {
-          item === quoteMenuItem -> {
-            processed = insertQuote()
-          }
-          item === spoilerMenuItem -> {
-            processed = insertTags("[spoiler]", "[/spoiler]")
-          }
-          item === codeMenuItem -> {
-            processed = insertTags("[code]", "[/code]")
-          }
-          item === eqnMenuItem -> {
-            processed = insertTags("[eqn]", "[/eqn]")
-          }
-          item === mathMenuItem -> {
-            processed = insertTags("[math]", "[/math]")
-          }
-          item === sjisMenuItem -> {
-            processed = insertTags("[sjis]", "[/sjis]")
-          }
-        }
-
-        if (processed) {
-          mode.finish()
-          processed = false
-          return true
-        }
-
-        return false
-      }
-
-      override fun onDestroyActionMode(mode: ActionMode) {}
-    }
-  }
-
   override fun onConfigurationChanged(newConfig: Configuration?) {
     super.onConfigurationChanged(newConfig)
 
@@ -1415,6 +1418,7 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   interface ThreadListLayoutCallbacks {
+    fun searchStatusHeight(): Int
     fun currentFocusedController(): ThreadPresenter.CurrentFocusedController
     fun highlightPosts(postDescriptors: Set<PostDescriptor>)
     fun openReply(open: Boolean)

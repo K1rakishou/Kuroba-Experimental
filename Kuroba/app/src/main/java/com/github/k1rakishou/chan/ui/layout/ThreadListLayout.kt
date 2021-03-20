@@ -763,6 +763,23 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
   }
 
+  override fun searchStatusHeight(): Int {
+    if (!searchOpen) {
+      return 0
+    }
+
+    if (searchStatus.height > 0) {
+      return searchStatus.height - searchStatus.totalPaddingTop
+    }
+
+    searchStatus.measure(
+      MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
+      MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+    )
+
+    return searchStatus.measuredHeight - searchStatus.totalPaddingTop
+  }
+
   override fun currentFocusedController(): ThreadPresenter.CurrentFocusedController {
     return threadPresenter?.currentFocusedController()
       ?: ThreadPresenter.CurrentFocusedController.None
