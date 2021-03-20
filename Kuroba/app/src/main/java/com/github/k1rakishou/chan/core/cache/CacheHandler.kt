@@ -706,6 +706,10 @@ class CacheHandler(
       return
     }
 
+    if (forced) {
+      Logger.d(TAG, "createDirectories(forced)")
+    }
+
     if (!fileManager.exists(cacheDirFile) && fileManager.create(cacheDirFile) == null) {
       val rawFile = File(cacheDirFile.getFullPath())
       if (!rawFile.exists() && !rawFile.mkdirs()) {
