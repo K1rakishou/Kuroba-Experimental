@@ -41,7 +41,7 @@ data class PostCellData(
   var filterHash: Int,
   var filterHighlightedColor: Int,
   var postAdditionalData: PostAdditionalData
-  ) {
+) {
   var postCellCallback: PostCellInterface.PostCellCallback? = null
 
   private var detailsSizePxPrecalculated: Int? = null
@@ -59,7 +59,7 @@ data class PostCellData(
     get() = filterHighlightedColor != 0
   val postDescriptor: PostDescriptor
     get() = post.postDescriptor
-  val postComment: CharSequence
+  val fullPostComment: CharSequence
     get() = post.postComment.comment()
   val postImages: List<ChanPostImage>
     get() = post.postImages
@@ -128,23 +128,23 @@ data class PostCellData(
 
   fun fullCopy(): PostCellData {
     return PostCellData(
-      chanDescriptor,
-      post,
-      postIndex,
-      textSizeSp,
-      highlighted,
-      postSelected,
-      markedNo,
-      showDivider,
-      boardPostViewMode,
-      boardPostsSortOrder,
-      neverShowPages,
-      compact,
-      stub,
-      theme,
-      filterHash,
-      filterHighlightedColor,
-      postAdditionalData
+      chanDescriptor = chanDescriptor,
+      post = post,
+      postIndex = postIndex,
+      textSizeSp = textSizeSp,
+      highlighted = highlighted,
+      postSelected = postSelected,
+      markedPostNo = markedPostNo,
+      showDivider = showDivider,
+      boardPostViewMode = boardPostViewMode,
+      boardPostsSortOrder = boardPostsSortOrder,
+      neverShowPages = neverShowPages,
+      compact = compact,
+      stub = stub,
+      theme = theme,
+      filterHash = filterHash,
+      filterHighlightedColor = filterHighlightedColor,
+      postAdditionalData = postAdditionalData
     ).also { newPostCellData ->
       newPostCellData.postCellCallback = postCellCallback
       newPostCellData.detailsSizePxPrecalculated = detailsSizePxPrecalculated

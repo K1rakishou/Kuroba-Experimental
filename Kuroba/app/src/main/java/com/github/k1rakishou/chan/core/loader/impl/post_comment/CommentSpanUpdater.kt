@@ -60,7 +60,7 @@ internal object CommentSpanUpdater {
 
     val post = chanThreadManager.getPost(postDescriptor)
       ?: return false
-    val ssb = SpannableStringBuilder(post.postComment.originalComment())
+    val stringBuilder = SpannableStringBuilder(post.postComment.originalComment())
     val groupedSpanUpdates = groupSpanUpdatesByOldSpans(spanUpdateBatchList)
 
     // Since we are inserting new text, old spans will become incorrect right after the first
@@ -72,45 +72,45 @@ internal object CommentSpanUpdater {
       invertedSpanUpdateBatchList.forEach { invertedSpanUpdateBatch ->
         val start = postLinkableSpan.start + offset
         val end = postLinkableSpan.end + offset
-        val oldSpans = ssb.getSpans(start, end, CharacterStyle::class.java).filter { oldSpan ->
+        val oldSpans = stringBuilder.getSpans(start, end, CharacterStyle::class.java).filter { oldSpan ->
           oldSpan !== postLinkableSpan.postLinkable
         }
-        val originalLinkUrl = ssb.substring(start, end)
+        val originalLinkUrl = stringBuilder.substring(start, end)
         val formattedLinkUrl = formatLinkUrl(originalLinkUrl, invertedSpanUpdateBatch.extraLinkInfo)
 
         // Update the offset with the difference between the new and old links
         offset += formattedLinkUrl.length - originalLinkUrl.length
 
         // Delete the old link with the text
-        ssb.delete(start, end)
+        stringBuilder.delete(start, end)
 
         // Insert new formatted link
-        ssb.insert(start, formattedLinkUrl)
+        stringBuilder.insert(start, formattedLinkUrl)
 
         // Add the updated span
-        ssb.setSpanSafe(
+        stringBuilder.setSpanSafe(
           postLinkableSpan.postLinkable,
           start,
           start + formattedLinkUrl.length,
-          ssb.getSpanFlags(postLinkableSpan.postLinkable)
+          stringBuilder.getSpanFlags(postLinkableSpan.postLinkable)
         )
 
         // Insert back old spans (and don't forget to update their boundaries) that were
         // on top of this PostLinkable that we are changing
         oldSpans.forEach { oldSpan ->
-          val oldSpanStart = ssb.getSpanStart(oldSpan)
-          val oldSpanEnd = ssb.getSpanEnd(oldSpan)
+          val oldSpanStart = stringBuilder.getSpanStart(oldSpan)
+          val oldSpanEnd = stringBuilder.getSpanEnd(oldSpan)
 
-          ssb.setSpanSafe(
+          stringBuilder.setSpanSafe(
             oldSpan,
             oldSpanStart,
             oldSpanEnd + formattedLinkUrl.length,
-            ssb.getSpanFlags(oldSpan)
+            stringBuilder.getSpanFlags(oldSpan)
           )
         }
 
         // Add the icon span
-        ssb.setSpanSafe(
+        stringBuilder.setSpanSafe(
           getIconSpan(invertedSpanUpdateBatch.iconBitmap),
           start,
           start + 1,
@@ -121,7 +121,7 @@ internal object CommentSpanUpdater {
       }
     }
 
-    post.postComment.updateComment(ssb)
+    post.postComment.updateComment(stringBuilder)
     return updated
   }
 

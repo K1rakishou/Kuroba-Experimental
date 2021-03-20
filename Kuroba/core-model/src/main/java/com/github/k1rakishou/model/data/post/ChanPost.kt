@@ -122,6 +122,27 @@ open class ChanPost(
   }
 
   @Synchronized
+  fun onDemandContentLoadedMapsDiffer(
+    thisMap: Map<LoaderType, LoaderContentLoadState>,
+    otherMap: Map<LoaderType, LoaderContentLoadState>
+  ): Boolean {
+    if (thisMap.size != otherMap.size) {
+      return true
+    }
+
+    for (loaderType in thisMap.keys) {
+      val thisLoaderState = thisMap[loaderType]
+      val otherLoaderState = otherMap[loaderType]
+
+      if (thisLoaderState != otherLoaderState) {
+        return true
+      }
+    }
+
+    return false
+  }
+
+  @Synchronized
   open fun updatePostImageSize(fileUrl: String, fileSize: Long) {
     for (postImage in postImages) {
       if (postImage.imageUrl != null && postImage.imageUrl.toString() == fileUrl) {
@@ -174,6 +195,10 @@ open class ChanPost(
       return false
     }
     if (isSavedReply != other.isSavedReply) {
+      return false
+    }
+
+    if (!onDemandContentLoadedMapsDiffer(onDemandContentLoadedMap, other.onDemandContentLoadedMap)) {
       return false
     }
 

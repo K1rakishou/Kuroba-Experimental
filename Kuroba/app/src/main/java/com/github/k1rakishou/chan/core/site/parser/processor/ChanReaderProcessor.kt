@@ -128,7 +128,13 @@ class ChanReaderProcessor(
       return true
     }
 
-    if (ChanPostUtils.postsDiffer(builder, chanPost)) {
+    val postsDiffer = ChanPostUtils.postsDiffer(
+      chanPostBuilder = builder,
+      chanPostFromCache = chanPost,
+      isThreadMode = chanDescriptor is ChanDescriptor.ThreadDescriptor
+    )
+
+    if (postsDiffer) {
       return true
     }
 

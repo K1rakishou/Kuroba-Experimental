@@ -621,7 +621,12 @@ class ThreadPresenter @Inject constructor(
     BackgroundUtils.ensureMainThread()
 
     if (threadPresenterCallback != null && needUpdatePost(batchResult)) {
-      threadPresenterCallback?.onPostUpdated(batchResult.postDescriptor, batchResult.results)
+      val updatedPost = chanThreadManager.getPost(batchResult.postDescriptor)
+        ?: return
+
+      serializedCoroutineExecutor.post {
+        threadPresenterCallback?.onPostUpdated(updatedPost, batchResult.results)
+      }
     }
   }
 
@@ -988,8 +993,9 @@ class ThreadPresenter @Inject constructor(
     }
 
     val topRepliesData = threadPresenterCallback?.getTopPostRepliesDataOrNull()
-    if (topRepliesData != null &&
-      topRepliesData.postAdditionalData.postViewMode == PostCellData.PostViewMode.ExternalPostsPopup) {
+    val postViewMode = topRepliesData?.postAdditionalData?.postViewMode
+
+    if (topRepliesData != null && postViewMode == PostCellData.PostViewMode.ExternalPostsPopup) {
       return
     }
 
@@ -1716,6 +1722,9 @@ class ThreadPresenter @Inject constructor(
       savedReplyManager.savePost(post.postDescriptor)
     }
 
+    // Trigger onDemandContentLoaderManager for this post again
+    onDemandContentLoaderManager.onPostUnbind(post.postDescriptor, isActuallyRecycling = true)
+
     if (descriptor is ChanDescriptor.ThreadDescriptor) {
       val isThreadCached = chanPostBuilderCache.isCached(descriptor)
       if (isThreadCached) {
@@ -2105,7 +2114,7 @@ class ThreadPresenter @Inject constructor(
       selectedPosts: List<PostDescriptor>
     )
 
-    fun onPostUpdated(postDescriptor: PostDescriptor, results: List<LoaderResult>)
+    suspend fun onPostUpdated(updatedPost: ChanPost, results: List<LoaderResult>)
     fun presentController(controller: Controller, animate: Boolean)
     fun showToolbar()
     fun showAvailableArchivesList(postDescriptor: PostDescriptor)

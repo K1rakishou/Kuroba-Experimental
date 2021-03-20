@@ -1,7 +1,7 @@
 package com.github.k1rakishou.model.data.post
 
 
-class LoaderContentLoadState(
+data class LoaderContentLoadState(
   private var loaded: Boolean = false
 ) {
   @Synchronized
@@ -23,4 +23,5 @@ class LoaderContentLoadState(
   fun setContentLoaded() {
     loaded = true
   }
+
 }

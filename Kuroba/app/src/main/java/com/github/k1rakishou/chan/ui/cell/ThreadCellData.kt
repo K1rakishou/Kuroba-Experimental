@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.ui.cell
 
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
@@ -10,7 +9,7 @@ import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import com.github.k1rakishou.model.data.post.LoaderType
+import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.PostIndexed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -161,28 +160,27 @@ class ThreadCellData(
     }
   }
 
-  fun onPostUpdated(postDescriptor: PostDescriptor, results: List<LoaderResult>) {
-    val postCellData = postCellDataList
-      .firstOrNull { postCellData -> postCellData.postDescriptor == postDescriptor }
+  suspend fun onPostUpdated(updatedPost: ChanPost) {
+    val postCellDataIndex = postCellDataList
+      .indexOfFirst { postCellData -> postCellData.postDescriptor == updatedPost.postDescriptor }
 
-    if (postCellData == null) {
+    if (postCellDataIndex < 0) {
       return
     }
 
-    results.forEach { loaderResult ->
-      if (loaderResult !is LoaderResult.Succeeded) {
-        return@forEach
-      }
+    val postCellData = postCellDataList.getOrNull(postCellDataIndex)
+      ?: return
 
-      when (loaderResult.loaderType) {
-        LoaderType.PostExtraContentLoader -> postCellData.resetCommentTextCache()
-        LoaderType.InlinedFileInfoLoader,
-        LoaderType.PrefetchLoader,
-        LoaderType.Chan4CloudFlareImagePreLoader -> {
-          // no-op
-        }
-      }
+    val updatedPostCellData = withContext(Dispatchers.Default) {
+      return@withContext postIndexedListToPostCellDataList(
+        postCellCallback = postCellCallback!!,
+        chanDescriptor = chanDescriptor!!,
+        theme = currentTheme,
+        postIndexedList = listOf(PostIndexed(updatedPost, postCellData.postIndex))
+      )
     }
+
+    postCellDataList[postCellDataIndex] = updatedPostCellData.first()
   }
 
   fun selectPosts(postDescriptors: Set<PostDescriptor>) {

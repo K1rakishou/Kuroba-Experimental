@@ -28,7 +28,6 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
@@ -51,6 +50,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.PostIndexed
 import com.github.k1rakishou.persist_state.IndexAndTop
@@ -187,13 +187,13 @@ class PostRepliesController(
     return thumbnail
   }
 
-  fun onPostUpdated(postDescriptor: PostDescriptor, results: List<LoaderResult>) {
+  suspend fun onPostUpdated(updatedPost: ChanPost) {
     BackgroundUtils.ensureMainThread()
 
     val adapter = repliesView?.adapter as? RepliesAdapter
       ?: return
 
-    adapter.onPostUpdated(postDescriptor, results)
+    adapter.onPostUpdated(updatedPost)
   }
 
   fun setPostRepliesData(threadDescriptor: ChanDescriptor.ThreadDescriptor, data: RepliesData) {
@@ -354,13 +354,15 @@ class PostRepliesController(
       notifyDataSetChanged()
     }
 
-    fun onPostUpdated(postDescriptor: PostDescriptor, results: List<LoaderResult>) {
+    suspend fun onPostUpdated(updatedPost: ChanPost) {
+      val postDescriptor = updatedPost.postDescriptor
+
       val postCellDataIndex = threadCellData.getPostCellDataIndex(postDescriptor)
       if (postCellDataIndex == null) {
         return
       }
 
-      threadCellData.onPostUpdated(postDescriptor, results)
+      threadCellData.onPostUpdated(updatedPost)
       notifyItemChanged(postCellDataIndex)
     }
 

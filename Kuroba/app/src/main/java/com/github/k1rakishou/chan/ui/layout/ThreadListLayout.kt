@@ -44,7 +44,6 @@ import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
-import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
@@ -85,6 +84,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineName
@@ -1364,9 +1364,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     recyclerView.removeItemDecoration(PARTY)
   }
 
-  fun onPostUpdated(postDescriptor: PostDescriptor, results: List<LoaderResult>) {
+  suspend fun onPostUpdated(updatedPost: ChanPost) {
     BackgroundUtils.ensureMainThread()
-    postAdapter.updatePost(postDescriptor, results)
+    postAdapter.updatePost(updatedPost)
   }
 
   fun isErrorShown(): Boolean {

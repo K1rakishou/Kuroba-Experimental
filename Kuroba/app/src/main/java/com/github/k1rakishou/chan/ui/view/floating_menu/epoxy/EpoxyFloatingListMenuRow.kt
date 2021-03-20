@@ -54,16 +54,7 @@ class EpoxyFloatingListMenuRow @JvmOverloads constructor(
 
   override fun onThemeChanged() {
     updateTitleColor()
-
-    if (moreItemsIcon.visibility == View.VISIBLE) {
-      moreItemsIcon.setImageDrawable(
-        themeEngine.getDrawableTinted(
-          context,
-          R.drawable.ic_baseline_navigate_next_24,
-          ThemeEngine.isDarkColor(themeEngine.chanTheme.backColor)
-        )
-      )
-    }
+    updateMoreItemsIcon()
   }
 
   @ModelProp
@@ -98,6 +89,7 @@ class EpoxyFloatingListMenuRow @JvmOverloads constructor(
     }
 
     moreItemsIcon.setVisibilityFast(visibility)
+    updateMoreItemsIcon()
   }
 
   @CallbackProp
@@ -117,6 +109,18 @@ class EpoxyFloatingListMenuRow @JvmOverloads constructor(
     )
 
     title.setTextColor(colorStateList)
+  }
+
+  private fun updateMoreItemsIcon() {
+    if (moreItemsIcon.visibility == VISIBLE) {
+      moreItemsIcon.setImageDrawable(
+        themeEngine.getDrawableTinted(
+          context,
+          R.drawable.ic_baseline_navigate_next_24,
+          ThemeEngine.isDarkColor(themeEngine.chanTheme.backColor)
+        )
+      )
+    }
   }
 
 }

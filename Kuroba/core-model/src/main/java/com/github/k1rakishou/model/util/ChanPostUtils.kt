@@ -105,7 +105,7 @@ object ChanPostUtils {
     return dateFormat.format(tmpDate)
   }
 
-  fun postsDiffer(chanPostBuilder: ChanPostBuilder, chanPostFromCache: ChanPost): Boolean {
+  fun postsDiffer(chanPostBuilder: ChanPostBuilder, chanPostFromCache: ChanPost, isThreadMode: Boolean): Boolean {
     if (chanPostBuilder.boardDescriptor!! != chanPostFromCache.postDescriptor.descriptor.boardDescriptor()) {
       return true
     }
@@ -116,9 +116,15 @@ object ChanPostUtils {
     if (chanPostBuilder.op) {
       chanPostFromCache as ChanOriginalPost
 
-      if (chanPostBuilder.lastModified != chanPostFromCache.lastModified) {
-        return true
+      if (!isThreadMode) {
+        // When in a thread lastModified will most likely not be sent from the server
+        // (4chan.org/2ch.hk) it is only sent for catalog threads. So we don't want to compare
+        // them here because otherwise this method will be always returning true for OPs.
+        if (chanPostBuilder.lastModified != chanPostFromCache.lastModified) {
+          return true
+        }
       }
+
       if (chanPostBuilder.sticky != chanPostFromCache.sticky) {
         return true
       }

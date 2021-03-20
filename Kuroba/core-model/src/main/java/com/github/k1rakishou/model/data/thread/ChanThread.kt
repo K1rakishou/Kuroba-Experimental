@@ -12,6 +12,7 @@ import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.LoaderType
+import com.github.k1rakishou.model.data.post.PostComment
 import com.github.k1rakishou.model.util.ChanPostUtils
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -463,33 +464,35 @@ class ChanThread(
     }
   }
 
-  private fun mergePosts(oldChanPost: ChanPost, newPost: ChanPost): ChanPost {
-    if (oldChanPost is ChanOriginalPost || newPost is ChanOriginalPost) {
-      return mergeOriginalPosts(oldChanPost, newPost)
+  private fun mergePosts(oldChanPost: ChanPost, newChanPost: ChanPost): ChanPost {
+    if (oldChanPost is ChanOriginalPost || newChanPost is ChanOriginalPost) {
+      return mergeOriginalPosts(oldChanPost, newChanPost)
     }
 
-    check(oldChanPost.postDescriptor == newPost.postDescriptor) {
+    check(oldChanPost.postDescriptor == newChanPost.postDescriptor) {
       "Post descriptors differ!"
     }
+
+    val postCommentsDiffer = postCommentsDiffer(oldChanPost, newChanPost)
 
     val mergedPost = ChanPost(
       chanPostId = oldChanPost.chanPostId,
       postDescriptor = oldChanPost.postDescriptor,
       repliesFrom = oldChanPost.repliesFrom,
-      postImages = mergePostImages(newPost.postImages, oldChanPost.postImages),
-      postIcons = newPost.postIcons,
-      repliesTo = newPost.repliesTo,
-      timestamp = newPost.timestamp,
-      postComment = newPost.postComment,
-      subject = newPost.subject,
-      tripcode = newPost.tripcode,
-      name = newPost.name,
-      posterId = newPost.posterId,
-      moderatorCapcode = newPost.moderatorCapcode,
-      isSavedReply = newPost.isSavedReply
+      postImages = mergePostImages(newChanPost.postImages, oldChanPost.postImages),
+      postIcons = newChanPost.postIcons,
+      repliesTo = newChanPost.repliesTo,
+      timestamp = newChanPost.timestamp,
+      postComment = mergePostComments(oldChanPost.postComment, newChanPost.postComment),
+      subject = newChanPost.subject,
+      tripcode = newChanPost.tripcode,
+      name = newChanPost.name,
+      posterId = newChanPost.posterId,
+      moderatorCapcode = newChanPost.moderatorCapcode,
+      isSavedReply = newChanPost.isSavedReply
     )
 
-    handlePostContentLoadedMap(mergedPost, oldChanPost)
+    handlePostContentLoadedMap(mergedPost, oldChanPost, postCommentsDiffer)
     mergedPost.setPostDeleted(oldChanPost.deleted)
     return mergedPost
   }
@@ -508,6 +511,8 @@ class ChanThread(
       "Post descriptors differ!"
     }
 
+    val postCommentsDiffer = postCommentsDiffer(oldChanOriginalPost, newChanOriginalPost)
+
     val mergedOriginalPost = ChanOriginalPost(
       chanPostId = oldChanOriginalPost.chanPostId,
       postDescriptor = oldChanOriginalPost.postDescriptor,
@@ -515,7 +520,7 @@ class ChanThread(
       postImages = mergePostImages(newChanOriginalPost.postImages, oldChanOriginalPost.postImages),
       postIcons = newChanOriginalPost.postIcons,
       repliesTo = newChanOriginalPost.repliesTo,
-      postComment = newChanOriginalPost.postComment,
+      postComment = mergePostComments(oldChanOriginalPost.postComment, newChanOriginalPost.postComment),
       subject = newChanOriginalPost.subject,
       tripcode = newChanOriginalPost.tripcode,
       name = newChanOriginalPost.name,
@@ -532,9 +537,21 @@ class ChanThread(
       archived = newChanOriginalPost.archived
     )
 
-    handlePostContentLoadedMap(mergedOriginalPost, oldChanOriginalPost)
+    handlePostContentLoadedMap(mergedOriginalPost, oldChanOriginalPost, postCommentsDiffer)
     mergedOriginalPost.setPostDeleted(oldChanOriginalPost.deleted)
     return mergedOriginalPost
+  }
+
+  private fun mergePostComments(oldPostComment: PostComment, newPostComment: PostComment): PostComment {
+    if (oldPostComment.originalCommentHash == newPostComment.originalCommentHash) {
+      return oldPostComment
+    }
+
+    return newPostComment
+  }
+
+  private fun postCommentsDiffer(oldChanPost: ChanPost, newChanPost: ChanPost): Boolean {
+    return oldChanPost.postComment.originalCommentHash != newChanPost.postComment.originalCommentHash
   }
 
   private fun mergePostImages(
@@ -565,13 +582,14 @@ class ChanThread(
 
   private fun handlePostContentLoadedMap(
     mergedPost: ChanPost,
-    oldChanPost: ChanPost
+    oldChanPost: ChanPost,
+    postCommentsDiffer: Boolean
   ) {
     mergedPost.replaceOnDemandContentLoadedMap(oldChanPost.copyOnDemandContentLoadedMap())
 
-    // Reset PostExtraContentLoader because since post has changed, the comment might have changed
-    // too, so we need to reload extra content for this post
-    mergedPost.setContentLoadedForLoader(LoaderType.PostExtraContentLoader, false)
+    if (postCommentsDiffer) {
+      mergedPost.setContentLoadedForLoader(LoaderType.PostExtraContentLoader, false)
+    }
   }
 
   private fun recalculatePostReplies() {

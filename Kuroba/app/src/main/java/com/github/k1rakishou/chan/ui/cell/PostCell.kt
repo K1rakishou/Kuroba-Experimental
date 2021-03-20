@@ -567,7 +567,7 @@ class PostCell : LinearLayout,
 
   private fun bindPostComment(postCellData: PostCellData) {
     val theme = postCellData.theme
-    val commentText = postCellData.commentText
+    val fullPostComment = postCellData.fullPostComment
 
     if (postCellData.postIcons.isNotEmpty()) {
       comment.setPadding(horizPaddingPx, vertPaddingPx, horizPaddingPx, 0)
@@ -583,7 +583,7 @@ class PostCell : LinearLayout,
     comment.setTextColor(theme.textColorPrimary)
 
     val newVisibility = when {
-      commentText.isEmpty() -> {
+      fullPostComment.isEmpty() -> {
         if (postCellData.singleImageMode || postCellData.postImages.isEmpty()) {
           View.GONE
         } else {
@@ -689,7 +689,7 @@ class PostCell : LinearLayout,
   }
 
   private fun setPostLinkableListener(postCellData: PostCellData, bind: Boolean) {
-    val postComment = postCellData.postComment
+    val postComment = postCellData.fullPostComment
     if (postComment !is Spanned) {
       return
     }

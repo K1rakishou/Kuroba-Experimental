@@ -175,7 +175,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   override val displayingPostDescriptors: List<PostDescriptor>
     get() = if (postPopupHelper.isOpen) {
-      postPopupHelper.displayingPostDescriptors
+      postPopupHelper.getDisplayingPostDescriptors()
     } else {
       threadListLayout.displayingPostDescriptors
     }
@@ -851,14 +851,14 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
-  override fun onPostUpdated(postDescriptor: PostDescriptor, results: List<LoaderResult>) {
+  override suspend fun onPostUpdated(updatedPost: ChanPost, results: List<LoaderResult>) {
     BackgroundUtils.ensureMainThread()
 
     if (postPopupHelper.isOpen) {
-      postPopupHelper.onPostUpdated(postDescriptor, results)
+      postPopupHelper.onPostUpdated(updatedPost)
     }
 
-    threadListLayout.onPostUpdated(postDescriptor, results)
+    threadListLayout.onPostUpdated(updatedPost)
   }
 
   override fun presentController(
