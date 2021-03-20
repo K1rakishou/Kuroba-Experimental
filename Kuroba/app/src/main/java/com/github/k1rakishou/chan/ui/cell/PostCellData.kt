@@ -244,11 +244,11 @@ data class PostCellData(
 
   private fun calculateCommentText(): CharSequence {
     if (boardPostViewMode == ChanSettings.PostViewMode.LIST) {
-      if (threadMode || post.postComment.comment().length <= COMMENT_MAX_LENGTH_BOARD) {
+      if (threadMode || post.postComment.comment().length <= COMMENT_MAX_LENGTH_LIST) {
         return post.postComment.comment()
       }
 
-      return post.postComment.comment().ellipsizeEnd(COMMENT_MAX_LENGTH_BOARD)
+      return post.postComment.comment().ellipsizeEnd(COMMENT_MAX_LENGTH_LIST)
     }
 
     val commentText = post.postComment.comment()
@@ -368,7 +368,7 @@ data class PostCellData(
   }
 
   companion object {
-    private const val COMMENT_MAX_LENGTH_BOARD = 350
+    private const val COMMENT_MAX_LENGTH_LIST = 350
     private const val COMMENT_MAX_LENGTH_GRID = 200
     private const val COMMENT_MAX_LENGTH_STAGGER = 500
     private const val POST_STUB_TITLE_MAX_LENGTH = 100

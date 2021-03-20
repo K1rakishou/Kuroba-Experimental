@@ -42,6 +42,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <dimen name="attach_new_file_button_vertical_margin">4dp</dimen>
     <dimen name="attach_new_file_button_wide_height">32dp</dimen>
 
-    <dimen name="post_multiple_image_thumbnail_view_info_text_size_max">16sp</dimen>
     <dimen name="post_multiple_image_thumbnail_view_info_text_size_min">10sp</dimen>
+    <dimen name="post_multiple_image_thumbnail_view_info_text_size_max">15sp</dimen>
+
+    <dimen name="post_multiple_image_thumbnail_view_dimens_text_size_min">9sp</dimen>
+    <dimen name="post_multiple_image_thumbnail_view_dimens_text_size_max">14sp</dimen>
 </resources>

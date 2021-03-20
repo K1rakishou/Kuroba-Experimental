@@ -16,6 +16,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import java.util.*
 import kotlin.collections.ArrayList
@@ -119,6 +120,11 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       "Bad post images count: ${postCellData.post.postImages.size}"
     }
 
+    val postThumbnailsAlignment = when (postCellData.chanDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostThumbnailAlignmentMode.get()
+      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostThumbnailAlignmentMode.get()
+    }
+
     val container = thumbnailContainer as ConstraintLayout
     val postCellCallback = postCellData.postCellCallback
     val resultThumbnailViews = mutableListOf<PostImageThumbnailViewContract>()
@@ -135,14 +141,14 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         continue
       }
 
-      val thumbnailView = PostImageThumbnailViewContainer(context)
+      val thumbnailView = when (postThumbnailsAlignment) {
+        ChanSettings.PostThumbnailAlignmentMode.AlignLeft -> PostImageThumbnailViewContainer(context, false)
+        ChanSettings.PostThumbnailAlignmentMode.AlignRight -> PostImageThumbnailViewContainer(context, true)
+      }
+
       thumbnailView.setViewId(View.generateViewId())
-
-      thumbnailView.bindActualThumbnailWidthAndHeight(
-        fileInfoContainerSize = (thumbnailContainerSize - cellPostThumbnailSize),
-        thumbnailSize = cellPostThumbnailSize,
-      )
-
+      thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize,)
+      thumbnailView.bindFileInfoContainerSizes(thumbnailContainerSize, cellPostThumbnailSize)
       thumbnailView.bindPostImage(postImage, true)
       thumbnailView.bindPostInfo(postImage)
 
@@ -240,6 +246,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     prevChanPostImages = ArrayList(postCellData.postImages)
   }
 
+  @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   private fun bindZeroOrOneImage(postCellData: PostCellData) {
     check(postCellData.post.postImages.size <= 1) {
       "Bad post images count: ${postCellData.post.postImages.size}"
@@ -249,10 +256,14 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       return
     }
 
+    val postThumbnailsAlignment = when (postCellData.chanDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostThumbnailAlignmentMode.get()
+      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostThumbnailAlignmentMode.get()
+    }
+
     val container = thumbnailContainer as LinearLayout
     val postCellCallback = postCellData.postCellCallback
     val cellPostThumbnailSize = calculatePostCellSingleThumbnailSize()
-    val fileInfoContainerSize = calculateFileInfoContainerSize()
     val resultThumbnailViews = mutableListOf<PostImageThumbnailViewContract>()
 
     for ((imageIndex, postImage) in postCellData.postImages.withIndex()) {
@@ -260,13 +271,12 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         continue
       }
 
-      val thumbnailView = PostImageThumbnailViewContainer(context)
+      val thumbnailView = when (postThumbnailsAlignment) {
+        ChanSettings.PostThumbnailAlignmentMode.AlignLeft -> PostImageThumbnailViewContainer(context, false)
+        ChanSettings.PostThumbnailAlignmentMode.AlignRight -> PostImageThumbnailViewContainer(context, true)
+      }
 
-      thumbnailView.bindActualThumbnailWidthAndHeight(
-        fileInfoContainerSize = fileInfoContainerSize,
-        thumbnailSize = cellPostThumbnailSize,
-      )
-
+      thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize)
       thumbnailView.setViewId(View.generateViewId())
       thumbnailView.bindPostImage(postImage, true)
       thumbnailView.bindPostInfo(postImage)
@@ -313,18 +323,13 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       }
 
       val layoutParams = LinearLayout.LayoutParams(
-        fileInfoContainerSize + cellPostThumbnailSize,
+        LinearLayout.LayoutParams.WRAP_CONTENT,
         cellPostThumbnailSize
       )
 
-      layoutParams.setMargins(
-        0,
-        topMargin,
-        0,
-        bottomMargin
-      )
-
+      layoutParams.setMargins(0, topMargin, 0, bottomMargin)
       container.addView(thumbnailView, layoutParams)
+
       resultThumbnailViews += thumbnailView
     }
 
@@ -384,17 +389,15 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     cellPostThumbnailSize: Int,
     postCellData: PostCellData
   ): ThumbnailContainerSizeAndSpanCount {
-    val containerFileInfoSizePercent =
-      getDimen(R.dimen.cell_post_thumbnail_container_file_info_size).toFloat() / 100f
-    val containerFileInfoSize =
-      ChanSettings.postCellThumbnailSizePercents.get() * containerFileInfoSizePercent
+    val containerFileInfoSizePercent = getDimen(R.dimen.cell_post_thumbnail_container_file_info_size).toFloat() / 100f
+    val containerFileInfoSize = ChanSettings.postCellThumbnailSizePercents.get() * containerFileInfoSizePercent
 
     // Calculate minimum needed width to display this post image with the current cell thumbnail size
     val minNeededWidth = (containerFileInfoSize + cellPostThumbnailSize).toInt()
 
     // Calculate span count (must not be greater than images size)
     val spanCount = (actualPostCellWidth / minNeededWidth)
-      .coerceIn(1, postCellData.post.postImages.size)
+      .coerceIn(2, postCellData.post.postImages.size)
 
     return ThumbnailContainerSizeAndSpanCount(
       // If there were less images that the span counts we had calculated, then fill those extra
@@ -402,15 +405,6 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       thumbnailContainerSize = actualPostCellWidth / spanCount,
       spanCount = spanCount
     )
-  }
-
-  private fun calculateFileInfoContainerSize(): Int {
-    val containerFileInfoSizePercent =
-      getDimen(R.dimen.cell_post_thumbnail_container_file_info_size).toFloat() / 100f
-    val containerFileInfoSize =
-      ChanSettings.postCellThumbnailSizePercents.get() * containerFileInfoSizePercent
-
-    return (containerFileInfoSize).toInt()
   }
 
   data class ThumbnailContainerSizeAndSpanCount(
