@@ -193,8 +193,8 @@ open class ViewThreadController(
         R.string.action_view_removed_posts
       ) { item -> showRemovedPostsDialog(item) }
       .withSubItem(
-        ACTION_OPEN_THREAD_IN_ARCHIVE,
-        R.string.action_open_thread_in_archive,
+        ACTION_PREVIEW_THREAD_IN_ARCHIVE,
+        R.string.action_preview_thread_in_archive,
         archivesManager.supports(threadDescriptor)
       ) { showAvailableArchives(threadDescriptor.toOriginalPostDescriptor()) }
       .withSubItem(
@@ -596,7 +596,7 @@ open class ViewThreadController(
   }
 
   private fun updateMenuItems() {
-    navigation.findSubItem(ACTION_OPEN_THREAD_IN_ARCHIVE)?.let { retrieveDeletedPostsItem ->
+    navigation.findSubItem(ACTION_PREVIEW_THREAD_IN_ARCHIVE)?.let { retrieveDeletedPostsItem ->
       retrieveDeletedPostsItem.visible = threadDescriptor.siteDescriptor().is4chan()
     }
   }
@@ -722,7 +722,7 @@ open class ViewThreadController(
     private const val ACTION_RELOAD = 9002
     private const val ACTION_FORCE_RELOAD = 9003
     private const val ACTION_VIEW_REMOVED_POSTS = 9004
-    private const val ACTION_OPEN_THREAD_IN_ARCHIVE = 9005
+    private const val ACTION_PREVIEW_THREAD_IN_ARCHIVE = 9005
     private const val ACTION_OPEN_BROWSER = 9006
     private const val ACTION_SHARE = 9007
     private const val ACTION_GO_TO_POST = 9008
