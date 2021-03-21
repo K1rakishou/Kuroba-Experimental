@@ -72,7 +72,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:paddingLeft="8dp"
             android:paddingTop="4dp"
             android:paddingRight="8dp"
-            android:paddingBottom="8dp"
+            android:paddingBottom="4dp"
             android:singleLine="true" />
 
     </com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout>

@@ -274,7 +274,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   override fun onClick(v: View) {
     if (v === errorRetryButton) {
-      presenter.normalLoad()
+      presenter.normalLoad(showLoading = true)
     } else if (v === openThreadInArchiveButton) {
       val threadDescriptor = presenter.currentChanDescriptor
       if (threadDescriptor is ChanDescriptor.ThreadDescriptor) {

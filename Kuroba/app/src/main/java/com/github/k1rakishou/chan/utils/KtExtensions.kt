@@ -7,6 +7,7 @@ import android.text.TextWatcher
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatEditText
+import androidx.core.view.doOnLayout
 import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.Lifecycle
 import com.airbnb.epoxy.AsyncEpoxyController
@@ -81,6 +82,12 @@ fun Context.getLifecycleFromContext(): Lifecycle? {
 suspend fun View.awaitUntilPreDraw() {
   suspendCancellableCoroutine<Unit> { cancellableContinuation ->
     doOnPreDraw { cancellableContinuation.resume(Unit) }
+  }
+}
+
+suspend fun View.awaitUntilLaidOut() {
+  suspendCancellableCoroutine<Unit> { cancellableContinuation ->
+    doOnLayout { cancellableContinuation.resume(Unit) }
   }
 }
 

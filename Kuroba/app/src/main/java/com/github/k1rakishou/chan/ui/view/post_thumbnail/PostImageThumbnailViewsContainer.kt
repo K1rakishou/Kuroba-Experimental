@@ -14,6 +14,7 @@ import androidx.core.view.updatePadding
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.cell.PostCellData
+import com.github.k1rakishou.chan.ui.cell.PostCellWidthStorage
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -33,12 +34,33 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
   private lateinit var thumbnailContainer: ViewGroup
 
+  fun getThumbnailView(postImage: ChanPostImage): ThumbnailView? {
+    val thumbnails = thumbnailViews
+      ?: return null
+
+    for (thumbnailViewContract in thumbnails) {
+      if (thumbnailViewContract.equalUrls(postImage)) {
+        return thumbnailViewContract.getThumbnailView()
+      }
+    }
+
+    return null
+  }
+
   fun preBind(
     postCellThumbnailCallbacks: PostCellThumbnailCallbacks,
     postCellData: PostCellData,
     horizPaddingPx: Int,
     vertPaddingPx: Int
   ) {
+    if (::thumbnailContainer.isInitialized
+      && thumbnailViews != null
+      && this.prevChanPostImages != null
+      && this.prevChanPostImages == postCellData.postImages) {
+      // Images are already bound and haven't changed since the last bind, do nothing
+      return
+    }
+
     this.postCellThumbnailCallbacks = postCellThumbnailCallbacks
     this.horizPaddingPx = horizPaddingPx
 
@@ -89,11 +111,6 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       return
     }
 
-    if (postCellData.postImages.isEmpty() || ChanSettings.textOnly.get()) {
-      unbindPostImages()
-      return
-    }
-
     if (thumbnailViews != null
       && this.prevChanPostImages != null
       && this.prevChanPostImages == postCellData.postImages) {
@@ -101,23 +118,53 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       return
     }
 
+    if (postCellData.postImages.isEmpty() || ChanSettings.textOnly.get()) {
+      unbindPostImages()
+      return
+    }
+
     unbindPostImages()
 
     if (postCellData.post.postImages.size <= 1) {
       bindZeroOrOneImage(postCellData)
-    } else {
-      if (this.width <= 0) {
-        this.doOnPreDraw { bindMoreThanOneImage(this.width, postCellData) }
-      } else {
+      return
+    }
+
+    if (this.width <= 0 && PostCellWidthStorage.get(postCellData) <= 0) {
+      this.doOnPreDraw {
+        PostCellWidthStorage.update(postCellData, this.width)
         bindMoreThanOneImage(this.width, postCellData)
       }
+    } else {
+      val actualWidth = if (PostCellWidthStorage.get(postCellData) > 0) {
+        PostCellWidthStorage.get(postCellData)
+      } else {
+        this.width
+      }
+
+      bindMoreThanOneImage(actualWidth, postCellData)
+    }
+  }
+
+  fun unbindContainer() {
+    unbindPostImages()
+
+    if (childCount != 0) {
+      removeAllViews()
     }
   }
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   private fun bindMoreThanOneImage(postCellWidth: Int, postCellData: PostCellData) {
+    check(postCellWidth > 0) { "Bad postCellWidth: ${postCellWidth}" }
+
     check(postCellData.post.postImages.size > 1) {
       "Bad post images count: ${postCellData.post.postImages.size}"
+    }
+
+    if (childCount == 0 || thumbnailViews != null || prevChanPostImages != null) {
+      // The post was unbound while we were waiting for the layout to happen
+      return
     }
 
     val postThumbnailsAlignment = when (postCellData.chanDescriptor) {
@@ -339,27 +386,6 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     thumbnailViews = resultThumbnailViews
     prevChanPostImages = ArrayList(postCellData.postImages)
-  }
-
-  fun getThumbnailView(postImage: ChanPostImage): ThumbnailView? {
-    val thumbnails = thumbnailViews
-      ?: return null
-
-    for (thumbnailViewContract in thumbnails) {
-      if (thumbnailViewContract.equalUrls(postImage)) {
-        return thumbnailViewContract.getThumbnailView()
-      }
-    }
-
-    return null
-  }
-
-  fun unbindContainer() {
-    unbindPostImages()
-
-    if (childCount != 0) {
-      removeAllViews()
-    }
   }
 
   private fun unbindPostImages() {

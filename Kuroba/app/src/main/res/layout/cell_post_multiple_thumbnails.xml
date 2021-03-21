@@ -97,14 +97,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
                     <TextView
                         android:id="@+id/replies"
-                        android:layout_width="match_parent"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:gravity="center_vertical"
+                        android:paddingLeft="8dp"
+                        android:paddingTop="4dp"
+                        android:paddingRight="8dp"
+                        android:paddingBottom="4dp"
                         app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintHorizontal_bias="0"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toBottomOf="@+id/comment"
                         app:singleLine="true"
-                        android:padding="4dp"
                         tools:text="234 replies, 123 image " />
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
@@ -117,17 +121,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:clickable="true"
                     android:focusable="true"
                     android:visibility="gone"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent"
-                    app:layout_constraintBottom_toBottomOf="parent"
                     tools:visibility="visible">
 
                     <androidx.appcompat.widget.AppCompatImageView
                         android:id="@+id/go_to_post_button"
                         android:layout_width="40dp"
                         android:layout_height="40dp"
-                        android:src="@drawable/ic_baseline_navigate_next_24"
-                        android:layout_gravity="center_vertical"/>
+                        android:layout_gravity="center_vertical"
+                        android:src="@drawable/ic_baseline_navigate_next_24" />
 
                 </FrameLayout>
 
