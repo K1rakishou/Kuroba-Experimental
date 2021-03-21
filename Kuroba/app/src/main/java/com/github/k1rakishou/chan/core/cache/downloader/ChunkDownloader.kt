@@ -42,7 +42,7 @@ internal class ChunkDownloader(
       .url(url)
 
     siteResolver.findSiteForUrl(url)?.let { site ->
-      site.requestModifier()?.modifyFullImageGetRequest(site, requestBuilder)
+      site.requestModifier().modifyFullImageGetRequest(site, requestBuilder)
     }
 
     if (!chunk.isWholeFile()) {
@@ -70,11 +70,8 @@ internal class ChunkDownloader(
         BackgroundUtils.ensureBackgroundThread()
 
         if (!call.isCanceled()) {
-          log(
-            TAG,
-            "Disposing OkHttp Call for CHUNKED request ${request} via " +
-              "manual canceling (${chunk.start}..${chunk.end})"
-          )
+          log(TAG, "Disposing OkHttp Call for CHUNKED request ${request} via " +
+              "manual canceling (${chunk.start}..${chunk.end})")
 
           call.cancel()
         }
@@ -106,10 +103,8 @@ internal class ChunkDownloader(
           val diff = System.currentTimeMillis() - startTime
           val exceptionMessage = e.message ?: "No message"
 
-          log(TAG,
-            "Couldn't get chunk response, reason = ${e.javaClass.simpleName} ($exceptionMessage) " +
-              "($url) ${chunk.start}..${chunk.end}, time = ${diff}ms"
-          )
+          log(TAG, "Couldn't get chunk response, reason = ${e.javaClass.simpleName} ($exceptionMessage) " +
+              "($url) ${chunk.start}..${chunk.end}, time = ${diff}ms")
 
           if (!isCancellationError(e)) {
             serializedEmitter.tryOnError(e)

@@ -40,9 +40,7 @@ internal class ChunkPersister(
 
       try {
         if (verboseLogs) {
-          log(TAG,
-            "storeChunkInFile($chunkIndex) ($url) called for chunk ${chunk.start}..${chunk.end}"
-          )
+          log(TAG, "storeChunkInFile($chunkIndex) ($url) called for chunk ${chunk.start}..${chunk.end}")
         }
 
         if (chunk.isWholeFile() && totalChunksCount > 1) {
@@ -62,8 +60,7 @@ internal class ChunkPersister(
           chunk.start,
           chunk.end,
           url
-        )
-          ?: throw IOException("Couldn't create chunk cache file")
+        ) ?: throw IOException("Couldn't create chunk cache file")
 
         try {
           chunkResponse.response.useAsResponseBody { responseBody ->
@@ -209,7 +206,7 @@ internal class ChunkPersister(
     val notifySize = if (chunkSize <= 0) {
       FileDownloader.BUFFER_SIZE
     } else {
-      chunkSize / 10
+      chunkSize / 64
     }
 
     try {
