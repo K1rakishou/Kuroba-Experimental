@@ -197,16 +197,34 @@ object SpannableStringMapper {
 
     when (postLinkable.type) {
       PostLinkable.Type.DEAD -> {
-        val threadOrPostLink = postLinkable.linkableValue as PostLinkable.Value.ThreadOrPostLink
-
-        postLinkableValueJson = gson.toJson(
-          PostLinkableThreadOrPostLinkValue(
-            SerializablePostLinkableType.Dead,
-            threadOrPostLink.board,
-            threadOrPostLink.threadId,
-            threadOrPostLink.postId
-          )
-        )
+        when (val postLinkableValue = postLinkable.linkableValue) {
+          is PostLinkableThreadOrPostLinkValue -> {
+            postLinkableValueJson = gson.toJson(
+              PostLinkableThreadOrPostLinkValue(
+                SerializablePostLinkableType.Dead,
+                postLinkableValue.board,
+                postLinkableValue.threadId,
+                postLinkableValue.postId
+              )
+            )
+          }
+          is PostLinkableQuoteValue -> {
+            val postId = postLinkable.linkableValue.extractLongOrNull()
+            if (postId == null) {
+              postLinkableValueJson = null
+            } else {
+              postLinkableValueJson = gson.toJson(
+                PostLinkableQuoteValue(
+                  SerializablePostLinkableType.Dead,
+                  postId
+                )
+              )
+            }
+          }
+          else -> {
+            postLinkableValueJson = null
+          }
+        }
 
         serializablePostLinkableSpan.setPostLinkableType(SerializablePostLinkableType.Dead.typeValue)
       }
@@ -320,6 +338,10 @@ object SpannableStringMapper {
         serializablePostLinkableSpan.setPostLinkableType(SerializablePostLinkableType.Archive.typeValue)
       }
       else -> throw IllegalArgumentException("Not implemented for type " + postLinkable.type.name)
+    }
+
+    if (postLinkableValueJson == null) {
+      return
     }
 
     serializablePostLinkableSpan.postLinkableValueJson = postLinkableValueJson
