@@ -300,7 +300,7 @@ public class ChanSettings {
     public static BooleanSetting transparencyOn;
 
     // Set elsewhere in the application
-    public static OptionsSetting<PostViewMode> boardViewMode;
+    public static OptionsSetting<PostViewMode> boardPostViewMode;
     public static StringSetting boardOrder;
     //endregion
 
@@ -490,7 +490,7 @@ public class ChanSettings {
             transparencyOn = new BooleanSetting(provider, "image_transparency_on", false);
 
             //Elsewhere
-            boardViewMode = new OptionsSetting<>(provider, "preference_board_view_mode", PostViewMode.class, PostViewMode.LIST);
+            boardPostViewMode = new OptionsSetting<>(provider, "preference_board_view_mode", PostViewMode.class, PostViewMode.LIST);
             boardOrder = new StringSetting(provider, "preference_board_order", chanSettingsInfo.getDefaultFilterOrderName());
             //endregion
 

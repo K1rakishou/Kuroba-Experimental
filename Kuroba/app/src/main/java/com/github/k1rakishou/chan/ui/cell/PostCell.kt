@@ -199,10 +199,7 @@ class PostCell : LinearLayout,
   }
 
   override fun onThemeChanged() {
-    val thisPost = postCellData?.post
-      ?: return
-
-    bindBackgroundColor(themeEngine.chanTheme, thisPost)
+    bindBackgroundColor(themeEngine.chanTheme)
 
     title.invalidate()
     comment.invalidate()
@@ -559,7 +556,7 @@ class PostCell : LinearLayout,
     postAttentionLabel.setVisibilityFast(View.INVISIBLE)
   }
 
-  private fun bindBackgroundColor(theme: ChanTheme, post: ChanPost) {
+  private fun bindBackgroundColor(theme: ChanTheme) {
     val postData = postCellData
       ?: return
 
@@ -567,7 +564,7 @@ class PostCell : LinearLayout,
       postData.postSelected || postData.highlighted -> {
         setBackgroundColorFast(theme.postHighlightedColor)
       }
-      post.isSavedReply -> {
+      postData.post.isSavedReply -> {
         setBackgroundColorFast(theme.postSavedReplyColor)
       }
       else -> {

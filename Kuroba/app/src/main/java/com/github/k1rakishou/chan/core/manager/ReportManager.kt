@@ -375,7 +375,7 @@ class ReportManager(
       appendLine("Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL)
       appendLine("------------------------------")
       appendLine("Current layout mode: ${ChanSettings.getCurrentLayoutMode().name}")
-      appendLine("Board view mode: ${ChanSettings.boardViewMode.get()}")
+      appendLine("Board view mode: ${ChanSettings.boardPostViewMode.get()}")
       appendLine("Prefetching enabled: ${ChanSettings.prefetchMedia.get()}")
       appendLine("Hi-res thumbnails enabled: ${ChanSettings.highResCells.get()}")
       appendLine("CloudFlare force preload enabled: ${ChanSettings.cloudflareForcePreload.get()}")

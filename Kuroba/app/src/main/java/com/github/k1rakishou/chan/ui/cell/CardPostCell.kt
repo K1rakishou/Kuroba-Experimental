@@ -20,6 +20,7 @@ import android.content.Context
 import android.text.TextUtils
 import android.util.AttributeSet
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.TextView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.PostViewMode
@@ -33,7 +34,9 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailView
 import com.github.k1rakishou.chan.ui.view.post_thumbnail.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
+import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -52,6 +55,7 @@ class CardPostCell : ColorizableCardView,
   private var callback: PostCellCallback? = null
 
   private var thumbView: PostImageThumbnailView? = null
+  private var cardPostCellBackgroundView: FrameLayout? = null
   private var prevPostImage: ChanPostImage? = null
   private var title: TextView? = null
   private var comment: TextView? = null
@@ -90,7 +94,7 @@ class CardPostCell : ColorizableCardView,
       return false
     }
 
-    return ChanSettings.boardViewMode.get() == PostViewMode.GRID
+    return ChanSettings.boardPostViewMode.get() == PostViewMode.GRID
       && postCellData.postCellCallback?.currentSpanCount() != 1
   }
 
@@ -166,6 +170,7 @@ class CardPostCell : ColorizableCardView,
       }
     }
 
+    cardPostCellBackgroundView = findViewById(R.id.card_post_cell_background_view)
     title = findViewById(R.id.title)
     comment = findViewById(R.id.comment)
     replies = findViewById(R.id.replies)
@@ -269,6 +274,27 @@ class CardPostCell : ColorizableCardView,
   override fun onThemeChanged() {
     comment?.setTextColor(themeEngine.chanTheme.textColorPrimary)
     replies?.setTextColor(themeEngine.chanTheme.textColorSecondary)
+
+    bindBackgroundColor(themeEngine.chanTheme)
+  }
+
+  private fun bindBackgroundColor(theme: ChanTheme) {
+    val postData = postCellData
+      ?: return
+    val backgroundView = cardPostCellBackgroundView
+      ?: return
+
+    when {
+      postData.postSelected || postData.highlighted -> {
+        backgroundView.setBackgroundColorFast(theme.postHighlightedColor)
+      }
+      postData.post.isSavedReply -> {
+        backgroundView.setBackgroundColorFast(theme.postSavedReplyColor)
+      }
+      else -> {
+        backgroundView.setBackgroundColorFast(theme.backColor)
+      }
+    }
   }
 
   private fun setCompact(postCellData: PostCellData) {

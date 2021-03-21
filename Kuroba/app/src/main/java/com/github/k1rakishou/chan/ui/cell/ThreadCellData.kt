@@ -32,7 +32,7 @@ class ThreadCellData(
   var postAdditionalData: PostCellData.PostAdditionalData =
     PostCellData.PostAdditionalData.NoAdditionalData(PostCellData.PostViewMode.Normal)
   var defaultIsCompact: Boolean = false
-  var defaultBoardPostViewMode: ChanSettings.PostViewMode = ChanSettings.boardViewMode.get()
+  var defaultBoardPostViewMode: ChanSettings.PostViewMode = ChanSettings.boardPostViewMode.get()
   var defaultMarkedNo: Long? = null
   var defaultNeverShowPages: Boolean = ChanSettings.neverShowPages.get()
 

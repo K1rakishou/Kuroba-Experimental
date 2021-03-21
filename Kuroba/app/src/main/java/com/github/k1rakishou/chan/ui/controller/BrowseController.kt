@@ -114,7 +114,7 @@ class BrowseController(
     // Initialization
     serializedCoroutineExecutor = SerializedCoroutineExecutor(mainScope)
 
-    threadLayout.setBoardPostViewMode(ChanSettings.boardViewMode.get())
+    threadLayout.setBoardPostViewMode(ChanSettings.boardPostViewMode.get())
 
     serializedCoroutineExecutor.post {
       val boardOrder = ChanSettings.boardOrder.get()
@@ -255,7 +255,7 @@ class BrowseController(
       overflowBuilder.withSubItem(ACTION_REPLY, R.string.action_reply) { item -> replyClicked(item) }
     }
 
-    val modeStringId = when (ChanSettings.boardViewMode.get()) {
+    val modeStringId = when (ChanSettings.boardPostViewMode.get()) {
       PostViewMode.LIST -> R.string.action_switch_catalog_grid
       PostViewMode.GRID -> R.string.action_switch_catalog_stagger
       PostViewMode.STAGGER -> R.string.action_switch_board
@@ -468,7 +468,7 @@ class BrowseController(
   }
 
   private fun viewModeClicked(item: ToolbarMenuSubItem) {
-    var postViewMode = ChanSettings.boardViewMode.get()
+    var postViewMode = ChanSettings.boardPostViewMode.get()
 
     postViewMode = when (postViewMode) {
       PostViewMode.LIST -> PostViewMode.GRID
@@ -476,7 +476,7 @@ class BrowseController(
       PostViewMode.STAGGER -> PostViewMode.LIST
     }
 
-    ChanSettings.boardViewMode.set(postViewMode)
+    ChanSettings.boardPostViewMode.set(postViewMode)
 
     val viewModeText = when (postViewMode) {
       PostViewMode.LIST -> R.string.action_switch_catalog_grid

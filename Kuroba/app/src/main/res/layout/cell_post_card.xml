@@ -22,59 +22,66 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     card_view:cardCornerRadius="@dimen/grid_card_corner_radius"
     card_view:cardElevation="2dp">
 
-    <com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout
-        android:id="@+id/card_content"
+    <FrameLayout
+        android:id="@+id/card_post_cell_background_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@drawable/item_background"
-        android:orientation="vertical">
+        android:layout_height="wrap_content">
 
-        <FrameLayout
+        <com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout
+            android:id="@+id/card_content"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:background="@drawable/item_background"
+            android:orientation="vertical">
 
-            <com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailView
-                android:id="@+id/thumbnail"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content">
 
-        </FrameLayout>
+                <com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailView
+                    android:id="@+id/thumbnail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
 
-        <View
-            android:id="@+id/filter_match_color"
-            android:layout_width="match_parent"
-            android:layout_height="10dp"
-            android:visibility="gone" />
+            </FrameLayout>
 
-        <TextView
-            android:id="@+id/title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="3"
-            android:paddingLeft="8dp"
-            android:paddingTop="8dp"
-            android:paddingRight="8dp" />
+            <View
+                android:id="@+id/filter_match_color"
+                android:layout_width="match_parent"
+                android:layout_height="10dp"
+                android:visibility="gone" />
 
-        <TextView
-            android:id="@+id/comment"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:paddingLeft="8dp"
-            android:paddingTop="8dp"
-            android:paddingRight="8dp" />
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="3"
+                android:paddingLeft="8dp"
+                android:paddingTop="8dp"
+                android:paddingRight="8dp" />
 
-        <TextView
-            android:id="@+id/replies"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingLeft="8dp"
-            android:paddingTop="4dp"
-            android:paddingRight="8dp"
-            android:paddingBottom="4dp"
-            android:singleLine="true" />
+            <TextView
+                android:id="@+id/comment"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:paddingLeft="8dp"
+                android:paddingTop="8dp"
+                android:paddingRight="8dp" />
 
-    </com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout>
+            <TextView
+                android:id="@+id/replies"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingLeft="8dp"
+                android:paddingTop="4dp"
+                android:paddingRight="8dp"
+                android:paddingBottom="4dp"
+                android:singleLine="true" />
+
+        </com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout>
+
+    </FrameLayout>
 
 </com.github.k1rakishou.chan.ui.cell.CardPostCell>

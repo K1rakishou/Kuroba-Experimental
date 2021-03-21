@@ -66,7 +66,7 @@ class ImageSaverV2Service : Service() {
     kurobaScope.launch {
       imageSaverV2ServiceDelegate.listenForStopServiceEvent()
         .collect {
-          Logger.d(TAG, "Got StopService command, stopping the serving")
+          Logger.d(TAG, "Got StopService command, stopping the service")
           stopSelf()
         }
     }
