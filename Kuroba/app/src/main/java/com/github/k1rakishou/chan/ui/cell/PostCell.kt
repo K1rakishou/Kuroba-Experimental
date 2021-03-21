@@ -580,16 +580,7 @@ class PostCell : LinearLayout,
     val theme = postCellData.theme
     val fullPostComment = postCellData.fullPostComment
 
-    if (postCellData.postIcons.isNotEmpty()) {
-      comment.setPadding(horizPaddingPx, vertPaddingPx, horizPaddingPx, 0)
-    } else {
-      if (postCellData.singleImageMode) {
-        comment.setPadding(horizPaddingPx, vertPaddingPx, horizPaddingPx, 0)
-      } else {
-        comment.setPadding(horizPaddingPx, vertPaddingPx / 2, horizPaddingPx, 0)
-      }
-    }
-
+    comment.setPadding(horizPaddingPx, vertPaddingPx, horizPaddingPx, vertPaddingPx)
     comment.typeface = Typeface.DEFAULT
     comment.setTextColor(theme.textColorPrimary)
 

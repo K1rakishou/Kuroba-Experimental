@@ -301,6 +301,8 @@ class ImageSaverV2OptionsController(
     if (needCallCancelFunc && options is Options.ResultDirAccessProblems) {
       options.onCancelClicked()
     }
+
+    rootDirButtonBackgroundAnimation.end()
   }
 
   private fun checkSubDirsValid(input: String): Boolean {
