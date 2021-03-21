@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.ui.view.floating_menu.epoxy
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.text.method.ScrollingMovementMethod
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
@@ -32,6 +33,7 @@ class EpoxyHeaderListMenuRow @JvmOverloads constructor(
       .inject(this)
 
     title = findViewById(R.id.title)
+    title.movementMethod = ScrollingMovementMethod()
   }
 
   override fun onAttachedToWindow() {

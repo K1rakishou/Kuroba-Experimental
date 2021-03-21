@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.RoomWarnings
 import androidx.room.Transaction
 import androidx.room.Update
 import com.github.k1rakishou.model.entity.chan.filter.ChanFilterBoardConstraintEntity
@@ -23,6 +24,7 @@ abstract class ChanFilterDao {
   @Update(onConflict = OnConflictStrategy.IGNORE)
   abstract suspend fun updateMany(chanFilterEntityList: List<ChanFilterEntity>)
 
+  @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
   @Transaction
   @Query("""
     SELECT *

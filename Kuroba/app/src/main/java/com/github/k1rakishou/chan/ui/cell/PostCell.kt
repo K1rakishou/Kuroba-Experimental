@@ -33,6 +33,8 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.updateLayoutParams
 import androidx.core.widget.TextViewCompat
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -304,8 +306,15 @@ class PostCell : LinearLayout,
     goToPostButtonContainer = findViewById(R.id.go_to_post_button_container)
     goToPostButton = findViewById(R.id.go_to_post_button)
     comment.textSize = textSizeSp.toFloat()
+
     replies.textSize = textSizeSp.toFloat()
     replies.setPadding(horizPaddingPx, 0, horizPaddingPx, vertPaddingPx)
+
+    if (postCellData.threadMode) {
+      replies.updateLayoutParams<ConstraintLayout.LayoutParams> {
+        width = ConstraintLayout.LayoutParams.MATCH_PARENT
+      }
+    }
 
     postCommentLongtapDetector.postCellContainer = postCellRootContainer
     postImageThumbnailViewsContainer.preBind(this, postCellData, horizPaddingPx, vertPaddingPx)

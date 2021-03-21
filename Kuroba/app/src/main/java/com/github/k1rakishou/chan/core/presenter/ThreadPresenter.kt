@@ -1090,7 +1090,7 @@ class ThreadPresenter @Inject constructor(
     }
 
     val items = mutableListOf<FloatingListMenuItem>()
-    items += HeaderFloatingListMenuItem(THUMBNAIL_LONG_CLICK_MENU_HEADER_KEY, fullImageName)
+    items += HeaderFloatingListMenuItem(THUMBNAIL_LONG_CLICK_MENU_HEADER, fullImageName)
     items += createMenuItem(IMAGE_COPY_FULL_URL, R.string.action_copy_image_full_url)
     items += createMenuItem(IMAGE_COPY_THUMBNAIL_URL, R.string.action_copy_image_thumbnail_url)
 
@@ -1574,11 +1574,16 @@ class ThreadPresenter @Inject constructor(
         return@post
       }
 
+      val site = siteManager.bySiteDescriptor(post.postDescriptor.siteDescriptor())
+        ?: return@post
+
       val floatingListMenuItems = mutableListOf<FloatingListMenuItem>()
       val postChanDescriptor = post.postDescriptor.descriptor
 
-      val site = siteManager.bySiteDescriptor(post.postDescriptor.siteDescriptor())
-        ?: return@post
+      floatingListMenuItems += HeaderFloatingListMenuItem(
+        POST_LINKABLE_LONG_CLICK_MENU_HEADER,
+        linkable.key.toString()
+      )
 
       when (linkable.type) {
         PostLinkable.Type.SPOILER -> {
@@ -2330,7 +2335,8 @@ class ThreadPresenter @Inject constructor(
     private const val COPY_LINK_VALUE = 2001
     private const val SHOW_POST_MENU_OPTIONS = 2002
 
-    private const val THUMBNAIL_LONG_CLICK_MENU_HEADER_KEY = "thumbnail_copy_menu_header"
+    private const val THUMBNAIL_LONG_CLICK_MENU_HEADER = "thumbnail_copy_menu_header"
+    private const val POST_LINKABLE_LONG_CLICK_MENU_HEADER = "post_linkable_long_click_menu_header"
   }
 
 }
