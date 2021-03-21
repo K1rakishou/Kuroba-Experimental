@@ -119,7 +119,10 @@ class OnDemandContentLoaderManager(
       }
       .toList()
       .map { results -> LoaderBatchResult(postLoaderData.postDescriptor, results) }
-      .doOnSuccess(postUpdateRxQueue::onNext)
+      .doOnSuccess { loaderBatchResults ->
+        removeFromActiveLoaders(loaderBatchResults.postDescriptor, cancelLoaders = false)
+        postUpdateRxQueue.onNext(loaderBatchResults)
+      }
       .map { Unit }
       .toFlowable()
   }
@@ -170,12 +173,7 @@ class OnDemandContentLoaderManager(
       return
     }
 
-    rwLock.write {
-      val postLoaderData = activeLoaders[postDescriptor.descriptor]?.remove(postDescriptor)
-        ?: return@write null
-
-      loaders.forEach { loader -> loader.cancelLoading(postLoaderData) }
-    }
+    removeFromActiveLoaders(postDescriptor)
   }
 
   fun cancelAllForDescriptor(chanDescriptor: ChanDescriptor) {
@@ -199,6 +197,17 @@ class OnDemandContentLoaderManager(
 
       postLoaderDataList.clear()
       activeLoaders.remove(threadDescriptor)
+    }
+  }
+
+  private fun removeFromActiveLoaders(postDescriptor: PostDescriptor, cancelLoaders: Boolean = true) {
+    rwLock.write {
+      val postLoaderData = activeLoaders[postDescriptor.descriptor]?.remove(postDescriptor)
+        ?: return@write
+
+      if (cancelLoaders) {
+        loaders.forEach { loader -> loader.cancelLoading(postLoaderData) }
+      }
     }
   }
 

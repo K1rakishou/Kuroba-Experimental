@@ -168,7 +168,7 @@ internal object CommentSpanUpdater {
 
     return buildString {
       // Two spaces for the icon
-      append("  ")
+      append("_")
 
       if (showLink || extraLinkInfo !is ExtraLinkInfo.Success) {
         // Append the original url
