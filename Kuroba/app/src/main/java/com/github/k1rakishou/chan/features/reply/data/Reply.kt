@@ -185,23 +185,27 @@ class Reply(
         .append('\n')
     }
 
-    if (!comment.contains(">>$postNo")) {
-      stringBuilder
-        .append(">>")
-        .append(postNo)
-        .append("\n")
-    }
+    stringBuilder
+      .append(">>")
+      .append(postNo)
+      .append("\n")
 
     if (textQuote != null) {
-      val lines = textQuote.split("\n+").toTypedArray()
+      val lines = textQuote.split("\n").toTypedArray()
       for (line in lines) {
         // do not include post no from quoted post
-        if (!QUOTE_PATTERN_COMPLEX.matcher(line).matches()) {
+        if (QUOTE_PATTERN_COMPLEX.matcher(line).matches()) {
+          continue
+        }
+
+        if (!line.startsWith(">>") && !line.startsWith(">")) {
           stringBuilder
             .append(">")
-            .append(line)
-            .append("\n")
         }
+
+        stringBuilder
+          .append(line)
+          .append("\n")
       }
     }
 
