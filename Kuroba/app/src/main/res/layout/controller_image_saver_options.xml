@@ -47,12 +47,14 @@
                             android:id="@+id/root_dir"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
                             android:background="?attr/selectableItemBackground"
                             android:clickable="true"
                             android:focusable="true"
                             android:gravity="center_horizontal"
-                            android:padding="4dp"
+                            android:paddingTop="8dp"
+                            android:paddingBottom="8dp"
+                            android:paddingStart="4dp"
+                            android:paddingEnd="4dp"
                             android:text="@string/controller_image_save_options_click_to_set_root_dir" />
 
                         <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout

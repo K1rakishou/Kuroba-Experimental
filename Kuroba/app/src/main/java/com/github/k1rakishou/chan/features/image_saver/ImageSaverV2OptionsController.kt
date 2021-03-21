@@ -21,8 +21,10 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.doIgnoringTextWatcher
+import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.isNotNullNorBlank
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.callback.directory.PermanentDirectoryChooserCallback
@@ -53,19 +55,26 @@ class ImageSaverV2OptionsController(
   private lateinit var fileNameTextWatcher: TextWatcher
   private lateinit var additionalDirsTextWatcher: TextWatcher
 
-  private var needCallCancelFunc = true
-
-  private val currentSetting = PersistableChanState.imageSaverV2PersistedOptions.get().copy()
-
-  private val fileNameDebouncer = Debouncer(false)
-  private val additionalDirsDebouncer = Debouncer(false)
-
-  private var overriddenFileName: String? = null
-
   @Inject
   lateinit var fileChooser: FileChooser
   @Inject
   lateinit var fileManager: FileManager
+  @Inject
+  lateinit var themeEngine: ThemeEngine
+
+  private var needCallCancelFunc = true
+  private var overriddenFileName: String? = null
+
+  private val currentSetting = PersistableChanState.imageSaverV2PersistedOptions.get().copy()
+  private val fileNameDebouncer = Debouncer(false)
+  private val additionalDirsDebouncer = Debouncer(false)
+
+  private val rootDirButtonBackgroundAnimation = RootDirBackgroundAnimation.createRootDirBackgroundAnimation(
+    themeEngine = themeEngine,
+    updateBackgroundColorFunc = { newBackgroundColor ->
+      rootDir.setBackgroundColorFast(newBackgroundColor)
+    }
+  )
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -179,6 +188,8 @@ class ImageSaverV2OptionsController(
 
           currentSetting.rootDirectoryUri = newDirUriString
           applyOptionsToView()
+
+          startOrStopRootDirBackgroundAnimation(stopAndLockAnimation = true)
         }
       })
     }
@@ -246,6 +257,14 @@ class ImageSaverV2OptionsController(
     }
 
     applyOptionsToView()
+  }
+
+  private fun startOrStopRootDirBackgroundAnimation(stopAndLockAnimation: Boolean) {
+    if (stopAndLockAnimation) {
+      rootDirButtonBackgroundAnimation.stopAndLock()
+    } else {
+      rootDirButtonBackgroundAnimation.start()
+    }
   }
 
   private fun RadioGroup.enableOrDisable(enable: Boolean) {
@@ -317,18 +336,6 @@ class ImageSaverV2OptionsController(
     return false
   }
 
-  private fun fileNameContainsBadSymbols(fileName: String): Boolean {
-    for (char in fileName) {
-      if (char.isLetterOrDigit() || char == '_' || char == '-') {
-        continue
-      }
-
-      return true
-    }
-
-    return false
-  }
-
   private fun applyOptionsToView() {
     val currentImageSaverSetting = currentSetting
     
@@ -379,9 +386,13 @@ class ImageSaverV2OptionsController(
     if (rootDirectoryUriString.isNullOrBlank()) {
       rootDir.textSize = 20f
       rootDir.text = context.getString(R.string.controller_image_save_options_click_to_set_root_dir)
+
+      startOrStopRootDirBackgroundAnimation(stopAndLockAnimation = false)
     } else {
       rootDir.text = rootDirectoryUriString
       rootDir.textSize = 14f
+
+      startOrStopRootDirBackgroundAnimation(stopAndLockAnimation = true)
     }
 
     val subDirsString = currentImageSaverSetting.subDirs
