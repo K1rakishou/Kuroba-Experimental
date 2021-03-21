@@ -207,6 +207,11 @@ class ReplyLayout @JvmOverloads constructor(
     replyLayout = this,
     onSwipedUp = { presenter.expandOrCollapse(expand = true) },
     onSwipedDown = {
+      if (globalWindowInsetsManager.isKeyboardOpened) {
+        AndroidUtils.hideKeyboard(comment)
+        return@ReplyLayoutGestureListener
+      }
+
       if (!presenter.expandOrCollapse(expand = false)) {
         threadListLayoutCallbacks?.openReply(open = false)
       }
