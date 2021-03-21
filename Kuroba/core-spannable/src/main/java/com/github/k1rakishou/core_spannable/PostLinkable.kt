@@ -157,7 +157,7 @@ open class PostLinkable(
       return when (this) {
         is LongValue -> value
         is StringValue,
-        is ThreadLink,
+        is ThreadOrPostLink,
         is ArchiveThreadLink,
         is SearchLink,
         NoValue -> null
@@ -167,8 +167,11 @@ open class PostLinkable(
     object NoValue : Value()
     data class LongValue(val value: Long) : Value()
     data class StringValue(val value: CharSequence) : Value()
-    data class ThreadLink(var board: String, var threadId: Long, var postId: Long) : Value()
-    data class SearchLink(var board: String, var search: String) : Value()
+    data class SearchLink(val board: String, val search: String) : Value()
+
+    data class ThreadOrPostLink(val board: String, val threadId: Long, val postId: Long) : Value() {
+      fun isThreadLink(): Boolean = threadId == postId
+    }
 
     data class ArchiveThreadLink(
       val archiveType: ArchiveType,

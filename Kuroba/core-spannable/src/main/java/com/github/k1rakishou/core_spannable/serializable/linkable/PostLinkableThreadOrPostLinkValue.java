@@ -5,7 +5,7 @@ import com.github.k1rakishou.core_spannable.serializable.SerializablePostLinkabl
 import com.google.gson.annotations.SerializedName;
 
 @DoNotStrip
-public class PostLinkThreadLinkValue
+public class PostLinkableThreadOrPostLinkValue
         extends PostLinkableValue {
     @SerializedName("board")
     private String board;
@@ -14,7 +14,12 @@ public class PostLinkThreadLinkValue
     @SerializedName("post_id")
     private long postId;
 
-    public PostLinkThreadLinkValue(SerializablePostLinkableType type, String board, long threadId, long postId) {
+    public PostLinkableThreadOrPostLinkValue(
+            SerializablePostLinkableType type,
+            String board,
+            long threadId,
+            long postId
+    ) {
         super(type);
 
         this.board = board;

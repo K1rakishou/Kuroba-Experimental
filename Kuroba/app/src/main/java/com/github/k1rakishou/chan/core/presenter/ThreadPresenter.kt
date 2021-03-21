@@ -1457,7 +1457,7 @@ class ThreadPresenter @Inject constructor(
       }
 
       if (linkable.type == PostLinkable.Type.THREAD) {
-        val threadLink = linkable.linkableValue as? PostLinkable.Value.ThreadLink
+        val threadLink = linkable.linkableValue as? PostLinkable.Value.ThreadOrPostLink
         if (threadLink == null) {
           Logger.e(TAG, "Bad thread linkable: linkableValue = ${linkable.linkableValue}")
           return@post
@@ -1526,17 +1526,35 @@ class ThreadPresenter @Inject constructor(
         val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
           ?: return@post
 
-        val postNo = linkable.linkableValue.extractLongOrNull()
-        if (postNo == null || postNo <= 0L) {
-          return@post
+        when (val postLinkableValue = linkable.linkableValue) {
+          is PostLinkable.Value.LongValue -> {
+            val postNo = postLinkableValue.extractLongOrNull()
+            if (postNo == null || postNo <= 0L) {
+              return@post
+            }
+
+            val archivePostDescriptor = PostDescriptor.create(
+              chanDescriptor = threadDescriptor,
+              postNo = postNo
+            )
+
+            threadPresenterCallback?.showAvailableArchivesList(archivePostDescriptor)
+          }
+          is PostLinkable.Value.ThreadOrPostLink -> {
+            val archivePostDescriptor = PostDescriptor.create(
+              siteName = siteName,
+              boardCode = postLinkableValue.board,
+              threadNo = postLinkableValue.threadId,
+              postNo = postLinkableValue.postId
+            )
+
+            threadPresenterCallback?.showAvailableArchivesList(archivePostDescriptor)
+          }
+          else -> {
+            // no-op
+          }
         }
 
-        val archivePostDescriptor = PostDescriptor.create(
-          chanDescriptor = threadDescriptor,
-          postNo = postNo
-        )
-
-        threadPresenterCallback?.showAvailableArchivesList(archivePostDescriptor)
         return@post
       }
 
@@ -1598,14 +1616,40 @@ class ThreadPresenter @Inject constructor(
             value = linkable.key
           )
 
-          val postNo = linkable.linkableValue.extractLongOrNull()
-          if (postNo != null) {
-            val desktopUrl = site.resolvable().desktopUrl(postChanDescriptor, postNo)
-            floatingListMenuItems += createMenuItem(
-              menuItemId = COPY_LINK_VALUE,
-              stringId = R.string.action_copy_link_value,
-              value = desktopUrl
-            )
+          when (val postLinkableValue = linkable.linkableValue) {
+            is PostLinkable.Value.LongValue -> {
+              val postNo = postLinkableValue.extractLongOrNull()
+              if (postNo != null) {
+                val desktopUrl = site.resolvable().desktopUrl(postChanDescriptor, postNo)
+                floatingListMenuItems += createMenuItem(
+                  menuItemId = COPY_LINK_VALUE,
+                  stringId = R.string.action_copy_link_value,
+                  value = desktopUrl
+                )
+              }
+            }
+            is PostLinkable.Value.ThreadOrPostLink -> {
+              val postDescriptor = PostDescriptor.create(
+                siteName = site.name(),
+                boardCode = postLinkableValue.board,
+                threadNo = postLinkableValue.threadId,
+                postNo = postLinkableValue.postId
+              )
+
+              val desktopUrl = site.resolvable().desktopUrl(
+                postDescriptor.descriptor,
+                postDescriptor.postNo
+              )
+
+              floatingListMenuItems += createMenuItem(
+                menuItemId = COPY_LINK_VALUE,
+                stringId = R.string.action_copy_link_value,
+                value = desktopUrl
+              )
+            }
+            else -> {
+              // no-nop
+            }
           }
         }
         PostLinkable.Type.LINK -> {
@@ -1619,7 +1663,7 @@ class ThreadPresenter @Inject constructor(
           }
         }
         PostLinkable.Type.THREAD -> {
-          val threadLink = linkable.linkableValue as? PostLinkable.Value.ThreadLink
+          val threadLink = linkable.linkableValue as? PostLinkable.Value.ThreadOrPostLink
           if (threadLink != null) {
             val boardDescriptor = BoardDescriptor.create(site.name(), threadLink.board)
             val board = boardManager.byBoardDescriptor(boardDescriptor)

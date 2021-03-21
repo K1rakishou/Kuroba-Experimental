@@ -130,8 +130,10 @@ class DvachCommentParser(
     }
 
     // link to post not in same thread with post number (>>post or >>>/board/post)
-    return PostLinkable.Link(PostLinkable.Type.THREAD, text,
-      PostLinkable.Value.ThreadLink(boardCode, threadNo, postNo)
+    return PostLinkable.Link(
+      PostLinkable.Type.THREAD,
+      text,
+      PostLinkable.Value.ThreadOrPostLink(boardCode, threadNo, postNo)
     )
   }
 

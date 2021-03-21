@@ -20,13 +20,14 @@ import com.github.k1rakishou.core_spannable.serializable.SerializableSpanType
 import com.github.k1rakishou.core_spannable.serializable.SerializableSpannableString
 import com.github.k1rakishou.core_spannable.serializable.SerializableStyleSpan
 import com.github.k1rakishou.core_spannable.serializable.SerializableTypefaceSpan
-import com.github.k1rakishou.core_spannable.serializable.linkable.PostLinkThreadLinkValue
 import com.github.k1rakishou.core_spannable.serializable.linkable.PostLinkableArchiveLinkValue
 import com.github.k1rakishou.core_spannable.serializable.linkable.PostLinkableBoardLinkValue
 import com.github.k1rakishou.core_spannable.serializable.linkable.PostLinkableLinkValue
 import com.github.k1rakishou.core_spannable.serializable.linkable.PostLinkableQuoteValue
 import com.github.k1rakishou.core_spannable.serializable.linkable.PostLinkableSearchLinkValue
 import com.github.k1rakishou.core_spannable.serializable.linkable.PostLinkableSpoilerValue
+import com.github.k1rakishou.core_spannable.serializable.linkable.PostLinkableThreadOrPostLinkValue
+import com.github.k1rakishou.core_spannable.serializable.linkable.PostLinkableValue
 import com.google.gson.Gson
 
 object SpannableStringMapper {
@@ -196,17 +197,18 @@ object SpannableStringMapper {
 
     when (postLinkable.type) {
       PostLinkable.Type.DEAD -> {
-        val postId = postLinkable.linkableValue.extractLongOrNull()
+        val threadOrPostLink = postLinkable.linkableValue as PostLinkable.Value.ThreadOrPostLink
 
-        if (postId != null) {
-          postLinkableValueJson = gson.toJson(
-            PostLinkableQuoteValue(
-              SerializablePostLinkableType.Dead,
-              postId
-            )
+        postLinkableValueJson = gson.toJson(
+          PostLinkableThreadOrPostLinkValue(
+            SerializablePostLinkableType.Dead,
+            threadOrPostLink.board,
+            threadOrPostLink.threadId,
+            threadOrPostLink.postId
           )
-          serializablePostLinkableSpan.setPostLinkableType(SerializablePostLinkableType.Dead.typeValue)
-        }
+        )
+
+        serializablePostLinkableSpan.setPostLinkableType(SerializablePostLinkableType.Dead.typeValue)
       }
       PostLinkable.Type.QUOTE -> {
         val postId = postLinkable.linkableValue.extractLongOrNull()
@@ -240,7 +242,7 @@ object SpannableStringMapper {
       }
       PostLinkable.Type.THREAD -> {
         val threadLink = postLinkable.linkableValue
-        if (threadLink !is PostLinkable.Value.ThreadLink) {
+        if (threadLink !is PostLinkable.Value.ThreadOrPostLink) {
           throw RuntimeException(
             "PostLinkable value is not of ThreadLink type, key = "
               + postLinkable.key + ", type = "
@@ -248,7 +250,7 @@ object SpannableStringMapper {
         }
 
         postLinkableValueJson = gson.toJson(
-          PostLinkThreadLinkValue(
+          PostLinkableThreadOrPostLinkValue(
             SerializablePostLinkableType.Thread,
             threadLink.board,
             threadLink.threadId,
@@ -469,16 +471,39 @@ object SpannableStringMapper {
   ): PostLinkable? {
     when (serializablePostLinkableSpan.postLinkableType) {
       SerializablePostLinkableType.Dead -> {
-        val postLinkableQuoteValue = gson.fromJson(
-          serializablePostLinkableSpan.postLinkableValueJson,
-          PostLinkableQuoteValue::class.java
-        )
+        val postLinkableValue: PostLinkableValue = try {
+          gson.fromJson(
+            serializablePostLinkableSpan.postLinkableValueJson,
+            PostLinkableThreadOrPostLinkValue::class.java
+          )
+        } catch (ignored: Throwable) {
+          gson.fromJson(
+            serializablePostLinkableSpan.postLinkableValueJson,
+            PostLinkableQuoteValue::class.java
+          )
+        }
 
-        return PostLinkable(
-          serializablePostLinkableSpan.key,
-          PostLinkable.Value.LongValue(postLinkableQuoteValue.postId),
-          PostLinkable.Type.DEAD
-        )
+        when (postLinkableValue) {
+          is PostLinkableThreadOrPostLinkValue -> {
+            return PostLinkable(
+              serializablePostLinkableSpan.key,
+              PostLinkable.Value.ThreadOrPostLink(
+                postLinkableValue.board,
+                postLinkableValue.threadId,
+                postLinkableValue.postId
+              ),
+              PostLinkable.Type.DEAD
+            )
+          }
+          is PostLinkableQuoteValue -> {
+            return PostLinkable(
+              serializablePostLinkableSpan.key,
+              PostLinkable.Value.LongValue(postLinkableValue.postId),
+              PostLinkable.Type.DEAD
+            )
+          }
+          else -> return null
+        }
       }
       SerializablePostLinkableType.Quote -> {
         val postLinkableQuoteValue = gson.fromJson(
@@ -514,12 +539,12 @@ object SpannableStringMapper {
       SerializablePostLinkableType.Thread -> {
         val postLinkThreadLinkValue = gson.fromJson(
           serializablePostLinkableSpan.postLinkableValueJson,
-          PostLinkThreadLinkValue::class.java
+          PostLinkableThreadOrPostLinkValue::class.java
         )
 
         return PostLinkable(
           serializablePostLinkableSpan.key,
-          PostLinkable.Value.ThreadLink(
+          PostLinkable.Value.ThreadOrPostLink(
             postLinkThreadLinkValue.board,
             postLinkThreadLinkValue.threadId,
             postLinkThreadLinkValue.postId

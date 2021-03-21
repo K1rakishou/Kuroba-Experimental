@@ -17,9 +17,9 @@
             android:id="@+id/title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:maxLines="5"
-            android:textSize="20sp"
-            android:scrollbars="vertical"
+            android:maxLines="10"
+            android:ellipsize="end"
+            android:textSize="18sp"
             tools:text="@string/lorem_ipsum"/>
 
     </FrameLayout>

@@ -179,15 +179,23 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         long postSubNo = 0;
 
         PostLinkable.Type type;
-        PostLinkable.Value value = new PostLinkable.Value.LongValue(postId);
+        PostLinkable.Value value;
 
         if (callback.isInternal(postId)) {
             // Link to post in same thread with post number (>>post)
             type = PostLinkable.Type.QUOTE;
             post.addReplyTo(postId);
+
+            value = new PostLinkable.Value.LongValue(postId);
         } else {
             // Link to post not in same thread in this case it means that the post is dead.
             type = PostLinkable.Type.DEAD;
+
+            value = new PostLinkable.Value.ThreadOrPostLink(
+                    post.boardDescriptor.getBoardCode(),
+                    post.opId,
+                    postId
+            );
         }
 
         PostLinkable.Link link = new PostLinkable.Link(
@@ -506,7 +514,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             } else {
                 // link to post not in same thread with post number (>>post or >>>/board/post)
                 type = PostLinkable.Type.THREAD;
-                value = new PostLinkable.Value.ThreadLink(board, threadId, postId);
+                value = new PostLinkable.Value.ThreadOrPostLink(board, threadId, postId);
             }
         } else {
             Matcher quoteMatcher = matchInternalQuote(href, post);
