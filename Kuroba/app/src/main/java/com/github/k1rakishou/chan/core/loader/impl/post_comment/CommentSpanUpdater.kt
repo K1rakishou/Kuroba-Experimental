@@ -109,11 +109,13 @@ internal object CommentSpanUpdater {
           )
         }
 
+        val iconPosition = start + formattedLinkUrl.length
+
         // Add the icon span
         stringBuilder.setSpanSafe(
           getIconSpan(invertedSpanUpdateBatch.iconBitmap),
-          start,
-          start + 1,
+          iconPosition - 1,
+          iconPosition,
           (500 shl Spanned.SPAN_PRIORITY_SHIFT) and Spanned.SPAN_PRIORITY
         )
 
@@ -167,9 +169,6 @@ internal object CommentSpanUpdater {
     val showLink = ChanSettings.showLinkAlongWithTitleAndDuration.get()
 
     return buildString {
-      // Two spaces for the icon
-      append("_")
-
       if (showLink || extraLinkInfo !is ExtraLinkInfo.Success) {
         // Append the original url
         append(originalLinkUrl)
@@ -189,6 +188,9 @@ internal object CommentSpanUpdater {
           append("[NOT AVAILABLE]")
         }
       }
+
+      // Two spaces for the icon
+      append("  ")
     }
   }
 

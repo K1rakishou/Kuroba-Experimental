@@ -23,6 +23,7 @@ class InlinedFileInfoRepository(
   suspend fun getInlinedFileInfo(fileUrl: String): ModularResult<InlinedFileInfo> {
     return applicationScope.myAsync {
       return@myAsync repoGenericGetAction(
+        fileUrl = fileUrl,
         cleanupFunc = { inlinedFileInfoRepositoryCleanup().ignore() },
         getFromCacheFunc = { cache.get(fileUrl) },
         getFromLocalSourceFunc = {

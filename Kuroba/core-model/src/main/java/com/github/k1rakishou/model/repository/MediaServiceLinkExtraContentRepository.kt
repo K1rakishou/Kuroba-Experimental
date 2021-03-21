@@ -33,6 +33,7 @@ class MediaServiceLinkExtraContentRepository(
 
     return applicationScope.myAsync {
       return@myAsync repoGenericGetAction(
+        fileUrl = requestUrl,
         cleanupFunc = { mediaServiceLinkExtraContentRepositoryCleanup().ignore() },
         getFromCacheFunc = { cache.get(mediaServiceKey) },
         getFromLocalSourceFunc = {

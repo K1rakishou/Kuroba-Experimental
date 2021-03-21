@@ -24,6 +24,7 @@ abstract class AbstractRepository(
    * */
   internal inline fun <reified T> repoGenericGetAction(
     tag: String,
+    fileUrl: String,
     cleanupFunc: () -> Unit,
     getFromCacheFunc: () -> T?,
     getFromLocalSourceFunc: () -> ModularResult<T?>,
@@ -40,10 +41,8 @@ abstract class AbstractRepository(
 
     when (val localSourceResult = getFromLocalSourceFunc()) {
       is ModularResult.Error -> {
-        Logger.e(tag,
-          "Error while trying to get ${T::class.java.simpleName} from " +
-            "local source: error = ${localSourceResult.error.errorMessageOrClassName()}"
-        )
+        Logger.e(tag, "Error while trying to get ${T::class.java.simpleName} from " +
+            "local source (fileUrl=$fileUrl): error = ${localSourceResult.error.errorMessageOrClassName()}")
         return ModularResult.error(localSourceResult.error)
       }
       is ModularResult.Value -> {
@@ -60,19 +59,15 @@ abstract class AbstractRepository(
 
     when (val remoteSourceResult = getFromRemoteSourceFunc()) {
       is ModularResult.Error -> {
-        Logger.e(tag,
-          "Error while trying to fetch ${T::class.java.simpleName} from " +
-            "remote source: error = ${remoteSourceResult.error.errorMessageOrClassName()}"
-        )
+        Logger.e(tag, "Error while trying to fetch ${T::class.java.simpleName} from " +
+            "remote source (fileUrl=$fileUrl): error = ${remoteSourceResult.error.errorMessageOrClassName()}")
         return ModularResult.error(remoteSourceResult.error)
       }
       is ModularResult.Value -> {
         return when (val storeResult = storeIntoLocalSourceFunc(remoteSourceResult.value)) {
           is ModularResult.Error -> {
-                Logger.e(tag,
-                  "Error while trying to store ${T::class.java.simpleName} in the " +
-                          "local source: error = ${storeResult.error.errorMessageOrClassName()}"
-                )
+            Logger.e(tag, "Error while trying to store ${T::class.java.simpleName} in the " +
+              "local source (fileUrl=$fileUrl): error = ${storeResult.error.errorMessageOrClassName()}")
             ModularResult.error(storeResult.error)
           }
           is ModularResult.Value -> {
