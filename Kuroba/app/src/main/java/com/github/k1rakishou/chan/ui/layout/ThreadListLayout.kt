@@ -531,7 +531,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     when (boardPostViewMode) {
       PostViewMode.LIST -> {
-        val linearLayoutManager: LinearLayoutManager = object : LinearLayoutManager(context) {
+        val linearLayoutManager = object : LinearLayoutManager(context) {
           override fun requestChildRectangleOnScreen(
             parent: RecyclerView,
             child: View,
@@ -551,7 +551,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         setBackgroundColor(themeEngine.chanTheme.backColor)
       }
       PostViewMode.GRID -> {
-        val gridLayoutManager: GridLayoutManager = object : GridLayoutManager(
+        val gridLayoutManager = object : GridLayoutManager(
           context,
           spanCount,
           GridLayoutManager.VERTICAL,
@@ -576,7 +576,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         setBackgroundColor(themeEngine.chanTheme.backColorSecondary())
       }
       PostViewMode.STAGGER -> {
-        val staggerLayoutManager: StaggeredGridLayoutManager = object : StaggeredGridLayoutManager(
+        val staggerLayoutManager = object : StaggeredGridLayoutManager(
           spanCount,
           StaggeredGridLayoutManager.VERTICAL,
         ) {

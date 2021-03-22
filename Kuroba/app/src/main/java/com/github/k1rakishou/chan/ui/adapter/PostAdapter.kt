@@ -264,7 +264,12 @@ class PostAdapter(
     threadCellData.updateThreadData(postCellCallback, chanDescriptor, postIndexedList, chanTheme)
     showError(null)
 
+    // We need to remove focus from the child views because if any child has a focus during
+    // RecyclerView layout pass RecyclerView will automatically scroll to that child (scroll to top
+    // bug).
+    recyclerView.requestFocus()
     notifyDataSetChanged()
+
     Logger.d(TAG, "setThread() notifyDataSetChanged called, postIndexedList.size=" + postIndexedList.size)
   }
 
