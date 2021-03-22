@@ -198,7 +198,7 @@ object SpannableStringMapper {
     when (postLinkable.type) {
       PostLinkable.Type.DEAD -> {
         when (val postLinkableValue = postLinkable.linkableValue) {
-          is PostLinkableThreadOrPostLinkValue -> {
+          is PostLinkable.Value.ThreadOrPostLink -> {
             postLinkableValueJson = gson.toJson(
               PostLinkableThreadOrPostLinkValue(
                 SerializablePostLinkableType.Dead,
@@ -208,7 +208,7 @@ object SpannableStringMapper {
               )
             )
           }
-          is PostLinkableQuoteValue -> {
+          is PostLinkable.Value.LongValue -> {
             val postId = postLinkable.linkableValue.extractLongOrNull()
             if (postId == null) {
               postLinkableValueJson = null
@@ -494,11 +494,13 @@ object SpannableStringMapper {
     when (serializablePostLinkableSpan.postLinkableType) {
       SerializablePostLinkableType.Dead -> {
         val postLinkableValue: PostLinkableValue = try {
+          // New PostLinkableValue for DEAD link type
           gson.fromJson(
             serializablePostLinkableSpan.postLinkableValueJson,
             PostLinkableThreadOrPostLinkValue::class.java
           )
         } catch (ignored: Throwable) {
+          // Old and deprecated PostLinkableValue for DEAD link type
           gson.fromJson(
             serializablePostLinkableSpan.postLinkableValueJson,
             PostLinkableQuoteValue::class.java
