@@ -48,6 +48,14 @@ open class PostDescriptor protected constructor(
     return "PD_${descriptor.serializeToString()}_${postNo}_${postSubNo}"
   }
 
+  fun userReadableString(): String {
+    if (postSubNo > 0) {
+      return "${descriptor.userReadableString()}/${postNo}/${postSubNo}"
+    } else {
+      return "${descriptor.userReadableString()}/${postNo}"
+    }
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is PostDescriptor) return false

@@ -45,7 +45,7 @@ class ShowPostsInExternalThreadHelper(
     val loadingController = LoadingViewController(
       context,
       true,
-      "Loading thread '${threadDescriptor.userReadableString()}'"
+      "Loading '${postDescriptor.userReadableString()}'"
     )
 
     val job = scope.launch {
