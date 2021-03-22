@@ -5,6 +5,7 @@ import androidx.annotation.GuardedBy
 import androidx.core.app.NotificationManagerCompat
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
+import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -15,7 +16,6 @@ import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.isOutOfDiskSpaceError
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.DirectorySegment
 import com.github.k1rakishou.fsaf.file.FileSegment
@@ -51,6 +51,8 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
 @OptIn(ObsoleteCoroutinesApi::class)
 class ImageSaverV2ServiceDelegate(
@@ -59,7 +61,7 @@ class ImageSaverV2ServiceDelegate(
   private val appConstants: AppConstants,
   private val downloaderOkHttpClient: RealDownloaderOkHttpClient,
   private val notificationManagerCompat: NotificationManagerCompat,
-  private val fileManager: FileManager,
+  private val imageSaverFileManager: ImageSaverFileManagerWrapper,
   private val siteResolver: SiteResolver,
   private val chanPostImageRepository: ChanPostImageRepository,
   private val imageDownloadRequestRepository: ImageDownloadRequestRepository
@@ -68,10 +70,8 @@ class ImageSaverV2ServiceDelegate(
 
   @GuardedBy("mutex")
   private val activeDownloads = hashMapOf<String, DownloadContext>()
-
   @GuardedBy("mutex")
   private val activeNotificationIdQueue = LinkedList<String>()
-
   private val cancelNotificationJobMap = ConcurrentHashMap<String, Job>()
 
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
@@ -135,27 +135,30 @@ class ImageSaverV2ServiceDelegate(
   fun downloadImages(imageDownloadInputData: ImageSaverV2Service.ImageDownloadInputData) {
     serializedCoroutineExecutor.post {
       try {
+        val activeDownloadsBefore = mutex.withLock { activeDownloads.size }
+        Logger.d(TAG, "downloadImages() start, activeDownloadsBefore=$activeDownloadsBefore")
+
         val activeDownloadsCountAfter = withContext(Dispatchers.Default) {
           downloadImagesInternal(imageDownloadInputData)
         }
 
-        if (verboseLogs) {
-          Logger.d(TAG, "onStartCommand() end, activeDownloadsCount=$activeDownloadsCountAfter")
-        }
+        Logger.d(TAG, "downloadImages() end, activeDownloadsCountAfter=$activeDownloadsCountAfter")
 
         if (activeDownloadsCountAfter <= 0) {
-          Logger.d(TAG, "onStartCommand() stopping service")
+          Logger.d(TAG, "downloadImages() stopping service")
           stopServiceFlow.emit(Unit)
         }
       } catch (error: Throwable) {
-        Logger.e(TAG, "Unhandled exception", error)
+        Logger.e(TAG, "downloadImages() Unhandled exception", error)
       }
     }
   }
 
+  @OptIn(ExperimentalTime::class)
   private suspend fun downloadImagesInternal(imageDownloadInputData: ImageSaverV2Service.ImageDownloadInputData): Int {
     BackgroundUtils.ensureBackgroundThread()
 
+    val uniqueId = imageDownloadInputData.uniqueId
     val outputDirUri = AtomicReference<Uri>(null)
     val currentChanPostImage = AtomicReference<ChanPostImage>(null)
     val hasResultDirAccessErrors = AtomicBoolean(false)
@@ -184,6 +187,10 @@ class ImageSaverV2ServiceDelegate(
     try {
       val canceled = getDownloadContext(imageDownloadInputData)?.isCanceled() ?: true
       if (canceled) {
+        Logger.d(TAG, "downloadImagesInternal() " +
+          "imageDownloadInputData=${imageDownloadInputData.javaClass.simpleName}, " +
+          "imagesCount=${imageDownloadInputData.requestsCount()} canceled, uniqueId=${uniqueId}")
+
         // Canceled, no need to send even here because we do that in try/finally block
         return mutex.withLock { activeDownloads.size }
       }
@@ -203,8 +210,8 @@ class ImageSaverV2ServiceDelegate(
         totalImagesCount = imageDownloadInputData.requestsCount(),
         canceledRequests = canceledRequests.get(),
         completedRequests = completedRequestsToDownloadedImagesResult(
-          completedRequests,
-          outputDirUri
+          completedRequests = completedRequests,
+          outputDirUri = outputDirUri
         ),
         duplicates = duplicates.get(),
         failedRequests = failedRequests.get(),
@@ -219,19 +226,27 @@ class ImageSaverV2ServiceDelegate(
           .forEach { imageDownloadRequestBatch ->
             val updatedImageDownloadRequestBatch = imageDownloadRequestBatch.map { imageDownloadRequest ->
               return@map appScope.async(Dispatchers.IO) {
-                return@async downloadSingleImage(
-                  imageDownloadInputData,
-                  imageDownloadRequest,
-                  hasResultDirAccessErrors,
-                  hasOutOfDiskSpaceErrors,
-                  hasRequestsThatCanBeRetried,
-                  currentChanPostImage,
-                  canceledRequests,
-                  duplicates,
-                  failedRequests,
-                  outputDirUri,
-                  completedRequests
-                )
+                val (outImageDownloadRequest, duration) = measureTimedValue {
+                  return@measureTimedValue downloadSingleImage(
+                    imageDownloadInputData = imageDownloadInputData,
+                    imageDownloadRequest = imageDownloadRequest,
+                    hasResultDirAccessErrors = hasResultDirAccessErrors,
+                    hasOutOfDiskSpaceErrors = hasOutOfDiskSpaceErrors,
+                    hasRequestsThatCanBeRetried = hasRequestsThatCanBeRetried,
+                    currentChanPostImage = currentChanPostImage,
+                    canceledRequests = canceledRequests,
+                    duplicates = duplicates,
+                    failedRequests = failedRequests,
+                    outputDirUri = outputDirUri,
+                    completedRequests = completedRequests
+                  )
+                }
+
+                if (verboseLogs) {
+                  Logger.d(TAG, "downloadSingleImage(${imageDownloadRequest.imageFullUrl}) took $duration")
+                }
+
+                return@async outImageDownloadRequest
               }
             }.awaitAll()
 
@@ -259,8 +274,8 @@ class ImageSaverV2ServiceDelegate(
                 totalImagesCount = imageDownloadInputData.requestsCount(),
                 canceledRequests = canceledRequests.get(),
                 completedRequests = completedRequestsToDownloadedImagesResult(
-                  completedRequests,
-                  outputDirUri
+                  completedRequests = completedRequests,
+                  outputDirUri = outputDirUri
                 ),
                 duplicates = duplicates.get(),
                 failedRequests = failedRequests.get(),
@@ -292,8 +307,8 @@ class ImageSaverV2ServiceDelegate(
         totalImagesCount = imageDownloadInputData.requestsCount(),
         canceledRequests = canceledRequests.get(),
         completedRequests = completedRequestsToDownloadedImagesResult(
-          completedRequests,
-          outputDirUri
+          completedRequests = completedRequests,
+          outputDirUri = outputDirUri
         ),
         duplicates = duplicates.get(),
         failedRequests = failedRequests.get(),
@@ -571,7 +586,7 @@ class ImageSaverV2ServiceDelegate(
   ): ResultFile {
     val rootDirectoryUri = Uri.parse(checkNotNull(imageSaverV2Options.rootDirectoryUri))
 
-    val rootDirectory = fileManager.fromUri(rootDirectoryUri)
+    val rootDirectory = imageSaverFileManager.fileManager.fromUri(rootDirectoryUri)
       ?: return ResultFile.FailedToOpenResultDir(rootDirectoryUri.toString())
 
     val segments = mutableListOf<Segment>()
@@ -594,7 +609,7 @@ class ImageSaverV2ServiceDelegate(
       subDirs.forEach { subDir -> segments += DirectorySegment(subDir) }
     }
 
-    val resultDir = fileManager.create(rootDirectory, segments)
+    val resultDir = imageSaverFileManager.fileManager.create(rootDirectory, segments)
     if (resultDir == null) {
       return ResultFile.FailedToOpenResultDir(rootDirectory.clone(segments).getFullPath())
     }
@@ -605,7 +620,7 @@ class ImageSaverV2ServiceDelegate(
     val resultFileUri = Uri.parse(resultFile.getFullPath())
     val resultDirUri = Uri.parse(resultDir.getFullPath())
 
-    if (fileManager.exists(resultFile)) {
+    if (imageSaverFileManager.fileManager.exists(resultFile)) {
       var duplicatesResolution =
         ImageSaverV2Options.DuplicatesResolution.fromRawValue(imageSaverV2Options.duplicatesResolution)
 
@@ -620,11 +635,11 @@ class ImageSaverV2ServiceDelegate(
           return ResultFile.DuplicateFound(resultFileUri)
         }
         ImageSaverV2Options.DuplicatesResolution.Skip -> {
-          val fileIsNotEmpty = fileManager.getLength(resultFile) > 0
+          val fileIsNotEmpty = imageSaverFileManager.fileManager.getLength(resultFile) > 0
           return ResultFile.Skipped(resultDirUri, resultFileUri, fileIsNotEmpty)
         }
         ImageSaverV2Options.DuplicatesResolution.Overwrite -> {
-          if (!fileManager.delete(resultFile)) {
+          if (!imageSaverFileManager.fileManager.delete(resultFile)) {
             return ResultFile.FailedToOpenResultDir(resultFile.getFullPath())
           }
 
@@ -741,7 +756,7 @@ class ImageSaverV2ServiceDelegate(
       val outputFile = outputFileResult.file
       val outputDirUri = outputFileResult.outputDirUri
 
-      val actualOutputFile = fileManager.create(outputFile)
+      val actualOutputFile = imageSaverFileManager.fileManager.create(outputFile)
       if (actualOutputFile == null) {
         return@Try DownloadImageResult.ResultDirectoryError(
           outputFile.getFullPath(),
@@ -764,7 +779,7 @@ class ImageSaverV2ServiceDelegate(
           }
         }
       } catch (error: Throwable) {
-        fileManager.delete(actualOutputFile)
+        imageSaverFileManager.fileManager.delete(actualOutputFile)
 
         return@Try when (error) {
           is OutOfDiskSpaceException -> {
@@ -807,7 +822,7 @@ class ImageSaverV2ServiceDelegate(
     val responseBody = response.body
       ?: throw IOException("Response has no body")
 
-    val outputFileStream = fileManager.getOutputStream(outputFile)
+    val outputFileStream = imageSaverFileManager.fileManager.getOutputStream(outputFile)
       ?: throw ResultFileAccessError(outputFile.getFullPath())
 
     runInterruptible {

@@ -67,6 +67,8 @@ class ImageSaverV2Service : Service() {
       imageSaverV2ServiceDelegate.listenForStopServiceEvent()
         .collect {
           Logger.d(TAG, "Got StopService command, stopping the service")
+
+          stopForeground(true)
           stopSelf()
         }
     }

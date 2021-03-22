@@ -17,6 +17,7 @@ import com.github.k1rakishou.chan.core.di.module.application.RepositoryModule;
 import com.github.k1rakishou.chan.core.di.module.application.RoomDatabaseModule;
 import com.github.k1rakishou.chan.core.di.module.application.SiteModule;
 import com.github.k1rakishou.chan.core.di.module.application.UseCaseModule;
+import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper;
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkBackgroundWatcherWorker;
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherWorker;
 import com.github.k1rakishou.chan.core.receiver.ImageSaverBroadcastReceiver;
@@ -77,6 +78,8 @@ public interface ApplicationComponent {
         Builder themeEngine(ThemeEngine themeEngine);
         @BindsInstance
         Builder fileManager(FileManager fileManager);
+        @BindsInstance
+        Builder imageSaverFileManagerWrapper(ImageSaverFileManagerWrapper imageSaverFileManagerWrapper);
         @BindsInstance
         Builder applicationCoroutineScope(CoroutineScope applicationCoroutineScope);
         @BindsInstance

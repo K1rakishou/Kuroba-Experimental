@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
+import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper;
 import com.github.k1rakishou.chan.core.helper.LastPageNotificationsHelper;
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder;
 import com.github.k1rakishou.chan.core.helper.PostHideHelper;
@@ -76,7 +77,6 @@ import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelega
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_themes.ThemeEngine;
-import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.repository.BoardRepository;
 import com.github.k1rakishou.model.repository.BookmarksRepository;
 import com.github.k1rakishou.model.repository.ChanFilterRepository;
@@ -614,7 +614,7 @@ public class ManagerModule {
             CoroutineScope appScope,
             AppConstants appConstants,
             RealDownloaderOkHttpClient downloaderOkHttpClient,
-            FileManager fileManager,
+            ImageSaverFileManagerWrapper imageSaverFileManagerWrapper,
             SiteResolver siteResolver,
             ChanPostImageRepository chanPostImageRepository,
             ImageDownloadRequestRepository imageDownloadRequestRepository
@@ -625,7 +625,7 @@ public class ManagerModule {
                 appConstants,
                 downloaderOkHttpClient,
                 NotificationManagerCompat.from(appContext),
-                fileManager,
+                imageSaverFileManagerWrapper,
                 siteResolver,
                 chanPostImageRepository,
                 imageDownloadRequestRepository

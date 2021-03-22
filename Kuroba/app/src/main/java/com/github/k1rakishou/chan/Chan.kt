@@ -43,6 +43,7 @@ import com.github.k1rakishou.chan.core.di.module.application.RoomDatabaseModule
 import com.github.k1rakishou.chan.core.di.module.application.SiteModule
 import com.github.k1rakishou.chan.core.di.module.application.UseCaseModule
 import com.github.k1rakishou.chan.core.diagnostics.AnrSupervisor
+import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -231,7 +232,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
     val okHttpDns = okHttpDns
     val okHttpProtocols = okHttpProtocols
-    val fileManager = provideFileManager()
+    val fileManager = provideApplicationFileManager()
+    val imageSaverFileManagerWrapper =  provideImageSaverFileManagerWrapper()
 
     val themeEngine = ThemesModuleInjector.build(
       this,
@@ -261,6 +263,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       .appContext(this)
       .themeEngine(themeEngine)
       .fileManager(fileManager)
+      .imageSaverFileManagerWrapper(imageSaverFileManagerWrapper)
       .applicationCoroutineScope(applicationScope)
       .okHttpDns(okHttpDns)
       .okHttpProtocols(okHttpProtocols)
@@ -465,7 +468,10 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     )
   }
 
-  private fun provideFileManager(): FileManager {
+  /**
+   * This is the main instance of FileManager that is used by the most of the app.
+   * */
+  private fun provideApplicationFileManager(): FileManager {
     val directoryManager = DirectoryManager(this)
 
     // Add new base directories here
@@ -476,10 +482,37 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     }
 
     return FileManager(
-      this,
-      resolutionStrategy,
-      directoryManager
+      appContext = this,
+      badPathSymbolResolutionStrategy = resolutionStrategy,
+      directoryManager = directoryManager
     )
+  }
+
+  /**
+   * This is a separate copy of FileManager that exist for the sole purpose of only being used by
+   * ImageSaver. That's because all public methods of FileManager are globally locked and the SAF
+   * version of the FileManager is slow as fuck so when you download albums the rest of the app will
+   * HANG because of the FileManager methods will be locked. To avoid this situation we use a
+   * second, separate, instance of FileManager that will only be used in ImageSaver so the other file
+   * manager that is used by the app is not getting locked while the user downloads something.
+   * */
+  private fun provideImageSaverFileManagerWrapper(): ImageSaverFileManagerWrapper {
+    val directoryManager = DirectoryManager(this)
+
+    // Add new base directories here
+    var resolutionStrategy = BadPathSymbolResolutionStrategy.ReplaceBadSymbols
+
+    if (AppModuleAndroidUtils.getFlavorType() != AndroidUtils.FlavorType.Stable) {
+      resolutionStrategy = BadPathSymbolResolutionStrategy.ThrowAnException
+    }
+
+    val fileManager = FileManager(
+      appContext = this,
+      badPathSymbolResolutionStrategy = resolutionStrategy,
+      directoryManager = directoryManager
+    )
+
+    return ImageSaverFileManagerWrapper(fileManager)
   }
 
   override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
