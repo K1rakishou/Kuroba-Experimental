@@ -45,8 +45,8 @@ android {
         buildConfigField "String", "COMMIT_HASH", "\"" + getCommitHash() + "\""
         buildConfigField "String", "BUILD_NUMBER", "\"" + getCurrentBuildNumber() + "\""
 
-        versionCode 605
-        versionName "v0.6.5"
+        versionCode 700
+        versionName "v0.7.0"
 
         applicationVariants.all { variant ->
             variant.outputs.all {
@@ -157,18 +157,26 @@ android {
         }
 
         release {
-            /*
-            If you want to sign releases without using "Generate Signed APK", make a file in app/keys.properties with the following content:
-            keystoreFile=yourkey.store
-            keystorePass=pass
-            keyAlias=alias
-            keyPass=pass
-            */
-            // Just select your build variant (debug/release) and do Build -> APK
-            File f = file('keys.properties')
-            if (f.exists()) {
+            def isRunningOnTravis = System.getenv("CI") == "true"
+            File propsFile = file('keys.properties')
+
+            if (isRunningOnTravis) {
+                signingConfigs {
+                    release {
+                        storeFile = file("kuroba_ex.jks")
+                        storePassword = System.getenv("keystore_password")
+                        keyAlias = System.getenv("keystore_alias")
+                        keyPassword = System.getenv("keystore_alias_password")
+
+                        v1SigningEnabled true
+                        v2SigningEnabled true
+                    }
+                }
+
+                signingConfig signingConfigs.release
+            } else if (propsFile.exists()) {
                 Properties props = new Properties()
-                InputStream is = new FileInputStream(f)
+                InputStream is = new FileInputStream(propsFile)
                 props.load(is)
 
                 signingConfigs {
