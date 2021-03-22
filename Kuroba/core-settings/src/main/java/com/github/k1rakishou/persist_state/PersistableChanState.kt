@@ -1,6 +1,7 @@
 package com.github.k1rakishou.persist_state
 
 import com.github.k1rakishou.PersistableChanStateInfo
+import com.github.k1rakishou.ReorderableBottomNavViewButtons
 import com.github.k1rakishou.SharedPreferencesSettingProvider
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
@@ -57,6 +58,9 @@ object PersistableChanState {
   lateinit var imageViewerImmersiveModeEnabled: BooleanSetting
   @JvmStatic
   lateinit var imageSaverV2PersistedOptions: JsonSetting<ImageSaverV2Options>
+  @JvmStatic
+  lateinit var reorderableBottomNavViewButtons: JsonSetting<ReorderableBottomNavViewButtons>
+
 
   fun init(persistableChanStateInfo: PersistableChanStateInfo) {
     PersistableChanState.persistableChanStateInfo = persistableChanStateInfo
@@ -151,6 +155,15 @@ object PersistableChanState {
         "image_saver_options",
         ImageSaverV2Options()
       )
+
+      reorderableBottomNavViewButtons = JsonSetting(
+        gson,
+        ReorderableBottomNavViewButtons::class.java,
+        provider,
+        "bottom_nav_view_buttons_ordered",
+        ReorderableBottomNavViewButtons()
+      )
+
     } catch (e: Exception) {
       Logger.e(TAG, "Error while initializing the state", e)
       throw e

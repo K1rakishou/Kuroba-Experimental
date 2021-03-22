@@ -623,6 +623,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_never_show_pages_bottom">Never display the page number in the catalog</string>
     <string name="setting_enable_draggable_scrollbars">Draggable scrollbars</string>
     <string name="setting_enable_draggable_scrollbars_bottom">Enable draggable scrollbars for fast scrolling</string>
+    <string name="setting_reorder_bottom_nav_view_buttons">Reorder bottom navigation view buttons</string>
 
     <string name="setting_enable_draggable_scrollbars_disabled">Disabled (Regular, non-draggable scrollbars)</string>
     <string name="setting_enable_draggable_scrollbars_scroll_by_dragging_thumb">Scroll only when dragging thumb</string>

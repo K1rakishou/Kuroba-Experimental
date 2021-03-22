@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -46,7 +46,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/bottom_nav_view_height"
                     android:layout_alignParentBottom="true"
-                    app:menu="@menu/bottom_navigation_menu" />
+                    tools:menu="@menu/bottom_navigation_menu" />
 
                 <com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanel
                     android:id="@+id/bottom_menu_panel"

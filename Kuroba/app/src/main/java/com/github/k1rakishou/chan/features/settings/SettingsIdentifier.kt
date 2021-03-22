@@ -310,6 +310,7 @@ sealed class AppearanceScreen(
     object BottomJsCaptcha : LayoutGroup("bottom_js_captcha")
     object NeverShowPages : LayoutGroup("never_show_pages")
     object EnableDraggableScrollbars : LayoutGroup("enable_draggable_scrollbars")
+    object ReorderableBottomNavViewButtonsSetting : LayoutGroup("reorderable_bottom_nav_view_buttons")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = AppearanceScreen.getScreenIdentifier()

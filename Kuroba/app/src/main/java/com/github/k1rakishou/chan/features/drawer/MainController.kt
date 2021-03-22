@@ -20,6 +20,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
@@ -31,6 +32,7 @@ import androidx.core.view.forEach
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.epoxy.EpoxyTouchHelper
+import com.github.k1rakishou.BottomNavViewButton
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
@@ -94,10 +96,12 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.persist_state.PersistableChanState
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
+
 
 class MainController(
   context: Context
@@ -231,6 +235,7 @@ class MainController(
     bottomNavView = view.findViewById(R.id.bottom_navigation_view)
     bottomMenuPanel = view.findViewById(R.id.bottom_menu_panel)
 
+    setBottomNavViewButtons()
     bottomNavView.selectedItemId = R.id.action_browse
     bottomNavView.elevation = dp(4f).toFloat()
     bottomNavView.disableTooltips()
@@ -314,6 +319,36 @@ class MainController(
 
     themeEngine.addListener(this)
     onThemeChanged()
+  }
+
+  private fun setBottomNavViewButtons() {
+    val bottomNavViewButtons = PersistableChanState.reorderableBottomNavViewButtons.get()
+    bottomNavView.menu.clear()
+
+    bottomNavViewButtons.bottomNavViewButtons().forEachIndexed { index, bottomNavViewButton ->
+      when (bottomNavViewButton) {
+        BottomNavViewButton.Search -> {
+          bottomNavView.menu
+            .add(Menu.NONE, R.id.action_search, index, R.string.menu_search)
+            .setIcon(R.drawable.ic_search_white_24dp)
+        }
+        BottomNavViewButton.Bookmarks -> {
+          bottomNavView.menu
+            .add(Menu.NONE, R.id.action_bookmarks, index, R.string.menu_bookmarks)
+            .setIcon(R.drawable.ic_baseline_bookmarks)
+        }
+        BottomNavViewButton.Browse -> {
+          bottomNavView.menu
+            .add(Menu.NONE, R.id.action_browse, index, R.string.menu_browse)
+            .setIcon(R.drawable.ic_baseline_laptop)
+        }
+        BottomNavViewButton.Settings -> {
+          bottomNavView.menu
+            .add(Menu.NONE, R.id.action_settings, index, R.string.menu_settings)
+            .setIcon(R.drawable.ic_baseline_settings)
+        }
+      }
+    }
   }
 
   override fun onShow() {

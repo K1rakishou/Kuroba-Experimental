@@ -2,7 +2,9 @@ package com.github.k1rakishou.chan.features.settings.screens
 
 import android.content.Context
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.ReorderableBottomNavViewButtons
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.features.reordering.SimpleListItemsReorderingController
 import com.github.k1rakishou.chan.features.settings.AppearanceScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
@@ -11,7 +13,9 @@ import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.RangeSettingV2
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.settings.ThemeSettingsController
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.persist_state.PersistableChanState
 
 class AppearanceSettingsScreen(
   context: Context,
@@ -439,6 +443,31 @@ class AppearanceSettingsScreen(
           },
           setting = ChanSettings.draggableScrollbars,
           requiresUiRefresh = true
+        )
+
+        group += LinkSettingV2.createBuilder(
+          context = context,
+          identifier = AppearanceScreen.LayoutGroup.ReorderableBottomNavViewButtonsSetting,
+          topDescriptionIdFunc = { R.string.setting_reorder_bottom_nav_view_buttons },
+          callback = {
+            val reorderableBottomNavViewButtons = PersistableChanState.reorderableBottomNavViewButtons.get()
+
+            val items = reorderableBottomNavViewButtons.bottomNavViewButtons()
+              .map { button -> SimpleListItemsReorderingController.SimpleReorderableItem(button.id, button.title) }
+
+            val controller = SimpleListItemsReorderingController(
+              context = context,
+              items = items,
+              onApplyClicked = { itemsReordered ->
+                val reorderedButtons = ReorderableBottomNavViewButtons(itemsReordered.map { it.id })
+                PersistableChanState.reorderableBottomNavViewButtons.set(reorderedButtons)
+
+                showToast(context, R.string.restart_the_app)
+              }
+            )
+
+            navigationController.presentController(controller)
+          }
         )
 
         group

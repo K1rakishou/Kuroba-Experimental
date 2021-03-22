@@ -32,6 +32,8 @@ import com.github.k1rakishou.chan.features.reencoding.ImageOptionsController;
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper;
 import com.github.k1rakishou.chan.features.reencoding.ImageReencodeOptionsController;
 import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter;
+import com.github.k1rakishou.chan.features.reordering.EpoxyReorderableItemView;
+import com.github.k1rakishou.chan.features.reordering.SimpleListItemsReorderingController;
 import com.github.k1rakishou.chan.features.reply.ReplyLayout;
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutFilesArea;
 import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyAttachNewFileButtonView;
@@ -234,6 +236,7 @@ public interface ActivityComponent {
     void inject(ImageSaverV2OptionsController imageSaverV2OptionsController);
     void inject(ResolveDuplicateImagesController resolveDuplicateImagesController);
     void inject(KurobaAlertDialogHostController kurobaAlertDialogHostController);
+    void inject(SimpleListItemsReorderingController simpleListItemsReorderingController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);
@@ -294,6 +297,7 @@ public interface ActivityComponent {
     void inject(EpoxySelectableBoardItemView epoxySelectableBoardItemView);
     void inject(EpoxySimpleGroupView epoxySimpleGroupView);
     void inject(EpoxyDuplicateImageView epoxyDuplicateImageView);
+    void inject(EpoxyReorderableItemView epoxyReorderableItemView);
 
     void inject(CaptchaNoJsLayoutV2 captchaNoJsLayoutV2);
     void inject(CaptchaNojsLayoutV1 captchaNojsLayoutV1);
