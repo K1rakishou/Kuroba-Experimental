@@ -193,7 +193,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
 
             value = new PostLinkable.Value.ThreadOrPostLink(
                     post.boardDescriptor.getBoardCode(),
-                    post.opId,
+                    post.getOpId(),
                     postId
             );
         }
@@ -239,7 +239,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             long mockReplyPostNo = mockReplyManager.getLastMockReply(
                     post.boardDescriptor.siteName(),
                     post.boardDescriptor.getBoardCode(),
-                    post.opId
+                    post.getOpId()
             );
 
             if (mockReplyPostNo >= 0) {

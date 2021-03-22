@@ -1458,7 +1458,7 @@ class ThreadPresenter @Inject constructor(
 
       if (linkable.type == PostLinkable.Type.THREAD) {
         val threadLink = linkable.linkableValue as? PostLinkable.Value.ThreadOrPostLink
-        if (threadLink == null) {
+        if (threadLink == null || !threadLink.isValid()) {
           Logger.e(TAG, "Bad thread linkable: linkableValue = ${linkable.linkableValue}")
           return@post
         }
@@ -1530,6 +1530,7 @@ class ThreadPresenter @Inject constructor(
           is PostLinkable.Value.LongValue -> {
             val postNo = postLinkableValue.extractLongOrNull()
             if (postNo == null || postNo <= 0L) {
+              Logger.e(TAG, "PostLinkable is not valid: linkableValue = ${postLinkableValue}")
               return@post
             }
 
@@ -1541,6 +1542,11 @@ class ThreadPresenter @Inject constructor(
             threadPresenterCallback?.showAvailableArchivesList(archivePostDescriptor)
           }
           is PostLinkable.Value.ThreadOrPostLink -> {
+            if (!postLinkableValue.isValid()) {
+              Logger.e(TAG, "PostLinkable is not valid: linkableValue = ${postLinkableValue}")
+              return@post
+            }
+
             val archivePostDescriptor = PostDescriptor.create(
               siteName = siteName,
               boardCode = postLinkableValue.board,
@@ -1570,6 +1576,11 @@ class ThreadPresenter @Inject constructor(
 
         if (!isSiteEnabled) {
           showToast(context, getString(R.string.archive_is_not_enabled, archiveDescriptor.domain))
+          return@post
+        }
+
+        if (!archiveThreadLink.isValid()) {
+          Logger.e(TAG, "PostLinkable is not valid: linkableValue = ${archiveThreadLink}")
           return@post
         }
 

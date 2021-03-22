@@ -171,6 +171,8 @@ open class PostLinkable(
 
     data class ThreadOrPostLink(val board: String, val threadId: Long, val postId: Long) : Value() {
       fun isThreadLink(): Boolean = threadId == postId
+
+      fun isValid(): Boolean = threadId > 0 && postId > 0
     }
 
     data class ArchiveThreadLink(
@@ -179,6 +181,8 @@ open class PostLinkable(
       val threadId: Long,
       val postId: Long?
     ) : Value() {
+
+      fun isValid(): Boolean = threadId > 0 && (postId == null || postId > 0)
 
       fun postIdOrThreadId(): Long {
         return postId ?: threadId
