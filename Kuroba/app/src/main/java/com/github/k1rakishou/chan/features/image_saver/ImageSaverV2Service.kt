@@ -271,7 +271,7 @@ class ImageSaverV2Service : Service() {
     )
       .setContentTitle(title)
       .setSmallIcon(smallIcon)
-      .setOngoing(imageSaverDelegateResult.completed.not())
+      .setOngoing(isNotificationOngoing(imageSaverDelegateResult))
       .setAutoCancel(false)
       .setSound(null)
       .setStyle(style)
@@ -289,6 +289,20 @@ class ImageSaverV2Service : Service() {
       imageSaverDelegateResult.uniqueId,
       notification
     )
+  }
+
+  private fun isNotificationOngoing(
+    imageSaverDelegateResult: ImageSaverV2ServiceDelegate.ImageSaverDelegateResult
+  ): Boolean {
+    if (!imageSaverDelegateResult.completed) {
+      return true
+    }
+
+    if (imageSaverDelegateResult.hasOnlyCompletedRequests()) {
+      return false
+    }
+
+    return true
   }
 
   private fun formatNotificationText(
@@ -358,6 +372,8 @@ class ImageSaverV2Service : Service() {
       )
 
       addAction(0, getString(R.string.image_saver_resolve_duplicates), navigate)
+
+      addCancelIntent(imageSaverDelegateResult)
     }
 
     return this
@@ -367,19 +383,7 @@ class ImageSaverV2Service : Service() {
     imageSaverDelegateResult: ImageSaverV2ServiceDelegate.ImageSaverDelegateResult
   ): NotificationCompat.Builder {
     if (!imageSaverDelegateResult.completed) {
-      val intent = Intent(applicationContext, ImageSaverBroadcastReceiver::class.java).apply {
-        setAction(ACTION_TYPE_CANCEL)
-        putExtra(UNIQUE_ID, imageSaverDelegateResult.uniqueId)
-      }
-
-      val cancelIntent = PendingIntent.getBroadcast(
-        applicationContext,
-        RequestCodes.nextRequestCode(),
-        intent,
-        PendingIntent.FLAG_UPDATE_CURRENT
-      )
-
-      addAction(0, getString(R.string.cancel), cancelIntent)
+      addCancelIntent(imageSaverDelegateResult)
       return this
     }
 
@@ -425,6 +429,22 @@ class ImageSaverV2Service : Service() {
     return this
   }
 
+  private fun NotificationCompat.Builder.addCancelIntent(imageSaverDelegateResult: ImageSaverV2ServiceDelegate.ImageSaverDelegateResult) {
+    val intent = Intent(applicationContext, ImageSaverBroadcastReceiver::class.java).apply {
+      setAction(ACTION_TYPE_CANCEL)
+      putExtra(UNIQUE_ID, imageSaverDelegateResult.uniqueId)
+    }
+
+    val cancelIntent = PendingIntent.getBroadcast(
+      applicationContext,
+      RequestCodes.nextRequestCode(),
+      intent,
+      PendingIntent.FLAG_UPDATE_CURRENT
+    )
+
+    addAction(0, getString(R.string.cancel), cancelIntent)
+  }
+
   private fun NotificationCompat.Builder.addResolveFailedDownloadsAction(
     imageSaverDelegateResult: ImageSaverV2ServiceDelegate.ImageSaverDelegateResult
   ): NotificationCompat.Builder {
@@ -447,6 +467,8 @@ class ImageSaverV2Service : Service() {
       )
 
       addAction(0, getString(R.string.retry), navigate)
+
+      addCancelIntent(imageSaverDelegateResult)
     }
 
     return this
