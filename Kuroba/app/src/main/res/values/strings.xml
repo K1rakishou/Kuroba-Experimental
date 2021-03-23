@@ -391,12 +391,13 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="controller_image_save_options_image_name_options_use_original_name">Use original file name</string>
     <string name="controller_image_save_options_duplicate_resolution_options">Duplicate resolution options</string>
     <string name="controller_image_save_options_duplicate_resolution_options_ask">Ask what to do</string>
-    <string name="controller_image_save_options_duplicate_resolution_options_overwrite">Overwrite already existing image</string>
-    <string name="controller_image_save_options_duplicate_resolution_options_skip">Skip image</string>
+    <string name="controller_image_save_options_duplicate_resolution_options_overwrite">Overwrite</string>
+    <string name="controller_image_save_options_duplicate_resolution_options_skip">Skip</string>
     <string name="controller_image_save_options_root_dir">Root directory:</string>
     <string name="controller_image_save_options_output_dir_append_site_name">Append site name</string>
     <string name="controller_image_save_options_output_dir_append_board_code">Append board code</string>
     <string name="controller_image_save_options_output_dir_append_thread_id">Append thread id</string>
+    <string name="controller_image_save_options_output_dir_append_thread_subject">Append thread subject</string>
     <string name="controller_image_save_options_additional_dirs">Additional directories (\'\\\' separated)</string>
     <string name="controller_image_save_options_result_path">Result path</string>
     <string name="controller_image_save_options_override_file_name">Override file name (without extension)</string>

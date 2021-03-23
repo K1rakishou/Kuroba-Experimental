@@ -617,7 +617,8 @@ public class ManagerModule {
             ImageSaverFileManagerWrapper imageSaverFileManagerWrapper,
             SiteResolver siteResolver,
             ChanPostImageRepository chanPostImageRepository,
-            ImageDownloadRequestRepository imageDownloadRequestRepository
+            ImageDownloadRequestRepository imageDownloadRequestRepository,
+            ChanThreadManager chanThreadManager
     ) {
         return new ImageSaverV2ServiceDelegate(
                 ChanSettings.verboseLogs.get(),
@@ -628,7 +629,8 @@ public class ManagerModule {
                 imageSaverFileManagerWrapper,
                 siteResolver,
                 chanPostImageRepository,
-                imageDownloadRequestRepository
+                imageDownloadRequestRepository,
+                chanThreadManager
         );
     }
 

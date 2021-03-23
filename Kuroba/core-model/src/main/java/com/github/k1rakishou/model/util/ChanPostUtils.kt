@@ -6,6 +6,7 @@ import android.widget.TextView
 import androidx.core.text.PrecomputedTextCompat
 import androidx.core.widget.TextViewCompat
 import com.github.k1rakishou.common.MurmurHashUtils
+import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
@@ -53,6 +54,31 @@ object ChanPostUtils {
       1000.let { b /= it; b } < 999950L -> String.format("%s%.1f PB", s, b / 1e3)
       else -> String.format("%s%.1f EB", s, b / 1e6)
     }
+  }
+
+  @JvmStatic
+  fun getSafeToUseTitle(post: ChanPost): String? {
+    fun getSafeToUseTitleInternal(post: ChanPost): String? {
+      if (!TextUtils.isEmpty(post.subject)) {
+        return post.subject.toString()
+      }
+
+      val comment = post.postComment.originalComment()
+
+      if (!TextUtils.isEmpty(comment)) {
+        val length = min(comment.length, 64)
+        return comment.subSequence(0, length).toString()
+      }
+
+      return null
+    }
+
+    val title = getSafeToUseTitleInternal(post)
+    if (title.isNullOrBlank()) {
+      return null
+    }
+
+    return StringUtils.dirNameRemoveBadCharacters(title)
   }
 
   @JvmStatic

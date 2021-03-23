@@ -13,6 +13,8 @@ data class ImageSaverV2Options(
   var appendBoardCode: Boolean = false,
   @SerializedName("append_thread_id")
   var appendThreadId: Boolean = false,
+  @SerializedName("append_thread_subject")
+  var appendThreadSubject: Boolean = false,
   @SerializedName("image_name_options")
   var imageNameOptions: Int = ImageNameOptions.UseServerFileName.rawValue,
   @SerializedName("duplicates_resolution")

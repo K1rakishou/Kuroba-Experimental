@@ -71,15 +71,27 @@ public class StringUtils {
         return filename.substring(0, index);
     }
 
-    public static String dirNameRemoveBadCharacters(String dirName) {
-        return dirName.replaceAll(" ", "_").replaceAll(RESERVED_CHARACTERS_DIR, "");
+    @Nullable
+    public static String dirNameRemoveBadCharacters(@Nullable String dirName) {
+        if (dirName == null) {
+            return null;
+        }
+
+        return dirName.replaceAll(" ", "_")
+                .replaceAll(RESERVED_CHARACTERS_DIR, "");
     }
 
     /**
      * The same as dirNameRemoveBadCharacters but allows dots since file names can have extensions
      */
-    public static String fileNameRemoveBadCharacters(String filename) {
-        return filename.replaceAll(" ", "_").replaceAll(RESERVED_CHARACTERS_FILE, "");
+    @Nullable
+    public static String fileNameRemoveBadCharacters(@Nullable String filename) {
+        if (filename == null) {
+            return null;
+        }
+
+        return filename.replaceAll(" ", "_")
+                .replaceAll(RESERVED_CHARACTERS_FILE, "");
     }
 
     public static String encodeBase64(String input) {

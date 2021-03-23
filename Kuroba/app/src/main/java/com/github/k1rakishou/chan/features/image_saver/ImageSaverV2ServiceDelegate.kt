@@ -6,11 +6,13 @@ import androidx.core.app.NotificationManagerCompat
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.doIoTaskWithAttempts
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.isOutOfDiskSpaceError
@@ -64,7 +66,8 @@ class ImageSaverV2ServiceDelegate(
   private val imageSaverFileManager: ImageSaverFileManagerWrapper,
   private val siteResolver: SiteResolver,
   private val chanPostImageRepository: ChanPostImageRepository,
-  private val imageDownloadRequestRepository: ImageDownloadRequestRepository
+  private val imageDownloadRequestRepository: ImageDownloadRequestRepository,
+  private val chanThreadManager: ChanThreadManager
 ) {
   private val mutex = Mutex()
 
@@ -579,6 +582,7 @@ class ImageSaverV2ServiceDelegate(
 
   @Suppress("MoveVariableDeclarationIntoWhen")
   private fun getFullFileUri(
+    chanPostImage: ChanPostImage,
     imageSaverV2Options: ImageSaverV2Options,
     imageDownloadRequest: ImageDownloadRequest,
     postDescriptor: PostDescriptor,
@@ -603,6 +607,16 @@ class ImageSaverV2ServiceDelegate(
       segments += DirectorySegment(postDescriptor.getThreadNo().toString())
     }
 
+    if (imageSaverV2Options.appendThreadSubject) {
+      val threadSubject = chanThreadManager.getSafeToUseThreadSubject(
+        chanPostImage.ownerPostDescriptor.threadDescriptor()
+      )
+
+      if (threadSubject.isNotNullNorBlank()) {
+        segments += DirectorySegment(threadSubject)
+      }
+    }
+
     if (imageSaverV2Options.subDirs.isNotNullNorBlank()) {
       val subDirs = imageSaverV2Options.subDirs!!.split('\\')
 
@@ -614,7 +628,7 @@ class ImageSaverV2ServiceDelegate(
       return ResultFile.FailedToOpenResultDir(rootDirectory.clone(segments).getFullPath())
     }
 
-    segments += FileSegment(fileName.replace(" ", "_"))
+    segments += FileSegment(StringUtils.fileNameRemoveBadCharacters(fileName)!!)
 
     val resultFile = rootDirectory.clone(segments)
     val resultFileUri = Uri.parse(resultFile.getFullPath())
@@ -716,6 +730,7 @@ class ImageSaverV2ServiceDelegate(
       val postDescriptor = chanPostImage.ownerPostDescriptor
 
       val outputFileResult = getFullFileUri(
+        chanPostImage = chanPostImage,
         imageSaverV2Options = imageSaverV2Options,
         imageDownloadRequest = imageDownloadRequest,
         postDescriptor = postDescriptor,

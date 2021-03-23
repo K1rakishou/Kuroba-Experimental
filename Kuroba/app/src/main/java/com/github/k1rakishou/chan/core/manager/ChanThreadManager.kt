@@ -19,6 +19,7 @@ import com.github.k1rakishou.model.data.post.LoaderType
 import com.github.k1rakishou.model.data.thread.ChanThread
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
+import com.github.k1rakishou.model.util.ChanPostUtils
 
 /**
  * The only manager class that can hold other manager classes. Do not use this class in other manager
@@ -173,6 +174,14 @@ class ChanThreadManager(
     }
   }
 
+  fun getSafeToUseThreadSubject(threadDescriptor: ChanDescriptor.ThreadDescriptor): String? {
+    val originalPost = chanThreadsCache.getThread(threadDescriptor)
+      ?.getOriginalPost()
+      ?: return null
+
+    return ChanPostUtils.getSafeToUseTitle(originalPost)
+  }
+
   fun getChanThread(threadDescriptor: ChanDescriptor.ThreadDescriptor?): ChanThread? {
     if (threadDescriptor == null) {
       return null
@@ -302,6 +311,38 @@ class ChanThreadManager(
     return chanThreadsCache.getThread(threadDescriptor)?.getNewPostsCount(lastPostNo) ?: 0
   }
 
+  fun isContentLoadedForLoader(postDescriptor: PostDescriptor, loaderType: LoaderType): Boolean {
+    when (val descriptor = postDescriptor.descriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        return chanThreadsCache.getCatalog(descriptor)
+          ?.getPost(postDescriptor)
+          ?.isContentLoadedForLoader(loaderType)
+          ?: false
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        return chanThreadsCache.getThread(descriptor)
+          ?.getPost(postDescriptor)
+          ?.isContentLoadedForLoader(loaderType)
+          ?: false
+      }
+    }
+  }
+
+  fun setContentLoadedForLoader(postDescriptor: PostDescriptor, loaderType: LoaderType) {
+    when (val descriptor = postDescriptor.descriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        chanThreadsCache.getCatalog(descriptor)
+          ?.getPost(postDescriptor)
+          ?.setContentLoadedForLoader(loaderType)
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        chanThreadsCache.getThread(descriptor)
+          ?.getPost(postDescriptor)
+          ?.setContentLoadedForLoader(loaderType)
+      }
+    }
+  }
+
   private suspend fun loadInternal(
     chanDescriptor: ChanDescriptor,
     requestNewPostsFromServer: Boolean,
@@ -372,38 +413,6 @@ class ChanThreadManager(
       chanReadOptions,
       site.chanReader()
     )
-  }
-
-  fun isContentLoadedForLoader(postDescriptor: PostDescriptor, loaderType: LoaderType): Boolean {
-    when (val descriptor = postDescriptor.descriptor) {
-      is ChanDescriptor.CatalogDescriptor -> {
-        return chanThreadsCache.getCatalog(descriptor)
-          ?.getPost(postDescriptor)
-          ?.isContentLoadedForLoader(loaderType)
-          ?: false
-      }
-      is ChanDescriptor.ThreadDescriptor -> {
-        return chanThreadsCache.getThread(descriptor)
-          ?.getPost(postDescriptor)
-          ?.isContentLoadedForLoader(loaderType)
-          ?: false
-      }
-    }
-  }
-
-  fun setContentLoadedForLoader(postDescriptor: PostDescriptor, loaderType: LoaderType) {
-    when (val descriptor = postDescriptor.descriptor) {
-      is ChanDescriptor.CatalogDescriptor -> {
-        chanThreadsCache.getCatalog(descriptor)
-          ?.getPost(postDescriptor)
-          ?.setContentLoadedForLoader(loaderType)
-      }
-      is ChanDescriptor.ThreadDescriptor -> {
-        chanThreadsCache.getThread(descriptor)
-          ?.getPost(postDescriptor)
-          ?.setContentLoadedForLoader(loaderType)
-      }
-    }
   }
 
   companion object {

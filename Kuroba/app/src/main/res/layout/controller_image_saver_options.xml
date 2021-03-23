@@ -92,6 +92,13 @@
                             android:layout_height="32dp"
                             android:text="@string/controller_image_save_options_output_dir_append_thread_id" />
 
+
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
+                            android:id="@+id/append_thread_subject"
+                            android:layout_width="match_parent"
+                            android:layout_height="32dp"
+                            android:text="@string/controller_image_save_options_output_dir_append_thread_subject" />
+
                         <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
                             android:id="@+id/additional_directories_til"
                             android:layout_width="match_parent"

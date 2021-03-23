@@ -7,7 +7,7 @@ import android.view.animation.LinearInterpolator
 import com.github.k1rakishou.chan.ui.animation.BaseAnimation
 import com.github.k1rakishou.core_themes.ThemeEngine
 
-object RootDirBackgroundAnimation {
+object RootDirBackgroundAnimationFactory {
 
   @JvmStatic
   fun createRootDirBackgroundAnimation(

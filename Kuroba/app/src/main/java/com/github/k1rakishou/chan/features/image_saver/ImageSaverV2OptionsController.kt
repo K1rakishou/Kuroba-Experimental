@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.doIgnoringTextWatcher
 import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileChooser
@@ -42,6 +43,7 @@ class ImageSaverV2OptionsController(
   private lateinit var appendSiteName: ColorizableCheckBox
   private lateinit var appendBoardCode: ColorizableCheckBox
   private lateinit var appendThreadId: ColorizableCheckBox
+  private lateinit var appendThreadSubject: ColorizableCheckBox
   private lateinit var rootDir: ColorizableTextView
   private lateinit var customFileName: ColorizableEditText
   private lateinit var resultPath: ColorizableEditText
@@ -69,7 +71,7 @@ class ImageSaverV2OptionsController(
   private val fileNameDebouncer = Debouncer(false)
   private val additionalDirsDebouncer = Debouncer(false)
 
-  private val rootDirButtonBackgroundAnimation = RootDirBackgroundAnimation.createRootDirBackgroundAnimation(
+  private val rootDirButtonBackgroundAnimation = RootDirBackgroundAnimationFactory.createRootDirBackgroundAnimation(
     themeEngine = themeEngine,
     updateBackgroundColorFunc = { newBackgroundColor ->
       rootDir.setBackgroundColorFast(newBackgroundColor)
@@ -91,6 +93,7 @@ class ImageSaverV2OptionsController(
     appendSiteName = view.findViewById(R.id.append_site_name)
     appendBoardCode = view.findViewById(R.id.append_board_code)
     appendThreadId = view.findViewById(R.id.append_thread_id)
+    appendThreadSubject = view.findViewById(R.id.append_thread_subject)
     additionalDirs = view.findViewById(R.id.additional_directories)
     resultPath = view.findViewById(R.id.result_path)
     outputDirFile = view.findViewById(R.id.output_file_til)
@@ -121,6 +124,7 @@ class ImageSaverV2OptionsController(
         appendSiteName.isEnabled = false
         appendBoardCode.isEnabled = false
         appendThreadId.isEnabled = false
+        appendThreadSubject.isEnabled = false
 
         additionalDirectoriesTil.isEnabled = false
         additionalDirs.isEnabled = false
@@ -224,6 +228,10 @@ class ImageSaverV2OptionsController(
     }
     appendThreadId.setOnCheckedChangeListener { _, isChecked ->
       currentSetting.appendThreadId = isChecked
+      applyOptionsToView()
+    }
+    appendThreadSubject.setOnCheckedChangeListener { _, isChecked ->
+      currentSetting.appendThreadSubject = isChecked
       applyOptionsToView()
     }
 
@@ -383,6 +391,7 @@ class ImageSaverV2OptionsController(
     appendSiteName.isChecked = currentImageSaverSetting.appendSiteName
     appendBoardCode.isChecked = currentImageSaverSetting.appendBoardCode
     appendThreadId.isChecked = currentImageSaverSetting.appendThreadId
+    appendThreadSubject.isChecked = currentImageSaverSetting.appendThreadSubject
 
     val rootDirectoryUriString = currentImageSaverSetting.rootDirectoryUri
     if (rootDirectoryUriString.isNullOrBlank()) {
@@ -426,6 +435,9 @@ class ImageSaverV2OptionsController(
       }
       if (currentImageSaverSetting.appendThreadId) {
         append("\\<Thread id>")
+      }
+      if (currentImageSaverSetting.appendThreadSubject) {
+        append("\\<Thread subject>")
       }
       if (subDirsString.isNotNullNorBlank()) {
         append("\\${subDirsString}")
@@ -471,7 +483,7 @@ class ImageSaverV2OptionsController(
       }
     }
 
-    val fixedFileName = fileName?.replace(" ", "_")
+    val fixedFileName = StringUtils.fileNameRemoveBadCharacters(fileName)
     if (fixedFileName.isNullOrEmpty()) {
       return chanPostImage.serverFilename
     }
