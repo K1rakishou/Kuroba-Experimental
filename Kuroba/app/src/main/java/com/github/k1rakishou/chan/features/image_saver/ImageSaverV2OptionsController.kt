@@ -161,6 +161,9 @@ class ImageSaverV2OptionsController(
         R.id.duplicate_resolution_options_overwrite -> {
           currentSetting.duplicatesResolution = ImageSaverV2Options.DuplicatesResolution.Overwrite.rawValue
         }
+        R.id.duplicate_resolution_options_save_as_duplicate -> {
+          currentSetting.duplicatesResolution = ImageSaverV2Options.DuplicatesResolution.SaveAsDuplicate.rawValue
+        }
         R.id.duplicate_resolution_options_skip -> {
           currentSetting.duplicatesResolution = ImageSaverV2Options.DuplicatesResolution.Skip.rawValue
         }
@@ -371,6 +374,9 @@ class ImageSaverV2OptionsController(
       }
       ImageSaverV2Options.DuplicatesResolution.Skip.rawValue -> {
         duplicatesResolutionOptionsGroup.check(R.id.duplicate_resolution_options_skip)
+      }
+      ImageSaverV2Options.DuplicatesResolution.SaveAsDuplicate.rawValue -> {
+        duplicatesResolutionOptionsGroup.check(R.id.duplicate_resolution_options_save_as_duplicate)
       }
     }
 

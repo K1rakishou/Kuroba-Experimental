@@ -244,6 +244,8 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
   @ModelProp
   fun setDuplicateResolution(resolution: ImageSaverV2Options.DuplicatesResolution) {
     when (resolution) {
+      // TODO(KurobaEx v0.7.0):
+      ImageSaverV2Options.DuplicatesResolution.SaveAsDuplicate,
       ImageSaverV2Options.DuplicatesResolution.AskWhatToDo -> {
         serverImageCheckbox.setChecked(false)
         localImageCheckbox.setChecked(false)

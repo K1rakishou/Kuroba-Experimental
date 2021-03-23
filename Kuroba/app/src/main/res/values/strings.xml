@@ -393,6 +393,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="controller_image_save_options_duplicate_resolution_options_ask">Ask what to do</string>
     <string name="controller_image_save_options_duplicate_resolution_options_overwrite">Overwrite</string>
     <string name="controller_image_save_options_duplicate_resolution_options_skip">Skip</string>
+    <string name="controller_image_save_options_duplicate_resolution_options_save_as_duplicate">Save as duplicate</string>
     <string name="controller_image_save_options_root_dir">Root directory:</string>
     <string name="controller_image_save_options_output_dir_append_site_name">Append site name</string>
     <string name="controller_image_save_options_output_dir_append_board_code">Append board code</string>

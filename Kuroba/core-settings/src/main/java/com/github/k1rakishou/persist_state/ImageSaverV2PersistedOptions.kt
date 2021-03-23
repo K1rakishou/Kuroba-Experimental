@@ -32,7 +32,8 @@ data class ImageSaverV2Options(
   enum class DuplicatesResolution(val rawValue: Int) {
     AskWhatToDo(0),
     Overwrite(1),
-    Skip(2);
+    Skip(2),
+    SaveAsDuplicate(3);
 
     companion object {
       fun fromRawValue(rawValue: Int): DuplicatesResolution {

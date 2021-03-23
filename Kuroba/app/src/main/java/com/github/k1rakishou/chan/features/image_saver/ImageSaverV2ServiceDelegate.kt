@@ -628,7 +628,8 @@ class ImageSaverV2ServiceDelegate(
       return ResultFile.FailedToOpenResultDir(rootDirectory.clone(segments).getFullPath())
     }
 
-    segments += FileSegment(StringUtils.fileNameRemoveBadCharacters(fileName)!!)
+    val resultFileName = StringUtils.fileNameRemoveBadCharacters(fileName)!!
+    segments += FileSegment(resultFileName)
 
     val resultFile = rootDirectory.clone(segments)
     val resultFileUri = Uri.parse(resultFile.getFullPath())
@@ -651,6 +652,25 @@ class ImageSaverV2ServiceDelegate(
         ImageSaverV2Options.DuplicatesResolution.Skip -> {
           val fileIsNotEmpty = imageSaverFileManager.fileManager.getLength(resultFile) > 0
           return ResultFile.Skipped(resultDirUri, resultFileUri, fileIsNotEmpty)
+        }
+        ImageSaverV2Options.DuplicatesResolution.SaveAsDuplicate -> {
+          var duplicateId = 1
+
+          while (true) {
+            val fileNameNoExtension = StringUtils.removeExtensionFromFileName(fileName)
+            val extension = StringUtils.extractFileNameExtension(fileName)
+            val newResultFile = resultDir.clone(FileSegment("${fileNameNoExtension}_($duplicateId).$extension"))
+
+            if (!imageSaverFileManager.fileManager.exists(newResultFile)) {
+              return ResultFile.File(
+                resultDirUri,
+                Uri.parse(newResultFile.getFullPath()),
+                newResultFile
+              )
+            }
+
+            ++duplicateId
+          }
         }
         ImageSaverV2Options.DuplicatesResolution.Overwrite -> {
           if (!imageSaverFileManager.fileManager.delete(resultFile)) {
