@@ -32,7 +32,6 @@ import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
@@ -69,6 +68,7 @@ import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
+import com.github.k1rakishou.chan.ui.view.FixedLinearLayoutManager
 import com.github.k1rakishou.chan.ui.view.PostInfoMapItemDecoration
 import com.github.k1rakishou.chan.ui.view.post_thumbnail.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -219,7 +219,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       }
 
       when (boardPostViewMode) {
-        PostViewMode.LIST -> return (layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+        PostViewMode.LIST -> return (layoutManager as FixedLinearLayoutManager).findFirstVisibleItemPosition()
         PostViewMode.GRID -> return (layoutManager as GridLayoutManager).findFirstVisibleItemPosition()
         PostViewMode.STAGGER -> {
           val positions = (layoutManager as StaggeredGridLayoutManager).findFirstVisibleItemPositions(null)
@@ -246,7 +246,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       }
 
       when (boardPostViewMode) {
-        PostViewMode.LIST -> return (layoutManager as LinearLayoutManager).findLastCompletelyVisibleItemPosition()
+        PostViewMode.LIST -> return (layoutManager as FixedLinearLayoutManager).findLastCompletelyVisibleItemPosition()
         PostViewMode.GRID -> return (layoutManager as GridLayoutManager).findLastCompletelyVisibleItemPosition()
         PostViewMode.STAGGER -> {
           val positions = (layoutManager as StaggeredGridLayoutManager).findLastCompletelyVisibleItemPositions(null)
@@ -531,7 +531,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     when (boardPostViewMode) {
       PostViewMode.LIST -> {
-        val linearLayoutManager = object : LinearLayoutManager(context) {
+        val linearLayoutManager = object : FixedLinearLayoutManager(recyclerView) {
           override fun requestChildRectangleOnScreen(
             parent: RecyclerView,
             child: View,
@@ -667,7 +667,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       chanThreadViewableInfoManager.view(chanDescriptor) { (_, index, top) ->
         when (boardPostViewMode) {
           PostViewMode.LIST -> {
-            (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
+            (layoutManager as FixedLinearLayoutManager).scrollToPositionWithOffset(
               index,
               top
             )
@@ -996,11 +996,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   fun smoothScrollNewPosts(displayPosition: Int) {
-    if (layoutManager !is LinearLayoutManager) {
+    if (layoutManager !is FixedLinearLayoutManager) {
       throw IllegalStateException("Layout manager is grid inside thread??")
     }
 
-    (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
+    (layoutManager as FixedLinearLayoutManager).scrollToPositionWithOffset(
       // position + 1 for last seen view
       displayPosition + 1,
       SCROLL_OFFSET
@@ -1075,8 +1075,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       return
     }
 
-    if (layoutManager is LinearLayoutManager) {
-      (layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
+    if (layoutManager is FixedLinearLayoutManager) {
+      (layoutManager as FixedLinearLayoutManager).scrollToPositionWithOffset(
         scrollPosition,
         SCROLL_OFFSET
       )
