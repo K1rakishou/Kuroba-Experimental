@@ -27,7 +27,6 @@ import com.github.k1rakishou.model.repository.SiteRepository
 import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
-import com.github.k1rakishou.model.source.cache.ChanPostBuilderCache
 import com.github.k1rakishou.model.source.cache.GenericSuspendableCacheSource
 import com.github.k1rakishou.model.source.cache.ThreadBookmarkCache
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
@@ -115,12 +114,6 @@ class ModelModule {
       dependencies.appConstants.maxPostsCountInPostsCache,
       chanCatalogSnapshotCache
     )
-  }
-
-  @Singleton
-  @Provides
-  fun provideChanPostBuilderCache(): ChanPostBuilderCache {
-    return ChanPostBuilderCache()
   }
 
   /**

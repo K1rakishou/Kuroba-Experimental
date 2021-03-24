@@ -7,13 +7,14 @@ import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.options.ChanCacheOption
-import com.github.k1rakishou.common.options.ChanCacheOptions
-import com.github.k1rakishou.common.options.ChanLoadOptions
-import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.options.ChanCacheOption
+import com.github.k1rakishou.model.data.options.ChanCacheOptions
+import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
+import com.github.k1rakishou.model.data.options.ChanLoadOptions
+import com.github.k1rakishou.model.data.options.ChanReadOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -72,8 +73,10 @@ class ShowPostsInExternalThreadHelper(
 
       chanThreadManager.loadThreadOrCatalog(
         chanDescriptor = threadDescriptor,
-        requestNewPostsFromServer = true,
-        chanLoadOptions = ChanLoadOptions.RetainAll,
+        chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateIfCacheIsOlderThan(
+          timePeriodMs = ChanCacheUpdateOptions.DEFAULT_PERIOD
+        ),
+        chanLoadOptions = ChanLoadOptions.retainAll(),
         chanCacheOptions = chanCacheOptions,
         chanReadOptions = ChanReadOptions.default()
       ) { threadLoadResult ->

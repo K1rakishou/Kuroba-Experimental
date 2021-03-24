@@ -10,14 +10,18 @@ import com.github.k1rakishou.common.SuspendableInitializer
 import com.github.k1rakishou.common.linkedMapWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.common.myAsync
-import com.github.k1rakishou.common.options.ChanCacheOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.id.ThreadDBId
+import com.github.k1rakishou.model.data.options.ChanCacheOptions
+import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
+import com.github.k1rakishou.model.data.options.PostsToReloadOptions
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostBuilder
+import com.github.k1rakishou.model.mapper.ChanPostMapper
 import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import com.github.k1rakishou.model.source.local.ChanPostLocalSource
@@ -142,8 +146,9 @@ class ChanPostRepository(
    * */
   @Suppress("UNCHECKED_CAST")
   suspend fun insertOrUpdateMany(
-    posts: List<ChanPost>,
+    parsedPosts: List<ChanPost>,
     cacheOptions: ChanCacheOptions,
+    cacheUpdateOptions: ChanCacheUpdateOptions,
     isCatalog: Boolean
   ): ModularResult<Int> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
@@ -152,20 +157,22 @@ class ChanPostRepository(
     return applicationScope.myAsync {
       return@myAsync tryWithTransaction {
         if (isCatalog) {
-          val allPostsAreOriginal = posts.all { post -> post is ChanOriginalPost }
+          val allPostsAreOriginal = parsedPosts.all { post -> post is ChanOriginalPost }
           require(allPostsAreOriginal) { "Not all posts are original posts" }
 
           val postsCount = insertOrUpdateCatalogOriginalPosts(
-            posts as List<ChanOriginalPost>,
-            cacheOptions
+            parsedPosts = parsedPosts as List<ChanOriginalPost>,
+            cacheOptions = cacheOptions,
+            cacheUpdateOptions = cacheUpdateOptions
           )
 
           Logger.d(TAG, "insertOrUpdateMany(isCatalog=$isCatalog) -> $postsCount")
           return@tryWithTransaction postsCount
         } else {
           val newPostsCount = insertOrUpdateThreadPosts(
-            posts,
-            cacheOptions
+            parsedPosts = parsedPosts,
+            cacheOptions = cacheOptions,
+            cacheUpdateOptions = cacheUpdateOptions
           )
 
           Logger.d(TAG, "insertOrUpdateMany(isCatalog=$isCatalog) -> $newPostsCount")
@@ -189,6 +196,12 @@ class ChanPostRepository(
     } else {
       return chanThreadsCache.getPostFromCache(postDescriptor)
     }
+  }
+
+  fun isForceUpdating(postDescriptor: PostDescriptor): Boolean {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+
+    return chanThreadsCache.isForceUpdating(postDescriptor)
   }
 
   fun putPostHash(postDescriptor: PostDescriptor, hash: MurmurHashUtils.Murmur3Hash) {
@@ -231,8 +244,9 @@ class ChanPostRepository(
 
         if (catalogPosts.isNotEmpty()) {
           chanThreadsCache.putManyCatalogPostsIntoCache(
-            originalPosts = catalogPosts,
-            cacheOptions = ChanCacheOptions.default()
+            parsedPosts = catalogPosts,
+            cacheOptions = ChanCacheOptions.default(),
+            cacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
           )
         }
 
@@ -277,8 +291,9 @@ class ChanPostRepository(
 
         if (catalogPostsFromDatabase.isNotEmpty()) {
           chanThreadsCache.putManyCatalogPostsIntoCache(
-            originalPosts = catalogPostsFromDatabase,
-            cacheOptions = ChanCacheOptions.default()
+            parsedPosts = catalogPostsFromDatabase,
+            cacheOptions = ChanCacheOptions.default(),
+            cacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
           )
         }
 
@@ -318,8 +333,9 @@ class ChanPostRepository(
 
         if (catalogPostsFromDatabase.isNotEmpty()) {
           chanThreadsCache.putManyCatalogPostsIntoCache(
-            originalPosts = catalogPostsFromDatabase.values.toList(),
-            cacheOptions = ChanCacheOptions.default()
+            parsedPosts = catalogPostsFromDatabase.values.toList(),
+            cacheOptions = ChanCacheOptions.default(),
+            cacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
           )
         }
 
@@ -345,7 +361,9 @@ class ChanPostRepository(
   }
 
   @OptIn(ExperimentalTime::class)
-  suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Unit> {
+  suspend fun preloadForThread(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): ModularResult<Unit> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
     ensureBackgroundThread()
 
@@ -359,13 +377,65 @@ class ChanPostRepository(
 
           if (postsFromDatabase.isNotEmpty()) {
             chanThreadsCache.putManyThreadPostsIntoCache(
-              posts = postsFromDatabase,
-              cacheOptions = ChanCacheOptions.default()
+              parsedPosts = postsFromDatabase,
+              cacheOptions = ChanCacheOptions.default(),
+              cacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
             )
           }
         }
 
         Logger.d(TAG, "preloadForThread($threadDescriptor) end, took $time")
+      }
+    }
+  }
+
+  suspend fun getPostBuilders(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    postsToReloadOptions: PostsToReloadOptions
+  ): ModularResult<List<ChanPostBuilder>> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+    ensureBackgroundThread()
+
+    Logger.d(TAG, "getPostBuilders(threadDescriptor=$threadDescriptor)")
+
+    return applicationScope.myAsync {
+      return@myAsync tryWithTransaction {
+        val postsFromCache = chanThreadsCache.getThread(threadDescriptor)?.let { thread ->
+          when (postsToReloadOptions) {
+            is PostsToReloadOptions.Reload -> {
+              return@let thread.getPosts(postsToReloadOptions.postDescriptors)
+            }
+            PostsToReloadOptions.ReloadAll -> {
+              return@let thread.getAll()
+            }
+          }
+        } ?: emptyList()
+
+        if (postsFromCache.isNotEmpty()) {
+          return@tryWithTransaction postsFromCache
+            .map { chanPost ->  ChanPostMapper.toPostBuilder(chanPost) }
+        }
+
+        val postsFromDatabase = when (postsToReloadOptions) {
+          is PostsToReloadOptions.Reload -> {
+            val postDatabaseIds = chanDescriptorCache
+              .getManyPostDatabaseIds(postsToReloadOptions.postDescriptors)
+              .values.map { postDbId -> postDbId.id }
+
+            localSource.getThreadPosts(threadDescriptor, postDatabaseIds)
+          }
+          PostsToReloadOptions.ReloadAll -> {
+            localSource.getThreadPosts(threadDescriptor)
+          }
+        }
+
+        if (postsFromDatabase.isEmpty()) {
+          return@tryWithTransaction emptyList()
+        }
+
+        // Do not update the in-memory cache here because we need to parse the posts first.
+        return@tryWithTransaction postsFromDatabase
+          .map { chanPost ->  ChanPostMapper.toPostBuilder(chanPost) }
       }
     }
   }
@@ -391,8 +461,9 @@ class ChanPostRepository(
         }
 
         chanThreadsCache.putManyThreadPostsIntoCache(
-          posts = postsFromDatabase,
-          cacheOptions = ChanCacheOptions.default()
+          parsedPosts = postsFromDatabase,
+          cacheOptions = ChanCacheOptions.default(),
+          cacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
         )
 
         return@tryWithTransaction postsFromDatabase
@@ -478,30 +549,33 @@ class ChanPostRepository(
   }
 
   private suspend fun insertOrUpdateCatalogOriginalPosts(
-    posts: List<ChanOriginalPost>,
-    cacheOptions: ChanCacheOptions
+    parsedPosts: List<ChanOriginalPost>,
+    cacheOptions: ChanCacheOptions,
+    cacheUpdateOptions: ChanCacheUpdateOptions
   ): Int {
     ensureBackgroundThread()
 
-    if (posts.isEmpty()) {
+    if (parsedPosts.isEmpty()) {
       return 0
     }
 
     val postsToStoreIntoDatabase = chanThreadsCache.putManyCatalogPostsIntoCache(
-      originalPosts = posts,
-      cacheOptions = cacheOptions
+      parsedPosts = parsedPosts,
+      cacheOptions = cacheOptions,
+      cacheUpdateOptions = cacheUpdateOptions
     )
 
     if (postsToStoreIntoDatabase.isNotEmpty()) {
       localSource.insertManyOriginalPosts(postsToStoreIntoDatabase, cacheOptions)
     }
 
-    return posts.size
+    return parsedPosts.size
   }
 
   private suspend fun insertOrUpdateThreadPosts(
-    posts: List<ChanPost>,
-    cacheOptions: ChanCacheOptions
+    parsedPosts: List<ChanPost>,
+    cacheOptions: ChanCacheOptions,
+    cacheUpdateOptions: ChanCacheUpdateOptions
   ): Int {
     ensureBackgroundThread()
 
@@ -509,7 +583,7 @@ class ChanPostRepository(
 
     // Figure out what posts differ from the cache that we want to update in the
     // database
-    posts.forEach { chanPost ->
+    parsedPosts.forEach { chanPost ->
       val differsFromCached = postDiffersFromCached(chanPost)
       if (differsFromCached) {
         postsThatDifferWithCache += chanPost
@@ -517,16 +591,17 @@ class ChanPostRepository(
     }
 
     if (postsThatDifferWithCache.isEmpty()) {
-      Logger.d(TAG, "postsThatDifferWithCache is empty")
+      Logger.d(TAG, "insertOrUpdateThreadPosts() postsThatDifferWithCache is empty")
       return 0
     }
 
     Logger.d(TAG, "insertOrUpdateThreadPosts() ${postsThatDifferWithCache.size} posts differ from " +
-      "the cache (total posts=${posts.size})")
+      "the cache (total posts=${parsedPosts.size})")
 
     val postsToStoreIntoDatabase = chanThreadsCache.putManyThreadPostsIntoCache(
-      postsThatDifferWithCache,
-      cacheOptions
+      parsedPosts = postsThatDifferWithCache,
+      cacheOptions = cacheOptions,
+      cacheUpdateOptions = cacheUpdateOptions
     )
 
     if (postsToStoreIntoDatabase.isNotEmpty()) {

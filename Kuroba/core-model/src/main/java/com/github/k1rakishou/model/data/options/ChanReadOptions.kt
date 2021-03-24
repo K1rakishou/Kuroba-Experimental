@@ -1,4 +1,4 @@
-package com.github.k1rakishou.common.options
+package com.github.k1rakishou.model.data.options
 
 /**
  * Can be used to load a thread partially (like only the first n-posts or only last n-posts). For now

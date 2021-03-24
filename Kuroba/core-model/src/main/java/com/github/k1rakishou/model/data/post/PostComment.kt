@@ -10,6 +10,8 @@ class PostComment(
   // The original comment without any custom link spannables.
   private var originalComment: CharSequence,
   @get:Synchronized
+  val originalUnparsedComment: String?,
+  @get:Synchronized
   val linkables: List<PostLinkable>
 ) {
 

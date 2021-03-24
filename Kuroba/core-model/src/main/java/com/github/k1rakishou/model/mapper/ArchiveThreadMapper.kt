@@ -1,6 +1,5 @@
 package com.github.k1rakishou.model.mapper
 
-import android.text.SpannableString
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.archive.ArchivePost
@@ -47,7 +46,7 @@ object ArchiveThreadMapper {
       .isSavedReply(false)
       .deleted(false)
 
-    postBuilder.postCommentBuilder.setComment(SpannableString(archivePost.comment))
+    postBuilder.postCommentBuilder.setUnparsedComment(archivePost.comment)
 
     return postBuilder
   }

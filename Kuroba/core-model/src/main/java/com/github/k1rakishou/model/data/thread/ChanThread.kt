@@ -8,6 +8,7 @@ import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -39,7 +40,11 @@ class ChanThread(
   // Stores hashes of unparsed post comments, the way we got the from the server, without any spans added yet.
   private val rawPostHashesMap = mutableMapOf<PostDescriptor, MurmurHashUtils.Murmur3Hash>()
   @GuardedBy("lock")
+  private val forceUpdateOnNextUpdateIteration = hashSetWithCap<PostDescriptor>(32)
+  @GuardedBy("lock")
   private var lastAccessTime = initialLastAccessTime
+  @GuardedBy("lock")
+  private var lastUpdateTime = 0L
 
   val postsCount: Int
     get() = lock.read { threadPosts.size }
@@ -73,19 +78,38 @@ class ChanThread(
     lock.write { rawPostHashesMap.clear() }
   }
 
+  fun getPosts(postDescriptors: Collection<PostDescriptor>): List<ChanPost> {
+    return lock.read {
+      val posts = mutableListWithCap<ChanPost>(postDescriptors.size)
+
+      postDescriptors.forEach { postDescriptor ->
+        posts += postsByPostDescriptors[postDescriptor]
+          ?: return@forEach
+      }
+
+      return@read posts
+    }
+  }
+
+  fun getAll(): List<ChanPost> {
+    return lock.read { threadPosts.toList() }
+  }
+
   fun getAllPostsForDatabasePersisting(): List<ChanPost> {
     return lock.read { threadPosts }
   }
 
-  fun addOrUpdatePosts(newChanPosts: List<ChanPost>): Boolean {
+  fun addOrUpdatePosts(newChanPosts: List<ChanPost>, cacheUpdateOptions: ChanCacheUpdateOptions): Boolean {
     return lock.write {
       require(newChanPosts.isNotEmpty()) { "newPosts are empty!" }
-      require(newChanPosts.first() is ChanOriginalPost) {
-        "First post is not an original post! post=${newChanPosts.first()}"
+
+      if (threadPosts.isNotEmpty()) {
+        require(threadPosts.first() is ChanOriginalPost) {
+          "First post is not an original post! post=${threadPosts.first()}"
+        }
       }
 
       var addedOrUpdatedPosts = false
-
       var addedPostsCount = 0
       var updatedPostsCount = 0
 
@@ -98,6 +122,7 @@ class ChanThread(
         if (!postsByPostDescriptors.containsKey(newChanPost.postDescriptor)) {
           threadPosts.add(newChanPost)
           postsByPostDescriptors[newChanPost.postDescriptor] = newChanPost
+          forceUpdateOnNextUpdateIteration.remove(newChanPost.postDescriptor)
 
           addedOrUpdatedPosts = true
           addedPostsCount++
@@ -110,15 +135,17 @@ class ChanThread(
         check(oldChanPostIndex >= 0) { "Bad oldChanPostIndex: $oldChanPostIndex" }
 
         val oldChanPost = threadPosts[oldChanPostIndex]
-        if (oldChanPost == newChanPost) {
+        if (oldChanPost == newChanPost && oldChanPost.postDescriptor !in forceUpdateOnNextUpdateIteration) {
           return@forEach
         }
 
         // We already have this post, we need to merge old and new posts into one and replace old
         // post with the merged post
         val mergedPost = mergePosts(oldChanPost, newChanPost)
+
         threadPosts[oldChanPostIndex] = mergedPost
         postsByPostDescriptors[newChanPost.postDescriptor] = mergedPost
+        forceUpdateOnNextUpdateIteration.remove(newChanPost.postDescriptor)
 
         addedOrUpdatedPosts = true
         ++updatedPostsCount
@@ -129,6 +156,7 @@ class ChanThread(
         recalculatePostReplies()
       }
 
+      updateLastUpdateTime(cacheUpdateOptions)
       checkPostsConsistency()
 
       Logger.d(TAG, "Thread cache (${threadDescriptor}) Added ${addedPostsCount} new posts, " +
@@ -138,7 +166,7 @@ class ChanThread(
     }
   }
 
-  fun setOrUpdateOriginalPost(newChanOriginalPost: ChanOriginalPost) {
+  fun setOrUpdateOriginalPost(newChanOriginalPost: ChanOriginalPost, cacheUpdateOptions: ChanCacheUpdateOptions) {
     lock.write {
       val oldPostDescriptor = threadPosts.firstOrNull()?.postDescriptor
       val newPostDescriptor = newChanOriginalPost.postDescriptor
@@ -176,6 +204,7 @@ class ChanThread(
         threadPosts.sortWith(POSTS_COMPARATOR)
       }
 
+      updateLastUpdateTime(cacheUpdateOptions)
       checkPostsConsistency()
     }
   }
@@ -203,6 +232,43 @@ class ChanThread(
 
   fun getLastAccessTime(): Long {
     return lock.read { lastAccessTime }
+  }
+
+  fun forceUpdatePosts(postDescriptors: Collection<PostDescriptor>) {
+    lock.write {
+      postDescriptors.forEach { postDescriptor ->
+        if (postDescriptor.isOP()) {
+          // No need since we always update original posts
+          return@forEach
+        }
+
+        forceUpdateOnNextUpdateIteration.add(postDescriptor)
+      }
+    }
+  }
+
+  fun isForceUpdating(postDescriptor: PostDescriptor): Boolean {
+    return lock.read { forceUpdateOnNextUpdateIteration.contains(postDescriptor) }
+  }
+
+  fun cacheNeedsUpdate(chanCacheUpdateOption: ChanCacheUpdateOptions): Boolean {
+    when (chanCacheUpdateOption) {
+      ChanCacheUpdateOptions.UpdateCache -> return true
+      ChanCacheUpdateOptions.DoNotUpdateCache -> return false
+      is ChanCacheUpdateOptions.UpdateIfCacheIsOlderThan -> {
+        return lock.read { (System.currentTimeMillis() - lastUpdateTime) > chanCacheUpdateOption.timePeriodMs}
+      }
+    }
+  }
+
+  private fun updateLastUpdateTime(cacheUpdateOptions: ChanCacheUpdateOptions) {
+    lock.write {
+      if (!cacheUpdateOptions.canUpdate(lastUpdateTime)) {
+        return@write
+      }
+
+      lastUpdateTime = System.currentTimeMillis()
+    }
   }
 
   fun setDeleted(deleted: Boolean) {
@@ -283,23 +349,26 @@ class ChanThread(
     }
   }
 
-  fun deletePost(postDescriptor: PostDescriptor) {
+  fun deletePosts(postDescriptors: Collection<PostDescriptor>) {
     lock.write {
       require(threadPosts.isNotEmpty()) { "posts are empty!" }
       require(threadPosts.first() is ChanOriginalPost) {
         "First post is not an original post! post=${threadPosts.first()}"
       }
 
-      val postIndex = threadPosts.indexOfFirst { chanPost ->
-        chanPost.postDescriptor == postDescriptor
-      }
+      postDescriptors.forEach { postDescriptor ->
+        val postIndex = threadPosts.indexOfFirst { chanPost ->
+          chanPost.postDescriptor == postDescriptor
+        }
 
-      if (postIndex >= 0) {
-        threadPosts.removeAt(postIndex)
-      }
+        if (postIndex >= 0) {
+          threadPosts.removeAt(postIndex)
+        }
 
-      rawPostHashesMap.remove(postDescriptor)
-      postsByPostDescriptors.remove(postDescriptor)
+        rawPostHashesMap.remove(postDescriptor)
+        postsByPostDescriptors.remove(postDescriptor)
+        forceUpdateOnNextUpdateIteration.remove(postDescriptor)
+      }
 
       checkPostsConsistency()
     }
@@ -703,10 +772,26 @@ class ChanThread(
     return resultList
   }
 
+  fun getPostWithRepliesToThisPost(postDescriptor: PostDescriptor): List<PostDescriptor> {
+    return lock.read {
+      val chanPost = postsByPostDescriptors[postDescriptor]
+        ?: return@read emptyList()
+
+      val resultPosts = mutableListOf<PostDescriptor>()
+      resultPosts += chanPost.postDescriptor
+
+      val replies = chanPost.repliesFrom
+        .map { replyFrom -> PostDescriptor.create(postDescriptor.descriptor, replyFrom) }
+
+      resultPosts.addAll(replies)
+      return@read resultPosts
+    }
+  }
+
   companion object {
     private const val TAG = "ChanThread"
 
-    private var POSTS_COMPARATOR = Comparator<ChanPost> { chanPost1, chanPost2 ->
+    private val POSTS_COMPARATOR = Comparator<ChanPost> { chanPost1, chanPost2 ->
       // Due to a strange thread on Lainchan where OP has postNo greater that the next post after it we
       //  need to add a new step to this comparator which will force OP to be the very first post of
       //  the thread. (https://lainchan.org/%CE%A9/res/36474.html)

@@ -222,7 +222,7 @@ object ChanPostUtils {
   @JvmStatic
   fun getPostHash(chanPostBuilder: ChanPostBuilder): MurmurHashUtils.Murmur3Hash {
     val inputString = buildString {
-      append(chanPostBuilder.postCommentBuilder.getComment().toString())
+      append(chanPostBuilder.postCommentBuilder.getUnparsedComment())
 
       chanPostBuilder.subject?.let { subject -> append(subject) }
       chanPostBuilder.name?.let { name -> append(name) }

@@ -11,6 +11,7 @@ object TextSpanMapper {
     gson: Gson,
     ownerPostId: Long,
     serializableSpannableString: SerializableSpannableString,
+    originalUnparsedComment: String?,
     chanTextType: ChanTextSpanEntity.TextType
   ): ChanTextSpanEntity? {
     if (serializableSpannableString.isEmpty) {
@@ -22,11 +23,12 @@ object TextSpanMapper {
     )
 
     return ChanTextSpanEntity(
-      0L,
-      ownerPostId,
-      serializableSpannableString.text,
-      spanInfoJson,
-      chanTextType
+      textSpanId = 0L,
+      ownerPostId = ownerPostId,
+      parsedText = serializableSpannableString.text,
+      unparsedText = originalUnparsedComment,
+      spanInfoJson = spanInfoJson,
+      textType = chanTextType
     )
   }
 
@@ -48,10 +50,8 @@ object TextSpanMapper {
     }
 
     if (filteredTextSpanEntityList.size > 1) {
-      throw IllegalStateException(
-        "Expected one (or zero) TextSpanEntity with type (${chanTextType.name}). " +
-          "Got ${filteredTextSpanEntityList.size}."
-      )
+      throw IllegalStateException("Expected one (or zero) TextSpanEntity with type (${chanTextType.name}). " +
+          "Got ${filteredTextSpanEntityList.size}.")
     }
 
     val textSpanEntity = filteredTextSpanEntityList.first()
@@ -63,7 +63,7 @@ object TextSpanMapper {
 
     return SerializableSpannableString(
       serializableSpanInfoList.spanInfoList,
-      textSpanEntity.originalText
+      textSpanEntity.parsedText
     )
   }
 

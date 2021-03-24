@@ -8,10 +8,11 @@ import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult.Companion.Try
-import com.github.k1rakishou.common.options.ChanCacheOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.catalog.ChanCatalogSnapshot
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.options.ChanCacheOptions
+import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import kotlin.time.Duration
@@ -29,6 +30,7 @@ internal class ChanPostPersister(
   suspend fun persistPosts(
     chanReaderProcessor: ChanReaderProcessor,
     cacheOptions: ChanCacheOptions,
+    cacheUpdateOptions: ChanCacheUpdateOptions,
     chanDescriptor: ChanDescriptor,
     postParser: PostParser
   ): ThreadResultWithTimeInfo {
@@ -41,8 +43,8 @@ internal class ChanPostPersister(
 
       if (chanReaderProcessor.chanDescriptor is ChanDescriptor.CatalogDescriptor) {
         val chanCatalogSnapshot = ChanCatalogSnapshot.fromSortedThreadDescriptorList(
-          chanReaderProcessor.chanDescriptor.boardDescriptor,
-          chanReaderProcessor.getThreadDescriptors()
+          boardDescriptor = chanReaderProcessor.chanDescriptor.boardDescriptor,
+          threadDescriptors = chanReaderProcessor.getThreadDescriptors()
         )
 
         chanCatalogSnapshotRepository.storeChanCatalogSnapshot(chanCatalogSnapshot)
@@ -52,9 +54,9 @@ internal class ChanPostPersister(
 
       val (parsedPosts, parsingDuration) = measureTimedValue {
         return@measureTimedValue parsePostsUseCase.parseNewPostsPosts(
-          chanDescriptor,
-          postParser,
-          chanReaderProcessor.getToParse()
+          chanDescriptor = chanDescriptor,
+          postParser = postParser,
+          postBuildersToParse = chanReaderProcessor.getToParse()
         )
       }
 
@@ -65,13 +67,12 @@ internal class ChanPostPersister(
 
       val (storedPostsCount, storeDuration) = measureTimedValue {
         storePostsInRepositoryUseCase.storePosts(
-          parsedPosts,
-          cacheOptions,
-          chanDescriptor.isCatalogDescriptor()
+          parsedPosts = parsedPosts,
+          cacheOptions = cacheOptions,
+          cacheUpdateOptions = cacheUpdateOptions,
+          isCatalog = chanDescriptor.isCatalogDescriptor()
         )
       }
-
-      checkNotNull(chanReaderProcessor.getOp()) { "OP is null" }
 
       val loadTimeInfo = LoadTimeInfo(
         storeDuration = storeDuration,

@@ -61,19 +61,19 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorEmpty
-import com.github.k1rakishou.common.options.ChanCacheOptions
-import com.github.k1rakishou.common.options.ChanLoadOptions
-import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.board.pages.BoardPage
 import com.github.k1rakishou.model.data.descriptor.*
+import com.github.k1rakishou.model.data.options.ChanCacheOptions
+import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
+import com.github.k1rakishou.model.data.options.ChanLoadOptions
+import com.github.k1rakishou.model.data.options.ChanReadOptions
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
-import com.github.k1rakishou.model.source.cache.ChanPostBuilderCache
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
 import com.github.k1rakishou.persist_state.PersistableChanState.imageSaverV2PersistedOptions
@@ -106,7 +106,6 @@ class ThreadPresenter @Inject constructor(
   private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
   private val postHideHelper: PostHideHelper,
   private val chanThreadManager: ChanThreadManager,
-  private val chanPostBuilderCache: ChanPostBuilderCache,
   private val imageSaverV2: ImageSaverV2,
   private val globalWindowInsetsManager: GlobalWindowInsetsManager
 ) : PostAdapterCallback,
@@ -332,9 +331,9 @@ class ThreadPresenter @Inject constructor(
     Logger.d(TAG, "preloadCatalogInfo($catalogDescriptor) end")
   }
 
-  override fun quickReload(showLoading: Boolean, requestNewPosts: Boolean) {
+  override fun quickReload(showLoading: Boolean, chanCacheUpdateOptions: ChanCacheUpdateOptions) {
     BackgroundUtils.ensureMainThread()
-    Logger.d(TAG, "quickReload($showLoading, $requestNewPosts)")
+    Logger.d(TAG, "quickReload($showLoading, $chanCacheUpdateOptions)")
 
     val currentChanDescriptor = chanThreadTicker.currentChanDescriptor
     if (currentChanDescriptor == null) {
@@ -345,7 +344,7 @@ class ThreadPresenter @Inject constructor(
     launch {
       normalLoad(
         showLoading = showLoading,
-        requestNewPostsFromServer = requestNewPosts
+        chanCacheUpdateOptions = chanCacheUpdateOptions
       )
     }
   }
@@ -367,8 +366,8 @@ class ThreadPresenter @Inject constructor(
    * */
   fun normalLoad(
     showLoading: Boolean = false,
-    requestNewPostsFromServer: Boolean = true,
-    chanLoadOptions: ChanLoadOptions = ChanLoadOptions.RetainAll,
+    chanCacheUpdateOptions: ChanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
+    chanLoadOptions: ChanLoadOptions = ChanLoadOptions.retainAll(),
     chanCacheOptions: ChanCacheOptions = ChanCacheOptions.default(),
     chanReadOptions: ChanReadOptions = ChanReadOptions.default()
   ) {
@@ -381,7 +380,7 @@ class ThreadPresenter @Inject constructor(
     }
 
     Logger.d(TAG, "normalLoad(currentChanDescriptor=$currentChanDescriptor, showLoading=$showLoading, " +
-      "requestNewPostsFromServer=$requestNewPostsFromServer, chanLoadOptions=$chanLoadOptions, " +
+      "chanCacheUpdateOptions=$chanCacheUpdateOptions, chanLoadOptions=$chanLoadOptions, " +
       "chanCacheOptions=$chanCacheOptions, chanReadOptions=$chanReadOptions)")
 
     chanThreadLoadingState = ChanThreadLoadingState.Loading
@@ -391,9 +390,13 @@ class ThreadPresenter @Inject constructor(
         threadPresenterCallback?.showLoading()
       }
 
+      if (chanThreadManager.isRequestAlreadyActive(currentChanDescriptor)) {
+        return@launch
+      }
+
       chanThreadManager.loadThreadOrCatalog(
         chanDescriptor = currentChanDescriptor,
-        requestNewPostsFromServer = requestNewPostsFromServer,
+        chanCacheUpdateOptions = chanCacheUpdateOptions,
         chanLoadOptions = chanLoadOptions,
         chanCacheOptions = chanCacheOptions,
         chanReadOptions = chanReadOptions
@@ -1262,7 +1265,7 @@ class ThreadPresenter @Inject constructor(
     menu.add(createMenuItem(POST_OPTION_COPY_TEXT, R.string.post_copy_text))
     menu.add(createMenuItem(POST_OPTION_INFO, R.string.post_info))
 
-    if (containsSite) {
+    if (containsSite && chanDescriptor.isThreadDescriptor()) {
       val isSaved = savedReplyManager.isSaved(post.postDescriptor)
       val stringId = if (isSaved) {
         R.string.unmark_as_my_post
@@ -1948,9 +1951,6 @@ class ThreadPresenter @Inject constructor(
   }
 
   private suspend fun saveUnsavePost(post: ChanPost) {
-    val descriptor = currentChanDescriptor
-      ?: return
-
     if (savedReplyManager.isSaved(post.postDescriptor)) {
       savedReplyManager.unsavePost(post.postDescriptor)
     } else {
@@ -1960,22 +1960,22 @@ class ThreadPresenter @Inject constructor(
     // Trigger onDemandContentLoaderManager for this post again
     onDemandContentLoaderManager.onPostUnbind(post.postDescriptor, isActuallyRecycling = true)
 
-    if (descriptor is ChanDescriptor.ThreadDescriptor) {
-      val isThreadCached = chanPostBuilderCache.isCached(descriptor)
-      if (isThreadCached) {
-        normalLoad(
-          showLoading = false,
-          requestNewPostsFromServer = false,
-          chanLoadOptions = ChanLoadOptions.ClearMemoryAndDatabaseCaches
-        )
+    val chanThread = chanThreadManager.getChanThread(post.postDescriptor.threadDescriptor())
+    if (chanThread == null) {
+      normalLoad(
+        showLoading = true,
+        chanLoadOptions = ChanLoadOptions.clearMemoryCache()
+      )
 
-        return
-      }
+      return
     }
 
+    val postsToUpdate = chanThread.getPostWithRepliesToThisPost(post.postDescriptor)
+
     normalLoad(
-      showLoading = true,
-      chanLoadOptions = ChanLoadOptions.ClearMemoryCache
+      showLoading = false,
+      chanLoadOptions = ChanLoadOptions.forceUpdatePosts(postsToUpdate),
+      chanCacheUpdateOptions = ChanCacheUpdateOptions.DoNotUpdateCache
     )
   }
 

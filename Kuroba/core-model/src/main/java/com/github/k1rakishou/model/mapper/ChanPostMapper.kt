@@ -9,13 +9,64 @@ import com.github.k1rakishou.model.data.post.PostComment
 object ChanPostMapper {
 
   @JvmStatic
-  fun fromPostBuilder(
-    chanPostBuilder: ChanPostBuilder
-  ): ChanPost {
+  fun toPostBuilder(chanPost: ChanPost): ChanPostBuilder {
+    val postDescriptor = chanPost.postDescriptor
+
+    if (chanPost is ChanOriginalPost) {
+      return ChanPostBuilder()
+        .boardDescriptor(postDescriptor.boardDescriptor())
+        .id(postDescriptor.postNo)
+        .opId(postDescriptor.getThreadNo())
+        .op(postDescriptor.isOP())
+        .replies(chanPost.catalogRepliesCount)
+        .uniqueIps(chanPost.uniqueIps)
+        .lastModified(chanPost.lastModified)
+        .sticky(chanPost.sticky)
+        .archived(chanPost.archived)
+        .deleted(chanPost.deleted)
+        .closed(chanPost.closed)
+        .subject(chanPost.subject)
+        .name(chanPost.name)
+        .comment(chanPost.postComment.originalUnparsedComment)
+        .tripcode(chanPost.tripcode)
+        .setUnixTimestampSeconds(chanPost.timestamp)
+        .postImages(chanPost.postImages, postDescriptor)
+        .posterId(chanPost.posterId)
+        .moderatorCapcode(chanPost.moderatorCapcode)
+        .httpIcons(chanPost.postIcons)
+        .isSavedReply(chanPost.isSavedReply)
+        .postLinkables(chanPost.postComment.getAllLinkables())
+        .repliesToIds(chanPost.repliesTo)
+    } else {
+      return ChanPostBuilder()
+        .boardDescriptor(postDescriptor.boardDescriptor())
+        .id(postDescriptor.postNo)
+        .opId(postDescriptor.getThreadNo())
+        .op(postDescriptor.isOP())
+        .replies(chanPost.catalogRepliesCount)
+        .deleted(chanPost.deleted)
+        .subject(chanPost.subject)
+        .name(chanPost.name)
+        .comment(chanPost.postComment.originalUnparsedComment)
+        .tripcode(chanPost.tripcode)
+        .setUnixTimestampSeconds(chanPost.timestamp)
+        .postImages(chanPost.postImages, postDescriptor)
+        .posterId(chanPost.posterId)
+        .moderatorCapcode(chanPost.moderatorCapcode)
+        .httpIcons(chanPost.postIcons)
+        .isSavedReply(chanPost.isSavedReply)
+        .postLinkables(chanPost.postComment.getAllLinkables())
+        .repliesToIds(chanPost.repliesTo)
+    }
+  }
+
+  @JvmStatic
+  fun fromPostBuilder(chanPostBuilder: ChanPostBuilder): ChanPost {
     val postDescriptor = chanPostBuilder.postDescriptor
 
     val postComment = PostComment(
       originalComment = SpannableString(chanPostBuilder.postCommentBuilder.getComment()),
+      originalUnparsedComment = chanPostBuilder.postCommentBuilder.getUnparsedComment(),
       linkables = chanPostBuilder.postCommentBuilder.getAllLinkables()
     )
 

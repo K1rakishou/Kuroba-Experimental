@@ -1,4 +1,4 @@
-package com.github.k1rakishou.common.options
+package com.github.k1rakishou.model.data.options
 
 data class ChanCacheOptions(val options: List<ChanCacheOption>) {
 

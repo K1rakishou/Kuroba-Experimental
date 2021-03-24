@@ -1,7 +1,5 @@
 package com.github.k1rakishou.model.data.post;
 
-import android.text.SpannableString;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -61,7 +59,7 @@ public class ChanPostBuilder {
     public CharSequence subject;
     private PostDescriptor postDescriptor;
 
-    private final Lazy<MurmurHashUtils.Murmur3Hash> commentHash = LazyKt.lazy(
+    private final Lazy<MurmurHashUtils.Murmur3Hash> postHash = LazyKt.lazy(
             this,
             () -> ChanPostUtils.getPostHash(this)
     );
@@ -110,7 +108,7 @@ public class ChanPostBuilder {
             throw new IllegalStateException("Bad commentUpdateCounter: " + commentUpdateCounter);
         }
 
-        return commentHash.getValue();
+        return postHash.getValue();
     }
 
     public synchronized boolean hasPostDescriptor() {
@@ -248,8 +246,13 @@ public class ChanPostBuilder {
         return this;
     }
 
-    public ChanPostBuilder comment(CharSequence comment) {
-        this.postCommentBuilder.setComment(new SpannableString(comment));
+    public ChanPostBuilder comment(String comment) {
+        if (comment == null) {
+            this.postCommentBuilder.setUnparsedComment("");
+        } else {
+            this.postCommentBuilder.setUnparsedComment(comment);
+        }
+
         return this;
     }
 
@@ -299,6 +302,12 @@ public class ChanPostBuilder {
         return this;
     }
 
+    public ChanPostBuilder httpIcons(List<ChanPostHttpIcon> httpIcons) {
+        this.httpIcons.clear();
+        this.httpIcons.addAll(httpIcons);
+        return this;
+    }
+
     public long getOpId() {
         if (!op) {
             return opId;
@@ -325,8 +334,22 @@ public class ChanPostBuilder {
         }
     }
 
+    public ChanPostBuilder postLinkables(List<PostLinkable> postLinkables) {
+        synchronized (this) {
+            postCommentBuilder.setPostLinkables(postLinkables);
+        }
+
+        return this;
+    }
+
     public ChanPostBuilder addReplyTo(long postId) {
         repliesToIds.add(postId);
+        return this;
+    }
+
+    public ChanPostBuilder repliesToIds(Set<Long> replyIds) {
+        repliesToIds.clear();
+        repliesToIds.addAll(replyIds);
         return this;
     }
 

@@ -85,6 +85,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import io.reactivex.disposables.CompositeDisposable
@@ -607,7 +608,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     onThemeChanged()
 
     if (requestNewPosts) {
-      callback?.quickReload(showLoading = false, requestNewPosts = false)
+      callback?.quickReload(
+        showLoading = false,
+        chanCacheUpdateOptions = ChanCacheUpdateOptions.DoNotUpdateCache
+      )
     }
   }
 
@@ -1403,7 +1407,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   interface ThreadListLayoutPresenterCallback {
     suspend fun showThread(threadDescriptor: ThreadDescriptor)
     fun requestNewPostLoad()
-    fun quickReload(showLoading: Boolean = false, requestNewPosts: Boolean = true)
+
+    fun quickReload(
+      showLoading: Boolean = false,
+      chanCacheUpdateOptions: ChanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
+    )
+
     suspend fun onListScrolledToBottom()
   }
 

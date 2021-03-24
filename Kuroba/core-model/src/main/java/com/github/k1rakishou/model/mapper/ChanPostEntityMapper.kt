@@ -179,8 +179,14 @@ object ChanPostEntityMapper {
       PostLinkable::class.java
     ).toList()
 
+    val unparsedPostComment = chanTextSpanEntityList
+      ?.filter { textSpanEntity -> textSpanEntity.textType == ChanTextSpanEntity.TextType.PostComment }
+      ?.firstOrNull()
+      ?.unparsedText
+
     return PostComment(
       originalComment = SpannableString(comment),
+      originalUnparsedComment = unparsedPostComment,
       linkables = postLinkables
     )
   }

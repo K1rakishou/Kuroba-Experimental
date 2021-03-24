@@ -2,7 +2,6 @@ package com.github.k1rakishou.model.source.cache
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.common.mutableMapWithCap
-import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -22,15 +21,10 @@ class ChanDescriptorCache(
 
   @GuardedBy("mutex")
   private val boardIdCache = mutableMapWithCap<BoardDescriptor, BoardDBId>(512)
-
   @GuardedBy("mutex")
   private val threadIdCache = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ThreadDBId>(512)
-
   @GuardedBy("mutex")
   private val bookmarkIdCache = mutableMapWithCap<ThreadBookmarkDescriptor, ThreadBookmarkDBId>(128)
-
-  @GuardedBy("mutex")
-  private val postIdCache = mutableMapWithCap<PostDescriptor, PostDBId>(1024)
 
   private val chanBoardDao = database.chanBoardDao()
   private val chanThreadDao = database.chanThreadDao()
@@ -333,6 +327,40 @@ class ChanDescriptorCache(
     return resultMap
   }
 
+  suspend fun getManyPostDatabaseIds(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, PostDBId> {
+    database.ensureInTransaction()
+
+    if (postDescriptors.isEmpty()) {
+      return emptyMap()
+    }
+
+    val resultMap = mutableMapWithCap<PostDescriptor, PostDBId>(postDescriptors)
+
+    val postDescriptorsMap = postDescriptors
+      .groupBy { postDescriptor -> postDescriptor.threadDescriptor() }
+
+    postDescriptorsMap.forEach { (threadDescriptor, postDescriptors) ->
+      val threadDbId = getThreadIdByThreadDescriptor(threadDescriptor)
+        ?: return@forEach
+
+      val chanPostIdEntityList = chanPostDao.selectManyByThreadIdAndPostNos(
+        ownerThreadId = threadDbId.id,
+        postNos = postDescriptors.map { it.postNo }
+      )
+
+      chanPostIdEntityList.forEach { chanPostIdEntity ->
+        val postDescriptor = postDescriptors.firstOrNull { postDescriptor ->
+          return@firstOrNull postDescriptor.postNo == chanPostIdEntity.postNo
+            && postDescriptor.postSubNo == chanPostIdEntity.postSubNo
+        } ?: return@forEach
+
+        resultMap[postDescriptor] = PostDBId(chanPostIdEntity.postId)
+      }
+    }
+
+    return resultMap
+  }
+
   suspend fun getManyPostDescriptors(chanPostIds: Set<PostDBId>): Map<PostDBId, PostDescriptor> {
     database.ensureInTransaction()
 
@@ -341,22 +369,6 @@ class ChanDescriptorCache(
     }
 
     val resultMap = mutableMapWithCap<PostDBId, PostDescriptor>(chanPostIds)
-
-    mutex.withLock {
-      if (postIdCache.size > MAX_POST_ID_CACHE_ENTRIES) {
-        cleanupCaches()
-      }
-
-      postIdCache.forEach { (postDescriptor, postDBId) ->
-        if (postDBId in chanPostIds) {
-          resultMap[postDBId] = postDescriptor
-        }
-      }
-    }
-
-    if (resultMap.size == chanPostIds.size) {
-      return resultMap
-    }
 
     val postDescriptorDatabaseObjects = chanPostDao.selectPostDescriptorDatabaseObjectsByPostIds(
       chanPostIds
@@ -379,40 +391,11 @@ class ChanDescriptorCache(
         )
 
         val postDBId = PostDBId(postDescriptorDatabaseObject.postDatabaseId)
-
         resultMap[postDBId] = postDescriptor
-        postIdCache[postDescriptor] = postDBId
       }
     }
 
     return resultMap
-  }
-
-  private suspend fun cleanupCaches() {
-    require(mutex.isLocked) { "Mutex must be locked" }
-
-    var toDelete = postIdCache.size / 2
-    Logger.d(TAG, "cleanupCaches() called, postIdCache.size=${postIdCache.size}, toDelete=${toDelete}")
-
-    val iterator = postIdCache.entries.iterator()
-
-    while (iterator.hasNext()) {
-      if (toDelete <= 0) {
-        break
-      }
-
-      val (postDescriptor, _) = iterator.next()
-      postIdCache.remove(postDescriptor)
-
-      --toDelete
-    }
-
-    Logger.d(TAG, "cleanupCaches() done")
-  }
-
-  companion object {
-    private const val TAG = "ChanDescriptorCache"
-    private const val MAX_POST_ID_CACHE_ENTRIES = 8000
   }
 
 }

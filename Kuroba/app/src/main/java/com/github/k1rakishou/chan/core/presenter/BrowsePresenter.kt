@@ -21,12 +21,13 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.common.options.ChanCacheOptions
-import com.github.k1rakishou.common.options.ChanLoadOptions
-import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.options.ChanCacheOptions
+import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
+import com.github.k1rakishou.model.data.options.ChanLoadOptions
+import com.github.k1rakishou.model.data.options.ChanReadOptions
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
@@ -175,8 +176,8 @@ class BrowsePresenter @Inject constructor(
 
         chanThreadManager.loadThreadOrCatalog(
           chanDescriptor = threadDescriptor,
-          requestNewPostsFromServer = true,
-          chanLoadOptions = ChanLoadOptions.RetainAll,
+          chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
+          chanLoadOptions = ChanLoadOptions.retainAll(),
           chanCacheOptions = ChanCacheOptions.default(),
           chanReadOptions = ChanReadOptions.default(),
           onReloaded = {

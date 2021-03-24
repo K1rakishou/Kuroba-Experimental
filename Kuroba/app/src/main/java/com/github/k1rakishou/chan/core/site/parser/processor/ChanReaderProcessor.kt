@@ -17,11 +17,11 @@
 package com.github.k1rakishou.chan.core.site.parser.processor
 
 import com.github.k1rakishou.common.mutableListWithCap
-import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.common.removeIfKt
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.options.ChanReadOptions
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
@@ -120,6 +120,10 @@ class ChanReaderProcessor(
 
     if (builder.op) {
       // Always update original post
+      return true
+    }
+
+    if (chanPostRepository.isForceUpdating(builder.postDescriptor)) {
       return true
     }
 

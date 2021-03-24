@@ -6,26 +6,36 @@ import com.github.k1rakishou.core_spannable.PostLinkable
 
 // Thread safe
 class PostCommentBuilder(
-  private var comment: Spannable? = null,
+  private var unparsedComment: String? = null,
+  private var parsedComment: Spannable? = null,
   private val postLinkables: MutableSet<PostLinkable> = mutableSetOf()
 ) {
   var commentUpdateCounter: Int = 0
     private set
 
   @Synchronized
-  fun setComment(comment: Spannable) {
-    this.comment = comment
+  fun setUnparsedComment(comment: String) {
+    this.unparsedComment = comment
     ++this.commentUpdateCounter
   }
 
   @Synchronized
   fun setParsedComment(comment: Spannable) {
-    this.comment = comment
+    this.parsedComment = comment
   }
 
   @Synchronized
   fun getComment(): CharSequence {
-    return comment ?: ""
+    if (parsedComment != null) {
+      return parsedComment!!
+    }
+
+    return unparsedComment ?: ""
+  }
+
+  @Synchronized
+  fun getUnparsedComment(): String {
+    return unparsedComment ?: ""
   }
 
   @Synchronized
@@ -39,30 +49,31 @@ class PostCommentBuilder(
   }
 
   @Synchronized
-  fun setPostLinkables(postLinkables: MutableSet<PostLinkable>) {
+  fun setPostLinkables(postLinkables: List<PostLinkable>) {
     this.postLinkables.clear()
     this.postLinkables.addAll(postLinkables)
   }
 
   @Synchronized
-  fun hasComment() = comment != null
+  fun hasComment() = unparsedComment != null
 
   @Synchronized
   fun copy(): PostCommentBuilder {
-    val commentCopy = if (comment == null) {
-      comment
+    val parsedCommentCopy = if (parsedComment == null) {
+      parsedComment
     } else {
-      SpannableString(comment)
+      SpannableString(parsedComment)
     }
 
     return PostCommentBuilder(
-      commentCopy,
-      postLinkables.toMutableSet()
+      unparsedComment = unparsedComment,
+      parsedComment = parsedCommentCopy,
+      postLinkables = postLinkables.toMutableSet()
     )
   }
 
   override fun toString(): String {
-    return "PostCommentBuilder(comment=${comment?.take(64)})"
+    return "PostCommentBuilder(comment=${unparsedComment?.take(64)})"
   }
 
   companion object {

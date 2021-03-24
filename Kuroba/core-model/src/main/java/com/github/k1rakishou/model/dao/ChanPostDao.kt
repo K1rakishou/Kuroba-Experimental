@@ -18,11 +18,42 @@ import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
 @Dao
 abstract class ChanPostDao {
 
-  suspend fun selectAllByThreadId(
-    ownerThreadId: Long
-  ): List<ChanPostFull> {
-    return selectAllByThreadIdGrouped(ownerThreadId)
-  }
+  @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+  @Transaction
+  @Query("""
+        SELECT *
+        FROM ${ChanPostIdEntity.TABLE_NAME} cp_id
+        INNER JOIN ${ChanPostEntity.TABLE_NAME} cpe
+            ON cpe.${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
+        WHERE 
+            cp_id.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
+        AND 
+            cp_id.${ChanPostIdEntity.POST_SUB_NO_COLUMN_NAME} = 0
+        AND 
+            cpe.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_FALSE}
+        ORDER BY cp_id.${ChanPostIdEntity.POST_NO_COLUMN_NAME} DESC
+    """)
+  abstract suspend fun selectAllByThreadIdExceptOp(ownerThreadId: Long): List<ChanPostFull>
+
+  @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+  @Transaction
+  @Query("""
+        SELECT *
+        FROM ${ChanPostIdEntity.TABLE_NAME} cp_id
+        INNER JOIN ${ChanPostEntity.TABLE_NAME} cpe
+            ON cpe.${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
+        WHERE 
+            cp_id.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
+        AND 
+            cp_id.${ChanPostIdEntity.POST_SUB_NO_COLUMN_NAME} = 0
+        AND 
+            cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME} IN (:postDatabaseIds)
+        ORDER BY cp_id.${ChanPostIdEntity.POST_NO_COLUMN_NAME} DESC
+    """)
+  abstract suspend fun selectManyByThreadIdExceptOp(
+    ownerThreadId: Long,
+    postDatabaseIds: Collection<Long>
+  ): List<ChanPostFull>
 
   suspend fun selectOriginalPost(
     ownerThreadId: Long
@@ -76,17 +107,15 @@ abstract class ChanPostDao {
   @Query("""
         SELECT *
         FROM ${ChanPostIdEntity.TABLE_NAME} cp_id
-        INNER JOIN ${ChanPostEntity.TABLE_NAME} cpe
-            ON cpe.${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
         WHERE 
             cp_id.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
         AND 
             cp_id.${ChanPostIdEntity.POST_SUB_NO_COLUMN_NAME} = 0
         AND 
-            cpe.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_FALSE}
+            cp_id.${ChanPostIdEntity.POST_NO_COLUMN_NAME} IN (:postNos)
         ORDER BY cp_id.${ChanPostIdEntity.POST_NO_COLUMN_NAME} DESC
     """)
-  protected abstract suspend fun selectAllByThreadIdGrouped(ownerThreadId: Long): List<ChanPostFull>
+  abstract suspend fun selectManyByThreadIdAndPostNos(ownerThreadId: Long, postNos: Collection<Long>): List<ChanPostIdEntity>
 
   @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
   @Transaction

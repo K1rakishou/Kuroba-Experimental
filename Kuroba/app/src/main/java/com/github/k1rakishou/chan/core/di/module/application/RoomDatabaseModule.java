@@ -19,7 +19,6 @@ import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentReposi
 import com.github.k1rakishou.model.repository.SeenPostRepository;
 import com.github.k1rakishou.model.repository.SiteRepository;
 import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository;
-import com.github.k1rakishou.model.source.cache.ChanPostBuilderCache;
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache;
 
 import javax.inject.Singleton;
@@ -164,14 +163,6 @@ public class RoomDatabaseModule {
             ModelComponent modelComponent
     ) {
         return modelComponent.getChanFilterWatchRepository();
-    }
-
-    @Provides
-    @Singleton
-    public ChanPostBuilderCache provideChanPostBuilderCache(
-            ModelComponent modelComponent
-    ) {
-        return modelComponent.getChanPostBuilderCache();
     }
 
     @Provides

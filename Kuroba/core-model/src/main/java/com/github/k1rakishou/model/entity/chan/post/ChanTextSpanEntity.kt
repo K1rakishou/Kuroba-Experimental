@@ -1,6 +1,10 @@
 package com.github.k1rakishou.model.entity.chan.post
 
-import androidx.room.*
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
 
 @Entity(
   tableName = ChanTextSpanEntity.TABLE_NAME,
@@ -32,8 +36,10 @@ data class ChanTextSpanEntity(
   var textSpanId: Long = 0L,
   @ColumnInfo(name = OWNER_POST_ID_COLUMN_NAME)
   val ownerPostId: Long,
-  @ColumnInfo(name = ORIGINAL_TEXT_COLUMN_NAME)
-  val originalText: String,
+  @ColumnInfo(name = PARSED_TEXT_COLUMN_NAME)
+  val parsedText: String,
+  @ColumnInfo(name = UNPARSED_TEXT_COLUMN_NAME, defaultValue = "NULL")
+  val unparsedText: String?,
   @ColumnInfo(name = SPAN_INFO_JSON_COLUMN_NAME)
   val spanInfoJson: String,
   @ColumnInfo(name = TEXT_TYPE_COLUMN_NAME)
@@ -59,7 +65,8 @@ data class ChanTextSpanEntity(
 
     const val TEXT_SPAN_ID_COLUMN_NAME = "text_span_id"
     const val OWNER_POST_ID_COLUMN_NAME = "owner_post_id"
-    const val ORIGINAL_TEXT_COLUMN_NAME = "original_text"
+    const val PARSED_TEXT_COLUMN_NAME = "parsed_text"
+    const val UNPARSED_TEXT_COLUMN_NAME = "unparsed_text"
     const val SPAN_INFO_JSON_COLUMN_NAME = "span_info_json"
     const val TEXT_TYPE_COLUMN_NAME = "text_type"
   }

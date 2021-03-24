@@ -91,13 +91,14 @@ public class DefaultPostParser implements PostParser {
         if (builder.postCommentBuilder.hasComment()) {
             Spannable parsedComment = parseComment(
                     builder,
-                    builder.postCommentBuilder.getComment(),
+                    builder.postCommentBuilder.getUnparsedComment(),
                     ChanSettings.parsePostImageLinks.get(),
                     callback
             );
 
             builder.postCommentBuilder.setParsedComment(parsedComment);
         } else {
+            builder.postCommentBuilder.setUnparsedComment("");
             builder.postCommentBuilder.setParsedComment(new SpannableString(""));
         }
 

@@ -7,13 +7,16 @@ import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.mutableListWithCap
-import com.github.k1rakishou.common.options.ChanCacheOptions
-import com.github.k1rakishou.common.options.ChanLoadOptions
-import com.github.k1rakishou.common.options.ChanReadOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.catalog.ChanCatalog
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.options.ChanCacheOptions
+import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
+import com.github.k1rakishou.model.data.options.ChanLoadOption
+import com.github.k1rakishou.model.data.options.ChanLoadOptions
+import com.github.k1rakishou.model.data.options.ChanReadOptions
+import com.github.k1rakishou.model.data.options.PostsToReloadOptions
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.LoaderType
 import com.github.k1rakishou.model.data.thread.ChanThread
@@ -65,9 +68,22 @@ class ChanThreadManager(
     }
   }
 
+  suspend fun isRequestAlreadyActive(chanDescriptor: ChanDescriptor): Boolean {
+    if (!requestedChanDescriptors.add(chanDescriptor)) {
+      // This chan descriptor has already been requested
+      if (verboseLogs) {
+        Logger.d(TAG, "loadThreadOrCatalog() skipping $chanDescriptor because it was already requested")
+      }
+
+      return true
+    }
+
+    return false
+  }
+
   suspend fun loadThreadOrCatalog(
     chanDescriptor: ChanDescriptor,
-    requestNewPostsFromServer: Boolean,
+    chanCacheUpdateOptions: ChanCacheUpdateOptions,
     chanLoadOptions: ChanLoadOptions,
     chanCacheOptions: ChanCacheOptions,
     chanReadOptions: ChanReadOptions,
@@ -75,18 +91,9 @@ class ChanThreadManager(
   ) {
     BackgroundUtils.ensureMainThread()
 
-    if (!requestedChanDescriptors.add(chanDescriptor)) {
-      // This chan descriptor has already been requested
-      if (verboseLogs) {
-        Logger.d(TAG, "loadThreadOrCatalog() skipping $chanDescriptor because it was already requested")
-      }
-
-      return
-    }
-
     try {
       Logger.d(TAG, "loadThreadOrCatalog(chanDescriptor=$chanDescriptor, " +
-        "requestNewPostsFromServer=$requestNewPostsFromServer, " +
+        "chanCacheUpdateOptions=$chanCacheUpdateOptions, " +
         "$chanLoadOptions, $chanCacheOptions, $chanReadOptions)")
 
       if (chanLoadOptions.isNotDefault()) {
@@ -94,13 +101,22 @@ class ChanThreadManager(
         postFilterManager.removeAllForDescriptor(chanDescriptor)
       }
 
-      if (chanLoadOptions.canClearCache()) {
+      if (chanLoadOptions.canClearCache() || chanLoadOptions.canForceUpdate()) {
         Logger.d(TAG, "loadThreadOrCatalog() deleting posts from the cache")
 
-        when (chanDescriptor) {
-          is ChanDescriptor.ThreadDescriptor -> chanThreadsCache.deleteThread(chanDescriptor)
-          is ChanDescriptor.CatalogDescriptor -> {
-            // no-op, we never delete threads from catalog snapshots
+        if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+          when (val chanLoadOption = chanLoadOptions.chanLoadOption) {
+            is ChanLoadOption.DeletePostsFromMemoryCache -> {
+              chanThreadsCache.deletePosts(chanLoadOption.postDescriptors)
+            }
+            is ChanLoadOption.ForceUpdatePosts -> {
+              chanThreadsCache.forceUpdatePosts(chanDescriptor, chanLoadOption.postDescriptors)
+            }
+            ChanLoadOption.ClearMemoryAndDatabaseCaches,
+            ChanLoadOption.ClearMemoryCache,
+            ChanLoadOption.RetainAll -> {
+              chanThreadsCache.deleteThread(chanDescriptor)
+            }
           }
         }
       }
@@ -116,7 +132,8 @@ class ChanThreadManager(
 
       val threadLoaderResult = loadInternal(
         chanDescriptor = chanDescriptor,
-        requestNewPostsFromServer = requestNewPostsFromServer,
+        chanCacheUpdateOptions = chanCacheUpdateOptions,
+        chanLoadOptions = chanLoadOptions,
         chanCacheOptions = chanCacheOptions,
         chanReadOptions = chanReadOptions
       )
@@ -345,7 +362,8 @@ class ChanThreadManager(
 
   private suspend fun loadInternal(
     chanDescriptor: ChanDescriptor,
-    requestNewPostsFromServer: Boolean,
+    chanCacheUpdateOptions: ChanCacheUpdateOptions,
+    chanLoadOptions: ChanLoadOptions,
     chanCacheOptions: ChanCacheOptions,
     chanReadOptions: ChanReadOptions
   ): ModularResult<ThreadLoadResult> {
@@ -369,10 +387,12 @@ class ChanThreadManager(
       return ModularResult.value(ThreadLoadResult.Error(ChanLoaderException(error)))
     }
 
-    if (!requestNewPostsFromServer) {
+    if (!chanThreadsCache.cacheNeedsUpdate(chanDescriptor, chanCacheUpdateOptions)) {
+      Logger.d(TAG, "loadInternal() chanThreadsCache.cacheNeedsUpdate($chanDescriptor, $chanCacheUpdateOptions) -> false")
+
       // Do not load new posts from the network, just refresh memory caches with data from the
       //  database
-      return when (chanDescriptor) {
+      when (chanDescriptor) {
         is ChanDescriptor.ThreadDescriptor -> {
           val siteDescriptor = chanDescriptor.siteDescriptor()
 
@@ -387,13 +407,43 @@ class ChanThreadManager(
             return ModularResult.value(threadLoadResult)
           }
 
-          chanThreadLoaderCoordinator.reloadThreadFromCache(postParser, chanDescriptor)
+          val postsToReloadOptions = when (val chanLoadOption = chanLoadOptions.chanLoadOption) {
+            is ChanLoadOption.DeletePostsFromMemoryCache -> {
+              PostsToReloadOptions.Reload(chanLoadOption.postDescriptors.toSet())
+            }
+            is ChanLoadOption.ForceUpdatePosts -> {
+              PostsToReloadOptions.Reload(chanLoadOption.postDescriptors.toSet())
+            }
+            ChanLoadOption.ClearMemoryAndDatabaseCaches,
+            ChanLoadOption.ClearMemoryCache,
+            ChanLoadOption.RetainAll -> PostsToReloadOptions.ReloadAll
+          }
+
+          val result = chanThreadLoaderCoordinator.reloadAndReparseThread(
+            postParser = postParser,
+            threadDescriptor = chanDescriptor,
+            cacheUpdateOptions = chanCacheUpdateOptions,
+            postsToReloadOptions = postsToReloadOptions
+          )
+
+          if (result is ModularResult.Error) {
+            return result
+          }
+
+          val threadLoadResult = (result as ModularResult.Value).value
+          if (threadLoadResult !is ThreadLoadResult.Error || !threadLoadResult.exception.isCacheEmptyException()) {
+            return result
+          }
+
+          // fallthrough
         }
         is ChanDescriptor.CatalogDescriptor -> {
-          chanThreadLoaderCoordinator.reloadCatalogFromDatabase(chanDescriptor)
+          return chanThreadLoaderCoordinator.reloadCatalogFromDatabase(chanDescriptor)
         }
       }
     }
+
+    Logger.d(TAG, "loadInternal() chanThreadsCache.cacheNeedsUpdate($chanDescriptor, $chanCacheUpdateOptions) -> true")
 
     // Notify the bookmarksManager that loader is starting to fetch data from the server so that
     //  bookmarksManager can start loading bookmark info for this thread
@@ -402,16 +452,17 @@ class ChanThreadManager(
     }
 
     val url = ChanThreadLoaderCoordinator.getChanUrl(
-      site,
-      chanDescriptor
+      site = site,
+      chanDescriptor = chanDescriptor
     ).toString()
 
     return chanThreadLoaderCoordinator.loadThreadOrCatalog(
-      url,
-      chanDescriptor,
-      chanCacheOptions,
-      chanReadOptions,
-      site.chanReader()
+      url = url,
+      chanDescriptor = chanDescriptor,
+      chanCacheOptions = chanCacheOptions,
+      cacheUpdateOptions = chanCacheUpdateOptions,
+      chanReadOptions = chanReadOptions,
+      chanReader = site.chanReader()
     )
   }
 

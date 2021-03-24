@@ -81,6 +81,7 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.FilterType
+import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -269,7 +270,10 @@ class ThreadLayout @JvmOverloads constructor(
       return
     }
 
-    presenter.quickReload(showLoading = false, requestNewPosts = false)
+    presenter.quickReload(
+      showLoading = false,
+      chanCacheUpdateOptions = ChanCacheUpdateOptions.DoNotUpdateCache
+    )
   }
 
   override fun onClick(v: View) {

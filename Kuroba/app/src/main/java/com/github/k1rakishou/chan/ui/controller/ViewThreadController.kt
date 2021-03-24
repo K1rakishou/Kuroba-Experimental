@@ -50,7 +50,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink
 import com.github.k1rakishou.chan.utils.SharingUtils.getUrlForSharing
 import com.github.k1rakishou.chan.utils.plusAssign
-import com.github.k1rakishou.common.options.ChanLoadOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -58,6 +57,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.options.ChanLoadOptions
 import com.github.k1rakishou.model.util.ChanPostUtils
 import io.reactivex.android.schedulers.AndroidSchedulers
 import kotlinx.coroutines.Dispatchers
@@ -290,7 +290,7 @@ open class ViewThreadController(
     threadLayout.presenter.resetTicker()
     threadLayout.presenter.normalLoad(
       showLoading = true,
-      chanLoadOptions = ChanLoadOptions.ClearMemoryCache
+      chanLoadOptions = ChanLoadOptions.clearMemoryCache()
     )
   }
 
@@ -298,7 +298,7 @@ open class ViewThreadController(
     threadLayout.presenter.resetTicker()
     threadLayout.presenter.normalLoad(
       showLoading = true,
-      chanLoadOptions = ChanLoadOptions.ClearMemoryAndDatabaseCaches
+      chanLoadOptions = ChanLoadOptions.clearMemoryAndDatabaseCaches()
     )
   }
 

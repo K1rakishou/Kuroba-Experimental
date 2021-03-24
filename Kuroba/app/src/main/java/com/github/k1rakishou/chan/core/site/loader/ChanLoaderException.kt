@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.site.loader
 
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.google.gson.JsonParseException
 import okhttp3.HttpUrl
 import java.net.SocketException
@@ -67,6 +68,14 @@ open class ChanLoaderException(
     return exception is CancellationException
   }
 
+  fun isCacheEmptyException(): Boolean = exception is CacheIsEmptyException
+
+  companion object {
+    fun cacheIsEmptyException(chanDescriptor: ChanDescriptor): ChanLoaderException {
+      return ChanLoaderException(CacheIsEmptyException(chanDescriptor))
+    }
+  }
+
 }
 
 class ClientException(message: String) : ChanLoaderException(Exception(message))
@@ -76,3 +85,5 @@ class ServerException(val statusCode: Int) : Exception("Bad status code: ${statu
     return statusCode == 401 || statusCode == 403
   }
 }
+
+class CacheIsEmptyException(chanDescriptor: ChanDescriptor) : Exception("Cache is empty for /$chanDescriptor/")

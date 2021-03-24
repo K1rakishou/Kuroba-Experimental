@@ -61,6 +61,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescrip
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
@@ -434,7 +435,10 @@ class BrowseController(
       return
     }
 
-    presenter.normalLoad(showLoading = true, requestNewPostsFromServer = true)
+    presenter.normalLoad(
+      showLoading = true,
+      chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
+    )
 
     // Give the rotation menu item view a spin.
     val refreshView: View = item.view

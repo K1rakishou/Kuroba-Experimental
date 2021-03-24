@@ -2,13 +2,13 @@ package com.github.k1rakishou.model.source.local
 
 import com.github.k1rakishou.common.flatMapIndexed
 import com.github.k1rakishou.common.mutableMapWithCap
-import com.github.k1rakishou.common.options.ChanCacheOptions
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.SpannableStringMapper
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.options.ChanCacheOptions
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.entity.chan.post.ChanPostFull
@@ -222,10 +222,11 @@ class ChanPostLocalSource(
       ) ?: return@mapIndexedNotNull null
 
       return@mapIndexedNotNull TextSpanMapper.toEntity(
-        gson,
-        chanPostEntityId.postId,
-        serializeSpannableString,
-        ChanTextSpanEntity.TextType.PostComment
+        gson = gson,
+        ownerPostId = chanPostEntityId.postId,
+        serializableSpannableString = serializeSpannableString,
+        originalUnparsedComment = chanPost.postComment.originalUnparsedComment,
+        chanTextType = ChanTextSpanEntity.TextType.PostComment
       )
     }
 
@@ -242,10 +243,11 @@ class ChanPostLocalSource(
       ) ?: return@mapIndexedNotNull null
 
       return@mapIndexedNotNull TextSpanMapper.toEntity(
-        gson,
-        chanPostEntityId.postId,
-        serializeSpannableString,
-        ChanTextSpanEntity.TextType.Subject
+        gson = gson,
+        ownerPostId = chanPostEntityId.postId,
+        serializableSpannableString = serializeSpannableString,
+        originalUnparsedComment = null,
+        chanTextType = ChanTextSpanEntity.TextType.Subject
       )
     }
 
@@ -262,10 +264,11 @@ class ChanPostLocalSource(
       ) ?: return@mapIndexedNotNull null
 
       return@mapIndexedNotNull TextSpanMapper.toEntity(
-        gson,
-        chanPostEntityId.postId,
-        serializeSpannableString,
-        ChanTextSpanEntity.TextType.Tripcode
+        gson = gson,
+        ownerPostId = chanPostEntityId.postId,
+        serializableSpannableString = serializeSpannableString,
+        originalUnparsedComment = null,
+        chanTextType = ChanTextSpanEntity.TextType.Tripcode
       )
     }
 
@@ -430,6 +433,13 @@ class ChanPostLocalSource(
   }
 
   suspend fun getThreadPosts(descriptor: ChanDescriptor.ThreadDescriptor): List<ChanPost> {
+    return getThreadPosts(descriptor, emptyList())
+  }
+
+  suspend fun getThreadPosts(
+    descriptor: ChanDescriptor.ThreadDescriptor,
+    postDatabaseIds: Collection<Long>
+  ): List<ChanPost> {
     ensureInTransaction()
 
     // Load descriptor's thread
@@ -439,7 +449,13 @@ class ChanPostLocalSource(
     val originalPost = chanPostDao.selectOriginalPost(chanThreadEntity.threadId)
       ?: return emptyList()
 
-    val threadPosts = chanPostDao.selectAllByThreadId(chanThreadEntity.threadId)
+    val threadPosts = if (postDatabaseIds.isEmpty()) {
+      chanPostDao.selectAllByThreadIdExceptOp(chanThreadEntity.threadId)
+    } else {
+      postDatabaseIds
+        .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+        .flatMap { chunk -> chanPostDao.selectManyByThreadIdExceptOp(chanThreadEntity.threadId, chunk) }
+    }
 
     // Load thread's posts. We need to sort them because we sort them right in the SQL query in
     // order to trim everything after [maxCount]
