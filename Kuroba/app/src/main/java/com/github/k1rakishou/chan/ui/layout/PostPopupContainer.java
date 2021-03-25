@@ -28,25 +28,25 @@ import javax.inject.Inject;
 
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 
-public class PostRepliesContainer extends LinearLayout implements ThemeEngine.ThemeChangesListener {
-    private static final int MAX_WIDTH = dp(800);
+public class PostPopupContainer extends LinearLayout implements ThemeEngine.ThemeChangesListener {
+    public static final int MAX_WIDTH = dp(800);
     private static final int HORIZ_PADDING = dp(24);
     private int maxWidth = MAX_WIDTH;
 
     @Inject
     ThemeEngine themeEngine;
 
-    public PostRepliesContainer(Context context) {
+    public PostPopupContainer(Context context) {
         super(context);
         init(context);
     }
 
-    public PostRepliesContainer(Context context, AttributeSet attrs) {
+    public PostPopupContainer(Context context, AttributeSet attrs) {
         super(context, attrs);
         init(context);
     }
 
-    public PostRepliesContainer(Context context, AttributeSet attrs, int defStyleAttr) {
+    public PostPopupContainer(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context);
     }

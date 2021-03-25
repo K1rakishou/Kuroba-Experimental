@@ -31,7 +31,6 @@ import com.github.k1rakishou.chan.controller.transition.ControllerTransition;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks;
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController;
-import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.k1rakishou.chan.ui.layout.ThreadSlidingPaneLayout;
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
@@ -50,7 +49,6 @@ public class ThreadSlideController
         extends Controller
         implements DoubleNavigationController,
         SlidingPaneLayoutEx.PanelSlideListener,
-        ToolbarNavigationController.ToolbarSearchCallback,
         ThemeEngine.ThemeChangesListener {
     private static final String TAG = "ThreadSlideController";
 
@@ -294,26 +292,6 @@ public class ThreadSlideController
         return super.onBack();
     }
 
-    @Override
-    public void onSearchVisibilityChanged(boolean visible) {
-        if (leftOpen() && leftController != null) {
-            ((ToolbarNavigationController.ToolbarSearchCallback) leftController).onSearchVisibilityChanged(visible);
-        }
-        if (!leftOpen() && rightController != null) {
-            ((ToolbarNavigationController.ToolbarSearchCallback) rightController).onSearchVisibilityChanged(visible);
-        }
-    }
-
-    @Override
-    public void onSearchEntered(@NonNull String entered) {
-        if (leftOpen() && leftController != null) {
-            ((ToolbarNavigationController.ToolbarSearchCallback) leftController).onSearchEntered(entered);
-        }
-        if (!leftOpen() && rightController != null) {
-            ((ToolbarNavigationController.ToolbarSearchCallback) rightController).onSearchEntered(entered);
-        }
-    }
-
     private boolean leftOpen() {
         return slidingPaneLayout.isOpen();
     }
@@ -378,19 +356,10 @@ public class ThreadSlideController
         if (left) {
             if (leftController != null) {
                 item = leftController.navigation;
-
-                // For catalogs we want to always restore the previous search state when switching
-                //  to it
-                item.search = leftController.threadLayout.presenter.getSearchVisible();
-                item.searchText = leftController.threadLayout.presenter.getSearchQuery();
             }
         } else {
             if (rightController != null) {
                 item = rightController.navigation;
-
-                // For threads we want to always close search when switching to catalog
-                item.search = false;
-                item.searchText = null;
             }
         }
 

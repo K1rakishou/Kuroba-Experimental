@@ -13,8 +13,6 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
-import com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils.doOnRecyclerScrollStopped
@@ -84,9 +82,6 @@ class ResolveDuplicateImagesController(
     resolveButton = view.findViewById(R.id.resolve_button)
     selectAllFromServer = view.findViewById(R.id.select_all_from_server)
     selectAllLocal = view.findViewById(R.id.select_all_local)
-
-    val widthConstraintContainer = view.findViewById<ViewContainerWithMaxSize>(R.id.width_constraint_container)
-    widthConstraintContainer.desiredWidth = DESIRED_WIDTH
 
     val cancelButton = view.findViewById<ColorizableButton>(R.id.cancel_button)
     val outsideArea = view.findViewById<FrameLayout>(R.id.outside_area)
@@ -227,7 +222,4 @@ class ResolveDuplicateImagesController(
     }
   }
 
-  companion object {
-    private val DESIRED_WIDTH = AppModuleAndroidUtils.dp(600f)
-  }
 }

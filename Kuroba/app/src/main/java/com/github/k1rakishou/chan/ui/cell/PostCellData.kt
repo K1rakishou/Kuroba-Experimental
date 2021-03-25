@@ -340,7 +340,8 @@ data class PostCellData(
     Normal,
     RepliesPopup,
     ExternalPostsPopup,
-    PostSelection;
+    PostSelection,
+    Search;
 
     fun canShowLastSeenIndicator(): Boolean {
       if (this == Normal) {
@@ -359,7 +360,7 @@ data class PostCellData(
     }
 
     fun canShowGoToPostButton(): Boolean {
-      if (this == RepliesPopup || this == ExternalPostsPopup) {
+      if (this == RepliesPopup || this == ExternalPostsPopup || this == Search) {
         return true
       }
 

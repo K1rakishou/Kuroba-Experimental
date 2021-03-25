@@ -36,7 +36,6 @@ import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
-import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
@@ -273,9 +272,11 @@ open class ViewThreadController(
   }
 
   private fun searchClicked(item: ToolbarMenuSubItem) {
-    if (navigationController is ToolbarNavigationController) {
-      (navigationController as ToolbarNavigationController).showSearch()
+    if (chanDescriptor == null) {
+      return
     }
+
+    threadLayout.popupHelper.showSearchPopup(chanDescriptor!!)
   }
 
   private fun replyClicked(item: ToolbarMenuSubItem) {
@@ -702,8 +703,6 @@ open class ViewThreadController(
   override fun onLostFocus(wasFocused: ThreadSlideController.ThreadControllerType) {
     super.onLostFocus(wasFocused)
     check(wasFocused == threadControllerType) { "Unexpected controllerType: $wasFocused" }
-
-    super.onSearchVisibilityChanged(false)
   }
 
   override fun onGainedFocus(nowFocused: ThreadSlideController.ThreadControllerType) {

@@ -17,8 +17,6 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
-import com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 
 class SimpleListItemsReorderingController(
   context: Context,
@@ -92,9 +90,6 @@ class SimpleListItemsReorderingController(
 
     val clickableArea = view.findViewById<ConstraintLayout>(R.id.clickable_area)
     clickableArea.setOnClickListener { pop() }
-
-    val sizeContainer = view.findViewById<ViewContainerWithMaxSize>(R.id.container_with_max_size)
-    sizeContainer.desiredWidth = dp(600f)
 
     view.findViewById<ColorizableBarButton>(R.id.cancel_button).setOnClickListener {
       pop()

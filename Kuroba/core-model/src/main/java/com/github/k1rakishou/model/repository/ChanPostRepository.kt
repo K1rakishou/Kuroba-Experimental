@@ -245,8 +245,7 @@ class ChanPostRepository(
         if (catalogPosts.isNotEmpty()) {
           chanThreadsCache.putManyCatalogPostsIntoCache(
             parsedPosts = catalogPosts,
-            cacheOptions = ChanCacheOptions.default(),
-            cacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
+            cacheOptions = ChanCacheOptions.default()
           )
         }
 
@@ -292,8 +291,7 @@ class ChanPostRepository(
         if (catalogPostsFromDatabase.isNotEmpty()) {
           chanThreadsCache.putManyCatalogPostsIntoCache(
             parsedPosts = catalogPostsFromDatabase,
-            cacheOptions = ChanCacheOptions.default(),
-            cacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
+            cacheOptions = ChanCacheOptions.default()
           )
         }
 
@@ -334,8 +332,7 @@ class ChanPostRepository(
         if (catalogPostsFromDatabase.isNotEmpty()) {
           chanThreadsCache.putManyCatalogPostsIntoCache(
             parsedPosts = catalogPostsFromDatabase.values.toList(),
-            cacheOptions = ChanCacheOptions.default(),
-            cacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
+            cacheOptions = ChanCacheOptions.default()
           )
         }
 
@@ -561,8 +558,7 @@ class ChanPostRepository(
 
     val postsToStoreIntoDatabase = chanThreadsCache.putManyCatalogPostsIntoCache(
       parsedPosts = parsedPosts,
-      cacheOptions = cacheOptions,
-      cacheUpdateOptions = cacheUpdateOptions
+      cacheOptions = cacheOptions
     )
 
     if (postsToStoreIntoDatabase.isNotEmpty()) {

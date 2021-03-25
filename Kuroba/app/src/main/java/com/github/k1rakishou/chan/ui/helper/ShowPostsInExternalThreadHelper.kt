@@ -135,7 +135,7 @@ class ShowPostsInExternalThreadHelper(
           return@loadThreadOrCatalog
         }
 
-        postPopupHelper.showPosts(
+        postPopupHelper.showRepliesPopup(
           threadDescriptor,
           PostCellData.PostAdditionalData.NoAdditionalData(PostCellData.PostViewMode.ExternalPostsPopup),
           null,

@@ -18,8 +18,6 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
-import com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.doIgnoringTextWatcher
 import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
@@ -102,9 +100,6 @@ class ImageSaverV2OptionsController(
     additionalDirectoriesTil = view.findViewById(R.id.additional_directories_til)
     cancelButton = view.findViewById(R.id.cancel_button)
     saveButton = view.findViewById(R.id.save_button)
-
-    val widthConstraintContainer = view.findViewById<ViewContainerWithMaxSize>(R.id.width_constraint_container)
-    widthConstraintContainer.desiredWidth = DESIRED_WIDTH
 
     when (options) {
       is Options.MultipleImages -> {
@@ -526,10 +521,6 @@ class ImageSaverV2OptionsController(
       val onRetryClicked: (ImageSaverV2Options) -> Unit,
       val onCancelClicked: () -> Unit
     ) : Options()
-  }
-
-  companion object {
-    private val DESIRED_WIDTH = dp(600f)
   }
 
 }

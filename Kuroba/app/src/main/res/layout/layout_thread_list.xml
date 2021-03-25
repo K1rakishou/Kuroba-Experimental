@@ -36,15 +36,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:visibility="gone"
         tools:ignore="UnusedAttribute" />
 
-    <TextView
-        android:id="@+id/search_status"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:elevation="4dp"
-        android:gravity="center"
-        android:padding="8dp"
-        android:singleLine="true"
-        android:visibility="gone"
-        tools:ignore="UnusedAttribute" />
-
 </com.github.k1rakishou.chan.ui.layout.ThreadListLayout>

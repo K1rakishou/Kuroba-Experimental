@@ -536,10 +536,6 @@ public class Toolbar
         return view.getBottom();
     }
 
-    public void openSearchWithCallback(@Nullable ToolbarContainer.ToolbarTransitionAnimationListener listener) {
-        presenter.openSearch(listener);
-    }
-
     public void openSearchWithQuery(@Nullable String query) {
         presenter.openSearch(query, null);
     }

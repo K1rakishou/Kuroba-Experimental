@@ -129,11 +129,6 @@ class ThreadPresenter @Inject constructor(
   private var currentFocusedController = CurrentFocusedController.None
   private var currentLoadThreadJob: Job? = null
 
-  var searchVisible = false
-    private set
-  var searchQuery: String? = null
-    private set
-
   var chanThreadLoadingState = ChanThreadLoadingState.Uninitialized
     private set
 
@@ -209,9 +204,6 @@ class ThreadPresenter @Inject constructor(
 
     this.currentLoadThreadJob?.cancel()
     this.currentLoadThreadJob = null
-
-    this.searchQuery = null
-    this.searchVisible = false
 
     postOptionsClickExecutor = RendezvousCoroutineExecutor(this)
     serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
@@ -471,57 +463,6 @@ class ThreadPresenter @Inject constructor(
     return true
   }
 
-  suspend fun onSearchVisibilityChanged(visible: Boolean) {
-    if (!isBound) {
-      return
-    }
-
-    if (searchVisible == visible) {
-      if (!visible) {
-        searchQuery = null
-      }
-
-      return
-    }
-
-    searchVisible = visible
-
-    if (!visible) {
-      searchQuery = null
-    }
-
-    threadPresenterCallback?.showSearch(visible)
-    showPosts()
-  }
-
-  suspend fun onSearchEntered(searchQuery: String?) {
-    if (!isBound) {
-      return
-    }
-
-    if (this.searchQuery == searchQuery) {
-      return
-    }
-
-    this.searchQuery = searchQuery
-
-    showPosts()
-
-    if (searchQuery.isNullOrEmpty()) {
-      threadPresenterCallback?.setSearchStatus(
-        query = null,
-        setEmptyText = true,
-        hideKeyboard = false
-      )
-    } else {
-      threadPresenterCallback?.setSearchStatus(
-        query = searchQuery,
-        setEmptyText = false,
-        hideKeyboard = false
-      )
-    }
-  }
-
   suspend fun setOrder(order: PostsFilter.Order, isManuallyChangedOrder: Boolean) {
     if (this.order != order) {
       this.order = order
@@ -687,12 +628,7 @@ class ThreadPresenter @Inject constructor(
       chanThreadTicker.kickTicker(resetTimer = shouldResetTimer)
     }
 
-    // allow for search refreshes inside the catalog
-    if (loadedChanDescriptor is ChanDescriptor.CatalogDescriptor && searchQuery.isNotNullNorEmpty()) {
-      onSearchEntered(searchQuery)
-    } else {
-      showPosts()
-    }
+    showPosts()
 
     if (localChanDescriptor is ChanDescriptor.ThreadDescriptor) {
       if (newPostsCount > 0 && localChanDescriptor.threadNo == loadedChanDescriptor.threadNoOrNull()) {
@@ -911,10 +847,6 @@ class ThreadPresenter @Inject constructor(
   }
 
   fun scrollToImage(postImage: ChanPostImage, smooth: Boolean) {
-    if (searchVisible) {
-      return
-    }
-
     var position = -1
     val postDescriptors = threadPresenterCallback?.displayingPostDescriptors
       ?: return
@@ -1022,18 +954,7 @@ class ThreadPresenter @Inject constructor(
         return@post
       }
 
-      if (searchVisible) {
-        this.searchQuery = null
-
-        showPosts()
-        threadPresenterCallback?.setSearchStatus(null, setEmptyText = false, hideKeyboard = true)
-        threadPresenterCallback?.showSearch(false)
-
-        highlightPost(post.postDescriptor)
-        scrollToPost(post.postDescriptor, false)
-      } else {
-        threadPresenterCallback?.postClicked(post.postDescriptor)
-      }
+      threadPresenterCallback?.postClicked(post.postDescriptor)
     }
   }
 
@@ -2170,7 +2091,7 @@ class ThreadPresenter @Inject constructor(
 
     threadPresenterCallback?.showPostsForChanDescriptor(
       descriptor,
-      PostsFilter(postHideHelper, order, searchQuery)
+      PostsFilter(postHideHelper, order)
     )
   }
 
@@ -2315,8 +2236,6 @@ class ThreadPresenter @Inject constructor(
     fun highlightPostTripcode(tripcode: CharSequence?)
     fun filterPostTripcode(tripcode: CharSequence?)
     fun selectPost(postDescriptor: PostDescriptor?)
-    fun showSearch(show: Boolean)
-    fun setSearchStatus(query: String?, setEmptyText: Boolean, hideKeyboard: Boolean)
     fun quote(post: ChanPost, withText: Boolean)
     fun quote(postDescriptor: PostDescriptor, text: CharSequence)
     fun confirmPostDelete(post: ChanPost)
@@ -2354,7 +2273,7 @@ class ThreadPresenter @Inject constructor(
     fun showToolbar()
     fun showAvailableArchivesList(postDescriptor: PostDescriptor)
     fun currentSpanCount(): Int
-    fun getTopPostRepliesDataOrNull(): PostPopupHelper.RepliesData?
+    fun getTopPostRepliesDataOrNull(): PostPopupHelper.PostPopupData?
   }
 
   companion object {

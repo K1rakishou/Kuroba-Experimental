@@ -102,7 +102,6 @@ import com.github.k1rakishou.chan.utils.setAlphaFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.findAllChildren
-import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
@@ -880,11 +879,6 @@ class ReplyLayout @JvmOverloads constructor(
 
     authenticationLayout!!.initialize(site, callback, autoReply)
     authenticationLayout!!.reset()
-
-    (authenticationLayout as? View)?.let { captchaView ->
-      val topPadding = threadListLayoutCallbacks?.searchStatusHeight() ?: 0
-      captchaView.updatePaddings(top = topPadding)
-    }
   }
 
   private fun createAuthenticationLayout(
@@ -1423,7 +1417,6 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   interface ThreadListLayoutCallbacks {
-    fun searchStatusHeight(): Int
     fun currentFocusedController(): ThreadPresenter.CurrentFocusedController
     fun highlightPosts(postDescriptors: Set<PostDescriptor>)
     fun openReply(open: Boolean)

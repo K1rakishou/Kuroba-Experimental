@@ -51,6 +51,12 @@ class ChanThreadManager(
   // Only accessed on the main thread
   private val requestedChanDescriptors = hashSetOf<ChanDescriptor>()
 
+  suspend fun awaitUntilDependenciesInitialized() {
+    siteManager.awaitUntilInitialized()
+    bookmarksManager.awaitUntilInitialized()
+    chanPostRepository.awaitUntilInitialized()
+  }
+
   fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
     when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
@@ -158,7 +164,14 @@ class ChanThreadManager(
 
   fun iteratePostsWhile(
     chanDescriptor: ChanDescriptor,
-    postDescriptors: Collection<PostDescriptor>,
+    iterator: (ChanPost) -> Boolean
+  ) {
+    iteratePostsWhile(chanDescriptor, null, iterator)
+  }
+
+  fun iteratePostsWhile(
+    chanDescriptor: ChanDescriptor,
+    postDescriptors: Collection<PostDescriptor>?,
     iterator: (ChanPost) -> Boolean
   ) {
     when (chanDescriptor) {
@@ -166,26 +179,34 @@ class ChanThreadManager(
         val chanThread = chanThreadsCache.getThread(chanDescriptor)
           ?: return
 
-        for (postDescriptor in postDescriptors) {
-          val post = chanThread.getPost(postDescriptor)
-            ?: continue
+        if (postDescriptors != null) {
+          for (postDescriptor in postDescriptors) {
+            val post = chanThread.getPost(postDescriptor)
+              ?: continue
 
-          if (!iterator(post)) {
-            return
+            if (!iterator(post)) {
+              return
+            }
           }
+        } else {
+          chanThread.iteratePostsOrderedWhile(iterator)
         }
       }
       is ChanDescriptor.CatalogDescriptor -> {
         val chanCatalog = chanThreadsCache.getCatalog(chanDescriptor)
           ?: return
 
-        for (postDescriptor in postDescriptors) {
-          val post = chanCatalog.getPost(postDescriptor)
-            ?: continue
+        if (postDescriptors != null) {
+          for (postDescriptor in postDescriptors) {
+            val post = chanCatalog.getPost(postDescriptor)
+              ?: continue
 
-          if (!iterator(post)) {
-            return
+            if (!iterator(post)) {
+              return
+            }
           }
+        } else {
+          chanCatalog.iteratePostsOrderedWhile(iterator)
         }
       }
     }
@@ -369,8 +390,7 @@ class ChanThreadManager(
   ): ModularResult<ThreadLoadResult> {
     BackgroundUtils.ensureMainThread()
 
-    siteManager.awaitUntilInitialized()
-    bookmarksManager.awaitUntilInitialized()
+    awaitUntilDependenciesInitialized()
 
     when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {

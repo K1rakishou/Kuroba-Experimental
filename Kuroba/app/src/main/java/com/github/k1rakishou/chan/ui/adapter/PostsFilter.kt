@@ -16,7 +16,6 @@
  */
 package com.github.k1rakishou.chan.ui.adapter
 
-import android.text.TextUtils
 import com.github.k1rakishou.chan.core.helper.PostHideHelper
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -27,8 +26,7 @@ import java.util.*
 
 class PostsFilter(
   private val postHideHelper: PostHideHelper,
-  private val order: Order,
-  private val query: String?
+  private val order: Order
 ) {
 
   suspend fun applyFilter(chanDescriptor: ChanDescriptor, posts: MutableList<ChanPost>): List<PostIndexed> {
@@ -38,10 +36,6 @@ class PostsFilter(
       processOrder(posts as MutableList<ChanOriginalPost>)
     }
 
-    if (!TextUtils.isEmpty(query)) {
-      processSearch(posts)
-    }
-
     // Process hidden by filter and post/thread hiding
     val retainedPosts: List<ChanPost> = postHideHelper.filterHiddenPosts(posts)
       .safeUnwrap { error ->
@@ -49,12 +43,9 @@ class PostsFilter(
         return emptyList()
       }
 
-    val searchQueryLog = query?.let { searchQuery -> "\"$searchQuery\"" } ?: "<null>"
-
     Logger.d(TAG, "originalPosts.size=${postsCount}, " +
       "retainedPosts.size=${retainedPosts.size}, " +
-      "chanDescriptor=$chanDescriptor, " +
-      "query=$searchQueryLog")
+      "chanDescriptor=$chanDescriptor")
 
     val indexedPosts: MutableList<PostIndexed> = ArrayList(retainedPosts.size)
 
@@ -76,38 +67,6 @@ class PostsFilter(
       Order.ACTIVITY -> Collections.sort(posts, THREAD_ACTIVITY_COMPARATOR)
       Order.BUMP -> {
         // no-op
-      }
-    }
-  }
-
-  private fun processSearch(posts: MutableList<ChanPost>) {
-    val lowerQuery = query?.toLowerCase(Locale.ENGLISH)
-      ?: return
-
-    var add: Boolean
-    val iterator = posts.iterator()
-
-    while (iterator.hasNext()) {
-      val chanPost = iterator.next()
-      add = false
-
-      if (chanPost.postComment.originalComment().toString().toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
-        add = true
-      } else if (chanPost.subject.toString().toLowerCase(Locale.ENGLISH).contains(lowerQuery)) {
-        add = true
-      } else if (chanPost.name?.toLowerCase(Locale.ENGLISH)?.contains(lowerQuery) == true) {
-        add = true
-      } else if (chanPost.postImages.isNotEmpty()) {
-        for (image in chanPost.postImages) {
-          if (image.filename != null && image.filename?.toLowerCase(Locale.ENGLISH)?.contains(lowerQuery) == true) {
-            add = true
-            break
-          }
-        }
-      }
-
-      if (!add) {
-        iterator.remove()
       }
     }
   }

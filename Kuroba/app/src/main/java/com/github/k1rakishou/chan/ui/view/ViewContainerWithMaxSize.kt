@@ -11,6 +11,7 @@ import androidx.core.view.marginEnd
 import androidx.core.view.marginStart
 import androidx.core.view.marginTop
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.ui.layout.PostPopupContainer
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.AndroidUtils
 import javax.inject.Inject
@@ -26,7 +27,7 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
   private var displayWidth: Int = 0
   private var displayHeight: Int = 0
 
-  var desiredWidth: Int = 0
+  var desiredWidth: Int = PostPopupContainer.MAX_WIDTH
     set(value) {
       field = value
       requestLayout()

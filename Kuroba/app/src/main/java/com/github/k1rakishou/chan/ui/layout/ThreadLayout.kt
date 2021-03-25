@@ -590,7 +590,7 @@ class ThreadLayout @JvmOverloads constructor(
       currentFocus.clearFocus()
     }
 
-    postPopupHelper.showPosts(threadDescriptor, postAdditionalData, postDescriptor, posts)
+    postPopupHelper.showRepliesPopup(threadDescriptor, postAdditionalData, postDescriptor, posts)
   }
 
   override fun hidePostsPopup() {
@@ -646,14 +646,6 @@ class ThreadLayout @JvmOverloads constructor(
 
   override fun selectPost(postDescriptor: PostDescriptor?) {
     threadListLayout.selectPost(postDescriptor)
-  }
-
-  override fun showSearch(show: Boolean) {
-    threadListLayout.openSearch(show)
-  }
-
-  override fun setSearchStatus(query: String?, setEmptyText: Boolean, hideKeyboard: Boolean) {
-    threadListLayout.setSearchStatus(query, setEmptyText, hideKeyboard)
   }
 
   override fun quote(post: ChanPost, withText: Boolean) {
@@ -889,7 +881,7 @@ class ThreadLayout @JvmOverloads constructor(
     return threadListLayout.currentSpanCount
   }
 
-  override fun getTopPostRepliesDataOrNull(): PostPopupHelper.RepliesData? {
+  override fun getTopPostRepliesDataOrNull(): PostPopupHelper.PostPopupData? {
     if (!::postPopupHelper.isInitialized) {
       return null
     }
@@ -1002,12 +994,6 @@ class ThreadLayout @JvmOverloads constructor(
       if (this.visible == Visible.THREAD) {
         threadListLayout.cleanup()
         postPopupHelper.popAll()
-
-        val currentChanDescriptor = presenter.currentChanDescriptor
-
-        if (currentChanDescriptor == null || currentChanDescriptor.isThreadDescriptor()) {
-          showSearch(false)
-        }
 
         showReplyButton(false)
         dismissSnackbar()

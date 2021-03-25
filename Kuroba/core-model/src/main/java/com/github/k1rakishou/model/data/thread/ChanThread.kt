@@ -99,7 +99,7 @@ class ChanThread(
     return lock.read { threadPosts }
   }
 
-  fun addOrUpdatePosts(newChanPosts: List<ChanPost>, cacheUpdateOptions: ChanCacheUpdateOptions): Boolean {
+  fun addOrUpdatePosts(newChanPosts: List<ChanPost>): Boolean {
     return lock.write {
       require(newChanPosts.isNotEmpty()) { "newPosts are empty!" }
 
@@ -156,7 +156,6 @@ class ChanThread(
         recalculatePostReplies()
       }
 
-      updateLastUpdateTime(cacheUpdateOptions)
       checkPostsConsistency()
 
       Logger.d(TAG, "Thread cache (${threadDescriptor}) Added ${addedPostsCount} new posts, " +
@@ -166,7 +165,7 @@ class ChanThread(
     }
   }
 
-  fun setOrUpdateOriginalPost(newChanOriginalPost: ChanOriginalPost, cacheUpdateOptions: ChanCacheUpdateOptions) {
+  fun setOrUpdateOriginalPost(newChanOriginalPost: ChanOriginalPost) {
     lock.write {
       val oldPostDescriptor = threadPosts.firstOrNull()?.postDescriptor
       val newPostDescriptor = newChanOriginalPost.postDescriptor
@@ -204,7 +203,6 @@ class ChanThread(
         threadPosts.sortWith(POSTS_COMPARATOR)
       }
 
-      updateLastUpdateTime(cacheUpdateOptions)
       checkPostsConsistency()
     }
   }
@@ -261,7 +259,7 @@ class ChanThread(
     }
   }
 
-  private fun updateLastUpdateTime(cacheUpdateOptions: ChanCacheUpdateOptions) {
+  fun updateLastUpdateTime(cacheUpdateOptions: ChanCacheUpdateOptions) {
     lock.write {
       if (!cacheUpdateOptions.canUpdate(lastUpdateTime)) {
         return@write
@@ -375,6 +373,13 @@ class ChanThread(
   }
 
   fun iteratePostsOrdered(iterator: (ChanPost) -> Unit) {
+    iteratePostsOrderedWhile { chanPost ->
+      iterator(chanPost)
+      return@iteratePostsOrderedWhile true
+    }
+  }
+
+  fun iteratePostsOrderedWhile(iterator: (ChanPost) -> Boolean) {
     lock.read {
       if (threadPosts.isEmpty()) {
         return@read
@@ -384,7 +389,9 @@ class ChanThread(
         val chanPost = threadPosts.getOrNull(index)
           ?: return@read
 
-        iterator(chanPost)
+        if (!iterator(chanPost)) {
+          return@read
+        }
       }
     }
   }

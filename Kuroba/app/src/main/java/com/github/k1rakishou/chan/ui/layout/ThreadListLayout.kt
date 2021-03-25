@@ -18,7 +18,6 @@ package com.github.k1rakishou.chan.ui.layout
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
-import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -30,7 +29,6 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
-import android.widget.TextView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration
@@ -74,12 +72,9 @@ import com.github.k1rakishou.chan.ui.view.post_thumbnail.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -271,7 +266,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private val gridModeSpaceItemDecoration = GridModeSpaceItemDecoration()
 
   private lateinit var replyLayout: ReplyLayout
-  private lateinit var searchStatus: TextView
   private lateinit var recyclerView: RecyclerView
   private lateinit var postAdapter: PostAdapter
 
@@ -294,7 +288,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private var threadListLayoutCallback: ThreadListLayoutCallback? = null
   private var boardPostViewMode: PostViewMode? = null
   private var spanCount = 2
-  private var searchOpen = false
   private var prevLastPostNo = 0L
   private var hat: Bitmap? = null
 
@@ -341,7 +334,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     // View binding
     replyLayout = findViewById(R.id.reply)
-    searchStatus = findViewById(R.id.search_status)
     recyclerView = findViewById(R.id.recycler_view)
 
     val params = replyLayout.layoutParams as LayoutParams
@@ -371,12 +363,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
 
     setBackgroundColorFast(backColor)
-
     replyLayout.setBackgroundColorFast(themeEngine.chanTheme.backColor)
-    searchStatus.setBackgroundColorFast(themeEngine.chanTheme.backColor)
-
-    searchStatus.setTextColor(themeEngine.chanTheme.textColorSecondary)
-    searchStatus.typeface = themeEngine.chanTheme.mainFont
   }
 
   fun onCreate(
@@ -412,12 +399,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     attachToolbarScroll(true)
 
     threadListLayoutCallback.toolbar?.addToolbarHeightUpdatesCallback(this)
-
-    // Wait a little bit so that the toolbar has it's updated height (which depends on the window
-    // insets)
-    post {
-      searchStatus.updatePaddings(top = searchStatus.paddingTop + toolbarHeight())
-    }
   }
 
   fun onDestroy() {
@@ -771,23 +752,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
   }
 
-  override fun searchStatusHeight(): Int {
-    if (!searchOpen) {
-      return 0
-    }
-
-    if (searchStatus.height > 0) {
-      return searchStatus.height - searchStatus.totalPaddingTop
-    }
-
-    searchStatus.measure(
-      MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-      MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-    )
-
-    return searchStatus.measuredHeight - searchStatus.totalPaddingTop
-  }
-
   override fun currentFocusedController(): ThreadPresenter.CurrentFocusedController {
     return threadPresenter?.currentFocusedController()
       ?: ThreadPresenter.CurrentFocusedController.None
@@ -857,89 +821,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
 
     threadListLayoutCallback?.replyLayoutOpen(open)
-    attachToolbarScroll(!open && !searchOpen)
+    attachToolbarScroll(!open)
   }
 
   fun showError(error: String?) {
     postAdapter.showError(error)
-  }
-
-  fun openSearch(open: Boolean) {
-    if (currentChanDescriptorOrNull() == null || searchOpen == open) {
-      return
-    }
-
-    searchOpen = open
-    searchStatus.measure(
-      MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-      MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-    )
-
-    val height = searchStatus.measuredHeight
-    val viewPropertyAnimator = searchStatus.animate()
-
-    viewPropertyAnimator.setListener(null)
-    viewPropertyAnimator.interpolator = DecelerateInterpolator(2f)
-    viewPropertyAnimator.duration = 600
-
-    val topPosition = topAdapterPosition
-
-    if (open) {
-      searchStatus.visibility = VISIBLE
-      searchStatus.translationY = -height.toFloat()
-
-      viewPropertyAnimator.translationY(0f)
-      viewPropertyAnimator.setListener(object : AnimatorListenerAdapter() {
-        override fun onAnimationEnd(animation: Animator) {
-          setRecyclerViewPadding()
-
-          searchStatus.setText(R.string.search_empty)
-          attachToolbarScroll(!open && !replyOpen)
-
-          if (topPosition <= 0) {
-            recyclerView.post {
-              recyclerView.scrollToPosition(0)
-            }
-          }
-        }
-      })
-    } else {
-      searchStatus.translationY = 0f
-
-      viewPropertyAnimator.translationY(-height.toFloat())
-      viewPropertyAnimator.setListener(object : AnimatorListenerAdapter() {
-        override fun onAnimationEnd(animation: Animator) {
-          viewPropertyAnimator.setListener(null)
-          searchStatus.visibility = GONE
-
-          setRecyclerViewPadding()
-          threadListLayoutCallback?.toolbar?.closeSearch()
-
-          attachToolbarScroll(!open && !replyOpen)
-        }
-      })
-    }
-  }
-
-  @SuppressLint("StringFormatMatches")
-  //android studio doesn't like the nested getQuantityString and messes up, but nothing is wrong
-  fun setSearchStatus(query: String?, setEmptyText: Boolean, hideKeyboard: Boolean) {
-    if (hideKeyboard) {
-      AndroidUtils.hideKeyboard(this)
-    }
-
-    if (setEmptyText) {
-      searchStatus.setText(R.string.search_empty)
-    }
-
-    if (query != null) {
-      val size = displayingPostDescriptors.size
-      searchStatus.text = getString(
-        R.string.search_results,
-        getQuantityString(R.plurals.posts, size, size),
-        query
-      )
-    }
   }
 
   fun canChildScrollUp(): Boolean {
@@ -961,21 +847,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       ?: return true
     val genericPostCellChildView = genericPostCellView.getChildPostCellView()
       ?: return true
-
-    if (searchOpen) {
-      val searchExtraHeight = findViewById<View>(R.id.search_status).height
-
-      return if (boardPostViewMode == PostViewMode.LIST) {
-        genericPostCellView.top != searchExtraHeight
-      } else {
-        if (genericPostCellChildView is PostStubCell) {
-          // PostStubCell does not have grid_card_margin
-          genericPostCellView.top != searchExtraHeight + dp(1f)
-        } else {
-          genericPostCellView.top != getDimen(R.dimen.grid_card_margin) + dp(1f) + searchExtraHeight
-        }
-      }
-    }
 
     when (boardPostViewMode) {
       PostViewMode.LIST -> {
@@ -1016,10 +887,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     replyLayout.cleanup()
 
     openReply(false)
-
-    if (currentChanDescriptorOrNull() is ThreadDescriptor) {
-      openSearch(false)
-    }
 
     prevLastPostNo = 0
     noParty()
@@ -1142,7 +1009,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     val toolbar = threadListLayoutCallback?.toolbar
       ?: return
 
-    if (attach && !searchOpen && !replyOpen) {
+    if (attach && !replyOpen) {
       toolbar.attachRecyclerViewScrollStateListener(recyclerView)
     } else {
       toolbar.detachRecyclerViewScrollStateListener(recyclerView)
@@ -1162,7 +1029,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     val toolbar = threadListLayoutCallback?.toolbar
       ?: return
 
-    if (searchOpen || replyOpen) {
+    if (replyOpen) {
       // force toolbar to show
       toolbar.collapseShow(true)
     } else {
@@ -1232,7 +1099,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   override fun onDragStarted() {
-    if (!canToolbarCollapse() || replyOpen || searchOpen) {
+    if (!canToolbarCollapse() || replyOpen) {
       return
     }
 
@@ -1248,7 +1115,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     //  manually after we are down scrolling via Fast scroller.
     onRecyclerViewScrolled()
 
-    if (!canToolbarCollapse() || replyOpen || searchOpen) {
+    if (!canToolbarCollapse() || replyOpen) {
       return
     }
 
@@ -1306,7 +1173,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       defaultPadding
     }
 
-    var recyclerTop = defaultPadding + toolbarHeight()
+    val recyclerTop = defaultPadding + toolbarHeight()
     var recyclerBottom = defaultPadding
     val keyboardOpened = globalWindowInsetsManager.isKeyboardOpened
 
@@ -1327,17 +1194,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       } else {
         globalWindowInsetsManager.bottom() + getDimen(R.dimen.bottom_nav_view_height)
       }
-    }
-
-    if (searchOpen) {
-      searchStatus.measure(
-        MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-        MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-      )
-
-      // search status has built-in padding for the toolbar height
-      recyclerTop += searchStatus.measuredHeight
-      recyclerTop -= toolbarHeight()
     }
 
     recyclerView.setPadding(

@@ -87,8 +87,7 @@ class ChanThreadsCache(
    * */
   fun putManyCatalogPostsIntoCache(
     parsedPosts: List<ChanOriginalPost>,
-    cacheOptions: ChanCacheOptions,
-    cacheUpdateOptions: ChanCacheUpdateOptions
+    cacheOptions: ChanCacheOptions
   ): List<ChanOriginalPost> {
     if (parsedPosts.isEmpty()) {
       return emptyList()
@@ -115,7 +114,9 @@ class ChanThreadsCache(
           )
         }
 
-        chanThreads[threadDescriptor]!!.setOrUpdateOriginalPost(chanOriginalPost, cacheUpdateOptions)
+        chanThreads[threadDescriptor]!!.setOrUpdateOriginalPost(chanOriginalPost)
+        // Do not update "lastUpdateTime" here because it will break catalog thread previewing
+
         updatedPosts += chanThreads[threadDescriptor]!!.getOriginalPost()
       }
 
@@ -161,10 +162,12 @@ class ChanThreadsCache(
       }
 
       if (cacheOptions.canStoreInMemory()) {
-        chanThreads[threadDescriptor]!!.addOrUpdatePosts(parsedPosts, cacheUpdateOptions)
+        chanThreads[threadDescriptor]!!.addOrUpdatePosts(parsedPosts)
       } else if (firstPost is ChanOriginalPost) {
-        chanThreads[threadDescriptor]!!.setOrUpdateOriginalPost(firstPost, cacheUpdateOptions)
+        chanThreads[threadDescriptor]!!.setOrUpdateOriginalPost(firstPost)
       }
+
+      chanThreads[threadDescriptor]!!.updateLastUpdateTime(cacheUpdateOptions)
 
       return@write chanThreads[threadDescriptor]!!.getAllPostsForDatabasePersisting()
     }

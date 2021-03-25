@@ -232,6 +232,10 @@ class ThreadCellData(
     return postCellDataList.get(getPostPosition(index))
   }
 
+  fun iteratePostCellDataList(iterator: (PostCellData) -> Unit) {
+    postCellDataList.forEach(iterator)
+  }
+
   fun getPostCellDataIndex(postDescriptor: PostDescriptor): Int? {
     val index = postCellDataList
       .indexOfFirst { postCellData -> postCellData.postDescriptor == postDescriptor }

@@ -45,7 +45,6 @@ import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoC
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
-import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
@@ -407,7 +406,7 @@ class BrowseController(
 
   private fun searchClicked(item: ToolbarMenuItem) {
     val presenter = threadLayout.presenter
-    if (!presenter.isBound) {
+    if (!presenter.isBound || chanDescriptor == null) {
       return
     }
 
@@ -426,7 +425,7 @@ class BrowseController(
         }
       })
 
-    (navigationController as ToolbarNavigationController).showSearch()
+    threadLayout.popupHelper.showSearchPopup(chanDescriptor!!)
   }
 
   private fun reloadClicked(item: ToolbarMenuItem) {
@@ -808,13 +807,6 @@ class BrowseController(
     super.onGainedFocus(nowFocused)
     check(nowFocused == threadControllerType) { "Unexpected controllerType: $nowFocused" }
 
-    val searchQuery = threadLayout.presenter.searchQuery
-    if (searchQuery != null) {
-      toolbar!!.openSearchWithCallback {
-        toolbar!!.searchInput(searchQuery)
-      }
-    }
-
     if (chanDescriptor != null) {
       historyNavigationManager.moveNavElementToTop(chanDescriptor!!)
     }
@@ -833,7 +825,6 @@ class BrowseController(
     private const val ACTION_SCROLL_TO_BOTTOM = 908
     private const val ACTION_OPEN_THREAD_BY_ID = 909
     private const val ACTION_OPEN_THREAD_BY_URL = 910
-    // TODO(KurobaEx): add action "open is a separate (new?) tab"
 
     private const val SORT_MODE_BUMP = 1000
     private const val SORT_MODE_REPLY = 1001

@@ -36,7 +36,6 @@ import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.ui.controller.ImageViewerController.ImageViewerCallback
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
-import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController.ToolbarSearchCallback
 import com.github.k1rakishou.chan.ui.helper.OpenExternalThreadHelper
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage
 import com.github.k1rakishou.chan.ui.helper.ShowPostsInExternalThreadHelper
@@ -67,7 +66,6 @@ abstract class ThreadController(
   ThreadLayoutCallback,
   ImageViewerCallback,
   OnRefreshListener,
-  ToolbarSearchCallback,
   SlideChangeListener,
   ApplicationVisibilityListener,
   ThemeEngine.ThemeChangesListener,
@@ -334,18 +332,6 @@ abstract class ThreadController(
     }
 
     swipeRefreshLayout.isRefreshing = false
-  }
-
-  override fun onSearchVisibilityChanged(visible: Boolean) {
-    serializedCoroutineExecutor.post {
-      threadLayout.presenter.onSearchVisibilityChanged(visible)
-    }
-  }
-
-  override fun onSearchEntered(entered: String) {
-    serializedCoroutineExecutor.post {
-      threadLayout.presenter.onSearchEntered(entered)
-    }
   }
 
   override fun openFilterForType(type: FilterType, filterText: String?) {

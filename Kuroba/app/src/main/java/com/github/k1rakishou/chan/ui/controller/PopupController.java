@@ -26,18 +26,14 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController;
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController;
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController;
-import com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize;
 
 import org.jetbrains.annotations.NotNull;
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 
 public class PopupController
         extends Controller
         implements View.OnClickListener {
-    private static final int DESIRED_WIDTH = dp(800);
-
     private FrameLayout container;
 
     @Override
@@ -54,9 +50,6 @@ public class PopupController
         super.onCreate();
 
         view = inflate(context, R.layout.layout_controller_popup);
-        ViewContainerWithMaxSize viewContainerWithMaxSize = view.findViewById(R.id.width_constraint_container);
-        viewContainerWithMaxSize.setDesiredWidth(DESIRED_WIDTH);
-
         FrameLayout topView = view.findViewById(R.id.top_view);
         topView.setOnClickListener(this);
         container = view.findViewById(R.id.container);

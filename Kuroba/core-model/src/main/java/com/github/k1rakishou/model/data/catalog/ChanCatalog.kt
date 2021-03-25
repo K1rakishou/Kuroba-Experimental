@@ -26,6 +26,13 @@ class ChanCatalog(
   }
 
   fun iteratePostsOrdered(iterator: (ChanOriginalPost) -> Unit) {
+    iteratePostsOrderedWhile { chanOriginalPost ->
+      iterator(chanOriginalPost)
+      return@iteratePostsOrderedWhile true
+    }
+  }
+
+  fun iteratePostsOrderedWhile(iterator: (ChanOriginalPost) -> Boolean) {
     lock.read {
       if (originalPosts.isEmpty()) {
         return@read
@@ -35,7 +42,9 @@ class ChanCatalog(
         val chanPost = originalPosts.getOrNull(index)
           ?: return@read
 
-        iterator(chanPost)
+        if (!iterator(chanPost)) {
+          return@read
+        }
       }
     }
   }

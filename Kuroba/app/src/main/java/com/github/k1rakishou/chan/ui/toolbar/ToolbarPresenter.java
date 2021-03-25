@@ -108,14 +108,6 @@ public class ToolbarPresenter {
         callback.containerSetTransitionProgress(progress);
     }
 
-    void openSearch() {
-        openSearch(null, null);
-    }
-
-    void openSearch(@Nullable ToolbarContainer.ToolbarTransitionAnimationListener listener) {
-        openSearch(null, listener);
-    }
-
     void openSearch(
             @Nullable String input,
             @Nullable ToolbarContainer.ToolbarTransitionAnimationListener listener
