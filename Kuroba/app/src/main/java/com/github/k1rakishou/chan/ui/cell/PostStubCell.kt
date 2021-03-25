@@ -172,8 +172,8 @@ class PostStubCell : RelativeLayout, PostCellInterface, View.OnClickListener, Th
 
     ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.postTitle, title)
 
-    val isGridOrStagger = (postCellData.boardPostViewMode === ChanSettings.PostViewMode.GRID
-      || postCellData.boardPostViewMode === ChanSettings.PostViewMode.STAGGER)
+    val isGridOrStagger = (postCellData.boardPostViewMode === ChanSettings.BoardPostViewMode.GRID
+      || postCellData.boardPostViewMode === ChanSettings.BoardPostViewMode.STAGGER)
 
     divider.visibility = if (isGridOrStagger) {
       GONE

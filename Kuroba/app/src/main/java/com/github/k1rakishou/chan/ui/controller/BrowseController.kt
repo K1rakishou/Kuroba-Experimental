@@ -22,7 +22,7 @@ import android.view.animation.Animation
 import android.view.animation.RotateAnimation
 import android.widget.Toast
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.ChanSettings.PostViewMode
+import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
@@ -253,9 +253,9 @@ class BrowseController(
     }
 
     val modeStringId = when (ChanSettings.boardPostViewMode.get()) {
-      PostViewMode.LIST -> R.string.action_switch_catalog_grid
-      PostViewMode.GRID -> R.string.action_switch_catalog_stagger
-      PostViewMode.STAGGER -> R.string.action_switch_board
+      BoardPostViewMode.LIST -> R.string.action_switch_catalog_grid
+      BoardPostViewMode.GRID -> R.string.action_switch_catalog_stagger
+      BoardPostViewMode.STAGGER -> R.string.action_switch_board
     }
 
     overflowBuilder
@@ -456,21 +456,21 @@ class BrowseController(
     var postViewMode = ChanSettings.boardPostViewMode.get()
 
     postViewMode = when (postViewMode) {
-      PostViewMode.LIST -> PostViewMode.GRID
-      PostViewMode.GRID -> PostViewMode.STAGGER
-      PostViewMode.STAGGER -> PostViewMode.LIST
+      BoardPostViewMode.LIST -> BoardPostViewMode.GRID
+      BoardPostViewMode.GRID -> BoardPostViewMode.STAGGER
+      BoardPostViewMode.STAGGER -> BoardPostViewMode.LIST
     }
 
     ChanSettings.boardPostViewMode.set(postViewMode)
 
     val viewModeText = when (postViewMode) {
-      PostViewMode.LIST -> R.string.action_switch_catalog_grid
-      PostViewMode.GRID -> R.string.action_switch_catalog_stagger
-      PostViewMode.STAGGER -> R.string.action_switch_board
+      BoardPostViewMode.LIST -> R.string.action_switch_catalog_grid
+      BoardPostViewMode.GRID -> R.string.action_switch_catalog_stagger
+      BoardPostViewMode.STAGGER -> R.string.action_switch_board
     }
 
     item.text = getString(viewModeText)
-    threadLayout.setBoardPostViewMode(postViewMode, reloadPosts = true)
+    threadLayout.setBoardPostViewMode(postViewMode)
   }
 
   private fun openBrowserClicked(item: ToolbarMenuSubItem) {

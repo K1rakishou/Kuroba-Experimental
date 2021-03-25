@@ -19,7 +19,7 @@ package com.github.k1rakishou.chan.ui.adapter
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.github.k1rakishou.ChanSettings.PostViewMode
+import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
@@ -309,15 +309,14 @@ class PostAdapter(
     notifyDataSetChanged()
   }
 
-  fun setBoardPostViewMode(boardPostViewMode: PostViewMode) {
+  fun setBoardPostViewMode(boardPostViewMode: BoardPostViewMode) {
     threadCellData.setBoardPostViewMode(boardPostViewMode)
-    // No need to call notifyDataSetChanged() since we should reload posts from the cache anyway
+    notifyDataSetChanged()
   }
 
   fun setCompact(compact: Boolean) {
     threadCellData.setCompact(compact)
-    // No need to call notifyDataSetChanged() since we are doing this now BEFORE the posts are added
-    // into the adapter and BEFORE the initial notifyDataSetChanged().
+    notifyDataSetChanged()
   }
 
   fun getScrollPosition(displayPosition: Int): Int {

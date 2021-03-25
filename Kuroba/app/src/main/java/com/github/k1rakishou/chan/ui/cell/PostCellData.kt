@@ -33,7 +33,7 @@ data class PostCellData(
   var postSelected: Boolean,
   private var markedPostNo: Long?,
   var showDivider: Boolean,
-  var boardPostViewMode: ChanSettings.PostViewMode,
+  var boardPostViewMode: ChanSettings.BoardPostViewMode,
   var boardPostsSortOrder: PostsFilter.Order,
   var neverShowPages: Boolean,
   var compact: Boolean,
@@ -273,7 +273,7 @@ data class PostCellData(
   }
 
   private fun calculateCommentTextInternal(): CharSequence {
-    if (boardPostViewMode == ChanSettings.PostViewMode.LIST) {
+    if (boardPostViewMode == ChanSettings.BoardPostViewMode.LIST) {
       if (threadMode || post.postComment.comment().length <= COMMENT_MAX_LENGTH_LIST) {
         return post.postComment.comment()
       }
@@ -284,7 +284,7 @@ data class PostCellData(
     val commentText = post.postComment.comment()
     var commentMaxLength = COMMENT_MAX_LENGTH_GRID
 
-    if (boardPostViewMode == ChanSettings.PostViewMode.STAGGER) {
+    if (boardPostViewMode == ChanSettings.BoardPostViewMode.STAGGER) {
       val spanCount = postCellCallback!!.currentSpanCount()
 
       // The higher the spanCount the lower the commentMaxLength

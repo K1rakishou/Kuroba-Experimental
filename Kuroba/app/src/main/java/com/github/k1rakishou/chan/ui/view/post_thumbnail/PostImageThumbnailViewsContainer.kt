@@ -29,6 +29,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 ) : FrameLayout(context, attributeSet, defAttrStyle) {
   private var thumbnailViews: MutableList<PostImageThumbnailViewContract>? = null
   private var prevChanPostImages: MutableList<ChanPostImage>? = null
+  private var prevBoardPostViewMode: ChanSettings.BoardPostViewMode? = null
   private var postCellThumbnailCallbacks: PostCellThumbnailCallbacks? = null
   private var horizPaddingPx = 0
 
@@ -56,13 +57,15 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     if (::thumbnailContainer.isInitialized
       && thumbnailViews != null
       && this.prevChanPostImages != null
-      && this.prevChanPostImages == postCellData.postImages) {
+      && this.prevChanPostImages == postCellData.postImages
+      && this.prevBoardPostViewMode == postCellData.boardPostViewMode) {
       // Images are already bound and haven't changed since the last bind, do nothing
       return
     }
 
     this.postCellThumbnailCallbacks = postCellThumbnailCallbacks
     this.horizPaddingPx = horizPaddingPx
+    this.prevBoardPostViewMode = postCellData.boardPostViewMode
 
     if (childCount != 0) {
       removeAllViews()

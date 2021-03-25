@@ -31,7 +31,7 @@ class ThreadCellData(
 
   var postViewMode: PostCellData.PostViewMode = PostCellData.PostViewMode.Normal
   var defaultIsCompact: Boolean = false
-  var defaultBoardPostViewMode: ChanSettings.PostViewMode = ChanSettings.boardPostViewMode.get()
+  var defaultBoardPostViewMode: ChanSettings.BoardPostViewMode = ChanSettings.boardPostViewMode.get()
   var defaultMarkedNo: Long? = null
   var defaultNeverShowPages: Boolean = ChanSettings.neverShowPages.get()
   var defaultSearchQuery = PostCellData.SearchQuery()
@@ -148,19 +148,18 @@ class ThreadCellData(
     }
   }
 
-  fun setBoardPostViewMode(boardPostViewMode: ChanSettings.PostViewMode) {
+  fun setBoardPostViewMode(boardPostViewMode: ChanSettings.BoardPostViewMode) {
     defaultBoardPostViewMode = boardPostViewMode
 
     postCellDataList.forEach { postCellData ->
-      if (postCellData.boardPostViewMode != boardPostViewMode) {
-        postCellData.boardPostViewMode = boardPostViewMode
-        postCellData.resetCommentTextCache()
-      }
+      postCellData.boardPostViewMode = boardPostViewMode
+      postCellData.resetCommentTextCache()
     }
   }
 
   fun setCompact(compact: Boolean) {
     defaultIsCompact = compact
+
     postCellDataList.forEach { postCellData ->
       postCellData.compact = compact
       postCellData.resetCatalogRepliesTextCache()

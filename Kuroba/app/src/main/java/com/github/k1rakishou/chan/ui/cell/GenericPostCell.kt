@@ -5,7 +5,7 @@ import android.os.SystemClock
 import android.view.View
 import android.widget.FrameLayout
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.ChanSettings.PostViewMode
+import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.view.post_thumbnail.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -101,7 +101,7 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
     checkNotNull(postAlignmentMode) { "postAlignmentMode is null" }
 
     when (postViewMode) {
-      PostViewMode.LIST -> {
+      BoardPostViewMode.LIST -> {
         if (post.postImages.size <= 1) {
           when (postAlignmentMode) {
             ChanSettings.PostThumbnailAlignmentMode.AlignLeft -> {
@@ -115,8 +115,8 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
           return R.layout.cell_post_multiple_thumbnails
         }
       }
-      PostViewMode.GRID,
-      PostViewMode.STAGGER -> {
+      BoardPostViewMode.GRID,
+      BoardPostViewMode.STAGGER -> {
         return R.layout.cell_post_card
       }
     }

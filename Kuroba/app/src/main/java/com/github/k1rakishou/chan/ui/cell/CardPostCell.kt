@@ -23,7 +23,7 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.ChanSettings.PostViewMode
+import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
@@ -94,7 +94,7 @@ class CardPostCell : ColorizableCardView,
       return false
     }
 
-    return ChanSettings.boardPostViewMode.get() == PostViewMode.GRID
+    return ChanSettings.boardPostViewMode.get() == BoardPostViewMode.GRID
       && postCellData.postCellCallback?.currentSpanCount() != 1
   }
 

@@ -28,7 +28,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.ChanSettings.PostViewMode
+import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.Debouncer
@@ -346,8 +346,8 @@ class ThreadLayout @JvmOverloads constructor(
     threadListLayout.gainedFocus(nowFocused, visible == Visible.THREAD)
   }
 
-  fun setBoardPostViewMode(boardPostViewMode: PostViewMode, reloadPosts: Boolean = false) {
-    threadListLayout.setBoardPostViewMode(boardPostViewMode, reloadPosts)
+  fun setBoardPostViewMode(boardPostViewMode: BoardPostViewMode) {
+    threadListLayout.setBoardPostViewMode(boardPostViewMode)
   }
 
   override fun replyLayoutOpen(open: Boolean) {

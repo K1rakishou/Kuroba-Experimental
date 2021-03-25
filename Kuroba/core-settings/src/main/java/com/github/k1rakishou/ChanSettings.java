@@ -158,14 +158,14 @@ public class ChanSettings {
         }
     }
 
-    public enum PostViewMode implements OptionSettingItem {
+    public enum BoardPostViewMode implements OptionSettingItem {
         LIST("list"),
         GRID("grid"),
         STAGGER("stagger");
 
         String name;
 
-        PostViewMode(String name) {
+        BoardPostViewMode(String name) {
             this.name = name;
         }
 
@@ -300,7 +300,7 @@ public class ChanSettings {
     public static BooleanSetting transparencyOn;
 
     // Set elsewhere in the application
-    public static OptionsSetting<PostViewMode> boardPostViewMode;
+    public static OptionsSetting<BoardPostViewMode> boardPostViewMode;
     public static StringSetting boardOrder;
     //endregion
 
@@ -490,7 +490,7 @@ public class ChanSettings {
             transparencyOn = new BooleanSetting(provider, "image_transparency_on", false);
 
             //Elsewhere
-            boardPostViewMode = new OptionsSetting<>(provider, "preference_board_view_mode", PostViewMode.class, PostViewMode.LIST);
+            boardPostViewMode = new OptionsSetting<>(provider, "preference_board_view_mode", BoardPostViewMode.class, BoardPostViewMode.LIST);
             boardOrder = new StringSetting(provider, "preference_board_order", chanSettingsInfo.getDefaultFilterOrderName());
             //endregion
 

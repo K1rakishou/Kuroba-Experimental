@@ -95,7 +95,7 @@ open class ViewThreadController(
   override fun onCreate() {
     super.onCreate()
 
-    threadLayout.setBoardPostViewMode(ChanSettings.PostViewMode.LIST)
+    threadLayout.setBoardPostViewMode(ChanSettings.BoardPostViewMode.LIST)
     view.setBackgroundColor(themeEngine.chanTheme.backColor)
     navigation.hasDrawer = true
     navigation.scrollableTitle = ChanSettings.scrollingTextForThreadTitles.get()
