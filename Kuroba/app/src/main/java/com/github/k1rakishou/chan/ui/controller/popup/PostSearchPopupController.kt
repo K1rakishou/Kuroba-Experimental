@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.ui.controller.popup
 
 import android.content.Context
+import android.util.LruCache
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -126,17 +127,11 @@ class PostSearchPopupController(
   }
 
   private fun getLastQuery(chanDescriptor: ChanDescriptor): String {
-    return when (chanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> lastQueryCache[0]
-      is ChanDescriptor.ThreadDescriptor -> lastQueryCache[1]
-    }
+    return lastQueryCache.get(chanDescriptor) ?: ""
   }
 
   private fun storeQuery(chanDescriptor: ChanDescriptor, query: String) {
-    when (chanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> lastQueryCache[0] = query
-      is ChanDescriptor.ThreadDescriptor -> lastQueryCache[1] = query
-    }
+    lastQueryCache.put(chanDescriptor, query)
   }
 
   suspend fun CoroutineScope.onQueryUpdated(chanDescriptor: ChanDescriptor, query: String) {
@@ -156,12 +151,12 @@ class PostSearchPopupController(
         }
 
         if (query.length < MIN_QUERY_LENGTH) {
-          resultPosts += PostIndexed(chanPost, postIndex++)
+          resultPosts += PostIndexed(chanPost.deepCopy(), postIndex++)
           return@iteratePostsWhile true
         }
 
         if (matchesQuery(chanPost, searchQuery)) {
-          resultPosts += PostIndexed(chanPost, postIndex++)
+          resultPosts += PostIndexed(chanPost.deepCopy(), postIndex++)
           return@iteratePostsWhile true
         }
 
@@ -181,6 +176,7 @@ class PostSearchPopupController(
       totalFoundTextView.text = context.getString(R.string.search_found_count, resultPosts.size)
     }
 
+    repliesAdapter.setSearchQuery(PostCellData.SearchQuery(query, MIN_QUERY_LENGTH))
     repliesAdapter.setOrUpdateData(resultPosts, themeEngine.chanTheme)
 
     postsView.post {
@@ -204,14 +200,6 @@ class PostSearchPopupController(
       return true
     }
 
-    if (chanPost.postImages.isNotEmpty()) {
-      for (image in chanPost.postImages) {
-        if (image.filename?.contains(query, ignoreCase = true) == true) {
-          return true
-        }
-      }
-    }
-
     return false
   }
 
@@ -221,9 +209,9 @@ class PostSearchPopupController(
   ) : PostPopupHelper.PostPopupData
 
   companion object {
-    private const val MIN_QUERY_LENGTH = 2
+    const val MIN_QUERY_LENGTH = 2
 
-    private val lastQueryCache = Array(2) { "" }
+    private val lastQueryCache = LruCache<ChanDescriptor, String>(128)
   }
 
 }

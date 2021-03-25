@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.core.base.RecalculatableLazy
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.SpannableHelper
 import com.github.k1rakishou.common.ellipsizeEnd
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed
@@ -40,7 +41,8 @@ data class PostCellData(
   var theme: ChanTheme,
   var filterHash: Int,
   var filterHighlightedColor: Int,
-  var postViewMode: PostViewMode
+  var postViewMode: PostViewMode,
+  var searchQuery: SearchQuery
 ) {
   var postCellCallback: PostCellInterface.PostCellCallback? = null
 
@@ -109,6 +111,11 @@ data class PostCellData(
     _commentText.resetValue()
   }
 
+  fun resetPostTitleCache() {
+    postTitlePrecalculated = null
+    _postTitle.resetValue()
+  }
+
   fun resetCatalogRepliesTextCache() {
     catalogRepliesTextPrecalculated = null
     _catalogRepliesText.resetValue()
@@ -142,7 +149,8 @@ data class PostCellData(
       theme = theme,
       filterHash = filterHash,
       filterHighlightedColor = filterHighlightedColor,
-      postViewMode = postViewMode
+      postViewMode = postViewMode,
+      searchQuery = searchQuery
     ).also { newPostCellData ->
       newPostCellData.postCellCallback = postCellCallback
       newPostCellData.detailsSizePxPrecalculated = detailsSizePxPrecalculated
@@ -169,7 +177,17 @@ data class PostCellData(
     }
 
     if (post.subject.isNotNullNorEmpty()) {
-      titleParts.add(post.subject!!)
+      val postSubject = SpannableString.valueOf(post.subject!!)
+
+      SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
+        inputQueries = listOf(searchQuery.query),
+        spannableString = postSubject,
+        color = theme.accentColor,
+        removePrevSpans = true,
+        minQueryLength = searchQuery.queryMinValidLength
+      )
+
+      titleParts.add(postSubject)
       titleParts.add("\n")
     }
 
@@ -241,6 +259,20 @@ data class PostCellData(
   }
 
   private fun calculateCommentText(): CharSequence {
+    val commentText = SpannableString.valueOf(calculateCommentTextInternal())
+
+    SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
+      inputQueries = listOf(searchQuery.query),
+      spannableString = commentText,
+      color = theme.accentColor,
+      removePrevSpans = true,
+      minQueryLength = searchQuery.queryMinValidLength
+    )
+
+    return commentText
+  }
+
+  private fun calculateCommentTextInternal(): CharSequence {
     if (boardPostViewMode == ChanSettings.PostViewMode.LIST) {
       if (threadMode || post.postComment.comment().length <= COMMENT_MAX_LENGTH_LIST) {
         return post.postComment.comment()
@@ -356,6 +388,10 @@ data class PostCellData(
 
       return false
     }
+  }
+
+  data class SearchQuery(val query: String = "", val queryMinValidLength: Int = 0) {
+    fun isEmpty(): Boolean = query.isEmpty()
   }
 
   companion object {

@@ -768,3 +768,11 @@ suspend fun OkHttpClient.readResponseAsString(request: Request): ModularResult<S
 fun MotionEvent.isActionUpOrCancel(): Boolean {
   return actionMasked == MotionEvent.ACTION_UP || actionMasked == MotionEvent.ACTION_CANCEL
 }
+
+fun CharSequence?.copy(): CharSequence? {
+  if (this == null) {
+    return null
+  }
+
+  return SpannableString(this)
+}

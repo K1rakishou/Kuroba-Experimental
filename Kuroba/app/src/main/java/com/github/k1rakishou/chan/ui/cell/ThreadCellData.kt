@@ -34,6 +34,7 @@ class ThreadCellData(
   var defaultBoardPostViewMode: ChanSettings.PostViewMode = ChanSettings.boardPostViewMode.get()
   var defaultMarkedNo: Long? = null
   var defaultNeverShowPages: Boolean = ChanSettings.neverShowPages.get()
+  var defaultSearchQuery = PostCellData.SearchQuery()
 
   var defaultShowDividerFunc = { postIndex: Int, totalPostsCount: Int -> true }
   var defaultStubFunc = { postDescriptor: PostDescriptor -> postFilterManager.getFilterStub(postDescriptor) }
@@ -109,7 +110,8 @@ class ThreadCellData(
         neverShowPages = defaultNeverShowPages,
         stub = defaultStubFunc.invoke(postDescriptor),
         filterHash = postFilterManager.getFilterHash(postDescriptor),
-        filterHighlightedColor = postFilterManager.getFilterHighlightedColor(postDescriptor)
+        filterHighlightedColor = postFilterManager.getFilterHighlightedColor(postDescriptor),
+        searchQuery = defaultSearchQuery
       )
 
       postCellData.postCellCallback = postCellCallback
@@ -135,6 +137,15 @@ class ThreadCellData(
     lastSeenIndicatorPosition = -1
     defaultMarkedNo = null
     error = null
+  }
+
+  fun setSearchQuery(searchQuery: PostCellData.SearchQuery) {
+    defaultSearchQuery = searchQuery
+
+    postCellDataList.forEach { postCellData ->
+      postCellData.resetCommentTextCache()
+      postCellData.resetPostTitleCache()
+    }
   }
 
   fun setBoardPostViewMode(boardPostViewMode: ChanSettings.PostViewMode) {

@@ -109,6 +109,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     android:paddingRight="20dp"
                     android:text="@string/close" />
             </FrameLayout>
+
         </LinearLayout>
 
     </com.github.k1rakishou.chan.ui.layout.PostPopupContainer>

@@ -1,5 +1,6 @@
 package com.github.k1rakishou.model.data.post
 
+import com.github.k1rakishou.common.copy
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import java.util.*
@@ -74,6 +75,28 @@ open class ChanPost(
     }
 
     repliesFrom?.let { replies -> this.repliesFrom.addAll(replies) }
+  }
+
+  open fun deepCopy(): ChanPost {
+    return ChanPost(
+      chanPostId,
+      postDescriptor,
+      postImages,
+      postIcons,
+      repliesTo,
+      timestamp,
+      postComment.copy(),
+      subject.copy(),
+      tripcode.copy(),
+      name,
+      posterId,
+      moderatorCapcode,
+      isSavedReply,
+      repliesFrom
+    ).also { newPost ->
+      newPost.replaceOnDemandContentLoadedMap(this.copyOnDemandContentLoadedMap())
+      newPost.setPostDeleted(this.deleted)
+    }
   }
 
   @Synchronized

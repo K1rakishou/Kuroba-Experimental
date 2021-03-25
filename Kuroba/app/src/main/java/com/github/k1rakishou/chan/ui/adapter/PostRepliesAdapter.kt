@@ -77,6 +77,12 @@ class PostRepliesAdapter(
     notifyDataSetChanged()
   }
 
+  fun setSearchQuery(searchQuery: PostCellData.SearchQuery) {
+    threadCellData.setSearchQuery(searchQuery)
+
+    notifyDataSetChanged()
+  }
+
   fun refresh() {
     notifyDataSetChanged()
   }

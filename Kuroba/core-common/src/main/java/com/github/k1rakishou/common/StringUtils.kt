@@ -1,129 +1,114 @@
-package com.github.k1rakishou.common;
+package com.github.k1rakishou.common
 
-import android.util.Base64;
+import android.util.Base64
+import java.nio.charset.StandardCharsets
+import java.util.*
+import java.util.regex.Pattern
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+object StringUtils {
+  private val IMAGE_THUMBNAIL_EXTRACTOR_PATTERN = Pattern.compile("/(\\d{12,32}+)s.(.*)")
+  private val HEX_ARRAY = "0123456789ABCDEF".toLowerCase(Locale.ENGLISH).toCharArray()
+  private const val RESERVED_CHARACTERS = "|?*<\":>+\\[\\]/'\\\\\\s"
+  private const val RESERVED_CHARACTERS_DIR = "[" + RESERVED_CHARACTERS + "." + "]"
+  private const val RESERVED_CHARACTERS_FILE = "[" + RESERVED_CHARACTERS + "]"
+  private const val UTF8_BOM = "\uFEFF"
 
-import java.nio.charset.StandardCharsets;
-import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+  fun bytesToHex(bytes: ByteArray): String {
+    val result = CharArray(bytes.size * 2)
+    var c = 0
 
-public class StringUtils {
-    private static final Pattern IMAGE_THUMBNAIL_EXTRACTOR_PATTERN = Pattern.compile("/(\\d{12,32}+)s.(.*)");
-    private static final char[] HEX_ARRAY = "0123456789ABCDEF".toLowerCase(Locale.ENGLISH).toCharArray();
-    private static final String RESERVED_CHARACTERS = "|?*<\":>+\\[\\]/'\\\\\\s";
-    private static final String RESERVED_CHARACTERS_DIR = "[" + RESERVED_CHARACTERS + "." + "]";
-    private static final String RESERVED_CHARACTERS_FILE = "[" + RESERVED_CHARACTERS + "]";
-    private static final String UTF8_BOM = "\uFEFF";
-
-    public static String bytesToHex(byte[] bytes) {
-        char[] hexChars = new char[bytes.length * 2];
-
-        for (int j = 0; j < bytes.length; j++) {
-            int v = bytes[j] & 0xFF;
-            hexChars[j * 2] = HEX_ARRAY[v >>> 4];
-            hexChars[j * 2 + 1] = HEX_ARRAY[v & 0x0F];
-        }
-
-        return new String(hexChars);
+    for (b in bytes) {
+      result[c++] = HEX_ARRAY[b.toInt() shr 4 and 0xf]
+      result[c++] = HEX_ARRAY[b.toInt() and 0xf]
     }
 
-    @Nullable
-    public static String convertThumbnailUrlToFilenameOnDisk(String url) {
-        Matcher matcher = IMAGE_THUMBNAIL_EXTRACTOR_PATTERN.matcher(url);
-        if (matcher.find()) {
-            String filename = matcher.group(1);
-            String extension = matcher.group(2);
+    return String(result)
+  }
 
-            if (filename == null || extension == null) {
-                return null;
-            }
+  fun convertThumbnailUrlToFilenameOnDisk(url: String): String? {
+    val matcher = IMAGE_THUMBNAIL_EXTRACTOR_PATTERN.matcher(url)
+    if (matcher.find()) {
+      val filename = matcher.group(1)
+      val extension = matcher.group(2)
 
-            if (filename.isEmpty() || extension.isEmpty()) {
-                return null;
-            }
+      if (filename == null || extension == null) {
+        return null
+      }
 
-            return String.format("%s_thumbnail.%s", filename, extension);
-        }
+      if (filename.isEmpty() || extension.isEmpty()) {
+        return null
+      }
 
-        return null;
+      return String.format("%s_thumbnail.%s", filename, extension)
     }
 
-    @Nullable
-    public static String extractFileNameExtension(String filename) {
-        int index = filename.lastIndexOf('.');
-        if (index == -1) {
-            return null;
-        }
+    return null
+  }
 
-        return filename.substring(index + 1);
+  fun extractFileNameExtension(filename: String): String? {
+    val index = filename.lastIndexOf('.')
+    if (index == -1) {
+      return null
     }
 
-    @NonNull
-    public static String removeExtensionFromFileName(String filename) {
-        int index = filename.lastIndexOf('.');
-        if (index == -1) {
-            return filename;
-        }
+    return filename.substring(index + 1)
+  }
 
-        return filename.substring(0, index);
+  fun removeExtensionFromFileName(filename: String): String {
+    val index = filename.lastIndexOf('.')
+    if (index == -1) {
+      return filename
     }
 
-    @Nullable
-    public static String dirNameRemoveBadCharacters(@Nullable String dirName) {
-        if (dirName == null) {
-            return null;
-        }
+    return filename.substring(0, index)
+  }
 
-        return dirName.replaceAll(" ", "_")
-                .replaceAll(RESERVED_CHARACTERS_DIR, "");
+  fun dirNameRemoveBadCharacters(dirName: String?): String? {
+    return dirName
+      ?.replace(" ".toRegex(), "_")
+      ?.replace(RESERVED_CHARACTERS_DIR.toRegex(), "")
+  }
+
+  /**
+   * The same as dirNameRemoveBadCharacters but allows dots since file names can have extensions
+   */
+  fun fileNameRemoveBadCharacters(filename: String?): String? {
+    return filename
+      ?.replace(" ".toRegex(), "_")
+      ?.replace(RESERVED_CHARACTERS_FILE.toRegex(), "")
+  }
+
+  fun encodeBase64(input: String): String {
+    return Base64.encodeToString(input.toByteArray(StandardCharsets.UTF_8), Base64.DEFAULT)
+  }
+
+  @JvmStatic
+  fun decodeBase64(base64Encoded: String): String? {
+    val bytes = try {
+      Base64.decode(base64Encoded, Base64.DEFAULT)
+    } catch (error: Throwable) {
+      return null
     }
 
-    /**
-     * The same as dirNameRemoveBadCharacters but allows dots since file names can have extensions
-     */
-    @Nullable
-    public static String fileNameRemoveBadCharacters(@Nullable String filename) {
-        if (filename == null) {
-            return null;
-        }
+    return bytesToHex(bytes)
+  }
 
-        return filename.replaceAll(" ", "_")
-                .replaceAll(RESERVED_CHARACTERS_FILE, "");
+  fun endsWithAny(s: String, suffixes: Array<String>): Boolean {
+    for (suffix in suffixes) {
+      if (s.endsWith(suffix)) {
+        return true
+      }
+    }
+    return false
+  }
+
+  fun removeUTF8BOM(_input: String): String {
+    var input = _input
+    if (input.startsWith(UTF8_BOM)) {
+      input = input.substring(1)
     }
 
-    public static String encodeBase64(String input) {
-        return Base64.encodeToString(input.getBytes(StandardCharsets.UTF_8), Base64.DEFAULT);
-    }
+    return input
+  }
 
-    @Nullable
-    public static String decodeBase64(String base64Encoded) {
-        byte[] bytes;
-
-        try {
-            bytes = Base64.decode(base64Encoded, Base64.DEFAULT);
-        } catch (Throwable error) {
-            return null;
-        }
-
-        return bytesToHex(bytes);
-    }
-
-    public static boolean endsWithAny(String s, String[] suffixes) {
-        for (String suffix : suffixes) {
-            if (s.endsWith(suffix)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public static String removeUTF8BOM(String input) {
-        if (input.startsWith(UTF8_BOM)) {
-            input = input.substring(1);
-        }
-        return input;
-    }
 }

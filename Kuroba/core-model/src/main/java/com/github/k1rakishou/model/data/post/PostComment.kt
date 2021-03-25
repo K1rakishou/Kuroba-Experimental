@@ -1,5 +1,6 @@
 package com.github.k1rakishou.model.data.post
 
+import android.text.SpannableString
 import com.github.k1rakishou.common.MurmurHashUtils
 import com.github.k1rakishou.core_spannable.PostLinkable
 
@@ -36,6 +37,19 @@ class PostComment(
   @get:Synchronized
   val updatedCommentHash: MurmurHashUtils.Murmur3Hash?
     get() = _updatedCommentHash
+
+  @Synchronized
+  fun copy(): PostComment {
+    return PostComment(
+      SpannableString(originalComment),
+      originalUnparsedComment,
+      linkables.toList()
+    ).also { newPostComment ->
+      newPostComment._updatedComment = this._updatedComment
+      newPostComment._originalCommentHash = this._originalCommentHash
+      newPostComment._updatedCommentHash = this._updatedCommentHash
+    }
+  }
 
   @Synchronized
   fun updateComment(newComment: CharSequence) {

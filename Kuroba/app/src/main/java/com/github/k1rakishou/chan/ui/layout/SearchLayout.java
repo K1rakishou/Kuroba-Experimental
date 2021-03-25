@@ -201,7 +201,16 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
     }
 
     public void setText(String searchText) {
-        searchView.setText(searchText);
+        Editable prevEditable = searchView.getText();
+        String prevText = null;
+
+        if (prevEditable == null) {
+            prevText = "";
+        } else {
+            prevText = prevEditable.toString();
+        }
+
+        searchView.getText().replace(0, prevText.length(), searchText);
     }
 
     public String getText() {

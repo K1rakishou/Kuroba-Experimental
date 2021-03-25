@@ -11,10 +11,10 @@ import com.github.k1rakishou.chan.core.site.sites.search.FuukaSearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
+import com.github.k1rakishou.chan.utils.SpannableHelper
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.core_spannable.BackgroundColorSpanHashed
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -100,10 +100,12 @@ class GlobalSearchUseCase(
           val parsedComment = simpleCommentParser.parseComment(commentRaw.toString()) ?: ""
           val spannedComment = SpannableString(parsedComment)
 
-          findAllQueryEntriesInsideSpannableStringAndMarkThem(
+          SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
             inputQueries = getAllQueries(searchResult.searchParams),
             spannableString = spannedComment,
-            theme = theme
+            color = theme.accentColor,
+            removePrevSpans = false,
+            minQueryLength = 1
           )
 
           findAllQuotesAndMarkThem(spannedComment, theme)
@@ -115,10 +117,12 @@ class GlobalSearchUseCase(
         searchEntryPost.subject?.let { subject ->
           val spannedSubject = SpannableString(subject)
 
-          findAllQueryEntriesInsideSpannableStringAndMarkThem(
+          SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
             inputQueries = getAllQueries(searchResult.searchParams),
             spannableString = spannedSubject,
-            theme = theme
+            color = theme.accentColor,
+            removePrevSpans = false,
+            minQueryLength = 1
           )
 
           subject.clear()
@@ -174,74 +178,6 @@ class GlobalSearchUseCase(
 
     return queries
   }
-
-  private fun findAllQueryEntriesInsideSpannableStringAndMarkThem(
-    inputQueries: Collection<String>,
-    spannableString: SpannableString,
-    theme: ChanTheme
-  ) {
-    val queries = inputQueries
-      .filter { query -> query.isNotEmpty() && query.length <= spannableString.length }
-
-    if (queries.isEmpty()) {
-      return
-    }
-
-    for (query in queries) {
-      var offset = 0
-      val spans = mutableListOf<SpanToAdd>()
-
-      while (offset < spannableString.length) {
-        if (query[0].equals(spannableString[offset], ignoreCase = true)) {
-          val compared = compare(query, spannableString, offset)
-          if (compared < 0) {
-            break
-          }
-
-          if (compared == query.length) {
-            spans += SpanToAdd(offset, query.length, BackgroundColorSpanHashed(theme.accentColor))
-          }
-
-          offset += compared
-          continue
-        }
-
-        ++offset
-      }
-
-      spans.forEach { spanToAdd ->
-        spannableString.setSpan(
-          spanToAdd.span,
-          spanToAdd.position,
-          spanToAdd.position + spanToAdd.length,
-          0
-        )
-      }
-    }
-  }
-
-  private fun compare(query: String, parsedComment: CharSequence, currentPosition: Int): Int {
-    var compared = 0
-
-    for (index in query.indices) {
-      val ch = parsedComment.getOrNull(currentPosition + index)
-        ?: return -1
-
-      if (!query[index].equals(ch, ignoreCase = true)) {
-        return compared
-      }
-
-      ++compared
-    }
-
-    return compared
-  }
-
-  private data class SpanToAdd(
-    val position: Int,
-    val length: Int,
-    val span: BackgroundColorSpanHashed
-  )
 
   companion object {
     private const val TAG = "GlobalSearchUseCase"

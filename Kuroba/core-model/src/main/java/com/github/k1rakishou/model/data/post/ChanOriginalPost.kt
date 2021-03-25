@@ -1,5 +1,6 @@
 package com.github.k1rakishou.model.data.post
 
+import com.github.k1rakishou.common.copy
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 
 class ChanOriginalPost(
@@ -40,6 +41,35 @@ class ChanOriginalPost(
   isSavedReply,
   repliesFrom
 ) {
+
+  override fun deepCopy(): ChanPost {
+    return ChanOriginalPost(
+      chanPostId,
+      postDescriptor,
+      postImages,
+      postIcons,
+      repliesTo,
+      timestamp,
+      postComment.copy(),
+      subject.copy(),
+      tripcode.copy(),
+      name,
+      posterId,
+      moderatorCapcode,
+      isSavedReply,
+      catalogRepliesCount,
+      catalogImagesCount,
+      uniqueIps,
+      lastModified,
+      sticky,
+      closed,
+      archived,
+      repliesFrom
+    ).also { newPost ->
+      newPost.replaceOnDemandContentLoadedMap(this.copyOnDemandContentLoadedMap())
+      newPost.setPostDeleted(this.deleted)
+    }
+  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
