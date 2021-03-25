@@ -694,7 +694,7 @@ public class ToolbarContainer extends FrameLayout {
             });
 
             if (item.searchText != null) {
-                searchLayout.setText(item.searchText);
+                searchLayout.setTextIgnoringWatcher(item.searchText);
             }
 
             searchLayout.setCatalogSearchColors();

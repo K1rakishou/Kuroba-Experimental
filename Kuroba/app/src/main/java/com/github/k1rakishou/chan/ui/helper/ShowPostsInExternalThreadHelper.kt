@@ -137,7 +137,7 @@ class ShowPostsInExternalThreadHelper(
 
         postPopupHelper.showRepliesPopup(
           threadDescriptor,
-          PostCellData.PostAdditionalData.NoAdditionalData(PostCellData.PostViewMode.ExternalPostsPopup),
+          PostCellData.PostViewMode.ExternalPostsPopup,
           null,
           postsToShow
         )

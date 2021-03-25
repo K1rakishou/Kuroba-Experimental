@@ -29,8 +29,7 @@ class ThreadCellData(
   private var postCellCallback: PostCellInterface.PostCellCallback? = null
   private var currentTheme: ChanTheme = initialTheme
 
-  var postAdditionalData: PostCellData.PostAdditionalData =
-    PostCellData.PostAdditionalData.NoAdditionalData(PostCellData.PostViewMode.Normal)
+  var postViewMode: PostCellData.PostViewMode = PostCellData.PostViewMode.Normal
   var defaultIsCompact: Boolean = false
   var defaultBoardPostViewMode: ChanSettings.PostViewMode = ChanSettings.boardPostViewMode.get()
   var defaultMarkedNo: Long? = null
@@ -45,9 +44,6 @@ class ThreadCellData(
 
   val chanDescriptor: ChanDescriptor?
     get() = _chanDescriptor
-
-  private val postViewMode: PostCellData.PostViewMode
-    get() = postAdditionalData.postViewMode
 
   override fun iterator(): Iterator<PostCellData> {
     return postCellDataList.iterator()
@@ -102,7 +98,7 @@ class ThreadCellData(
         postIndex = postIndexed.postIndex,
         textSizeSp = fontSize,
         theme = theme,
-        postAdditionalData = postAdditionalData,
+        postViewMode = postViewMode,
         highlighted = isPostHighlighted(postDescriptor),
         postSelected = isPostSelected(postDescriptor),
         markedPostNo = defaultMarkedNo,

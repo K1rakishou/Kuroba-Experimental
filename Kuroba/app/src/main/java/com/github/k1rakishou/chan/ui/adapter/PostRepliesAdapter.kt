@@ -16,7 +16,7 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.PostIndexed
 
 class PostRepliesAdapter(
-  private val postAdditionalData: PostCellData.PostAdditionalData,
+  private val postViewMode: PostCellData.PostViewMode,
   private val postCellCallback: PostCellInterface.PostCellCallback,
   private val chanDescriptor: ChanDescriptor,
   private val clickedPostDescriptor: PostDescriptor?,
@@ -32,7 +32,7 @@ class PostRepliesAdapter(
   )
 
   init {
-    threadCellData.postAdditionalData = postAdditionalData
+    threadCellData.postViewMode = postViewMode
     threadCellData.defaultIsCompact = false
     threadCellData.defaultBoardPostViewMode = ChanSettings.PostViewMode.LIST
     threadCellData.defaultMarkedNo = clickedPostDescriptor?.postNo

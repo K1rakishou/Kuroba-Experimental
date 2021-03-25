@@ -285,7 +285,7 @@ class PostCell : LinearLayout,
     val textSizeSp = postCellData.textSizeSp
     val endPadding = dp(16f)
 
-    horizPaddingPx = dp(textSizeSp - 6.toFloat())
+    horizPaddingPx = calculateHorizPadding(textSizeSp)
     vertPaddingPx = dp(textSizeSp - 10.toFloat())
 
     title = findViewById(R.id.title)
@@ -324,7 +324,7 @@ class PostCell : LinearLayout,
     setOnClickListener(null)
     setOnLongClickListener(null)
 
-    if (postCellData.isSelectionMode) {
+    if (postCellData.isBlockPostCellInteractionMode) {
       replies.setOnClickListener(null)
       postCellRootContainer.setOnLongClickListener(null)
       postCellRootContainer.setOnClickListener(null)
@@ -343,7 +343,7 @@ class PostCell : LinearLayout,
         }
       }
 
-      if (postCellData.isSelectionMode || postCellData.threadPreviewMode) {
+      if (postCellData.isBlockPostCellInteractionMode || postCellData.threadPreviewMode) {
         postCellRootContainer.setOnLongClickListener(null)
       } else {
         postCellRootContainer.setOnLongClickListener {
@@ -387,7 +387,7 @@ class PostCell : LinearLayout,
   }
 
   private fun showPostFloatingListMenu(postCellData: PostCellData) {
-    if (postCellData.isSelectionMode || postCellData.threadPreviewMode) {
+    if (postCellData.isBlockPostCellInteractionMode || postCellData.threadPreviewMode) {
       return
     }
 
@@ -405,7 +405,7 @@ class PostCell : LinearLayout,
     postCellRootContainer.isClickable = true
     postCellRootContainer.isLongClickable = true
 
-    if (postCellData.isSelectionMode) {
+    if (postCellData.isBlockPostCellInteractionMode) {
       setPostLinkableListener(postCellData, false)
       replies.isClickable = false
     } else {
@@ -428,7 +428,7 @@ class PostCell : LinearLayout,
     val canBindReplies = (!postCellData.threadMode && postCellData.catalogRepliesCount > 0)
       || postCellData.repliesFromCount > 0
 
-    if (!postCellData.isSelectionMode && canBindReplies) {
+    if (!postCellData.isBlockPostCellInteractionMode && canBindReplies) {
       bindRepliesWithImageCountText(postCellData)
     } else {
       bindRepliesText()
@@ -455,7 +455,7 @@ class PostCell : LinearLayout,
   }
 
   private fun bindBackgroundResources(postCellData: PostCellData) {
-    if (postCellData.isSelectionMode) {
+    if (postCellData.isBlockPostCellInteractionMode) {
       postCellRootContainer.setBackgroundResource(0)
       replies.setBackgroundResource(0)
     } else {
@@ -502,7 +502,7 @@ class PostCell : LinearLayout,
   }
 
   private fun startAttentionLabelFadeOutAnimation(postCellData: PostCellData) {
-    if (postCellCallback == null || postCellData.isSelectionMode) {
+    if (postCellCallback == null || postCellData.isBlockPostCellInteractionMode) {
       return
     }
 
@@ -527,7 +527,7 @@ class PostCell : LinearLayout,
       return
     }
 
-    if (postCellData.isSelectionMode) {
+    if (postCellData.isBlockPostCellInteractionMode) {
       return
     }
 
@@ -644,7 +644,7 @@ class PostCell : LinearLayout,
     val theme = postCellData.theme
     comment.setText(postCellData.commentText, TextView.BufferType.SPANNABLE)
 
-    if (postCellData.isSelectionMode) {
+    if (postCellData.isBlockPostCellInteractionMode) {
       comment.customSelectionActionModeCallback = null
       comment.customTouchEventListener(null)
       comment.customMovementMethod(null)
@@ -1186,5 +1186,7 @@ class PostCell : LinearLayout,
 
   companion object {
     private const val TAG = "PostCell"
+
+    fun calculateHorizPadding(textSizeSp: Int) = dp(textSizeSp - 6.toFloat())
   }
 }

@@ -186,7 +186,7 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
         }
     }
 
-    public void setText(String searchText) {
+    public void setTextIgnoringWatcher(String searchText) {
         if (textWatcher != null) {
             KtExtensionsKt.doIgnoringTextWatcher(
                     searchView,
@@ -198,6 +198,10 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
         } else {
             searchView.setText(searchText);
         }
+    }
+
+    public void setText(String searchText) {
+        searchView.setText(searchText);
     }
 
     public String getText() {

@@ -22,8 +22,8 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.controller.popup.BasePostPopupController
-import com.github.k1rakishou.chan.ui.controller.popup.BasePostPopupController.Companion.clearScrollPositionCache
-import com.github.k1rakishou.chan.ui.controller.popup.PostPopupController
+import com.github.k1rakishou.chan.ui.controller.popup.PostRepliesPopupController
+import com.github.k1rakishou.chan.ui.controller.popup.PostSearchPopupController
 import com.github.k1rakishou.chan.ui.view.post_thumbnail.ThumbnailView
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -47,18 +47,18 @@ class PostPopupHelper(
     get() = presentingPostRepliesController != null && presentingPostRepliesController!!.alive
 
   fun getDisplayingPostDescriptors(): List<PostDescriptor> {
-    return presentingPostRepliesController?.postRepliesData ?: emptyList()
+    return presentingPostRepliesController?.getDisplayingPostDescriptors() ?: emptyList()
   }
 
   fun showRepliesPopup(
     threadDescriptor: ThreadDescriptor,
-    postAdditionalData: PostCellData.PostAdditionalData,
+    postViewMode: PostCellData.PostViewMode,
     postDescriptor: PostDescriptor?,
     posts: List<ChanPost>
   ) {
-    val data = PostPopupController.PostRepliesPopupData(
+    val data = PostRepliesPopupController.PostRepliesPopupData(
       threadDescriptor,
-      postAdditionalData,
+      postViewMode,
       postDescriptor,
       indexPosts(posts)
     )
@@ -66,14 +66,25 @@ class PostPopupHelper(
     dataQueue.add(data)
 
     if (dataQueue.size == 1) {
-      present(PostPopupController(context, this, presenter))
+      present(PostRepliesPopupController(context, this, presenter))
     }
 
     presentingPostRepliesController?.initialDisplayData(threadDescriptor, data)
   }
 
   fun showSearchPopup(chanDescriptor: ChanDescriptor) {
+    val data = PostSearchPopupController.PostSearchPopupData(
+      chanDescriptor,
+      PostCellData.PostViewMode.Search
+    )
 
+    dataQueue.add(data)
+
+    if (dataQueue.size == 1) {
+      present(PostSearchPopupController(context, this, presenter))
+    }
+
+    presentingPostRepliesController?.initialDisplayData(chanDescriptor, data)
   }
 
   private fun indexPosts(posts: List<ChanPost>): List<PostIndexed> {
@@ -152,8 +163,6 @@ class PostPopupHelper(
   }
 
   private fun dismiss() {
-    clearScrollPositionCache()
-
     presentingPostRepliesController?.stopPresenting()
     presentingPostRepliesController = null
   }
@@ -167,9 +176,7 @@ class PostPopupHelper(
 
   interface PostPopupData {
     val descriptor: ChanDescriptor
-    val postAdditionalData: PostCellData.PostAdditionalData
-    val forPostWithDescriptor: PostDescriptor?
-    val posts: List<PostIndexed>
+    val postViewMode: PostCellData.PostViewMode
   }
 
   interface PostPopupHelperCallback {

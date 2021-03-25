@@ -580,7 +580,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   override fun showPostsPopup(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    postAdditionalData: PostCellData.PostAdditionalData,
+    postViewMode: PostCellData.PostViewMode,
     postDescriptor: PostDescriptor?,
     posts: List<ChanPost>
   ) {
@@ -590,7 +590,7 @@ class ThreadLayout @JvmOverloads constructor(
       currentFocus.clearFocus()
     }
 
-    postPopupHelper.showRepliesPopup(threadDescriptor, postAdditionalData, postDescriptor, posts)
+    postPopupHelper.showRepliesPopup(threadDescriptor, postViewMode, postDescriptor, posts)
   }
 
   override fun hidePostsPopup() {

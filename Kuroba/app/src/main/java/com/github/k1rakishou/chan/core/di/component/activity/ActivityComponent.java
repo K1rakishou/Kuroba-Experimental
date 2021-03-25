@@ -104,7 +104,8 @@ import com.github.k1rakishou.chan.ui.controller.navigation.BottomNavBarAwareNavi
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController;
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController;
 import com.github.k1rakishou.chan.ui.controller.navigation.TabHostController;
-import com.github.k1rakishou.chan.ui.controller.popup.PostPopupController;
+import com.github.k1rakishou.chan.ui.controller.popup.PostRepliesPopupController;
+import com.github.k1rakishou.chan.ui.controller.popup.PostSearchPopupController;
 import com.github.k1rakishou.chan.ui.controller.settings.RangeSettingUpdaterController;
 import com.github.k1rakishou.chan.ui.controller.settings.ThemeSettingsController;
 import com.github.k1rakishou.chan.ui.controller.settings.captcha.JsCaptchaCookiesEditorController;
@@ -197,7 +198,8 @@ public interface ActivityComponent {
     void inject(LoginController loginController);
     void inject(LogsController logsController);
     void inject(PopupController popupController);
-    void inject(PostPopupController postPopupController);
+    void inject(PostRepliesPopupController postRepliesPopupController);
+    void inject(PostSearchPopupController postSearchPopupController);
     void inject(RemovedPostsController removedPostsController);
     void inject(ReportController reportController);
     void inject(SitesSetupController sitesSetupController);

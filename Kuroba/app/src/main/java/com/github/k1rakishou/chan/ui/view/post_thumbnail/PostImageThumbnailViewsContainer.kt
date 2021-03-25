@@ -199,7 +199,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       thumbnailView.bindPostImage(postImage, true)
       thumbnailView.bindPostInfo(postImage)
 
-      if (postCellData.isSelectionMode) {
+      if (postCellData.isBlockPostCellInteractionMode) {
         thumbnailView.setImageClickListener(null)
         thumbnailView.setImageLongClickListener(null)
 
@@ -328,7 +328,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       thumbnailView.bindPostImage(postImage, true)
       thumbnailView.bindPostInfo(postImage)
 
-      if (postCellData.isSelectionMode) {
+      if (postCellData.isBlockPostCellInteractionMode) {
         thumbnailView.setImageClickListener(null)
         thumbnailView.setImageLongClickListener(null)
 

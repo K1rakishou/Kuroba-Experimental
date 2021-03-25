@@ -928,7 +928,7 @@ class ThreadPresenter @Inject constructor(
     }
 
     val topRepliesData = threadPresenterCallback?.getTopPostRepliesDataOrNull()
-    val postViewMode = topRepliesData?.postAdditionalData?.postViewMode
+    val postViewMode = topRepliesData?.postViewMode
 
     if (topRepliesData != null && postViewMode == PostCellData.PostViewMode.ExternalPostsPopup) {
       return
@@ -1360,7 +1360,7 @@ class ThreadPresenter @Inject constructor(
 
           threadPresenterCallback?.showPostsPopup(
             currentThreadDescriptor,
-            PostCellData.PostAdditionalData.NoAdditionalData(postViewMode),
+            postViewMode,
             post.postDescriptor,
             listOf(linked)
           )
@@ -1789,7 +1789,7 @@ class ThreadPresenter @Inject constructor(
 
       threadPresenterCallback?.showPostsPopup(
         threadDescriptor,
-        PostCellData.PostAdditionalData.NoAdditionalData(postViewMode),
+        postViewMode,
         post.postDescriptor,
         posts
       )
@@ -2216,7 +2216,7 @@ class ThreadPresenter @Inject constructor(
     fun openReportView(post: ChanPost)
     fun showPostsPopup(
       threadDescriptor: ChanDescriptor.ThreadDescriptor,
-      postAdditionalData: PostCellData.PostAdditionalData,
+      postViewMode: PostCellData.PostViewMode,
       postDescriptor: PostDescriptor?,
       posts: List<ChanPost>
     )

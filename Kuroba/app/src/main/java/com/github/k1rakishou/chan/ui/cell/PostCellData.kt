@@ -40,7 +40,7 @@ data class PostCellData(
   var theme: ChanTheme,
   var filterHash: Int,
   var filterHighlightedColor: Int,
-  var postAdditionalData: PostAdditionalData
+  var postViewMode: PostViewMode
 ) {
   var postCellCallback: PostCellInterface.PostCellCallback? = null
 
@@ -81,12 +81,10 @@ data class PostCellData(
     get() = post.repliesFromCount
   val singleImageMode: Boolean
     get() = post.postImages.size == 1
-  val postViewMode: PostViewMode
-    get() = postAdditionalData.postViewMode
   val isInPopup: Boolean
     get() = postViewMode == PostViewMode.RepliesPopup || postViewMode == PostViewMode.ExternalPostsPopup
-  val isSelectionMode: Boolean
-    get() = postViewMode == PostViewMode.PostSelection
+  val isBlockPostCellInteractionMode: Boolean
+    get() = postViewMode == PostViewMode.PostSelection || postViewMode == PostViewMode.Search
   val threadPreviewMode: Boolean
     get() = postViewMode == PostViewMode.ExternalPostsPopup
   val markedNo: Long
@@ -144,7 +142,7 @@ data class PostCellData(
       theme = theme,
       filterHash = filterHash,
       filterHighlightedColor = filterHighlightedColor,
-      postAdditionalData = postAdditionalData
+      postViewMode = postViewMode
     ).also { newPostCellData ->
       newPostCellData.postCellCallback = postCellCallback
       newPostCellData.detailsSizePxPrecalculated = detailsSizePxPrecalculated
@@ -326,14 +324,6 @@ data class PostCellData(
     }
 
     return catalogRepliesTextBuilder.toString()
-  }
-
-  sealed class PostAdditionalData(
-    val postViewMode: PostViewMode
-  ) {
-
-    class NoAdditionalData(postViewMode: PostViewMode) : PostAdditionalData(postViewMode)
-
   }
 
   enum class PostViewMode {

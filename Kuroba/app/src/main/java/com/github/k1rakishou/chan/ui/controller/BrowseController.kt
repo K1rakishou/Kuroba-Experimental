@@ -16,11 +16,8 @@
  */
 package com.github.k1rakishou.chan.ui.controller
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
 import android.content.Context
 import android.view.View
-import android.view.animation.AccelerateInterpolator
 import android.view.animation.Animation
 import android.view.animation.RotateAnimation
 import android.widget.Toast
@@ -409,21 +406,6 @@ class BrowseController(
     if (!presenter.isBound || chanDescriptor == null) {
       return
     }
-
-    val refreshView: View = item.view
-    refreshView.scaleX = 1f
-    refreshView.scaleY = 1f
-    refreshView.animate()
-      .scaleX(10f)
-      .scaleY(10f)
-      .setDuration(500)
-      .setInterpolator(AccelerateInterpolator(2f))
-      .setListener(object : AnimatorListenerAdapter() {
-        override fun onAnimationEnd(animation: Animator) {
-          refreshView.scaleX = 1f
-          refreshView.scaleY = 1f
-        }
-      })
 
     threadLayout.popupHelper.showSearchPopup(chanDescriptor!!)
   }

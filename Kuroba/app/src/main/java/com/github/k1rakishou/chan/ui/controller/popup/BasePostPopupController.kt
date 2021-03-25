@@ -18,8 +18,12 @@ package com.github.k1rakishou.chan.ui.controller.popup
 
 import android.content.Context
 import android.util.LruCache
+import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
@@ -33,7 +37,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView
 import com.github.k1rakishou.chan.ui.view.LoadView
 import com.github.k1rakishou.chan.ui.view.post_thumbnail.ThumbnailView
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.RecyclerUtils.getIndexAndTop
+import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils.restoreScrollPosition
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
@@ -42,7 +46,6 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.persist_state.IndexAndTop
-import java.util.*
 import javax.inject.Inject
 
 abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
@@ -59,38 +62,36 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
   lateinit var chanThreadViewableInfoManager: ChanThreadViewableInfoManager
 
   abstract var displayingData: T?
+  abstract val postPopupType: PostPopupType
 
-  protected lateinit var loadView: LoadView
+  private var first = true
+
+  private var repliesBackText: TextView? = null
+  private var repliesCloseText: TextView? = null
+  private lateinit var loadView: LoadView
   protected lateinit var postsView: ColorizableRecyclerView
 
   protected val scope = KurobaCoroutineScope()
   protected val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(scope)
+  protected val debouncingCoroutineExecutor = DebouncingCoroutineExecutor(scope)
 
   protected val themeEngineInitialized: Boolean
     get() = ::themeEngine.isInitialized
-
-  val postRepliesData: List<PostDescriptor>
-    get() {
-      val postDescriptors: MutableList<PostDescriptor> = ArrayList()
-      for (post in displayingData!!.posts) {
-        postDescriptors.add(post.post.postDescriptor)
-      }
-
-      return postDescriptors
-    }
+  protected val postsViewInitialized: Boolean
+    get() = ::postsView.isInitialized
 
   protected val scrollListener = object : RecyclerView.OnScrollListener() {
     override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
       super.onScrollStateChanged(recyclerView, newState)
 
       if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-        storeScrollPositionForVisiblePopup()
+        storeScrollPosition()
       }
     }
   }
 
   override fun getLayoutId(): Int {
-    return R.layout.layout_post_replies_container
+    return R.layout.layout_post_popup_container
   }
 
   override fun onCreate() {
@@ -112,10 +113,8 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
 
     themeEngine.removeListener(this)
 
-    if (::postsView.isInitialized) {
-      postsView.removeOnScrollListener(scrollListener)
-      postsView.swapAdapter(null, true)
-    }
+    postsView.removeOnScrollListener(scrollListener)
+    postsView.swapAdapter(null, true)
 
     scope.cancelChildren()
   }
@@ -128,6 +127,21 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
     if (!::postsView.isInitialized) {
       return
     }
+
+    val isDarkColor = ThemeEngine.isDarkColor(themeEngine.chanTheme.backColor)
+    val backDrawable = themeEngine.getDrawableTinted(context, R.drawable.ic_arrow_back_white_24dp, isDarkColor)
+    val doneDrawable = themeEngine.getDrawableTinted(context, R.drawable.ic_done_white_24dp, isDarkColor)
+
+    if (repliesBackText != null) {
+      repliesBackText?.setTextColor(themeEngine.chanTheme.textColorPrimary)
+      repliesBackText?.setCompoundDrawablesWithIntrinsicBounds(backDrawable, null, null, null)
+    }
+
+    if (repliesCloseText != null) {
+      repliesCloseText?.setTextColor(themeEngine.chanTheme.textColorPrimary)
+      repliesCloseText?.setCompoundDrawablesWithIntrinsicBounds(doneDrawable, null, null, null)
+    }
+
 
     val adapter = postsView.adapter
     if (adapter is PostRepliesAdapter) {
@@ -175,7 +189,26 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
   }
 
   fun initialDisplayData(chanDescriptor: ChanDescriptor, data: PostPopupHelper.PostPopupData) {
-    rendezvousCoroutineExecutor.post { initialDisplayData(chanDescriptor, data as T) }
+    rendezvousCoroutineExecutor.post {
+      displayingData = data as T
+
+      val dataView = initialDisplayData(chanDescriptor, data)
+
+      val repliesBack = dataView.findViewById<View>(R.id.replies_back)
+      repliesBack.setOnClickListener { postPopupHelper.pop() }
+
+      val repliesClose = dataView.findViewById<View>(R.id.replies_close)
+      repliesClose.setOnClickListener { postPopupHelper.popAll() }
+
+      repliesBackText = dataView.findViewById(R.id.replies_back_icon)
+      repliesCloseText = dataView.findViewById(R.id.replies_close_icon)
+
+      loadView.setFadeDuration(if (first) 0 else 150)
+      loadView.setView(dataView)
+
+      first = false
+      onThemeChanged()
+    }
   }
 
   fun scrollTo(displayPosition: Int) {
@@ -191,52 +224,51 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
     return true
   }
 
-  private fun storeScrollPositionForVisiblePopup() {
-    if (!::postsView.isInitialized) {
+  protected fun storeScrollPosition() {
+    if (!postsViewInitialized) {
       return
     }
 
-    val postNo = displayingData?.forPostWithDescriptor?.postNo
-      ?: displayingData?.descriptor?.threadDescriptorOrNull()?.threadNo
-
-    if (postNo == null) {
+    val descriptor = displayingData?.descriptor
+    if (descriptor == null) {
       return
     }
 
-    scrollPositionCache.put(
-      postNo,
-      getIndexAndTop(postsView)
+    scrollPositionCache[postPopupType]!!.put(
+      descriptor,
+      RecyclerUtils.getIndexAndTop(postsView)
     )
   }
 
-  protected fun restoreScrollPosition(
-    chanDescriptor: ChanDescriptor,
-    repliesData: PostPopupHelper.PostPopupData
-  ) {
-    if (!::postsView.isInitialized) {
+  protected fun restoreScrollPosition(chanDescriptor: ChanDescriptor) {
+    if (!postsViewInitialized) {
       return
     }
 
-    val postNo = repliesData.forPostWithDescriptor?.postNo
-      ?: chanDescriptor.threadDescriptorOrNull()?.threadNo
-
-    val scrollPosition = scrollPositionCache[postNo]
+    val scrollPosition = scrollPositionCache[postPopupType]!![chanDescriptor]
       ?: return
 
     postsView.restoreScrollPosition(scrollPosition)
   }
 
-  protected abstract suspend fun initialDisplayData(
-    chanDescriptor: ChanDescriptor,
-    data: T
-  )
+  abstract fun getDisplayingPostDescriptors(): List<PostDescriptor>
+  protected abstract suspend fun initialDisplayData(chanDescriptor: ChanDescriptor, data: T): ViewGroup
 
   companion object {
-    private val scrollPositionCache = LruCache<Long, IndexAndTop>(128)
+    val scrollPositionCache = initScrollPositionCache()
 
-    @JvmStatic
-    fun clearScrollPositionCache() {
-      scrollPositionCache.evictAll()
+    private fun initScrollPositionCache(): Map<PostPopupType, LruCache<ChanDescriptor, IndexAndTop>> {
+      val map = mutableMapOf<PostPopupType, LruCache<ChanDescriptor, IndexAndTop>>()
+
+      map.put(PostPopupType.Replies, LruCache<ChanDescriptor, IndexAndTop>(128))
+      map.put(PostPopupType.Search, LruCache<ChanDescriptor, IndexAndTop>(128))
+
+      return map
     }
+  }
+
+  enum class PostPopupType {
+    Replies,
+    Search
   }
 }
