@@ -1,9 +1,10 @@
 package com.github.k1rakishou.chan.utils
 
 import android.text.SpannableString
+import android.text.style.CharacterStyle
 import androidx.core.text.getSpans
-import com.github.k1rakishou.core_spannable.BackgroundColorSpanHashed
-import com.github.k1rakishou.core_spannable.PostSearchQuerySpan
+import com.github.k1rakishou.common.ELLIPSIZE_SYMBOL
+import com.github.k1rakishou.core_spannable.PostSearchQueryBackgroundSpan
 
 object SpannableHelper {
 
@@ -15,7 +16,7 @@ object SpannableHelper {
     minQueryLength: Int
   ) {
     if (removePrevSpans) {
-      spannableString.getSpans<PostSearchQuerySpan>().forEach { prevSpan ->
+      spannableString.getSpans<PostSearchQueryBackgroundSpan>().forEach { prevSpan ->
         spannableString.removeSpan(prevSpan)
       }
     }
@@ -31,6 +32,8 @@ object SpannableHelper {
       return
     }
 
+    var addedAtLeastOneSpan = false
+
     for (query in validQueries) {
       var offset = 0
       val spans = mutableListOf<SpanToAdd>()
@@ -43,7 +46,8 @@ object SpannableHelper {
           }
 
           if (compared == query.length) {
-            spans += SpanToAdd(offset, query.length, PostSearchQuerySpan(color))
+            spans += SpanToAdd(offset, query.length, PostSearchQueryBackgroundSpan(color))
+            addedAtLeastOneSpan = true
           }
 
           offset += compared
@@ -61,6 +65,17 @@ object SpannableHelper {
           0
         )
       }
+    }
+
+    // It is assumed that the original, uncut, text has this query somewhere where we can't see it now.
+    if (!addedAtLeastOneSpan
+      && spannableString.endsWith(ELLIPSIZE_SYMBOL)
+      && spannableString.length >= ELLIPSIZE_SYMBOL.length
+    ) {
+      val start = spannableString.length - ELLIPSIZE_SYMBOL.length
+      val end = spannableString.length
+
+      spannableString.setSpan(PostSearchQueryBackgroundSpan(color), start, end, 0)
     }
   }
 
@@ -84,7 +99,7 @@ object SpannableHelper {
   private data class SpanToAdd(
     val position: Int,
     val length: Int,
-    val span: BackgroundColorSpanHashed
+    val span: CharacterStyle
   )
 
 }

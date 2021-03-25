@@ -121,7 +121,17 @@ class PostSearchPopupController(
     postsView.recycledViewPool.setMaxRecycledViews(PostRepliesAdapter.POST_REPLY_VIEW_TYPE, 0)
     postsView.adapter = repliesAdapter
     postsView.addOnScrollListener(scrollListener)
-    searchLayout.text = getLastQuery(chanDescriptor)
+
+    val prevQuery = getLastQuery(chanDescriptor)
+    searchLayout.text = prevQuery
+
+    updaterJob?.cancel()
+    updaterJob = null
+
+    updaterJob = scope.launch {
+      onQueryUpdated(chanDescriptor, prevQuery)
+      updaterJob = null
+    }
 
     return dataView
   }
@@ -134,7 +144,7 @@ class PostSearchPopupController(
     lastQueryCache.put(chanDescriptor, query)
   }
 
-  suspend fun CoroutineScope.onQueryUpdated(chanDescriptor: ChanDescriptor, query: String) {
+  private suspend fun CoroutineScope.onQueryUpdated(chanDescriptor: ChanDescriptor, query: String) {
     val repliesAdapter = (postsView.adapter as? PostRepliesAdapter)
       ?: return
     val data = displayingData
