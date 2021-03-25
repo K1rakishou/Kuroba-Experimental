@@ -86,9 +86,9 @@ class CacheHandler(
   @Suppress("JoinDeclarationAndAssignment")
   private val fileCacheDiskSizeBytes: Long
 
-  @GuardedBy("this")
+  @GuardedBy("itself")
   private val filesOnDiskCache = hashSetWithCap<String>(128)
-  @GuardedBy("this")
+  @GuardedBy("itself")
   private val fullyDownloadedFiles = hashSetWithCap<String>(128)
 
   init {
@@ -167,7 +167,9 @@ class CacheHandler(
         }
       }
 
-      filesOnDiskCache.add(fileManager.getName(cacheFile))
+      val cacheFileName = fileManager.getName(cacheFile)
+      synchronized(filesOnDiskCache) { filesOnDiskCache.add(cacheFileName) }
+
       return cacheFile
     } catch (error: IOException) {
       Logger.e(TAG, "Error while trying to get or create cache file", error)
@@ -204,10 +206,9 @@ class CacheHandler(
     return fileManager.create(chunkCacheFile) as RawFile?
   }
 
-  @Synchronized
   fun cacheFileExists(fileUrl: String): Boolean {
     val fileName = formatCacheFileName(hashUrl(fileUrl))
-    return filesOnDiskCache.contains(fileName)
+    return synchronized(filesOnDiskCache) { filesOnDiskCache.contains(fileName) }
   }
 
   @Synchronized
@@ -215,7 +216,6 @@ class CacheHandler(
     return deleteCacheFile(hashUrl(url))
   }
 
-  @Synchronized
   fun isAlreadyDownloaded(fileUrl: String): Boolean {
     BackgroundUtils.ensureBackgroundThread()
     return isAlreadyDownloaded(getCacheFileInternal(fileUrl))
@@ -228,7 +228,6 @@ class CacheHandler(
    *
    * [cacheFile] must be the cache file, not cache file meta!
    * */
-  @Synchronized
   fun isAlreadyDownloaded(cacheFile: RawFile): Boolean {
     BackgroundUtils.ensureBackgroundThread()
 
@@ -236,7 +235,9 @@ class CacheHandler(
       createDirectories()
 
       val cacheFileName = fileManager.getName(cacheFile)
-      if (fullyDownloadedFiles.contains(cacheFileName)) {
+      val containsInCache = synchronized(fullyDownloadedFiles) { fullyDownloadedFiles.contains(cacheFileName) }
+
+      if (containsInCache) {
         return true
       }
 
@@ -278,7 +279,7 @@ class CacheHandler(
 
       val isDownloaded = cacheFileMeta.isDownloaded
       if (isDownloaded) {
-        fullyDownloadedFiles += cacheFileName
+        synchronized(fullyDownloadedFiles) { fullyDownloadedFiles += cacheFileName }
       }
 
       return isDownloaded
@@ -293,7 +294,6 @@ class CacheHandler(
    * Marks the file as a downloaded (sets a flag in it's meta info). If meta info cannot be read
    * deletes the file so it can be re-downloaded again.
    * */
-  @Synchronized
   fun markFileDownloaded(output: AbstractFile): Boolean {
     BackgroundUtils.ensureBackgroundThread()
 
@@ -312,20 +312,23 @@ class CacheHandler(
         return false
       }
 
-      val updateResult = updateCacheFileMeta(
-        cacheFileMeta,
-        false,
-        null,
-        true
-      )
+      return synchronized(this) {
+        val updateResult = updateCacheFileMeta(
+          cacheFileMeta,
+          false,
+          null,
+          true
+        )
 
-      if (!updateResult) {
-        deleteCacheFile(output)
-      } else {
-        fullyDownloadedFiles += fileManager.getName(output)
+        if (!updateResult) {
+          deleteCacheFile(output)
+        } else {
+          val outputFileName = fileManager.getName(output)
+          synchronized(fullyDownloadedFiles) { fullyDownloadedFiles += outputFileName }
+        }
+
+        return@synchronized updateResult
       }
-
-      return updateResult
     } catch (error: Throwable) {
       Logger.e(TAG, "Error while trying to mark file as downloaded", error)
       deleteCacheFile(output)
@@ -342,7 +345,6 @@ class CacheHandler(
    * check whether it exceeds the maximum cache size or not. If it does then the trim() operation
    * is executed in a background thread.
    * */
-  @Synchronized
   fun fileWasAdded(fileLen: Long) {
     val totalSize = size.addAndGet(fileLen.coerceAtLeast(0))
     val trimTime = lastTrimTime.get()
@@ -406,8 +408,8 @@ class CacheHandler(
       }
     }
 
-    filesOnDiskCache.clear()
-    fullyDownloadedFiles.clear()
+    synchronized(filesOnDiskCache) { filesOnDiskCache.clear() }
+    synchronized(fullyDownloadedFiles) { fullyDownloadedFiles.clear() }
 
     recalculateSize()
   }
@@ -447,8 +449,8 @@ class CacheHandler(
       Logger.e(TAG, "Failed to delete cache file meta = ${cacheMetaFile.getFullPath()}")
     }
 
-    filesOnDiskCache.remove(cacheFileName)
-    fullyDownloadedFiles.remove(cacheFileName)
+    synchronized(filesOnDiskCache) { filesOnDiskCache.remove(cacheFileName) }
+    synchronized(fullyDownloadedFiles) { fullyDownloadedFiles.remove(cacheFileName) }
 
     if (deleteCacheFileResult && deleteCacheFileMetaResult) {
       val fileSize = if (cacheFileSize < 0) {
@@ -541,28 +543,30 @@ class CacheHandler(
       }
     }
 
-    val outputStream = fileManager.getOutputStream(file)
-    if (outputStream == null) {
-      Logger.e(TAG, "Couldn't create OutputStream for file = ${file.getFullPath()}")
-      return false
-    }
+    return synchronized(this) {
+      val outputStream = fileManager.getOutputStream(file)
+      if (outputStream == null) {
+        Logger.e(TAG, "Couldn't create OutputStream for file = ${file.getFullPath()}")
+        return@synchronized false
+      }
 
-    return outputStream.use { stream ->
-      return@use PrintWriter(stream).use { pw ->
-        val toWrite = String.format(
-          Locale.ENGLISH,
-          CACHE_FILE_META_CONTENT_FORMAT,
-          CURRENT_META_FILE_VERSION,
-          prevCacheFileMeta.createdOn,
-          prevCacheFileMeta.isDownloaded
-        )
+      return@synchronized outputStream.use { stream ->
+        return@use PrintWriter(stream).use { pw ->
+          val toWrite = String.format(
+            Locale.ENGLISH,
+            CACHE_FILE_META_CONTENT_FORMAT,
+            CURRENT_META_FILE_VERSION,
+            prevCacheFileMeta.createdOn,
+            prevCacheFileMeta.isDownloaded
+          )
 
-        val lengthChars = intToCharArray(toWrite.length)
-        pw.write(lengthChars)
-        pw.write(toWrite)
-        pw.flush()
+          val lengthChars = intToCharArray(toWrite.length)
+          pw.write(lengthChars)
+          pw.write(toWrite)
+          pw.flush()
 
-        return@use true
+          return@use true
+        }
       }
     }
   }
@@ -590,47 +594,49 @@ class CacheHandler(
       throw IOException("Not a cache file meta! file = ${cacheFileMate.getFullPath()}")
     }
 
-    return fileManager.withFileDescriptor(cacheFileMate, FileDescriptorMode.Read) { fd ->
-      return@withFileDescriptor FileReader(fd).use { reader ->
-        val lengthBuffer = CharArray(CACHE_FILE_META_HEADER_SIZE)
+    return synchronized(this) {
+      return@synchronized fileManager.withFileDescriptor(cacheFileMate, FileDescriptorMode.Read) { fd ->
+        return@withFileDescriptor FileReader(fd).use { reader ->
+          val lengthBuffer = CharArray(CACHE_FILE_META_HEADER_SIZE)
 
-        var read = reader.read(lengthBuffer)
-        if (read != CACHE_FILE_META_HEADER_SIZE) {
-          throw IOException(
-            "Couldn't read content size of cache file meta, read $read"
+          var read = reader.read(lengthBuffer)
+          if (read != CACHE_FILE_META_HEADER_SIZE) {
+            throw IOException(
+              "Couldn't read content size of cache file meta, read $read"
+            )
+          }
+
+          val length = charArrayToInt(lengthBuffer)
+          if (length < 0 || length > MAX_CACHE_META_SIZE) {
+            throw IOException("Cache file meta is too big or negative (${length} bytes)." +
+              " It was probably corrupted. Deleting it.")
+          }
+
+          val contentBuffer = CharArray(length)
+          read = reader.read(contentBuffer)
+
+          if (read != length) {
+            throw IOException("Couldn't read content cache file meta, read = $read, expected = $length")
+          }
+
+          val content = String(contentBuffer)
+          val split = content.split(",").toTypedArray()
+
+          if (split.size != CacheFileMeta.PARTS_COUNT) {
+            throw IOException("Couldn't split meta content ($content), split.size = ${split.size}")
+          }
+
+          val fileVersion = split[0].toInt()
+          if (fileVersion != CURRENT_META_FILE_VERSION) {
+            throw IOException("Bad file version: $fileVersion")
+          }
+
+          return@use CacheFileMeta(
+            fileVersion,
+            split[1].toLong(),
+            split[2].toBoolean()
           )
         }
-
-        val length = charArrayToInt(lengthBuffer)
-        if (length < 0 || length > MAX_CACHE_META_SIZE) {
-          throw IOException("Cache file meta is too big or negative (${length} bytes)." +
-            " It was probably corrupted. Deleting it.")
-        }
-
-        val contentBuffer = CharArray(length)
-        read = reader.read(contentBuffer)
-
-        if (read != length) {
-          throw IOException("Couldn't read content cache file meta, read = $read, expected = $length")
-        }
-
-        val content = String(contentBuffer)
-        val split = content.split(",").toTypedArray()
-
-        if (split.size != CacheFileMeta.PARTS_COUNT) {
-          throw IOException("Couldn't split meta content ($content), split.size = ${split.size}")
-        }
-
-        val fileVersion = split[0].toInt()
-        if (fileVersion != CURRENT_META_FILE_VERSION) {
-          throw IOException("Bad file version: $fileVersion")
-        }
-
-        return@use CacheFileMeta(
-          fileVersion,
-          split[1].toLong(),
-          split[2].toBoolean()
-        )
       }
     }
   }
@@ -788,18 +794,21 @@ class CacheHandler(
       return
     }
 
-    synchronized(this) { filesOnDiskCache.clear() }
+    synchronized(filesOnDiskCache) { filesOnDiskCache.clear() }
 
     try {
-      val files = fileManager.listFiles(cacheDirFile)
+      synchronized(this) {
+        val files = fileManager.listFiles(cacheDirFile)
+        for (file in files) {
+          if (fileManager.getName(file).endsWith(CACHE_META_EXTENSION)) {
+            continue
+          }
 
-      for (file in files) {
-        if (fileManager.getName(file).endsWith(CACHE_META_EXTENSION)) {
-          continue
+          calculatedSize += fileManager.getLength(file)
+          val cacheFileName = fileManager.getName(file)
+
+          synchronized(filesOnDiskCache) { filesOnDiskCache.add(cacheFileName) }
         }
-
-        calculatedSize += fileManager.getLength(file)
-        filesOnDiskCache.add(fileManager.getName(file))
       }
 
       size.set(calculatedSize)
