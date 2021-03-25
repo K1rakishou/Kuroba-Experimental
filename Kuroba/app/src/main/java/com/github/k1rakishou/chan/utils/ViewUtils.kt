@@ -9,6 +9,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.AbsListView
 import android.widget.EdgeEffect
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
@@ -157,6 +158,31 @@ object ViewUtils {
       f1.set(this, edgeEffectTop)
 
       val f2: Field = AbsListView::class.java.getDeclaredField("mEdgeGlowBottom")
+      f2.isAccessible = true
+      f2.set(this, edgeEffectBottom)
+    } catch (ignored: Exception) {
+    }
+  }
+
+  fun ScrollView.changeEdgeEffect(theme: ChanTheme) {
+    val color = theme.accentColor
+
+    if (AndroidUtils.isAndroid10()) {
+      setEdgeEffectColor(theme.accentColor)
+      return
+    }
+
+    val edgeEffectTop = EdgeEffect(context)
+    edgeEffectTop.color = color
+    val edgeEffectBottom = EdgeEffect(context)
+    edgeEffectBottom.color = color
+
+    try {
+      val f1: Field = ScrollView::class.java.getDeclaredField("mEdgeGlowTop")
+      f1.isAccessible = true
+      f1.set(this, edgeEffectTop)
+
+      val f2: Field = ScrollView::class.java.getDeclaredField("mEdgeGlowBottom")
       f2.isAccessible = true
       f2.set(this, edgeEffectBottom)
     } catch (ignored: Exception) {

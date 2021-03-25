@@ -6,6 +6,7 @@ import android.text.TextWatcher
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.RadioGroup
+import android.widget.ScrollView
 import android.widget.Toast
 import androidx.core.view.children
 import androidx.core.widget.doAfterTextChanged
@@ -18,6 +19,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+import com.github.k1rakishou.chan.utils.ViewUtils.changeEdgeEffect
 import com.github.k1rakishou.chan.utils.doIgnoringTextWatcher
 import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
@@ -100,6 +102,9 @@ class ImageSaverV2OptionsController(
     additionalDirectoriesTil = view.findViewById(R.id.additional_directories_til)
     cancelButton = view.findViewById(R.id.cancel_button)
     saveButton = view.findViewById(R.id.save_button)
+
+    val scrollView = view.findViewById<ScrollView>(R.id.scroll_view)
+    scrollView.changeEdgeEffect(themeEngine.chanTheme)
 
     when (options) {
       is Options.MultipleImages -> {
