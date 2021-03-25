@@ -1235,6 +1235,9 @@ Don't have a 4chan Pass?<br>
     <string name="image_saver_finished_downloading_images_progress">Downloading %1$d/%2$d images</string>
     <string name="image_saver_finished_downloading_images_with_errors">Finished downloading %1$d images with errors</string>
 
+    <string name="search_found_unknown">Found: ???</string>
+    <string name="search_found_count">Found: %1$d</string>
+
     <string name="bookmarks_tab_title">Bookmarks</string>
     <string name="filter_watches_tab_title">Filter watches</string>
 

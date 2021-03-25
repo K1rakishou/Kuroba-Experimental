@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.ui.controller.popup
 
 import android.content.Context
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -13,6 +14,7 @@ import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.layout.SearchLayout
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.updatePaddings
@@ -20,7 +22,11 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.PostIndexed
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
 import javax.inject.Inject
@@ -33,6 +39,9 @@ class PostSearchPopupController(
   private val currentPosts: MutableList<ChanPost>? = null
   private var skipDebouncer = true
   private var scrollPositionRestored = false
+  private var updaterJob: Job? = null
+
+  private lateinit var totalFoundTextView: ColorizableTextView
 
   @Inject
   lateinit var chanThreadManager: ChanThreadManager
@@ -67,10 +76,10 @@ class PostSearchPopupController(
     dataView.id = R.id.post_popup_search_view_id
 
     val horizPadding = PostCell.calculateHorizPadding(ChanSettings.fontSize.get().toInt())
+    val searchLayoutContainer = dataView.findViewById<LinearLayout>(R.id.search_layout_container)
+    searchLayoutContainer.updatePaddings(left = horizPadding, right = horizPadding)
 
     val searchLayout = dataView.findViewById<SearchLayout>(R.id.search_layout)
-    searchLayout.updatePaddings(left = horizPadding, right = horizPadding)
-
     searchLayout.setCallback { query ->
       val timeout = if (skipDebouncer) {
         skipDebouncer = false
@@ -81,10 +90,18 @@ class PostSearchPopupController(
 
       debouncingCoroutineExecutor.post(timeout) {
         storeQuery(chanDescriptor, query)
-        onQueryUpdated(chanDescriptor, query)
+
+        updaterJob?.cancel()
+        updaterJob = null
+
+        updaterJob = scope.launch {
+          onQueryUpdated(chanDescriptor, query)
+          updaterJob = null
+        }
       }
     }
 
+    totalFoundTextView = dataView.findViewById(R.id.total_found)
     postsView = dataView.findViewById(R.id.post_list)
 
     val repliesAdapter = PostRepliesAdapter(
@@ -122,7 +139,7 @@ class PostSearchPopupController(
     }
   }
 
-  private suspend fun onQueryUpdated(chanDescriptor: ChanDescriptor, query: String) {
+  suspend fun CoroutineScope.onQueryUpdated(chanDescriptor: ChanDescriptor, query: String) {
     val repliesAdapter = (postsView.adapter as? PostRepliesAdapter)
       ?: return
     val data = displayingData
@@ -134,6 +151,10 @@ class PostSearchPopupController(
       var postIndex = 0
 
       chanThreadManager.iteratePostsWhile(data.descriptor) { chanPost ->
+        if (!isActive) {
+          return@iteratePostsWhile false
+        }
+
         if (query.length < MIN_QUERY_LENGTH) {
           resultPosts += PostIndexed(chanPost, postIndex++)
           return@iteratePostsWhile true
@@ -148,6 +169,16 @@ class PostSearchPopupController(
       }
 
       return@withContext resultPosts
+    }
+
+    if (!isActive) {
+      return
+    }
+
+    if (query.length < MIN_QUERY_LENGTH) {
+      totalFoundTextView.text = context.getString(R.string.search_found_unknown)
+    } else {
+      totalFoundTextView.text = context.getString(R.string.search_found_count, resultPosts.size)
     }
 
     repliesAdapter.setOrUpdateData(resultPosts, themeEngine.chanTheme)
