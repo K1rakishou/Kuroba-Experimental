@@ -355,7 +355,11 @@ class Dvach : CommonSite() {
     return chunkDownloaderSiteProperties
   }
 
-  inner class DvachEndpoints(commonSite: CommonSite) : VichanEndpoints(commonSite, "https://2ch.hk", "https://2ch.hk") {
+  inner class DvachEndpoints(commonSite: CommonSite) : VichanEndpoints(
+    commonSite,
+    URL_HANDLER.url!!.toString(),
+    URL_HANDLER.url!!.toString()
+  ) {
     override fun imageUrl(post: ChanPostBuilder, arg: Map<String, String>): HttpUrl {
       val path = requireNotNull(arg["path"]) { "\"path\" parameter not found" }
 
@@ -376,7 +380,7 @@ class Dvach : CommonSite() {
     fun dvachGetBoards(): HttpUrl {
       return HttpUrl.Builder()
         .scheme("https")
-        .host("2ch.hk")
+        .host(URL_HANDLER.url!!.host)
         .addPathSegment("makaba")
         .addPathSegment("mobile.fcgi")
         .addQueryParameter("task", "get_boards")
@@ -386,7 +390,7 @@ class Dvach : CommonSite() {
     override fun boards(): HttpUrl {
       return HttpUrl.Builder()
         .scheme("https")
-        .host("2ch.hk")
+        .host(URL_HANDLER.url!!.host)
         .addPathSegment("boards.json")
         .build()
     }
@@ -394,7 +398,7 @@ class Dvach : CommonSite() {
     override fun pages(board: ChanBoard): HttpUrl {
       return HttpUrl.Builder()
         .scheme("https")
-        .host("2ch.hk")
+        .host(URL_HANDLER.url!!.host)
         .addPathSegment(board.boardCode())
         .addPathSegment("catalog.json")
         .build()
@@ -403,7 +407,7 @@ class Dvach : CommonSite() {
     override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
       return HttpUrl.Builder()
         .scheme("https")
-        .host("2ch.hk")
+        .host(URL_HANDLER.url!!.host)
         .addPathSegment("makaba")
         .addPathSegment("posting.fcgi")
         .addQueryParameter("json", "1")
@@ -413,7 +417,7 @@ class Dvach : CommonSite() {
     override fun login(): HttpUrl {
       return HttpUrl.Builder()
         .scheme("https")
-        .host("2ch.hk")
+        .host(URL_HANDLER.url!!.host)
         .addPathSegment("makaba")
         .addPathSegment("makaba.fcgi")
         .build()
@@ -431,7 +435,7 @@ class Dvach : CommonSite() {
 
       return HttpUrl.Builder()
         .scheme("https")
-        .host("2ch.hk")
+        .host(URL_HANDLER.url!!.host)
         .addPathSegment("makaba")
         .addPathSegment("makaba.fcgi")
         .addQueryParameter("task", "auth")
@@ -528,7 +532,7 @@ class Dvach : CommonSite() {
 
     @JvmField
     val URL_HANDLER: CommonSiteUrlHandler = object : CommonSiteUrlHandler() {
-      val ROOT = "https://2ch.hk/"
+      val ROOT = "https://2ch.pm/"
 
       override fun getSiteClass(): Class<out Site?> {
         return Dvach::class.java
