@@ -61,14 +61,15 @@ class ParsePostsUseCase(
           val deferredList = postToParseChunk.map { postToParse ->
             return@map async(dispatcher) {
               return@async PostParseWorker(
-                filterEngine,
-                postFilterManager,
-                savedReplyManager,
-                filters,
-                postToParse,
-                postParser,
-                internalIds,
-                boardDescriptors
+                filterEngine = filterEngine,
+                postFilterManager = postFilterManager,
+                savedReplyManager = savedReplyManager,
+                filters = filters,
+                postBuilder = postToParse,
+                postParser = postParser,
+                internalIds = internalIds,
+                boardDescriptors = boardDescriptors,
+                isParsingCatalog = chanDescriptor is ChanDescriptor.CatalogDescriptor
               ).parse()
             }
           }

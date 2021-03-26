@@ -36,7 +36,8 @@ import javax.inject.Inject
 class PostSearchPopupController(
   context: Context,
   postPopupHelper: PostPopupHelper,
-  postCellCallback: PostCellInterface.PostCellCallback
+  postCellCallback: PostCellInterface.PostCellCallback,
+  private var initialQuery: String? = null
 ) : BasePostPopupController<PostSearchPopupController.PostSearchPopupData>(context, postPopupHelper, postCellCallback) {
   private val currentPosts = mutableListOf<PostIndexed>()
   private var skipDebouncer = true
@@ -132,8 +133,10 @@ class PostSearchPopupController(
     postsView.adapter = repliesAdapter
     postsView.addOnScrollListener(scrollListener)
 
-    val prevQuery = getLastQuery(chanDescriptor)
+    val prevQuery = initialQuery ?: getLastQuery(chanDescriptor)
+    initialQuery = null
     searchLayout.text = prevQuery
+
 
     updaterJob?.cancel()
     updaterJob = null

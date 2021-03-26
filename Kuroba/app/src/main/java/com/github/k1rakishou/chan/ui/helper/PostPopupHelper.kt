@@ -74,7 +74,7 @@ class PostPopupHelper(
     presentingPostRepliesController?.displayData(threadDescriptor, data)
   }
 
-  fun showSearchPopup(chanDescriptor: ChanDescriptor) {
+  fun showSearchPopup(chanDescriptor: ChanDescriptor, searchQuery: String? = null) {
     val postViewMode = PostCellData.PostViewMode.Search
 
     val data = PostSearchPopupController.PostSearchPopupData(
@@ -83,10 +83,13 @@ class PostPopupHelper(
     )
 
     val prevPostViewMode = dataQueue.lastOrNull()?.postViewMode
-    dataQueue.add(data)
+
+    if (searchQuery == null || prevPostViewMode != postViewMode) {
+      dataQueue.add(data)
+    }
 
     if (dataQueue.size == 1 || prevPostViewMode != postViewMode) {
-      present(PostSearchPopupController(context, this, presenter))
+      present(PostSearchPopupController(context, this, presenter, searchQuery))
     }
 
     presentingPostRepliesController?.displayData(chanDescriptor, data)

@@ -39,7 +39,8 @@ internal class PostParseWorker(
   private val postBuilder: ChanPostBuilder,
   private val postParser: PostParser,
   private val internalIds: Set<Long>,
-  private val boardDescriptors: Set<BoardDescriptor>
+  private val boardDescriptors: Set<BoardDescriptor>,
+  private val isParsingCatalog: Boolean
 ) {
 
   suspend fun parse(): ChanPost? {
@@ -61,6 +62,10 @@ internal class PostParseWorker(
 
         override fun isValidBoard(boardDescriptor: BoardDescriptor): Boolean {
           return boardDescriptors.contains(boardDescriptor)
+        }
+
+        override fun isParsingCatalogPosts(): Boolean {
+          return isParsingCatalog
         }
       })
     }.mapErrorToValue { error ->

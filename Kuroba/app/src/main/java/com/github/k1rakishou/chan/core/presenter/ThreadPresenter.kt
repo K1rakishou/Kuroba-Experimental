@@ -1438,11 +1438,7 @@ class ThreadPresenter @Inject constructor(
           return@post
         }
 
-        showToast(context, R.string.board_search_links_are_disabled)
-
-        // TODO(KurobaEx): search links are broken
-//        localSearchManager.onSearchEntered(LocalSearchType.CatalogSearch, searchLink.search)
-//        threadPresenterCallback?.setBoard(boardDescriptor, true)
+        threadPresenterCallback?.setBoardWithSearchQuery(boardDescriptor, searchLink.query, true)
         return@post
       }
 
@@ -2212,15 +2208,25 @@ class ThreadPresenter @Inject constructor(
     suspend fun openExternalThread(postDescriptor: PostDescriptor)
     suspend fun showBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
     suspend fun setBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
+
+    suspend fun setBoardWithSearchQuery(
+      boardDescriptor: BoardDescriptor,
+      searchQuery: String,
+      animated: Boolean
+    )
+
     fun openLink(link: String)
     fun openReportView(post: ChanPost)
+
     fun showPostsPopup(
       threadDescriptor: ChanDescriptor.ThreadDescriptor,
       postViewMode: PostCellData.PostViewMode,
       postDescriptor: PostDescriptor?,
       posts: List<ChanPost>
     )
+
     fun hidePostsPopup()
+
     fun showImages(
       images: List<ChanPostImage>,
       index: Int,

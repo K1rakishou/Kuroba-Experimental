@@ -90,8 +90,13 @@ import kotlinx.android.synthetic.main.controller_save_location.view.*
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
@@ -161,6 +166,7 @@ class ThreadLayout @JvmOverloads constructor(
   private var refreshedFromSwipe = false
   private var deletingDialog: ProgressDialog? = null
   private var visible: Visible? = null
+  private var searchLinkPopupOpenJob: Job? = null
 
   private val scrollToBottomDebouncer = Debouncer(false)
   private val job = SupervisorJob()
@@ -574,6 +580,39 @@ class ThreadLayout @JvmOverloads constructor(
 
   override suspend fun setBoard(boardDescriptor: BoardDescriptor, animated: Boolean) {
     Logger.d(TAG, "setBoard($boardDescriptor, $animated)")
+
+    callback.setBoard(boardDescriptor, animated)
+  }
+
+  override suspend fun setBoardWithSearchQuery(
+    boardDescriptor: BoardDescriptor,
+    searchQuery: String,
+    animated: Boolean
+  ) {
+    Logger.d(TAG, "setBoardWithSearchQuery($boardDescriptor, $searchQuery, $animated)")
+
+    searchLinkPopupOpenJob?.cancel()
+    searchLinkPopupOpenJob = null
+
+    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      searchLinkPopupOpenJob = coroutineScope {
+        launch {
+          delay(500L)
+
+          if (!isActive) {
+            return@launch
+          }
+
+          val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(boardDescriptor)
+          postPopupHelper.showSearchPopup(catalogDescriptor, searchQuery)
+
+          searchLinkPopupOpenJob = null
+        }
+      }
+    } else {
+      val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(boardDescriptor)
+      postPopupHelper.showSearchPopup(catalogDescriptor, searchQuery)
+    }
 
     callback.setBoard(boardDescriptor, animated)
   }

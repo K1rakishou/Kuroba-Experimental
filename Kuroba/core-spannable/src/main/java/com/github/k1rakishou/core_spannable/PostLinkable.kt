@@ -167,7 +167,7 @@ open class PostLinkable(
     object NoValue : Value()
     data class LongValue(val value: Long) : Value()
     data class StringValue(val value: CharSequence) : Value()
-    data class SearchLink(val board: String, val search: String) : Value()
+    data class SearchLink(val board: String, val query: String) : Value()
 
     data class ThreadOrPostLink(val board: String, val threadId: Long, val postId: Long) : Value() {
       fun isThreadLink(): Boolean = threadId == postId

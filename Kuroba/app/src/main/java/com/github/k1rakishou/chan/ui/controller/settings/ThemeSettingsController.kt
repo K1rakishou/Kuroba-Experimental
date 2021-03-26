@@ -169,6 +169,10 @@ class ThemeSettingsController(context: Context) : Controller(context),
     override fun isValidBoard(boardDescriptor: BoardDescriptor): Boolean {
       return true
     }
+
+    override fun isParsingCatalogPosts(): Boolean {
+      return false
+    }
   }
 
   private lateinit var pager: ViewPager

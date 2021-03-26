@@ -49,5 +49,7 @@ public interface PostParser {
         boolean isInternal(long postNo);
 
         boolean isValidBoard(@NonNull BoardDescriptor boardDescriptor);
+
+        boolean isParsingCatalogPosts();
     }
 }

@@ -309,7 +309,7 @@ object SpannableStringMapper {
           PostLinkableSearchLinkValue(
             SerializablePostLinkableType.Search,
             searchLink.board,
-            searchLink.search
+            searchLink.query
           )
         )
 
