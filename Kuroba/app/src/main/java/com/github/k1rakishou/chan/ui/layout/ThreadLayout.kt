@@ -80,6 +80,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterType
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -932,6 +933,10 @@ class ThreadLayout @JvmOverloads constructor(
     return postPopupHelper.topOrNull()
   }
 
+  override fun openFiltersController(chanFilterMutable: ChanFilterMutable) {
+    callback.openFiltersController(chanFilterMutable)
+  }
+
   override fun showNewPostsNotification(show: Boolean, newPostsCount: Int) {
     if (!show) {
       dismissSnackbar()
@@ -1161,6 +1166,7 @@ class ThreadLayout @JvmOverloads constructor(
     fun openReportController(post: ChanPost)
     fun hideSwipeRefreshLayout()
     fun openFilterForType(type: FilterType, filterText: String?)
+    fun openFiltersController(chanFilterMutable: ChanFilterMutable)
     fun threadBackPressed(): Boolean
     fun threadBackLongPressed()
     fun showAvailableArchivesList(postDescriptor: PostDescriptor)

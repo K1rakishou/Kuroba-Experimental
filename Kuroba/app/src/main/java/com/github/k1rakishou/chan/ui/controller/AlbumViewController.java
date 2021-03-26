@@ -52,6 +52,7 @@ import com.github.k1rakishou.chan.ui.view.post_thumbnail.ThumbnailView;
 import com.github.k1rakishou.common.AndroidUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 import com.github.k1rakishou.persist_state.PersistableChanState;
 
@@ -89,6 +90,7 @@ public class AlbumViewController
     private FastScroller fastScroller;
 
     private AlbumAdapter albumAdapter;
+    private final ThreadControllerCallbacks threadControllerCallbacks;
 
     @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
@@ -100,8 +102,10 @@ public class AlbumViewController
         component.inject(this);
     }
 
-    public AlbumViewController(Context context) {
+    public AlbumViewController(Context context, ThreadControllerCallbacks threadControllerCallbacks) {
         super(context);
+
+        this.threadControllerCallbacks = threadControllerCallbacks;
     }
 
     @Override
@@ -354,9 +358,13 @@ public class AlbumViewController
     private void showImageLongClickOptions(ChanPostImage postImage) {
         thumbnailLongtapOptionsHelper.onThumbnailLongTapped(
                 context,
+                true,
                 postImage,
                 controller -> {
                     presentController(controller);
+                    return Unit.INSTANCE;
+                },
+                chanFilterMutable -> {
                     return Unit.INSTANCE;
                 }
         );
@@ -464,5 +472,9 @@ public class AlbumViewController
             this.spanCount = spanCount;
             this.spanWidth = spanWidth;
         }
+    }
+
+    interface ThreadControllerCallbacks {
+        void openFiltersController(ChanFilterMutable chanFilterMutable);
     }
 }

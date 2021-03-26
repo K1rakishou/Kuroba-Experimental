@@ -62,6 +62,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.board.pages.BoardPage
 import com.github.k1rakishou.model.data.descriptor.*
+import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.options.ChanCacheOptions
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.options.ChanLoadOptions
@@ -1001,9 +1002,15 @@ class ThreadPresenter @Inject constructor(
     }
 
     thumbnailLongtapOptionsHelper.onThumbnailLongTapped(
-      context,
-      postImage,
-      { controller -> threadPresenterCallback?.presentController(controller, true) }
+      context = context,
+      isCurrentlyInAlbum = false,
+      postImage = postImage,
+      presentControllerFunc = { controller ->
+        threadPresenterCallback?.presentController(controller, true)
+      },
+      showFiltersControllerFunc = { chanFilterMutable ->
+        threadPresenterCallback?.openFiltersController(chanFilterMutable)
+      }
     )
 
   }
@@ -2171,6 +2178,7 @@ class ThreadPresenter @Inject constructor(
     fun showAvailableArchivesList(postDescriptor: PostDescriptor)
     fun currentSpanCount(): Int
     fun getTopPostRepliesDataOrNull(): PostPopupHelper.PostPopupData?
+    fun openFiltersController(chanFilterMutable: ChanFilterMutable)
   }
 
   companion object {

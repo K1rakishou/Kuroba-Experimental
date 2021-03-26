@@ -205,6 +205,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_copy_image_original_name">Copy original file name</string>
     <string name="action_copy_image_server_name">Copy server file name</string>
     <string name="action_copy_image_file_hash_hex">Copy file hash HEX</string>
+    <string name="action_filter_image_by_hash">Filter posts with this image\'s hash</string>
     <string name="action_share_content">Share file content</string>
     <string name="action_download_content">Download file</string>
     <string name="action_download_content_with_options">Download file (show options)</string>

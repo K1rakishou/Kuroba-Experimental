@@ -69,7 +69,8 @@ abstract class ThreadController(
   SlideChangeListener,
   ApplicationVisibilityListener,
   ThemeEngine.ThemeChangesListener,
-  Toolbar.ToolbarHeightUpdatesCallback {
+  Toolbar.ToolbarHeightUpdatesCallback,
+  AlbumViewController.ThreadControllerCallbacks {
 
   @Inject
   lateinit var siteManager: SiteManager
@@ -293,7 +294,7 @@ abstract class ThreadController(
       return
     }
 
-    val albumViewController = AlbumViewController(context)
+    val albumViewController = AlbumViewController(context, this)
     albumViewController.setImages(chanDescriptor, filteredImages, newIndex, navigation.title)
 
     if (doubleNavigationController != null) {
@@ -335,6 +336,18 @@ abstract class ThreadController(
   }
 
   override fun openFilterForType(type: FilterType, filterText: String?) {
+    val filter = ChanFilterMutable()
+    filter.type = type.flag
+    filter.pattern = '/'.toString() + (filterText ?: "") + '/'
+    openFiltersController(filter)
+  }
+
+  override fun openFiltersController(chanFilterMutable: ChanFilterMutable) {
+    val filtersController = openFiltersController()
+    filtersController.showFilterDialog(chanFilterMutable)
+  }
+
+  private fun openFiltersController(): FiltersController {
     val filtersController = FiltersController(context)
 
     if (doubleNavigationController != null) {
@@ -344,10 +357,7 @@ abstract class ThreadController(
     }
 
     requireStartActivity().setSettingsMenuItemSelected()
-    val filter = ChanFilterMutable()
-    filter.type = type.flag
-    filter.pattern = '/'.toString() + (filterText ?: "") + '/'
-    filtersController.showFilterDialog(filter)
+    return filtersController
   }
 
   override fun onLostFocus(wasFocused: ThreadSlideController.ThreadControllerType) {

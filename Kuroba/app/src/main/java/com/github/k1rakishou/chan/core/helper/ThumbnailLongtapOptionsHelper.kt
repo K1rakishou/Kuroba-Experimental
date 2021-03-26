@@ -16,6 +16,8 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorEmpty
+import com.github.k1rakishou.model.data.filter.ChanFilterMutable
+import com.github.k1rakishou.model.data.filter.FilterType
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.persist_state.PersistableChanState
 
@@ -26,8 +28,10 @@ class ThumbnailLongtapOptionsHelper(
 
   fun onThumbnailLongTapped(
     context: Context,
+    isCurrentlyInAlbum: Boolean,
     postImage: ChanPostImage,
-    presentControllerFunc: (Controller) -> Unit
+    presentControllerFunc: (Controller) -> Unit,
+    showFiltersControllerFunc: (ChanFilterMutable) -> Unit
   ) {
     val fullImageName = buildString {
       append((postImage.filename ?: postImage.serverFilename))
@@ -53,6 +57,10 @@ class ThumbnailLongtapOptionsHelper(
 
     if (postImage.fileHash.isNotNullNorEmpty()) {
       items += createMenuItem(context, IMAGE_COPY_MD5_HASH_HEX, R.string.action_copy_image_file_hash_hex)
+
+      if (!isCurrentlyInAlbum) {
+        items += createMenuItem(context, FILTER_POSTS_WITH_THIS_IMAGE_HASH, R.string.action_filter_image_by_hash)
+      }
     }
 
     items += createMenuItem(context, SHARE_MEDIA_FILE_CONTENT, R.string.action_share_content)
@@ -63,17 +71,26 @@ class ThumbnailLongtapOptionsHelper(
       context,
       globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items,
-      { item -> onThumbnailOptionClicked(context, item.key as Int, postImage, presentControllerFunc) }
+      { item ->
+        onThumbnailOptionClicked(
+          context = context,
+          id = item.key as Int,
+          postImage = postImage,
+          presentControllerFunc = presentControllerFunc,
+          showFiltersControllerFunc = showFiltersControllerFunc
+        )
+      }
     )
 
-    presentControllerFunc(floatingListMenuController,)
+    presentControllerFunc(floatingListMenuController)
   }
 
   private fun onThumbnailOptionClicked(
     context: Context,
     id: Int,
     postImage: ChanPostImage,
-    presentControllerFunc: (Controller) -> Unit
+    presentControllerFunc: (Controller) -> Unit,
+    showFiltersControllerFunc: (ChanFilterMutable) -> Unit
   ) {
     when (id) {
       IMAGE_COPY_FULL_URL -> {
@@ -103,6 +120,13 @@ class ThumbnailLongtapOptionsHelper(
       IMAGE_COPY_MD5_HASH_HEX -> {
         AndroidUtils.setClipboardContent("File hash HEX", postImage.fileHash)
         AppModuleAndroidUtils.showToast(context, R.string.image_file_hash_copied_to_clipboard)
+      }
+      FILTER_POSTS_WITH_THIS_IMAGE_HASH -> {
+        val filter = ChanFilterMutable()
+        filter.type = FilterType.IMAGE.flag
+        filter.pattern = postImage.fileHash
+
+        showFiltersControllerFunc(filter)
       }
       SHARE_MEDIA_FILE_CONTENT -> {
         imageSaverV2.share(postImage) { result ->
@@ -171,6 +195,7 @@ class ThumbnailLongtapOptionsHelper(
     private const val IMAGE_COPY_ORIGINAL_FILE_NAME = 1005
     private const val IMAGE_COPY_SERVER_FILE_NAME = 1006
     private const val IMAGE_COPY_MD5_HASH_HEX = 1007
+    private const val FILTER_POSTS_WITH_THIS_IMAGE_HASH = 1008
     private const val THUMBNAIL_LONG_CLICK_MENU_HEADER = "thumbnail_copy_menu_header"
   }
 
