@@ -341,7 +341,7 @@ open class ThemeEngine(
     }
 
     @JvmStatic
-    fun isBlackOrAlmostBlackColor(color: Int): Boolean {
+    fun isNearToFullyBlackColor(color: Int): Boolean {
       return ColorUtils.calculateLuminance(color) < 0.01f
     }
 

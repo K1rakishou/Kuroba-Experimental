@@ -648,7 +648,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
     bottomNavView.selectedItemId = R.id.action_browse
     bottomNavView.setBackgroundColor(theme.primaryColor)
 
-    val uncheckedColor = if (ThemeEngine.isBlackOrAlmostBlackColor(theme.primaryColor)) {
+    val uncheckedColor = if (ThemeEngine.isNearToFullyBlackColor(theme.primaryColor)) {
       Color.DKGRAY
     } else {
       ThemeEngine.manipulateColor(theme.primaryColor, .7f)

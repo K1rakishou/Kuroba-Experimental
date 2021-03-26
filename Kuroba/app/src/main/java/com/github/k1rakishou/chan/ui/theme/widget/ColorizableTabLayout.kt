@@ -62,7 +62,7 @@ class ColorizableTabLayout @JvmOverloads constructor(
   override fun applyColors() {
     setBackgroundColor(themeEngine.chanTheme.primaryColor)
 
-    val normalTextColor = if (ThemeEngine.isBlackOrAlmostBlackColor(themeEngine.chanTheme.primaryColor)) {
+    val normalTextColor = if (ThemeEngine.isNearToFullyBlackColor(themeEngine.chanTheme.primaryColor)) {
       Color.DKGRAY
     } else {
       ThemeEngine.manipulateColor(themeEngine.chanTheme.primaryColor, .7f)

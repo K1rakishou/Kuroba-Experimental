@@ -104,7 +104,6 @@ class GlobalSearchUseCase(
             inputQueries = getAllQueries(searchResult.searchParams),
             spannableString = spannedComment,
             color = theme.accentColor,
-            removePrevSpans = false,
             minQueryLength = 1
           )
 
@@ -121,7 +120,6 @@ class GlobalSearchUseCase(
             inputQueries = getAllQueries(searchResult.searchParams),
             spannableString = spannedSubject,
             color = theme.accentColor,
-            removePrevSpans = false,
             minQueryLength = 1
           )
 

@@ -1,10 +1,12 @@
 package com.github.k1rakishou.chan.utils
 
+import android.graphics.Color
 import android.text.SpannableString
 import android.text.style.CharacterStyle
-import androidx.core.text.getSpans
 import com.github.k1rakishou.common.ELLIPSIZE_SYMBOL
 import com.github.k1rakishou.core_spannable.PostSearchQueryBackgroundSpan
+import com.github.k1rakishou.core_spannable.PostSearchQueryForegroundSpan
+import com.github.k1rakishou.core_themes.ThemeEngine
 
 object SpannableHelper {
 
@@ -12,15 +14,8 @@ object SpannableHelper {
     inputQueries: Collection<String>,
     spannableString: SpannableString,
     color: Int,
-    removePrevSpans: Boolean,
     minQueryLength: Int
   ) {
-    if (removePrevSpans) {
-      spannableString.getSpans<PostSearchQueryBackgroundSpan>().forEach { prevSpan ->
-        spannableString.removeSpan(prevSpan)
-      }
-    }
-
     val validQueries = inputQueries
       .filter { query ->
         return@filter query.isNotEmpty()
@@ -47,6 +42,15 @@ object SpannableHelper {
 
           if (compared == query.length) {
             spans += SpanToAdd(offset, query.length, PostSearchQueryBackgroundSpan(color))
+
+            val textColor = if (ThemeEngine.isDarkColor(color)) {
+              Color.LTGRAY
+            } else {
+              Color.DKGRAY
+            }
+
+            spans += SpanToAdd(offset, query.length, PostSearchQueryForegroundSpan(textColor))
+
             addedAtLeastOneSpan = true
           }
 
@@ -76,6 +80,14 @@ object SpannableHelper {
       val end = spannableString.length
 
       spannableString.setSpan(PostSearchQueryBackgroundSpan(color), start, end, 0)
+
+      val textColor = if (ThemeEngine.isDarkColor(color)) {
+        Color.LTGRAY
+      } else {
+        Color.DKGRAY
+      }
+
+      spannableString.setSpan(PostSearchQueryForegroundSpan(textColor), start, end, 0)
     }
   }
 

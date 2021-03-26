@@ -183,7 +183,6 @@ data class PostCellData(
         inputQueries = listOf(searchQuery.query),
         spannableString = postSubject,
         color = theme.accentColor,
-        removePrevSpans = true,
         minQueryLength = searchQuery.queryMinValidLength
       )
 
@@ -265,7 +264,6 @@ data class PostCellData(
       inputQueries = listOf(searchQuery.query),
       spannableString = commentText,
       color = theme.accentColor,
-      removePrevSpans = true,
       minQueryLength = searchQuery.queryMinValidLength
     )
 

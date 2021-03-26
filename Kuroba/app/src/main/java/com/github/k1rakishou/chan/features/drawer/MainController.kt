@@ -364,7 +364,7 @@ class MainController(
     divider.setBackgroundColor(themeEngine.chanTheme.dividerColor)
     bottomNavView.setBackgroundColor(themeEngine.chanTheme.primaryColor)
 
-    val uncheckedColor = if (ThemeEngine.isBlackOrAlmostBlackColor(themeEngine.chanTheme.primaryColor)) {
+    val uncheckedColor = if (ThemeEngine.isNearToFullyBlackColor(themeEngine.chanTheme.primaryColor)) {
       Color.DKGRAY
     } else {
       ThemeEngine.manipulateColor(themeEngine.chanTheme.primaryColor, .7f)
