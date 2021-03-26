@@ -169,7 +169,7 @@ class PrefetchLoader(
       }
     }
 
-    prefetchStateManager.onPrefetchCompleted(postImage)
+    prefetchStateManager.onPrefetchCompleted(postImage, success)
   }
 
   private fun isSuitableForPrefetch(): Boolean {

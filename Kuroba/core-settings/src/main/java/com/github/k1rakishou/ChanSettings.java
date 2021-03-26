@@ -554,11 +554,11 @@ public class ChanSettings {
             //region CACHING
             diskCacheSizeMegabytes = new RangeSetting(provider, "disk_cache_size", 512, diskCacheSizeGetMin(), 1024);
             prefetchDiskCacheSizeMegabytes = new RangeSetting(provider, "prefetch_disk_cache_size", 1024, diskCacheSizePrefetchGetMin(), 2048);
-            diskCacheCleanupRemovePercent = new RangeSetting(provider, "disk_cache_cleanup_remove_files_percent", 25, 25, 75);
+            diskCacheCleanupRemovePercent = new RangeSetting(provider, "disk_cache_cleanup_remove_files_percent", 25, cleanupPercentsGetMin(), 75);
 
             databaseMaxPostsCount = new RangeSetting(provider, "database_max_posts_count", 125000, databaseMinPostsCount(), 500000);
             databaseMaxThreadsCount = new RangeSetting(provider, "database_max_threads_count", 12500, databaseMinThreadsCount(), 50000);
-            databasePostsCleanupRemovePercent = new RangeSetting(provider, "database_posts_cleanup_remove_posts_percent", 25, 25, 75);
+            databasePostsCleanupRemovePercent = new RangeSetting(provider, "database_posts_cleanup_remove_posts_percent", 25, cleanupPercentsGetMin(), 75);
             //endregion
 
             //region EXPERIMENTAL
@@ -649,6 +649,14 @@ public class ChanSettings {
             Logger.e(TAG, "Error while initializing the settings", error);
             throw error;
         }
+    }
+
+    private static int cleanupPercentsGetMin() {
+        if (chanSettingsInfo.isDevBuild()) {
+            return 1;
+        }
+
+        return 25;
     }
 
     private static int databaseMinThreadsCount() {

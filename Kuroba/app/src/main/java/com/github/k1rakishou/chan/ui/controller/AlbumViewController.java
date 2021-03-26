@@ -43,6 +43,7 @@ import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationContro
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
+import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem;
 import com.github.k1rakishou.chan.ui.view.FastScroller;
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper;
 import com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailView;
@@ -74,6 +75,7 @@ public class AlbumViewController
 
     private static final int ACTION_DOWNLOAD = 0;
     private static final int ACTION_TOGGLE_LAYOUT_MODE = 1;
+    private static final int ACTION_TOGGLE_IMAGE_DETAILS = 2;
 
     private ColorizableGridRecyclerView recyclerView;
     private List<ChanPostImage> postImages;
@@ -110,6 +112,34 @@ public class AlbumViewController
         recyclerView.setAdapter(albumAdapter);
 
         updateRecyclerView(false);
+
+        // Navigation
+        Drawable downloadDrawable = ContextCompat.getDrawable(context, R.drawable.ic_file_download_white_24dp);
+        downloadDrawable.setTint(Color.WHITE);
+
+        Drawable gridDrawable;
+
+        if (PersistableChanState.getAlbumLayoutGridMode().get()) {
+            gridDrawable = ContextCompat.getDrawable(context, R.drawable.ic_baseline_view_quilt_24);
+        } else {
+            gridDrawable = ContextCompat.getDrawable(context, R.drawable.ic_baseline_view_comfy_24);
+        }
+
+        gridDrawable.setTint(Color.WHITE);
+
+        navigation
+                .buildMenu(context)
+                .withItem(ACTION_TOGGLE_LAYOUT_MODE, gridDrawable, this::toggleLayoutModeClicked)
+                .withItem(ACTION_DOWNLOAD, downloadDrawable, this::downloadAlbumClicked)
+                .withOverflow(navigationController)
+                .withCheckableSubItem(
+                        ACTION_TOGGLE_IMAGE_DETAILS,
+                        R.string.action_album_show_image_details,
+                        true,
+                        PersistableChanState.showAlbumViewsImageDetails.get(),
+                        this::onToggleAlbumViewsImageInfoToggled)
+                .build()
+                .build();
 
         fastScroller = FastScrollerHelper.create(
                 FastScroller.FastScrollerControllerType.Album,
@@ -215,28 +245,14 @@ public class AlbumViewController
         this.chanDescriptor = chanDescriptor;
         this.postImages = postImages;
 
-        // Navigation
-        Drawable downloadDrawable = ContextCompat.getDrawable(context, R.drawable.ic_file_download_white_24dp);
-        downloadDrawable.setTint(Color.WHITE);
-
-        Drawable gridDrawable;
-
-        if (PersistableChanState.getAlbumLayoutGridMode().get()) {
-            gridDrawable = ContextCompat.getDrawable(context, R.drawable.ic_baseline_view_quilt_24);
-        } else {
-            gridDrawable = ContextCompat.getDrawable(context, R.drawable.ic_baseline_view_comfy_24);
-        }
-
-        gridDrawable.setTint(Color.WHITE);
-
-        navigation.buildMenu(context)
-                .withItem(ACTION_TOGGLE_LAYOUT_MODE, gridDrawable, this::toggleLayoutModeClicked)
-                .withItem(ACTION_DOWNLOAD, downloadDrawable, this::downloadAlbumClicked)
-                .build();
-
         navigation.title = title;
         navigation.subtitle = getQuantityString(R.plurals.image, postImages.size(), postImages.size());
         targetIndex = index;
+    }
+
+    private void onToggleAlbumViewsImageInfoToggled(ToolbarMenuSubItem subItem) {
+        PersistableChanState.showAlbumViewsImageDetails.toggle();
+        albumAdapter.refresh();
     }
 
     private void downloadAlbumClicked(ToolbarMenuItem item) {
@@ -362,7 +378,8 @@ public class AlbumViewController
                 holder.cell.bindPostImage(
                         postImage,
                         canUseHighResCells,
-                        isStaggeredGridMode
+                        isStaggeredGridMode,
+                        PersistableChanState.getShowAlbumViewsImageDetails().get()
                 );
             }
         }

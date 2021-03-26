@@ -294,6 +294,10 @@ class ImageLoaderV2(
     activeListener: ActiveListener,
     url: String
   ): BitmapDrawable? {
+    if (imageFile == null) {
+      return null
+    }
+
     val request = with(ImageRequest.Builder(context)) {
       lifecycle(lifecycle)
       allowHardware(true)
@@ -318,7 +322,10 @@ class ImageLoaderV2(
         BitmapDrawable(context.resources, bitmap)
       }
       is ErrorResult -> {
-        Logger.e(TAG, "applyTransformationsToDrawable() error", result.throwable)
+        Logger.e(TAG, "applyTransformationsToDrawable() error, " +
+          "imageFile=${imageFile.absolutePath}, error=${result.throwable.errorMessageOrClassName()}")
+
+        cacheHandler.deleteCacheFileByUrl(url)
         null
       }
     }
@@ -512,7 +519,12 @@ class ImageLoaderV2(
       throw IOException("Failed to mark file '${cacheFile.getFullPath()}' as downloaded")
     }
 
-    cacheHandler.fileWasAdded(fileManager.getLength(cacheFile))
+    val fileLength = fileManager.getLength(cacheFile)
+    if (fileLength <= 0) {
+      return false
+    }
+
+    cacheHandler.fileWasAdded(fileLength)
 
     return true
   }
@@ -1191,7 +1203,7 @@ class ImageLoaderV2(
     }
   }
 
-  private class ActiveListener(
+  class ActiveListener(
     val imageListenerParam: ImageListenerParam,
     val imageSize: ImageSize,
     val transformations: List<Transformation>

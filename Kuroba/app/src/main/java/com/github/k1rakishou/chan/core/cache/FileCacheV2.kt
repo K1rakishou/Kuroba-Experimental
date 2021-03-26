@@ -474,7 +474,6 @@ class FileCacheV2(
               is FileCacheException.FileNotFoundOnTheServerException -> {
                 onNotFound()
               }
-              is FileCacheException.FileHashesAreDifferent,
               is FileCacheException.CouldNotMarkFileAsDownloaded,
               is FileCacheException.NoResponseBodyException,
               is FileCacheException.CouldNotCreateOutputCacheFile,

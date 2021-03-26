@@ -18,6 +18,7 @@ package com.github.k1rakishou.chan.ui.cell;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
@@ -77,20 +78,26 @@ public class AlbumViewCell extends FrameLayout {
     public void bindPostImage(
             @NonNull ChanPostImage postImage,
             boolean canUseHighResCells,
-            boolean isStaggeredGridMode
+            boolean isStaggeredGridMode,
+            boolean showDetails
     ) {
         this.postImage = postImage;
         thumbnailView.bindPostImage(postImage, canUseHighResCells);
 
-        String details = postImage.getExtension().toUpperCase()
-                + " "
-                + postImage.getImageWidth()
-                + "x"
-                + postImage.getImageHeight()
-                + " "
-                + getReadableFileSize(postImage.getSize());
+        if (showDetails) {
+            String details = postImage.getExtension().toUpperCase()
+                    + " "
+                    + postImage.getImageWidth()
+                    + "x"
+                    + postImage.getImageHeight()
+                    + " "
+                    + getReadableFileSize(postImage.getSize());
 
-        text.setText(postImage.isInlined() ? postImage.getExtension().toUpperCase() : details);
+            text.setVisibility(View.VISIBLE);
+            text.setText(postImage.isInlined() ? postImage.getExtension().toUpperCase() : details);
+        } else {
+            text.setVisibility(View.GONE);
+        }
 
         if (isStaggeredGridMode) {
             setRatioFromImageDimensions();

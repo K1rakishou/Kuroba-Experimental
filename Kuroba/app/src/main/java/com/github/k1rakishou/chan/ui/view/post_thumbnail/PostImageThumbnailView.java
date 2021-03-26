@@ -230,7 +230,12 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
         if (prefetchState instanceof PrefetchState.PrefetchCompleted) {
             if (canShowProgress) {
                 prefetching = false;
+                segmentedCircleDrawable.percentage(0f);
                 invalidate();
+            }
+
+            if (!((PrefetchState.PrefetchCompleted) prefetchState).getSuccess()) {
+                return;
             }
 
             if (postImage != null && (canUseHighResCells != null && canUseHighResCells)) {

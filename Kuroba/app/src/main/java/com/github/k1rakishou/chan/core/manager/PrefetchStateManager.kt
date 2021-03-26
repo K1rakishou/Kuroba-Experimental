@@ -25,17 +25,13 @@ class PrefetchStateManager {
     prefetchStateProcessor.onNext(PrefetchState.PrefetchProgress(postImage, progress))
   }
 
-  fun onPrefetchCompleted(postImage: ChanPostImage) {
-    if (!postImage.isPrefetched) {
-      return
-    }
-
-    prefetchStateProcessor.onNext(PrefetchState.PrefetchCompleted(postImage))
+  fun onPrefetchCompleted(postImage: ChanPostImage, success: Boolean) {
+    prefetchStateProcessor.onNext(PrefetchState.PrefetchCompleted(postImage, success))
   }
 
   fun listenForPrefetchStateUpdates(): Flowable<PrefetchState> {
     return prefetchStateProcessor
-      .onBackpressureLatest()
+      .onBackpressureBuffer(1024)
       .observeOn(AndroidSchedulers.mainThread())
       .doOnError { error -> Logger.e(TAG, "Error while listening for prefetch state updates", error) }
       .hide()
@@ -49,5 +45,5 @@ class PrefetchStateManager {
 sealed class PrefetchState(val postImage: ChanPostImage) {
   class PrefetchStarted(postImage: ChanPostImage) : PrefetchState(postImage)
   class PrefetchProgress(postImage: ChanPostImage, val progress: Float) : PrefetchState(postImage)
-  class PrefetchCompleted(postImage: ChanPostImage) : PrefetchState(postImage)
+  class PrefetchCompleted(postImage: ChanPostImage, val success: Boolean) : PrefetchState(postImage)
 }

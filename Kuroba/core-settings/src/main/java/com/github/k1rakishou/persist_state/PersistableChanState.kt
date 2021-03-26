@@ -60,7 +60,8 @@ object PersistableChanState {
   lateinit var imageSaverV2PersistedOptions: JsonSetting<ImageSaverV2Options>
   @JvmStatic
   lateinit var reorderableBottomNavViewButtons: JsonSetting<ReorderableBottomNavViewButtons>
-
+  @JvmStatic
+  lateinit var showAlbumViewsImageDetails: BooleanSetting
 
   fun init(persistableChanStateInfo: PersistableChanStateInfo) {
     PersistableChanState.persistableChanStateInfo = persistableChanStateInfo
@@ -163,6 +164,8 @@ object PersistableChanState {
         "bottom_nav_view_buttons_ordered",
         ReorderableBottomNavViewButtons()
       )
+
+      showAlbumViewsImageDetails = BooleanSetting(provider, "show_album_views_image_details", true);
 
     } catch (e: Exception) {
       Logger.e(TAG, "Error while initializing the state", e)

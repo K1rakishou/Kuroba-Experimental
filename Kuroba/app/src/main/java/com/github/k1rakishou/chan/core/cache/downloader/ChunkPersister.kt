@@ -206,7 +206,7 @@ internal class ChunkPersister(
     val notifySize = if (chunkSize <= 0) {
       FileDownloader.BUFFER_SIZE
     } else {
-      chunkSize / 64
+      chunkSize / 24
     }
 
     try {

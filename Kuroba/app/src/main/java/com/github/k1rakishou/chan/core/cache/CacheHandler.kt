@@ -47,6 +47,8 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 /**
  * CacheHandler has been re-worked a little bit because old implementation was relying on the
@@ -211,7 +213,6 @@ class CacheHandler(
     return synchronized(filesOnDiskCache) { filesOnDiskCache.contains(fileName) }
   }
 
-  @Synchronized
   fun deleteCacheFileByUrl(url: String): Boolean {
     return deleteCacheFile(hashUrl(url))
   }
@@ -280,6 +281,8 @@ class CacheHandler(
       val isDownloaded = cacheFileMeta.isDownloaded
       if (isDownloaded) {
         synchronized(fullyDownloadedFiles) { fullyDownloadedFiles += cacheFileName }
+      } else {
+        synchronized(fullyDownloadedFiles) { fullyDownloadedFiles -= cacheFileName }
       }
 
       return isDownloaded
@@ -314,10 +317,10 @@ class CacheHandler(
 
       return synchronized(this) {
         val updateResult = updateCacheFileMeta(
-          cacheFileMeta,
-          false,
-          null,
-          true
+          file = cacheFileMeta,
+          overwrite = false,
+          createdOn = null,
+          fileDownloaded = true
         )
 
         if (!updateResult) {
@@ -418,7 +421,6 @@ class CacheHandler(
    * Deletes a cache file with it's meta. Also decreases the total cache size variable by the size
    * of the file.
    * */
-  @Synchronized
   fun deleteCacheFile(cacheFile: AbstractFile): Boolean {
     val fileName = fileManager.getName(cacheFile)
 
@@ -514,36 +516,36 @@ class CacheHandler(
       return false
     }
 
-    val prevCacheFileMeta = readCacheFileMeta(file).let { cacheFileMeta ->
-      when {
-        !overwrite && cacheFileMeta != null -> {
-          require(!(createdOn == null && fileDownloaded == null)) {
-            "Only one parameter may be null when updating!"
-          }
+    return synchronized(this) {
+      val prevCacheFileMeta = readCacheFileMeta(file).let { cacheFileMeta ->
+        when {
+          !overwrite && cacheFileMeta != null -> {
+            require(!(createdOn == null && fileDownloaded == null)) {
+              "Only one parameter may be null when updating!"
+            }
 
-          val updatedCreatedOn = createdOn ?: cacheFileMeta.createdOn
-          val updatedFileDownloaded = fileDownloaded ?: cacheFileMeta.isDownloaded
+            val updatedCreatedOn = createdOn ?: cacheFileMeta.createdOn
+            val updatedFileDownloaded = fileDownloaded ?: cacheFileMeta.isDownloaded
 
-          return@let CacheFileMeta(
-            CURRENT_META_FILE_VERSION,
-            updatedCreatedOn,
-            updatedFileDownloaded
-          )
-        }
-        else -> {
-          if (createdOn == null || fileDownloaded == null) {
-            throw IOException(
-              "Both parameters must not be null when writing! " +
-                "(Probably prevCacheFileMeta couldn't be read, check the logs)"
+            return@let CacheFileMeta(
+              CURRENT_META_FILE_VERSION,
+              updatedCreatedOn,
+              updatedFileDownloaded
             )
           }
+          else -> {
+            if (createdOn == null || fileDownloaded == null) {
+              throw IOException(
+                "Both parameters must not be null when writing! " +
+                  "(Probably prevCacheFileMeta couldn't be read, check the logs)"
+              )
+            }
 
-          return@let CacheFileMeta(CURRENT_META_FILE_VERSION, createdOn, fileDownloaded)
+            return@let CacheFileMeta(CURRENT_META_FILE_VERSION, createdOn, fileDownloaded)
+          }
         }
       }
-    }
 
-    return synchronized(this) {
       val outputStream = fileManager.getOutputStream(file)
       if (outputStream == null) {
         Logger.e(TAG, "Couldn't create OutputStream for file = ${file.getFullPath()}")
@@ -784,9 +786,12 @@ class CacheHandler(
       return
     }
 
-    executor.execute { recalculateSize() }
+    executor.execute {
+      recalculateSize()
+    }
   }
 
+  @OptIn(ExperimentalTime::class)
   private fun recalculateSize() {
     var calculatedSize: Long = 0
 
@@ -794,27 +799,33 @@ class CacheHandler(
       return
     }
 
-    synchronized(filesOnDiskCache) { filesOnDiskCache.clear() }
+    val time = measureTime {
+      synchronized(filesOnDiskCache) { filesOnDiskCache.clear() }
 
-    try {
-      synchronized(this) {
-        val files = fileManager.listFiles(cacheDirFile)
-        for (file in files) {
-          if (fileManager.getName(file).endsWith(CACHE_META_EXTENSION)) {
-            continue
+      try {
+        synchronized(this) {
+          val files = fileManager.listFiles(cacheDirFile)
+          for (file in files) {
+            if (fileManager.getName(file).endsWith(CACHE_META_EXTENSION)) {
+              continue
+            }
+
+            calculatedSize += fileManager.getLength(file)
+            val cacheFileName = fileManager.getName(file)
+
+            synchronized(filesOnDiskCache) { filesOnDiskCache.add(cacheFileName) }
           }
-
-          calculatedSize += fileManager.getLength(file)
-          val cacheFileName = fileManager.getName(file)
-
-          synchronized(filesOnDiskCache) { filesOnDiskCache.add(cacheFileName) }
         }
-      }
 
-      size.set(calculatedSize)
-    } finally {
-      recalculationRunning.set(false)
+        size.set(calculatedSize)
+      } finally {
+        recalculationRunning.set(false)
+      }
     }
+
+    Logger.d(TAG, "recalculateSize() took $time, " +
+      "filesOnDiskCount=${filesOnDiskCache.size}, " +
+      "fullyDownloadedFilesCount=${fullyDownloadedFiles.size}")
   }
 
   private fun trim() {

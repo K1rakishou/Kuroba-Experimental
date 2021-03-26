@@ -35,6 +35,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.ui.view.FastScroller
@@ -88,6 +89,8 @@ open class ThumbnailView : View {
   lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var globalViewStateManager: GlobalViewStateManager
+  @Inject
+  lateinit var cacheHandler: CacheHandler
 
   constructor(context: Context) : super(context) {
     init()
@@ -224,6 +227,7 @@ open class ThumbnailView : View {
 
     super.setOnClickListener { view ->
       if (error && imageUrl != null && imageSize != null) {
+        cacheHandler.deleteCacheFileByUrl(imageUrl!!)
         bindImageUrl(imageUrl!!, imageSize!!)
         return@setOnClickListener
       }
@@ -348,6 +352,9 @@ open class ThumbnailView : View {
           return
         }
 
+        this@ThumbnailView.error = false
+        this@ThumbnailView.errorText = null
+
         setImageBitmap(drawable.bitmap)
         onImageSet(isImmediate)
         invalidate()
@@ -385,13 +392,16 @@ open class ThumbnailView : View {
 
         if (isIoError && ioErrorAttempts.decrementAndGet() > 0 && isScopeActive) {
           bindImageUrl(url, imageSize)
-        } else {
-          this@ThumbnailView.error = true
-          this@ThumbnailView.errorText = AppModuleAndroidUtils.getString(R.string.thumbnail_load_failed_network)
-
-          onImageSet(false)
-          invalidate()
+          return
         }
+
+        Logger.e(TAG, "onResponseError() error: ${error.errorMessageOrClassName()}")
+
+        this@ThumbnailView.error = true
+        this@ThumbnailView.errorText = AppModuleAndroidUtils.getString(R.string.thumbnail_load_failed_network)
+
+        onImageSet(false)
+        invalidate()
       }
     }
 
