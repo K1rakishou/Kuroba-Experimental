@@ -507,9 +507,11 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             long threadId = Long.parseLong(externalMatcher.group(2));
             long postId = Long.parseLong(externalMatcher.group(3));
 
-            if (board.equals(post.boardDescriptor.getBoardCode())
+            boolean isInternalQuote = board.equals(post.boardDescriptor.getBoardCode())
                     && callback.isInternal(postId)
-                    && !callback.isParsingCatalogPosts()) {
+                    && !callback.isParsingCatalogPosts();
+
+            if (isInternalQuote) {
                 // link to post in same thread with post number (>>post)
                 type = PostLinkable.Type.QUOTE;
                 value = new PostLinkable.Value.LongValue(postId);

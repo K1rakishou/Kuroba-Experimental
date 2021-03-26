@@ -70,6 +70,7 @@ public class AlbumDownloadController
         implements View.OnClickListener,
         WindowInsetsListener,
         Toolbar.ToolbarHeightUpdatesCallback {
+    private static final String ALBUM_DOWNLOAD_VIEW_CELL_THUMBNAIL_CLICK_TOKEN = "ALBUM_DOWNLOAD_VIEW_CELL_THUMBNAIL_CLICK";
 
     private ColorizableGridRecyclerView recyclerView;
     private ColorizableFloatingActionButton download;
@@ -354,7 +355,7 @@ public class AlbumDownloadController
             itemView.getLayoutParams().height = recyclerView.getRealSpanWidth();
             checkbox = itemView.findViewById(R.id.checkbox);
             thumbnailView = itemView.findViewById(R.id.thumbnail_view);
-            thumbnailView.setOnClickListener(this);
+            thumbnailView.setOnImageClickListener(ALBUM_DOWNLOAD_VIEW_CELL_THUMBNAIL_CLICK_TOKEN, this);
         }
 
         @Override

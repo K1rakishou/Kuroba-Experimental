@@ -32,10 +32,12 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailView
+import com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailViewsContainer
 import com.github.k1rakishou.chan.ui.view.post_thumbnail.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
+import com.github.k1rakishou.chan.utils.setOnThrottlingLongClickListener
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -165,7 +167,7 @@ class CardPostCell : ColorizableCardView,
 
     thumbView = findViewById<PostImageThumbnailView>(R.id.thumbnail).apply {
       setRatio(16f / 13f)
-      setOnClickListener {
+      setOnImageClickListener(PostImageThumbnailViewsContainer.THUMBNAIL_CLICK_TOKEN) {
         callback?.onThumbnailClicked(postCellData.post.firstImage()!!, thumbView!!)
       }
     }
@@ -183,11 +185,11 @@ class CardPostCell : ColorizableCardView,
 
     setCompact(postCellData)
 
-    setOnClickListener {
+    setOnThrottlingClickListener(PostCell.POST_CELL_ROOT_CLICK_TOKEN) {
       callback?.onPostClicked(postCellData.postDescriptor)
     }
 
-    setOnLongClickListener({
+    setOnThrottlingLongClickListener(PostCell.POST_CELL_ROOT_LONG_CLICK_TOKEN) {
       val items = mutableListOf<FloatingListMenuItem>()
 
       if (callback != null) {
@@ -195,12 +197,12 @@ class CardPostCell : ColorizableCardView,
 
         if (items.isNotEmpty()) {
           callback!!.showPostOptions(postCellData.post, postCellData.isInPopup, items)
-          return@setOnLongClickListener true
+          return@setOnThrottlingLongClickListener true
         }
       }
 
-      return@setOnLongClickListener false
-    })
+      return@setOnThrottlingLongClickListener false
+    }
 
     replies!!.setOnThrottlingClickListener {
       callback?.onPreviewThreadPostsClicked(postCellData.post)
@@ -254,13 +256,13 @@ class CardPostCell : ColorizableCardView,
       ColorizableGridRecyclerView.canUseHighResCells(callback!!.currentSpanCount())
     )
 
-    thumbView!!.setOnLongClickListener {
+    thumbView!!.setOnImageLongClickListener(PostImageThumbnailViewsContainer.THUMBNAIL_LONG_CLICK_TOKEN) {
       if (this.postCellData == null) {
-        return@setOnLongClickListener false
+        return@setOnImageLongClickListener false
       }
 
       callback?.onThumbnailLongClicked(this.postCellData!!.post.firstImage()!!, thumbView!!)
-      return@setOnLongClickListener true
+      return@setOnImageLongClickListener true
     }
 
     this.prevPostImage = firstPostImage.copy()

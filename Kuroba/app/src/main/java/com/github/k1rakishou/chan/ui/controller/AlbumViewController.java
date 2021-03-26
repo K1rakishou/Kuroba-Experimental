@@ -33,6 +33,7 @@ import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
+import com.github.k1rakishou.chan.core.helper.ThumbnailLongtapOptionsHelper;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
@@ -59,6 +60,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 import javax.inject.Inject;
+
+import kotlin.Unit;
 
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString;
@@ -89,6 +92,8 @@ public class AlbumViewController
 
     @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
+    @Inject
+    ThumbnailLongtapOptionsHelper thumbnailLongtapOptionsHelper;
 
     @Override
     protected void injectDependencies(@NotNull ActivityComponent component) {
@@ -346,6 +351,17 @@ public class AlbumViewController
         }
     }
 
+    private void showImageLongClickOptions(ChanPostImage postImage) {
+        thumbnailLongtapOptionsHelper.onThumbnailLongTapped(
+                context,
+                postImage,
+                controller -> {
+                    presentController(controller);
+                    return Unit.INSTANCE;
+                }
+        );
+    }
+
     private class AlbumAdapter extends RecyclerView.Adapter<AlbumItemCellHolder> {
         public static final int ALBUM_CELL_TYPE = 1;
 
@@ -406,7 +422,10 @@ public class AlbumViewController
 
     private class AlbumItemCellHolder
             extends RecyclerView.ViewHolder
-            implements View.OnClickListener {
+            implements View.OnClickListener, View.OnLongClickListener {
+        private static final String ALBUM_VIEW_CELL_THUMBNAIL_CLICK_TOKEN = "ALBUM_VIEW_CELL_THUMBNAIL_CLICK";
+        private static final String ALBUM_VIEW_CELL_THUMBNAIL_LONG_CLICK_TOKEN = "ALBUM_VIEW_CELL_THUMBNAIL_LONG_CLICK";
+
         private final AlbumViewCell cell;
         private final PostImageThumbnailView thumbnailView;
 
@@ -415,7 +434,9 @@ public class AlbumViewController
 
             cell = (AlbumViewCell) itemView;
             thumbnailView = (PostImageThumbnailView) cell.getThumbnailView();
-            thumbnailView.setOnClickListener(this);
+
+            thumbnailView.setOnImageClickListener(ALBUM_VIEW_CELL_THUMBNAIL_CLICK_TOKEN, this);
+            thumbnailView.setOnImageLongClickListener(ALBUM_VIEW_CELL_THUMBNAIL_LONG_CLICK_TOKEN, this);
         }
 
         @Override
@@ -424,9 +445,18 @@ public class AlbumViewController
             ChanPostImage postImage = postImages.get(adapterPosition);
             openImage(this, postImage);
         }
+
+        @Override
+        public boolean onLongClick(View v) {
+            int adapterPosition = getAdapterPosition();
+            ChanPostImage postImage = postImages.get(adapterPosition);
+            showImageLongClickOptions(postImage);
+            return true;
+        }
+
     }
 
-    private class SpanInfo {
+    private static class SpanInfo {
         public final int spanCount;
         public final int spanWidth;
 

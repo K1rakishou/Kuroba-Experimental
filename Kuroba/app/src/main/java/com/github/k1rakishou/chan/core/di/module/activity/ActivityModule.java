@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.di.scope.PerActivity;
 import com.github.k1rakishou.chan.core.helper.DialogFactory;
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper;
+import com.github.k1rakishou.chan.core.helper.ThumbnailLongtapOptionsHelper;
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.BookmarksManager;
@@ -22,6 +23,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager;
 import com.github.k1rakishou.chan.core.manager.UpdateManager;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2;
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileChooser;
@@ -133,6 +135,18 @@ public class ActivityModule {
     @Provides
     public GlobalViewStateManager provideViewFlagsStorage() {
         return new GlobalViewStateManager();
+    }
+
+    @PerActivity
+    @Provides
+    public ThumbnailLongtapOptionsHelper provideThumbnailLongtapOptionsHelper(
+            GlobalWindowInsetsManager globalWindowInsetsManager,
+            ImageSaverV2 imageSaverV2
+    ) {
+        return new ThumbnailLongtapOptionsHelper(
+                globalWindowInsetsManager,
+                imageSaverV2
+        );
     }
 
 }

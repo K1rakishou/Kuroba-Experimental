@@ -11,6 +11,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.setOnThrottlingLongClickListener
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
@@ -93,12 +94,12 @@ class PostImageThumbnailViewContainer(
     rootContainer.isLongClickable = longClickable
   }
 
-  override fun setImageClickListener(listener: OnClickListener?) {
+  override fun setImageClickListener(token: String, listener: OnClickListener?) {
     rootContainer.setOnClickListener(listener)
   }
 
-  override fun setImageLongClickListener(listener: OnLongClickListener?) {
-    rootContainer.setOnLongClickListener(listener)
+  override fun setImageLongClickListener(token: String, listener: OnLongClickListener?) {
+    rootContainer.setOnThrottlingLongClickListener(token, listener)
   }
 
   override fun bindPostImage(postImage: ChanPostImage, canUseHighResCells: Boolean) {

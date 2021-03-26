@@ -203,8 +203,8 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       thumbnailView.bindPostInfo(postImage)
 
       if (postCellData.isSelectionMode) {
-        thumbnailView.setImageClickListener(null)
-        thumbnailView.setImageLongClickListener(null)
+        thumbnailView.setImageClickListener(THUMBNAIL_CLICK_TOKEN, null)
+        thumbnailView.setImageLongClickListener(THUMBNAIL_LONG_CLICK_TOKEN, null)
 
         // We need to explicitly set clickable/long clickable to false here because calling
         // setOnClickListener/setOnLongClickListener will automatically set them to true even if
@@ -219,10 +219,10 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         // disk and if you are not lucky enough it may freeze for quite a while). We do all
         // the necessary checks when clicking an image anyway, so no point in doing them
         // twice and more importantly inside RecyclerView bind call
-        thumbnailView.setImageClickListener {
+        thumbnailView.setImageClickListener(THUMBNAIL_CLICK_TOKEN) {
           postCellCallback?.onThumbnailClicked(postImage, thumbnailView.getThumbnailView())
         }
-        thumbnailView.setImageLongClickListener {
+        thumbnailView.setImageLongClickListener(THUMBNAIL_LONG_CLICK_TOKEN) {
           postCellThumbnailCallbacks?.requestParentDisallowInterceptTouchEvents(true)
           postCellCallback?.onThumbnailLongClicked(postImage, thumbnailView.getThumbnailView())
           return@setImageLongClickListener true
@@ -332,8 +332,8 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       thumbnailView.bindPostInfo(postImage)
 
       if (postCellData.isSelectionMode) {
-        thumbnailView.setImageClickListener(null)
-        thumbnailView.setImageLongClickListener(null)
+        thumbnailView.setImageClickListener(THUMBNAIL_CLICK_TOKEN, null)
+        thumbnailView.setImageLongClickListener(THUMBNAIL_LONG_CLICK_TOKEN, null)
 
         // We need to explicitly set clickable/long clickable to false here because calling
         // setOnClickListener/setOnLongClickListener will automatically set them to true even if
@@ -348,10 +348,10 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         // disk and if you are not lucky enough it may freeze for quite a while). We do all
         // the necessary checks when clicking an image anyway, so no point in doing them
         // twice and more importantly inside RecyclerView bind call
-        thumbnailView.setImageClickListener {
+        thumbnailView.setImageClickListener(THUMBNAIL_CLICK_TOKEN) {
           postCellCallback?.onThumbnailClicked(postImage, thumbnailView.getThumbnailView())
         }
-        thumbnailView.setImageLongClickListener {
+        thumbnailView.setImageLongClickListener(THUMBNAIL_LONG_CLICK_TOKEN) {
           postCellThumbnailCallbacks?.requestParentDisallowInterceptTouchEvents(true)
           postCellCallback?.onThumbnailLongClicked(postImage, thumbnailView.getThumbnailView())
           return@setImageLongClickListener true
@@ -451,6 +451,9 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     private val THUMBNAIL_TOP_MARGIN = dp(4f)
     private val MULTIPLE_THUMBNAILS_MIDDLE_MARGIN = dp(2f)
     private val THUMBNAILS_GAP_SIZE = dp(4f)
+
+    const val THUMBNAIL_CLICK_TOKEN = "POST_THUMBNAIL_VIEW_CLICK"
+    const val THUMBNAIL_LONG_CLICK_TOKEN = "POST_THUMBNAIL_VIEW_LONG_CLICK"
   }
 
 }

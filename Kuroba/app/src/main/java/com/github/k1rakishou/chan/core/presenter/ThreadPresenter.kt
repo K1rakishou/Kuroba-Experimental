@@ -18,7 +18,6 @@ package com.github.k1rakishou.chan.core.presenter
 
 import android.content.Context
 import android.text.TextUtils
-import android.widget.Toast
 import androidx.annotation.StringRes
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -29,6 +28,7 @@ import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.helper.ChanThreadTicker
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
 import com.github.k1rakishou.chan.core.helper.PostHideHelper
+import com.github.k1rakishou.chan.core.helper.ThumbnailLongtapOptionsHelper
 import com.github.k1rakishou.chan.core.loader.LoaderBatchResult
 import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.loader.LoaderResult.Succeeded
@@ -40,8 +40,6 @@ import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.PostCellData
@@ -60,7 +58,6 @@ import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.board.pages.BoardPage
@@ -76,7 +73,6 @@ import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
-import com.github.k1rakishou.persist_state.PersistableChanState.imageSaverV2PersistedOptions
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
@@ -106,8 +102,8 @@ class ThreadPresenter @Inject constructor(
   private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
   private val postHideHelper: PostHideHelper,
   private val chanThreadManager: ChanThreadManager,
-  private val imageSaverV2: ImageSaverV2,
-  private val globalWindowInsetsManager: GlobalWindowInsetsManager
+  private val globalWindowInsetsManager: GlobalWindowInsetsManager,
+  private val thumbnailLongtapOptionsHelper: ThumbnailLongtapOptionsHelper
 ) : PostAdapterCallback,
   PostCellCallback,
   ThreadStatusCell.Callback,
@@ -1004,117 +1000,12 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    val fullImageName = buildString {
-      append((postImage.filename ?: postImage.serverFilename))
-
-      if (postImage.extension.isNotNullNorEmpty()) {
-        append(".")
-        append(postImage.extension!!)
-      }
-    }
-
-    val items = mutableListOf<FloatingListMenuItem>()
-    items += HeaderFloatingListMenuItem(THUMBNAIL_LONG_CLICK_MENU_HEADER, fullImageName)
-    items += createMenuItem(IMAGE_COPY_FULL_URL, R.string.action_copy_image_full_url)
-    items += createMenuItem(IMAGE_COPY_THUMBNAIL_URL, R.string.action_copy_image_thumbnail_url)
-
-    if (postImage.formatFullOriginalFileName().isNotNullNorEmpty()) {
-      items += createMenuItem(IMAGE_COPY_ORIGINAL_FILE_NAME, R.string.action_copy_image_original_name)
-    }
-
-    if (postImage.formatFullServerFileName().isNotNullNorEmpty()) {
-      items += createMenuItem(IMAGE_COPY_SERVER_FILE_NAME, R.string.action_copy_image_server_name)
-    }
-
-    if (postImage.fileHash.isNotNullNorEmpty()) {
-      items += createMenuItem(IMAGE_COPY_MD5_HASH_HEX, R.string.action_copy_image_file_hash_hex)
-    }
-
-    items += createMenuItem(SHARE_MEDIA_FILE_CONTENT, R.string.action_share_content)
-    items += createMenuItem(DOWNLOAD_MEDIA_FILE_CONTENT, R.string.action_download_content)
-    items += createMenuItem(DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT, R.string.action_download_content_with_options)
-
-    val floatingListMenuController = FloatingListMenuController(
+    thumbnailLongtapOptionsHelper.onThumbnailLongTapped(
       context,
-      globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
-      items,
-      { item -> onThumbnailOptionClicked(item.key as Int, postImage) }
+      postImage,
+      { controller -> threadPresenterCallback?.presentController(controller, true) }
     )
 
-    threadPresenterCallback?.presentController(floatingListMenuController, true)
-  }
-
-  private fun onThumbnailOptionClicked(
-    id: Int,
-    postImage: ChanPostImage
-  ) {
-    when (id) {
-      IMAGE_COPY_FULL_URL -> {
-        if (postImage.imageUrl == null) {
-          return
-        }
-
-        AndroidUtils.setClipboardContent("Image URL", postImage.imageUrl.toString())
-        showToast(context, R.string.image_url_copied_to_clipboard)
-      }
-      IMAGE_COPY_THUMBNAIL_URL -> {
-        if (postImage.actualThumbnailUrl == null) {
-          return
-        }
-
-        AndroidUtils.setClipboardContent("Thumbnail URL", postImage.actualThumbnailUrl.toString())
-        showToast(context, R.string.image_url_copied_to_clipboard)
-      }
-      IMAGE_COPY_ORIGINAL_FILE_NAME -> {
-        AndroidUtils.setClipboardContent("Original file name", postImage.formatFullOriginalFileName())
-        showToast(context, R.string.image_file_name_copied_to_clipboard)
-      }
-      IMAGE_COPY_SERVER_FILE_NAME -> {
-        AndroidUtils.setClipboardContent("Server file name", postImage.formatFullServerFileName())
-        showToast(context, R.string.image_file_name_copied_to_clipboard)
-      }
-      IMAGE_COPY_MD5_HASH_HEX -> {
-        AndroidUtils.setClipboardContent("File hash HEX", postImage.fileHash)
-        showToast(context, R.string.image_file_hash_copied_to_clipboard)
-      }
-      SHARE_MEDIA_FILE_CONTENT -> {
-        imageSaverV2.share(postImage) { result ->
-          if (result is ModularResult.Error) {
-            showToast(
-              context,
-              "Failed to share content, error=${result.error.errorMessageOrClassName()}",
-              Toast.LENGTH_LONG
-            )
-
-            return@share
-          }
-        }
-      }
-      DOWNLOAD_MEDIA_FILE_CONTENT -> {
-        downloadMediaFile(false, postImage)
-      }
-      DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT -> {
-        downloadMediaFile(true, postImage)
-      }
-    }
-  }
-
-  private fun downloadMediaFile(showOptions: Boolean, postImage: ChanPostImage) {
-    val imageSaverV2Options = imageSaverV2PersistedOptions.get()
-
-    if (showOptions || imageSaverV2Options.shouldShowImageSaverOptionsController()) {
-      val options = ImageSaverV2OptionsController.Options.SingleImage(
-        chanPostImage = postImage,
-        onSaveClicked = { updatedImageSaverV2Options, newFileName ->
-          imageSaverV2.save(updatedImageSaverV2Options, postImage, newFileName)
-        }
-      )
-
-      val controller = ImageSaverV2OptionsController(context, options)
-      threadPresenterCallback?.presentController(controller, false)
-    } else {
-      imageSaverV2.save(imageSaverV2Options, postImage, null)
-    }
   }
 
   override fun onPopulatePostOptions(post: ChanPost, menu: MutableList<FloatingListMenuItem>) {
@@ -2302,20 +2193,10 @@ class ThreadPresenter @Inject constructor(
     private const val POST_OPTION_MOCK_REPLY = 15
     private const val POST_OPTION_FILTER_TRIPCODE = 100
 
-    private const val IMAGE_COPY_FULL_URL = 1000
-    private const val IMAGE_COPY_THUMBNAIL_URL = 1001
-    private const val SHARE_MEDIA_FILE_CONTENT = 1002
-    private const val DOWNLOAD_MEDIA_FILE_CONTENT = 1003
-    private const val DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT = 1004
-    private const val IMAGE_COPY_ORIGINAL_FILE_NAME = 1005
-    private const val IMAGE_COPY_SERVER_FILE_NAME = 1006
-    private const val IMAGE_COPY_MD5_HASH_HEX = 1007
-
     private const val COPY_LINK_TEXT = 2000
     private const val COPY_LINK_VALUE = 2001
     private const val SHOW_POST_MENU_OPTIONS = 2002
 
-    private const val THUMBNAIL_LONG_CLICK_MENU_HEADER = "thumbnail_copy_menu_header"
     private const val POST_LINKABLE_LONG_CLICK_MENU_HEADER = "post_linkable_long_click_menu_header"
   }
 

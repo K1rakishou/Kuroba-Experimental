@@ -36,6 +36,7 @@ import com.github.k1rakishou.chan.core.manager.PrefetchStateManager;
 import com.github.k1rakishou.chan.core.presenter.ImageViewerPresenter;
 import com.github.k1rakishou.chan.ui.view.SegmentedCircleDrawable;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
+import com.github.k1rakishou.chan.utils.ThrottlingClicksKt;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
@@ -142,13 +143,13 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
     }
 
     @Override
-    public void setImageClickListener(@Nullable View.OnClickListener listener) {
-        setOnClickListener(listener);
+    public void setImageClickListener(@NotNull String token, @Nullable View.OnClickListener listener) {
+        ThrottlingClicksKt.setOnThrottlingClickListener(this, token, listener);
     }
 
     @Override
-    public void setImageLongClickListener(@Nullable View.OnLongClickListener listener) {
-        setOnLongClickListener(listener);
+    public void setImageLongClickListener(@NonNull String token, @Nullable View.OnLongClickListener listener) {
+        ThrottlingClicksKt.setOnThrottlingLongClickListener(this, token, listener);
     }
 
     @Override

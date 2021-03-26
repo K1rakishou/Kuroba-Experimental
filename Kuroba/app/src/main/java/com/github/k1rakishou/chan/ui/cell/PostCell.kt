@@ -326,8 +326,8 @@ class PostCell : LinearLayout,
 
     if (postCellData.isSelectionMode) {
       replies.setOnClickListener(null)
-      postCellRootContainer.setOnLongClickListener(null)
-      postCellRootContainer.setOnClickListener(null)
+      postCellRootContainer.setOnThrottlingLongClickListener(POST_CELL_ROOT_LONG_CLICK_TOKEN, null)
+      postCellRootContainer.setOnThrottlingClickListener(POST_CELL_ROOT_CLICK_TOKEN, null)
     } else {
       replies.setOnThrottlingClickListener {
         if (replies.visibility == View.VISIBLE) {
@@ -344,16 +344,16 @@ class PostCell : LinearLayout,
       }
 
       if (postCellData.isSelectionMode || postCellData.threadPreviewMode) {
-        postCellRootContainer.setOnLongClickListener(null)
+        postCellRootContainer.setOnThrottlingLongClickListener(POST_CELL_ROOT_LONG_CLICK_TOKEN, null)
       } else {
-        postCellRootContainer.setOnLongClickListener {
+        postCellRootContainer.setOnThrottlingLongClickListener(POST_CELL_ROOT_LONG_CLICK_TOKEN) {
           requestParentDisallowInterceptTouchEvents(true)
           showPostFloatingListMenu(postCellData)
-          return@setOnLongClickListener true
+          return@setOnThrottlingLongClickListener true
         }
       }
 
-      postCellRootContainer.setOnThrottlingClickListener {
+      postCellRootContainer.setOnThrottlingClickListener(POST_CELL_ROOT_CLICK_TOKEN, ) {
         postCellCallback?.onPostClicked(postCellData.post.postDescriptor)
       }
     }
@@ -1186,6 +1186,9 @@ class PostCell : LinearLayout,
 
   companion object {
     private const val TAG = "PostCell"
+
+    const val POST_CELL_ROOT_CLICK_TOKEN = "POST_CELL_ROOT_CLICK"
+    const val POST_CELL_ROOT_LONG_CLICK_TOKEN = "POST_CELL_ROOT_LONG_CLICK"
 
     fun calculateHorizPadding(textSizeSp: Int) = dp(textSizeSp - 6.toFloat())
   }

@@ -12,8 +12,8 @@ interface PostImageThumbnailViewContract {
 
   fun setImageClickable(clickable: Boolean)
   fun setImageLongClickable(longClickable: Boolean)
-  fun setImageClickListener(listener: View.OnClickListener?)
-  fun setImageLongClickListener(listener: View.OnLongClickListener?)
+  fun setImageClickListener(token: String, listener: View.OnClickListener?)
+  fun setImageLongClickListener(token: String, listener: View.OnLongClickListener?)
 
   fun bindPostImage(postImage: ChanPostImage, canUseHighResCells: Boolean)
   fun unbindPostImage()

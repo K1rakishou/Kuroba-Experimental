@@ -40,6 +40,8 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
+import com.github.k1rakishou.chan.utils.setOnThrottlingLongClickListener
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -219,20 +221,37 @@ open class ThumbnailView : View {
     foregroundCalculate = true
   }
 
-  override fun setOnClickListener(listener: OnClickListener?) {
+  fun setOnImageClickListener(token: String, listener: OnClickListener?) {
     if (listener == null) {
-      super.setOnClickListener(listener)
+      setOnThrottlingClickListener(token, listener)
       return
     }
 
-    super.setOnClickListener { view ->
+    setOnThrottlingClickListener(token) { view ->
       if (error && imageUrl != null && imageSize != null) {
         cacheHandler.deleteCacheFileByUrl(imageUrl!!)
         bindImageUrl(imageUrl!!, imageSize!!)
-        return@setOnClickListener
+        return@setOnThrottlingClickListener
       }
 
       listener.onClick(view)
+    }
+  }
+
+  fun setOnImageLongClickListener(token: String, listener: OnLongClickListener?) {
+    if (listener == null) {
+      setOnThrottlingLongClickListener(token, listener)
+      return
+    }
+
+    setOnThrottlingLongClickListener(token) { view ->
+      if (error && imageUrl != null && imageSize != null) {
+        cacheHandler.deleteCacheFileByUrl(imageUrl!!)
+        bindImageUrl(imageUrl!!, imageSize!!)
+        return@setOnThrottlingLongClickListener true
+      }
+
+      return@setOnThrottlingLongClickListener listener.onLongClick(view)
     }
   }
 
