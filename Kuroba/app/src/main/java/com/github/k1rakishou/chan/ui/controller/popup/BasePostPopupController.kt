@@ -113,8 +113,10 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
 
     themeEngine.removeListener(this)
 
-    postsView.removeOnScrollListener(scrollListener)
-    postsView.swapAdapter(null, true)
+    if (::postsView.isInitialized) {
+      postsView.removeOnScrollListener(scrollListener)
+      postsView.swapAdapter(null, true)
+    }
 
     scope.cancelChildren()
   }
@@ -188,11 +190,11 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
     adapter.onPostUpdated(updatedPost)
   }
 
-  fun initialDisplayData(chanDescriptor: ChanDescriptor, data: PostPopupHelper.PostPopupData) {
+  fun displayData(chanDescriptor: ChanDescriptor, data: PostPopupHelper.PostPopupData) {
     rendezvousCoroutineExecutor.post {
       displayingData = data as T
 
-      val dataView = initialDisplayData(chanDescriptor, data)
+      val dataView = displayData(chanDescriptor, data)
 
       val repliesBack = dataView.findViewById<View>(R.id.replies_back)
       repliesBack.setOnClickListener { postPopupHelper.pop() }
@@ -252,7 +254,8 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
   }
 
   abstract fun getDisplayingPostDescriptors(): List<PostDescriptor>
-  protected abstract suspend fun initialDisplayData(chanDescriptor: ChanDescriptor, data: T): ViewGroup
+  abstract fun onImageIsAboutToShowUp()
+  protected abstract suspend fun displayData(chanDescriptor: ChanDescriptor, data: T): ViewGroup
 
   companion object {
     val scrollPositionCache = initScrollPositionCache()

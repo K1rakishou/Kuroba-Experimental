@@ -17,6 +17,7 @@ import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.layout.SearchLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -37,12 +38,13 @@ class PostSearchPopupController(
   postPopupHelper: PostPopupHelper,
   postCellCallback: PostCellInterface.PostCellCallback
 ) : BasePostPopupController<PostSearchPopupController.PostSearchPopupData>(context, postPopupHelper, postCellCallback) {
-  private val currentPosts: MutableList<ChanPost>? = null
+  private val currentPosts = mutableListOf<PostIndexed>()
   private var skipDebouncer = true
   private var scrollPositionRestored = false
   private var updaterJob: Job? = null
 
   private lateinit var totalFoundTextView: ColorizableTextView
+  private lateinit var searchLayout: SearchLayout
 
   @Inject
   lateinit var chanThreadManager: ChanThreadManager
@@ -53,13 +55,13 @@ class PostSearchPopupController(
     get() = PostPopupType.Search
 
   override fun getDisplayingPostDescriptors(): List<PostDescriptor> {
-    if (currentPosts == null) {
+    if (currentPosts.isEmpty()) {
       return emptyList()
     }
 
     val postDescriptors: MutableList<PostDescriptor> = ArrayList()
     for (chanPost in currentPosts) {
-      postDescriptors.add(chanPost.postDescriptor)
+      postDescriptors.add(chanPost.post.postDescriptor)
     }
 
     return postDescriptors
@@ -69,7 +71,15 @@ class PostSearchPopupController(
     component.inject(this)
   }
 
-  override suspend fun initialDisplayData(
+  override fun onImageIsAboutToShowUp() {
+    if (this.view.focusedChild != null) {
+      val currentFocus = this.view.focusedChild
+      AndroidUtils.hideKeyboard(currentFocus)
+      currentFocus.clearFocus()
+    }
+  }
+
+  override suspend fun displayData(
     chanDescriptor: ChanDescriptor,
     data: PostSearchPopupData
   ): ViewGroup {
@@ -80,7 +90,7 @@ class PostSearchPopupController(
     val searchLayoutContainer = dataView.findViewById<LinearLayout>(R.id.search_layout_container)
     searchLayoutContainer.updatePaddings(left = horizPadding, right = horizPadding)
 
-    val searchLayout = dataView.findViewById<SearchLayout>(R.id.search_layout)
+    searchLayout = dataView.findViewById<SearchLayout>(R.id.search_layout)
     searchLayout.setCallback { query ->
       val timeout = if (skipDebouncer) {
         skipDebouncer = false
@@ -185,6 +195,9 @@ class PostSearchPopupController(
     } else {
       totalFoundTextView.text = context.getString(R.string.search_found_count, resultPosts.size)
     }
+
+    this@PostSearchPopupController.currentPosts.clear()
+    this@PostSearchPopupController.currentPosts.addAll(resultPosts)
 
     repliesAdapter.setSearchQuery(PostCellData.SearchQuery(query, MIN_QUERY_LENGTH))
     repliesAdapter.setOrUpdateData(resultPosts, themeEngine.chanTheme)

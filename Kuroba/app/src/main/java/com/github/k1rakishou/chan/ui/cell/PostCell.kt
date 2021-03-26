@@ -175,7 +175,7 @@ class PostCell : LinearLayout,
     : super(context, attrs, defStyleAttr)
 
   init {
-    AppModuleAndroidUtils.extractActivityComponent(context)
+    extractActivityComponent(context)
       .inject(this)
 
     linkClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostLinkColor, 1.3f)
@@ -324,7 +324,7 @@ class PostCell : LinearLayout,
     setOnClickListener(null)
     setOnLongClickListener(null)
 
-    if (postCellData.isBlockPostCellInteractionMode) {
+    if (postCellData.isSelectionMode) {
       replies.setOnClickListener(null)
       postCellRootContainer.setOnLongClickListener(null)
       postCellRootContainer.setOnClickListener(null)
@@ -343,7 +343,7 @@ class PostCell : LinearLayout,
         }
       }
 
-      if (postCellData.isBlockPostCellInteractionMode || postCellData.threadPreviewMode) {
+      if (postCellData.isSelectionMode || postCellData.threadPreviewMode) {
         postCellRootContainer.setOnLongClickListener(null)
       } else {
         postCellRootContainer.setOnLongClickListener {
@@ -387,7 +387,7 @@ class PostCell : LinearLayout,
   }
 
   private fun showPostFloatingListMenu(postCellData: PostCellData) {
-    if (postCellData.isBlockPostCellInteractionMode || postCellData.threadPreviewMode) {
+    if (postCellData.isSelectionMode || postCellData.threadPreviewMode) {
       return
     }
 
@@ -405,7 +405,7 @@ class PostCell : LinearLayout,
     postCellRootContainer.isClickable = true
     postCellRootContainer.isLongClickable = true
 
-    if (postCellData.isBlockPostCellInteractionMode) {
+    if (postCellData.isSelectionMode) {
       setPostLinkableListener(postCellData, false)
       replies.isClickable = false
     } else {
@@ -428,7 +428,7 @@ class PostCell : LinearLayout,
     val canBindReplies = (!postCellData.threadMode && postCellData.catalogRepliesCount > 0)
       || postCellData.repliesFromCount > 0
 
-    if (!postCellData.isBlockPostCellInteractionMode && canBindReplies) {
+    if (!postCellData.isSelectionMode && canBindReplies) {
       bindRepliesWithImageCountText(postCellData)
     } else {
       bindRepliesText()
@@ -455,7 +455,7 @@ class PostCell : LinearLayout,
   }
 
   private fun bindBackgroundResources(postCellData: PostCellData) {
-    if (postCellData.isBlockPostCellInteractionMode) {
+    if (postCellData.isSelectionMode) {
       postCellRootContainer.setBackgroundResource(0)
       replies.setBackgroundResource(0)
     } else {
@@ -502,7 +502,7 @@ class PostCell : LinearLayout,
   }
 
   private fun startAttentionLabelFadeOutAnimation(postCellData: PostCellData) {
-    if (postCellCallback == null || postCellData.isBlockPostCellInteractionMode) {
+    if (postCellCallback == null || postCellData.isSelectionMode) {
       return
     }
 
@@ -527,7 +527,7 @@ class PostCell : LinearLayout,
       return
     }
 
-    if (postCellData.isBlockPostCellInteractionMode) {
+    if (postCellData.isSelectionMode) {
       return
     }
 
@@ -644,7 +644,7 @@ class PostCell : LinearLayout,
     val theme = postCellData.theme
     comment.setText(postCellData.commentText, TextView.BufferType.SPANNABLE)
 
-    if (postCellData.isBlockPostCellInteractionMode) {
+    if (postCellData.isSelectionMode) {
       comment.customSelectionActionModeCallback = null
       comment.customTouchEventListener(null)
       comment.customMovementMethod(null)

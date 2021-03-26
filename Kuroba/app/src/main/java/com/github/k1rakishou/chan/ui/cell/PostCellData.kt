@@ -84,11 +84,15 @@ data class PostCellData(
   val singleImageMode: Boolean
     get() = post.postImages.size == 1
   val isInPopup: Boolean
-    get() = postViewMode == PostViewMode.RepliesPopup || postViewMode == PostViewMode.ExternalPostsPopup
-  val isBlockPostCellInteractionMode: Boolean
-    get() = postViewMode == PostViewMode.PostSelection || postViewMode == PostViewMode.Search
+    get() = postViewMode == PostViewMode.RepliesPopup
+      || postViewMode == PostViewMode.ExternalPostsPopup
+      || postViewMode == PostViewMode.Search
+  val isSelectionMode: Boolean
+    get() = postViewMode == PostViewMode.PostSelection
   val threadPreviewMode: Boolean
     get() = postViewMode == PostViewMode.ExternalPostsPopup
+  val searchMode: Boolean
+    get() = postViewMode == PostViewMode.Search
   val markedNo: Long
     get() = markedPostNo ?: -1
 
@@ -386,6 +390,15 @@ data class PostCellData(
 
       return false
     }
+
+    fun consumePostClicks(): Boolean {
+      if (this == ExternalPostsPopup || this == Search) {
+        return true
+      }
+
+      return false
+    }
+
   }
 
   data class SearchQuery(val query: String = "", val queryMinValidLength: Int = 0) {

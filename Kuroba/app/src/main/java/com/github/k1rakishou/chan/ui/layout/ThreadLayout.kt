@@ -609,6 +609,10 @@ class ThreadLayout @JvmOverloads constructor(
       currentFocus.clearFocus()
     }
 
+    if (postPopupHelper.isOpen && images.isNotEmpty()) {
+      postPopupHelper.onImageIsAboutToShowUp()
+    }
+
     callback.showImages(images, index, chanDescriptor, thumbnail)
   }
 

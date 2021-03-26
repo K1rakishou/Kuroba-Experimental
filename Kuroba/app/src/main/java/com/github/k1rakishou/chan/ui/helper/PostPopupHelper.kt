@@ -26,6 +26,7 @@ import com.github.k1rakishou.chan.ui.controller.popup.PostRepliesPopupController
 import com.github.k1rakishou.chan.ui.controller.popup.PostSearchPopupController
 import com.github.k1rakishou.chan.ui.view.post_thumbnail.ThumbnailView
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -63,28 +64,32 @@ class PostPopupHelper(
       indexPosts(posts)
     )
 
+    val prevPostViewMode = dataQueue.lastOrNull()?.postViewMode
     dataQueue.add(data)
 
-    if (dataQueue.size == 1) {
+    if (dataQueue.size == 1 || prevPostViewMode != postViewMode) {
       present(PostRepliesPopupController(context, this, presenter))
     }
 
-    presentingPostRepliesController?.initialDisplayData(threadDescriptor, data)
+    presentingPostRepliesController?.displayData(threadDescriptor, data)
   }
 
   fun showSearchPopup(chanDescriptor: ChanDescriptor) {
+    val postViewMode = PostCellData.PostViewMode.Search
+
     val data = PostSearchPopupController.PostSearchPopupData(
       chanDescriptor,
-      PostCellData.PostViewMode.Search
+      postViewMode
     )
 
+    val prevPostViewMode = dataQueue.lastOrNull()?.postViewMode
     dataQueue.add(data)
 
-    if (dataQueue.size == 1) {
+    if (dataQueue.size == 1 || prevPostViewMode != postViewMode) {
       present(PostSearchPopupController(context, this, presenter))
     }
 
-    presentingPostRepliesController?.initialDisplayData(chanDescriptor, data)
+    presentingPostRepliesController?.displayData(chanDescriptor, data)
   }
 
   private fun indexPosts(posts: List<ChanPost>): List<PostIndexed> {
@@ -130,13 +135,46 @@ class PostPopupHelper(
       return
     }
 
+    val postRepliesController = presentingPostRepliesController
+      ?: return
+
     val repliesData = dataQueue[dataQueue.size - 1]
     checkNotNull(repliesData.descriptor) { "Descriptor cannot be null" }
 
-    presentingPostRepliesController?.initialDisplayData(
+    val needPresentController = when (postRepliesController.postPopupType) {
+      BasePostPopupController.PostPopupType.Replies -> isNotReplyPostViewMode(repliesData)
+      BasePostPopupController.PostPopupType.Search -> isNotSearchPostViewMode(repliesData)
+    }
+
+    if (needPresentController) {
+      when (repliesData.postViewMode) {
+        PostCellData.PostViewMode.PostSelection,
+        PostCellData.PostViewMode.Normal -> {
+          throw IllegalArgumentException("Invalid postViewMode: ${repliesData.postViewMode}")
+        }
+        PostCellData.PostViewMode.RepliesPopup,
+        PostCellData.PostViewMode.ExternalPostsPopup -> {
+          present(PostRepliesPopupController(context, this, presenter))
+        }
+        PostCellData.PostViewMode.Search -> {
+          present(PostSearchPopupController(context, this, presenter))
+        }
+      }.exhaustive
+    }
+
+    presentingPostRepliesController?.displayData(
       repliesData.descriptor,
       repliesData
     )
+  }
+
+  private fun isNotSearchPostViewMode(repliesData: PostPopupData): Boolean {
+    return repliesData.postViewMode != PostCellData.PostViewMode.Search
+  }
+
+  private fun isNotReplyPostViewMode(repliesData: PostPopupData): Boolean {
+    return repliesData.postViewMode != PostCellData.PostViewMode.RepliesPopup
+      && repliesData.postViewMode != PostCellData.PostViewMode.ExternalPostsPopup
   }
 
   fun popAll() {
@@ -168,10 +206,19 @@ class PostPopupHelper(
   }
 
   private fun present(controller: BasePostPopupController<out PostPopupData>) {
+    if (presentingPostRepliesController != null) {
+      presentingPostRepliesController?.stopPresenting()
+      presentingPostRepliesController = null
+    }
+
     if (presentingPostRepliesController == null) {
       presentingPostRepliesController = controller
       callback.presentRepliesController(presentingPostRepliesController!!)
     }
+  }
+
+  fun onImageIsAboutToShowUp() {
+    presentingPostRepliesController?.onImageIsAboutToShowUp()
   }
 
   interface PostPopupData {

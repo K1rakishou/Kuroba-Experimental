@@ -930,7 +930,7 @@ class ThreadPresenter @Inject constructor(
     val topRepliesData = threadPresenterCallback?.getTopPostRepliesDataOrNull()
     val postViewMode = topRepliesData?.postViewMode
 
-    if (topRepliesData != null && postViewMode == PostCellData.PostViewMode.ExternalPostsPopup) {
+    if (topRepliesData != null && postViewMode?.consumePostClicks() == true) {
       return
     }
 

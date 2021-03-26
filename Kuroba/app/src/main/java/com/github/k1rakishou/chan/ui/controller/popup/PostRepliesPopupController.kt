@@ -42,7 +42,7 @@ class PostRepliesPopupController(
     component.inject(this)
   }
 
-  override suspend fun initialDisplayData(
+  override suspend fun displayData(
     chanDescriptor: ChanDescriptor,
     data: PostRepliesPopupData
   ): ViewGroup {
@@ -72,6 +72,10 @@ class PostRepliesPopupController(
     restoreScrollPosition(chanDescriptor)
 
     return dataView
+  }
+
+  override fun onImageIsAboutToShowUp() {
+    // no-op
   }
 
   class PostRepliesPopupData(
