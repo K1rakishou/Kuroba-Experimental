@@ -423,7 +423,7 @@ class PostCell : LinearLayout,
     ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.postTitle, title)
     bindIcons(postCellData)
     bindPostComment(postCellData)
-    bindPostContent(postCellData, postCellData.threadMode)
+    bindPostContent(postCellData)
 
     val canBindReplies = (!postCellData.threadMode && postCellData.catalogRepliesCount > 0)
       || postCellData.repliesFromCount > 0
@@ -640,7 +640,7 @@ class PostCell : LinearLayout,
   }
 
   @SuppressLint("ClickableViewAccessibility")
-  private fun bindPostContent(postCellData: PostCellData, isThreadMode: Boolean) {
+  private fun bindPostContent(postCellData: PostCellData) {
     val theme = postCellData.theme
     comment.setText(postCellData.commentText, TextView.BufferType.SPANNABLE)
 
@@ -650,7 +650,7 @@ class PostCell : LinearLayout,
       comment.customMovementMethod(null)
       title.movementMethod = null
     } else {
-      if (isThreadMode) {
+      if (postCellData.threadMode || postCellData.searchMode) {
         comment.customMovementMethod(commentMovementMethod)
 
         if (ChanSettings.tapNoReply.get()
