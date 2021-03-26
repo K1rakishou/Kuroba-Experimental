@@ -116,6 +116,7 @@ class PostCell : LinearLayout,
   private val customSelectionActionModeCallback = object : ActionMode.Callback {
     private var quoteMenuItem: MenuItem? = null
     private var webSearchItem: MenuItem? = null
+    private var filterItem: MenuItem? = null
     private var processed = false
 
     override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
@@ -126,7 +127,8 @@ class PostCell : LinearLayout,
         quoteMenuItem = menu.add(Menu.NONE, R.id.post_selection_action_quote, 0, R.string.post_quote)
       }
 
-      webSearchItem = menu.add(Menu.NONE, R.id.post_selection_action_search, 1, R.string.post_web_search)
+      filterItem = menu.add(Menu.NONE, R.id.post_selection_action_filter, 1, R.string.post_filter)
+      webSearchItem = menu.add(Menu.NONE, R.id.post_selection_action_search, 2, R.string.post_web_search)
       return true
     }
 
@@ -140,6 +142,11 @@ class PostCell : LinearLayout,
       if (item === quoteMenuItem) {
         if (postCellCallback != null && postCellData != null) {
           postCellCallback?.onPostSelectionQuoted(postCellData!!.postDescriptor, selection)
+          processed = true
+        }
+      } else if (item === filterItem) {
+        if (postCellCallback != null && postCellData != null) {
+          postCellCallback?.onPostSelectionFilter(postCellData!!.postDescriptor, selection)
           processed = true
         }
       } else if (item === webSearchItem) {

@@ -63,6 +63,7 @@ import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.board.pages.BoardPage
 import com.github.k1rakishou.model.data.descriptor.*
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
+import com.github.k1rakishou.model.data.filter.FilterType
 import com.github.k1rakishou.model.data.options.ChanCacheOptions
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.options.ChanLoadOptions
@@ -1623,8 +1624,21 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.quote(post, false)
   }
 
-  override fun onPostSelectionQuoted(postDescriptor: PostDescriptor, quoted: CharSequence) {
-    threadPresenterCallback?.quote(postDescriptor, quoted)
+  override fun onPostSelectionQuoted(postDescriptor: PostDescriptor, selection: CharSequence) {
+    threadPresenterCallback?.quote(postDescriptor, selection)
+  }
+
+  override fun onPostSelectionFilter(postDescriptor: PostDescriptor, selection: CharSequence) {
+    if (selection.isEmpty()) {
+      showToast(context, R.string.selected_text_is_empty)
+      return
+    }
+
+    val chanFilterMutable = ChanFilterMutable()
+    chanFilterMutable.type = FilterType.COMMENT.flag
+    chanFilterMutable.pattern = "/${selection}/"
+
+    threadPresenterCallback?.openFiltersController(chanFilterMutable)
   }
 
   override fun showPostOptions(

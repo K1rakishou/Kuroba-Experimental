@@ -437,6 +437,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="post_hide">Hide</string>
     <string name="post_remove">Remove</string>
     <string name="post_web_search">Web search</string>
+    <string name="post_filter">Filter</string>
     <string name="post_posting_is_not_supported">Posting is not supported for this site</string>
 
     <string name="thread_hidden">Thread hidden</string>
@@ -1275,5 +1276,6 @@ Don't have a 4chan Pass?<br>
     <string name="cloud_flare_cookie_setting_description">If a site is hosted by CloudFlare and has anti-ddos checks enabled the application will automatically try to pass them and store CloudFlare clearance cookie that will be used to access site normally without having to pass checks every singe time. You will see a cookie here and will be able to edit/remove it if you ever need to do that. When removing a cookie (making it empty) a new cookie will be requested on the next site access. If a site does not use CloudFlare then this setting will always be empty.</string>
     <string name="no_filter_watched_threads">You have no filter watched threads here yet (They may be in the update process)</string>
     <string name="the_app_will_be_restarted">The app will be restarted when exiting the settings screen</string>
+    <string name="selected_text_is_empty">Selected text is empty</string>
 
 </resources>

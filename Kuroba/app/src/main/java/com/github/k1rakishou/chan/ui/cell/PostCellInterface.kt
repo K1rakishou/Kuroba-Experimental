@@ -58,7 +58,8 @@ interface PostCellInterface {
     fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable)
     fun onPostLinkableLongClicked(post: ChanPost, linkable: PostLinkable, inPopup: Boolean)
     fun onPostNoClicked(post: ChanPost)
-    fun onPostSelectionQuoted(postDescriptor: PostDescriptor, quoted: CharSequence)
+    fun onPostSelectionQuoted(postDescriptor: PostDescriptor, selection: CharSequence)
+    fun onPostSelectionFilter(postDescriptor: PostDescriptor, selection: CharSequence)
     fun getPage(originalPostDescriptor: PostDescriptor): BoardPage?
     fun hasAlreadySeenPost(postDescriptor: PostDescriptor): Boolean
     fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>)

@@ -140,7 +140,8 @@ class ThemeSettingsController(context: Context) : Controller(context),
     override fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable) {}
     override fun onPostLinkableLongClicked(post: ChanPost, linkable: PostLinkable, inPopup: Boolean) {}
     override fun onPostNoClicked(post: ChanPost) {}
-    override fun onPostSelectionQuoted(postDescriptor: PostDescriptor, quoted: CharSequence) {}
+    override fun onPostSelectionQuoted(postDescriptor: PostDescriptor, selection: CharSequence) {}
+    override fun onPostSelectionFilter(postDescriptor: PostDescriptor, selection: CharSequence) {}
     override fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>) {}
     override fun onUnhidePostClick(post: ChanPost) {}
     override fun currentSpanCount(): Int = 1
