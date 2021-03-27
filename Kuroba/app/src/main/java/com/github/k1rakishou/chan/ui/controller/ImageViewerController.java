@@ -732,6 +732,7 @@ public class ImageViewerController
 
         if (thumbnailUrl == null || !setTransitionViewData(startImageView)) {
             presenter.onInTransitionEnd();
+            presenter.onExit();
             return;
         }
 
