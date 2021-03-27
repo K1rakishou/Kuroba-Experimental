@@ -3,9 +3,9 @@ package com.github.k1rakishou.chan.core.cache
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
 import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
 import com.github.k1rakishou.chan.core.cache.downloader.FileDownloadRequest
-import com.github.k1rakishou.fsaf.file.RawFile
 import com.nhaarman.mockitokotlin2.spy
 import okhttp3.mockwebserver.MockWebServer
+import java.io.File
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicLong
 
@@ -25,7 +25,7 @@ internal fun createFileDownloadRequest(
   url: String,
   chunksCount: Int = 1,
   isBatchDownload: Boolean = false,
-  file: RawFile
+  file: File
 ): FileDownloadRequest {
   val cancelableDownload = CancelableDownload(
     url,

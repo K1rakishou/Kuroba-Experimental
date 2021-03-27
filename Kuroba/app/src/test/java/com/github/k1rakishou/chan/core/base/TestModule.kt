@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.core.base
 import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
+import com.github.k1rakishou.chan.core.cache.CacheHandlerSynchronizer
 import com.github.k1rakishou.chan.core.cache.downloader.ActiveDownloads
 import com.github.k1rakishou.chan.core.cache.downloader.ChunkDownloader
 import com.github.k1rakishou.chan.core.cache.downloader.ChunkMerger
@@ -13,13 +14,10 @@ import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy
 import com.github.k1rakishou.fsaf.FileManager
-import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.fsaf.manager.base_directory.DirectoryManager
 import com.nhaarman.mockitokotlin2.mock
 import io.reactivex.schedulers.Schedulers
 import okhttp3.OkHttpClient
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
 import org.robolectric.RuntimeEnvironment
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -38,8 +36,8 @@ class TestModule {
   private var siteResolver: SiteResolver? = null
   private var appConstants: AppConstants? = null
 
-  private var cacheDirFile: RawFile? = null
-  private var chunksCacheDirFile: RawFile? = null
+  private var cacheDirFile: File? = null
+  private var chunksCacheDirFile: File? = null
 
   fun provideApplication() = RuntimeEnvironment.application
   fun provideContext() = provideApplication().applicationContext
@@ -131,6 +129,7 @@ class TestModule {
     if (chunkDownloader == null) {
       chunkDownloader = ChunkDownloader(
         provideDownloaderOkHttpClient(),
+        provideSiteResolver(),
         provideActiveDownloads(),
         false,
         provideAppConstants()
@@ -155,7 +154,8 @@ class TestModule {
   fun provideCacheHandler(): CacheHandler {
     if (cacheHandler == null) {
       cacheHandler = CacheHandler(
-        provideFileManager(),
+        CacheHandlerSynchronizer(),
+        false,
         provideCacheDirFile(),
         provideChunksCacheDirFile(),
         false
@@ -165,25 +165,17 @@ class TestModule {
     return cacheHandler!!
   }
 
-  fun provideCacheDirFile(): RawFile {
+  fun provideCacheDirFile(): File {
     if (cacheDirFile == null) {
-      val fileMan = provideFileManager()
-
-      cacheDirFile = fileMan.fromRawFile(File(provideContext().cacheDir, "cache_dir"))
-      assertNotNull(fileMan.create(cacheDirFile!!))
-      assertTrue(fileMan.deleteContent(cacheDirFile!!))
+      cacheDirFile = File(provideContext().cacheDir, "cache_dir")
     }
 
     return cacheDirFile!!
   }
 
-  fun provideChunksCacheDirFile(): RawFile {
+  fun provideChunksCacheDirFile(): File {
     if (chunksCacheDirFile == null) {
-      val fileMan = provideFileManager()
-
-      chunksCacheDirFile = fileMan.fromRawFile(File(provideContext().cacheDir, "chunks_cache_dir"))
-      assertNotNull(fileMan.create(chunksCacheDirFile!!))
-      assertTrue(fileMan.deleteContent(chunksCacheDirFile!!))
+      chunksCacheDirFile = File(provideContext().cacheDir, "chunks_cache_dir")
     }
 
     return chunksCacheDirFile!!

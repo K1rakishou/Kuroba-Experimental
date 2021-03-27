@@ -7,7 +7,6 @@ import com.github.k1rakishou.chan.core.cache.createFileDownloadRequest
 import com.github.k1rakishou.chan.core.cache.withServer
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.fsaf.FileManager
-import com.github.k1rakishou.fsaf.file.RawFile
 import io.reactivex.schedulers.Schedulers
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -21,6 +20,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.shadows.ShadowLog
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 @RunWith(RobolectricTestRunner::class)
@@ -32,7 +32,7 @@ class ChunkDownloaderTest {
   private lateinit var activeDownloads: ActiveDownloads
   private lateinit var cacheHandler: CacheHandler
   private lateinit var fileManager: FileManager
-  private lateinit var chunksCacheDirFile: RawFile
+  private lateinit var chunksCacheDirFile: File
 
   @Before
   fun init() {
@@ -67,7 +67,7 @@ class ChunkDownloaderTest {
       server.start()
 
       val url = server.url("/${imageName}").toString()
-      val output = cacheHandler.getOrCreateCacheFile(url) as RawFile
+      val output = cacheHandler.getOrCreateCacheFile(url)!!
       val request = createFileDownloadRequest(url, chunks.size, file = output)
       activeDownloads.put(url, request)
 
@@ -113,7 +113,7 @@ class ChunkDownloaderTest {
       val chunk = Chunk(999, 9999)
       val chunksCount = 4
 
-      val output = cacheHandler.getOrCreateCacheFile(url) as RawFile
+      val output = cacheHandler.getOrCreateCacheFile(url)!!
       val request = createFileDownloadRequest(url, chunksCount, file = output)
       activeDownloads.put(url, request)
       request.cancelableDownload.cancel()
@@ -131,7 +131,7 @@ class ChunkDownloaderTest {
       assertEquals(1, errors.size)
       assertTrue(errors.first() is FileCacheException.CancellationException)
       assertFalse(cacheHandler.isAlreadyDownloaded(output))
-      assertTrue(fileManager.listFiles(chunksCacheDirFile).isEmpty())
+      assertTrue(chunksCacheDirFile.listFiles().isNullOrEmpty())
 
       assertEquals(0, server.requestCount)
     }

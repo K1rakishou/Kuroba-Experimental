@@ -6,7 +6,6 @@ import com.github.k1rakishou.chan.core.cache.FileCacheV2.Companion.MIN_CHUNK_SIZ
 import com.github.k1rakishou.chan.core.cache.createFileDownloadRequest
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.fsaf.FileManager
-import com.github.k1rakishou.fsaf.file.RawFile
 import com.nhaarman.mockitokotlin2.doAnswer
 import com.nhaarman.mockitokotlin2.spy
 import com.nhaarman.mockitokotlin2.whenever
@@ -31,6 +30,7 @@ import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.ArgumentMatchers.anyString
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.shadows.ShadowLog
+import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -44,7 +44,7 @@ class ChunkPersisterTest {
   private lateinit var cacheHandler: CacheHandler
   private lateinit var activeDownloads: ActiveDownloads
   private lateinit var chunkPersister: ChunkPersister
-  private lateinit var chunksCacheDirFile: RawFile
+  private lateinit var chunksCacheDirFile: File
 
   @Before
   fun init() {
@@ -77,7 +77,7 @@ class ChunkPersisterTest {
     val chunksCount = 2
     val chunks = chunkLong(fileBytes.size.toLong(), chunksCount, MIN_CHUNK_SIZE)
     val chunkResponses = createChunkResponses(url, chunks, fileBytes)
-    val output = cacheHandler.getOrCreateCacheFile(url) as RawFile
+    val output = cacheHandler.getOrCreateCacheFile(url)!!
     val request = createFileDownloadRequest(url, chunksCount, file = output)
     val chunkIndex = AtomicInteger(0)
     val timesCalled = AtomicInteger(0)
@@ -118,10 +118,10 @@ class ChunkPersisterTest {
 
     val successEvent = events.first { event -> event is ChunkDownloadEvent.ChunkSuccess }
     successEvent as ChunkDownloadEvent.ChunkSuccess
-    assertEquals(1, fileManager.listFiles(chunksCacheDirFile).size)
+    assertEquals(1, chunksCacheDirFile.listFiles()!!.size)
 
-    val fileName = fileManager.getName(successEvent.chunkCacheFile)
-    val fileSize = fileManager.getLength(successEvent.chunkCacheFile)
+    val fileName = successEvent.chunkCacheFile.name
+    val fileSize = successEvent.chunkCacheFile.length()
 
     val chunkString = String.format("%d_%d", successEvent.chunk.start, successEvent.chunk.end)
     assertTrue(fileName.contains(chunkString))
@@ -137,7 +137,7 @@ class ChunkPersisterTest {
     val chunksCount = 2
     val chunks = chunkLong(fileBytes.size.toLong(), chunksCount, MIN_CHUNK_SIZE)
     val chunkResponses = createChunkResponses(url, chunks, fileBytes)
-    val output = cacheHandler.getOrCreateCacheFile(url) as RawFile
+    val output = cacheHandler.getOrCreateCacheFile(url)!!
     val request = createFileDownloadRequest(url, chunksCount, file = output)
     val chunkIndex = AtomicInteger(0)
     activeDownloads.put(url, request)
@@ -177,7 +177,7 @@ class ChunkPersisterTest {
       val end = chunkSuccessEvent.chunk.realEnd.toInt()
 
       val expectedBytes = fileBytes.sliceArray(start until end)
-      val actualBytes = fileManager.getInputStream(chunkSuccessEvent.chunkCacheFile)!!.use {
+      val actualBytes = chunkSuccessEvent.chunkCacheFile.inputStream()!!.use {
         it.readBytes()
       }
 
@@ -207,7 +207,7 @@ class ChunkPersisterTest {
     val url = "http://testUrl.com/123.jpg"
     val chunksCount = 1
     val chunkResponse = create404ChunkResponse(url)
-    val output = cacheHandler.getOrCreateCacheFile(url) as RawFile
+    val output = cacheHandler.getOrCreateCacheFile(url)!!
     val request = createFileDownloadRequest(url, chunksCount, file = output)
     activeDownloads.put(url, request)
 

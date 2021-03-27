@@ -8,7 +8,7 @@ import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.setting.RangeSettingV2
 
 class CachingSettingsScreen(
-  context: Context,
+  context: Context
 ) : BaseSettingsScreen(
   context,
   CachingScreen,

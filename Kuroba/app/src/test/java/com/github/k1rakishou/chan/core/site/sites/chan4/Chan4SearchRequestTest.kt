@@ -77,7 +77,7 @@ class Chan4SearchRequestTest {
 
     val mockUrl = mockWebServer.url("/?q=test&o=0")
 
-    val siteDescriptor = SiteDescriptor("4chan")
+    val siteDescriptor = SiteDescriptor.create("4chan")
     val chan4 = Mockito.mock(Site::class.java)
     val testSiteActions = TestSiteActions(testModule.provideProxiedOkHttpClient(), mockUrl)
 

@@ -45,7 +45,7 @@ class ReplyParserTest {
   fun `test extract quotes from 2ch_hk comment`() {
     whenever(siteManager.bySiteDescriptor(any())).thenReturn(Dvach())
 
-    val replies = replyParser.extractCommentReplies(SiteDescriptor("2ch.hk"), DVACH_PARSER_TEST_COMMENT)
+    val replies = replyParser.extractCommentReplies(SiteDescriptor.create("2ch.hk"), DVACH_PARSER_TEST_COMMENT)
     assertEquals(2, replies.size)
     assertTrue(replies.all { it is ReplyParser.ExtractedQuote.FullQuote })
 
@@ -62,7 +62,7 @@ class ReplyParserTest {
   fun `test extract quotes from 4chan_org comment`() {
     whenever(siteManager.bySiteDescriptor(any())).thenReturn(Chan4())
 
-    val replies = replyParser.extractCommentReplies(SiteDescriptor("4chan.org"), COMMON_PARSER_TEST_COMMENT)
+    val replies = replyParser.extractCommentReplies(SiteDescriptor.create("4chan.org"), COMMON_PARSER_TEST_COMMENT)
     assertEquals(3, replies.size)
     assertTrue(replies.all { it is ReplyParser.ExtractedQuote.Quote })
 
@@ -75,7 +75,7 @@ class ReplyParserTest {
   fun `test extract quotes from lainchan_org comment`() {
     whenever(siteManager.bySiteDescriptor(any())).thenReturn(Lainchan())
 
-    val replies = replyParser.extractCommentReplies(SiteDescriptor("lainchan.org"), VICHAN_PARSER_TEST_COMMENT)
+    val replies = replyParser.extractCommentReplies(SiteDescriptor.create("lainchan.org"), VICHAN_PARSER_TEST_COMMENT)
     assertEquals(2, replies.size)
     assertTrue(replies.all { it is ReplyParser.ExtractedQuote.Quote })
 

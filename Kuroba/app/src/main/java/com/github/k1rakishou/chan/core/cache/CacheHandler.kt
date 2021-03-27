@@ -30,8 +30,6 @@ import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mbytesToBytes
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.fsaf.file.AbstractFile
-import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.model.util.ChanPostUtils
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.ISODateTimeFormat
@@ -62,6 +60,7 @@ import kotlin.time.measureTime
  * as all media files retrieved via [ImageLoaderV2]
  */
 class CacheHandler(
+  private val cacheHandlerSynchronizer: CacheHandlerSynchronizer,
   private val verboseLogs: Boolean,
   private val cacheDirFile: File,
   private val chunksCacheDirFile: File,
@@ -101,29 +100,30 @@ class CacheHandler(
     clearChunksCacheDir()
   }
 
-  @Synchronized
   fun getCacheFileOrNull(url: String): File? {
     BackgroundUtils.ensureBackgroundThread()
 
     createDirectories()
     val cacheFile = getCacheFileInternal(url)
 
-    try {
-      if (!cacheFile.exists()) {
-        return null
+    return cacheHandlerSynchronizer.withLocalLock(cacheFile.name) {
+      try {
+        if (!cacheFile.exists()) {
+          return@withLocalLock null
+        }
+
+        if (!getCacheFileMetaInternal(url).exists()) {
+          return@withLocalLock null
+        }
+
+        return@withLocalLock cacheFile
+      } catch (error: IOException) {
+        Logger.e(TAG, "Error while trying to get cache file", error)
+
+        createDirectories(forced = true)
+        deleteCacheFile(cacheFile)
+        return@withLocalLock null
       }
-
-      if (!getCacheFileMetaInternal(url).exists()) {
-        return null
-      }
-
-      return cacheFile
-    } catch (error: IOException) {
-      Logger.e(TAG, "Error while trying to get cache file", error)
-
-      createDirectories(forced = true)
-      deleteCacheFile(cacheFile)
-      return null
     }
   }
 
@@ -131,77 +131,80 @@ class CacheHandler(
    * Either returns already downloaded file or creates an empty new one on the disk (also creates
    * cache file meta with default parameters)
    * */
-  @Synchronized
   fun getOrCreateCacheFile(url: String): File? {
     BackgroundUtils.ensureBackgroundThread()
 
     createDirectories()
     val cacheFile = getCacheFileInternal(url)
 
-    try {
-      if (!cacheFile.exists() && !cacheFile.createNewFile()) {
-        throw IOException("Couldn't create cache file, path = ${cacheFile.absolutePath}")
-      }
-
-      val cacheFileMeta = getCacheFileMetaInternal(url)
-      if (!cacheFileMeta.exists()) {
-        if (!cacheFileMeta.createNewFile()) {
-          throw IOException("Couldn't create cache file meta, path = ${cacheFileMeta.absolutePath}")
+    return cacheHandlerSynchronizer.withLocalLock(cacheFile.name) {
+      try {
+        if (!cacheFile.exists() && !cacheFile.createNewFile()) {
+          throw IOException("Couldn't create cache file, path = ${cacheFile.absolutePath}")
         }
 
-        val result = updateCacheFileMeta(
-          cacheFileMeta,
-          true,
-          System.currentTimeMillis(),
-          false
-        )
+        val cacheFileMeta = getCacheFileMetaInternal(url)
+        if (!cacheFileMeta.exists()) {
+          if (!cacheFileMeta.createNewFile()) {
+            throw IOException("Couldn't create cache file meta, path = ${cacheFileMeta.absolutePath}")
+          }
 
-        if (!result) {
-          throw IOException("Cache file meta update failed")
+          val result = updateCacheFileMeta(
+            file = cacheFileMeta,
+            overwrite = true,
+            createdOn = System.currentTimeMillis(),
+            fileDownloaded = false
+          )
+
+          if (!result) {
+            throw IOException("Cache file meta update failed")
+          }
         }
+
+        val cacheFileName = cacheFile.name
+        synchronized(filesOnDiskCache) { filesOnDiskCache.add(cacheFileName) }
+
+        return@withLocalLock cacheFile
+      } catch (error: IOException) {
+        Logger.e(TAG, "Error while trying to get or create cache file", error)
+
+        createDirectories(forced = true)
+        deleteCacheFile(cacheFile)
+        return@withLocalLock null
       }
-
-      val cacheFileName = cacheFile.name
-      synchronized(filesOnDiskCache) { filesOnDiskCache.add(cacheFileName) }
-
-      return cacheFile
-    } catch (error: IOException) {
-      Logger.e(TAG, "Error while trying to get or create cache file", error)
-
-      createDirectories(forced = true)
-      deleteCacheFile(cacheFile)
-      return null
     }
   }
 
-  @Synchronized
   fun getChunkCacheFileOrNull(chunkStart: Long, chunkEnd: Long, url: String): File? {
     BackgroundUtils.ensureBackgroundThread()
-
     val chunkCacheFile = getChunkCacheFileInternal(chunkStart, chunkEnd, url)
-    if (chunkCacheFile.exists()) {
-      return chunkCacheFile
-    }
 
-    return null
+    return cacheHandlerSynchronizer.withLocalLock(chunkCacheFile.name) {
+      if (chunkCacheFile.exists()) {
+        return@withLocalLock chunkCacheFile
+      }
+
+      return@withLocalLock null
+    }
   }
 
-  @Synchronized
   fun getOrCreateChunkCacheFile(chunkStart: Long, chunkEnd: Long, url: String): File? {
     BackgroundUtils.ensureBackgroundThread()
-
     val chunkCacheFile = getChunkCacheFileInternal(chunkStart, chunkEnd, url)
-    if (chunkCacheFile.exists()) {
-      if (!chunkCacheFile.delete()) {
-        throw IOException("Couldn't delete old chunk cache file")
+
+    return cacheHandlerSynchronizer.withLocalLock(chunkCacheFile.name) {
+      if (chunkCacheFile.exists()) {
+        if (!chunkCacheFile.delete()) {
+          throw IOException("Couldn't delete old chunk cache file")
+        }
       }
-    }
 
-    if (!chunkCacheFile.createNewFile()) {
-      throw IOException("Couldn't create new chunk cache file")
-    }
+      if (!chunkCacheFile.createNewFile()) {
+        throw IOException("Couldn't create new chunk cache file")
+      }
 
-    return chunkCacheFile
+      return@withLocalLock chunkCacheFile
+    }
   }
 
   fun cacheFileExists(fileUrl: String): Boolean {
@@ -225,105 +228,90 @@ class CacheHandler(
    *
    * [cacheFile] must be the cache file, not cache file meta!
    * */
-  fun isAlreadyDownloaded(cacheFileRaw: RawFile): Boolean {
-    BackgroundUtils.ensureBackgroundThread()
-    return isAlreadyDownloaded(File(cacheFileRaw.getFullPath()))
-  }
-
   fun isAlreadyDownloaded(cacheFile: File): Boolean {
     BackgroundUtils.ensureBackgroundThread()
 
-    try {
-      createDirectories()
+    createDirectories()
+    val cacheFileName = cacheFile.name
 
-      val cacheFileName = cacheFile.name
-      val containsInCache = synchronized(fullyDownloadedFiles) { fullyDownloadedFiles.contains(cacheFileName) }
+    return cacheHandlerSynchronizer.withLocalLock(cacheFileName) {
+      try {
+        val containsInCache = synchronized(fullyDownloadedFiles) { fullyDownloadedFiles.contains(cacheFileName) }
+        if (containsInCache) {
+          return@withLocalLock true
+        }
 
-      if (containsInCache) {
-        return true
-      }
+        if (!cacheFile.exists()) {
+          deleteCacheFile(cacheFile)
+          return@withLocalLock false
+        }
 
-      if (!cacheFile.exists()) {
+        if (!cacheFileName.endsWith(CACHE_EXTENSION)) {
+          Logger.e(TAG, "Not a cache file! file = " + cacheFile.absolutePath)
+          deleteCacheFile(cacheFile)
+          return@withLocalLock false
+        }
+
+        val cacheFileMetaFile = getCacheFileMetaByCacheFile(cacheFile)
+        if (cacheFileMetaFile == null) {
+          Logger.e(TAG, "Couldn't get cache file meta by cache file, file = ${cacheFile.absolutePath}")
+          deleteCacheFile(cacheFile)
+          return@withLocalLock false
+        }
+
+        if (!cacheFileMetaFile.exists()) {
+          Logger.e(TAG, "Cache file meta does not exist, cacheFileMetaFile = ${cacheFileMetaFile.absolutePath}")
+          deleteCacheFile(cacheFile)
+          return@withLocalLock false
+        }
+
+        if (cacheFileMetaFile.length() <= 0) {
+          // File is empty
+          deleteCacheFile(cacheFile)
+          return@withLocalLock false
+        }
+
+        val cacheFileMeta = readCacheFileMeta(cacheFileMetaFile)
+        if (cacheFileMeta == null) {
+          deleteCacheFile(cacheFile)
+          return@withLocalLock false
+        }
+
+        val isDownloaded = cacheFileMeta.isDownloaded
+        if (isDownloaded) {
+          synchronized(fullyDownloadedFiles) { fullyDownloadedFiles += cacheFileName }
+        } else {
+          synchronized(fullyDownloadedFiles) { fullyDownloadedFiles -= cacheFileName }
+        }
+
+        return@withLocalLock isDownloaded
+      } catch (error: Throwable) {
+        Logger.e(TAG, "Error while trying to check whether the file is already downloaded", error)
         deleteCacheFile(cacheFile)
-        return false
+        return@withLocalLock false
       }
-
-      if (!cacheFileName.endsWith(CACHE_EXTENSION)) {
-        Logger.e(TAG, "Not a cache file! file = " + cacheFile.absolutePath)
-        deleteCacheFile(cacheFile)
-        return false
-      }
-
-      val cacheFileMetaFile = getCacheFileMetaByCacheFile(cacheFile)
-      if (cacheFileMetaFile == null) {
-        Logger.e(TAG, "Couldn't get cache file meta by cache file, file = ${cacheFile.absolutePath}")
-        deleteCacheFile(cacheFile)
-        return false
-      }
-
-      if (!cacheFileMetaFile.exists()) {
-        Logger.e(TAG, "Cache file meta does not exist, cacheFileMetaFile = ${cacheFileMetaFile.absolutePath}")
-        deleteCacheFile(cacheFile)
-        return false
-      }
-
-      if (cacheFileMetaFile.length() <= 0) {
-        // File is empty
-        deleteCacheFile(cacheFile)
-        return false
-      }
-
-      val cacheFileMeta = readCacheFileMeta(cacheFileMetaFile)
-      if (cacheFileMeta == null) {
-        deleteCacheFile(cacheFile)
-        return false
-      }
-
-      val isDownloaded = cacheFileMeta.isDownloaded
-      if (isDownloaded) {
-        synchronized(fullyDownloadedFiles) { fullyDownloadedFiles += cacheFileName }
-      } else {
-        synchronized(fullyDownloadedFiles) { fullyDownloadedFiles -= cacheFileName }
-      }
-
-      return isDownloaded
-    } catch (error: Throwable) {
-      Logger.e(TAG, "Error while trying to check whether the file is already downloaded", error)
-      deleteCacheFile(cacheFile)
-      return false
     }
-  }
-
-  /**
-   * Marks the file as a downloaded (sets a flag in it's meta info). If meta info cannot be read
-   * deletes the file so it can be re-downloaded again.
-   * */
-  fun markFileDownloaded(output: AbstractFile): Boolean {
-    BackgroundUtils.ensureBackgroundThread()
-    require(output is RawFile) { "output Must be RawFile" }
-
-    return markFileDownloaded(File(output.getFullPath()))
   }
 
   fun markFileDownloaded(output: File): Boolean {
     BackgroundUtils.ensureBackgroundThread()
 
-    try {
-      createDirectories()
+    return cacheHandlerSynchronizer.withLocalLock(output.name) {
+      try {
+        createDirectories()
 
-      if (!output.exists()) {
-        Logger.e(TAG, "File does not exist! file = ${output.absolutePath}")
-        deleteCacheFile(output)
-        return false
-      }
+        if (!output.exists()) {
+          Logger.e(TAG, "File does not exist! file = ${output.absolutePath}")
+          deleteCacheFile(output)
+          return@withLocalLock false
+        }
 
-      val cacheFileMeta = getCacheFileMetaByCacheFile(output)
-      if (cacheFileMeta == null) {
-        deleteCacheFile(output)
-        return false
-      }
+        val cacheFileMeta = getCacheFileMetaByCacheFile(output)
+        if (cacheFileMeta == null) {
+          deleteCacheFile(output)
+          return@withLocalLock false
+        }
 
-      return synchronized(this) {
         val updateResult = updateCacheFileMeta(
           file = cacheFileMeta,
           overwrite = false,
@@ -338,12 +326,12 @@ class CacheHandler(
           synchronized(fullyDownloadedFiles) { fullyDownloadedFiles += outputFileName }
         }
 
-        return@synchronized updateResult
+        return@withLocalLock updateResult
+      } catch (error: Throwable) {
+        Logger.e(TAG, "Error while trying to mark file as downloaded", error)
+        deleteCacheFile(output)
+        return@withLocalLock false
       }
-    } catch (error: Throwable) {
-      Logger.e(TAG, "Error while trying to mark file as downloaded", error)
-      deleteCacheFile(output)
-      return false
     }
   }
 
@@ -399,30 +387,31 @@ class CacheHandler(
   /**
    * For now only used in developer settings. Clears the cache completely.
    * */
-  @Synchronized
   fun clearCache() {
     Logger.d(TAG, "Clearing cache")
 
-    if (cacheDirFile.exists() && cacheDirFile.isDirectory) {
-      for (file in cacheDirFile.listFiles() ?: emptyArray()) {
-        if (!deleteCacheFile(file)) {
-          Logger.d(TAG, "Could not delete cache file while clearing cache ${file.absolutePath}")
+    cacheHandlerSynchronizer.withGlobalLock {
+      if (cacheDirFile.exists() && cacheDirFile.isDirectory) {
+        for (file in cacheDirFile.listFiles() ?: emptyArray()) {
+          if (!deleteCacheFile(file)) {
+            Logger.d(TAG, "Could not delete cache file while clearing cache ${file.absolutePath}")
+          }
         }
       }
-    }
 
-    if (chunksCacheDirFile.exists() && chunksCacheDirFile.isDirectory) {
-      for (file in chunksCacheDirFile.listFiles() ?: emptyArray()) {
-        if (!file.delete()) {
-          Logger.d(TAG, "Could not delete cache chunk file while clearing cache ${file.absolutePath}")
+      if (chunksCacheDirFile.exists() && chunksCacheDirFile.isDirectory) {
+        for (file in chunksCacheDirFile.listFiles() ?: emptyArray()) {
+          if (!file.delete()) {
+            Logger.d(TAG, "Could not delete cache chunk file while clearing cache ${file.absolutePath}")
+          }
         }
       }
+
+      synchronized(filesOnDiskCache) { filesOnDiskCache.clear() }
+      synchronized(fullyDownloadedFiles) { fullyDownloadedFiles.clear() }
+
+      recalculateSize()
     }
-
-    synchronized(filesOnDiskCache) { filesOnDiskCache.clear() }
-    synchronized(fullyDownloadedFiles) { fullyDownloadedFiles.clear() }
-
-    recalculateSize()
   }
 
   /**
@@ -434,57 +423,59 @@ class CacheHandler(
   }
 
   private fun deleteCacheFile(fileName: String): Boolean {
-    val originalFileName = StringUtils.removeExtensionFromFileName(fileName)
-    if (originalFileName.isEmpty()) {
-      Logger.e(TAG, "Couldn't parse original file name, fileName = $fileName")
-      return false
-    }
-
-    val cacheFileName = formatCacheFileName(originalFileName)
-    val cacheMetaFileName = formatCacheFileMetaName(originalFileName)
-
-    val cacheFile = File(cacheDirFile, cacheFileName)
-    val cacheMetaFile = File(cacheDirFile, cacheMetaFileName)
-    val cacheFileSize = cacheFile.length()
-
-    val deleteCacheFileResult = cacheFile.delete()
-    if (!deleteCacheFileResult) {
-      Logger.e(TAG, "Failed to delete cache file, fileName = ${cacheFile.absolutePath}")
-    }
-
-    val deleteCacheFileMetaResult = cacheMetaFile.delete()
-    if (!deleteCacheFileMetaResult) {
-      Logger.e(TAG, "Failed to delete cache file meta = ${cacheMetaFile.absolutePath}")
-    }
-
-    synchronized(filesOnDiskCache) { filesOnDiskCache.remove(cacheFileName) }
-    synchronized(fullyDownloadedFiles) { fullyDownloadedFiles.remove(cacheFileName) }
-
-    if (deleteCacheFileResult && deleteCacheFileMetaResult) {
-      val fileSize = if (cacheFileSize < 0) {
-        0
-      } else {
-        cacheFileSize
+    return cacheHandlerSynchronizer.withLocalLock(fileName) {
+      val originalFileName = StringUtils.removeExtensionFromFileName(fileName)
+      if (originalFileName.isEmpty()) {
+        Logger.e(TAG, "Couldn't parse original file name, fileName = $fileName")
+        return@withLocalLock false
       }
 
-      if (fileSize > 0) {
-        size.getAndAdd(-fileSize)
-        if (size.get() < 0L) {
-          size.set(0L)
-        }
+      val cacheFileName = formatCacheFileName(originalFileName)
+      val cacheMetaFileName = formatCacheFileMetaName(originalFileName)
 
-        if (verboseLogs) {
-          Logger.d(TAG, "Deleted $cacheFileName and it's meta $cacheMetaFileName, " +
-            "fileSize = ${ChanPostUtils.getReadableFileSize(fileSize)}, " +
-            "cache size = ${ChanPostUtils.getReadableFileSize(size.get())}")
-        }
+      val cacheFile = File(cacheDirFile, cacheFileName)
+      val cacheMetaFile = File(cacheDirFile, cacheMetaFileName)
+      val cacheFileSize = cacheFile.length()
+
+      val deleteCacheFileResult = !cacheFile.exists() || cacheFile.delete()
+      if (!deleteCacheFileResult) {
+        Logger.e(TAG, "Failed to delete cache file, fileName = ${cacheFile.absolutePath}")
       }
 
-      return true
-    }
+      val deleteCacheFileMetaResult = !cacheMetaFile.exists() || cacheMetaFile.delete()
+      if (!deleteCacheFileMetaResult) {
+        Logger.e(TAG, "Failed to delete cache file meta = ${cacheMetaFile.absolutePath}")
+      }
 
-    // Only one of the files could be deleted
-    return false
+      synchronized(filesOnDiskCache) { filesOnDiskCache.remove(cacheFileName) }
+      synchronized(fullyDownloadedFiles) { fullyDownloadedFiles.remove(cacheFileName) }
+
+      if (deleteCacheFileResult && deleteCacheFileMetaResult) {
+        val fileSize = if (cacheFileSize < 0) {
+          0
+        } else {
+          cacheFileSize
+        }
+
+        if (fileSize > 0) {
+          size.getAndAdd(-fileSize)
+          if (size.get() < 0L) {
+            size.set(0L)
+          }
+
+          if (verboseLogs) {
+            Logger.d(TAG, "Deleted $cacheFileName and it's meta $cacheMetaFileName, " +
+              "fileSize = ${ChanPostUtils.getReadableFileSize(fileSize)}, " +
+              "cache size = ${ChanPostUtils.getReadableFileSize(size.get())}")
+          }
+        }
+
+        return@withLocalLock true
+      }
+
+      // Only one of the files could be deleted
+      return@withLocalLock false
+    }
   }
 
   private fun getCacheFileMetaByCacheFile(cacheFile: File): File? {
@@ -510,17 +501,17 @@ class CacheHandler(
     createdOn: Long?,
     fileDownloaded: Boolean?
   ): Boolean {
-    if (!file.exists()) {
-      Logger.e(TAG, "Cache file meta does not exist!")
-      return false
-    }
+    return cacheHandlerSynchronizer.withLocalLock(file.name) {
+      if (!file.exists()) {
+        Logger.e(TAG, "Cache file meta does not exist!")
+        return@withLocalLock false
+      }
 
-    if (!file.name.endsWith(CACHE_META_EXTENSION)) {
-      Logger.e(TAG, "Not a cache file meta! file = ${file.absolutePath}")
-      return false
-    }
+      if (!file.name.endsWith(CACHE_META_EXTENSION)) {
+        Logger.e(TAG, "Not a cache file meta! file = ${file.absolutePath}")
+        return@withLocalLock false
+      }
 
-    return synchronized(this) {
       val prevCacheFileMeta = readCacheFileMeta(file).let { cacheFileMeta ->
         when {
           !overwrite && cacheFileMeta != null -> {
@@ -550,7 +541,7 @@ class CacheHandler(
         }
       }
 
-      return@synchronized file.outputStream().use { stream ->
+      return@withLocalLock file.outputStream().use { stream ->
         return@use PrintWriter(stream).use { pw ->
           val toWrite = String.format(
             Locale.ENGLISH,
@@ -573,29 +564,29 @@ class CacheHandler(
 
   @Throws(IOException::class)
   private fun readCacheFileMeta(cacheFileMeta: File): CacheFileMeta? {
-    if (!cacheFileMeta.exists()) {
-      throw IOException("Cache file meta does not exist, path = ${cacheFileMeta.absolutePath}")
-    }
+    return cacheHandlerSynchronizer.withLocalLock(cacheFileMeta.name) {
+      if (!cacheFileMeta.exists()) {
+        throw IOException("Cache file meta does not exist, path = ${cacheFileMeta.absolutePath}")
+      }
 
-    if (!cacheFileMeta.isFile()) {
-      throw IOException("Input file is not a file!")
-    }
+      if (!cacheFileMeta.isFile()) {
+        throw IOException("Input file is not a file!")
+      }
 
-    if (!cacheFileMeta.canRead()) {
-      throw IOException("Couldn't read cache file meta")
-    }
+      if (!cacheFileMeta.canRead()) {
+        throw IOException("Couldn't read cache file meta")
+      }
 
-    if (cacheFileMeta.length() <= 0) {
-      // This is a valid case
-      return null
-    }
+      if (cacheFileMeta.length() <= 0) {
+        // This is a valid case
+        return@withLocalLock null
+      }
 
-    if (!cacheFileMeta.name.endsWith(CACHE_META_EXTENSION)) {
-      throw IOException("Not a cache file meta! file = ${cacheFileMeta.absolutePath}")
-    }
+      if (!cacheFileMeta.name.endsWith(CACHE_META_EXTENSION)) {
+        throw IOException("Not a cache file meta! file = ${cacheFileMeta.absolutePath}")
+      }
 
-    return synchronized(this) {
-      return@synchronized cacheFileMeta.reader().use { reader ->
+      return@withLocalLock cacheFileMeta.reader().use { reader ->
         val lengthBuffer = CharArray(CACHE_FILE_META_HEADER_SIZE)
 
         var read = reader.read(lengthBuffer)
@@ -750,16 +741,16 @@ class CacheHandler(
     }
   }
 
-  @Synchronized
   private fun clearChunksCacheDirInternal() {
     if (trimChunksRunning.get()) {
       return
     }
 
     try {
-      if (chunksCacheDirFile.exists()) {
-        chunksCacheDirFile.listFiles()
-          ?.forEach { file -> file.delete() }
+      cacheHandlerSynchronizer.withGlobalLock {
+        if (chunksCacheDirFile.exists()) {
+          chunksCacheDirFile.listFiles()?.forEach { file -> file.delete() }
+        }
       }
     } finally {
       trimChunksRunning.set(false)
@@ -788,7 +779,7 @@ class CacheHandler(
       synchronized(filesOnDiskCache) { filesOnDiskCache.clear() }
 
       try {
-        synchronized(this) {
+        cacheHandlerSynchronizer.withGlobalLock {
           val files = cacheDirFile.listFiles() ?: emptyArray()
           for (file in files) {
             if (file.name.endsWith(CACHE_META_EXTENSION)) {
@@ -817,7 +808,7 @@ class CacheHandler(
     BackgroundUtils.ensureBackgroundThread()
     createDirectories()
 
-    val directoryFiles = synchronized(this) { cacheDirFile.listFiles() ?: emptyArray() }
+    val directoryFiles = cacheHandlerSynchronizer.withGlobalLock { cacheDirFile.listFiles() ?: emptyArray() }
     // Don't try to trim empty directories or just two files in it.
     // Two (not one) because for every cache file we now have a cache file meta with some
     // additional info.
@@ -847,7 +838,9 @@ class CacheHandler(
       fileCacheDiskSizeBytes
     }
 
-    val sizeToFree = (currentCacheSizeToUse / (100f / ChanSettings.diskCacheCleanupRemovePercent.get().toFloat())).toLong()
+    val sizeDiff = (size.get() - fileCacheDiskSizeBytes).coerceAtLeast(0)
+    val calculatedSizeToFree = (currentCacheSizeToUse / (100f / ChanSettings.diskCacheCleanupRemovePercent.get().toFloat())).toLong()
+    val sizeToFree = sizeDiff + calculatedSizeToFree
 
     Logger.d(TAG, "trim() started, " +
       "currentCacheSize=${ChanPostUtils.getReadableFileSize(size.get())}, " +
@@ -890,9 +883,9 @@ class CacheHandler(
       }
     }
 
+    val timeDiff = System.currentTimeMillis() - start
     recalculateSize()
 
-    val timeDiff = System.currentTimeMillis() - start
     Logger.d(TAG, "trim() ended (took ${timeDiff} ms), filesDeleted=$filesDeleted, " +
       "total space freed=${ChanPostUtils.getReadableFileSize(totalDeleted)}")
   }
@@ -1039,7 +1032,7 @@ class CacheHandler(
 
     private const val CURRENT_META_FILE_VERSION = 1
     private const val CACHE_FILE_META_HEADER_SIZE = 4
-    private const val MAX_TRIM_TIME_MS = 500L
+    private const val MAX_TRIM_TIME_MS = 1500L
 
     // I don't think it will ever get this big but just in case don't forget to update it if it
     // ever gets

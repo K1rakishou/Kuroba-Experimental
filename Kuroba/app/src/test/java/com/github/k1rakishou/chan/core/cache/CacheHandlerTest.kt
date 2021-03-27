@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.cache
 import com.github.k1rakishou.chan.core.base.TestModule
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.fsaf.FileManager
-import com.github.k1rakishou.fsaf.file.RawFile
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -13,6 +12,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowLog
+import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE)
@@ -21,7 +21,7 @@ class CacheHandlerTest {
 
   private lateinit var cacheHandler: CacheHandler
   private lateinit var fileManager: FileManager
-  private lateinit var cacheDirFile: RawFile
+  private lateinit var cacheDirFile: File
 
   @Before
   fun init() {
@@ -53,13 +53,13 @@ class CacheHandlerTest {
     val url = "http://4chan.org/image.jpg"
     val cacheFile = checkNotNull(cacheHandler.getOrCreateCacheFile(url))
     val cacheFileMeta = cacheHandler.getCacheFileMetaInternal(url)
-    val fileLength = fileManager.getLength(cacheFileMeta)
+    val fileLength = cacheFileMeta.length()
 
-    checkNotNull(fileManager.getInputStream(cacheFileMeta)).use { inputStream ->
+    checkNotNull(cacheFileMeta.inputStream()).use { inputStream ->
       val array = ByteArray(fileLength.toInt())
       inputStream.read(array)
 
-      checkNotNull(fileManager.getOutputStream(cacheFileMeta)).use { outputStream ->
+      checkNotNull(cacheFileMeta.outputStream()).use { outputStream ->
         // Malform the "True/False" boolean parameter by replacing it's last character with
         // a comma
         array[array.lastIndex] = ','.toByte()
@@ -71,7 +71,7 @@ class CacheHandlerTest {
 
     assertFalse(cacheHandler.markFileDownloaded(cacheFile))
     assertFalse(cacheHandler.isAlreadyDownloaded(cacheFile))
-    assertTrue(fileManager.listFiles(cacheDirFile).isEmpty())
+    assertTrue(cacheDirFile.listFiles().isNullOrEmpty())
   }
 
   @Test
@@ -87,6 +87,6 @@ class CacheHandlerTest {
 
     cacheHandler.clearCache()
 
-    assertTrue(fileManager.listFiles(cacheDirFile).isEmpty())
+    assertTrue(cacheDirFile.listFiles().isNullOrEmpty())
   }
 }

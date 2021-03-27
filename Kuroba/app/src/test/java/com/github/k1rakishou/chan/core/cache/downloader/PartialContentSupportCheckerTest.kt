@@ -8,7 +8,6 @@ import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.fsaf.file.RawFile
 import com.nhaarman.mockitokotlin2.whenever
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
@@ -62,15 +61,14 @@ class PartialContentSupportCheckerTest {
   fun `test check for batch request should return supportsPartialContentDownload == false`() {
     val url = "http://4chan.org/image1.jpg"
     val host = url.toHttpUrl().host
-    val output = cacheHandler.getOrCreateCacheFile(url) as RawFile
+    val output = cacheHandler.getOrCreateCacheFile(url)!!
     val request = createFileDownloadRequest(url, isBatchDownload = true, file = output)
     activeDownloads.put(url, request)
 
     val mockSite = Mockito.mock(Site::class.java)
     val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
       enabled = true,
-      siteSendsCorrectFileSizeInBytes = true,
-      canFileHashBeTrusted = true
+      siteSendsCorrectFileSizeInBytes = true
     )
     whenever(siteResolver.findSiteForUrl(host)).thenReturn(mockSite)
     whenever(mockSite.getChunkDownloaderSiteProperties()).thenReturn(chunkDownloaderSiteProperties)
@@ -101,15 +99,14 @@ class PartialContentSupportCheckerTest {
 
       val url = server.url("/image1.jpg").toString()
       val host = url.toHttpUrl().host
-      val output = cacheHandler.getOrCreateCacheFile(url) as RawFile
+      val output = cacheHandler.getOrCreateCacheFile(url)!!
       val request = createFileDownloadRequest(url, file = output)
       activeDownloads.put(url, request)
 
       val mockSite = Mockito.mock(Site::class.java)
       val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
         enabled = true,
-        siteSendsCorrectFileSizeInBytes = true,
-        canFileHashBeTrusted = true
+        siteSendsCorrectFileSizeInBytes = true
       )
 
       whenever(siteResolver.findSiteForUrl(host)).thenReturn(mockSite)
@@ -146,15 +143,14 @@ class PartialContentSupportCheckerTest {
 
       val url = server.url("/image1.jpg").toString()
       val host = url.toHttpUrl().host
-      val output = cacheHandler.getOrCreateCacheFile(url) as RawFile
+      val output = cacheHandler.getOrCreateCacheFile(url)!!
       val request = createFileDownloadRequest(url, file = output)
       activeDownloads.put(url, request)
 
       val mockSite = Mockito.mock(Site::class.java)
       val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
         enabled = true,
-        siteSendsCorrectFileSizeInBytes = true,
-        canFileHashBeTrusted = true
+        siteSendsCorrectFileSizeInBytes = true
       )
       whenever(siteResolver.findSiteForUrl(host)).thenReturn(mockSite)
       whenever(mockSite.getChunkDownloaderSiteProperties()).thenReturn(chunkDownloaderSiteProperties)
@@ -189,15 +185,14 @@ class PartialContentSupportCheckerTest {
 
       val url = server.url("/image1.jpg").toString()
       val host = url.toHttpUrl().host
-      val output = cacheHandler.getOrCreateCacheFile(url) as RawFile
+      val output = cacheHandler.getOrCreateCacheFile(url)!!
       val request = createFileDownloadRequest(url, file = output)
       activeDownloads.put(url, request)
 
       val mockSite = Mockito.mock(Site::class.java)
       val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
         enabled = true,
-        siteSendsCorrectFileSizeInBytes = true,
-        canFileHashBeTrusted = true
+        siteSendsCorrectFileSizeInBytes = true
       )
       whenever(siteResolver.findSiteForUrl(host)).thenReturn(mockSite)
       whenever(mockSite.getChunkDownloaderSiteProperties()).thenReturn(chunkDownloaderSiteProperties)
@@ -239,15 +234,14 @@ class PartialContentSupportCheckerTest {
 
       val url = server.url("/image1.jpg").toString()
       val host = url.toHttpUrl().host
-      val output = cacheHandler.getOrCreateCacheFile(url) as RawFile
+      val output = cacheHandler.getOrCreateCacheFile(url)!!
       val request = createFileDownloadRequest(url, file = output)
       activeDownloads.put(url, request)
 
       val mockSite = Mockito.mock(Site::class.java)
       val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
         enabled = true,
-        siteSendsCorrectFileSizeInBytes = true,
-        canFileHashBeTrusted = true
+        siteSendsCorrectFileSizeInBytes = true
       )
       whenever(siteResolver.findSiteForUrl(host)).thenReturn(mockSite)
       whenever(mockSite.getChunkDownloaderSiteProperties()).thenReturn(chunkDownloaderSiteProperties)
@@ -284,15 +278,14 @@ class PartialContentSupportCheckerTest {
 
       val url = server.url("/image1.jpg").toString()
       val host = url.toHttpUrl().host
-      val output = cacheHandler.getOrCreateCacheFile(url) as RawFile
+      val output = cacheHandler.getOrCreateCacheFile(url)!!
       val request = createFileDownloadRequest(url, file = output)
       activeDownloads.put(url, request)
 
       val mockSite = Mockito.mock(Site::class.java)
       val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
         enabled = true,
-        siteSendsCorrectFileSizeInBytes = true,
-        canFileHashBeTrusted = true
+        siteSendsCorrectFileSizeInBytes = true
       )
       whenever(siteResolver.findSiteForUrl(host)).thenReturn(mockSite)
       whenever(mockSite.getChunkDownloaderSiteProperties()).thenReturn(chunkDownloaderSiteProperties)
@@ -326,15 +319,14 @@ class PartialContentSupportCheckerTest {
 
       val url = server.url("/image1.jpg").toString()
       val host = url.toHttpUrl().host
-      val output = cacheHandler.getOrCreateCacheFile(url) as RawFile
+      val output = cacheHandler.getOrCreateCacheFile(url)!!
       val request = createFileDownloadRequest(url, file = output)
       activeDownloads.put(url, request)
 
       val mockSite = Mockito.mock(Site::class.java)
       val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
         enabled = true,
-        siteSendsCorrectFileSizeInBytes = true,
-        canFileHashBeTrusted = true
+        siteSendsCorrectFileSizeInBytes = true
       )
 
       whenever(siteResolver.findSiteForUrl(host)).thenReturn(mockSite)
