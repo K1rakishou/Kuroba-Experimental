@@ -50,6 +50,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
@@ -67,6 +68,10 @@ import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteSetting
+import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
+import com.github.k1rakishou.chan.features.bypass.BypassMode
+import com.github.k1rakishou.chan.features.bypass.CookieResult
+import com.github.k1rakishou.chan.features.bypass.SiteAntiSpamCheckBypassController
 import com.github.k1rakishou.chan.features.reply.ReplyPresenter.ReplyPresenterCallback
 import com.github.k1rakishou.chan.features.reply.data.Reply
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
@@ -112,9 +117,11 @@ import com.github.k1rakishou.prefs.StringSetting
 import com.google.android.material.textview.MaterialTextView
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import javax.inject.Inject
+import kotlin.coroutines.resume
 
 class ReplyLayout @JvmOverloads constructor(
   context: Context,
@@ -663,6 +670,26 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun unbindReplyImages(chanDescriptor: ChanDescriptor) {
     replyLayoutFilesArea.onUnbind()
+  }
+
+  override suspend fun show2chAntiSpamCheckSolverController(): Boolean {
+    BackgroundUtils.ensureMainThread()
+
+    val callbacks = threadListLayoutCallbacks
+      ?: return false
+
+    return suspendCancellableCoroutine { continuation ->
+      val controller = SiteAntiSpamCheckBypassController(
+        context = context,
+        bypassMode = BypassMode.Bypass2chAntiSpamCheck,
+        urlToOpen = Dvach.URL_HANDLER.url!!.toString()
+      ) { cookieResult ->
+        continuation.resume(cookieResult is CookieResult.CookieValue)
+      }
+
+      callbacks.presentController(controller)
+      continuation.invokeOnCancellation { controller.stopPresenting() }
+    }
   }
 
   override fun requestWrappingModeUpdate() {
@@ -1425,7 +1452,7 @@ class ReplyLayout @JvmOverloads constructor(
     fun getCurrentChanDescriptor(): ChanDescriptor?
     fun updateRecyclerViewPaddings()
     fun measureReplyLayout()
-    fun presentController(controller: FloatingListMenuController)
+    fun presentController(controller: Controller)
   }
 
   companion object {

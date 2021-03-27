@@ -60,7 +60,6 @@ import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.PostCellWidthStorage
 import com.github.k1rakishou.chan.ui.cell.PostStubCell
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
-import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
@@ -1130,7 +1129,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     )
   }
 
-  override fun presentController(controller: FloatingListMenuController) {
+  override fun presentController(controller: Controller) {
     BackgroundUtils.ensureMainThread()
     threadListLayoutCallback?.presentController(controller)
   }

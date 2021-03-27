@@ -11,6 +11,7 @@ import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.GridLayoutManager
 import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -456,7 +457,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   }
 
   interface ThreadListLayoutCallbacks {
-    fun presentController(controller: FloatingListMenuController)
+    fun presentController(controller: Controller)
     fun showImageReencodingWindow(fileUuid: UUID, supportsReencode: Boolean)
     fun showLoadingView(cancellationFunc: () -> Unit, titleTextId: Int)
     fun hideLoadingView()

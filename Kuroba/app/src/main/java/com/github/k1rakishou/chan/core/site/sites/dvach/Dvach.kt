@@ -60,6 +60,7 @@ class Dvach : CommonSite() {
   private lateinit var passCode: StringSetting
   private lateinit var passCookie: StringSetting
   private lateinit var userCodeCookie: StringSetting
+  private lateinit var antiSpamCookie: StringSetting
   private lateinit var captchaType: OptionsSetting<Chan4.CaptchaType>
   private lateinit var passCodeInfo: JsonSetting<DvachPasscodeInfo>
 
@@ -71,6 +72,7 @@ class Dvach : CommonSite() {
     passCode = StringSetting(prefs, "preference_pass_code", "")
     passCookie = StringSetting(prefs, "preference_pass_cookie", "")
     userCodeCookie = StringSetting(prefs, "user_code_cookie", "")
+    antiSpamCookie = StringSetting(prefs, "dvach_anti_spam_cookie", "")
 
     captchaType = OptionsSetting(
       prefs,
@@ -111,6 +113,7 @@ class Dvach : CommonSite() {
     return when (settingId) {
       // Used for hidden boards accessing
       SiteSetting.SiteSettingId.DvachUserCodeCookie -> userCodeCookie as T
+      SiteSetting.SiteSettingId.DvachAntiSpamCookie -> antiSpamCookie as T
       else -> super.getSettingBySettingId(settingId)
     }
   }
@@ -457,6 +460,11 @@ class Dvach : CommonSite() {
         requestBuilder.addHeader(cookieHeaderKey, "passcode_auth=" + site.passCookie.get())
       }
 
+      val antiSpamCookie = site.antiSpamCookie.get()
+      if (antiSpamCookie.isNotEmpty()) {
+        requestBuilder.addHeader(cookieHeaderKey, antiSpamCookie)
+      }
+
       addUserCodeCookie(site, requestBuilder)
     }
 
@@ -532,7 +540,7 @@ class Dvach : CommonSite() {
 
     @JvmField
     val URL_HANDLER: CommonSiteUrlHandler = object : CommonSiteUrlHandler() {
-      val ROOT = "https://2ch.pm/"
+      val ROOT = "https://2ch.hk/"
 
       override fun getSiteClass(): Class<out Site?> {
         return Dvach::class.java

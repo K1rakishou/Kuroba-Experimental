@@ -473,7 +473,7 @@ class ReplyPresenter @Inject constructor(
     callback.updateRevertChangeButtonVisibility(isBufferEmpty = true)
   }
 
-  private fun makeSubmitCall() {
+  private fun makeSubmitCall(retrying: Boolean = false) {
     launch {
       val chanDescriptor = currentChanDescriptor
         ?: return@launch
@@ -501,7 +501,7 @@ class ReplyPresenter @Inject constructor(
           withContext(Dispatchers.Main) {
             when (postResult) {
               is SiteActions.PostResult.PostComplete -> {
-                onPostComplete(chanDescriptor, postResult.replyResponse)
+                onPostComplete(chanDescriptor, postResult.replyResponse, retrying)
               }
               is SiteActions.PostResult.UploadingProgress -> {
                 onUploadingProgress(
@@ -543,7 +543,11 @@ class ReplyPresenter @Inject constructor(
     callback.openMessage(errorMessage)
   }
 
-  private suspend fun onPostComplete(chanDescriptor: ChanDescriptor, replyResponse: ReplyResponse) {
+  private suspend fun onPostComplete(
+    chanDescriptor: ChanDescriptor,
+    replyResponse: ReplyResponse,
+    retrying: Boolean
+  ) {
     when {
       replyResponse.posted -> {
         Logger.d(TAG, "onPostComplete() replyResponse=$replyResponse")
@@ -554,24 +558,51 @@ class ReplyPresenter @Inject constructor(
         switchPage(Page.AUTHENTICATION)
       }
       else -> {
-        updateFloatingReplyMessageClickAction(replyResponse)
-
-        var errorMessage = getString(R.string.reply_error)
-        if (replyResponse.errorMessage != null) {
-          errorMessage = getString(
-            R.string.reply_error_message,
-            replyResponse.errorMessage
-          )
+        if (retrying) {
+          // To avoid infinite cycles
+          onPostCompleteUnsuccessful(replyResponse, chanDescriptor)
+          return
         }
 
-        replyManager.restoreFiles(chanDescriptor)
-
-        Logger.e(TAG, "onPostComplete() error: $errorMessage")
-        switchPage(Page.INPUT)
-
-        callback.openMessage(errorMessage)
+        when (replyResponse.additionalResponseData) {
+          ReplyResponse.AdditionalResponseData.DvachAntiSpamCheckDetected -> {
+            handleDvachAntiSpam(replyResponse, chanDescriptor)
+          }
+          null -> {
+            onPostCompleteUnsuccessful(replyResponse, chanDescriptor)
+          }
+        }
       }
     }
+  }
+
+  private suspend fun handleDvachAntiSpam(replyResponse: ReplyResponse, chanDescriptor: ChanDescriptor) {
+    if (callback.show2chAntiSpamCheckSolverController()) {
+      // We managed to solve the anti spam check, try posting again
+      makeSubmitCall(retrying = true)
+    } else {
+      // We failed to solve the anti spam check, show the error
+      onPostCompleteUnsuccessful(replyResponse, chanDescriptor)
+    }
+  }
+
+  private fun onPostCompleteUnsuccessful(replyResponse: ReplyResponse, chanDescriptor: ChanDescriptor) {
+    updateFloatingReplyMessageClickAction(replyResponse)
+
+    var errorMessage = getString(R.string.reply_error)
+    if (replyResponse.errorMessage != null) {
+      errorMessage = getString(
+        R.string.reply_error_message,
+        replyResponse.errorMessage
+      )
+    }
+
+    replyManager.restoreFiles(chanDescriptor)
+
+    Logger.e(TAG, "onPostComplete() error: $errorMessage")
+    switchPage(Page.INPUT)
+
+    callback.openMessage(errorMessage)
   }
 
   private fun updateFloatingReplyMessageClickAction(replyResponse: ReplyResponse) {
@@ -847,6 +878,7 @@ class ReplyPresenter @Inject constructor(
     fun restoreComment(prevCommentInputState: CommentEditingHistory.CommentInputState)
     suspend fun bindReplyImages(chanDescriptor: ChanDescriptor)
     fun unbindReplyImages(chanDescriptor: ChanDescriptor)
+    suspend fun show2chAntiSpamCheckSolverController(): Boolean
   }
 
   companion object {

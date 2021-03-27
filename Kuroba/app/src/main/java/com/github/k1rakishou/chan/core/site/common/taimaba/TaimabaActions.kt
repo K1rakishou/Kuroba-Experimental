@@ -97,7 +97,7 @@ open class TaimabaActions(
       replyResponse.errorMessage = Jsoup.parse(err.group(1)).body().text()
     } else {
       replyResponse.threadNo = threadNo
-      replyResponse.password = password
+      replyResponse.password = password ?: ""
       replyResponse.posted = true
     }
   }

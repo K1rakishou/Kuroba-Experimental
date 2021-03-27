@@ -186,6 +186,8 @@ abstract class SiteBase : Site, CoroutineScope {
       SiteSetting.SiteSettingId.CountryFlag -> null
       // 2ch.hk only
       SiteSetting.SiteSettingId.DvachUserCodeCookie -> null
+      // 2ch.hk only
+      SiteSetting.SiteSettingId.DvachAntiSpamCookie -> null
     }
   }
 

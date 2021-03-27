@@ -1,5 +1,6 @@
-package com.github.k1rakishou.chan.ui.controller
+package com.github.k1rakishou.chan.features.bypass
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.view.View
 import android.webkit.CookieManager
@@ -8,10 +9,10 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor.Companion.CF_CLEARANCE
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.SiteSetting
+import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
@@ -20,9 +21,10 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class CloudFlareBypassController(
+class SiteAntiSpamCheckBypassController(
   context: Context,
-  private val originalRequestUrlHost: String,
+  private val bypassMode: BypassMode,
+  private val urlToOpen: String,
   private val onResult: (CookieResult) -> Unit
 ) : BaseFloatingController(context) {
 
@@ -33,11 +35,22 @@ class CloudFlareBypassController(
 
   private lateinit var webView: WebView
 
+  private var resultNotified = false
+
   private val cookieResultCompletableDeferred = CompletableDeferred<CookieResult>()
 
   private val cookieManager by lazy { CookieManager.getInstance() }
-  private val webClient by lazy {
-    CustomWebClient(originalRequestUrlHost, cookieManager, cookieResultCompletableDeferred)
+  private val webClient by lazy { createWebClient(bypassMode) }
+
+  private fun createWebClient(mode: BypassMode): WebViewClient {
+    return when (mode) {
+      BypassMode.BypassCloudflare -> {
+        CloudFlareCheckBypassWebClient(urlToOpen, cookieManager, cookieResultCompletableDeferred)
+      }
+      BypassMode.Bypass2chAntiSpamCheck -> {
+        DvachAntiSpamCheckBypassWebClient(urlToOpen, cookieManager, cookieResultCompletableDeferred)
+      }
+    }
   }
 
   override fun injectDependencies(component: ActivityComponent) {
@@ -69,6 +82,7 @@ class CloudFlareBypassController(
     }
   }
 
+  @SuppressLint("SetJavaScriptEnabled")
   private fun onCreateInternal() {
     webView = view.findViewById(R.id.web_view)
 
@@ -90,7 +104,7 @@ class CloudFlareBypassController(
     webView.webViewClient = webClient
     cookieManager.removeAllCookies(null)
 
-    webView.loadUrl(originalRequestUrlHost)
+    webView.loadUrl(urlToOpen)
 
     mainScope.launch {
       waitAndHandleResult()
@@ -103,120 +117,68 @@ class CloudFlareBypassController(
 
     when (cookieResult) {
       is CookieResult.CookieValue -> {
-        Logger.d(TAG, "Success: ${cookieResult.cfClearanceValue}")
-
-        addCookieToSiteSettings(cookieResult.cfClearanceValue)
+        Logger.d(TAG, "Success: ${cookieResult.cookie}")
+        addCookieToSiteSettings(cookieResult.cookie)
       }
       is CookieResult.Error -> {
         Logger.e(TAG, "Error: ${cookieResult.exception.errorMessageOrClassName()}")
       }
       CookieResult.Canceled -> {
         Logger.e(TAG, "Canceled")
-        return
       }
     }
 
     notifyAboutResult(cookieResult)
   }
 
-  private fun addCookieToSiteSettings(cfClearanceValue: String): Boolean {
-    val site = siteResolver.findSiteForUrl(originalRequestUrlHost)
+  private fun addCookieToSiteSettings(cookie: String): Boolean {
+    val site = siteResolver.findSiteForUrl(urlToOpen)
     if (site == null) {
-      Logger.e(TAG, "Failed to find site for url: '$originalRequestUrlHost'")
+      Logger.e(TAG, "Failed to find site for url: '$urlToOpen'")
       return false
     }
 
-    val cloudFlareClearanceCookieSetting = site.getSettingBySettingId<StringSetting>(
-      SiteSetting.SiteSettingId.CloudFlareClearanceCookie
-    )
+    when (bypassMode) {
+      BypassMode.BypassCloudflare -> {
+        val cloudFlareClearanceCookieSetting = site.getSettingBySettingId<StringSetting>(
+          SiteSetting.SiteSettingId.CloudFlareClearanceCookie
+        )
 
-    if (cloudFlareClearanceCookieSetting == null) {
-      Logger.e(TAG, "Failed to find setting with key CloudFlareClearanceKey")
-      return false
+        if (cloudFlareClearanceCookieSetting == null) {
+          Logger.e(TAG, "Failed to find setting with key CloudFlareClearanceKey")
+          return false
+        }
+
+        cloudFlareClearanceCookieSetting.set(cookie)
+      }
+      BypassMode.Bypass2chAntiSpamCheck -> {
+        val dvachAntiSpamCookieSetting = site.getSettingBySettingId<StringSetting>(
+          SiteSetting.SiteSettingId.DvachAntiSpamCookie
+        )
+
+        if (dvachAntiSpamCookieSetting == null) {
+          Logger.e(TAG, "Failed to find setting with key DvachAntiSpamCookie")
+          return false
+        }
+
+        dvachAntiSpamCookieSetting.set(cookie)
+      }
     }
 
-    cloudFlareClearanceCookieSetting.set(cfClearanceValue)
     return true
   }
 
   private fun notifyAboutResult(cookieResult: CookieResult) {
-    onResult(cookieResult)
-    pop()
-  }
+    if (!resultNotified) {
+      resultNotified = true
 
-  class CustomWebClient(
-    private val originalRequestUrlHost: String,
-    private val cookieManager: CookieManager,
-    private val cookieResultCompletableDeferred: CompletableDeferred<CookieResult>
-  ) : WebViewClient() {
-    private var pageLoadsCounter = 0
-
-    override fun onPageFinished(view: WebView?, url: String?) {
-      super.onPageFinished(view, url)
-
-      val cookies = cookieManager.getCookie(originalRequestUrlHost)
-      if (!cookies.contains(CF_CLEARANCE)) {
-        ++pageLoadsCounter
-
-        if (pageLoadsCounter > MAX_PAGE_LOADS_COUNT) {
-          fail(CloudFlareBypassException("Exceeded max page load limit"))
-        }
-
-        return
-      }
-
-      val actualCookie = cookies
-        .split(";")
-        .map { cookie -> cookie.trim() }
-        .firstOrNull { cookie -> cookie.startsWith(CF_CLEARANCE) }
-        ?.removePrefix("${CF_CLEARANCE}=")
-
-      if (actualCookie == null) {
-        fail(CloudFlareBypassException("No cf_clearance cookie found in result"))
-        return
-      }
-
-      success(actualCookie)
+      onResult(cookieResult)
+      pop()
     }
-
-    override fun onReceivedError(
-      view: WebView?,
-      errorCode: Int,
-      description: String?,
-      failingUrl: String?
-    ) {
-      super.onReceivedError(view, errorCode, description, failingUrl)
-      fail(CloudFlareBypassException(description ?: "Unknown error while trying to load CloudFlare page"))
-    }
-
-    private fun success(cookieValue: String) {
-      if (cookieResultCompletableDeferred.isCompleted) {
-        return
-      }
-
-      cookieResultCompletableDeferred.complete(CookieResult.CookieValue(cookieValue))
-    }
-
-    private fun fail(exception: CloudFlareBypassException) {
-      if (cookieResultCompletableDeferred.isCompleted) {
-        return
-      }
-
-      cookieResultCompletableDeferred.complete(CookieResult.Error(exception))
-    }
-
-  }
-
-  class CloudFlareBypassException(message: String) : Exception(message)
-
-  sealed class CookieResult {
-    data class CookieValue(val cfClearanceValue: String) : CookieResult()
-    data class Error(val exception: CloudFlareBypassException) : CookieResult()
-    object Canceled : CookieResult()
   }
 
   companion object {
     private const val TAG = "CloudFlareBypassController"
-    private const val MAX_PAGE_LOADS_COUNT = 5
+    const val MAX_PAGE_LOADS_COUNT = 5
   }
 }

@@ -14,58 +14,58 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.core.site.http;
+package com.github.k1rakishou.chan.core.site.http
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor.Companion.create
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 
-import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor;
+class ReplyResponse {
+  @JvmField
+  var posted = false
+  @JvmField
+  var errorMessage: String? = null
+  @JvmField
+  var siteDescriptor: SiteDescriptor? = null
+  @JvmField
+  var boardCode = ""
+  @JvmField
+  var threadNo = 0L
+  @JvmField
+  var postNo = 0L
+  @JvmField
+  var password = ""
+  @JvmField
+  var probablyBanned = false
 
-public class ReplyResponse {
-    /**
-     * {@code true} if the post when through, {@code false} otherwise.
-     */
-    public boolean posted = false;
+  var requireAuthentication = false
 
-    /**
-     * Error message used to show to the user if {@link #posted} is {@code false}.
-     * <p>Optional
-     */
-    @Nullable
-    public String errorMessage;
+  var additionalResponseData: AdditionalResponseData? = null
 
-    @Nullable
-    public SiteDescriptor siteDescriptor = null;
-    public String boardCode = "";
-    public long threadNo = 0L;
-    public long postNo = 0L;
-    public String password = "";
-    public boolean probablyBanned = false;
-    public boolean requireAuthentication = false;
+  val postDescriptorOrNull: PostDescriptor?
+    get() {
+      if (probablyBanned || requireAuthentication || postNo <= 0L || threadNo <= 0) {
+        return null
+      }
 
-    @Nullable
-    public PostDescriptor getPostDescriptorOrNull() {
-        if (probablyBanned || requireAuthentication || postNo <= 0L || threadNo <= 0) {
-            return null;
-        }
-
-        return PostDescriptor.create(siteDescriptor.getSiteName(), boardCode, threadNo, postNo);
+      return create(siteDescriptor!!.siteName, boardCode, threadNo, postNo)
     }
 
-    @NonNull
-    @Override
-    public String toString() {
-        return "ReplyResponse{" +
-                "posted=" + posted +
-                ", errorMessage='" + errorMessage + '\'' +
-                ", siteDescriptor=" + siteDescriptor +
-                ", boardCode='" + boardCode + '\'' +
-                ", threadNo=" + threadNo +
-                ", postNo=" + postNo +
-                ", password='" + password + '\'' +
-                ", probablyBanned=" + probablyBanned +
-                ", requireAuthentication=" + requireAuthentication +
-                '}';
-    }
+  sealed class AdditionalResponseData {
+    object DvachAntiSpamCheckDetected : AdditionalResponseData()
+  }
+
+  override fun toString(): String {
+    return "ReplyResponse{" +
+      "posted=" + posted +
+      ", errorMessage='" + errorMessage + '\'' +
+      ", siteDescriptor=" + siteDescriptor +
+      ", boardCode='" + boardCode + '\'' +
+      ", threadNo=" + threadNo +
+      ", postNo=" + postNo +
+      ", password='" + password + '\'' +
+      ", probablyBanned=" + probablyBanned +
+      ", requireAuthentication=" + requireAuthentication +
+      '}'
+  }
 }

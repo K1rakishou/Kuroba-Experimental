@@ -46,12 +46,14 @@ import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter.ThreadPresenterCallback
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
+import com.github.k1rakishou.chan.features.bypass.BypassMode
+import com.github.k1rakishou.chan.features.bypass.CookieResult
+import com.github.k1rakishou.chan.features.bypass.SiteAntiSpamCheckBypassController
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper.ImageReencodingHelperCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.PostCellData
-import com.github.k1rakishou.chan.ui.controller.CloudFlareBypassController
 import com.github.k1rakishou.chan.ui.controller.PostLinksController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
@@ -435,30 +437,31 @@ class ThreadLayout @JvmOverloads constructor(
 
   private fun openCloudFlareBypassControllerAndHandleResult(error: ChanLoaderException) {
     val presenting = callback
-      .isAlreadyPresentingController { controller -> controller is CloudFlareBypassController }
+      .isAlreadyPresentingController { controller -> controller is SiteAntiSpamCheckBypassController }
 
     if (presenting) {
       return
     }
 
-    val controller = CloudFlareBypassController(
+    val controller = SiteAntiSpamCheckBypassController(
       context = context,
-      originalRequestUrlHost = error.getOriginalRequestHost(),
+      bypassMode = BypassMode.BypassCloudflare,
+      urlToOpen = error.getOriginalRequestHost(),
       onResult = { cookieResult ->
         when (cookieResult) {
-          is CloudFlareBypassController.CookieResult.CookieValue -> {
+          is CookieResult.CookieValue -> {
             showToast(context, "Successfully passed CloudFlare checks!")
             presenter.normalLoad()
 
-            return@CloudFlareBypassController
+            return@SiteAntiSpamCheckBypassController
           }
-          is CloudFlareBypassController.CookieResult.Error -> {
+          is CookieResult.Error -> {
             showToast(
               context,
               "Failed to pass CloudFlare checks, reason: ${cookieResult.exception.errorMessageOrClassName()}"
             )
           }
-          CloudFlareBypassController.CookieResult.Canceled -> {
+          CookieResult.Canceled -> {
             showToast(context, "Failed to pass CloudFlare checks, reason: Canceled")
           }
         }

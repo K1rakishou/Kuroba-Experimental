@@ -22,6 +22,7 @@ import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.common.CommonReplyHttpCall
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody.ProgressRequestListener
+import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.common.ModularResult
@@ -179,6 +180,12 @@ class DvachReplyCall internal constructor(
       return
     }
 
+    if (result.contains(ANTI_SPAM_SCRIPT_TAG)) {
+      replyResponse.errorMessage = "2ch.hk anti spam script detected"
+      replyResponse.additionalResponseData = ReplyResponse.AdditionalResponseData.DvachAntiSpamCheckDetected
+      return
+    }
+
     Logger.e(TAG, "Couldn't handle server response! response = \"$result\"")
     replyResponse.errorMessage = "Failed to post, see the logs for more info"
   }
@@ -220,5 +227,6 @@ class DvachReplyCall internal constructor(
     private val THREAD_MESSAGE =
       Pattern.compile("^\\{\"Error\":null,\"Status\":\"Redirect\",\"Target\":(\\d+)")
     private const val PROBABLY_BANNED_TEXT = "banned"
+    private const val ANTI_SPAM_SCRIPT_TAG = "<title>Проверка...</title>"
   }
 }

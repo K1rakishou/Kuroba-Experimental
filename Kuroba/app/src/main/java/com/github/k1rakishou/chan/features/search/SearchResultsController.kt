@@ -10,15 +10,16 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
+import com.github.k1rakishou.chan.features.bypass.BypassMode
+import com.github.k1rakishou.chan.features.bypass.CookieResult
+import com.github.k1rakishou.chan.features.bypass.SiteAntiSpamCheckBypassController
 import com.github.k1rakishou.chan.features.search.data.SearchParameters
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerState
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerStateData
 import com.github.k1rakishou.chan.features.search.epoxy.*
-import com.github.k1rakishou.chan.ui.controller.CloudFlareBypassController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
@@ -93,25 +94,26 @@ class SearchResultsController(
       .build()
       .toString()
 
-    val controller = CloudFlareBypassController(
+    val controller = SiteAntiSpamCheckBypassController(
       context = context,
-      originalRequestUrlHost = hostUrl,
+      bypassMode = BypassMode.BypassCloudflare,
+      urlToOpen = hostUrl,
       onResult = { cookieResult ->
         when (cookieResult) {
-          is CloudFlareBypassController.CookieResult.CookieValue -> {
-            AppModuleAndroidUtils.showToast(context, "Successfully passed CloudFlare checks!")
+          is CookieResult.CookieValue -> {
+            showToast(context, "Successfully passed CloudFlare checks!")
             presenter.reloadCurrentPage()
 
-            return@CloudFlareBypassController
+            return@SiteAntiSpamCheckBypassController
           }
-          is CloudFlareBypassController.CookieResult.Error -> {
-            AppModuleAndroidUtils.showToast(
+          is CookieResult.Error -> {
+            showToast(
               context,
               "Failed to pass CloudFlare checks, reason: ${cookieResult.exception.errorMessageOrClassName()}"
             )
           }
-          CloudFlareBypassController.CookieResult.Canceled -> {
-            AppModuleAndroidUtils.showToast(context, "Failed to pass CloudFlare checks, reason: Canceled")
+          CookieResult.Canceled -> {
+            showToast(context, "Failed to pass CloudFlare checks, reason: Canceled")
           }
         }
       }
