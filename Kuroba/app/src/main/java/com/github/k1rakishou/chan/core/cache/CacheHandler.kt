@@ -154,8 +154,7 @@ class CacheHandler(
       val cacheFileMeta = getCacheFileMetaInternal(url)
       if (!fileManager.exists(cacheFileMeta)) {
         val createdFile = fileManager.create(cacheFileMeta) as RawFile?
-          ?: throw IOException(
-            "Couldn't create cache file meta, path = ${cacheFileMeta.getFullPath()}")
+          ?: throw IOException("Couldn't create cache file meta, path = ${cacheFileMeta.getFullPath()}")
 
         val result = updateCacheFileMeta(
           createdFile,
