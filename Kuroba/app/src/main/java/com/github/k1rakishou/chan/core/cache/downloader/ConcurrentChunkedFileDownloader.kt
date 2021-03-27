@@ -6,10 +6,10 @@ import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.fsaf.FileManager
-import com.github.k1rakishou.fsaf.file.RawFile
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import java.io.File
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -38,7 +38,7 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
       ?.getOutputFile()
       ?: activeDownloads.throwCancellationException(url)
 
-    if (!fileManager.exists(output)) {
+    if (!output.exists()) {
       return Flowable.error(IOException("Output file does not exist!"))
     }
 
@@ -134,10 +134,10 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
       val chunkFile = cacheHandler.getChunkCacheFileOrNull(chunk.start, chunk.end, url)
         ?: continue
 
-      if (fileManager.delete(chunkFile)) {
-        log(TAG, "Deleted chunk file ${chunkFile.getFullPath()}")
+      if (chunkFile.delete()) {
+        log(TAG, "Deleted chunk file ${chunkFile.absolutePath}")
       } else {
-        logError(TAG, "Couldn't delete chunk file ${chunkFile.getFullPath()}")
+        logError(TAG, "Couldn't delete chunk file ${chunkFile.absolutePath}")
       }
     }
 
@@ -148,7 +148,7 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
     url: String,
     chunks: List<Chunk>,
     partialContentCheckResult: PartialContentCheckResult,
-    output: RawFile
+    output: File
   ): Flowable<FileDownloadResult> {
     BackgroundUtils.ensureBackgroundThread()
 

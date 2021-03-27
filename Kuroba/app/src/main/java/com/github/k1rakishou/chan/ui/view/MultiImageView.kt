@@ -66,7 +66,6 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.*
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
-import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageType
@@ -443,11 +442,11 @@ class MultiImageView @JvmOverloads constructor(
             callback?.onProgress(this@MultiImageView, chunkIndex, downloaded, total)
           }
 
-          override fun onSuccess(file: RawFile) {
+          override fun onSuccess(file: File) {
             BackgroundUtils.ensureMainThread()
 
             setBigImageFromFile(
-              file = File(file.getFullPath()),
+              file = file,
               tiling = true,
               isSpoiler = postImage.spoiler
             )
@@ -512,11 +511,11 @@ class MultiImageView @JvmOverloads constructor(
             callback?.onProgress(this@MultiImageView, chunkIndex, downloaded, total)
           }
 
-          override fun onSuccess(file: RawFile) {
+          override fun onSuccess(file: File) {
             BackgroundUtils.ensureMainThread()
 
             if (!hasContent || mode == Mode.GIFIMAGE) {
-              setGifFile(File(file.getFullPath()), postImage.spoiler)
+              setGifFile(file, postImage.spoiler)
             }
 
             callback?.onDownloaded(postImage)
@@ -644,11 +643,11 @@ class MultiImageView @JvmOverloads constructor(
             callback?.onProgress(this@MultiImageView, chunkIndex, downloaded, total)
           }
 
-          override fun onSuccess(file: RawFile) {
+          override fun onSuccess(file: File) {
             BackgroundUtils.ensureMainThread()
 
             if (!hasContent || mode == Mode.VIDEO) {
-              setVideoFile(File(file.getFullPath()))
+              setVideoFile(file)
             }
 
             callback?.onDownloaded(postImage)

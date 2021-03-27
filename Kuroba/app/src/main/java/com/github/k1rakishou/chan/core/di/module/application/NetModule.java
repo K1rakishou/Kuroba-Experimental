@@ -35,7 +35,6 @@ import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.fsaf.FileManager;
-import com.github.k1rakishou.fsaf.file.RawFile;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -81,18 +80,13 @@ public class NetModule {
 
     @Provides
     @Singleton
-    public CacheHandler provideCacheHandler(
-            FileManager fileManager
-    ) {
+    public CacheHandler provideCacheHandler() {
         File cacheDir = getCacheDir().getValue();
-        RawFile cacheDirFile = fileManager.fromRawFile(new File(cacheDir, FILE_CACHE_DIR));
-        RawFile chunksCacheDirFile = fileManager.fromRawFile(new File(cacheDir, FILE_CHUNKS_CACHE_DIR));
 
         return new CacheHandler(
                 ChanSettings.verboseLogs.get(),
-                fileManager,
-                cacheDirFile,
-                chunksCacheDirFile,
+                new File(cacheDir, FILE_CACHE_DIR),
+                new File(cacheDir, FILE_CHUNKS_CACHE_DIR),
                 ChanSettings.prefetchMedia.get()
         );
     }

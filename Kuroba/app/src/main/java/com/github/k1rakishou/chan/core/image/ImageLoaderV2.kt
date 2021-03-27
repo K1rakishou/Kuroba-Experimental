@@ -37,7 +37,6 @@ import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileManager
-import com.github.k1rakishou.fsaf.file.RawFile
 import com.google.android.exoplayer2.util.MimeTypes
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -474,10 +473,10 @@ class ImageLoaderV2(
       return null
     }
 
-    return File(cacheFile.getFullPath())
+    return cacheFile
   }
 
-  private suspend fun loadFromNetworkIntoFileInternal(url: String, cacheFile: RawFile): Boolean {
+  private suspend fun loadFromNetworkIntoFileInternal(url: String, cacheFile: File): Boolean {
     BackgroundUtils.ensureBackgroundThread()
 
     val site = siteResolver.findSiteForUrl(url)
@@ -505,21 +504,18 @@ class ImageLoaderV2(
     runInterruptible {
       val responseBody = response.body
         ?: throw IOException("Response body is null")
-      val outputStream = fileManager.getOutputStream(cacheFile)
-        ?: throw IOException("Failed to get output stream")
-
       responseBody.byteStream().use { inputStream ->
-        outputStream.use { os ->
+        cacheFile.outputStream().use { os ->
           inputStream.copyTo(os)
         }
       }
     }
 
     if (!cacheHandler.markFileDownloaded(cacheFile)) {
-      throw IOException("Failed to mark file '${cacheFile.getFullPath()}' as downloaded")
+      throw IOException("Failed to mark file '${cacheFile.absolutePath}' as downloaded")
     }
 
-    val fileLength = fileManager.getLength(cacheFile)
+    val fileLength = cacheFile.length()
     if (fileLength <= 0) {
       return false
     }
@@ -541,12 +537,11 @@ class ImageLoaderV2(
       return null
     }
 
-    val file = File(cacheFile.getFullPath())
-    if (!file.exists() || file.length() == 0L) {
+    if (!cacheFile.exists() || cacheFile.length() == 0L) {
       return null
     }
 
-    return file
+    return cacheFile
   }
 
   fun loadFromResources(
@@ -1232,7 +1227,7 @@ class ImageLoaderV2(
 
     @Synchronized
     fun removeImageListenerParam(imageListenerParam: ImageListenerParam): Boolean {
-      val removed = listeners.removeIfKt { activeListener ->
+      listeners.removeIfKt { activeListener ->
         activeListener.imageListenerParam === imageListenerParam
       }
 

@@ -10,8 +10,6 @@ import com.github.k1rakishou.chan.core.site.SiteRequestModifier;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_logger.Logger;
-import com.github.k1rakishou.fsaf.FileManager;
-import com.github.k1rakishou.fsaf.file.RawFile;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.upstream.BaseDataSource;
 import com.google.android.exoplayer2.upstream.DataSpec;
@@ -222,7 +220,6 @@ public class WebmStreamingDataSource extends BaseDataSource {
         }
     }
 
-    private FileManager fileManager;
     private HttpDataSource dataSource;
     private PartialFileCache partialFileCache;
     private byte[] dataToFillCache = null;
@@ -232,7 +229,7 @@ public class WebmStreamingDataSource extends BaseDataSource {
     private List<Callback> listeners = new ArrayList<>();
 
     private boolean verboseLogs;
-    private RawFile file;
+    private File file;
     @Nullable
     private Uri uri;
 
@@ -246,9 +243,8 @@ public class WebmStreamingDataSource extends BaseDataSource {
     public WebmStreamingDataSource(
             @Nullable Uri uri,
             @Nullable Site site,
-            RawFile file,
+            File file,
             long fileLength,
-            FileManager fileManager,
             boolean verboseLogs,
             AppConstants appConstants
     ) {
@@ -272,7 +268,6 @@ public class WebmStreamingDataSource extends BaseDataSource {
                 .createDataSource();
 
         this.verboseLogs = verboseLogs;
-        this.fileManager = fileManager;
         this.fileLength = fileLength;
         this.file = file;
         this.uri = uri;
@@ -434,13 +429,11 @@ public class WebmStreamingDataSource extends BaseDataSource {
     }
 
     public void cacheComplete() {
-        if (!fileManager.exists(file)) {
+        if (!file.exists()) {
             throw new IllegalStateException("File does not exist!");
         }
 
-        File innerFile = new File(file.getFullPath());
-
-        try (FileOutputStream fos = new FileOutputStream(innerFile)) {
+        try (FileOutputStream fos = new FileOutputStream(file)) {
             fos.write(partialFileCache.getCacheBytes());
             fos.flush();
         } catch (Exception e) {
@@ -450,7 +443,7 @@ public class WebmStreamingDataSource extends BaseDataSource {
 
         BackgroundUtils.runOnMainThread(() -> {
             for (Callback c : listeners) {
-                c.dataSourceAddedFile(innerFile);
+                c.dataSourceAddedFile(file);
             }
 
             clearListeners();

@@ -22,20 +22,6 @@ internal sealed class FileCacheException(message: String) : Exception(message) {
   internal class CouldNotCreateOutputCacheFile(url: String)
     : FileCacheException("Could not create output cache file, url = $url")
 
-  internal class CouldNotGetInputStreamException(
-    val path: String,
-    val exists: Boolean,
-    val isFile: Boolean,
-    val canRead: Boolean
-  ) : FileCacheException("Could not get input stream, exists = $exists, isFile = $isFile, canRead = $canRead, path = $path")
-
-  internal class CouldNotGetOutputStreamException(
-    val path: String,
-    val exists: Boolean,
-    val isFile: Boolean,
-    val canWrite: Boolean
-  ) : FileCacheException("Could not get output stream, exists = $exists, isFile = $isFile, canWrite = $canWrite, path = $path")
-
   internal class OutputFileDoesNotExist(val path: String)
     : FileCacheException("OutputFileDoesNotExist path = $path")
 

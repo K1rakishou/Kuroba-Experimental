@@ -20,8 +20,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.common.DoNotStrip;
-import com.github.k1rakishou.fsaf.file.AbstractFile;
-import com.github.k1rakishou.fsaf.file.RawFile;
+
+import java.io.File;
 
 /**
  * Callback call order:
@@ -53,7 +53,7 @@ public abstract class FileCacheListener {
     /**
      * Called when the file download was completed.
      */
-    public void onSuccess(@NonNull RawFile file) {
+    public void onSuccess(@NonNull File file) {
     }
 
     /**
@@ -75,7 +75,7 @@ public abstract class FileCacheListener {
      * for the WebmStreaming so there is no need to override this. But if you need to stop (not
      * cancel) a download then you probably should override this.
      */
-    public void onStop(@Nullable AbstractFile file) {
+    public void onStop(@Nullable File file) {
 
     }
 

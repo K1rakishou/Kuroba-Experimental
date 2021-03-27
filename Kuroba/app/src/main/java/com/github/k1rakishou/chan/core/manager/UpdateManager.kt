@@ -58,7 +58,6 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.callback.FileCreateCallback
-import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -476,7 +475,7 @@ class UpdateManager(
           }
         }
 
-        override fun onSuccess(file: RawFile) {
+        override fun onSuccess(file: File) {
           Logger.d(TAG, "APK download success")
           BackgroundUtils.ensureMainThread()
 
@@ -552,7 +551,7 @@ class UpdateManager(
   }
 
   private fun suggestCopyingApkToAnotherDirectory(
-    file: RawFile,
+    file: File,
     fileName: String,
     onDone: () -> Unit
   ) {
@@ -585,7 +584,7 @@ class UpdateManager(
 
   }
 
-  private fun onApkFilePathSelected(downloadedFile: RawFile, uri: Uri) {
+  private fun onApkFilePathSelected(downloadedFile: File, uri: Uri) {
     val newApkFile = fileManager.fromUri(uri)
     if (newApkFile == null) {
       val message = getString(R.string.update_manager_could_not_convert_uri, uri.toString())
@@ -593,10 +592,10 @@ class UpdateManager(
       return
     }
 
-    if (!fileManager.exists(downloadedFile)) {
+    if (!downloadedFile.exists()) {
       val message = getString(
         R.string.update_manager_input_file_does_not_exist,
-        downloadedFile.getFullPath()
+        downloadedFile.absolutePath
       )
 
       showToast(context, message)
@@ -613,10 +612,12 @@ class UpdateManager(
       return
     }
 
-    if (!fileManager.copyFileContents(downloadedFile, newApkFile)) {
+    val downloadedFileRaw = fileManager.fromRawFile(downloadedFile)
+
+    if (!fileManager.copyFileContents(downloadedFileRaw, newApkFile)) {
       val message = getString(
         R.string.update_manager_could_not_copy_apk,
-        downloadedFile.getFullPath(),
+        downloadedFileRaw.getFullPath(),
         newApkFile.getFullPath()
       )
 
@@ -627,7 +628,7 @@ class UpdateManager(
     showToast(context, R.string.update_manager_apk_copied)
   }
 
-  private fun installApk(apk: RawFile) {
+  private fun installApk(apkFile: File) {
     BackgroundUtils.ensureMainThread()
 
     if (!BackgroundUtils.isInForeground()) {
@@ -643,7 +644,7 @@ class UpdateManager(
       descriptionText = getString(R.string.update_retry, getApplicationLabel()),
       negativeButtonText = getString(R.string.cancel),
       positiveButtonText = getString(R.string.update_retry_button),
-      onPositiveButtonClickListener = { installApk(apk) }
+      onPositiveButtonClickListener = { installApk(apkFile) }
     )
 
     // Then launch the APK install intent.
@@ -651,7 +652,6 @@ class UpdateManager(
       flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_GRANT_READ_URI_PERMISSION
     }
 
-    val apkFile = File(apk.getFullPath())
     val apkURI = FileProvider.getUriForFile(context, getAppFileProvider(), apkFile)
     intent.setDataAndType(apkURI, "application/vnd.android.package-archive")
 

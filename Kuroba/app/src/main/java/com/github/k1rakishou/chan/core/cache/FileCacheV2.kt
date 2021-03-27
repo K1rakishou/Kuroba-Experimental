@@ -27,12 +27,12 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
-import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
 import io.reactivex.Flowable
 import io.reactivex.processors.PublishProcessor
 import io.reactivex.schedulers.Schedulers
+import java.io.File
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.Executors
@@ -477,8 +477,6 @@ class FileCacheV2(
               is FileCacheException.CouldNotMarkFileAsDownloaded,
               is FileCacheException.NoResponseBodyException,
               is FileCacheException.CouldNotCreateOutputCacheFile,
-              is FileCacheException.CouldNotGetInputStreamException,
-              is FileCacheException.CouldNotGetOutputStreamException,
               is FileCacheException.OutputFileDoesNotExist,
               is FileCacheException.ChunkFileDoesNotExist,
               is FileCacheException.HttpCodeException,
@@ -565,10 +563,10 @@ class FileCacheV2(
       return Flowable.just(FileDownloadResult.Success(outputFile, 0L))
     }
 
-    val fullPath = outputFile.getFullPath()
-    val exists = fileManager.exists(outputFile)
-    val isFile = fileManager.isFile(outputFile)
-    val canWrite = fileManager.canWrite(outputFile)
+    val fullPath = outputFile.absolutePath
+    val exists = outputFile.exists()
+    val isFile = outputFile.isFile()
+    val canWrite = outputFile.canWrite()
 
     if (!exists || !isFile || !canWrite) {
       return Flowable.error(
@@ -594,7 +592,7 @@ class FileCacheV2(
       }
   }
 
-  private fun purgeOutput(url: String, output: RawFile?) {
+  private fun purgeOutput(url: String, output: File?) {
     BackgroundUtils.ensureBackgroundThread()
 
     val request = activeDownloads.get(url)
@@ -610,10 +608,10 @@ class FileCacheV2(
       return
     }
 
-    log(TAG, "Purging $url, file = ${output.getFullPath()}")
+    log(TAG, "Purging $url, file = ${output.absolutePath}")
 
     if (!cacheHandler.deleteCacheFile(output)) {
-      logError(TAG, "Could not delete the file in purgeOutput, output = ${output.getFullPath()}")
+      logError(TAG, "Could not delete the file in purgeOutput, output = ${output.absolutePath}")
     }
   }
 

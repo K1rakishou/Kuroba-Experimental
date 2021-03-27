@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.cache.downloader
 
-import com.github.k1rakishou.fsaf.file.RawFile
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -17,7 +16,7 @@ internal open class FileDownloadRequest(
   // Chunks to delete from the disk upon download success or error
   val chunks: MutableSet<Chunk> = mutableSetOf()
 ) {
-  private var output: RawFile? = null
+  private var output: File? = null
 
   private var chunksCount = AtomicInteger(-1)
 
@@ -27,7 +26,7 @@ internal open class FileDownloadRequest(
   }
 
   @Synchronized
-  fun setOutputFile(outputFile: RawFile) {
+  fun setOutputFile(outputFile: File) {
     if (output != null) {
       throw IllegalStateException("Output file is already set!")
     }
@@ -36,7 +35,7 @@ internal open class FileDownloadRequest(
   }
 
   @Synchronized
-  fun getOutputFile(): RawFile? {
+  fun getOutputFile(): File? {
     return output
   }
 
@@ -45,7 +44,7 @@ internal open class FileDownloadRequest(
       if (output == null) {
         "<null>"
       } else {
-        File(output!!.getFullPath()).name
+        output!!.name
       }
     }
 

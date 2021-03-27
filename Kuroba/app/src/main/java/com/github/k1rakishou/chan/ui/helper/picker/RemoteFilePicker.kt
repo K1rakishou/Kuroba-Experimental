@@ -12,7 +12,6 @@ import com.github.k1rakishou.chan.utils.IOUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.fsaf.FileManager
-import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +19,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import java.io.File
 import java.io.IOException
 import kotlin.coroutines.resume
 
@@ -77,7 +77,7 @@ class RemoteFilePicker(
   }
 
   private fun copyDownloadedFileToReplyFileStorage(
-    downloadedFile: RawFile,
+    downloadedFile: File,
     originalFileName: String,
     replyChanDescriptor: ChanDescriptor
   ): ModularResult<PickedFile> {
@@ -114,27 +114,17 @@ class RemoteFilePicker(
   }
 
   private fun copyDownloadedFileIntoReplyFile(
-    downloadedFile: RawFile,
+    downloadedFile: File,
     replyFile: ReplyFile
   ) {
-    val cacheFile = fileManager.fromRawFile(replyFile.fileOnDisk)
+    val outputFile = replyFile.fileOnDisk
 
-    val input = fileManager.getInputStream(downloadedFile)
-    if (input == null) {
-      throw IOException("Failed to get input stream (downloadedFile='${downloadedFile.getFullPath()}')")
-    }
-
-    val output = fileManager.getOutputStream(cacheFile)
-    if (output == null) {
-      throw IOException("Failed to get output stream (filePath='${cacheFile.getFullPath()}')")
-    }
-
-    input.use { inputStream ->
-      output.use { outputStream ->
+    downloadedFile.inputStream().use { inputStream ->
+      outputFile.outputStream().use { outputStream ->
         if (!IOUtils.copy(inputStream, outputStream, MAX_FILE_SIZE)) {
           throw IOException(
-            "Failed to copy downloaded file (downloadedFile='${downloadedFile.getFullPath()}') " +
-              "into reply file (filePath='${cacheFile.getFullPath()}')"
+            "Failed to copy downloaded file (downloadedFile='${downloadedFile.absolutePath}') " +
+              "into reply file (filePath='${outputFile.absolutePath}')"
           )
         }
       }
@@ -145,7 +135,7 @@ class RemoteFilePicker(
     imageUrl: HttpUrl,
     showLoadingView: suspend (Int) -> Unit,
     hideLoadingView: suspend () -> Unit
-  ): ModularResult<RawFile> {
+  ): ModularResult<File> {
     val urlString = imageUrl.toString()
 
     serializedCoroutineExecutor.post {
@@ -156,7 +146,7 @@ class RemoteFilePicker(
       val cancelableDownload = fileCacheV2.enqueueNormalDownloadFileRequest(
         urlString,
         object : FileCacheListener() {
-          override fun onSuccess(file: RawFile) {
+          override fun onSuccess(file: File) {
             super.onSuccess(file)
 
             cancellableContinuation.resume(ModularResult.value(file))

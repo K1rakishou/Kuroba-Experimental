@@ -4,8 +4,8 @@ import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.fsaf.FileManager
-import com.github.k1rakishou.fsaf.file.RawFile
 import io.reactivex.Flowable
+import java.io.File
 
 
 internal class ChunkMerger(
@@ -19,7 +19,7 @@ internal class ChunkMerger(
   fun mergeChunksIntoCacheFile(
     url: String,
     chunkSuccessEvents: List<ChunkDownloadEvent.ChunkSuccess>,
-    output: RawFile,
+    output: File,
     requestStartTime: Long
   ): Flowable<ChunkDownloadEvent> {
     BackgroundUtils.ensureBackgroundThread()
@@ -39,41 +39,31 @@ internal class ChunkMerger(
         // Must be sorted in ascending order!!!
         val sortedChunkEvents = chunkSuccessEvents.sortedBy { event -> event.chunk.start }
 
-        if (!fileManager.exists(output)) {
-          throw FileCacheException.OutputFileDoesNotExist(output.getFullPath())
+        if (!output.exists()) {
+          throw FileCacheException.OutputFileDoesNotExist(output.absolutePath)
         }
 
-        fileManager.getOutputStream(output)?.use { outputStream ->
+        output.outputStream().use { outputStream ->
           // Iterate each chunk and write it to the output file
           for (chunkEvent in sortedChunkEvents) {
             val chunkFile = chunkEvent.chunkCacheFile
 
-            if (!fileManager.exists(chunkFile)) {
-              throw FileCacheException.ChunkFileDoesNotExist(chunkFile.getFullPath())
+            if (!chunkFile.exists()) {
+              throw FileCacheException.ChunkFileDoesNotExist(chunkFile.absolutePath)
             }
 
-            fileManager.getInputStream(chunkFile)?.use { inputStream ->
+            chunkFile.inputStream().use { inputStream ->
               inputStream.copyTo(outputStream)
-            } ?: throw FileCacheException.CouldNotGetInputStreamException(
-              chunkFile.getFullPath(),
-              true,
-              fileManager.isFile(chunkFile),
-              fileManager.canRead(chunkFile)
-            )
+            }
           }
 
           outputStream.flush()
-        } ?: throw FileCacheException.CouldNotGetOutputStreamException(
-          output.getFullPath(),
-          true,
-          fileManager.isFile(output),
-          fileManager.canRead(output)
-        )
+        }
       } finally {
         // In case of success or an error we want delete all chunk files
         chunkSuccessEvents.forEach { event ->
-          if (!fileManager.delete(event.chunkCacheFile)) {
-            logError(TAG, "Couldn't delete chunk file: ${event.chunkCacheFile.getFullPath()}")
+          if (!event.chunkCacheFile.delete()) {
+            logError(TAG, "Couldn't delete chunk file: ${event.chunkCacheFile.absolutePath}")
           }
         }
       }
@@ -102,7 +92,7 @@ internal class ChunkMerger(
         activeDownloads.throwCancellationException(url)
       }
 
-      throw FileCacheException.CouldNotMarkFileAsDownloaded(outputFile)
+      throw FileCacheException.CouldNotMarkFileAsDownloaded(fileManager.fromRawFile(outputFile))
     }
   }
 

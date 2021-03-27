@@ -4,7 +4,6 @@ import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.fsaf.FileManager
-import com.github.k1rakishou.fsaf.file.RawFile
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
 import io.reactivex.FlowableEmitter
@@ -16,6 +15,7 @@ import okio.BufferedSink
 import okio.BufferedSource
 import okio.buffer
 import okio.sink
+import java.io.File
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicLong
 
@@ -166,22 +166,8 @@ internal class ChunkPersister(
     }
   }
 
-  private fun RawFile.useAsBufferedSink(func: (BufferedSink) -> Unit) {
-    val outputStream = fileManager.getOutputStream(this)
-    if (outputStream == null) {
-      val fileExists = fileManager.exists(this)
-      val isFile = fileManager.exists(this)
-      val canWrite = fileManager.exists(this)
-
-      throw FileCacheException.CouldNotGetOutputStreamException(
-        this.getFullPath(),
-        fileExists,
-        isFile,
-        canWrite
-      )
-    }
-
-    outputStream.sink().use { sink ->
+  private fun File.useAsBufferedSink(func: (BufferedSink) -> Unit) {
+    outputStream().sink().use { sink ->
       sink.buffer().use { bufferedSink ->
         func(bufferedSink)
       }
@@ -196,7 +182,7 @@ internal class ChunkPersister(
     totalDownloaded: AtomicLong,
     serializedEmitter: FlowableEmitter<ChunkDownloadEvent>,
     chunkIndex: Int,
-    chunkCacheFile: RawFile,
+    chunkCacheFile: File,
     chunk: Chunk
   ) {
     var downloaded = 0L
@@ -290,9 +276,9 @@ internal class ChunkPersister(
     return !request.cancelableDownload.isRunning()
   }
 
-  private fun deleteChunkFile(chunkFile: RawFile) {
-    if (!fileManager.delete(chunkFile)) {
-      logError(TAG, "Couldn't delete chunk file: ${chunkFile.getFullPath()}")
+  private fun deleteChunkFile(chunkFile: File) {
+    if (!chunkFile.delete()) {
+      logError(TAG, "Couldn't delete chunk file: ${chunkFile.absolutePath}")
     }
   }
 

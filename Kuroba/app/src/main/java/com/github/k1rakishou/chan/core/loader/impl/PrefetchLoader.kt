@@ -11,8 +11,6 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.PrefetchStateManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.fsaf.file.AbstractFile
-import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -20,6 +18,7 @@ import com.github.k1rakishou.model.data.post.ChanPostImageType
 import com.github.k1rakishou.model.data.post.LoaderType
 import io.reactivex.Scheduler
 import io.reactivex.Single
+import java.io.File
 import kotlin.math.abs
 
 class PrefetchLoader(
@@ -96,14 +95,14 @@ class PrefetchLoader(
           onPrefetchProgress(prefetch.postImage, abs(1f - progress))
         }
 
-        override fun onSuccess(file: RawFile) {
+        override fun onSuccess(file: File) {
           chanThreadManager.setContentLoadedForLoader(post.postDescriptor, loaderType)
           onPrefetchCompleted(prefetch.postImage)
         }
 
         override fun onFail(exception: Exception?) = onPrefetchCompleted(prefetch.postImage)
         override fun onNotFound() = onPrefetchCompleted(prefetch.postImage)
-        override fun onStop(file: AbstractFile?) = onPrefetchCompleted(prefetch.postImage)
+        override fun onStop(file: File?) = onPrefetchCompleted(prefetch.postImage)
         override fun onCancel() = onPrefetchCompleted(prefetch.postImage, false)
       })
       postLoaderData.addDisposeFunc { cancelableDownload.cancelPrefetch() }
