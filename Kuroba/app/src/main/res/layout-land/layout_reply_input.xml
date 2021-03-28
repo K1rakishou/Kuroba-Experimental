@@ -84,11 +84,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                             android:layout_width="0dp"
                             android:layout_height="match_parent"
                             android:layout_weight="1"
+                            android:background="?attr/selectableItemBackgroundBorderless"
                             android:clickable="true"
                             android:focusable="true"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:hint="@string/reply_flag"
                             android:gravity="center"
+                            android:hint="@string/reply_flag"
                             android:singleLine="true"
                             android:textSize="16sp"
                             android:visibility="gone"
@@ -132,13 +132,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                                 android:inputType="textMultiLine|textCapSentences|textAutoCorrect"
                                 android:maxLines="6"
                                 android:minHeight="111dp"
-                                android:textSize="16sp"
                                 android:overScrollMode="always"
+                                android:paddingTop="14dp"
                                 android:scrollbarStyle="insideInset"
                                 android:scrollbars="vertical"
+                                android:textSize="16sp"
                                 app:layout_constraintEnd_toEndOf="parent"
                                 app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toTopOf="parent" />
+                                app:layout_constraintTop_toTopOf="parent"
+                                tools:text="@string/lorem_ipsum" />
 
                             <TextView
                                 android:id="@+id/comment_counter"
@@ -349,7 +351,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:focusable="true"
                 android:padding="8dp"
                 android:textColor="#fff44336"
-                tools:text="Test error message"/>
+                tools:text="Test error message" />
 
         </FrameLayout>
 
