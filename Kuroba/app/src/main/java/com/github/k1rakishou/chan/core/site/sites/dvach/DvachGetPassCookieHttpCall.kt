@@ -37,9 +37,20 @@ class DvachGetPassCookieHttpCall(
       return
     }
 
+    if (result.contains(DvachReplyCall.ANTI_SPAM_SCRIPT_TAG, ignoreCase = true)) {
+      loginResponse = DvachLoginResponse.AntiSpamDetected
+      return
+    }
+
     if (result.contains(PASS_CODE_DOES_NOT_EXIST, ignoreCase = true)) {
       loginResponse =
         DvachLoginResponse.Failure("Login failure! Your pass code is probably invalid")
+      return
+    }
+
+    if (result.contains(PASS_CODE_EXPIRED, ignoreCase = true)) {
+      loginResponse =
+        DvachLoginResponse.Failure("Login failure! Your pass code has already expired")
       return
     }
 
@@ -87,5 +98,6 @@ class DvachGetPassCookieHttpCall(
   companion object {
     private const val TAG = "DvachPassHttpCall"
     private const val PASS_CODE_DOES_NOT_EXIST = "Ваш код не существует"
+    private const val PASS_CODE_EXPIRED = "Срок действия вашего пасскода истёк"
   }
 }

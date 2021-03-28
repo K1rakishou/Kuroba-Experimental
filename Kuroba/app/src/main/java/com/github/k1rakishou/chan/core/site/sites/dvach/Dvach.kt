@@ -226,6 +226,9 @@ class Dvach : CommonSite() {
               is DvachLoginResponse.Failure -> {
                 SiteActions.LoginResult.LoginError(loginResponse.errorMessage)
               }
+              DvachLoginResponse.AntiSpamDetected -> {
+                SiteActions.LoginResult.AntiSpamDetected
+              }
             }
           }
           is HttpCall.HttpCallResult.Fail -> {

@@ -227,6 +227,6 @@ class DvachReplyCall internal constructor(
     private val THREAD_MESSAGE =
       Pattern.compile("^\\{\"Error\":null,\"Status\":\"Redirect\",\"Target\":(\\d+)")
     private const val PROBABLY_BANNED_TEXT = "banned"
-    private const val ANTI_SPAM_SCRIPT_TAG = "<title>Проверка...</title>"
+    const val ANTI_SPAM_SCRIPT_TAG = "<title>Проверка...</title>"
   }
 }
