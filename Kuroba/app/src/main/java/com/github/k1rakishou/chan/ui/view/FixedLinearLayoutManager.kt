@@ -17,9 +17,7 @@ open class FixedLinearLayoutManager(
     val childCount = recyclerView.childCount
     for (index in 0 until childCount) {
       val childView = recyclerView.getChildAt(index)
-
       childView.clearFocus()
-      recyclerView.clearChildFocus(childView)
     }
 
     super.onLayoutChildren(recycler, state)
