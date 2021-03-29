@@ -21,6 +21,7 @@ import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.TextUtils;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.ChanSettings;
@@ -159,24 +160,29 @@ public class DefaultPostParser implements PostParser {
         }
 
         if (!TextUtils.isEmpty(builder.tripcode)) {
-            tripcodeSpan = new SpannableString(builder.tripcode);
-            tripcodeSpan.setSpan(
-                    new ColorizableForegroundColorSpan(ChanThemeColorId.PostNameColor),
-                    0,
-                    tripcodeSpan.length(),
-                    0
-            );
+            CharSequence tripcode = extractTripcode(builder);
+            if (!StringsKt.isBlank(tripcode)) {
+                // This is kinda dumb but that's how it was originally and now it's the same in the DB
+                // so changing it is a huge pain in the ass.
+                tripcodeSpan = new SpannableString(tripcode);
+                tripcodeSpan.setSpan(
+                        new ColorizableForegroundColorSpan(ChanThemeColorId.PostNameColor),
+                        0,
+                        tripcodeSpan.length(),
+                        0
+                );
 
-            tripcodeSpan.setSpan(
-                    new AbsoluteSizeSpanHashed(detailsSizePx),
-                    0,
-                    tripcodeSpan.length(),
-                    0
-            );
+                tripcodeSpan.setSpan(
+                        new AbsoluteSizeSpanHashed(detailsSizePx),
+                        0,
+                        tripcodeSpan.length(),
+                        0
+                );
+            }
         }
 
         if (!TextUtils.isEmpty(builder.posterId)) {
-            idSpan = new SpannableString("  ID: " + builder.posterId + "  ");
+            idSpan = new SpannableString(formatPosterId(builder));
 
             idSpan.setSpan(new ForegroundColorSpanHashed(builder.idColor), 0, idSpan.length(), 0);
             idSpan.setSpan(new BackgroundColorSpanHashed(getComplementaryColor(builder.idColor)), 0, idSpan.length(), 0);
@@ -184,7 +190,7 @@ public class DefaultPostParser implements PostParser {
         }
 
         if (!TextUtils.isEmpty(builder.moderatorCapcode)) {
-            capcodeSpan = new SpannableString("Capcode: " + builder.moderatorCapcode);
+            capcodeSpan = new SpannableString(formatCapcode(builder));
             capcodeSpan.setSpan(
                     new ColorizableForegroundColorSpan(ChanThemeColorId.AccentColor),
                     0,
@@ -225,6 +231,65 @@ public class DefaultPostParser implements PostParser {
         }
 
         builder.tripcode = SpannableString.valueOf(nameTripcodeIdCapcodeSpan);
+    }
+
+    private CharSequence extractTripcode(ChanPostBuilder builder) {
+        if (TextUtils.isEmpty(builder.tripcode)) {
+            return builder.tripcode;
+        }
+
+        String formattedCapcode = "";
+        String formattedPosterId = "";
+        String name = "";
+
+        if (!TextUtils.isEmpty(builder.moderatorCapcode)) {
+            formattedCapcode = formatCapcode(builder);
+        }
+        if (!TextUtils.isEmpty(builder.posterId)) {
+            formattedPosterId = formatPosterId(builder);
+        }
+        if (!TextUtils.isEmpty(builder.name)) {
+            name = builder.name;
+        }
+
+        if (formattedCapcode.isEmpty() && formattedPosterId.isEmpty() && name.isEmpty()) {
+            return builder.tripcode;
+        }
+
+        StringBuilder tripcodeStringBuilder = new StringBuilder(builder.tripcode);
+
+        if (formattedCapcode.length() > 0) {
+            int index = tripcodeStringBuilder.indexOf(formattedCapcode);
+            if (index >= 0) {
+                tripcodeStringBuilder.replace(index, index + formattedCapcode.length(), "");
+            }
+        }
+
+        if (formattedPosterId.length() > 0) {
+            int index = tripcodeStringBuilder.indexOf(formattedPosterId);
+            if (index >= 0) {
+                tripcodeStringBuilder.replace(index, index + formattedPosterId.length(), "");
+            }
+        }
+
+        if (name.length() > 0) {
+            int index = tripcodeStringBuilder.indexOf(name);
+            if (index >= 0) {
+                tripcodeStringBuilder.replace(index, index + name.length(), "");
+            }
+        }
+
+        return tripcodeStringBuilder.toString().trim();
+    }
+
+    @NonNull
+    private String formatCapcode(ChanPostBuilder builder) {
+        return "Capcode: " + builder.moderatorCapcode;
+    }
+
+    @NonNull
+    private String formatPosterId(ChanPostBuilder builder) {
+        return "  ID: " + builder.posterId + "  ";
     }
 
     @Override
