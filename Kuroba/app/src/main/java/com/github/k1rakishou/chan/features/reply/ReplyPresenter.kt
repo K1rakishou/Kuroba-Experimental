@@ -743,8 +743,6 @@ class ReplyPresenter @Inject constructor(
       PostHelper.getTitle(reply)
     }
 
-    bindChanDescriptor(newThreadDescriptor)
-
     val bookmarkThreadDescriptor = ChanDescriptor.ThreadDescriptor.create(
       boardDescriptor = newThreadDescriptor.boardDescriptor(),
       threadNo = threadNo
