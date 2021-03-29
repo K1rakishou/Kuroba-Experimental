@@ -96,7 +96,14 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
     return
   }
 
-  fun isInitialized() = value.isCompleted
+  fun isInitialized(): Boolean {
+    if (!value.isCompleted) {
+      return false
+    }
+
+    error.get()?.let { initializationError -> throw RuntimeException(initializationError) }
+    return true
+  }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   suspend fun get(): T {

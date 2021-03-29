@@ -54,6 +54,7 @@ class ChanPostRepository(
       val postDeleteResult = deleteOldPostsIfNeeded()
       if (postDeleteResult is ModularResult.Error) {
         Logger.e(TAG, "deleteOldPostsIfNeeded() error", postDeleteResult.error)
+        suspendableInitializer.initWithError(postDeleteResult.error)
         return@launch
       }
 
@@ -61,6 +62,7 @@ class ChanPostRepository(
       val threadDeleteResult = deleteOldThreadsIfNeeded()
       if (threadDeleteResult is ModularResult.Error) {
         Logger.e(TAG, "deleteOldThreadsIfNeeded() error", threadDeleteResult.error)
+        suspendableInitializer.initWithError(threadDeleteResult.error)
         return@launch
       }
 
