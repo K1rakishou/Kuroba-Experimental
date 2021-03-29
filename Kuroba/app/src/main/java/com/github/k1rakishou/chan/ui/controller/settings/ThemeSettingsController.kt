@@ -51,6 +51,7 @@ import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
+import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
@@ -130,7 +131,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
     override fun onPostBind(postDescriptor: PostDescriptor) {}
     override fun onPostUnbind(postDescriptor: PostDescriptor, isActuallyRecycling: Boolean) {}
     override fun onPostClicked(postDescriptor: PostDescriptor) {}
-    override fun onGoToPostButtonClicked(post: ChanPost) {}
+    override fun onGoToPostButtonClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode) {}
     override fun onThumbnailClicked(postImage: ChanPostImage, thumbnail: ThumbnailView) {}
     override fun onThumbnailLongClicked(postImage: ChanPostImage, thumbnail: ThumbnailView) {}
     override fun onShowPostReplies(post: ChanPost) {}

@@ -48,7 +48,7 @@ interface PostCellInterface {
     fun onPostUnbind(postDescriptor: PostDescriptor, isActuallyRecycling: Boolean)
 
     fun onPostClicked(postDescriptor: PostDescriptor)
-    fun onGoToPostButtonClicked(post: ChanPost)
+    fun onGoToPostButtonClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode)
     fun onThumbnailClicked(postImage: ChanPostImage, thumbnail: ThumbnailView)
     fun onThumbnailLongClicked(postImage: ChanPostImage, thumbnail: ThumbnailView)
     fun onShowPostReplies(post: ChanPost)

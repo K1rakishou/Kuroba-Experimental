@@ -940,7 +940,7 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  override fun onGoToPostButtonClicked(post: ChanPost) {
+  override fun onGoToPostButtonClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode) {
     if (!isBound) {
       return
     }
@@ -948,7 +948,15 @@ class ThreadPresenter @Inject constructor(
     serializedCoroutineExecutor.post {
       val isExternalThread = currentChanDescriptor != post.postDescriptor.descriptor
       if (isExternalThread) {
-        threadPresenterCallback?.openExternalThread(post.postDescriptor)
+        val showOpenThreadDialog = when (postViewMode) {
+          PostCellData.PostViewMode.Normal,
+          PostCellData.PostViewMode.RepliesPopup,
+          PostCellData.PostViewMode.PostSelection,
+          PostCellData.PostViewMode.Search -> false
+          PostCellData.PostViewMode.ExternalPostsPopup -> true
+        }
+
+        threadPresenterCallback?.openExternalThread(post.postDescriptor, showOpenThreadDialog)
         return@post
       }
 
@@ -2117,7 +2125,7 @@ class ThreadPresenter @Inject constructor(
     suspend fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showPostInExternalThread(postDescriptor: PostDescriptor)
     suspend fun previewCatalogThread(postDescriptor: PostDescriptor)
-    suspend fun openExternalThread(postDescriptor: PostDescriptor)
+    suspend fun openExternalThread(postDescriptor: PostDescriptor, showOpenThreadDialog: Boolean)
     suspend fun showBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
     suspend fun setBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
 

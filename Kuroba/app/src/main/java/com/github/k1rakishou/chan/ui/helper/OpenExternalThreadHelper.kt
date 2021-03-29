@@ -25,6 +25,7 @@ class OpenExternalThreadHelper(
   fun openExternalThread(
     currentChanDescriptor: ChanDescriptor,
     postDescriptor: PostDescriptor,
+    showOpenThreadDialog: Boolean,
     openThreadFunc: (ChanDescriptor.ThreadDescriptor) -> Unit
   ) {
     Logger.d(TAG, "openExternalThread($postDescriptor)")
@@ -58,6 +59,17 @@ class OpenExternalThreadHelper(
       append(fullPostLink)
     }
 
+    if (!showOpenThreadDialog) {
+      openExternalThreadInternal(
+        postDescriptor = postDescriptor,
+        currentChanDescriptor = currentChanDescriptor,
+        threadToOpenDescriptor = threadToOpenDescriptor,
+        openThreadFunc = openThreadFunc
+      )
+
+      return
+    }
+
     dialogFactory.createSimpleConfirmationDialog(
       context = context,
       titleTextId = R.string.open_thread_confirmation,
@@ -65,24 +77,38 @@ class OpenExternalThreadHelper(
       negativeButtonText = AppModuleAndroidUtils.getString(R.string.cancel),
       positiveButtonText = AppModuleAndroidUtils.getString(R.string.ok),
       onPositiveButtonClickListener = {
-        Logger.d(TAG, "openExternalThread() loading external thread $postDescriptor from $currentChanDescriptor")
-
-        chanThreadViewableInfoManager.update(
-          threadToOpenDescriptor,
-          createEmptyWhenNull = true
-        ) { chanThreadViewableInfo -> chanThreadViewableInfo.markedPostNo = postDescriptor.postNo }
-
-        if (currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
-          threadFollowHistoryManager.pushThreadDescriptor(currentChanDescriptor)
-        }
-
-        if (postPopupHelper.isOpen) {
-          postPopupHelper.postClicked(postDescriptor)
-        }
-
-        openThreadFunc(threadToOpenDescriptor)
+        openExternalThreadInternal(
+          postDescriptor = postDescriptor,
+          currentChanDescriptor = currentChanDescriptor,
+          threadToOpenDescriptor = threadToOpenDescriptor,
+          openThreadFunc = openThreadFunc
+        )
       }
     )
+  }
+
+  private fun openExternalThreadInternal(
+    postDescriptor: PostDescriptor,
+    currentChanDescriptor: ChanDescriptor,
+    threadToOpenDescriptor: ChanDescriptor.ThreadDescriptor,
+    openThreadFunc: (ChanDescriptor.ThreadDescriptor) -> Unit
+  ) {
+    Logger.d(TAG, "openExternalThread() loading external thread $postDescriptor from $currentChanDescriptor")
+
+    chanThreadViewableInfoManager.update(
+      threadToOpenDescriptor,
+      createEmptyWhenNull = true
+    ) { chanThreadViewableInfo -> chanThreadViewableInfo.markedPostNo = postDescriptor.postNo }
+
+    if (currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      threadFollowHistoryManager.pushThreadDescriptor(currentChanDescriptor)
+    }
+
+    if (postPopupHelper.isOpen) {
+      postPopupHelper.postClicked(postDescriptor)
+    }
+
+    openThreadFunc(threadToOpenDescriptor)
   }
 
   companion object {

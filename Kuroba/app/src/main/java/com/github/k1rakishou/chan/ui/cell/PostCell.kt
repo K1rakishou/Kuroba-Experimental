@@ -480,7 +480,7 @@ class PostCell : LinearLayout,
 
       goToPostButtonContainer.setOnClickListener {
         this.postCellData?.let { pcd ->
-          postCellCallback?.onGoToPostButtonClicked(pcd.post)
+          postCellCallback?.onGoToPostButtonClicked(pcd.post, pcd.postViewMode)
         }
       }
     } else {

@@ -558,11 +558,15 @@ open class ViewThreadController(
     updateLeftPaneHighlighting(newThreadDescriptor)
   }
 
-  override suspend fun openExternalThread(postDescriptor: PostDescriptor) {
+  override suspend fun openExternalThread(postDescriptor: PostDescriptor, showOpenThreadDialog: Boolean) {
     val descriptor = chanDescriptor
       ?: return
 
-    openExternalThreadHelper.openExternalThread(descriptor, postDescriptor) { threadDescriptor ->
+    openExternalThreadHelper.openExternalThread(
+      currentChanDescriptor = descriptor,
+      postDescriptor = postDescriptor,
+      showOpenThreadDialog = showOpenThreadDialog
+    ) { threadDescriptor ->
       mainScope.launch { loadThread(threadDescriptor = threadDescriptor, openingExternalThread = true) }
     }
   }

@@ -657,11 +657,15 @@ class BrowseController(
     showPostsInExternalThreadHelper.showPostsInExternalThread(postDescriptor, isPreviewingCatalogThread)
   }
 
-  override suspend fun openExternalThread(postDescriptor: PostDescriptor) {
+  override suspend fun openExternalThread(postDescriptor: PostDescriptor, showOpenThreadDialog: Boolean) {
     val descriptor = chanDescriptor
       ?: return
 
-    openExternalThreadHelper.openExternalThread(descriptor, postDescriptor) { threadDescriptor ->
+    openExternalThreadHelper.openExternalThread(
+      currentChanDescriptor = descriptor,
+      postDescriptor = postDescriptor,
+      showOpenThreadDialog = showOpenThreadDialog
+    ) { threadDescriptor ->
       mainScope.launch { showThread(descriptor = threadDescriptor, animated = true) }
     }
   }
