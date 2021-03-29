@@ -1,0 +1,52 @@
+v0.7.5-release
+TLDR version:
+- Post view changes and optimizations.
+- Previewable threads/posts/archive posts.
+- Floating menus updated.
+- Dialogs reworked.
+- Catalog/thread search reworked.
+- 2ch.hk new anti-spam script support.
+- CacheHandler optimizations.
+
+Full version:
+- Fix inability to use passcode on 2ch.hk
+- Fix a bug where after creating a thread, then posting in it and then trying to create a new thread, the post will appear in the previous thread instead of creating a new thread.
+- "Show file name on posts" will now show media file names. It is also always shown when in search mode.
+- Local search now allows searching for post media file names.
+- Fix posterId applied multiple times when marking/unmarking post as own.
+- Do not show the confirmation dialog when opening external threads in search mode.
+
+v0.7.4-release
+- CacheHandler (on-disk cache for all media files) optimizations. Disk cache synchronization was reworked and now uses per-file synchronization rather than global synchronization (synchronization on the CacheHandler instance) which should drastically improve performance for cases where lots of different threads are trying to access CacheHandler at the same time (the most common case).
+- Fix reply comment input sometimes stopping reacting to any keyboard input.
+
+v0.7.3-beta:
+- Dvach now uses 2ch.hk domain again because I managed to come up with a proper solution for the new anti-spam check which now solves the anti-spam JS script instead of relying on the other domains.
+- Catalog/thread search reworked. Now it shows posts in a popup window which should be more convenient than before because it won't mess up the current scroll position anymore when you search for something. The search now also marks the current query in the post text.
+- Catalog search links are back.
+- Fix some problems related to being able to open two images in the album or selecting two posts at the same time.
+- Add "Filter" option to the post comment selection menu. Add back "Filter" option when long tapping image thumbnails. Album views now use the same long tap menu as post thumbnails.
+
+v0.7.2-beta
+- Switch 2ch.hk domain to 2ch.pm (temporary, to make posting work), until it's clear what to do next.
+
+v0.7.1-beta:
+- Add ability to append thread subject to the result download directory path.
+- Add ability to store both images (the previous one and the new duplicate one) by adding the duplicate index to the new image (e.g. "image_(1).jpg").
+- Fix keyboard getting automatically hidden when searching for something or when writing a reply in a thread.
+
+v0.7.0-beta:
+- Added a setting to change post view thumbnail size (can be found in Appearance settings).
+- Post view comment selection now starts by double clicking a post, not long clicking it. (Thanks to Dashchan project for the idea of how to make this work).
+- Post menu can now be shown by long clicking a post. The three dot button was removed.
+- Post thumbnails were reworked. They can now be shown on the left or right side of posts (there is a separate setting for catalog/thread posts, it's called "Post alignment mode").
+- New layout for thumbnail container when a post has multiple thumbnails.
+- Lots of stuff that was calculated during post bind stage was moved to an earlier stage to make post binding faster. This should make the catalog/thread scrolling more smooth.
+- External thread/external post/catalog thread/dead post/archive post links can now be previewed.
+- FloatingListMenu will now appear closer to the touch position.
+- Prefetching now works correctly when it's enabled together with high-res cells setting. It also now works in albums.
+- Can now long click links to show link menu.
+- ImageSaver now uses a separate instance of FileManager so it shouldn't slow down disk access speed for the rest of the application when a lot of stuff is being downloaded.
+- Dialogs have been reworked and now don't use the Window instances. Should no longer have strange ugly artifacts around them.
+- Add ability to reorder BottomNavView's buttons.
+- Other minor fixes and adjustments.
