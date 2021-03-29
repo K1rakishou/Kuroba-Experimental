@@ -636,8 +636,7 @@ Note that for country code filtering, troll country codes should be prepended wi
 
     <!-- Appearance post group -->
     <string name="setting_post_full_date">Show the full date on posts</string>
-    <string name="setting_post_file_info">Show file info on posts</string>
-    <string name="setting_post_filename">Show filename on posts</string>
+    <string name="setting_post_file_name">Show file name on posts</string>
     <string name="settings_group_images">Images</string>
     <string name="setting_text_only">Text-only mode</string>
     <string name="setting_text_only_description">Remove images when in board and thread view</string>

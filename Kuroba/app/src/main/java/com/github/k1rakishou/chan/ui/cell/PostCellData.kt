@@ -3,13 +3,16 @@ package com.github.k1rakishou.chan.ui.cell
 import android.text.SpannableString
 import android.text.TextUtils
 import android.text.format.DateUtils
+import android.text.style.UnderlineSpan
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.RecalculatableLazy
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.SpannableHelper
+import com.github.k1rakishou.common.MurmurHashUtils
 import com.github.k1rakishou.common.ellipsizeEnd
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed
@@ -48,6 +51,8 @@ data class PostCellData(
 
   private var detailsSizePxPrecalculated: Int? = null
   private var postTitlePrecalculated: CharSequence? = null
+  private var postFileInfoPrecalculated: MutableMap<ChanPostImage, SpannableString>? = null
+  private var postFileInfoHashPrecalculated: MurmurHashUtils.Murmur3Hash? = null
   private var commentTextPrecalculated: CharSequence? = null
   private var catalogRepliesTextPrecalculated: CharSequence? = null
 
@@ -96,8 +101,10 @@ data class PostCellData(
   val markedNo: Long
     get() = markedPostNo ?: -1
 
-  private val _detailsSizePx = RecalculatableLazy { detailsSizePxPrecalculated ?: AppModuleAndroidUtils.sp(textSizeSp - 4.toFloat()) }
+  private val _detailsSizePx = RecalculatableLazy { detailsSizePxPrecalculated ?: sp(textSizeSp - 4.toFloat()) }
   private val _postTitle = RecalculatableLazy { postTitlePrecalculated ?: calculatePostTitle() }
+  private val _postFileInfoMap = RecalculatableLazy { postFileInfoPrecalculated ?: calculatePostFileInfo() }
+  private val _postFileInfoMapHash = RecalculatableLazy { postFileInfoHashPrecalculated ?: calculatePostFileInfoHash(_postFileInfoMap) }
   private val _commentText = RecalculatableLazy { commentTextPrecalculated ?: calculateCommentText() }
   private val _catalogRepliesText = RecalculatableLazy { catalogRepliesTextPrecalculated ?: calculateCatalogRepliesText() }
 
@@ -105,6 +112,10 @@ data class PostCellData(
     get() = _detailsSizePx.value()
   val postTitle: CharSequence
     get() = _postTitle.value()
+  val postFileInfoMap: Map<ChanPostImage, SpannableString>
+    get() = _postFileInfoMap.value()
+  val postFileInfoMapHash: MurmurHashUtils.Murmur3Hash
+    get() = _postFileInfoMapHash.value()
   val commentText: CharSequence
     get() = _commentText.value()
   val catalogRepliesText
@@ -120,6 +131,13 @@ data class PostCellData(
     _postTitle.resetValue()
   }
 
+  fun resetPostFileInfoCache() {
+    postFileInfoPrecalculated = null
+    postFileInfoHashPrecalculated = null
+    _postFileInfoMap.resetValue()
+    _postFileInfoMapHash.resetValue()
+  }
+
   fun resetCatalogRepliesTextCache() {
     catalogRepliesTextPrecalculated = null
     _catalogRepliesText.resetValue()
@@ -131,6 +149,8 @@ data class PostCellData(
     // Force lazily evaluated values to get calculated and cached
     _detailsSizePx.value()
     _postTitle.value()
+    _postFileInfoMap.value()
+    _postFileInfoMapHash.value()
     _commentText.value()
     _catalogRepliesText.value()
   }
@@ -274,6 +294,42 @@ data class PostCellData(
     return commentText
   }
 
+  private fun calculatePostFileInfo(): Map<ChanPostImage, SpannableString> {
+    val postFileInfoTextMap = calculatePostFileInfoInternal()
+
+    postFileInfoTextMap.entries.forEach { (_, postFileInfoSpannable) ->
+      SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
+        inputQueries = listOf(searchQuery.query),
+        spannableString = postFileInfoSpannable,
+        color = theme.accentColor,
+        minQueryLength = searchQuery.queryMinValidLength
+      )
+    }
+
+    return postFileInfoTextMap
+  }
+
+  private fun calculatePostFileInfoInternal(): Map<ChanPostImage, SpannableString> {
+    if (postImages.isEmpty()) {
+      return emptyMap()
+    }
+
+    val resultMap = mutableMapOf<ChanPostImage, SpannableString>()
+    val detailsSizePx = sp(textSizeSp - 4.toFloat())
+
+    postImages.forEach { postImage ->
+      val fileInfoText = SpannableString.valueOf(postImage.formatFullAvailableFileName())
+
+      fileInfoText.setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, fileInfoText.length, 0)
+      fileInfoText.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfoText.length, 0)
+      fileInfoText.setSpan(UnderlineSpan(), 0, fileInfoText.length, 0)
+
+      resultMap[postImage] = fileInfoText
+    }
+
+    return resultMap
+  }
+
   private fun calculateCommentTextInternal(): CharSequence {
     if (boardPostViewMode == ChanSettings.BoardPostViewMode.LIST) {
       if (threadMode || post.postComment.comment().length <= COMMENT_MAX_LENGTH_LIST) {
@@ -358,6 +414,23 @@ data class PostCellData(
     }
 
     return catalogRepliesTextBuilder.toString()
+  }
+
+  private fun calculatePostFileInfoHash(
+    postFileInfoMapLazy: RecalculatableLazy<Map<ChanPostImage, SpannableString>>
+  ): MurmurHashUtils.Murmur3Hash {
+    var hash = MurmurHashUtils.Murmur3Hash.EMPTY
+    val postFileInfoMapInput = postFileInfoMapLazy.value()
+
+    if (postFileInfoMapInput.isEmpty()) {
+      return hash
+    }
+
+    postFileInfoMapInput.values.forEach { postFileInfo ->
+      hash = hash.combine(MurmurHashUtils.murmurhash3_x64_128(postFileInfo))
+    }
+
+    return hash
   }
 
   enum class PostViewMode {

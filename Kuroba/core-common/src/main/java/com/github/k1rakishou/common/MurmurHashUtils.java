@@ -20,6 +20,9 @@ package com.github.k1rakishou.common;
  *  Taken from https://github.com/yonik/java_util/blob/master/src/util/hash/MurmurHash3.java
  */
 
+import android.text.Spannable;
+import android.text.style.CharacterStyle;
+
 import kotlin.text.Charsets;
 
 public class MurmurHashUtils {
@@ -53,6 +56,28 @@ public class MurmurHashUtils {
                 | ((buf[offset+2] & 0xffL) << 16)
                 | ((buf[offset+1] & 0xffL) << 8)
                 | ((buf[offset  ] & 0xffL));        // no shift needed
+    }
+
+    public static Murmur3Hash murmurhash3_x64_128(Spannable input) {
+        StringBuilder stringBuilder = new StringBuilder(input.length());
+        stringBuilder.append(input.toString());
+
+        CharacterStyle[] spans = input.getSpans(0, input.length(), CharacterStyle.class);
+
+        for (CharacterStyle span : spans) {
+            stringBuilder
+                    .append("{")
+                    .append(input.getSpanStart(span))
+                    .append(",")
+                    .append(input.getSpanEnd(span))
+                    .append(",")
+                    .append(input.getSpanFlags(span))
+                    .append(",")
+                    .append(span.getClass().getSimpleName())
+                    .append("}");
+        }
+
+        return murmurhash3_x64_128(stringBuilder.toString());
     }
 
     public static Murmur3Hash murmurhash3_x64_128(CharSequence input) {
@@ -126,12 +151,22 @@ public class MurmurHashUtils {
 
     /** 128 bits of state */
     public static final class Murmur3Hash {
+        public static final Murmur3Hash EMPTY = new Murmur3Hash(0L, 0L);
+
         public long val1;
         public long val2;
 
         public Murmur3Hash(long val1, long val2) {
             this.val1 = val1;
             this.val2 = val2;
+        }
+
+        public Murmur3Hash combine(Murmur3Hash other) {
+            return new Murmur3Hash(val1 ^ other.val1, val2 ^ other.val2);
+        }
+
+        public Murmur3Hash copy() {
+            return new Murmur3Hash(val1, val2);
         }
 
         @Override

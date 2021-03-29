@@ -327,7 +327,6 @@ sealed class AppearanceScreen(
     object FontSize : PostGroup("font_size")
     object PostCellThumbnailSizePercent : PostGroup("post_cell_thumbnail_size_percent")
     object PostFullDate : PostGroup("post_full_date")
-    object PostFileInfo : PostGroup("post_file_info")
     object PostFileName : PostGroup("post_file_name")
     object TextOnly : PostGroup("text_only")
     object RevealTextSpoilers : PostGroup("reveal_text_spoilers")

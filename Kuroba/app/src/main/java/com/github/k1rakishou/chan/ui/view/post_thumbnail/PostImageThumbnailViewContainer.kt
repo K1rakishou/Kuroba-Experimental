@@ -3,15 +3,20 @@ package com.github.k1rakishou.chan.ui.view.post_thumbnail
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.TypedValue
+import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.GravityCompat
 import androidx.core.view.updateLayoutParams
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.setOnThrottlingLongClickListener
+import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
@@ -26,6 +31,7 @@ class PostImageThumbnailViewContainer(
   private val rootContainer: ConstraintLayout
   private val actualThumbnailView: PostImageThumbnailView
   private val fileInfoContainer: ConstraintLayout
+  private val postFileNameInfoTextView: TextView
   private val thumbnailFileExtension: TextView
   private val thumbnailFileDimens: TextView
   private val thumbnailFileSize: TextView
@@ -46,6 +52,7 @@ class PostImageThumbnailViewContainer(
     rootContainer = findViewById(R.id.root_container)
     actualThumbnailView = findViewById(R.id.actual_thumbnail)
     fileInfoContainer = findViewById(R.id.file_info_container)
+    postFileNameInfoTextView = findViewById(R.id.post_file_name_info)
     thumbnailFileExtension = findViewById(R.id.thumbnail_file_extension)
     thumbnailFileDimens = findViewById(R.id.thumbnail_file_dimens)
     thumbnailFileSize = findViewById(R.id.thumbnail_file_size)
@@ -125,7 +132,11 @@ class PostImageThumbnailViewContainer(
   }
 
   @SuppressLint("SetTextI18n")
-  fun bindPostInfo(chanPostImage: ChanPostImage) {
+  fun bindPostInfo(
+    postCellData: PostCellData,
+    chanPostImage: ChanPostImage,
+    postThumbnailAlignmentMode: ChanSettings.PostThumbnailAlignmentMode
+  ) {
     val thumbnailInfoTextSizeMin = getDimen(R.dimen.post_multiple_image_thumbnail_view_info_text_size_min).toFloat()
     val thumbnailInfoTextSizeMax = getDimen(R.dimen.post_multiple_image_thumbnail_view_info_text_size_max).toFloat()
     val thumbnailDimensTextSizeMin = getDimen(R.dimen.post_multiple_image_thumbnail_view_dimens_text_size_min).toFloat()
@@ -145,6 +156,20 @@ class PostImageThumbnailViewContainer(
     val newDimensTextSize = (ChanSettings.postCellThumbnailSizePercents.get() * thumbnailInfoTextSizePercent)
       .coerceIn(thumbnailDimensTextSizeMin, thumbnailDimensTextSizeMax)
     thumbnailFileDimens.setTextSize(TypedValue.COMPLEX_UNIT_PX, newDimensTextSize)
+
+    val postFileInfo = postCellData.postFileInfoMap[chanPostImage]
+
+    if ((postCellData.searchMode || ChanSettings.postFileName.get()) && postFileInfo.isNotNullNorBlank()) {
+      postFileNameInfoTextView.setVisibilityFast(View.VISIBLE)
+      postFileNameInfoTextView.setText(postFileInfo, TextView.BufferType.SPANNABLE)
+
+      postFileNameInfoTextView.gravity = when (postThumbnailAlignmentMode) {
+        ChanSettings.PostThumbnailAlignmentMode.AlignLeft -> GravityCompat.START
+        ChanSettings.PostThumbnailAlignmentMode.AlignRight -> GravityCompat.END
+      }
+    } else {
+      postFileNameInfoTextView.setVisibilityFast(View.GONE)
+    }
   }
 
   override fun onThemeChanged() {

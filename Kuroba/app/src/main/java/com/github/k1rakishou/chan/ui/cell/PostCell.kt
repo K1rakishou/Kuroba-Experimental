@@ -565,7 +565,10 @@ class PostCell : LinearLayout,
 
   private fun bindBackgroundColor(theme: ChanTheme) {
     val postData = postCellData
-      ?: return
+    if (postData == null) {
+      setBackgroundColorFast(theme.backColor)
+      return
+    }
 
     when {
       postData.postSelected || postData.highlighted -> {

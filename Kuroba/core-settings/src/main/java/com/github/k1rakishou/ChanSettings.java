@@ -271,8 +271,7 @@ public class ChanSettings {
     public static StringSetting fontSize;
     public static RangeSetting postCellThumbnailSizePercents;
     public static BooleanSetting postFullDate;
-    public static BooleanSetting postFileInfo;
-    public static BooleanSetting postFilename;
+    public static BooleanSetting postFileName;
     public static OptionsSetting<PostThumbnailAlignmentMode> catalogPostThumbnailAlignmentMode;
     public static OptionsSetting<PostThumbnailAlignmentMode> threadPostThumbnailAlignmentMode;
     public static BooleanSetting textOnly;
@@ -446,8 +445,7 @@ public class ChanSettings {
             fontSize = new StringSetting(provider, "preference_font", chanSettingsInfo.isTablet() ? "16" : "14");
             postCellThumbnailSizePercents = new RangeSetting(provider, "post_cell_thumbnail_size_percents", 75, 50, 100);
             postFullDate = new BooleanSetting(provider, "preference_post_full_date", false);
-            postFileInfo = new BooleanSetting(provider, "preference_post_file_info", true);
-            postFilename = new BooleanSetting(provider, "preference_post_filename", true);
+            postFileName = new BooleanSetting(provider, "preference_post_file_name", false);
             catalogPostThumbnailAlignmentMode = new OptionsSetting<>(provider, "catalog_post_thumbnail_alignment_mode", PostThumbnailAlignmentMode.class, PostThumbnailAlignmentMode.AlignLeft);
             threadPostThumbnailAlignmentMode = new OptionsSetting<>(provider, "thread_post_thumbnail_alignment_mode", PostThumbnailAlignmentMode.class, PostThumbnailAlignmentMode.AlignLeft);
             textOnly = new BooleanSetting(provider, "preference_text_only", false);

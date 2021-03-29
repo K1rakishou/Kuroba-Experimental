@@ -145,6 +145,7 @@ class ThreadCellData(
     postCellDataList.forEach { postCellData ->
       postCellData.resetCommentTextCache()
       postCellData.resetPostTitleCache()
+      postCellData.resetPostFileInfoCache()
     }
   }
 

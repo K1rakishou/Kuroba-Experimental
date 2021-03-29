@@ -17,6 +17,7 @@ import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellWidthStorage
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.common.MurmurHashUtils
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import java.util.*
@@ -30,6 +31,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
   private var thumbnailViews: MutableList<PostImageThumbnailViewContract>? = null
   private var prevChanPostImages: MutableList<ChanPostImage>? = null
   private var prevBoardPostViewMode: ChanSettings.BoardPostViewMode? = null
+  private var postFileInfosHash: MurmurHashUtils.Murmur3Hash? = null
   private var postCellThumbnailCallbacks: PostCellThumbnailCallbacks? = null
   private var horizPaddingPx = 0
 
@@ -58,7 +60,8 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       && thumbnailViews != null
       && this.prevChanPostImages != null
       && this.prevChanPostImages == postCellData.postImages
-      && this.prevBoardPostViewMode == postCellData.boardPostViewMode) {
+      && this.prevBoardPostViewMode == postCellData.boardPostViewMode
+      && this.postFileInfosHash == postCellData.postFileInfoMapHash) {
       // Images are already bound and haven't changed since the last bind, do nothing
       return
     }
@@ -66,6 +69,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     this.postCellThumbnailCallbacks = postCellThumbnailCallbacks
     this.horizPaddingPx = horizPaddingPx
     this.prevBoardPostViewMode = postCellData.boardPostViewMode
+    this.postFileInfosHash = postCellData.postFileInfoMapHash.copy()
 
     if (childCount != 0) {
       removeAllViews()
@@ -116,7 +120,8 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     if (thumbnailViews != null
       && this.prevChanPostImages != null
-      && this.prevChanPostImages == postCellData.postImages) {
+      && this.prevChanPostImages == postCellData.postImages
+      && this.postFileInfosHash == postCellData.postFileInfoMapHash) {
       // Images are already bound and haven't changed since the last bind, do nothing
       return
     }
@@ -200,7 +205,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize,)
       thumbnailView.bindFileInfoContainerSizes(thumbnailContainerSize, cellPostThumbnailSize)
       thumbnailView.bindPostImage(postImage, true)
-      thumbnailView.bindPostInfo(postImage)
+      thumbnailView.bindPostInfo(postCellData, postImage, postThumbnailsAlignment)
 
       if (postCellData.isSelectionMode) {
         thumbnailView.setImageClickListener(THUMBNAIL_CLICK_TOKEN, null)
@@ -233,7 +238,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
       val layoutParams = ConstraintLayout.LayoutParams(
         thumbnailContainerSize - THUMBNAILS_GAP_SIZE,
-        cellPostThumbnailSize
+        LinearLayout.LayoutParams.WRAP_CONTENT
       )
 
       container.addView(thumbnailView, layoutParams)
@@ -329,7 +334,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize)
       thumbnailView.setViewId(View.generateViewId())
       thumbnailView.bindPostImage(postImage, true)
-      thumbnailView.bindPostInfo(postImage)
+      thumbnailView.bindPostInfo(postCellData, postImage, postThumbnailsAlignment)
 
       if (postCellData.isSelectionMode) {
         thumbnailView.setImageClickListener(THUMBNAIL_CLICK_TOKEN, null)
@@ -374,7 +379,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
       val layoutParams = LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.WRAP_CONTENT,
-        cellPostThumbnailSize
+        LinearLayout.LayoutParams.WRAP_CONTENT
       )
 
       layoutParams.setMargins(0, topMargin, 0, bottomMargin)

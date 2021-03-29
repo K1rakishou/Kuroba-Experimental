@@ -153,17 +153,9 @@ class AppearanceSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
-          identifier = AppearanceScreen.PostGroup.PostFileInfo,
-          topDescriptionIdFunc = { R.string.setting_post_file_info },
-          setting = ChanSettings.postFileInfo,
-          requiresUiRefresh = true
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
           identifier = AppearanceScreen.PostGroup.PostFileName,
-          topDescriptionIdFunc = { R.string.setting_post_filename },
-          setting = ChanSettings.postFilename,
+          topDescriptionIdFunc = { R.string.setting_post_file_name },
+          setting = ChanSettings.postFileName,
           requiresUiRefresh = true
         )
 

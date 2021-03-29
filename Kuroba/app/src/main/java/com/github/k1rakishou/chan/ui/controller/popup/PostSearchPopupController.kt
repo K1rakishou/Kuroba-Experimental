@@ -226,6 +226,15 @@ class PostSearchPopupController(
       return true
     }
 
+    if (chanPost.postImages.isNotEmpty()) {
+      for (image in chanPost.postImages) {
+        val filename = image.formatFullAvailableFileName()
+        if (filename.contains(query, ignoreCase = true)) {
+          return true
+        }
+      }
+    }
+
     return false
   }
 

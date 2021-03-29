@@ -2,6 +2,7 @@ package com.github.k1rakishou.model.data.post
 
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import okhttp3.HttpUrl
@@ -138,16 +139,20 @@ class ChanPostImage(
     return (AppConstants.RESOURCES_ENDPOINT + "hide_thumb.png").toHttpUrl()
   }
 
-  fun getServerFilenameWithExtension(): String? {
-    if (serverFilename.isNullOrEmpty()) {
-      return null
+  fun formatFullAvailableFileName(): String {
+    var name = filename
+    if (name.isNullOrBlank()) {
+      name = serverFilename
     }
 
-    if (extension.isNullOrEmpty()) {
-      return null
-    }
+    return buildString {
+      append(name)
 
-    return "$serverFilename.$extension"
+      if (extension.isNotNullNorBlank()) {
+        append('.')
+        append(extension)
+      }
+    }
   }
 
   fun formatFullOriginalFileName(): String? {
