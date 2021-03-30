@@ -37,7 +37,7 @@ class DialogFactory(
   fun createSimpleInformationDialog(
     context: Context,
     titleText: String,
-    descriptionText: String? = null,
+    descriptionText: CharSequence? = null,
     onPositiveButtonClickListener: (() -> Unit) = { },
     positiveButtonTextId: Int = R.string.ok,
     onDismissListener: () -> Unit = { },

@@ -246,7 +246,7 @@ class UpdateManager(
       if (commitHash == BuildConfig.COMMIT_HASH) {
         // Same version and commit, no update needed
         if (manual) {
-          dialogFactory.createSimpleConfirmationDialog(
+          dialogFactory.createSimpleInformationDialog(
             context = context,
             titleText = getString(R.string.update_none, getApplicationLabel())
           )
@@ -303,7 +303,7 @@ class UpdateManager(
             Logger.d(TAG, "ReleaseUpdateApiRequest success")
 
             if (!processUpdateApiResponse(response.result, manual) && manual) {
-              dialogFactory.createSimpleConfirmationDialog(
+              dialogFactory.createSimpleInformationDialog(
                 context = context,
                 titleText = getString(R.string.update_none, getApplicationLabel()),
               )
@@ -393,13 +393,12 @@ class UpdateManager(
     BackgroundUtils.ensureMainThread()
 
     // Show dialog because release updates are infrequent so it's fine
-    val text = (
-      "<h3>" + getApplicationLabel() + " was updated to " + BuildConfig.VERSION_NAME + "</h3>"
-    ).parseAsHtml()
+    val text = ("<h3>" + getApplicationLabel() + " was updated to " + BuildConfig.VERSION_NAME + "</h3>")
+      .parseAsHtml()
 
-    dialogFactory.createSimpleConfirmationDialog(
+    dialogFactory.createSimpleInformationDialog(
       context = context,
-      titleTextId = R.string.update_already_updated,
+      titleText = getString(R.string.update_already_updated),
       descriptionText = text
     )
 
@@ -431,10 +430,10 @@ class UpdateManager(
     Logger.e(TAG, "Failed to process $buildTag API call for updating")
 
     if (manual && BackgroundUtils.isInForeground()) {
-      dialogFactory.createSimpleConfirmationDialog(
+      dialogFactory.createSimpleInformationDialog(
         context = context,
-        titleTextId = R.string.update_check_failed,
-        descriptionTextId = R.string.update_install_download_failed_see_logs
+        titleText = getString(R.string.update_check_failed),
+        descriptionText = getString(R.string.update_install_download_failed_see_logs)
       )
     }
   }
@@ -507,9 +506,9 @@ class UpdateManager(
             updateDownloadDialog = null
           }
 
-          dialogFactory.createSimpleConfirmationDialog(
+          dialogFactory.createSimpleInformationDialog(
             context = context,
-            titleTextId = R.string.update_install_download_failed,
+            titleText = getString(R.string.update_install_download_failed),
             descriptionText = description
           )
         }
@@ -528,10 +527,10 @@ class UpdateManager(
             updateDownloadDialog = null
           }
 
-          dialogFactory.createSimpleConfirmationDialog(
+          dialogFactory.createSimpleInformationDialog(
             context = context,
-            titleTextId = R.string.update_install_download_failed,
-            descriptionTextId = R.string.update_install_download_failed_canceled
+            titleText = getString(R.string.update_install_download_failed),
+            descriptionText = getString(R.string.update_install_download_failed_canceled)
           )
         }
       })
