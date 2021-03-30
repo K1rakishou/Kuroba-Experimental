@@ -55,9 +55,10 @@ class ChanFilterManager(
     Logger.d(TAG, "ChanFilterManager.initialize()")
     serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
-    appScope.launch(Dispatchers.Default) {
+    appScope.launch(Dispatchers.IO) {
+      Logger.d(TAG, "loadFiltersInternal() start")
       val time = measureTime { loadFiltersInternal() }
-      Logger.d(TAG, "loadFilters() took ${time}")
+      Logger.d(TAG, "loadFiltersInternal() end, took ${time}")
     }
   }
 
@@ -74,7 +75,7 @@ class ChanFilterManager(
   private suspend fun loadFiltersInternal() {
     val loadFiltersResult = chanFilterRepository.loadAllFilters()
     if (loadFiltersResult is ModularResult.Error) {
-      Logger.e(TAG, "chanFilterRepository.loadAllFilters() error", loadFiltersResult.error)
+      Logger.e(TAG, "loadFiltersInternal() chanFilterRepository.loadAllFilters() error", loadFiltersResult.error)
       suspendableInitializer.initWithError(loadFiltersResult.error)
       return
     }
@@ -90,9 +91,10 @@ class ChanFilterManager(
       }
 
       suspendableInitializer.initWithValue(Unit)
+      Logger.d(TAG, "loadFiltersInternal() done. Loaded ${loadFiltersResult.value.size} filters")
     } catch (error: Throwable) {
-      Logger.e(TAG, "ChanFilterManager initialization error", error)
       suspendableInitializer.initWithError(error)
+      Logger.e(TAG, "loadFiltersInternal() unknown error", error)
     }
 
     filterChangesFlow.tryEmit(FilterEvent.Initialized)

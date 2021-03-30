@@ -50,10 +50,10 @@ open class SiteManager(
   fun initialize() {
     Logger.d(TAG, "SiteManager.initialize()")
 
-    appScope.launch(Dispatchers.Default) {
-      Logger.d(TAG, "loadSites() start")
+    appScope.launch(Dispatchers.IO) {
+      Logger.d(TAG, "loadSitesInternal() start")
       val time = measureTime { loadSitesInternal() }
-      Logger.d(TAG, "loadSites() took ${time}")
+      Logger.d(TAG, "loadSitesInternal() took ${time}")
     }
   }
 
@@ -61,7 +61,7 @@ open class SiteManager(
   private suspend fun loadSitesInternal() {
     val result = siteRepository.initialize(siteRegistry.SITE_CLASSES_MAP.keys)
     if (result is ModularResult.Error) {
-      Logger.e(TAG, "siteRepository.initializeSites() error", result.error)
+      Logger.e(TAG, "siteRepository.initializeSites() siteRepository.initialize() error", result.error)
       suspendableInitializer.initWithError(result.error)
       return
     }
@@ -84,9 +84,11 @@ open class SiteManager(
 
       ensureSitesAndOrdersConsistency()
       suspendableInitializer.initWithValue(Unit)
+
+      Logger.d(TAG, "siteRepository.initializeSites() done. Loaded ${result.value.size} sites")
     } catch (error: Throwable) {
-      Logger.e(TAG, "SiteManager initialization error", error)
       suspendableInitializer.initWithError(error)
+      Logger.e(TAG, "siteRepository.initializeSites() unknown error", error)
     }
   }
 

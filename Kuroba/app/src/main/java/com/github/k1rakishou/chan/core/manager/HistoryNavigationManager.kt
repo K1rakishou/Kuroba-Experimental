@@ -48,51 +48,59 @@ class HistoryNavigationManager(
   @OptIn(ExperimentalTime::class)
   fun initialize() {
     Logger.d(TAG, "HistoryNavigationManager.initialize()")
+    startListeningForAppVisibilityUpdates()
 
     appScope.launch {
-      applicationVisibilityManager.addListener { visibility ->
-        if (!suspendableInitializer.isInitialized()) {
-          return@addListener
+      persistTaskSubject
+        .onBackpressureLatest()
+        .asFlow()
+        .debounce(1.seconds)
+        .collect {
+          persisNavigationStack(eager = false)
+        }
+    }
+
+    appScope.launch(Dispatchers.IO) {
+      Logger.d(TAG, "initializeHistoryNavigationManagerInternal() start")
+      initializeHistoryNavigationManagerInternal()
+      Logger.d(TAG, "initializeHistoryNavigationManagerInternal() end")
+    }
+  }
+
+  private suspend fun initializeHistoryNavigationManagerInternal() {
+    @Suppress("MoveVariableDeclarationIntoWhen")
+    val loadedNavElementsResult = historyNavigationRepository.initialize(MAX_NAV_HISTORY_ENTRIES)
+    when (loadedNavElementsResult) {
+      is ModularResult.Value -> {
+        lock.write {
+          navigationStack.clear()
+          navigationStack.addAll(loadedNavElementsResult.value)
         }
 
-        if (visibility != ApplicationVisibility.Background) {
-          return@addListener
-        }
+        suspendableInitializer.initWithValue(Unit)
+        Logger.d(TAG, "initializeHistoryNavigationManagerInternal() done. " +
+          "Loaded ${loadedNavElementsResult.value.size} history nav elements")
+      }
+      is ModularResult.Error -> {
+        suspendableInitializer.initWithError(loadedNavElementsResult.error)
+        Logger.e(TAG, "initializeHistoryNavigationManagerInternal() error", loadedNavElementsResult.error)
+      }
+    }
 
-        persisNavigationStack(eager = true)
+    navStackChanged()
+  }
+
+  private fun startListeningForAppVisibilityUpdates() {
+    applicationVisibilityManager.addListener { visibility ->
+      if (!suspendableInitializer.isInitialized()) {
+        return@addListener
       }
 
-      appScope.launch {
-        persistTaskSubject
-          .onBackpressureLatest()
-          .asFlow()
-          .debounce(1.seconds)
-          .collect {
-            persisNavigationStack(eager = false)
-          }
+      if (visibility != ApplicationVisibility.Background) {
+        return@addListener
       }
 
-      appScope.launch(Dispatchers.Default) {
-        @Suppress("MoveVariableDeclarationIntoWhen")
-        val loadedNavElementsResult = historyNavigationRepository.initialize(MAX_NAV_HISTORY_ENTRIES)
-        when (loadedNavElementsResult) {
-          is ModularResult.Value -> {
-            lock.write {
-              navigationStack.clear()
-              navigationStack.addAll(loadedNavElementsResult.value)
-            }
-
-            suspendableInitializer.initWithValue(Unit)
-            Logger.d(TAG, "HistoryNavigationManager initialized!")
-          }
-          is ModularResult.Error -> {
-            Logger.e(TAG, "Exception while initializing HistoryNavigationManager", loadedNavElementsResult.error)
-            suspendableInitializer.initWithError(loadedNavElementsResult.error)
-          }
-        }
-
-        navStackChanged()
-      }
+      persisNavigationStack(eager = true)
     }
   }
 

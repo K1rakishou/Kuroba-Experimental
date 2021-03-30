@@ -51,26 +51,32 @@ class ThreadBookmarkGroupManager(
   }
 
   fun initialize() {
-    appScope.launch(Dispatchers.Default) {
-      when (val groupsResult = threadBookmarkGroupEntryRepository.initialize()) {
-        is ModularResult.Value -> {
-          mutex.withLock {
-            groupsByGroupIdMap.clear()
+    Logger.d(TAG, "ThreadBookmarkGroupManager.initialize()")
 
-            groupsResult.value.forEach { threadBookmarkGroup ->
-              groupsByGroupIdMap[threadBookmarkGroup.groupId] = threadBookmarkGroup
-            }
+    appScope.launch(Dispatchers.IO) {
+      Logger.d(TAG, "loadThreadBookmarkGroupsInternal() start")
+      loadThreadBookmarkGroupsInternal()
+      Logger.d(TAG, "loadThreadBookmarkGroupsInternal() end")
+    }
+  }
+
+  private suspend fun loadThreadBookmarkGroupsInternal() {
+    when (val groupsResult = threadBookmarkGroupEntryRepository.initialize()) {
+      is ModularResult.Value -> {
+        mutex.withLock {
+          groupsByGroupIdMap.clear()
+
+          groupsResult.value.forEach { threadBookmarkGroup ->
+            groupsByGroupIdMap[threadBookmarkGroup.groupId] = threadBookmarkGroup
           }
-
-          Logger.d(TAG, "ThreadBookmarkGroupEntryManager initialized! " +
-            "Loaded ${groupsByGroupIdMap.size} total bookmark groups")
-
-          suspendableInitializer.initWithValue(Unit)
         }
-        is ModularResult.Error -> {
-          Logger.e(TAG, "Exception while initializing ThreadBookmarkGroupEntryManager", groupsResult.error)
-          suspendableInitializer.initWithError(groupsResult.error)
-        }
+
+        suspendableInitializer.initWithValue(Unit)
+        Logger.d(TAG, "loadThreadBookmarkGroupsInternal() done. Loaded ${groupsByGroupIdMap.size} bookmark groups")
+      }
+      is ModularResult.Error -> {
+        suspendableInitializer.initWithError(groupsResult.error)
+        Logger.e(TAG, "loadThreadBookmarkGroupsInternal() error", groupsResult.error)
       }
     }
   }

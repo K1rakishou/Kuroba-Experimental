@@ -87,9 +87,7 @@ class UpdateManager(
   private val settingsNotificationManager: SettingsNotificationManager,
   private val fileChooser: FileChooser,
   private val proxiedOkHttpClient: ProxiedOkHttpClient,
-  private val dialogFactory: DialogFactory,
-  private val siteManager: SiteManager,
-  private val boardManager: BoardManager
+  private val dialogFactory: DialogFactory
 ) : CoroutineScope {
 
   private var updateDownloadDialog: ProgressDialog? = null
@@ -112,6 +110,7 @@ class UpdateManager(
    */
   fun autoUpdateCheck() {
     BackgroundUtils.ensureMainThread()
+    Logger.d(TAG, "autoUpdateCheck()")
 
     if (isDevBuild()) {
       Logger.d(TAG, "Updater is disabled for dev builds!")
@@ -141,6 +140,8 @@ class UpdateManager(
   }
 
   fun manualUpdateCheck() {
+    Logger.d(TAG, "manualUpdateCheck()")
+
     if (isDevBuild()) {
       Logger.d(TAG, "Updater is disabled for dev builds!")
       return
@@ -157,21 +158,7 @@ class UpdateManager(
   @Suppress("ConstantConditionIf", "WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   private suspend fun runUpdateApi(manual: Boolean) {
     BackgroundUtils.ensureBackgroundThread()
-
-    if (manual) {
-      if (!siteManager.isReady()) {
-        Logger.d(TAG, "runUpdateApi() siteManager is not ready, exiting")
-        return
-      }
-
-      if (!boardManager.isReady()) {
-        Logger.d(TAG, "runUpdateApi() boardManager is not ready, exiting")
-        return
-      }
-    } else {
-      siteManager.awaitUntilInitialized()
-      boardManager.awaitUntilInitialized()
-    }
+    Logger.d(TAG, "runUpdateApi() manual=$manual")
 
     if (PersistableChanState.hasNewApkUpdate.get()) {
       // If we noticed that there was an apk update on the previous check - show the

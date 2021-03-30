@@ -31,30 +31,28 @@ class FilterWatcherCoordinator(
     Logger.d(TAG, "FilterWatcherCoordinator.initialize()")
 
     appScope.launch {
-      appScope.launch {
-        chanFilterManager.listenForFiltersChanges()
-          .collect { filterEvent -> restartFilterWatcherWithTinyDelay(filterEvent) }
-      }
+      chanFilterManager.listenForFiltersChanges()
+        .collect { filterEvent -> restartFilterWatcherWithTinyDelay(filterEvent) }
+    }
 
-      appScope.launch {
-        ChanSettings.filterWatchEnabled.listenForChanges()
-          .asFlow()
-          .collect { enabled ->
-            if (enabled) {
-              restartFilterWatcherWithTinyDelay(null)
-            } else {
-              stopFilterWatcherWork()
-            }
-          }
-      }
-
-      appScope.launch {
-        ChanSettings.filterWatchInterval.listenForChanges()
-          .asFlow()
-          .collect {
+    appScope.launch {
+      ChanSettings.filterWatchEnabled.listenForChanges()
+        .asFlow()
+        .collect { enabled ->
+          if (enabled) {
             restartFilterWatcherWithTinyDelay(null)
+          } else {
+            stopFilterWatcherWork()
           }
-      }
+        }
+    }
+
+    appScope.launch {
+      ChanSettings.filterWatchInterval.listenForChanges()
+        .asFlow()
+        .collect {
+          restartFilterWatcherWithTinyDelay(null)
+        }
     }
   }
 

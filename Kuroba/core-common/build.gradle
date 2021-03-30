@@ -30,6 +30,8 @@ android {
 }
 
 dependencies {
+    implementation project(':core-logger')
+
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin_version}"
 

@@ -44,9 +44,7 @@ public class ActivityModule {
             SettingsNotificationManager settingsNotificationManager,
             FileChooser fileChooser,
             ProxiedOkHttpClient proxiedOkHttpClient,
-            DialogFactory dialogFactory,
-            SiteManager siteManager,
-            BoardManager boardManager
+            DialogFactory dialogFactory
     ) {
         return new UpdateManager(
                 activity,
@@ -55,9 +53,7 @@ public class ActivityModule {
                 settingsNotificationManager,
                 fileChooser,
                 proxiedOkHttpClient,
-                dialogFactory,
-                siteManager,
-                boardManager
+                dialogFactory
         );
     }
 

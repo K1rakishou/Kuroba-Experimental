@@ -51,10 +51,10 @@ class BoardManager(
   fun initialize() {
     Logger.d(TAG, "BoardManager.initialize()")
 
-    appScope.launch(Dispatchers.Default) {
-      Logger.d(TAG, "loadBoards() start")
+    appScope.launch(Dispatchers.IO) {
+      Logger.d(TAG, "loadBoardsInternal() start")
       val time = measureTime { loadBoardsInternal() }
-      Logger.d(TAG, "loadBoards() took ${time}")
+      Logger.d(TAG, "loadBoardsInternal() took ${time}")
     }
   }
 
@@ -66,7 +66,9 @@ class BoardManager(
       return
     }
 
+    Logger.d(TAG, "loadBoardsInternal() awaitUntilSitesLoaded() start")
     siteRepository.awaitUntilSitesLoaded()
+    Logger.d(TAG, "loadBoardsInternal() awaitUntilSitesLoaded() end")
 
     val loadSitesResult = siteRepository.loadAllSites()
     if (loadSitesResult is ModularResult.Error) {
@@ -105,9 +107,11 @@ class BoardManager(
 
       ensureBoardsAndOrdersConsistency()
       suspendableInitializer.initWithValue(Unit)
+
+      Logger.d(TAG, "loadBoardsInternal() done. Loaded ${loadBoardsResult.value.values.count()} boards")
     } catch (error: Throwable) {
-      Logger.e(TAG, "BoardManager initialization error", error)
       suspendableInitializer.initWithError(error)
+      Logger.e(TAG, "loadBoardsInternal() error", error)
     }
   }
 

@@ -5,6 +5,7 @@ import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
+import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.SuspendableInitializer
 import com.github.k1rakishou.common.data.ArchiveType
@@ -51,12 +52,14 @@ open class ArchivesManager(
   fun initialize() {
     Logger.d(TAG, "ArchivesManager.initialize()")
 
-    applicationScope.launch(Dispatchers.Default) {
-      initArchivesManager()
+    applicationScope.launch(Dispatchers.IO) {
+      Logger.d(TAG, "initializeArchivesManagerInternal() start")
+      initializeArchivesManagerInternal()
+      Logger.d(TAG, "initializeArchivesManagerInternal() end")
     }
   }
 
-  private fun initArchivesManager() {
+  private fun initializeArchivesManagerInternal() {
     val result = Try {
       val allArchives = loadArchives()
 
@@ -86,10 +89,19 @@ open class ArchivesManager(
         allArchiveDescriptors.addAll(archiveDescriptors)
       }
 
-      return@Try
+      return@Try allArchives.size
     }
 
-    suspendableInitializer.initWithModularResult(result)
+    suspendableInitializer.initWithModularResult(result.mapValue { Unit })
+
+    when (result) {
+      is ModularResult.Value -> {
+        Logger.d(TAG, "initializeArchivesManagerInternal() done. Loaded ${result.value} archives")
+      }
+      is ModularResult.Error ->     {
+        Logger.e(TAG, "initializeArchivesManagerInternal() error", result.error)
+      }
+    }
   }
 
   @OptIn(ExperimentalTime::class)

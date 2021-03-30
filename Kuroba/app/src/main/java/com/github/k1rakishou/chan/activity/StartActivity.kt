@@ -86,7 +86,6 @@ import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -138,7 +137,6 @@ class StartActivity : AppCompatActivity(),
   lateinit var startActivityStartupHandlerHelper: StartActivityStartupHandlerHelper
 
   private val stack = Stack<Controller>()
-  private val job = SupervisorJob()
   private val compositeDisposable = CompositeDisposable()
 
   private var intentMismatchWorkaroundActive = false
@@ -207,9 +205,7 @@ class StartActivity : AppCompatActivity(),
     Logger.d(TAG, "onDestroy()")
 
     AppModuleAndroidUtils.cancelLastToast()
-
     compositeDisposable.clear()
-    job.cancel()
 
     if (::themeEngine.isInitialized) {
       themeEngine.removeRootView()

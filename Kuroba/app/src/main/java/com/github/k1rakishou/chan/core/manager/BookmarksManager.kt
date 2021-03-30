@@ -54,51 +54,55 @@ class BookmarksManager(
 
   fun initialize() {
     Logger.d(TAG, "BookmarksManager.initialize()")
+    startListeningForAppVisibilityUpdates()
 
-    appScope.launch {
-      applicationVisibilityManager.addListener { visibility ->
-        if (!suspendableInitializer.isInitialized()) {
-          return@addListener
-        }
+    val allSiteNames = siteRegistry.SITE_CLASSES_MAP.keys
+      .map { siteDescriptor -> siteDescriptor.siteName }
+      .toSet()
 
-        if (visibility != ApplicationVisibility.Background) {
-          return@addListener
-        }
+    appScope.launch(Dispatchers.IO) {
+      Logger.d(TAG, "initializeBookmarksInternal() start")
+      initializeBookmarksInternal(allSiteNames)
+      Logger.d(TAG, "initializeBookmarksInternal() end")
+    }
+  }
 
-        persistBookmarks(eager = true)
+  private fun startListeningForAppVisibilityUpdates() {
+    applicationVisibilityManager.addListener { visibility ->
+      if (!suspendableInitializer.isInitialized()) {
+        return@addListener
       }
 
-      appScope.launch(Dispatchers.Default) {
-        val allSiteNames = siteRegistry.SITE_CLASSES_MAP.keys
-          .map { siteDescriptor -> siteDescriptor.siteName }
-          .toSet()
+      if (visibility != ApplicationVisibility.Background) {
+        return@addListener
+      }
 
-        @Suppress("MoveVariableDeclarationIntoWhen")
-        val bookmarksResult = bookmarksRepository.initialize(allSiteNames)
-        when (bookmarksResult) {
-          is ModularResult.Value -> {
-            lock.write {
-              bookmarks.clear()
+      persistBookmarks(eager = true)
+    }
+  }
 
-              bookmarksResult.value.forEach { threadBookmark ->
-                bookmarks[threadBookmark.threadDescriptor] = threadBookmark
-              }
-            }
+  private suspend fun initializeBookmarksInternal(allSiteNames: Set<String>) {
+    when (val bookmarksResult = bookmarksRepository.initialize(allSiteNames)) {
+      is ModularResult.Value -> {
+        lock.write {
+          bookmarks.clear()
 
-            suspendableInitializer.initWithValue(Unit)
-
-            Logger.d(TAG, "BookmarksManager initialized! Loaded ${bookmarks.size} total " +
-              "bookmarks and ${activeBookmarksCount()} active bookmarks")
-          }
-          is ModularResult.Error -> {
-            Logger.e(TAG, "Exception while initializing BookmarksManager", bookmarksResult.error)
-            suspendableInitializer.initWithError(bookmarksResult.error)
+          bookmarksResult.value.forEach { threadBookmark ->
+            bookmarks[threadBookmark.threadDescriptor] = threadBookmark
           }
         }
 
-        bookmarksChanged(BookmarkChange.BookmarksInitialized)
+        suspendableInitializer.initWithValue(Unit)
+        Logger.d(TAG, "initializeBookmarksInternal() done. Loaded ${bookmarks.size} bookmarks and " +
+          "${activeBookmarksCount()} active bookmarks")
+      }
+      is ModularResult.Error -> {
+        suspendableInitializer.initWithError(bookmarksResult.error)
+        Logger.e(TAG, "initializeBookmarksInternal() error", bookmarksResult.error)
       }
     }
+
+    bookmarksChanged(BookmarkChange.BookmarksInitialized)
   }
 
   fun listenForBookmarksChanges(): Flowable<BookmarkChange> {

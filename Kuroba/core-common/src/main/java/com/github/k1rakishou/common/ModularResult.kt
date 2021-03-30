@@ -32,6 +32,7 @@ sealed class ModularResult<V : Any?> {
   }
 
   fun isValue(): Boolean = this is Value
+  fun isError(): Boolean = this is Error
 
   fun valueOrNull(): V? {
     if (this is Value) {
