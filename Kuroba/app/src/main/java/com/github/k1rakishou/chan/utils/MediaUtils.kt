@@ -403,18 +403,15 @@ object MediaUtils {
       val hasAudio = "yes" == audioMetaResult
 
       if (hasAudio && frameBitmap != null && addAudioIcon) {
-        val audioIconBitmapWidth = (maxWidth / 5).coerceAtLeast(dp(32f))
-        val audioIconBitmapHeight = (maxHeight / 5).coerceAtLeast(dp(32f))
+        val newWidth = min(frameBitmap.width, maxWidth)
+        val newHeight = min(frameBitmap.height, maxHeight)
+        val audioIconBitmapSize = ((Math.min(newWidth, newHeight)) / 4).coerceAtLeast(dp(32f))
 
         val audioIconBitmap = AppCompatResources.getDrawable(
           context,
           R.drawable.ic_volume_up_white_24dp
-        )
-          ?.toBitmap(audioIconBitmapWidth, audioIconBitmapHeight)
+        )?.toBitmap(audioIconBitmapSize, audioIconBitmapSize)
           ?: return null
-
-        val newWidth = min(frameBitmap.width, maxWidth)
-        val newHeight = min(frameBitmap.height, maxHeight)
 
         try {
           result = Bitmap.createBitmap(
@@ -428,8 +425,8 @@ object MediaUtils {
 
           canvas.drawBitmap(
             audioIconBitmap,
-            (newWidth - audioIconBitmap.width).toFloat() / 2f,
-            (newHeight - audioIconBitmap.height).toFloat() / 2f,
+            (newWidth - audioIconBitmapSize).toFloat() / 2f,
+            (newHeight - audioIconBitmapSize).toFloat() / 2f,
             null
           )
         } finally {
@@ -453,8 +450,6 @@ object MediaUtils {
     } finally {
       metadataRetriever.release()
     }
-
-    check(!(result != null && result.isRecycled)) { "Result bitmap is already recycled!" }
 
     return result?.let { BitmapDrawable(context.resources, it) }
   }
