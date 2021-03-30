@@ -63,8 +63,7 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
       return
     }
 
-    logInternal("SuspendableInitializer awaitUntilInitialized() " +
-      "called when not initialized, awaiting... (stacktrace=${Throwable().stackTraceToString()})")
+    logInternal("SuspendableInitializer awaitUntilInitialized() called when not initialized, awaiting...")
 
     val startTime = System.currentTimeMillis()
     withContext(NonCancellable) { value.await() }

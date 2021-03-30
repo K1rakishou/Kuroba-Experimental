@@ -6,7 +6,6 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.RoomWarnings
-import androidx.room.Transaction
 import androidx.room.Update
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkEntity
@@ -39,7 +38,6 @@ abstract class ThreadBookmarkDao {
   abstract suspend fun selectManyThreadBookmarkIdPairs(ownerThreadIds: Collection<Long>): List<ThreadBookmarkIdPairDatabaseObject>
 
   @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
-  @Transaction
   @Query("""
     SELECT * 
     FROM ${ThreadBookmarkEntity.TABLE_NAME} bookmarks
@@ -76,7 +74,6 @@ abstract class ThreadBookmarkDao {
     threadBookmarkDatabaseIds: Set<Long>
   ): List<ThreadBookmarkDescriptorDatabaseObject>
 
-  @Transaction
   open suspend fun insertOrUpdateMany(threadBookmarkEntities: Collection<ThreadBookmarkEntity>) {
     val alreadyInsertedIdsMap = selectManyIds(
       threadBookmarkEntities.map { threadBookmarkEntity -> threadBookmarkEntity.ownerThreadId }

@@ -79,7 +79,6 @@ abstract class ChanBoardDao {
   abstract suspend fun selectBoardDatabaseId(siteName: String, boardCode: String): Long?
 
   @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
-  @Transaction
   @Query("""
     SELECT *
     FROM ${ChanBoardIdEntity.TABLE_NAME} cbie
