@@ -59,14 +59,14 @@ open class SiteManager(
 
   @OptIn(ExperimentalTime::class)
   private suspend fun loadSitesInternal() {
-    val result = siteRepository.initialize(siteRegistry.SITE_CLASSES_MAP.keys)
-    if (result is ModularResult.Error) {
-      Logger.e(TAG, "siteRepository.initializeSites() siteRepository.initialize() error", result.error)
-      suspendableInitializer.initWithError(result.error)
-      return
-    }
-
     try {
+      val result = siteRepository.initialize(siteRegistry.SITE_CLASSES_MAP.keys)
+      if (result is ModularResult.Error) {
+        Logger.e(TAG, "siteRepository.initializeSites() siteRepository.initialize() error", result.error)
+        suspendableInitializer.initWithError(result.error)
+        return
+      }
+
       result as ModularResult.Value
 
       lock.write {

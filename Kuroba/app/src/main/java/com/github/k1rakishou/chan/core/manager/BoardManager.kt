@@ -59,25 +59,25 @@ class BoardManager(
   }
 
   private suspend fun loadBoardsInternal() {
-    val loadBoardsResult = boardRepository.loadAllBoards()
-    if (loadBoardsResult is ModularResult.Error) {
-      Logger.e(TAG, "boardRepository.loadAllBoards() error", loadBoardsResult.error)
-      suspendableInitializer.initWithError(loadBoardsResult.error)
-      return
-    }
-
-    Logger.d(TAG, "loadBoardsInternal() awaitUntilSitesLoaded() start")
-    siteRepository.awaitUntilSitesLoaded()
-    Logger.d(TAG, "loadBoardsInternal() awaitUntilSitesLoaded() end")
-
-    val loadSitesResult = siteRepository.loadAllSites()
-    if (loadSitesResult is ModularResult.Error) {
-      Logger.e(TAG, "siteRepository.loadAllSites() error", loadSitesResult.error)
-      suspendableInitializer.initWithError(loadSitesResult.error)
-      return
-    }
-
     try {
+      Logger.d(TAG, "loadBoardsInternal() awaitUntilSitesLoaded() start")
+      siteRepository.awaitUntilSitesLoaded()
+      Logger.d(TAG, "loadBoardsInternal() awaitUntilSitesLoaded() end")
+
+      val loadSitesResult = siteRepository.loadAllSites()
+      if (loadSitesResult is ModularResult.Error) {
+        Logger.e(TAG, "loadBoardsInternal() siteRepository.loadAllSites() error", loadSitesResult.error)
+        suspendableInitializer.initWithError(loadSitesResult.error)
+        return
+      }
+
+      val loadBoardsResult = boardRepository.loadAllBoards()
+      if (loadBoardsResult is ModularResult.Error) {
+        Logger.e(TAG, "boardRepository.loadAllBoards() error", loadBoardsResult.error)
+        suspendableInitializer.initWithError(loadBoardsResult.error)
+        return
+      }
+
       loadBoardsResult as ModularResult.Value
       loadSitesResult as ModularResult.Value
 
@@ -108,7 +108,8 @@ class BoardManager(
       ensureBoardsAndOrdersConsistency()
       suspendableInitializer.initWithValue(Unit)
 
-      Logger.d(TAG, "loadBoardsInternal() done. Loaded ${loadBoardsResult.value.values.count()} boards")
+      val totalLoadedBoards = loadBoardsResult.value.values.sumBy { siteBoards -> siteBoards.size }
+      Logger.d(TAG, "loadBoardsInternal() done. Loaded ${totalLoadedBoards} boards")
     } catch (error: Throwable) {
       suspendableInitializer.initWithError(error)
       Logger.e(TAG, "loadBoardsInternal() error", error)

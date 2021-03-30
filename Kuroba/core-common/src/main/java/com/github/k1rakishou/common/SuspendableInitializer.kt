@@ -18,35 +18,36 @@ import kotlin.time.ExperimentalTime
  * */
 class SuspendableInitializer<T> @JvmOverloads constructor(
   private val tag: String,
+  private val enabledLogs: Boolean = true,
   private val value: CompletableDeferred<T> = CompletableDeferred()
 ) {
   private val error = AtomicReference<Throwable>(null)
 
   fun initWithValue(newValue: T) {
-    Logger.d(tag, "SuspendableInitializer initWithValue() called")
+    logInternal("SuspendableInitializer initWithValue() called")
 
     if (!value.complete(newValue)) {
-      Logger.d(tag, "SuspendableInitializer initWithValue() already completed, exiting")
+      logInternal("SuspendableInitializer initWithValue() already completed, exiting")
       return
     }
 
-    Logger.d(tag, "SuspendableInitializer initWithValue() done")
+    logInternal("SuspendableInitializer initWithValue() done")
   }
 
   fun initWithError(exception: Throwable) {
-    Logger.e(tag, "SuspendableInitializer initWithError() called")
+    logErrorInternal("SuspendableInitializer initWithError() called")
     error.set(exception)
 
     if (!value.completeExceptionally(exception)) {
-      Logger.e(tag, "SuspendableInitializer initWithError() already completed, exiting")
+      logErrorInternal("SuspendableInitializer initWithError() already completed, exiting")
       return
     }
 
-    Logger.e(tag, "SuspendableInitializer initWithError() done")
+    logErrorInternal("SuspendableInitializer initWithError() done")
   }
 
   fun initWithModularResult(modularResult: ModularResult<T>) {
-    Logger.d(tag, "SuspendableInitializer initWithModularResult() called")
+    logInternal("SuspendableInitializer initWithModularResult() called")
 
     when (modularResult) {
       is ModularResult.Value -> initWithValue(modularResult.value)
@@ -62,14 +63,14 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
       return
     }
 
-    Logger.d(tag, "SuspendableInitializer awaitUntilInitialized() " +
+    logInternal("SuspendableInitializer awaitUntilInitialized() " +
       "called when not initialized, awaiting... (stacktrace=${Throwable().stackTraceToString()})")
 
     val startTime = System.currentTimeMillis()
     withContext(NonCancellable) { value.await() }
     val diffTime = System.currentTimeMillis() - startTime
 
-    Logger.d(tag, "SuspendableInitializer awaitUntilInitialized() called when not initialized, " +
+    logInternal("SuspendableInitializer awaitUntilInitialized() called when not initialized, " +
       "done (diffTime=${diffTime}ms)")
 
     return
@@ -90,7 +91,7 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
       return value.getCompleted()
     }
 
-    Logger.d(tag, "SuspendableInitializer get() called when not initialized, awaiting...")
+    logInternal("SuspendableInitializer get() called when not initialized, awaiting...")
     return value.await()
   }
 
@@ -100,7 +101,19 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
       return value.getCompleted()
     }
 
-    Logger.d(tag, "SuspendableInitializer getOrNull() called when not initialized, returning null")
+    logInternal("SuspendableInitializer getOrNull() called when not initialized, returning null")
     return null
+  }
+
+  private fun logInternal(message: String) {
+    if (enabledLogs) {
+      Logger.d(tag, message)
+    }
+  }
+
+  private fun logErrorInternal(message: String) {
+    if (enabledLogs) {
+      Logger.e(tag, message)
+    }
   }
 }

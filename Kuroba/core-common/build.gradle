@@ -44,4 +44,5 @@ dependencies {
 
     implementation "com.google.code.findbugs:jsr305:3.0.2"
     testImplementation "junit:junit:${versions.junit}"
+    testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:${versions.kotlin_coroutines_version}"
 }

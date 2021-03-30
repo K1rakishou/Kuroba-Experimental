@@ -31,7 +31,8 @@ class BoardRepository(
           return@measureTimedValue localSource.selectAllBoards()
         }
 
-        Logger.d(TAG, "loadAllBoards() -> ${boards.size} took $duration")
+        val totalLoadedBoards = boards.values.sumBy { siteBoards -> siteBoards.size }
+        Logger.d(TAG, "loadAllBoards() -> ${totalLoadedBoards} took $duration")
         return@tryWithTransaction boards
       }
     }

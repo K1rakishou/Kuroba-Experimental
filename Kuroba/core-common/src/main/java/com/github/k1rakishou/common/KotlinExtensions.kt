@@ -19,11 +19,11 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -44,7 +44,6 @@ import kotlin.collections.LinkedHashMap
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -207,10 +206,10 @@ public val <T> List<T>.lastIndexOrNull: Int?
 
 @Suppress("RedundantAsync")
 suspend fun <T> CoroutineScope.myAsync(
-  context: CoroutineContext = EmptyCoroutineContext,
+  context: CoroutineContext = Dispatchers.Default,
   func: suspend () -> T
 ): T {
-  return supervisorScope {
+  return coroutineScope {
     async(context = context) { func() }.await()
   }
 }

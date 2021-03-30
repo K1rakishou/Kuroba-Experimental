@@ -77,11 +77,11 @@ import com.github.k1rakishou.model.di.NetworkModule
 import com.github.k1rakishou.persist_state.PersistableChanState
 import io.reactivex.exceptions.UndeliverableException
 import io.reactivex.plugins.RxJavaPlugins
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancelChildren
 import okhttp3.Dns
 import okhttp3.Protocol
 import org.greenrobot.eventbus.EventBus
@@ -95,9 +95,13 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   private var activityForegroundCounter = 0
 
   private val job = SupervisorJob(null)
-  private var applicationScope: CoroutineScope? = null
+  private lateinit var applicationScope: CoroutineScope
 
-  private val tagPrefix by lazy { AndroidUtils.getApplicationLabel().toString() + " | " }
+  private val coroutineExceptionHandler = CoroutineExceptionHandler { _, exception ->
+    onUnhandledException(exception, exceptionToString(UnhandlerExceptionHandlerType.Coroutines, exception))
+  }
+
+  private val tagPrefix by lazy { getApplicationLabel().toString() + " | " }
 
   @Inject
   lateinit var siteManager: SiteManager
@@ -186,9 +190,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
   private fun onCreateInternal() {
     registerActivityLifecycleCallbacks(this)
-
-    job.cancelChildren()
-    applicationScope = CoroutineScope(job + Dispatchers.Main + CoroutineName("Chan"))
+    applicationScope = CoroutineScope(job + Dispatchers.Main + CoroutineName("Chan") + coroutineExceptionHandler)
 
     val isDev = isDevBuild()
     val flavorType = AppModuleAndroidUtils.getFlavorType()
@@ -236,22 +238,22 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     val imageSaverFileManagerWrapper =  provideImageSaverFileManagerWrapper()
 
     val themeEngine = ThemesModuleInjector.build(
-      this,
-      applicationScope!!,
-      fileManager
+      application = this,
+      scope = applicationScope,
+      fileManager = fileManager
     ).getThemeEngine()
 
     themeEngine.initialize(this)
     SpannableModuleInjector.initialize(themeEngine)
 
     val modelComponent = ModelModuleInjector.build(
-      this,
-      applicationScope!!,
-      okHttpDns,
-      NetworkModule.OkHttpProtocolList(okHttpProtocols.protocols),
-      ChanSettings.verboseLogs.get(),
-      isDev,
-      appConstants
+      application = this,
+      scope = applicationScope,
+      dns = okHttpDns,
+      protocols = NetworkModule.OkHttpProtocolList(okHttpProtocols.protocols),
+      verboseLogs = ChanSettings.verboseLogs.get(),
+      isDevFlavor = isDev,
+      appConstants = appConstants
     )
 
     // We need to start initializing ChanPostRepository first because it deletes old posts during
@@ -364,13 +366,13 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       }
 
       Logger.e(TAG, "RxJava undeliverable exception", error)
-      onUnhandledException(error, exceptionToString(true, error))
+      onUnhandledException(error, exceptionToString(UnhandlerExceptionHandlerType.RxJava, error))
     }
 
     Thread.setDefaultUncaughtExceptionHandler { _, e ->
       // if there's any uncaught crash stuff, just dump them to the log and exit immediately
       Logger.e(TAG, "Unhandled exception", e)
-      onUnhandledException(e, exceptionToString(false, e))
+      onUnhandledException(e, exceptionToString(UnhandlerExceptionHandlerType.Normal, e))
       exitProcess(999)
     }
   }
@@ -385,17 +387,23 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     Logger.d(TAG, "kurobaExUserAgent = " + appConstants.kurobaExUserAgent)
   }
 
-  private fun exceptionToString(isCalledFromRxJavaHandler: Boolean, e: Throwable): String {
+  private fun exceptionToString(type: UnhandlerExceptionHandlerType, e: Throwable): String {
     try {
       StringWriter().use { sw ->
         PrintWriter(sw).use { pw ->
           e.printStackTrace(pw)
           val stackTrace = sw.toString()
 
-          return if (isCalledFromRxJavaHandler) {
-            "Called from RxJava onError handler.\n$stackTrace"
-          } else {
-            "Called from unhandled exception handler.\n$stackTrace"
+          return when (type) {
+            UnhandlerExceptionHandlerType.Normal -> {
+              "Called from unhandled exception handler.\n$stackTrace"
+            }
+            UnhandlerExceptionHandlerType.RxJava -> {
+              "Called from RxJava onError handler.\n$stackTrace"
+            }
+            UnhandlerExceptionHandlerType.Coroutines -> {
+              "Called from Coroutines exception handler.\n$stackTrace"
+            }
           }
         }
       }
@@ -513,6 +521,12 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     )
 
     return ImageSaverFileManagerWrapper(fileManager)
+  }
+
+  private enum class UnhandlerExceptionHandlerType {
+    Normal,
+    RxJava,
+    Coroutines
   }
 
   override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
