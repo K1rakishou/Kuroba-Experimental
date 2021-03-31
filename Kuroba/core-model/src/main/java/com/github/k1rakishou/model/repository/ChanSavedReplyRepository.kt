@@ -1,7 +1,6 @@
 package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -18,24 +17,24 @@ class ChanSavedReplyRepository(
   // TODO(KurobaEx): remove old saved replies after some time
 
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): ModularResult<List<ChanSavedReply>> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction localSource.preloadForThread(threadDescriptor)
       }
     }
   }
 
   suspend fun unsavePost(postDescriptor: PostDescriptor): ModularResult<Unit> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction localSource.unsavePost(postDescriptor)
       }
     }
   }
 
   suspend fun savePost(chanSavedReply: ChanSavedReply): ModularResult<Unit> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction localSource.savePost(chanSavedReply)
       }
     }

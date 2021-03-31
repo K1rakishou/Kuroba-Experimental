@@ -29,6 +29,7 @@ import java.io.File
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.URI
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Suppress("BlockingMethodInNonBlockingContext")
@@ -47,6 +48,8 @@ class ProxyStorage(
   // ProxyStorage is dirty when the user has added/update or removed a proxy(ies) and haven't
   // restarted the app yet
   private val isProxyStorageDirty = AtomicBoolean(false)
+
+  private val dependenciesInitialized = AtomicBoolean(false)
 
   @GuardedBy("this")
   private val proxiesMap = mutableMapOf<SiteDescriptor, MutableSet<ProxyKey>>()
@@ -74,6 +77,7 @@ class ProxyStorage(
 
   fun getProxyByUri(uri: URI, proxyActionType: ProxyActionType): List<Proxy> {
     loadProxies()
+    awaitBlockingUntilDependenciesAreInitialized()
 
     val siteDescriptor = siteResolver.findSiteForUrl(uri.host.toString())?.siteDescriptor()
     if (siteDescriptor == null) {
@@ -230,6 +234,18 @@ class ProxyStorage(
     } catch (error: Throwable) {
       Logger.e(TAG, "loadProxies() error", error)
     }
+  }
+
+  private fun awaitBlockingUntilDependenciesAreInitialized() {
+    if (dependenciesInitialized.get()) {
+      return
+    }
+
+    val countDownLatch = CountDownLatch(1)
+    siteResolver.runWhenInitialized { countDownLatch.countDown() }
+    countDownLatch.await()
+
+    dependenciesInitialized.set(true)
   }
 
   private suspend fun saveProxiesInternal(): ModularResult<Boolean> {

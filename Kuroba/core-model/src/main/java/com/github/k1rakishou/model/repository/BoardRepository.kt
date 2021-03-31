@@ -1,7 +1,6 @@
 package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.board.ChanBoard
@@ -23,8 +22,8 @@ class BoardRepository(
 
   @OptIn(ExperimentalTime::class)
   suspend fun loadAllBoards(): ModularResult<Map<SiteDescriptor, List<ChanBoard>>> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         ensureBackgroundThread()
 
         val (boards, duration) = measureTimedValue {
@@ -43,8 +42,8 @@ class BoardRepository(
     boardDescriptors: Collection<BoardDescriptor>,
     activate: Boolean
   ): ModularResult<Boolean> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction localSource.activateDeactivateBoards(
           siteDescriptor,
           boardDescriptors,
@@ -60,8 +59,8 @@ class BoardRepository(
       return ModularResult.value(Unit)
     }
 
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         val time = measureTime { localSource.persist(boardsOrdered) }
 
         val boardsCountTotal = boardsOrdered.values.sumBy { boards -> boards.size }

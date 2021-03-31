@@ -26,6 +26,10 @@ open class SiteResolver @Inject constructor(
   private val siteManager: SiteManager
 ) {
 
+  fun runWhenInitialized(func: (Throwable?) -> Unit) {
+    siteManager.runWhenInitialized(func)
+  }
+
   open fun findSiteForUrl(url: String): Site? {
     var httpUrl = sanitizeUrl(url)
 
@@ -56,41 +60,6 @@ open class SiteResolver @Inject constructor(
 
       return@firstActiveSiteOrNull false
     }
-  }
-
-  fun resolveSiteForUrl(url: String): SiteResolverResult {
-    val siteUrlHandlers: List<SiteUrlHandler> = SiteRegistry.URL_HANDLERS
-    var httpUrl = sanitizeUrl(url)
-
-    if (httpUrl == null) {
-      for (siteUrlHandler in siteUrlHandlers) {
-        if (siteUrlHandler.matchesName(url)) {
-          return SiteResolverResult(
-            SiteResolverResult.Match.BUILTIN,
-            siteUrlHandler.getSiteClass(),
-            null
-          )
-        }
-      }
-
-      return SiteResolverResult(SiteResolverResult.Match.NONE, null, null)
-    }
-
-    if (httpUrl.scheme != "https") {
-      httpUrl = httpUrl.newBuilder().scheme("https").build()
-    }
-
-    for (siteUrlHandler in siteUrlHandlers) {
-      if (siteUrlHandler.respondsTo(httpUrl)) {
-        return SiteResolverResult(
-          SiteResolverResult.Match.BUILTIN,
-          siteUrlHandler.getSiteClass(),
-          null
-        )
-      }
-    }
-
-    return SiteResolverResult(SiteResolverResult.Match.EXTERNAL, null, httpUrl)
   }
 
   fun resolveChanDescriptorForUrl(url: String): ChanDescriptorResult? {
@@ -132,18 +101,6 @@ open class SiteResolver @Inject constructor(
     }
 
     return httpUrl
-  }
-
-  class SiteResolverResult(
-    val match: Match,
-    val builtinResult: Class<out Site>?,
-    val externalResult: HttpUrl?
-  ) {
-    enum class Match {
-      NONE,
-      BUILTIN,
-      EXTERNAL
-    }
   }
 
   class ChanDescriptorResult {

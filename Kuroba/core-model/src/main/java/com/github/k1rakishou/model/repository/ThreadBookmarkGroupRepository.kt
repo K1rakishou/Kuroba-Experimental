@@ -1,7 +1,6 @@
 package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.bookmark.CreateBookmarkGroupEntriesTransaction
@@ -22,8 +21,8 @@ class ThreadBookmarkGroupRepository(
 
   @OptIn(ExperimentalTime::class)
   suspend fun initialize(): ModularResult<List<ThreadBookmarkGroup>> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         ensureBackgroundThread()
 
         val (bookmarks, duration) = measureTimedValue {
@@ -39,32 +38,32 @@ class ThreadBookmarkGroupRepository(
   }
 
   suspend fun updateBookmarkGroupExpanded(groupId: String, isExpanded: Boolean): ModularResult<Unit> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         localSource.updateBookmarkGroupExpanded(groupId, isExpanded)
       }
     }
   }
 
   suspend fun executeCreateTransaction(createTransaction: CreateBookmarkGroupEntriesTransaction): ModularResult<Unit> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         localSource.executeCreateTransaction(createTransaction)
       }
     }
   }
 
   suspend fun executeDeleteTransaction(deleteTransaction: DeleteBookmarkGroupEntriesTransaction): ModularResult<Unit> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         localSource.executeDeleteTransaction(deleteTransaction)
       }
     }
   }
 
   suspend fun updateGroup(group: ThreadBookmarkGroup): ModularResult<Unit> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         localSource.updateGroup(group)
       }
     }

@@ -1,7 +1,6 @@
 package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.media.GenericVideoId
 import com.github.k1rakishou.model.data.video_service.MediaServiceLinkExtraContent
@@ -31,8 +30,8 @@ class MediaServiceLinkExtraContentRepository(
     ensureBackgroundThread()
     val mediaServiceKey = MediaServiceKey(videoId, mediaServiceType)
 
-    return applicationScope.myAsync {
-      return@myAsync repoGenericGetAction(
+    return applicationScope.dbCall {
+      return@dbCall repoGenericGetAction(
         fileUrl = requestUrl,
         cleanupFunc = { mediaServiceLinkExtraContentRepositoryCleanup().ignore() },
         getFromCacheFunc = { cache.get(mediaServiceKey) },
@@ -79,8 +78,8 @@ class MediaServiceLinkExtraContentRepository(
     ensureBackgroundThread()
     val mediaServiceKey = MediaServiceKey(videoId, mediaServiceType)
 
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         val hasInCache = cache.contains(mediaServiceKey)
         if (hasInCache) {
           return@tryWithTransaction true
@@ -97,24 +96,24 @@ class MediaServiceLinkExtraContentRepository(
   }
 
   suspend fun deleteAll(): ModularResult<Int> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction mediaServiceLinkExtraContentLocalSource.deleteAll()
       }
     }
   }
 
   suspend fun count(): ModularResult<Int> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction mediaServiceLinkExtraContentLocalSource.count()
       }
     }
   }
 
   private suspend fun mediaServiceLinkExtraContentRepositoryCleanup(): ModularResult<Int> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         if (!alreadyExecuted.compareAndSet(false, true)) {
           return@tryWithTransaction 0
         }

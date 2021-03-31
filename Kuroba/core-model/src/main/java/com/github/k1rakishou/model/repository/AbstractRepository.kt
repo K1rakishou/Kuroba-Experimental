@@ -6,16 +6,33 @@ import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ObsoleteCoroutinesApi
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import java.util.concurrent.Executors
 
 abstract class AbstractRepository(
   private val database: KurobaDatabase
 ) {
+  @OptIn(ObsoleteCoroutinesApi::class)
+  private val dbDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
   protected suspend fun <T> tryWithTransaction(func: suspend () -> T): ModularResult<T> {
     return Try { database.withTransaction(func) }
   }
 
   protected fun isInTransaction() = database.inTransaction()
+
+  @Suppress("RedundantAsync")
+  protected suspend fun <T> CoroutineScope.dbCall(
+    func: suspend () -> T
+  ): T {
+    return coroutineScope {
+      async(context = dbDispatcher) { func() }.await()
+    }
+  }
 
   /**
    * An implementation of a function that first checks whether an in-memory cache has a value, if

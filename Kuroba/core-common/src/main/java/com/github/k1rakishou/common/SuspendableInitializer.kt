@@ -1,5 +1,6 @@
 package com.github.k1rakishou.common
 
+import androidx.annotation.GuardedBy
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -23,6 +24,9 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
 ) {
   private val error = AtomicReference<Throwable>(null)
 
+  @GuardedBy("itself")
+  private val waiters = ArrayList<(Throwable?) -> Unit>()
+
   fun initWithValue(newValue: T) {
     logInternal("SuspendableInitializer initWithValue() called")
 
@@ -31,6 +35,7 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
       return
     }
 
+    notifyAllWaiters()
     logInternal("SuspendableInitializer initWithValue() done")
   }
 
@@ -43,6 +48,7 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
       return
     }
 
+    notifyAllWaiters(exception)
     logErrorInternal("SuspendableInitializer initWithError() done")
   }
 
@@ -58,6 +64,7 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
   @OptIn(ExperimentalTime::class)
   suspend fun awaitUntilInitialized() {
     if (value.isCompleted) {
+      notifyAllWaiters()
       // This will throw if it was initialized with an error
       value.getCompleted()
       return
@@ -102,6 +109,30 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
 
     logInternal("SuspendableInitializer getOrNull() called when not initialized, returning null")
     return null
+  }
+
+  fun runWhenInitialized(func: (Throwable?) -> Unit) {
+    if (isInitialized()) {
+      func(null)
+      notifyAllWaiters(null)
+      return
+    }
+
+    synchronized(this) {
+      waiters += func
+    }
+  }
+
+  private fun notifyAllWaiters(throwable: Throwable? = null) {
+    val waitersCopy = synchronized(waiters) {
+      logInternal("notifyAllWaiters throwable==null: ${throwable == null}, waiters=${waiters.size}")
+      val copy = ArrayList(waiters)
+      waiters.clear()
+
+      return@synchronized copy
+    }
+
+    waitersCopy.forEach { waiter -> waiter.invoke(throwable) }
   }
 
   private fun logInternal(message: String) {

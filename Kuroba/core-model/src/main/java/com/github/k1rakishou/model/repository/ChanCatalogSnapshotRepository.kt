@@ -3,7 +3,6 @@ package com.github.k1rakishou.model.repository
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.hashSetWithCap
-import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.catalog.ChanCatalogSnapshot
@@ -36,8 +35,8 @@ class ChanCatalogSnapshotRepository(
       return ModularResult.value(Unit)
     }
 
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
 
         if (verboseLogsEnabled) {
           Logger.d(TAG, "preloadChanCatalogSnapshot($catalogDescriptor) begin")
@@ -66,8 +65,8 @@ class ChanCatalogSnapshotRepository(
   ): ModularResult<Unit> {
     Logger.d(TAG, "storeChanCatalogSnapshot($chanCatalogSnapshot)")
 
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction localSource.storeChanCatalogSnapshot(chanCatalogSnapshot)
       }
     }

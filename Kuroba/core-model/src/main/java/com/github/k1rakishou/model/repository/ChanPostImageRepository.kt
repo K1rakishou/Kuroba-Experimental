@@ -1,7 +1,6 @@
 package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.source.local.ChanPostImageLocalSource
@@ -22,8 +21,8 @@ class ChanPostImageRepository(
   }
 
   suspend fun selectPostImagesByUrls(imagesUrls: Collection<HttpUrl>): ModularResult<List<ChanPostImage>> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction chanPostImageLocalSource.selectPostImagesByUrls(imagesUrls)
       }
     }

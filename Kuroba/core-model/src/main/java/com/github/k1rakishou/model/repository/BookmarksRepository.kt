@@ -1,7 +1,6 @@
 package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmark
@@ -20,8 +19,8 @@ class BookmarksRepository(
 
   @OptIn(ExperimentalTime::class)
   suspend fun initialize(allSiteNames: Set<String>): ModularResult<List<ThreadBookmark>> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         ensureBackgroundThread()
 
         val (bookmarks, duration) = measureTimedValue {
@@ -38,8 +37,8 @@ class BookmarksRepository(
 
   @OptIn(ExperimentalTime::class)
   suspend fun persist(bookmarks: List<ThreadBookmark>): ModularResult<Unit> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         val (result, duration) = measureTimedValue {
           return@measureTimedValue localSource.persist(bookmarks)
         }

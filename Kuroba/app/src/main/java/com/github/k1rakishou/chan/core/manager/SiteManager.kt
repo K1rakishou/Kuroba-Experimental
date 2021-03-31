@@ -335,6 +335,10 @@ open class SiteManager(
     sitesChanged()
   }
 
+  fun runWhenInitialized(func: (Throwable?) -> Unit) {
+    suspendableInitializer.runWhenInitialized(func)
+  }
+
   @OptIn(ExperimentalTime::class)
   open suspend fun awaitUntilInitialized() {
     if (isReady()) {

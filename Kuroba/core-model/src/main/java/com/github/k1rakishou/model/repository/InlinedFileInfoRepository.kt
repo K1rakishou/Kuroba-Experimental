@@ -1,7 +1,6 @@
 package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.InlinedFileInfo
 import com.github.k1rakishou.model.source.cache.GenericSuspendableCacheSource
@@ -21,8 +20,8 @@ class InlinedFileInfoRepository(
   private val alreadyExecuted = AtomicBoolean(false)
 
   suspend fun getInlinedFileInfo(fileUrl: String): ModularResult<InlinedFileInfo> {
-    return applicationScope.myAsync {
-      return@myAsync repoGenericGetAction(
+    return applicationScope.dbCall {
+      return@dbCall repoGenericGetAction(
         fileUrl = fileUrl,
         cleanupFunc = { inlinedFileInfoRepositoryCleanup().ignore() },
         getFromCacheFunc = { cache.get(fileUrl) },
@@ -40,8 +39,8 @@ class InlinedFileInfoRepository(
   }
 
   suspend fun isCached(fileUrl: String): ModularResult<Boolean> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         val hasInCache = cache.contains(fileUrl)
         if (hasInCache) {
           return@tryWithTransaction true
@@ -53,24 +52,24 @@ class InlinedFileInfoRepository(
   }
 
   suspend fun count(): ModularResult<Int> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction inlinedFileInfoLocalSource.count()
       }
     }
   }
 
   suspend fun deleteAll(): ModularResult<Int> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction inlinedFileInfoLocalSource.deleteAll()
       }
     }
   }
 
   private suspend fun inlinedFileInfoRepositoryCleanup(): ModularResult<Int> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         if (!alreadyExecuted.compareAndSet(false, true)) {
           return@tryWithTransaction 0
         }

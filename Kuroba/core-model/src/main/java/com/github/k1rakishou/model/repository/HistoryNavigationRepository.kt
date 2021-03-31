@@ -1,7 +1,6 @@
 package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.navigation.NavHistoryElement
@@ -20,8 +19,8 @@ class HistoryNavigationRepository(
 
   @OptIn(ExperimentalTime::class)
   suspend fun initialize(maxCount: Int): ModularResult<List<NavHistoryElement>> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         ensureBackgroundThread()
 
         val (navHistoryStack, duration) = measureTimedValue {
@@ -36,8 +35,8 @@ class HistoryNavigationRepository(
 
   @OptIn(ExperimentalTime::class)
   suspend fun persist(navHistoryStack: List<NavHistoryElement>): ModularResult<Unit> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         val (result, duration) = measureTimedValue {
           return@measureTimedValue localSource.persist(navHistoryStack)
         }

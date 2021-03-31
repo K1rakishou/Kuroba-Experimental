@@ -17,11 +17,8 @@ import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -43,7 +40,6 @@ import kotlin.collections.HashMap
 import kotlin.collections.LinkedHashMap
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -203,16 +199,6 @@ public val <T> List<T>.lastIndexOrNull: Int?
 
     return this.size - 1
   }
-
-@Suppress("RedundantAsync")
-suspend fun <T> CoroutineScope.myAsync(
-  context: CoroutineContext = Dispatchers.Default,
-  func: suspend () -> T
-): T {
-  return coroutineScope {
-    async(context = context) { func() }.await()
-  }
-}
 
 inline fun <T> Collection<T>.forEachReverseIndexed(action: (index: Int, T) -> Unit): Unit {
   if (this.isEmpty()) {

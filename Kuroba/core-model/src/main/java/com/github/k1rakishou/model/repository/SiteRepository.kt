@@ -2,7 +2,6 @@ package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.SuspendableInitializer
-import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -26,7 +25,7 @@ class SiteRepository(
 
   @OptIn(ExperimentalTime::class)
   suspend fun initialize(allSiteDescriptors: Collection<SiteDescriptor>): ModularResult<List<ChanSiteData>> {
-    return applicationScope.myAsync {
+    return applicationScope.dbCall {
       val result = tryWithTransaction {
         ensureBackgroundThread()
 
@@ -42,15 +41,15 @@ class SiteRepository(
 
       allSitesLoadedInitializer.initWithModularResult(result.mapValue { Unit })
       Logger.d(TAG, "allSitesLoadedInitializer initialized")
-      return@myAsync result
+      return@dbCall result
     }
   }
 
   suspend fun loadAllSites(): ModularResult<List<ChanSiteData>> {
     check(allSitesLoadedInitializer.isInitialized()) { "SiteRepository is not initialized" }
 
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction localSource.selectAllOrderedDesc()
       }
     }
@@ -61,8 +60,8 @@ class SiteRepository(
     check(allSitesLoadedInitializer.isInitialized()) { "SiteRepository is not initialized" }
     Logger.d(TAG, "persist(chanSiteDataListCount=${chanSiteDataList.size})")
 
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         val time = measureTime { localSource.persist(chanSiteDataList) }
         Logger.d(TAG, "persist(${chanSiteDataList.size}) took $time")
 

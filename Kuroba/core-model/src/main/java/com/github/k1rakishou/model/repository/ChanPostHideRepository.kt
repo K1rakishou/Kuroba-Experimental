@@ -1,7 +1,6 @@
 package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -16,8 +15,8 @@ class ChanPostHideRepository(
 ) : AbstractRepository(database) {
 
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): ModularResult<List<ChanPostHide>> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction localSource.preloadForThread(threadDescriptor)
       }
     }
@@ -27,40 +26,40 @@ class ChanPostHideRepository(
     catalogDescriptor: ChanDescriptor.CatalogDescriptor,
     count: Int
   ): ModularResult<List<ChanPostHide>> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction localSource.preloadForCatalog(catalogDescriptor, count)
       }
     }
   }
 
   suspend fun createMany(chanPostHideList: List<ChanPostHide>): ModularResult<Unit> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction localSource.createMany(chanPostHideList)
       }
     }
   }
 
   suspend fun getTotalCount(): ModularResult<Int> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction localSource.getTotalCount()
       }
     }
   }
 
   suspend fun removeMany(postDescriptorList: List<PostDescriptor>): ModularResult<Unit> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction localSource.removeMany(postDescriptorList)
       }
     }
   }
 
   suspend fun deleteAll(): ModularResult<Unit> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction localSource.deleteAll()
       }
     }

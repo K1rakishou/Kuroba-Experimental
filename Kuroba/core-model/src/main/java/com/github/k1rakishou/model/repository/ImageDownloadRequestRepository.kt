@@ -1,7 +1,6 @@
 package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.myAsync
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.download.ImageDownloadRequest
 import com.github.k1rakishou.model.source.local.ImageDownloadRequestLocalSource
@@ -25,8 +24,8 @@ class ImageDownloadRequestRepository(
   ): ModularResult<List<ImageDownloadRequest>> {
     check(imageDownloadRequests.isNotEmpty()) { "imageDownloadRequests is empty" }
 
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         if (deletionRoutineExecuted.compareAndSet(false, true)) {
           imageDownloadRequestLocalSource.deleteOldAndHangedInQueueStatus()
         }
@@ -37,8 +36,8 @@ class ImageDownloadRequestRepository(
   }
 
   suspend fun selectMany(uniqueId: String): ModularResult<List<ImageDownloadRequest>> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction imageDownloadRequestLocalSource.selectMany(uniqueId)
       }
     }
@@ -48,8 +47,8 @@ class ImageDownloadRequestRepository(
     uniqueId: String,
     downloadStatuses: Collection<ImageDownloadRequest.Status>
   ): ModularResult<List<ImageDownloadRequest>> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction imageDownloadRequestLocalSource.selectManyWithStatus(
           uniqueId,
           downloadStatuses
@@ -63,8 +62,8 @@ class ImageDownloadRequestRepository(
       return ModularResult.value(Unit)
     }
 
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction imageDownloadRequestLocalSource.completeMany(imageDownloadRequests)
       }
     }
@@ -75,16 +74,16 @@ class ImageDownloadRequestRepository(
       return ModularResult.value(Unit)
     }
 
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction imageDownloadRequestLocalSource.updateMany(imageDownloadRequests)
       }
     }
   }
 
   suspend fun deleteByUniqueId(uniqueId: String): ModularResult<Unit> {
-    return applicationScope.myAsync {
-      return@myAsync tryWithTransaction {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
         return@tryWithTransaction imageDownloadRequestLocalSource.deleteByUniqueId(uniqueId)
       }
     }
