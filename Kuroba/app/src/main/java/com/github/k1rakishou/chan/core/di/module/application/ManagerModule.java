@@ -134,13 +134,11 @@ public class ManagerModule {
     @Singleton
     public BoardManager provideBoardManager(
             CoroutineScope appScope,
-            SiteRepository siteRepository,
             BoardRepository boardRepository
     ) {
         return new BoardManager(
                 appScope,
                 AppModuleAndroidUtils.isDevBuild(),
-                siteRepository,
                 boardRepository
         );
     }

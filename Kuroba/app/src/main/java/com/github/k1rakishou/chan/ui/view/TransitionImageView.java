@@ -31,13 +31,13 @@ public class TransitionImageView extends View {
     private static final String TAG = "TransitionImageView";
 
     private Bitmap bitmap;
-    private Matrix matrix = new Matrix();
-    private Paint paint = new Paint();
-    private RectF bitmapRect = new RectF();
-    private RectF destRect = new RectF();
-    private RectF sourceImageRect = new RectF();
-    private PointF sourceOverlap = new PointF();
-    private RectF destClip = new RectF();
+    private final Matrix matrix = new Matrix();
+    private final Paint paint = new Paint();
+    private final RectF bitmapRect = new RectF();
+    private final RectF destRect = new RectF();
+    private final RectF sourceImageRect = new RectF();
+    private final PointF sourceOverlap = new PointF();
+    private final RectF destClip = new RectF();
     private float progress;
     private float stateScale;
     private float stateBitmapScaleDiff;
@@ -66,9 +66,14 @@ public class TransitionImageView extends View {
         // Center inside method
         float selfWidth = getWidth();
         float selfHeight = getHeight();
-        float destScale = Math.min(selfWidth / (float) bitmap.getWidth(), selfHeight / (float) bitmap.getHeight());
 
-        RectF output = new RectF((selfWidth - bitmap.getWidth() * destScale) * 0.5f,
+        float destScale = Math.min(
+                selfWidth / (float) bitmap.getWidth(),
+                selfHeight / (float) bitmap.getHeight()
+        );
+
+        RectF output = new RectF(
+                (selfWidth - bitmap.getWidth() * destScale) * 0.5f,
                 (selfHeight - bitmap.getHeight() * destScale) * 0.5f,
                 0,
                 0
@@ -78,7 +83,6 @@ public class TransitionImageView extends View {
         output.bottom = bitmap.getHeight() * destScale + output.top;
 
         destRect.set(output);
-
         matrix.setRectToRect(bitmapRect, destRect, Matrix.ScaleToFit.FILL);
     }
 
@@ -96,9 +100,11 @@ public class TransitionImageView extends View {
         float globalOffsetY = windowLocation.y - myLoc[1];
 
         // Get the coords in the image view with the center crop method
-        float scale = Math.max((float) viewSize.x / (float) bitmap.getWidth(),
+        float scale = Math.max(
+                (float) viewSize.x / (float) bitmap.getWidth(),
                 (float) viewSize.y / (float) bitmap.getHeight()
         );
+
         float scaledX = bitmap.getWidth() * scale;
         float scaledY = bitmap.getHeight() * scale;
         float offsetX = (scaledX - viewSize.x) * 0.5f;
@@ -133,9 +139,13 @@ public class TransitionImageView extends View {
             float selfWidth = getWidth();
             float selfHeight = getHeight();
 
-            float destScale = Math.min(selfWidth / (float) bitmap.getWidth(), selfHeight / (float) bitmap.getHeight());
+            float destScale = Math.min(
+                    selfWidth / (float) bitmap.getWidth(),
+                    selfHeight / (float) bitmap.getHeight()
+            );
 
-            output = new RectF((selfWidth - bitmap.getWidth() * destScale) * 0.5f,
+            output = new RectF(
+                    (selfWidth - bitmap.getWidth() * destScale) * 0.5f,
                     (selfHeight - bitmap.getHeight() * destScale) * 0.5f,
                     0,
                     0
@@ -155,7 +165,8 @@ public class TransitionImageView extends View {
 
         matrix.setRectToRect(bitmapRect, destRect, Matrix.ScaleToFit.FILL);
 
-        destClip.set(output.left + sourceOverlap.x * (1f - progress),
+        destClip.set(
+                output.left + sourceOverlap.x * (1f - progress),
                 output.top + sourceOverlap.y * (1f - progress),
                 output.right - sourceOverlap.x * (1f - progress),
                 output.bottom - sourceOverlap.y * (1f - progress)
@@ -170,9 +181,11 @@ public class TransitionImageView extends View {
 
         if (bitmap != null) {
             canvas.save();
+
             if (progress < 1f) {
                 canvas.clipRect(destClip);
             }
+
             canvas.drawBitmap(bitmap, matrix, paint);
             canvas.restore();
         }

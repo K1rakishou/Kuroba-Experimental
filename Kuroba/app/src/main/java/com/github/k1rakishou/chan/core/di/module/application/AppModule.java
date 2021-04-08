@@ -23,12 +23,22 @@ import android.net.ConnectivityManager;
 import android.os.Environment;
 
 import com.github.k1rakishou.ChanSettings;
+import com.github.k1rakishou.chan.core.AppDependenciesInitializer;
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.diagnostics.AnrSupervisor;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
+import com.github.k1rakishou.chan.core.manager.ArchivesManager;
+import com.github.k1rakishou.chan.core.manager.BoardManager;
+import com.github.k1rakishou.chan.core.manager.BookmarksManager;
+import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
+import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
 import com.github.k1rakishou.chan.core.manager.ReportManager;
+import com.github.k1rakishou.chan.core.manager.SiteManager;
+import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager;
+import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherCoordinator;
+import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2;
@@ -80,6 +90,32 @@ public class AppModule {
 
             return cacheDir;
         });
+    }
+
+    @Provides
+    @Singleton
+    public AppDependenciesInitializer provideAppDependenciesInitializer(
+            SiteManager siteManager,
+            BoardManager boardManager,
+            BookmarksManager bookmarksManager,
+            HistoryNavigationManager historyNavigationManager,
+            BookmarkWatcherCoordinator bookmarkWatcherCoordinator,
+            FilterWatcherCoordinator filterWatcherCoordinator,
+            ArchivesManager archivesManager,
+            ChanFilterManager chanFilterManager,
+            ThreadBookmarkGroupManager threadBookmarkGroupManager
+    ) {
+        return new AppDependenciesInitializer(
+                siteManager,
+                boardManager,
+                bookmarksManager,
+                historyNavigationManager,
+                bookmarkWatcherCoordinator,
+                filterWatcherCoordinator,
+                archivesManager,
+                chanFilterManager,
+                threadBookmarkGroupManager
+        );
     }
 
     @Provides

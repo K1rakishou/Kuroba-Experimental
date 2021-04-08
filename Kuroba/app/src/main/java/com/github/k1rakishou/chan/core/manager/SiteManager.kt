@@ -16,6 +16,7 @@ import com.github.k1rakishou.model.repository.SiteRepository
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -47,18 +48,18 @@ open class SiteManager(
   private val orders = mutableListWithCap<SiteDescriptor>(32)
 
   @OptIn(ExperimentalTime::class)
-  fun initialize() {
+  fun initialize(allSitesDeferred: CompletableDeferred<List<ChanSiteData>>) {
     Logger.d(TAG, "SiteManager.initialize()")
 
     appScope.launch(Dispatchers.IO) {
       Logger.d(TAG, "loadSitesInternal() start")
-      val time = measureTime { loadSitesInternal() }
+      val time = measureTime { loadSitesInternal(allSitesDeferred) }
       Logger.d(TAG, "loadSitesInternal() took ${time}")
     }
   }
 
   @OptIn(ExperimentalTime::class)
-  private suspend fun loadSitesInternal() {
+  private suspend fun loadSitesInternal(allSitesDeferred: CompletableDeferred<List<ChanSiteData>>) {
     try {
       val result = siteRepository.initialize(siteRegistry.SITE_CLASSES_MAP.keys)
       if (result is ModularResult.Error) {
@@ -80,6 +81,8 @@ open class SiteManager(
           siteMap[chanSiteData.siteDescriptor] = instantiateSite(chanSiteData)
           orders.add(0, chanSiteData.siteDescriptor)
         }
+
+        allSitesDeferred.complete(siteDataMap.values.toList())
       }
 
       ensureSitesAndOrdersConsistency()
@@ -88,6 +91,7 @@ open class SiteManager(
       Logger.d(TAG, "siteRepository.initializeSites() done. Loaded ${result.value.size} sites")
     } catch (error: Throwable) {
       suspendableInitializer.initWithError(error)
+      allSitesDeferred.completeExceptionally(error)
       Logger.e(TAG, "siteRepository.initializeSites() unknown error", error)
     }
   }

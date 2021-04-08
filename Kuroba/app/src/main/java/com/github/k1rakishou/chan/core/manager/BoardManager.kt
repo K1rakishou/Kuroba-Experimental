@@ -12,12 +12,13 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.model.data.site.ChanSiteData
 import com.github.k1rakishou.model.repository.BoardRepository
-import com.github.k1rakishou.model.repository.SiteRepository
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
 import io.reactivex.processors.PublishProcessor
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -31,7 +32,6 @@ import kotlin.time.measureTime
 class BoardManager(
   private val appScope: CoroutineScope,
   private val isDevFlavor: Boolean,
-  private val siteRepository: SiteRepository,
   private val boardRepository: BoardRepository
 ) {
   private val suspendableInitializer = SuspendableInitializer<Unit>("BoardManager")
@@ -48,28 +48,21 @@ class BoardManager(
   private val ordersMap = mutableMapOf<SiteDescriptor, MutableList<BoardDescriptor>>()
 
   @OptIn(ExperimentalTime::class)
-  fun initialize() {
+  fun initialize(siteDataListAsync: CompletableDeferred<List<ChanSiteData>>) {
     Logger.d(TAG, "BoardManager.initialize()")
 
     appScope.launch(Dispatchers.IO) {
       Logger.d(TAG, "loadBoardsInternal() start")
-      val time = measureTime { loadBoardsInternal() }
+      val time = measureTime { loadBoardsInternal(siteDataListAsync) }
       Logger.d(TAG, "loadBoardsInternal() took ${time}")
     }
   }
 
-  private suspend fun loadBoardsInternal() {
+  private suspend fun loadBoardsInternal(siteDataListAsync: CompletableDeferred<List<ChanSiteData>>) {
     try {
-      Logger.d(TAG, "loadBoardsInternal() awaitUntilSitesLoaded() start")
-      siteRepository.awaitUntilSitesLoaded()
-      Logger.d(TAG, "loadBoardsInternal() awaitUntilSitesLoaded() end")
-
-      val loadSitesResult = siteRepository.loadAllSites()
-      if (loadSitesResult is ModularResult.Error) {
-        Logger.e(TAG, "loadBoardsInternal() siteRepository.loadAllSites() error", loadSitesResult.error)
-        suspendableInitializer.initWithError(loadSitesResult.error)
-        return
-      }
+      Logger.d(TAG, "loadBoardsInternal() siteDataListAsync.get() start")
+      val allLoadedSites = siteDataListAsync.await()
+      Logger.d(TAG, "loadBoardsInternal() siteDataListAsync.get() end")
 
       val loadBoardsResult = boardRepository.loadAllBoards()
       if (loadBoardsResult is ModularResult.Error) {
@@ -79,13 +72,12 @@ class BoardManager(
       }
 
       loadBoardsResult as ModularResult.Value
-      loadSitesResult as ModularResult.Value
 
       lock.write {
         boardsMap.clear()
         ordersMap.clear()
 
-        loadSitesResult.value.forEach { chanSiteData ->
+        allLoadedSites.forEach { chanSiteData ->
           ordersMap[chanSiteData.siteDescriptor] = mutableListWithCap(64)
           boardsMap[chanSiteData.siteDescriptor] = mutableMapWithCap(64)
         }

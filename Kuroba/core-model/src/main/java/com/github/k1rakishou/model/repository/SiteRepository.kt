@@ -21,8 +21,6 @@ class SiteRepository(
   private val TAG = "SiteRepository"
   private val allSitesLoadedInitializer = SuspendableInitializer<Unit>("allSitesLoadedInitializer")
 
-  suspend fun awaitUntilSitesLoaded() = allSitesLoadedInitializer.awaitUntilInitialized()
-
   @OptIn(ExperimentalTime::class)
   suspend fun initialize(allSiteDescriptors: Collection<SiteDescriptor>): ModularResult<List<ChanSiteData>> {
     return applicationScope.dbCall {
@@ -42,16 +40,6 @@ class SiteRepository(
       allSitesLoadedInitializer.initWithModularResult(result.mapValue { Unit })
       Logger.d(TAG, "allSitesLoadedInitializer initialized")
       return@dbCall result
-    }
-  }
-
-  suspend fun loadAllSites(): ModularResult<List<ChanSiteData>> {
-    check(allSitesLoadedInitializer.isInitialized()) { "SiteRepository is not initialized" }
-
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
-        return@tryWithTransaction localSource.selectAllOrderedDesc()
-      }
     }
   }
 

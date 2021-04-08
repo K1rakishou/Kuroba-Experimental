@@ -27,6 +27,7 @@ import com.github.k1rakishou.BookmarkGridViewInfo
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettingsInfo
 import com.github.k1rakishou.PersistableChanStateInfo
+import com.github.k1rakishou.chan.core.AppDependenciesInitializer
 import com.github.k1rakishou.chan.core.cache.downloader.FileCacheException
 import com.github.k1rakishou.chan.core.cache.downloader.FileCacheException.FileNotFoundOnTheServerException
 import com.github.k1rakishou.chan.core.di.component.application.ApplicationComponent
@@ -45,14 +46,9 @@ import com.github.k1rakishou.chan.core.di.module.application.UseCaseModule
 import com.github.k1rakishou.chan.core.diagnostics.AnrSupervisor
 import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
-import com.github.k1rakishou.chan.core.manager.ArchivesManager
-import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.manager.BookmarksManager
-import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
-import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherCoordinator
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator
@@ -104,19 +100,11 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   private val tagPrefix by lazy { getApplicationLabel().toString() + " | " }
 
   @Inject
-  lateinit var siteManager: SiteManager
-  @Inject
-  lateinit var boardManager: BoardManager
-  @Inject
-  lateinit var reportManager: ReportManager
+  lateinit var appDependenciesInitializer: AppDependenciesInitializer
   @Inject
   lateinit var bookmarkWatcherCoordinator: BookmarkWatcherCoordinator
   @Inject
   lateinit var filterWatcherCoordinator: FilterWatcherCoordinator
-  @Inject
-  lateinit var archivesManager: ArchivesManager
-  @Inject
-  lateinit var chanFilterManager: ChanFilterManager
   @Inject
   lateinit var threadBookmarkGroupManager: ThreadBookmarkGroupManager
   @Inject
@@ -126,7 +114,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   @Inject
   lateinit var historyNavigationManager: HistoryNavigationManager
   @Inject
-  lateinit var bookmarksManager: BookmarksManager
+  lateinit var reportManager: ReportManager
   @Inject
   lateinit var anrSupervisor: AnrSupervisor
 
@@ -286,17 +274,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       .also { component -> component.inject(this) }
 
     anrSupervisor.start()
-
-    siteManager.initialize()
-    boardManager.initialize()
-    bookmarksManager.initialize()
-    historyNavigationManager.initialize()
-    bookmarkWatcherCoordinator.initialize()
-    filterWatcherCoordinator.initialize()
-    archivesManager.initialize()
-    chanFilterManager.initialize()
-    threadBookmarkGroupManager.initialize()
-
+    appDependenciesInitializer.init()
     setupErrorHandlers()
 
     reportManager.postTask {
