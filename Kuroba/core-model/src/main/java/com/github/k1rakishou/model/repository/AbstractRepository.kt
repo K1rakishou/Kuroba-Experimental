@@ -7,10 +7,10 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
 
 abstract class AbstractRepository(
@@ -29,9 +29,7 @@ abstract class AbstractRepository(
   protected suspend fun <T> CoroutineScope.dbCall(
     func: suspend () -> T
   ): T {
-    return coroutineScope {
-      async(context = dbDispatcher) { func() }.await()
-    }
+    return withContext(dbDispatcher + NonCancellable) { func() }
   }
 
   /**

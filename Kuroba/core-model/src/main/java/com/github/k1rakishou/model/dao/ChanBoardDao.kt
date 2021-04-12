@@ -21,12 +21,6 @@ abstract class ChanBoardDao {
   @Insert(onConflict = OnConflictStrategy.ABORT)
   abstract suspend fun insertBoard(chanBoardEntity: ChanBoardEntity)
 
-  @Update(onConflict = OnConflictStrategy.IGNORE)
-  abstract suspend fun updateBoard(chanBoardEntity: ChanBoardEntity)
-
-  @Update(onConflict = OnConflictStrategy.IGNORE)
-  abstract suspend fun updateBoards(chanBoardEntities: List<ChanBoardEntity>)
-
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   abstract suspend fun createOrUpdateBoards(chanBoardEntities: List<ChanBoardEntity>)
 

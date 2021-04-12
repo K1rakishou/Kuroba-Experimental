@@ -256,6 +256,11 @@ class ChanThreadLoaderCoordinator(
       appendLine("Threads with more than one post " +
         "count = ($threadsWithMoreThanOnePostCount/${ChanThreadsCache.IMMUNE_THREADS_COUNT}), " +
         "total cached threads count = ${cachedThreadsCount}.")
+
+      val fullLocalDuration = readPostsDuration + storeDuration + parsingDuration
+      val fullGlobalDuration = requestDuration + readPostsDuration + storeDuration + parsingDuration
+
+      appendLine("fullLocalDuration=$fullLocalDuration, fullGlobalDuration=${fullGlobalDuration}")
     }
 
     Logger.d(TAG, logString)

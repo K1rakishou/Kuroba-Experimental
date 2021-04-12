@@ -85,6 +85,9 @@ import com.github.k1rakishou.model.migrations.Migration_v6_to_v7
 import com.github.k1rakishou.model.migrations.Migration_v7_to_v8
 import com.github.k1rakishou.model.migrations.Migration_v8_to_v9
 import com.github.k1rakishou.model.migrations.Migration_v9_to_v10
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadFactory
+import java.util.concurrent.atomic.AtomicInteger
 
 @DoNotStrip
 @Database(
@@ -183,12 +186,36 @@ abstract class KurobaDatabase : RoomDatabase() {
     const val SQLITE_TRUE = 1
     const val SQLITE_FALSE = 0
 
+    private val CUSTOM_QUERY_EXECUTOR = Executors.newFixedThreadPool(4, object : ThreadFactory {
+      private val THREAD_NAME_STEM = "database_query_%d"
+      private val mThreadId = AtomicInteger(0)
+
+      override fun newThread(r: Runnable): Thread {
+        val t = Thread(r)
+        t.name = String.format(THREAD_NAME_STEM, mThreadId.getAndIncrement())
+        return t
+      }
+    })
+
+    private val CUSTOM_TRANSACTION_EXECUTOR = Executors.newCachedThreadPool(object : ThreadFactory {
+      private val THREAD_NAME_STEM = "database_transaction_%d"
+      private val mThreadId = AtomicInteger(0)
+
+      override fun newThread(r: Runnable): Thread {
+        val t = Thread(r)
+        t.name = String.format(THREAD_NAME_STEM, mThreadId.getAndIncrement())
+        return t
+      }
+    })
+
     fun buildDatabase(application: Application): KurobaDatabase {
       return Room.databaseBuilder(
         application.applicationContext,
         KurobaDatabase::class.java,
         DATABASE_NAME
       )
+        .setQueryExecutor(CUSTOM_QUERY_EXECUTOR)
+        .setTransactionExecutor(CUSTOM_TRANSACTION_EXECUTOR)
         .addMigrations(
           Migration_v1_to_v2(),
           Migration_v2_to_v3(),
