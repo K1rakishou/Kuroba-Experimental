@@ -41,7 +41,7 @@ class SerializedCoroutineExecutor(
 
   fun post(func: suspend () -> Unit) {
     if (channel.isClosedForSend) {
-      throw IllegalStateException("Channel is closed!")
+      return
     }
 
     val serializedAction = SerializedAction(func)
