@@ -796,8 +796,19 @@ public class ImageViewerController
     }
 
     private void doPreviewOutAnimation(ChanPostImage postImage) {
+        ImageViewerAdapter adapter = ((ImageViewerAdapter) pager.getAdapter());
+        if (adapter == null) {
+            previewOutAnimationEnded();
+            return;
+        }
+
         // Find translation and scale if the current displayed image was a bigimage
-        MultiImageView multiImageView = ((ImageViewerAdapter) pager.getAdapter()).find(postImage);
+        MultiImageView multiImageView = adapter.find(postImage);
+        if (multiImageView == null) {
+            previewOutAnimationEnded();
+            return;
+        }
+
         View activeView = multiImageView.getActiveView();
         if (activeView == null) {
             previewOutAnimationEnded();
