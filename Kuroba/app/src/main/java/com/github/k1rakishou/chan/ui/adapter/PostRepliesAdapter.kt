@@ -100,7 +100,10 @@ class PostRepliesAdapter(
       return
     }
 
-    threadCellData.onPostUpdated(updatedPost)
+    if (!threadCellData.onPostUpdated(updatedPost)) {
+      return
+    }
+
     notifyItemChanged(postCellDataIndex)
   }
 

@@ -336,7 +336,9 @@ class PostAdapter(
     val postIndex = threadCellData.getPostCellDataIndexToUpdate(updatedPost.postDescriptor)
       ?: return
 
-    threadCellData.onPostUpdated(updatedPost)
+    if (!threadCellData.onPostUpdated(updatedPost)) {
+      return
+    }
 
     updatingPosts.add(updatedPost.postNo())
     notifyItemChanged(postIndex)

@@ -167,16 +167,16 @@ class ThreadCellData(
     }
   }
 
-  suspend fun onPostUpdated(updatedPost: ChanPost) {
+  suspend fun onPostUpdated(updatedPost: ChanPost): Boolean {
     val postCellDataIndex = postCellDataList
       .indexOfFirst { postCellData -> postCellData.postDescriptor == updatedPost.postDescriptor }
 
     if (postCellDataIndex < 0) {
-      return
+      return false
     }
 
     val postCellData = postCellDataList.getOrNull(postCellDataIndex)
-      ?: return
+      ?: return false
 
     val updatedPostCellData = withContext(Dispatchers.Default) {
       return@withContext postIndexedListToPostCellDataList(
@@ -187,7 +187,17 @@ class ThreadCellData(
       )
     }
 
+    // We need to recalculate the index again because it might have changed and if it did
+    // we need to skip this onPostUpdated call
+    val postCellDataIndex2 = postCellDataList
+      .indexOfFirst { pcd -> pcd.postDescriptor == updatedPost.postDescriptor }
+
+    if (postCellDataIndex != postCellDataIndex2) {
+      return false
+    }
+
     postCellDataList[postCellDataIndex] = updatedPostCellData.first()
+    return true
   }
 
   fun selectPosts(postDescriptors: Set<PostDescriptor>) {
