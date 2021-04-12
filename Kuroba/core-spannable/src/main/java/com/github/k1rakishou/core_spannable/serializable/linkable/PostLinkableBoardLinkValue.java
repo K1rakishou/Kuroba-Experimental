@@ -16,6 +16,11 @@ public class PostLinkableBoardLinkValue
         this.boardLink = boardLink;
     }
 
+    @Override
+    public boolean isValid() {
+        return true;
+    }
+
     public String getBoardLink() {
         return boardLink;
     }

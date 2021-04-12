@@ -16,11 +16,8 @@
  */
 package com.github.k1rakishou.chan.core.di.module.application;
 
-import android.Manifest;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
-import android.os.Environment;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.AppDependenciesInitializer;
@@ -72,24 +69,20 @@ import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
 public class AppModule {
     public static final String DI_TAG = "Dependency Injection";
 
+    private static final Lazy<File> GET_CACHE_DIR_FUNC = LazyKt.lazy(
+            LazyThreadSafetyMode.SYNCHRONIZED,
+            () -> {
+                File cacheDir = getAppContext().getCacheDir();
+                long spaceInBytes = getAvailableSpaceInBytes(cacheDir);
+
+                Logger.d(DI_TAG, "Available space for cache dir: " + spaceInBytes +
+                        " bytes, cacheDirPath = " + cacheDir.getAbsolutePath());
+
+                return cacheDir;
+            });
+
     public static Lazy<File> getCacheDir() {
-        return LazyKt.lazy(LazyThreadSafetyMode.SYNCHRONIZED, () -> {
-            File cacheDir;
-            File externalStorage = getAppContext().getExternalCacheDir();
-
-            // See also res/xml/filepaths.xml for the fileprovider.
-            if (isExternalStorageOk(externalStorage)) {
-                cacheDir = externalStorage;
-            } else {
-                cacheDir = getAppContext().getCacheDir();
-            }
-
-            long spaceInBytes = getAvailableSpaceInBytes(cacheDir);
-            Logger.d(DI_TAG, "Available space for cache dir: " + spaceInBytes +
-                    " bytes, cacheDirPath = " + cacheDir.getAbsolutePath());
-
-            return cacheDir;
-        });
+        return GET_CACHE_DIR_FUNC;
     }
 
     @Provides
@@ -222,17 +215,5 @@ public class AppModule {
     @Singleton
     public AnrSupervisor provideAnrSupervisor(ReportManager reportManager) {
         return new AnrSupervisor(reportManager);
-    }
-
-    private static boolean isExternalStorageOk(File externalStorage) {
-        return externalStorage != null
-                && !Environment.isExternalStorageRemovable(externalStorage)
-                && Environment.getExternalStorageState(externalStorage).equals(Environment.MEDIA_MOUNTED)
-                && hasExternalStoragePermission();
-    }
-
-    private static boolean hasExternalStoragePermission() {
-        int perm = getAppContext().checkCallingOrSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-        return perm == PackageManager.PERMISSION_GRANTED;
     }
 }

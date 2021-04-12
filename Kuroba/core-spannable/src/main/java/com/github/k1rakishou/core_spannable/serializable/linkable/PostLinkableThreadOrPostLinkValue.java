@@ -1,5 +1,7 @@
 package com.github.k1rakishou.core_spannable.serializable.linkable;
 
+import android.text.TextUtils;
+
 import com.github.k1rakishou.common.DoNotStrip;
 import com.github.k1rakishou.core_spannable.serializable.SerializablePostLinkableType;
 import com.google.gson.annotations.SerializedName;
@@ -25,6 +27,10 @@ public class PostLinkableThreadOrPostLinkValue
         this.board = board;
         this.threadId = threadId;
         this.postId = postId;
+    }
+
+    public boolean isValid() {
+        return !TextUtils.isEmpty(board) && threadId > 0 && postId > 0;
     }
 
     public String getBoard() {

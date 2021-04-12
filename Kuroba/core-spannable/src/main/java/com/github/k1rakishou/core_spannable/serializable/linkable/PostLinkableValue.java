@@ -11,6 +11,8 @@ public abstract class PostLinkableValue {
         this.type = type.getTypeValue();
     }
 
+    public abstract boolean isValid();
+
     public int getType() {
         return type;
     }

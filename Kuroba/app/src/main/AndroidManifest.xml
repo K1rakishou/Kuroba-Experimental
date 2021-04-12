@@ -16,19 +16,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.github.k1rakishou.chan"
-    android:installLocation="auto">
+    android:installLocation="internalOnly">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
     <uses-permission-sdk-23 android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <queries>
         <intent>
             <action android:name="android.intent.action.GET_CONTENT" />
-            <data android:mimeType="*/*"/>
+            <data android:mimeType="*/*" />
         </intent>
         <intent>
             <action android:name="android.intent.action.VIEW" />
@@ -69,8 +70,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         <activity
             android:name="com.github.k1rakishou.chan.activity.StartActivity"
-            android:launchMode="singleTask"
             android:configChanges="keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
+            android:launchMode="singleTask"
             android:theme="${appTheme}">
 
             <intent-filter>
@@ -80,6 +81,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
@@ -98,32 +100,38 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             </intent-filter>
         </activity>
 
-        <activity android:name=".activity.SharingActivity"
-            android:launchMode="singleTask"
+        <activity
+            android:name=".activity.SharingActivity"
             android:autoRemoveFromRecents="true"
             android:excludeFromRecents="true"
+            android:launchMode="singleTask"
             android:theme="@style/Chan.SharingActivityTheme">
 
             <intent-filter>
-                <action android:name="android.intent.action.SEND"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <data android:mimeType="image/*"/>
-                <data android:mimeType="video/*"/>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="image/*" />
+                <data android:mimeType="video/*" />
             </intent-filter>
 
         </activity>
 
-        <service android:name=".features.image_saver.ImageSaverV2Service"
-            android:exported="false"/>
+        <service
+            android:name=".features.image_saver.ImageSaverV2Service"
+            android:exported="false" />
 
-        <receiver android:name=".core.receiver.SelectedFilePickerBroadcastReceiver"
-            android:exported="false"/>
+        <receiver
+            android:name=".core.receiver.SelectedFilePickerBroadcastReceiver"
+            android:exported="false" />
 
-        <receiver android:name=".core.receiver.ReplyNotificationDeleteIntentBroadcastReceiver"
-            android:exported="false"/>
+        <receiver
+            android:name=".core.receiver.ReplyNotificationDeleteIntentBroadcastReceiver"
+            android:exported="false" />
 
-        <receiver android:name=".core.receiver.ImageSaverBroadcastReceiver"
-            android:exported="false"/>
+        <receiver
+            android:name=".core.receiver.ImageSaverBroadcastReceiver"
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

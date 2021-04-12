@@ -9,4 +9,9 @@ public class PostLinkableSpoilerValue
     public PostLinkableSpoilerValue(SerializablePostLinkableType type) {
         super(type);
     }
+
+    @Override
+    public boolean isValid() {
+        return true;
+    }
 }

@@ -32,6 +32,11 @@ public class PostLinkableArchiveLinkValue extends PostLinkableValue {
         this.postNo = postNo;
     }
 
+    @Override
+    public boolean isValid() {
+        return true;
+    }
+
     public String getArchiveDomain() {
         return archiveDomain;
     }

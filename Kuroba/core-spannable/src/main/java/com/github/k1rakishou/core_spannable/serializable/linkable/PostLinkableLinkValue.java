@@ -15,6 +15,11 @@ public class PostLinkableLinkValue extends PostLinkableValue {
         this.link = link;
     }
 
+    @Override
+    public boolean isValid() {
+        return true;
+    }
+
     public String getLink() {
         return link;
     }

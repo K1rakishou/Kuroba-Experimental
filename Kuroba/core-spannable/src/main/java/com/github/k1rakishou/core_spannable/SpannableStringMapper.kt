@@ -495,10 +495,19 @@ object SpannableStringMapper {
       SerializablePostLinkableType.Dead -> {
         val postLinkableValue: PostLinkableValue = try {
           // New PostLinkableValue for DEAD link type
-          gson.fromJson(
+          var postLinkableValue: PostLinkableValue = gson.fromJson(
             serializablePostLinkableSpan.postLinkableValueJson,
             PostLinkableThreadOrPostLinkValue::class.java
           )
+
+          if (!postLinkableValue.isValid) {
+            postLinkableValue = gson.fromJson(
+              serializablePostLinkableSpan.postLinkableValueJson,
+              PostLinkableQuoteValue::class.java
+            )
+          }
+
+          postLinkableValue
         } catch (ignored: Throwable) {
           // Old and deprecated PostLinkableValue for DEAD link type
           gson.fromJson(

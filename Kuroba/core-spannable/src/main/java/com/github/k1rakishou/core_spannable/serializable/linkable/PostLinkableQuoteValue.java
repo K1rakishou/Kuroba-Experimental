@@ -19,6 +19,11 @@ public class PostLinkableQuoteValue
         this.postId = postId;
     }
 
+    @Override
+    public boolean isValid() {
+        return true;
+    }
+
     public long getPostId() {
         return postId;
     }

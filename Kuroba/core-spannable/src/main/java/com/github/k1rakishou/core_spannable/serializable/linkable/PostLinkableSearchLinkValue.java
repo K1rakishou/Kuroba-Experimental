@@ -18,6 +18,11 @@ public class PostLinkableSearchLinkValue extends PostLinkableValue {
         this.search = search;
     }
 
+    @Override
+    public boolean isValid() {
+        return true;
+    }
+
     public String getBoard() {
         return board;
     }
