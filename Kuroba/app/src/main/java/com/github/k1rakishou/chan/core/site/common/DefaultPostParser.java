@@ -335,7 +335,7 @@ public class DefaultPostParser implements PostParser {
             Node node
     ) {
         if (node instanceof TextNode) {
-            String text = ((TextNode) node).text();
+            String text = ((TextNode) node).getWholeText();
 
             return CommentParserHelper.detectLinks(
                     post,
