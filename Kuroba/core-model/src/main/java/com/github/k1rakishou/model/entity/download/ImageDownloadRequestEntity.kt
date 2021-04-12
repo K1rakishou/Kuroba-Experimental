@@ -31,6 +31,8 @@ data class ImageDownloadRequestEntity(
   val uniqueId: String,
   @ColumnInfo(name = IMAGE_FULL_URL_COLUMN_NAME)
   val imageFullUrl: HttpUrl,
+  @ColumnInfo(name = POST_DESCRIPTOR_STRING_COLUMN_NAME)
+  val postDescriptorString: String,
   @ColumnInfo(name = NEW_FILE_NAME_COLUMN_NAME)
   val newFileName: String?,
   @ColumnInfo(name = STATUS_COLUMN_NAME)
@@ -52,6 +54,7 @@ data class ImageDownloadRequestEntity(
 
     const val UNIQUE_ID_COLUMN_NAME = "unique_id"
     const val IMAGE_FULL_URL_COLUMN_NAME = "image_full_url"
+    const val POST_DESCRIPTOR_STRING_COLUMN_NAME = "post_descriptor_string"
     const val NEW_FILE_NAME_COLUMN_NAME = "new_file_name"
     const val STATUS_COLUMN_NAME = "status"
     const val DUPLICATE_FILE_URI_COLUMN_NAME = "duplicate_file_uri"

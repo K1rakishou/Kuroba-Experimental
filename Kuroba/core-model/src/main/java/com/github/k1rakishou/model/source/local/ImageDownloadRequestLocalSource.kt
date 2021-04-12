@@ -42,6 +42,7 @@ class ImageDownloadRequestLocalSource(
       return@mapNotNull ImageDownloadRequestEntity(
         uniqueId = imageDownloadRequest.uniqueId,
         imageFullUrl = imageDownloadRequest.imageFullUrl,
+        postDescriptorString = imageDownloadRequest.postDescriptorString,
         newFileName = imageDownloadRequest.newFileName,
         status = imageDownloadRequest.status.rawValue,
         duplicateFileUri = imageDownloadRequest.duplicateFileUri,
@@ -60,6 +61,7 @@ class ImageDownloadRequestLocalSource(
       return@mapNotNull ImageDownloadRequest(
         uniqueId = newRequest.uniqueId,
         imageFullUrl = newRequest.imageFullUrl,
+        postDescriptorString = newRequest.postDescriptorString,
         newFileName = newRequest.newFileName,
         status = status,
         duplicateFileUri = newRequest.duplicateFileUri,
@@ -82,6 +84,7 @@ class ImageDownloadRequestLocalSource(
         return@mapNotNull ImageDownloadRequest(
           uniqueId = imageDownloadRequestEntity.uniqueId,
           imageFullUrl = imageDownloadRequestEntity.imageFullUrl,
+          postDescriptorString = imageDownloadRequestEntity.postDescriptorString,
           newFileName = imageDownloadRequestEntity.newFileName,
           status = status,
           duplicateFileUri = imageDownloadRequestEntity.duplicateFileUri,
@@ -109,6 +112,7 @@ class ImageDownloadRequestLocalSource(
         return@mapNotNull ImageDownloadRequest(
           uniqueId = imageDownloadRequestEntity.uniqueId,
           imageFullUrl = imageDownloadRequestEntity.imageFullUrl,
+          postDescriptorString = imageDownloadRequestEntity.postDescriptorString,
           newFileName = imageDownloadRequestEntity.newFileName,
           status = status,
           duplicateFileUri = imageDownloadRequestEntity.duplicateFileUri,
@@ -133,6 +137,7 @@ class ImageDownloadRequestLocalSource(
       toUpdate += ImageDownloadRequestEntity(
         uniqueId = imageDownloadRequest.uniqueId,
         imageFullUrl = imageDownloadRequest.imageFullUrl,
+        postDescriptorString = imageDownloadRequest.postDescriptorString,
         newFileName = imageDownloadRequest.newFileName,
         status = imageDownloadRequest.status.rawValue,
         duplicateFileUri = imageDownloadRequest.duplicateFileUri,
@@ -156,6 +161,7 @@ class ImageDownloadRequestLocalSource(
         return@map ImageDownloadRequestEntity(
           uniqueId = imageDownloadRequest.uniqueId,
           imageFullUrl = imageDownloadRequest.imageFullUrl,
+          postDescriptorString = imageDownloadRequest.postDescriptorString,
           newFileName = imageDownloadRequest.newFileName,
           status = imageDownloadRequest.status.rawValue,
           duplicateFileUri = imageDownloadRequest.duplicateFileUri,

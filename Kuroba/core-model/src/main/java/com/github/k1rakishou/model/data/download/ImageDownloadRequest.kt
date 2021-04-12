@@ -8,6 +8,7 @@ import org.joda.time.DateTime
 data class ImageDownloadRequest(
   val uniqueId: String,
   val imageFullUrl: HttpUrl,
+  val postDescriptorString: String,
   val newFileName: String? = null,
   val status: Status = Status.Queued,
   val duplicateFileUri: Uri? = null,

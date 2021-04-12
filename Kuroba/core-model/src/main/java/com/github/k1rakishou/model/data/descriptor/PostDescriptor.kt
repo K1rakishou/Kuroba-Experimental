@@ -1,5 +1,8 @@
 package com.github.k1rakishou.model.data.descriptor
 
+import com.github.k1rakishou.core_logger.Logger
+import java.util.*
+
 open class PostDescriptor protected constructor(
   /**
    * A post may belong to a thread or to a catalog (OP) that's why we use abstract
@@ -45,6 +48,9 @@ open class PostDescriptor protected constructor(
   }
 
   fun serializeToString(): String {
+    // PD_TD_4chan_g_12345678_345345345_0
+    // or
+    // PD_CD_4chan_g_345345345_0
     return "PD_${descriptor.serializeToString()}_${postNo}_${postSubNo}"
   }
 
@@ -85,6 +91,44 @@ open class PostDescriptor protected constructor(
   }
 
   companion object {
+    private const val TAG = "PostDescriptor"
+
+    // PD_TD_4chan_g_12345678_345345345_0
+    // PD_CD_4chan_g_345345345_0
+    fun deserializeFromString(postDescriptorString: String): PostDescriptor? {
+      val parts = postDescriptorString.split('_')
+
+      val postDescriptorMark = parts.getOrNull(0)?.toUpperCase(Locale.ENGLISH) ?: return null
+      if (postDescriptorMark != "PD") {
+        return null
+      }
+
+      val descriptorType = parts.getOrNull(1)?.toUpperCase(Locale.ENGLISH) ?: return null
+      val siteName = parts.getOrNull(2) ?: return null
+      val boardCode = parts.getOrNull(3) ?: return null
+
+      when (descriptorType) {
+        "TD" -> {
+          val threadNo = parts.getOrNull(4)?.toLongOrNull() ?: return null
+          val postNo = parts.getOrNull(5)?.toLongOrNull() ?: return null
+          val postSubNo = parts.getOrNull(6)?.toLongOrNull() ?: return null
+
+          val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(siteName, boardCode, threadNo)
+          return create(threadDescriptor, threadNo, postNo, postSubNo)
+        }
+        "CD" -> {
+          val postNo = parts.getOrNull(4)?.toLongOrNull() ?: return null
+          val postSubNo = parts.getOrNull(5)?.toLongOrNull() ?: return null
+
+          val chanDescriptor = ChanDescriptor.CatalogDescriptor.create(siteName, boardCode)
+          return create(chanDescriptor, postNo, postSubNo)
+        }
+        else -> {
+          Logger.d(TAG, "Unknown descriptorType: $descriptorType")
+          return null
+        }
+      }
+    }
 
     @JvmStatic
     fun create(chanDescriptor: ChanDescriptor, postNo: Long): PostDescriptor {

@@ -452,6 +452,9 @@ class ImageSaverV2Service : Service() {
       && imageSaverDelegateResult.hasRequestsThatCanBeRetried
       && imageSaverDelegateResult.failedRequests > 0
 
+    val canShowCancelButton = imageSaverDelegateResult.completed
+      && imageSaverDelegateResult.failedRequests > 0
+
     if (canShowRetryAction) {
       val intent = Intent(applicationContext, ImageSaverBroadcastReceiver::class.java).apply {
         setAction(ACTION_TYPE_RETRY_FAILED)
@@ -467,7 +470,9 @@ class ImageSaverV2Service : Service() {
       )
 
       addAction(0, getString(R.string.retry), navigate)
+    }
 
+    if (canShowCancelButton) {
       addCancelIntent(imageSaverDelegateResult)
     }
 

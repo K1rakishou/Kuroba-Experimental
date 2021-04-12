@@ -81,6 +81,7 @@ class ImageSaverV2(
       val imageDownloadRequest = ImageDownloadRequest(
         uniqueId = uniqueId,
         imageFullUrl = postImage.imageUrl!!,
+        postDescriptorString = postImage.ownerPostDescriptor.serializeToString(),
         newFileName = newFileName,
         status = ImageDownloadRequest.Status.Queued,
         duplicateFileUri = null,
@@ -125,6 +126,7 @@ class ImageSaverV2(
         return@mapNotNull ImageDownloadRequest(
           uniqueId = uniqueId,
           imageFullUrl = imageUrl,
+          postDescriptorString = postImage.ownerPostDescriptor.serializeToString(),
           newFileName = null,
           status = ImageDownloadRequest.Status.Queued,
           duplicateFileUri = null,

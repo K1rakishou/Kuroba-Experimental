@@ -286,10 +286,6 @@ class ImageSaverV2ServiceDelegate(
                 hasOutOfDiskSpaceErrors = hasOutOfDiskSpaceErrors.get(),
                 hasRequestsThatCanBeRetried = hasRequestsThatCanBeRetried.get()
               )
-
-              // Wait a little bit to let other systems access the disk and stuff (otherwise they may
-              // get locked for quite some time, like for 5 seconds in some cases).
-              delay(500L)
             }
           }
       }
@@ -445,6 +441,7 @@ class ImageSaverV2ServiceDelegate(
     return ImageDownloadRequest(
       imageDownloadRequest.uniqueId,
       imageDownloadRequest.imageFullUrl,
+      imageDownloadRequest.postDescriptorString,
       imageDownloadRequest.newFileName,
       downloadImageResultToStatus(downloadImageResult),
       getDuplicateUriOrNull(downloadImageResult),
@@ -728,14 +725,32 @@ class ImageSaverV2ServiceDelegate(
       val imageSaverV2Options = imageDownloadInputData.imageSaverV2Options
       val imageFullUrl = imageDownloadRequest.imageFullUrl
 
-      val chanPostImageResult = chanPostImageRepository.selectPostImageByUrl(imageFullUrl)
-      if (chanPostImageResult is ModularResult.Error) {
-        return@Try DownloadImageResult.Failure(chanPostImageResult.error, true)
+      var postDescriptor: PostDescriptor? = PostDescriptor.deserializeFromString(imageDownloadRequest.postDescriptorString)
+      var chanPostImage: ChanPostImage? = null
+
+      if (postDescriptor != null) {
+        chanThreadManager.getPost(postDescriptor)?.iteratePostImages { cpi ->
+          if (cpi.imageUrl == imageFullUrl) {
+            chanPostImage = cpi
+          }
+        }
+      } else {
+        val chanPostImageResult = chanPostImageRepository.selectPostImageByUrl(imageFullUrl)
+        if (chanPostImageResult is ModularResult.Error) {
+          return@Try DownloadImageResult.Failure(chanPostImageResult.error, true)
+        }
+
+        chanPostImage = (chanPostImageResult as ModularResult.Value).value
+        postDescriptor = chanPostImage?.ownerPostDescriptor
       }
 
-      val chanPostImage = (chanPostImageResult as ModularResult.Value).value
       if (chanPostImage == null) {
-        val error = IOException("Image $imageFullUrl already deleted from the database")
+        val error = IOException("Failed to find image '$imageFullUrl' in thread cache/database")
+        return@Try DownloadImageResult.Failure(error, false)
+      }
+
+      if (postDescriptor == null) {
+        val error = IOException("Failed to find post descriptor of image '$imageFullUrl'")
         return@Try DownloadImageResult.Failure(error, false)
       }
 
@@ -743,14 +758,12 @@ class ImageSaverV2ServiceDelegate(
 
       val fileName = formatFileName(
         imageSaverV2Options,
-        chanPostImage,
+        chanPostImage!!,
         imageDownloadRequest
       )
 
-      val postDescriptor = chanPostImage.ownerPostDescriptor
-
       val outputFileResult = getFullFileUri(
-        chanPostImage = chanPostImage,
+        chanPostImage = chanPostImage!!,
         imageSaverV2Options = imageSaverV2Options,
         imageDownloadRequest = imageDownloadRequest,
         postDescriptor = postDescriptor,
@@ -799,7 +812,7 @@ class ImageSaverV2ServiceDelegate(
         )
       }
 
-      val imageUrl = checkNotNull(chanPostImage.imageUrl) { "Image url is empty!" }
+      val imageUrl = checkNotNull(chanPostImage!!.imageUrl) { "Image url is empty!" }
 
       try {
         doIoTaskWithAttempts(MAX_IO_ERROR_RETRIES_COUNT) {
