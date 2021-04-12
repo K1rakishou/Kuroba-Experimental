@@ -5,12 +5,14 @@ import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.core.helper.ProxyStorage;
 import com.github.k1rakishou.chan.core.net.KurobaProxySelector;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
+import com.github.k1rakishou.common.dns.CompositeDnsSelector;
+import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory;
+import com.github.k1rakishou.common.dns.NormalDnsSelectorFactory;
 
 import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 
-import okhttp3.Dns;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 
@@ -20,7 +22,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
     private OkHttpClient proxiedClient;
 
-    private final Dns okHttpDns;
+    private final NormalDnsSelectorFactory normalDnsSelectorFactory;
+    private final DnsOverHttpsSelectorFactory dnsOverHttpsSelectorFactory;
     private final Chan.OkHttpProtocols okHttpProtocols;
     private final ProxyStorage proxyStorage;
     private final HttpLoggingInterceptorLazy httpLoggingInterceptorLazy;
@@ -28,13 +31,15 @@ public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
 
     @Inject
     public RealProxiedOkHttpClient(
-            Dns okHttpDns,
+            NormalDnsSelectorFactory normalDnsSelectorFactory,
+            DnsOverHttpsSelectorFactory dnsOverHttpsSelectorFactory,
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
             HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
             SiteResolver siteResolver
     ) {
-        this.okHttpDns = okHttpDns;
+        this.normalDnsSelectorFactory = normalDnsSelectorFactory;
+        this.dnsOverHttpsSelectorFactory = dnsOverHttpsSelectorFactory;
         this.okHttpProtocols = okHttpProtocols;
         this.proxyStorage = proxyStorage;
         this.httpLoggingInterceptorLazy = httpLoggingInterceptorLazy;
@@ -66,11 +71,21 @@ public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
                             .writeTimeout(30, SECONDS)
                             .protocols(okHttpProtocols.getProtocols())
                             .proxySelector(kurobaProxySelector)
-                            .addNetworkInterceptor(interceptor)
-                            .dns(okHttpDns);
+                            .addNetworkInterceptor(interceptor);
 
                     HttpLoggingInterceptorInstaller.install(builder, httpLoggingInterceptorLazy);
-                    proxiedClient = builder.build();
+                    OkHttpClient okHttpClient = builder.build();
+
+                    CompositeDnsSelector compositeDnsSelector = new CompositeDnsSelector(
+                            okHttpClient,
+                            ChanSettings.okHttpUseDnsOverHttps.get(),
+                            normalDnsSelectorFactory,
+                            dnsOverHttpsSelectorFactory
+                    );
+
+                    proxiedClient = okHttpClient.newBuilder()
+                            .dns(compositeDnsSelector)
+                            .build();
                 }
             }
         }

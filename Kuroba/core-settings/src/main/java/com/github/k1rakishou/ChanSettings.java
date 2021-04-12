@@ -361,6 +361,7 @@ public class ChanSettings {
     public static StringSetting androidTenGestureZones;
     public static BooleanSetting okHttpAllowHttp2;
     public static BooleanSetting okHttpAllowIpv6;
+    public static BooleanSetting okHttpUseDnsOverHttps;
     public static BooleanSetting cloudflareForcePreload;
     //endregion
 
@@ -563,6 +564,7 @@ public class ChanSettings {
             androidTenGestureZones = new StringSetting(provider, "android_ten_gesture_zones", EMPTY_JSON);
             okHttpAllowHttp2 = new BooleanSetting(provider, "ok_http_allow_http_2", true);
             okHttpAllowIpv6 = new BooleanSetting(provider, "ok_http_allow_ipv6", false);
+            okHttpUseDnsOverHttps = new BooleanSetting(provider, "ok_http_use_dns_over_https", false);
             //endregion
 
             //region OTHER

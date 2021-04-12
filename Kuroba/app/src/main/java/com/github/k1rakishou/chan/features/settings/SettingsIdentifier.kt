@@ -696,6 +696,7 @@ sealed class ExperimentalScreen(
     object ResetExclusionZones : MainSettingsGroup("reset_exclusion_zones")
     object OkHttpAllowHttp2 : MainSettingsGroup("ok_http_allow_http_2")
     object OkHttpAllowIpv6 : MainSettingsGroup("ok_http_allow_ipv6")
+    object OkHttpUseDnsOverHttps : MainSettingsGroup("ok_http_use_dns_over_https")
     object CloudflareForcePreload : MainSettingsGroup("cloudflare_force_preload")
 
     companion object : IGroupIdentifier() {

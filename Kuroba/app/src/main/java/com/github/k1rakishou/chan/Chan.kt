@@ -52,7 +52,6 @@ import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherCoordinator
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator
-import com.github.k1rakishou.chan.core.net.DnsSelector
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -62,6 +61,10 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.dns.DnsOverHttpsSelector
+import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory
+import com.github.k1rakishou.common.dns.NormalDnsSelector
+import com.github.k1rakishou.common.dns.NormalDnsSelectorFactory
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.SpannableModuleInjector
 import com.github.k1rakishou.core_themes.ThemesModuleInjector
@@ -78,12 +81,16 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import okhttp3.Dns
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import okhttp3.dnsoverhttps.DnsOverHttps
 import org.greenrobot.eventbus.EventBus
 import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.net.InetAddress
+import java.util.*
 import javax.inject.Inject
 import kotlin.system.exitProcess
 
@@ -118,16 +125,46 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   @Inject
   lateinit var anrSupervisor: AnrSupervisor
 
-  private val okHttpDns: Dns
-    get() {
+  private val normalDnsCreatorFactory: NormalDnsSelectorFactory = object : NormalDnsSelectorFactory {
+    override fun createDnsSelector(okHttpClient: OkHttpClient): NormalDnsSelector {
+      Logger.d(AppModule.DI_TAG, "NormalDnsSelectorFactory created")
+
       if (ChanSettings.okHttpAllowIpv6.get()) {
         Logger.d(AppModule.DI_TAG, "Using DnsSelector.Mode.SYSTEM")
-        return DnsSelector(DnsSelector.Mode.SYSTEM)
+        return NormalDnsSelector(NormalDnsSelector.Mode.SYSTEM)
       }
 
       Logger.d(AppModule.DI_TAG, "Using DnsSelector.Mode.IPV4_ONLY")
-      return DnsSelector(DnsSelector.Mode.IPV4_ONLY)
+      return NormalDnsSelector(NormalDnsSelector.Mode.IPV4_ONLY)
     }
+  }
+
+  private val dnsOverHttpsCreatorFactory: DnsOverHttpsSelectorFactory = object : DnsOverHttpsSelectorFactory {
+    override fun createDnsSelector(okHttpClient: OkHttpClient): DnsOverHttpsSelector {
+      Logger.d(AppModule.DI_TAG, "DnsOverHttpsSelectorFactory created")
+
+      val selector = DnsOverHttps.Builder()
+        .includeIPv6(ChanSettings.okHttpAllowIpv6.get())
+        .client(okHttpClient)
+        .url("https://cloudflare-dns.com/dns-query".toHttpUrl())
+        .bootstrapDnsHosts(
+          listOf(
+            InetAddress.getByName("162.159.36.1"),
+            InetAddress.getByName("162.159.46.1"),
+            InetAddress.getByName("1.1.1.1"),
+            InetAddress.getByName("1.0.0.1"),
+            InetAddress.getByName("162.159.132.53"),
+            InetAddress.getByName("2606:4700:4700::1111"),
+            InetAddress.getByName("2606:4700:4700::1001"),
+            InetAddress.getByName("2606:4700:4700::0064"),
+            InetAddress.getByName("2606:4700:4700::6400")
+          )
+        )
+        .build()
+
+      return DnsOverHttpsSelector(selector)
+    }
+  }
 
   private val okHttpProtocols: OkHttpProtocols
     get() {
@@ -220,7 +257,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
     logAppConstantsAndSettings(appConstants)
 
-    val okHttpDns = okHttpDns
     val okHttpProtocols = okHttpProtocols
     val fileManager = provideApplicationFileManager()
     val imageSaverFileManagerWrapper =  provideImageSaverFileManagerWrapper()
@@ -237,10 +273,12 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     val modelComponent = ModelModuleInjector.build(
       application = this,
       scope = applicationScope,
-      dns = okHttpDns,
+      normalDnsSelectorFactory = normalDnsCreatorFactory,
+      dnsOverHttpsSelectorFactory = dnsOverHttpsCreatorFactory,
       protocols = NetworkModule.OkHttpProtocolList(okHttpProtocols.protocols),
       verboseLogs = ChanSettings.verboseLogs.get(),
       isDevFlavor = isDev,
+      okHttpUseDnsOverHttps = ChanSettings.okHttpUseDnsOverHttps.get(),
       appConstants = appConstants
     )
 
@@ -255,7 +293,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       .fileManager(fileManager)
       .imageSaverFileManagerWrapper(imageSaverFileManagerWrapper)
       .applicationCoroutineScope(applicationScope)
-      .okHttpDns(okHttpDns)
+      .normalDnsSelectorFactory(normalDnsCreatorFactory)
+      .dnsOverHttpsSelectorFactory(dnsOverHttpsCreatorFactory)
       .okHttpProtocols(okHttpProtocols)
       .appConstants(appConstants)
       .modelMainComponent(modelComponent)

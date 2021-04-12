@@ -1,5 +1,6 @@
 package com.github.k1rakishou.model.di
 
+import com.github.k1rakishou.common.dns.CompositeDnsSelector
 import dagger.Module
 import dagger.Provides
 import okhttp3.OkHttpClient
@@ -13,12 +14,22 @@ class NetworkModule {
   @Singleton
   @Provides
   fun provideOkHttpClient(dependencies: ModelComponent.Dependencies): OkHttpClient {
-    return OkHttpClient().newBuilder()
+    val okHttpClient = OkHttpClient().newBuilder()
       .connectTimeout(30, TimeUnit.SECONDS)
       .readTimeout(30, TimeUnit.SECONDS)
       .writeTimeout(30, TimeUnit.SECONDS)
       .protocols(dependencies.okHttpProtocols.protocols)
-      .dns(dependencies.dns)
+      .build()
+
+    val compositeDnsSelector = CompositeDnsSelector(
+      okHttpClient,
+      dependencies.okHttpUseDnsOverHttps,
+      dependencies.normalDnsSelectorFactory,
+      dependencies.dnsOverHttpsSelectorFactory
+    )
+
+    return okHttpClient.newBuilder()
+      .dns(compositeDnsSelector)
       .build()
   }
 

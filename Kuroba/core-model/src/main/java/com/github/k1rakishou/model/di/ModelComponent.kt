@@ -2,6 +2,8 @@ package com.github.k1rakishou.model.di
 
 import android.app.Application
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory
+import com.github.k1rakishou.common.dns.NormalDnsSelectorFactory
 import com.github.k1rakishou.model.repository.BoardRepository
 import com.github.k1rakishou.model.repository.BookmarksRepository
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
@@ -25,7 +27,6 @@ import com.google.gson.Gson
 import dagger.BindsInstance
 import dagger.Component
 import kotlinx.coroutines.CoroutineScope
-import okhttp3.Dns
 import javax.inject.Singleton
 
 @Singleton
@@ -69,7 +70,9 @@ interface ModelComponent {
     val coroutineScope: CoroutineScope,
     val verboseLogs: Boolean,
     val isDevFlavor: Boolean,
-    val dns: Dns,
+    val okHttpUseDnsOverHttps: Boolean,
+    val normalDnsSelectorFactory: NormalDnsSelectorFactory,
+    val dnsOverHttpsSelectorFactory: DnsOverHttpsSelectorFactory,
     val okHttpProtocols: NetworkModule.OkHttpProtocolList,
     val appConstants: AppConstants
   )

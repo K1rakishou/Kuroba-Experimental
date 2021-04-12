@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.net;
+package com.github.k1rakishou.common.dns;
 
 import androidx.annotation.NonNull;
 
@@ -12,10 +12,10 @@ import okhttp3.Dns;
 
 // This class is a modified copy of https://github.com/yschimke/okurl/blob/b24caf077223cf54e2ab26589839e5ba2205c691/src/main/java/com/baulsupp/oksocial/network/DnsSelector.java
 
-public class DnsSelector implements Dns {
+public class NormalDnsSelector implements Dns {
     private Mode mode;
 
-    public DnsSelector(Mode mode) {
+    public NormalDnsSelector(Mode mode) {
         this.mode = mode;
     }
 

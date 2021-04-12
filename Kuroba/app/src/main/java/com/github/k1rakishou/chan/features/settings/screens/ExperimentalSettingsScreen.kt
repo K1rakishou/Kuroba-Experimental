@@ -96,6 +96,14 @@ class ExperimentalSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
+          identifier = ExperimentalScreen.MainSettingsGroup.OkHttpUseDnsOverHttps,
+          topDescriptionIdFunc = { R.string.setting_allow_okhttp_use_dns_over_https },
+          setting = ChanSettings.okHttpUseDnsOverHttps,
+          requiresRestart = true
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
           identifier = ExperimentalScreen.MainSettingsGroup.CloudflareForcePreload,
           topDescriptionIdFunc = { R.string.setting_cloudflare_preloading_dialog_title },
           bottomDescriptionIdFunc = { R.string.setting_cloudflare_preloading_dialog_description },

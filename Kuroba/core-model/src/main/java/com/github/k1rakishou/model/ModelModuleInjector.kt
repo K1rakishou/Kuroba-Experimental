@@ -2,11 +2,12 @@ package com.github.k1rakishou.model
 
 import android.app.Application
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory
+import com.github.k1rakishou.common.dns.NormalDnsSelectorFactory
 import com.github.k1rakishou.model.di.DaggerModelComponent
 import com.github.k1rakishou.model.di.ModelComponent
 import com.github.k1rakishou.model.di.NetworkModule
 import kotlinx.coroutines.CoroutineScope
-import okhttp3.Dns
 
 object ModelModuleInjector {
   lateinit var modelComponent: ModelComponent
@@ -15,10 +16,12 @@ object ModelModuleInjector {
   fun build(
     application: Application,
     scope: CoroutineScope,
-    dns: Dns,
+    normalDnsSelectorFactory: NormalDnsSelectorFactory,
+    dnsOverHttpsSelectorFactory: DnsOverHttpsSelectorFactory,
     protocols: NetworkModule.OkHttpProtocolList,
     verboseLogs: Boolean,
     isDevFlavor: Boolean,
+    okHttpUseDnsOverHttps: Boolean,
     appConstants: AppConstants
   ): ModelComponent {
     val dependencies = ModelComponent.Dependencies(
@@ -26,7 +29,9 @@ object ModelModuleInjector {
       scope,
       verboseLogs,
       isDevFlavor,
-      dns,
+      okHttpUseDnsOverHttps,
+      normalDnsSelectorFactory,
+      dnsOverHttpsSelectorFactory,
       protocols,
       appConstants
     )

@@ -7,6 +7,9 @@ import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.core.helper.ProxyStorage;
 import com.github.k1rakishou.chan.core.net.KurobaProxySelector;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
+import com.github.k1rakishou.common.dns.CompositeDnsSelector;
+import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory;
+import com.github.k1rakishou.common.dns.NormalDnsSelectorFactory;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +18,6 @@ import java.io.File;
 import javax.inject.Inject;
 
 import okhttp3.Cache;
-import okhttp3.Dns;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 
@@ -26,7 +28,8 @@ public class CoilOkHttpClient implements CustomOkHttpClient {
     private static final long IMAGE_CACHE_MAX_SIZE = 100 * ONE_MB;
 
     private final Context applicationContext;
-    private final Dns okHttpDns;
+    private final NormalDnsSelectorFactory normalDnsSelectorFactory;
+    private final DnsOverHttpsSelectorFactory dnsOverHttpsSelectorFactory;
     private final Chan.OkHttpProtocols okHttpProtocols;
     private final HttpLoggingInterceptorLazy httpLoggingInterceptorLazy;
     private final ProxyStorage proxyStorage;
@@ -37,14 +40,16 @@ public class CoilOkHttpClient implements CustomOkHttpClient {
     @Inject
     public CoilOkHttpClient(
             Context applicationContext,
-            Dns okHttpDns,
+            NormalDnsSelectorFactory normalDnsSelectorFactory,
+            DnsOverHttpsSelectorFactory dnsOverHttpsSelectorFactory,
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
             HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
             SiteResolver siteResolver
     ) {
         this.applicationContext = applicationContext;
-        this.okHttpDns = okHttpDns;
+        this.normalDnsSelectorFactory = normalDnsSelectorFactory;
+        this.dnsOverHttpsSelectorFactory = dnsOverHttpsSelectorFactory;
         this.okHttpProtocols = okHttpProtocols;
         this.proxyStorage = proxyStorage;
         this.httpLoggingInterceptorLazy = httpLoggingInterceptorLazy;
@@ -80,11 +85,21 @@ public class CoilOkHttpClient implements CustomOkHttpClient {
                             .protocols(okHttpProtocols.getProtocols())
                             .proxySelector(kurobaProxySelector)
                             .cache(cache)
-                            .addNetworkInterceptor(interceptor)
-                            .dns(okHttpDns);
+                            .addNetworkInterceptor(interceptor);
 
                     HttpLoggingInterceptorInstaller.install(builder, httpLoggingInterceptorLazy);
-                    coilClient = builder.build();
+                    OkHttpClient okHttpClient = builder.build();
+
+                    CompositeDnsSelector compositeDnsSelector = new CompositeDnsSelector(
+                            okHttpClient,
+                            ChanSettings.okHttpUseDnsOverHttps.get(),
+                            normalDnsSelectorFactory,
+                            dnsOverHttpsSelectorFactory
+                    );
+
+                    coilClient = okHttpClient.newBuilder()
+                            .dns(compositeDnsSelector)
+                            .build();
                 }
             }
         }

@@ -828,6 +828,7 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="setting_exclusion_zones_reset_zones_description">All exclusion zones will be deleted; the app will be restarted</string>
     <string name="setting_allow_okhttp_http2">Allow OkHttp to use HTTP/2 protocol</string>
     <string name="setting_allow_okhttp_ipv6">Allow OkHttp to use IPv6</string>
+    <string name="setting_allow_okhttp_use_dns_over_https">Use DNS over HTTPS</string>
     <string name="setting_allow_okhttp_http2_ipv6_description">Disabling this setting may resolve issues with images not loading whatsoever in some rare cases. Try disabling this setting if images refuse to start loading.</string>
     <string name="setting_cloudflare_preloading_dialog_title">Cloudflare image preloading (4chan only)</string>
     <string name="setting_cloudflare_preloading_dialog_description">This option will be forcing Cloudflare to preload all currently visible images in a thread. No images will be downloaded on your phone and no additional traffic will be used. Only HEAD requests will be sent for every image in the thread which will force Cloudflare to cache those images. This SHOULD make subsequent image downloads way faster because you will be loading them from Cloudflare servers, not 4chan\'s. This feature works similar to how media prefetching works (you don\'t need to click anything, just scroll through the thread like you always do).</string>

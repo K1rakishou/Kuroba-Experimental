@@ -27,6 +27,8 @@ import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesPresenter
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Service;
 import com.github.k1rakishou.chan.ui.widget.SnackbarWrapper;
 import com.github.k1rakishou.common.AppConstants;
+import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory;
+import com.github.k1rakishou.common.dns.NormalDnsSelectorFactory;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.di.ModelComponent;
@@ -36,7 +38,6 @@ import javax.inject.Singleton;
 import dagger.BindsInstance;
 import dagger.Component;
 import kotlinx.coroutines.CoroutineScope;
-import okhttp3.Dns;
 
 @Singleton
 @Component(modules = {
@@ -83,7 +84,9 @@ public interface ApplicationComponent {
         @BindsInstance
         Builder applicationCoroutineScope(CoroutineScope applicationCoroutineScope);
         @BindsInstance
-        Builder okHttpDns(Dns okHttpDns);
+        Builder normalDnsSelectorFactory(NormalDnsSelectorFactory normalDnsSelectorFactory);
+        @BindsInstance
+        Builder dnsOverHttpsSelectorFactory(DnsOverHttpsSelectorFactory dnsOverHttpsSelectorFactory);
         @BindsInstance
         Builder okHttpProtocols(Chan.OkHttpProtocols okHttpProtocols);
         @BindsInstance

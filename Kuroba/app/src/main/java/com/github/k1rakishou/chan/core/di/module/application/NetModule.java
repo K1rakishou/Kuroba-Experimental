@@ -35,6 +35,8 @@ import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager;
 import com.github.k1rakishou.common.AppConstants;
+import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory;
+import com.github.k1rakishou.common.dns.NormalDnsSelectorFactory;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.google.gson.Gson;
 
@@ -45,7 +47,6 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 import kotlinx.coroutines.CoroutineScope;
-import okhttp3.Dns;
 
 import static com.github.k1rakishou.chan.core.di.module.application.AppModule.getCacheDir;
 
@@ -149,14 +150,16 @@ public class NetModule {
     @Provides
     @Singleton
     public ProxiedOkHttpClient provideProxiedOkHttpClient(
-            Dns okHttpDns,
+            NormalDnsSelectorFactory normalDnsSelectorFactory,
+            DnsOverHttpsSelectorFactory dnsOverHttpsSelectorFactory,
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
             HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
             SiteResolver siteResolver
     ) {
         return new RealProxiedOkHttpClient(
-                okHttpDns,
+                normalDnsSelectorFactory,
+                dnsOverHttpsSelectorFactory,
                 okHttpProtocols,
                 proxyStorage,
                 httpLoggingInterceptorLazy,
@@ -171,7 +174,8 @@ public class NetModule {
     @Singleton
     public CoilOkHttpClient provideCoilOkHttpClient(
             Context applicationContext,
-            Dns okHttpDns,
+            NormalDnsSelectorFactory normalDnsSelectorFactory,
+            DnsOverHttpsSelectorFactory dnsOverHttpsSelectorFactory,
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
             HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
@@ -179,7 +183,8 @@ public class NetModule {
     ) {
         return new CoilOkHttpClient(
                 applicationContext,
-                okHttpDns,
+                normalDnsSelectorFactory,
+                dnsOverHttpsSelectorFactory,
                 okHttpProtocols,
                 proxyStorage,
                 httpLoggingInterceptorLazy,
@@ -193,14 +198,16 @@ public class NetModule {
     @Provides
     @Singleton
     public RealDownloaderOkHttpClient provideDownloaderOkHttpClient(
-            Dns okHttpDns,
+            NormalDnsSelectorFactory normalDnsSelectorFactory,
+            DnsOverHttpsSelectorFactory dnsOverHttpsSelectorFactory,
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
             HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
             SiteResolver siteResolver
     ) {
         return new RealDownloaderOkHttpClient(
-                okHttpDns,
+                normalDnsSelectorFactory,
+                dnsOverHttpsSelectorFactory,
                 okHttpProtocols,
                 proxyStorage,
                 httpLoggingInterceptorLazy,

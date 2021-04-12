@@ -5,19 +5,22 @@ import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.core.helper.ProxyStorage;
 import com.github.k1rakishou.chan.core.net.KurobaProxySelector;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
+import com.github.k1rakishou.common.dns.CompositeDnsSelector;
+import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory;
+import com.github.k1rakishou.common.dns.NormalDnsSelectorFactory;
 
 import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 
-import okhttp3.Dns;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class RealDownloaderOkHttpClient implements DownloaderOkHttpClient {
-    private final Dns okHttpDns;
+    private final NormalDnsSelectorFactory normalDnsSelectorFactory;
+    private final DnsOverHttpsSelectorFactory dnsOverHttpsSelectorFactory;
     private final Chan.OkHttpProtocols okHttpProtocols;
     private final HttpLoggingInterceptorLazy httpLoggingInterceptorLazy;
     private final ProxyStorage proxyStorage;
@@ -27,13 +30,15 @@ public class RealDownloaderOkHttpClient implements DownloaderOkHttpClient {
 
     @Inject
     public RealDownloaderOkHttpClient(
-            Dns okHttpDns,
+            NormalDnsSelectorFactory normalDnsSelectorFactory,
+            DnsOverHttpsSelectorFactory dnsOverHttpsSelectorFactory,
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
             HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
             SiteResolver siteResolver
     ) {
-        this.okHttpDns = okHttpDns;
+        this.normalDnsSelectorFactory = normalDnsSelectorFactory;
+        this.dnsOverHttpsSelectorFactory = dnsOverHttpsSelectorFactory;
         this.okHttpProtocols = okHttpProtocols;
         this.proxyStorage = proxyStorage;
         this.httpLoggingInterceptorLazy = httpLoggingInterceptorLazy;
@@ -63,11 +68,21 @@ public class RealDownloaderOkHttpClient implements DownloaderOkHttpClient {
                             .writeTimeout(5, SECONDS)
                             .proxySelector(kurobaProxySelector)
                             .protocols(okHttpProtocols.getProtocols())
-                            .addNetworkInterceptor(interceptor)
-                            .dns(okHttpDns);
+                            .addNetworkInterceptor(interceptor);
 
                     HttpLoggingInterceptorInstaller.install(builder, httpLoggingInterceptorLazy);
-                    downloaderClient = builder.build();
+                    OkHttpClient okHttpClient = builder.build();
+
+                    CompositeDnsSelector compositeDnsSelector = new CompositeDnsSelector(
+                            okHttpClient,
+                            ChanSettings.okHttpUseDnsOverHttps.get(),
+                            normalDnsSelectorFactory,
+                            dnsOverHttpsSelectorFactory
+                    );
+
+                    downloaderClient = okHttpClient.newBuilder()
+                            .dns(compositeDnsSelector)
+                            .build();
                 }
             }
         }
