@@ -106,7 +106,7 @@ public class ImageViewerController
         ToolbarMenuItem.ToobarThreedotMenuCallback,
         WindowInsetsListener {
     private static final String TAG = "ImageViewerController";
-    private static final int TRANSITION_DURATION = 300;
+    private static final int TRANSITION_DURATION = 200;
     private static final float TRANSITION_FINAL_ALPHA = 0.85f;
 
     private static final int VOLUME_ID = 1;
