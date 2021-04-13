@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.utils;
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.Application;
+import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -176,13 +177,16 @@ public class AppModuleAndroidUtils {
         if (resolvedActivity == null) {
             Logger.d(TAG, "openLink() resolvedActivity == null");
 
-            String message = getString(
-                    R.string.open_link_failed_url_additional_info,
-                    link,
-                    "resolveActivity returned null"
-            );
+            try {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                application.startActivity(intent);
+            } catch (ActivityNotFoundException e) {
+                Logger.e(TAG, "openLink() application.startActivity() error, intent = " + intent, e);
 
-            showToast(application, message, Toast.LENGTH_LONG);
+                String message = getString(R.string.open_link_failed_url_additional_info, e.getMessage());
+                Toast.makeText(application, message, Toast.LENGTH_SHORT).show();
+            }
+
             return;
         }
 
@@ -246,13 +250,16 @@ public class AppModuleAndroidUtils {
     public static void openIntent(Intent intent) {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        if (intent.resolveActivity(application.getPackageManager()) == null) {
-            Logger.d(TAG, "openIntent() resolveActivity returned null, intent = " + intent);
-            showToast(application, R.string.open_link_failed, Toast.LENGTH_LONG);
+        try {
+            application.startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            Logger.e(TAG, "openIntent() application.startActivity() error, intent = " + intent, e);
+
+            String message = getString(R.string.open_link_failed_url_additional_info, e.getMessage());
+            Toast.makeText(application, message, Toast.LENGTH_SHORT).show();
             return;
         }
 
-        application.startActivity(intent);
         Logger.d(TAG, "openIntent() success");
     }
 
