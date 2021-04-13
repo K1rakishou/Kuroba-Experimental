@@ -1,6 +1,7 @@
-package com.github.k1rakishou.chan.ui.view.post_thumbnail
+package com.github.k1rakishou.chan.ui.cell.post_thumbnail
 
 import android.view.View
+import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.model.data.post.ChanPostImage
 
 interface PostImageThumbnailViewContract {

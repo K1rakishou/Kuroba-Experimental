@@ -1212,8 +1212,8 @@ class MultiImageView @JvmOverloads constructor(
       // max size from RecordingCanvas
 
       if (drawable.frameByteCount > MAX_BYTES_SIZE) {
-        val errorMessage = ("Uncompressed GIF too large (>100MB), "
-          + getReadableFileSize(drawable.frameByteCount.toLong()))
+        val errorMessage =
+          "Uncompressed GIF too large, ${getReadableFileSize(drawable.frameByteCount.toLong())}"
 
         onError(Exception(errorMessage))
         return false

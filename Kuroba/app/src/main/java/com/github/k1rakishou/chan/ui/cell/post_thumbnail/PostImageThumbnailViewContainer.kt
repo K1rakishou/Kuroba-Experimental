@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.ui.view.post_thumbnail
+package com.github.k1rakishou.chan.ui.cell.post_thumbnail
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -12,6 +12,7 @@ import androidx.core.view.updateLayoutParams
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.cell.PostCellData
+import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.setOnThrottlingLongClickListener

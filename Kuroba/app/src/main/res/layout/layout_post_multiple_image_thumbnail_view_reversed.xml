@@ -63,7 +63,7 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailView
+        <com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
             android:id="@+id/actual_thumbnail"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

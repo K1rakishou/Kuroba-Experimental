@@ -78,7 +78,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                         tools:layout_height="32dp"
                         tools:layout_width="match_parent" />
 
-                    <com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailViewsContainer
+                    <com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewsContainer
                         android:id="@+id/thumbnails_container"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"

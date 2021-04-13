@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.ui.view.post_thumbnail
+package com.github.k1rakishou.chan.ui.view
 
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
@@ -38,7 +38,6 @@ import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
-import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
 import com.github.k1rakishou.chan.utils.setOnThrottlingLongClickListener
@@ -404,7 +403,8 @@ open class ThumbnailView : View {
         val isScopeActive = kurobaScope?.isActive ?: false
 
         if (verboseLogs) {
-          Logger.d(TAG, "onResponseError() error: ${error.errorMessageOrClassName()}, " +
+          Logger.d(
+            TAG, "onResponseError() error: ${error.errorMessageOrClassName()}, " +
             "isIoError=$isIoError, isScopeActive=$isScopeActive, remainingAttempts=${ioErrorAttempts.get()}"
           )
         }

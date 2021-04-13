@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <com.github.k1rakishou.chan.ui.view.post_thumbnail.FixedRatioThumbnailView
+    <com.github.k1rakishou.chan.ui.view.FixedRatioThumbnailView
         android:id="@+id/image"
         android:layout_width="match_parent"
         android:layout_height="80dp" />

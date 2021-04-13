@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.ui.view.post_thumbnail;
+package com.github.k1rakishou.chan.ui.cell.post_thumbnail;
 
 import android.content.Context;
 import android.graphics.Canvas;
@@ -35,6 +35,7 @@ import com.github.k1rakishou.chan.core.manager.PrefetchState;
 import com.github.k1rakishou.chan.core.manager.PrefetchStateManager;
 import com.github.k1rakishou.chan.core.presenter.ImageViewerPresenter;
 import com.github.k1rakishou.chan.ui.view.SegmentedCircleDrawable;
+import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.ThrottlingClicksKt;
 import com.github.k1rakishou.core_logger.Logger;

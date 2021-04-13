@@ -35,7 +35,7 @@ import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.SiteAuthentication;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
-import com.github.k1rakishou.chan.ui.view.post_thumbnail.FixedRatioThumbnailView;
+import com.github.k1rakishou.chan.ui.view.FixedRatioThumbnailView;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.IOUtils;

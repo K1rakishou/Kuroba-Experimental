@@ -27,13 +27,13 @@ import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
+import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
+import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewsContainer
 import com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView
+import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
-import com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailView
-import com.github.k1rakishou.chan.ui.view.post_thumbnail.PostImageThumbnailViewsContainer
-import com.github.k1rakishou.chan.ui.view.post_thumbnail.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
