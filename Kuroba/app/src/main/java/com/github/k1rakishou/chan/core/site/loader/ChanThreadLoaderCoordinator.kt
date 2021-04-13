@@ -47,20 +47,16 @@ import com.github.k1rakishou.model.data.options.PostsToReloadOptions
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
 import java.util.*
-import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -101,7 +97,6 @@ class ChanThreadLoaderCoordinator(
   private val parsePostsUseCase by lazy {
     ParsePostsUseCase(
       verboseLogsEnabled,
-      dispatcher,
       chanPostRepository,
       filterEngine,
       postFilterManager,
@@ -378,27 +373,6 @@ class ChanThreadLoaderCoordinator(
 
   companion object {
     private const val TAG = "ChanThreadLoaderCoordinator"
-    private const val threadFactoryName = "post_parser_thread_%d"
-
-    private val THREAD_COUNT = Runtime.getRuntime().availableProcessors()
-    private val threadIndex = AtomicInteger(0)
-    private val dispatcher: CoroutineDispatcher
-
-    init {
-      Logger.d(TAG, "Thread count: $THREAD_COUNT")
-
-      val executor = Executors.newFixedThreadPool(THREAD_COUNT) { runnable ->
-        val threadName = String.format(
-          Locale.ENGLISH,
-          threadFactoryName,
-          threadIndex.getAndIncrement()
-        )
-
-        return@newFixedThreadPool Thread(runnable, threadName)
-      }
-
-      dispatcher = executor.asCoroutineDispatcher()
-    }
 
     @JvmStatic
     fun getChanUrl(site: Site, chanDescriptor: ChanDescriptor): HttpUrl {

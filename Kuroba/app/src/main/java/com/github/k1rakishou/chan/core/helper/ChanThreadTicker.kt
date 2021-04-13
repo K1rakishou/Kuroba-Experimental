@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.helper
 
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.CancellationException
@@ -19,6 +20,7 @@ class ChanThreadTicker(
   private val scope: CoroutineScope,
   private val isDevFlavor: Boolean,
   private val archivesManager: ArchivesManager,
+  private val chanThreadManager: ChanThreadManager,
   private val action: suspend (ChanDescriptor) -> Unit
 ) {
   private val debouncer = DebouncingCoroutineExecutor(scope)
@@ -216,15 +218,46 @@ class ChanThreadTicker(
     currentTimeoutIndex: Int
   ): Long {
     val isArchiveDescriptor = archivesManager.isSiteArchive(currentDescriptor.siteDescriptor())
-    if (isArchiveDescriptor) {
-      return ARCHIVE_WATCH_TIMEOUTS.getOrElse(currentTimeoutIndex) {
-        return@getOrElse ARCHIVE_WATCH_TIMEOUTS[currentTimeoutIndex]
-      }
+
+    val timeoutMs = if (isArchiveDescriptor) {
+      ARCHIVE_WATCH_TIMEOUTS.get(currentTimeoutIndex)
     } else {
-      return NORMAL_WATCH_TIMEOUTS.getOrElse(currentTimeoutIndex) {
-        return@getOrElse NORMAL_WATCH_TIMEOUTS[currentTimeoutIndex]
-      }
+      NORMAL_WATCH_TIMEOUTS.get(currentTimeoutIndex)
     }
+
+    if (currentDescriptor is ChanDescriptor.CatalogDescriptor) {
+      // Catalogs are usually not that big so we don't need to do anything additional there + there is
+      // no auto updating for catalogs.
+      return timeoutMs
+    }
+
+    currentDescriptor as ChanDescriptor.ThreadDescriptor
+
+    val postsCount = chanThreadManager.getThreadPostsCount(currentDescriptor)
+    val multiplier = (postsCount.toFloat() / POSTS_COUNT_LONG_TIMEOUTS.toFloat()) / LONG_TIMEOUT_DIVIDER
+
+    if (multiplier <= 1) {
+      return timeoutMs
+    }
+
+    // Once a thread reaches 1000+ posts we want to switch to more rare updates because the amount
+    // of posts become really huge and it takes a lot of time to process it with the regular intervals.
+    // So we want to multiple the current timeout by amount of posts in thousands divided by
+    // LONG_TIMEOUT_DIVIDER. Which means that if a thread has 10000 posts and current timeout is
+    // 20seconds it will be converted into:
+    //
+    // multiplier: (5000 / 1000) / 2.5 = 2
+    // new timeout: 15 * 2 = 30 seconds
+    //
+    // multiplier: (10000 / 1000) / 2.5 = 4
+    // new timeout: 15 * 4 = 60 seconds
+    //
+    // multiplier: (100000 / 1000) / 2.5 = 40
+    // new timeout: 15 * 40 = 600 seconds
+    //
+    // Threads this big usually pinned threads with tons of replies per second and that is not good
+    // for us.
+    return (timeoutMs.toFloat() * multiplier).toLong()
   }
 
   private class ChanTickerData(
@@ -311,6 +344,8 @@ class ChanThreadTicker(
   companion object {
     private const val TAG = "ChanTicker"
     private const val DEBOUNCE_TIMEOUT = 1000L
+    private const val POSTS_COUNT_LONG_TIMEOUTS = 1000L
+    private const val LONG_TIMEOUT_DIVIDER = 2.5f
 
     private val NORMAL_WATCH_TIMEOUTS = longArrayOf(15, 20, 30, 45, 60, 90, 120, 180, 240, 300, 450, 600, 750, 1000)
     private val ARCHIVE_WATCH_TIMEOUTS = longArrayOf(300, 600, 1200, 1800, 2400, 3600)

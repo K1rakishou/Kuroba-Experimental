@@ -299,6 +299,10 @@ public class DefaultPostParser implements PostParser {
             boolean addPostImages,
             Callback callback
     ) {
+        if (commentRaw.length() <= 0) {
+            return SpannableString.valueOf(commentRaw);
+        }
+
         SpannableStringBuilder total = new SpannableStringBuilder("");
 
         try {

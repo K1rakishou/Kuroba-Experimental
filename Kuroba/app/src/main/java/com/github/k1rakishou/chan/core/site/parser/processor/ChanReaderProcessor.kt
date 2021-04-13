@@ -132,16 +132,6 @@ class ChanReaderProcessor(
       return true
     }
 
-    val postsDiffer = ChanPostUtils.postsDiffer(
-      chanPostBuilder = builder,
-      chanPostFromCache = chanPost,
-      isThreadMode = chanDescriptor is ChanDescriptor.ThreadDescriptor
-    )
-
-    if (postsDiffer) {
-      return true
-    }
-
     val cachedPostHash = chanPostRepository.getPostHash(builder.postDescriptor)
     if (cachedPostHash == null) {
       chanPostRepository.putPostHash(builder.postDescriptor, builder.getPostHash)
@@ -150,6 +140,16 @@ class ChanReaderProcessor(
 
     if (builder.getPostHash != cachedPostHash) {
       chanPostRepository.putPostHash(builder.postDescriptor, builder.getPostHash)
+      return true
+    }
+
+    val postsDiffer = ChanPostUtils.postsDiffer(
+      chanPostBuilder = builder,
+      chanPostFromCache = chanPost,
+      isThreadMode = chanDescriptor is ChanDescriptor.ThreadDescriptor
+    )
+
+    if (postsDiffer) {
       return true
     }
 

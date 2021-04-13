@@ -117,6 +117,7 @@ class ThreadPresenter @Inject constructor(
       scope = this,
       isDevFlavor = isDevBuild(),
       archivesManager = archivesManager,
+      chanThreadManager = chanThreadManager,
       action = this::onChanTickerTick
     )
   }

@@ -16,13 +16,16 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.supervisorScope
+import java.util.*
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
 
 class ParsePostsUseCase(
   private val verboseLogsEnabled: Boolean,
-  private val dispatcher: CoroutineDispatcher,
   private val chanPostRepository: ChanPostRepository,
   private val filterEngine: FilterEngine,
   private val postFilterManager: PostFilterManager,
@@ -56,7 +59,7 @@ class ParsePostsUseCase(
 
     val parsedPosts = supervisorScope {
       return@supervisorScope postBuildersToParse
-        .chunked(POSTS_PER_BATCH)
+        .chunked(THREAD_COUNT * 2)
         .flatMap { postToParseChunk ->
           val deferredList = postToParseChunk.map { postToParse ->
             return@map async(dispatcher) {
@@ -124,8 +127,27 @@ class ParsePostsUseCase(
 
   companion object {
     private const val TAG = "ParsePostsUseCase"
+    private const val threadFactoryName = "post_parser_%d"
 
-    private const val POSTS_PER_BATCH = 16
+    private val THREAD_COUNT = Runtime.getRuntime().availableProcessors()
+    private val threadIndex = AtomicInteger(0)
+    private val dispatcher: CoroutineDispatcher
+
+    init {
+      Logger.d(TAG, "Thread count: $THREAD_COUNT")
+
+      val executor = Executors.newFixedThreadPool(THREAD_COUNT) { runnable ->
+        val threadName = String.format(
+          Locale.ENGLISH,
+          threadFactoryName,
+          threadIndex.getAndIncrement()
+        )
+
+        return@newFixedThreadPool Thread(runnable, threadName)
+      }
+
+      dispatcher = executor.asCoroutineDispatcher()
+    }
   }
 
 }
