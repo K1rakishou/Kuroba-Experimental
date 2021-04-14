@@ -1,7 +1,5 @@
 package com.github.k1rakishou.model.data.descriptor
 
-import com.github.k1rakishou.common.datastructure.LockFreeGrowableArray
-
 class BoardDescriptor private constructor(
   val siteDescriptor: SiteDescriptor,
   val boardCode: String
@@ -30,8 +28,6 @@ class BoardDescriptor private constructor(
   }
 
   companion object {
-    private val CACHE = LockFreeGrowableArray<BoardDescriptor>(128)
-
     @JvmStatic
     fun create(siteDescriptor: SiteDescriptor, boardCode: String): BoardDescriptor {
       return create(siteDescriptor.siteName, boardCode)
@@ -41,14 +37,7 @@ class BoardDescriptor private constructor(
     fun create(siteName: String, boardCodeInput: String): BoardDescriptor {
       val boardCode = boardCodeInput.intern()
 
-      return CACHE.getOrCreate(
-        comparatorFunc = { boardDescriptor ->
-          boardDescriptor.siteDescriptor.siteName === siteName && boardDescriptor.boardCode === boardCode
-        },
-        instantiatorFunc = {
-          BoardDescriptor(SiteDescriptor.create(siteName), boardCode)
-        }
-      )
+      return BoardDescriptor(SiteDescriptor.create(siteName), boardCode)
     }
   }
 }

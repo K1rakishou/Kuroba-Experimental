@@ -1,7 +1,5 @@
 package com.github.k1rakishou.model.data.descriptor
 
-import com.github.k1rakishou.common.datastructure.LockFreeGrowableArray
-
 class SiteDescriptor private constructor(
   val siteName: String
 ) {
@@ -37,15 +35,10 @@ class SiteDescriptor private constructor(
   }
 
   companion object {
-    private val CACHE = LockFreeGrowableArray<SiteDescriptor>(24)
-
     fun create(siteNameInput: String): SiteDescriptor {
       val siteName = siteNameInput.intern()
 
-      return CACHE.getOrCreate(
-        comparatorFunc = { siteDescriptor -> siteDescriptor.siteName === siteName  },
-        instantiatorFunc = { SiteDescriptor(siteName) }
-      )
+      return SiteDescriptor(siteName)
     }
   }
 

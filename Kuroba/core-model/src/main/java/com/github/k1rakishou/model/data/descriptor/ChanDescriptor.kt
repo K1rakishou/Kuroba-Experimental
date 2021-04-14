@@ -1,7 +1,5 @@
 package com.github.k1rakishou.model.data.descriptor
 
-import com.github.k1rakishou.common.datastructure.LockFreeGrowableArray
-
 sealed class ChanDescriptor {
   abstract fun isThreadDescriptor(): Boolean
   abstract fun isCatalogDescriptor(): Boolean
@@ -83,8 +81,6 @@ sealed class ChanDescriptor {
     }
 
     companion object {
-      private val CACHE = LockFreeGrowableArray<ThreadDescriptor>(256)
-
       @JvmStatic
       fun create(siteName: String, boardCode: String, threadNo: Long): ThreadDescriptor {
         require(threadNo > 0) { "Bad threadId: $threadNo" }
@@ -101,13 +97,7 @@ sealed class ChanDescriptor {
       fun create(boardDescriptor: BoardDescriptor, threadNo: Long): ThreadDescriptor {
         require(threadNo > 0) { "Bad threadId: $threadNo" }
 
-        return CACHE.getOrCreate(
-          comparatorFunc = { threadDescriptor ->
-            threadDescriptor.boardDescriptor === boardDescriptor
-              && threadDescriptor.threadNo == threadNo
-          },
-          instantiatorFunc = { ThreadDescriptor(boardDescriptor, threadNo) }
-        )
+        return ThreadDescriptor(boardDescriptor, threadNo)
       }
 
       fun fromDescriptorParcelable(descriptorParcelable: DescriptorParcelable): ThreadDescriptor {
@@ -162,8 +152,6 @@ sealed class ChanDescriptor {
     }
 
     companion object {
-      private val CACHE = LockFreeGrowableArray<CatalogDescriptor>(64)
-
       fun fromDescriptorParcelable(descriptorParcelable: DescriptorParcelable): CatalogDescriptor {
         require(!descriptorParcelable.isThreadDescriptor()) { "Not a catalog descriptor type" }
 
@@ -183,13 +171,7 @@ sealed class ChanDescriptor {
         val siteName = siteNameInput.intern()
         val boardCode = boardCodeInput.intern()
 
-        return CACHE.getOrCreate(
-          comparatorFunc = { catalogDescriptor ->
-            catalogDescriptor.boardDescriptor.siteName() === siteName
-              && catalogDescriptor.boardDescriptor.boardCode === boardCode
-          },
-          instantiatorFunc = { CatalogDescriptor(BoardDescriptor.create(siteName, boardCode)) }
-        )
+        return CatalogDescriptor(BoardDescriptor.create(siteName, boardCode))
       }
     }
   }
