@@ -767,14 +767,6 @@ public class SlidingPaneLayoutEx extends ViewGroup {
     }
 
     @Override
-    public void requestChildFocus(View child, View focused) {
-        super.requestChildFocus(child, focused);
-        if (!isInTouchMode() && !mCanSlide) {
-            mPreservedOpenState = child == mSlideableView;
-        }
-    }
-
-    @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         final int action = ev.getActionMasked();
 
