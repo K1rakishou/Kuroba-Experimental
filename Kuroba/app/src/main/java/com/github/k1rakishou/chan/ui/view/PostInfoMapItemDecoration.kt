@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.ui.view
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import androidx.core.graphics.withTranslation
 import androidx.recyclerview.widget.RecyclerView
@@ -32,6 +33,11 @@ class PostInfoMapItemDecoration(
     alpha = DEFAULT_ALPHA
   }
 
+  private val testPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    color = Color.MAGENTA
+    alpha = DEFAULT_ALPHA
+  }
+
   private var postsTotal = 0
 
   fun setItems(
@@ -48,79 +54,53 @@ class PostInfoMapItemDecoration(
 
   fun onDrawOver(
     canvas: Canvas,
-    recyclerView: RecyclerView,
-    recyclerTopPadding: Float,
-    recyclerBottomPadding: Float,
-    recyclerViewHeight: Int,
-    recyclerViewWidth: Int
+    recyclerView: RecyclerView
   ) {
-    var labelWidth = DEFAULT_LABEL_WIDTH
-
     drawRanges(
       canvas,
       recyclerView,
       postInfoHolder.myPostsPositionRanges,
-      recyclerTopPadding,
-      recyclerBottomPadding,
-      recyclerViewHeight,
-      recyclerViewWidth,
-      labelWidth,
       myPostsPaint
     )
-    labelWidth += LABEL_WIDTH_INC
 
     drawRanges(
       canvas,
       recyclerView,
       postInfoHolder.replyPositionRanges,
-      recyclerTopPadding,
-      recyclerBottomPadding,
-      recyclerViewHeight,
-      recyclerViewWidth,
-      labelWidth,
       yousPaint
     )
-    labelWidth += LABEL_WIDTH_INC
 
     drawRanges(
       canvas,
       recyclerView,
       postInfoHolder.crossThreadQuotePositionRanges,
-      recyclerTopPadding,
-      recyclerBottomPadding,
-      recyclerViewHeight,
-      recyclerViewWidth,
-      labelWidth,
       crossThreadRepliesPaint
     )
-    labelWidth += LABEL_WIDTH_INC
   }
 
   private fun drawRanges(
     canvas: Canvas,
     recyclerView: RecyclerView,
     ranges: List<IntRange>,
-    recyclerTopPadding: Float,
-    recyclerBottomPadding: Float,
-    recyclerViewHeight: Int,
-    recyclerViewWidth: Int,
-    labelWidth: Float,
     paint: Paint
   ) {
     if (ranges.isEmpty() || postsTotal <= 0) {
       return
     }
 
+    val recyclerTopPadding = recyclerView.paddingTop.toFloat()
+    val recyclerBottomPadding = recyclerView.paddingBottom.toFloat()
+    val recyclerViewHeight = recyclerView.height
+    val recyclerViewWidth = recyclerView.width
+
     paint.alpha = (DEFAULT_ALPHA.toFloat() * showHideAnimator.animatedValue as Float).toInt()
 
-    val onePostHeightRaw = recyclerView.computeVerticalScrollRange() / (postsTotal + 1)
+    val onePostHeightRaw = recyclerView.computeVerticalScrollRange() / (postsTotal + THREAD_STATUS_CELL)
     val recyclerHeight = (recyclerViewHeight.toFloat() - (recyclerTopPadding + recyclerBottomPadding))
     val unit = ((recyclerHeight / recyclerView.computeVerticalScrollRange()) * onePostHeightRaw).coerceAtLeast(MIN_LABEL_HEIGHT)
     val halfUnit = unit / 2f
 
-    val topOffset = recyclerTopPadding
-
-    canvas.withTranslation(y = topOffset + halfUnit) {
+    canvas.withTranslation(y = recyclerTopPadding + halfUnit) {
       ranges.forEach { positionRange ->
         val startPosition = positionRange.first
         val endPosition = positionRange.last
@@ -129,7 +109,7 @@ class PostInfoMapItemDecoration(
         val bottom = (endPosition * unit) + halfUnit
 
         canvas.drawRect(
-          recyclerViewWidth - labelWidth,
+          recyclerViewWidth.toFloat() - DEFAULT_LABEL_WIDTH,
           top,
           recyclerViewWidth.toFloat(),
           bottom,
@@ -159,9 +139,10 @@ class PostInfoMapItemDecoration(
   private companion object {
     private val MIN_LABEL_HEIGHT = dp(1f).toFloat()
     private val DEFAULT_LABEL_WIDTH = dp(10f).toFloat()
-    private val LABEL_WIDTH_INC = dp(1f).toFloat()
 
     private const val SHOW_DURATION_MS = 500
     private const val DEFAULT_ALPHA = 120
+
+    private const val THREAD_STATUS_CELL = 1
   }
 }

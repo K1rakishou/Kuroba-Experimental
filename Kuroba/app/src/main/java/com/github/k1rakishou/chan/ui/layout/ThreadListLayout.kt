@@ -1079,8 +1079,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       val scroller = FastScrollerHelper.create(
         fastScrollerType,
         recyclerView,
-        postInfoMapItemDecoration,
-        toolbarPaddingTop()
+        postInfoMapItemDecoration
       )
 
       scroller.setThumbDragListener(this)
@@ -1197,11 +1196,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   fun toolbarHeight(): Int {
-    return threadListLayoutCallback!!.toolbar!!.toolbarHeight
-  }
-
-  fun toolbarPaddingTop(): Int {
-    return threadListLayoutCallback!!.toolbar!!.paddingTop
+    return threadListLayoutCallback?.toolbar?.toolbarHeight ?: 0
   }
 
   private fun party() {

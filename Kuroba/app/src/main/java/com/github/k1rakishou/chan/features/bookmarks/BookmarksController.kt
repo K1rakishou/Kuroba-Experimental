@@ -522,8 +522,7 @@ class BookmarksController(
       val scroller = FastScrollerHelper.create(
         FastScroller.FastScrollerControllerType.Bookmarks,
         epoxyRecyclerView,
-        null,
-        0,
+        null
       )
 
       scroller.setThumbDragListener(object : FastScroller.ThumbDragListener {

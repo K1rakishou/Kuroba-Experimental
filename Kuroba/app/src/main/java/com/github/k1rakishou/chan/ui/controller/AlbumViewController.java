@@ -153,8 +153,7 @@ public class AlbumViewController
         fastScroller = FastScrollerHelper.create(
                 FastScroller.FastScrollerControllerType.Album,
                 recyclerView,
-                null,
-                0
+                null
         );
 
         requireNavController().requireToolbar().addToolbarHeightUpdatesCallback(this);

@@ -127,8 +127,7 @@ public class AlbumDownloadController
         fastScroller = FastScrollerHelper.create(
                 FastScroller.FastScrollerControllerType.Album,
                 recyclerView,
-                null,
-                0
+                null
         );
 
         globalWindowInsetsManager.addInsetsUpdatesListener(this);

@@ -25,6 +25,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
 import android.view.MotionEvent;
+import android.view.View;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
@@ -103,10 +104,8 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
     @Nullable
     private final PostInfoMapItemDecoration postInfoMapItemDecoration;
     private final int mScrollbarMinimumRange;
-    private final int mMargin;
     private final int mThumbMinLength;
     private final int defaultWidth;
-    private final int toolbarPaddingTop;
 
     // Final values for the vertical scroll bar
     private StateListDrawable mVerticalThumbDrawable;
@@ -126,8 +125,6 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
 
     private int mRecyclerViewLeftPadding = 0;
     private int mRecyclerViewTopPadding = 0;
-    private int mRecyclerViewRightPadding = 0;
-    private int mRecyclerViewBottomPadding = 0;
 
     private FastScrollerControllerType fastScrollerControllerType;
 
@@ -147,10 +144,20 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
     @AnimationState
     private int mAnimationState = ANIMATION_STATE_OUT;
     private final Runnable mHideRunnable = () -> hide(HIDE_DURATION_MS);
+
     private final OnScrollListener mOnScrollListener = new OnScrollListener() {
         @Override
         public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
             updateScrollPosition(recyclerView.computeVerticalScrollOffset());
+        }
+    };
+
+    private final View.OnLayoutChangeListener onLayoutChangeListener = new View.OnLayoutChangeListener() {
+        @Override
+        public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+            if (left != oldLeft || right != oldRight || top != oldTop || bottom != oldBottom) {
+                requestRedraw();
+            }
         }
     };
 
@@ -166,9 +173,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
             PostInfoMapItemDecoration postInfoMapItemDecoration,
             int defaultWidth,
             int scrollbarMinimumRange,
-            int margin,
-            int thumbMinLength,
-            int toolbarPaddingTop
+            int thumbMinLength
     ) {
         AppModuleAndroidUtils.extractActivityComponent(recyclerView.getContext())
                 .inject(this);
@@ -176,10 +181,8 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
         this.fastScrollerControllerType = fastScrollerControllerType;
         this.mScrollbarMinimumRange = scrollbarMinimumRange;
         this.defaultWidth = defaultWidth;
-        this.mMargin = margin;
         this.mThumbMinLength = thumbMinLength;
         this.postInfoMapItemDecoration = postInfoMapItemDecoration;
-        this.toolbarPaddingTop = toolbarPaddingTop;
 
         onThemeChanged();
 
@@ -248,6 +251,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
         mRecyclerView.addItemDecoration(this);
         mRecyclerView.addOnItemTouchListener(this);
         mRecyclerView.addOnScrollListener(mOnScrollListener);
+        mRecyclerView.addOnLayoutChangeListener(onLayoutChangeListener);
     }
 
     public void onCleanup() {
@@ -261,6 +265,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
         mRecyclerView.removeItemDecoration(this);
         mRecyclerView.removeOnItemTouchListener(this);
         mRecyclerView.removeOnScrollListener(mOnScrollListener);
+        mRecyclerView.removeOnLayoutChangeListener(onLayoutChangeListener);
         cancelHide();
 
         if (postInfoMapItemDecoration != null) {
@@ -392,10 +397,8 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
         if (mRecyclerViewWidth != getRecyclerViewWidth() || mRecyclerViewHeight != getRecyclerViewHeight()) {
             mRecyclerViewWidth = getRecyclerViewWidth();
             mRecyclerViewHeight = getRecyclerViewHeight();
-            mRecyclerViewLeftPadding = getRecyclerViewLeftPadding();
-            mRecyclerViewTopPadding = getRecyclerViewTopPadding();
-            mRecyclerViewRightPadding = getRecyclerViewRightPadding();
-            mRecyclerViewBottomPadding = getRecyclerViewBottomPadding();
+            mRecyclerViewLeftPadding = mRecyclerView.getPaddingLeft();
+            mRecyclerViewTopPadding = mRecyclerView.getPaddingTop();
 
             // This is due to the different events ordering when keyboard is opened or
             // retracted vs rotate. Hence to avoid corner cases we just disable the
@@ -405,63 +408,35 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
             return;
         }
 
-        if (postInfoMapItemDecoration != null) {
-            int recyclerHeight = mRecyclerView.getHeight();
-            int recyclerWidth = getRecyclerViewWidth();
-
-            // Draw under scrollbar
-            postInfoMapItemDecoration.onDrawOver(
-                    canvas,
-                    mRecyclerView,
-                    mRecyclerView.getPaddingTop(),
-                    mRecyclerView.getPaddingBottom(),
-                    recyclerHeight,
-                    recyclerWidth
-            );
-        }
-
-        if (mAnimationState != ANIMATION_STATE_OUT) {
-            if (mNeedVerticalScrollbar) {
-                drawVerticalScrollbar(canvas);
+        if (mAnimationState != ANIMATION_STATE_OUT && mNeedVerticalScrollbar) {
+            if (postInfoMapItemDecoration != null) {
+                // Draw under scrollbar
+                postInfoMapItemDecoration.onDrawOver(canvas, mRecyclerView);
             }
+
+            drawVerticalScrollbar(canvas);
         }
     }
 
     private int getRecyclerViewWidth() {
-        return mNeedVerticalScrollbar
-                ? mRecyclerView.getWidth()
-                : mRecyclerView.getWidth() - mRecyclerView.getPaddingLeft() - mRecyclerView.getPaddingRight();
+        return mRecyclerView.getWidth() - mRecyclerView.getPaddingLeft() - mRecyclerView.getPaddingRight();
     }
 
     private int getRecyclerViewHeight() {
-        return mRecyclerView.getHeight() - getRecyclerViewTopPadding() - getRecyclerViewBottomPadding();
-    }
-
-    private int getRecyclerViewLeftPadding() {
-        return mNeedVerticalScrollbar ? 0 : mRecyclerView.getPaddingLeft();
-    }
-
-    private int getRecyclerViewTopPadding() {
-        return mRecyclerView.getPaddingTop() + (toolbarPaddingTop / 2);
-    }
-
-    private int getRecyclerViewRightPadding() {
-        return mNeedVerticalScrollbar ? 0 : mRecyclerView.getPaddingRight();
-    }
-
-    private int getRecyclerViewBottomPadding() {
-        return mRecyclerView.getPaddingBottom() + (toolbarPaddingTop / 2);
+        return mRecyclerView.getHeight() - mRecyclerView.getPaddingTop() - mRecyclerView.getPaddingBottom();
     }
 
     private void drawVerticalScrollbar(Canvas canvas) {
-        int viewWidth = mRecyclerViewWidth;
-
-        int left = mRecyclerViewLeftPadding + viewWidth - mVerticalThumbWidth;
+        int left = mRecyclerView.getWidth() - mRecyclerView.getPaddingLeft() - mVerticalThumbWidth;
         int top = mVerticalThumbCenterY - verticalThumbHeight / 2;
         mVerticalThumbDrawable.setBounds(0, 0, mVerticalThumbWidth, verticalThumbHeight);
 
-        int trackLength = mRecyclerViewHeight + mRecyclerViewTopPadding + mRecyclerViewBottomPadding;
-        mVerticalTrackDrawable.setBounds(0, 0, mVerticalTrackWidth, trackLength);
+        mVerticalTrackDrawable.setBounds(
+                0,
+                mRecyclerView.getPaddingTop(),
+                mVerticalTrackWidth,
+                mRecyclerView.getHeight() - mRecyclerView.getPaddingBottom()
+        );
 
         if (isLayoutRTL()) {
             mVerticalTrackDrawable.draw(canvas);
@@ -645,8 +620,8 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
      * Gets the (min, max) vertical positions of the vertical scroll bar.
      */
     private int[] getVerticalRange() {
-        mVerticalRange[0] = mRecyclerViewTopPadding + mMargin;
-        mVerticalRange[1] = mRecyclerViewTopPadding + mRecyclerViewHeight - mMargin;
+        mVerticalRange[0] = mRecyclerViewTopPadding;
+        mVerticalRange[1] = mRecyclerViewTopPadding + mRecyclerViewHeight;
         return mVerticalRange;
     }
 
