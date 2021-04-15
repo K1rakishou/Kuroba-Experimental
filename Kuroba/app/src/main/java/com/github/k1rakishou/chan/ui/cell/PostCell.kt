@@ -26,6 +26,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.text.*
 import android.text.method.LinkMovementMethod
+import android.text.style.BackgroundColorSpan
 import android.text.style.ClickableSpan
 import android.util.AttributeSet
 import android.view.*
@@ -106,6 +107,7 @@ class PostCell : LinearLayout,
 
   private val linkClickSpan: ColorizableBackgroundColorSpan
   private val quoteClickSpan: ColorizableBackgroundColorSpan
+  private val spoilerClickSpan: BackgroundColorSpan
 
   private val commentMovementMethod = PostViewMovementMethod()
   private val titleMovementMethod = PostViewFastMovementMethod()
@@ -187,6 +189,7 @@ class PostCell : LinearLayout,
 
     linkClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostLinkColor, 1.3f)
     quoteClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostQuoteColor, 1.3f)
+    spoilerClickSpan = BackgroundColorSpan(themeEngine.chanTheme.postSpoilerColor)
   }
 
   override fun onAttachedToWindow() {
@@ -724,6 +727,7 @@ class PostCell : LinearLayout,
       if (commentSpanned is Spannable) {
         commentSpanned.removeSpan(linkClickSpan)
         commentSpanned.removeSpan(quoteClickSpan)
+        commentSpanned.removeSpan(spoilerClickSpan)
       }
     }
   }
@@ -864,6 +868,7 @@ class PostCell : LinearLayout,
       if (action == MotionEvent.ACTION_CANCEL) {
         buffer.removeSpan(linkClickSpan)
         buffer.removeSpan(quoteClickSpan)
+        buffer.removeSpan(spoilerClickSpan)
 
         return true
       }
@@ -899,6 +904,7 @@ class PostCell : LinearLayout,
 
       buffer.removeSpan(linkClickSpan)
       buffer.removeSpan(quoteClickSpan)
+      buffer.removeSpan(spoilerClickSpan)
 
       return false
     }
@@ -990,10 +996,10 @@ class PostCell : LinearLayout,
       }
 
       if (action == MotionEvent.ACTION_DOWN && clickableSpan1 is PostLinkable) {
-        val span = if (clickableSpan1.type == PostLinkable.Type.LINK) {
-          linkClickSpan
-        } else {
-          quoteClickSpan
+        val span = when (clickableSpan1.type) {
+          PostLinkable.Type.LINK -> linkClickSpan
+          PostLinkable.Type.SPOILER -> spoilerClickSpan
+          else -> quoteClickSpan
         }
 
         buffer.setSpan(
@@ -1085,6 +1091,7 @@ class PostCell : LinearLayout,
 
       buffer.removeSpan(linkClickSpan)
       buffer.removeSpan(quoteClickSpan)
+      buffer.removeSpan(spoilerClickSpan)
     }
 
     private inner class PerformalLinkLongClick(

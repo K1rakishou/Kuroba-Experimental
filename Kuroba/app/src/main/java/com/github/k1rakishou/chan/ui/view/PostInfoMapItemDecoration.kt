@@ -12,8 +12,7 @@ import com.github.k1rakishou.chan.core.usecase.PostMapInfoHolder
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 
 class PostInfoMapItemDecoration(
-  private val context: Context,
-  private val isSplitMode: Boolean
+  private val context: Context
 ) {
   private var postInfoHolder = PostMapInfoHolder()
   private val showHideAnimator = ValueAnimator.ofFloat(0f, 1f)

@@ -1057,10 +1057,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       val chanThread = chanThreadManager.getChanThread(chanDescriptor)
       if (chanThread != null) {
         if (postInfoMapItemDecoration == null) {
-          postInfoMapItemDecoration = PostInfoMapItemDecoration(
-            context,
-            ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT
-          )
+          postInfoMapItemDecoration = PostInfoMapItemDecoration(context)
         }
 
         postInfoMapItemDecoration!!.setItems(
