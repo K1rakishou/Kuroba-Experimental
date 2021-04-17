@@ -17,6 +17,7 @@ object NotificationConstants {
   const val REPLIES_PRE_OREO_NOTIFICATION_ID = 1
   const val LAST_PAGE_NOTIFICATION_ID = 2
   const val IMAGE_SAVER_WORKER_NOTIFICATION_ID = 3
+  const val POSTING_SERVICE_NOTIFICATION_ID = 4
 
   const val REPLY_NOTIFICATION_ACTION = "${BuildConfig.APPLICATION_ID}_reply_notification_action"
   const val LAST_PAGE_NOTIFICATION_ACTION = "${BuildConfig.APPLICATION_ID}_last_page_notification_action"
@@ -55,6 +56,11 @@ object NotificationConstants {
   object ImageSaverNotifications {
     const val IMAGE_SAVER_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_image_saver_notification_channel"
     const val IMAGE_SAVER_NOTIFICATION_NAME = "Notification channel for downloading images"
+  }
+
+  object PostingServiceNotifications {
+    const val NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_posting_service_notification_channel"
+    const val NOTIFICATION_NAME = "Notification channel for posting"
   }
 
 }

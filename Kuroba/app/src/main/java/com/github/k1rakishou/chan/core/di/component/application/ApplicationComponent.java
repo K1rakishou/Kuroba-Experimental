@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.core.receiver.ReplyNotificationDeleteIntentBro
 import com.github.k1rakishou.chan.core.site.SiteBase;
 import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesPresenter;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Service;
+import com.github.k1rakishou.chan.features.posting.PostingService;
 import com.github.k1rakishou.chan.ui.widget.SnackbarWrapper;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory;
@@ -67,6 +68,7 @@ public interface ApplicationComponent {
     void inject(CloudFlareHandlerInterceptor cloudFlareHandlerInterceptor);
     void inject(FilterWatchesPresenter filterWatchesPresenter);
     void inject(ImageSaverV2Service imageSaverV2Service);
+    void inject(PostingService postingService);
     void inject(ImageSaverBroadcastReceiver cancelImagesDownloadBroadcastReceiver);
 
     @Component.Builder

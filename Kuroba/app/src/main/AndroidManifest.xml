@@ -120,6 +120,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <service
             android:name=".features.image_saver.ImageSaverV2Service"
             android:exported="false" />
+        <service android:name=".features.posting.PostingService"
+            android:exported="false" />
 
         <receiver
             android:name=".core.receiver.SelectedFilePickerBroadcastReceiver"

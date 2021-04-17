@@ -17,77 +17,61 @@
 package com.github.k1rakishou.chan.features.reply
 
 import android.content.Context
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.helper.CommentEditingHistory
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.manager.BookmarksManager
-import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
-import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.repository.LastReplyRepository
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.Site
-import com.github.k1rakishou.chan.core.site.SiteActions
-import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
+import com.github.k1rakishou.chan.features.posting.PostingService
+import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
 import com.github.k1rakishou.chan.features.reply.floating_message_actions.Chan4OpenBannedUrlClickAction
 import com.github.k1rakishou.chan.features.reply.floating_message_actions.IFloatingReplyMessageClickAction
-import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
-import com.github.k1rakishou.chan.ui.helper.PostHelper
+import com.github.k1rakishou.chan.ui.controller.CaptchaContainerController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
-import com.github.k1rakishou.model.data.post.ChanSavedReply
-import com.github.k1rakishou.model.repository.ChanPostRepository
-import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
 class ReplyPresenter @Inject constructor(
-  private val context: Context,
   private val replyManager: ReplyManager,
-  private val savedReplyManager: SavedReplyManager,
   private val lastReplyRepository: LastReplyRepository,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
-  private val bookmarksManager: BookmarksManager,
-  private val chanThreadManager: ChanThreadManager,
-  private val chanPostRepository: ChanPostRepository,
-  private val staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository
-) : AuthenticationLayoutCallback,
-  CoroutineScope,
+  private val staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository,
+  private val postingServiceDelegate: PostingServiceDelegate,
+  private val dialogFactory: DialogFactory
+) : CoroutineScope,
   CommentEditingHistory.CommentEditingHistoryListener {
-
-  enum class Page {
-    INPUT, AUTHENTICATION, LOADING
-  }
-
-  var page = Page.INPUT
-    private set
 
   private var currentChanDescriptor: ChanDescriptor? = null
   private var previewOpen = false
   private var floatingReplyMessageClickAction: IFloatingReplyMessageClickAction? = null
+  private var postingStatusUpdatesJob: Job? = null
 
   private val job = SupervisorJob()
   private val commentEditingHistory = CommentEditingHistory(this)
@@ -95,6 +79,7 @@ class ReplyPresenter @Inject constructor(
   private lateinit var callback: ReplyPresenterCallback
   private lateinit var chanBoard: ChanBoard
   private lateinit var site: Site
+  private lateinit var context: Context
 
   private val highlightQuotesDebouncer = Debouncer(false)
 
@@ -104,7 +89,8 @@ class ReplyPresenter @Inject constructor(
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("ReplyPresenter")
 
-  fun create(callback: ReplyPresenterCallback) {
+  fun create(context: Context, callback: ReplyPresenterCallback) {
+    this.context = context
     this.callback = callback
   }
 
@@ -151,7 +137,54 @@ class ReplyPresenter @Inject constructor(
     callback.setCommentHint(getString(stringId))
     callback.showCommentCounter(thisBoard.maxCommentChars > 0)
 
-    switchPage(Page.INPUT)
+    postingStatusUpdatesJob = launch {
+      postingServiceDelegate.listenForPostingStatusUpdates(chanDescriptor)
+        .collect { status ->
+          if (status.chanDescriptor != currentChanDescriptor) {
+            return@collect
+          }
+
+          Logger.d(TAG, "listenForPostingStatusUpdates($chanDescriptor) -> ${status.javaClass.simpleName}")
+
+          withContext(Dispatchers.Main) {
+            when (status) {
+              is PostingServiceDelegate.PostingStatus.Attached -> {
+                if (::callback.isInitialized) {
+                  callback.enableSendButton()
+                }
+              }
+              is PostingServiceDelegate.PostingStatus.Enqueued -> {
+                // no-op
+              }
+              is PostingServiceDelegate.PostingStatus.BeforePosting -> {
+                if (::callback.isInitialized) {
+                  callback.disableSendButton()
+                }
+              }
+              is PostingServiceDelegate.PostingStatus.Progress -> {
+                Logger.d(TAG, "PostingStatus.Progress(fileIndex=${status.fileIndex}, " +
+                  "totalFiles=${status.totalFiles}, percent=${status.percent})")
+              }
+              is PostingServiceDelegate.PostingStatus.AfterPosting -> {
+                if (::callback.isInitialized) {
+                  callback.enableSendButton()
+                }
+
+                when (val postResult = status.postResult) {
+                  is PostingServiceDelegate.PostResult.Error -> {
+                    onPostError(status.chanDescriptor, postResult.throwable)
+                  }
+                  is PostingServiceDelegate.PostResult.Success -> {
+                    onPostComplete(status.chanDescriptor, postResult.replyResponse, postResult.retrying)
+                  }
+                }
+              }
+            }
+          }
+        }
+    }
+
+    callback.setInputPage()
     return true
   }
 
@@ -163,6 +196,10 @@ class ReplyPresenter @Inject constructor(
 
   fun unbindChanDescriptor() {
     closeAll()
+
+    postingStatusUpdatesJob?.cancel()
+    postingStatusUpdatesJob = null
+
     currentChanDescriptor = null
   }
 
@@ -181,15 +218,6 @@ class ReplyPresenter @Inject constructor(
   }
 
   fun onBack(): Boolean {
-    if (page == Page.LOADING) {
-      return true
-    }
-
-    if (page == Page.AUTHENTICATION) {
-      switchPage(Page.INPUT)
-      return true
-    }
-
     if (isExpanded) {
       onMoreClicked()
       return true
@@ -256,7 +284,57 @@ class ReplyPresenter @Inject constructor(
       return
     }
 
-    switchPage(Page.AUTHENTICATION, useV2NoJsCaptcha = true, autoReply = false)
+    val descriptor = currentChanDescriptor
+      ?: return
+
+    showCaptcha(chanDescriptor = descriptor, autoReply = false)
+  }
+
+  private fun showCaptcha(chanDescriptor: ChanDescriptor, autoReply: Boolean) {
+    val controller = CaptchaContainerController(
+      context = context,
+      chanDescriptor = chanDescriptor
+    ) { authenticationResult ->
+      when (authenticationResult) {
+        is CaptchaContainerController.AuthenticationResult.Failure -> {
+          Logger.e(TAG, "CaptchaContainerController failure, ${authenticationResult.throwable}")
+
+          dialogFactory.createSimpleInformationDialog(
+            context = context,
+            titleText = getString(R.string.reply_captcha_failure),
+            descriptionText = authenticationResult.throwable.errorMessageOrClassName()
+          )
+        }
+        is CaptchaContainerController.AuthenticationResult.Success -> {
+          Logger.e(TAG, "CaptchaContainerController success")
+
+          onAuthenticationComplete(
+            chanDescriptor = chanDescriptor,
+            challenge = authenticationResult.challenge,
+            response = authenticationResult.response,
+            autoReply = autoReply
+          )
+        }
+      }
+    }
+
+    callback.hideKeyboard()
+    callback.presentController(controller)
+  }
+
+  private fun onAuthenticationComplete(
+    chanDescriptor: ChanDescriptor,
+    challenge: String?,
+    response: String?,
+    autoReply: Boolean
+  ) {
+    replyManager.readReply(chanDescriptor) { reply ->
+      reply.initCaptchaInfo(challenge, response)
+    }
+
+    if (autoReply) {
+      makeSubmitCall()
+    }
   }
 
   fun onSubmitClicked(longClicked: Boolean) {
@@ -269,7 +347,7 @@ class ReplyPresenter @Inject constructor(
 
     // only 4chan seems to have the post delay, this is a hack for that
     if (!chanDescriptor.siteDescriptor().is4chan() || longClicked) {
-      submitOrAuthenticate()
+      submitOrAuthenticate(chanDescriptor)
       return
     }
 
@@ -282,10 +360,9 @@ class ReplyPresenter @Inject constructor(
       )
 
       if (timeLeft < 0L) {
-        submitOrAuthenticate()
+        submitOrAuthenticate(chanDescriptor)
       } else {
         val errorMessage = getString(R.string.reply_error_message_timer_reply, timeLeft)
-        switchPage(Page.INPUT)
         callback.openMessage(errorMessage)
       }
 
@@ -294,27 +371,31 @@ class ReplyPresenter @Inject constructor(
 
     val timeLeft = lastReplyRepository.getTimeUntilThread(chanDescriptor.boardDescriptor())
     if (timeLeft < 0L) {
-      submitOrAuthenticate()
+      submitOrAuthenticate(chanDescriptor)
     } else {
       val errorMessage = getString(R.string.reply_error_message_timer_thread, timeLeft)
-      switchPage(Page.INPUT)
       callback.openMessage(errorMessage)
     }
   }
 
-  private fun submitOrAuthenticate() {
-    if (site.actions().postRequiresAuthentication()) {
-      val token = callback.getTokenOrNull()
-      if (token.isNullOrEmpty()) {
-        switchPage(Page.AUTHENTICATION)
-        return
-      }
-
-      onAuthenticationComplete(null, token, true)
+  private fun submitOrAuthenticate(chanDescriptor: ChanDescriptor) {
+    if (!site.actions().postRequiresAuthentication()) {
+      makeSubmitCall()
       return
     }
 
-    makeSubmitCall()
+    val token = callback.getTokenOrNull()
+    if (token.isNullOrEmpty()) {
+      showCaptcha(chanDescriptor = chanDescriptor, autoReply = true)
+      return
+    }
+
+    onAuthenticationComplete(
+      chanDescriptor = chanDescriptor,
+      challenge = null,
+      response = token,
+      autoReply = true
+    )
   }
 
   private fun onPrepareToSubmit(isAuthenticateOnly: Boolean): Boolean {
@@ -341,34 +422,6 @@ class ReplyPresenter @Inject constructor(
       reply.resetCaptchaResponse()
       return@readReply true
     }
-  }
-
-  override fun onAuthenticationComplete(
-    challenge: String?,
-    response: String?,
-    autoReply: Boolean
-  ) {
-    val chanDescriptor = currentChanDescriptor
-      ?: return
-
-    replyManager.readReply(chanDescriptor) { reply ->
-      reply.initCaptchaInfo(challenge, response)
-    }
-
-    if (autoReply) {
-      makeSubmitCall()
-    } else {
-      switchPage(Page.INPUT)
-    }
-  }
-
-  override fun onAuthenticationFailed(error: Throwable) {
-    callback.showAuthenticationFailedError(error)
-    switchPage(Page.INPUT)
-  }
-
-  override fun onFallbackToV1CaptchaView(autoReply: Boolean) {
-    callback.onFallbackToV1CaptchaView(autoReply)
   }
 
   fun updateInitialCommentEditingHistory(commentInputState: CommentEditingHistory.CommentInputState) {
@@ -469,68 +522,24 @@ class ReplyPresenter @Inject constructor(
     callback.openCommentMathButton(false)
     callback.openCommentSJISButton(false)
     callback.openNameOptions(false)
-    callback.destroyCurrentAuthentication()
     callback.updateRevertChangeButtonVisibility(isBufferEmpty = true)
   }
 
   private fun makeSubmitCall(retrying: Boolean = false) {
-    launch {
-      val chanDescriptor = currentChanDescriptor
-        ?: return@launch
+    val chanDescriptor = currentChanDescriptor
+      ?: return
 
-      switchPage(Page.LOADING)
-      Logger.d(TAG, "makeSubmitCall() chanDescriptor=${chanDescriptor}")
+    this@ReplyPresenter.floatingReplyMessageClickAction = null
 
-      val takeFilesResult = replyManager.takeSelectedFiles(chanDescriptor)
-        .safeUnwrap { error ->
-          Logger.e(TAG, "makeSubmitCall() takeSelectedFiles(${chanDescriptor}) error")
-          onPostError(chanDescriptor, error)
-          return@launch
-        }
+    closeAll()
+    callback.openOrCloseReply(open = false)
 
-      if (!takeFilesResult) {
-        onPostError(chanDescriptor, IOException("Failed to move attached files into reply"))
-        return@launch
-      }
-
-      this@ReplyPresenter.floatingReplyMessageClickAction = null
-
-      site.actions().post(chanDescriptor)
-        .catch { error -> onPostError(chanDescriptor, error) }
-        .collect { postResult ->
-          withContext(Dispatchers.Main) {
-            when (postResult) {
-              is SiteActions.PostResult.PostComplete -> {
-                onPostComplete(chanDescriptor, postResult.replyResponse, retrying)
-              }
-              is SiteActions.PostResult.UploadingProgress -> {
-                onUploadingProgress(
-                  postResult.fileIndex,
-                  postResult.totalFiles,
-                  postResult.percent
-                )
-              }
-              is SiteActions.PostResult.PostError -> {
-                onPostError(chanDescriptor, postResult.error)
-              }
-            }
-          }
-        }
-    }
-  }
-
-  private fun onUploadingProgress(fileIndex: Int, totalFiles: Int, percent: Int) {
-    // called on a background thread!
-    BackgroundUtils.runOnMainThread {
-      callback.onUploadingProgress(fileIndex, totalFiles, percent)
-    }
+    PostingService.enqueueReplyChanDescriptor(context, chanDescriptor, retrying)
   }
 
   private fun onPostError(chanDescriptor: ChanDescriptor, exception: Throwable?) {
+    BackgroundUtils.ensureMainThread()
     Logger.e(TAG, "onPostError", exception)
-    switchPage(Page.INPUT)
-
-    replyManager.restoreFiles(chanDescriptor)
 
     var errorMessage = getString(R.string.reply_error)
     if (exception != null) {
@@ -548,6 +557,8 @@ class ReplyPresenter @Inject constructor(
     replyResponse: ReplyResponse,
     retrying: Boolean
   ) {
+    BackgroundUtils.ensureMainThread()
+
     when {
       replyResponse.posted -> {
         Logger.d(TAG, "onPostComplete() replyResponse=$replyResponse")
@@ -555,7 +566,7 @@ class ReplyPresenter @Inject constructor(
       }
       replyResponse.requireAuthentication -> {
         Logger.d(TAG, "onPostComplete() requireAuthentication==true replyResponse=$replyResponse")
-        switchPage(Page.AUTHENTICATION)
+        showCaptcha(chanDescriptor = chanDescriptor, autoReply = true)
       }
       else -> {
         if (retrying) {
@@ -597,11 +608,7 @@ class ReplyPresenter @Inject constructor(
       )
     }
 
-    replyManager.restoreFiles(chanDescriptor)
-
     Logger.e(TAG, "onPostComplete() error: $errorMessage")
-    switchPage(Page.INPUT)
-
     callback.openMessage(errorMessage)
   }
 
@@ -622,8 +629,6 @@ class ReplyPresenter @Inject constructor(
 
     Logger.d(TAG, "prevChanDescriptor() prevChanDescriptor=$prevChanDescriptor, " +
       "siteDescriptor=$siteDescriptor, replyResponse=$replyResponse")
-
-    replyManager.cleanupFiles(prevChanDescriptor, notifyListeners = true)
 
     if (siteDescriptor == null) {
       Logger.e(TAG, "onPostedSuccessfully() siteDescriptor==null")
@@ -659,141 +664,14 @@ class ReplyPresenter @Inject constructor(
       threadNo
     )
 
-    lastReplyRepository.putLastReply(newThreadDescriptor.boardDescriptor)
-
-    if (prevChanDescriptor.isCatalogDescriptor()) {
-      lastReplyRepository.putLastThread(prevChanDescriptor.boardDescriptor())
-    }
-
-    val createThreadSuccess = chanPostRepository.createEmptyThreadIfNotExists(newThreadDescriptor)
-      .peekError { error ->
-        Logger.e(TAG, "Failed to create empty thread in the database for $newThreadDescriptor", error)
-      }
-      .valueOrNull() == true
-
-    if (createThreadSuccess && ChanSettings.postPinThread.get()) {
-      bookmarkThread(newThreadDescriptor, threadNo)
-    }
-
-    val responsePostDescriptor = replyResponse.postDescriptorOrNull
-    if (responsePostDescriptor != null) {
-      val password = if (replyResponse.password.isNotEmpty()) {
-        replyResponse.password
-      } else {
-        null
-      }
-
-      savedReplyManager.saveReply(ChanSavedReply(responsePostDescriptor, password))
-    } else {
-      Logger.e(TAG, "Couldn't create responsePostDescriptor, replyResponse=${replyResponse}")
-    }
-
-    switchPage(Page.INPUT)
     closeAll()
     highlightQuotes()
-
-    replyManager.readReply(newThreadDescriptor) { newReply ->
-      replyManager.readReply(prevChanDescriptor) { prevReply ->
-        val prevName = prevReply.postName
-        val prevFlag = prevReply.flag
-
-        newReply.resetAfterPosting()
-        newReply.postName = prevName
-        newReply.flag = prevFlag
-      }
-    }
 
     callback.loadDraftIntoViews(newThreadDescriptor)
     callback.onPosted()
 
     if (prevChanDescriptor.isCatalogDescriptor()) {
       callback.showThread(newThreadDescriptor)
-    }
-  }
-
-  private suspend fun bookmarkThread(newThreadDescriptor: ChanDescriptor, threadNo: Long) {
-    val chanDescriptor = currentChanDescriptor
-      ?: return
-
-    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-      val thread = chanThreadManager.getChanThread(chanDescriptor)
-      val bookmarkThreadDescriptor = newThreadDescriptor.toThreadDescriptor(threadNo)
-
-      // reply
-      val createBookmarkResult = if (thread != null) {
-        val originalPost = thread.getOriginalPost()
-        val title = ChanPostUtils.getTitle(originalPost, currentChanDescriptor)
-        val thumbnail = originalPost.firstImage()?.actualThumbnailUrl
-
-        bookmarksManager.createBookmark(bookmarkThreadDescriptor, title, thumbnail)
-      } else {
-        bookmarksManager.createBookmark(bookmarkThreadDescriptor)
-      }
-
-      if (!createBookmarkResult) {
-        Logger.e(TAG, "bookmarkThread() Failed to create bookmark with chanDescriptor=$chanDescriptor, " +
-          "threadDescriptor: $bookmarkThreadDescriptor, newThreadDescriptor=$newThreadDescriptor, " +
-          "threadNo=$threadNo")
-      }
-
-      return
-    }
-
-    val title = replyManager.readReply(chanDescriptor) { reply ->
-      PostHelper.getTitle(reply)
-    }
-
-    val bookmarkThreadDescriptor = ChanDescriptor.ThreadDescriptor.create(
-      boardDescriptor = newThreadDescriptor.boardDescriptor(),
-      threadNo = threadNo
-    )
-
-    val createBookmarkResult = bookmarksManager.createBookmark(
-      bookmarkThreadDescriptor,
-      title
-    )
-
-    if (!createBookmarkResult) {
-      Logger.e(TAG, "bookmarkThread() Failed to create bookmark with chanDescriptor=$chanDescriptor, " +
-        "threadDescriptor: $bookmarkThreadDescriptor, newThreadDescriptor=$newThreadDescriptor, " +
-        "threadNo=$threadNo")
-    }
-  }
-
-  @JvmOverloads
-  fun switchPage(
-    page: Page,
-    useV2NoJsCaptcha: Boolean = true,
-    autoReply: Boolean = true
-  ) {
-    if (useV2NoJsCaptcha && this.page == page) {
-      return
-    }
-
-    this.page = page
-
-    when (page) {
-      Page.LOADING,
-      Page.INPUT -> callback.setPage(page)
-      Page.AUTHENTICATION -> {
-        callback.setPage(Page.AUTHENTICATION)
-
-        // cleanup resources tied to the new captcha layout/presenter
-        callback.destroyCurrentAuthentication()
-
-        try {
-          // If the user doesn't have WebView installed it will throw an error
-          callback.initializeAuthentication(
-            site,
-            site.actions().postAuthenticate(),
-            this,
-            useV2NoJsCaptcha,
-            autoReply
-          )
-        } catch (error: Throwable) {
-          onAuthenticationFailed(error)
-        }
-      }
     }
   }
 
@@ -834,21 +712,15 @@ class ReplyPresenter @Inject constructor(
     val chanDescriptor: ChanDescriptor?
     val selectionStart: Int
 
+    fun disableSendButton()
+    fun enableSendButton()
     fun loadViewsIntoDraft(chanDescriptor: ChanDescriptor)
     fun loadDraftIntoViews(chanDescriptor: ChanDescriptor)
     fun adjustSelection(start: Int, amount: Int)
-    fun setPage(page: Page)
-    fun initializeAuthentication(
-      site: Site,
-      authentication: SiteAuthentication,
-      callback: AuthenticationLayoutCallback,
-      useV2NoJsCaptcha: Boolean,
-      autoReply: Boolean
-    )
-
-    fun resetAuthentication()
+    fun setInputPage()
     fun openMessage(message: String?)
     fun openMessage(message: String?, hideDelayMs: Int)
+    fun openOrCloseReply(open: Boolean)
     fun onPosted()
     fun setCommentHint(hint: String?)
     fun showCommentCounter(show: Boolean)
@@ -867,16 +739,14 @@ class ReplyPresenter @Inject constructor(
     fun highlightPosts(postDescriptors: Set<PostDescriptor>)
     fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     fun focusComment()
-    fun onUploadingProgress(fileIndex: Int, totalFiles: Int,percent: Int)
-    fun onFallbackToV1CaptchaView(autoReply: Boolean)
-    fun destroyCurrentAuthentication()
-    fun showAuthenticationFailedError(error: Throwable)
     fun getTokenOrNull(): String?
     fun updateRevertChangeButtonVisibility(isBufferEmpty: Boolean)
     fun restoreComment(prevCommentInputState: CommentEditingHistory.CommentInputState)
     suspend fun bindReplyImages(chanDescriptor: ChanDescriptor)
     fun unbindReplyImages(chanDescriptor: ChanDescriptor)
     suspend fun show2chAntiSpamCheckSolverController(): Boolean
+    fun presentController(controller: Controller)
+    fun hideKeyboard()
   }
 
   companion object {

@@ -13,6 +13,14 @@ data class DescriptorParcelable(
 
   fun isThreadDescriptor(): Boolean = type == THREAD
 
+  fun toChanDescriptor(): ChanDescriptor {
+    return if (isThreadDescriptor()) {
+      ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(this)
+    } else {
+      ChanDescriptor.CatalogDescriptor.fromDescriptorParcelable(this)
+    }
+  }
+
   companion object {
     private const val THREAD = 0
     private const val CATALOG = 1

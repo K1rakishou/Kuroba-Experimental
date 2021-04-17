@@ -483,6 +483,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="reply_attach_long_click_hint">Long tap to attach image by it\'s URL from the clipboard</string>
     <string name="reply_proxy_list_is_dirty_message">You recently changed your proxy list and didn\'t restart the app. There is a possibility that the next post you make will use a wrong proxy or no proxy at all (that depends on what you\'ve changed). Restart the app to make sure everything works as expected.</string>
     <string name="reply_flag_format">Flag: %1$s</string>
+    <string name="reply_captcha_failure">Captcha failure</string>
 
     <string name="delete_confirm">Delete your post?</string>
     <string name="delete_wait">Deleting post…</string>
@@ -1238,6 +1239,8 @@ Don't have a 4chan Pass?<br>
     <string name="image_saver_finished_downloading_images_progress">Downloading %1$d/%2$d images</string>
     <string name="image_saver_finished_downloading_images_with_errors">Finished downloading %1$d images with errors</string>
 
+    <string name="post_service_processing">Processing replies</string>
+
     <string name="search_found_unknown">Found: ???</string>
     <string name="search_found_count">Found: %1$d</string>
 
@@ -1254,7 +1257,6 @@ Don't have a 4chan Pass?<br>
     <string name="doing_heavy_lifting_please_wait">Doing heavy lifting, please wait…</string>
     <string name="decoding_reply_file_preview">Decoding file preview, this may take some time</string>
     <string name="downloading_file">Downloading file, this may take some time</string>
-    <string name="upload_file_x_out_of_y">Uploading file %1$d out of %2$d</string>
     <string name="enter_image_video_url">Enter image/video url</string>
     <string name="refresh_posting_limits_info">Refresh posting limits info</string>
     <string name="must_be_logged_in">Must be logged in</string>

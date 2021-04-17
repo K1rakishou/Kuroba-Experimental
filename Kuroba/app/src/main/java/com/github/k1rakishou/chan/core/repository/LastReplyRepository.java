@@ -32,9 +32,9 @@ public class LastReplyRepository {
     private final BoardManager boardManager;
 
     @GuardedBy("this")
-    private Map<BoardDescriptor, Long> lastReplyMap = new HashMap<>();
+    private final Map<BoardDescriptor, Long> lastReplyMap = new HashMap<>();
     @GuardedBy("this")
-    private Map<BoardDescriptor, Long> lastThreadMap = new HashMap<>();
+    private final Map<BoardDescriptor, Long> lastThreadMap = new HashMap<>();
 
     public LastReplyRepository(SiteManager siteManager, BoardManager boardManager) {
         this.siteManager = siteManager;

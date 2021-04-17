@@ -362,7 +362,6 @@ class StartActivityStartupHandlerHelper(
     return chanDescriptor
   }
 
-
   private fun isKnownAction(action: String): Boolean {
     return when (action) {
       NotificationConstants.LAST_PAGE_NOTIFICATION_ACTION -> true

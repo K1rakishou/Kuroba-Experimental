@@ -46,6 +46,7 @@ class ReplyManager @Inject constructor(
   private val appConstants: AppConstants,
   commonGson: Gson
 ) {
+  @Volatile
   private var filesLoaded = false
   private val filesLoadedInitializer = SuspendableInitializer<Unit>("filesLoadedInitializer")
 

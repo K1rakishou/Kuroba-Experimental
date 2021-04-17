@@ -41,7 +41,6 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.animation.doOnEnd
@@ -65,8 +64,6 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
-import com.github.k1rakishou.chan.core.site.Site
-import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.chan.features.bypass.BypassMode
@@ -74,15 +71,8 @@ import com.github.k1rakishou.chan.features.bypass.CookieResult
 import com.github.k1rakishou.chan.features.bypass.SiteAntiSpamCheckBypassController
 import com.github.k1rakishou.chan.features.reply.ReplyPresenter.ReplyPresenterCallback
 import com.github.k1rakishou.chan.features.reply.data.Reply
-import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
-import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder.CaptchaValidationListener
-import com.github.k1rakishou.chan.ui.captcha.CaptchaLayout
-import com.github.k1rakishou.chan.ui.captcha.GenericWebViewAuthenticationLayout
-import com.github.k1rakishou.chan.ui.captcha.LegacyCaptchaLayout
-import com.github.k1rakishou.chan.ui.captcha.v1.CaptchaNojsLayoutV1
-import com.github.k1rakishou.chan.ui.captcha.v2.CaptchaNoJsLayoutV2
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage
@@ -162,14 +152,8 @@ class ReplyLayout @JvmOverloads constructor(
   private var threadListLayoutCallbacks: ThreadListLayoutCallbacks? = null
   private var threadListLayoutFilesCallback: ReplyLayoutFilesArea.ThreadListLayoutCallbacks? = null
 
-  private var authenticationLayout: AuthenticationLayoutInterface? = null
   private var blockSelectionChange = false
   private var currentOrientation: Int = Configuration.ORIENTATION_UNDEFINED
-
-  // Progress view (when sending request to the server)
-  private lateinit var progressLayout: View
-  private lateinit var currentProgress: ColorizableTextView
-  private lateinit var currentFile: ColorizableTextView
 
   // Reply views:
   private lateinit var replyInputLayout: ViewGroup
@@ -199,10 +183,6 @@ class ReplyLayout @JvmOverloads constructor(
   private lateinit var replyLayoutFilesArea: ReplyLayoutFilesArea
 
   private var isCounterOverflowed = false
-
-  // Captcha views:
-  private lateinit var captchaContainer: FrameLayout
-  private lateinit var captchaHardReset: ImageView
 
   private val coroutineScope = KurobaCoroutineScope()
   private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(coroutineScope)
@@ -434,14 +414,7 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   private fun updateWrappingMode() {
-    val page = presenter.page
-
-    val matchParent = when {
-      page === ReplyPresenter.Page.INPUT -> presenter.isExpanded
-      page === ReplyPresenter.Page.LOADING -> false
-      page === ReplyPresenter.Page.AUTHENTICATION -> true
-      else -> throw IllegalStateException("Unknown Page: $page")
-    }
+    val matchParent = presenter.isExpanded
 
     setWrappingMode(matchParent)
     threadListLayoutCallbacks?.updateRecyclerViewPaddings()
@@ -479,10 +452,6 @@ class ReplyLayout @JvmOverloads constructor(
     replyLayoutFilesArea = replyInputLayout.findViewById(R.id.reply_layout_files_area)
 
     passChildMotionEventsToDetectors()
-
-    progressLayout = AppModuleAndroidUtils.inflate(context, R.layout.layout_reply_progress, this, false)
-    currentProgress = progressLayout.findViewById(R.id.current_progress)
-    currentFile = progressLayout.findViewById(R.id.current_file)
 
     // Setup reply layout views
     commentQuoteButton.setOnClickListener(this)
@@ -537,29 +506,10 @@ class ReplyLayout @JvmOverloads constructor(
       true
     }
 
-    // Inflate captcha layout
-    captchaContainer = AppModuleAndroidUtils.inflate(
-      context,
-      R.layout.layout_reply_captcha,
-      this,
-      false
-    ) as FrameLayout
-
-    captchaHardReset = captchaContainer.findViewById(R.id.reset)
-
-    // Setup captcha layout views
-    captchaContainer.layoutParams = LayoutParams(
-      ViewGroup.LayoutParams.MATCH_PARENT,
-      ViewGroup.LayoutParams.MATCH_PARENT
-    )
-    AndroidUtils.setBoundlessRoundRippleBackground(captchaHardReset)
-    captchaHardReset.setOnClickListener(this)
     moreDropdown = DropdownArrowDrawable(dp(16f), dp(16f), false)
-
     submit.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_send_white_24dp))
     more.setImageDrawable(moreDropdown)
 
-    captchaHardReset.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_refresh_white_24dp))
     setView(replyInputLayout)
     elevation = dp(4f).toFloat()
   }
@@ -574,7 +524,7 @@ class ReplyLayout @JvmOverloads constructor(
     this.threadListLayoutCallbacks = replyLayoutCallback
     this.threadListLayoutFilesCallback = threadListLayoutCallbacks
 
-    presenter.create(this)
+    presenter.create(context, this)
     replyLayoutFilesArea.onCreate()
 
     coroutineScope.launch {
@@ -672,6 +622,10 @@ class ReplyLayout @JvmOverloads constructor(
     replyLayoutFilesArea.onUnbind()
   }
 
+  override fun presentController(controller: Controller) {
+    threadListLayoutCallbacks?.presentController(controller)
+  }
+
   override suspend fun show2chAntiSpamCheckSolverController(): Boolean {
     BackgroundUtils.ensureMainThread()
 
@@ -690,6 +644,10 @@ class ReplyLayout @JvmOverloads constructor(
       callbacks.presentController(controller)
       continuation.invokeOnCancellation { controller.stopPresenting() }
     }
+  }
+
+  override fun hideKeyboard() {
+    AndroidUtils.hideKeyboard(this)
   }
 
   override fun requestWrappingModeUpdate() {
@@ -806,7 +764,6 @@ class ReplyLayout @JvmOverloads constructor(
         v === more -> presenter.onMoreClicked()
         v === captchaView -> presenter.onAuthenticateCalled()
         v === submit -> presenter.onSubmitClicked(false)
-        v === captchaHardReset -> authenticationLayout?.hardReset()
         v === commentQuoteButton -> insertQuote()
         v === commentSpoilerButton -> insertTags("[spoiler]", "[/spoiler]")
         v === commentCodeButton -> insertTags("[code]", "[/code]")
@@ -892,124 +849,10 @@ class ReplyLayout @JvmOverloads constructor(
     return true
   }
 
-  override fun initializeAuthentication(
-    site: Site,
-    authentication: SiteAuthentication,
-    callback: AuthenticationLayoutCallback,
-    useV2NoJsCaptcha: Boolean,
-    autoReply: Boolean
-  ) {
-    if (authenticationLayout == null) {
-      authenticationLayout = createAuthenticationLayout(authentication, useV2NoJsCaptcha)
-      captchaContainer.addView(authenticationLayout as View?, 0)
-    }
-
-    authenticationLayout!!.initialize(site, callback, autoReply)
-    authenticationLayout!!.reset()
-  }
-
-  private fun createAuthenticationLayout(
-    authentication: SiteAuthentication,
-    useV2NoJsCaptcha: Boolean
-  ): AuthenticationLayoutInterface {
-    when (authentication.type) {
-      SiteAuthentication.Type.CAPTCHA1 -> {
-        return AppModuleAndroidUtils.inflate(
-          context,
-          R.layout.layout_captcha_legacy,
-          captchaContainer,
-          false
-        ) as LegacyCaptchaLayout
-      }
-      SiteAuthentication.Type.CAPTCHA2 -> {
-        return CaptchaLayout(context)
-      }
-      SiteAuthentication.Type.CAPTCHA2_NOJS -> {
-        val authenticationLayoutInterface = if (useV2NoJsCaptcha) {
-          // new captcha window without webview
-          CaptchaNoJsLayoutV2(context)
-        } else {
-          // default webview-based captcha view
-          CaptchaNojsLayoutV1(context)
-        }
-
-        val resetButton = captchaContainer.findViewById<ImageView>(R.id.reset)
-        if (resetButton != null) {
-          if (useV2NoJsCaptcha) {
-            // we don't need the default reset button because we have our own
-            resetButton.visibility = GONE
-          } else {
-            // restore the button's visibility when using old v1 captcha view
-            resetButton.visibility = VISIBLE
-          }
-        }
-
-        return authenticationLayoutInterface
-      }
-      SiteAuthentication.Type.GENERIC_WEBVIEW -> {
-        val view = GenericWebViewAuthenticationLayout(context)
-        val params = LayoutParams(
-          ViewGroup.LayoutParams.MATCH_PARENT,
-          ViewGroup.LayoutParams.MATCH_PARENT
-        )
-
-        view.layoutParams = params
-        return view
-      }
-      SiteAuthentication.Type.NONE -> {
-        throw IllegalArgumentException("${authentication.type} is not supposed to be used here")
-      }
-      else -> throw IllegalArgumentException("Unknown authentication.type=${authentication.type}")
-    }
-  }
-
-  override fun setPage(page: ReplyPresenter.Page) {
-    Logger.d(TAG, "Switching to page " + page.name)
-
-    when (page) {
-      ReplyPresenter.Page.LOADING -> {
-        setView(progressLayout)
-        setWrappingMode(false)
-
-        //reset progress to 0 upon uploading start
-        currentProgress.visibility = INVISIBLE
-        destroyCurrentAuthentication()
-        threadListLayoutCallbacks?.updateRecyclerViewPaddings()
-      }
-      ReplyPresenter.Page.INPUT -> {
-        setView(replyInputLayout)
-        setWrappingMode(presenter.isExpanded)
-        destroyCurrentAuthentication()
-        threadListLayoutCallbacks?.updateRecyclerViewPaddings()
-      }
-      ReplyPresenter.Page.AUTHENTICATION -> {
-        AndroidUtils.hideKeyboard(this)
-        setView(captchaContainer, false)
-        setWrappingMode(true)
-        captchaContainer.requestFocus(FOCUS_DOWN)
-        threadListLayoutCallbacks?.updateRecyclerViewPaddings()
-      }
-    }
-  }
-
-  override fun resetAuthentication() {
-    authenticationLayout?.reset()
-  }
-
-  override fun destroyCurrentAuthentication() {
-    if (authenticationLayout == null) {
-      return
-    }
-
-    // cleanup resources when switching from the new to the old captcha view
-    authenticationLayout?.onDestroy()
-    captchaContainer.removeView(authenticationLayout as View?)
-    authenticationLayout = null
-  }
-
-  override fun showAuthenticationFailedError(error: Throwable) {
-    val message = getString(R.string.could_not_initialized_captcha, getReason(error))
-    replyLayoutMessageToast.showToast(context, message, Toast.LENGTH_LONG)
+  override fun setInputPage() {
+    setView(replyInputLayout)
+    setWrappingMode(presenter.isExpanded)
+    threadListLayoutCallbacks?.updateRecyclerViewPaddings()
   }
 
   override fun getTokenOrNull(): String? {
@@ -1139,6 +982,10 @@ class ReplyLayout @JvmOverloads constructor(
       replyInputMessageHolder.alpha = alpha
     }
     valueAnimator.start()
+  }
+
+  override fun openOrCloseReply(open: Boolean) {
+    threadListLayoutCallbacks?.openReply(open)
   }
 
   override fun onPosted() {
@@ -1286,11 +1133,6 @@ class ReplyLayout @JvmOverloads constructor(
     comment.post { AndroidUtils.requestViewAndKeyboardFocus(comment) }
   }
 
-  override fun onFallbackToV1CaptchaView(autoReply: Boolean) {
-    // fallback to v1 captcha window
-    presenter.switchPage(ReplyPresenter.Page.AUTHENTICATION, false, autoReply)
-  }
-
   override fun highlightPosts(postDescriptors: Set<PostDescriptor>) {
     threadListLayoutCallbacks?.highlightPosts(postDescriptors)
   }
@@ -1409,25 +1251,6 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun showThread(threadDescriptor: ThreadDescriptor) {
     threadListLayoutCallbacks?.showThread(threadDescriptor)
-  }
-
-  override fun onUploadingProgress(fileIndex: Int, totalFiles: Int, percent: Int) {
-    if (!::currentProgress.isInitialized || !::currentFile.isInitialized) {
-      return
-    }
-
-    if (percent in 0..99) {
-      currentProgress.visibility = VISIBLE
-      currentFile.visibility = VISIBLE
-    }
-
-    currentFile.text = context.getString(R.string.upload_file_x_out_of_y, fileIndex, totalFiles)
-    currentProgress.text = percent.toString()
-
-    if (fileIndex >= totalFiles && percent >= 100) {
-      currentProgress.visibility = View.INVISIBLE
-      currentFile.visibility = INVISIBLE
-    }
   }
 
   override fun onCaptchaCountChanged(validCaptchaCount: Int) {

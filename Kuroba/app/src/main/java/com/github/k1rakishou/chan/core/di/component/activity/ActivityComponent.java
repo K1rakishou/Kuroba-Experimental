@@ -84,6 +84,7 @@ import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewC
 import com.github.k1rakishou.chan.ui.controller.AlbumDownloadController;
 import com.github.k1rakishou.chan.ui.controller.AlbumViewController;
 import com.github.k1rakishou.chan.ui.controller.BrowseController;
+import com.github.k1rakishou.chan.ui.controller.CaptchaContainerController;
 import com.github.k1rakishou.chan.ui.controller.FiltersController;
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController;
 import com.github.k1rakishou.chan.ui.controller.ImageViewerController;
@@ -239,6 +240,7 @@ public interface ActivityComponent {
     void inject(ResolveDuplicateImagesController resolveDuplicateImagesController);
     void inject(KurobaAlertDialogHostController kurobaAlertDialogHostController);
     void inject(SimpleListItemsReorderingController simpleListItemsReorderingController);
+    void inject(CaptchaContainerController captchaContainerController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

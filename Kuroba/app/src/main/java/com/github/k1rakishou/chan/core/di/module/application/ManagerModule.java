@@ -63,6 +63,7 @@ import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherCoordinato
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherDelegate;
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator;
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherDelegate;
+import com.github.k1rakishou.chan.core.repository.LastReplyRepository;
 import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.SiteRegistry;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
@@ -74,6 +75,7 @@ import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUse
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate;
+import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_themes.ThemeEngine;
@@ -629,6 +631,34 @@ public class ManagerModule {
                 chanPostImageRepository,
                 imageDownloadRequestRepository,
                 chanThreadManager
+        );
+    }
+
+    @Singleton
+    @Provides
+    public PostingServiceDelegate providePostingServiceDelegate(
+            CoroutineScope appScope,
+            AppConstants appConstants,
+            ReplyManager replyManager,
+            SiteManager siteManager,
+            BoardManager boardManager,
+            BookmarksManager bookmarksManager,
+            SavedReplyManager savedReplyManager,
+            ChanThreadManager chanThreadManager,
+            LastReplyRepository lastReplyRepository,
+            ChanPostRepository chanPostRepository
+    ) {
+        return new PostingServiceDelegate(
+                appScope,
+                appConstants,
+                replyManager,
+                siteManager,
+                boardManager,
+                bookmarksManager,
+                savedReplyManager,
+                chanThreadManager,
+                lastReplyRepository,
+                chanPostRepository
         );
     }
 
