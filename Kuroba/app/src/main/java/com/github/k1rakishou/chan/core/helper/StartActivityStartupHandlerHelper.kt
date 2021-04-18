@@ -40,6 +40,11 @@ class StartActivityStartupHandlerHelper(
   private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
   private val siteResolver: SiteResolver
 ) {
+  // We only want to load a board upon the application start when nothing is loaded yet. Afterward
+  // we don't want to do that anymore so that we won't override the currently opened board when
+  // opening threads from notifications.
+  private var needToLoadBoard = true
+
   private var context: Context? = null
   private var browseController: BrowseController? = null
   private var mainController: MainController? = null
@@ -94,6 +99,8 @@ class StartActivityStartupHandlerHelper(
     if (!handled) {
       restoreFresh(allowedToOpenThread = true)
     }
+
+    needToLoadBoard = false
   }
 
   private suspend fun restoreFresh(allowedToOpenThread: Boolean) {
@@ -219,6 +226,9 @@ class StartActivityStartupHandlerHelper(
       }
       intent.hasExtra(NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
         return lastPageNotificationClicked(extras)
+      }
+      intent.hasExtra(NotificationConstants.PostingServiceNotifications.NOTIFICATION_CLICK_CHAN_DESCRIPTOR_KEY) -> {
+        return postingNotificationClicked(extras)
       }
       action == Intent.ACTION_VIEW -> {
         return restoreFromUrl(intent)
@@ -375,6 +385,39 @@ class StartActivityStartupHandlerHelper(
     }
   }
 
+  private suspend fun postingNotificationClicked(extras: Bundle): Boolean {
+    val descriptorParcelable = extras.getParcelable<DescriptorParcelable>(
+      NotificationConstants.PostingServiceNotifications.NOTIFICATION_CLICK_CHAN_DESCRIPTOR_KEY
+    )
+
+    if (descriptorParcelable == null) {
+      return false
+    }
+
+    val chanDescriptor = descriptorParcelable.toChanDescriptor()
+    Logger.d(TAG, "onNewIntent() posting notification clicked, chanDescriptor=$chanDescriptor")
+
+    when (chanDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        browseController?.showBoard(chanDescriptor.boardDescriptor, animated = false)
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        if (needToLoadBoard) {
+          val boardToOpen = getBoardToOpen()
+          if (boardToOpen != null) {
+            browseController?.showBoard(boardToOpen, animated = false)
+          } else {
+            browseController?.loadWithDefaultBoard()
+          }
+        }
+
+        startActivityCallbacks?.loadThread(chanDescriptor, animated = false)
+      }
+    }
+
+    return true
+  }
+
   private suspend fun lastPageNotificationClicked(extras: Bundle): Boolean {
     val threadDescriptors = extras.getParcelableArrayList<DescriptorParcelable>(
       NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
@@ -416,11 +459,13 @@ class StartActivityStartupHandlerHelper(
   private suspend fun openThreadFromNotificationOrBookmarksController(
     threadDescriptors: List<ChanDescriptor.ThreadDescriptor>
   ) {
-    val boardToOpen = getBoardToOpen()
-    if (boardToOpen != null) {
-      browseController?.showBoard(boardToOpen, false)
-    } else {
-      browseController?.loadWithDefaultBoard()
+    if (needToLoadBoard) {
+      val boardToOpen = getBoardToOpen()
+      if (boardToOpen != null) {
+        browseController?.showBoard(boardToOpen, false)
+      } else {
+        browseController?.loadWithDefaultBoard()
+      }
     }
 
     if (threadDescriptors.size == 1) {

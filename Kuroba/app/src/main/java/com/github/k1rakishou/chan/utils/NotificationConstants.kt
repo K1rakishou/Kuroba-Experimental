@@ -59,8 +59,13 @@ object NotificationConstants {
   }
 
   object PostingServiceNotifications {
-    const val NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_posting_service_notification_channel"
-    const val NOTIFICATION_NAME = "Notification channel for posting"
+    const val MAIN_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_posting_service_main_notification_channel"
+    const val MAIN_NOTIFICATION_NAME = "Notification channel for posting service"
+
+    const val CHILD_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_posting_service_child_notification_channel"
+    const val CHILD_NOTIFICATION_NAME = "Notification channel for posting updates"
+
+    const val NOTIFICATION_CLICK_CHAN_DESCRIPTOR_KEY = "posting_service_child_notification_click_chan_descriptor"
   }
 
 }

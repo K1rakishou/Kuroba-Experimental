@@ -293,6 +293,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   var replyOpen = false
     private set
 
+  override fun isReplyLayoutOpened(): Boolean {
+    return replyOpen
+  }
+
   override fun getCurrentChanDescriptor(): ChanDescriptor? {
     return threadPresenter?.currentChanDescriptor
   }
@@ -779,6 +783,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       replyLayout.visibility = VISIBLE
       replyLayout.translationY = height.toFloat()
 
+      threadListLayoutCallback?.showReplyButton(false)
+
       viewPropertyAnimator.translationY(0f)
       viewPropertyAnimator.setListener(object : AnimatorListenerAdapter() {
         override fun onAnimationStart(animation: Animator?) {
@@ -801,6 +807,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         override fun onAnimationEnd(animation: Animator) {
           viewPropertyAnimator.setListener(null)
           replyLayout.visibility = GONE
+
+          threadListLayoutCallback?.showReplyButton(true)
         }
       })
     }
@@ -812,7 +820,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       AndroidUtils.hideKeyboard(replyLayout)
     }
 
-    threadListLayoutCallback?.replyLayoutOpen(open)
     attachToolbarScroll(!open)
   }
 
@@ -1261,7 +1268,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     val chanDescriptor: ChanDescriptor?
 
     fun showToolbar()
-    fun replyLayoutOpen(open: Boolean)
+    fun showReplyButton(show: Boolean)
     fun showImageReencodingWindow(fileUuid: UUID, supportsReencode: Boolean)
     fun threadBackPressed(): Boolean
     fun threadBackLongPressed()

@@ -135,6 +135,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:name=".core.receiver.ImageSaverBroadcastReceiver"
             android:exported="false" />
 
+        <receiver
+            android:name=".core.receiver.PostingServiceBroadcastReceiver"
+            android:exported="false" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${fileProviderAuthority}"

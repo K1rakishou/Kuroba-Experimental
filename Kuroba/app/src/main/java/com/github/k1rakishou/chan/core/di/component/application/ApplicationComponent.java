@@ -21,6 +21,7 @@ import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper;
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkBackgroundWatcherWorker;
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherWorker;
 import com.github.k1rakishou.chan.core.receiver.ImageSaverBroadcastReceiver;
+import com.github.k1rakishou.chan.core.receiver.PostingServiceBroadcastReceiver;
 import com.github.k1rakishou.chan.core.receiver.ReplyNotificationDeleteIntentBroadcastReceiver;
 import com.github.k1rakishou.chan.core.site.SiteBase;
 import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesPresenter;
@@ -69,7 +70,8 @@ public interface ApplicationComponent {
     void inject(FilterWatchesPresenter filterWatchesPresenter);
     void inject(ImageSaverV2Service imageSaverV2Service);
     void inject(PostingService postingService);
-    void inject(ImageSaverBroadcastReceiver cancelImagesDownloadBroadcastReceiver);
+    void inject(ImageSaverBroadcastReceiver imageSaverBroadcastReceiver);
+    void inject(PostingServiceBroadcastReceiver postingServiceBroadcastReceiver);
 
     @Component.Builder
     interface Builder {

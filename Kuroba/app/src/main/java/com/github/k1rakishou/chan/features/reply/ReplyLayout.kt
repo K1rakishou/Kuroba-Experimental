@@ -1291,11 +1291,17 @@ class ReplyLayout @JvmOverloads constructor(
     }
   }
 
+  override fun isReplyLayoutOpened(): Boolean {
+    return threadListLayoutCallbacks?.isReplyLayoutOpened() ?: false
+  }
+
   fun onImageOptionsComplete() {
     replyLayoutFilesArea.onImageOptionsComplete()
   }
 
   interface ThreadListLayoutCallbacks {
+    fun isReplyLayoutOpened(): Boolean
+
     fun currentFocusedController(): ThreadPresenter.CurrentFocusedController
     fun highlightPosts(postDescriptors: Set<PostDescriptor>)
     fun openReply(open: Boolean)

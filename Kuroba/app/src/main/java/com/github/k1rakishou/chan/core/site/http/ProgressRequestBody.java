@@ -34,7 +34,7 @@ public class ProgressRequestBody extends RequestBody {
     protected ProgressSink progressSink;
 
     private static final int maxPercent = 100;
-    private static final int percentStep = 2;
+    private static final int percentStep = 5;
 
     public ProgressRequestBody(
             RequestBody delegate,
@@ -98,7 +98,6 @@ public class ProgressRequestBody extends RequestBody {
 
             if (contentLength() > 0) {
                 int percent = (int) (maxPercent * bytesWritten / contentLength());
-
                 if (percent - lastPercent >= percentStep) {
                     lastPercent = percent;
                     listener.onRequestProgress(fileIndex, totalFiles, percent);

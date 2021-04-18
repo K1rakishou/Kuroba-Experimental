@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.posting
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
@@ -14,10 +15,13 @@ import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.ui.helper.PostHelper
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.isNotNullNorBlank
+import com.github.k1rakishou.common.withLockNonCancellable
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -37,6 +41,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
@@ -70,6 +75,8 @@ class PostingServiceDelegate(
 
   private val _stopServiceEventFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
   private val _updateMainNotificationFlow = MutableSharedFlow<MainNotificationInfo>(extraBufferCapacity = 1)
+  private val _updateChildNotificationFlow = MutableSharedFlow<ChildNotificationInfo>(extraBufferCapacity = 1)
+  private val _closeChildNotificationFlow = MutableSharedFlow<ChanDescriptor>(extraBufferCapacity = 1)
 
   private val channel = appScope.actor<ChanDescriptor>(capacity = Channel.UNLIMITED) {
     consumeEach { chanDescriptor ->
@@ -144,6 +151,11 @@ class PostingServiceDelegate(
 
       updateMainNotification()
 
+      val canceled = doWithReplyInfo(chanDescriptor) { canceled } ?: true
+      if (canceled) {
+        _closeChildNotificationFlow.emit(chanDescriptor)
+      }
+
       val allRepliesProcessed = mutex.withLock {
         if (activeReplyDescriptors.isEmpty()) {
           return@withLock true
@@ -168,6 +180,44 @@ class PostingServiceDelegate(
 
   fun listenForMainNotificationUpdates(): SharedFlow<MainNotificationInfo> {
     return _updateMainNotificationFlow
+  }
+
+  fun listenForChildNotificationUpdates(): SharedFlow<ChildNotificationInfo> {
+    return _updateChildNotificationFlow.asSharedFlow()
+  }
+
+  fun listenForChildNotificationsToClose(): SharedFlow<ChanDescriptor> {
+    return _closeChildNotificationFlow.asSharedFlow()
+  }
+
+  suspend fun cancelAll() {
+    mutex.withLockNonCancellable {
+      activeReplyDescriptors.values.forEach { replyInfo -> replyInfo.cancelReplyUpload() }
+    }
+  }
+
+  suspend fun cancel(chanDescriptor: ChanDescriptor) {
+    mutex.withLockNonCancellable {
+      activeReplyDescriptors[chanDescriptor]?.cancelReplyUpload()
+    }
+  }
+
+  suspend fun retry(chanDescriptor: ChanDescriptor) {
+    val currentStatus = mutex.withLockNonCancellable {
+      activeReplyDescriptors[chanDescriptor]?.currentStatus
+    }
+
+    if (currentStatus == null) {
+      return
+    }
+
+    if (currentStatus !is PostingStatus.AfterPosting) {
+      Logger.d(TAG, "retry() Cannot retry ${chanDescriptor} because it's not in terminal state, " +
+        "currentStatus=${currentStatus.javaClass.simpleName}")
+      return
+    }
+
+    onNewReply(chanDescriptor, retrying = false)
   }
 
   suspend fun listenForPostingStatusUpdates(chanDescriptor: ChanDescriptor): StateFlow<PostingStatus> {
@@ -221,8 +271,10 @@ class PostingServiceDelegate(
         is PostingStatus.BeforePosting -> false
       }
 
-      if (replyInfo.currentStatus is PostingStatus.Attached) {
-        replyInfo.updateStatus(PostingStatus.Enqueued(chanDescriptor))
+      if (replyInfo.currentStatus is PostingStatus.Attached
+        || replyInfo.currentStatus is PostingStatus.AfterPosting
+      ) {
+        replyInfo.reset(chanDescriptor)
       }
 
       return needActorKick
@@ -245,12 +297,21 @@ class PostingServiceDelegate(
     _updateMainNotificationFlow.emit(MainNotificationInfo(activeRepliesCount))
   }
 
+  private suspend fun updateChildNotification(
+    chanDescriptor: ChanDescriptor,
+    status: ChildNotificationInfo.Status
+  ) {
+    _updateChildNotificationFlow.emit(ChildNotificationInfo(chanDescriptor, status))
+  }
+
   private suspend fun processNewReply(
     chanDescriptor: ChanDescriptor,
     postedSuccessfully: AtomicBoolean
   ): Flow<PostingStatus> {
     return flow {
       BackgroundUtils.ensureMainThread()
+
+      updateChildNotification(chanDescriptor, ChildNotificationInfo.Status.Preparing(chanDescriptor))
 
       val reply = replyManager.getReplyOrNull(chanDescriptor)
       if (reply == null) {
@@ -261,6 +322,8 @@ class PostingServiceDelegate(
         )
         return@flow
       }
+
+      ensureNotCanceled(chanDescriptor)
 
       val retrying = doWithReplyInfo(chanDescriptor) { retrying.get() } ?: false
       makeSubmitCall(chanDescriptor, postedSuccessfully, retrying)
@@ -323,6 +386,10 @@ class PostingServiceDelegate(
     retrying: Boolean,
     postedSuccessfully: AtomicBoolean
   ) {
+    ensureNotCanceled(chanDescriptor)
+    processAdditionalReplyServices(chanDescriptor)
+    ensureNotCanceled(chanDescriptor)
+
     site.actions()
       .post(chanDescriptor)
       .catch { error ->
@@ -341,6 +408,10 @@ class PostingServiceDelegate(
               percent = postResult.percent
             )
 
+            val uploadingStatus = ChildNotificationInfo.Status.Uploading(status.toOverallPercent())
+            Logger.d(TAG, "uploadingStatus=${uploadingStatus.totalProgress}")
+
+            updateChildNotification(chanDescriptor, uploadingStatus)
             emit(status)
           }
           is SiteActions.PostResult.PostError -> {
@@ -385,11 +456,48 @@ class PostingServiceDelegate(
       }
   }
 
+  private suspend fun processAdditionalReplyServices(chanDescriptor: ChanDescriptor) {
+
+  }
+
   private suspend fun FlowCollector<PostingStatus>.emitTerminalEvent(
     chanDescriptor: ChanDescriptor,
     postResult: PostResult
   ) {
     emit(PostingStatus.AfterPosting(chanDescriptor, postResult))
+
+    when (postResult) {
+      PostResult.Canceled -> {
+        updateChildNotification(chanDescriptor, ChildNotificationInfo.Status.Canceled)
+      }
+      is PostResult.Error -> {
+        val errorMessage = postResult.throwable.errorMessageOrClassName()
+        updateChildNotification(chanDescriptor, ChildNotificationInfo.Status.Error(errorMessage))
+      }
+      is PostResult.Success -> {
+        val replyResponse = postResult.replyResponse
+        if (replyResponse.posted) {
+          updateChildNotification(chanDescriptor, ChildNotificationInfo.Status.Posted(chanDescriptor))
+          return
+        }
+
+        val errorMessage = when {
+          replyResponse.errorMessage.isNotNullNorBlank() -> replyResponse.errorMessage!!
+          replyResponse.probablyBanned -> getString(R.string.post_service_response_probably_banned)
+          replyResponse.requireAuthentication -> getString(R.string.post_service_response_authentication_required)
+          replyResponse.additionalResponseData != null -> {
+            when (replyResponse.additionalResponseData!!) {
+              ReplyResponse.AdditionalResponseData.DvachAntiSpamCheckDetected -> {
+                getString(R.string.post_service_response_dvach_antispam_detected)
+              }
+            }
+          }
+          else -> getString(R.string.post_service_response_unknown_error)
+        }
+
+        updateChildNotification(chanDescriptor, ChildNotificationInfo.Status.Error(errorMessage))
+      }
+    }
   }
 
   private suspend fun onPostedSuccessfully(
@@ -479,6 +587,10 @@ class PostingServiceDelegate(
     threadNo: Long
   ) {
     if (newThreadDescriptor is ChanDescriptor.ThreadDescriptor) {
+      if (bookmarksManager.exists(newThreadDescriptor)) {
+        return
+      }
+
       val thread = chanThreadManager.getChanThread(newThreadDescriptor)
       val bookmarkThreadDescriptor = newThreadDescriptor.toThreadDescriptor(threadNo)
 
@@ -498,28 +610,30 @@ class PostingServiceDelegate(
           "threadDescriptor: $bookmarkThreadDescriptor, newThreadDescriptor=$newThreadDescriptor, " +
           "threadNo=$threadNo")
       }
+    } else {
+      val bookmarkThreadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+        boardDescriptor = newThreadDescriptor.boardDescriptor(),
+        threadNo = threadNo
+      )
 
-      return
-    }
+      if (bookmarksManager.exists(bookmarkThreadDescriptor)) {
+        return
+      }
 
-    val title = replyManager.readReply(newThreadDescriptor) { reply ->
-      PostHelper.getTitle(reply)
-    }
+      val title = replyManager.readReply(newThreadDescriptor) { reply ->
+        PostHelper.getTitle(reply)
+      }
 
-    val bookmarkThreadDescriptor = ChanDescriptor.ThreadDescriptor.create(
-      boardDescriptor = newThreadDescriptor.boardDescriptor(),
-      threadNo = threadNo
-    )
+      val createBookmarkResult = bookmarksManager.createBookmark(
+        bookmarkThreadDescriptor,
+        title
+      )
 
-    val createBookmarkResult = bookmarksManager.createBookmark(
-      bookmarkThreadDescriptor,
-      title
-    )
-
-    if (!createBookmarkResult) {
-      Logger.e(TAG, "bookmarkThread() Failed to create bookmark with newThreadDescriptor=$newThreadDescriptor, " +
-        "threadDescriptor: $bookmarkThreadDescriptor, newThreadDescriptor=$newThreadDescriptor, " +
-        "threadNo=$threadNo")
+      if (!createBookmarkResult) {
+        Logger.e(TAG, "bookmarkThread() Failed to create bookmark with newThreadDescriptor=$newThreadDescriptor, " +
+            "threadDescriptor: $bookmarkThreadDescriptor, newThreadDescriptor=$newThreadDescriptor, " +
+            "threadNo=$threadNo")
+      }
     }
   }
 
@@ -539,6 +653,15 @@ class PostingServiceDelegate(
       chanPostRepository.awaitUntilInitialized()
       bookmarksManager.awaitUntilInitialized()
       chanThreadManager.awaitUntilDependenciesInitialized()
+    }
+  }
+
+  private suspend fun ensureNotCanceled(replyDescriptor: ChanDescriptor) {
+    mutex.withLock {
+      val replyInfo = activeReplyDescriptors[replyDescriptor]
+      if (replyInfo == null || replyInfo.canceled) {
+        throw CancellationException("Canceled")
+      }
     }
   }
 
@@ -568,37 +691,66 @@ class PostingServiceDelegate(
   }
 
   suspend fun consumeTerminalEvent(replyDescriptor: ChanDescriptor) {
-    Logger.d(TAG, "consumeTerminalEvent($replyDescriptor)")
+    val consumed = mutex.withLock {
+      val replyInfo = activeReplyDescriptors[replyDescriptor]
+      if (replyInfo == null) {
+        return@withLock false
+      }
 
-    mutex.withLock {
-      activeReplyDescriptors[replyDescriptor]
-        ?.updateStatus(PostingStatus.Attached(replyDescriptor))
+      if (!replyInfo.currentStatus.isTerminalEvent()) {
+        return@withLock false
+      }
+
+      replyInfo.updateStatus(PostingStatus.Attached(replyDescriptor))
+      return@withLock true
     }
+
+    if (!consumed) {
+      return
+    }
+
+    Logger.d(TAG, "consumeTerminalEvent($replyDescriptor)")
+    updateChildNotification(replyDescriptor, ChildNotificationInfo.Status.Preparing(replyDescriptor))
   }
 
   class ReplyInfo(
     initialStatus: PostingStatus,
-    private var _status: MutableStateFlow<PostingStatus> = MutableStateFlow(initialStatus),
+    private val _status: MutableStateFlow<PostingStatus> = MutableStateFlow(initialStatus),
     val retrying: AtomicBoolean = AtomicBoolean(false)
   ) {
+    private val _canceled = AtomicBoolean(false)
+
     val currentStatus: PostingStatus
       get() = _status.value
     val statusUpdates: StateFlow<PostingStatus>
       get() = _status.asStateFlow()
     val activeJob = AtomicReference<Job>(null)
 
+    val canceled: Boolean
+      get() = activeJob.get() == null || _canceled.get()
+
     @Synchronized
     fun updateStatus(newStatus: PostingStatus) {
       _status.value = newStatus
-      Logger.d(TAG, "updateStatus, newStatus=${_status.value}")
     }
 
     @Synchronized
     fun cancelReplyUpload() {
+      _canceled.set(true)
+
       val job = activeJob.get() ?: return
       job.cancel()
 
       activeJob.set(null)
+    }
+
+    @Synchronized
+    fun reset(chanDescriptor: ChanDescriptor) {
+      retrying.set(false)
+      _canceled.set(false)
+      activeJob.set(null)
+
+      _status.value = PostingStatus.Enqueued(chanDescriptor)
     }
 
   }
@@ -656,7 +808,18 @@ class PostingServiceDelegate(
       val fileIndex: Int,
       val totalFiles: Int,
       val percent: Int
-    ) : PostingStatus()
+    ) : PostingStatus() {
+
+      fun toOverallPercent(): Float {
+        val index = (fileIndex - 1).coerceAtLeast(0).toFloat()
+
+        val totalProgress = totalFiles.toFloat() * 100f
+        val currentProgress = (index * 100f) + percent.toFloat()
+
+        return currentProgress / totalProgress
+      }
+
+    }
 
     data class AfterPosting(
       override val chanDescriptor: ChanDescriptor,
@@ -665,6 +828,71 @@ class PostingServiceDelegate(
   }
 
   data class MainNotificationInfo(val activeRepliesCount: Int)
+
+  data class ChildNotificationInfo(
+    val chanDescriptor: ChanDescriptor,
+    val status: Status
+  ) {
+
+    val canCancel: Boolean
+      get() {
+        return when (status) {
+          is Status.Uploading,
+          is Status.WaitingForCaptchaSolution -> true
+          is Status.Preparing,
+          is Status.Error,
+          is Status.Posted,
+          Status.Canceled -> false
+        }
+      }
+
+    val canRetry: Boolean
+      get() = status is Status.Error
+
+    val isOngoing: Boolean
+      get() {
+        return when (status) {
+          is Status.Uploading,
+          is Status.WaitingForCaptchaSolution -> true
+          is Status.Error,
+          is Status.Preparing,
+          is Status.Posted,
+          Status.Canceled -> false
+        }
+      }
+
+    sealed class Status(
+      val statusText: String
+    ) {
+      class Preparing(
+        chanDescriptor: ChanDescriptor
+      ) : Status("Preparing to send a reply to ${chanDescriptor.userReadableString()}")
+
+      data class WaitingForCaptchaSolution(
+        val serviceName: String
+      ): Status("Waiting for captcha solution from \"${serviceName}\"")
+
+      data class Uploading(
+        val totalProgress: Float
+      ) : Status("Uploading ${(totalProgress * 100f).toInt()}%...")
+
+      data class Posted(
+        val chanDescriptor: ChanDescriptor
+      ) : Status("Posted in ${chanDescriptor.userReadableString()}")
+
+      data class Error(
+        val errorMessage: String
+      ) : Status("Failed to post, error=${errorMessage}")
+
+      object Canceled : Status("Canceled")
+    }
+
+    companion object {
+      fun default(chanDescriptor: ChanDescriptor): ChildNotificationInfo {
+        return ChildNotificationInfo(chanDescriptor, Status.Preparing(chanDescriptor))
+      }
+    }
+  }
 
   class PostingException(message: String) : Exception(message)
 

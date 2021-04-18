@@ -359,10 +359,6 @@ class ThreadLayout @JvmOverloads constructor(
     threadListLayout.setBoardPostViewMode(boardPostViewMode)
   }
 
-  override fun replyLayoutOpen(open: Boolean) {
-    showReplyButton(!open)
-  }
-
   override fun showImageReencodingWindow(fileUuid: UUID, supportsReencode: Boolean) {
     presenter.showImageReencodingWindow(fileUuid, supportsReencode)
   }
@@ -1024,7 +1020,7 @@ class ThreadLayout @JvmOverloads constructor(
     openReplyInternal(open)
   }
 
-  private fun showReplyButton(show: Boolean) {
+  override fun showReplyButton(show: Boolean) {
     if (replyButton.isFabVisible() == show || !replyButtonEnabled) {
       return
     }

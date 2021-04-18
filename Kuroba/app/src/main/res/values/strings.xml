@@ -84,6 +84,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     <string name="empty" />
     <string name="cancel">Cancel</string>
+    <string name="cancel_all">Cancel all</string>
     <string name="canceled">Canceled</string>
     <string name="add">Add</string>
     <string name="close">Close</string>
@@ -1241,6 +1242,10 @@ Don't have a 4chan Pass?<br>
 
     <string name="post_service_processing">Processing replies</string>
     <string name="post_service_processing_count">Processing %1$d replies</string>
+    <string name="post_service_response_probably_banned">You are probably banned</string>
+    <string name="post_service_response_authentication_required">Authentication required</string>
+    <string name="post_service_response_dvach_antispam_detected">Dvach anti-spam script detected</string>
+    <string name="post_service_response_unknown_error">Unknown error</string>
 
     <string name="search_found_unknown">Found: ???</string>
     <string name="search_found_count">Found: %1$d</string>

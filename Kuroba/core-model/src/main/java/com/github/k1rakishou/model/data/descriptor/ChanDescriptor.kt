@@ -131,7 +131,7 @@ sealed class ChanDescriptor {
     }
 
     override fun userReadableString(): String {
-      return "${boardDescriptor.siteName()}_${boardDescriptor.boardCode}"
+      return "${boardDescriptor.siteName()}/${boardDescriptor.boardCode}"
     }
 
     override fun equals(other: Any?): Boolean {

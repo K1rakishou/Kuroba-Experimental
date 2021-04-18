@@ -14,7 +14,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.SpannableHelper
 import com.github.k1rakishou.common.MurmurHashUtils
 import com.github.k1rakishou.common.ellipsizeEnd
-import com.github.k1rakishou.common.isNotNullNorEmpty
+import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed
 import com.github.k1rakishou.core_themes.ChanTheme
@@ -200,7 +200,7 @@ data class PostCellData(
       postIndexText = String.format(Locale.ENGLISH, "#%d, ", postIndex + 1)
     }
 
-    if (post.subject.isNotNullNorEmpty()) {
+    if (post.subject.isNotNullNorBlank()) {
       val postSubject = SpannableString.valueOf(post.subject!!)
 
       SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
@@ -214,7 +214,7 @@ data class PostCellData(
       titleParts.add("\n")
     }
 
-    if (post.tripcode.isNotNullNorEmpty()) {
+    if (post.tripcode.isNotNullNorBlank()) {
       titleParts.add(post.tripcode!!)
     }
 

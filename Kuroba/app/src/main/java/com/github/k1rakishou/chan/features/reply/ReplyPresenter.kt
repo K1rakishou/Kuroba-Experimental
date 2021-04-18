@@ -190,10 +190,12 @@ class ReplyPresenter @Inject constructor(
             }
           }
 
-          // We need to "consume" the AfterPosting event (meaning replace it with Attached event) so
-          // that we don't show "Posted successfully" every time we open a thread where we have
-          // recently posted.
-          postingServiceDelegate.consumeTerminalEvent(status.chanDescriptor)
+          if (::callback.isInitialized && callback.isReplyLayoutOpened()) {
+            // We need to "consume" the AfterPosting event (meaning replace it with Attached event) so
+            // that we don't show "Posted successfully" every time we open a thread where we have
+            // recently posted.
+            postingServiceDelegate.consumeTerminalEvent(status.chanDescriptor)
+          }
         }
       }
     }
@@ -223,6 +225,13 @@ class ReplyPresenter @Inject constructor(
   }
 
   fun onOpen(open: Boolean) {
+    launch {
+      val descriptor = currentChanDescriptor
+      if (open && descriptor != null) {
+        postingServiceDelegate.consumeTerminalEvent(descriptor)
+      }
+    }
+
     if (open) {
       callback.focusComment()
     }
@@ -401,7 +410,7 @@ class ReplyPresenter @Inject constructor(
     onAuthenticationComplete(
       chanDescriptor = chanDescriptor,
       challenge = null,
-      response = null,
+      response = callback.getTokenOrNull(),
       autoReply = true
     )
   }
@@ -729,6 +738,7 @@ class ReplyPresenter @Inject constructor(
     val chanDescriptor: ChanDescriptor?
     val selectionStart: Int
 
+    fun isReplyLayoutOpened(): Boolean
     suspend fun enableOrDisableReplyLayout()
     fun loadViewsIntoDraft(chanDescriptor: ChanDescriptor)
     fun loadDraftIntoViews(chanDescriptor: ChanDescriptor)

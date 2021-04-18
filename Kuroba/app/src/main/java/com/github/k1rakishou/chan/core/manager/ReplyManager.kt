@@ -35,14 +35,13 @@ import kotlinx.coroutines.flow.Flow
 import java.io.File
 import java.io.IOException
 import java.util.*
-import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 /**
  * Manages replies.
  */
-class ReplyManager @Inject constructor(
+class ReplyManager(
   private val appConstants: AppConstants,
   commonGson: Gson
 ) {
