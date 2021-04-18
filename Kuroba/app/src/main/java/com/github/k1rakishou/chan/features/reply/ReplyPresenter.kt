@@ -56,6 +56,7 @@ import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.cancellation.CancellationException
 
 class ReplyPresenter @Inject constructor(
   private val replyManager: ReplyManager,
@@ -139,53 +140,59 @@ class ReplyPresenter @Inject constructor(
 
     postingStatusUpdatesJob = launch {
       postingServiceDelegate.listenForPostingStatusUpdates(chanDescriptor)
-        .collect { status ->
-          if (status.chanDescriptor != currentChanDescriptor) {
-            return@collect
-          }
-
-          Logger.d(TAG, "listenForPostingStatusUpdates($chanDescriptor) -> ${status.javaClass.simpleName}")
-
-          withContext(Dispatchers.Main) {
-            when (status) {
-              is PostingServiceDelegate.PostingStatus.Attached -> {
-                if (::callback.isInitialized) {
-                  callback.enableSendButton()
-                }
-              }
-              is PostingServiceDelegate.PostingStatus.Enqueued -> {
-                // no-op
-              }
-              is PostingServiceDelegate.PostingStatus.BeforePosting -> {
-                if (::callback.isInitialized) {
-                  callback.disableSendButton()
-                }
-              }
-              is PostingServiceDelegate.PostingStatus.Progress -> {
-                Logger.d(TAG, "PostingStatus.Progress(fileIndex=${status.fileIndex}, " +
-                  "totalFiles=${status.totalFiles}, percent=${status.percent})")
-              }
-              is PostingServiceDelegate.PostingStatus.AfterPosting -> {
-                if (::callback.isInitialized) {
-                  callback.enableSendButton()
-                }
-
-                when (val postResult = status.postResult) {
-                  is PostingServiceDelegate.PostResult.Error -> {
-                    onPostError(status.chanDescriptor, postResult.throwable)
-                  }
-                  is PostingServiceDelegate.PostResult.Success -> {
-                    onPostComplete(status.chanDescriptor, postResult.replyResponse, postResult.retrying)
-                  }
-                }
-              }
-            }
-          }
-        }
+        .collect { status -> processPostingStatusUpdates(status, chanDescriptor) }
     }
 
     callback.setInputPage()
     return true
+  }
+
+  private suspend fun processPostingStatusUpdates(
+    status: PostingServiceDelegate.PostingStatus,
+    chanDescriptor: ChanDescriptor
+  ) {
+    withContext(Dispatchers.Main) {
+      if (status.chanDescriptor != currentChanDescriptor) {
+        // The user may open another thread while the reply is being uploaded so we need to check
+        // whether this even actually belongs to this catalog/thread.
+        return@withContext
+      }
+
+      Logger.d(TAG, "listenForPostingStatusUpdates($chanDescriptor) -> ${status.javaClass.simpleName}")
+
+      when (status) {
+        is PostingServiceDelegate.PostingStatus.Attached,
+        is PostingServiceDelegate.PostingStatus.Enqueued -> {
+          // no-op
+        }
+        is PostingServiceDelegate.PostingStatus.BeforePosting -> {
+          if (::callback.isInitialized) {
+            callback.enableOrDisableReplyLayout()
+          }
+        }
+        is PostingServiceDelegate.PostingStatus.Progress -> {
+          Logger.d(TAG, "PostingStatus.Progress(fileIndex=${status.fileIndex}, " +
+              "totalFiles=${status.totalFiles}, percent=${status.percent})")
+        }
+        is PostingServiceDelegate.PostingStatus.AfterPosting -> {
+          if (::callback.isInitialized) {
+            callback.enableOrDisableReplyLayout()
+          }
+
+          when (val postResult = status.postResult) {
+            PostingServiceDelegate.PostResult.Canceled -> {
+              onPostError(status.chanDescriptor, CancellationException("Canceled"))
+            }
+            is PostingServiceDelegate.PostResult.Error -> {
+              onPostError(status.chanDescriptor, postResult.throwable)
+            }
+            is PostingServiceDelegate.PostResult.Success -> {
+              onPostComplete(status.chanDescriptor, postResult.replyResponse, postResult.retrying)
+            }
+          }
+        }
+      }
+    }
   }
 
   fun unbindReplyImages() {
@@ -333,13 +340,18 @@ class ReplyPresenter @Inject constructor(
     }
 
     if (autoReply) {
-      makeSubmitCall()
+      makeSubmitCall(chanDescriptor = chanDescriptor)
     }
   }
 
-  fun onSubmitClicked(longClicked: Boolean) {
+  suspend fun onSubmitClicked(longClicked: Boolean) {
     val chanDescriptor = currentChanDescriptor
       ?: return
+
+    if (!isReplyLayoutEnabled()) {
+      postingServiceDelegate.cancelReplySend(chanDescriptor)
+      return
+    }
 
     if (!onPrepareToSubmit(false)) {
       return
@@ -380,7 +392,7 @@ class ReplyPresenter @Inject constructor(
 
   private fun submitOrAuthenticate(chanDescriptor: ChanDescriptor) {
     if (!site.actions().postRequiresAuthentication()) {
-      makeSubmitCall()
+      makeSubmitCall(chanDescriptor = chanDescriptor)
       return
     }
 
@@ -525,10 +537,7 @@ class ReplyPresenter @Inject constructor(
     callback.updateRevertChangeButtonVisibility(isBufferEmpty = true)
   }
 
-  private fun makeSubmitCall(retrying: Boolean = false) {
-    val chanDescriptor = currentChanDescriptor
-      ?: return
-
+  private fun makeSubmitCall(chanDescriptor: ChanDescriptor, retrying: Boolean = false) {
     this@ReplyPresenter.floatingReplyMessageClickAction = null
 
     closeAll()
@@ -539,7 +548,12 @@ class ReplyPresenter @Inject constructor(
 
   private fun onPostError(chanDescriptor: ChanDescriptor, exception: Throwable?) {
     BackgroundUtils.ensureMainThread()
-    Logger.e(TAG, "onPostError", exception)
+
+    if (exception is CancellationException) {
+      Logger.e(TAG, "onPostError: Canceled")
+    } else {
+      Logger.e(TAG, "onPostError", exception)
+    }
 
     var errorMessage = getString(R.string.reply_error)
     if (exception != null) {
@@ -562,7 +576,7 @@ class ReplyPresenter @Inject constructor(
     when {
       replyResponse.posted -> {
         Logger.d(TAG, "onPostComplete() replyResponse=$replyResponse")
-        onPostedSuccessfully(chanDescriptor, replyResponse)
+        onPostedSuccessfully(prevChanDescriptor = chanDescriptor, replyResponse = replyResponse)
       }
       replyResponse.requireAuthentication -> {
         Logger.d(TAG, "onPostComplete() requireAuthentication==true replyResponse=$replyResponse")
@@ -590,10 +604,10 @@ class ReplyPresenter @Inject constructor(
   private suspend fun handleDvachAntiSpam(replyResponse: ReplyResponse, chanDescriptor: ChanDescriptor) {
     if (callback.show2chAntiSpamCheckSolverController()) {
       // We managed to solve the anti spam check, try posting again
-      makeSubmitCall(retrying = true)
+      makeSubmitCall(chanDescriptor = chanDescriptor, retrying = true)
     } else {
       // We failed to solve the anti spam check, show the error
-      onPostCompleteUnsuccessful(replyResponse, chanDescriptor)
+      onPostCompleteUnsuccessful(replyResponse = replyResponse, chanDescriptor = chanDescriptor)
     }
   }
 
@@ -708,12 +722,18 @@ class ReplyPresenter @Inject constructor(
     floatingReplyMessageClickAction = null
   }
 
+  suspend fun isReplyLayoutEnabled(): Boolean {
+    val descriptor = currentChanDescriptor
+      ?: return true
+
+    return postingServiceDelegate.isReplyCurrentlyInProgress(descriptor)
+  }
+
   interface ReplyPresenterCallback {
     val chanDescriptor: ChanDescriptor?
     val selectionStart: Int
 
-    fun disableSendButton()
-    fun enableSendButton()
+    suspend fun enableOrDisableReplyLayout()
     fun loadViewsIntoDraft(chanDescriptor: ChanDescriptor)
     fun loadDraftIntoViews(chanDescriptor: ChanDescriptor)
     fun adjustSelection(start: Int, amount: Int)

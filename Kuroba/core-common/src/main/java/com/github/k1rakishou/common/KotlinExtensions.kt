@@ -191,7 +191,7 @@ inline fun <K, V> MutableMap<K, V>.mutableIteration(func: (MutableIterator<Map.E
   }
 }
 
-public val <T> List<T>.lastIndexOrNull: Int?
+val <T> List<T>.lastIndexOrNull: Int?
   get() {
     if (this.isEmpty()) {
       return null
@@ -642,7 +642,7 @@ inline fun <T> hashSetWithCap(collection: Collection<*>): HashSet<T> {
   return HashSet(safeCapacity(collection.size))
 }
 
-public inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long): Long {
+inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long): Long {
   var sum = 0L
   for (element in this) {
     sum += selector(element)
@@ -760,4 +760,14 @@ fun CharSequence?.copy(): CharSequence? {
   }
 
   return SpannableString(this)
+}
+
+fun View.isPointInsideView(x: Float, y: Float): Boolean {
+  val location = IntArray(2)
+  this.getLocationOnScreen(location)
+
+  val viewX = location[0]
+  val viewY = location[1]
+
+  return x > viewX && x < viewX + this.width && y > viewY && y < viewY + this.height
 }

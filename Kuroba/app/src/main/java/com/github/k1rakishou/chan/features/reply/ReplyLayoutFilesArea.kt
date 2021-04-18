@@ -36,6 +36,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.setAlphaFast
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -368,7 +369,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
     val floatingListMenuController = FloatingListMenuController(
       context = context,
-      globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = floatingListMenuItems,
       itemClickListener = { item -> onPickFileItemClicked(item) }
     )
@@ -445,6 +446,14 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
   fun onImageOptionsComplete() {
     presenter.refreshAttachedFiles()
+  }
+
+  fun enableOrDisable(enable: Boolean) {
+    if (!enable) {
+      setAlphaFast(0.6f)
+    } else {
+      setAlphaFast(1f)
+    }
   }
 
   private inner class ReplyFilesEpoxyController : EpoxyController() {

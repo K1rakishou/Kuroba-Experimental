@@ -5,6 +5,7 @@ import android.content.ContextWrapper
 import android.graphics.drawable.ColorDrawable
 import android.text.TextWatcher
 import android.view.View
+import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.view.doOnLayout
@@ -115,6 +116,14 @@ fun View.setAlphaFast(newAlpha: Float) {
 fun View.setEnabledFast(newEnabled: Boolean) {
   if (isEnabled != newEnabled) {
     isEnabled = newEnabled
+  }
+
+  if (this is ImageView) {
+    if (!newEnabled) {
+      setAlphaFast(0.6f)
+    } else {
+      setAlphaFast(1f)
+    }
   }
 }
 

@@ -1240,6 +1240,7 @@ Don't have a 4chan Pass?<br>
     <string name="image_saver_finished_downloading_images_with_errors">Finished downloading %1$d images with errors</string>
 
     <string name="post_service_processing">Processing replies</string>
+    <string name="post_service_processing_count">Processing %1$d replies</string>
 
     <string name="search_found_unknown">Found: ???</string>
     <string name="search_found_count">Found: %1$d</string>

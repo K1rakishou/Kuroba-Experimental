@@ -20,13 +20,11 @@ import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Configuration
-import android.content.res.Resources
 import android.graphics.Color
 import android.os.Build
 import android.text.Editable
 import android.text.TextUtils
 import android.text.TextWatcher
-import android.util.AndroidRuntimeException
 import android.util.AttributeSet
 import android.view.ActionMode
 import android.view.GestureDetector
@@ -94,9 +92,11 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.doIgnoringTextWatcher
 import com.github.k1rakishou.chan.utils.setAlphaFast
+import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.findAllChildren
+import com.github.k1rakishou.common.isPointInsideView
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
@@ -153,6 +153,7 @@ class ReplyLayout @JvmOverloads constructor(
   private var threadListLayoutFilesCallback: ReplyLayoutFilesArea.ThreadListLayoutCallbacks? = null
 
   private var blockSelectionChange = false
+  private var replyLayoutEnabled = true
   private var currentOrientation: Int = Configuration.ORIENTATION_UNDEFINED
 
   // Reply views:
@@ -502,8 +503,8 @@ class ReplyLayout @JvmOverloads constructor(
     AndroidUtils.setBoundlessRoundRippleBackground(submit)
     submit.setOnClickListener(this)
     submit.setOnLongClickListener {
-      presenter.onSubmitClicked(true)
-      true
+      rendezvousCoroutineExecutor.post { presenter.onSubmitClicked(longClicked = true) }
+      return@setOnLongClickListener true
     }
 
     moreDropdown = DropdownArrowDrawable(dp(16f), dp(16f), false)
@@ -583,11 +584,10 @@ class ReplyLayout @JvmOverloads constructor(
 
       globalViewStateManager.updateIsReplyLayoutOpened(threadControllerType, open)
     }
-  }
 
-  @SuppressLint("ClickableViewAccessibility")
-  override fun onTouchEvent(event: MotionEvent): Boolean {
-    return true
+    coroutineScope.launch {
+      enableOrDisableReplyLayout()
+    }
   }
 
   suspend fun bindLoadable(chanDescriptor: ChanDescriptor) {
@@ -763,7 +763,7 @@ class ReplyLayout @JvmOverloads constructor(
       when {
         v === more -> presenter.onMoreClicked()
         v === captchaView -> presenter.onAuthenticateCalled()
-        v === submit -> presenter.onSubmitClicked(false)
+        v === submit -> presenter.onSubmitClicked(longClicked = false)
         v === commentQuoteButton -> insertQuote()
         v === commentSpoilerButton -> insertTags("[spoiler]", "[/spoiler]")
         v === commentCodeButton -> insertTags("[code]", "[/code]")
@@ -879,27 +879,6 @@ class ReplyLayout @JvmOverloads constructor(
     }
   }
 
-  private fun getReason(error: Throwable): String {
-    if (error is AndroidRuntimeException && error.message != null) {
-      if (error.message?.contains("MissingWebViewPackageException") == true) {
-        return getString(R.string.fail_reason_webview_is_not_installed)
-      }
-
-      // Fallthrough
-    } else if (error is Resources.NotFoundException) {
-      return getString(
-        R.string.fail_reason_some_part_of_webview_not_initialized,
-        error.message
-      )
-    }
-
-    if (error.message != null) {
-      return String.format("%s: %s", error.javaClass.simpleName, error.message)
-    }
-
-    return error.javaClass.simpleName
-  }
-
   override fun loadDraftIntoViews(chanDescriptor: ChanDescriptor) {
     val lastUsedFlagInfo = staticBoardFlagInfoRepository.getLastUsedFlagInfo(chanDescriptor.boardDescriptor())
 
@@ -917,6 +896,56 @@ class ReplyLayout @JvmOverloads constructor(
       comment.setText(reply.comment)
       blockSelectionChange = false
     }
+  }
+
+  override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
+    if (ev == null) {
+      return false
+    }
+
+    if (!replyLayoutEnabled && !submit.isPointInsideView(ev.rawX, ev.rawY)) {
+      // Intercept touch events for all children (except the submit button) when reply layout is disabled
+      return true
+    }
+
+    return super.onInterceptTouchEvent(ev)
+  }
+
+  @SuppressLint("ClickableViewAccessibility")
+  override fun onTouchEvent(event: MotionEvent): Boolean {
+    return true
+  }
+
+  override suspend fun enableOrDisableReplyLayout() {
+    val enable = presenter.isReplyLayoutEnabled()
+
+    replyInputMessage.setEnabledFast(enable)
+    name.setEnabledFast(enable)
+    subject.setEnabledFast(enable)
+    flag.setEnabledFast(enable)
+    options.setEnabledFast(enable)
+    commentQuoteButton.setEnabledFast(enable)
+    commentSpoilerButton.setEnabledFast(enable)
+    commentCodeButton.setEnabledFast(enable)
+    commentEqnButton.setEnabledFast(enable)
+    commentMathButton.setEnabledFast(enable)
+    commentSJISButton.setEnabledFast(enable)
+    comment.setEnabledFast(enable)
+    commentCounter.setEnabledFast(enable)
+    commentRevertChangeButton.setEnabledFast(enable)
+    captchaView.setEnabledFast(enable)
+    validCaptchasCount.setEnabledFast(enable)
+    more.setEnabledFast(enable)
+    replyLayoutFilesArea.enableOrDisable(enable)
+
+    if (enable) {
+      submit.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_send_white_24dp))
+    } else {
+      submit.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_clear_white_24dp))
+    }
+
+    val tintColor = themeEngine.resolveTintColor(themeEngine.chanTheme.isBackColorDark)
+    submit.setImageDrawable(themeEngine.tintDrawable(submit.drawable, tintColor))
   }
 
   override fun loadViewsIntoDraft(chanDescriptor: ChanDescriptor) {

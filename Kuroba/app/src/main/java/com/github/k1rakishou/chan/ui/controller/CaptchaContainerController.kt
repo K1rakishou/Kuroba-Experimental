@@ -1,6 +1,8 @@
 package com.github.k1rakishou.chan.ui.controller
 
 import android.content.Context
+import android.content.res.Resources
+import android.util.AndroidRuntimeException
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -16,6 +18,7 @@ import com.github.k1rakishou.chan.ui.captcha.LegacyCaptchaLayout
 import com.github.k1rakishou.chan.ui.captcha.v1.CaptchaNojsLayoutV1
 import com.github.k1rakishou.chan.ui.captcha.v2.CaptchaNoJsLayoutV2
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import javax.inject.Inject
 
@@ -43,7 +46,35 @@ class CaptchaContainerController(
     view.findViewById<FrameLayout>(R.id.outside_area)
       .setOnClickListener { pop() }
 
-    initAuthenticationInternal(useV2NoJsCaptcha = true)
+    try {
+      initAuthenticationInternal(useV2NoJsCaptcha = true)
+    } catch (error: Throwable) {
+      Logger.e(TAG, "initAuthenticationInternal error", error)
+      showToast(getReason(error))
+
+      pop()
+    }
+  }
+
+  private fun getReason(error: Throwable): String {
+    if (error is AndroidRuntimeException && error.message != null) {
+      if (error.message?.contains("MissingWebViewPackageException") == true) {
+        return AppModuleAndroidUtils.getString(R.string.fail_reason_webview_is_not_installed)
+      }
+
+      // Fallthrough
+    } else if (error is Resources.NotFoundException) {
+      return AppModuleAndroidUtils.getString(
+        R.string.fail_reason_some_part_of_webview_not_initialized,
+        error.message
+      )
+    }
+
+    if (error.message != null) {
+      return String.format("%s: %s", error.javaClass.simpleName, error.message)
+    }
+
+    return error.javaClass.simpleName
   }
 
   private fun initAuthenticationInternal(useV2NoJsCaptcha: Boolean) {
@@ -132,4 +163,7 @@ class CaptchaContainerController(
     data class Failure(val throwable: Throwable) : AuthenticationResult()
   }
 
+  companion object {
+    private const val TAG = "CaptchaContainerController"
+  }
 }

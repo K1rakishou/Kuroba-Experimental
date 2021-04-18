@@ -49,6 +49,16 @@ class PostingService : Service() {
           stopSelf()
         }
     }
+
+    kurobaScope.launch {
+      postingServiceDelegate.listenForMainNotificationUpdates()
+        .collect { mainNotificationInfo ->
+          notificationManagerCompat.notify(
+            NotificationConstants.POSTING_SERVICE_NOTIFICATION_ID,
+            createServiceNotification(mainNotificationInfo)
+          )
+        }
+    }
   }
 
   override fun onDestroy() {
@@ -66,7 +76,7 @@ class PostingService : Service() {
 
     startForeground(
       NotificationConstants.POSTING_SERVICE_NOTIFICATION_ID,
-      createServiceNotification()
+      createServiceNotification(mainNotificationInfo = null)
     )
 
     val chanDescriptor = intent.getParcelableExtra<DescriptorParcelable>(REPLY_CHAN_DESCRIPTOR)
@@ -84,15 +94,23 @@ class PostingService : Service() {
     return START_REDELIVER_INTENT
   }
 
-  private fun createServiceNotification(): Notification {
+  private fun createServiceNotification(
+    mainNotificationInfo: PostingServiceDelegate.MainNotificationInfo?
+  ): Notification {
     BackgroundUtils.ensureMainThread()
     setupChannels()
+
+    val titleString = if (mainNotificationInfo == null || mainNotificationInfo.activeRepliesCount <= 0) {
+      getString(R.string.post_service_processing)
+    } else {
+      getString(R.string.post_service_processing_count, mainNotificationInfo.activeRepliesCount)
+    }
 
     return NotificationCompat.Builder(
       applicationContext,
       NotificationConstants.PostingServiceNotifications.NOTIFICATION_CHANNEL_ID
     )
-      .setContentTitle(getString(R.string.post_service_processing))
+      .setContentTitle(titleString)
       .setSmallIcon(R.drawable.ic_stat_notify)
       .setOngoing(true)
       .build()
