@@ -47,7 +47,18 @@ public class LastReplyRepository {
         }
     }
 
+    public void putLastThread(BoardDescriptor boardDescriptor) {
+        synchronized (this) {
+            lastThreadMap.put(boardDescriptor, System.currentTimeMillis());
+        }
+    }
+
     public long getTimeUntilReply(BoardDescriptor boardDescriptor, boolean hasImage) {
+        if (!boardDescriptor.getSiteDescriptor().is4chan()) {
+            // only 4chan seems to have the post delay, this is a hack for that
+            return 0L;
+        }
+
         Long lastTime = 0L;
 
         synchronized (this) {
@@ -79,13 +90,12 @@ public class LastReplyRepository {
         return waitTime - ((System.currentTimeMillis() - lastReplyTime) / 1000L);
     }
 
-    public void putLastThread(BoardDescriptor boardDescriptor) {
-        synchronized (this) {
-            lastThreadMap.put(boardDescriptor, System.currentTimeMillis());
-        }
-    }
-
     public long getTimeUntilThread(BoardDescriptor boardDescriptor) {
+        if (!boardDescriptor.getSiteDescriptor().is4chan()) {
+            // only 4chan seems to have the post delay, this is a hack for that
+            return 0L;
+        }
+
         Long lastTime = 0L;
 
         synchronized (this) {

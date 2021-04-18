@@ -17,6 +17,7 @@ import com.github.k1rakishou.chan.ui.helper.PostHelper
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -87,22 +88,24 @@ class PostingServiceDelegate(
               doWithReplyInfo(chanDescriptor) { updateStatus(status) }
 
               when (status) {
+                is PostingStatus.Progress -> {
+                  // no-op
+                }
                 is PostingStatus.Attached,
                 is PostingStatus.Enqueued,
-                is PostingStatus.BeforePosting,
-                is PostingStatus.Progress -> {
+                is PostingStatus.BeforePosting -> {
                   Logger.d(TAG, "processNewReply($chanDescriptor) -> ${status.javaClass.simpleName}")
                 }
                 is PostingStatus.AfterPosting -> {
                   when (status.postResult) {
                     PostResult.Canceled -> {
-                      Logger.e(TAG, "processNewReply($chanDescriptor) AfterPosting canceled")
+                      Logger.d(TAG, "processNewReply($chanDescriptor) AfterPosting canceled")
                     }
                     is PostResult.Error -> {
-                      Logger.e(TAG, "processNewReply($chanDescriptor) AfterPosting error message: ${status.postResult.throwable}")
+                      Logger.d(TAG, "processNewReply($chanDescriptor) AfterPosting error message: ${status.postResult.throwable}")
                     }
                     is PostResult.Success -> {
-                      Logger.e(TAG, "processNewReply($chanDescriptor) AfterPosting success")
+                      Logger.d(TAG, "processNewReply($chanDescriptor) AfterPosting success")
                     }
                   }
                 }
@@ -323,6 +326,9 @@ class PostingServiceDelegate(
     site.actions()
       .post(chanDescriptor)
       .catch { error ->
+        Logger.e(TAG, "SiteActions.PostResult.PostError($chanDescriptor) " +
+          "unhandled error: ${error.errorMessageOrClassName()}")
+
         emitTerminalEvent(chanDescriptor, PostResult.Error(error))
       }
       .collect { postResult ->
@@ -338,28 +344,42 @@ class PostingServiceDelegate(
             emit(status)
           }
           is SiteActions.PostResult.PostError -> {
+            Logger.e(TAG, "SiteActions.PostResult.PostError($chanDescriptor) " +
+              "error: ${postResult.error.errorMessageOrClassName()}")
             emitTerminalEvent(chanDescriptor, PostResult.Error(postResult.error))
           }
           is SiteActions.PostResult.PostComplete -> {
-            if (postResult.replyResponse.posted) {
-              try {
-                postedSuccessfully.set(true)
-                onPostedSuccessfully(chanDescriptor, postResult.replyResponse)
-              } catch (error: Throwable) {
-                Logger.e(TAG, " onPostedSuccessfully($chanDescriptor) error", error)
+            if (!postResult.replyResponse.posted) {
+              Logger.d(TAG, "SiteActions.PostResult.PostComplete($chanDescriptor) failed to post")
 
-                emitTerminalEvent(chanDescriptor, PostResult.Error(error))
-                return@collect
-              }
+              emitTerminalEvent(
+                chanDescriptor = chanDescriptor,
+                postResult = PostResult.Success(
+                  replyResponse = postResult.replyResponse,
+                  retrying = retrying
+                )
+              )
+
+              return@collect
             }
 
-            emitTerminalEvent(
-              chanDescriptor = chanDescriptor,
-              postResult = PostResult.Success(
-                replyResponse = postResult.replyResponse,
-                retrying = retrying
+            try {
+              onPostedSuccessfully(chanDescriptor, postResult.replyResponse)
+              postedSuccessfully.set(true)
+
+              emitTerminalEvent(
+                chanDescriptor = chanDescriptor,
+                postResult = PostResult.Success(
+                  replyResponse = postResult.replyResponse,
+                  retrying = retrying
+                )
               )
-            )
+
+              Logger.d(TAG, "SiteActions.PostResult.PostComplete($chanDescriptor) success")
+            } catch (error: Throwable) {
+              emitTerminalEvent(chanDescriptor, PostResult.Error(error))
+              Logger.e(TAG, "SiteActions.PostResult.PostComplete($chanDescriptor) error", error)
+            }
           }
         }
       }
@@ -543,7 +563,17 @@ class PostingServiceDelegate(
   }
 
   suspend fun cancelReplySend(replyDescriptor: ChanDescriptor) {
+    Logger.d(TAG, "cancelReplySend($replyDescriptor)")
     mutex.withLock { activeReplyDescriptors[replyDescriptor]?.cancelReplyUpload() }
+  }
+
+  suspend fun consumeTerminalEvent(replyDescriptor: ChanDescriptor) {
+    Logger.d(TAG, "consumeTerminalEvent($replyDescriptor)")
+
+    mutex.withLock {
+      activeReplyDescriptors[replyDescriptor]
+        ?.updateStatus(PostingStatus.Attached(replyDescriptor))
+    }
   }
 
   class ReplyInfo(

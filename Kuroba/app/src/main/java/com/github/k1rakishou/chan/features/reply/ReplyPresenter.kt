@@ -171,8 +171,7 @@ class ReplyPresenter @Inject constructor(
           }
         }
         is PostingServiceDelegate.PostingStatus.Progress -> {
-          Logger.d(TAG, "PostingStatus.Progress(fileIndex=${status.fileIndex}, " +
-              "totalFiles=${status.totalFiles}, percent=${status.percent})")
+          // no-op
         }
         is PostingServiceDelegate.PostingStatus.AfterPosting -> {
           if (::callback.isInitialized) {
@@ -190,6 +189,11 @@ class ReplyPresenter @Inject constructor(
               onPostComplete(status.chanDescriptor, postResult.replyResponse, postResult.retrying)
             }
           }
+
+          // We need to "consume" the AfterPosting event (meaning replace it with Attached event) so
+          // that we don't show "Posted successfully" every time we open a thread where we have
+          // recently posted.
+          postingServiceDelegate.consumeTerminalEvent(status.chanDescriptor)
         }
       }
     }
@@ -357,8 +361,7 @@ class ReplyPresenter @Inject constructor(
       return
     }
 
-    // only 4chan seems to have the post delay, this is a hack for that
-    if (!chanDescriptor.siteDescriptor().is4chan() || longClicked) {
+    if (longClicked) {
       submitOrAuthenticate(chanDescriptor)
       return
     }
@@ -371,20 +374,19 @@ class ReplyPresenter @Inject constructor(
         hasAtLeastOneFile
       )
 
-      if (timeLeft < 0L) {
+      if (timeLeft <= 0L) {
         submitOrAuthenticate(chanDescriptor)
       } else {
         val errorMessage = getString(R.string.reply_error_message_timer_reply, timeLeft)
         callback.openMessage(errorMessage)
       }
-
-      return
-    }
-
-    val timeLeft = lastReplyRepository.getTimeUntilThread(chanDescriptor.boardDescriptor())
-    if (timeLeft < 0L) {
-      submitOrAuthenticate(chanDescriptor)
     } else {
+      val timeLeft = lastReplyRepository.getTimeUntilThread(chanDescriptor.boardDescriptor())
+      if (timeLeft <= 0L) {
+        submitOrAuthenticate(chanDescriptor)
+        return
+      }
+
       val errorMessage = getString(R.string.reply_error_message_timer_thread, timeLeft)
       callback.openMessage(errorMessage)
     }
@@ -396,16 +398,10 @@ class ReplyPresenter @Inject constructor(
       return
     }
 
-    val token = callback.getTokenOrNull()
-    if (token.isNullOrEmpty()) {
-      showCaptcha(chanDescriptor = chanDescriptor, autoReply = true)
-      return
-    }
-
     onAuthenticationComplete(
       chanDescriptor = chanDescriptor,
       challenge = null,
-      response = token,
+      response = null,
       autoReply = true
     )
   }
@@ -622,7 +618,7 @@ class ReplyPresenter @Inject constructor(
       )
     }
 
-    Logger.e(TAG, "onPostComplete() error: $errorMessage")
+    Logger.e(TAG, "onPostCompleteUnsuccessful() error: $errorMessage")
     callback.openMessage(errorMessage)
   }
 

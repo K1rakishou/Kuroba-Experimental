@@ -145,7 +145,15 @@ class DvachReplyCall internal constructor(
   override fun process(response: Response, result: String) {
     val errorMessageMatcher = ERROR_MESSAGE.matcher(result)
     if (errorMessageMatcher.find()) {
-      replyResponse.errorMessage = Jsoup.parse(errorMessageMatcher.group(1)).body().text()
+      val errorCode = errorMessageMatcher.group(1).toInt()
+      val errorText = errorMessageMatcher.group(2)
+
+      if (errorCode == INVALID_CAPTCHA_ERROR_CODE || errorText.equals(INVALID_CAPTCHA_ERROR_TEXT, ignoreCase = true)) {
+        replyResponse.requireAuthentication = true
+        return
+      }
+
+      replyResponse.errorMessage = Jsoup.parse(errorText).body().text()
       replyResponse.probablyBanned = replyResponse.errorMessage?.contains(PROBABLY_BANNED_TEXT) ?: false
       return
     }
@@ -221,7 +229,11 @@ class DvachReplyCall internal constructor(
 
   companion object {
     private const val TAG = "DvachReplyCall"
-    private val ERROR_MESSAGE = Pattern.compile("^\\{\"Error\":-\\d+,\"Reason\":\"(.*)\"")
+
+    private const val INVALID_CAPTCHA_ERROR_CODE = -5
+    private const val INVALID_CAPTCHA_ERROR_TEXT = "Капча невалидна"
+
+    private val ERROR_MESSAGE = Pattern.compile("^\\{\"Error\":(-?\\d+),\"Reason\":\"(.*)\"")
     private val POST_MESSAGE =
       Pattern.compile("^\\{\"Error\":null,\"Status\":\"OK\",\"Num\":(\\d+)")
     private val THREAD_MESSAGE =

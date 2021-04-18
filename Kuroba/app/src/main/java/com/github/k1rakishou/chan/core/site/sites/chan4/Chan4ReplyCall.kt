@@ -27,14 +27,18 @@ import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.Response
+import org.jsoup.Jsoup
 import java.io.IOException
 import java.util.*
+import java.util.regex.Pattern
 
 
 class Chan4ReplyCall(
@@ -114,6 +118,60 @@ class Chan4ReplyCall(
     }
   }
 
+  override fun process(response: Response, result: String) {
+    if (result.contains(CAPTCHA_REQUIRED_TEXT, ignoreCase = true)) {
+      replyResponse.requireAuthentication = true
+      return
+    }
+
+    val errorMessageMatcher = ERROR_MESSAGE.matcher(result)
+    if (errorMessageMatcher.find()) {
+      replyResponse.errorMessage = Jsoup.parse(errorMessageMatcher.group(1)).body().text()
+      replyResponse.probablyBanned = checkIfBanned()
+      return
+    }
+
+    val threadNoMatcher = THREAD_NO_PATTERN.matcher(result)
+    if (!threadNoMatcher.find()) {
+      Logger.e(TAG, "Couldn't handle server response! response = \"$result\"")
+      return
+    }
+
+    try {
+      replyResponse.threadNo = threadNoMatcher.group(1).toInt().toLong()
+      replyResponse.postNo = threadNoMatcher.group(2).toInt().toLong()
+
+      if (replyResponse.threadNo == 0L) {
+        replyResponse.threadNo = replyResponse.postNo
+      }
+    } catch (error: NumberFormatException) {
+      Logger.e(TAG, "ReplyResponse parsing error", error)
+    }
+
+    if (replyResponse.threadNo > 0 && replyResponse.postNo > 0) {
+      replyResponse.posted = true
+      return
+    }
+
+    Logger.e(TAG, "Couldn't handle server response! response = \"$result\"")
+  }
+
+  private fun checkIfBanned(): Boolean {
+    val errorMessage = replyResponse.errorMessage
+      ?: return false
+
+    val isBannedFound = errorMessage.contains(PROBABLY_BANNED_TEXT)
+    if (isBannedFound) {
+      return true
+    }
+
+    if (!replyChanDescriptor.siteDescriptor().is4chan()) {
+      return false
+    }
+
+    return errorMessage.contains(PROBABLY_IP_BLOCKED)
+  }
+
   private fun attachFile(
     formBuilder: MultipartBody.Builder,
     progressListener: ProgressRequestListener?,
@@ -133,5 +191,16 @@ class Chan4ReplyCall(
     }
 
     formBuilder.addFormDataPart("upfile", replyFileMeta.fileName, requestBody)
+  }
+
+  companion object {
+    private const val TAG = "Chan4ReplyCall"
+
+    private const val PROBABLY_BANNED_TEXT = "banned"
+    private const val PROBABLY_IP_BLOCKED = "Posting from your IP range has been blocked due to abuse"
+    private const val CAPTCHA_REQUIRED_TEXT = "Error: You forgot to solve the CAPTCHA"
+
+    private val THREAD_NO_PATTERN = Pattern.compile("<!-- thread:([0-9]+),no:([0-9]+) -->")
+    private val ERROR_MESSAGE = Pattern.compile("\"errmsg\"[^>]*>(.*?)</span")
   }
 }
