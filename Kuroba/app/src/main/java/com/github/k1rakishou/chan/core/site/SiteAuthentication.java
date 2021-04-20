@@ -16,7 +16,8 @@
  */
 package com.github.k1rakishou.chan.core.site;
 
-import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA1;
+import androidx.annotation.Nullable;
+
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2;
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2_NOJS;
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.GENERIC_WEBVIEW;
@@ -25,7 +26,6 @@ import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.NONE;
 public class SiteAuthentication {
     public enum Type {
         NONE,
-        CAPTCHA1,
         CAPTCHA2,
         CAPTCHA2_NOJS,
         GENERIC_WEBVIEW
@@ -33,13 +33,6 @@ public class SiteAuthentication {
 
     public static SiteAuthentication fromNone() {
         return new SiteAuthentication(NONE);
-    }
-
-    public static SiteAuthentication fromCaptcha1(String siteKey, String baseUrl) {
-        SiteAuthentication a = new SiteAuthentication(CAPTCHA1);
-        a.siteKey = siteKey;
-        a.baseUrl = baseUrl;
-        return a;
     }
 
     public static SiteAuthentication fromCaptcha2(String siteKey, String baseUrl) {
@@ -67,13 +60,13 @@ public class SiteAuthentication {
     public final Type type;
 
     // captcha1 & captcha2
-    public String siteKey;
-    public String baseUrl;
+    @Nullable public String siteKey;
+    @Nullable public String baseUrl;
 
     // generic webview
-    public String url;
-    public String retryText;
-    public String successText;
+    @Nullable public String url;
+    @Nullable public String retryText;
+    @Nullable public String successText;
 
     private SiteAuthentication(Type type) {
         this.type = type;

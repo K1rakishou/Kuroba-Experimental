@@ -357,6 +357,12 @@ public class ChanSettings {
     public static RangeSetting databasePostsCleanupRemovePercent;
     //endregion
 
+    // region Captcha-solvers
+    public static BooleanSetting twoCaptchaSolverEnabled;
+    public static StringSetting twoCaptchaSolverUrl;
+    public static StringSetting twoCaptchaSolverApiKey;
+    //endregion
+
     //region EXPERIMENTAL
     public static StringSetting androidTenGestureZones;
     public static BooleanSetting okHttpAllowHttp2;
@@ -558,6 +564,12 @@ public class ChanSettings {
             databaseMaxPostsCount = new RangeSetting(provider, "database_max_posts_count", 125000, databaseMinPostsCount(), 500000);
             databaseMaxThreadsCount = new RangeSetting(provider, "database_max_threads_count", 12500, databaseMinThreadsCount(), 50000);
             databasePostsCleanupRemovePercent = new RangeSetting(provider, "database_posts_cleanup_remove_posts_percent", 25, cleanupPercentsGetMin(), 75);
+            //endregion
+
+            // region Captcha-solvers
+            twoCaptchaSolverEnabled = new BooleanSetting(provider, "two_captcha_solver_enabled", false);
+            twoCaptchaSolverUrl = new StringSetting(provider, "two_captcha_solver_url", "");
+            twoCaptchaSolverApiKey = new StringSetting(provider, "two_captcha_solver_api_key", "");
             //endregion
 
             //region EXPERIMENTAL

@@ -63,26 +63,6 @@ class PostingServiceBroadcastReceiver : BroadcastReceiver() {
           }
         }
       }
-      PostingService.ACTION_TYPE_RETRY -> {
-        val chanDescriptor = intent.extras
-          ?.getParcelable<DescriptorParcelable>(PostingService.CHAN_DESCRIPTOR)
-          ?.toChanDescriptor()
-
-        if (chanDescriptor == null) {
-          return
-        }
-
-        Logger.d(TAG, "Retrying post upload for ${chanDescriptor}")
-        val pendingResult = goAsync()
-
-        serializedExecutor.post {
-          try {
-            postingServiceDelegate.retry(chanDescriptor)
-          } finally {
-            pendingResult.finish()
-          }
-        }
-      }
     }
   }
 

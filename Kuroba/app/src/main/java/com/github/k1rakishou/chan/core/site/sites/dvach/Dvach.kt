@@ -292,20 +292,20 @@ class Dvach : CommonSite() {
       }
 
       override fun postAuthenticate(): SiteAuthentication {
-        return if (isLoggedIn()) {
-          SiteAuthentication.fromNone()
-        } else {
-          when (captchaType.get()) {
-            Chan4.CaptchaType.V2JS -> SiteAuthentication.fromCaptcha2(
-              CAPTCHA_KEY,
-              "https://2ch.hk/api/captcha/recaptcha/mobile"
-            )
-            Chan4.CaptchaType.V2NOJS -> SiteAuthentication.fromCaptcha2nojs(
-              CAPTCHA_KEY,
-              "https://2ch.hk/api/captcha/recaptcha/mobile"
-            )
-            else -> throw IllegalArgumentException()
-          }
+        if (isLoggedIn()) {
+          return SiteAuthentication.fromNone()
+        }
+
+        return when (captchaType.get()) {
+          Chan4.CaptchaType.V2JS -> SiteAuthentication.fromCaptcha2(
+            CAPTCHA_KEY,
+            "https://2ch.hk/api/captcha/recaptcha/mobile"
+          )
+          Chan4.CaptchaType.V2NOJS -> SiteAuthentication.fromCaptcha2nojs(
+            CAPTCHA_KEY,
+            "https://2ch.hk/api/captcha/recaptcha/mobile"
+          )
+          else -> throw IllegalArgumentException()
         }
       }
 

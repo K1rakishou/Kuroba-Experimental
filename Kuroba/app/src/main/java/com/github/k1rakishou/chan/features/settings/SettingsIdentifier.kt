@@ -103,6 +103,7 @@ sealed class MainScreen(
     object Security : MainGroup("security")
     object Caching : MainGroup("caching")
     object Experimental : MainGroup("experimental")
+    object CaptchaSolvers : MainGroup("captcha_solvers")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = MainScreen.getScreenIdentifier()
@@ -670,6 +671,40 @@ sealed class CachingScreen(
 
   companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("caching_screen")
+  }
+}
+
+// ================================================================
+// ================= CaptchaSolversSettingsScreen ===================
+// ================================================================
+
+sealed class CaptchaSolversScreen(
+  groupIdentifier: GroupIdentifier,
+  settingIdentifier: SettingIdentifier,
+  screenIdentifier: ScreenIdentifier = CaptchaSolversScreen.getScreenIdentifier()
+) :
+  IScreen,
+  SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
+
+  sealed class TwoCaptchaSettingsGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = TwoCaptchaSettingsGroup.getGroupIdentifier()
+  ) : IGroup,
+    CaptchaSolversScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object TwoCaptchaSolverEnabled : TwoCaptchaSettingsGroup("two_captcha_solver_enabled")
+    object TwoCaptchaSolverUrl : TwoCaptchaSettingsGroup("two_captcha_solver_url")
+    object TwoCaptchaSolverApiKey : TwoCaptchaSettingsGroup("two_captcha_solver_api_key")
+    object TwoCaptchaSolverValidate : TwoCaptchaSettingsGroup("two_captcha_solver_validate")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = CaptchaSolversScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("two_captcha_settings_group")
+    }
+  }
+
+  companion object : IScreenIdentifier() {
+    override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("captcha_solvers_screen")
   }
 }
 

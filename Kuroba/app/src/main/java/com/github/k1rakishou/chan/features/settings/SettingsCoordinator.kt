@@ -132,6 +132,13 @@ class SettingsCoordinator(
     )
   }
 
+  private val captchaSolversSettingsScreen by lazy {
+    CaptchaSolversScreen(
+      context,
+      navigationController
+    )
+  }
+
   private val experimentalSettingsScreen by lazy {
     ExperimentalSettingsScreen(
       context,
@@ -237,6 +244,7 @@ class SettingsCoordinator(
     appearanceSettingsScreen.onCreate()
     behaviorSettingsScreen.onCreate()
     experimentalSettingsScreen.onCreate()
+    captchaSolversSettingsScreen.onCreate()
     importExportSettingsScreen.onCreate()
     mediaSettingsScreen.onCreate()
     securitySettingsScreen.onCreate()
@@ -251,6 +259,7 @@ class SettingsCoordinator(
     appearanceSettingsScreen.onDestroy()
     behaviorSettingsScreen.onDestroy()
     experimentalSettingsScreen.onDestroy()
+    captchaSolversSettingsScreen.onDestroy()
     importExportSettingsScreen.onDestroy()
     mediaSettingsScreen.onDestroy()
     securitySettingsScreen.onDestroy()
@@ -424,6 +433,7 @@ class SettingsCoordinator(
     graph += appearanceSettingsScreen.build()
     graph += behaviorSettingsScreen.build()
     graph += experimentalSettingsScreen.build()
+    graph += captchaSolversSettingsScreen.build()
     graph += importExportSettingsScreen.build()
     graph += mediaSettingsScreen.build()
     graph += securitySettingsScreen.build()

@@ -12,6 +12,7 @@ import com.github.k1rakishou.chan.core.manager.UpdateManager
 import com.github.k1rakishou.chan.features.settings.AppearanceScreen
 import com.github.k1rakishou.chan.features.settings.BehaviorScreen
 import com.github.k1rakishou.chan.features.settings.CachingScreen
+import com.github.k1rakishou.chan.features.settings.CaptchaSolversScreen
 import com.github.k1rakishou.chan.features.settings.DeveloperScreen
 import com.github.k1rakishou.chan.features.settings.ExperimentalScreen
 import com.github.k1rakishou.chan.features.settings.ImportExportScreen
@@ -279,6 +280,14 @@ class MainSettingsScreen(
           topDescriptionIdFunc = { R.string.settings_caching },
           bottomDescriptionIdFunc = { R.string.settings_caching_description },
           callbackWithClickAction = { SettingClickAction.OpenScreen(CachingScreen) }
+        )
+
+        group += LinkSettingV2.createBuilder(
+          context = context,
+          identifier = MainScreen.MainGroup.CaptchaSolvers,
+          topDescriptionIdFunc = { R.string.settings_captcha_solvers },
+          bottomDescriptionIdFunc = { R.string.settings_captcha_solvers_description },
+          callbackWithClickAction = { SettingClickAction.OpenScreen(CaptchaSolversScreen) }
         )
 
         group += LinkSettingV2.createBuilder(

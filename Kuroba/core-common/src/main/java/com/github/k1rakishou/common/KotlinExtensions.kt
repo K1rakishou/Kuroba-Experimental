@@ -13,11 +13,13 @@ import android.view.ViewGroup
 import android.view.ViewParent
 import androidx.core.view.children
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.google.gson.Gson
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
@@ -31,6 +33,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
+import java.io.InputStreamReader
 import java.io.InterruptedIOException
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -63,6 +66,44 @@ suspend fun OkHttpClient.suspendCall(request: Request): Response {
       }
     })
   }
+}
+
+suspend inline fun <reified T> OkHttpClient.suspendConvertIntoJsonObject(
+  request: Request,
+  gson: Gson
+): JsonConversionResult<out T> {
+  return withContext(Dispatchers.IO) {
+    try {
+      val response = suspendCall(request)
+
+      if (!response.isSuccessful) {
+        return@withContext JsonConversionResult.HttpError(response.code)
+      }
+
+      val body = response.body
+      if (body == null) {
+        return@withContext JsonConversionResult.UnknownError(IOException("Response has no body"))
+      }
+
+      val result = body.byteStream().use { inputStream ->
+        gson.fromJson<T>(JsonReader(InputStreamReader(inputStream)), T::class.java)
+      }
+
+      return@withContext JsonConversionResult.Success(result)
+    } catch (error: Throwable) {
+      return@withContext JsonConversionResult.UnknownError(error)
+    }
+  }
+}
+
+sealed class JsonConversionResult<T> {
+  data class HttpError(val status: Int) : JsonConversionResult<Nothing>() {
+    val isNotFound: Boolean
+      get() = status == 404
+  }
+
+  data class UnknownError(val error: Throwable) : JsonConversionResult<Nothing>()
+  data class Success<T>(val obj: T) : JsonConversionResult<T>()
 }
 
 fun JsonReader.nextStringOrNull(): String? {

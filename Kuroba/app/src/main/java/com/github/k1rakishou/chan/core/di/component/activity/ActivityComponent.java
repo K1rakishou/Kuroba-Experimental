@@ -71,7 +71,6 @@ import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteView;
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaLayout;
 import com.github.k1rakishou.chan.ui.captcha.GenericWebViewAuthenticationLayout;
-import com.github.k1rakishou.chan.ui.captcha.LegacyCaptchaLayout;
 import com.github.k1rakishou.chan.ui.captcha.v1.CaptchaNojsLayoutV1;
 import com.github.k1rakishou.chan.ui.captcha.v2.CaptchaNoJsLayoutV2;
 import com.github.k1rakishou.chan.ui.cell.AlbumViewCell;
@@ -314,7 +313,6 @@ public interface ActivityComponent {
     void inject(ThreadListLayout threadListLayout);
     void inject(ToolbarContainer toolbarContainer);
     void inject(CardPostCell cardPostCell);
-    void inject(LegacyCaptchaLayout legacyCaptchaLayout);
     void inject(CaptchaLayout captchaLayout);
     void inject(FloatingMenu floatingMenu);
     void inject(Toolbar toolbar);

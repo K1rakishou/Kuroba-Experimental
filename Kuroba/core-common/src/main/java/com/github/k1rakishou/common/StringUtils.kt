@@ -111,4 +111,13 @@ object StringUtils {
     return input
   }
 
+  @JvmStatic
+  fun trimCaptchaResponseToken(token: String): String {
+    if (token.length <= 16) {
+      return token
+    }
+
+    return token.substring(0, 7) + "..." + token.substring(token.length - 8)
+  }
+
 }

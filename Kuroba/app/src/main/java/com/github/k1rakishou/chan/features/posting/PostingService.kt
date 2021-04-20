@@ -155,34 +155,28 @@ class PostingService : Service() {
 
     val iconId = when (childNotificationInfo.status) {
       is PostingServiceDelegate.ChildNotificationInfo.Status.Preparing -> R.drawable.ic_stat_notify
-      is PostingServiceDelegate.ChildNotificationInfo.Status.WaitingForCaptchaSolution -> R.drawable.ic_baseline_access_time_24
+      is PostingServiceDelegate.ChildNotificationInfo.Status.WaitingForAdditionalService -> R.drawable.ic_baseline_access_time_24
       is PostingServiceDelegate.ChildNotificationInfo.Status.Uploading -> android.R.drawable.stat_sys_upload
       is PostingServiceDelegate.ChildNotificationInfo.Status.Posted -> android.R.drawable.stat_sys_upload_done
       PostingServiceDelegate.ChildNotificationInfo.Status.Canceled -> R.drawable.ic_stat_notify
       is PostingServiceDelegate.ChildNotificationInfo.Status.Error -> android.R.drawable.stat_sys_warning
     }
 
-    val title = when (childNotificationInfo.chanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> {
-        // TODO(KurobaEx v0.8.0): strings
-        "Creating a thread on ${childNotificationInfo.chanDescriptor.userReadableString()}"
-      }
-      is ChanDescriptor.ThreadDescriptor -> {
-        // TODO(KurobaEx v0.8.0): strings
-        "Post in ${childNotificationInfo.chanDescriptor.userReadableString()}"
-      }
-    }
+    val style = NotificationCompat.BigTextStyle()
+      .setBigContentTitle(childNotificationInfo.chanDescriptor.userReadableString())
+      .setSummaryText(childNotificationInfo.status.statusText)
+      .bigText(childNotificationInfo.status.statusText)
 
     return NotificationCompat.Builder(
       applicationContext,
       NotificationConstants.PostingServiceNotifications.CHILD_NOTIFICATION_CHANNEL_ID
     )
-      .setContentTitle(title)
+      .setStyle(style)
+      .setContentTitle(childNotificationInfo.chanDescriptor.userReadableString())
       .setContentText(childNotificationInfo.status.statusText)
       .setSmallIcon(iconId)
       .setOngoing(childNotificationInfo.isOngoing)
       .addCancelAction(childNotificationInfo)
-      .addRetryAction(childNotificationInfo)
       .addNotificationClickAction(childNotificationInfo)
       .setTimeoutEx(childNotificationInfo)
       .build()
@@ -271,29 +265,6 @@ class PostingService : Service() {
     return addAction(0, getString(R.string.cancel), cancelIntent)
   }
 
-  private fun NotificationCompat.Builder.addRetryAction(
-    childNotificationInfo: PostingServiceDelegate.ChildNotificationInfo
-  ): NotificationCompat.Builder {
-    if (!childNotificationInfo.canRetry) {
-      return this
-    }
-
-    val intent = Intent(applicationContext, PostingServiceBroadcastReceiver::class.java).apply {
-      setAction(ACTION_TYPE_RETRY)
-
-      putExtra(CHAN_DESCRIPTOR, DescriptorParcelable.fromDescriptor(childNotificationInfo.chanDescriptor))
-    }
-
-    val cancelIntent = PendingIntent.getBroadcast(
-      applicationContext,
-      RequestCodes.nextRequestCode(),
-      intent,
-      PendingIntent.FLAG_UPDATE_CURRENT
-    )
-
-    return addAction(0, getString(R.string.cancel), cancelIntent)
-  }
-
   private fun NotificationCompat.Builder.addNotificationClickAction(
     childNotificationInfo: PostingServiceDelegate.ChildNotificationInfo
   ): NotificationCompat.Builder {
@@ -301,7 +272,7 @@ class PostingService : Service() {
     val descriptorParcelable = DescriptorParcelable.fromDescriptor(childNotificationInfo.chanDescriptor)
 
     intent
-      .setAction(NotificationConstants.REPLY_NOTIFICATION_ACTION)
+      .setAction(NotificationConstants.POSTING_NOTIFICATION_ACTION)
       .addCategory(Intent.CATEGORY_LAUNCHER)
       .setFlags(
         Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -349,7 +320,6 @@ class PostingService : Service() {
 
     const val ACTION_TYPE_CANCEL_ALL = "${TAG}_ACTION_CANCEL_ALL"
     const val ACTION_TYPE_CANCEL = "${TAG}_ACTION_CANCEL"
-    const val ACTION_TYPE_RETRY = "${TAG}_ACTION_RETRY"
 
     fun enqueueReplyChanDescriptor(context: Context, chanDescriptor: ChanDescriptor, retrying: Boolean) {
       val startServiceIntent = Intent(

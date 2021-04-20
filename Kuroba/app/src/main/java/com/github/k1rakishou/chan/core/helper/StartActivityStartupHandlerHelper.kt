@@ -376,6 +376,7 @@ class StartActivityStartupHandlerHelper(
     return when (action) {
       NotificationConstants.LAST_PAGE_NOTIFICATION_ACTION -> true
       NotificationConstants.REPLY_NOTIFICATION_ACTION -> true
+      NotificationConstants.POSTING_NOTIFICATION_ACTION -> true
       ImageSaverV2Service.ACTION_TYPE_NAVIGATE -> true
       ImageSaverV2Service.ACTION_TYPE_RESOLVE_DUPLICATES -> true
       ImageSaverV2Service.ACTION_TYPE_RETRY_FAILED -> true

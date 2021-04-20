@@ -161,10 +161,11 @@ class ReplyPresenter @Inject constructor(
       Logger.d(TAG, "listenForPostingStatusUpdates($chanDescriptor) -> ${status.javaClass.simpleName}")
 
       when (status) {
-        is PostingServiceDelegate.PostingStatus.Attached,
-        is PostingServiceDelegate.PostingStatus.Enqueued -> {
+        is PostingServiceDelegate.PostingStatus.Attached -> {
           // no-op
         }
+        is PostingServiceDelegate.PostingStatus.Enqueued,
+        is PostingServiceDelegate.PostingStatus.WaitingForAdditionalService,
         is PostingServiceDelegate.PostingStatus.BeforePosting -> {
           if (::callback.isInitialized) {
             callback.enableOrDisableReplyLayout()
@@ -190,12 +191,10 @@ class ReplyPresenter @Inject constructor(
             }
           }
 
-          if (::callback.isInitialized && callback.isReplyLayoutOpened()) {
-            // We need to "consume" the AfterPosting event (meaning replace it with Attached event) so
-            // that we don't show "Posted successfully" every time we open a thread where we have
-            // recently posted.
-            postingServiceDelegate.consumeTerminalEvent(status.chanDescriptor)
-          }
+          // We need to "consume" the AfterPosting event (meaning replace it with Attached event) so
+          // that we don't show "Posted successfully" every time we open a thread where we have
+          // recently posted.
+          postingServiceDelegate.consumeTerminalEvent(status.chanDescriptor)
         }
       }
     }
@@ -225,13 +224,6 @@ class ReplyPresenter @Inject constructor(
   }
 
   fun onOpen(open: Boolean) {
-    launch {
-      val descriptor = currentChanDescriptor
-      if (open && descriptor != null) {
-        postingServiceDelegate.consumeTerminalEvent(descriptor)
-      }
-    }
-
     if (open) {
       callback.focusComment()
     }
@@ -362,7 +354,7 @@ class ReplyPresenter @Inject constructor(
       ?: return
 
     if (!isReplyLayoutEnabled()) {
-      postingServiceDelegate.cancelReplySend(chanDescriptor)
+      postingServiceDelegate.cancel(chanDescriptor)
       return
     }
 
@@ -546,8 +538,6 @@ class ReplyPresenter @Inject constructor(
     this@ReplyPresenter.floatingReplyMessageClickAction = null
 
     closeAll()
-    callback.openOrCloseReply(open = false)
-
     PostingService.enqueueReplyChanDescriptor(context, chanDescriptor, retrying)
   }
 

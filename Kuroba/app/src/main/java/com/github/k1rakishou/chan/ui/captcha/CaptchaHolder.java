@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
+import com.github.k1rakishou.common.StringUtils;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
@@ -68,7 +69,7 @@ public class CaptchaHolder {
             );
 
             Logger.d(TAG, "A new token has been added, validCount = " + captchaQueue.size()
-                    + ", token = " + trimToken(token));
+                    + ", token = " + StringUtils.trimCaptchaResponseToken(token));
         }
 
         notifyListener();
@@ -104,7 +105,7 @@ public class CaptchaHolder {
 
             String token = captchaQueue.get(lastIndex).getToken();
             captchaQueue.remove(lastIndex);
-            Logger.d(TAG, "getToken() token = " + trimToken(token));
+            Logger.d(TAG, "getToken() token = " + StringUtils.trimCaptchaResponseToken(token));
 
             notifyListener();
             return token;
@@ -144,7 +145,7 @@ public class CaptchaHolder {
                     Logger.d(TAG, "Captcha token got expired, now = " + sdf.format(now)
                             + ", token validUntil = "
                             + sdf.format(captchaInfo.getValidUntil()) + ", token = "
-                            + trimToken(captchaInfo.getToken())
+                            + StringUtils.trimCaptchaResponseToken(captchaInfo.getToken())
                     );
                 }
             }
@@ -235,15 +236,7 @@ public class CaptchaHolder {
         @NonNull
         @Override
         public String toString() {
-            return "validUntil = " + sdf.format(validUntil) + ", token = " + trimToken(token);
+            return "validUntil = " + sdf.format(validUntil) + ", token = " + StringUtils.trimCaptchaResponseToken(token);
         }
-    }
-
-    private static String trimToken(String token) {
-        if (token.length() <= 16) {
-            return token;
-        }
-
-        return token.substring(0, 7) + "..." + token.substring(token.length() - 8);
     }
 }

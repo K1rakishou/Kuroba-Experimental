@@ -918,6 +918,7 @@ class ReplyLayout @JvmOverloads constructor(
 
   override suspend fun enableOrDisableReplyLayout() {
     val enable = presenter.isReplyLayoutEnabled()
+    replyLayoutEnabled = enable
 
     replyInputMessage.setEnabledFast(enable)
     name.setEnabledFast(enable)

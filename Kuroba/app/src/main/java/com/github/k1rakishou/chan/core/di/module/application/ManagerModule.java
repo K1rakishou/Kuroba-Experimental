@@ -76,6 +76,8 @@ import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate;
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate;
+import com.github.k1rakishou.chan.features.posting.solver.TwoCaptchaSolver;
+import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_themes.ThemeEngine;
@@ -636,6 +638,21 @@ public class ManagerModule {
 
     @Singleton
     @Provides
+    public TwoCaptchaSolver provideTwoCaptchaSolver(
+            Gson gson,
+            SiteManager siteManager,
+            ProxiedOkHttpClient proxiedOkHttpClient
+    ) {
+        return new TwoCaptchaSolver(
+                AppModuleAndroidUtils.isDevBuild(),
+                gson,
+                siteManager,
+                proxiedOkHttpClient
+        );
+    }
+
+    @Singleton
+    @Provides
     public PostingServiceDelegate providePostingServiceDelegate(
             CoroutineScope appScope,
             AppConstants appConstants,
@@ -646,7 +663,9 @@ public class ManagerModule {
             SavedReplyManager savedReplyManager,
             ChanThreadManager chanThreadManager,
             LastReplyRepository lastReplyRepository,
-            ChanPostRepository chanPostRepository
+            ChanPostRepository chanPostRepository,
+            TwoCaptchaSolver twoCaptchaSolver,
+            CaptchaHolder captchaHolder
     ) {
         return new PostingServiceDelegate(
                 appScope,
@@ -658,7 +677,9 @@ public class ManagerModule {
                 savedReplyManager,
                 chanThreadManager,
                 lastReplyRepository,
-                chanPostRepository
+                chanPostRepository,
+                twoCaptchaSolver,
+                captchaHolder
         );
     }
 

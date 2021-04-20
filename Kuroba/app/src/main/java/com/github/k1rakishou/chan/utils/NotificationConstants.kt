@@ -21,6 +21,7 @@ object NotificationConstants {
 
   const val REPLY_NOTIFICATION_ACTION = "${BuildConfig.APPLICATION_ID}_reply_notification_action"
   const val LAST_PAGE_NOTIFICATION_ACTION = "${BuildConfig.APPLICATION_ID}_last_page_notification_action"
+  const val POSTING_NOTIFICATION_ACTION = "${BuildConfig.APPLICATION_ID}_posting_notification_action"
 
   object ReplyNotifications {
     val notificationIdCounter = AtomicInteger(100000)

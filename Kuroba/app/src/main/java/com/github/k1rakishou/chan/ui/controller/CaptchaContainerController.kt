@@ -14,7 +14,6 @@ import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface
 import com.github.k1rakishou.chan.ui.captcha.CaptchaLayout
 import com.github.k1rakishou.chan.ui.captcha.GenericWebViewAuthenticationLayout
-import com.github.k1rakishou.chan.ui.captcha.LegacyCaptchaLayout
 import com.github.k1rakishou.chan.ui.captcha.v1.CaptchaNojsLayoutV1
 import com.github.k1rakishou.chan.ui.captcha.v2.CaptchaNoJsLayoutV2
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -121,14 +120,6 @@ class CaptchaContainerController(
     useV2NoJsCaptcha: Boolean
   ): AuthenticationLayoutInterface {
     when (authentication.type) {
-      SiteAuthentication.Type.CAPTCHA1 -> {
-        return AppModuleAndroidUtils.inflate(
-          context,
-          R.layout.layout_captcha_legacy,
-          captchaContainer,
-          false
-        ) as LegacyCaptchaLayout
-      }
       SiteAuthentication.Type.CAPTCHA2 -> {
         return CaptchaLayout(context)
       }

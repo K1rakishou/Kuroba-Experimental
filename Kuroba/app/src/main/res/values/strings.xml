@@ -540,6 +540,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_security_description">Proxy settings, etc.</string>
     <string name="settings_caching">Caching</string>
     <string name="settings_caching_description">Media cache/database cache</string>
+    <string name="settings_captcha_solvers">Captcha solvers</string>
+    <string name="settings_captcha_solvers_description">Automatic, paid, captcha solvers</string>
     <string name="settings_experimental_settings">⚠ EXPERIMENTAL ⚠</string>
     <string name="settings_experimental_settings_description">These settings may be in an unstable state. They are for testing. They may break the app and you may have to reset the app data. Use them at your own risk if you are really interested in some feature. Backup everything beforehand.</string>
 
@@ -819,6 +821,15 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="settings_screen_security_proxy_group">Proxy</string>
     <string name="settings_screen_security_proxy">Proxy settings</string>
     <string name="settings_screen_security_proxy_description">%1$d proxies enabled</string>
+
+    <!-- Captcha solvers settings -->
+    <string name="two_captcha_solver_group">Two captcha solver</string>
+    <string name="two_captcha_solver_url">Two captcha solver url</string>
+    <string name="two_captcha_solver_url_description">The app supports all services that implement 2captcha API including 2captcha.com itself</string>
+    <string name="two_captcha_solver_api_key">Two captcha solver API key</string>
+    <string name="two_captcha_solver_api_key_description">The API key that you get when registering an account. For 2captcha.com you need to use the \"customer mode\" key</string>
+    <string name="two_captcha_solver_validate">Validate</string>
+    <string name="two_captcha_solver_validate_description">Click to validate the settings and check the account balance</string>
 
     <!-- Experimental settings -->
     <string name="experimental_settings_group">Experimental settings</string>

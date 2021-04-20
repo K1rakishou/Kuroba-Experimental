@@ -183,7 +183,7 @@ class TestModule {
 
   fun provideDownloaderOkHttpClient(): DownloaderOkHttpClient {
     if (downloaderOkHttpClient == null) {
-      downloaderOkHttpClient = TextDownloaderOkHttpClient()
+      downloaderOkHttpClient = TestDownloaderOkHttpClient()
     }
 
     return downloaderOkHttpClient!!
@@ -197,7 +197,7 @@ class TestModule {
     return proxiedOkHttpClient!!
   }
 
-  class TextDownloaderOkHttpClient : DownloaderOkHttpClient {
+  class TestDownloaderOkHttpClient : DownloaderOkHttpClient {
     private var okHttpClient: OkHttpClient? = null
 
     override fun okHttpClient(): OkHttpClient {
