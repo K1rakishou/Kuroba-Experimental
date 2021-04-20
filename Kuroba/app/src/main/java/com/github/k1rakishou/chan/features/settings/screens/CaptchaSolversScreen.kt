@@ -4,16 +4,21 @@ import android.content.Context
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.usecase.TwoCaptchaCheckBalanceUseCase
 import com.github.k1rakishou.chan.features.settings.CaptchaSolversScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
+import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 
 class CaptchaSolversScreen(
   context: Context,
   private val navigationController: NavigationController,
+  private val dialogFactory: DialogFactory,
+  private val twoCaptchaCheckBalanceUseCase: TwoCaptchaCheckBalanceUseCase
 ) : BaseSettingsScreen(
   context,
   CaptchaSolversScreen,
@@ -48,7 +53,9 @@ class CaptchaSolversScreen(
           context = context,
           identifier = CaptchaSolversScreen.TwoCaptchaSettingsGroup.TwoCaptchaSolverUrl,
           topDescriptionIdFunc = { R.string.two_captcha_solver_url },
-          bottomDescriptionIdFunc = { R.string.two_captcha_solver_url_description },
+          bottomDescriptionStringFunc = {
+            getString(R.string.two_captcha_solver_url_description) + "\n\n" + ChanSettings.twoCaptchaSolverUrl.get()
+          },
           setting = ChanSettings.twoCaptchaSolverUrl,
           dependsOnSetting = ChanSettings.twoCaptchaSolverEnabled,
           inputType = DialogFactory.DialogInputType.String
@@ -58,7 +65,9 @@ class CaptchaSolversScreen(
           context = context,
           identifier = CaptchaSolversScreen.TwoCaptchaSettingsGroup.TwoCaptchaSolverApiKey,
           topDescriptionIdFunc = { R.string.two_captcha_solver_api_key },
-          bottomDescriptionIdFunc = { R.string.two_captcha_solver_api_key_description },
+          bottomDescriptionStringFunc = {
+            getString(R.string.two_captcha_solver_api_key_description) + "\n\n" + ChanSettings.twoCaptchaSolverApiKey.get()
+          },
           setting = ChanSettings.twoCaptchaSolverApiKey,
           dependsOnSetting = ChanSettings.twoCaptchaSolverEnabled,
           inputType = DialogFactory.DialogInputType.String
@@ -71,7 +80,20 @@ class CaptchaSolversScreen(
           bottomDescriptionIdFunc = { R.string.two_captcha_solver_validate_description },
           dependsOnSetting = ChanSettings.twoCaptchaSolverEnabled,
           callback = {
-            // TODO(KurobaEx v0.8.0):
+            val loadingController = LoadingViewController(context, true)
+            navigationController.presentController(loadingController)
+
+            val balanceResultString = try {
+              twoCaptchaCheckBalanceUseCase.execute(Unit)
+            } finally {
+              loadingController.stopPresenting()
+            }
+
+            dialogFactory.createSimpleInformationDialog(
+              context,
+              titleText = getString(R.string.two_captcha_solver_validate_result_title),
+              balanceResultString
+            )
           }
         )
 

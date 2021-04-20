@@ -26,6 +26,8 @@ import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase;
 import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
+import com.github.k1rakishou.chan.core.usecase.TwoCaptchaCheckBalanceUseCase;
+import com.github.k1rakishou.chan.features.posting.solver.TwoCaptchaSolver;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileManager;
@@ -213,6 +215,14 @@ public class UseCaseModule {
                 siteManager,
                 proxiedOkHttpClient
         );
+    }
+
+    @Provides
+    @Singleton
+    public TwoCaptchaCheckBalanceUseCase provideTwoCaptchaCheckBalanceUseCase(
+            TwoCaptchaSolver twoCaptchaSolver
+    ) {
+        return new TwoCaptchaCheckBalanceUseCase(twoCaptchaSolver);
     }
 
 }

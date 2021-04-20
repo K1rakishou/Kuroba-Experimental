@@ -12,6 +12,7 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
+import com.github.k1rakishou.chan.core.usecase.TwoCaptchaCheckBalanceUseCase
 import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.settings.screens.*
@@ -91,6 +92,8 @@ class SettingsCoordinator(
   lateinit var importExportRepository: ImportExportRepository
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var twoCaptchaCheckBalanceUseCase: TwoCaptchaCheckBalanceUseCase
 
   private val scope = KurobaCoroutineScope()
   private val settingBuilderExecutor = SerializedCoroutineExecutor(scope)
@@ -135,7 +138,9 @@ class SettingsCoordinator(
   private val captchaSolversSettingsScreen by lazy {
     CaptchaSolversScreen(
       context,
-      navigationController
+      navigationController,
+      dialogFactory,
+      twoCaptchaCheckBalanceUseCase
     )
   }
 

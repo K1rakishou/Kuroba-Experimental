@@ -568,7 +568,7 @@ public class ChanSettings {
 
             // region Captcha-solvers
             twoCaptchaSolverEnabled = new BooleanSetting(provider, "two_captcha_solver_enabled", false);
-            twoCaptchaSolverUrl = new StringSetting(provider, "two_captcha_solver_url", "");
+            twoCaptchaSolverUrl = new StringSetting(provider, "two_captcha_solver_url", "https://2captcha.com");
             twoCaptchaSolverApiKey = new StringSetting(provider, "two_captcha_solver_api_key", "");
             //endregion
 

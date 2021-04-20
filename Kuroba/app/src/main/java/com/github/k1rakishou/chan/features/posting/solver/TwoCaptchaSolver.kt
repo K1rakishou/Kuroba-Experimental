@@ -15,6 +15,7 @@ import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import java.util.*
@@ -42,7 +43,8 @@ class TwoCaptchaSolver(
   val apiKey: String
     get() = ChanSettings.twoCaptchaSolverApiKey.get()
 
-  private val actualUrlOrNull by lazy { url.toHttpUrlOrNull() }
+  private val actualUrlOrNull: HttpUrl?
+    get() = url.toHttpUrlOrNull()
 
   suspend fun cancelAll() {
     mutex.withLock { activeRequests.clear() }
@@ -107,9 +109,15 @@ class TwoCaptchaSolver(
     }
   }
 
-  suspend fun getAccountBalance(): ModularResult<TwoCaptchaBalanceResponse?> {
+  suspend fun getAccountBalance(forced: Boolean): ModularResult<TwoCaptchaBalanceResponse?> {
     return ModularResult.Try {
+      Logger.d(TAG, "getAccountBalance(forced=$forced) success, got from cache")
+
       val twoCaptchaBalanceResponseCached = mutex.withLock {
+        if (forced) {
+          return@withLock null
+        }
+
         val accountInfo = solverAccountInfo
         val twoCaptchaBalanceResponse = accountInfo.twoCaptchaBalanceResponse
 
@@ -135,8 +143,10 @@ class TwoCaptchaSolver(
         return@Try null
       }
 
-      mutex.withLock {
-        solverAccountInfo.twoCaptchaBalanceResponse = twoCaptchaBalanceResponseFresh
+      if (twoCaptchaBalanceResponseFresh.isOk()) {
+        mutex.withLock {
+          solverAccountInfo.twoCaptchaBalanceResponse = twoCaptchaBalanceResponseFresh
+        }
       }
 
       Logger.d(TAG, "getAccountBalance() success, got from server")
@@ -204,7 +214,7 @@ class TwoCaptchaSolver(
       return TwoCaptchaResult.BadSiteBaseUrl(solverName = name, url = baseSiteUrl)
     }
 
-    val balanceResponse = getAccountBalance()
+    val balanceResponse = getAccountBalance(forced = false)
       .peekError { error -> Logger.e(TAG, "getAccountBalance() error", error) }
       .valueOrNull()
 

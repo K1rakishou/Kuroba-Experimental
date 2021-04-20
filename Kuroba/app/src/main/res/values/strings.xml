@@ -823,13 +823,14 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="settings_screen_security_proxy_description">%1$d proxies enabled</string>
 
     <!-- Captcha solvers settings -->
-    <string name="two_captcha_solver_group">Two captcha solver</string>
-    <string name="two_captcha_solver_url">Two captcha solver url</string>
+    <string name="two_captcha_solver_group">2captcha solver</string>
+    <string name="two_captcha_solver_url">2captcha solver url</string>
     <string name="two_captcha_solver_url_description">The app supports all services that implement 2captcha API including 2captcha.com itself</string>
-    <string name="two_captcha_solver_api_key">Two captcha solver API key</string>
+    <string name="two_captcha_solver_api_key">2captcha solver API key</string>
     <string name="two_captcha_solver_api_key_description">The API key that you get when registering an account. For 2captcha.com you need to use the \"customer mode\" key</string>
     <string name="two_captcha_solver_validate">Validate</string>
     <string name="two_captcha_solver_validate_description">Click to validate the settings and check the account balance</string>
+    <string name="two_captcha_solver_validate_result_title">Balance check result</string>
 
     <!-- Experimental settings -->
     <string name="experimental_settings_group">Experimental settings</string>
