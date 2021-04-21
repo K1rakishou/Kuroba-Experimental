@@ -44,7 +44,6 @@ public class GenericWebViewAuthenticationLayout
     private AuthenticationLayoutCallback callback;
     private SiteAuthentication authentication;
     private boolean resettingFromFoundText = false;
-    private boolean isAutoReply = true;
 
     @Inject
     CaptchaHolder captchaHolder;
@@ -75,7 +74,7 @@ public class GenericWebViewAuthenticationLayout
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override
-    public void initialize(Site site, AuthenticationLayoutCallback callback, boolean ignored) {
+    public void initialize(Site site, AuthenticationLayoutCallback callback) {
         this.callback = callback;
 
         authentication = site.actions().postAuthenticate();
@@ -87,11 +86,6 @@ public class GenericWebViewAuthenticationLayout
 
     @Override
     public void reset() {
-        if (captchaHolder.hasToken() && isAutoReply) {
-            callback.onAuthenticationComplete(null, captchaHolder.getToken(), true);
-            return;
-        }
-
         loadUrl(authentication.url);
     }
 
@@ -117,16 +111,7 @@ public class GenericWebViewAuthenticationLayout
             }
         } else if (success) {
             captchaHolder.addNewToken(text, RECAPTCHA_TOKEN_LIVE_TIME);
-
-            String token;
-
-            if (isAutoReply) {
-                token = captchaHolder.getToken();
-            } else {
-                token = text;
-            }
-
-            callback.onAuthenticationComplete(null, token, isAutoReply);
+            callback.onAuthenticationComplete();
         }
     }
 

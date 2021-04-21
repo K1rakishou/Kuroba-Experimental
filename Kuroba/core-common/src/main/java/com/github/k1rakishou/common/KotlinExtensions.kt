@@ -335,27 +335,30 @@ fun Matcher.groupOrNull(group: Int): String? {
   }
 }
 
-/**
- * Not thread-safe!
- * */
 fun <K, V> MutableMap<K, V>.putIfNotContains(key: K, value: V) {
   if (!this.containsKey(key)) {
     this[key] = value
   }
 }
 
-/**
- * Not thread-safe!
- * */
+inline fun <K, V> MutableMap<K, V>.putIfNotContainsLazy(key: K, crossinline valueFunc: () -> V) {
+  if (!this.containsKey(key)) {
+    this[key] = valueFunc()
+  }
+}
+
 fun <K, V> HashMap<K, V>.putIfNotContains(key: K, value: V) {
   if (!this.containsKey(key)) {
     this[key] = value
   }
 }
 
-/**
- * Not thread-safe!
- * */
+inline fun <K, V> HashMap<K, V>.putIfNotContainsLazy(key: K, crossinline valueFunc: () -> V) {
+  if (!this.containsKey(key)) {
+    this[key] = valueFunc()
+  }
+}
+
 fun <K, V> TreeMap<K, V>.firstKeyOrNull(): K? {
   if (isEmpty()) {
     return null

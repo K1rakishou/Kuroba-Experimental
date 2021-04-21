@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.usecase
 
-import com.github.k1rakishou.chan.features.posting.solver.TwoCaptchaSolver
+import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger

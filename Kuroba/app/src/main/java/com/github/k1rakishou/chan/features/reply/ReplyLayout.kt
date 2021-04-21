@@ -1019,8 +1019,6 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   override fun onPosted() {
-    replyLayoutMessageToast.showToast(context, R.string.reply_success)
-
     threadListLayoutCallbacks?.openReply(false)
     threadListLayoutCallbacks?.requestNewPostLoad()
   }

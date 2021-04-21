@@ -168,6 +168,12 @@ class Reply(
   }
 
   @Synchronized
+  fun resetCaptcha() {
+    captchaInfo.captchaChallenge = null
+    captchaInfo.captchaResponse = null
+  }
+
+  @Synchronized
   fun resetAfterPosting() {
     basicReplyInfo.resetAfterPosting()
   }

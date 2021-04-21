@@ -125,7 +125,7 @@ class PostingService : Service() {
   }
 
   private fun createMainNotification(
-    mainNotificationInfo: PostingServiceDelegate.MainNotificationInfo?
+    mainNotificationInfo: MainNotificationInfo?
   ): Notification {
     BackgroundUtils.ensureMainThread()
     setupChannels()
@@ -148,18 +148,19 @@ class PostingService : Service() {
   }
 
   private fun createChildNotification(
-    childNotificationInfo: PostingServiceDelegate.ChildNotificationInfo
+    childNotificationInfo: ChildNotificationInfo
   ): Notification {
     BackgroundUtils.ensureMainThread()
     setupChannels()
 
     val iconId = when (childNotificationInfo.status) {
-      is PostingServiceDelegate.ChildNotificationInfo.Status.Preparing -> R.drawable.ic_stat_notify
-      is PostingServiceDelegate.ChildNotificationInfo.Status.WaitingForAdditionalService -> R.drawable.ic_baseline_access_time_24
-      is PostingServiceDelegate.ChildNotificationInfo.Status.Uploading -> android.R.drawable.stat_sys_upload
-      is PostingServiceDelegate.ChildNotificationInfo.Status.Posted -> android.R.drawable.stat_sys_upload_done
-      PostingServiceDelegate.ChildNotificationInfo.Status.Canceled -> R.drawable.ic_stat_notify
-      is PostingServiceDelegate.ChildNotificationInfo.Status.Error -> android.R.drawable.stat_sys_warning
+      is ChildNotificationInfo.Status.Preparing -> R.drawable.ic_stat_notify
+      is ChildNotificationInfo.Status.WaitingForSiteRateLimitToPass,
+      is ChildNotificationInfo.Status.WaitingForAdditionalService -> R.drawable.ic_baseline_access_time_24
+      is ChildNotificationInfo.Status.Uploading -> android.R.drawable.stat_sys_upload
+      is ChildNotificationInfo.Status.Posted -> android.R.drawable.stat_sys_upload_done
+      ChildNotificationInfo.Status.Canceled -> R.drawable.ic_stat_notify
+      is ChildNotificationInfo.Status.Error -> android.R.drawable.stat_sys_warning
     }
 
     val style = NotificationCompat.BigTextStyle()
@@ -243,7 +244,7 @@ class PostingService : Service() {
   }
 
   private fun NotificationCompat.Builder.addCancelAction(
-    childNotificationInfo: PostingServiceDelegate.ChildNotificationInfo
+    childNotificationInfo: ChildNotificationInfo
   ): NotificationCompat.Builder {
     if (!childNotificationInfo.canCancel) {
       return this
@@ -266,7 +267,7 @@ class PostingService : Service() {
   }
 
   private fun NotificationCompat.Builder.addNotificationClickAction(
-    childNotificationInfo: PostingServiceDelegate.ChildNotificationInfo
+    childNotificationInfo: ChildNotificationInfo
   ): NotificationCompat.Builder {
     val intent = Intent(applicationContext, StartActivity::class.java)
     val descriptorParcelable = DescriptorParcelable.fromDescriptor(childNotificationInfo.chanDescriptor)
@@ -297,10 +298,10 @@ class PostingService : Service() {
   }
 
   private fun NotificationCompat.Builder.setTimeoutEx(
-    childNotificationInfo: PostingServiceDelegate.ChildNotificationInfo
+    childNotificationInfo: ChildNotificationInfo
   ): NotificationCompat.Builder {
-    if (childNotificationInfo.status !is PostingServiceDelegate.ChildNotificationInfo.Status.Posted
-      && childNotificationInfo.status !is PostingServiceDelegate.ChildNotificationInfo.Status.Canceled) {
+    if (childNotificationInfo.status !is ChildNotificationInfo.Status.Posted
+      && childNotificationInfo.status !is ChildNotificationInfo.Status.Canceled) {
       return this
     }
 

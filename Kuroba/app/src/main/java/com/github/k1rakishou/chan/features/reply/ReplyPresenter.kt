@@ -25,12 +25,14 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.repository.LastReplyRepository
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
+import com.github.k1rakishou.chan.features.posting.LastReplyRepository
+import com.github.k1rakishou.chan.features.posting.PostResult
 import com.github.k1rakishou.chan.features.posting.PostingService
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
+import com.github.k1rakishou.chan.features.posting.PostingStatus
 import com.github.k1rakishou.chan.features.reply.floating_message_actions.Chan4OpenBannedUrlClickAction
 import com.github.k1rakishou.chan.features.reply.floating_message_actions.IFloatingReplyMessageClickAction
 import com.github.k1rakishou.chan.ui.controller.CaptchaContainerController
@@ -148,7 +150,7 @@ class ReplyPresenter @Inject constructor(
   }
 
   private suspend fun processPostingStatusUpdates(
-    status: PostingServiceDelegate.PostingStatus,
+    status: PostingStatus,
     chanDescriptor: ChanDescriptor
   ) {
     withContext(Dispatchers.Main) {
@@ -158,42 +160,42 @@ class ReplyPresenter @Inject constructor(
         return@withContext
       }
 
-      Logger.d(TAG, "listenForPostingStatusUpdates($chanDescriptor) -> ${status.javaClass.simpleName}")
-
       when (status) {
-        is PostingServiceDelegate.PostingStatus.Attached -> {
-          // no-op
+        is PostingStatus.Attached -> {
+          Logger.d(TAG, "processPostingStatusUpdates($chanDescriptor) -> ${status.javaClass.simpleName}")
         }
-        is PostingServiceDelegate.PostingStatus.Enqueued,
-        is PostingServiceDelegate.PostingStatus.WaitingForAdditionalService,
-        is PostingServiceDelegate.PostingStatus.BeforePosting -> {
+        is PostingStatus.Enqueued,
+        is PostingStatus.WaitingForSiteRateLimitToPass,
+        is PostingStatus.WaitingForAdditionalService,
+        is PostingStatus.BeforePosting -> {
+          Logger.d(TAG, "processPostingStatusUpdates($chanDescriptor) -> ${status.javaClass.simpleName}")
+
           if (::callback.isInitialized) {
             callback.enableOrDisableReplyLayout()
           }
         }
-        is PostingServiceDelegate.PostingStatus.Progress -> {
+        is PostingStatus.Progress -> {
           // no-op
         }
-        is PostingServiceDelegate.PostingStatus.AfterPosting -> {
+        is PostingStatus.AfterPosting -> {
+          Logger.d(TAG, "processPostingStatusUpdates($chanDescriptor) -> ${status.javaClass.simpleName}")
+
           if (::callback.isInitialized) {
             callback.enableOrDisableReplyLayout()
           }
 
           when (val postResult = status.postResult) {
-            PostingServiceDelegate.PostResult.Canceled -> {
+            PostResult.Canceled -> {
               onPostError(status.chanDescriptor, CancellationException("Canceled"))
             }
-            is PostingServiceDelegate.PostResult.Error -> {
+            is PostResult.Error -> {
               onPostError(status.chanDescriptor, postResult.throwable)
             }
-            is PostingServiceDelegate.PostResult.Success -> {
+            is PostResult.Success -> {
               onPostComplete(status.chanDescriptor, postResult.replyResponse, postResult.retrying)
             }
           }
 
-          // We need to "consume" the AfterPosting event (meaning replace it with Attached event) so
-          // that we don't show "Posted successfully" every time we open a thread where we have
-          // recently posted.
           postingServiceDelegate.consumeTerminalEvent(status.chanDescriptor)
         }
       }
@@ -322,8 +324,6 @@ class ReplyPresenter @Inject constructor(
 
           onAuthenticationComplete(
             chanDescriptor = chanDescriptor,
-            challenge = authenticationResult.challenge,
-            response = authenticationResult.response,
             autoReply = autoReply
           )
         }
@@ -336,14 +336,8 @@ class ReplyPresenter @Inject constructor(
 
   private fun onAuthenticationComplete(
     chanDescriptor: ChanDescriptor,
-    challenge: String?,
-    response: String?,
     autoReply: Boolean
   ) {
-    replyManager.readReply(chanDescriptor) { reply ->
-      reply.initCaptchaInfo(challenge, response)
-    }
-
     if (autoReply) {
       makeSubmitCall(chanDescriptor = chanDescriptor)
     }
@@ -363,34 +357,13 @@ class ReplyPresenter @Inject constructor(
     }
 
     if (longClicked) {
+      // TODO(KurobaEx v0.8.0): show post options (solve captcha manually, solve captcha by solver
+      //  (if possible), post with passcode (if possible)
       submitOrAuthenticate(chanDescriptor)
       return
     }
 
-    if (chanDescriptor.isThreadDescriptor()) {
-      val hasAtLeastOneFile = replyManager.readReply(chanDescriptor) { reply -> reply.hasFiles() }
-
-      val timeLeft = lastReplyRepository.getTimeUntilReply(
-        chanDescriptor.boardDescriptor(),
-        hasAtLeastOneFile
-      )
-
-      if (timeLeft <= 0L) {
-        submitOrAuthenticate(chanDescriptor)
-      } else {
-        val errorMessage = getString(R.string.reply_error_message_timer_reply, timeLeft)
-        callback.openMessage(errorMessage)
-      }
-    } else {
-      val timeLeft = lastReplyRepository.getTimeUntilThread(chanDescriptor.boardDescriptor())
-      if (timeLeft <= 0L) {
-        submitOrAuthenticate(chanDescriptor)
-        return
-      }
-
-      val errorMessage = getString(R.string.reply_error_message_timer_thread, timeLeft)
-      callback.openMessage(errorMessage)
-    }
+    submitOrAuthenticate(chanDescriptor)
   }
 
   private fun submitOrAuthenticate(chanDescriptor: ChanDescriptor) {
@@ -401,8 +374,6 @@ class ReplyPresenter @Inject constructor(
 
     onAuthenticationComplete(
       chanDescriptor = chanDescriptor,
-      challenge = null,
-      response = callback.getTokenOrNull(),
       autoReply = true
     )
   }

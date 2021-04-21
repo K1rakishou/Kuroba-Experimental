@@ -89,7 +89,7 @@ class CaptchaContainerController(
     val authenticationLayout = createAuthenticationLayout(site.actions().postAuthenticate(), useV2NoJsCaptcha)
     captchaContainer.addView(authenticationLayout as View, 0)
 
-    authenticationLayout.initialize(site, this, false)
+    authenticationLayout.initialize(site, this)
     authenticationLayout.reset()
   }
 
@@ -101,8 +101,8 @@ class CaptchaContainerController(
     }
   }
 
-  override fun onAuthenticationComplete(challenge: String?, response: String?, autoReply: Boolean) {
-    authenticationCallback(AuthenticationResult.Success(challenge, response))
+  override fun onAuthenticationComplete() {
+    authenticationCallback(AuthenticationResult.Success)
     pop()
   }
 
@@ -111,7 +111,7 @@ class CaptchaContainerController(
     pop()
   }
 
-  override fun onFallbackToV1CaptchaView(autoReply: Boolean) {
+  override fun onFallbackToV1CaptchaView() {
     initAuthenticationInternal(useV2NoJsCaptcha = false)
   }
 
@@ -150,7 +150,7 @@ class CaptchaContainerController(
   }
 
   sealed class AuthenticationResult {
-    data class Success(val challenge: String?, val response: String?) : AuthenticationResult()
+    object Success : AuthenticationResult()
     data class Failure(val throwable: Throwable) : AuthenticationResult()
   }
 

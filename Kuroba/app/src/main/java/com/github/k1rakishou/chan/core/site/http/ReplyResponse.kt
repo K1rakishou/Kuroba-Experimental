@@ -16,6 +16,7 @@
  */
 package com.github.k1rakishou.chan.core.site.http
 
+import com.github.k1rakishou.chan.features.posting.LastReplyRepository
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor.Companion.create
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -42,6 +43,8 @@ class ReplyResponse {
 
   var additionalResponseData: AdditionalResponseData? = null
 
+  var rateLimitInfo: RateLimitInfo? = null
+
   val postDescriptorOrNull: PostDescriptor?
     get() {
       if (probablyBanned || requireAuthentication || postNo <= 0L || threadNo <= 0) {
@@ -52,8 +55,17 @@ class ReplyResponse {
     }
 
   sealed class AdditionalResponseData {
-    object DvachAntiSpamCheckDetected : AdditionalResponseData()
+    object DvachAntiSpamCheckDetected : AdditionalResponseData() {
+      override fun toString(): String {
+        return "DvachAntiSpamCheckDetected"
+      }
+    }
   }
+
+  data class RateLimitInfo(
+    val actualTimeToWaitMs: Long,
+    val cooldownInfo: LastReplyRepository.CooldownInfo
+  )
 
   override fun toString(): String {
     return "ReplyResponse{" +
@@ -66,6 +78,8 @@ class ReplyResponse {
       ", password='" + password + '\'' +
       ", probablyBanned=" + probablyBanned +
       ", requireAuthentication=" + requireAuthentication +
+      ", rateLimitInfo=" + rateLimitInfo +
+      ", additionalResponseData=" + additionalResponseData +
       '}'
   }
 }

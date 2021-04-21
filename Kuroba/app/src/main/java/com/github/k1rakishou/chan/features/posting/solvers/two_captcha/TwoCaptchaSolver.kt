@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.features.posting.solver
+package com.github.k1rakishou.chan.features.posting.solvers.two_captcha
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.ChanSettings
@@ -10,9 +10,7 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.suspendConvertIntoJsonObject
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.google.gson.Gson
-import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import okhttp3.HttpUrl
@@ -67,7 +65,7 @@ class TwoCaptchaSolver(
       }
 
       if (apiKey.isBlank()) {
-        Logger.d(TAG, "solve() apiKey url: \'$apiKey\'")
+        Logger.d(TAG, "solve() bad apiKey")
         return@Try TwoCaptchaResult.SolverBadApiKey(solverName = name)
       }
 
@@ -94,10 +92,6 @@ class TwoCaptchaSolver(
         SiteAuthentication.Type.CAPTCHA2_NOJS -> {
           postAuthenticate
         }
-      }
-
-      if (isDevBuild) {
-        Logger.d(TAG, "solve() apiKey=${apiKey}")
       }
 
       val activeRequest = mutex.withLock { activeRequests[chanDescriptor] }
@@ -249,7 +243,7 @@ class TwoCaptchaSolver(
       }
 
       if (enqueueSolveCaptchaResponse.badApiKey()) {
-        Logger.d(TAG, "enqueueSolution() apiKey url: \'$apiKey\'")
+        Logger.d(TAG, "enqueueSolution() bad apiKey url")
         return TwoCaptchaResult.SolverBadApiKey(name)
       }
 
@@ -413,166 +407,12 @@ class TwoCaptchaSolver(
     return balanceResponse
   }
 
-  data class ActiveCaptchaRequest(
-    val requestId: Long
-  ) {
-    var lastSolutionCheckTime: Long = 0L
-  }
-
   private data class AccountInfo(
     val lastBalanceCheckTimeMs: Long = 0L,
     var twoCaptchaBalanceResponse: TwoCaptchaBalanceResponse? = null
   ) {
     fun shouldCheckBalance(): Boolean {
       return (System.currentTimeMillis() - lastBalanceCheckTimeMs) > BALANCE_CHECK_INTERVAL
-    }
-  }
-
-  sealed class TwoCaptchaResult {
-    data class BadSiteKey(val solverName: String) : TwoCaptchaResult()
-    data class SolverBadApiKey(val solverName: String) : TwoCaptchaResult()
-    data class SolverDisabled(val solverName: String) : TwoCaptchaResult()
-    data class SolverBadApiUrl(val solverName: String, val url: String) : TwoCaptchaResult()
-    data class BadSiteBaseUrl(val solverName: String, val url: String?) : TwoCaptchaResult()
-    data class NotSupported(val solverName: String, val siteDescriptor: SiteDescriptor) : TwoCaptchaResult()
-    data class CaptchaNotNeeded(val solverName: String, val siteDescriptor: SiteDescriptor) : TwoCaptchaResult()
-    data class BadBalance(val balance: Float?) : TwoCaptchaResult()
-
-    data class UnknownError(val message: String) : TwoCaptchaResult()
-    data class BadBalanceResponse(val twoCaptchaBalanceResponse: TwoCaptchaBalanceResponse) : TwoCaptchaResult()
-    data class BadSolveCaptchaResponse(val twoCaptchaSolveCaptchaResponse: TwoCaptchaEnqueueSolveCaptchaResponse) : TwoCaptchaResult()
-    data class BadCheckCaptchaSolutionResponse(val twoCaptchaCheckSolutionResponse: TwoCaptchaCheckSolutionResponse) : TwoCaptchaResult()
-    data class WaitingForSolution(val waitTime: Long) : TwoCaptchaResult()
-    data class Solution(val twoCaptchaCheckSolutionResponse: TwoCaptchaCheckSolutionResponse): TwoCaptchaResult()
-  }
-
-  data class BaseSolverApiResponse(
-    @SerializedName("status")
-    val status: Int,
-    @SerializedName("request")
-    val requestRaw: String,
-    @SerializedName("error_text")
-    val errorText: String?
-  ) {
-    fun isOk(): Boolean = status == 1
-
-    fun errorTextOrDefault(): String = errorText ?: "No error text"
-  }
-
-  class TwoCaptchaEnqueueSolveCaptchaResponse private constructor(
-    val response: BaseSolverApiResponse
-  ) {
-    val requestId: Long? by lazy {
-      if (response.isOk()) {
-        return@lazy response.requestRaw.toLongOrNull()
-      }
-
-      return@lazy null
-    }
-
-    fun badApiKey(): Boolean = response.requestRaw == "ERROR_KEY_DOES_NOT_EXIST"
-    fun badUrl(): Boolean = response.requestRaw == "ERROR_PAGEURL"
-    fun badSiteKey(): Boolean = response.requestRaw == "ERROR_GOOGLEKEY"
-    fun isZeroBalanceError(): Boolean = response.requestRaw == "ERROR_ZERO_BALANCE"
-    fun noAvailableSlots(): Boolean = response.requestRaw == "ERROR_NO_SLOT_AVAILABLE"
-
-    fun isOk(): Boolean = response.isOk()
-
-    override fun equals(other: Any?): Boolean {
-      if (this === other) return true
-      if (javaClass != other?.javaClass) return false
-
-      other as TwoCaptchaEnqueueSolveCaptchaResponse
-
-      if (response != other.response) return false
-
-      return true
-    }
-
-    override fun hashCode(): Int {
-      return response.hashCode()
-    }
-
-    override fun toString(): String {
-      return "TwoCaptchaEnqueueSolveCaptchaResponse(response=$response)"
-    }
-
-    companion object {
-      fun wrap(response: BaseSolverApiResponse): TwoCaptchaEnqueueSolveCaptchaResponse {
-        return TwoCaptchaEnqueueSolveCaptchaResponse(response)
-      }
-    }
-  }
-
-  class TwoCaptchaBalanceResponse private constructor(
-    val response: BaseSolverApiResponse
-  ) {
-    val balance: Float? by lazy {
-      if (response.isOk()) {
-        return@lazy response.requestRaw.toFloatOrNull()
-      }
-
-      return@lazy null
-    }
-
-    fun isOk(): Boolean = response.isOk()
-
-    override fun equals(other: Any?): Boolean {
-      if (this === other) return true
-      if (javaClass != other?.javaClass) return false
-
-      other as TwoCaptchaBalanceResponse
-
-      if (response != other.response) return false
-
-      return true
-    }
-
-    override fun hashCode(): Int {
-      return response.hashCode()
-    }
-
-    override fun toString(): String {
-      return "TwoCaptchaBalanceResponse(response=$response)"
-    }
-
-    companion object {
-      fun wrap(response: BaseSolverApiResponse): TwoCaptchaBalanceResponse {
-        return TwoCaptchaBalanceResponse(response)
-      }
-    }
-  }
-
-  class TwoCaptchaCheckSolutionResponse private constructor(
-    val response: BaseSolverApiResponse
-  ) {
-    fun isOk(): Boolean = response.isOk()
-
-    fun isCaptchaNotReady(): Boolean = response.requestRaw == "CAPCHA_NOT_READY"
-
-    override fun equals(other: Any?): Boolean {
-      if (this === other) return true
-      if (javaClass != other?.javaClass) return false
-
-      other as TwoCaptchaCheckSolutionResponse
-
-      if (response != other.response) return false
-
-      return true
-    }
-
-    override fun hashCode(): Int {
-      return response.hashCode()
-    }
-
-    override fun toString(): String {
-      return "TwoCaptchaCheckSolutionResponse(response=$response)"
-    }
-
-    companion object {
-      fun wrap(response: BaseSolverApiResponse): TwoCaptchaCheckSolutionResponse {
-        return TwoCaptchaCheckSolutionResponse(response)
-      }
     }
   }
 

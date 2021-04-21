@@ -20,13 +20,13 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository;
-import com.github.k1rakishou.chan.core.repository.LastReplyRepository;
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository;
 import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager;
 import com.github.k1rakishou.chan.core.usecase.ExportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
+import com.github.k1rakishou.chan.features.posting.LastReplyRepository;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.google.gson.Gson;
 

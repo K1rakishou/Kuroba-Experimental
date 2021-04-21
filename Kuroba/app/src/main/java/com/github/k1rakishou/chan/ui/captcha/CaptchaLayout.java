@@ -69,8 +69,6 @@ public class CaptchaLayout
     private String baseUrl;
     private String siteKey;
 
-    private boolean isAutoReply = true;
-
     @Inject
     CaptchaHolder captchaHolder;
     @Inject
@@ -100,10 +98,8 @@ public class CaptchaLayout
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override
-    public void initialize(Site site, AuthenticationLayoutCallback callback, boolean autoReply) {
+    public void initialize(Site site, AuthenticationLayoutCallback callback) {
         this.callback = callback;
-        this.isAutoReply = autoReply;
-
         SiteAuthentication authentication = site.actions().postAuthenticate();
 
         this.siteKey = authentication.siteKey;
@@ -172,11 +168,6 @@ public class CaptchaLayout
         if (loaded) {
             loadUrl("javascript:grecaptcha.reset()");
         } else {
-            if (captchaHolder.hasToken() && isAutoReply) {
-                callback.onAuthenticationComplete(null, captchaHolder.getToken(), true);
-                return;
-            }
-
             hardReset();
         }
     }
@@ -226,15 +217,7 @@ public class CaptchaLayout
         }
 
         captchaHolder.addNewToken(response, RECAPTCHA_TOKEN_LIVE_TIME);
-
-        String token;
-        if (isAutoReply) {
-            token = captchaHolder.getToken();
-        } else {
-            token = response;
-        }
-
-        callback.onAuthenticationComplete(challenge, token, isAutoReply);
+        callback.onAuthenticationComplete();
     }
 
     @Override

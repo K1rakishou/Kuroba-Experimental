@@ -10,11 +10,11 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.repository.LastReplyRepository
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
-import com.github.k1rakishou.chan.features.posting.solver.TwoCaptchaSolver
+import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaResult
+import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.helper.PostHelper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
@@ -34,14 +34,11 @@ import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.isActive
@@ -51,6 +48,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
@@ -112,8 +110,14 @@ class PostingServiceDelegate(
     Logger.d(TAG, "cancel($chanDescriptor)")
 
     mutex.withLockNonCancellable {
-      activeReplyDescriptors[chanDescriptor]?.cancelReplyUpload()
+      val replyInfo = activeReplyDescriptors[chanDescriptor]
+
+      replyInfo?.cancelReplyUpload()
       twoCaptchaSolver.cancel(chanDescriptor)
+
+      if (replyInfo == null) {
+        _closeChildNotificationFlow.emit(chanDescriptor)
+      }
     }
   }
 
@@ -163,6 +167,7 @@ class PostingServiceDelegate(
   }
 
   private suspend fun CoroutineScope.onNewReplyInternal(chanDescriptor: ChanDescriptor) {
+    Logger.d(TAG, "onNewReplyInternal($chanDescriptor)")
     val postedSuccessfully = AtomicBoolean(false)
 
     try {
@@ -186,6 +191,9 @@ class PostingServiceDelegate(
     if (!postedSuccessfully.get()) {
       replyManager.restoreFiles(chanDescriptor)
     }
+
+    // TODO(KurobaEx v0.8.0): reset cooldowns once all replies for a board are processed. If there
+    //  are sill unprocessed replies, do not reset cooldowns.
 
     updateMainNotification()
 
@@ -221,6 +229,7 @@ class PostingServiceDelegate(
         is PostingStatus.Enqueued,
         is PostingStatus.Progress,
         is PostingStatus.BeforePosting,
+        is PostingStatus.WaitingForSiteRateLimitToPass,
         is PostingStatus.WaitingForAdditionalService -> false
       }
 
@@ -264,11 +273,13 @@ class PostingServiceDelegate(
   ) {
     BackgroundUtils.ensureMainThread()
 
+    Logger.d(TAG, "processNewReply($chanDescriptor)")
     updateChildNotification(chanDescriptor, ChildNotificationInfo.Status.Preparing(chanDescriptor))
 
     val reply = replyManager.getReplyOrNull(chanDescriptor)
     if (reply == null) {
       Logger.e(TAG, "No reply found for chanDescriptor: $chanDescriptor")
+
       emitTerminalEvent(
         chanDescriptor = chanDescriptor,
         postResult = PostResult.Error(IOException("Canceled"))
@@ -278,16 +289,6 @@ class PostingServiceDelegate(
     }
 
     ensureNotCanceled(chanDescriptor)
-
-    val retrying = doWithReplyInfo(chanDescriptor) { retrying.get() } ?: false
-    makeSubmitCall(chanDescriptor, postedSuccessfully, retrying)
-  }
-
-  private suspend fun makeSubmitCall(
-    chanDescriptor: ChanDescriptor,
-    postedSuccessfully: AtomicBoolean,
-    retrying: Boolean
-  ) {
     Logger.d(TAG, "makeSubmitCall() chanDescriptor=${chanDescriptor}")
 
     val siteDescriptor = chanDescriptor.siteDescriptor()
@@ -314,6 +315,8 @@ class PostingServiceDelegate(
       }
 
     if (!takeFilesResult) {
+      Logger.e(TAG, "makeSubmitCall() takeFilesResult == false")
+
       emitTerminalEvent(
         chanDescriptor = chanDescriptor,
         postResult = PostResult.Error(
@@ -323,35 +326,180 @@ class PostingServiceDelegate(
       return
     }
 
-    makePostInternal(
+    runPostWaitQueueLoop(
       site = site,
       chanDescriptor = chanDescriptor,
-      retrying = retrying,
       postedSuccessfully = postedSuccessfully
     )
   }
 
-  private suspend fun makePostInternal(
+  private suspend fun runPostWaitQueueLoop(
     site: Site,
     chanDescriptor: ChanDescriptor,
-    retrying: Boolean,
     postedSuccessfully: AtomicBoolean
   ) {
+    Logger.d(TAG, "runPostWaitQueueLoop(${site.siteDescriptor()}, $chanDescriptor)")
     ensureNotCanceled(chanDescriptor)
 
+    doWithReplyInfo(chanDescriptor) {
+      updateStatus(PostingStatus.WaitingForSiteRateLimitToPass(chanDescriptor))
+    }
+
+    val startTime = System.currentTimeMillis()
+    val automaticallySolvedCaptchasCount = AtomicInteger()
+
+    Logger.d(TAG, "runPostWaitQueueLoop($chanDescriptor) started at $startTime")
+
+    while (true) {
+      ensureNotCanceled(chanDescriptor)
+
+      if (System.currentTimeMillis() - startTime > MAX_POST_QUEUE_TIME_MS) {
+        val timeSpent = System.currentTimeMillis() - startTime
+        Logger.e(TAG, "runPostWaitQueueLoop($chanDescriptor) spent too much time in the loop " +
+          "(${timeSpent}ms), exiting")
+
+        cancel(chanDescriptor)
+        break
+      }
+
+      if (automaticallySolvedCaptchasCount.get() > MAX_AUTO_SOLVED_CAPTCHAS_COUNT) {
+        val solvedCount = automaticallySolvedCaptchasCount.get()
+        Logger.e(TAG, "runPostWaitQueueLoop($chanDescriptor) solved too many captcha ($solvedCount), exiting")
+
+        cancel(chanDescriptor)
+        break
+      }
+
+      var timeToWaitMs = POST_LOOP_DELAY_MS
+
+      // First we need to take the oldest post from all posts in the activeReplyDescriptors
+      if (isOldestEnqueuedReply(chanDescriptor)) {
+        Logger.d(TAG, "runPostWaitQueueLoop($chanDescriptor) oldest enqueued reply descriptor: $chanDescriptor")
+
+        // Then we need to check whether we can post or need to wait a timeout before posting
+        val remainingWaitTime = lastReplyRepository.getTimeUntilNextThreadCreationOrReply(chanDescriptor)
+        check(remainingWaitTime >= 0) { "Bad remainingWaitTime: $remainingWaitTime" }
+
+        if (remainingWaitTime > 0) {
+          // Can't post yet, need to wait
+          updateChildNotification(
+            chanDescriptor,
+            ChildNotificationInfo.Status.WaitingForSiteRateLimitToPass(remainingWaitTime, chanDescriptor.siteDescriptor())
+          )
+
+          // TODO(KurobaEx v0.8.0): set timeToWaitMs to 10 seconds max so we can update the notification
+          //  periodically so it doesn't appear as if hanged.
+          timeToWaitMs = (remainingWaitTime + POST_LOOP_DELAY_MS)
+        } else {
+          // Possibly can post. Now we need to check whether somebody is already trying to post on
+          // this board. We only allow one post being processed per board at a time.
+
+          val attemptToStartPosting = lastReplyRepository.attemptToStartPosting(chanDescriptor)
+          if (attemptToStartPosting) {
+            Logger.d(TAG, "runPostWaitQueueLoop($chanDescriptor) remainingWaitTime: ${remainingWaitTime}, " +
+              "attemptToStartPosting=$attemptToStartPosting, " +
+              "automaticallySolvedCaptchasCount=${automaticallySolvedCaptchasCount.get()}")
+
+            // We managed to take the permission to post
+            val actualPostResult = AtomicReference<ActualPostResult>(ActualPostResult.FailedToPost)
+
+            try {
+              runPostWaitForCaptchaLoop(
+                site = site,
+                chanDescriptor = chanDescriptor,
+                automaticallySolvedCaptchasCount = automaticallySolvedCaptchasCount,
+                actualPostResult = actualPostResult
+              )
+            } finally {
+              lastReplyRepository.endPostingAttempt(chanDescriptor)
+            }
+
+            Logger.d(TAG, "runPostWaitQueueLoop($chanDescriptor) makePostInternal() -> $actualPostResult")
+
+            when (actualPostResult.get()) {
+              null,
+              is ActualPostResult.Posted -> {
+                postedSuccessfully.set(true)
+                break
+              }
+              is ActualPostResult.RateLimited -> {
+                // We were rate limited, now we need to wait again
+                continue
+              }
+              is ActualPostResult.FailedToPost -> {
+                // Failed to post for whatever reason and we can't continue. We need to notify the
+                // user about the error.
+                break
+              }
+            }
+          }
+        }
+      }
+
+      val totalPostsWaiting = getTotalWaitingForRateLimitToPassRepliesCount()
+
+      Logger.d(TAG, "runPostWaitQueueLoop($chanDescriptor) totalPostsWaiting=${totalPostsWaiting}, " +
+        "waiting ${timeToWaitMs}ms...")
+
+      delay(timeToWaitMs)
+
+      Logger.d(TAG, "runPostWaitQueueLoop($chanDescriptor) totalPostsWaiting=${totalPostsWaiting}, " +
+        "waiting ${timeToWaitMs}ms done")
+    }
+
+    Logger.d(TAG, "runPostQueueLoop($chanDescriptor) took ${System.currentTimeMillis() - startTime}ms")
+  }
+
+  private suspend fun runPostWaitForCaptchaLoop(
+    site: Site,
+    chanDescriptor: ChanDescriptor,
+    automaticallySolvedCaptchasCount: AtomicInteger,
+    actualPostResult: AtomicReference<ActualPostResult>
+  ) {
     val serviceName = twoCaptchaSolver.name
-    doWithReplyInfo(chanDescriptor) { updateStatus(PostingStatus.WaitingForAdditionalService(serviceName, chanDescriptor)) }
-    updateChildNotification(chanDescriptor, ChildNotificationInfo.Status.WaitingForAdditionalService(serviceName))
+    Logger.d(TAG, "runPostWaitForCaptchaLoop(${site.siteDescriptor()}, $chanDescriptor)")
+
+    doWithReplyInfo(chanDescriptor) {
+      updateStatus(PostingStatus.WaitingForAdditionalService(serviceName, chanDescriptor))
+    }
 
     val availableAttempts = AtomicInteger(MAX_ATTEMPTS)
 
     while (true) {
+      ensureNotCanceled(chanDescriptor)
+
+      updateChildNotification(
+        chanDescriptor = chanDescriptor,
+        status = ChildNotificationInfo.Status.WaitingForAdditionalService(
+          availableAttempts = availableAttempts.get(),
+          serviceName = serviceName
+        )
+      )
+
       val result = processAntiCaptchaService(chanDescriptor)
-      Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) -> $result, attempt ${availableAttempts.get()}")
+      Logger.d(TAG, "runPostWaitForCaptchaLoop() processAntiCaptchaService($chanDescriptor) -> $result, " +
+        "attempt ${availableAttempts.get()}")
 
       when (result) {
-        is AntiCaptchaServiceResult.ContinuePosting -> {
-          val token = result.token
+        is AntiCaptchaServiceResult.Solution,
+        is AntiCaptchaServiceResult.AlreadyHaveToken -> {
+          val token = when (result) {
+            AntiCaptchaServiceResult.ExitLoop,
+            is AntiCaptchaServiceResult.WaitNextIteration -> throw RuntimeException("Shouldn't be called here")
+            is AntiCaptchaServiceResult.Solution -> {
+              // This called when the captcha was solved by anti-captcha service, meaning we paid
+              // money for that. We don't want to accidentally waste all the money if we ever somehow
+              // get into an infinite loop here so we need to check how many was solved and exit if
+              // there were too many.
+              automaticallySolvedCaptchasCount.incrementAndGet()
+              result.token
+            }
+            is AntiCaptchaServiceResult.AlreadyHaveToken -> {
+              // We already have a token (Most likely the user pre-solved captcha manually).
+              result.token
+            }
+          }
+
           if (token.isNotNullNorBlank()) {
             replyManager.readReply(chanDescriptor) { reply ->
               reply.initCaptchaInfo(challenge = null, response = token)
@@ -360,10 +508,10 @@ class PostingServiceDelegate(
 
           break
         }
-        AntiCaptchaServiceResult.Exit -> {
+        AntiCaptchaServiceResult.ExitLoop -> {
           return
         }
-        is AntiCaptchaServiceResult.Wait -> {
+        is AntiCaptchaServiceResult.WaitNextIteration -> {
           delay(result.waitTimeMs)
         }
       }
@@ -381,11 +529,21 @@ class PostingServiceDelegate(
     ensureNotCanceled(chanDescriptor)
     doWithReplyInfo(chanDescriptor) { updateStatus(PostingStatus.BeforePosting(chanDescriptor)) }
 
+    callPostDelegate(site, chanDescriptor, actualPostResult)
+  }
+
+  private suspend fun callPostDelegate(
+    site: Site,
+    chanDescriptor: ChanDescriptor,
+    actualPostResult: AtomicReference<ActualPostResult>
+  ) {
+    Logger.d(TAG, "callPostDelegate(${site.siteDescriptor()}, $chanDescriptor)")
+
     site.actions()
       .post(chanDescriptor)
       .catch { error ->
         Logger.e(TAG, "SiteActions.PostResult.PostError($chanDescriptor) " +
-          "unhandled error: ${error.errorMessageOrClassName()}")
+            "unhandled error: ${error.errorMessageOrClassName()}")
 
         emitTerminalEvent(chanDescriptor, PostResult.Error(error))
       }
@@ -400,66 +558,165 @@ class PostingServiceDelegate(
             )
 
             val uploadingStatus = ChildNotificationInfo.Status.Uploading(status.toOverallPercent())
-            Logger.d(TAG, "uploadingStatus=${uploadingStatus.totalProgress}")
-
             updateChildNotification(chanDescriptor, uploadingStatus)
             doWithReplyInfo(chanDescriptor) { updateStatus(status) }
           }
           is SiteActions.PostResult.PostError -> {
-            Logger.e(
-              TAG, "SiteActions.PostResult.PostError($chanDescriptor) " +
-              "error: ${postResult.error.errorMessageOrClassName()}")
+            Logger.e(TAG, "SiteActions.PostResult.PostError($chanDescriptor) " +
+                "error: ${postResult.error.errorMessageOrClassName()}")
             emitTerminalEvent(chanDescriptor, PostResult.Error(postResult.error))
           }
           is SiteActions.PostResult.PostComplete -> {
-            if (!postResult.replyResponse.posted) {
-              Logger.d(TAG, "SiteActions.PostResult.PostComplete($chanDescriptor) failed to post")
-
-              emitTerminalEvent(
-                chanDescriptor = chanDescriptor,
-                postResult = PostResult.Success(
-                  replyResponse = postResult.replyResponse,
-                  retrying = retrying
-                )
-              )
-
-              return@collect
-            }
-
-            try {
-              onPostedSuccessfully(chanDescriptor, postResult.replyResponse)
-              postedSuccessfully.set(true)
-
-              emitTerminalEvent(
-                chanDescriptor = chanDescriptor,
-                postResult = PostResult.Success(
-                  replyResponse = postResult.replyResponse,
-                  retrying = retrying
-                )
-              )
-
-              Logger.d(TAG, "SiteActions.PostResult.PostComplete($chanDescriptor) success")
-            } catch (error: Throwable) {
-              emitTerminalEvent(chanDescriptor, PostResult.Error(error))
-              Logger.e(TAG, "SiteActions.PostResult.PostComplete($chanDescriptor) error", error)
-            }
+            onPostComplete(chanDescriptor, postResult, actualPostResult)
           }
         }
       }
   }
 
+  /**
+   * We fully sent a post (with all attachements) to the server and got the response.
+   * */
+  private suspend fun onPostComplete(
+    chanDescriptor: ChanDescriptor,
+    postResult: SiteActions.PostResult.PostComplete,
+    actualPostResult: AtomicReference<ActualPostResult>
+  ) {
+    val retrying = doWithReplyInfo(chanDescriptor) { retrying.get() }
+      ?: false
+
+    if (!postResult.replyResponse.posted) {
+      Logger.d(TAG, "SiteActions.PostResult.PostComplete($chanDescriptor) failed to post, " +
+          "response=${postResult.replyResponse}")
+
+      if (postResult.replyResponse.rateLimitInfo != null) {
+        onRateLimitedByServer(
+          rateLimitInfo = postResult.replyResponse.rateLimitInfo!!,
+          actualPostResult = actualPostResult,
+          chanDescriptor = chanDescriptor
+        )
+
+        return
+      }
+
+      emitTerminalEvent(
+        chanDescriptor = chanDescriptor,
+        postResult = PostResult.Success(
+          replyResponse = postResult.replyResponse,
+          retrying = retrying
+        )
+      )
+
+      return
+    }
+
+    try {
+      onPostedSuccessfully(chanDescriptor, postResult.replyResponse)
+      actualPostResult.set(ActualPostResult.Posted)
+
+      emitTerminalEvent(
+        chanDescriptor = chanDescriptor,
+        postResult = PostResult.Success(
+          replyResponse = postResult.replyResponse,
+          retrying = retrying
+        )
+      )
+
+      Logger.d(TAG, "SiteActions.PostResult.PostComplete($chanDescriptor) success")
+    } catch (error: Throwable) {
+      emitTerminalEvent(chanDescriptor, PostResult.Error(error))
+      Logger.e(TAG, "SiteActions.PostResult.PostComplete($chanDescriptor) error", error)
+    }
+  }
+
+  /**
+   * We detected that the server declined our post with some kind of "You must wait X minutes Y
+   * seconds before posting" message.
+   * */
+  private suspend fun onRateLimitedByServer(
+    rateLimitInfo: ReplyResponse.RateLimitInfo,
+    actualPostResult: AtomicReference<ActualPostResult>,
+    chanDescriptor: ChanDescriptor
+  ) {
+    // We were rate limited. We don't want to emit terminal event here because we are
+    // going to continue the queue loop. But we need to reset the captcha, update
+    // cooldownInfo in the lastReplyRepository and update the notification.
+    val timeToWaitMs = rateLimitInfo.actualTimeToWaitMs.coerceAtLeast(POST_LOOP_DELAY_MS)
+
+    actualPostResult.set(ActualPostResult.RateLimited(timeToWaitMs))
+
+    replyManager.readReply(chanDescriptor) { reply ->
+      reply.resetCaptcha()
+    }
+
+    lastReplyRepository.onPostAttemptFinished(
+      chanDescriptor = chanDescriptor,
+      newCooldownInfo = rateLimitInfo.cooldownInfo
+    )
+
+    ChildNotificationInfo.Status.WaitingForSiteRateLimitToPass(
+      remainingWaitTime = rateLimitInfo.cooldownInfo.currentPostingCooldownMs,
+      siteDescriptor = chanDescriptor.siteDescriptor()
+    )
+
+    return
+  }
+
+  /**
+   * Check whether a reply with this [chanDescriptor] is the oldest among all replies with
+   * [PostingStatus.WaitingForSiteRateLimitToPass] status. We always attempt to post the oldest
+   * queued replies first. Basically it's a FIFO queue.
+   * */
+  private suspend fun isOldestEnqueuedReply(chanDescriptor: ChanDescriptor): Boolean {
+    return mutex.withLock {
+      if (activeReplyDescriptors.isEmpty()) {
+        return@withLock true
+      }
+
+      var actualOldestReplyDescriptor: ChanDescriptor? = null
+      var oldestEnqueuedReplyTime: Long = Long.MAX_VALUE
+
+      for ((descriptor, replyInfo) in activeReplyDescriptors.entries) {
+        if (replyInfo.currentStatus !is PostingStatus.WaitingForSiteRateLimitToPass) {
+          continue
+        }
+
+        if (replyInfo.enqueuedAt.get() < oldestEnqueuedReplyTime) {
+          oldestEnqueuedReplyTime = replyInfo.enqueuedAt.get()
+          actualOldestReplyDescriptor = descriptor
+        }
+      }
+
+      if (actualOldestReplyDescriptor == null) {
+        return@withLock true
+      }
+
+      return@withLock actualOldestReplyDescriptor == chanDescriptor
+    }
+  }
+
+  private suspend fun getTotalWaitingForRateLimitToPassRepliesCount(): Int {
+    return mutex.withLock {
+      return@withLock activeReplyDescriptors.values.count { replyInfo ->
+        replyInfo.currentStatus is PostingStatus.WaitingForSiteRateLimitToPass
+      }
+    }
+  }
+
+  /**
+   * Handles the results of captcha solvers.
+   * */
   private suspend fun processAntiCaptchaService(
     chanDescriptor: ChanDescriptor
   ): AntiCaptchaServiceResult {
     val tokenAlreadySet = replyManager.readReply(chanDescriptor) { reply -> reply.captchaResponse != null }
     if (tokenAlreadySet) {
       Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) reply already contains a token, use it instead")
-      return AntiCaptchaServiceResult.ContinuePosting(null)
+      return AntiCaptchaServiceResult.AlreadyHaveToken(null)
     }
 
     if (captchaHolder.hasToken()) {
       Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) already has token, use it instead")
-      return AntiCaptchaServiceResult.ContinuePosting(captchaHolder.token)
+      return AntiCaptchaServiceResult.AlreadyHaveToken(captchaHolder.token)
     }
 
     val twoCaptchaResult = twoCaptchaSolver.solve(chanDescriptor)
@@ -468,7 +725,7 @@ class PostingServiceDelegate(
           Logger.e(TAG, "processAntiCaptchaService() twoCaptchaSolver.solve($chanDescriptor) " +
             "error=${error.errorMessageOrClassName()}")
 
-          return AntiCaptchaServiceResult.Wait(TwoCaptchaSolver.LONG_WAIT_TIME_MS)
+          return AntiCaptchaServiceResult.WaitNextIteration(TwoCaptchaSolver.LONG_WAIT_TIME_MS)
         }
 
         Logger.e(TAG, "processAntiCaptchaService() twoCaptchaSolver.solve($chanDescriptor) error", error)
@@ -478,11 +735,11 @@ class PostingServiceDelegate(
           postResult = PostResult.Error(error)
         )
 
-        return AntiCaptchaServiceResult.Exit
+        return AntiCaptchaServiceResult.ExitLoop
       }
 
     when (twoCaptchaResult) {
-      is TwoCaptchaSolver.TwoCaptchaResult.BadSiteKey -> {
+      is TwoCaptchaResult.BadSiteKey -> {
         Logger.e(TAG, "processAntiCaptchaService($chanDescriptor) -> $twoCaptchaResult")
 
         val exception = PostingException("Cannot use captcha solver, bad site key. " +
@@ -493,9 +750,9 @@ class PostingServiceDelegate(
           postResult = PostResult.Error(exception)
         )
 
-        return AntiCaptchaServiceResult.Exit
+        return AntiCaptchaServiceResult.ExitLoop
       }
-      is TwoCaptchaSolver.TwoCaptchaResult.BadSiteBaseUrl -> {
+      is TwoCaptchaResult.BadSiteBaseUrl -> {
         Logger.e(TAG, "processAntiCaptchaService($chanDescriptor) -> $twoCaptchaResult")
 
         val exception = PostingException("Cannot use captcha solver, bad site key. " +
@@ -506,22 +763,22 @@ class PostingServiceDelegate(
           postResult = PostResult.Error(exception)
         )
 
-        return AntiCaptchaServiceResult.Exit
+        return AntiCaptchaServiceResult.ExitLoop
       }
-      is TwoCaptchaSolver.TwoCaptchaResult.SolverBadApiKey -> {
+      is TwoCaptchaResult.SolverBadApiKey -> {
         Logger.e(TAG, "processAntiCaptchaService($chanDescriptor) -> $twoCaptchaResult")
 
-        val exception = PostingException("Cannot use captcha solver, bad site key. " +
-          "Solver='${twoCaptchaResult.solverName}'")
+        val exception = PostingException("Cannot use captcha solver, bad API key. " +
+          "Check that your API key is valid. Solver='${twoCaptchaResult.solverName}'")
 
         emitTerminalEvent(
           chanDescriptor = chanDescriptor,
           postResult = PostResult.Error(exception)
         )
 
-        return AntiCaptchaServiceResult.Exit
+        return AntiCaptchaServiceResult.ExitLoop
       }
-      is TwoCaptchaSolver.TwoCaptchaResult.SolverBadApiUrl -> {
+      is TwoCaptchaResult.SolverBadApiUrl -> {
         Logger.e(TAG, "processAntiCaptchaService($chanDescriptor) -> $twoCaptchaResult")
 
         val exception = PostingException("Cannot use captcha solver, bad solver url: " +
@@ -533,9 +790,9 @@ class PostingServiceDelegate(
           postResult = PostResult.Error(exception)
         )
 
-        return AntiCaptchaServiceResult.Exit
+        return AntiCaptchaServiceResult.ExitLoop
       }
-      is TwoCaptchaSolver.TwoCaptchaResult.BadBalance -> {
+      is TwoCaptchaResult.BadBalance -> {
         Logger.e(TAG, "processAntiCaptchaService($chanDescriptor) -> $twoCaptchaResult")
 
         emitTerminalEvent(
@@ -545,9 +802,9 @@ class PostingServiceDelegate(
           )
         )
 
-        return AntiCaptchaServiceResult.Exit
+        return AntiCaptchaServiceResult.ExitLoop
       }
-      is TwoCaptchaSolver.TwoCaptchaResult.BadBalanceResponse -> {
+      is TwoCaptchaResult.BadBalanceResponse -> {
         Logger.e(TAG, "processAntiCaptchaService($chanDescriptor) -> $twoCaptchaResult")
 
         val errorCodeString = twoCaptchaResult.twoCaptchaBalanceResponse.response.requestRaw
@@ -560,9 +817,9 @@ class PostingServiceDelegate(
           )
         )
 
-        return AntiCaptchaServiceResult.Exit
+        return AntiCaptchaServiceResult.ExitLoop
       }
-      is TwoCaptchaSolver.TwoCaptchaResult.BadSolveCaptchaResponse -> {
+      is TwoCaptchaResult.BadSolveCaptchaResponse -> {
         Logger.e(TAG, "processAntiCaptchaService($chanDescriptor) -> $twoCaptchaResult")
 
         val errorCodeString = twoCaptchaResult.twoCaptchaSolveCaptchaResponse.response.requestRaw
@@ -575,9 +832,9 @@ class PostingServiceDelegate(
           )
         )
 
-        return AntiCaptchaServiceResult.Exit
+        return AntiCaptchaServiceResult.ExitLoop
       }
-      is TwoCaptchaSolver.TwoCaptchaResult.BadCheckCaptchaSolutionResponse -> {
+      is TwoCaptchaResult.BadCheckCaptchaSolutionResponse -> {
         Logger.e(TAG, "processAntiCaptchaService($chanDescriptor) -> $twoCaptchaResult")
 
         val errorCodeString = twoCaptchaResult.twoCaptchaCheckSolutionResponse.response.requestRaw
@@ -590,9 +847,9 @@ class PostingServiceDelegate(
           )
         )
 
-        return AntiCaptchaServiceResult.Exit
+        return AntiCaptchaServiceResult.ExitLoop
       }
-      is TwoCaptchaSolver.TwoCaptchaResult.UnknownError -> {
+      is TwoCaptchaResult.UnknownError -> {
         Logger.e(TAG, "processAntiCaptchaService($chanDescriptor) -> $twoCaptchaResult")
 
         emitTerminalEvent(
@@ -602,25 +859,25 @@ class PostingServiceDelegate(
           )
         )
 
-        return AntiCaptchaServiceResult.Exit
+        return AntiCaptchaServiceResult.ExitLoop
       }
-      is TwoCaptchaSolver.TwoCaptchaResult.WaitingForSolution -> {
+      is TwoCaptchaResult.WaitingForSolution -> {
         Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) -> $twoCaptchaResult")
-        return AntiCaptchaServiceResult.Wait(twoCaptchaResult.waitTime)
+        return AntiCaptchaServiceResult.WaitNextIteration(twoCaptchaResult.waitTime)
       }
-      is TwoCaptchaSolver.TwoCaptchaResult.CaptchaNotNeeded -> {
+      is TwoCaptchaResult.CaptchaNotNeeded -> {
         Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) -> $twoCaptchaResult")
-        return AntiCaptchaServiceResult.ContinuePosting(null)
+        return AntiCaptchaServiceResult.AlreadyHaveToken(null)
       }
-      is TwoCaptchaSolver.TwoCaptchaResult.NotSupported -> {
+      is TwoCaptchaResult.NotSupported -> {
         Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) -> $twoCaptchaResult")
-        return AntiCaptchaServiceResult.ContinuePosting(null)
+        return AntiCaptchaServiceResult.AlreadyHaveToken(null)
       }
-      is TwoCaptchaSolver.TwoCaptchaResult.SolverDisabled -> {
+      is TwoCaptchaResult.SolverDisabled -> {
         Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) -> $twoCaptchaResult")
-        return AntiCaptchaServiceResult.ContinuePosting(null)
+        return AntiCaptchaServiceResult.AlreadyHaveToken(null)
       }
-      is TwoCaptchaSolver.TwoCaptchaResult.Solution -> {
+      is TwoCaptchaResult.Solution -> {
         val solutionResponse = twoCaptchaResult.twoCaptchaCheckSolutionResponse
         if (!solutionResponse.isOk()) {
           val errorCodeString = solutionResponse.response.requestRaw
@@ -634,35 +891,71 @@ class PostingServiceDelegate(
             postResult = PostResult.Error(PostingException(fullMessage))
           )
 
-          return AntiCaptchaServiceResult.Exit
+          return AntiCaptchaServiceResult.ExitLoop
         }
 
         val solutionTrimmed = StringUtils.trimCaptchaResponseToken(solutionResponse.response.requestRaw)
         Logger.d(TAG, "Got solution: \'${solutionTrimmed}\'")
 
-        return AntiCaptchaServiceResult.ContinuePosting(solutionResponse.response.requestRaw)
+        return AntiCaptchaServiceResult.Solution(solutionResponse.response.requestRaw)
       }
     }
   }
 
+  /**
+   * A terminal event is emitted when we cannot proceed further without user interaction. When this
+   * event is emitted we will quit the postQueueLoop. The postingStatus will be set to
+   * PostingStatus.AfterPosting. Captcha will be reset.
+   * */
   private suspend fun emitTerminalEvent(
     chanDescriptor: ChanDescriptor,
     postResult: PostResult
   ) {
-    doWithReplyInfo(chanDescriptor) { updateStatus(PostingStatus.AfterPosting(chanDescriptor, postResult)) }
+    Logger.d(TAG, "emitTerminalEvent($chanDescriptor, $postResult)")
+
+    doWithReplyInfo(chanDescriptor) {
+      updateStatus(PostingStatus.AfterPosting(chanDescriptor, postResult))
+    }
+
+    replyManager.readReply(chanDescriptor) { reply ->
+      reply.resetCaptcha()
+    }
 
     when (postResult) {
       PostResult.Canceled -> {
         updateChildNotification(chanDescriptor, ChildNotificationInfo.Status.Canceled)
+        lastReplyRepository.onPostAttemptFinished(chanDescriptor = chanDescriptor)
       }
       is PostResult.Error -> {
         val errorMessage = postResult.throwable.errorMessageOrClassName()
+
         updateChildNotification(chanDescriptor, ChildNotificationInfo.Status.Error(errorMessage))
+        lastReplyRepository.onPostAttemptFinished(chanDescriptor = chanDescriptor)
       }
       is PostResult.Success -> {
         val replyResponse = postResult.replyResponse
         if (replyResponse.posted) {
           updateChildNotification(chanDescriptor, ChildNotificationInfo.Status.Posted(chanDescriptor))
+          lastReplyRepository.onPostAttemptFinished(chanDescriptor)
+          return
+        }
+
+        if (replyResponse.rateLimitInfo != null) {
+          val cooldownInfo = replyResponse.rateLimitInfo!!.cooldownInfo
+
+          updateChildNotification(
+            chanDescriptor = chanDescriptor,
+            status = ChildNotificationInfo.Status.WaitingForSiteRateLimitToPass(
+              remainingWaitTime = cooldownInfo.currentPostingCooldownMs,
+              siteDescriptor = chanDescriptor.siteDescriptor()
+            )
+          )
+
+          lastReplyRepository.onPostAttemptFinished(
+            chanDescriptor = chanDescriptor,
+            newCooldownInfo = cooldownInfo
+          )
+
           return
         }
 
@@ -681,10 +974,15 @@ class PostingServiceDelegate(
         }
 
         updateChildNotification(chanDescriptor, ChildNotificationInfo.Status.Error(errorMessage))
+        lastReplyRepository.onPostAttemptFinished(chanDescriptor)
       }
     }
   }
 
+  /**
+   * Successfully managed to post. Do the cleanup stuff, bookmark the thread if needed and reset the
+   * reply.
+   * */
   private suspend fun onPostedSuccessfully(
     prevChanDescriptor: ChanDescriptor,
     replyResponse: ReplyResponse
@@ -725,12 +1023,6 @@ class PostingServiceDelegate(
       localBoard.boardCode(),
       threadNo
     )
-
-    lastReplyRepository.putLastReply(newThreadDescriptor.boardDescriptor)
-
-    if (prevChanDescriptor.isCatalogDescriptor()) {
-      lastReplyRepository.putLastThread(prevChanDescriptor.boardDescriptor())
-    }
 
     val createThreadSuccess = chanPostRepository.createEmptyThreadIfNotExists(newThreadDescriptor)
       .peekError { error ->
@@ -779,7 +1071,7 @@ class PostingServiceDelegate(
       val thread = chanThreadManager.getChanThread(newThreadDescriptor)
       val bookmarkThreadDescriptor = newThreadDescriptor.toThreadDescriptor(threadNo)
 
-      // reply
+      // Reply in an existing thread
       val createBookmarkResult = if (thread != null) {
         val originalPost = thread.getOriginalPost()
         val title = ChanPostUtils.getTitle(originalPost, newThreadDescriptor)
@@ -805,6 +1097,7 @@ class PostingServiceDelegate(
         return
       }
 
+      // New thread
       val title = replyManager.readReply(newThreadDescriptor) { reply ->
         PostHelper.getTitle(reply)
       }
@@ -872,6 +1165,11 @@ class PostingServiceDelegate(
     }
   }
 
+  /**
+   * We need to "consume" the AfterPosting event (meaning replace it with Attached event) so
+   * that we don't show "Posted successfully" every time we open a thread where we have
+   * recently posted.
+   * */
   suspend fun consumeTerminalEvent(replyDescriptor: ChanDescriptor) {
     val consumed = mutex.withLock {
       val replyInfo = activeReplyDescriptors[replyDescriptor]
@@ -890,208 +1188,27 @@ class PostingServiceDelegate(
     Logger.d(TAG, "consumeTerminalEvent($replyDescriptor) consumed=$consumed")
   }
 
-  class ReplyInfo(
-    initialStatus: PostingStatus,
-    private val chanDescriptor: ChanDescriptor,
-    private val _status: MutableStateFlow<PostingStatus> = MutableStateFlow(initialStatus),
-    val retrying: AtomicBoolean = AtomicBoolean(false)
-  ) {
-    private val _canceled = AtomicBoolean(false)
-
-    val currentStatus: PostingStatus
-      get() = _status.value
-    val statusUpdates: StateFlow<PostingStatus>
-      get() = _status.asStateFlow()
-    val activeJob = AtomicReference<Job>(null)
-
-    val canceled: Boolean
-      get() = activeJob.get() == null || _canceled.get()
-
-    @Synchronized
-    fun updateStatus(newStatus: PostingStatus) {
-      Logger.d(TAG, "updateStatus($chanDescriptor) -> ${newStatus.javaClass.simpleName}")
-      _status.value = newStatus
-    }
-
-    @Synchronized
-    fun cancelReplyUpload() {
-      _canceled.set(true)
-
-      val job = activeJob.get() ?: return
-      job.cancel()
-
-      activeJob.set(null)
-    }
-
-    @Synchronized
-    fun reset(chanDescriptor: ChanDescriptor) {
-      retrying.set(false)
-      _canceled.set(false)
-      activeJob.set(null)
-
-      _status.value = PostingStatus.Enqueued(chanDescriptor)
-    }
-
-  }
-
-  sealed class AntiCaptchaServiceResult {
-    data class Wait(val waitTimeMs: Long) : AntiCaptchaServiceResult()
-
-    object Exit : AntiCaptchaServiceResult() {
+  sealed class ActualPostResult {
+    object Posted : ActualPostResult() {
       override fun toString(): String {
-        return "Exit"
+        return "Posted"
       }
     }
-
-    data class ContinuePosting(val token: String?) : AntiCaptchaServiceResult()
+    object FailedToPost : ActualPostResult() {
+      override fun toString(): String {
+        return "FailedToPost"
+      }
+    }
+    data class RateLimited(val timeMs: Long) : ActualPostResult()
   }
-
-  sealed class PostResult {
-    object Canceled : PostResult()
-
-    data class Error(
-      val throwable: Throwable
-    ) : PostResult()
-
-    data class Success(
-      val replyResponse: ReplyResponse,
-      val retrying: Boolean
-    ) : PostResult()
-  }
-
-  sealed class PostingStatus {
-    abstract val chanDescriptor: ChanDescriptor
-
-    fun isActive(): Boolean {
-      return when (this) {
-        is AfterPosting,
-        is Attached -> false
-        is WaitingForAdditionalService,
-        is BeforePosting,
-        is Enqueued,
-        is Progress -> true
-      }
-    }
-
-    fun isTerminalEvent(): Boolean {
-      return when (this) {
-        is Attached,
-        is Enqueued,
-        is Progress,
-        is WaitingForAdditionalService,
-        is BeforePosting -> false
-        is AfterPosting -> true
-      }
-    }
-
-    data class Attached(
-      override val chanDescriptor: ChanDescriptor
-    ) : PostingStatus()
-
-    data class Enqueued(
-      override val chanDescriptor: ChanDescriptor
-    ) : PostingStatus()
-
-    data class WaitingForAdditionalService(
-      val serviceName: String,
-      override val chanDescriptor: ChanDescriptor
-    ) : PostingStatus()
-
-    data class BeforePosting(
-      override val chanDescriptor: ChanDescriptor
-    ) : PostingStatus()
-
-    data class Progress(
-      override val chanDescriptor: ChanDescriptor,
-      val fileIndex: Int,
-      val totalFiles: Int,
-      val percent: Int
-    ) : PostingStatus() {
-      fun toOverallPercent(): Float {
-        val index = (fileIndex - 1).coerceAtLeast(0).toFloat()
-
-        val totalProgress = totalFiles.toFloat() * 100f
-        val currentProgress = (index * 100f) + percent.toFloat()
-
-        return currentProgress / totalProgress
-      }
-    }
-
-    data class AfterPosting(
-      override val chanDescriptor: ChanDescriptor,
-      val postResult: PostResult
-    ) : PostingStatus()
-  }
-
-  data class MainNotificationInfo(val activeRepliesCount: Int)
-
-  data class ChildNotificationInfo(
-    val chanDescriptor: ChanDescriptor,
-    val status: Status
-  ) {
-
-    val canCancel: Boolean
-      get() {
-        return when (status) {
-          is Status.Uploading,
-          is Status.WaitingForAdditionalService -> true
-          is Status.Preparing,
-          is Status.Error,
-          is Status.Posted,
-          Status.Canceled -> false
-        }
-      }
-
-    val isOngoing: Boolean
-      get() {
-        return when (status) {
-          is Status.Uploading,
-          is Status.WaitingForAdditionalService -> true
-          is Status.Error,
-          is Status.Preparing,
-          is Status.Posted,
-          Status.Canceled -> false
-        }
-      }
-
-    sealed class Status(
-      val statusText: String
-    ) {
-      class Preparing(
-        chanDescriptor: ChanDescriptor
-      ) : Status("Preparing to send a reply to ${chanDescriptor.userReadableString()}")
-
-      data class WaitingForAdditionalService(
-        val serviceName: String
-      ): Status("Waiting for additional service: \"${serviceName}\"")
-
-      data class Uploading(
-        val totalProgress: Float
-      ) : Status("Uploading ${(totalProgress * 100f).toInt()}%...")
-
-      data class Posted(
-        val chanDescriptor: ChanDescriptor
-      ) : Status("Posted in ${chanDescriptor.userReadableString()}")
-
-      data class Error(
-        val errorMessage: String
-      ) : Status("Failed to post, error=${errorMessage}")
-
-      object Canceled : Status("Canceled")
-    }
-
-    companion object {
-      fun default(chanDescriptor: ChanDescriptor): ChildNotificationInfo {
-        return ChildNotificationInfo(chanDescriptor, Status.Preparing(chanDescriptor))
-      }
-    }
-  }
-
-  class PostingException(message: String) : Exception(message)
 
   companion object {
     private const val TAG = "PostingServiceDelegate"
     private const val MAX_ATTEMPTS = 16
+    private const val POST_LOOP_DELAY_MS = 1000L
+    private const val MAX_AUTO_SOLVED_CAPTCHAS_COUNT = 10
+
+    private val MAX_POST_QUEUE_TIME_MS = TimeUnit.MINUTES.toMillis(30)
   }
 
 }

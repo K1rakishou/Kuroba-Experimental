@@ -81,7 +81,6 @@ public class CaptchaNoJsLayoutV2
     private ColorizableBarButton useOldCaptchaButton;
     private ColorizableBarButton reloadCaptchaButton;
 
-    private boolean isAutoReply = true;
     private boolean isSplitLayoutMode;
     private int prevOrientation = 0;
 
@@ -131,7 +130,7 @@ public class CaptchaNoJsLayoutV2
         captchaButtonsHolder = view.findViewById(R.id.captcha_layout_v2_buttons);
 
         captchaVerifyButton.setOnClickListener(v -> sendVerificationResponse());
-        useOldCaptchaButton.setOnClickListener(v -> callback.onFallbackToV1CaptchaView(isAutoReply));
+        useOldCaptchaButton.setOnClickListener(v -> callback.onFallbackToV1CaptchaView());
         reloadCaptchaButton.setOnClickListener(v -> reset());
 
         onThemeChanged();
@@ -172,13 +171,12 @@ public class CaptchaNoJsLayoutV2
     }
 
     @Override
-    public void initialize(Site site, AuthenticationLayoutCallback callback, boolean autoReply) {
+    public void initialize(Site site, AuthenticationLayoutCallback callback) {
         this.callback = callback;
-        this.isAutoReply = autoReply;
 
         SiteAuthentication authentication = site.actions().postAuthenticate();
         if (authentication.type != CAPTCHA2_NOJS) {
-            callback.onFallbackToV1CaptchaView(isAutoReply);
+            callback.onFallbackToV1CaptchaView();
             return;
         }
 
@@ -187,11 +185,6 @@ public class CaptchaNoJsLayoutV2
 
     @Override
     public void reset() {
-        if (captchaHolder.hasToken() && isAutoReply) {
-            callback.onAuthenticationComplete(null, captchaHolder.getToken(), true);
-            return;
-        }
-
         hardReset();
     }
 
@@ -242,16 +235,8 @@ public class CaptchaNoJsLayoutV2
         BackgroundUtils.runOnMainThread(() -> {
             captchaHolder.addNewToken(verificationToken, RECAPTCHA_TOKEN_LIVE_TIME);
 
-            String token;
-
-            if (isAutoReply) {
-                token = captchaHolder.getToken();
-            } else {
-                token = verificationToken;
-            }
-
             captchaVerifyButton.setEnabled(true);
-            callback.onAuthenticationComplete(null, token, isAutoReply);
+            callback.onAuthenticationComplete();
         });
     }
 
@@ -263,7 +248,7 @@ public class CaptchaNoJsLayoutV2
 
             showToast(getContext(), error.getMessage(), Toast.LENGTH_LONG);
             captchaVerifyButton.setEnabled(true);
-            callback.onFallbackToV1CaptchaView(isAutoReply);
+            callback.onFallbackToV1CaptchaView();
         });
     }
 
@@ -299,7 +284,7 @@ public class CaptchaNoJsLayoutV2
             captchaVerifyButton.setEnabled(true);
         } catch (Throwable error) {
             if (callback != null) {
-                callback.onFallbackToV1CaptchaView(isAutoReply);
+                callback.onFallbackToV1CaptchaView();
             }
         }
     }

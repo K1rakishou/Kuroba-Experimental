@@ -16,16 +16,9 @@
  */
 package com.github.k1rakishou.chan.ui.captcha;
 
-import org.jetbrains.annotations.Nullable;
 
 public interface AuthenticationLayoutCallback {
-    void onAuthenticationComplete(
-            @Nullable String challenge,
-            @Nullable String response,
-            boolean autoReply
-    );
-
+    void onAuthenticationComplete();
     void onAuthenticationFailed(Throwable error);
-
-    void onFallbackToV1CaptchaView(boolean autoReply);
+    void onFallbackToV1CaptchaView();
 }

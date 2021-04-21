@@ -63,7 +63,6 @@ import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherCoordinato
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherDelegate;
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator;
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherDelegate;
-import com.github.k1rakishou.chan.core.repository.LastReplyRepository;
 import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.SiteRegistry;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
@@ -75,8 +74,9 @@ import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUse
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate;
+import com.github.k1rakishou.chan.features.posting.LastReplyRepository;
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate;
-import com.github.k1rakishou.chan.features.posting.solver.TwoCaptchaSolver;
+import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.common.AppConstants;

@@ -19,7 +19,7 @@ package com.github.k1rakishou.chan.ui.captcha;
 import com.github.k1rakishou.chan.core.site.Site;
 
 public interface AuthenticationLayoutInterface {
-    void initialize(Site site, AuthenticationLayoutCallback callback, boolean autoReply);
+    void initialize(Site site, AuthenticationLayoutCallback callback);
     void reset();
     void hardReset();
     void onDestroy();

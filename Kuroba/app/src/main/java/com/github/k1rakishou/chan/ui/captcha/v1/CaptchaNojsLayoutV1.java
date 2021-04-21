@@ -73,7 +73,6 @@ public class CaptchaNojsLayoutV1
     private String siteKey;
 
     private String webviewUserAgent;
-    private boolean isAutoReply = true;
 
     public CaptchaNojsLayoutV1(Context context) {
         super(context);
@@ -97,10 +96,8 @@ public class CaptchaNojsLayoutV1
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override
-    public void initialize(Site site, AuthenticationLayoutCallback callback, boolean autoReply) {
+    public void initialize(Site site, AuthenticationLayoutCallback callback) {
         this.callback = callback;
-        this.isAutoReply = autoReply;
-
         SiteAuthentication authentication = site.actions().postAuthenticate();
 
         this.siteKey = authentication.siteKey;
@@ -156,11 +153,6 @@ public class CaptchaNojsLayoutV1
     }
 
     public void reset() {
-        if (captchaHolder.hasToken() && isAutoReply) {
-            callback.onAuthenticationComplete(null, captchaHolder.getToken(), true);
-            return;
-        }
-
         hardReset();
     }
 
@@ -199,16 +191,7 @@ public class CaptchaNojsLayoutV1
             reset();
         } else {
             captchaHolder.addNewToken(response, RECAPTCHA_TOKEN_LIVE_TIME);
-
-            String token;
-
-            if (isAutoReply) {
-                token = captchaHolder.getToken();
-            } else {
-                token = response;
-            }
-
-            callback.onAuthenticationComplete(null, token, isAutoReply);
+            callback.onAuthenticationComplete();
         }
     }
 

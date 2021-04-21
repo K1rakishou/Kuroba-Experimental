@@ -23,10 +23,13 @@ import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.common.CommonReplyHttpCall
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody.ProgressRequestListener
+import com.github.k1rakishou.chan.core.site.http.ReplyResponse
+import com.github.k1rakishou.chan.features.posting.LastReplyRepository
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
@@ -38,6 +41,7 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import java.io.IOException
 import java.util.*
+import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 
@@ -119,15 +123,24 @@ class Chan4ReplyCall(
   }
 
   override fun process(response: Response, result: String) {
-    if (result.contains(CAPTCHA_REQUIRED_TEXT, ignoreCase = true)) {
+    if (result.contains(CAPTCHA_REQUIRED_TEXT1, ignoreCase = true)
+      || result.contains(CAPTCHA_REQUIRED_TEXT2, ignoreCase = true)) {
       replyResponse.requireAuthentication = true
       return
     }
 
-    val errorMessageMatcher = ERROR_MESSAGE.matcher(result)
+    val errorMessageMatcher = ERROR_MESSAGE_PATTERN.matcher(result)
     if (errorMessageMatcher.find()) {
-      replyResponse.errorMessage = Jsoup.parse(errorMessageMatcher.group(1)).body().text()
+      val errorMessage = Jsoup.parse(errorMessageMatcher.group(1)).body().text()
+      replyResponse.errorMessage = errorMessage
       replyResponse.probablyBanned = checkIfBanned()
+
+      val rateLimitMatcher = RATE_LIMITED_PATTERN.matcher(errorMessage)
+      if (rateLimitMatcher.find()) {
+        replyResponse.rateLimitInfo = createRateLimitInfo(rateLimitMatcher)
+        return
+      }
+
       return
     }
 
@@ -154,6 +167,19 @@ class Chan4ReplyCall(
     }
 
     Logger.e(TAG, "Couldn't handle server response! response = \"$result\"")
+  }
+
+  private fun createRateLimitInfo(rateLimitMatcher: Matcher): ReplyResponse.RateLimitInfo {
+    val minutes = (rateLimitMatcher.groupOrNull(1)?.toIntOrNull() ?: 0).coerceIn(0, 60)
+    val seconds = (rateLimitMatcher.groupOrNull(2)?.toIntOrNull() ?: 0).coerceIn(0, 60)
+    val currentPostingCooldownMs = ((minutes * 60) + seconds) * 1000L
+
+    val cooldownInfo = LastReplyRepository.CooldownInfo(
+      replyChanDescriptor.boardDescriptor(),
+      currentPostingCooldownMs
+    )
+
+    return ReplyResponse.RateLimitInfo(currentPostingCooldownMs, cooldownInfo)
   }
 
   private fun checkIfBanned(): Boolean {
@@ -198,9 +224,11 @@ class Chan4ReplyCall(
 
     private const val PROBABLY_BANNED_TEXT = "banned"
     private const val PROBABLY_IP_BLOCKED = "Posting from your IP range has been blocked due to abuse"
-    private const val CAPTCHA_REQUIRED_TEXT = "Error: You forgot to solve the CAPTCHA"
+    private const val CAPTCHA_REQUIRED_TEXT1 = "Error: You forgot to solve the CAPTCHA"
+    private const val CAPTCHA_REQUIRED_TEXT2 = "Error: You seem to have mistyped the CAPTCHA"
 
     private val THREAD_NO_PATTERN = Pattern.compile("<!-- thread:([0-9]+),no:([0-9]+) -->")
-    private val ERROR_MESSAGE = Pattern.compile("\"errmsg\"[^>]*>(.*?)</span")
+    private val ERROR_MESSAGE_PATTERN = Pattern.compile("\"errmsg\"[^>]*>(.*?)</span")
+    private val RATE_LIMITED_PATTERN = Pattern.compile("must wait (?:(\\d+)\\s+minutes)?.*?(?:(\\d+)\\s+seconds)")
   }
 }
