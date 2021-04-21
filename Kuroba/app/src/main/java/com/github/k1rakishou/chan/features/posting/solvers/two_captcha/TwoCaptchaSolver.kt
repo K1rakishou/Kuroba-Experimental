@@ -228,7 +228,7 @@ class TwoCaptchaSolver(
     }
 
     val balance = balanceResponse.balance
-    if (balance == null || balance < 0.00001f) {
+    if (balance == null || balance < MIN_ACCOUNT_BALANCE) {
       Logger.d(TAG, "enqueueSolution() bad balance: $balance")
       return TwoCaptchaResult.BadBalance(balance)
     }
@@ -428,6 +428,7 @@ class TwoCaptchaSolver(
     const val LONG_WAIT_TIME_MS = 15_000L
     private const val SHORT_WAIT_TIME_MS = 5_000L
     private const val RETRY_WAIT_TIME_MS = 1_000L
+    private const val MIN_ACCOUNT_BALANCE = 0.001f
   }
 
 }

@@ -903,7 +903,11 @@ class ReplyLayout @JvmOverloads constructor(
       return false
     }
 
-    if (!replyLayoutEnabled && !submit.isPointInsideView(ev.rawX, ev.rawY)) {
+    val isTouchingAllowedButtons = submit.isPointInsideView(ev.rawX, ev.rawY)
+      || captchaButtonContainer.isPointInsideView(ev.rawX, ev.rawY)
+      || more.isPointInsideView(ev.rawX, ev.rawY)
+
+    if (!replyLayoutEnabled && !isTouchingAllowedButtons) {
       // Intercept touch events for all children (except the submit button) when reply layout is disabled
       return true
     }
@@ -934,9 +938,6 @@ class ReplyLayout @JvmOverloads constructor(
     comment.setEnabledFast(enable)
     commentCounter.setEnabledFast(enable)
     commentRevertChangeButton.setEnabledFast(enable)
-    captchaView.setEnabledFast(enable)
-    validCaptchasCount.setEnabledFast(enable)
-    more.setEnabledFast(enable)
     replyLayoutFilesArea.enableOrDisable(enable)
 
     if (enable) {

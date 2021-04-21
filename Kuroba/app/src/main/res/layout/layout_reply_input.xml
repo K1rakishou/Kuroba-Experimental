@@ -253,8 +253,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
                     <ImageView
                         android:id="@+id/more"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:clickable="true"
                         android:focusable="true"
@@ -262,8 +262,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:id="@+id/captcha_button_container"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp">
+                        android:layout_width="32dp"
+                        android:layout_height="32dp">
 
                         <androidx.appcompat.widget.AppCompatImageView
                             android:id="@+id/captcha_view"
@@ -291,8 +291,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
                     <ImageView
                         android:id="@+id/submit"
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:clickable="true"
                         android:focusable="true"
