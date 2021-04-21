@@ -17,6 +17,7 @@ import com.github.k1rakishou.chan.ui.captcha.GenericWebViewAuthenticationLayout
 import com.github.k1rakishou.chan.ui.captcha.v1.CaptchaNojsLayoutV1
 import com.github.k1rakishou.chan.ui.captcha.v2.CaptchaNoJsLayoutV2
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import javax.inject.Inject
@@ -121,7 +122,14 @@ class CaptchaContainerController(
   ): AuthenticationLayoutInterface {
     when (authentication.type) {
       SiteAuthentication.Type.CAPTCHA2 -> {
-        return CaptchaLayout(context)
+        val view = CaptchaLayout(context)
+        val params = FrameLayout.LayoutParams(
+          ViewGroup.LayoutParams.MATCH_PARENT,
+          WEBVIEW_BASE_CAPTCHA_VIEW_HEIGHT
+        )
+
+        view.layoutParams = params
+        return view
       }
       SiteAuthentication.Type.CAPTCHA2_NOJS -> {
         return if (useV2NoJsCaptcha) {
@@ -136,7 +144,7 @@ class CaptchaContainerController(
         val view = GenericWebViewAuthenticationLayout(context)
         val params = FrameLayout.LayoutParams(
           ViewGroup.LayoutParams.MATCH_PARENT,
-          ViewGroup.LayoutParams.MATCH_PARENT
+          WEBVIEW_BASE_CAPTCHA_VIEW_HEIGHT
         )
 
         view.layoutParams = params
@@ -156,5 +164,6 @@ class CaptchaContainerController(
 
   companion object {
     private const val TAG = "CaptchaContainerController"
+    private val WEBVIEW_BASE_CAPTCHA_VIEW_HEIGHT = dp(600f)
   }
 }

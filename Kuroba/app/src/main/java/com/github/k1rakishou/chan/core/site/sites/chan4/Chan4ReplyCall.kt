@@ -135,10 +135,14 @@ class Chan4ReplyCall(
       replyResponse.errorMessage = errorMessage
       replyResponse.probablyBanned = checkIfBanned()
 
-      val rateLimitMatcher = RATE_LIMITED_PATTERN.matcher(errorMessage)
-      if (rateLimitMatcher.find()) {
-        replyResponse.rateLimitInfo = createRateLimitInfo(rateLimitMatcher)
-        return
+      if (replyChanDescriptor is ThreadDescriptor) {
+        // Only check for rate limits when replying in threads. Do not do this when creating new
+        // threads.
+        val rateLimitMatcher = RATE_LIMITED_PATTERN.matcher(errorMessage)
+        if (rateLimitMatcher.find()) {
+          replyResponse.rateLimitInfo = createRateLimitInfo(rateLimitMatcher)
+          return
+        }
       }
 
       return
@@ -195,7 +199,7 @@ class Chan4ReplyCall(
       return false
     }
 
-    return errorMessage.contains(PROBABLY_IP_BLOCKED)
+    return errorMessage.contains(PROBABLY_IP_RANGE_BLOCKED)
   }
 
   private fun attachFile(
@@ -223,9 +227,12 @@ class Chan4ReplyCall(
     private const val TAG = "Chan4ReplyCall"
 
     private const val PROBABLY_BANNED_TEXT = "banned"
-    private const val PROBABLY_IP_BLOCKED = "Posting from your IP range has been blocked due to abuse"
+    private const val PROBABLY_IP_RANGE_BLOCKED = "Posting from your IP range has been blocked due to abuse"
     private const val CAPTCHA_REQUIRED_TEXT1 = "Error: You forgot to solve the CAPTCHA"
     private const val CAPTCHA_REQUIRED_TEXT2 = "Error: You seem to have mistyped the CAPTCHA"
+
+    // Not used.
+    private const val NEW_THREAD_CREATION_RATE_LIMIT_TEXT = "Error: You must wait longer before posting a new thread"
 
     private val THREAD_NO_PATTERN = Pattern.compile("<!-- thread:([0-9]+),no:([0-9]+) -->")
     private val ERROR_MESSAGE_PATTERN = Pattern.compile("\"errmsg\"[^>]*>(.*?)</span")

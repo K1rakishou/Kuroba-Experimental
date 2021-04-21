@@ -52,12 +52,17 @@ class TwoCaptchaSolver(
     mutex.withLock { activeRequests.remove(chanDescriptor) }
   }
 
-  suspend fun solve(chanDescriptor: ChanDescriptor): ModularResult<TwoCaptchaResult> {
+  suspend fun solve(
+    chanDescriptor: ChanDescriptor,
+    updateChildNotificationFunc: suspend () -> Unit
+  ): ModularResult<TwoCaptchaResult> {
     return ModularResult.Try {
       if (!enabled) {
         Logger.d(TAG, "solve() solver disabled")
         return@Try TwoCaptchaResult.SolverDisabled(name)
       }
+
+      updateChildNotificationFunc()
 
       if (url.isBlank() || actualUrlOrNull == null) {
         Logger.d(TAG, "solve() bad url: \'$url\'")

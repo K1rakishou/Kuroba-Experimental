@@ -44,14 +44,14 @@ data class ChildNotificationInfo(
     ) : Status("Preparing to send a reply to ${chanDescriptor.userReadableString()}")
 
     data class WaitingForSiteRateLimitToPass(
-      val remainingWaitTime: Long,
+      val remainingWaitTimeMs: Long,
       val siteDescriptor: SiteDescriptor,
-    ) : Status("Waiting ${remainingWaitTime}ms for ${siteDescriptor.siteName} rate limit to pass")
+    ) : Status("Waiting ${remainingWaitTimeMs}ms for ${siteDescriptor.siteName} rate limit to pass")
 
     data class WaitingForAdditionalService(
       val availableAttempts: Int,
       val serviceName: String
-    ) : Status("Waiting for additional service: \"${serviceName}\" ($availableAttempts)")
+    ) : Status("Waiting for external service response: \"${serviceName}\" ($availableAttempts)")
 
     data class Uploading(
       val totalProgress: Float

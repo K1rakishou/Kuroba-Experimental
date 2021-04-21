@@ -192,8 +192,29 @@ class PostingServiceDelegate(
       replyManager.restoreFiles(chanDescriptor)
     }
 
-    // TODO(KurobaEx v0.8.0): reset cooldowns once all replies for a board are processed. If there
-    //  are sill unprocessed replies, do not reset cooldowns.
+    val allRepliesPerBoardProcessed = mutex.withLock {
+      if (activeReplyDescriptors.isEmpty()) {
+        return@withLock true
+      }
+
+      return@withLock activeReplyDescriptors.values
+        .filter { replyInfo ->
+          return@filter replyInfo.chanDescriptor.boardDescriptor() == chanDescriptor.boardDescriptor()
+        }
+        .all { replyInfo ->
+          return@all replyInfo.currentStatus is PostingStatus.Attached
+            || replyInfo.currentStatus.isTerminalEvent()
+        }
+    }
+
+    if (allRepliesPerBoardProcessed) {
+      Logger.d(TAG, "All replies for board ${chanDescriptor.boardDescriptor()} processed, " +
+        "resetting the cooldowns")
+
+      // All replies for the same board as the current reply have been processed. We need to reset
+      // the cooldowns and update last reply attempt time just to be sure everything is up to date.
+      lastReplyRepository.onPostAttemptFinished(chanDescriptor)
+    }
 
     updateMainNotification()
 
@@ -383,13 +404,15 @@ class PostingServiceDelegate(
         if (remainingWaitTime > 0) {
           // Can't post yet, need to wait
           updateChildNotification(
-            chanDescriptor,
-            ChildNotificationInfo.Status.WaitingForSiteRateLimitToPass(remainingWaitTime, chanDescriptor.siteDescriptor())
+            chanDescriptor = chanDescriptor,
+            status = ChildNotificationInfo.Status.WaitingForSiteRateLimitToPass(
+              remainingWaitTimeMs = remainingWaitTime,
+              siteDescriptor = chanDescriptor.siteDescriptor()
+            )
           )
 
-          // TODO(KurobaEx v0.8.0): set timeToWaitMs to 10 seconds max so we can update the notification
-          //  periodically so it doesn't appear as if hanged.
           timeToWaitMs = (remainingWaitTime + POST_LOOP_DELAY_MS)
+            .coerceIn(POST_LOOP_DELAY_MS, POST_LOOP_DELAY_MAX_MS)
         } else {
           // Possibly can post. Now we need to check whether somebody is already trying to post on
           // this board. We only allow one post being processed per board at a time.
@@ -438,13 +461,9 @@ class PostingServiceDelegate(
 
       val totalPostsWaiting = getTotalWaitingForRateLimitToPassRepliesCount()
 
-      Logger.d(TAG, "runPostWaitQueueLoop($chanDescriptor) totalPostsWaiting=${totalPostsWaiting}, " +
-        "waiting ${timeToWaitMs}ms...")
-
+      Logger.d(TAG, "runPostWaitQueueLoop($chanDescriptor) " +
+        "totalPostsWaiting=${totalPostsWaiting}, waiting ${timeToWaitMs}ms...")
       delay(timeToWaitMs)
-
-      Logger.d(TAG, "runPostWaitQueueLoop($chanDescriptor) totalPostsWaiting=${totalPostsWaiting}, " +
-        "waiting ${timeToWaitMs}ms done")
     }
 
     Logger.d(TAG, "runPostQueueLoop($chanDescriptor) took ${System.currentTimeMillis() - startTime}ms")
@@ -467,16 +486,9 @@ class PostingServiceDelegate(
 
     while (true) {
       ensureNotCanceled(chanDescriptor)
+      val result = processAntiCaptchaService(availableAttempts.get(), chanDescriptor)
+      ensureNotCanceled(chanDescriptor)
 
-      updateChildNotification(
-        chanDescriptor = chanDescriptor,
-        status = ChildNotificationInfo.Status.WaitingForAdditionalService(
-          availableAttempts = availableAttempts.get(),
-          serviceName = serviceName
-        )
-      )
-
-      val result = processAntiCaptchaService(chanDescriptor)
       Logger.d(TAG, "runPostWaitForCaptchaLoop() processAntiCaptchaService($chanDescriptor) -> $result, " +
         "attempt ${availableAttempts.get()}")
 
@@ -485,7 +497,9 @@ class PostingServiceDelegate(
         is AntiCaptchaServiceResult.AlreadyHaveToken -> {
           val token = when (result) {
             AntiCaptchaServiceResult.ExitLoop,
-            is AntiCaptchaServiceResult.WaitNextIteration -> throw RuntimeException("Shouldn't be called here")
+            is AntiCaptchaServiceResult.WaitNextIteration -> {
+              throw RuntimeException("Shouldn't be called here")
+            }
             is AntiCaptchaServiceResult.Solution -> {
               // This called when the captcha was solved by anti-captcha service, meaning we paid
               // money for that. We don't want to accidentally waste all the money if we ever somehow
@@ -574,7 +588,7 @@ class PostingServiceDelegate(
   }
 
   /**
-   * We fully sent a post (with all attachements) to the server and got the response.
+   * We fully uploaded a post (with all it's attachments) to the server and got a response.
    * */
   private suspend fun onPostComplete(
     chanDescriptor: ChanDescriptor,
@@ -654,7 +668,7 @@ class PostingServiceDelegate(
     )
 
     ChildNotificationInfo.Status.WaitingForSiteRateLimitToPass(
-      remainingWaitTime = rateLimitInfo.cooldownInfo.currentPostingCooldownMs,
+      remainingWaitTimeMs = rateLimitInfo.cooldownInfo.currentPostingCooldownMs,
       siteDescriptor = chanDescriptor.siteDescriptor()
     )
 
@@ -706,6 +720,7 @@ class PostingServiceDelegate(
    * Handles the results of captcha solvers.
    * */
   private suspend fun processAntiCaptchaService(
+    availableAttempts: Int,
     chanDescriptor: ChanDescriptor
   ): AntiCaptchaServiceResult {
     val tokenAlreadySet = replyManager.readReply(chanDescriptor) { reply -> reply.captchaResponse != null }
@@ -719,7 +734,18 @@ class PostingServiceDelegate(
       return AntiCaptchaServiceResult.AlreadyHaveToken(captchaHolder.token)
     }
 
-    val twoCaptchaResult = twoCaptchaSolver.solve(chanDescriptor)
+    // Only update the notification after we are sure that we will call the captcha solver service.
+    val updateChildNotificationFunc: suspend () -> Unit = {
+      updateChildNotification(
+        chanDescriptor = chanDescriptor,
+        status = ChildNotificationInfo.Status.WaitingForAdditionalService(
+          availableAttempts = availableAttempts,
+          serviceName = twoCaptchaSolver.name
+        )
+      )
+    }
+
+    val twoCaptchaResult = twoCaptchaSolver.solve(chanDescriptor, updateChildNotificationFunc)
       .safeUnwrap { error ->
         if (error is IOException) {
           Logger.e(TAG, "processAntiCaptchaService() twoCaptchaSolver.solve($chanDescriptor) " +
@@ -946,7 +972,7 @@ class PostingServiceDelegate(
           updateChildNotification(
             chanDescriptor = chanDescriptor,
             status = ChildNotificationInfo.Status.WaitingForSiteRateLimitToPass(
-              remainingWaitTime = cooldownInfo.currentPostingCooldownMs,
+              remainingWaitTimeMs = cooldownInfo.currentPostingCooldownMs,
               siteDescriptor = chanDescriptor.siteDescriptor()
             )
           )
@@ -1205,7 +1231,8 @@ class PostingServiceDelegate(
   companion object {
     private const val TAG = "PostingServiceDelegate"
     private const val MAX_ATTEMPTS = 16
-    private const val POST_LOOP_DELAY_MS = 1000L
+    private const val POST_LOOP_DELAY_MS = 1_000L
+    private const val POST_LOOP_DELAY_MAX_MS = 10_000L
     private const val MAX_AUTO_SOLVED_CAPTCHAS_COUNT = 10
 
     private val MAX_POST_QUEUE_TIME_MS = TimeUnit.MINUTES.toMillis(30)

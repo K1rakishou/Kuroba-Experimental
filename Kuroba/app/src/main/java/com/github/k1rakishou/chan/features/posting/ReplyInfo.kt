@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 internal class ReplyInfo(
   initialStatus: PostingStatus,
-  private val chanDescriptor: ChanDescriptor,
+  val chanDescriptor: ChanDescriptor,
   private val _status: MutableStateFlow<PostingStatus> = MutableStateFlow(initialStatus),
   val retrying: AtomicBoolean = AtomicBoolean(false),
   val enqueuedAt: AtomicLong = AtomicLong(System.currentTimeMillis())
