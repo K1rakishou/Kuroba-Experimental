@@ -432,7 +432,7 @@ class PostingServiceDelegate(
             chanDescriptor = chanDescriptor,
             status = ChildNotificationInfo.Status.WaitingForSiteRateLimitToPass(
               remainingWaitTimeMs = remainingWaitTime,
-              siteDescriptor = chanDescriptor.siteDescriptor()
+              boardDescriptor = chanDescriptor.boardDescriptor()
             )
           )
 
@@ -734,7 +734,7 @@ class PostingServiceDelegate(
 
     ChildNotificationInfo.Status.WaitingForSiteRateLimitToPass(
       remainingWaitTimeMs = rateLimitInfo.cooldownInfo.currentPostingCooldownMs,
-      siteDescriptor = chanDescriptor.siteDescriptor()
+      boardDescriptor = chanDescriptor.boardDescriptor()
     )
 
     return
@@ -1038,7 +1038,7 @@ class PostingServiceDelegate(
             chanDescriptor = chanDescriptor,
             status = ChildNotificationInfo.Status.WaitingForSiteRateLimitToPass(
               remainingWaitTimeMs = cooldownInfo.currentPostingCooldownMs,
-              siteDescriptor = chanDescriptor.siteDescriptor()
+              boardDescriptor = chanDescriptor.boardDescriptor()
             )
           )
 

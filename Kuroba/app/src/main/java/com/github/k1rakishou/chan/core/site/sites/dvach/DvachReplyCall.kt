@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.core.site.common.CommonReplyHttpCall
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody.ProgressRequestListener
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
+import com.github.k1rakishou.chan.features.posting.LastReplyRepository
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.common.ModularResult
@@ -40,6 +41,7 @@ import okhttp3.Response
 import org.jsoup.Jsoup
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
 class DvachReplyCall internal constructor(
@@ -155,6 +157,22 @@ class DvachReplyCall internal constructor(
         return
       }
 
+      if (replyChanDescriptor is ThreadDescriptor) {
+        // Only check for rate limits when replying in threads. Do not do this when creating new
+        // threads.
+        if (errorText != null && errorText.contains(RATE_LIMITED_PATTERN, ignoreCase = true)) {
+          replyResponse.rateLimitInfo = ReplyResponse.RateLimitInfo(
+            actualTimeToWaitMs = POSTING_COOLDOWN_MS,
+            cooldownInfo = LastReplyRepository.CooldownInfo(
+              boardDescriptor = replyChanDescriptor.boardDescriptor,
+              currentPostingCooldownMs = POSTING_COOLDOWN_MS
+            )
+          )
+
+          return
+        }
+      }
+
       replyResponse.errorMessage = Jsoup.parse(errorText).body().text()
       replyResponse.probablyBanned = replyResponse.errorMessage?.contains(PROBABLY_BANNED_TEXT) ?: false
       return
@@ -234,6 +252,9 @@ class DvachReplyCall internal constructor(
 
     private const val INVALID_CAPTCHA_ERROR_CODE = -5
     private const val INVALID_CAPTCHA_ERROR_TEXT = "Капча невалидна"
+    private const val RATE_LIMITED_PATTERN = "Вы постите слишком быстро"
+
+    private val POSTING_COOLDOWN_MS = TimeUnit.SECONDS.toMillis(35)
 
     private val ERROR_MESSAGE = Pattern.compile("^\\{\"Error\":(-?\\d+),\"Reason\":\"(.*)\"")
     private val POST_MESSAGE =

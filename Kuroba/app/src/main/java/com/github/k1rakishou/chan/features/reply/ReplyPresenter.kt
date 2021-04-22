@@ -584,10 +584,7 @@ class ReplyPresenter @Inject constructor(
 
     var errorMessage = getString(R.string.reply_error)
     if (exception != null) {
-      val message = exception.message
-      if (message != null) {
-        errorMessage = getString(R.string.reply_error_message, message)
-      }
+      errorMessage = getString(R.string.reply_error_message, exception.errorMessageOrClassName())
     }
 
     callback.openMessage(errorMessage)

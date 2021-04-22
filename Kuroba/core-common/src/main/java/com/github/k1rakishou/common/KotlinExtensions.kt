@@ -368,8 +368,14 @@ fun <K, V> TreeMap<K, V>.firstKeyOrNull(): K? {
 }
 
 fun Throwable.errorMessageOrClassName(): String {
-  if (!message.isNullOrBlank()) {
-    return message!!
+  val actualMessage = if (cause?.message?.isNotNullNorBlank() == true) {
+    cause!!.message
+  } else {
+    message
+  }
+
+  if (!actualMessage.isNullOrBlank()) {
+    return actualMessage
   }
 
   return this::class.java.name

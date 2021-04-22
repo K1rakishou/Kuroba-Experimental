@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.features.posting
 
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 
 data class MainNotificationInfo(val activeRepliesCount: Int)
 
@@ -45,8 +45,8 @@ data class ChildNotificationInfo(
 
     data class WaitingForSiteRateLimitToPass(
       val remainingWaitTimeMs: Long,
-      val siteDescriptor: SiteDescriptor,
-    ) : Status("Waiting ${remainingWaitTimeMs}ms until ${siteDescriptor.siteName} rate limit is over")
+      val boardDescriptor: BoardDescriptor,
+    ) : Status("Waiting ${remainingWaitTimeMs}ms until ${boardDescriptor.siteName()}/${boardDescriptor.boardCode} rate limit is over")
 
     data class WaitingForAdditionalService(
       val availableAttempts: Int,

@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.posting
 
-import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.persist_state.ReplyMode
 import kotlinx.coroutines.Job
@@ -33,7 +32,6 @@ internal class ReplyInfo(
 
   @Synchronized
   fun updateStatus(newStatus: PostingStatus) {
-    Logger.d("ReplyInfo", "updateStatus($chanDescriptor) -> ${newStatus.javaClass.simpleName}")
     _status.value = newStatus
   }
 
