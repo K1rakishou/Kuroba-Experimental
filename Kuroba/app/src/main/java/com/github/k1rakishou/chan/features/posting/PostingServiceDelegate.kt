@@ -12,6 +12,7 @@ import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
+import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaResult
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver
@@ -31,6 +32,8 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanSavedReply
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
+import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.prefs.OptionsSetting
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -129,20 +132,29 @@ class PostingServiceDelegate(
         return@withLock activeReplyDescriptors[chanDescriptor]!!.statusUpdates
       }
 
+      val replyMode = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+        ?.requireSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+        ?.get()
+        ?: ReplyMode.ReplyModeSolveCaptchaManually
+
       activeReplyDescriptors.put(
         chanDescriptor,
-        ReplyInfo(chanDescriptor = chanDescriptor, initialStatus = PostingStatus.Attached(chanDescriptor))
+        ReplyInfo(
+          chanDescriptor = chanDescriptor,
+          initialStatus = PostingStatus.Attached(chanDescriptor),
+          initialReplyMode = replyMode
+        )
       )
 
       return@withLock activeReplyDescriptors[chanDescriptor]!!.statusUpdates
     }
   }
 
-  fun onNewReply(chanDescriptor: ChanDescriptor, retrying: Boolean) {
+  fun onNewReply(chanDescriptor: ChanDescriptor, replyMode: ReplyMode, retrying: Boolean) {
     BackgroundUtils.ensureMainThread()
 
     serializedCoroutineExecutor.post {
-      val shouldStartCoroutine = mutex.withLock { addOrUpdateReplyInfo(chanDescriptor, retrying) }
+      val shouldStartCoroutine = mutex.withLock { addOrUpdateReplyInfo(chanDescriptor, replyMode, retrying) }
       if (!shouldStartCoroutine) {
         return@post
       }
@@ -160,7 +172,7 @@ class PostingServiceDelegate(
         appScope.launch { onNewReplyInternal(chanDescriptor) }
       }
 
-      doWithReplyInfo(chanDescriptor) {
+      readReplyInfo(chanDescriptor) {
         activeJob.compareAndSet(null, job)
       }
     }
@@ -176,13 +188,13 @@ class PostingServiceDelegate(
       if (error is CancellationException) {
         Logger.e(TAG, "Posting canceled $chanDescriptor")
 
-        doWithReplyInfo(chanDescriptor) {
+        readReplyInfo(chanDescriptor) {
           updateStatus(PostingStatus.AfterPosting(chanDescriptor, PostResult.Canceled))
         }
       } else {
         Logger.e(TAG, "Unhandled exception", error)
 
-        doWithReplyInfo(chanDescriptor) {
+        readReplyInfo(chanDescriptor) {
           updateStatus(PostingStatus.AfterPosting(chanDescriptor, PostResult.Error(error)))
         }
       }
@@ -218,7 +230,7 @@ class PostingServiceDelegate(
 
     updateMainNotification()
 
-    val canceled = doWithReplyInfo(chanDescriptor) { canceled } ?: true
+    val canceled = readReplyInfo(chanDescriptor) { canceled }
     if (canceled || !isActive) {
       _closeChildNotificationFlow.emit(chanDescriptor)
     }
@@ -240,9 +252,15 @@ class PostingServiceDelegate(
     }
   }
 
-  private fun addOrUpdateReplyInfo(chanDescriptor: ChanDescriptor, retrying: Boolean): Boolean {
+  private fun addOrUpdateReplyInfo(
+    chanDescriptor: ChanDescriptor,
+    replyMode: ReplyMode,
+    retrying: Boolean
+  ): Boolean {
     if (activeReplyDescriptors.containsKey(chanDescriptor)) {
       val replyInfo = activeReplyDescriptors[chanDescriptor]!!
+      replyInfo.replyModeRef.set(replyMode)
+      replyInfo.retrying.set(retrying)
 
       val shouldStartCoroutine = when (replyInfo.currentStatus) {
         is PostingStatus.Attached,
@@ -265,8 +283,10 @@ class PostingServiceDelegate(
 
     activeReplyDescriptors[chanDescriptor] = ReplyInfo(
       initialStatus = PostingStatus.Enqueued(chanDescriptor),
+      initialReplyMode = replyMode,
       chanDescriptor = chanDescriptor,
-      retrying = AtomicBoolean(retrying)
+      retrying = AtomicBoolean(retrying),
+      replyModeRef = AtomicReference(replyMode)
     )
 
     return true
@@ -362,7 +382,7 @@ class PostingServiceDelegate(
     Logger.d(TAG, "runPostWaitQueueLoop(${site.siteDescriptor()}, $chanDescriptor)")
     ensureNotCanceled(chanDescriptor)
 
-    doWithReplyInfo(chanDescriptor) {
+    readReplyInfo(chanDescriptor) {
       updateStatus(PostingStatus.WaitingForSiteRateLimitToPass(chanDescriptor))
     }
 
@@ -395,10 +415,15 @@ class PostingServiceDelegate(
 
       // First we need to take the oldest post from all posts in the activeReplyDescriptors
       if (isOldestEnqueuedReply(chanDescriptor)) {
+        val replyMode = readReplyInfo(chanDescriptor) { replyModeRef.get() }
         Logger.d(TAG, "runPostWaitQueueLoop($chanDescriptor) oldest enqueued reply descriptor: $chanDescriptor")
 
         // Then we need to check whether we can post or need to wait a timeout before posting
-        val remainingWaitTime = lastReplyRepository.getTimeUntilNextThreadCreationOrReply(chanDescriptor)
+        val remainingWaitTime = lastReplyRepository.getTimeUntilNextThreadCreationOrReply(
+          chanDescriptor = chanDescriptor,
+          replyMode = replyMode
+        )
+
         check(remainingWaitTime >= 0) { "Bad remainingWaitTime: $remainingWaitTime" }
 
         if (remainingWaitTime > 0) {
@@ -459,10 +484,7 @@ class PostingServiceDelegate(
         }
       }
 
-      val totalPostsWaiting = getTotalWaitingForRateLimitToPassRepliesCount()
-
-      Logger.d(TAG, "runPostWaitQueueLoop($chanDescriptor) " +
-        "totalPostsWaiting=${totalPostsWaiting}, waiting ${timeToWaitMs}ms...")
+      Logger.d(TAG, "runPostWaitQueueLoop($chanDescriptor) waiting ${timeToWaitMs}ms...")
       delay(timeToWaitMs)
     }
 
@@ -478,7 +500,7 @@ class PostingServiceDelegate(
     val serviceName = twoCaptchaSolver.name
     Logger.d(TAG, "runPostWaitForCaptchaLoop(${site.siteDescriptor()}, $chanDescriptor)")
 
-    doWithReplyInfo(chanDescriptor) {
+    readReplyInfo(chanDescriptor) {
       updateStatus(PostingStatus.WaitingForAdditionalService(serviceName, chanDescriptor))
     }
 
@@ -486,7 +508,7 @@ class PostingServiceDelegate(
 
     while (true) {
       ensureNotCanceled(chanDescriptor)
-      val result = processAntiCaptchaService(availableAttempts.get(), chanDescriptor)
+      val result = processAntiCaptchaService(site, availableAttempts.get(), chanDescriptor)
       ensureNotCanceled(chanDescriptor)
 
       Logger.d(TAG, "runPostWaitForCaptchaLoop() processAntiCaptchaService($chanDescriptor) -> $result, " +
@@ -495,29 +517,30 @@ class PostingServiceDelegate(
       when (result) {
         is AntiCaptchaServiceResult.Solution,
         is AntiCaptchaServiceResult.AlreadyHaveToken -> {
-          val token = when (result) {
-            AntiCaptchaServiceResult.ExitLoop,
-            is AntiCaptchaServiceResult.WaitNextIteration -> {
-              throw RuntimeException("Shouldn't be called here")
-            }
-            is AntiCaptchaServiceResult.Solution -> {
-              // This called when the captcha was solved by anti-captcha service, meaning we paid
-              // money for that. We don't want to accidentally waste all the money if we ever somehow
-              // get into an infinite loop here so we need to check how many was solved and exit if
-              // there were too many.
-              automaticallySolvedCaptchasCount.incrementAndGet()
-              result.token
-            }
-            is AntiCaptchaServiceResult.AlreadyHaveToken -> {
-              // We already have a token (Most likely the user pre-solved captcha manually).
-              result.token
-            }
+          val replyMode = readReplyInfo(chanDescriptor) { replyModeRef.get() }
+          val retrying = readReplyInfo(chanDescriptor) { retrying.get() }
+
+          val hasValidCaptcha = hasValidCaptcha(chanDescriptor, result, automaticallySolvedCaptchasCount)
+          Logger.d(TAG, "requiresAuthentication($chanDescriptor) replyMode=$replyMode, hasValidCaptcha=$hasValidCaptcha")
+
+          val canPostWithoutCaptcha = when (replyMode) {
+            null,
+            ReplyMode.ReplyModeSolveCaptchaManually,
+            ReplyMode.ReplyModeSolveCaptchaAuto -> false
+            ReplyMode.ReplyModeSendWithoutCaptcha,
+            ReplyMode.ReplyModeUsePasscode -> true
           }
 
-          if (token.isNotNullNorBlank()) {
-            replyManager.readReply(chanDescriptor) { reply ->
-              reply.initCaptchaInfo(challenge = null, response = token)
-            }
+          if (!hasValidCaptcha && !canPostWithoutCaptcha) {
+            val replyResponse = ReplyResponse()
+              .also { response -> response.requireAuthentication = true }
+
+            emitTerminalEvent(
+              chanDescriptor = chanDescriptor,
+              postResult = PostResult.Success(replyResponse, replyMode, retrying)
+            )
+
+            return
           }
 
           break
@@ -541,9 +564,48 @@ class PostingServiceDelegate(
     }
 
     ensureNotCanceled(chanDescriptor)
-    doWithReplyInfo(chanDescriptor) { updateStatus(PostingStatus.BeforePosting(chanDescriptor)) }
+    readReplyInfo(chanDescriptor) { updateStatus(PostingStatus.BeforePosting(chanDescriptor)) }
 
-    callPostDelegate(site, chanDescriptor, actualPostResult)
+    callPostDelegate(
+      site = site,
+      chanDescriptor = chanDescriptor,
+      actualPostResult = actualPostResult
+    )
+  }
+
+  private fun hasValidCaptcha(
+    chanDescriptor: ChanDescriptor,
+    result: AntiCaptchaServiceResult,
+    automaticallySolvedCaptchasCount: AtomicInteger
+  ): Boolean {
+    val token = when (result) {
+      AntiCaptchaServiceResult.ExitLoop,
+      is AntiCaptchaServiceResult.WaitNextIteration -> {
+        throw RuntimeException("Shouldn't be called here")
+      }
+      is AntiCaptchaServiceResult.Solution -> {
+        // This called when the captcha was solved by anti-captcha service, meaning we paid
+        // money for that. We don't want to accidentally waste all the money if we ever somehow
+        // get into an infinite loop here so we need to check how many was solved and exit if
+        // there were too many.
+        automaticallySolvedCaptchasCount.incrementAndGet()
+        result.token
+      }
+      is AntiCaptchaServiceResult.AlreadyHaveToken -> {
+        // We already have a token (Most likely the user pre-solved captcha manually).
+        result.token
+      }
+    }
+
+    return replyManager.readReply(chanDescriptor) { reply ->
+      var actualToken = token?.trim()
+      if (actualToken?.isBlank() == true) {
+        actualToken = null
+      }
+
+      reply.setCaptcha(challenge = null, response = actualToken)
+      return@readReply reply.captchaResponse != null
+    }
   }
 
   private suspend fun callPostDelegate(
@@ -552,9 +614,10 @@ class PostingServiceDelegate(
     actualPostResult: AtomicReference<ActualPostResult>
   ) {
     Logger.d(TAG, "callPostDelegate(${site.siteDescriptor()}, $chanDescriptor)")
+    val replyMode = readReplyInfo(chanDescriptor) { replyModeRef.get() }
 
     site.actions()
-      .post(chanDescriptor)
+      .post(chanDescriptor, replyMode)
       .catch { error ->
         Logger.e(TAG, "SiteActions.PostResult.PostError($chanDescriptor) " +
             "unhandled error: ${error.errorMessageOrClassName()}")
@@ -573,7 +636,7 @@ class PostingServiceDelegate(
 
             val uploadingStatus = ChildNotificationInfo.Status.Uploading(status.toOverallPercent())
             updateChildNotification(chanDescriptor, uploadingStatus)
-            doWithReplyInfo(chanDescriptor) { updateStatus(status) }
+            readReplyInfo(chanDescriptor) { updateStatus(status) }
           }
           is SiteActions.PostResult.PostError -> {
             Logger.e(TAG, "SiteActions.PostResult.PostError($chanDescriptor) " +
@@ -595,8 +658,8 @@ class PostingServiceDelegate(
     postResult: SiteActions.PostResult.PostComplete,
     actualPostResult: AtomicReference<ActualPostResult>
   ) {
-    val retrying = doWithReplyInfo(chanDescriptor) { retrying.get() }
-      ?: false
+    val retrying = readReplyInfo(chanDescriptor) { retrying.get() }
+    val replyMode = readReplyInfo(chanDescriptor) { replyModeRef.get() }
 
     if (!postResult.replyResponse.posted) {
       Logger.d(TAG, "SiteActions.PostResult.PostComplete($chanDescriptor) failed to post, " +
@@ -616,6 +679,7 @@ class PostingServiceDelegate(
         chanDescriptor = chanDescriptor,
         postResult = PostResult.Success(
           replyResponse = postResult.replyResponse,
+          replyMode = replyMode,
           retrying = retrying
         )
       )
@@ -631,6 +695,7 @@ class PostingServiceDelegate(
         chanDescriptor = chanDescriptor,
         postResult = PostResult.Success(
           replyResponse = postResult.replyResponse,
+          replyMode = replyMode,
           retrying = retrying
         )
       )
@@ -708,30 +773,36 @@ class PostingServiceDelegate(
     }
   }
 
-  private suspend fun getTotalWaitingForRateLimitToPassRepliesCount(): Int {
-    return mutex.withLock {
-      return@withLock activeReplyDescriptors.values.count { replyInfo ->
-        replyInfo.currentStatus is PostingStatus.WaitingForSiteRateLimitToPass
-      }
-    }
-  }
-
   /**
    * Handles the results of captcha solvers.
    * */
   private suspend fun processAntiCaptchaService(
+    site: Site,
     availableAttempts: Int,
     chanDescriptor: ChanDescriptor
   ): AntiCaptchaServiceResult {
-    val tokenAlreadySet = replyManager.readReply(chanDescriptor) { reply -> reply.captchaResponse != null }
-    if (tokenAlreadySet) {
-      Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) reply already contains a token, use it instead")
+    val replyMode = readReplyInfo(chanDescriptor) { replyModeRef.get() }
+
+    if (site.actions().isLoggedIn() && replyMode == ReplyMode.ReplyModeUsePasscode) {
+      Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) logged in and reply mode is ReplyModeUsePasscode")
       return AntiCaptchaServiceResult.AlreadyHaveToken(null)
+    }
+
+    val prevCaptchaResponse = replyManager.readReply(chanDescriptor) { reply -> reply.captchaResponse }
+    if (prevCaptchaResponse.isNotNullNorBlank()) {
+      Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) reply already contains a token, use it instead")
+      return AntiCaptchaServiceResult.AlreadyHaveToken(prevCaptchaResponse)
     }
 
     if (captchaHolder.hasToken()) {
       Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) already has token, use it instead")
       return AntiCaptchaServiceResult.AlreadyHaveToken(captchaHolder.token)
+    }
+
+    if (replyMode != ReplyMode.ReplyModeSolveCaptchaAuto) {
+      Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) replyMode does not allow using " +
+        "captcha solver, replyMode=${replyMode}")
+      return AntiCaptchaServiceResult.AlreadyHaveToken(prevCaptchaResponse)
     }
 
     // Only update the notification after we are sure that we will call the captcha solver service.
@@ -891,17 +962,11 @@ class PostingServiceDelegate(
         Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) -> $twoCaptchaResult")
         return AntiCaptchaServiceResult.WaitNextIteration(twoCaptchaResult.waitTime)
       }
-      is TwoCaptchaResult.CaptchaNotNeeded -> {
-        Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) -> $twoCaptchaResult")
-        return AntiCaptchaServiceResult.AlreadyHaveToken(null)
-      }
-      is TwoCaptchaResult.NotSupported -> {
-        Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) -> $twoCaptchaResult")
-        return AntiCaptchaServiceResult.AlreadyHaveToken(null)
-      }
+      is TwoCaptchaResult.CaptchaNotNeeded,
+      is TwoCaptchaResult.NotSupported,
       is TwoCaptchaResult.SolverDisabled -> {
         Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) -> $twoCaptchaResult")
-        return AntiCaptchaServiceResult.AlreadyHaveToken(null)
+        return AntiCaptchaServiceResult.AlreadyHaveToken(prevCaptchaResponse)
       }
       is TwoCaptchaResult.Solution -> {
         val solutionResponse = twoCaptchaResult.twoCaptchaCheckSolutionResponse
@@ -939,7 +1004,7 @@ class PostingServiceDelegate(
   ) {
     Logger.d(TAG, "emitTerminalEvent($chanDescriptor, $postResult)")
 
-    doWithReplyInfo(chanDescriptor) {
+    readReplyInfo(chanDescriptor) {
       updateStatus(PostingStatus.AfterPosting(chanDescriptor, postResult))
     }
 
@@ -1171,12 +1236,14 @@ class PostingServiceDelegate(
     }
   }
 
-  private suspend fun <T : Any?> doWithReplyInfo(
+  private suspend fun <T : Any?> readReplyInfo(
     replyDescriptor: ChanDescriptor,
     func: ReplyInfo.() -> T
-  ): T? {
+  ): T {
     return mutex.withLock {
-      activeReplyDescriptors[replyDescriptor]?.let { replyInfo -> func(replyInfo) }
+      activeReplyDescriptors[replyDescriptor]
+        ?.let { replyInfo -> func(replyInfo) }
+        ?: throw CancellationException("Canceled")
     }
   }
 

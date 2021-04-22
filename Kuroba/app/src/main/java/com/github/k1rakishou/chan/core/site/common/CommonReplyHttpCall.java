@@ -16,6 +16,7 @@
  */
 package com.github.k1rakishou.chan.core.site.common;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.chan.core.site.Site;
@@ -40,7 +41,7 @@ public abstract class CommonReplyHttpCall extends HttpCall {
     public final ChanDescriptor replyChanDescriptor;
     public final ReplyResponse replyResponse = new ReplyResponse();
 
-    public CommonReplyHttpCall(Site site, ChanDescriptor replyChanDescriptor) {
+    public CommonReplyHttpCall(@NonNull Site site, @NonNull ChanDescriptor replyChanDescriptor) {
         super(site);
 
         ChanDescriptor chanDescriptor = Objects.requireNonNull(

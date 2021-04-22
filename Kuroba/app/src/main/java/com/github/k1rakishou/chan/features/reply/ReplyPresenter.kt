@@ -23,19 +23,24 @@ import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.helper.CommentEditingHistory
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
-import com.github.k1rakishou.chan.features.posting.LastReplyRepository
 import com.github.k1rakishou.chan.features.posting.PostResult
 import com.github.k1rakishou.chan.features.posting.PostingService
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
 import com.github.k1rakishou.chan.features.posting.PostingStatus
+import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver
 import com.github.k1rakishou.chan.features.reply.floating_message_actions.Chan4OpenBannedUrlClickAction
 import com.github.k1rakishou.chan.features.reply.floating_message_actions.IFloatingReplyMessageClickAction
 import com.github.k1rakishou.chan.ui.controller.CaptchaContainerController
+import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
+import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
+import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -45,6 +50,8 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.prefs.OptionsSetting
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,12 +69,13 @@ import kotlin.coroutines.cancellation.CancellationException
 
 class ReplyPresenter @Inject constructor(
   private val replyManager: ReplyManager,
-  private val lastReplyRepository: LastReplyRepository,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
   private val staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository,
   private val postingServiceDelegate: PostingServiceDelegate,
-  private val dialogFactory: DialogFactory
+  private val twoCaptchaSolver: TwoCaptchaSolver,
+  private val dialogFactory: DialogFactory,
+  private val globalWindowInsetsManager: GlobalWindowInsetsManager
 ) : CoroutineScope,
   CommentEditingHistory.CommentEditingHistoryListener {
 
@@ -192,7 +200,12 @@ class ReplyPresenter @Inject constructor(
               onPostError(status.chanDescriptor, postResult.throwable)
             }
             is PostResult.Success -> {
-              onPostComplete(status.chanDescriptor, postResult.replyResponse, postResult.retrying)
+              onPostComplete(
+                chanDescriptor = status.chanDescriptor,
+                replyResponse = postResult.replyResponse,
+                replyMode = postResult.replyMode,
+                retrying = postResult.retrying
+              )
             }
           }
 
@@ -289,22 +302,23 @@ class ReplyPresenter @Inject constructor(
     }
   }
 
-  fun onAuthenticateCalled() {
-    if (!site.actions().postRequiresAuthentication()) {
-      return
-    }
-
-    if (!onPrepareToSubmit(true)) {
-      return
-    }
-
+  fun onAuthenticateClicked() {
     val descriptor = currentChanDescriptor
       ?: return
 
-    showCaptcha(chanDescriptor = descriptor, autoReply = false)
+    val replyMode = siteManager.bySiteDescriptor(descriptor.siteDescriptor())
+      ?.requireSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+      ?.get()
+      ?: return
+
+    showCaptcha(
+      chanDescriptor = descriptor,
+      replyMode = replyMode,
+      autoReply = false
+    )
   }
 
-  private fun showCaptcha(chanDescriptor: ChanDescriptor, autoReply: Boolean) {
+  private fun showCaptcha(chanDescriptor: ChanDescriptor, replyMode: ReplyMode, autoReply: Boolean) {
     val controller = CaptchaContainerController(
       context = context,
       chanDescriptor = chanDescriptor
@@ -322,25 +336,15 @@ class ReplyPresenter @Inject constructor(
         is CaptchaContainerController.AuthenticationResult.Success -> {
           Logger.e(TAG, "CaptchaContainerController success")
 
-          onAuthenticationComplete(
-            chanDescriptor = chanDescriptor,
-            autoReply = autoReply
-          )
+          if (autoReply) {
+            makeSubmitCall(chanDescriptor = chanDescriptor, replyMode = replyMode)
+          }
         }
       }
     }
 
     callback.hideKeyboard()
     callback.presentController(controller)
-  }
-
-  private fun onAuthenticationComplete(
-    chanDescriptor: ChanDescriptor,
-    autoReply: Boolean
-  ) {
-    if (autoReply) {
-      makeSubmitCall(chanDescriptor = chanDescriptor)
-    }
   }
 
   suspend fun onSubmitClicked(longClicked: Boolean) {
@@ -352,30 +356,83 @@ class ReplyPresenter @Inject constructor(
       return
     }
 
+    val prevReplyMode = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      ?.requireSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+      ?.get()
+      ?: return
+
+    if (longClicked) {
+      showReplyOptions(chanDescriptor, prevReplyMode)
+      return
+    }
+
     if (!onPrepareToSubmit(false)) {
       return
     }
 
-    if (longClicked) {
-      // TODO(KurobaEx v0.8.0): show post options (solve captcha manually, solve captcha by solver
-      //  (if possible), post with passcode (if possible)
-      submitOrAuthenticate(chanDescriptor)
-      return
-    }
-
-    submitOrAuthenticate(chanDescriptor)
+    submitOrAuthenticate(
+      chanDescriptor = chanDescriptor,
+      replyMode = prevReplyMode
+    )
   }
 
-  private fun submitOrAuthenticate(chanDescriptor: ChanDescriptor) {
-    if (!site.actions().postRequiresAuthentication()) {
-      makeSubmitCall(chanDescriptor = chanDescriptor)
+  private fun showReplyOptions(chanDescriptor: ChanDescriptor, prevReplyMode: ReplyMode) {
+    val availableReplyModes = mutableListOf<FloatingListMenuItem>()
+
+    availableReplyModes += CheckableFloatingListMenuItem(
+      key = ReplyMode.ReplyModeSolveCaptchaManually,
+      name = getString(R.string.reply_mode_solve_captcha_and_post),
+      isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeSolveCaptchaManually
+    )
+
+    availableReplyModes += CheckableFloatingListMenuItem(
+      key = ReplyMode.ReplyModeSendWithoutCaptcha,
+      name = getString(R.string.reply_mode_attempt_post_without_captcha),
+      isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeSendWithoutCaptcha
+    )
+
+    if (twoCaptchaSolver.isLoggedIn) {
+      availableReplyModes += CheckableFloatingListMenuItem(
+        key = ReplyMode.ReplyModeSolveCaptchaAuto,
+        name = getString(R.string.reply_mode_post_with_captcha_solver),
+        isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeSolveCaptchaAuto
+      )
+    }
+
+    if (siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())?.actions()?.isLoggedIn() == true) {
+      availableReplyModes += CheckableFloatingListMenuItem(
+        key = ReplyMode.ReplyModeUsePasscode,
+        name = getString(R.string.reply_mode_post_with_passcode),
+        isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeUsePasscode
+      )
+    }
+
+    val floatingListMenuController = FloatingListMenuController(
+      context = context,
+      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+      items = availableReplyModes,
+      itemClickListener = { clickedItem ->
+        val replyMode = clickedItem.key as? ReplyMode
+          ?: return@FloatingListMenuController
+
+        siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+          ?.requireSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+          ?.set(replyMode)
+
+        callback.updateCaptchaContainerVisibility()
+      }
+    )
+
+    callback.presentController(floatingListMenuController)
+  }
+
+  private fun submitOrAuthenticate(chanDescriptor: ChanDescriptor, replyMode: ReplyMode) {
+    if (replyMode == ReplyMode.ReplyModeSolveCaptchaManually) {
+      showCaptcha(chanDescriptor = chanDescriptor, replyMode = replyMode, autoReply = true)
       return
     }
 
-    onAuthenticationComplete(
-      chanDescriptor = chanDescriptor,
-      autoReply = true
-    )
+    makeSubmitCall(chanDescriptor = chanDescriptor, replyMode = replyMode)
   }
 
   private fun onPrepareToSubmit(isAuthenticateOnly: Boolean): Boolean {
@@ -399,7 +456,7 @@ class ReplyPresenter @Inject constructor(
         return@readReply false
       }
 
-      reply.resetCaptchaResponse()
+      reply.resetCaptcha()
       return@readReply true
     }
   }
@@ -505,11 +562,15 @@ class ReplyPresenter @Inject constructor(
     callback.updateRevertChangeButtonVisibility(isBufferEmpty = true)
   }
 
-  private fun makeSubmitCall(chanDescriptor: ChanDescriptor, retrying: Boolean = false) {
+  private fun makeSubmitCall(
+    chanDescriptor: ChanDescriptor,
+    replyMode: ReplyMode,
+    retrying: Boolean = false
+  ) {
     this@ReplyPresenter.floatingReplyMessageClickAction = null
 
     closeAll()
-    PostingService.enqueueReplyChanDescriptor(context, chanDescriptor, retrying)
+    PostingService.enqueueReplyChanDescriptor(context, chanDescriptor, replyMode, retrying)
   }
 
   private fun onPostError(chanDescriptor: ChanDescriptor, exception: Throwable?) {
@@ -535,6 +596,7 @@ class ReplyPresenter @Inject constructor(
   private suspend fun onPostComplete(
     chanDescriptor: ChanDescriptor,
     replyResponse: ReplyResponse,
+    replyMode: ReplyMode,
     retrying: Boolean
   ) {
     BackgroundUtils.ensureMainThread()
@@ -546,7 +608,7 @@ class ReplyPresenter @Inject constructor(
       }
       replyResponse.requireAuthentication -> {
         Logger.d(TAG, "onPostComplete() requireAuthentication==true replyResponse=$replyResponse")
-        showCaptcha(chanDescriptor = chanDescriptor, autoReply = true)
+        showCaptcha(chanDescriptor = chanDescriptor, replyMode = replyMode, autoReply = true)
       }
       else -> {
         if (retrying) {
@@ -557,7 +619,7 @@ class ReplyPresenter @Inject constructor(
 
         when (replyResponse.additionalResponseData) {
           ReplyResponse.AdditionalResponseData.DvachAntiSpamCheckDetected -> {
-            handleDvachAntiSpam(replyResponse, chanDescriptor)
+            handleDvachAntiSpam(replyResponse, chanDescriptor, replyMode)
           }
           null -> {
             onPostCompleteUnsuccessful(replyResponse, chanDescriptor)
@@ -567,10 +629,14 @@ class ReplyPresenter @Inject constructor(
     }
   }
 
-  private suspend fun handleDvachAntiSpam(replyResponse: ReplyResponse, chanDescriptor: ChanDescriptor) {
+  private suspend fun handleDvachAntiSpam(
+    replyResponse: ReplyResponse,
+    chanDescriptor: ChanDescriptor,
+    replyMode: ReplyMode
+  ) {
     if (callback.show2chAntiSpamCheckSolverController()) {
       // We managed to solve the anti spam check, try posting again
-      makeSubmitCall(chanDescriptor = chanDescriptor, retrying = true)
+      makeSubmitCall(chanDescriptor = chanDescriptor, replyMode = replyMode, retrying = true)
     } else {
       // We failed to solve the anti spam check, show the error
       onPostCompleteUnsuccessful(replyResponse = replyResponse, chanDescriptor = chanDescriptor)
@@ -734,6 +800,7 @@ class ReplyPresenter @Inject constructor(
     suspend fun show2chAntiSpamCheckSolverController(): Boolean
     fun presentController(controller: Controller)
     fun hideKeyboard()
+    fun updateCaptchaContainerVisibility()
   }
 
   companion object {

@@ -44,7 +44,6 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
 import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
@@ -103,6 +102,8 @@ import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import com.google.android.material.textview.MaterialTextView
 import kotlinx.coroutines.flow.collect
@@ -565,6 +566,8 @@ class ReplyLayout @JvmOverloads constructor(
       if (proxyStorage.isDirty()) {
         openMessage(getString(R.string.reply_proxy_list_is_dirty_message), 10000)
       }
+
+      updateCaptchaContainerVisibility()
     }
 
     if (open) {
@@ -609,8 +612,6 @@ class ReplyLayout @JvmOverloads constructor(
       comment.minHeight = REPLY_COMMENT_MIN_HEIGHT
     }
 
-    captchaButtonContainer.isVisible = site.actions().postRequiresAuthentication()
-
     captchaHolder.setListener(chanDescriptor, this)
   }
 
@@ -648,6 +649,25 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun hideKeyboard() {
     AndroidUtils.hideKeyboard(this)
+  }
+
+  override fun updateCaptchaContainerVisibility() {
+    val descriptor = chanDescriptor
+      ?: return
+
+    val replyMode = siteManager.bySiteDescriptor(descriptor.siteDescriptor())
+      ?.requireSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+      ?.get()
+      ?: return
+
+    val captchaContainerVisibility = when (replyMode) {
+      ReplyMode.ReplyModeSolveCaptchaManually,
+      ReplyMode.ReplyModeSendWithoutCaptcha,
+      ReplyMode.ReplyModeSolveCaptchaAuto -> View.VISIBLE
+      ReplyMode.ReplyModeUsePasscode -> View.GONE
+    }
+
+    captchaButtonContainer.setVisibilityFast(captchaContainerVisibility)
   }
 
   override fun requestWrappingModeUpdate() {
@@ -762,7 +782,7 @@ class ReplyLayout @JvmOverloads constructor(
     rendezvousCoroutineExecutor.post {
       when {
         v === more -> presenter.onMoreClicked()
-        v === captchaView -> presenter.onAuthenticateCalled()
+        v === captchaView -> presenter.onAuthenticateClicked()
         v === submit -> presenter.onSubmitClicked(longClicked = false)
         v === commentQuoteButton -> insertQuote()
         v === commentSpoilerButton -> insertTags("[spoiler]", "[/spoiler]")

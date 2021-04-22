@@ -320,10 +320,11 @@ abstract class Controller(@JvmField var context: Context) {
     presentingThisController = controller
 
     controller.presentedByController = this
+    (context as StartActivity).pushController(controller)
+
     controller.onCreate()
     controller.attachToView(contentView)
     controller.onShow()
-    (context as StartActivity).pushController(controller)
 
     if (animated) {
       val transition = FadeInTransition()

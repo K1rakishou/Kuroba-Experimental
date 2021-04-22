@@ -18,12 +18,13 @@ import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
+import com.github.k1rakishou.persist_state.ReplyMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 class YukilaActions(site: CommonSite) : CommonSite.CommonActions(site) {
 
-  override suspend fun post(replyChanDescriptor: ChanDescriptor): Flow<SiteActions.PostResult> {
+  override suspend fun post(replyChanDescriptor: ChanDescriptor, replyMode: ReplyMode): Flow<SiteActions.PostResult> {
     return flow {
       val error = CommonClientException("Posting is not supported for site ${site.name()}")
       emit(SiteActions.PostResult.PostError(error))

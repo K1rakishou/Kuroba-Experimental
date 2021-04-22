@@ -50,6 +50,7 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.site.SiteBoards
+import com.github.k1rakishou.persist_state.ReplyMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -420,7 +421,7 @@ abstract class CommonSite : SiteBase() {
   
   abstract class CommonActions(protected var site: CommonSite) : SiteActions {
     
-    override suspend fun post(replyChanDescriptor: ChanDescriptor): Flow<SiteActions.PostResult> {
+    override suspend fun post(replyChanDescriptor: ChanDescriptor, replyMode: ReplyMode): Flow<SiteActions.PostResult> {
       val replyResponse = ReplyResponse()
 
       site.replyManager.readReply(replyChanDescriptor) { reply ->

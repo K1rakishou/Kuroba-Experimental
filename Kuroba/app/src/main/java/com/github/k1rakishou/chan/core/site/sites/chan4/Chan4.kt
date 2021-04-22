@@ -44,6 +44,7 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.site.SiteBoards
+import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -269,10 +270,11 @@ open class Chan4 : SiteBase() {
       ).execute()
     }
 
-    override suspend fun post(replyChanDescriptor: ChanDescriptor): Flow<SiteActions.PostResult> {
+    override suspend fun post(replyChanDescriptor: ChanDescriptor, replyMode: ReplyMode): Flow<SiteActions.PostResult> {
       val replyCall = Chan4ReplyCall(
         site = this@Chan4,
         replyChanDescriptor = replyChanDescriptor,
+        replyMode = replyMode,
         replyManager = replyManager,
         boardManager = boardManager,
         appConstants = appConstants,
@@ -357,10 +359,6 @@ open class Chan4 : SiteBase() {
     }
 
     override fun postAuthenticate(): SiteAuthentication {
-      if (isLoggedIn()) {
-        return SiteAuthentication.fromNone()
-      }
-
       val captchaTypeSetting = checkNotNull(captchaType) { "CaptchaType must not be null here!" }
 
       return when (captchaTypeSetting.get()) {
@@ -526,9 +524,11 @@ open class Chan4 : SiteBase() {
     override fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
       super.modifyHttpCall(httpCall, requestBuilder)
 
-      if (site.actions().isLoggedIn()) {
-        val passTokenSetting = site.passToken
-        requestBuilder.addHeader("Cookie", "pass_id=" + passTokenSetting.get())
+      if (httpCall is Chan4ReplyCall && httpCall.replyMode == ReplyMode.ReplyModeUsePasscode) {
+        if (site.actions().isLoggedIn()) {
+          val passTokenSetting = site.passToken
+          requestBuilder.addHeader("Cookie", "pass_id=" + passTokenSetting.get())
+        }
       }
     }
 

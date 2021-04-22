@@ -41,7 +41,8 @@ sealed class SiteSetting(
     CloudFlareClearanceCookie,
     CountryFlag,
     DvachUserCodeCookie,
-    DvachAntiSpamCookie
+    DvachAntiSpamCookie,
+    LastUsedReplyMode
   }
 
 }

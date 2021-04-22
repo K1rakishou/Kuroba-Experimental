@@ -39,6 +39,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.site.SiteBoards
+import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.JsonSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
@@ -159,11 +160,15 @@ class Dvach : CommonSite() {
         return false
       }
 
-      override suspend fun post(replyChanDescriptor: ChanDescriptor): Flow<SiteActions.PostResult> {
+      override suspend fun post(
+        replyChanDescriptor: ChanDescriptor,
+        replyMode: ReplyMode
+      ): Flow<SiteActions.PostResult> {
         val replyCall = DvachReplyCall(
-          this@Dvach,
-          replyChanDescriptor,
-          replyManager
+          site = this@Dvach,
+          replyChanDescriptor = replyChanDescriptor,
+          replyMode = replyMode,
+          replyManager = replyManager
         )
 
         return httpCallManager.makePostHttpCallWithProgress(replyCall)
@@ -292,10 +297,6 @@ class Dvach : CommonSite() {
       }
 
       override fun postAuthenticate(): SiteAuthentication {
-        if (isLoggedIn()) {
-          return SiteAuthentication.fromNone()
-        }
-
         return when (captchaType.get()) {
           Chan4.CaptchaType.V2JS -> SiteAuthentication.fromCaptcha2(
             CAPTCHA_KEY,

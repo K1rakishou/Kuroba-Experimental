@@ -167,5 +167,9 @@ interface Site {
 
   fun postingLimitationInfo(): SitePostingLimitationInfo
 
+  fun <T : Setting<*>> requireSettingBySettingId(settingId: SiteSetting.SiteSettingId): T {
+    return requireNotNull(getSettingBySettingId(settingId)) { "Setting ${settingId} not found for site ${siteDescriptor()}" }
+  }
+
   fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T?
 }

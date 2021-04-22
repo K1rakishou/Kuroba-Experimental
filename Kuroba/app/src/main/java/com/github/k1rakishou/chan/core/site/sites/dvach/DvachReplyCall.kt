@@ -30,6 +30,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.StringSetting
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
@@ -44,6 +45,7 @@ import java.util.regex.Pattern
 class DvachReplyCall internal constructor(
   site: Dvach,
   replyChanDescriptor: ChanDescriptor,
+  val replyMode: ReplyMode,
   private val replyManager: ReplyManager
 ) : CommonReplyHttpCall(site, replyChanDescriptor) {
 

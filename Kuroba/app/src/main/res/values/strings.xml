@@ -484,6 +484,10 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="reply_proxy_list_is_dirty_message">You recently changed your proxy list and didn\'t restart the app. There is a possibility that the next post you make will use a wrong proxy or no proxy at all (that depends on what you\'ve changed). Restart the app to make sure everything works as expected.</string>
     <string name="reply_flag_format">Flag: %1$s</string>
     <string name="reply_captcha_failure">Captcha failure</string>
+    <string name="reply_mode_solve_captcha_and_post">Solve captcha and post</string>
+    <string name="reply_mode_attempt_post_without_captcha">Attempt to post without captcha</string>
+    <string name="reply_mode_post_with_captcha_solver">Post with captcha solver</string>
+    <string name="reply_mode_post_with_passcode">Post with passcode</string>
 
     <string name="delete_confirm">Delete your post?</string>
     <string name="delete_wait">Deleting post…</string>

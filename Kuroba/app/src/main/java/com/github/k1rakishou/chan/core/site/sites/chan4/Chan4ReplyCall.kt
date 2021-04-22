@@ -34,6 +34,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import com.github.k1rakishou.persist_state.ReplyMode
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -46,8 +47,9 @@ import java.util.regex.Pattern
 
 
 class Chan4ReplyCall(
-  site: Site?,
-  replyChanDescriptor: ChanDescriptor?,
+  site: Site,
+  replyChanDescriptor: ChanDescriptor,
+  val replyMode: ReplyMode,
   private val replyManager: ReplyManager,
   private val boardManager: BoardManager,
   private val appConstants: AppConstants
@@ -124,7 +126,8 @@ class Chan4ReplyCall(
 
   override fun process(response: Response, result: String) {
     if (result.contains(CAPTCHA_REQUIRED_TEXT1, ignoreCase = true)
-      || result.contains(CAPTCHA_REQUIRED_TEXT2, ignoreCase = true)) {
+      || result.contains(CAPTCHA_REQUIRED_TEXT2, ignoreCase = true)
+    ) {
       replyResponse.requireAuthentication = true
       return
     }

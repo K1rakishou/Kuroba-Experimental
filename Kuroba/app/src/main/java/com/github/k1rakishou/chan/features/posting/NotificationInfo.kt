@@ -46,12 +46,12 @@ data class ChildNotificationInfo(
     data class WaitingForSiteRateLimitToPass(
       val remainingWaitTimeMs: Long,
       val siteDescriptor: SiteDescriptor,
-    ) : Status("Waiting ${remainingWaitTimeMs}ms for ${siteDescriptor.siteName} rate limit to pass")
+    ) : Status("Waiting ${remainingWaitTimeMs}ms until ${siteDescriptor.siteName} rate limit is over")
 
     data class WaitingForAdditionalService(
       val availableAttempts: Int,
       val serviceName: String
-    ) : Status("Waiting for external service response: \"${serviceName}\" ($availableAttempts)")
+    ) : Status("Waiting for external service: \"${serviceName}\" ($availableAttempts)")
 
     data class Uploading(
       val totalProgress: Float

@@ -40,6 +40,8 @@ class TwoCaptchaSolver(
     get() = ChanSettings.twoCaptchaSolverUrl.get()
   val apiKey: String
     get() = ChanSettings.twoCaptchaSolverApiKey.get()
+  val isLoggedIn: Boolean
+    get() = enabled && url.isNotBlank() && apiKey.isNotBlank()
 
   private val actualUrlOrNull: HttpUrl?
     get() = url.toHttpUrlOrNull()

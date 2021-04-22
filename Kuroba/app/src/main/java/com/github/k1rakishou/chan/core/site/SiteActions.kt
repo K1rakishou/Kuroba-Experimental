@@ -31,12 +31,13 @@ import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
+import com.github.k1rakishou.persist_state.ReplyMode
 import kotlinx.coroutines.flow.Flow
 
 interface SiteActions {
   suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards>
   suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages>
-  suspend fun post(replyChanDescriptor: ChanDescriptor): Flow<PostResult>
+  suspend fun post(replyChanDescriptor: ChanDescriptor, replyMode: ReplyMode): Flow<PostResult>
   suspend fun delete(deleteRequest: DeleteRequest): DeleteResult
   suspend fun <T : AbstractLoginRequest> login(loginRequest: T): LoginResult
   fun postRequiresAuthentication(): Boolean

@@ -157,14 +157,9 @@ class Reply(
   }
 
   @Synchronized
-  fun initCaptchaInfo(challenge: String?, response: String?) {
+  fun setCaptcha(challenge: String?, response: String?) {
     captchaInfo.captchaChallenge = challenge
     captchaInfo.captchaResponse = response
-  }
-
-  @Synchronized
-  fun resetCaptchaResponse() {
-    captchaInfo.captchaResponse = null
   }
 
   @Synchronized

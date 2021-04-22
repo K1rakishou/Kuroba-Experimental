@@ -22,6 +22,7 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
+import com.github.k1rakishou.persist_state.ReplyMode
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -111,6 +112,7 @@ class PostingService : Service() {
 
     val chanDescriptor = intent.getParcelableExtra<DescriptorParcelable>(REPLY_CHAN_DESCRIPTOR)
       ?.toChanDescriptor()
+    val replyMode = ReplyMode.fromString(intent.getStringExtra(REPLY_MODE))
     val retrying = intent.getBooleanExtra(RETRYING, false)
 
     if (chanDescriptor == null) {
@@ -118,7 +120,7 @@ class PostingService : Service() {
       return START_NOT_STICKY
     }
 
-    postingServiceDelegate.onNewReply(chanDescriptor, retrying)
+    postingServiceDelegate.onNewReply(chanDescriptor, replyMode, retrying)
     Logger.d(TAG, "onStartCommand() onNewReply($chanDescriptor, $retrying)")
 
     return START_REDELIVER_INTENT
@@ -313,6 +315,7 @@ class PostingService : Service() {
     private const val TAG = "PostingService"
 
     const val REPLY_CHAN_DESCRIPTOR = "posting_service_reply_chan_descriptor"
+    const val REPLY_MODE = "posting_service_reply_mode"
     const val RETRYING = "posting_service_retrying"
 
     private const val CHILD_NOTIFICATION_TAG = "${TAG}_ChildNotification"
@@ -322,13 +325,19 @@ class PostingService : Service() {
     const val ACTION_TYPE_CANCEL_ALL = "${TAG}_ACTION_CANCEL_ALL"
     const val ACTION_TYPE_CANCEL = "${TAG}_ACTION_CANCEL"
 
-    fun enqueueReplyChanDescriptor(context: Context, chanDescriptor: ChanDescriptor, retrying: Boolean) {
+    fun enqueueReplyChanDescriptor(
+      context: Context,
+      chanDescriptor: ChanDescriptor,
+      replyMode: ReplyMode,
+      retrying: Boolean
+    ) {
       val startServiceIntent = Intent(
         context,
         PostingService::class.java
       )
 
       startServiceIntent.putExtra(REPLY_CHAN_DESCRIPTOR, DescriptorParcelable.fromDescriptor(chanDescriptor))
+      startServiceIntent.putExtra(REPLY_MODE, replyMode.modeRaw)
       startServiceIntent.putExtra(RETRYING, retrying)
 
       context.startService(startServiceIntent)

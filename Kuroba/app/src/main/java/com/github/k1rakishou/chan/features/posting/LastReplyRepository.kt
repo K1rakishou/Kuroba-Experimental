@@ -24,6 +24,7 @@ import com.github.k1rakishou.common.withLockNonCancellable
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.persist_state.ReplyMode
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.TimeUnit
@@ -80,7 +81,7 @@ class LastReplyRepository(
     chanDescriptor: ChanDescriptor,
     newCooldownInfo: CooldownInfo? = null
   ) {
-    Logger.d(TAG, "onPostAttemptFinished($chanDescriptor, $newCooldownInfo)")
+    Logger.d(TAG, "onPostAttemptFinished($chanDescriptor, newCooldownInfo=$newCooldownInfo)")
 
     mutex.withLockNonCancellable {
       val boardDescriptor = chanDescriptor.boardDescriptor()
@@ -104,24 +105,35 @@ class LastReplyRepository(
         // Reset the cooldowns after posting
         cooldownInfoMap[boardDescriptor] = CooldownInfo(boardDescriptor)
       }
+
+      Logger.d(TAG, "onPostAttemptFinished($chanDescriptor, cooldownInfo=${cooldownInfoMap[boardDescriptor]})")
     }
   }
 
-  suspend fun getTimeUntilNextThreadCreationOrReply(chanDescriptor: ChanDescriptor): Long {
+  suspend fun getTimeUntilNextThreadCreationOrReply(
+    chanDescriptor: ChanDescriptor,
+    replyMode: ReplyMode
+  ): Long {
+    Logger.d(TAG, "getTimeUntilNextThreadCreationOrReply($chanDescriptor, $replyMode)")
+
     return when (chanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> getTimeUntilNewThread(chanDescriptor.boardDescriptor)
-      is ChanDescriptor.ThreadDescriptor -> getTimeUntilReply(chanDescriptor.boardDescriptor)
+      is ChanDescriptor.CatalogDescriptor -> {
+        getTimeUntilNewThread(chanDescriptor.boardDescriptor, replyMode)
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        getTimeUntilReply(chanDescriptor.boardDescriptor, replyMode)
+      }
     }
   }
 
-  suspend fun getTimeUntilReply(boardDescriptor: BoardDescriptor): Long {
+  suspend fun getTimeUntilReply(boardDescriptor: BoardDescriptor, replyMode: ReplyMode): Long {
     val lastReply = mutex.withLock {
       lastReplyMap.putIfNotContainsLazy(boardDescriptor) { LastReply(boardDescriptor) }
       lastReplyMap[boardDescriptor]!!
     }
 
     if (lastReply.lastReplyTimeMs <= 0) {
-      Logger.d(TAG, "getTimeUntilReply($boardDescriptor) lastReplyTimeMs <= 0")
+      Logger.d(TAG, "getTimeUntilReply($boardDescriptor, $replyMode) lastReplyTimeMs <= 0")
       return 0L
     }
 
@@ -132,43 +144,44 @@ class LastReplyRepository(
 
     var currentPostingCooldownMs = cooldowns.currentPostingCooldownMs
     if (currentPostingCooldownMs <= 0L) {
-      Logger.d(TAG, "getTimeUntilReply($boardDescriptor) currentPostingCooldownMs <= 0")
+      Logger.d(TAG, "getTimeUntilReply($boardDescriptor, $replyMode) currentPostingCooldownMs <= 0")
       return 0L
     }
 
     val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
     if (site == null) {
-      Logger.d(TAG, "getTimeUntilReply($boardDescriptor) site (${boardDescriptor.siteDescriptor}) == null")
+      Logger.d(TAG, "getTimeUntilReply($boardDescriptor, $replyMode) site (${boardDescriptor.siteDescriptor}) == null")
       return currentPostingCooldownMs
     }
 
-    if (site.actions().isLoggedIn()) {
+    if (replyMode == ReplyMode.ReplyModeUsePasscode && site.actions().isLoggedIn()) {
+      Logger.d(TAG, "getTimeUntilReply($boardDescriptor, $replyMode) halving " +
+        "currentPostingCooldownMs because of passcode")
+
       currentPostingCooldownMs /= 2
     }
 
     val now = System.currentTimeMillis()
     val actualWaitTime = currentPostingCooldownMs - (now - lastReply.lastReplyTimeMs)
 
-    if (actualWaitTime < 0) {
-      Logger.d(
-        TAG, "getTimeUntilReply($boardDescriptor) actualWaitTime < 0 ($actualWaitTime), " +
-        "currentPostingCooldownMs=${currentPostingCooldownMs}, now=${now}, " +
-        "lastReplyTimeMs=${lastReply.lastReplyTimeMs}")
+    Logger.d(TAG, "getTimeUntilReply($boardDescriptor, $replyMode) actualWaitTime=$actualWaitTime, " +
+      "currentPostingCooldownMs=${currentPostingCooldownMs}, now=${now}, lastReplyTimeMs=${lastReply.lastReplyTimeMs}")
 
+    if (actualWaitTime < 0) {
       return 0L
     }
 
     return actualWaitTime
   }
 
-  suspend fun getTimeUntilNewThread(boardDescriptor: BoardDescriptor): Long {
+  suspend fun getTimeUntilNewThread(boardDescriptor: BoardDescriptor, replyMode: ReplyMode): Long {
     val lastReply = mutex.withLock {
       lastThreadMap.putIfNotContainsLazy(boardDescriptor) { LastReply(boardDescriptor) }
       lastThreadMap[boardDescriptor]!!
     }
 
     if (lastReply.lastReplyTimeMs <= 0) {
-      Logger.d(TAG, "getTimeUntilNewThread($boardDescriptor) lastReplyTimeMs <= 0")
+      Logger.d(TAG, "getTimeUntilNewThread($boardDescriptor, $replyMode) lastReplyTimeMs <= 0")
       return 0L
     }
 
@@ -179,29 +192,30 @@ class LastReplyRepository(
 
     var currentPostingCooldownMs = cooldowns.currentPostingCooldownMs
     if (currentPostingCooldownMs <= 0L) {
-      Logger.d(TAG, "getTimeUntilNewThread($boardDescriptor) currentPostingCooldownMs <= 0")
+      Logger.d(TAG, "getTimeUntilNewThread($boardDescriptor, $replyMode) currentPostingCooldownMs <= 0")
       return 0L
     }
 
     val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
     if (site == null) {
-      Logger.d(TAG, "getTimeUntilNewThread($boardDescriptor) site (${boardDescriptor.siteDescriptor}) == null")
+      Logger.d(TAG, "getTimeUntilNewThread($boardDescriptor, $replyMode) site (${boardDescriptor.siteDescriptor}) == null")
       return currentPostingCooldownMs
     }
 
-    if (site.actions().isLoggedIn()) {
+    if (replyMode == ReplyMode.ReplyModeUsePasscode && site.actions().isLoggedIn()) {
+      Logger.d(TAG, "getTimeUntilNewThread($boardDescriptor, $replyMode) halving " +
+        "currentPostingCooldownMs because of passcode")
+
       currentPostingCooldownMs /= 2
     }
 
     val now = System.currentTimeMillis()
     val actualWaitTime = currentPostingCooldownMs - (now - lastReply.lastReplyTimeMs)
 
-    if (actualWaitTime < 0) {
-      Logger.d(
-        TAG, "getTimeUntilNewThread($boardDescriptor) actualWaitTime < 0 ($actualWaitTime), " +
-        "currentPostingCooldownMs=${currentPostingCooldownMs}, now=${now}, " +
-        "lastReplyTimeMs=${lastReply.lastReplyTimeMs}")
+    Logger.d(TAG, "getTimeUntilNewThread($boardDescriptor, $replyMode) actualWaitTime=$actualWaitTime, " +
+      "currentPostingCooldownMs=${currentPostingCooldownMs}, now=${now}, lastReplyTimeMs=${lastReply.lastReplyTimeMs}")
 
+    if (actualWaitTime < 0) {
       return 0L
     }
 

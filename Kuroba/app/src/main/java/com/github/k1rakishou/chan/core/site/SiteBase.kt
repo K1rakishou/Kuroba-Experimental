@@ -39,6 +39,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
+import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import com.google.gson.Gson
@@ -92,6 +93,7 @@ abstract class SiteBase : Site, CoroutineScope {
 
   lateinit var concurrentFileDownloadingChunks: OptionsSetting<ChanSettings.ConcurrentFileDownloadingChunks>
   lateinit var cloudFlareClearanceCookie: StringSetting
+  lateinit var lastUsedReplyMode: OptionsSetting<ReplyMode>
 
   private var initialized = false
 
@@ -118,6 +120,19 @@ abstract class SiteBase : Site, CoroutineScope {
       prefs,
       "cloud_flare_clearance_cookie",
       ""
+    )
+
+    val defaultReplyMode = if (actions().isLoggedIn()) {
+      ReplyMode.ReplyModeUsePasscode
+    } else {
+      ReplyMode.ReplyModeSolveCaptchaManually
+    }
+
+    lastUsedReplyMode = OptionsSetting(
+      prefs,
+      "last_used_reply_mode",
+      ReplyMode::class.java,
+      defaultReplyMode
     )
   }
 
@@ -182,6 +197,7 @@ abstract class SiteBase : Site, CoroutineScope {
   override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? {
     return when (settingId) {
       SiteSetting.SiteSettingId.CloudFlareClearanceCookie -> cloudFlareClearanceCookie as T
+      SiteSetting.SiteSettingId.LastUsedReplyMode -> lastUsedReplyMode as T
       // 4chan only
       SiteSetting.SiteSettingId.CountryFlag -> null
       // 2ch.hk only

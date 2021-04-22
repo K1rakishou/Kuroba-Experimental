@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.posting
 
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.persist_state.ReplyMode
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -12,10 +13,12 @@ import java.util.concurrent.atomic.AtomicReference
 
 internal class ReplyInfo(
   initialStatus: PostingStatus,
+  initialReplyMode: ReplyMode,
   val chanDescriptor: ChanDescriptor,
   private val _status: MutableStateFlow<PostingStatus> = MutableStateFlow(initialStatus),
   val retrying: AtomicBoolean = AtomicBoolean(false),
-  val enqueuedAt: AtomicLong = AtomicLong(System.currentTimeMillis())
+  val enqueuedAt: AtomicLong = AtomicLong(System.currentTimeMillis()),
+  val replyModeRef: AtomicReference<ReplyMode> = AtomicReference(initialReplyMode)
 ) {
   private val _canceled = AtomicBoolean(false)
 
