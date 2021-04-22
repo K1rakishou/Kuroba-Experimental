@@ -22,7 +22,6 @@ import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
-import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.loader.internal.ChanPostPersister
 import com.github.k1rakishou.chan.core.site.loader.internal.DatabasePostLoader
@@ -52,7 +51,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.withContext
-import okhttp3.HttpUrl
 import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
@@ -373,15 +371,6 @@ class ChanThreadLoaderCoordinator(
 
   companion object {
     private const val TAG = "ChanThreadLoaderCoordinator"
-
-    @JvmStatic
-    fun getChanUrl(site: Site, chanDescriptor: ChanDescriptor): HttpUrl {
-      return when (chanDescriptor) {
-        is ChanDescriptor.ThreadDescriptor -> site.endpoints().thread(chanDescriptor)
-        is ChanDescriptor.CatalogDescriptor -> site.endpoints().catalog(chanDescriptor.boardDescriptor)
-        else -> throw IllegalArgumentException("Unknown mode")
-      }
-    }
   }
 
 }

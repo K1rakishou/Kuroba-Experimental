@@ -87,9 +87,12 @@ class CaptchaContainerController(
 
     captchaContainer.removeAllViews()
 
-    val authenticationLayout = createAuthenticationLayout(site.actions().postAuthenticate(), useV2NoJsCaptcha)
-    captchaContainer.addView(authenticationLayout as View, 0)
+    val authenticationLayout = createAuthenticationLayout(
+      authentication = site.actions().postAuthenticate(),
+      useV2NoJsCaptcha = useV2NoJsCaptcha
+    )
 
+    captchaContainer.addView(authenticationLayout as View, 0)
     authenticationLayout.initialize(site, this)
     authenticationLayout.reset()
   }
@@ -121,6 +124,10 @@ class CaptchaContainerController(
     useV2NoJsCaptcha: Boolean
   ): AuthenticationLayoutInterface {
     when (authentication.type) {
+      SiteAuthentication.Type.NONE -> {
+        throw IllegalArgumentException("${authentication.type} is not supposed to be used here")
+      }
+      SiteAuthentication.Type.CAPTCHA2_INVISIBLE,
       SiteAuthentication.Type.CAPTCHA2 -> {
         val view = CaptchaLayout(context)
         val params = FrameLayout.LayoutParams(
@@ -150,10 +157,6 @@ class CaptchaContainerController(
         view.layoutParams = params
         return view
       }
-      SiteAuthentication.Type.NONE -> {
-        throw IllegalArgumentException("${authentication.type} is not supposed to be used here")
-      }
-      else -> throw IllegalArgumentException("Unknown authentication.type=${authentication.type}")
     }
   }
 

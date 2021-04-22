@@ -558,7 +558,8 @@ open class Chan4 : SiteBase() {
   @DoNotStrip
   enum class CaptchaType(val value: String) : OptionSettingItem {
     V2JS("v2js"),
-    V2NOJS("v2nojs");
+    V2NOJS("v2nojs"),
+    V2_INVISIBLE("v2_invisible");
 
     override fun getKey(): String {
       return value

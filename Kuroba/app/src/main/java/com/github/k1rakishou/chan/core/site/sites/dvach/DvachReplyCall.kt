@@ -84,7 +84,10 @@ class DvachReplyCall internal constructor(
 
       if (reply.captchaResponse != null) {
         formBuilder.addFormDataPart("captcha_type", "recaptcha")
-        formBuilder.addFormDataPart("captcha_key", Dvach.CAPTCHA_KEY)
+
+        // TODO(KurobaEx): uhhh is it okay to use the same key for both normal and invisible
+        //  captcha? Seems to work just fine so I'm gonna just leave it.
+        formBuilder.addFormDataPart("captcha_key", Dvach.NORMAL_CAPTCHA_KEY)
 
         val captchaChallenge = reply.captchaChallenge
         val captchaResponse = reply.captchaResponse

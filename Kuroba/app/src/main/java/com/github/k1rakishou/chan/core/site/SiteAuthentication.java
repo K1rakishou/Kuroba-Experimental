@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.core.site;
 import androidx.annotation.Nullable;
 
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2;
+import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2_INVISIBLE;
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2_NOJS;
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.GENERIC_WEBVIEW;
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.NONE;
@@ -28,6 +29,7 @@ public class SiteAuthentication {
         NONE,
         CAPTCHA2,
         CAPTCHA2_NOJS,
+        CAPTCHA2_INVISIBLE,
         GENERIC_WEBVIEW
     }
 
@@ -44,6 +46,13 @@ public class SiteAuthentication {
 
     public static SiteAuthentication fromCaptcha2nojs(String siteKey, String baseUrl) {
         SiteAuthentication a = new SiteAuthentication(CAPTCHA2_NOJS);
+        a.siteKey = siteKey;
+        a.baseUrl = baseUrl;
+        return a;
+    }
+
+    public static SiteAuthentication fromCaptcha2Invisible(String siteKey, String baseUrl) {
+        SiteAuthentication a = new SiteAuthentication(CAPTCHA2_INVISIBLE);
         a.siteKey = siteKey;
         a.baseUrl = baseUrl;
         return a;

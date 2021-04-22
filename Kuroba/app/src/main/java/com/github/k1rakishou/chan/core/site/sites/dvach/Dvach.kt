@@ -36,6 +36,7 @@ import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.site.SiteBoards
@@ -299,12 +300,16 @@ class Dvach : CommonSite() {
       override fun postAuthenticate(): SiteAuthentication {
         return when (captchaType.get()) {
           Chan4.CaptchaType.V2JS -> SiteAuthentication.fromCaptcha2(
-            CAPTCHA_KEY,
+            NORMAL_CAPTCHA_KEY,
             "https://2ch.hk/api/captcha/recaptcha/mobile"
           )
           Chan4.CaptchaType.V2NOJS -> SiteAuthentication.fromCaptcha2nojs(
-            CAPTCHA_KEY,
+            NORMAL_CAPTCHA_KEY,
             "https://2ch.hk/api/captcha/recaptcha/mobile"
+          )
+          Chan4.CaptchaType.V2_INVISIBLE -> SiteAuthentication.fromCaptcha2Invisible(
+            INVISIBLE_CAPTCHA_KEY,
+            "https://2ch.hk/api/captcha/invisible_recaptcha/mobile"
           )
           else -> throw IllegalArgumentException()
         }
@@ -399,6 +404,21 @@ class Dvach : CommonSite() {
         .scheme("https")
         .host(URL_HANDLER.url!!.host)
         .addPathSegment("boards.json")
+        .build()
+    }
+
+    // /api/mobile/v2/after/{board}/{thread}/{num}
+    override fun threadPartial(fromPostDescriptor: PostDescriptor): HttpUrl {
+      return HttpUrl.Builder()
+        .scheme("https")
+        .host(URL_HANDLER.url!!.host)
+        .addPathSegment("api")
+        .addPathSegment("mobile")
+        .addPathSegment("v2")
+        .addPathSegment("after")
+        .addPathSegment(fromPostDescriptor.boardDescriptor().boardCode)
+        .addPathSegment(fromPostDescriptor.getThreadNo().toString())
+        .addPathSegment(fromPostDescriptor.postNo.toString())
         .build()
     }
 
@@ -537,7 +557,8 @@ class Dvach : CommonSite() {
     private const val TAG = "Dvach"
     const val SITE_NAME = "2ch.hk"
     val SITE_DESCRIPTOR = SiteDescriptor.create(SITE_NAME)
-    const val CAPTCHA_KEY = "6LeQYz4UAAAAAL8JCk35wHSv6cuEV5PyLhI6IxsM"
+    const val NORMAL_CAPTCHA_KEY = "6LeQYz4UAAAAAL8JCk35wHSv6cuEV5PyLhI6IxsM"
+    const val INVISIBLE_CAPTCHA_KEY = "6LdwXD4UAAAAAHxyTiwSMuge1-pf1ZiEL4qva_xu"
     const val DEFAULT_MAX_FILE_SIZE = 20480 * 1024 // 20MB
 
     const val USER_CODE_COOKIE_KEY = "usercode_auth"

@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.manager
 
+import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.common.CommonClientException
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
@@ -23,6 +24,7 @@ import com.github.k1rakishou.model.data.thread.ChanThread
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import com.github.k1rakishou.model.util.ChanPostUtils
+import okhttp3.HttpUrl
 
 /**
  * The only manager class that can hold other manager classes. Do not use this class in other manager
@@ -471,19 +473,64 @@ class ChanThreadManager(
       bookmarksManager.onThreadIsFetchingData(chanDescriptor)
     }
 
-    val url = ChanThreadLoaderCoordinator.getChanUrl(
-      site = site,
-      chanDescriptor = chanDescriptor
-    ).toString()
-
     return chanThreadLoaderCoordinator.loadThreadOrCatalog(
-      url = url,
+      url = getChanUrl(site, chanDescriptor).toString(),
       chanDescriptor = chanDescriptor,
       chanCacheOptions = chanCacheOptions,
       cacheUpdateOptions = chanCacheUpdateOptions,
       chanReadOptions = chanReadOptions,
       chanReader = site.chanReader()
     )
+  }
+
+  private fun getChanUrl(site: Site, chanDescriptor: ChanDescriptor): HttpUrl {
+    return getChanUrlFullLoad(site, chanDescriptor)
+
+    // TODO(KurobaEx v0.8.0): 2ch.hk API v2 support
+//    val isThreadCached = if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+//      chanThreadsCache.getThreadPostsCount(chanDescriptor) > 1
+//    } else {
+//      false
+//    }
+//
+//    if (!isThreadCached || chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+//      return getChanUrlFullLoad(site, chanDescriptor)
+//    }
+//
+//    val threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
+//
+//    val lastPost = chanThreadsCache.getLastPost(threadDescriptor)
+//    if (lastPost == null) {
+//      return getChanUrlFullLoad(site, chanDescriptor)
+//    }
+//
+//    val threadPartialLoadUrl = getChanUrlPartialLoad(site, threadDescriptor, lastPost.postDescriptor)
+//    if (threadPartialLoadUrl == null) {
+//      // Not supported by the site
+//      return getChanUrlFullLoad(site, chanDescriptor)
+//    }
+//
+//    return threadPartialLoadUrl
+  }
+
+  private fun getChanUrlFullLoad(site: Site, chanDescriptor: ChanDescriptor): HttpUrl {
+    return when (chanDescriptor) {
+      is ChanDescriptor.ThreadDescriptor -> site.endpoints().thread(chanDescriptor)
+      is ChanDescriptor.CatalogDescriptor -> site.endpoints().catalog(chanDescriptor.boardDescriptor)
+      else -> throw IllegalArgumentException("Unknown mode")
+    }
+  }
+
+  private fun getChanUrlPartialLoad(
+    site: Site,
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    postDescriptor: PostDescriptor
+  ): HttpUrl? {
+    check(threadDescriptor == postDescriptor.threadDescriptor()) {
+      "ThreadDescriptor ($threadDescriptor) differs from descriptor in this PostDescriptor ($postDescriptor)"
+    }
+
+    return site.endpoints().threadPartial(postDescriptor)
   }
 
   companion object {

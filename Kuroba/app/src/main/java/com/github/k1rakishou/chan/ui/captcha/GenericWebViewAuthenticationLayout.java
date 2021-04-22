@@ -98,8 +98,8 @@ public class GenericWebViewAuthenticationLayout
     }
 
     private void onAllText(String text) {
-        boolean retry = text.contains(authentication.retryText);
-        boolean success = text.contains(authentication.successText);
+        boolean retry = text != null && text.contains(authentication.retryText);
+        boolean success = text != null && text.contains(authentication.successText);
 
         if (retry) {
             if (!resettingFromFoundText) {
@@ -109,7 +109,11 @@ public class GenericWebViewAuthenticationLayout
                     reset();
                 }, 1000);
             }
-        } else if (success) {
+
+            return;
+        }
+
+        if (success) {
             captchaHolder.addNewToken(text, RECAPTCHA_TOKEN_LIVE_TIME);
             callback.onAuthenticationComplete();
         }

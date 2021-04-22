@@ -68,6 +68,7 @@ public class CaptchaLayout
     private boolean loaded = false;
     private String baseUrl;
     private String siteKey;
+    private boolean isInvisible;
 
     @Inject
     CaptchaHolder captchaHolder;
@@ -104,6 +105,7 @@ public class CaptchaLayout
 
         this.siteKey = authentication.siteKey;
         this.baseUrl = authentication.baseUrl;
+        this.isInvisible = authentication.type == SiteAuthentication.Type.CAPTCHA2_INVISIBLE;
 
         requestDisallowInterceptTouchEvent(true);
         hideKeyboard(this);
@@ -117,10 +119,7 @@ public class CaptchaLayout
         setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onConsoleMessage(@NonNull ConsoleMessage consoleMessage) {
-                Logger.i(
-                        TAG,
-                        consoleMessage.lineNumber() + ":" + consoleMessage.message() + " " + consoleMessage.sourceId()
-                );
+                Logger.d(TAG, consoleMessage.lineNumber() + ":" + consoleMessage.message() + " " + consoleMessage.sourceId());
                 return true;
             }
         });
@@ -174,6 +173,26 @@ public class CaptchaLayout
 
     @Override
     public void hardReset() {
+        if (isInvisible) {
+            loadCaptchaV2Invisible();
+        } else {
+            loadCaptchaV2Normal();
+        }
+    }
+
+    private void loadCaptchaV2Invisible() {
+        Logger.d(TAG, "loadCaptchaV2Invisible()");
+
+        String html = IOUtils.assetAsString(getContext(), "html/captcha2_invisible.html");
+        html = html.replace("__site_key__", siteKey);
+        html = html.replace("__theme__", themeEngine.getChanTheme().isLightTheme() ? "light" : "dark");
+
+        loadDataWithBaseURL(baseUrl, html, "text/html", "UTF-8", null);
+    }
+
+    private void loadCaptchaV2Normal() {
+        Logger.d(TAG, "loadCaptchaV2Normal()");
+
         String html = IOUtils.assetAsString(getContext(), "html/captcha2.html");
         html = html.replace("__site_key__", siteKey);
         html = html.replace("__theme__", themeEngine.getChanTheme().isLightTheme() ? "light" : "dark");

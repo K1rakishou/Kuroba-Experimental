@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<body>
+<div id="captcha-container"></div>
+<div id="captcha-error"></div>
+<div id="captcha-loading">Loading captcha&#8230;</div>
+
+<script type="text/javascript">
+(function() {
+window.globalOnCaptchaEntered = function(res) {
+    CaptchaCallback.onCaptchaEntered(res);
+}
+
+window.globalOnCaptchaLoaded = function() {
+    var holderId = grecaptcha.render('captcha-container', {
+        'sitekey': '__site_key__',
+        'theme': '__theme__',
+        'size': 'invisible',
+        'badge' : 'bottomright',
+        'callback': globalOnCaptchaEntered
+    });
+    grecaptcha.execute(holderId);
+
+    document.getElementById('captcha-loading').style.display = 'none';
+}
+
+window.onerror = function(message, url, line) {
+    console.log("onerror")
+
+    document.getElementById('captcha-loading').style.display = 'none';
+    document.getElementById('captcha-error').appendChild(document.createTextNode(
+        'Captcha error at ' + line + ': ' + message + ' @ ' + url));
+}
+})();
+</script>
+
+<script src='https://www.google.com/recaptcha/api.js?onload=globalOnCaptchaLoaded&render=explicit'></script>
+</body>
+</html>

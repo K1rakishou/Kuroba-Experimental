@@ -85,8 +85,10 @@ class TwoCaptchaSolver(
       }
 
       val postAuthenticate = site.actions().postAuthenticate()
+      val captchaType = postAuthenticate.type!!
+      Logger.d(TAG, "solve() captchaType=$captchaType")
 
-      val siteAuthentication = when (postAuthenticate.type!!) {
+      val siteAuthentication = when (captchaType) {
         SiteAuthentication.Type.NONE -> {
           Logger.d(TAG, "solve() authentication not needed")
           return@Try TwoCaptchaResult.CaptchaNotNeeded(solverName = name, siteDescriptor = siteDescriptor)
@@ -96,7 +98,8 @@ class TwoCaptchaSolver(
           return@Try TwoCaptchaResult.NotSupported(solverName = name, siteDescriptor = siteDescriptor)
         }
         SiteAuthentication.Type.CAPTCHA2,
-        SiteAuthentication.Type.CAPTCHA2_NOJS -> {
+        SiteAuthentication.Type.CAPTCHA2_NOJS,
+        SiteAuthentication.Type.CAPTCHA2_INVISIBLE -> {
           postAuthenticate
         }
       }
@@ -105,7 +108,7 @@ class TwoCaptchaSolver(
       if (activeRequest != null) {
         return@Try checkSolution(activeRequest, chanDescriptor)
       } else {
-        return@Try enqueueSolution(siteAuthentication, chanDescriptor)
+        return@Try enqueueSolution(captchaType, siteAuthentication, chanDescriptor)
       }
     }
   }
@@ -197,6 +200,7 @@ class TwoCaptchaSolver(
   }
 
   private suspend fun enqueueSolution(
+    captchaType: SiteAuthentication.Type,
     siteAuthentication: SiteAuthentication,
     chanDescriptor: ChanDescriptor
   ): TwoCaptchaResult {
@@ -237,7 +241,7 @@ class TwoCaptchaSolver(
 
     Logger.d(TAG, "enqueueSolution() current balance=${balance}")
 
-    val enqueueSolveCaptchaResponse = sendEnqueueSolveCaptchaRequest(siteKey, baseSiteUrl)
+    val enqueueSolveCaptchaResponse = sendEnqueueSolveCaptchaRequest(siteKey, baseSiteUrl, captchaType)
     if (enqueueSolveCaptchaResponse == null) {
       Logger.d(TAG, "enqueueSolution() enqueueSolveCaptchaResponse() -> null")
       return TwoCaptchaResult.UnknownError("Failed to solve captcha, see logs for more info")
@@ -331,12 +335,19 @@ class TwoCaptchaSolver(
 
   private suspend fun sendEnqueueSolveCaptchaRequest(
     siteCaptchaKey: String,
-    siteUrl: String
+    siteUrl: String,
+    captchaType: SiteAuthentication.Type
   ): TwoCaptchaEnqueueSolveCaptchaResponse? {
     val baseUrl = actualUrlOrNull
     if (baseUrl == null) {
       Logger.d(TAG, "sendSolveCaptchaRequest() baseUrl is bad, url=\'$url\'")
       return null
+    }
+
+    val invisibleCaptchaParam = if (captchaType == SiteAuthentication.Type.CAPTCHA2_INVISIBLE) {
+      "1"
+    } else {
+      "0"
     }
 
     val fullUrl = baseUrl.newBuilder()
@@ -345,6 +356,7 @@ class TwoCaptchaSolver(
       .addEncodedQueryParameter("method", "userrecaptcha")
       .addEncodedQueryParameter("googlekey", siteCaptchaKey)
       .addEncodedQueryParameter("pageurl", siteUrl)
+      .addEncodedQueryParameter("invisible", invisibleCaptchaParam)
       .addEncodedQueryParameter("json", "1")
       .build()
 

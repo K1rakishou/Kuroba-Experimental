@@ -349,7 +349,7 @@ abstract class CommonSite : SiteBase() {
     override fun thread(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
-    
+
     override fun imageUrl(post: ChanPostBuilder, arg: Map<String, String>): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
