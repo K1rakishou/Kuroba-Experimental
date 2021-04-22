@@ -13,6 +13,7 @@ import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.common.StringUtils
 
 class CaptchaSolversScreen(
   context: Context,
@@ -66,7 +67,9 @@ class CaptchaSolversScreen(
           identifier = CaptchaSolversScreen.TwoCaptchaSettingsGroup.TwoCaptchaSolverApiKey,
           topDescriptionIdFunc = { R.string.two_captcha_solver_api_key },
           bottomDescriptionStringFunc = {
-            getString(R.string.two_captcha_solver_api_key_description) + "\n\n" + ChanSettings.twoCaptchaSolverApiKey.get()
+            val tokenTrimmed = StringUtils.trimToken(ChanSettings.twoCaptchaSolverApiKey.get())
+
+            getString(R.string.two_captcha_solver_api_key_description) + "\n\n" + tokenTrimmed
           },
           setting = ChanSettings.twoCaptchaSolverApiKey,
           dependsOnSetting = ChanSettings.twoCaptchaSolverEnabled,

@@ -17,13 +17,13 @@ internal sealed class AntiCaptchaServiceResult {
         return "AlreadyHaveToken(token='null')"
       }
 
-      return "AlreadyHaveToken(token='${StringUtils.trimCaptchaResponseToken(token)}')"
+      return "AlreadyHaveToken(token='${StringUtils.trimToken(token)}')"
     }
   }
 
   class Solution(val token: String) : AntiCaptchaServiceResult() {
     override fun toString(): String {
-      return "Solution(token='${StringUtils.trimCaptchaResponseToken(token)}')"
+      return "Solution(token='${StringUtils.trimToken(token)}')"
     }
   }
 

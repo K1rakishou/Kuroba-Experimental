@@ -112,12 +112,13 @@ object StringUtils {
   }
 
   @JvmStatic
-  fun trimCaptchaResponseToken(token: String): String {
-    if (token.length <= 16) {
-      return token
-    }
+  fun trimToken(token: String): String {
+    val tokenEdgeLength = (token.length.toFloat() * 0.2f).toInt() / 2
 
-    return token.substring(0, 7) + "..." + token.substring(token.length - 8)
+    val startTokenPart = token.substring(0, tokenEdgeLength)
+    val endTokenPart = token.substring(token.length - tokenEdgeLength)
+
+    return "${startTokenPart}<cut>${endTokenPart}"
   }
 
 }

@@ -69,7 +69,7 @@ public class CaptchaHolder {
             );
 
             Logger.d(TAG, "A new token has been added, validCount = " + captchaQueue.size()
-                    + ", token = " + StringUtils.trimCaptchaResponseToken(token));
+                    + ", token = " + StringUtils.trimToken(token));
         }
 
         notifyListener();
@@ -105,7 +105,7 @@ public class CaptchaHolder {
 
             String token = captchaQueue.get(lastIndex).getToken();
             captchaQueue.remove(lastIndex);
-            Logger.d(TAG, "getToken() token = " + StringUtils.trimCaptchaResponseToken(token));
+            Logger.d(TAG, "getToken() token = " + StringUtils.trimToken(token));
 
             notifyListener();
             return token;
@@ -145,7 +145,7 @@ public class CaptchaHolder {
                     Logger.d(TAG, "Captcha token got expired, now = " + sdf.format(now)
                             + ", token validUntil = "
                             + sdf.format(captchaInfo.getValidUntil()) + ", token = "
-                            + StringUtils.trimCaptchaResponseToken(captchaInfo.getToken())
+                            + StringUtils.trimToken(captchaInfo.getToken())
                     );
                 }
             }
@@ -236,7 +236,7 @@ public class CaptchaHolder {
         @NonNull
         @Override
         public String toString() {
-            return "validUntil = " + sdf.format(validUntil) + ", token = " + StringUtils.trimCaptchaResponseToken(token);
+            return "validUntil = " + sdf.format(validUntil) + ", token = " + StringUtils.trimToken(token);
         }
     }
 }
