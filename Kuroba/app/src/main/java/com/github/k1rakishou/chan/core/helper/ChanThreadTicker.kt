@@ -195,9 +195,9 @@ class ChanThreadTicker(
 
     val isArchiveDescriptor = archivesManager.isSiteArchive(currentDescriptor.siteDescriptor())
     val maxIndex = if (isArchiveDescriptor) {
-      ARCHIVE_WATCH_TIMEOUTS.lastIndex
+      ARCHIVE_WATCH_TIMEOUTS_SEC.lastIndex
     } else {
-      NORMAL_WATCH_TIMEOUTS.lastIndex
+      NORMAL_WATCH_TIMEOUTS_SEC.lastIndex
     }
 
     return min(currentTimeoutIndex + 1, maxIndex)
@@ -219,16 +219,16 @@ class ChanThreadTicker(
   ): Long {
     val isArchiveDescriptor = archivesManager.isSiteArchive(currentDescriptor.siteDescriptor())
 
-    val timeoutMs = if (isArchiveDescriptor) {
-      ARCHIVE_WATCH_TIMEOUTS.get(currentTimeoutIndex)
+    val timeoutSec = if (isArchiveDescriptor) {
+      ARCHIVE_WATCH_TIMEOUTS_SEC.get(currentTimeoutIndex)
     } else {
-      NORMAL_WATCH_TIMEOUTS.get(currentTimeoutIndex)
+      NORMAL_WATCH_TIMEOUTS_SEC.get(currentTimeoutIndex)
     }
 
     if (currentDescriptor is ChanDescriptor.CatalogDescriptor) {
       // Catalogs are usually not that big so we don't need to do anything additional there + there is
       // no auto updating for catalogs.
-      return timeoutMs
+      return timeoutSec
     }
 
     currentDescriptor as ChanDescriptor.ThreadDescriptor
@@ -237,7 +237,7 @@ class ChanThreadTicker(
     val multiplier = (postsCount.toFloat() / POSTS_COUNT_LONG_TIMEOUTS.toFloat()) / LONG_TIMEOUT_DIVIDER
 
     if (multiplier <= 1) {
-      return timeoutMs
+      return timeoutSec
     }
 
     // Once a thread reaches 1000+ posts we want to switch to more rare updates because the amount
@@ -257,7 +257,7 @@ class ChanThreadTicker(
     //
     // Threads this big usually pinned threads with tons of replies per second and that is not good
     // for us.
-    return (timeoutMs.toFloat() * multiplier).toLong()
+    return ((timeoutSec.toFloat() * multiplier).toLong()).coerceAtMost(MAX_ADAPTIVE_TIMER_TIMEOUT_SEC)
   }
 
   private class ChanTickerData(
@@ -347,7 +347,8 @@ class ChanThreadTicker(
     private const val POSTS_COUNT_LONG_TIMEOUTS = 1000L
     private const val LONG_TIMEOUT_DIVIDER = 2.5f
 
-    private val NORMAL_WATCH_TIMEOUTS = longArrayOf(15, 20, 30, 45, 60, 90, 120, 180, 240, 300, 450, 600, 750, 1000)
-    private val ARCHIVE_WATCH_TIMEOUTS = longArrayOf(300, 600, 1200, 1800, 2400, 3600)
+    private val NORMAL_WATCH_TIMEOUTS_SEC = longArrayOf(20, 30, 45, 60, 90, 120, 180, 240, 300)
+    private val ARCHIVE_WATCH_TIMEOUTS_SEC = longArrayOf(120, 300, 600, 1200, 1800)
+    private const val MAX_ADAPTIVE_TIMER_TIMEOUT_SEC = 600L
   }
 }
