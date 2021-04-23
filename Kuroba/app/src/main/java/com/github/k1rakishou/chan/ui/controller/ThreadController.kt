@@ -136,7 +136,9 @@ abstract class ThreadController(
       postPopupHelper = threadLayout.popupHelper,
       chanThreadManager = chanThreadManager,
       presentControllerFunc = { controller -> presentController(controller) },
-      showAvailableArchivesListFunc = { postDescriptor -> showAvailableArchivesList(postDescriptor) },
+      showAvailableArchivesListFunc = { postDescriptor ->
+        showAvailableArchivesList(postDescriptor = postDescriptor, preview = true)
+      },
       showToastFunc = { message -> showToast(message) }
     )
 
@@ -390,7 +392,7 @@ abstract class ThreadController(
     // no-op
   }
 
-  override fun showAvailableArchivesList(postDescriptor: PostDescriptor) {
+  override fun showAvailableArchivesList(postDescriptor: PostDescriptor, preview: Boolean) {
     // no-op
   }
 

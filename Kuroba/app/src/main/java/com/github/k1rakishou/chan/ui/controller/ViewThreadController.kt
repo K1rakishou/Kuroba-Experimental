@@ -195,7 +195,7 @@ open class ViewThreadController(
         ACTION_PREVIEW_THREAD_IN_ARCHIVE,
         R.string.action_preview_thread_in_archive,
         archivesManager.supports(threadDescriptor)
-      ) { showAvailableArchives(threadDescriptor.toOriginalPostDescriptor()) }
+      ) { showAvailableArchives(postDescriptor = threadDescriptor.toOriginalPostDescriptor(), preview = true) }
       .withSubItem(
         ACTION_OPEN_BROWSER,
         R.string.action_open_browser
@@ -303,7 +303,7 @@ open class ViewThreadController(
     )
   }
 
-  private fun showAvailableArchives(postDescriptor: PostDescriptor) {
+  private fun showAvailableArchives(postDescriptor: PostDescriptor, preview: Boolean) {
     Logger.d(TAG, "showAvailableArchives($postDescriptor)")
 
     val descriptor = postDescriptor.descriptor as? ThreadDescriptor
@@ -356,10 +356,17 @@ open class ViewThreadController(
             postDescriptor.postNo
           )
 
-          showPostsInExternalThread(
-            postDescriptor = externalArchivePostDescriptor,
-            isPreviewingCatalogThread = false
-          )
+          if (preview) {
+            showPostsInExternalThread(
+              postDescriptor = externalArchivePostDescriptor,
+              isPreviewingCatalogThread = false
+            )
+          } else {
+            openExternalThread(
+              postDescriptor = externalArchivePostDescriptor,
+              showOpenThreadDialog = false
+            )
+          }
         }
       }
     )
@@ -692,8 +699,8 @@ open class ViewThreadController(
     showToast(R.string.thread_follow_history_has_been_cleared)
   }
 
-  override fun showAvailableArchivesList(postDescriptor: PostDescriptor) {
-    showAvailableArchives(postDescriptor)
+  override fun showAvailableArchivesList(postDescriptor: PostDescriptor, preview: Boolean) {
+    showAvailableArchives(postDescriptor, preview)
   }
 
   override fun onMenuShown() {

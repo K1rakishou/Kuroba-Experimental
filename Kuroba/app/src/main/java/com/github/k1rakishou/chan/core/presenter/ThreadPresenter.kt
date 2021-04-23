@@ -1367,7 +1367,10 @@ class ThreadPresenter @Inject constructor(
               postNo = postNo
             )
 
-            threadPresenterCallback?.showAvailableArchivesList(archivePostDescriptor)
+            threadPresenterCallback?.showAvailableArchivesList(
+              postDescriptor = archivePostDescriptor,
+              preview = true
+            )
           }
           is PostLinkable.Value.ThreadOrPostLink -> {
             if (!postLinkableValue.isValid()) {
@@ -1382,7 +1385,10 @@ class ThreadPresenter @Inject constructor(
               postNo = postLinkableValue.postId
             )
 
-            threadPresenterCallback?.showAvailableArchivesList(archivePostDescriptor)
+            threadPresenterCallback?.showAvailableArchivesList(
+              postDescriptor = archivePostDescriptor,
+              preview = true
+            )
           }
           else -> {
             // no-op
@@ -2198,7 +2204,7 @@ class ThreadPresenter @Inject constructor(
     suspend fun onPostUpdated(updatedPost: ChanPost, results: List<LoaderResult>)
     fun presentController(controller: Controller, animate: Boolean)
     fun showToolbar()
-    fun showAvailableArchivesList(postDescriptor: PostDescriptor)
+    fun showAvailableArchivesList(postDescriptor: PostDescriptor, preview: Boolean)
     fun currentSpanCount(): Int
     fun getTopPostRepliesDataOrNull(): PostPopupHelper.PostPopupData?
     fun openFiltersController(chanFilterMutable: ChanFilterMutable)

@@ -291,7 +291,10 @@ class ThreadLayout @JvmOverloads constructor(
     } else if (v === openThreadInArchiveButton) {
       val threadDescriptor = presenter.currentChanDescriptor
       if (threadDescriptor is ChanDescriptor.ThreadDescriptor) {
-        callback.showAvailableArchivesList(threadDescriptor.toOriginalPostDescriptor())
+        callback.showAvailableArchivesList(
+          postDescriptor = threadDescriptor.toOriginalPostDescriptor(),
+          preview = false
+        )
       }
     } else if (v === replyButton) {
       // Give some time for the keyboard to show up because we need keyboards' insets for proper
@@ -916,8 +919,8 @@ class ThreadLayout @JvmOverloads constructor(
     }, SCROLL_TO_BOTTOM_DEBOUNCE_TIMEOUT_MS)
   }
 
-  override fun showAvailableArchivesList(postDescriptor: PostDescriptor) {
-    callback.showAvailableArchivesList(postDescriptor)
+  override fun showAvailableArchivesList(postDescriptor: PostDescriptor, preview: Boolean) {
+    callback.showAvailableArchivesList(postDescriptor, preview)
   }
 
   override fun currentSpanCount(): Int {
@@ -1168,7 +1171,7 @@ class ThreadLayout @JvmOverloads constructor(
     fun openFiltersController(chanFilterMutable: ChanFilterMutable)
     fun threadBackPressed(): Boolean
     fun threadBackLongPressed()
-    fun showAvailableArchivesList(postDescriptor: PostDescriptor)
+    fun showAvailableArchivesList(postDescriptor: PostDescriptor, preview: Boolean)
   }
 
   companion object {
