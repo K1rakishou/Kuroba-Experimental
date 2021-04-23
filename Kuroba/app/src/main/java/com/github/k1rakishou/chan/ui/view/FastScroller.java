@@ -25,7 +25,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
 import android.view.MotionEvent;
-import android.view.View;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
@@ -152,15 +151,6 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
         }
     };
 
-    private final View.OnLayoutChangeListener onLayoutChangeListener = new View.OnLayoutChangeListener() {
-        @Override
-        public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-            if (left != oldLeft || right != oldRight || top != oldTop || bottom != oldBottom) {
-                requestRedraw();
-            }
-        }
-    };
-
     @Inject
     ThemeEngine themeEngine;
     @Inject
@@ -251,7 +241,6 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
         mRecyclerView.addItemDecoration(this);
         mRecyclerView.addOnItemTouchListener(this);
         mRecyclerView.addOnScrollListener(mOnScrollListener);
-        mRecyclerView.addOnLayoutChangeListener(onLayoutChangeListener);
     }
 
     public void onCleanup() {
@@ -265,7 +254,6 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
         mRecyclerView.removeItemDecoration(this);
         mRecyclerView.removeOnItemTouchListener(this);
         mRecyclerView.removeOnScrollListener(mOnScrollListener);
-        mRecyclerView.removeOnLayoutChangeListener(onLayoutChangeListener);
         cancelHide();
 
         if (postInfoMapItemDecoration != null) {

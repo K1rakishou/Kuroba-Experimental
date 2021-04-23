@@ -27,8 +27,8 @@ import android.util.AttributeSet
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
-import android.view.animation.DecelerateInterpolator
 import android.widget.FrameLayout
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration
@@ -776,7 +776,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     val viewPropertyAnimator = replyLayout.animate()
 
     viewPropertyAnimator.setListener(null)
-    viewPropertyAnimator.interpolator = DecelerateInterpolator(2f)
+    viewPropertyAnimator.interpolator = FastOutSlowInInterpolator()
     viewPropertyAnimator.duration = 350
 
     if (open) {
@@ -1122,7 +1122,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   override fun updateRecyclerViewPaddings() {
-    updateRecyclerPaddingsDebouncer.post({ setRecyclerViewPadding() }, 250L)
+    updateRecyclerPaddingsDebouncer.post({ setRecyclerViewPadding() }, 50L)
   }
 
   override fun measureReplyLayout() {
