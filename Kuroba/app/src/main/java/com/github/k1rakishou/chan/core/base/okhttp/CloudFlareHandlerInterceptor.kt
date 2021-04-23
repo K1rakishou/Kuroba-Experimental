@@ -94,7 +94,6 @@ class CloudFlareHandlerInterceptor(
     val site = siteResolver.findSiteForUrl(url.toString())
 
     if (site == null) {
-      Logger.d(TAG, "[$okHttpType] requireCloudFlareCookie() site not found for url: '$url'")
       return false
     }
 
@@ -115,7 +114,6 @@ class CloudFlareHandlerInterceptor(
     val site = siteResolver.findSiteForUrl(url.toString())
 
     if (site == null) {
-      Logger.d(TAG, "[$okHttpType] removeSiteClearanceCookie() site not found for url: '$url'")
       return
     }
 
@@ -142,7 +140,6 @@ class CloudFlareHandlerInterceptor(
     val site = siteResolver.findSiteForUrl(url.toString())
 
     if (site == null) {
-      Logger.d(TAG, "[$okHttpType] addCloudFlareCookie() site not found for url: '$url'")
       return null
     }
 

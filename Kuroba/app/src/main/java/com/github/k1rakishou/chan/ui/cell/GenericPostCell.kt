@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.ui.cell
 
 import android.content.Context
-import android.os.SystemClock
 import android.view.View
 import android.widget.FrameLayout
 import com.github.k1rakishou.ChanSettings
@@ -9,7 +8,6 @@ import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -43,13 +41,7 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
   }
 
   override fun setPost(postCellData: PostCellData) {
-    val startTime = SystemClock.elapsedRealtime()
     setPostCellInternal(postCellData)
-    val deltaTime = SystemClock.elapsedRealtime() - startTime
-
-    if (AppModuleAndroidUtils.isDevBuild()) {
-      Logger.d(TAG, "postDescriptor=${postCellData.postDescriptor} bind took ${deltaTime}ms")
-    }
   }
 
   private fun setPostCellInternal(postCellData: PostCellData) {
