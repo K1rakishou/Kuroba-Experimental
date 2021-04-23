@@ -3,10 +3,8 @@ package com.github.k1rakishou.common
 import android.util.Base64
 import java.nio.charset.StandardCharsets
 import java.util.*
-import java.util.regex.Pattern
 
 object StringUtils {
-  private val IMAGE_THUMBNAIL_EXTRACTOR_PATTERN = Pattern.compile("/(\\d{12,32}+)s.(.*)")
   private val HEX_ARRAY = "0123456789ABCDEF".toLowerCase(Locale.ENGLISH).toCharArray()
   private const val RESERVED_CHARACTERS = "|?*<\":>+\\[\\]/'\\\\\\s"
   private const val RESERVED_CHARACTERS_DIR = "[" + RESERVED_CHARACTERS + "." + "]"
@@ -23,26 +21,6 @@ object StringUtils {
     }
 
     return String(result)
-  }
-
-  fun convertThumbnailUrlToFilenameOnDisk(url: String): String? {
-    val matcher = IMAGE_THUMBNAIL_EXTRACTOR_PATTERN.matcher(url)
-    if (matcher.find()) {
-      val filename = matcher.group(1)
-      val extension = matcher.group(2)
-
-      if (filename == null || extension == null) {
-        return null
-      }
-
-      if (filename.isEmpty() || extension.isEmpty()) {
-        return null
-      }
-
-      return String.format("%s_thumbnail.%s", filename, extension)
-    }
-
-    return null
   }
 
   fun extractFileNameExtension(filename: String): String? {
@@ -113,10 +91,10 @@ object StringUtils {
 
   @JvmStatic
   fun trimToken(token: String): String {
-    val tokenEdgeLength = (token.length.toFloat() * 0.2f).toInt() / 2
+    val tokenPartLength = (token.length.toFloat() * 0.2f).toInt() / 2
 
-    val startTokenPart = token.substring(0, tokenEdgeLength)
-    val endTokenPart = token.substring(token.length - tokenEdgeLength)
+    val startTokenPart = token.substring(0, tokenPartLength)
+    val endTokenPart = token.substring(token.length - tokenPartLength)
 
     return "${startTokenPart}<cut>${endTokenPart}"
   }

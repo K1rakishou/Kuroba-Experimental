@@ -183,7 +183,7 @@ public class AppModuleAndroidUtils {
             } catch (ActivityNotFoundException e) {
                 Logger.e(TAG, "openLink() application.startActivity() error, intent = " + intent, e);
 
-                String message = getString(R.string.open_link_failed_url_additional_info, e.getMessage());
+                String message = getString(R.string.open_link_failed_url_additional_info, link, e.getMessage());
                 Toast.makeText(application, message, Toast.LENGTH_SHORT).show();
             }
 
@@ -255,7 +255,7 @@ public class AppModuleAndroidUtils {
         } catch (ActivityNotFoundException e) {
             Logger.e(TAG, "openIntent() application.startActivity() error, intent = " + intent, e);
 
-            String message = getString(R.string.open_link_failed_url_additional_info, e.getMessage());
+            String message = getString(R.string.open_intent_failed, intent.toString());
             Toast.makeText(application, message, Toast.LENGTH_SHORT).show();
             return;
         }
