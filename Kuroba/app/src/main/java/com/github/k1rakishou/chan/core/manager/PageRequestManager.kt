@@ -225,39 +225,43 @@ class PageRequestManager(
       return
     }
 
-    Logger.d(TAG, "Requesting new board pages for /${boardDescriptor.boardCode}/")
+    try {
+      Logger.d(TAG, "Requesting new board pages for /${boardDescriptor.boardCode}/")
 
-    siteManager.awaitUntilInitialized()
+      siteManager.awaitUntilInitialized()
 
-    val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
-    if (site == null) {
-      Logger.e(TAG, "Couldn't find site by siteDescriptor (${boardDescriptor.siteDescriptor})")
-      return
-    }
-
-    boardManager.awaitUntilInitialized()
-
-    val board = boardManager.byBoardDescriptor(boardDescriptor)
-    if (board == null) {
-      Logger.e(TAG, "Couldn't find board by siteDescriptor (${boardDescriptor.siteDescriptor}) " +
-        "and boardCode (${boardDescriptor.boardCode})")
-      return
-    }
-
-    when (val response = site.actions().pages(board)) {
-      is JsonReaderRequest.JsonReaderResponse.Success -> {
-        onPagesReceived(response.result.boardDescriptor, response.result)
+      val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+      if (site == null) {
+        Logger.e(TAG, "Couldn't find site by siteDescriptor (${boardDescriptor.siteDescriptor})")
+        return
       }
-      is JsonReaderRequest.JsonReaderResponse.ServerError -> {
-        Logger.e(TAG, "Server error while trying to get board ($board) pages, " +
-          "status code: ${response.statusCode}")
+
+      boardManager.awaitUntilInitialized()
+
+      val board = boardManager.byBoardDescriptor(boardDescriptor)
+      if (board == null) {
+        Logger.e(TAG, "Couldn't find board by siteDescriptor (${boardDescriptor.siteDescriptor}) " +
+          "and boardCode (${boardDescriptor.boardCode})")
+        return
       }
-      is JsonReaderRequest.JsonReaderResponse.UnknownServerError -> {
-        Logger.e(TAG, "Unknown server error while trying to get board (${board}) pages", response.error)
+
+      when (val response = site.actions().pages(board)) {
+        is JsonReaderRequest.JsonReaderResponse.Success -> {
+          onPagesReceived(response.result.boardDescriptor, response.result)
+        }
+        is JsonReaderRequest.JsonReaderResponse.ServerError -> {
+          Logger.e(TAG, "Server error while trying to get board ($board) pages, " +
+              "status code: ${response.statusCode}")
+        }
+        is JsonReaderRequest.JsonReaderResponse.UnknownServerError -> {
+          Logger.e(TAG, "Unknown server error while trying to get board (${board}) pages", response.error)
+        }
+        is JsonReaderRequest.JsonReaderResponse.ParsingError -> {
+          Logger.e(TAG, "Parsing error while trying to get board (${board}) pages", response.error)
+        }
       }
-      is JsonReaderRequest.JsonReaderResponse.ParsingError -> {
-        Logger.e(TAG, "Parsing error while trying to get board (${board}) pages", response.error)
-      }
+    } finally {
+      synchronized(this) { requestedBoards.remove(boardDescriptor.boardCode) }
     }
   }
 
@@ -269,7 +273,6 @@ class PageRequestManager(
     Logger.d(TAG, "Got pages for ${boardDescriptor.siteName()}/${boardDescriptor.boardCode}/")
 
     savedBoards.add(boardDescriptor.boardCode)
-    requestedBoards.remove(boardDescriptor.boardCode)
     boardTimeMap[boardDescriptor.boardCode] = System.currentTimeMillis()
     boardPagesMap[boardDescriptor.boardCode] = pages
 
