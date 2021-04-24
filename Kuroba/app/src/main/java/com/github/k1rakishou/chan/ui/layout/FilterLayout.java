@@ -224,7 +224,7 @@ public class FilterLayout
                 themeEngine.tintDrawable(getContext(), R.drawable.ic_help_outline_white_24dp)
         );
 
-        int color = themeEngine.resolveTintColor(isDarkColor);
+        int color = themeEngine.resolveDrawableTintColor(isDarkColor);
 
         typeText.setCompoundDrawablesWithIntrinsicBounds(
                 null,

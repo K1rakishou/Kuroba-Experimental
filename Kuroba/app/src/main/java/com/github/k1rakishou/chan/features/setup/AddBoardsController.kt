@@ -163,7 +163,7 @@ class AddBoardsController(
           state.selectableBoardCellDataList.forEach { selectableBoardCellData ->
             epoxySelectableBoardView {
               id("add_boards_selectable_board_view_${selectableBoardCellData.boardCellData.boardDescriptor}")
-              boardName(selectableBoardCellData.boardCellData.name)
+              boardName(selectableBoardCellData.boardCellData.fullName)
               boardDescription(selectableBoardCellData.boardCellData.description)
               boardSelected(selectableBoardCellData.selected)
               onClickedCallback { isChecked ->

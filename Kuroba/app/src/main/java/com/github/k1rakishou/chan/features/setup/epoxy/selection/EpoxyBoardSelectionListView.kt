@@ -13,7 +13,7 @@ import com.google.android.material.textview.MaterialTextView
 import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
-class EpoxyBoardSelectionView @JvmOverloads constructor(
+class EpoxyBoardSelectionListView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
@@ -22,14 +22,18 @@ class EpoxyBoardSelectionView @JvmOverloads constructor(
   @Inject
   lateinit var themeEngine: ThemeEngine
 
+  private val boardCode: MaterialTextView
+  private val boardSeparator: MaterialTextView
   private val boardName: MaterialTextView
 
   init {
-    inflate(context, R.layout.epoxy_board_selection_view, this)
+    inflate(context, R.layout.epoxy_board_selection_list_view, this)
 
     AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
+    boardCode = findViewById(R.id.board_code)
+    boardSeparator = findViewById(R.id.board_separator)
     boardName = findViewById(R.id.board_name)
   }
 
@@ -44,6 +48,12 @@ class EpoxyBoardSelectionView @JvmOverloads constructor(
   }
 
   override fun onThemeChanged() {
+    updateBoardNameColor()
+  }
+
+  @ModelProp
+  fun bindBoardCode(boardCode: String) {
+    this.boardCode.text = boardCode
     updateBoardNameColor()
   }
 
@@ -66,6 +76,8 @@ class EpoxyBoardSelectionView @JvmOverloads constructor(
   }
 
   private fun updateBoardNameColor() {
+    boardCode.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    boardSeparator.setTextColor(themeEngine.chanTheme.textColorPrimary)
     boardName.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 

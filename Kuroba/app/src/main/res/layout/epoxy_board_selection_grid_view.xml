@@ -2,20 +2,31 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="48dp"
+    android:layout_height="wrap_content"
     android:background="?attr/selectableItemBackground"
     android:orientation="vertical"
     android:paddingTop="8dp"
-    android:paddingBottom="8dp">
+    android:paddingBottom="8dp"
+    tools:layout_width="96dp">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/board_code"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:textSize="18sp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        tools:text="/a/" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/board_name"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:gravity="center_vertical"
-        android:textSize="18sp"
-        android:maxLines="1"
+        android:gravity="center_horizontal"
+        android:textSize="14sp"
+        android:maxLines="3"
         android:ellipsize="end"
-        tools:text="/a/ - Anime and Manga" />
+        tools:text="Anime and Manga" />
 
 </LinearLayout>

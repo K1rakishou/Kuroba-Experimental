@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.setup.epoxy.selection
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.View
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
 import coil.request.Disposable
@@ -30,6 +31,7 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
 
   private val siteIcon: AppCompatImageView
   private val siteName: MaterialTextView
+  private val divider: View
 
   private var requestDisposable: Disposable? = null
 
@@ -41,6 +43,9 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
 
     siteIcon = findViewById(R.id.site_icon)
     siteName = findViewById(R.id.site_name)
+    divider = findViewById(R.id.divider)
+
+    onThemeChanged()
   }
 
   override fun onAttachedToWindow() {
@@ -54,13 +59,16 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
   }
 
   override fun onThemeChanged() {
-    updateSiteNameColor()
+    siteName.setTextColor(themeEngine.chanTheme.textColorPrimary)
+
+    val dividerColor = themeEngine.resolveDrawableTintColor(themeEngine.chanTheme.isBackColorDark)
+    divider.setBackgroundColor(dividerColor)
   }
 
   @ModelProp
   fun bindSiteName(name: String) {
     siteName.text = name
-    updateSiteNameColor()
+    onThemeChanged()
   }
 
   @ModelProp
@@ -94,10 +102,6 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
   fun unbind() {
     this.requestDisposable?.dispose()
     this.requestDisposable = null
-  }
-
-  private fun updateSiteNameColor() {
-    siteName.setTextColor(themeEngine.chanTheme.textColorPrimary)
   }
 
 }

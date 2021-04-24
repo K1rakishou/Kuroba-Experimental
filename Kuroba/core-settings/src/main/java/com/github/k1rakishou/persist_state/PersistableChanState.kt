@@ -64,6 +64,8 @@ object PersistableChanState {
   lateinit var showAlbumViewsImageDetails: BooleanSetting
   @JvmStatic
   lateinit var drawerNavHistoryGridMode: BooleanSetting
+  @JvmStatic
+  lateinit var boardSelectionGridMode: BooleanSetting
 
   fun init(persistableChanStateInfo: PersistableChanStateInfo) {
     PersistableChanState.persistableChanStateInfo = persistableChanStateInfo
@@ -170,6 +172,7 @@ object PersistableChanState {
       showAlbumViewsImageDetails = BooleanSetting(provider, "show_album_views_image_details", true)
 
       drawerNavHistoryGridMode = BooleanSetting(provider, "drawer_nav_history_grid_mode", false)
+      boardSelectionGridMode = BooleanSetting(provider, "board_selection_grid_mode", false)
 
     } catch (e: Exception) {
       Logger.e(TAG, "Error while initializing the state", e)

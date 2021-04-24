@@ -1,12 +1,15 @@
 package com.github.k1rakishou.chan.features.setup.data
 
+import com.github.k1rakishou.chan.ui.helper.BoardHelper
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 
 class BoardCellData(
   val boardDescriptor: BoardDescriptor,
-  val name: String,
+  val boardName: String,
   val description: String
 ) {
+  val boardCodeFormatted by lazy { "/${boardDescriptor.boardCode}/" }
+  val fullName by lazy { BoardHelper.getName(boardDescriptor.boardCode, boardName) }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -24,7 +27,7 @@ class BoardCellData(
   }
 
   override fun toString(): String {
-    return "BoardCellData(boardDescriptor=$boardDescriptor, name='$name', description='$description')"
+    return "BoardCellData(boardDescriptor=$boardDescriptor, fullName='$fullName', description='$description')"
   }
 
 }

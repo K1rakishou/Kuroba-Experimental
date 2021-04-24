@@ -125,7 +125,7 @@ class AddBoardsPresenter(
       matchedBoards += SelectableBoardCellData(
         boardCellData = BoardCellData(
           boardDescriptor = chanBoard.boardDescriptor,
-          name = BoardHelper.getName(chanBoard),
+          boardName = chanBoard.boardName(),
           description = BoardHelper.getDescription(chanBoard)
         ),
         selected = isSelected

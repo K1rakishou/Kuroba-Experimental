@@ -963,7 +963,7 @@ class MainController(
     val isGridMode = PersistableChanState.drawerNavHistoryGridMode.get()
     if (isGridMode) {
       val screenWidth = AndroidUtils.getDisplaySize(context).x
-      val spanCount = (screenWidth / dp(96f)).coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
+      val spanCount = (screenWidth / GRID_COLUMN_WIDTH).coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
 
       epoxyRecyclerView.layoutManager = GridLayoutManager(context, spanCount).apply {
         spanSizeLookup = controller.spanSizeLookup
@@ -1035,5 +1035,6 @@ class MainController(
     private const val ACTION_TOGGLE_NAV_HISTORY_LAYOUT_MODE = 4
 
     private val BADGE_DRAWABLE_VERTICAL_OFFSET = dp(4f)
+    private val GRID_COLUMN_WIDTH = dp(96f)
   }
 }

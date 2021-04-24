@@ -32,7 +32,7 @@ data class ChanBoard(
   val archive: Boolean = false
 ) {
 
-  fun boardName(): String = name ?: "No board name"
+  fun boardName(): String = name ?: ""
   fun siteName(): String =  boardDescriptor.siteName()
   fun boardCode(): String = boardDescriptor.boardCode
 

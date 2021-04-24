@@ -28,7 +28,6 @@ import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
-import com.github.k1rakishou.chan.ui.helper.BoardHelper
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
@@ -218,7 +217,7 @@ class BoardsSetupController(
           state.boardCellDataList.forEach { boardCellData ->
             epoxyBoardView {
               id("boards_setup_board_view_${boardCellData.boardDescriptor}")
-              boardName(BoardHelper.getName(boardCellData.boardDescriptor.boardCode, boardCellData.name))
+              boardName(boardCellData.fullName)
               boardDescription(boardCellData.description)
               boardDescriptor(boardCellData.boardDescriptor)
             }

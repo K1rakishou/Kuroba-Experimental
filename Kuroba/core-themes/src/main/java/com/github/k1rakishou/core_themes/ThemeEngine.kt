@@ -145,13 +145,13 @@ open class ThemeEngine(
     val drawable = ContextCompat.getDrawable(context, drawableId)?.mutate()
       ?: throw IllegalStateException("Couldn't find drawable ${drawableId}")
 
-    DrawableCompat.setTint(drawable, resolveTintColor(isCurrentColorDark))
+    DrawableCompat.setTint(drawable, resolveDrawableTintColor(isCurrentColorDark))
     return drawable
   }
 
   fun tintDrawable(drawable: Drawable, isCurrentColorDark: Boolean): Drawable {
     val drawableMutable = DrawableCompat.wrap(drawable).mutate()
-    DrawableCompat.setTint(drawableMutable, resolveTintColor(isCurrentColorDark))
+    DrawableCompat.setTint(drawableMutable, resolveDrawableTintColor(isCurrentColorDark))
 
     return drawableMutable
   }
@@ -163,7 +163,7 @@ open class ThemeEngine(
     return drawableMutable
   }
 
-  fun resolveTintColor(isCurrentColorDark: Boolean): Int {
+  fun resolveDrawableTintColor(isCurrentColorDark: Boolean): Int {
     return if (isCurrentColorDark) {
       LIGHT_DRAWABLE_TINT
     } else {

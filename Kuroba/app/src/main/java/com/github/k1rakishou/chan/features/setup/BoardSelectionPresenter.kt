@@ -9,11 +9,11 @@ import com.github.k1rakishou.chan.features.setup.data.BoardSelectionControllerSt
 import com.github.k1rakishou.chan.features.setup.data.SiteCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
 import com.github.k1rakishou.chan.ui.helper.BoardDescriptorsComparator
-import com.github.k1rakishou.chan.ui.helper.BoardHelper
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.site.ChanSiteData
+import com.github.k1rakishou.persist_state.PersistableChanState
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
@@ -53,6 +53,10 @@ class BoardSelectionPresenter(
     showActiveSitesWithBoardsSorted(query)
   }
 
+  fun reloadBoards() {
+    showActiveSitesWithBoardsSorted()
+  }
+
   private fun showActiveSitesWithBoardsSorted(query: String = "") {
     val resultMap = linkedMapOf<SiteCellData, List<BoardCellData>>()
 
@@ -79,7 +83,12 @@ class BoardSelectionPresenter(
       return
     }
 
-    setState(BoardSelectionControllerState.Data(resultMap))
+    val newState = BoardSelectionControllerState.Data(
+      isGridMode = PersistableChanState.boardSelectionGridMode.get(),
+      sortedSiteWithBoardsData = resultMap
+    )
+
+    setState(newState)
   }
 
   private fun collectBoards(
@@ -93,9 +102,9 @@ class BoardSelectionPresenter(
 
       if (query.isEmpty() || boardCode.contains(query, ignoreCase = true)) {
         boardCellDataList += BoardCellData(
-          chanBoard.boardDescriptor,
-          BoardHelper.getName(chanBoard),
-          ""
+          boardDescriptor = chanBoard.boardDescriptor,
+          boardName = chanBoard.boardName(),
+          description = ""
         )
       }
     }
