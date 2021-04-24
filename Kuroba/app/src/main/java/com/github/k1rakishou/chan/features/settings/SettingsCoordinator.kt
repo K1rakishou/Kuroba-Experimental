@@ -13,7 +13,7 @@ import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
 import com.github.k1rakishou.chan.core.usecase.TwoCaptchaCheckBalanceUseCase
-import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
+import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.settings.screens.*
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
@@ -45,7 +45,7 @@ import javax.inject.Inject
 class SettingsCoordinator(
   private val context: Context,
   private val navigationController: NavigationController,
-  private val drawerCallbacks: DrawerCallbacks?
+  private val drawerCallbacks: MainControllerCallbacks?
 ): SettingsCoordinatorCallbacks {
 
   @Inject

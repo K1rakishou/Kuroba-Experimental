@@ -19,6 +19,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.model.util.ChanPostUtils
+import com.github.k1rakishou.persist_state.PersistableChanState
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
@@ -31,7 +32,7 @@ import okhttp3.HttpUrl
 import kotlin.time.ExperimentalTime
 import kotlin.time.seconds
 
-class DrawerPresenter(
+class MainControllerPresenter(
   private val isDevFlavor: Boolean,
   private val historyNavigationManager: HistoryNavigationManager,
   private val siteManager: SiteManager,
@@ -39,7 +40,7 @@ class DrawerPresenter(
   private val pageRequestManager: PageRequestManager,
   private val archivesManager: ArchivesManager,
   private val chanThreadManager: ChanThreadManager
-) : BasePresenter<DrawerView>() {
+) : BasePresenter<MainControllerView>() {
 
   private val historyControllerStateSubject = PublishProcessor.create<HistoryControllerState>()
     .toSerialized()
@@ -48,7 +49,7 @@ class DrawerPresenter(
   private val reloadNavHistoryDebouncer = DebouncingCoroutineExecutor(scope)
 
   @OptIn(ExperimentalTime::class)
-  override fun onCreate(view: DrawerView) {
+  override fun onCreate(view: MainControllerView) {
     super.onCreate(view)
 
     scope.launch {
@@ -202,7 +203,12 @@ class DrawerPresenter(
       return
     }
 
-    setState(HistoryControllerState.Data(navHistoryList))
+    val newState = HistoryControllerState.Data(
+      isGridLayoutMode = PersistableChanState.drawerNavHistoryGridMode.get(),
+      navHistoryEntryList = navHistoryList
+    )
+
+    setState(newState)
   }
 
   private fun createNavHistoryElementOrNull(

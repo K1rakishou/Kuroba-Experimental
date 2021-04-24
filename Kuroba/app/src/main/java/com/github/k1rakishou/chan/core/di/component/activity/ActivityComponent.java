@@ -15,10 +15,11 @@ import com.github.k1rakishou.chan.features.bookmarks.epoxy.BaseThreadBookmarkVie
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.EpoxyGridThreadBookmarkViewHolder;
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.EpoxyListThreadBookmarkViewHolder;
 import com.github.k1rakishou.chan.features.bypass.SiteAntiSpamCheckBypassController;
-import com.github.k1rakishou.chan.features.drawer.DrawerPresenter;
 import com.github.k1rakishou.chan.features.drawer.MainController;
-import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryEntryView;
+import com.github.k1rakishou.chan.features.drawer.MainControllerPresenter;
+import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryGridEntryView;
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryHeaderView;
+import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryListEntryView;
 import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesController;
 import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10GestureZonesController;
 import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10GestureZonesView;
@@ -266,7 +267,8 @@ public interface ActivityComponent {
 
     void inject(EpoxyGridThreadBookmarkViewHolder epoxyGridThreadBookmarkViewHolder);
     void inject(EpoxyListThreadBookmarkViewHolder epoxyListThreadBookmarkViewHolder);
-    void inject(EpoxyHistoryEntryView epoxyHistoryEntryView);
+    void inject(EpoxyHistoryListEntryView epoxyHistoryListEntryView);
+    void inject(EpoxyHistoryGridEntryView epoxyHistoryGridEntryView);
     void inject(EpoxyProxyView epoxyProxyView);
     void inject(EpoxySearchEndOfResultsView epoxySearchEndOfResultsView);
     void inject(EpoxySearchErrorView epoxySearchErrorView);
@@ -322,7 +324,7 @@ public interface ActivityComponent {
     void inject(NavigationControllerContainerLayout navigationControllerContainerLayout);
     void inject(BookmarksPresenter bookmarksPresenter);
     void inject(BaseThreadBookmarkViewHolder baseThreadBookmarkViewHolder);
-    void inject(DrawerPresenter drawerPresenter);
+    void inject(MainControllerPresenter mainControllerPresenter);
     void inject(AdjustAndroid10GestureZonesView adjustAndroid10GestureZonesView);
     void inject(SettingsCoordinator settingsCoordinator);
     void inject(JsCaptchaCookiesEditorLayout jsCaptchaCookiesEditorLayout);

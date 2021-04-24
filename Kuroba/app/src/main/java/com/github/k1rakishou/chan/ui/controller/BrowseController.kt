@@ -33,7 +33,7 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.presenter.BrowsePresenter
 import com.github.k1rakishou.chan.core.site.SiteResolver
-import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
+import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.setup.BoardSelectionController
 import com.github.k1rakishou.chan.features.setup.SiteSettingsController
 import com.github.k1rakishou.chan.features.setup.SitesSetupController
@@ -65,7 +65,7 @@ import javax.inject.Inject
 
 class BrowseController(
   context: Context,
-  drawerCallbacks: DrawerCallbacks?
+  drawerCallbacks: MainControllerCallbacks?
 ) : ThreadController(context, drawerCallbacks),
   ThreadLayoutCallback,
   BrowsePresenter.Callback,

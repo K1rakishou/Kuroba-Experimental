@@ -36,7 +36,7 @@ import com.github.k1rakishou.chan.features.bookmarks.epoxy.EpoxyListThreadBookma
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.UnifiedBookmarkInfoAccessor
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyGridThreadBookmarkViewHolder
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyListThreadBookmarkViewHolder
-import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
+import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.ui.controller.navigation.TabPageController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.settings.RangeSettingUpdaterController
@@ -71,7 +71,7 @@ import javax.inject.Inject
 class BookmarksController(
   context: Context,
   bookmarksToHighlight: List<ChanDescriptor.ThreadDescriptor>,
-  private var drawerCallbacks: DrawerCallbacks?
+  private var drawerCallbacks: MainControllerCallbacks?
 ) : TabPageController(context),
   BookmarksView,
   ToolbarNavigationController.ToolbarSearchCallback,

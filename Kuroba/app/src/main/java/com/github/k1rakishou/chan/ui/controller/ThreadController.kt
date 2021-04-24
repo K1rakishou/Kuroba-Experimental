@@ -32,7 +32,7 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
 import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
-import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
+import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.ui.controller.ImageViewerController.ImageViewerCallback
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
@@ -61,7 +61,7 @@ import javax.inject.Inject
 
 abstract class ThreadController(
   context: Context,
-  var drawerCallbacks: DrawerCallbacks?
+  var drawerCallbacks: MainControllerCallbacks?
 ) : Controller(context),
   ThreadLayoutCallback,
   ImageViewerCallback,

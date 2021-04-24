@@ -8,7 +8,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
-import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
+import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyBooleanSetting
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyLinkSetting
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyNoSettingsFoundView
@@ -36,7 +36,7 @@ import javax.inject.Inject
 
 class MainSettingsControllerV2(
   context: Context,
-  private var drawerCallbacks: DrawerCallbacks?
+  private var drawerCallbacks: MainControllerCallbacks?
 ) : BaseSettingsController(context), ToolbarSearchCallback {
 
   @Inject

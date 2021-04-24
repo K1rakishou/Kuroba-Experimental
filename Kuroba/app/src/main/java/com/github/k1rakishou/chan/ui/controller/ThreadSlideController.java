@@ -29,7 +29,7 @@ import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.controller.transition.ControllerTransition;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
-import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks;
+import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks;
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController;
 import com.github.k1rakishou.chan.ui.layout.ThreadSlidingPaneLayout;
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem;
@@ -59,7 +59,7 @@ public class ThreadSlideController
     public ViewThreadController rightController;
 
     @Nullable
-    private DrawerCallbacks drawerCallbacks;
+    private MainControllerCallbacks mainControllerCallbacks;
     private boolean leftOpen = true;
     private ViewGroup emptyView;
     private ThreadSlidingPaneLayout slidingPaneLayout;
@@ -69,11 +69,11 @@ public class ThreadSlideController
         component.inject(this);
     }
 
-    public ThreadSlideController(Context context, ViewGroup emptyView, @NotNull DrawerCallbacks drawerCallbacks) {
+    public ThreadSlideController(Context context, ViewGroup emptyView, @NotNull MainControllerCallbacks mainControllerCallbacks) {
         super(context);
 
         this.emptyView = emptyView;
-        this.drawerCallbacks = drawerCallbacks;
+        this.mainControllerCallbacks = mainControllerCallbacks;
     }
 
     @Override
@@ -115,7 +115,7 @@ public class ThreadSlideController
         super.onDestroy();
 
         themeEngine.removeListener(this);
-        drawerCallbacks = null;
+        mainControllerCallbacks = null;
     }
 
     @Override
@@ -131,8 +131,8 @@ public class ThreadSlideController
     public void onShow() {
         super.onShow();
 
-        if (drawerCallbacks != null) {
-            drawerCallbacks.resetBottomNavViewCheckState();
+        if (mainControllerCallbacks != null) {
+            mainControllerCallbacks.resetBottomNavViewCheckState();
         }
     }
 

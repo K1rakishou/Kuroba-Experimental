@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="4dp"
+    tools:parentTag="android.widget.FrameLayout">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/history_entry_view_holder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:orientation="vertical">
+
+        <RelativeLayout
+            android:id="@+id/icon_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/history_entry_thread_image"
+                android:layout_width="@dimen/history_entry_thread_image_size"
+                android:layout_height="@dimen/history_entry_thread_image_size"
+                android:padding="8dp"
+                android:scaleType="centerCrop"
+                tools:src="@drawable/ic_baseline_settings" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/history_entry_site_image"
+                android:layout_width="@dimen/history_entry_site_image_size"
+                android:layout_height="@dimen/history_entry_site_image_size"
+                android:layout_alignTop="@+id/history_entry_thread_image"
+                android:layout_alignEnd="@+id/history_entry_thread_image"
+                android:scaleType="centerCrop"
+                tools:src="@drawable/ic_baseline_settings" />
+
+        </RelativeLayout>
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/history_entry_info"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:clickable="false"
+            android:focusable="false"
+            android:gravity="center_horizontal"
+            android:maxLines="2"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="@+id/icon_container"
+            app:layout_constraintStart_toStartOf="@+id/icon_container"
+            app:layout_constraintTop_toBottomOf="@+id/icon_container"
+            tools:text="123" />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/history_entry_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:gravity="center_horizontal"
+            android:maxLines="3"
+            android:textSize="12sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/history_entry_info"
+            tools:text="34" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</merge>

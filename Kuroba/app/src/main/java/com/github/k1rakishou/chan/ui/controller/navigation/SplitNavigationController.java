@@ -31,7 +31,7 @@ import com.github.k1rakishou.chan.controller.transition.ControllerTransition;
 import com.github.k1rakishou.chan.controller.transition.PopControllerTransition;
 import com.github.k1rakishou.chan.controller.transition.PushControllerTransition;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
-import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks;
+import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks;
 import com.github.k1rakishou.chan.ui.controller.PopupController;
 import com.github.k1rakishou.chan.ui.layout.SplitNavigationControllerLayout;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
@@ -54,7 +54,7 @@ public class SplitNavigationController
     public Controller rightController;
 
     @Nullable
-    private DrawerCallbacks drawerCallbacks;
+    private MainControllerCallbacks mainControllerCallbacks;
     private FrameLayout leftControllerView;
     private FrameLayout rightControllerView;
     private ViewGroup emptyView;
@@ -68,11 +68,11 @@ public class SplitNavigationController
         component.inject(this);
     }
 
-    public SplitNavigationController(Context context, ViewGroup emptyView, @NotNull DrawerCallbacks drawerCallbacks) {
+    public SplitNavigationController(Context context, ViewGroup emptyView, @NotNull MainControllerCallbacks mainControllerCallbacks) {
         super(context);
 
         this.emptyView = emptyView;
-        this.drawerCallbacks = drawerCallbacks;
+        this.mainControllerCallbacks = mainControllerCallbacks;
     }
 
     @Override
@@ -108,7 +108,7 @@ public class SplitNavigationController
         super.onDestroy();
 
         themeEngine.removeListener(this);
-        drawerCallbacks = null;
+        mainControllerCallbacks = null;
     }
 
     @Override
@@ -218,8 +218,8 @@ public class SplitNavigationController
     public boolean popController(ControllerTransition controllerTransition) {
         if (popup != null) {
             if (popupChild.childControllers.size() == 1) {
-                if (drawerCallbacks != null) {
-                    drawerCallbacks.resetBottomNavViewCheckState();
+                if (mainControllerCallbacks != null) {
+                    mainControllerCallbacks.resetBottomNavViewCheckState();
                 }
 
                 Objects.requireNonNull(presentingThisController);
@@ -238,8 +238,8 @@ public class SplitNavigationController
 
     public void popAll() {
         if (popup != null) {
-            if (drawerCallbacks != null) {
-                drawerCallbacks.resetBottomNavViewCheckState();
+            if (mainControllerCallbacks != null) {
+                mainControllerCallbacks.resetBottomNavViewCheckState();
             }
 
             Objects.requireNonNull(presentingThisController);

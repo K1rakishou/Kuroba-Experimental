@@ -9,7 +9,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController
-import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
+import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTabLayout
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
@@ -23,7 +23,7 @@ import com.google.android.material.tabs.TabLayout
 class TabHostController(
   context: Context,
   private val bookmarksToHighlight: List<ChanDescriptor.ThreadDescriptor>,
-  private val drawerCallbacks: DrawerCallbacks?
+  private val drawerCallbacks: MainControllerCallbacks?
 ) : Controller(context), ToolbarNavigationController.ToolbarSearchCallback, DisableableLayout {
   private lateinit var tabLayout: ColorizableTabLayout
   private lateinit var viewPager: KurobaViewPager

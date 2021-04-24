@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.features.settings.screens
 import android.content.Context
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
-import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
+import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.proxies.ProxySetupController
 import com.github.k1rakishou.chan.features.settings.SecurityScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
@@ -15,7 +15,7 @@ class SecuritySettingsScreen(
   context: Context,
   private val navigationController: NavigationController,
   private val proxyStorage: ProxyStorage,
-  private val drawerCallbacks: DrawerCallbacks?
+  private val drawerCallbacks: MainControllerCallbacks?
 ) : BaseSettingsScreen(
   context,
   SecurityScreen,

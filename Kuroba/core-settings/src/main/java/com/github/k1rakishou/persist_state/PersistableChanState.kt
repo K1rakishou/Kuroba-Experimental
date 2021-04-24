@@ -62,6 +62,8 @@ object PersistableChanState {
   lateinit var reorderableBottomNavViewButtons: JsonSetting<ReorderableBottomNavViewButtons>
   @JvmStatic
   lateinit var showAlbumViewsImageDetails: BooleanSetting
+  @JvmStatic
+  lateinit var drawerNavHistoryGridMode: BooleanSetting
 
   fun init(persistableChanStateInfo: PersistableChanStateInfo) {
     PersistableChanState.persistableChanStateInfo = persistableChanStateInfo
@@ -165,7 +167,9 @@ object PersistableChanState {
         ReorderableBottomNavViewButtons()
       )
 
-      showAlbumViewsImageDetails = BooleanSetting(provider, "show_album_views_image_details", true);
+      showAlbumViewsImageDetails = BooleanSetting(provider, "show_album_views_image_details", true)
+
+      drawerNavHistoryGridMode = BooleanSetting(provider, "drawer_nav_history_grid_mode", false)
 
     } catch (e: Exception) {
       Logger.e(TAG, "Error while initializing the state", e)

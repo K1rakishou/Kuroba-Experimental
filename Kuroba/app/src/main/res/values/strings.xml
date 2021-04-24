@@ -1117,6 +1117,8 @@ Don't have a 4chan Pass?<br>
     <string name="drawer_controller_show_bookmarks">Show bookmarked threads</string>
     <string name="drawer_controller_show_navigation_history">Show navigation history</string>
     <string name="drawer_controller_clear_nav_history">Clear navigation history</string>
+    <string name="drawer_controller_history_list_layout_mode">Navigation history list mode</string>
+    <string name="drawer_controller_history_grid_layout_mode">Navigation history grid mode</string>
     <string name="drawer_controller_clear_nav_history_dialog_title">Clear navigation history?</string>
 
     <string name="thread_layout_background_watcher_is_disabled_message">Thread is currently being downloaded, but the background watcher is disabled so it won\'t be incrementally updated. To enable incremental thread updating, you have to enable the background thread watcher.</string>

@@ -6,9 +6,9 @@ import android.graphics.Typeface
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
-import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import coil.request.Disposable
 import coil.transform.CircleCropTransformation
 import com.airbnb.epoxy.AfterPropsSet
@@ -18,20 +18,19 @@ import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.features.drawer.data.ImagesLoaderRequestData
 import com.github.k1rakishou.chan.features.drawer.data.NavHistoryBookmarkAdditionalInfo
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import okhttp3.HttpUrl
 import javax.inject.Inject
 
-@ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
-class EpoxyHistoryEntryView @JvmOverloads constructor(
+@ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT, fullSpan = false)
+class EpoxyHistoryGridEntryView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : FrameLayout(context, attrs, defStyleAttr),
-  ThemeEngine.ThemeChangesListener {
+) : FrameLayout(context, attrs, defStyleAttr), ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
@@ -44,16 +43,16 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
   private var descriptor: ChanDescriptor? = null
   private var additionalInfo: NavHistoryBookmarkAdditionalInfo? = null
 
-  private val viewHolder: LinearLayout
+  private val viewHolder: ConstraintLayout
   private val threadThumbnailImage: AppCompatImageView
   private val siteThumbnailImage: AppCompatImageView
   private val title: AppCompatTextView
-  private val bookmarkStats: AppCompatTextView
+  private val historyEntryInfo: AppCompatTextView
   private val threadThumbnailImageSize: Int
   private val siteThumbnailImageSize: Int
 
   init {
-    inflate(context, R.layout.epoxy_history_entry_view, this)
+    inflate(context, R.layout.epoxy_history_grid_entry_view, this)
 
     AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
@@ -62,7 +61,7 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
     threadThumbnailImage = findViewById(R.id.history_entry_thread_image)
     siteThumbnailImage = findViewById(R.id.history_entry_site_image)
     title = findViewById(R.id.history_entry_title)
-    bookmarkStats = findViewById(R.id.history_entry_bookmark_stats)
+    historyEntryInfo = findViewById(R.id.history_entry_info)
 
     threadThumbnailImageSize = context.resources.getDimension(R.dimen.history_entry_thread_image_size).toInt()
     siteThumbnailImageSize = context.resources.getDimension(R.dimen.history_entry_site_image_size).toInt()
@@ -107,15 +106,15 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
     this.imagesLoaderRequestData = imagesLoaderRequestData
   }
 
+  @ModelProp(options = [ModelProp.Option.DoNotHash])
+  fun setDescriptor(descriptor: ChanDescriptor) {
+    this.descriptor = descriptor
+  }
+
   @ModelProp
   fun setTitle(titleText: String) {
     title.text = titleText
     title.setTextColor(themeEngine.chanTheme.textColorPrimary)
-  }
-
-  @ModelProp(options = [ModelProp.Option.DoNotHash])
-  fun setDescriptor(descriptor: ChanDescriptor) {
-    this.descriptor = descriptor
   }
 
   @ModelProp
@@ -123,34 +122,34 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
     this.additionalInfo = additionalInfo
 
     if (additionalInfo == null) {
-      bookmarkStats.visibility = View.GONE
+      historyEntryInfo.visibility = View.GONE
       return
     }
 
-    bookmarkStats.visibility = View.VISIBLE
-    bookmarkStats.text = additionalInfo.newPosts.toString()
+    historyEntryInfo.visibility = View.VISIBLE
+    historyEntryInfo.text = additionalInfo.newPosts.toString()
 
     if (additionalInfo.newQuotes > 0) {
-      bookmarkStats.setTextColor(themeEngine.chanTheme.bookmarkCounterHasRepliesColor)
+      historyEntryInfo.setTextColor(themeEngine.chanTheme.bookmarkCounterHasRepliesColor)
     } else if (!additionalInfo.watching) {
-      bookmarkStats.setTextColor(themeEngine.chanTheme.bookmarkCounterNotWatchingColor)
+      historyEntryInfo.setTextColor(themeEngine.chanTheme.bookmarkCounterNotWatchingColor)
     } else {
-      bookmarkStats.setTextColor(themeEngine.chanTheme.bookmarkCounterNormalColor)
+      historyEntryInfo.setTextColor(themeEngine.chanTheme.bookmarkCounterNormalColor)
     }
 
-    bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.NORMAL)
-    bookmarkStats.paintFlags = Paint.ANTI_ALIAS_FLAG
+    historyEntryInfo.setTypeface(historyEntryInfo.typeface, Typeface.NORMAL)
+    historyEntryInfo.paintFlags = Paint.ANTI_ALIAS_FLAG
 
     if (additionalInfo.isBumpLimit && additionalInfo.isImageLimit) {
-      bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.BOLD_ITALIC)
+      historyEntryInfo.setTypeface(historyEntryInfo.typeface, Typeface.BOLD_ITALIC)
     } else if (additionalInfo.isBumpLimit) {
-      bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.ITALIC)
+      historyEntryInfo.setTypeface(historyEntryInfo.typeface, Typeface.ITALIC)
     } else if (additionalInfo.isImageLimit) {
-      bookmarkStats.setTypeface(bookmarkStats.typeface, Typeface.BOLD)
+      historyEntryInfo.setTypeface(historyEntryInfo.typeface, Typeface.BOLD)
     }
 
     if (additionalInfo.isLastPage) {
-      bookmarkStats.paintFlags = bookmarkStats.paintFlags or Paint.UNDERLINE_TEXT_FLAG
+      historyEntryInfo.paintFlags = historyEntryInfo.paintFlags or Paint.UNDERLINE_TEXT_FLAG
     }
   }
 
@@ -198,12 +197,8 @@ class EpoxyHistoryEntryView @JvmOverloads constructor(
     }
   }
 
-  data class ImagesLoaderRequestData(
-    val threadThumbnailUrl: HttpUrl,
-    val siteThumbnailUrl: HttpUrl?
-  )
-
   companion object {
     private val CIRCLE_CROP = CircleCropTransformation()
   }
+
 }

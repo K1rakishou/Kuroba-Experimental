@@ -30,7 +30,10 @@ import androidx.appcompat.widget.TooltipCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.forEach
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.airbnb.epoxy.EpoxyController
+import com.airbnb.epoxy.EpoxyModel
 import com.airbnb.epoxy.EpoxyTouchHelper
 import com.github.k1rakishou.BottomNavViewButton
 import com.github.k1rakishou.ChanSettings
@@ -51,11 +54,13 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.navigation.HasNavigation
 import com.github.k1rakishou.chan.features.drawer.data.HistoryControllerState
+import com.github.k1rakishou.chan.features.drawer.data.ImagesLoaderRequestData
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
-import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryEntryView
-import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryEntryViewModel_
-import com.github.k1rakishou.chan.features.drawer.epoxy.epoxyHistoryEntryView
+import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryGridEntryViewModel_
+import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryListEntryViewModel_
+import com.github.k1rakishou.chan.features.drawer.epoxy.epoxyHistoryGridEntryView
 import com.github.k1rakishou.chan.features.drawer.epoxy.epoxyHistoryHeaderView
+import com.github.k1rakishou.chan.features.drawer.epoxy.epoxyHistoryListEntryView
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController
 import com.github.k1rakishou.chan.features.image_saver.ResolveDuplicateImagesController
@@ -91,6 +96,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.chan.utils.plusAssign
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -106,8 +112,8 @@ import javax.inject.Inject
 class MainController(
   context: Context
 ) : Controller(context),
-  DrawerView,
-  DrawerCallbacks,
+  MainControllerView,
+  MainControllerCallbacks,
   View.OnClickListener,
   WindowInsetsListener,
   ThemeEngine.ThemeChangesListener {
@@ -139,6 +145,8 @@ class MainController(
   @Inject
   lateinit var globalViewStateManager: GlobalViewStateManager
 
+  private val controller = MainEpoxyController()
+
   private lateinit var rootLayout: TouchBlockingFrameLayout
   private lateinit var container: FrameLayout
   private lateinit var drawerLayout: DrawerLayout
@@ -159,7 +167,7 @@ class MainController(
   }
 
   private val drawerPresenter by lazy {
-    DrawerPresenter(
+    MainControllerPresenter(
       isDevFlavor = isDevBuild(),
       historyNavigationManager = historyNavigationManager,
       siteManager = siteManager,
@@ -230,10 +238,12 @@ class MainController(
     drawerLayout = view.findViewById(R.id.drawer_layout)
     drawerLayout.setDrawerShadow(R.drawable.panel_shadow, GravityCompat.START)
     drawer = view.findViewById(R.id.drawer_part)
-    epoxyRecyclerView = view.findViewById(R.id.drawer_recycler_view)
     divider = view.findViewById(R.id.divider)
     bottomNavView = view.findViewById(R.id.bottom_navigation_view)
     bottomMenuPanel = view.findViewById(R.id.bottom_menu_panel)
+
+    epoxyRecyclerView = view.findViewById(R.id.drawer_recycler_view)
+    epoxyRecyclerView.setController(controller)
 
     setBottomNavViewButtons()
     bottomNavView.selectedItemId = R.id.action_browse
@@ -279,10 +289,33 @@ class MainController(
     EpoxyTouchHelper
       .initSwiping(epoxyRecyclerView)
       .right()
-      .withTarget(EpoxyHistoryEntryViewModel_::class.java)
-      .andCallbacks(object : SimpleEpoxySwipeCallbacks<EpoxyHistoryEntryViewModel_>() {
+      .withTargets(EpoxyHistoryListEntryViewModel_::class.java, EpoxyHistoryGridEntryViewModel_::class.java)
+      .andCallbacks(object : SimpleEpoxySwipeCallbacks<EpoxyModel<*>>() {
         override fun onSwipeCompleted(
-          model: EpoxyHistoryEntryViewModel_,
+          model: EpoxyModel<*>,
+          itemView: View?,
+          position: Int,
+          direction: Int
+        ) {
+          super.onSwipeCompleted(model, itemView, position, direction)
+
+          val descriptor = when (model) {
+            is EpoxyHistoryListEntryViewModel_ -> model.descriptor()
+            is EpoxyHistoryGridEntryViewModel_ -> model.descriptor()
+            else -> throw IllegalArgumentException("Unknown model: ${model.javaClass.simpleName}")
+          }
+
+          drawerPresenter.onNavElementSwipedAway(descriptor)
+        }
+      })
+
+    EpoxyTouchHelper
+      .initSwiping(epoxyRecyclerView)
+      .right()
+      .withTarget(EpoxyHistoryGridEntryViewModel_::class.java)
+      .andCallbacks(object : SimpleEpoxySwipeCallbacks<EpoxyHistoryGridEntryViewModel_>() {
+        override fun onSwipeCompleted(
+          model: EpoxyHistoryGridEntryViewModel_,
           itemView: View?,
           position: Int,
           direction: Int
@@ -292,6 +325,8 @@ class MainController(
           drawerPresenter.onNavElementSwipedAway(model.descriptor())
         }
       })
+
+    updateRecyclerLayoutMode()
 
     compositeDisposable += drawerPresenter.listenForStateChanges()
       .subscribe(
@@ -706,7 +741,7 @@ class MainController(
     presentController(imageSaverV2OptionsController)
   }
 
-  private fun onBookmarksBadgeStateChanged(state: DrawerPresenter.BookmarksBadgeState) {
+  private fun onBookmarksBadgeStateChanged(state: MainControllerPresenter.BookmarksBadgeState) {
     if (state.totalUnseenPostsCount <= 0) {
       if (bottomNavView.getBadge(R.id.action_bookmarks) != null) {
         bottomNavView.removeBadge(R.id.action_bookmarks)
@@ -765,7 +800,9 @@ class MainController(
   }
 
   private fun onDrawerStateChanged(state: HistoryControllerState) {
-    epoxyRecyclerView.withModels {
+    val gridMode = PersistableChanState.drawerNavHistoryGridMode.get()
+
+    controller.callback = buildFunc@ {
       addOneshotModelBuildListener {
         val llm = (epoxyRecyclerView.layoutManager as LinearLayoutManager)
 
@@ -781,7 +818,7 @@ class MainController(
           id("history_loading_view")
         }
 
-        return@withModels
+        return@buildFunc
       }
 
       epoxyHistoryHeaderView {
@@ -805,24 +842,37 @@ class MainController(
         }
         is HistoryControllerState.Data -> {
           state.navHistoryEntryList.forEach { navHistoryEntry ->
-            val requestData = EpoxyHistoryEntryView.ImagesLoaderRequestData(
+            val requestData = ImagesLoaderRequestData(
               navHistoryEntry.threadThumbnailUrl,
               navHistoryEntry.siteThumbnailUrl
             )
 
-            epoxyHistoryEntryView {
-              id("navigation_history_entry_${navHistoryEntry.hashCode()}")
-              descriptor(navHistoryEntry.descriptor)
-              imageLoaderRequestData(requestData)
-              title(navHistoryEntry.title)
-              bindNavHistoryBookmarkAdditionalInfo(navHistoryEntry.additionalInfo)
-              clickListener { onHistoryEntryViewClicked(navHistoryEntry) }
+            if (gridMode) {
+              epoxyHistoryGridEntryView {
+                id("navigation_history_grid_entry_${navHistoryEntry.hashCode()}")
+                descriptor(navHistoryEntry.descriptor)
+                imageLoaderRequestData(requestData)
+                title(navHistoryEntry.title)
+                bindNavHistoryBookmarkAdditionalInfo(navHistoryEntry.additionalInfo)
+                clickListener { onHistoryEntryViewClicked(navHistoryEntry) }
+              }
+            } else {
+              epoxyHistoryListEntryView {
+                id("navigation_history_list_entry_${navHistoryEntry.hashCode()}")
+                descriptor(navHistoryEntry.descriptor)
+                imageLoaderRequestData(requestData)
+                title(navHistoryEntry.title)
+                bindNavHistoryBookmarkAdditionalInfo(navHistoryEntry.additionalInfo)
+                clickListener { onHistoryEntryViewClicked(navHistoryEntry) }
+              }
             }
           }
         }
         HistoryControllerState.Loading -> throw IllegalStateException("Must be handled separately")
       }
     }
+
+    controller.requestModelBuild()
   }
 
   private fun showDrawerOptions() {
@@ -849,6 +899,12 @@ class MainController(
     drawerOptions += FloatingListMenuItem(
       key = ACTION_CLEAR_NAV_HISTORY,
       name = getString(R.string.drawer_controller_clear_nav_history)
+    )
+
+    drawerOptions += CheckableFloatingListMenuItem(
+      key = ACTION_TOGGLE_NAV_HISTORY_LAYOUT_MODE,
+      name = getString(R.string.drawer_controller_history_grid_layout_mode),
+      isCurrentlySelected = PersistableChanState.drawerNavHistoryGridMode.get()
     )
 
     val floatingListMenuController = FloatingListMenuController(
@@ -896,7 +952,29 @@ class MainController(
           onPositiveButtonClickListener = { historyNavigationManager.clear() }
         )
       }
+      ACTION_TOGGLE_NAV_HISTORY_LAYOUT_MODE -> {
+        PersistableChanState.drawerNavHistoryGridMode.toggle()
+        updateRecyclerLayoutMode()
+      }
     }
+  }
+
+  private fun updateRecyclerLayoutMode() {
+    val isGridMode = PersistableChanState.drawerNavHistoryGridMode.get()
+    if (isGridMode) {
+      val screenWidth = AndroidUtils.getDisplaySize(context).x
+      val spanCount = (screenWidth / dp(96f)).coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
+
+      epoxyRecyclerView.layoutManager = GridLayoutManager(context, spanCount).apply {
+        spanSizeLookup = controller.spanSizeLookup
+      }
+
+      drawerPresenter.reloadNavigationHistory()
+      return
+    }
+
+    epoxyRecyclerView.layoutManager = LinearLayoutManager(context)
+    drawerPresenter.reloadNavigationHistory()
   }
 
   private fun onHistoryEntryViewClicked(navHistoryEntry: NavigationHistoryEntry) {
@@ -934,15 +1012,27 @@ class MainController(
     }
   }
 
+  private class MainEpoxyController : EpoxyController() {
+    var callback: EpoxyController.() -> Unit = {}
+
+    override fun buildModels() {
+      callback(this)
+    }
+  }
+
   companion object {
     private const val TAG = "MainController"
     private const val BOOKMARKS_BADGE_COUNTER_MAX_NUMBERS = 5
     private const val SETTINGS_BADGE_COUNTER_MAX_NUMBERS = 2
 
+    private const val MIN_SPAN_COUNT = 2
+    private const val MAX_SPAN_COUNT = 10
+
     private const val ACTION_MOVE_LAST_ACCESSED_THREAD_TO_TOP = 0
     private const val ACTION_SHOW_BOOKMARKS = 1
     private const val ACTION_SHOW_NAV_HISTORY = 2
     private const val ACTION_CLEAR_NAV_HISTORY = 3
+    private const val ACTION_TOGGLE_NAV_HISTORY_LAYOUT_MODE = 4
 
     private val BADGE_DRAWABLE_VERTICAL_OFFSET = dp(4f)
   }

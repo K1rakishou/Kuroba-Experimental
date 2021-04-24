@@ -49,7 +49,7 @@ import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.features.bypass.BypassMode
 import com.github.k1rakishou.chan.features.bypass.CookieResult
 import com.github.k1rakishou.chan.features.bypass.SiteAntiSpamCheckBypassController
-import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
+import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper.ImageReencodingHelperCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
@@ -163,7 +163,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   var threadControllerType: ThreadSlideController.ThreadControllerType? = null
     private set
-  private var drawerCallbacks: DrawerCallbacks? = null
+  private var drawerCallbacks: MainControllerCallbacks? = null
   private var newPostsNotification: SnackbarWrapper? = null
   private var replyButtonEnabled = false
   private var refreshedFromSwipe = false
@@ -212,7 +212,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
-  fun setDrawerCallbacks(drawerCallbacks: DrawerCallbacks?) {
+  fun setDrawerCallbacks(drawerCallbacks: MainControllerCallbacks?) {
     this.drawerCallbacks = drawerCallbacks
   }
 

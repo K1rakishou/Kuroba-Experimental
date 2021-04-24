@@ -32,7 +32,7 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.B
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.BookmarksInitialized
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
-import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
+import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
@@ -66,7 +66,7 @@ import javax.inject.Inject
 
 open class ViewThreadController(
   context: Context,
-  drawerCallbacks: DrawerCallbacks?,
+  drawerCallbacks: MainControllerCallbacks?,
   startingThreadDescriptor: ThreadDescriptor
 ) : ThreadController(context, drawerCallbacks),
   ThreadLayoutCallback,

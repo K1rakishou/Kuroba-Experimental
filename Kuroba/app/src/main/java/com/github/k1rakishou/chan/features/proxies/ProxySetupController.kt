@@ -7,7 +7,7 @@ import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
-import com.github.k1rakishou.chan.features.drawer.DrawerCallbacks
+import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.proxies.data.ProxyEntryView
 import com.github.k1rakishou.chan.features.proxies.data.ProxySetupState
 import com.github.k1rakishou.chan.features.proxies.epoxy.epoxyProxyView
@@ -24,7 +24,7 @@ import javax.inject.Inject
 
 class ProxySetupController(
   context: Context,
-  private val drawerCallbacks: DrawerCallbacks?
+  private val drawerCallbacks: MainControllerCallbacks?
 ) : Controller(context), ProxySetupView, ProxySelectionHelper.OnProxyItemClicked {
 
   @Inject

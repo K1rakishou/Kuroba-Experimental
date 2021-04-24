@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="8dp"
+    android:padding="4dp"
     tools:parentTag="android.widget.FrameLayout">
 
     <LinearLayout
@@ -42,16 +42,16 @@
             android:id="@+id/history_entry_title"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="8dp"
             android:layout_weight="1"
             android:ellipsize="end"
             android:gravity="center_vertical"
             android:maxLines="1"
-            android:textSize="18sp"
+            android:textSize="14sp"
             tools:text="@string/lorem_ipsum" />
 
         <androidx.appcompat.widget.AppCompatTextView
-            android:id="@+id/history_entry_bookmark_stats"
+            android:id="@+id/history_entry_info"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical"
