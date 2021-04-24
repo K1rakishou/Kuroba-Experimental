@@ -985,7 +985,7 @@ class PostingServiceDelegate(
           return AntiCaptchaServiceResult.ExitLoop
         }
 
-        val solutionTrimmed = StringUtils.trimToken(solutionResponse.response.requestRaw)
+        val solutionTrimmed = StringUtils.formatToken(solutionResponse.response.requestRaw)
         Logger.d(TAG, "Got solution: \'${solutionTrimmed}\'")
 
         return AntiCaptchaServiceResult.Solution(solutionResponse.response.requestRaw)

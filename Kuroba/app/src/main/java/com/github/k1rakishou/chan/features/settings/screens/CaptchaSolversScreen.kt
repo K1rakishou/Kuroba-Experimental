@@ -67,7 +67,7 @@ class CaptchaSolversScreen(
           identifier = CaptchaSolversScreen.TwoCaptchaSettingsGroup.TwoCaptchaSolverApiKey,
           topDescriptionIdFunc = { R.string.two_captcha_solver_api_key },
           bottomDescriptionStringFunc = {
-            val tokenTrimmed = StringUtils.trimToken(ChanSettings.twoCaptchaSolverApiKey.get())
+            val tokenTrimmed = StringUtils.formatToken(ChanSettings.twoCaptchaSolverApiKey.get())
 
             getString(R.string.two_captcha_solver_api_key_description) + "\n\n" + tokenTrimmed
           },

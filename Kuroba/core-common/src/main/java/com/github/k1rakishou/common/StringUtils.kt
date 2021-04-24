@@ -90,7 +90,11 @@ object StringUtils {
   }
 
   @JvmStatic
-  fun trimToken(token: String): String {
+  fun formatToken(token: String): String {
+    if (token.isEmpty()) {
+      return "<empty>"
+    }
+
     val tokenPartLength = (token.length.toFloat() * 0.2f).toInt() / 2
 
     val startTokenPart = token.substring(0, tokenPartLength)
