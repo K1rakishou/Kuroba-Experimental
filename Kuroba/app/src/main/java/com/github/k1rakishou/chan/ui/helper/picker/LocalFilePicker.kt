@@ -134,6 +134,11 @@ class LocalFilePicker(
     }
 
     if (resultCode != Activity.RESULT_OK) {
+      if (resultCode == Activity.RESULT_CANCELED) {
+        finishWithError(requestCode, FilePickerError.Canceled())
+        return
+      }
+
       finishWithError(requestCode, FilePickerError.BadResultCode(resultCode))
       return
     }

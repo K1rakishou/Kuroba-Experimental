@@ -156,11 +156,14 @@ class SharingActivity : AppCompatActivity() {
               pickedFile.reason
             )
 
-            showToast(
-              this,
-              R.string.share_error_message,
-              Toast.LENGTH_LONG
-            )
+            if (!pickedFile.reason.isCanceled()) {
+              showToast(
+                this,
+                R.string.share_error_message,
+                Toast.LENGTH_LONG
+              )
+            }
+
             return false
           }
         }

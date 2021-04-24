@@ -2076,8 +2076,8 @@ class ThreadPresenter @Inject constructor(
   }
 
   fun lostFocus(wasFocused: ThreadSlideController.ThreadControllerType) {
-    if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SLIDE) {
-      // If we are not in SLIDE layout mode, then we don't need to check the state of SlidingPaneLayout
+    if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+      // If we are not in SLIDE/PHONE layout mode, then we don't need to check the state of SlidingPaneLayout
       currentFocusedController = CurrentFocusedController.None
       return
     }
@@ -2089,8 +2089,8 @@ class ThreadPresenter @Inject constructor(
   }
 
   fun gainedFocus(nowFocused: ThreadSlideController.ThreadControllerType) {
-    if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SLIDE) {
-      // If we are not in SLIDE layout mode, then we don't need to check the state of SlidingPaneLayout
+    if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+      // If we are not in SLIDE/PHONE layout mode, then we don't need to check the state of SlidingPaneLayout
       currentFocusedController = CurrentFocusedController.None
       return
     }

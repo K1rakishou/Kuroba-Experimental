@@ -240,6 +240,10 @@ class ReplyInputEditText @JvmOverloads constructor(
                 .unwrap()
 
               if (pickedFile is PickedFile.Failure) {
+                if (pickedFile.reason.isCanceled()) {
+                  return@launch
+                }
+
                 throw pickedFile.reason
               }
 

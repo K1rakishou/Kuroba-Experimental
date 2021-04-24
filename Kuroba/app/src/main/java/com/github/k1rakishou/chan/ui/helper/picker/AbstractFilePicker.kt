@@ -148,6 +148,8 @@ abstract class AbstractFilePicker<T>(
   }
 
   sealed class FilePickerError(message: String) : Exception(message) {
+    fun isCanceled(): Boolean = this is Canceled
+
     // Common errors
     class UnknownError(cause: Throwable) : FilePickerError("Unknown error: ${cause.errorMessageOrClassName()}")
     class Canceled : FilePickerError("Canceled")

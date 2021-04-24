@@ -395,6 +395,11 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
   override fun showFilePickerErrorToast(filePickerError: AbstractFilePicker.FilePickerError) {
     BackgroundUtils.ensureMainThread()
+
+    if (filePickerError.isCanceled()) {
+      return
+    }
+
     showToast(context, filePickerError.errorMessageOrClassName(), Toast.LENGTH_LONG)
   }
 
