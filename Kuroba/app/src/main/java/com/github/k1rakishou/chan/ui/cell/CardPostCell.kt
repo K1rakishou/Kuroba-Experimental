@@ -321,14 +321,13 @@ class CardPostCell : ColorizableCardView,
       AppModuleAndroidUtils.dp(8f)
     }
 
-    // Same as the layout.
     title!!.setPadding(padding, padding, padding, 0)
     comment!!.setPadding(padding, padding, padding, 0)
     replies!!.setPadding(padding, padding / 2, padding, padding)
   }
 
   companion object {
-    private const val SMALL_FONT_SIZE_SPAN_COUNT = 3
+    private const val SMALL_FONT_SIZE_SPAN_COUNT = 4
     private const val COMPACT_MODE_TEXT_REDUCTION_SP = 2
   }
 }
