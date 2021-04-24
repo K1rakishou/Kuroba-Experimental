@@ -143,10 +143,7 @@ abstract class ThreadController(
     )
 
     openExternalThreadHelper = OpenExternalThreadHelper(
-      context = context,
       postPopupHelper = threadLayout.popupHelper,
-      chanThreadManager = chanThreadManager,
-      dialogFactory = dialogFactory,
       chanThreadViewableInfoManager = chanThreadViewableInfoManager,
       threadFollowHistoryManager = threadFollowHistoryManager
     )

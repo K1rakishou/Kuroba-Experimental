@@ -230,7 +230,6 @@ Re-enable this permission in the app settings if you permanently disabled it."</
 
     <string name="search_hint">Search</string>
     <string name="open_link_confirmation">Open this link?</string>
-    <string name="open_thread_confirmation">Open this thread?</string>
     <string name="open_link_failed">No applications were found to open this link</string>
     <string name="open_link_failed_url">No applications were found to open link \"%1$s\"</string>
     <string name="open_intent_failed">No applications were found to open intent \"%1$s\"</string>
