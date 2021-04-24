@@ -1,0 +1,22 @@
+v0.8.0-beta
+TLDR version:
+- Support for paid captcha solvers (2captcha).
+- Support for post queueing and posting rate limit handling (only 4chan/2ch.hk).
+- Grid layout mode for navigation history/board selection controllers.
+- 2ch.hk invisible captcha support.
+
+Full version:
+- Paid captcha solvers can now be used for posting. For now 2captcha API is supported. Can be found in "Captcha solvers" settings section. You will need to enter a solver url (for example https://2captcha.com) and an API key that you can get after registering there. Then you need to switch to "customer" mode, and copy/paste the API key. Don't forget to top up the balance. You can check that everything works by clicking "Validate" button which will automatically check the balance. After that you need to reply the reply layout and long-press the send button. There are multiple posting modes now depending on whether you have passcode entered or captcha solver enabled. You can switch between them seamlessly at any time. The last used posting mode is remembered individually per site. Some sites do not require captcha solution so you may want to try "Attempt to post without captcha" mode. To post with captcha solver you must select the according option. Catpcha solvers (at least 2captcha) work with all supported kinds of recaptcha (v2 JS/v2 no-JS/v2 invisible). But it may be better to always use "v2 no-JS" since it's the easiest one and you won't have to wait additional time.
+- Post queueing support. You can now send multiple posts at once which will be processed sequentially. If a site has posting rate limits, the posting will be rescheduled after receiving a rate limit error to a latter time. This is very useful when using captcha solvers. You can't queue multiple posts in the same thread, though. This is a design decision because otherwise everything becomes way more complex.
+- Some adjustments for fast scroller.
+- Touching spoiled text while scrolling catalog/thread now won't reveal the text.
+- [2ch.hk] add support for invisible recaptcha. It's probably a good idea to use "Attempt to post without captcha" when using invisible captcha on 2ch.hk since there is a change it will allow to post without solving captcha at all.
+- Fix 404ed threads being opened as previews instead of being opened directly when clicking "Open in archive".
+- Fix a bug where thread page indicator would stop getting updated in some rare cases.
+- Post card cell's compact mode adjustments. Now it will be switched into compact mode only if catalog is set to 4+ columns.
+- Add grid layout mode for navigation history menu.
+- Add grid layout mode for board selection menu.
+- Update board search logic, it's now possible to search by board name/description + use '/' symbols to make the search query more precise.
+- Do not show confirmation dialog when opening external threads.
+- Fix a bug when searching for something on wakarimasen archive when there is a spoilered image in the results which resulted in parser failing to find the image.
+- Other minor fixes and improvements.
