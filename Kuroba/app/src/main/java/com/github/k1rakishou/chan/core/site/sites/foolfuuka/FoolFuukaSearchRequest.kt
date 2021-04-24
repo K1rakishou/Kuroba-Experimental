@@ -125,20 +125,35 @@ class FoolFuukaSearchRequest(
             a(matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("thread_image_link")) })
 
             nest {
-              // Different archives use different tags for thumbnail url
-              val imgTagAttrKeys = listOf("src", "data-src")
+              executeIfElse(
+                predicate = { className(KurobaMatcher.PatternMatcher.stringEquals("spoiler_box")) },
+                ifBranchBuilder = {
+                  div(
+                    matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("spoiler_box")) },
+                    extractorFunc = { _, _, testCollector ->
+                      testCollector.lastOrNull()?.let { postBuilder ->
+                        postBuilder.postImageUrlRawList += WAKARIMASEN_SPOILER_IMAGE_URL
+                      }
+                    }
+                  )
+                },
+                elseBranchBuilder = {
+                  // Different archives use different tags for thumbnail url
+                  val imgTagAttrKeys = listOf("src", "data-src")
 
-              tag(
-                tagName = "img",
-                matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagHasAnyOfAttributes(imgTagAttrKeys)) },
-                attrExtractorBuilderFunc = { extractAttrValueByAnyKey(imgTagAttrKeys) },
-                extractorFunc = { _, extractedAttributeValues, testCollector ->
-                  testCollector.lastOrNull()?.let { postBuilder ->
-                    val imageThumbnailUrl =
-                      requireNotNull(extractedAttributeValues.getAnyAttrValue(imgTagAttrKeys)).toHttpUrl()
+                  tag(
+                    tagName = "img",
+                    matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagHasAnyOfAttributes(imgTagAttrKeys)) },
+                    attrExtractorBuilderFunc = { extractAttrValueByAnyKey(imgTagAttrKeys) },
+                    extractorFunc = { _, extractedAttributeValues, testCollector ->
+                      testCollector.lastOrNull()?.let { postBuilder ->
+                        val imageThumbnailUrl =
+                          requireNotNull(extractedAttributeValues.getAnyAttrValue(imgTagAttrKeys)).toHttpUrl()
 
-                    postBuilder.postImageUrlRawList += imageThumbnailUrl
-                  }
+                        postBuilder.postImageUrlRawList += imageThumbnailUrl
+                      }
+                    }
+                  )
                 }
               )
             }
@@ -455,6 +470,9 @@ class FoolFuukaSearchRequest(
 
     private val TOO_MANY_ENTRIES_FOUND_AMOUNT_PATTERN = Pattern.compile("(\\d+) of \\d+")
     private val REGULAR_ENTRIES_FOUND_AMOUNT_PATTERN = Pattern.compile("(\\d+) results found.\$")
+
+    private val WAKARIMASEN_SPOILER_IMAGE_URL =
+      "https://archive.wakarimasen.moe/foolfuuka/foolz/foolfuuka-theme-foolfuuka/assets-1.2.28/images/missing-image.jpg".toHttpUrl()
   }
 
 }
