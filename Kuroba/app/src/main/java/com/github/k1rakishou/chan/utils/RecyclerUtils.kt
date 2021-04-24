@@ -40,8 +40,11 @@ object RecyclerUtils {
     }
   }
 
+  /**
+   * If [useTopMostChild] is false then the bottom-most visible child will be used
+   * */
   @JvmStatic
-  fun getIndexAndTop(recyclerView: RecyclerView): IndexAndTop {
+  fun getIndexAndTop(recyclerView: RecyclerView, useTopMostChild: Boolean = true): IndexAndTop {
     var index = 0
     var top = 0
 
@@ -49,12 +52,21 @@ object RecyclerUtils {
       ?: return IndexAndTop(index, top)
 
     if (layoutManager.childCount > 0) {
-      val topChild = layoutManager.getChildAt(0)
-        ?: return IndexAndTop(index, top)
+      if (useTopMostChild) {
+        val topChild = layoutManager.getChildAt(0)
+          ?: return IndexAndTop(index, top)
 
-      index = (topChild.layoutParams as RecyclerView.LayoutParams).viewLayoutPosition
-      val params = topChild.layoutParams as RecyclerView.LayoutParams
-      top = layoutManager.getDecoratedTop(topChild) - params.topMargin - recyclerView.paddingTop
+        index = (topChild.layoutParams as RecyclerView.LayoutParams).viewLayoutPosition
+        val params = topChild.layoutParams as RecyclerView.LayoutParams
+        top = layoutManager.getDecoratedTop(topChild) - params.topMargin - recyclerView.paddingTop
+      } else {
+        val bottomChild = layoutManager.getChildAt(layoutManager.childCount - 1)
+          ?: return IndexAndTop(index, top)
+
+        index = (bottomChild.layoutParams as RecyclerView.LayoutParams).viewLayoutPosition
+        val params = bottomChild.layoutParams as RecyclerView.LayoutParams
+        top = layoutManager.getDecoratedTop(bottomChild) - params.topMargin - recyclerView.paddingTop
+      }
     }
 
     return IndexAndTop(index, top)
@@ -71,12 +83,19 @@ object RecyclerUtils {
       return
     }
 
+    val recyclerHeight = if (height > 0) {
+      height - 1
+    } else {
+      height
+    }
+
     val newIndex = indexAndTop.index.coerceIn(0, itemsCount)
+    val newTop = indexAndTop.top.coerceIn(0, recyclerHeight)
 
     when (val layoutManager = this.layoutManager) {
-      is GridLayoutManager -> layoutManager.scrollToPositionWithOffset(newIndex, indexAndTop.top)
-      is LinearLayoutManager -> layoutManager.scrollToPositionWithOffset(newIndex, indexAndTop.top)
-      is StaggeredGridLayoutManager -> layoutManager.scrollToPositionWithOffset(newIndex, indexAndTop.top)
+      is GridLayoutManager -> layoutManager.scrollToPositionWithOffset(newIndex, newTop)
+      is LinearLayoutManager -> layoutManager.scrollToPositionWithOffset(newIndex, newTop)
+      is StaggeredGridLayoutManager -> layoutManager.scrollToPositionWithOffset(newIndex, newTop)
     }
   }
 
