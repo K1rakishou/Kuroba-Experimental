@@ -8,7 +8,6 @@ import com.github.k1rakishou.chan.features.setup.data.BoardCellData
 import com.github.k1rakishou.chan.features.setup.data.BoardSelectionControllerState
 import com.github.k1rakishou.chan.features.setup.data.SiteCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
-import com.github.k1rakishou.chan.ui.helper.BoardDescriptorsComparator
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
@@ -97,16 +96,23 @@ class BoardSelectionPresenter(
   ): List<BoardCellData> {
     val boardCellDataList = mutableListOf<BoardCellData>()
 
-    val iteratorFunc = { chanBoard: ChanBoard ->
-      val boardCode = chanBoard.boardCode()
+    val iteratorFunc = iteratorFunc@ { chanBoard: ChanBoard ->
+      val boardCode = chanBoard.formattedBoardCode()
+      val boardName = chanBoard.boardName()
 
-      if (query.isEmpty() || boardCode.contains(query, ignoreCase = true)) {
-        boardCellDataList += BoardCellData(
-          boardDescriptor = chanBoard.boardDescriptor,
-          boardName = chanBoard.boardName(),
-          description = ""
-        )
+      val matches = query.isEmpty()
+        || boardCode.contains(query, ignoreCase = true)
+        || boardName.contains(query, ignoreCase = true)
+
+      if (!matches) {
+        return@iteratorFunc
       }
+
+      boardCellDataList += BoardCellData(
+        boardDescriptor = chanBoard.boardDescriptor,
+        boardName = chanBoard.boardName(),
+        description = ""
+      )
     }
 
     if (query.isEmpty()) {
@@ -116,16 +122,7 @@ class BoardSelectionPresenter(
 
     boardManager.viewAllBoards(chanSiteData.siteDescriptor, iteratorFunc)
 
-    val comparator = BoardDescriptorsComparator<BoardCellData>(query) { boardCellData ->
-      boardCellData.boardDescriptor
-    }
-
-    return try {
-      boardCellDataList.sortedWith(comparator)
-    } catch (error: IllegalArgumentException) {
-      val descriptors = boardCellDataList.map { boardCellData -> boardCellData.boardDescriptor }
-      throw IllegalAccessException("Bug in BoardDescriptorsComparator, query=$query, descriptors=${descriptors}")
-    }
+    return boardCellDataList.sortedBy { boardCellData -> boardCellData.boardDescriptor.boardCode }
   }
 
   private fun setState(state: BoardSelectionControllerState) {

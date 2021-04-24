@@ -35,6 +35,7 @@ data class ChanBoard(
   fun boardName(): String = name ?: ""
   fun siteName(): String =  boardDescriptor.siteName()
   fun boardCode(): String = boardDescriptor.boardCode
+  fun formattedBoardCode(): String = "/${boardCode()}/"
 
   fun boardSupportsFlagSelection(): Boolean {
     val is4chan = boardDescriptor.siteDescriptor.is4chan()

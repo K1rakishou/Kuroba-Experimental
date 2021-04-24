@@ -1055,7 +1055,6 @@ Don't have a 4chan Pass?<br>
     <string name="browse_controller_subtitle">Tap for site/board setup</string>
     <string name="browse_controller_cannot_open_board">Cannot open board, it does not exist in the BoardRepository. Are you trying to open a board you didn\'t manually add?</string>
     <string name="browse_controller_cannot_open_thread">Cannot open thread, it does not exist in the database. This is most likely a bug.</string>
-    <string name="browse_controller_cannot_open_thread_not_a_thread">Cannot open thread, bad loadable mode: %1$d</string>
     <string name="browse_controller_enter_thread_id">Enter thread id (the OP number, e.g. 123456789)</string>
     <string name="browse_controller_enter_thread_url">Enter thread url</string>
     <string name="browse_controller_enter_thread_id_msg">The thread must belong to a board you are currently on, otherwise it won\'t be found</string>

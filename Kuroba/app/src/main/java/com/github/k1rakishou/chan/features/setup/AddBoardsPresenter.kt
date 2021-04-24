@@ -6,7 +6,6 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.setup.data.AddBoardsControllerState
 import com.github.k1rakishou.chan.features.setup.data.BoardCellData
 import com.github.k1rakishou.chan.features.setup.data.SelectableBoardCellData
-import com.github.k1rakishou.chan.ui.helper.BoardDescriptorsComparator
 import com.github.k1rakishou.chan.ui.helper.BoardHelper
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.mutableListWithCap
@@ -116,10 +115,17 @@ class AddBoardsPresenter(
         chanBoard.boardDescriptor in selectedBoards
       }
 
-      if (query.isNotEmpty()) {
-        if (!chanBoard.boardCode().contains(query, ignoreCase = true)) {
-          return@viewBoards
-        }
+      val boardCode = chanBoard.formattedBoardCode()
+      val boardName = chanBoard.boardName()
+      val boardDescription = chanBoard.description
+
+      val matches = query.isEmpty()
+        || boardCode.contains(query, ignoreCase = true)
+        || boardName.contains(query, ignoreCase = true)
+        || (boardDescription.isEmpty() || boardDescription.contains(query, ignoreCase = true))
+
+      if (!matches) {
+        return@viewBoards
       }
 
       matchedBoards += SelectableBoardCellData(
@@ -137,16 +143,8 @@ class AddBoardsPresenter(
       return
     }
 
-    val comparator = BoardDescriptorsComparator<SelectableBoardCellData>(query) { selectableBoardCellData ->
-      selectableBoardCellData.boardCellData.boardDescriptor
-    }
-
-    val sortedBoards = try {
-      matchedBoards.sortedWith(comparator)
-    } catch (error: IllegalArgumentException) {
-      val descriptors = matchedBoards.map { matchedBoard -> matchedBoard.boardCellData.boardDescriptor }
-      throw IllegalAccessException("Bug in BoardDescriptorsComparator, query=$query, descriptors=${descriptors}")
-    }
+    val sortedBoards = matchedBoards
+      .sortedBy { selectableBoardCellData -> selectableBoardCellData.boardCellData.boardDescriptor.boardCode }
 
     setState(AddBoardsControllerState.Data(sortedBoards))
   }
