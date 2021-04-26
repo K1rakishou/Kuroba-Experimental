@@ -135,7 +135,6 @@ class ImageLoaderV2(
       BackgroundUtils.ensureBackgroundThread()
 
       try {
-        val startTime = System.currentTimeMillis()
         var isFromCache = true
 
         // 1. Enqueue a new request (or add a callback to an old request if there is already a
@@ -170,10 +169,6 @@ class ImageLoaderV2(
         // 2. Check whether we have this bitmap cached on the disk
         var imageFile = tryLoadFromDiskCacheOrNull(url)
 
-        if (verboseLogs && imageFile != null) {
-          Logger.d(TAG, "Loaded '$url' from disk cache, $imageSize")
-        }
-
         // 3. Failed to find this bitmap in the disk cache. Load it from the network.
         if (imageFile == null) {
           isFromCache = false
@@ -183,10 +178,6 @@ class ImageLoaderV2(
             url = url,
             imageSize = imageSize
           )
-
-          if (imageFile != null && verboseLogs) {
-            Logger.d(TAG, "Loaded '$url' from network")
-          }
 
           if (imageFile == null) {
             val errorMessage = "Failed to load image '$url' from disk and network"
@@ -262,9 +253,6 @@ class ImageLoaderV2(
             }
           }
         }
-
-        val endTime = System.currentTimeMillis() - startTime
-        Logger.d(TAG, "Loaded '$url', fromCache=${isFromCache}, time=${endTime}ms")
       } catch (error: Throwable) {
         notifyListenersFailure(context, url, error)
 
@@ -312,12 +300,6 @@ class ImageLoaderV2(
     return when (val result = imageLoader.execute(request)) {
       is SuccessResult -> {
         val bitmap = result.drawable.toBitmap()
-
-        if (verboseLogs) {
-          Logger.d(TAG, "applyTransformationsToDrawable() done, url='$url', " +
-              "bitmap.size=${bitmap.width}x${bitmap.height}")
-        }
-
         BitmapDrawable(context.resources, bitmap)
       }
       is ErrorResult -> {

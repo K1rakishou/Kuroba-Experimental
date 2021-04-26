@@ -16,8 +16,6 @@ class KurobaProxySelector(
 
   override fun select(uri: URI): List<Proxy> {
     val proxies = proxyStorage.getProxyByUri(uri, proxyActionType)
-    Logger.d(TAG, "select($uri) -> ${proxies}")
-
     if (proxies.isEmpty()) {
       return listOf(Proxy.NO_PROXY)
     }
