@@ -50,6 +50,8 @@ import java.lang.annotation.RetentionPolicy;
 
 import javax.inject.Inject;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+
 /**
  * Class responsible to animate and provide a fast scroller.
  * <p>
@@ -89,8 +91,9 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
     private static final int HIDE_DELAY_AFTER_VISIBLE_MS = 1500;
     private static final int HIDE_DELAY_AFTER_DRAGGING_MS = 1200;
     private static final int HIDE_DURATION_MS = 300;
-    private static final int SCROLLBAR_THUMB_ALPHA = 200;
-    private static final int SCROLLBAR_TRACK_ALPHA_DRAGGING = 200;
+    private static final int SCROLLBAR_THUMB_ALPHA = 150;
+    private static final int SCROLLBAR_REAL_THUMB_ALPHA = 200;
+    private static final int SCROLLBAR_TRACK_ALPHA_DRAGGING = 150;
     private static final int SCROLLBAR_TRACK_ALPHA_VISIBLE = 80;
 
     private static final int[] PRESSED_STATE_SET = {android.R.attr.state_pressed};
@@ -103,11 +106,13 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
     @Nullable
     private final PostInfoMapItemDecoration postInfoMapItemDecoration;
     private final int mScrollbarMinimumRange;
-    private final int mThumbMinLength;
+    private final int thumbMinLength;
+    private int realThumbMinLength = (int) dp(1f);
     private final int defaultWidth;
 
     // Final values for the vertical scroll bar
     private StateListDrawable mVerticalThumbDrawable;
+    private StateListDrawable realVerticalThumbDrawable;
     private Drawable mVerticalTrackDrawable;
     private int mVerticalThumbWidth;
     private int mVerticalTrackWidth;
@@ -171,7 +176,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
         this.fastScrollerControllerType = fastScrollerControllerType;
         this.mScrollbarMinimumRange = scrollbarMinimumRange;
         this.defaultWidth = defaultWidth;
-        this.mThumbMinLength = thumbMinLength;
+        this.thumbMinLength = thumbMinLength;
         this.postInfoMapItemDecoration = postInfoMapItemDecoration;
 
         onThemeChanged();
@@ -186,12 +191,14 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
     @Override
     public void onThemeChanged() {
         mVerticalThumbDrawable = getThumb(themeEngine.chanTheme);
+        realVerticalThumbDrawable = getRealThumb(themeEngine.chanTheme);
         mVerticalTrackDrawable = getTrack(themeEngine.chanTheme);
 
         mVerticalThumbWidth = Math.max(defaultWidth, mVerticalThumbDrawable.getIntrinsicWidth());
         mVerticalTrackWidth = Math.max(defaultWidth, mVerticalTrackDrawable.getIntrinsicWidth());
 
         mVerticalThumbDrawable.setAlpha(SCROLLBAR_THUMB_ALPHA);
+        realVerticalThumbDrawable.setAlpha(SCROLLBAR_REAL_THUMB_ALPHA);
         mVerticalTrackDrawable.setAlpha(getTrackAlpha());
 
         requestRedraw();
@@ -203,6 +210,12 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
         }
 
         return SCROLLBAR_TRACK_ALPHA_VISIBLE;
+    }
+
+    private static StateListDrawable getRealThumb(ChanTheme curTheme) {
+        StateListDrawable list = new StateListDrawable();
+        list.addState(new int[]{}, new ColorDrawable(curTheme.getTextColorSecondary()));
+        return list;
     }
 
     private static StateListDrawable getThumb(ChanTheme curTheme) {
@@ -417,7 +430,23 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
     private void drawVerticalScrollbar(Canvas canvas) {
         int left = mRecyclerView.getWidth() - mRecyclerView.getPaddingLeft() - mVerticalThumbWidth;
         int top = mVerticalThumbCenterY - verticalThumbHeight / 2;
-        mVerticalThumbDrawable.setBounds(0, 0, mVerticalThumbWidth, verticalThumbHeight);
+
+        if (top < mRecyclerViewTopPadding) {
+            top = mRecyclerViewTopPadding;
+        }
+
+        if (top > mRecyclerViewHeight + verticalThumbHeight / 2) {
+            top = mRecyclerViewHeight + verticalThumbHeight / 2;
+        }
+
+        // Draw the draggable thumb. It uses may not always be of the same height as the real thumb
+        // because we force it to a minimum height so that it's easy to drag it around.
+        mVerticalThumbDrawable.setBounds(
+                0,
+                0,
+                mVerticalThumbWidth,
+                verticalThumbHeight
+        );
 
         mVerticalTrackDrawable.setBounds(
                 0,
@@ -439,6 +468,26 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
             canvas.translate(0, top);
             mVerticalThumbDrawable.draw(canvas);
             canvas.translate(-left, -top);
+        }
+
+        if (realVerticalThumbHeight != verticalThumbHeight) {
+            // Draw the real thumb (with the real height). This one is useful in huge thread to see
+            // where exactly a marked post is relative to it.
+            int realTop = mVerticalThumbCenterY - (realVerticalThumbHeight / 2);
+            realVerticalThumbDrawable.setBounds(0, 0, mVerticalThumbWidth, realVerticalThumbHeight);
+
+            if (isLayoutRTL()) {
+                canvas.translate(mVerticalThumbWidth, realTop);
+                canvas.scale(-1, 1);
+                realVerticalThumbDrawable.draw(canvas);
+                canvas.scale(1, 1);
+                canvas.translate(-mVerticalThumbWidth, -realTop);
+            } else {
+                canvas.translate(left, 0);
+                canvas.translate(0, realTop);
+                realVerticalThumbDrawable.draw(canvas);
+                canvas.translate(-left, -realTop);
+            }
         }
     }
 
@@ -465,8 +514,8 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
                     (verticalVisibleLength * verticalVisibleLength) / verticalContentLength
             );
 
-            verticalThumbHeight = Math.max(mThumbMinLength, length);
-            realVerticalThumbHeight = length;
+            verticalThumbHeight = Math.max(thumbMinLength, length);
+            realVerticalThumbHeight = Math.max(realThumbMinLength, length);
         }
 
         if (mState == STATE_HIDDEN || mState == STATE_VISIBLE) {
@@ -644,9 +693,11 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
         @Override
         public void onAnimationUpdate(ValueAnimator valueAnimator) {
             int thumbAlpha = (int) (SCROLLBAR_THUMB_ALPHA * ((float) valueAnimator.getAnimatedValue()));
+            int realThumbAlpha = (int) (SCROLLBAR_REAL_THUMB_ALPHA * ((float) valueAnimator.getAnimatedValue()));
             int trackAlpha = (int) (getTrackAlpha() * ((float) valueAnimator.getAnimatedValue()));
 
             mVerticalThumbDrawable.setAlpha(thumbAlpha);
+            realVerticalThumbDrawable.setAlpha(realThumbAlpha);
             mVerticalTrackDrawable.setAlpha(trackAlpha);
             requestRedraw();
         }
