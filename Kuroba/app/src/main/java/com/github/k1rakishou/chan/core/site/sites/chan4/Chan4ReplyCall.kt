@@ -239,6 +239,10 @@ class Chan4ReplyCall(
 
     private val THREAD_NO_PATTERN = Pattern.compile("<!-- thread:([0-9]+),no:([0-9]+) -->")
     private val ERROR_MESSAGE_PATTERN = Pattern.compile("\"errmsg\"[^>]*>(.*?)</span")
-    private val RATE_LIMITED_PATTERN = Pattern.compile("must wait (?:(\\d+)\\s+minutes)?.*?(?:(\\d+)\\s+seconds)")
+
+    // Error: You must wait 1 minute 17 seconds before posting a duplicate reply.
+    // Error: You must wait 2 minutes 1 second before posting a duplicate reply.
+    // Error: You must wait 17 seconds before posting a duplicate reply.
+    private val RATE_LIMITED_PATTERN = Pattern.compile("must wait (?:(\\d+)\\s+minutes?)?.*?(?:(\\d+)\\s+seconds?)")
   }
 }
