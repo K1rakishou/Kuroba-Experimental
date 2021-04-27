@@ -130,7 +130,7 @@ open class PostLinkable(
   }
 
   override fun toString(): String {
-    return "PostLinkable(key=$key, linkableValue=$linkableValue, type=$type, " +
+    return "PostLinkable(key=${key.take(32)}, linkableValue=$linkableValue, type=$type, " +
       "isSpoilerVisible=$isSpoilerVisible, markedNo=$markedNo)"
   }
 

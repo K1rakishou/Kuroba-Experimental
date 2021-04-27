@@ -470,7 +470,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
             canvas.translate(-left, -top);
         }
 
-        if (realVerticalThumbHeight != verticalThumbHeight) {
+        if ((realVerticalThumbHeight * 4) < verticalThumbHeight) {
             // Draw the real thumb (with the real height). This one is useful in huge thread to see
             // where exactly a marked post is relative to it.
             int realTop = mVerticalThumbCenterY - (realVerticalThumbHeight / 2);
