@@ -217,7 +217,7 @@ class StartActivity : AppCompatActivity(),
     }
 
     if (::imagePickHelper.isInitialized) {
-      imagePickHelper.onActivityDestroyed()
+      imagePickHelper.onActivityDestroyed(this)
     }
 
     if (::fileChooser.isInitialized) {

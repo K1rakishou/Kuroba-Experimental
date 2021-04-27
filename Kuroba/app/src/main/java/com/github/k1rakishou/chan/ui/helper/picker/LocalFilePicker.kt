@@ -31,8 +31,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
 
 
 class LocalFilePicker(
@@ -44,23 +44,23 @@ class LocalFilePicker(
   private val activeRequests = ConcurrentHashMap<Int, EnqueuedRequest>()
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
   private val requestCodeCounter = AtomicInteger(0)
-  private val activityRef = AtomicReference<AppCompatActivity>(null)
+  private val activities = CopyOnWriteArraySet<AppCompatActivity>()
 
   private val selectedFilePickerBroadcastReceiver = SelectedFilePickerBroadcastReceiver()
 
   fun onActivityCreated(activity: AppCompatActivity) {
     BackgroundUtils.ensureMainThread()
-    activityRef.set(activity)
+    activities.add(activity)
   }
 
-  fun onActivityDestroyed() {
+  fun onActivityDestroyed(activity: AppCompatActivity) {
     BackgroundUtils.ensureMainThread()
     serializedCoroutineExecutor.cancelChildren()
 
     activeRequests.values.forEach { enqueuedRequest -> enqueuedRequest.completableDeferred.cancel() }
     activeRequests.clear()
 
-    activityRef.set(null)
+    activities.remove(activity)
   }
 
   override suspend fun pickFile(filePickerInput: LocalFilePickerInput): ModularResult<PickedFile> {
@@ -70,7 +70,7 @@ class LocalFilePicker(
       PersistableChanState.lastRememberedFilePicker.set("")
     }
 
-    val attachedActivity = activityRef.get()
+    val attachedActivity = activities.firstOrNull()
     if (attachedActivity == null) {
       return error(FilePickerError.ActivityIsNotSet())
     }
@@ -128,7 +128,7 @@ class LocalFilePicker(
       return
     }
 
-    val attachedActivity = activityRef.get()
+    val attachedActivity = activities.firstOrNull()
     if (attachedActivity == null) {
       return finishWithError(requestCode, FilePickerError.ActivityIsNotSet())
     }

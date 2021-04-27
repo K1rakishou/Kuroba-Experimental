@@ -64,7 +64,7 @@ class SharingActivity : AppCompatActivity() {
     super.onDestroy()
 
     if (::imagePickHelper.isInitialized) {
-      imagePickHelper.onActivityDestroyed()
+      imagePickHelper.onActivityDestroyed(this)
     }
 
     AppModuleAndroidUtils.cancelLastToast()

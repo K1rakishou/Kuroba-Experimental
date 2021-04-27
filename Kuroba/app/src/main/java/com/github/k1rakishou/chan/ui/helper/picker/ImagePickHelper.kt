@@ -251,8 +251,8 @@ class ImagePickHelper(
     localFilePicker.onActivityCreated(activity)
   }
 
-  fun onActivityDestroyed() {
-    localFilePicker.onActivityDestroyed()
+  fun onActivityDestroyed(activity: AppCompatActivity) {
+    localFilePicker.onActivityDestroyed(activity)
   }
 
   companion object {
