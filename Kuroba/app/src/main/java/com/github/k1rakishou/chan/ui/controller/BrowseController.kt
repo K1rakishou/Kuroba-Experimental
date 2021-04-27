@@ -29,7 +29,6 @@ import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.presenter.BrowsePresenter
 import com.github.k1rakishou.chan.core.site.SiteResolver
@@ -80,8 +79,6 @@ class BrowseController(
   lateinit var historyNavigationManager: HistoryNavigationManager
   @Inject
   lateinit var siteResolver: SiteResolver
-  @Inject
-  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 

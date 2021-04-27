@@ -67,10 +67,10 @@ internal class ChanPostPersister(
 
       val (storedPostsCount, storeDuration) = measureTimedValue {
         storePostsInRepositoryUseCase.storePosts(
+          chanDescriptor = chanDescriptor,
           parsedPosts = parsedPosts,
           cacheOptions = cacheOptions,
-          cacheUpdateOptions = cacheUpdateOptions,
-          isCatalog = chanDescriptor.isCatalogDescriptor()
+          cacheUpdateOptions = cacheUpdateOptions
         )
       }
 

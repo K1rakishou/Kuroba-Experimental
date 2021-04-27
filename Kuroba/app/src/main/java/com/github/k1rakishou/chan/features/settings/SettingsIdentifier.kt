@@ -658,6 +658,7 @@ sealed class CachingScreen(
   ) : IGroup,
     CachingScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
+    object DatabaseCachingEnabled : DatabaseCacheSizeGroup("database_caching_enabled")
     object MaxDatabasePostsCount : DatabaseCacheSizeGroup("max_database_posts")
     object MaxDatabaseThreadsCount : DatabaseCacheSizeGroup("max_database_threads")
     object DatabasePostsCleanupRemovePercent : DatabaseCacheSizeGroup("database_posts_cleanup_remove_percent")

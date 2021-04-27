@@ -100,6 +100,10 @@ class ChanThread(
   }
 
   fun addOrUpdatePosts(newChanPosts: List<ChanPost>): Boolean {
+    if (newChanPosts.isEmpty()) {
+      return true
+    }
+
     return lock.write {
       require(newChanPosts.isNotEmpty()) { "newPosts are empty!" }
 

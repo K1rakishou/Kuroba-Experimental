@@ -1351,14 +1351,17 @@ class ThreadPresenter @Inject constructor(
       }
 
       if (linkable.type == PostLinkable.Type.DEAD) {
-        val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
-          ?: return@post
-
         when (val postLinkableValue = linkable.linkableValue) {
           is PostLinkable.Value.LongValue -> {
             val postNo = postLinkableValue.extractLongOrNull()
             if (postNo == null || postNo <= 0L) {
               Logger.e(TAG, "PostLinkable is not valid: linkableValue = ${postLinkableValue}")
+              return@post
+            }
+
+            val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
+            if (threadDescriptor == null) {
+              Logger.e(TAG, "Bad currentChanDescriptor: ${currentChanDescriptor} (null or not thread descriptor)")
               return@post
             }
 

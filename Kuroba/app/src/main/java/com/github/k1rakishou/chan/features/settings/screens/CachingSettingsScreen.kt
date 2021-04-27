@@ -5,6 +5,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.settings.CachingScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
+import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.RangeSettingV2
 
 class CachingSettingsScreen(
@@ -33,6 +34,15 @@ class CachingSettingsScreen(
           groupIdentifier = identifier
         )
 
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = CachingScreen.DatabaseCacheSizeGroup.DatabaseCachingEnabled,
+          topDescriptionIdFunc = { R.string.settings_database_post_caching_enabled },
+          bottomDescriptionIdFunc = { R.string.settings_database_post_caching_enabled_description },
+          setting = ChanSettings.databasePostCachingEnabled,
+          requiresRestart = true
+        )
+
         group += RangeSettingV2.createBuilder(
           context = context,
           identifier = CachingScreen.DatabaseCacheSizeGroup.MaxDatabasePostsCount,
@@ -40,7 +50,8 @@ class CachingSettingsScreen(
           bottomDescriptionIdFunc = { R.string.database_max_posts_description },
           currentValueStringFunc = { ChanSettings.databaseMaxPostsCount.get().toString() },
           requiresRestart = true,
-          setting = ChanSettings.databaseMaxPostsCount
+          setting = ChanSettings.databaseMaxPostsCount,
+          dependsOnSetting = ChanSettings.databasePostCachingEnabled
         )
 
         group += RangeSettingV2.createBuilder(
@@ -50,7 +61,8 @@ class CachingSettingsScreen(
           bottomDescriptionIdFunc = { R.string.database_max_threads_description },
           currentValueStringFunc = { ChanSettings.databaseMaxThreadsCount.get().toString() },
           requiresRestart = true,
-          setting = ChanSettings.databaseMaxThreadsCount
+          setting = ChanSettings.databaseMaxThreadsCount,
+          dependsOnSetting = ChanSettings.databasePostCachingEnabled
         )
 
         group += RangeSettingV2.createBuilder(
@@ -60,7 +72,8 @@ class CachingSettingsScreen(
           bottomDescriptionIdFunc = { R.string.database_posts_cleanup_remove_percent_description },
           currentValueStringFunc = { "${ChanSettings.databasePostsCleanupRemovePercent.get()}%" },
           requiresRestart = true,
-          setting = ChanSettings.databasePostsCleanupRemovePercent
+          setting = ChanSettings.databasePostsCleanupRemovePercent,
+          dependsOnSetting = ChanSettings.databasePostCachingEnabled,
         )
 
         group

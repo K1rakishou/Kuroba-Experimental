@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.ui.controller
 import android.content.Context
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.widget.Toast
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout.OnRefreshListener
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
@@ -27,8 +28,10 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibility
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityListener
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
 import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
@@ -43,18 +46,22 @@ import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
+import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.widget.KurobaSwipeRefreshLayout
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterType
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import kotlinx.coroutines.launch
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import javax.inject.Inject
@@ -88,6 +95,10 @@ abstract class ThreadController(
   lateinit var chanThreadViewableInfoManager: ChanThreadViewableInfoManager
   @Inject
   lateinit var threadFollowHistoryManager: ThreadFollowHistoryManager
+  @Inject
+  lateinit var archivesManager: ArchivesManager
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   protected lateinit var threadLayout: ThreadLayout
   protected lateinit var showPostsInExternalThreadHelper: ShowPostsInExternalThreadHelper
@@ -390,7 +401,74 @@ abstract class ThreadController(
   }
 
   override fun showAvailableArchivesList(postDescriptor: PostDescriptor, preview: Boolean) {
-    // no-op
+    Logger.d(TAG, "showAvailableArchives($postDescriptor)")
+
+    val descriptor = postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
+      ?: return
+
+    val supportedArchiveDescriptors = archivesManager.getSupportedArchiveDescriptors(descriptor)
+      .filter { archiveDescriptor ->
+        return@filter siteManager.bySiteDescriptor(archiveDescriptor.siteDescriptor)?.enabled()
+          ?: false
+      }
+
+    if (supportedArchiveDescriptors.isEmpty()) {
+      Logger.d(TAG, "showAvailableArchives($descriptor) supportedThreadDescriptors is empty")
+
+      val message = AppModuleAndroidUtils.getString(
+        R.string.thread_presenter_no_archives_found_to_open_thread,
+        descriptor.toString()
+      )
+      showToast(message, Toast.LENGTH_LONG)
+      return
+    }
+
+    val items = mutableListOf<FloatingListMenuItem>()
+
+    supportedArchiveDescriptors.forEach { archiveDescriptor ->
+      items += FloatingListMenuItem(
+        archiveDescriptor,
+        archiveDescriptor.name
+      )
+    }
+
+    if (items.isEmpty()) {
+      Logger.d(TAG, "showAvailableArchives($descriptor) items is empty")
+      return
+    }
+
+    val floatingListMenuController = FloatingListMenuController(
+      context,
+      globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+      items,
+      itemClickListener = { clickedItem ->
+        mainScope.launch {
+          val archiveDescriptor = (clickedItem.key as? ArchiveDescriptor)
+            ?: return@launch
+
+          val externalArchivePostDescriptor = PostDescriptor.create(
+            archiveDescriptor.domain,
+            postDescriptor.descriptor.boardCode(),
+            postDescriptor.getThreadNo(),
+            postDescriptor.postNo
+          )
+
+          if (preview) {
+            showPostsInExternalThread(
+              postDescriptor = externalArchivePostDescriptor,
+              isPreviewingCatalogThread = false
+            )
+          } else {
+            openExternalThread(
+              postDescriptor = externalArchivePostDescriptor,
+              showOpenThreadDialog = false
+            )
+          }
+        }
+      }
+    )
+
+    presentController(floatingListMenuController)
   }
 
   companion object {

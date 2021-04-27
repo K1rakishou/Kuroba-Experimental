@@ -1297,7 +1297,7 @@ class PostingServiceDelegate(
 
   companion object {
     private const val TAG = "PostingServiceDelegate"
-    private const val MAX_ATTEMPTS = 16
+    private const val MAX_ATTEMPTS = 30
     private const val POST_LOOP_DELAY_MS = 1_000L
     private const val POST_LOOP_DELAY_MAX_MS = 10_000L
     private const val MAX_AUTO_SOLVED_CAPTCHAS_COUNT = 10

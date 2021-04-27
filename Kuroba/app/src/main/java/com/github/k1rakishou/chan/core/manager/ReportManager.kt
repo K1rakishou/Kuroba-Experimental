@@ -384,9 +384,12 @@ class ReportManager(
       appendLine("prefetchDiskCacheSizeMegabytes: ${ChanSettings.prefetchDiskCacheSizeMegabytes.get()}")
       appendLine("diskCacheCleanupRemovePercent: ${ChanSettings.diskCacheCleanupRemovePercent.get()}")
 
-      appendLine("databaseMaxPostsCount: ${ChanSettings.databaseMaxPostsCount.get()}")
-      appendLine("databaseMaxThreadsCount: ${ChanSettings.databaseMaxThreadsCount.get()}")
-      appendLine("databasePostsCleanupRemovePercent: ${ChanSettings.databasePostsCleanupRemovePercent.get()}")
+      appendLine("databasePostCachingEnabled: ${ChanSettings.databasePostCachingEnabled.get()}")
+      if (ChanSettings.databasePostCachingEnabled.get()) {
+        appendLine("databaseMaxPostsCount: ${ChanSettings.databaseMaxPostsCount.get()}")
+        appendLine("databaseMaxThreadsCount: ${ChanSettings.databaseMaxThreadsCount.get()}")
+        appendLine("databasePostsCleanupRemovePercent: ${ChanSettings.databasePostsCleanupRemovePercent.get()}")
+      }
 
       appendLine("WEBM streaming enabled: ${ChanSettings.videoStream.get()}")
       appendLine("ImageSaver root directory: ${PersistableChanState.imageSaverV2PersistedOptions.get().rootDirectoryUri}")

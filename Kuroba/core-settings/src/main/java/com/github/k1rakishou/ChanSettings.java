@@ -352,6 +352,7 @@ public class ChanSettings {
     public static RangeSetting prefetchDiskCacheSizeMegabytes;
     public static RangeSetting diskCacheCleanupRemovePercent;
 
+    public static BooleanSetting databasePostCachingEnabled;
     public static RangeSetting databaseMaxPostsCount;
     public static RangeSetting databaseMaxThreadsCount;
     public static RangeSetting databasePostsCleanupRemovePercent;
@@ -561,6 +562,7 @@ public class ChanSettings {
             prefetchDiskCacheSizeMegabytes = new RangeSetting(provider, "prefetch_disk_cache_size", 1024, diskCacheSizePrefetchGetMin(), 2048);
             diskCacheCleanupRemovePercent = new RangeSetting(provider, "disk_cache_cleanup_remove_files_percent", 25, cleanupPercentsGetMin(), 75);
 
+            databasePostCachingEnabled = new BooleanSetting(provider, "database_post_caching_enabled", true);
             databaseMaxPostsCount = new RangeSetting(provider, "database_max_posts_count", 125000, databaseMinPostsCount(), 500000);
             databaseMaxThreadsCount = new RangeSetting(provider, "database_max_threads_count", 12500, databaseMinThreadsCount(), 50000);
             databasePostsCleanupRemovePercent = new RangeSetting(provider, "database_posts_cleanup_remove_posts_percent", 25, cleanupPercentsGetMin(), 75);

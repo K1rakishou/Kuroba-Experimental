@@ -125,6 +125,7 @@ class ChanThreadsCache(
   }
 
   fun putManyThreadPostsIntoCache(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
     parsedPosts: List<ChanPost>,
     cacheOptions: ChanCacheOptions,
     cacheUpdateOptions: ChanCacheUpdateOptions
@@ -133,13 +134,9 @@ class ChanThreadsCache(
     //  called on a background thread.
     ensureBackgroundThread()
 
-    if (parsedPosts.isEmpty()) {
-      return emptyList()
-    }
+    val firstPost = parsedPosts.firstOrNull()
 
-    val firstPost = parsedPosts.first()
-
-    if (isDevBuild) {
+    if (isDevBuild && parsedPosts.isNotEmpty()) {
       val distinctByChanDescriptor = parsedPosts
         .map { chanPost -> chanPost.postDescriptor.descriptor }
         .toSet()
@@ -151,7 +148,6 @@ class ChanThreadsCache(
 
     return lock.write {
       runOldPostEvictionRoutineIfNeeded()
-      val threadDescriptor = firstPost.postDescriptor.descriptor as ChanDescriptor.ThreadDescriptor
 
       if (!chanThreads.containsKey(threadDescriptor)) {
         chanThreads[threadDescriptor] = ChanThread(
@@ -163,7 +159,7 @@ class ChanThreadsCache(
 
       if (cacheOptions.canStoreInMemory()) {
         chanThreads[threadDescriptor]!!.addOrUpdatePosts(parsedPosts)
-      } else if (firstPost is ChanOriginalPost) {
+      } else if (firstPost != null && firstPost is ChanOriginalPost) {
         chanThreads[threadDescriptor]!!.setOrUpdateOriginalPost(firstPost)
       }
 
@@ -253,13 +249,10 @@ class ChanThreadsCache(
           return@read chanThreads[chanDescriptor]?.hasAtLeastOnePost() ?: false
         }
         is ChanDescriptor.CatalogDescriptor -> {
-          val catalogThreadDescriptors = chanCatalogSnapshotCache.get(chanDescriptor.boardDescriptor)
+          val catalogThreadDescriptorList = chanCatalogSnapshotCache.get(chanDescriptor.boardDescriptor)
             ?.catalogThreadDescriptorList
-            ?: return@read false
 
-          return@read catalogThreadDescriptors.any { threadDescriptor ->
-            chanThreads[threadDescriptor]?.hasAtLeastOnePost() ?: false
-          }
+          return@read catalogThreadDescriptorList != null && catalogThreadDescriptorList.isNotEmpty()
         }
       }
     }

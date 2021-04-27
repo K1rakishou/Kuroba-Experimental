@@ -742,6 +742,8 @@ Re-enable this permission in the app settings if you permanently disabled it."
 
     <!-- Database size group -->
     <string name="settings_database_cache_size">Database cache size</string>
+    <string name="settings_database_post_caching_enabled">Database post caching enabled</string>
+    <string name="settings_database_post_caching_enabled_description">Disabling database caching will improve the performance (especially thread loading speed) but you won\'t be able to access already opened threads without internet anymore</string>
     <string name="database_max_posts">Max posts count in the database</string>
     <string name="database_max_posts_description">All posts are stored in the database (so you can access threads even without internet connection). This setting regulates the maximum amount of posts in the database before we start running periodic cleanup routines. Posts in bookmarked threads/Original Posts are ignored by cleanup routines.</string>
     <string name="database_max_threads">Max threads count in the database</string>

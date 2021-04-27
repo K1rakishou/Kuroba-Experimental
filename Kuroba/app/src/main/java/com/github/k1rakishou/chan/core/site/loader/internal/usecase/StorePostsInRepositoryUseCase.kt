@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.site.loader.internal.usecase
 
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheOptions
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -12,24 +13,24 @@ class StorePostsInRepositoryUseCase(
 ) {
 
   suspend fun storePosts(
+    chanDescriptor: ChanDescriptor,
     parsedPosts: List<ChanPost>,
     cacheOptions: ChanCacheOptions,
-    cacheUpdateOptions: ChanCacheUpdateOptions,
-    isCatalog: Boolean
+    cacheUpdateOptions: ChanCacheUpdateOptions
   ): Int {
     BackgroundUtils.ensureBackgroundThread()
     chanPostRepository.awaitUntilInitialized()
 
     if (parsedPosts.isEmpty()) {
-      Logger.d(TAG, "storePosts(parsedPostsCount=${parsedPosts.size}, isCatalog=$isCatalog) -> 0")
+      Logger.d(TAG, "storePosts(parsedPostsCount=${parsedPosts.size}, chanDescriptor=${chanDescriptor}) -> 0")
       return 0
     }
 
     return chanPostRepository.insertOrUpdateMany(
+      chanDescriptor = chanDescriptor,
       parsedPosts = parsedPosts,
       cacheOptions = cacheOptions,
-      cacheUpdateOptions = cacheUpdateOptions,
-      isCatalog = isCatalog
+      cacheUpdateOptions = cacheUpdateOptions
     ).unwrap()
   }
 

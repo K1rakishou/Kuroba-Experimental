@@ -51,7 +51,7 @@ data class ChildNotificationInfo(
     data class WaitingForAdditionalService(
       val availableAttempts: Int,
       val serviceName: String
-    ) : Status("Waiting for external service: \"${serviceName}\" ($availableAttempts)")
+    ) : Status("Waiting for external service: \"${serviceName}\" (attempts: $availableAttempts)")
 
     data class Uploading(
       val totalProgress: Float

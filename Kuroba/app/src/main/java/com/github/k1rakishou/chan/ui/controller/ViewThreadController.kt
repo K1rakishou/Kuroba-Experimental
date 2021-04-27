@@ -17,20 +17,17 @@
 package com.github.k1rakishou.chan.ui.controller
 
 import android.content.Context
-import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.R.string.action_reload
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
-import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.BookmarksCreated
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.BookmarksDeleted
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.BookmarksInitialized
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
@@ -42,7 +39,6 @@ import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem.ToobarThreedotMenuCallback
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
-import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
@@ -50,7 +46,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink
 import com.github.k1rakishou.chan.utils.SharingUtils.getUrlForSharing
 import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
@@ -77,10 +72,6 @@ open class ViewThreadController(
   lateinit var historyNavigationManager: HistoryNavigationManager
   @Inject
   lateinit var bookmarksManager: BookmarksManager
-  @Inject
-  lateinit var archivesManager: ArchivesManager
-  @Inject
-  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private var pinItemPinned = false
   private var threadDescriptor: ThreadDescriptor = startingThreadDescriptor
@@ -195,7 +186,7 @@ open class ViewThreadController(
         ACTION_PREVIEW_THREAD_IN_ARCHIVE,
         R.string.action_preview_thread_in_archive,
         archivesManager.supports(threadDescriptor)
-      ) { showAvailableArchives(postDescriptor = threadDescriptor.toOriginalPostDescriptor(), preview = true) }
+      ) { showAvailableArchivesList(postDescriptor = threadDescriptor.toOriginalPostDescriptor(), preview = true) }
       .withSubItem(
         ACTION_OPEN_BROWSER,
         R.string.action_open_browser
@@ -301,77 +292,6 @@ open class ViewThreadController(
       showLoading = true,
       chanLoadOptions = ChanLoadOptions.clearMemoryAndDatabaseCaches()
     )
-  }
-
-  private fun showAvailableArchives(postDescriptor: PostDescriptor, preview: Boolean) {
-    Logger.d(TAG, "showAvailableArchives($postDescriptor)")
-
-    val descriptor = postDescriptor.descriptor as? ThreadDescriptor
-      ?: return
-
-    val supportedArchiveDescriptors = archivesManager.getSupportedArchiveDescriptors(descriptor)
-      .filter { archiveDescriptor ->
-        return@filter siteManager.bySiteDescriptor(archiveDescriptor.siteDescriptor)?.enabled()
-          ?: false
-      }
-
-    if (supportedArchiveDescriptors.isEmpty()) {
-      Logger.d(TAG, "showAvailableArchives($descriptor) supportedThreadDescriptors is empty")
-
-      val message = getString(
-        R.string.thread_presenter_no_archives_found_to_open_thread,
-        descriptor.toString()
-      )
-      showToast(message, Toast.LENGTH_LONG)
-      return
-    }
-
-    val items = mutableListOf<FloatingListMenuItem>()
-
-    supportedArchiveDescriptors.forEach { archiveDescriptor ->
-      items += FloatingListMenuItem(
-        archiveDescriptor,
-        archiveDescriptor.name
-      )
-    }
-
-    if (items.isEmpty()) {
-      Logger.d(TAG, "showAvailableArchives($descriptor) items is empty")
-      return
-    }
-
-    val floatingListMenuController = FloatingListMenuController(
-      context,
-      globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
-      items,
-      itemClickListener = { clickedItem ->
-        mainScope.launch {
-          val archiveDescriptor = (clickedItem.key as? ArchiveDescriptor)
-            ?: return@launch
-
-          val externalArchivePostDescriptor = PostDescriptor.create(
-            archiveDescriptor.domain,
-            postDescriptor.descriptor.boardCode(),
-            postDescriptor.getThreadNo(),
-            postDescriptor.postNo
-          )
-
-          if (preview) {
-            showPostsInExternalThread(
-              postDescriptor = externalArchivePostDescriptor,
-              isPreviewingCatalogThread = false
-            )
-          } else {
-            openExternalThread(
-              postDescriptor = externalArchivePostDescriptor,
-              showOpenThreadDialog = false
-            )
-          }
-        }
-      }
-    )
-
-    presentController(floatingListMenuController)
   }
 
   private fun showRemovedPostsDialog(item: ToolbarMenuSubItem?) {
@@ -697,10 +617,6 @@ open class ViewThreadController(
   override fun threadBackLongPressed() {
     threadFollowHistoryManager.clearAllExcept(threadDescriptor)
     showToast(R.string.thread_follow_history_has_been_cleared)
-  }
-
-  override fun showAvailableArchivesList(postDescriptor: PostDescriptor, preview: Boolean) {
-    showAvailableArchives(postDescriptor, preview)
   }
 
   override fun onMenuShown() {

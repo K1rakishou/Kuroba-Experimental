@@ -415,7 +415,7 @@ class ThreadLayout @JvmOverloads constructor(
       openThreadInArchiveButton.setVisibilityFast(View.GONE)
     }
 
-    val errorMessage = error.cause?.message
+    val errorMessage = error.message
       ?: getString(error.errorMessage)
 
     if (visible == Visible.THREAD) {
