@@ -19,7 +19,7 @@ class Yukila : CommonSite() {
   )
 
   override fun setup() {
-    setEnabled(true)
+    setEnabled(false)
     setName(SITE_NAME)
     setIcon(SiteIcon.fromFavicon(imageLoaderV2, FAVICON_URL))
     setBoardsType(Site.BoardsType.INFINITE)
@@ -70,7 +70,7 @@ class Yukila : CommonSite() {
     val ROOT: String = "https://yuki.la/"
     val ROOT_URL: HttpUrl = ROOT.toHttpUrl()
     val SITE_NAME: String = ArchiveType.Yukila.domain
-    val NAMES: Array<String> = arrayOf("warosu")
+    val NAMES: Array<String> = arrayOf("yuki.la")
     val CLASS: Class<out Site> = Yukila::class.java
 
     val MEDIA_HOSTS: Array<HttpUrl> = arrayOf(

@@ -17,7 +17,7 @@ class RebeccaBlackTech : BaseFoolFuukaSite() {
   override fun rootUrl(): HttpUrl = ROOT_URL
 
   override fun setup() {
-    setEnabled(true)
+    setEnabled(false)
     setName(SITE_NAME)
     setIcon(SiteIcon.fromFavicon(imageLoaderV2, FAVICON_URL))
     setBoardsType(Site.BoardsType.INFINITE)
