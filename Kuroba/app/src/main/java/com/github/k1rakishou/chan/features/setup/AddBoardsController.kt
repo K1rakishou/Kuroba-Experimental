@@ -166,11 +166,12 @@ class AddBoardsController(
               boardName(selectableBoardCellData.boardCellData.fullName)
               boardDescription(selectableBoardCellData.boardCellData.description)
               boardSelected(selectableBoardCellData.selected)
+              bindQuery(selectableBoardCellData.boardCellData.searchQuery)
               onClickedCallback { isChecked ->
                 presenter.onBoardSelectionChanged(
-                  selectableBoardCellData.boardCellData.boardDescriptor,
-                  isChecked,
-                  searchView.text
+                  boardDescriptor = selectableBoardCellData.boardCellData.boardDescriptor,
+                  checked = isChecked,
+                  query = searchView.text
                 )
               }
             }

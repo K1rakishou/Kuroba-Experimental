@@ -1,13 +1,18 @@
 package com.github.k1rakishou.chan.features.setup.epoxy.selection
 
 import android.content.Context
+import android.text.SpannableString
 import android.util.AttributeSet
 import android.widget.LinearLayout
+import android.widget.TextView
+import com.airbnb.epoxy.AfterPropsSet
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
+import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.SpannableHelper
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.android.material.textview.MaterialTextView
 import javax.inject.Inject
@@ -25,6 +30,8 @@ class EpoxyBoardSelectionListView @JvmOverloads constructor(
   private val boardCode: MaterialTextView
   private val boardSeparator: MaterialTextView
   private val boardName: MaterialTextView
+
+  private var searchQuery: String? = null
 
   init {
     inflate(context, R.layout.epoxy_board_selection_list_view, this)
@@ -51,16 +58,51 @@ class EpoxyBoardSelectionListView @JvmOverloads constructor(
     updateBoardNameColor()
   }
 
+  @AfterPropsSet
+  fun afterPropsSet() {
+    val query = searchQuery
+    if (query.isNullOrEmpty()) {
+      SpannableHelper.cleanSearchSpans(this.boardCode.text)
+      SpannableHelper.cleanSearchSpans(this.boardName.text)
+      return
+    }
+
+    SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
+      inputQueries = listOf(query),
+      spannableString = this.boardCode.text as SpannableString,
+      color = themeEngine.chanTheme.accentColor,
+      minQueryLength = 1
+    )
+
+    SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
+      inputQueries = listOf(query),
+      spannableString = this.boardName.text as SpannableString,
+      color = themeEngine.chanTheme.accentColor,
+      minQueryLength = 1
+    )
+  }
+
+  @OnViewRecycled
+  fun onRecycled() {
+    SpannableHelper.cleanSearchSpans(this.boardCode.text)
+    SpannableHelper.cleanSearchSpans(this.boardName.text)
+  }
+
   @ModelProp
   fun bindBoardCode(boardCode: String) {
-    this.boardCode.text = boardCode
+    this.boardCode.setText(SpannableString.valueOf(boardCode), TextView.BufferType.SPANNABLE)
     updateBoardNameColor()
   }
 
   @ModelProp
   fun bindBoardName(boardName: String) {
-    this.boardName.text = boardName
+    this.boardName.setText(SpannableString.valueOf(boardName), TextView.BufferType.SPANNABLE)
     updateBoardNameColor()
+  }
+
+  @ModelProp
+  fun bindQuery(query: String?) {
+    this.searchQuery = query
   }
 
   @CallbackProp

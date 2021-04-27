@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.features.setup.data.AddBoardsControllerState
 import com.github.k1rakishou.chan.features.setup.data.BoardCellData
 import com.github.k1rakishou.chan.features.setup.data.SelectableBoardCellData
 import com.github.k1rakishou.chan.ui.helper.BoardHelper
+import com.github.k1rakishou.chan.utils.AlphanumComparator
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
@@ -130,6 +131,7 @@ class AddBoardsPresenter(
 
       matchedBoards += SelectableBoardCellData(
         boardCellData = BoardCellData(
+          searchQuery = query,
           boardDescriptor = chanBoard.boardDescriptor,
           boardName = chanBoard.boardName(),
           description = BoardHelper.getDescription(chanBoard)
@@ -144,7 +146,7 @@ class AddBoardsPresenter(
     }
 
     val sortedBoards = matchedBoards
-      .sortedBy { selectableBoardCellData -> selectableBoardCellData.boardCellData.boardDescriptor.boardCode }
+      .sortedWith(COMPARATOR)
 
     setState(AddBoardsControllerState.Data(sortedBoards))
   }
@@ -155,5 +157,9 @@ class AddBoardsPresenter(
 
   companion object {
     private const val TAG = "AddBoardsPresenter"
+
+    private val COMPARATOR = AlphanumComparator<SelectableBoardCellData> { selectableBoardCellData ->
+      selectableBoardCellData.boardCellData.boardDescriptor.boardCode
+    }
   }
 }

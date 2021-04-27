@@ -1,8 +1,10 @@
 package com.github.k1rakishou.chan.utils
 
 import android.graphics.Color
+import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.CharacterStyle
+import androidx.core.text.getSpans
 import com.github.k1rakishou.common.ELLIPSIZE_SYMBOL
 import com.github.k1rakishou.core_spannable.PostSearchQueryBackgroundSpan
 import com.github.k1rakishou.core_spannable.PostSearchQueryForegroundSpan
@@ -16,6 +18,9 @@ object SpannableHelper {
     color: Int,
     minQueryLength: Int
   ) {
+    // Remove spans that may be left after previous execution of this function
+    cleanSearchSpans(spannableString)
+
     val validQueries = inputQueries
       .filter { query ->
         return@filter query.isNotEmpty()
@@ -89,6 +94,17 @@ object SpannableHelper {
 
       spannableString.setSpan(PostSearchQueryForegroundSpan(textColor), start, end, 0)
     }
+  }
+
+  fun cleanSearchSpans(input: CharSequence) {
+    if (input !is Spannable) {
+      return
+    }
+
+    input.getSpans<PostSearchQueryBackgroundSpan>()
+      .forEach { span -> input.removeSpan(span) }
+    input.getSpans<PostSearchQueryForegroundSpan>()
+      .forEach { span -> input.removeSpan(span) }
   }
 
   private fun compare(query: String, parsedComment: CharSequence, currentPosition: Int): Int {

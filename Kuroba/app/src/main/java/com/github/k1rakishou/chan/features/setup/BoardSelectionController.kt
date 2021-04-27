@@ -215,6 +215,7 @@ class BoardSelectionController(
                   id("boards_selection_board_selection_grid_view_${boardCellData.boardDescriptor}")
                   bindBoardCode(boardCellData.boardCodeFormatted)
                   bindBoardName(boardCellData.boardName)
+                  bindQuery(boardCellData.searchQuery)
                   bindRowClickCallback {
                     callback.onBoardSelected(boardCellData.boardDescriptor)
                     pop()
@@ -225,6 +226,7 @@ class BoardSelectionController(
                   id("boards_selection_board_selection_list_view_${boardCellData.boardDescriptor}")
                   bindBoardCode(boardCellData.boardCodeFormatted)
                   bindBoardName(boardCellData.boardName)
+                  bindQuery(boardCellData.searchQuery)
                   bindRowClickCallback {
                     callback.onBoardSelected(boardCellData.boardDescriptor)
                     pop()

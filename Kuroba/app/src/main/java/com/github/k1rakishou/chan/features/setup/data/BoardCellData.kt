@@ -4,6 +4,7 @@ import com.github.k1rakishou.chan.ui.helper.BoardHelper
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 
 class BoardCellData(
+  val searchQuery: String?,
   val boardDescriptor: BoardDescriptor,
   val boardName: String,
   val description: String
