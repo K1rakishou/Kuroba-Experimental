@@ -5,12 +5,16 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.util.AttributeSet
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.updateLayoutParams
+import androidx.core.view.updatePadding
 import coil.request.Disposable
 import coil.transform.CircleCropTransformation
+import coil.transform.RoundedCornersTransformation
 import com.airbnb.epoxy.AfterPropsSet
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
@@ -94,6 +98,10 @@ class EpoxyHistoryGridEntryView @JvmOverloads constructor(
 
     threadThumbnailImage.setImageBitmap(null)
     siteThumbnailImage.setImageBitmap(null)
+
+    threadThumbnailImage.updateLayoutParams<ViewGroup.LayoutParams> {
+      width = ViewGroup.LayoutParams.MATCH_PARENT
+    }
   }
 
   override fun onThemeChanged() {
@@ -164,7 +172,14 @@ class EpoxyHistoryGridEntryView @JvmOverloads constructor(
 
   @AfterPropsSet
   fun afterPropsSet() {
-    if (imagesLoaderRequestData == null) {
+    threadThumbnailImage.updatePadding(
+      left = THREAD_THUMBNAIL_PADDING,
+      right = THREAD_THUMBNAIL_PADDING,
+      top = THREAD_THUMBNAIL_PADDING,
+      bottom = THREAD_THUMBNAIL_PADDING
+    )
+
+    if (imagesLoaderRequestData == null || descriptor == null) {
       threadThumbnailImage.setImageBitmap(null)
       siteThumbnailImage.setImageBitmap(null)
       return
@@ -172,11 +187,25 @@ class EpoxyHistoryGridEntryView @JvmOverloads constructor(
 
     val threadThumbnailUrl = imagesLoaderRequestData?.threadThumbnailUrl
     if (threadThumbnailUrl != null) {
+      val transformation = if (descriptor is ChanDescriptor.CatalogDescriptor) {
+        threadThumbnailImage.updateLayoutParams<ViewGroup.LayoutParams> {
+          width = context.resources.getDimension(R.dimen.history_entry_thread_image_size).toInt()
+        }
+
+        CIRCLE_CROP
+      } else {
+        threadThumbnailImage.updateLayoutParams<ViewGroup.LayoutParams> {
+          width = ViewGroup.LayoutParams.MATCH_PARENT
+        }
+
+        ROUNDED_CORNERS
+      }
+
       threadImageRequestDisposable = imageLoaderV2.loadFromNetwork(
         context,
         threadThumbnailUrl.toString(),
         ImageLoaderV2.ImageSize.MeasurableImageSize.create(threadThumbnailImage),
-        listOf(CIRCLE_CROP),
+        listOf(transformation),
         { drawable ->
           threadThumbnailImage.setImageBitmap(drawable.bitmap)
         }
@@ -199,6 +228,14 @@ class EpoxyHistoryGridEntryView @JvmOverloads constructor(
 
   companion object {
     private val CIRCLE_CROP = CircleCropTransformation()
+    private val ROUNDED_CORNERS = RoundedCornersTransformation(
+      AppModuleAndroidUtils.dp(1f).toFloat(),
+      AppModuleAndroidUtils.dp(1f).toFloat(),
+      AppModuleAndroidUtils.dp(1f).toFloat(),
+      AppModuleAndroidUtils.dp(1f).toFloat()
+    )
+
+    private val THREAD_THUMBNAIL_PADDING = AppModuleAndroidUtils.dp(4f)
   }
 
 }

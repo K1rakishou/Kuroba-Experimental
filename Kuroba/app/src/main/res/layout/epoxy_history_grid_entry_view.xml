@@ -27,9 +27,8 @@
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/history_entry_thread_image"
-                android:layout_width="@dimen/history_entry_thread_image_size"
+                android:layout_width="match_parent"
                 android:layout_height="@dimen/history_entry_thread_image_size"
-                android:padding="8dp"
                 android:scaleType="centerCrop"
                 tools:src="@drawable/ic_baseline_settings" />
 
