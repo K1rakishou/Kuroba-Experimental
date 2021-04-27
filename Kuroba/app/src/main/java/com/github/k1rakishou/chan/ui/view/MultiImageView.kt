@@ -125,7 +125,6 @@ class MultiImageView @JvmOverloads constructor(
   private var gifRequest = AtomicReference<CancelableDownload>(null)
   private var videoRequest = AtomicReference<CancelableDownload>(null)
 
-  private var imageNotFoundPlaceholderLoadJob: Job? = null
   private var webmStreamSourceInitJob: Job? = null
   private var thumbnailRequestDisposable: Disposable? = null
   private var callback: Callback? = null
@@ -216,11 +215,6 @@ class MultiImageView @JvmOverloads constructor(
     if (webmStreamSourceInitJob != null) {
       webmStreamSourceInitJob?.cancel()
       webmStreamSourceInitJob = null
-    }
-
-    if (imageNotFoundPlaceholderLoadJob != null) {
-      imageNotFoundPlaceholderLoadJob?.cancel()
-      imageNotFoundPlaceholderLoadJob = null
     }
 
     bigImageRequest.get()?.cancel()
@@ -400,7 +394,7 @@ class MultiImageView @JvmOverloads constructor(
 
         override fun onNotFound() {
           thumbnailRequestDisposable = null
-          onNotFoundTryToFallback()
+          onNotFoundError()
         }
 
         override fun onResponseError(error: Throwable) {
@@ -456,7 +450,7 @@ class MultiImageView @JvmOverloads constructor(
 
           override fun onNotFound() {
             BackgroundUtils.ensureMainThread()
-            onNotFoundTryToFallback()
+            onNotFoundError()
           }
 
           override fun onFail(exception: Exception) {
@@ -523,7 +517,7 @@ class MultiImageView @JvmOverloads constructor(
 
           override fun onNotFound() {
             BackgroundUtils.ensureMainThread()
-            onNotFoundTryToFallback()
+            onNotFoundError()
           }
 
           override fun onFail(exception: Exception) {
@@ -655,7 +649,7 @@ class MultiImageView @JvmOverloads constructor(
 
           override fun onNotFound() {
             BackgroundUtils.ensureMainThread()
-            onNotFoundTryToFallback()
+            onNotFoundError()
           }
 
           override fun onFail(exception: Exception) {
@@ -854,10 +848,6 @@ class MultiImageView @JvmOverloads constructor(
   }
 
   private fun setOther(image: ChanPostImage) {
-    if (image == null) {
-      return
-    }
-
     if (image.type === ChanPostImageType.PDF) {
       cancellableToast.showToast(context, R.string.pdf_not_viewable)
       // this lets the user download the PDF, even though we haven't actually downloaded anything
@@ -1078,40 +1068,6 @@ class MultiImageView @JvmOverloads constructor(
     animatorSet.start()
   }
 
-  private fun onNotFoundTryToFallback() {
-    if (imageNotFoundPlaceholderLoadJob != null) {
-      return
-    }
-
-    callback?.hideProgress(this@MultiImageView)
-
-    imageNotFoundPlaceholderLoadJob = mainScope.launch {
-      imageLoaderV2.loadFromNetwork(
-        context,
-        CHAN4_404_IMAGE_LINKS.random(random),
-        ImageLoaderV2.ImageSize.UnknownImageSize,
-        emptyList(),
-        object : FailureAwareImageListener {
-          override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
-            imageNotFoundPlaceholderLoadJob = null
-
-            setBigImageFromBitmapDrawable(drawable)
-          }
-
-          override fun onNotFound() {
-            imageNotFoundPlaceholderLoadJob = null
-            onNotFoundError()
-          }
-
-          override fun onResponseError(error: Throwable) {
-            imageNotFoundPlaceholderLoadJob = null
-            onError(error)
-          }
-        }
-      )
-    }
-  }
-
   private fun onError(exception: Throwable) {
     val message = String.format(Locale.ENGLISH,
       "%s: %s",
@@ -1251,22 +1207,6 @@ class MultiImageView @JvmOverloads constructor(
     private val BACKGROUND_COLOR_NSFW_OP = Color.argb(255, 255, 255, 238)
 
     private val random = Random(System.currentTimeMillis())
-
-    private val CHAN4_404_IMAGE_LINKS = listOf(
-      "https://s.4cdn.org/image/error/404/404-Anonymous.png",
-      "https://s.4cdn.org/image/error/404/404-Anonymous.jpg",
-      "https://s.4cdn.org/image/error/404/404-Anonymous-2.png",
-      "https://s.4cdn.org/image/error/404/404-Anonymous-3.jpg",
-      "https://s.4cdn.org/image/error/404/404-Anonymous-3.png",
-      "https://s.4cdn.org/image/error/404/404-Anonymous-4.png",
-      "https://s.4cdn.org/image/error/404/404-Anonymous-5.png",
-      "https://s.4cdn.org/image/error/404/404-Anonymous-6.png",
-      "https://s.4cdn.org/image/error/404/404-Anonymous-7.png",
-      "https://s.4cdn.org/image/error/404/404-Anonymous-8.png",
-      "https://s.4cdn.org/image/error/404/404-anonymouse.png",
-      "https://s.4cdn.org/image/error/404/404-Kobayen.png",
-      "https://s.4cdn.org/image/error/404/404-Ragathol.png"
-    )
 
     private val MEDIA_LOADING_DISPATCHER = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
   }
