@@ -314,6 +314,8 @@ class WatcherSettingsScreen(
 
     private val FILTER_WATCHER_INTERVALS = listOf(
       TimeUnit.MINUTES.toMillis(1).toInt(),
+      TimeUnit.HOURS.toMillis(1).toInt(),
+      TimeUnit.HOURS.toMillis(2).toInt(),
       TimeUnit.HOURS.toMillis(4).toInt(),
       TimeUnit.HOURS.toMillis(8).toInt(),
       TimeUnit.HOURS.toMillis(12).toInt(),
