@@ -828,10 +828,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   fun canChildScrollUp(): Boolean {
-    if (replyOpen) {
-      return true
-    }
-
     if (topAdapterPosition != 0) {
       return true
     }
