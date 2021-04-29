@@ -1,0 +1,39 @@
+v0.8.2-beta
+TLDR version:
+- Support for paid captcha solvers (2captcha).
+- Support for post queueing and posting rate limit handling (only 4chan/2ch.hk).
+- Grid layout mode for navigation history/board selection controllers.
+- 2ch.hk invisible captcha support.
+- Ability to disable post database caching.
+
+Full version:
+- Show thread statistics in archived threads.
+- Allow using pull-to-refresh when reply layout is opened.
+- Fix reply popups incorrectly storing/restoring scroll position.
+- Add 1 and 2 hour options for filter watcher.
+
+v0.8.1-beta
+- FastScroller should now be more precise. In cases when there are lots of posts in a thread a real scrollbar thumb will be displayed so it's easier to see where a post is located.
+- ReplyLayout button sizes reverted back.
+- Use rectangular thumbnails in navigation history menu when using grid layout mode.
+- Can now search boards by name and description + add search query highlighting.
+- Fix a bug where file picker would not open anymore (until app restart) after sharing something into the app.
+- Fix regex that detects 4chan posting rate limits.
+- Add ability to completely disable post database caching. This will drastically improve catalog/thread loading/reloading times but you won't be able to access threads you've already opened when you have no internet connection.
+- Update 4chan archives, disable dead archives.
+
+v0.8.0-beta
+- Paid captcha solvers can now be used for posting. For now 2captcha API is supported. Can be found in "Captcha solvers" settings section. You will need to enter a solver url (for example https://2captcha.com) and an API key. To get the API key you need to register on the site, then you need to switch to "customer" mode, and copy/paste the API key. Don't forget to top up the balance. You can check that everything works by clicking "Validate" button which will automatically check the balance. After that you need to open the reply layout and long-press the send button. There are multiple posting modes now depending on whether you have passcode entered or captcha solver enabled. You can switch between them seamlessly at any time. The last used posting mode is remembered individually per site. Some sites do not require captcha so you may want to try "Attempt to post without captcha" mode. To post with captcha solver you need to select the according option. Catpcha solvers (at least 2captcha) work with all supported by the application kinds of recaptcha (V2 JS/V2 no-JS/V2 invisible). But it may be better to always use "v2 no-JS" since it's the easiest one to solve and the wait time is probably the shortest (not 100% sure, this will probably also depend on how many workers there and other stuff so it's hard to tell for sure).
+- Post queueing support. You can now send multiple posts at once which will be processed sequentially. If a site has posting rate limits, the posting will be rescheduled after receiving a rate limit error to a latter time (only 2ch.hk/4chan are supported for now). This is very useful when using captcha solvers. You can't queue multiple posts in the same thread, though. This is a design decision because otherwise everything becomes way more complex.
+- Some adjustments for fast scroller.
+- Touching spoiled text while scrolling catalog/thread now won't reveal the text.
+- [2ch.hk] add support for invisible recaptcha. It's probably a good idea to use "Attempt to post without captcha" posting mode when using invisible captcha on 2ch.hk since there is a chance it will allow posting without solving a captcha at all.
+- Fix 404ed threads being opened as previews instead of being opened directly when clicking "Open in archive".
+- Fix a bug where thread page indicator would stop getting updated in some rare cases.
+- Post card cell's compact mode adjustments. Now it will be switched into compact mode only if catalog is set to 4+ columns.
+- Add grid layout mode for navigation history menu.
+- Add grid layout mode for board selection menu.
+- Update board search logic, it's now possible to search by board name/description + use '/' symbols to make the search query more precise.
+- Do not show confirmation dialog when opening external threads.
+- Fix a bug when searching for something on wakarimasen archive when there is a spoilered image in the results which resulted in parser failing to find the image.
+- Other minor fixes and improvements.
