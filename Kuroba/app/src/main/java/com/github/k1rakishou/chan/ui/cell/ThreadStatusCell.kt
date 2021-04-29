@@ -29,6 +29,7 @@ import android.widget.TextView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.ThrottlingCoroutineExecutor
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -60,6 +61,8 @@ class ThreadStatusCell(
   lateinit var boardManager: BoardManager
   @Inject
   lateinit var chanThreadManager: ChanThreadManager
+  @Inject
+  lateinit var archivesManager: ArchivesManager
 
   private lateinit var statusCellText: TextView
 
@@ -198,6 +201,12 @@ class ThreadStatusCell(
 
     val canUpdate = chanThread.canUpdateThread()
     val builder = SpannableStringBuilder()
+
+    if (archivesManager.isSiteArchive(chanDescriptor.siteDescriptor())) {
+      builder
+        .append(getString(R.string.controller_bookmarks_bookmark_of_archived_thread))
+        .append('\n')
+    }
 
     if (appendThreadStatusPart(chanThread, builder)) {
       builder.append('\n')
