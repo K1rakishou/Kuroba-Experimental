@@ -623,7 +623,7 @@ class ThreadLayout @JvmOverloads constructor(
   override fun showPostsPopup(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     postViewMode: PostCellData.PostViewMode,
-    postDescriptor: PostDescriptor?,
+    postDescriptor: PostDescriptor,
     posts: List<ChanPost>
   ) {
     if (this.focusedChild != null) {

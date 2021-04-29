@@ -54,14 +54,14 @@ class PostPopupHelper(
   fun showRepliesPopup(
     threadDescriptor: ThreadDescriptor,
     postViewMode: PostCellData.PostViewMode,
-    postDescriptor: PostDescriptor?,
+    postDescriptor: PostDescriptor,
     posts: List<ChanPost>
   ) {
     val data = PostRepliesPopupController.PostRepliesPopupData(
-      threadDescriptor,
-      postViewMode,
-      postDescriptor,
-      indexPosts(posts)
+      descriptor = threadDescriptor,
+      postViewMode = postViewMode,
+      forPostWithDescriptor = postDescriptor,
+      posts = indexPosts(posts)
     )
 
     val prevPostViewMode = dataQueue.lastOrNull()?.postViewMode

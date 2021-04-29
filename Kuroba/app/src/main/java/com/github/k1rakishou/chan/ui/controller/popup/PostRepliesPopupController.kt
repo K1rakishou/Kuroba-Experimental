@@ -1,8 +1,10 @@
 package com.github.k1rakishou.chan.ui.controller.popup
 
 import android.content.Context
+import android.util.LruCache
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.ui.adapter.PostRepliesAdapter
@@ -10,9 +12,12 @@ import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.RecyclerUtils
+import com.github.k1rakishou.chan.utils.RecyclerUtils.restoreScrollPosition
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.PostIndexed
+import com.github.k1rakishou.persist_state.IndexAndTop
 import java.util.*
 
 class PostRepliesPopupController(
@@ -22,8 +27,26 @@ class PostRepliesPopupController(
 ) : BasePostPopupController<PostRepliesPopupController.PostRepliesPopupData>(context, postPopupHelper, postCellCallback) {
   override var displayingData: PostRepliesPopupData? = null
 
+  private val scrollListener = object : RecyclerView.OnScrollListener() {
+    override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+      super.onScrollStateChanged(recyclerView, newState)
+
+      if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+        storeScrollPosition()
+      }
+    }
+  }
+
   override val postPopupType: PostPopupType
     get() = PostPopupType.Replies
+
+  override fun onDestroy() {
+    super.onDestroy()
+
+    if (postsViewInitialized) {
+      postsView.removeOnScrollListener(scrollListener)
+    }
+  }
 
   override fun getDisplayingPostDescriptors(): List<PostDescriptor> {
     if (displayingData == null) {
@@ -69,7 +92,7 @@ class PostRepliesPopupController(
     postsView.adapter = repliesAdapter
     postsView.addOnScrollListener(scrollListener)
 
-    restoreScrollPosition(chanDescriptor)
+    restoreScrollPosition(data.forPostWithDescriptor)
 
     return dataView
   }
@@ -78,11 +101,42 @@ class PostRepliesPopupController(
     // no-op
   }
 
+  private fun storeScrollPosition() {
+    if (!postsViewInitialized) {
+      return
+    }
+
+    val firstPostDescriptor = displayingData?.forPostWithDescriptor
+    if (firstPostDescriptor == null) {
+      return
+    }
+
+    scrollPositionCache.put(
+      firstPostDescriptor,
+      RecyclerUtils.getIndexAndTop(postsView)
+    )
+  }
+
+  private fun restoreScrollPosition(postDescriptor: PostDescriptor) {
+    if (!postsViewInitialized) {
+      return
+    }
+
+    val scrollPosition = scrollPositionCache[postDescriptor]
+      ?: return
+
+    postsView.restoreScrollPosition(scrollPosition)
+  }
+
   class PostRepliesPopupData(
     override val descriptor: ChanDescriptor,
+    val forPostWithDescriptor: PostDescriptor,
     override val postViewMode: PostCellData.PostViewMode,
-    val forPostWithDescriptor: PostDescriptor?,
     val posts: List<PostIndexed>
   ) : PostPopupHelper.PostPopupData
+
+  companion object {
+    val scrollPositionCache = LruCache<PostDescriptor, IndexAndTop>(128)
+  }
 
 }

@@ -5,6 +5,7 @@ import android.util.LruCache
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -17,6 +18,8 @@ import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.layout.SearchLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.RecyclerUtils
+import com.github.k1rakishou.chan.utils.RecyclerUtils.restoreScrollPosition
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.updatePaddings
@@ -24,6 +27,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.PostIndexed
+import com.github.k1rakishou.persist_state.IndexAndTop
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -50,10 +54,28 @@ class PostSearchPopupController(
   @Inject
   lateinit var chanThreadManager: ChanThreadManager
 
-  override var displayingData: PostSearchPopupData? = null
-
   override val postPopupType: PostPopupType
     get() = PostPopupType.Search
+
+  private val scrollListener = object : RecyclerView.OnScrollListener() {
+    override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+      super.onScrollStateChanged(recyclerView, newState)
+
+      if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+        storeScrollPosition()
+      }
+    }
+  }
+
+  override var displayingData: PostSearchPopupData? = null
+
+  override fun onDestroy() {
+    super.onDestroy()
+
+    if (postsViewInitialized) {
+      postsView.removeOnScrollListener(scrollListener)
+    }
+  }
 
   override fun getDisplayingPostDescriptors(): List<PostDescriptor> {
     if (currentPosts.isEmpty()) {
@@ -208,7 +230,7 @@ class PostSearchPopupController(
     postsView.post {
       if (!scrollPositionRestored) {
         scrollPositionRestored = true
-        restoreScrollPosition(chanDescriptor)
+        restoreScrollPosition(data.descriptor)
       }
     }
   }
@@ -238,6 +260,33 @@ class PostSearchPopupController(
     return false
   }
 
+  private fun storeScrollPosition() {
+    if (!postsViewInitialized) {
+      return
+    }
+
+    val chanDescriptor = displayingData?.descriptor
+    if (chanDescriptor == null) {
+      return
+    }
+
+    scrollPositionCache.put(
+      chanDescriptor,
+      RecyclerUtils.getIndexAndTop(postsView)
+    )
+  }
+
+  private fun restoreScrollPosition(chanDescriptor: ChanDescriptor) {
+    if (!postsViewInitialized) {
+      return
+    }
+
+    val scrollPosition = scrollPositionCache[chanDescriptor]
+      ?: return
+
+    postsView.restoreScrollPosition(scrollPosition)
+  }
+
   class PostSearchPopupData(
     override val descriptor: ChanDescriptor,
     override val postViewMode: PostCellData.PostViewMode
@@ -245,6 +294,8 @@ class PostSearchPopupController(
 
   companion object {
     const val MIN_QUERY_LENGTH = 2
+
+    val scrollPositionCache = LruCache<ChanDescriptor, IndexAndTop>(128)
 
     private val lastQueryCache = LruCache<ChanDescriptor, String>(128)
   }

@@ -2151,7 +2151,7 @@ class ThreadPresenter @Inject constructor(
     fun showPostsPopup(
       threadDescriptor: ChanDescriptor.ThreadDescriptor,
       postViewMode: PostCellData.PostViewMode,
-      postDescriptor: PostDescriptor?,
+      postDescriptor: PostDescriptor,
       posts: List<ChanPost>
     )
 

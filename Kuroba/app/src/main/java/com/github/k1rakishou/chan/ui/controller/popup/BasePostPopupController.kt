@@ -17,11 +17,9 @@
 package com.github.k1rakishou.chan.ui.controller.popup
 
 import android.content.Context
-import android.util.LruCache
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
@@ -37,15 +35,12 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView
 import com.github.k1rakishou.chan.ui.view.LoadView
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.RecyclerUtils
-import com.github.k1rakishou.chan.utils.RecyclerUtils.restoreScrollPosition
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
-import com.github.k1rakishou.persist_state.IndexAndTop
 import javax.inject.Inject
 
 abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
@@ -80,16 +75,6 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
   protected val postsViewInitialized: Boolean
     get() = ::postsView.isInitialized
 
-  protected val scrollListener = object : RecyclerView.OnScrollListener() {
-    override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-      super.onScrollStateChanged(recyclerView, newState)
-
-      if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-        storeScrollPosition()
-      }
-    }
-  }
-
   override fun getLayoutId(): Int {
     return R.layout.layout_post_popup_container
   }
@@ -114,7 +99,6 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
     themeEngine.removeListener(this)
 
     if (::postsView.isInitialized) {
-      postsView.removeOnScrollListener(scrollListener)
       postsView.swapAdapter(null, true)
     }
 
@@ -226,49 +210,9 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
     return true
   }
 
-  protected fun storeScrollPosition() {
-    if (!postsViewInitialized) {
-      return
-    }
-
-    val descriptor = displayingData?.descriptor
-    if (descriptor == null) {
-      return
-    }
-
-    scrollPositionCache[postPopupType]!!.put(
-      descriptor,
-      RecyclerUtils.getIndexAndTop(postsView)
-    )
-  }
-
-  protected fun restoreScrollPosition(chanDescriptor: ChanDescriptor) {
-    if (!postsViewInitialized) {
-      return
-    }
-
-    val scrollPosition = scrollPositionCache[postPopupType]!![chanDescriptor]
-      ?: return
-
-    postsView.restoreScrollPosition(scrollPosition)
-  }
-
   abstract fun getDisplayingPostDescriptors(): List<PostDescriptor>
   abstract fun onImageIsAboutToShowUp()
   protected abstract suspend fun displayData(chanDescriptor: ChanDescriptor, data: T): ViewGroup
-
-  companion object {
-    val scrollPositionCache = initScrollPositionCache()
-
-    private fun initScrollPositionCache(): Map<PostPopupType, LruCache<ChanDescriptor, IndexAndTop>> {
-      val map = mutableMapOf<PostPopupType, LruCache<ChanDescriptor, IndexAndTop>>()
-
-      map.put(PostPopupType.Replies, LruCache<ChanDescriptor, IndexAndTop>(128))
-      map.put(PostPopupType.Search, LruCache<ChanDescriptor, IndexAndTop>(128))
-
-      return map
-    }
-  }
 
   enum class PostPopupType {
     Replies,

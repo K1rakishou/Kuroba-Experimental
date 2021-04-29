@@ -83,19 +83,12 @@ object RecyclerUtils {
       return
     }
 
-    val recyclerHeight = if (height > 0) {
-      height - 1
-    } else {
-      height
-    }
-
     val newIndex = indexAndTop.index.coerceIn(0, itemsCount)
-    val newTop = indexAndTop.top.coerceIn(0, recyclerHeight)
 
     when (val layoutManager = this.layoutManager) {
-      is GridLayoutManager -> layoutManager.scrollToPositionWithOffset(newIndex, newTop)
-      is LinearLayoutManager -> layoutManager.scrollToPositionWithOffset(newIndex, newTop)
-      is StaggeredGridLayoutManager -> layoutManager.scrollToPositionWithOffset(newIndex, newTop)
+      is GridLayoutManager -> layoutManager.scrollToPositionWithOffset(newIndex, indexAndTop.top)
+      is LinearLayoutManager -> layoutManager.scrollToPositionWithOffset(newIndex, indexAndTop.top)
+      is StaggeredGridLayoutManager -> layoutManager.scrollToPositionWithOffset(newIndex, indexAndTop.top)
     }
   }
 
