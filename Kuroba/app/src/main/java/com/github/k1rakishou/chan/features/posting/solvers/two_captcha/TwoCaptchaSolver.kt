@@ -176,6 +176,10 @@ class TwoCaptchaSolver(
     val checkSolutionResponse = checkSolution(activeRequest.requestId)
     if (checkSolutionResponse == null) {
       Logger.d(TAG, "checkSolution() checkSolution(${activeRequest.requestId}) -> null")
+
+      // Remove the request from active requests so we can send a new one on the next iteration
+      cancel(chanDescriptor)
+
       return TwoCaptchaResult.UnknownError("Failed to check captcha solution, see logs for more info")
     }
 
@@ -186,6 +190,10 @@ class TwoCaptchaSolver(
       }
 
       Logger.d(TAG, "checkSolution() checkSolutionResponse is not ok, checkSolutionResponse=$checkSolutionResponse")
+
+      // Remove the request from active requests so we can send a new one on the next iteration
+      cancel(chanDescriptor)
+
       return TwoCaptchaResult.BadCheckCaptchaSolutionResponse(checkSolutionResponse)
     }
 
@@ -196,6 +204,8 @@ class TwoCaptchaSolver(
     }
 
     Logger.d(TAG, "checkSolution() got check solution response")
+    cancel(chanDescriptor)
+
     return TwoCaptchaResult.Solution(checkSolutionResponse)
   }
 
