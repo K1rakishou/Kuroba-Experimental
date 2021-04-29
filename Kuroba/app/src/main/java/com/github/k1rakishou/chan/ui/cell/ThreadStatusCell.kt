@@ -210,7 +210,7 @@ class ThreadStatusCell(
     val op = chanThread.getOriginalPost()
 
     val board = boardManager.byBoardDescriptor(op.postDescriptor.boardDescriptor())
-    board?.let { appendThreadStatisticsPart(chanThread, builder, op, it) }
+    appendThreadStatisticsPart(chanThread, builder, op, board)
 
     statusCellText.text = builder
 
@@ -224,26 +224,29 @@ class ThreadStatusCell(
     chanThread: ChanThread,
     builder: SpannableStringBuilder,
     op: ChanOriginalPost,
-    board: ChanBoard
+    board: ChanBoard?
   ) {
     val hasReplies = chanThread.repliesCount > 0
     val hasImages = chanThread.imagesCount > 0
 
     if (hasReplies || hasImages) {
-      val hasBumpLimit = board.bumpLimit > 0
-      val hasImageLimit = board.imageLimit > 0
+      val bumpLimit = board?.bumpLimit ?: Int.MAX_VALUE
+      val imageLimit = board?.imageLimit ?: Int.MAX_VALUE
+
+      val hasBumpLimit = bumpLimit > 0
+      val hasImageLimit = imageLimit > 0
 
       val totalRepliesCount = chanThread.repliesCount
       val replies = SpannableString(totalRepliesCount.toString() + "R")
 
-      if (hasBumpLimit && totalRepliesCount >= board.bumpLimit) {
+      if (hasBumpLimit && totalRepliesCount >= bumpLimit) {
         replies.setSpan(StyleSpan(Typeface.ITALIC), 0, replies.length, 0)
       }
 
       val threadImagesCount = chanThread.imagesCount
       val images = SpannableString(threadImagesCount.toString() + "I")
 
-      if (hasImageLimit && threadImagesCount >= board.imageLimit) {
+      if (hasImageLimit && threadImagesCount >= imageLimit) {
         images.setSpan(StyleSpan(Typeface.ITALIC), 0, images.length, 0)
       }
 
@@ -258,18 +261,20 @@ class ThreadStatusCell(
       builder.append(" / ").append(ips)
     }
 
-    val boardPage = callback?.getPage(op.postDescriptor)
-    if (boardPage != null) {
-      val page = SpannableString(boardPage.currentPage.toString())
-      if (boardPage.currentPage >= board.pages) {
-        page.setSpan(StyleSpan(Typeface.ITALIC), 0, page.length, 0)
-      }
+    if (board != null) {
+      val boardPage = callback?.getPage(op.postDescriptor)
+      if (boardPage != null) {
+        val page = SpannableString(boardPage.currentPage.toString())
+        if (boardPage.currentPage >= board.pages) {
+          page.setSpan(StyleSpan(Typeface.ITALIC), 0, page.length, 0)
+        }
 
-      builder
-        .append(" / ")
-        .append(getString(R.string.thread_page_no))
-        .append(' ')
-        .append(page)
+        builder
+          .append(" / ")
+          .append(getString(R.string.thread_page_no))
+          .append(' ')
+          .append(page)
+      }
     }
   }
 
