@@ -1,6 +1,10 @@
 package com.github.k1rakishou.chan.core.site.loader.internal.usecase
 
 import com.github.k1rakishou.chan.core.helper.FilterEngine
+import com.github.k1rakishou.chan.core.lib.KurobaNativeLib
+import com.github.k1rakishou.chan.core.lib.data.post_parsing.PostParserContext
+import com.github.k1rakishou.chan.core.lib.data.post_parsing.PostToParse
+import com.github.k1rakishou.chan.core.lib.data.post_parsing.ThreadToParse
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
@@ -8,6 +12,7 @@ import com.github.k1rakishou.chan.core.site.parser.PostParseWorker
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mapArray
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -57,7 +62,55 @@ class ParsePostsUseCase(
       "boardDescriptors=${boardDescriptors.size}, " +
       "filters=${filters.size}")
 
-    val parsedPosts = supervisorScope {
+//    val parsedPosts = parsePostsWithPostParserV1(postBuildersToParse, filters, postParser, internalIds, boardDescriptors, chanDescriptor)
+    val parsedPosts = parsePostsWithPostParserV2(postBuildersToParse, filters, postParser, internalIds, boardDescriptors, chanDescriptor)
+
+    Logger.d(TAG, "parseNewPostsPosts(chanDescriptor=$chanDescriptor) -> parsedPosts=${parsedPosts.size}")
+    return parsedPosts
+  }
+
+  private fun parsePostsWithPostParserV2(
+    postBuildersToParse: List<ChanPostBuilder>,
+    filters: List<ChanFilter>,
+    postParser: PostParser,
+    internalIds: Set<Long>,
+    boardDescriptors: Set<BoardDescriptor>,
+    chanDescriptor: ChanDescriptor
+  ): List<ChanPost> {
+    if (postBuildersToParse.isEmpty()) {
+      return emptyList()
+    }
+
+    val threadId = postBuildersToParse.first().getOpId()
+
+    val postsToParseArray = postBuildersToParse
+      .mapArray { postBuilderToParse ->
+        PostToParse(postBuilderToParse.id, postBuilderToParse.postCommentBuilder.getUnparsedComment())
+      }
+
+    val postThreadParsed = KurobaNativeLib.parseThreadPosts(
+      PostParserContext(threadId, longArrayOf(), internalIds.toLongArray()),
+      ThreadToParse(postsToParseArray)
+    )
+
+    println("TTTAAA parsed comments count=${postThreadParsed.postCommentsParsedList.size}")
+
+    for (postCommentParsed in postThreadParsed.postCommentsParsedList) {
+      println("TTTAAA ${postCommentParsed}")
+    }
+
+    return emptyList()
+  }
+
+  private suspend fun parsePostsWithPostParserV1(
+    postBuildersToParse: List<ChanPostBuilder>,
+    filters: List<ChanFilter>,
+    postParser: PostParser,
+    internalIds: Set<Long>,
+    boardDescriptors: Set<BoardDescriptor>,
+    chanDescriptor: ChanDescriptor
+  ): List<ChanPost> {
+    return supervisorScope {
       return@supervisorScope postBuildersToParse
         .chunked(THREAD_COUNT * 2)
         .flatMap { postToParseChunk ->
@@ -80,9 +133,6 @@ class ParsePostsUseCase(
           return@flatMap deferredList.awaitAll().filterNotNull()
         }
     }
-
-    Logger.d(TAG, "parseNewPostsPosts(chanDescriptor=$chanDescriptor) -> parsedPosts=${parsedPosts.size}")
-    return parsedPosts
   }
 
   private fun getBoardDescriptors(chanDescriptor: ChanDescriptor): Set<BoardDescriptor> {

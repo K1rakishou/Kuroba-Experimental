@@ -821,3 +821,13 @@ fun View.isPointInsideView(x: Float, y: Float): Boolean {
 
   return x > viewX && x < viewX + this.width && y > viewY && y < viewY + this.height
 }
+
+inline fun <T, reified R> List<T>.mapArray(mapper: (T) -> R): Array<R> {
+  val array = arrayOfNulls<R>(size)
+
+  forEachIndexed { index, element ->
+    array[index] = mapper(element)
+  }
+
+  return array as Array<R>
+}

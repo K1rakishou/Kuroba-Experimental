@@ -51,3 +51,5 @@ hs_err_pid*
 
 keys.properties
 kuroba_ex.jks
+
+/src/main/jniLibs/
