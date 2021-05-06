@@ -33,7 +33,6 @@ import com.github.k1rakishou.chan.core.helper.ReplyNotificationsHelper;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader;
 import com.github.k1rakishou.chan.core.loader.impl.Chan4CloudFlareImagePreloader;
-import com.github.k1rakishou.chan.core.loader.impl.InlinedFileInfoLoader;
 import com.github.k1rakishou.chan.core.loader.impl.PostExtraContentLoader;
 import com.github.k1rakishou.chan.core.loader.impl.PrefetchLoader;
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager;
@@ -228,7 +227,6 @@ public class ManagerModule {
     public OnDemandContentLoaderManager provideOnDemandContentLoader(
             PrefetchLoader prefetchLoader,
             PostExtraContentLoader postExtraContentLoader,
-            InlinedFileInfoLoader inlinedFileInfoLoader,
             Chan4CloudFlareImagePreloader chan4CloudFlareImagePreloader,
             ChanThreadManager chanThreadManager,
             @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
@@ -237,7 +235,6 @@ public class ManagerModule {
         loaders.add(chan4CloudFlareImagePreloader);
         loaders.add(prefetchLoader);
         loaders.add(postExtraContentLoader);
-        loaders.add(inlinedFileInfoLoader);
 
         return new OnDemandContentLoaderManager(
                 Schedulers.from(onDemandContentLoaderExecutor),

@@ -18,6 +18,7 @@ class ChanPostImage(
   val imageWidth: Int = 0,
   val imageHeight: Int = 0,
   val spoiler: Boolean = false,
+  @Deprecated("remove me")
   val isInlined: Boolean = false,
   fileSize: Long = 0L,
   val fileHash: String? = null,

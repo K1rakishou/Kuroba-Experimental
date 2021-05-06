@@ -76,25 +76,6 @@ class AppearanceSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
-          identifier = AppearanceScreen.ImagesGroup.ParsePostImageLinks,
-          topDescriptionIdFunc = { R.string.setting_image_link_loading_title },
-          bottomDescriptionIdFunc = { R.string.setting_image_link_loading_description },
-          setting = ChanSettings.parsePostImageLinks,
-          requiresUiRefresh = true
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = AppearanceScreen.ImagesGroup.FetchInlinedFileSizes,
-          topDescriptionIdFunc = { R.string.setting_fetch_inlined_file_sizes_title },
-          bottomDescriptionIdFunc = { R.string.setting_fetch_inlined_file_sizes_description },
-          setting = ChanSettings.fetchInlinedFileSizes,
-          dependsOnSetting = ChanSettings.parsePostImageLinks,
-          requiresUiRefresh = true
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
           identifier = AppearanceScreen.ImagesGroup.TransparencyOn,
           topDescriptionIdFunc = { R.string.setting_fetch_image_opacity },
           bottomDescriptionIdFunc = { R.string.setting_fetch_image_opacity_description },

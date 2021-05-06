@@ -22,10 +22,12 @@ import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.loader.internal.ChanPostPersister
 import com.github.k1rakishou.chan.core.site.loader.internal.DatabasePostLoader
-import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsUseCase
+import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase
+import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV2UseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ReloadPostsFromDatabaseUseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
@@ -77,6 +79,7 @@ class ChanThreadLoaderCoordinator(
   private val appConstants: AppConstants,
   private val postFilterManager: PostFilterManager,
   private val verboseLogsEnabled: Boolean,
+  private val siteManager: SiteManager,
   private val boardManager: BoardManager,
   private val siteResolver: SiteResolver
 ) : CoroutineScope {
@@ -92,8 +95,19 @@ class ChanThreadLoaderCoordinator(
     )
   }
 
-  private val parsePostsUseCase by lazy {
-    ParsePostsUseCase(
+  private val parsePostsV1UseCase by lazy {
+    ParsePostsV1UseCase(
+      verboseLogsEnabled,
+      chanPostRepository,
+      filterEngine,
+      postFilterManager,
+      savedReplyManager,
+      boardManager
+    )
+  }
+
+  private val parsePostsV2UseCase by lazy {
+    ParsePostsV2UseCase(
       verboseLogsEnabled,
       chanPostRepository,
       filterEngine,
@@ -111,7 +125,9 @@ class ChanThreadLoaderCoordinator(
 
   private val chanPostPersister by lazy {
     ChanPostPersister(
-      parsePostsUseCase,
+      siteManager,
+      parsePostsV1UseCase,
+      parsePostsV2UseCase,
       storePostsInRepositoryUseCase,
       chanPostRepository,
       chanCatalogSnapshotRepository

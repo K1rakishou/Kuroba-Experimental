@@ -1,44 +1,61 @@
 pub mod mapper {
-  use new_post_parser_lib::{PostCommentParsed, Spannable, SpannableData, PostLink};
+  use new_post_parser_lib::{Spannable, SpannableData, PostLink, ParsedPost};
   use jni::sys::{jobject, jsize, _jobject};
   use jni::{JNIEnv, errors};
-  use crate::helpers::{format_post_parsing_object_signature, format_spannables_object_signature_pref, format_spannables_object_signature};
-  use jni::objects::{JObject, JString, JValue};
+  use crate::helpers::{format_post_parsing_object_signature, format_spannables_object_signature_pref, format_spannables_object_signature, format_post_parsing_object_signature_pref};
+  use jni::objects::{JObject, JValue};
 
-  pub fn to_java_object(env: &JNIEnv, post_comment_parsed: &PostCommentParsed) -> errors::Result<jobject> {
-    let post_comment_parsed_jclass = env.find_class(format_post_parsing_object_signature("PostCommentParsed").as_str())
-      .expect("Failed to find class PostCommentParsed");
+  pub fn map_to_post_parsed(env: &JNIEnv, parsed_post: &ParsedPost) -> errors::Result<jobject> {
+    let post_comment_parsed_jclass = env.find_class(format_post_parsing_object_signature("ParsedSpannableText").as_str())
+      .expect("Failed to find class ParsedSpannableText");
     let post_comment_parsed_jobject = env.new_object(post_comment_parsed_jclass, "()V", &[])
-      .expect("Failed to instantiate PostCommentParsed");
+      .expect("Failed to instantiate ParsedSpannableText");
 
     env.set_field(
       post_comment_parsed_jobject,
       "commentTextRaw",
       "Ljava/lang/String;",
-      JValue::Object(JObject::from(env.new_string(&post_comment_parsed.original_comment_text)?.into_inner()))
+      JValue::Object(JObject::from(env.new_string(&parsed_post.post_comment_parsed.original_text)?.into_inner()))
     ).expect("Failed to set field commentTextRaw of post_comment_parsed_jobject");
 
     env.set_field(
       post_comment_parsed_jobject,
       "commentTextParsed",
       "Ljava/lang/String;",
-      JValue::Object(JObject::from(env.new_string(&*post_comment_parsed.parsed_comment_text)?.into_inner()))
+      JValue::Object(JObject::from(env.new_string(&*parsed_post.post_comment_parsed.parsed_text)?.into_inner()))
     ).expect("Failed to set field commentTextParsed of post_comment_parsed_jobject");
 
     env.set_field(
       post_comment_parsed_jobject,
       "spannableList",
       format_spannables_object_signature_pref("[", "PostCommentSpannable").as_str(),
-      JValue::Object(JObject::from(spannables_to_java_object(env, &*post_comment_parsed.spannables)?))
+      JValue::Object(JObject::from(spannables_to_java_object(env, &*parsed_post.post_comment_parsed.spannables)?))
     ).expect("Failed to set field commentTextParsed of post_comment_parsed_jobject");
 
-    return Result::Ok(post_comment_parsed_jobject.into_inner());
+    let post_parsed_jclass = env.find_class(format_post_parsing_object_signature("PostParsed").as_str())
+      .expect("Failed to find class PostParsed");
+    let post_parsed_jobject = env.new_object(post_parsed_jclass, "()V", &[])
+      .expect("Failed to instantiate PostParsed");
+
+    env.set_field(post_parsed_jobject, "postId", "J", JValue::Long(parsed_post.post_id as i64))
+      .expect("Failed to set field postId of post_parsed_jobject");
+    env.set_field(post_parsed_jobject, "postSubId", "J", JValue::Long(parsed_post.post_sub_id as i64))
+      .expect("Failed to set field postSubId of post_parsed_jobject");
+
+    env.set_field(
+      post_parsed_jobject,
+      "postCommentParsed",
+      format_post_parsing_object_signature_pref("", "ParsedSpannableText"),
+      JValue::Object(JObject::from(post_comment_parsed_jobject))
+    ).expect("Failed to set field postCommentParsed of post_parsed_jobject");
+
+    return Result::Ok(post_parsed_jobject.into_inner());
   }
 
   fn spannables_to_java_object(env: &JNIEnv, spannables: &Vec<Spannable>) -> errors::Result<jobject> {
     let post_comment_spannable_data_array_jclass = env.find_class(
       format_spannables_object_signature("IPostCommentSpannableData").as_str()
-    ).expect("Failed to find class PostCommentParsed");
+    ).expect("Failed to find class IPostCommentSpannableData");
 
     let spannable_array = env.new_object_array(
       spannables.len() as jsize,
@@ -54,32 +71,32 @@ pub mod mapper {
               let post_no_param = JValue::Long(*post_no as i64);
               let params = [post_no_param];
 
-              convert_spannable_and_add_to_array(env, spannable_array, index, "Quote", "(J)V", &params);
+              convert_spannable_and_add_to_array(env, spannable_array, index, "Quote", "(J)V", &params)?;
             }
             PostLink::Dead { post_no } => {
               let post_no_param = JValue::Long(*post_no as i64);
               let params = [post_no_param];
 
-              convert_spannable_and_add_to_array(env, spannable_array, index, "DeadQuote", "(J)V", &params);
+              convert_spannable_and_add_to_array(env, spannable_array, index, "DeadQuote", "(J)V", &params)?;
             }
             PostLink::UrlLink { link } => {
               let link_param = JValue::Object(JObject::from(env.new_string(link)?.into_inner()));
               let params = [link_param];
 
-              convert_spannable_and_add_to_array(env, spannable_array, index, "UrlLink", "(Ljava/lang/String;)V", &params);
+              convert_spannable_and_add_to_array(env, spannable_array, index, "UrlLink", "(Ljava/lang/String;)V", &params)?;
             }
             PostLink::BoardLink { board_code } => {
               let board_code_param = JValue::Object(JObject::from(env.new_string(board_code)?.into_inner()));
               let params = [board_code_param];
 
-              convert_spannable_and_add_to_array(env, spannable_array, index, "BoardLink", "(Ljava/lang/String;)V", &params);
+              convert_spannable_and_add_to_array(env, spannable_array, index, "BoardLink", "(Ljava/lang/String;)V", &params)?;
             }
             PostLink::SearchLink { board_code, search_query } => {
               let board_code_param = JValue::Object(JObject::from(env.new_string(board_code)?.into_inner()));
               let search_query_param = JValue::Object(JObject::from(env.new_string(search_query)?.into_inner()));
               let params = [board_code_param, search_query_param];
 
-              convert_spannable_and_add_to_array(env, spannable_array, index, "SearchLink", "(Ljava/lang/String;Ljava/lang/String;)V", &params);
+              convert_spannable_and_add_to_array(env, spannable_array, index, "SearchLink", "(Ljava/lang/String;Ljava/lang/String;)V", &params)?;
             }
             PostLink::ThreadLink { board_code, thread_no, post_no } => {
               let board_code_param = JValue::Object(JObject::from(env.new_string(board_code)?.into_inner()));
@@ -87,15 +104,15 @@ pub mod mapper {
               let post_no_param = JValue::Long(*post_no as i64);
               let params = [board_code_param, thread_no_param, post_no_param];
 
-              convert_spannable_and_add_to_array(env, spannable_array, index, "ThreadLink", "(Ljava/lang/String;JJ)V", &params);
+              convert_spannable_and_add_to_array(env, spannable_array, index, "ThreadLink", "(Ljava/lang/String;JJ)V", &params)?;
             }
           }
         }
         SpannableData::Spoiler => {
-          convert_spannable_and_add_to_array(env, spannable_array, index, "Spoiler", "()V", &[]);
+          convert_spannable_and_add_to_array(env, spannable_array, index, "Spoiler", "()V", &[])?;
         }
         SpannableData::GreenText => {
-          convert_spannable_and_add_to_array(env, spannable_array, index, "GreenText", "()V", &[]);
+          convert_spannable_and_add_to_array(env, spannable_array, index, "GreenText", "()V", &[])?;
         }
       }
     }
@@ -110,7 +127,7 @@ pub mod mapper {
     spannable_class_signature: &str,
     ctor_sign: &str,
     ctor_args: &[JValue]
-  ) {
+  ) -> errors::Result<()> {
     let full_signature = format!("IPostCommentSpannableData${}", spannable_class_signature);
 
     let spoiler_span_jclass = env.find_class(
@@ -124,6 +141,8 @@ pub mod mapper {
       post_comment_spannable_data_array,
       index as jsize,
       spannable_object
-    );
+    )?;
+
+    return Result::Ok(())
   }
 }

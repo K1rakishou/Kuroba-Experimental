@@ -55,7 +55,10 @@ class PostCommentBuilder(
   }
 
   @Synchronized
-  fun hasComment() = unparsedComment != null
+  fun hasUnparsedComment() = unparsedComment != null
+
+  @Synchronized
+  fun commentAlreadyParsed() = parsedComment != null
 
   @Synchronized
   fun copy(): PostCommentBuilder {

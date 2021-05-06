@@ -20,7 +20,6 @@ public class ChanPostImageBuilder {
     private int imageWidth;
     private int imageHeight;
     private boolean spoiler;
-    private boolean isInlined = false;
     private long size;
     @Nullable
     private String fileHash;
@@ -80,11 +79,6 @@ public class ChanPostImageBuilder {
         return this;
     }
 
-    public ChanPostImageBuilder isInlined(boolean inlined) {
-        this.isInlined = inlined;
-        return this;
-    }
-
     public ChanPostImageBuilder size(long size) {
         this.size = size;
         return this;
@@ -127,7 +121,7 @@ public class ChanPostImageBuilder {
                 imageWidth,
                 imageHeight,
                 spoiler,
-                isInlined,
+                false,
                 size,
                 fileHash,
                 getImageType(extension)

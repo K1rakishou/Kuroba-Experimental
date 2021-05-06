@@ -1,8 +1,11 @@
 package com.github.k1rakishou.chan.core.site.loader.internal
 
+import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
-import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsUseCase
+import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase
+import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV2UseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
@@ -15,12 +18,15 @@ import com.github.k1rakishou.model.data.options.ChanCacheOptions
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import com.github.k1rakishou.prefs.BooleanSetting
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
 internal class ChanPostPersister(
-  private val parsePostsUseCase: ParsePostsUseCase,
+  private val siteManager: SiteManager,
+  private val parsePostsV1UseCase: ParsePostsV1UseCase,
+  private val parsePostsV2UseCase: ParsePostsV2UseCase,
   private val storePostsInRepositoryUseCase: StorePostsInRepositoryUseCase,
   private val chanPostRepository: ChanPostRepository,
   private val chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository
@@ -53,11 +59,28 @@ internal class ChanPostPersister(
       }
 
       val (parsedPosts, parsingDuration) = measureTimedValue {
-        return@measureTimedValue parsePostsUseCase.parseNewPostsPosts(
-          chanDescriptor = chanDescriptor,
-          postParser = postParser,
-          postBuildersToParse = chanReaderProcessor.getToParse()
-        )
+        val usePostParserV2 = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+          ?.getSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.UsePostParserV2)
+          ?.get()
+          ?: false
+
+        if (usePostParserV2) {
+          Logger.d(TAG, "Using PostParserV2")
+
+          return@measureTimedValue parsePostsV2UseCase.parseNewPostsPosts(
+            chanDescriptor = chanDescriptor,
+            postParser = postParser,
+            postBuildersToParse = chanReaderProcessor.getToParse()
+          )
+        } else {
+          Logger.d(TAG, "Using PostParserV1")
+
+          return@measureTimedValue parsePostsV1UseCase.parseNewPostsPosts(
+            chanDescriptor = chanDescriptor,
+            postParser = postParser,
+            postBuildersToParse = chanReaderProcessor.getToParse()
+          )
+        }
       }
 
       if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {

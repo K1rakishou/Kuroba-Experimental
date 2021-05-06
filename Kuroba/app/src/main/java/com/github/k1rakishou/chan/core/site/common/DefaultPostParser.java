@@ -89,18 +89,19 @@ public class DefaultPostParser implements PostParser {
 
         parseSpans(builder);
 
-        if (builder.postCommentBuilder.hasComment()) {
-            Spannable parsedComment = parseComment(
-                    builder,
-                    builder.postCommentBuilder.getUnparsedComment(),
-                    ChanSettings.parsePostImageLinks.get(),
-                    callback
-            );
+        if (!builder.postCommentBuilder.commentAlreadyParsed()) {
+            if (builder.postCommentBuilder.hasUnparsedComment()) {
+                Spannable parsedComment = parseComment(
+                        builder,
+                        builder.postCommentBuilder.getUnparsedComment(),
+                        callback
+                );
 
-            builder.postCommentBuilder.setParsedComment(parsedComment);
-        } else {
-            builder.postCommentBuilder.setUnparsedComment("");
-            builder.postCommentBuilder.setParsedComment(new SpannableString(""));
+                builder.postCommentBuilder.setParsedComment(parsedComment);
+            } else {
+                builder.postCommentBuilder.setUnparsedComment("");
+                builder.postCommentBuilder.setParsedComment(new SpannableString(""));
+            }
         }
 
         return builder.build();
@@ -296,7 +297,6 @@ public class DefaultPostParser implements PostParser {
     public Spannable parseComment(
             ChanPostBuilder post,
             CharSequence commentRaw,
-            boolean addPostImages,
             Callback callback
     ) {
         if (commentRaw.length() <= 0) {
@@ -324,10 +324,6 @@ public class DefaultPostParser implements PostParser {
             }
         } catch (Exception e) {
             Logger.e(TAG, "Error parsing comment html", e);
-        }
-
-        if (addPostImages) {
-            CommentParserHelper.addPostImages(post);
         }
 
         return SpannableString.valueOf(total);

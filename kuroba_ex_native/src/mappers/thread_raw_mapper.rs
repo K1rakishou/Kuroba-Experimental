@@ -1,13 +1,8 @@
 pub mod mapper {
   use new_post_parser_lib::{ThreadRaw, PostRaw};
   use jni::{JNIEnv, errors};
-  use jni::objects::{JObject, ReleaseMode, JString};
-  use std::ffi::{CString, CStr};
-  use jni::errors::Error;
-  use log::debug;
+  use jni::objects::{JObject};
   use crate::helpers::{java_string_field_to_rust_string, format_post_parsing_object_signature_pref};
-
-  const TAG: &str = "thread_raw_mapper";
 
   pub fn from_java_object(env: &JNIEnv, threads_to_parse: JObject) -> errors::Result<ThreadRaw> {
     let posts_to_parse_list_field =  env.get_field(
@@ -35,20 +30,14 @@ pub mod mapper {
 
   fn post_raw_object_to_post_raw(env: &JNIEnv, post_raw_object: JObject) -> errors::Result<PostRaw> {
     let post_id = env.get_field(post_raw_object, "postId", "J")?.j()? as u64;
-    let comment_result = java_string_field_to_rust_string(env, post_raw_object, "comment", "Ljava/lang/String;");
-
-    let comment_maybe = match comment_result {
-      Ok(value) => Option::Some(value),
-      Err(error) => {
-        eprintln!("{} post_raw_object_to_post_raw() java_string_field_to_rust_string() error={:?}", TAG, error);
-        Option::None
-      }
-    };
+    let post_sub_id = env.get_field(post_raw_object, "postSubId", "J")?.j()? as u64;
+    let comment = java_string_field_to_rust_string(env, post_raw_object, "comment")?;
 
     return Result::Ok(
       PostRaw {
         post_id,
-        com: comment_maybe
+        post_sub_id,
+        com: comment
       }
     )
   }

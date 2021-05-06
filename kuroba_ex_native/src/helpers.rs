@@ -5,10 +5,9 @@ use std::ffi::{CStr, CString};
 pub fn java_string_field_to_rust_string(
   env: &JNIEnv,
   object_holder: JObject,
-  field_name: &str,
-  field_signature: &str
+  field_name: &str
 ) -> errors::Result<String> {
-  let comment_field = env.get_field(object_holder, field_name, field_signature)?.l()?;
+  let comment_field = env.get_field(object_holder, field_name, "Ljava/lang/String;")?.l()?;
   let result_string: String;
 
   unsafe {

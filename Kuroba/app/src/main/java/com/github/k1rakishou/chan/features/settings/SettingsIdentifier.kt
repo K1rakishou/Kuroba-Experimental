@@ -367,8 +367,6 @@ sealed class AppearanceScreen(
     object HideImages : ImagesGroup("hide_images")
     object RemoveImageSpoilers : ImagesGroup("remove_image_spoilers")
     object HighResCells : ImagesGroup("high_res_cells")
-    object ParsePostImageLinks : ImagesGroup("parse_post_image_links")
-    object FetchInlinedFileSizes : ImagesGroup("fetch_inlined_file_sizes")
     object TransparencyOn : ImagesGroup("transparency_on")
 
     companion object : IGroupIdentifier() {

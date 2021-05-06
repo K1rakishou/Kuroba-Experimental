@@ -678,10 +678,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_reveal_image_spoilers">Auto reveal image spoilers</string>
     <string name="setting_images_high_res">High resolution cells</string>
     <string name="setting_images_high_res_description">Make the album view and card catalog images higher resolution by pre-rescaling full size images</string>
-    <string name="setting_image_link_loading_title">Enable image link loading</string>
-    <string name="setting_image_link_loading_description">Adds any JPG, PNG, GIF, WEBP, BMP, PDF, WEBM, or MP4 files linked in posts as internally viewable post attachments, with a special spoiler image due to no thumbnails being available</string>
-    <string name="setting_fetch_inlined_file_sizes_title">Fetch the file size for inlined files</string>
-    <string name="setting_fetch_inlined_file_sizes_description">A HEAD request will be sent for inlined files to try to get the Content-Length header which value will be used as the file size.\n\n⚠⚠⚠ WARNING ⚠⚠⚠\n\nBy enabling this setting you may accidentally leak your IP address to IP logger site. Only enable this if you don\'t care about leaking your IP address.</string>
     <string name="setting_fetch_image_opacity">Image opacity</string>
     <string name="setting_fetch_image_opacity_description">Default state for image transparency in the viewer</string>
 

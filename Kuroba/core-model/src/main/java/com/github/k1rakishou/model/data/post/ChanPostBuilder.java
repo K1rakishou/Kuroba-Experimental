@@ -23,6 +23,8 @@ public class ChanPostBuilder {
     @Nullable
     public BoardDescriptor boardDescriptor;
     public long id = -1;
+    // TODO(KurobaEx / @GhostPosts):
+    public long subId = 0;
     public long opId = -1;
     public boolean op;
     public int totalRepliesCount = -1;
@@ -358,9 +360,9 @@ public class ChanPostBuilder {
                 || id < 0
                 || opId < 0
                 || unixTimestampSeconds < 0
-                || !postCommentBuilder.hasComment()
+                || !postCommentBuilder.hasUnparsedComment()
         ) {
-            throw new IllegalArgumentException("Post data not complete" + toString());
+            throw new IllegalArgumentException("Post data not complete: " + toString());
         }
 
         return ChanPostMapper.fromPostBuilder(this);

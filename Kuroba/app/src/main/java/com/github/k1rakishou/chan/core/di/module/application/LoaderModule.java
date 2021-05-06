@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.di.module.application;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.loader.impl.Chan4CloudFlareImagePreloader;
-import com.github.k1rakishou.chan.core.loader.impl.InlinedFileInfoLoader;
 import com.github.k1rakishou.chan.core.loader.impl.PostExtraContentLoader;
 import com.github.k1rakishou.chan.core.loader.impl.PrefetchLoader;
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.ExternalMediaServiceExtraInfoFetcher;
@@ -13,7 +12,6 @@ import com.github.k1rakishou.chan.core.loader.impl.external_media_service.Youtub
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchStateManager;
-import com.github.k1rakishou.model.repository.InlinedFileInfoRepository;
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository;
 
 import java.util.ArrayList;
@@ -45,20 +43,6 @@ public class LoaderModule {
                 cacheHandler,
                 chanThreadManager,
                 prefetchStateManager
-        );
-    }
-
-    @Provides
-    @Singleton
-    public InlinedFileInfoLoader provideInlinedFileInfoLoader(
-            InlinedFileInfoRepository inlinedFileInfoRepository,
-            ChanThreadManager chanThreadManager,
-            @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
-    ) {
-        return new InlinedFileInfoLoader(
-                Schedulers.from(onDemandContentLoaderExecutor),
-                inlinedFileInfoRepository,
-                chanThreadManager
         );
     }
 

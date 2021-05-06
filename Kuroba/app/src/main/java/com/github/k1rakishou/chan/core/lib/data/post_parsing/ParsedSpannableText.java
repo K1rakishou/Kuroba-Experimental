@@ -4,14 +4,14 @@ import com.github.k1rakishou.chan.core.lib.data.post_parsing.spannable.PostComme
 
 import java.util.Arrays;
 
-public class PostCommentParsed {
+public class ParsedSpannableText {
     public String commentTextRaw;
     public String commentTextParsed;
     public PostCommentSpannable[] spannableList;
 
     @Override
     public String toString() {
-        return "PostCommentParsed{" +
+        return "ParsedSpannableText{" +
                 "commentTextRaw='" + commentTextRaw + '\'' +
                 ", commentTextParsed='" + commentTextParsed + '\'' +
                 ", spannableList=" + Arrays.toString(spannableList) +

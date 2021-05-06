@@ -294,8 +294,6 @@ public class ChanSettings {
     public static BooleanSetting removeImageSpoilers;
     public static BooleanSetting revealImageSpoilers;
     public static BooleanSetting highResCells;
-    public static BooleanSetting parsePostImageLinks;
-    public static BooleanSetting fetchInlinedFileSizes;
     public static BooleanSetting transparencyOn;
 
     // Set elsewhere in the application
@@ -491,8 +489,6 @@ public class ChanSettings {
             removeImageSpoilers = new BooleanSetting(provider, "preference_reveal_image_spoilers", false);
             revealImageSpoilers = new BooleanSetting(provider, "preference_auto_unspoil_images", true);
             highResCells = new BooleanSetting(provider, "high_res_cells", false);
-            parsePostImageLinks = new BooleanSetting(provider, "parse_post_image_links", true);
-            fetchInlinedFileSizes = new BooleanSetting(provider, "fetch_inlined_file_size", false);
             transparencyOn = new BooleanSetting(provider, "image_transparency_on", false);
 
             //Elsewhere

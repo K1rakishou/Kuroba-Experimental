@@ -19,14 +19,8 @@ package com.github.k1rakishou.chan.core.site.parser
 import android.text.SpannableString
 import android.text.Spanned
 import androidx.core.text.buildSpannedString
-import com.github.k1rakishou.common.AppConstants
-import com.github.k1rakishou.common.StringUtils
-import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
-import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
-import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.nibor.autolink.LinkExtractor
 import org.nibor.autolink.LinkSpan
 import org.nibor.autolink.LinkType
@@ -184,74 +178,6 @@ object CommentParserHelper {
       )
 
       post.addLinkable(pl)
-    }
-  }
-
-  @JvmStatic
-  fun addPostImages(chanPost: ChanPostBuilder) {
-    val duplicateCheckerSet = mutableSetOf<HttpUrl>()
-
-    for (linkable in chanPost.linkables) {
-      if (chanPost.postImages.size >= 5) {
-        // max 5 images hotlinked
-        return
-      }
-
-      if (linkable.type !== PostLinkable.Type.LINK) {
-        break
-      }
-
-      val linkableValue = linkable.linkableValue
-      if (linkableValue !is PostLinkable.Value.StringValue) {
-        Logger.e(TAG, "Bad linkableValue type: " + linkableValue.javaClass.simpleName)
-        continue
-      }
-
-      val link = linkableValue.value
-      val matcher = imageUrlPattern.matcher(link)
-
-      if (!matcher.matches()) {
-        break
-      }
-
-      val linkStr = link.toString()
-      val noThumbnail = StringUtils.endsWithAny(linkStr, noThumbLinkSuffixes)
-      val spoilerThumbnail = AppConstants.RESOURCES_ENDPOINT + "internal_spoiler.png"
-
-      val imageUrl = linkStr.toHttpUrlOrNull()
-      if (imageUrl == null) {
-        Logger.e(TAG, "addPostImages() couldn't parse linkable.value ($linkStr)")
-        continue
-      }
-
-      if (!duplicateCheckerSet.add(imageUrl)) {
-        // This link has already been inlined, do not inline the same link more than once
-        continue
-      }
-
-      // Spoiler thumb for some linked items, the image itself for the rest;
-      // probably not a great idea
-      val thumbnailUrl = if (noThumbnail) {
-        spoilerThumbnail.toHttpUrlOrNull()
-      } else {
-        linkStr.toHttpUrlOrNull()
-      }
-
-      val spoilerThumbnailUrl = spoilerThumbnail.toHttpUrlOrNull()
-
-      val postImage = ChanPostImageBuilder()
-        .serverFilename(matcher.group(1))
-        .thumbnailUrl(thumbnailUrl)
-        .spoilerThumbnailUrl(spoilerThumbnailUrl)
-        .imageUrl(imageUrl)
-        .filename(matcher.group(1))
-        .extension(matcher.group(2))
-        .spoiler(true)
-        .isInlined(true)
-        .size(-1)
-        .build()
-
-      chanPost.postImages(listOf(postImage), chanPost.postDescriptor)
     }
   }
 

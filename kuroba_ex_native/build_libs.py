@@ -2,10 +2,18 @@ import subprocess
 import sys,os
 import shutil
 
-def download_and_extract_ndk():
+def download_and_extract_ndk(force_download_ndk):
 	ndkDir = os.path.realpath("../ndk")
 	ndkName = "android-ndk-r22b-linux-x86_64"
 	ndkUrl = 'https://dl.google.com/android/repository/{}.zip'.format(ndkName)
+	ndkOutZipFile = os.path.join(ndkDir, ndkName + ".zip")
+	ndkExtractedDir = os.path.join(ndkDir, ndkName)
+
+	if not force_download_ndk and os.path.exists(ndkExtractedDir):
+		print("NDK output directory ({}) already exists. Assuming it's correct since force_download_ndk is true.".format(ndkExtractedDir))
+		return
+	else:
+		print("NDK output directory ({}) DOES NOT exists. Downloading it now.".format(ndkExtractedDir))
 
 	if (os.path.exists(ndkDir)):
 		print("Deleting existing NDK directory ({})...".format(ndkDir))
@@ -14,12 +22,6 @@ def download_and_extract_ndk():
 		print("Done")
 	else:
 		os.makedirs(ndkDir)
-
-	ndkOutZipFile = os.path.join(ndkDir, ndkName + ".zip")
-	ndkExtractedDir = os.path.join(ndkDir, ndkName)
-
-	print("ndkOutZipFile={}".format(ndkOutZipFile))
-	print("ndkExtractedDir={}".format(ndkExtractedDir))
 
 	print("Downloading NDK ({}) into file ({})...".format(ndkUrl, ndkOutZipFile))
 	print(subprocess.check_call(['wget', '-O', ndkOutZipFile, ndkUrl]))
@@ -30,13 +32,17 @@ def download_and_extract_ndk():
 	print("Done")
 
 if __name__ == "__main__":
-	buildType = "debug" #TODO: change to "release" when doing release
+	buildType = "release" 		#TODO: change to "release" when doing release
+	onlyBuildEmulatorLib = True #TODO: probably make it into an argument which will be passed by the gradle task
+										# depending on whether we are doing a CI or regular local build
+	force_download_ndk = False  #TODO: probably make it into an argument which will be passed by the gradle task
+										# depending on whether we are doing a CI or regular local build
+
 	libName = 'libkuroba_ex_native.so'
 	jniLibsAndroidDir = os.path.realpath("../Kuroba/app/src/main/jniLibs")
 	jniLibsBuildDir = os.path.realpath("target")
 
-	if buildType != "debug":
-		download_and_extract_ndk()
+	download_and_extract_ndk(force_download_ndk)
 
 	if os.path.exists(jniLibsBuildDir):
 		print("Deleting existing jni libs target directory...")
@@ -46,7 +52,7 @@ if __name__ == "__main__":
 	targets = []
 	androidJniLibDirs = []
 
-	if buildType == "debug":
+	if onlyBuildEmulatorLib:
 		targets = ['i686-linux-android']
 		androidJniLibDirs = ['x86']
 	else:

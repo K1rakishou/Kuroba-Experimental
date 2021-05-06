@@ -33,7 +33,6 @@ public interface PostParser {
     Spannable parseComment(
             ChanPostBuilder post,
             CharSequence commentRaw,
-            boolean addPostImages,
             Callback callback
     );
 

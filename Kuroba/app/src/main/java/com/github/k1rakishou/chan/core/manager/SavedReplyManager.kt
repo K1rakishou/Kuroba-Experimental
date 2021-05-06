@@ -88,6 +88,27 @@ class SavedReplyManager(
     }
   }
 
+  fun getAllRepliesCatalog(
+    catalogDescriptor: ChanDescriptor.CatalogDescriptor,
+    threadPostIds: Set<Long>
+  ): List<ChanSavedReply> {
+    return lock.read {
+      return@read threadPostIds.mapNotNull { threadPostId ->
+        val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(catalogDescriptor, threadPostId)
+
+        return@mapNotNull savedReplyMap[threadDescriptor]
+          ?.firstOrNull { chanSavedReply -> chanSavedReply.postDescriptor.postNo == threadPostId }
+      }
+    }
+  }
+
+  fun getAllRepliesThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): List<ChanSavedReply> {
+    return lock.read {
+      return@read savedReplyMap[threadDescriptor]
+        ?: emptyList()
+    }
+  }
+
   suspend fun unsavePost(postDescriptor: PostDescriptor) {
     savedReplyRepository.unsavePost(postDescriptor)
       .safeUnwrap { error ->

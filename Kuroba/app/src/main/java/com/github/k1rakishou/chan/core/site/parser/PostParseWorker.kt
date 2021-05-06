@@ -16,26 +16,18 @@
  */
 package com.github.k1rakishou.chan.core.site.parser
 
-import com.github.k1rakishou.chan.core.helper.FilterEngine
-import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
-import com.github.k1rakishou.model.data.filter.ChanFilter
-import com.github.k1rakishou.model.data.filter.FilterAction
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
-import com.github.k1rakishou.model.data.post.PostFilter
 import java.util.*
 
 // Called concurrently to parse the post html and the filters on it
 // belong to ChanReaderRequest
 internal class PostParseWorker(
-  private val filterEngine: FilterEngine,
-  private val postFilterManager: PostFilterManager,
   private val savedReplyManager: SavedReplyManager,
-  private val filters: List<ChanFilter>,
   private val postBuilder: ChanPostBuilder,
   private val postParser: PostParser,
   private val internalIds: Set<Long>,
@@ -45,12 +37,6 @@ internal class PostParseWorker(
 
   suspend fun parse(): ChanPost? {
     return Try {
-      // needed for "Apply to own posts" to work correctly
-      postBuilder.isSavedReply(savedReplyManager.isSaved(postBuilder.postDescriptor))
-
-      // Process the filters before finish, because parsing the html is dependent on filter matches
-      processPostFilter(postBuilder)
-
       return@Try postParser.parse(postBuilder, object : PostParser.Callback {
         override fun isSaved(postNo: Long, postSubNo: Long): Boolean {
           return savedReplyManager.isSaved(postBuilder.postDescriptor.descriptor, postNo, postSubNo)
@@ -71,72 +57,6 @@ internal class PostParseWorker(
     }.mapErrorToValue { error ->
       Logger.e(TAG, "Error parsing post ${postBuilderToString(postBuilder)}", error)
       return@mapErrorToValue null
-    }
-  }
-
-  @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
-  private fun processPostFilter(post: ChanPostBuilder) {
-    val postDescriptor = post.postDescriptor
-
-    if (postFilterManager.contains(postDescriptor)) {
-      // Fast path. We have already processed this post so we don't want to do that again. This
-      // should make filter processing way faster after the initial processing but it's kinda
-      // dangerous in case a post is updated on the server which "shouldn't" happen normally. It
-      // can happen when a poster is getting banned with a message and we can't handle that for now,
-      // because 4chan as well as other sites do not provide "last_modified" parameter for posts.
-      // There is a workaround for that - to compare post that we got from the server with the one
-      // in the database and if they differ update the "last_modified" but it will make everything
-      // slower. Maybe it's doable by calculating a post hash and store it in the memory cache and
-      // in the database too.
-      return
-    }
-
-    for (filter in filters) {
-      if (filter.isWatchFilter()) {
-        // Do not auto create watch filters, this may end up pretty bad
-        continue
-      }
-
-      if (filterEngine.matches(filter, post)) {
-        postFilterManager.insert(postDescriptor, createPostFilter(filter))
-        return
-      }
-
-      postFilterManager.remove(postDescriptor)
-    }
-  }
-
-  @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
-  private fun createPostFilter(filter: ChanFilter): PostFilter {
-    return when (FilterAction.forId(filter.action)) {
-      FilterAction.COLOR -> {
-        PostFilter(
-          enabled = filter.enabled,
-          filterHighlightedColor = filter.color,
-          filterReplies = filter.applyToReplies,
-          filterOnlyOP = filter.onlyOnOP,
-          filterSaved = filter.applyToSaved
-        )
-      }
-      FilterAction.HIDE -> {
-        PostFilter(
-          enabled = filter.enabled,
-          filterStub = true,
-          filterReplies = filter.applyToReplies,
-          filterOnlyOP = filter.onlyOnOP
-        )
-      }
-      FilterAction.REMOVE -> {
-        PostFilter(
-          enabled = filter.enabled,
-          filterRemove = true,
-          filterReplies = filter.applyToReplies,
-          filterOnlyOP = filter.onlyOnOP
-        )
-      }
-      FilterAction.WATCH -> {
-        throw IllegalStateException("Cannot auto-create WATCH filters")
-      }
     }
   }
 

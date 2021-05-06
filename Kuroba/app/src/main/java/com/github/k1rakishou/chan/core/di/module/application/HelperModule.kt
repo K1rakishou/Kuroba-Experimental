@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
@@ -39,6 +40,7 @@ class HelperModule {
     chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository,
     appConstants: AppConstants,
     postFilterManager: PostFilterManager,
+    siteManager: SiteManager,
     boardManager: BoardManager,
     siteResolver: SiteResolver
   ): ChanThreadLoaderCoordinator {
@@ -51,6 +53,7 @@ class HelperModule {
       appConstants,
       postFilterManager,
       ChanSettings.verboseLogs.get(),
+      siteManager,
       boardManager,
       siteResolver
     )

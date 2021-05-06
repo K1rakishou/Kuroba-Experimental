@@ -41,10 +41,6 @@ class ChanFilter(
   fun allBoards(): Boolean = boards.isEmpty()
 
   fun getFilterBoardCount(): Int {
-    if (boards.isEmpty()) {
-      return -1
-    }
-
     return boards.size
   }
 

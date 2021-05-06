@@ -1,7 +1,8 @@
 package com.github.k1rakishou.chan.core.lib;
 
+import com.github.k1rakishou.chan.core.lib.data.KurobaNativeLibException;
 import com.github.k1rakishou.chan.core.lib.data.post_parsing.PostParserContext;
-import com.github.k1rakishou.chan.core.lib.data.post_parsing.PostThreadParsed;
+import com.github.k1rakishou.chan.core.lib.data.post_parsing.ThreadParsed;
 import com.github.k1rakishou.chan.core.lib.data.post_parsing.ThreadToParse;
 
 /**
@@ -25,12 +26,12 @@ public class KurobaNativeLib {
     }
 
     /**
-     * Initializes the native library logger
+     * Initializes the native library (this will initialize the native logger).
      * */
     public static native void init();
 
-    public static native PostThreadParsed parseThreadPosts(
+    public static native ThreadParsed parseThreadPosts(
             PostParserContext postParserContext,
             ThreadToParse threadToParse
-    );
+    ) throws KurobaNativeLibException;
 }
