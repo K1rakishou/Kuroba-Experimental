@@ -53,15 +53,15 @@ pub mod mapper {
   }
 
   fn spannables_to_java_object(env: &JNIEnv, spannables: &Vec<Spannable>) -> errors::Result<jobject> {
-    let post_comment_spannable_data_array_jclass = env.find_class(
-      format_spannables_object_signature("IPostCommentSpannableData").as_str()
-    ).expect("Failed to find class IPostCommentSpannableData");
+    let post_spannable_array_jclass = env.find_class(
+      format_spannables_object_signature("PostCommentSpannable").as_str()
+    ).expect("Failed to find class PostCommentSpannable");
 
-    let spannable_array = env.new_object_array(
+    let post_spannable_array_jobject = env.new_object_array(
       spannables.len() as jsize,
-      post_comment_spannable_data_array_jclass,
+      post_spannable_array_jclass,
       JObject::null()
-    ).expect("Failed to allocate array for spannables");
+    ).expect("Failed to allocate array for PostCommentSpannable");
 
     for (index, spannable) in spannables.iter().enumerate() {
       match &spannable.spannable_data {
@@ -71,32 +71,32 @@ pub mod mapper {
               let post_no_param = JValue::Long(*post_no as i64);
               let params = [post_no_param];
 
-              convert_spannable_and_add_to_array(env, spannable_array, index, "Quote", "(J)V", &params)?;
+              add_post_comment_parsed_to_array(env, &spannable, post_spannable_array_jobject, index, "Quote", "(J)V", &params)?;
             }
             PostLink::Dead { post_no } => {
               let post_no_param = JValue::Long(*post_no as i64);
               let params = [post_no_param];
 
-              convert_spannable_and_add_to_array(env, spannable_array, index, "DeadQuote", "(J)V", &params)?;
+              add_post_comment_parsed_to_array(env, &spannable, post_spannable_array_jobject, index, "DeadQuote", "(J)V", &params)?;
             }
             PostLink::UrlLink { link } => {
               let link_param = JValue::Object(JObject::from(env.new_string(link)?.into_inner()));
               let params = [link_param];
 
-              convert_spannable_and_add_to_array(env, spannable_array, index, "UrlLink", "(Ljava/lang/String;)V", &params)?;
+              add_post_comment_parsed_to_array(env, &spannable, post_spannable_array_jobject, index, "UrlLink", "(Ljava/lang/String;)V", &params)?;
             }
             PostLink::BoardLink { board_code } => {
               let board_code_param = JValue::Object(JObject::from(env.new_string(board_code)?.into_inner()));
               let params = [board_code_param];
 
-              convert_spannable_and_add_to_array(env, spannable_array, index, "BoardLink", "(Ljava/lang/String;)V", &params)?;
+              add_post_comment_parsed_to_array(env, &spannable, post_spannable_array_jobject, index, "BoardLink", "(Ljava/lang/String;)V", &params)?;
             }
             PostLink::SearchLink { board_code, search_query } => {
               let board_code_param = JValue::Object(JObject::from(env.new_string(board_code)?.into_inner()));
               let search_query_param = JValue::Object(JObject::from(env.new_string(search_query)?.into_inner()));
               let params = [board_code_param, search_query_param];
 
-              convert_spannable_and_add_to_array(env, spannable_array, index, "SearchLink", "(Ljava/lang/String;Ljava/lang/String;)V", &params)?;
+              add_post_comment_parsed_to_array(env, &spannable, post_spannable_array_jobject, index, "SearchLink", "(Ljava/lang/String;Ljava/lang/String;)V", &params)?;
             }
             PostLink::ThreadLink { board_code, thread_no, post_no } => {
               let board_code_param = JValue::Object(JObject::from(env.new_string(board_code)?.into_inner()));
@@ -104,45 +104,63 @@ pub mod mapper {
               let post_no_param = JValue::Long(*post_no as i64);
               let params = [board_code_param, thread_no_param, post_no_param];
 
-              convert_spannable_and_add_to_array(env, spannable_array, index, "ThreadLink", "(Ljava/lang/String;JJ)V", &params)?;
+              add_post_comment_parsed_to_array(env, &spannable, post_spannable_array_jobject, index, "ThreadLink", "(Ljava/lang/String;JJ)V", &params)?;
             }
           }
         }
         SpannableData::Spoiler => {
-          convert_spannable_and_add_to_array(env, spannable_array, index, "Spoiler", "()V", &[])?;
+          add_post_comment_parsed_to_array(env, &spannable, post_spannable_array_jobject, index, "Spoiler", "()V", &[])?;
         }
         SpannableData::GreenText => {
-          convert_spannable_and_add_to_array(env, spannable_array, index, "GreenText", "()V", &[])?;
+          add_post_comment_parsed_to_array(env, &spannable, post_spannable_array_jobject, index, "GreenText", "()V", &[])?;
         }
       }
     }
 
-    return Result::Ok(spannable_array);
+    return Result::Ok(post_spannable_array_jobject);
   }
 
-  fn convert_spannable_and_add_to_array(
+  fn add_post_comment_parsed_to_array(
     env: &JNIEnv,
-    post_comment_spannable_data_array: *mut _jobject,
+    spannable: &Spannable,
+    post_spannable_array_jobject: *mut _jobject,
     index: usize,
     spannable_class_signature: &str,
     ctor_sign: &str,
     ctor_args: &[JValue]
   ) -> errors::Result<()> {
-    let full_signature = format!("IPostCommentSpannableData${}", spannable_class_signature);
+    let spannable_data_full_type_string = format!("IPostCommentSpannableData${}", spannable_class_signature);
+    let spannable_data_full_type = spannable_data_full_type_string.as_str();
+    let spannable_data_signature_string = format_spannables_object_signature(spannable_data_full_type);
 
-    let spoiler_span_jclass = env.find_class(
-      format_spannables_object_signature(full_signature.as_str()).as_str()
-    ).expect(format!("Failed to find class {}", full_signature.as_str()).as_str());
+    let spannable_jclass = env.find_class(spannable_data_signature_string.as_str())
+      .expect(format!("Failed to find class {}", spannable_data_full_type).as_str());
 
-    let spannable_object = env.new_object(spoiler_span_jclass, ctor_sign, ctor_args)
-      .expect(format!("Failed to instantiate {}", full_signature.as_str()).as_str());
+    let spannable_object = env.new_object(spannable_jclass, ctor_sign, ctor_args)
+      .expect(format!("Failed to instantiate {}", spannable_data_full_type).as_str());
 
-    env.set_object_array_element(
-      post_comment_spannable_data_array,
-      index as jsize,
-      spannable_object
+    let post_comment_spannable_jclass = env.find_class(
+      format_spannables_object_signature("PostCommentSpannable").as_str()
+    ).expect("Failed to find class PostCommentSpannable");
+
+    let post_comment_spannable_object = env.new_object(post_comment_spannable_jclass, "()V", &[])
+      .expect("Failed to instantiate PostCommentSpannable");
+
+    env.set_field(post_comment_spannable_object, "start", "I", JValue::Int(spannable.start as i32))?;
+    env.set_field(post_comment_spannable_object, "length", "I", JValue::Int(spannable.len as i32))?;
+
+    env.set_field(
+      post_comment_spannable_object,
+      "spannableData",
+      format_spannables_object_signature_pref("", "IPostCommentSpannableData"),
+      JValue::Object(JObject::from(spannable_object.into_inner()))
     )?;
 
+    env.set_object_array_element(
+      post_spannable_array_jobject,
+      index as jsize,
+      post_comment_spannable_object
+    )?;
     return Result::Ok(())
   }
 }
