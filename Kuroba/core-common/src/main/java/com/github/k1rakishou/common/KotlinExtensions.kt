@@ -18,11 +18,15 @@ import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -830,4 +834,30 @@ inline fun <T, reified R> List<T>.mapArray(mapper: (T) -> R): Array<R> {
   }
 
   return array as Array<R>
+}
+
+suspend fun <T, R> processDataCollectionConcurrently(
+  dataList: List<T>,
+  batchCount: Int,
+  dispatcher: CoroutineDispatcher = Dispatchers.Default,
+  processFunc: suspend (T) -> R?
+): List<R> {
+  return supervisorScope {
+    return@supervisorScope dataList
+      .chunked(batchCount)
+      .flatMap { dataChunk ->
+        return@flatMap dataChunk
+          .map { data ->
+            return@map async(dispatcher) {
+              try {
+                return@async processFunc(data)
+              } catch (error: Throwable) {
+                return@async null
+              }
+            }
+          }
+          .awaitAll()
+          .filterNotNull()
+      }
+  }
 }

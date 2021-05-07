@@ -282,6 +282,7 @@ class BookmarkFilterWatchableThreadsUseCase(
       return@supervisorScope filterWatchCatalogInfoObjects.flatMap { filterWatchCatalogInfoObject ->
         return@flatMap filterWatchCatalogInfoObject.catalogThreads
           .chunked(batchSize)
+          // TODO(KurobaEx): use processDataCollectionConcurrently
           .flatMap { chunk ->
             return@flatMap chunk.mapNotNull { catalogThread ->
               return@mapNotNull appScope.async(Dispatchers.IO) {
@@ -399,11 +400,13 @@ class BookmarkFilterWatchableThreadsUseCase(
       return CatalogFetchResult.Error(error)
     }
 
-    val filterWatchCatalogInfoObjectResult = chanReader.readFilterWatchCatalogInfoObject(
-      boardDescriptor,
-      request,
-      responseBody
-    )
+    val filterWatchCatalogInfoObjectResult = responseBody.byteStream().use { inputStream ->
+      return@use chanReader.readFilterWatchCatalogInfoObject(
+        boardDescriptor,
+        request.url.toString(),
+        inputStream
+      )
+    }
 
     if (filterWatchCatalogInfoObjectResult is ModularResult.Error) {
       return CatalogFetchResult.Error(filterWatchCatalogInfoObjectResult.error)

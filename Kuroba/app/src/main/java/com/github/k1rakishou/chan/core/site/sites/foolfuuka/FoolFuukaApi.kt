@@ -20,19 +20,18 @@ import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
 import com.github.k1rakishou.model.mapper.ArchiveThreadMapper
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
-import okhttp3.Request
-import okhttp3.ResponseBody
+import java.io.InputStream
 
 class FoolFuukaApi(
   site: CommonSite
 ) : CommonSite.CommonApi(site) {
 
   override suspend fun loadThread(
-    request: Request,
-    responseBody: ResponseBody,
+    requestUrl: String,
+    responseBodyStream: InputStream,
     chanReaderProcessor: ChanReaderProcessor
   ) {
-    readBodyJson(responseBody) { jsonReader ->
+    readBodyJson(responseBodyStream) { jsonReader ->
       val chanDescriptor = chanReaderProcessor.chanDescriptor
 
       val threadDescriptor = chanDescriptor.threadDescriptorOrNull()
@@ -223,8 +222,8 @@ class FoolFuukaApi(
   }
 
   override suspend fun loadCatalog(
-    request: Request,
-    responseBody: ResponseBody,
+    requestUrl: String,
+    responseBodyStream: InputStream,
     chanReaderProcessor: IChanReaderProcessor
   ) {
     throw CommonClientException("Catalog is not supported for site ${site.name()}")
@@ -233,7 +232,8 @@ class FoolFuukaApi(
   override suspend fun readThreadBookmarkInfoObject(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     expectedCapacity: Int,
-    reader: JsonReader
+    requestUrl: String,
+    responseBodyStream: InputStream,
   ): ModularResult<ThreadBookmarkInfoObject> {
     val error = CommonClientException("Bookmarks are not supported for site ${site.name()}")
 
@@ -242,8 +242,8 @@ class FoolFuukaApi(
 
   override suspend fun readFilterWatchCatalogInfoObject(
     boardDescriptor: BoardDescriptor,
-    request: Request,
-    responseBody: ResponseBody
+    requestUrl: String,
+    responseBodyStream: InputStream,
   ): ModularResult<FilterWatchCatalogInfoObject> {
     val error = CommonClientException("Filter watching is not supported for site ${site.name()}")
 

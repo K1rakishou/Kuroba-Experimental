@@ -4,10 +4,10 @@ import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
-import com.github.k1rakishou.chan.core.site.parser.PostParseWorker
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.processDataCollectionConcurrently
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -19,12 +19,11 @@ import com.github.k1rakishou.model.data.post.PostFilter
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.supervisorScope
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 abstract class AbstractParsePostsUseCase(
   protected val verboseLogsEnabled: Boolean,
@@ -39,64 +38,27 @@ abstract class AbstractParsePostsUseCase(
     chanDescriptor: ChanDescriptor,
     postParser: PostParser,
     postBuildersToParse: List<ChanPostBuilder>
-  ): List<ChanPost>
+  ): ParsingResult
 
-  protected suspend fun postParsingProcessStage(
+  protected suspend fun postParsingProcessFiltersStage(
     postBuildersToParse: List<ChanPostBuilder>,
     filters: List<ChanFilter>
   ) {
-    supervisorScope {
-      return@supervisorScope postBuildersToParse
-        .chunked(THREAD_COUNT * 2)
-        .forEach { postToParseChunk ->
-          val deferredList = postToParseChunk.map { postToParse ->
-            return@map async(dispatcher) {
-              // needed for "Apply to own posts" to work correctly
-              postToParse.isSavedReply(savedReplyManager.isSaved(postToParse.postDescriptor))
+    processDataCollectionConcurrently(postBuildersToParse, THREAD_COUNT * 2, dispatcher) { postToParse ->
+      // needed for "Apply to own posts" to work correctly
+      postToParse.isSavedReply(savedReplyManager.isSaved(postToParse.postDescriptor))
 
-              // Process the filters before finish, because parsing the html is dependent on filter matches
-              processPostFilter(filters, postToParse)
-            }
-          }
+      if (filters.isNotEmpty()) {
+        processFilters(postToParse, filters)
+      }
 
-          deferredList.awaitAll()
-        }
+      return@processDataCollectionConcurrently
     }
   }
 
-
-  protected suspend fun parsePostsWithPostParser(
-    postBuildersToParse: List<ChanPostBuilder>,
-    postParser: PostParser,
-    internalIds: Set<Long>,
-    boardDescriptors: Set<BoardDescriptor>,
-    chanDescriptor: ChanDescriptor
-  ): List<ChanPost> {
-    return supervisorScope {
-      return@supervisorScope postBuildersToParse
-        .chunked(THREAD_COUNT * 2)
-        .flatMap { postToParseChunk ->
-          val deferredList = postToParseChunk.map { postToParse ->
-            return@map async(dispatcher) {
-              return@async PostParseWorker(
-                savedReplyManager = savedReplyManager,
-                postBuilder = postToParse,
-                postParser = postParser,
-                internalIds = internalIds,
-                boardDescriptors = boardDescriptors,
-                isParsingCatalog = chanDescriptor is ChanDescriptor.CatalogDescriptor
-              ).parse()
-            }
-          }
-
-          return@flatMap deferredList.awaitAll().filterNotNull()
-        }
-    }
-  }
-
-  @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
-  private fun processPostFilter(filters: List<ChanFilter>, post: ChanPostBuilder) {
-    val postDescriptor = post.postDescriptor
+  private fun processFilters(postToParse: ChanPostBuilder, filters: List<ChanFilter>) {
+    // Process the filters before finish, because parsing the html is dependent on filter matches
+    val postDescriptor = postToParse.postDescriptor
 
     if (postFilterManager.contains(postDescriptor)) {
       // Fast path. We have already processed this post so we don't want to do that again. This
@@ -117,7 +79,7 @@ abstract class AbstractParsePostsUseCase(
         continue
       }
 
-      if (filterEngine.matches(filter, post)) {
+      if (filterEngine.matches(filter, postToParse)) {
         postFilterManager.insert(postDescriptor, createPostFilter(filter))
         return
       }
@@ -199,6 +161,12 @@ abstract class AbstractParsePostsUseCase(
     return filterEngine.enabledFilters
       .filter { filter -> filterEngine.matchesBoard(filter, board) }
   }
+
+  class ParsingResult @OptIn(ExperimentalTime::class) constructor(
+    val parsedPosts: List<ChanPost>,
+    val filterProcessionTime: Duration,
+    val parsingTime: Duration
+  )
 
   companion object {
     private const val TAG = "AbstractParsePostsUseCase"

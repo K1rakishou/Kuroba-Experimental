@@ -361,6 +361,7 @@ public class ChanPostBuilder {
                 || opId < 0
                 || unixTimestampSeconds < 0
                 || !postCommentBuilder.hasUnparsedComment()
+                || !postCommentBuilder.commentAlreadyParsed()
         ) {
             throw new IllegalArgumentException("Post data not complete: " + toString());
         }

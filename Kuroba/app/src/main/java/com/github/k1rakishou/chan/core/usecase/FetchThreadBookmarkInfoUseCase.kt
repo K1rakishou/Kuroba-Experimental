@@ -12,7 +12,6 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.google.gson.stream.JsonReader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -21,8 +20,6 @@ import kotlinx.coroutines.supervisorScope
 import okhttp3.HttpUrl
 import okhttp3.Request
 import java.io.IOException
-import java.io.InputStreamReader
-import java.nio.charset.StandardCharsets
 import kotlin.math.max
 
 @Suppress("FoldInitializerAndIfToElvis")
@@ -107,28 +104,26 @@ class FetchThreadBookmarkInfoUseCase(
       ?: return ThreadBookmarkFetchResult.Error(IOException("Response has no body"), threadDescriptor)
 
     return body.byteStream().use { inputStream ->
-      return@use JsonReader(InputStreamReader(inputStream, StandardCharsets.UTF_8))
-        .use { jsonReader ->
-          val postsCount = bookmarksManager.mapBookmark(threadDescriptor) { threadBookmarkView ->
-            threadBookmarkView.postsCount()
-          }
+      val postsCount = bookmarksManager.mapBookmark(threadDescriptor) { threadBookmarkView ->
+        threadBookmarkView.postsCount()
+      }
 
-          if (postsCount == null) {
-            return@use ThreadBookmarkFetchResult.AlreadyDeleted(threadDescriptor)
-          }
+      if (postsCount == null) {
+        return@use ThreadBookmarkFetchResult.AlreadyDeleted(threadDescriptor)
+      }
 
-          val threadBookmarkInfoObject = chanReader.readThreadBookmarkInfoObject(
-            threadDescriptor,
-            max(postsCount, ChanReader.DEFAULT_POST_LIST_CAPACITY),
-            jsonReader
-          ).safeUnwrap { error -> return@use ThreadBookmarkFetchResult.Error(error, threadDescriptor) }
+      val threadBookmarkInfoObject = chanReader.readThreadBookmarkInfoObject(
+        threadDescriptor,
+        max(postsCount, ChanReader.DEFAULT_POST_LIST_CAPACITY),
+        request.url.toString(),
+        inputStream
+      ).safeUnwrap { error -> return@use ThreadBookmarkFetchResult.Error(error, threadDescriptor) }
 
-          if (isDevFlavor && !threadDescriptor.siteDescriptor().isLainchan()) {
-            ensureCorrectPostOrder(threadBookmarkInfoObject.simplePostObjects)
-          }
+      if (isDevFlavor && !threadDescriptor.siteDescriptor().isLainchan()) {
+        ensureCorrectPostOrder(threadBookmarkInfoObject.simplePostObjects)
+      }
 
-          return@use ThreadBookmarkFetchResult.Success(threadBookmarkInfoObject, threadDescriptor)
-        }
+      return@use ThreadBookmarkFetchResult.Success(threadBookmarkInfoObject, threadDescriptor)
     }
   }
 

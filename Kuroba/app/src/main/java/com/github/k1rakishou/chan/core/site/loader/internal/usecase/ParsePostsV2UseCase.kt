@@ -8,19 +8,28 @@ import com.github.k1rakishou.chan.core.lib.data.post_parsing.PostParsed
 import com.github.k1rakishou.chan.core.lib.data.post_parsing.PostParserContext
 import com.github.k1rakishou.chan.core.lib.data.post_parsing.PostToParse
 import com.github.k1rakishou.chan.core.lib.data.post_parsing.ThreadToParse
+import com.github.k1rakishou.chan.core.lib.data.post_parsing.spannable.IPostCommentSpannableData
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.common.mapArray
+import com.github.k1rakishou.common.setSpanSafe
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan
+import com.github.k1rakishou.core_spannable.PostLinkable
+import com.github.k1rakishou.core_themes.ChanThemeColorId
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.model.data.filter.ChanFilter
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 class ParsePostsV2UseCase(
   verboseLogsEnabled: Boolean,
@@ -38,25 +47,26 @@ class ParsePostsV2UseCase(
   boardManager
 ) {
 
+  @OptIn(ExperimentalTime::class)
   override suspend fun parseNewPostsPosts(
     chanDescriptor: ChanDescriptor,
     postParser: PostParser,
     postBuildersToParse: List<ChanPostBuilder>
-  ): List<ChanPost> {
+  ): ParsingResult {
     BackgroundUtils.ensureBackgroundThread()
 
     chanPostRepository.awaitUntilInitialized()
     boardManager.awaitUntilInitialized()
 
     if (postBuildersToParse.isEmpty()) {
-      return emptyList()
+      return ParsingResult(emptyList(), Duration.ZERO, Duration.ZERO)
     }
 
     val internalIds = getInternalIds(chanDescriptor, postBuildersToParse)
     val boardDescriptors = getBoardDescriptors(chanDescriptor)
     val filters = loadFilters(chanDescriptor)
 
-    postParsingProcessStage(postBuildersToParse, filters)
+    val filterProcessingDuration = measureTime { postParsingProcessFiltersStage(postBuildersToParse, filters) }
 
     Logger.d(TAG, "parseNewPostsPosts(chanDescriptor=$chanDescriptor, " +
       "postsToParseSize=${postBuildersToParse.size}), " +
@@ -64,23 +74,26 @@ class ParsePostsV2UseCase(
       "boardDescriptors=${boardDescriptors.size}, " +
       "filters=${filters.size}")
 
-    val parsedPosts = parsePostsWithPostParser(
-      postBuildersToParse = postBuildersToParse,
-      filters = filters,
-      postParser = postParser,
-      internalIds = internalIds,
-      boardDescriptors = boardDescriptors,
-      chanDescriptor = chanDescriptor
-    )
+    val (parsedPosts, parsingDuration) = measureTimedValue {
+      return@measureTimedValue parsePostsWithPostParser(
+        postBuildersToParse = postBuildersToParse,
+        internalIds = internalIds,
+        boardDescriptors = boardDescriptors,
+        chanDescriptor = chanDescriptor
+      )
+    }
 
     Logger.d(TAG, "parseNewPostsPosts(chanDescriptor=$chanDescriptor) -> parsedPosts=${parsedPosts.size}")
-    return parsedPosts
+
+    return ParsingResult(
+      parsedPosts = parsedPosts,
+      filterProcessionTime = filterProcessingDuration,
+      parsingTime = parsingDuration
+    )
   }
 
   private fun parsePostsWithPostParser(
     postBuildersToParse: List<ChanPostBuilder>,
-    filters: List<ChanFilter>,
-    postParser: PostParser,
     internalIds: Set<Long>,
     boardDescriptors: Set<BoardDescriptor>,
     chanDescriptor: ChanDescriptor
@@ -134,7 +147,7 @@ class ParsePostsV2UseCase(
 
       if (postParsed != null) {
         chanPostBuilder.postCommentBuilder.setUnparsedComment(postParsed.postCommentParsed.commentTextRaw)
-        chanPostBuilder.postCommentBuilder.setParsedComment(applySpansToParsedComment(postParsed))
+        chanPostBuilder.postCommentBuilder.setParsedComment(applySpansToParsedComment(chanPostBuilder, postParsed))
       } else {
         chanPostBuilder.postCommentBuilder.setUnparsedComment("")
         chanPostBuilder.postCommentBuilder.setParsedComment(SpannableString(""))
@@ -144,8 +157,56 @@ class ParsePostsV2UseCase(
     }
   }
 
-  private fun applySpansToParsedComment(postParsed: PostParsed): Spannable {
-    return SpannableString.valueOf(postParsed.postCommentParsed.commentTextParsed)
+  private fun applySpansToParsedComment(chanPostBuilder: ChanPostBuilder, postParsed: PostParsed,): Spannable {
+    val commentParsed = postParsed.postCommentParsed.commentTextParsed
+    val spannableCommentTextParsed = SpannableString.valueOf(commentParsed)
+
+    postParsed.postCommentParsed.spannableList.forEach { postCommentSpannable ->
+      val spannableStart = postCommentSpannable.start
+      val spannableEnd = postCommentSpannable.start + postCommentSpannable.length
+      val spannableKey = commentParsed.substring(spannableStart, spannableEnd)
+
+      val actualSpannable = when (val spannableData = postCommentSpannable.spannableData) {
+        is IPostCommentSpannableData.DeadQuote -> {
+          chanPostBuilder.addReplyTo(spannableData.postNo)
+          PostLinkable(spannableKey, PostLinkable.Value.LongValue(spannableData.postNo), PostLinkable.Type.DEAD)
+        }
+        is IPostCommentSpannableData.Quote -> {
+          chanPostBuilder.addReplyTo(spannableData.postNo)
+          PostLinkable(spannableKey, PostLinkable.Value.LongValue(spannableData.postNo), PostLinkable.Type.QUOTE)
+        }
+        is IPostCommentSpannableData.BoardLink -> {
+          PostLinkable(spannableKey, PostLinkable.Value.StringValue(spannableData.boardCode), PostLinkable.Type.BOARD)
+        }
+        is IPostCommentSpannableData.SearchLink -> {
+          val value = PostLinkable.Value.SearchLink(spannableData.boardCode, spannableData.searchQuery)
+          PostLinkable(spannableKey, value, PostLinkable.Type.SEARCH)
+        }
+        is IPostCommentSpannableData.ThreadLink -> {
+          val value = PostLinkable.Value.ThreadOrPostLink(spannableData.boardCode, spannableData.threadNo, spannableData.postNo)
+          PostLinkable(spannableKey, value, PostLinkable.Type.THREAD)
+        }
+        is IPostCommentSpannableData.UrlLink -> {
+          val value = PostLinkable.Value.StringValue(spannableData.urlLink)
+          PostLinkable(spannableKey, value, PostLinkable.Type.LINK)
+        }
+        is IPostCommentSpannableData.Spoiler -> {
+          val value = PostLinkable.Value.StringValue(spannableKey)
+          PostLinkable(spannableKey, value, PostLinkable.Type.SPOILER)
+        }
+        is IPostCommentSpannableData.GreenText -> {
+          ColorizableForegroundColorSpan(ChanThemeColorId.PostInlineQuoteColor)
+        }
+        else -> {
+          Logger.e(TAG, "Unknown spannableData: ${spannableData.javaClass.simpleName}")
+          return@forEach
+        }
+      }.exhaustive
+
+      spannableCommentTextParsed.setSpanSafe(actualSpannable, spannableStart, spannableEnd, 0)
+    }
+
+    return spannableCommentTextParsed;
   }
 
   companion object {

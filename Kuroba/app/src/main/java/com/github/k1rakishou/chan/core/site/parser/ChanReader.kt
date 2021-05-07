@@ -24,69 +24,63 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
 import com.google.gson.stream.JsonReader
-import okhttp3.Request
-import okhttp3.ResponseBody
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import java.io.InputStream
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 
-abstract class ChanReader() {
+abstract class ChanReader {
   abstract suspend fun getParser(): PostParser?
 
   @Throws(Exception::class)
   abstract suspend fun loadThread(
-    request: Request,
-    responseBody: ResponseBody,
+    requestUrl: String,
+    responseBodyStream: InputStream,
     chanReaderProcessor: ChanReaderProcessor
   )
 
   @Throws(Exception::class)
   abstract suspend fun loadCatalog(
-    request: Request,
-    responseBody: ResponseBody,
+    requestUrl: String,
+    responseBodyStream: InputStream,
     chanReaderProcessor: IChanReaderProcessor
   )
 
   abstract suspend fun readThreadBookmarkInfoObject(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     expectedCapacity: Int,
-    reader: JsonReader
+    requestUrl: String,
+    responseBodyStream: InputStream,
   ): ModularResult<ThreadBookmarkInfoObject>
 
   abstract suspend fun readFilterWatchCatalogInfoObject(
     boardDescriptor: BoardDescriptor,
-    request: Request,
-    responseBody: ResponseBody
+    requestUrl: String,
+    responseBodyStream: InputStream,
   ): ModularResult<FilterWatchCatalogInfoObject>
 
   protected suspend fun readBodyJson(
-    responseBody: ResponseBody,
+    inputStream: InputStream,
     reader: suspend (JsonReader) -> Unit
   ) {
-    responseBody.byteStream().use { inputStream ->
-      JsonReader(InputStreamReader(inputStream, StandardCharsets.UTF_8)).use { jsonReader ->
-        reader(jsonReader)
-      }
+    JsonReader(InputStreamReader(inputStream, StandardCharsets.UTF_8)).use { jsonReader ->
+      reader(jsonReader)
     }
   }
 
   protected suspend fun readBodyHtml(
-    request: Request,
-    responseBody: ResponseBody,
+    requestUrl: String,
+    responseBodyStream: InputStream,
     reader: suspend (Document) -> Unit
   ) {
-    responseBody.use { body ->
-      body.byteStream().use { inputStream ->
-        val htmlDocument = Jsoup.parse(
-          inputStream,
-          StandardCharsets.UTF_8.name(),
-          request.url.toString()
-        )
+    val htmlDocument = Jsoup.parse(
+      responseBodyStream,
+      StandardCharsets.UTF_8.name(),
+      requestUrl
+    )
 
-        reader(htmlDocument)
-      }
-    }
+    reader(htmlDocument)
   }
 
   companion object {

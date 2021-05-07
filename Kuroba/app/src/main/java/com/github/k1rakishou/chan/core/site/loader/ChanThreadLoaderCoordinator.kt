@@ -54,8 +54,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.withContext
 import okhttp3.Request
-import okhttp3.Response
 import java.io.IOException
+import java.io.InputStream
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
@@ -193,13 +193,18 @@ class ChanThreadLoaderCoordinator(
         }
 
         val (chanReaderProcessor, readPostsDuration) = measureTimedValue {
-          return@measureTimedValue readPostsFromResponse(
-            request = request,
-            response = response,
-            chanDescriptor = chanDescriptor,
-            chanReadOptions = chanReadOptions,
-            chanReader = chanReader
-          ).unwrap()
+          val body = response.body
+            ?: throw IOException("Response has no body")
+
+          return@measureTimedValue body.byteStream().use { inputStream ->
+            return@use readPostsFromResponse(
+              requestUrl = request.url.toString(),
+              responseBodyStream = inputStream,
+              chanDescriptor = chanDescriptor,
+              chanReadOptions = chanReadOptions,
+              chanReader = chanReader
+            ).unwrap()
+          }
         }
 
         checkNotNull(chanReaderProcessor.getOp()) { "OP is null" }
@@ -235,6 +240,7 @@ class ChanThreadLoaderCoordinator(
 
     val storeDuration = loadTimeInfo.storeDuration
     val storedPostsCount = loadTimeInfo.storedPostsCount
+    val filterProcessingDuration = loadTimeInfo.filterProcessingDuration
     val parsingDuration = loadTimeInfo.parsingDuration
     val parsedPostsCount = loadTimeInfo.parsedPostsCount
     val postsInChanReaderProcessor = loadTimeInfo.postsInChanReaderProcessor
@@ -252,10 +258,11 @@ class ChanThreadLoaderCoordinator(
     val logString = buildString {
       appendLine("ChanReaderRequest.readJson() stats:")
       appendLine("url = $url.")
+      appendLine("PostParserV2: ${loadTimeInfo.usePostParserV2}.")
       appendLine("Network request execution took $requestDuration.")
       appendLine("Json reading took $readPostsDuration.")
       appendLine("Store new posts took $storeDuration (stored ${storedPostsCount} posts).")
-      appendLine("Parse posts took = $parsingDuration, (parsed ${parsedPostsCount} out of $postsInChanReaderProcessor posts).")
+      appendLine("Parse posts took = $parsingDuration, filter processing took = $filterProcessingDuration (parsed ${parsedPostsCount} out of $postsInChanReaderProcessor posts).")
       appendLine("Total in-memory cached posts count = $cachedPostsCount/${appConstants.maxPostsCountInPostsCache}.")
 
       if (currentThreadCachedPostsCount != null) {
@@ -267,9 +274,8 @@ class ChanThreadLoaderCoordinator(
         "total cached threads count = ${cachedThreadsCount}.")
 
       val fullLocalDuration = readPostsDuration + storeDuration + parsingDuration
-      val fullGlobalDuration = requestDuration + readPostsDuration + storeDuration + parsingDuration
 
-      appendLine("fullLocalDuration=$fullLocalDuration, fullGlobalDuration=${fullGlobalDuration}")
+      appendLine("Total local processing time: $fullLocalDuration")
     }
 
     Logger.d(TAG, logString)
@@ -353,8 +359,8 @@ class ChanThreadLoaderCoordinator(
   }
 
   private suspend fun readPostsFromResponse(
-    request: Request,
-    response: Response,
+    requestUrl: String,
+    responseBodyStream: InputStream,
     chanDescriptor: ChanDescriptor,
     chanReadOptions: ChanReadOptions,
     chanReader: ChanReader
@@ -362,9 +368,6 @@ class ChanThreadLoaderCoordinator(
     BackgroundUtils.ensureBackgroundThread()
 
     return Try {
-      val body = response.body
-        ?: throw IOException("Response has no body")
-
       val chanReaderProcessor = ChanReaderProcessor(
         chanPostRepository,
         chanReadOptions,
@@ -373,10 +376,10 @@ class ChanThreadLoaderCoordinator(
 
       when (chanDescriptor) {
         is ChanDescriptor.ThreadDescriptor -> {
-          chanReader.loadThread(request, body, chanReaderProcessor)
+          chanReader.loadThread(requestUrl, responseBodyStream, chanReaderProcessor)
         }
         is ChanDescriptor.CatalogDescriptor -> {
-          chanReader.loadCatalog(request, body, chanReaderProcessor)
+          chanReader.loadCatalog(requestUrl, responseBodyStream, chanReaderProcessor)
         }
         else -> throw IllegalArgumentException("Unknown mode")
       }

@@ -31,10 +31,10 @@ import com.google.gson.stream.JsonReader
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import okhttp3.HttpUrl
-import okhttp3.Request
-import okhttp3.ResponseBody
 import org.jsoup.parser.Parser
 import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
 import kotlin.math.max
 
 @Suppress("BlockingMethodInNonBlockingContext")
@@ -69,11 +69,11 @@ class FutabaChanReader(
 
   @Throws(Exception::class)
   override suspend fun loadThread(
-    request: Request,
-    responseBody: ResponseBody,
+    requestUrl: String,
+    responseBodyStream: InputStream,
     chanReaderProcessor: ChanReaderProcessor
   ) {
-    readBodyJson(responseBody) { jsonReader ->
+    readBodyJson(responseBodyStream) { jsonReader ->
       iteratePostsInThread(jsonReader) { reader ->
         readPostObject(reader, chanReaderProcessor)
       }
@@ -84,11 +84,11 @@ class FutabaChanReader(
 
   @Throws(Exception::class)
   override suspend fun loadCatalog(
-    request: Request,
-    responseBody: ResponseBody,
+    requestUrl: String,
+    responseBodyStream: InputStream,
     chanReaderProcessor: IChanReaderProcessor
   ) {
-    readBodyJson(responseBody) { jsonReader ->
+    readBodyJson(responseBodyStream) { jsonReader ->
       iterateThreadsInCatalog(jsonReader) { reader ->
         readPostObject(reader, chanReaderProcessor)
       }
@@ -318,17 +318,20 @@ class FutabaChanReader(
   override suspend fun readThreadBookmarkInfoObject(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     expectedCapacity: Int,
-    reader: JsonReader
+    requestUrl: String,
+    responseBodyStream: InputStream,
   ): ModularResult<ThreadBookmarkInfoObject> {
     return ModularResult.Try {
       val postObjects = ArrayList<ThreadBookmarkInfoPostObject>(
         max(expectedCapacity, DEFAULT_POST_LIST_CAPACITY)
       )
 
-      iteratePostsInThread(reader) { reader ->
-        val postObject = readThreadBookmarkInfoPostObject(reader)
-        if (postObject != null) {
-          postObjects += postObject
+      JsonReader(InputStreamReader(responseBodyStream)).use { jsonReader ->
+        iteratePostsInThread(jsonReader) { reader ->
+          val postObject = readThreadBookmarkInfoPostObject(reader)
+          if (postObject != null) {
+            postObjects += postObject
+          }
         }
       }
 
@@ -412,8 +415,8 @@ class FutabaChanReader(
 
   override suspend fun readFilterWatchCatalogInfoObject(
     boardDescriptor: BoardDescriptor,
-    request: Request,
-    responseBody: ResponseBody
+    requestUrl: String,
+    responseBodyStream: InputStream,
   ): ModularResult<FilterWatchCatalogInfoObject> {
     val endpoints = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
       ?.endpoints()
@@ -422,7 +425,7 @@ class FutabaChanReader(
     return ModularResult.Try {
       val threadObjects = mutableListWithCap<FilterWatchCatalogThreadInfoObject>(100)
 
-      readBodyJson(responseBody) { jsonReader ->
+      readBodyJson(responseBodyStream) { jsonReader ->
         iterateThreadsInCatalog(jsonReader) { reader ->
           val threadObject = readFilterWatchCatalogThreadInfoObject(endpoints, boardDescriptor, reader)
           if (threadObject != null) {

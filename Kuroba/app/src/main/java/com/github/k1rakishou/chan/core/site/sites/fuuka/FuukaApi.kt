@@ -16,9 +16,7 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
 import com.github.k1rakishou.model.mapper.ArchiveThreadMapper
-import com.google.gson.stream.JsonReader
-import okhttp3.Request
-import okhttp3.ResponseBody
+import java.io.InputStream
 
 class FuukaApi(
   site: CommonSite
@@ -30,11 +28,11 @@ class FuukaApi(
     .build()
 
   override suspend fun loadThread(
-    request: Request,
-    responseBody: ResponseBody,
+    requestUrl: String,
+    responseBodyStream: InputStream,
     chanReaderProcessor: ChanReaderProcessor
   ) {
-    readBodyHtml(request, responseBody) { document ->
+    readBodyHtml(requestUrl, responseBodyStream) { document ->
       require(chanReaderProcessor.chanDescriptor is ChanDescriptor.ThreadDescriptor) {
         "Cannot load catalogs here!"
       }
@@ -72,8 +70,8 @@ class FuukaApi(
   }
 
   override suspend fun loadCatalog(
-    request: Request,
-    responseBody: ResponseBody,
+    requestUrl: String,
+    responseBodyStream: InputStream,
     chanReaderProcessor: IChanReaderProcessor
   ) {
     throw CommonClientException("Catalog is not supported for site ${site.name()}")
@@ -82,7 +80,8 @@ class FuukaApi(
   override suspend fun readThreadBookmarkInfoObject(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     expectedCapacity: Int,
-    reader: JsonReader
+    requestUrl: String,
+    responseBodyStream: InputStream,
   ): ModularResult<ThreadBookmarkInfoObject> {
     val error = CommonClientException("Bookmarks are not supported for site ${site.name()}")
 
@@ -91,8 +90,8 @@ class FuukaApi(
 
   override suspend fun readFilterWatchCatalogInfoObject(
     boardDescriptor: BoardDescriptor,
-    request: Request,
-    responseBody: ResponseBody
+    requestUrl: String,
+    responseBodyStream: InputStream,
   ): ModularResult<FilterWatchCatalogInfoObject> {
     val error = CommonClientException("Filter watching is not supported for site ${site.name()}")
 

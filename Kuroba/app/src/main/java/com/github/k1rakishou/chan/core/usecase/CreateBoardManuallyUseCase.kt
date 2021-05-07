@@ -50,7 +50,9 @@ class CreateBoardManuallyUseCase(
     val chanReaderProcessor = SimpleCountingChanReaderProcessor(catalogDescriptor)
 
     try {
-      site.chanReader().loadCatalog(request, body, chanReaderProcessor)
+      body.byteStream().use { inputStream ->
+        site.chanReader().loadCatalog(request.url.toString(), inputStream, chanReaderProcessor)
+      }
     } catch (error: Throwable) {
       Logger.e(TAG, "loadCatalog($siteDescriptor) error", error)
     }

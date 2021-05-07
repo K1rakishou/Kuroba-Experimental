@@ -27,10 +27,10 @@ import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.google.gson.stream.JsonReader
 import okhttp3.HttpUrl
-import okhttp3.Request
-import okhttp3.ResponseBody
 import org.jsoup.parser.Parser
 import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
 import java.util.*
 import kotlin.math.max
 
@@ -43,11 +43,11 @@ class DvachApi internal constructor(
 
   @Throws(Exception::class)
   override suspend fun loadThread(
-    request: Request,
-    responseBody: ResponseBody,
+    requestUrl: String,
+    responseBodyStream: InputStream,
     chanReaderProcessor: ChanReaderProcessor
   ) {
-    readBodyJson(responseBody) { jsonReader ->
+    readBodyJson(responseBodyStream) { jsonReader ->
       iteratePostsInThread(jsonReader) { dvachExtraThreadInfo, reader ->
         readPostObject(reader, dvachExtraThreadInfo, chanReaderProcessor)
       }
@@ -58,11 +58,11 @@ class DvachApi internal constructor(
 
   @Throws(Exception::class)
   override suspend fun loadCatalog(
-    request: Request,
-    responseBody: ResponseBody,
+    requestUrl: String,
+    responseBodyStream: InputStream,
     chanReaderProcessor: IChanReaderProcessor
   ) {
-    readBodyJson(responseBody) { jsonReader ->
+    readBodyJson(responseBodyStream) { jsonReader ->
       iterateThreadsInCatalog(jsonReader) { reader ->
         readPostObject(reader, null, chanReaderProcessor)
       }
@@ -225,17 +225,20 @@ class DvachApi internal constructor(
   override suspend fun readThreadBookmarkInfoObject(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     expectedCapacity: Int,
-    reader: JsonReader
+    requestUrl: String,
+    responseBodyStream: InputStream,
   ): ModularResult<ThreadBookmarkInfoObject> {
     return ModularResult.Try {
       val postObjects = ArrayList<ThreadBookmarkInfoPostObject>(
         max(expectedCapacity, ChanReader.DEFAULT_POST_LIST_CAPACITY)
       )
 
-      iteratePostsInThread(reader) { dvachExtraThreadInfo, reader ->
-        val postObject = readThreadBookmarkInfoPostObject(dvachExtraThreadInfo, reader)
-        if (postObject != null) {
-          postObjects += postObject
+      JsonReader(InputStreamReader(responseBodyStream)).use { jsonReader ->
+        iteratePostsInThread(jsonReader) { dvachExtraThreadInfo, reader ->
+          val postObject = readThreadBookmarkInfoPostObject(dvachExtraThreadInfo, reader)
+          if (postObject != null) {
+            postObjects += postObject
+          }
         }
       }
 
@@ -332,8 +335,8 @@ class DvachApi internal constructor(
 
   override suspend fun readFilterWatchCatalogInfoObject(
     boardDescriptor: BoardDescriptor,
-    request: Request,
-    responseBody: ResponseBody
+    requestUrl: String,
+    responseBodyStream: InputStream,
   ): ModularResult<FilterWatchCatalogInfoObject> {
     val endpoints = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
       ?.endpoints()
@@ -342,7 +345,7 @@ class DvachApi internal constructor(
     return ModularResult.Try {
       val threadObjects = mutableListWithCap<FilterWatchCatalogThreadInfoObject>(100)
 
-      readBodyJson(responseBody) { jsonReader ->
+      readBodyJson(responseBodyStream) { jsonReader ->
         iterateThreadsInCatalog(jsonReader) { reader ->
           val threadObject = readFilterWatchCatalogThreadInfoObject(boardDescriptor, reader, endpoints)
           if (threadObject != null) {

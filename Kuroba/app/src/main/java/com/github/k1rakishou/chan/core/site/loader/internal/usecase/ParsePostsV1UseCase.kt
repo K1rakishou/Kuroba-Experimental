@@ -4,13 +4,18 @@ import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
+import com.github.k1rakishou.chan.core.site.parser.PostParseWorker
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.processDataCollectionConcurrently
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 class ParsePostsV1UseCase(
   verboseLogsEnabled: Boolean,
@@ -28,25 +33,26 @@ class ParsePostsV1UseCase(
   boardManager
 ) {
 
+  @OptIn(ExperimentalTime::class)
   override suspend fun parseNewPostsPosts(
     chanDescriptor: ChanDescriptor,
     postParser: PostParser,
     postBuildersToParse: List<ChanPostBuilder>
-  ): List<ChanPost> {
+  ): ParsingResult {
     BackgroundUtils.ensureBackgroundThread()
 
     chanPostRepository.awaitUntilInitialized()
     boardManager.awaitUntilInitialized()
 
     if (postBuildersToParse.isEmpty()) {
-      return emptyList()
+      return ParsingResult(emptyList(), Duration.ZERO, Duration.ZERO)
     }
 
     val internalIds = getInternalIds(chanDescriptor, postBuildersToParse)
     val boardDescriptors = getBoardDescriptors(chanDescriptor)
     val filters = loadFilters(chanDescriptor)
 
-    postParsingProcessStage(postBuildersToParse, filters)
+    val filterProcessingDuration = measureTime { postParsingProcessFiltersStage(postBuildersToParse, filters) }
 
     Logger.d(TAG, "parseNewPostsPosts(chanDescriptor=$chanDescriptor, " +
       "postsToParseSize=${postBuildersToParse.size}), " +
@@ -54,16 +60,30 @@ class ParsePostsV1UseCase(
       "boardDescriptors=${boardDescriptors.size}, " +
       "filters=${filters.size}")
 
-    val parsedPosts = parsePostsWithPostParser(
-      postBuildersToParse = postBuildersToParse,
-      postParser = postParser,
-      internalIds = internalIds,
-      boardDescriptors = boardDescriptors,
-      chanDescriptor = chanDescriptor
-    )
+    val (parsedPosts, parsingDuration) = measureTimedValue {
+      return@measureTimedValue processDataCollectionConcurrently(
+        dataList = postBuildersToParse,
+        batchCount = THREAD_COUNT * 2,
+        dispatcher = dispatcher
+      ) { postToParse ->
+        return@processDataCollectionConcurrently PostParseWorker(
+          savedReplyManager = savedReplyManager,
+          postBuilder = postToParse,
+          postParser = postParser,
+          internalIds = internalIds,
+          boardDescriptors = boardDescriptors,
+          isParsingCatalog = chanDescriptor is ChanDescriptor.CatalogDescriptor
+        ).parse()
+      }
+    }
 
     Logger.d(TAG, "parseNewPostsPosts(chanDescriptor=$chanDescriptor) -> parsedPosts=${parsedPosts.size}")
-    return parsedPosts
+
+    return ParsingResult(
+      parsedPosts = parsedPosts,
+      filterProcessionTime = filterProcessingDuration,
+      parsingTime = parsingDuration
+    )
   }
 
   companion object {

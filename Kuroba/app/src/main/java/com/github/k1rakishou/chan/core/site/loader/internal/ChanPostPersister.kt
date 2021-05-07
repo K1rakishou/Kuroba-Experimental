@@ -58,24 +58,20 @@ internal class ChanPostPersister(
           .ignore()
       }
 
-      val (parsedPosts, parsingDuration) = measureTimedValue {
-        val usePostParserV2 = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-          ?.getSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.UsePostParserV2)
-          ?.get()
-          ?: false
+      val usePostParserV2 = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+        ?.getSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.UsePostParserV2)
+        ?.get()
+        ?: false
 
+      val parsingResult = kotlin.run {
         if (usePostParserV2) {
-          Logger.d(TAG, "Using PostParserV2")
-
-          return@measureTimedValue parsePostsV2UseCase.parseNewPostsPosts(
+          return@run parsePostsV2UseCase.parseNewPostsPosts(
             chanDescriptor = chanDescriptor,
             postParser = postParser,
             postBuildersToParse = chanReaderProcessor.getToParse()
           )
         } else {
-          Logger.d(TAG, "Using PostParserV1")
-
-          return@measureTimedValue parsePostsV1UseCase.parseNewPostsPosts(
+          return@run parsePostsV1UseCase.parseNewPostsPosts(
             chanDescriptor = chanDescriptor,
             postParser = postParser,
             postBuildersToParse = chanReaderProcessor.getToParse()
@@ -91,17 +87,19 @@ internal class ChanPostPersister(
       val (storedPostsCount, storeDuration) = measureTimedValue {
         storePostsInRepositoryUseCase.storePosts(
           chanDescriptor = chanDescriptor,
-          parsedPosts = parsedPosts,
+          parsedPosts = parsingResult.parsedPosts,
           cacheOptions = cacheOptions,
           cacheUpdateOptions = cacheUpdateOptions
         )
       }
 
       val loadTimeInfo = LoadTimeInfo(
+        usePostParserV2 = usePostParserV2,
         storeDuration = storeDuration,
         storedPostsCount = storedPostsCount,
-        parsingDuration = parsingDuration,
-        parsedPostsCount = parsedPosts.size,
+        filterProcessingDuration = parsingResult.filterProcessionTime,
+        parsingDuration = parsingResult.parsingTime,
+        parsedPostsCount = parsingResult.parsedPosts.size,
         postsInChanReaderProcessor = chanReaderProcessor.getTotalPostsCount()
       )
 
@@ -123,8 +121,10 @@ internal class ChanPostPersister(
   )
 
   class LoadTimeInfo @OptIn(ExperimentalTime::class) constructor(
+    val usePostParserV2: Boolean,
     val storeDuration: Duration,
     val storedPostsCount: Int,
+    val filterProcessingDuration: Duration,
     val parsingDuration: Duration,
     val parsedPostsCount: Int,
     val postsInChanReaderProcessor: Int

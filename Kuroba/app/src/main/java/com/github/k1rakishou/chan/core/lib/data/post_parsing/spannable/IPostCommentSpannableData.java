@@ -8,6 +8,13 @@ public interface IPostCommentSpannableData {
         public DeadQuote(long postNo) {
             this.postNo = postNo;
         }
+
+        @Override
+        public String toString() {
+            return "DeadQuote{" +
+                    "postNo=" + postNo +
+                    '}';
+        }
     }
 
     public class Quote implements IPostCommentSpannableData {
@@ -16,6 +23,13 @@ public interface IPostCommentSpannableData {
         public Quote(long postNo) {
             this.postNo = postNo;
         }
+
+        @Override
+        public String toString() {
+            return "Quote{" +
+                    "postNo=" + postNo +
+                    '}';
+        }
     }
 
     public class BoardLink implements IPostCommentSpannableData {
@@ -23,6 +37,13 @@ public interface IPostCommentSpannableData {
 
         public BoardLink(String boardCode) {
             this.boardCode = boardCode;
+        }
+
+        @Override
+        public String toString() {
+            return "BoardLink{" +
+                    "boardCode='" + boardCode + '\'' +
+                    '}';
         }
     }
 
@@ -33,6 +54,14 @@ public interface IPostCommentSpannableData {
         public SearchLink(String boardCode, String searchQuery) {
             this.boardCode = boardCode;
             this.searchQuery = searchQuery;
+        }
+
+        @Override
+        public String toString() {
+            return "SearchLink{" +
+                    "boardCode='" + boardCode + '\'' +
+                    ", searchQuery='" + searchQuery + '\'' +
+                    '}';
         }
     }
 
@@ -46,6 +75,15 @@ public interface IPostCommentSpannableData {
             this.threadNo = threadNo;
             this.postNo = postNo;
         }
+
+        @Override
+        public String toString() {
+            return "ThreadLink{" +
+                    "boardCode='" + boardCode + '\'' +
+                    ", threadNo=" + threadNo +
+                    ", postNo=" + postNo +
+                    '}';
+        }
     }
 
     public class UrlLink implements IPostCommentSpannableData {
@@ -54,14 +92,27 @@ public interface IPostCommentSpannableData {
         public UrlLink(String urlLink) {
             this.urlLink = urlLink;
         }
+
+        @Override
+        public String toString() {
+            return "UrlLink{" +
+                    "urlLink='" + urlLink + '\'' +
+                    '}';
+        }
     }
 
     public class Spoiler implements IPostCommentSpannableData {
-
+        @Override
+        public String toString() {
+            return "Spoiler{}";
+        }
     }
 
     public class GreenText implements IPostCommentSpannableData {
-
+        @Override
+        public String toString() {
+            return "GreenText{}";
+        }
     }
 
 }
