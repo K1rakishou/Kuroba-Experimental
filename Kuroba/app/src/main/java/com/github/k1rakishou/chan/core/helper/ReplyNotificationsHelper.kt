@@ -35,7 +35,7 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
 import com.github.k1rakishou.common.ellipsizeEnd
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.mutableMapWithCap
+import com.github.k1rakishou.common.processDataCollectionConcurrently
 import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -46,17 +46,15 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
-import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import org.joda.time.DateTime
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.resume
 
@@ -503,26 +501,18 @@ class ReplyNotificationsHelper(
   private suspend fun getThreadThumbnails(
     originalPosts: Map<ChanDescriptor.ThreadDescriptor, ChanPost>
   ): Map<ChanDescriptor.ThreadDescriptor, BitmapDrawable> {
-    val resultMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, BitmapDrawable>(originalPosts.size / 2)
+    val resultMap = ConcurrentHashMap<ChanDescriptor.ThreadDescriptor, BitmapDrawable>()
 
-    supervisorScope {
-      originalPosts.entries
-        .chunked(MAX_THUMBNAIL_REQUESTS_PER_BATCH)
-        .forEach { chunk ->
-          val results = chunk.mapNotNull { (threadDescriptor, originalPost) ->
-            val thumbnailUrl = originalPost.postImages.firstOrNull()?.actualThumbnailUrl
-              ?: return@mapNotNull null
+    processDataCollectionConcurrently(originalPosts.entries, MAX_THUMBNAIL_REQUESTS_PER_BATCH) { entry ->
+      val (threadDescriptor, originalPost) = entry
 
-            return@mapNotNull appScope
-              .async { downloadThumbnailForNotification(thumbnailUrl, threadDescriptor) }
-          }
-            .awaitAll()
-            .filterNotNull()
+      val thumbnailUrl = originalPost.postImages.firstOrNull()?.actualThumbnailUrl
+        ?: return@processDataCollectionConcurrently null
 
-          results.forEach { (threadDescriptor, bitmapDrawable) ->
-            resultMap[threadDescriptor] = bitmapDrawable
-          }
-        }
+      val bitmapDrawable = downloadThumbnailForNotification(thumbnailUrl)
+        ?: return@processDataCollectionConcurrently null
+
+      resultMap[threadDescriptor] = bitmapDrawable
     }
 
     return resultMap
@@ -530,8 +520,7 @@ class ReplyNotificationsHelper(
 
   private suspend fun downloadThumbnailForNotification(
     thumbnailUrl: HttpUrl,
-    threadDescriptor: ChanDescriptor.ThreadDescriptor
-  ): Pair<ChanDescriptor.ThreadDescriptor, BitmapDrawable>? {
+  ): BitmapDrawable? {
     return suspendCancellableCoroutine { cancellableContinuation ->
       imageLoaderV2.loadFromNetwork(
         appContext,
@@ -543,7 +532,7 @@ class ReplyNotificationsHelper(
         CIRCLE_CROP,
         object : ImageLoaderV2.FailureAwareImageListener {
           override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
-            cancellableContinuation.resume(threadDescriptor to drawable)
+            cancellableContinuation.resume(drawable)
           }
 
           override fun onNotFound() {

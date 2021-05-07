@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.processDataCollectionConcurrently
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmark
@@ -26,9 +27,6 @@ import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.supervisorScope
 import okhttp3.HttpUrl
 import okhttp3.Request
 import org.jsoup.parser.Parser
@@ -278,33 +276,19 @@ class BookmarkFilterWatchableThreadsUseCase(
     val batchSize = (appConstants.processorsCount * BATCH_PER_CORE)
       .coerceAtLeast(MIN_BATCHES_COUNT)
 
-    return supervisorScope {
-      return@supervisorScope filterWatchCatalogInfoObjects.flatMap { filterWatchCatalogInfoObject ->
-        return@flatMap filterWatchCatalogInfoObject.catalogThreads
-          .chunked(batchSize)
-          // TODO(KurobaEx): use processDataCollectionConcurrently
-          .flatMap { chunk ->
-            return@flatMap chunk.mapNotNull { catalogThread ->
-              return@mapNotNull appScope.async(Dispatchers.IO) {
-                try {
-                  if (predicate(catalogThread)) {
-                    return@async catalogThread
-                  }
-                } catch (error: Throwable) {
-                  if (verboseLogsEnabled) {
-                    Logger.e(TAG, "iterateResultsConcurrently error", error)
-                  } else {
-                    val errorMessage = error.errorMessageOrClassName()
-                    Logger.e(TAG, "iterateResultsConcurrently error=${errorMessage}")
-                  }
-                }
+    val filterWatchCatalogThreadInfoObjectList = filterWatchCatalogInfoObjects
+      .flatMap { filterWatchCatalogInfoObject -> filterWatchCatalogInfoObject.catalogThreads }
 
-                return@async null
-              }
-            }.awaitAll()
-              .filterNotNull()
-          }
+    return processDataCollectionConcurrently(
+      dataList = filterWatchCatalogThreadInfoObjectList,
+      batchCount = batchSize,
+      dispatcher = Dispatchers.IO
+    ) { catalogThread ->
+      if (predicate(catalogThread)) {
+        return@processDataCollectionConcurrently catalogThread
       }
+
+      return@processDataCollectionConcurrently null
     }
   }
 
@@ -336,32 +320,22 @@ class BookmarkFilterWatchableThreadsUseCase(
     val batchSize = (appConstants.processorsCount * BATCH_PER_CORE)
       .coerceAtLeast(MIN_BATCHES_COUNT)
 
-    return boardDescriptorsToCheck
-      .chunked(batchSize)
-      .flatMap { chunk ->
-        return@flatMap supervisorScope {
-          return@supervisorScope chunk.map { boardDescriptor ->
-            return@map appScope.async(Dispatchers.IO) {
-              val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
-              if (site == null) {
-                Logger.e(TAG, "Site with descriptor ${boardDescriptor.siteDescriptor} " +
-                    "not found in siteRepository!")
-                return@async null
-              }
-
-              val catalogJsonEndpoint = site.endpoints().catalog(boardDescriptor)
-
-              return@async fetchBoardCatalog(
-                boardDescriptor,
-                catalogJsonEndpoint,
-                site.chanReader()
-              )
-            }
-          }
-        }
-          .awaitAll()
-          .filterNotNull()
+    return processDataCollectionConcurrently(boardDescriptorsToCheck, batchSize, Dispatchers.IO) { boardDescriptor ->
+      val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+      if (site == null) {
+        Logger.e(TAG, "Site with descriptor ${boardDescriptor.siteDescriptor} " +
+          "not found in siteRepository!")
+        return@processDataCollectionConcurrently null
       }
+
+      val catalogJsonEndpoint = site.endpoints().catalog(boardDescriptor)
+
+      return@processDataCollectionConcurrently fetchBoardCatalog(
+        boardDescriptor,
+        catalogJsonEndpoint,
+        site.chanReader()
+      )
+    }
   }
 
   private suspend fun fetchBoardCatalog(

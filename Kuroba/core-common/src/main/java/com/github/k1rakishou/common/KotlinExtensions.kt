@@ -837,7 +837,7 @@ inline fun <T, reified R> List<T>.mapArray(mapper: (T) -> R): Array<R> {
 }
 
 suspend fun <T, R> processDataCollectionConcurrently(
-  dataList: List<T>,
+  dataList: Collection<T>,
   batchCount: Int,
   dispatcher: CoroutineDispatcher = Dispatchers.Default,
   processFunc: suspend (T) -> R?

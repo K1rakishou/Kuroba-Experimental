@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.common.processDataCollectionConcurrently
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
@@ -14,9 +15,6 @@ import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.supervisorScope
 import okhttp3.HttpUrl
 import okhttp3.Request
 import java.io.IOException
@@ -44,32 +42,22 @@ class FetchThreadBookmarkInfoUseCase(
     val batchSize = (appConstants.processorsCount * BATCH_PER_CORE)
       .coerceAtLeast(MIN_BATCHES_COUNT)
 
-    return watchingBookmarkDescriptors
-      .chunked(batchSize)
-      .flatMap { chunk ->
-        return@flatMap supervisorScope {
-          return@supervisorScope chunk.map { threadDescriptor ->
-            return@map appScope.async(Dispatchers.IO) {
-              val site = siteManager.bySiteDescriptor(threadDescriptor.siteDescriptor())
-              if (site == null) {
-                Logger.e(TAG, "Site with descriptor ${threadDescriptor.siteDescriptor()} " +
-                  "not found in siteRepository!")
-                return@async null
-              }
-
-              val threadJsonEndpoint = site.endpoints().thread(threadDescriptor)
-
-              return@async fetchThreadBookmarkInfo(
-                threadDescriptor,
-                threadJsonEndpoint,
-                site.chanReader()
-              )
-            }
-          }
-        }
-          .awaitAll()
-          .filterNotNull()
+    return processDataCollectionConcurrently(watchingBookmarkDescriptors, batchSize, Dispatchers.IO) { threadDescriptor ->
+      val site = siteManager.bySiteDescriptor(threadDescriptor.siteDescriptor())
+      if (site == null) {
+        Logger.e(TAG, "Site with descriptor ${threadDescriptor.siteDescriptor()} " +
+          "not found in siteRepository!")
+        return@processDataCollectionConcurrently null
       }
+
+      val threadJsonEndpoint = site.endpoints().thread(threadDescriptor)
+
+      return@processDataCollectionConcurrently fetchThreadBookmarkInfo(
+        threadDescriptor,
+        threadJsonEndpoint,
+        site.chanReader()
+      )
+    }
   }
 
   private suspend fun fetchThreadBookmarkInfo(
