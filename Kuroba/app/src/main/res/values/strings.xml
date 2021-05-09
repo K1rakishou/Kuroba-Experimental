@@ -211,7 +211,6 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_share_content">Share file content</string>
     <string name="action_download_content">Download file</string>
     <string name="action_download_content_with_options">Download file (show options)</string>
-    <string name="action_confirm_exit">Tap back again to exit</string>
     <string name="action_album_show_image_details">Show image details</string>
 
     <string name="open_link_not_matched">Cannot open this link: \'%1$s\'.</string>
