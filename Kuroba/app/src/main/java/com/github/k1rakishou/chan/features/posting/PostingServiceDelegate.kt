@@ -526,10 +526,13 @@ class PostingServiceDelegate(
           val canPostWithoutCaptcha = when (replyMode) {
             null,
             ReplyMode.Unknown,
-            ReplyMode.ReplyModeSolveCaptchaManually,
             ReplyMode.ReplyModeSolveCaptchaAuto -> false
             ReplyMode.ReplyModeSendWithoutCaptcha,
             ReplyMode.ReplyModeUsePasscode -> true
+            ReplyMode.ReplyModeSolveCaptchaManually -> {
+              // Allow posting without forcing to solve captcha if the user already has a pre-solved captcha
+              hasValidCaptcha
+            }
           }
 
           if (!hasValidCaptcha && !canPostWithoutCaptcha) {

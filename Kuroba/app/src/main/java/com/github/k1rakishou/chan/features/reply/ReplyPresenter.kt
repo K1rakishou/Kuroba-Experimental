@@ -38,6 +38,7 @@ import com.github.k1rakishou.chan.features.posting.PostingStatus
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver
 import com.github.k1rakishou.chan.features.reply.floating_message_actions.Chan4OpenBannedUrlClickAction
 import com.github.k1rakishou.chan.features.reply.floating_message_actions.IFloatingReplyMessageClickAction
+import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.controller.CaptchaContainerController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
@@ -76,7 +77,8 @@ class ReplyPresenter @Inject constructor(
   private val postingServiceDelegate: PostingServiceDelegate,
   private val twoCaptchaSolver: TwoCaptchaSolver,
   private val dialogFactory: DialogFactory,
-  private val globalWindowInsetsManager: GlobalWindowInsetsManager
+  private val globalWindowInsetsManager: GlobalWindowInsetsManager,
+  private val captchaHolder: CaptchaHolder
 ) : CoroutineScope,
   CommentEditingHistory.CommentEditingHistoryListener {
 
@@ -431,7 +433,7 @@ class ReplyPresenter @Inject constructor(
   }
 
   private fun submitOrAuthenticate(chanDescriptor: ChanDescriptor, replyMode: ReplyMode) {
-    if (replyMode == ReplyMode.ReplyModeSolveCaptchaManually) {
+    if (replyMode == ReplyMode.ReplyModeSolveCaptchaManually && !captchaHolder.hasToken()) {
       showCaptcha(chanDescriptor = chanDescriptor, replyMode = replyMode, autoReply = true)
       return
     }
