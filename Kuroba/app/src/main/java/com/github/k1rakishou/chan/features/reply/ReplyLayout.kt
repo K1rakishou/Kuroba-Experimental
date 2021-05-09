@@ -61,6 +61,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
+import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.chan.features.bypass.BypassMode
@@ -655,16 +656,25 @@ class ReplyLayout @JvmOverloads constructor(
     val descriptor = chanDescriptor
       ?: return
 
-    val replyMode = siteManager.bySiteDescriptor(descriptor.siteDescriptor())
-      ?.requireSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
-      ?.get()
+    val site = siteManager.bySiteDescriptor(descriptor.siteDescriptor())
       ?: return
 
+    val replyMode = site
+      .requireSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+      .get()
+
+    val siteDoesNotRequireAuthentication = site.actions().postAuthenticate().type == SiteAuthentication.Type.NONE
+    if (siteDoesNotRequireAuthentication) {
+      captchaButtonContainer.setVisibilityFast(View.GONE)
+      return
+    }
+
     val captchaContainerVisibility = when (replyMode) {
+      ReplyMode.Unknown,
       ReplyMode.ReplyModeSolveCaptchaManually,
       ReplyMode.ReplyModeSendWithoutCaptcha,
-      ReplyMode.ReplyModeSolveCaptchaAuto -> View.VISIBLE
-      ReplyMode.ReplyModeUsePasscode -> View.GONE
+      ReplyMode.ReplyModeSolveCaptchaAuto -> VISIBLE
+      ReplyMode.ReplyModeUsePasscode -> GONE
     }
 
     captchaButtonContainer.setVisibilityFast(captchaContainerVisibility)

@@ -525,6 +525,7 @@ class PostingServiceDelegate(
 
           val canPostWithoutCaptcha = when (replyMode) {
             null,
+            ReplyMode.Unknown,
             ReplyMode.ReplyModeSolveCaptchaManually,
             ReplyMode.ReplyModeSolveCaptchaAuto -> false
             ReplyMode.ReplyModeSendWithoutCaptcha,
@@ -615,6 +616,11 @@ class PostingServiceDelegate(
   ) {
     Logger.d(TAG, "callPostDelegate(${site.siteDescriptor()}, $chanDescriptor)")
     val replyMode = readReplyInfo(chanDescriptor) { replyModeRef.get() }
+
+    if (replyMode == ReplyMode.Unknown) {
+      emitTerminalEvent(chanDescriptor, PostResult.Error(PostingException("ReplyMode is not set")))
+      return
+    }
 
     site.actions()
       .post(chanDescriptor, replyMode)

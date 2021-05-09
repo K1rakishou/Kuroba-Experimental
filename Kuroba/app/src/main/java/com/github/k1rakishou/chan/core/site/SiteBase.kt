@@ -122,17 +122,11 @@ abstract class SiteBase : Site, CoroutineScope {
       ""
     )
 
-    val defaultReplyMode = if (actions().isLoggedIn()) {
-      ReplyMode.ReplyModeUsePasscode
-    } else {
-      ReplyMode.ReplyModeSolveCaptchaManually
-    }
-
     lastUsedReplyMode = OptionsSetting(
       prefs,
       "last_used_reply_mode",
       ReplyMode::class.java,
-      defaultReplyMode
+      ReplyMode.Unknown
     )
   }
 

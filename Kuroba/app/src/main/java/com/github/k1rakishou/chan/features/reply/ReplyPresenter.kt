@@ -28,6 +28,7 @@ import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.features.posting.PostResult
@@ -359,9 +360,9 @@ class ReplyPresenter @Inject constructor(
     val prevReplyMode = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
       ?.requireSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
       ?.get()
-      ?: return
+      ?: ReplyMode.Unknown
 
-    if (longClicked) {
+    if (longClicked || prevReplyMode == ReplyMode.Unknown) {
       showReplyOptions(chanDescriptor, prevReplyMode)
       return
     }
@@ -378,12 +379,15 @@ class ReplyPresenter @Inject constructor(
 
   private fun showReplyOptions(chanDescriptor: ChanDescriptor, prevReplyMode: ReplyMode) {
     val availableReplyModes = mutableListOf<FloatingListMenuItem>()
+    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
 
-    availableReplyModes += CheckableFloatingListMenuItem(
-      key = ReplyMode.ReplyModeSolveCaptchaManually,
-      name = getString(R.string.reply_mode_solve_captcha_and_post),
-      isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeSolveCaptchaManually
-    )
+    if (site?.actions()?.postAuthenticate()?.type != SiteAuthentication.Type.NONE) {
+      availableReplyModes += CheckableFloatingListMenuItem(
+        key = ReplyMode.ReplyModeSolveCaptchaManually,
+        name = getString(R.string.reply_mode_solve_captcha_and_post),
+        isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeSolveCaptchaManually
+      )
+    }
 
     availableReplyModes += CheckableFloatingListMenuItem(
       key = ReplyMode.ReplyModeSendWithoutCaptcha,
@@ -391,7 +395,7 @@ class ReplyPresenter @Inject constructor(
       isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeSendWithoutCaptcha
     )
 
-    if (twoCaptchaSolver.isLoggedIn) {
+    if (twoCaptchaSolver.isSiteCurrentCaptchaTypeSupported(chanDescriptor.siteDescriptor()) && twoCaptchaSolver.isLoggedIn) {
       availableReplyModes += CheckableFloatingListMenuItem(
         key = ReplyMode.ReplyModeSolveCaptchaAuto,
         name = getString(R.string.reply_mode_post_with_captcha_solver),
@@ -399,7 +403,7 @@ class ReplyPresenter @Inject constructor(
       )
     }
 
-    if (siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())?.actions()?.isLoggedIn() == true) {
+    if (site?.actions()?.isLoggedIn() == true) {
       availableReplyModes += CheckableFloatingListMenuItem(
         key = ReplyMode.ReplyModeUsePasscode,
         name = getString(R.string.reply_mode_post_with_passcode),
