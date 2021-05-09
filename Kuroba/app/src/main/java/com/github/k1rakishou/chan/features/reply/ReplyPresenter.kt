@@ -60,6 +60,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -347,7 +348,13 @@ class ReplyPresenter @Inject constructor(
     }
 
     callback.hideKeyboard()
-    callback.presentController(controller)
+
+    launch {
+      // Wait a little bit for the keyboard to get hidden
+      delay(100)
+
+      callback.presentController(controller)
+    }
   }
 
   suspend fun onSubmitClicked(longClicked: Boolean) {

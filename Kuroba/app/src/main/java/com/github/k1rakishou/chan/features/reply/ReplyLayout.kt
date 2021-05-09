@@ -48,8 +48,8 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.Debouncer
+import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
-import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.CommentEditingHistory.CommentInputState
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -188,7 +188,7 @@ class ReplyLayout @JvmOverloads constructor(
   private var isCounterOverflowed = false
 
   private val coroutineScope = KurobaCoroutineScope()
-  private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(coroutineScope)
+  private val debouncingCoroutineExecutor = DebouncingCoroutineExecutor(coroutineScope)
   private val wrappingModeUpdateDebouncer = Debouncer(false)
   private val replyLayoutMessageToast = CancellableToast()
 
@@ -505,7 +505,7 @@ class ReplyLayout @JvmOverloads constructor(
     AndroidUtils.setBoundlessRoundRippleBackground(submit)
     submit.setOnClickListener(this)
     submit.setOnLongClickListener {
-      rendezvousCoroutineExecutor.post { presenter.onSubmitClicked(longClicked = true) }
+      debouncingCoroutineExecutor.post(250L) { presenter.onSubmitClicked(longClicked = true) }
       return@setOnLongClickListener true
     }
 
@@ -548,7 +548,7 @@ class ReplyLayout @JvmOverloads constructor(
     cleanup()
 
     coroutineScope.cancelChildren()
-    rendezvousCoroutineExecutor.stop()
+    debouncingCoroutineExecutor.stop()
     presenter.destroy()
   }
 
@@ -789,7 +789,7 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   override fun onClick(v: View) {
-    rendezvousCoroutineExecutor.post {
+    debouncingCoroutineExecutor.post(250L) {
       when {
         v === more -> presenter.onMoreClicked()
         v === captchaView -> presenter.onAuthenticateClicked()
