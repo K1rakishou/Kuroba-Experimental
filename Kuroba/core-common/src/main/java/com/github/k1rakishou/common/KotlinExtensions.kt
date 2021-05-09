@@ -90,7 +90,9 @@ suspend inline fun <reified T> OkHttpClient.suspendConvertIntoJsonObject(
       }
 
       val result = body.byteStream().use { inputStream ->
-        gson.fromJson<T>(JsonReader(InputStreamReader(inputStream)), T::class.java)
+        return@use JsonReader(InputStreamReader(inputStream)).use { jsonReader ->
+          return@use gson.fromJson<T>(jsonReader, T::class.java)
+        }
       }
 
       return@withContext JsonConversionResult.Success(result)
