@@ -40,19 +40,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         <TextView
             android:id="@+id/title"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/thumbnails_container"
             app:layout_constraintTop_toTopOf="parent"
             tools:text="Thread Subject" />
 
         <com.github.k1rakishou.chan.ui.cell.PostIcons
             android:id="@+id/icons"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/post_attention_label"
+            app:layout_constraintStart_toEndOf="@+id/thumbnails_container"
             app:layout_constraintTop_toBottomOf="@+id/title"
             tools:layout_height="32dp" />
 
@@ -62,7 +62,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_height="wrap_content"
             android:orientation="vertical"
             app:layout_constraintStart_toEndOf="@id/post_attention_label"
-            app:layout_constraintTop_toBottomOf="@+id/icons"
+            app:layout_constraintTop_toTopOf="parent"
             tools:layout_height="64dp"
             tools:layout_width="64dp" />
 

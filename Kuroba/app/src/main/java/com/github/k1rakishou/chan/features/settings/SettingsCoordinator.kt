@@ -381,7 +381,7 @@ class SettingsCoordinator(
   }
 
   fun rebuildCurrentScreen(buildOptions: BuildOptions) {
-    if (screenStack.isNotEmpty()) {
+    if (screenStack.isEmpty()) {
       return
     }
 
