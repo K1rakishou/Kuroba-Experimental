@@ -3,6 +3,8 @@ package com.github.k1rakishou.persist_state
 import com.github.k1rakishou.OptionSettingItem
 
 enum class ReplyMode(val modeRaw: String) : OptionSettingItem {
+  Unknown("unknown"),
+
   // Solve captcha beforehand and then post
   ReplyModeSolveCaptchaManually("reply_mode_solve_captcha_manually"),
 

@@ -69,7 +69,7 @@ open class Chan4 : SiteBase() {
   private lateinit var passToken: StringSetting
   private lateinit var captchaType: OptionsSetting<CaptchaType>
   private lateinit var usePostParserV2: BooleanSetting
-  lateinit var flagType: StringSetting
+  lateinit var lastUsedFlagPerBoard: StringSetting
 
   private val siteRequestModifier by lazy { Chan4SiteRequestModifier(this, appConstants) }
 
@@ -82,9 +82,22 @@ open class Chan4 : SiteBase() {
     passUser = StringSetting(prefs, "preference_pass_token", "")
     passPass = StringSetting(prefs, "preference_pass_pin", "")
     passToken = StringSetting(prefs, "preference_pass_id", "")
-    captchaType = OptionsSetting(prefs, "preference_captcha_type_chan4", CaptchaType::class.java, CaptchaType.V2NOJS)
-    flagType = StringSetting(prefs, "preference_flag_chan4", "0")
+
+    captchaType = OptionsSetting(
+      prefs,
+      "preference_captcha_type_chan4",
+      CaptchaType::class.java,
+      CaptchaType.V2NOJS
+    )
+
+    lastUsedFlagPerBoard = StringSetting(
+      prefs,
+      "preference_flag_chan4",
+      "0"
+    )
+
     usePostParserV2 = BooleanSetting(prefs, "use_post_parser_v2", true)
+
 
     chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
       enabled = true,
@@ -164,12 +177,14 @@ open class Chan4 : SiteBase() {
           b.addPathSegment("country")
           b.addPathSegment(countryCode.toLowerCase(Locale.ENGLISH) + ".gif")
         }
-        "troll_country" -> {
-          val trollCountryCode = requireNotNull(arg?.get("troll_country_code")) { "Bad arg map: $arg" }
+        // https://s.4cdn.org/image/flags/[board]/[code].gif
+        "board_flag" -> {
+          val boardFlagCode = requireNotNull(arg?.get("board_flag_code")) { "Bad arg map: $arg" }
+          val boardCode = requireNotNull(arg?.get("board_code")) { "Bad arg map: $arg" }
 
-          b.addPathSegment("country")
-          b.addPathSegment("troll")
-          b.addPathSegment(trollCountryCode.toLowerCase(Locale.ENGLISH) + ".gif")
+          b.addPathSegment("flags")
+          b.addPathSegment(boardCode)
+          b.addPathSegment(boardFlagCode.toLowerCase(Locale.ENGLISH) + ".gif")
         }
         "since4pass" -> b.addPathSegment("minileaf.gif")
       }
@@ -270,6 +285,7 @@ open class Chan4 : SiteBase() {
         replyManager = replyManager,
         boardManager = boardManager,
         appConstants = appConstants,
+        staticBoardFlagInfoRepository = staticBoardFlagInfoRepository
       )
 
       return httpCallManager.makePostHttpCallWithProgress(replyCall)
@@ -482,7 +498,7 @@ open class Chan4 : SiteBase() {
 
   override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? {
     return when (settingId) {
-      SiteSetting.SiteSettingId.CountryFlag -> flagType as T
+      SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard -> lastUsedFlagPerBoard as T
       SiteSetting.SiteSettingId.UsePostParserV2 -> usePostParserV2 as T
       else -> super.getSettingBySettingId(settingId)
     }

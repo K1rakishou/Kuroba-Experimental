@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
+import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -82,6 +83,8 @@ abstract class SiteBase : Site, CoroutineScope {
   protected lateinit var replyManager: ReplyManager
   @Inject
   protected lateinit var gson: Gson
+  @Inject
+  protected lateinit var staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("SiteBase")
@@ -122,17 +125,11 @@ abstract class SiteBase : Site, CoroutineScope {
       ""
     )
 
-    val defaultReplyMode = if (actions().isLoggedIn()) {
-      ReplyMode.ReplyModeUsePasscode
-    } else {
-      ReplyMode.ReplyModeSolveCaptchaManually
-    }
-
     lastUsedReplyMode = OptionsSetting(
       prefs,
       "last_used_reply_mode",
       ReplyMode::class.java,
-      defaultReplyMode
+      ReplyMode.Unknown
     )
   }
 
@@ -199,7 +196,7 @@ abstract class SiteBase : Site, CoroutineScope {
       SiteSetting.SiteSettingId.CloudFlareClearanceCookie -> cloudFlareClearanceCookie as T
       SiteSetting.SiteSettingId.LastUsedReplyMode -> lastUsedReplyMode as T
       // 4chan only
-      SiteSetting.SiteSettingId.CountryFlag -> null
+      SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard -> null
       // 4chan only for now
       SiteSetting.SiteSettingId.UsePostParserV2 -> null
       // 2ch.hk only

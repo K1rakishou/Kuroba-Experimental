@@ -22,15 +22,13 @@ class WakarimasenMoe: BaseFoolFuukaSite() {
 
   private val wakarimasenEndpoints = object : FoolFuukaEndpoints(this@WakarimasenMoe, rootUrl()) {
 
-    // https://archived.moe/_/api/chan/thread/&board=a&num=208364509
+    // https://archived.moe/_/api/chan/thread/?board=a&num=208364509
     override fun thread(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
-      val baseUrl = rootUrl.newBuilder()
-        .addPathSegments("_/api/chan/thread")
-        .build()
-        .toString()
-
-      val finalUrlRaw = "${baseUrl}/&board=${threadDescriptor.boardCode()}&num=${threadDescriptor.threadNo}"
-      return finalUrlRaw.toHttpUrl()
+      return archivesManager.getRequestLink(
+        ArchiveType.WakarimasenMoe,
+        threadDescriptor.boardCode(),
+        threadDescriptor.threadNo
+      ).toHttpUrl()
     }
 
   }

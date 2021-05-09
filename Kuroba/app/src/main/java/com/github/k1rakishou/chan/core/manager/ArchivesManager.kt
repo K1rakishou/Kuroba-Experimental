@@ -142,18 +142,28 @@ open class ArchivesManager(
     val archiveData = getArchiveDataByArchiveDescriptor(archiveDescriptor)
       ?: return null
 
-    val threadEndpointFormat = if (archiveDescriptor.domain == ArchiveType.WakarimasenMoe.domain) {
-      WAKARIMASEN_THREAD_ENDPOINT_FORMAT
-    } else {
-      FOOLFUUKA_THREAD_ENDPOINT_FORMAT
-    }
-
     return String.format(
       Locale.ENGLISH,
-      threadEndpointFormat,
+      FOOLFUUKA_THREAD_ENDPOINT_FORMAT,
       archiveData.domain,
       threadDescriptor.boardCode(),
       threadDescriptor.threadNo
+    )
+  }
+
+  fun getRequestLink(
+    archiveType: ArchiveType,
+    boardCode: String,
+    threadNo: Long
+  ): String {
+    val archiveData = getArchiveDescriptorByArchiveType(archiveType)!!
+
+    return String.format(
+      Locale.ENGLISH,
+      FOOLFUUKA_THREAD_ENDPOINT_FORMAT,
+      archiveData.domain,
+      boardCode,
+      threadNo
     )
   }
 
@@ -334,11 +344,6 @@ open class ArchivesManager(
     private const val TAG = "ArchivesManager"
     private const val ARCHIVES_JSON_FILE_NAME = "archives.json"
     private const val FOOLFUUKA_THREAD_ENDPOINT_FORMAT = "https://%s/_/api/chan/thread/?board=%s&num=%d"
-
-    // wakarimasen.moe uses a slightly different request url
-    // https://archive.wakarimasen.moe/_/api/chan/thread/&board=a&num=216913439
-
-    private const val WAKARIMASEN_THREAD_ENDPOINT_FORMAT = "https://%s/_/api/chan/thread/&board=%s&num=%d"
 
     private const val WWW_PREFIX = "www."
   }

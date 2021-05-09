@@ -127,8 +127,9 @@ class FutabaChanReader(
 
     // Country flag
     var countryCode: String? = null
-    var trollCountryCode: String? = null
     var countryName: String? = null
+    var boardFlagCode: String? = null
+    var boardFlagName: String? = null
 
     // 4chan pass leaf
     var since4pass = 0
@@ -154,8 +155,9 @@ class FutabaChanReader(
         "filename" -> fileName = reader.nextString()
         "trip" -> builder.tripcode(reader.nextString())
         "country" -> countryCode = reader.nextString()
-        "troll_country" -> trollCountryCode = reader.nextString()
         "country_name" -> countryName = reader.nextString()
+        "board_flag" -> boardFlagCode = reader.nextString()
+        "flag_name" -> boardFlagName = reader.nextString()
         "spoiler" -> fileSpoiler = reader.nextInt() == 1
         "resto" -> {
           val opId = reader.nextInt()
@@ -247,9 +249,16 @@ class FutabaChanReader(
       builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/$countryCode"))
     }
 
-    if (trollCountryCode != null && countryName != null) {
-      val countryUrl = endpoints.icon("troll_country", SiteEndpoints.makeArgument("troll_country_code", trollCountryCode))
-      builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/t_$trollCountryCode"))
+    if (boardFlagCode != null && boardFlagName != null) {
+      val argument = SiteEndpoints.makeArgument(
+        "board_flag_code",
+        boardFlagCode,
+        "board_code",
+        boardDescriptor.boardCode
+      )
+
+      val countryUrl = endpoints.icon("board_flag", argument)
+      builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$boardFlagName/t_$boardFlagCode"))
     }
 
     if (since4pass != 0) {

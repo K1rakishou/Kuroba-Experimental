@@ -48,8 +48,8 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.Debouncer
+import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
-import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.CommentEditingHistory.CommentInputState
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -61,6 +61,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
+import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.chan.features.bypass.BypassMode
@@ -187,7 +188,7 @@ class ReplyLayout @JvmOverloads constructor(
   private var isCounterOverflowed = false
 
   private val coroutineScope = KurobaCoroutineScope()
-  private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(coroutineScope)
+  private val debouncingCoroutineExecutor = DebouncingCoroutineExecutor(coroutineScope)
   private val wrappingModeUpdateDebouncer = Debouncer(false)
   private val replyLayoutMessageToast = CancellableToast()
 
@@ -504,7 +505,7 @@ class ReplyLayout @JvmOverloads constructor(
     AndroidUtils.setBoundlessRoundRippleBackground(submit)
     submit.setOnClickListener(this)
     submit.setOnLongClickListener {
-      rendezvousCoroutineExecutor.post { presenter.onSubmitClicked(longClicked = true) }
+      debouncingCoroutineExecutor.post(250L) { presenter.onSubmitClicked(longClicked = true) }
       return@setOnLongClickListener true
     }
 
@@ -547,7 +548,7 @@ class ReplyLayout @JvmOverloads constructor(
     cleanup()
 
     coroutineScope.cancelChildren()
-    rendezvousCoroutineExecutor.stop()
+    debouncingCoroutineExecutor.stop()
     presenter.destroy()
   }
 
@@ -655,16 +656,25 @@ class ReplyLayout @JvmOverloads constructor(
     val descriptor = chanDescriptor
       ?: return
 
-    val replyMode = siteManager.bySiteDescriptor(descriptor.siteDescriptor())
-      ?.requireSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
-      ?.get()
+    val site = siteManager.bySiteDescriptor(descriptor.siteDescriptor())
       ?: return
 
+    val replyMode = site
+      .requireSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+      .get()
+
+    val siteDoesNotRequireAuthentication = site.actions().postAuthenticate().type == SiteAuthentication.Type.NONE
+    if (siteDoesNotRequireAuthentication) {
+      captchaButtonContainer.setVisibilityFast(View.GONE)
+      return
+    }
+
     val captchaContainerVisibility = when (replyMode) {
+      ReplyMode.Unknown,
       ReplyMode.ReplyModeSolveCaptchaManually,
       ReplyMode.ReplyModeSendWithoutCaptcha,
-      ReplyMode.ReplyModeSolveCaptchaAuto -> View.VISIBLE
-      ReplyMode.ReplyModeUsePasscode -> View.GONE
+      ReplyMode.ReplyModeSolveCaptchaAuto -> VISIBLE
+      ReplyMode.ReplyModeUsePasscode -> GONE
     }
 
     captchaButtonContainer.setVisibilityFast(captchaContainerVisibility)
@@ -779,7 +789,7 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   override fun onClick(v: View) {
-    rendezvousCoroutineExecutor.post {
+    debouncingCoroutineExecutor.post(250L) {
       when {
         v === more -> presenter.onMoreClicked()
         v === captchaView -> presenter.onAuthenticateClicked()
@@ -793,6 +803,8 @@ class ReplyLayout @JvmOverloads constructor(
         v === commentRevertChangeButton -> presenter.onRevertChangeButtonClicked()
         v === flag -> showFlagSelector(chanDescriptor)
       }
+
+      comment.clearFocus()
     }
   }
 
@@ -800,8 +812,8 @@ class ReplyLayout @JvmOverloads constructor(
     val boardDescriptor = chanDescriptor?.boardDescriptor()
       ?: return
 
-    val countryFlagSetting = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
-      ?.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.CountryFlag)
+    val lastUsedCountryFlagPerBoardSetting = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+      ?.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard)
       ?: return
 
     val flagInfoList = staticBoardFlagInfoRepository.getFlagInfoList(boardDescriptor)
@@ -831,7 +843,12 @@ class ReplyLayout @JvmOverloads constructor(
         val flagInfo = floatingListMenuItem.value as? StaticBoardFlagInfoRepository.FlagInfo
           ?: return@FloatingListMenuController
 
-        countryFlagSetting.set(flagInfo.flagKey)
+        staticBoardFlagInfoRepository.storeLastUsedFlag(
+          lastUsedCountryFlagPerBoardSetting,
+          flagInfo,
+          boardDescriptor.boardCode
+        )
+
         openFlag(flagInfo)
       })
 

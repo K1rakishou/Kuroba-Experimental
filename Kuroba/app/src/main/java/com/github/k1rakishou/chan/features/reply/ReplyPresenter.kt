@@ -28,6 +28,7 @@ import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.features.posting.PostResult
@@ -37,6 +38,7 @@ import com.github.k1rakishou.chan.features.posting.PostingStatus
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver
 import com.github.k1rakishou.chan.features.reply.floating_message_actions.Chan4OpenBannedUrlClickAction
 import com.github.k1rakishou.chan.features.reply.floating_message_actions.IFloatingReplyMessageClickAction
+import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.controller.CaptchaContainerController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
@@ -58,6 +60,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -75,7 +78,8 @@ class ReplyPresenter @Inject constructor(
   private val postingServiceDelegate: PostingServiceDelegate,
   private val twoCaptchaSolver: TwoCaptchaSolver,
   private val dialogFactory: DialogFactory,
-  private val globalWindowInsetsManager: GlobalWindowInsetsManager
+  private val globalWindowInsetsManager: GlobalWindowInsetsManager,
+  private val captchaHolder: CaptchaHolder
 ) : CoroutineScope,
   CommentEditingHistory.CommentEditingHistoryListener {
 
@@ -186,7 +190,8 @@ class ReplyPresenter @Inject constructor(
           // no-op
         }
         is PostingStatus.AfterPosting -> {
-          Logger.d(TAG, "processPostingStatusUpdates($chanDescriptor) -> ${status.javaClass.simpleName}")
+          Logger.d(TAG, "processPostingStatusUpdates($chanDescriptor) -> " +
+            "${status.javaClass.simpleName}, status.postResult=${status.postResult}")
 
           if (::callback.isInitialized) {
             callback.enableOrDisableReplyLayout()
@@ -209,6 +214,7 @@ class ReplyPresenter @Inject constructor(
             }
           }
 
+          Logger.d(TAG, "processPostingStatusUpdates($chanDescriptor) consumeTerminalEvent(${status.chanDescriptor})")
           postingServiceDelegate.consumeTerminalEvent(status.chanDescriptor)
         }
       }
@@ -344,7 +350,13 @@ class ReplyPresenter @Inject constructor(
     }
 
     callback.hideKeyboard()
-    callback.presentController(controller)
+
+    launch {
+      // Wait a little bit for the keyboard to get hidden
+      delay(100)
+
+      callback.presentController(controller)
+    }
   }
 
   suspend fun onSubmitClicked(longClicked: Boolean) {
@@ -359,9 +371,9 @@ class ReplyPresenter @Inject constructor(
     val prevReplyMode = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
       ?.requireSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
       ?.get()
-      ?: return
+      ?: ReplyMode.Unknown
 
-    if (longClicked) {
+    if (longClicked || prevReplyMode == ReplyMode.Unknown) {
       showReplyOptions(chanDescriptor, prevReplyMode)
       return
     }
@@ -378,12 +390,15 @@ class ReplyPresenter @Inject constructor(
 
   private fun showReplyOptions(chanDescriptor: ChanDescriptor, prevReplyMode: ReplyMode) {
     val availableReplyModes = mutableListOf<FloatingListMenuItem>()
+    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
 
-    availableReplyModes += CheckableFloatingListMenuItem(
-      key = ReplyMode.ReplyModeSolveCaptchaManually,
-      name = getString(R.string.reply_mode_solve_captcha_and_post),
-      isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeSolveCaptchaManually
-    )
+    if (site?.actions()?.postAuthenticate()?.type != SiteAuthentication.Type.NONE) {
+      availableReplyModes += CheckableFloatingListMenuItem(
+        key = ReplyMode.ReplyModeSolveCaptchaManually,
+        name = getString(R.string.reply_mode_solve_captcha_and_post),
+        isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeSolveCaptchaManually
+      )
+    }
 
     availableReplyModes += CheckableFloatingListMenuItem(
       key = ReplyMode.ReplyModeSendWithoutCaptcha,
@@ -391,7 +406,7 @@ class ReplyPresenter @Inject constructor(
       isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeSendWithoutCaptcha
     )
 
-    if (twoCaptchaSolver.isLoggedIn) {
+    if (twoCaptchaSolver.isSiteCurrentCaptchaTypeSupported(chanDescriptor.siteDescriptor()) && twoCaptchaSolver.isLoggedIn) {
       availableReplyModes += CheckableFloatingListMenuItem(
         key = ReplyMode.ReplyModeSolveCaptchaAuto,
         name = getString(R.string.reply_mode_post_with_captcha_solver),
@@ -399,7 +414,7 @@ class ReplyPresenter @Inject constructor(
       )
     }
 
-    if (siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())?.actions()?.isLoggedIn() == true) {
+    if (site?.actions()?.isLoggedIn() == true) {
       availableReplyModes += CheckableFloatingListMenuItem(
         key = ReplyMode.ReplyModeUsePasscode,
         name = getString(R.string.reply_mode_post_with_passcode),
@@ -427,7 +442,7 @@ class ReplyPresenter @Inject constructor(
   }
 
   private fun submitOrAuthenticate(chanDescriptor: ChanDescriptor, replyMode: ReplyMode) {
-    if (replyMode == ReplyMode.ReplyModeSolveCaptchaManually) {
+    if (replyMode == ReplyMode.ReplyModeSolveCaptchaManually && !captchaHolder.hasToken()) {
       showCaptcha(chanDescriptor = chanDescriptor, replyMode = replyMode, autoReply = true)
       return
     }
@@ -600,7 +615,7 @@ class ReplyPresenter @Inject constructor(
 
     when {
       replyResponse.posted -> {
-        Logger.d(TAG, "onPostComplete() replyResponse=$replyResponse")
+        Logger.d(TAG, "onPostComplete() posted==true replyResponse=$replyResponse")
         onPostedSuccessfully(prevChanDescriptor = chanDescriptor, replyResponse = replyResponse)
       }
       replyResponse.requireAuthentication -> {
@@ -608,6 +623,8 @@ class ReplyPresenter @Inject constructor(
         showCaptcha(chanDescriptor = chanDescriptor, replyMode = replyMode, autoReply = true)
       }
       else -> {
+        Logger.d(TAG, "onPostComplete() else branch replyResponse=$replyResponse")
+
         if (retrying) {
           // To avoid infinite cycles
           onPostCompleteUnsuccessful(replyResponse, chanDescriptor)

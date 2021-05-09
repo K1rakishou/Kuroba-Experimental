@@ -34,7 +34,7 @@
   "name": "arch.b4k.co",
   "domain": "arch.b4k.co",
   "boards": ["g", "mlp", "qb", "v", "vg", "vm", "vmg", "vp", "vrpg", "vst"],
-  "files": [],
+  "files": ["qb", "v", "vg", "vm", "vmg", "vrpg", "vst"],
   "search": ["qb", "v", "vg", "vm", "vmg", "vrpg", "vst"]
 }, {
   "name": "bstats",
@@ -60,8 +60,8 @@
 }, {
   "name": "TokyoChronos",
   "domain": "www.tokyochronos.net",
-  "boards": ["a", "g", "jp", "r9k", "vrpg", "vt"],
-  "files": ["a", "g", "jp", "r9k", "vrpg", "vt"]
+  "boards": ["a", "g", "jp", "r9k", "vt"],
+  "files": ["a", "g", "jp", "r9k", "vt"]
 }, {
   "name" : "Wakarimasen Archive",
   "domain" : "archive.wakarimasen.moe",

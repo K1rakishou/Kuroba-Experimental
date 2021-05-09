@@ -52,7 +52,7 @@ Screenshots can be found [here](https://github.com/K1rakishou/Kuroba-Experimenta
 
 [All beta versions](https://kuroba.io:8443/apks/0)
 
-### [Latest release version (v0.8.2)](https://github.com/K1rakishou/Kuroba-Experimental/releases/tag/v0.8.2-release)
+### [Latest release version (v0.8.3)](https://github.com/K1rakishou/Kuroba-Experimental/releases/tag/v0.8.3-release)
 
 ##### Currently supported sites
 - 4Chan

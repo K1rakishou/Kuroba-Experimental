@@ -10,6 +10,7 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.suspendConvertIntoJsonObject
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.google.gson.Gson
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -52,6 +53,28 @@ class TwoCaptchaSolver(
 
   suspend fun cancel(chanDescriptor: ChanDescriptor) {
     mutex.withLock { activeRequests.remove(chanDescriptor) }
+  }
+
+  fun isSiteCurrentCaptchaTypeSupported(siteDescriptor: SiteDescriptor): Boolean {
+    val site = siteManager.bySiteDescriptor(siteDescriptor)
+    if (site == null) {
+      return false
+    }
+
+    val postAuthenticate = site.actions().postAuthenticate().type
+      ?: SiteAuthentication.Type.NONE
+
+    when (postAuthenticate) {
+      SiteAuthentication.Type.NONE,
+      SiteAuthentication.Type.GENERIC_WEBVIEW -> {
+        return false
+      }
+      SiteAuthentication.Type.CAPTCHA2,
+      SiteAuthentication.Type.CAPTCHA2_NOJS,
+      SiteAuthentication.Type.CAPTCHA2_INVISIBLE -> {
+        return true
+      }
+    }
   }
 
   suspend fun solve(

@@ -46,7 +46,7 @@ data class ChildNotificationInfo(
     data class WaitingForSiteRateLimitToPass(
       val remainingWaitTimeMs: Long,
       val boardDescriptor: BoardDescriptor,
-    ) : Status("Waiting ${remainingWaitTimeMs}ms until ${boardDescriptor.siteName()}/${boardDescriptor.boardCode} rate limit is over")
+    ) : Status("Waiting ${remainingWaitTimeMs / 1000}s until ${boardDescriptor.siteName()}/${boardDescriptor.boardCode} rate limit is over")
 
     data class WaitingForAdditionalService(
       val availableAttempts: Int,

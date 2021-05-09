@@ -67,8 +67,6 @@ import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
-import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.FullScreenUtils
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupFullscreen
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
@@ -140,7 +138,6 @@ class StartActivity : AppCompatActivity(),
   private val compositeDisposable = CompositeDisposable()
 
   private var intentMismatchWorkaroundActive = false
-  private var exitFlag = false
   private var browseController: BrowseController? = null
 
   lateinit var contentView: ViewGroup
@@ -617,14 +614,7 @@ class StartActivity : AppCompatActivity(),
       return
     }
 
-    if (!exitFlag) {
-      showToast(this, R.string.action_confirm_exit)
-      exitFlag = true
-      BackgroundUtils.runOnMainThread({ exitFlag = false }, 650)
-    } else {
-      exitFlag = false
-      super@StartActivity.onBackPressed()
-    }
+    super.onBackPressed()
   }
 
   override fun onRequestPermissionsResult(

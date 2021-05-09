@@ -381,7 +381,9 @@ class SettingsCoordinator(
   }
 
   fun rebuildCurrentScreen(buildOptions: BuildOptions) {
-    require(screenStack.isNotEmpty()) { "Stack is empty" }
+    if (screenStack.isEmpty()) {
+      return
+    }
 
     val screenIdentifier = screenStack.peek()
     rebuildScreen(screenIdentifier, buildOptions)
