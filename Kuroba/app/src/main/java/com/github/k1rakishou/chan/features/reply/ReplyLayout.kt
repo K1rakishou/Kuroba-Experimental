@@ -793,6 +793,8 @@ class ReplyLayout @JvmOverloads constructor(
         v === commentRevertChangeButton -> presenter.onRevertChangeButtonClicked()
         v === flag -> showFlagSelector(chanDescriptor)
       }
+
+      comment.clearFocus()
     }
   }
 
