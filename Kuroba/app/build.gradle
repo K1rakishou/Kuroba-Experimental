@@ -45,8 +45,8 @@ android {
         buildConfigField "String", "COMMIT_HASH", "\"" + getCommitHash() + "\""
         buildConfigField "String", "BUILD_NUMBER", "\"" + getCurrentBuildNumber() + "\""
 
-        versionCode 803
-        versionName "v0.8.3"
+        versionCode 804
+        versionName "v0.8.4"
 
         applicationVariants.all { variant ->
             variant.outputs.all {
