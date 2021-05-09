@@ -190,7 +190,8 @@ class ReplyPresenter @Inject constructor(
           // no-op
         }
         is PostingStatus.AfterPosting -> {
-          Logger.d(TAG, "processPostingStatusUpdates($chanDescriptor) -> ${status.javaClass.simpleName}")
+          Logger.d(TAG, "processPostingStatusUpdates($chanDescriptor) -> " +
+            "${status.javaClass.simpleName}, status.postResult=${status.postResult}")
 
           if (::callback.isInitialized) {
             callback.enableOrDisableReplyLayout()
@@ -213,6 +214,7 @@ class ReplyPresenter @Inject constructor(
             }
           }
 
+          Logger.d(TAG, "processPostingStatusUpdates($chanDescriptor) consumeTerminalEvent(${status.chanDescriptor})")
           postingServiceDelegate.consumeTerminalEvent(status.chanDescriptor)
         }
       }
@@ -613,7 +615,7 @@ class ReplyPresenter @Inject constructor(
 
     when {
       replyResponse.posted -> {
-        Logger.d(TAG, "onPostComplete() replyResponse=$replyResponse")
+        Logger.d(TAG, "onPostComplete() posted==true replyResponse=$replyResponse")
         onPostedSuccessfully(prevChanDescriptor = chanDescriptor, replyResponse = replyResponse)
       }
       replyResponse.requireAuthentication -> {
@@ -621,6 +623,8 @@ class ReplyPresenter @Inject constructor(
         showCaptcha(chanDescriptor = chanDescriptor, replyMode = replyMode, autoReply = true)
       }
       else -> {
+        Logger.d(TAG, "onPostComplete() else branch replyResponse=$replyResponse")
+
         if (retrying) {
           // To avoid infinite cycles
           onPostCompleteUnsuccessful(replyResponse, chanDescriptor)

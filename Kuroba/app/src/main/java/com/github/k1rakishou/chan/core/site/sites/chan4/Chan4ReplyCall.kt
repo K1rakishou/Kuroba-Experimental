@@ -19,7 +19,9 @@ package com.github.k1rakishou.chan.core.site.sites.chan4
 import android.text.TextUtils
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
+import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.common.CommonReplyHttpCall
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody.ProgressRequestListener
@@ -35,6 +37,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.prefs.StringSetting
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -52,7 +55,8 @@ class Chan4ReplyCall(
   val replyMode: ReplyMode,
   private val replyManager: ReplyManager,
   private val boardManager: BoardManager,
-  private val appConstants: AppConstants
+  private val appConstants: AppConstants,
+  private val staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository
 ) : CommonReplyHttpCall(site, replyChanDescriptor) {
 
   @Throws(IOException::class)
@@ -97,15 +101,23 @@ class Chan4ReplyCall(
         }
       }
 
-      if (site is Chan4 && reply.chanDescriptor.boardCode() == "pol") {
+      if (site is Chan4) {
         if (reply.flag.isNotEmpty()) {
           formBuilder.addFormDataPart("flag", reply.flag)
         } else {
-          formBuilder.addFormDataPart("flag", site.flagType.get())
+          val lastUsedCountryFlagPerBoardString =
+            site.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard)?.get()
+
+          if (lastUsedCountryFlagPerBoardString != null) {
+            val lastUsedFlag = staticBoardFlagInfoRepository.extractFlagCodeOrDefault(
+              lastUsedCountryFlagPerBoardString,
+              replyChanDescriptor.boardCode()
+            )
+
+            formBuilder.addFormDataPart("flag", lastUsedFlag)
+          }
         }
       }
-
-      check(reply.filesCount() <= 1) { "Bad files count: ${reply.filesCount()}" }
 
       val replyFile = reply.firstFileOrNull()
       if (replyFile != null) {

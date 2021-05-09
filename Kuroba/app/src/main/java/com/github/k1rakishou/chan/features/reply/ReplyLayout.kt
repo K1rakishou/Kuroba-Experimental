@@ -812,8 +812,8 @@ class ReplyLayout @JvmOverloads constructor(
     val boardDescriptor = chanDescriptor?.boardDescriptor()
       ?: return
 
-    val countryFlagSetting = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
-      ?.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.CountryFlag)
+    val lastUsedCountryFlagPerBoardSetting = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+      ?.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard)
       ?: return
 
     val flagInfoList = staticBoardFlagInfoRepository.getFlagInfoList(boardDescriptor)
@@ -843,7 +843,12 @@ class ReplyLayout @JvmOverloads constructor(
         val flagInfo = floatingListMenuItem.value as? StaticBoardFlagInfoRepository.FlagInfo
           ?: return@FloatingListMenuController
 
-        countryFlagSetting.set(flagInfo.flagKey)
+        staticBoardFlagInfoRepository.storeLastUsedFlag(
+          lastUsedCountryFlagPerBoardSetting,
+          flagInfo,
+          boardDescriptor.boardCode
+        )
+
         openFlag(flagInfo)
       })
 

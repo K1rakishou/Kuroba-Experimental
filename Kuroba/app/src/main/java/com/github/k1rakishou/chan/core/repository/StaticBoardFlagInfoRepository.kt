@@ -15,21 +15,87 @@ class StaticBoardFlagInfoRepository(
 
   init {
     extractFlags(CHAN4_POL_FLAGS, BoardDescriptor.Companion.create(Chan4.SITE_DESCRIPTOR, "pol"))
+    extractFlags(CHAN4_MLP_FLAGS, BoardDescriptor.Companion.create(Chan4.SITE_DESCRIPTOR, "mlp"))
   }
 
   fun getFlagInfoList(boardDescriptor: BoardDescriptor): List<FlagInfo> {
     return flagInfoMap[boardDescriptor]?.toList() ?: emptyList()
   }
 
+  fun storeLastUsedFlag(
+    lastUsedCountryFlagPerBoardSetting: StringSetting,
+    selectedFlagInfo: FlagInfo,
+    currentBoardCode: String
+  ) {
+    // board_code:flag_code;board_code:flag_code;board_code:flag_code;etc...
+
+    val flagMap = mutableMapOf<String, String>()
+    val boardCodeFlagCodePairs = lastUsedCountryFlagPerBoardSetting.get().split(';')
+
+    for (boardCodeFlagCodePair in boardCodeFlagCodePairs) {
+      val splitPair = boardCodeFlagCodePair.split(':')
+      if (splitPair.size != 2) {
+        continue
+      }
+
+      val boardCode = splitPair[0]
+      val flagCode = splitPair[1]
+
+      flagMap[boardCode] = flagCode
+    }
+
+    flagMap[currentBoardCode] = selectedFlagInfo.flagKey
+
+    val resultFlags = buildString {
+      var index = 1
+
+      flagMap.entries.forEach { (boardCode, flagKey) ->
+        append("${boardCode}:${flagKey}")
+
+        if (index != flagMap.size) {
+          append(";")
+        }
+
+        ++index
+      }
+    }
+
+    lastUsedCountryFlagPerBoardSetting.set(resultFlags)
+  }
+
+  fun extractFlagCodeOrDefault(lastUsedCountryFlagPerBoardString: String, currentBoardCode: String): String {
+    // board_code:flag_code;board_code:flag_code;board_code:flag_code;etc...
+
+    val boardCodeFlagCodePairs = lastUsedCountryFlagPerBoardString.split(';')
+    var resultFlagCode = "0"
+
+    for (boardCodeFlagCodePair in boardCodeFlagCodePairs) {
+      val splitPair = boardCodeFlagCodePair.split(':')
+      if (splitPair.size != 2) {
+        continue
+      }
+
+      val boardCode = splitPair[0]
+      val flagCode = splitPair[1]
+
+      if (boardCode == currentBoardCode) {
+        resultFlagCode = flagCode
+        break
+      }
+    }
+
+    return resultFlagCode
+  }
+
   fun getLastUsedFlagInfo(boardDescriptor: BoardDescriptor): FlagInfo? {
-    val countryFlagSetting = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
-      ?.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.CountryFlag)
+    val lastUsedCountryFlagPerBoardSetting = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+      ?.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard)
       ?: return null
 
-    val lastUsedFlagKey = countryFlagSetting.get()
+    val lastUsedCountryFlagPerBoard = lastUsedCountryFlagPerBoardSetting.get()
 
     var lastUsedFlagInfo = getFlagInfoByFlagKeyOrNull(
-      lastUsedFlagKey,
+      lastUsedCountryFlagPerBoard,
       boardDescriptor
     )
 
@@ -40,7 +106,12 @@ class StaticBoardFlagInfoRepository(
     return lastUsedFlagInfo
   }
 
-  private fun getFlagInfoByFlagKeyOrNull(flagKey: String, boardDescriptor: BoardDescriptor): FlagInfo? {
+  private fun getFlagInfoByFlagKeyOrNull(
+    lastUsedCountryFlagPerBoard: String,
+    boardDescriptor: BoardDescriptor
+  ): FlagInfo? {
+    val flagKey = extractFlagCodeOrDefault(lastUsedCountryFlagPerBoard, boardDescriptor.boardCode)
+
     val flagInfoList = flagInfoMap[boardDescriptor]
       ?: return null
 
@@ -76,7 +147,7 @@ class StaticBoardFlagInfoRepository(
     private val FLAG_PATTERN = Pattern.compile("<option value=\"(.*)\">(.*)<\\/option>")
 
     private const val CHAN4_POL_FLAGS = """
-<option value="0"> Geographic Location</option>
+<option value="0">Geographic Location</option>
 <option value="AC">Anarcho-Capitalist</option>
 <option value="AN">Anarchist</option>
 <option value="BL">Black Nationalist</option>
@@ -101,6 +172,90 @@ class StaticBoardFlagInfoRepository(
 <option value="UN">United Nations</option>
 <option value="WP">White Supremacist</option>
   """
+
+    private const val CHAN4_MLP_FLAGS = """
+<option value="0">None</option>
+<option value="4CC">4cc /mlp/</option>
+<option value="ADA">Adagio Dazzle</option>
+<option value="AN">Anon</option>
+<option value="ANF">Anonfilly</option>
+<option value="APB">Apple Bloom</option>
+<option value="AJ">Applejack</option>
+<option value="AB">Aria Blaze</option>
+<option value="AU">Autumn Blaze</option>
+<option value="BB">Bon Bon</option>
+<option value="BM">Big Mac</option>
+<option value="BP">Berry Punch</option>
+<option value="BS">Babs Seed</option>
+<option value="CL">Changeling</option>
+<option value="CO">Coco Pommel</option>
+<option value="CG">Cozy Glow</option>
+<option value="CHE">Cheerilee</option>
+<option value="CB">Cherry Berry</option>
+<option value="DAY">Daybreaker</option>
+<option value="DD">Daring Do</option>
+<option value="DER">Derpy Hooves</option>
+<option value="DT">Diamond Tiara</option>
+<option value="DIS">Discord</option>
+<option value="EQA">EqG Applejack</option>
+<option value="EQF">EqG Fluttershy</option>
+<option value="EQP">EqG Pinkie Pie</option>
+<option value="EQR">EqG Rainbow Dash</option>
+<option value="EQT">EqG Trixie</option>
+<option value="EQI">EqG Twilight Sparkle</option>
+<option value="EQS">EqG Sunset Shimmer</option>
+<option value="ERA">EqG Rarity</option>
+<option value="FAU">Fausticorn</option>
+<option value="FLE">Fleur de lis</option>
+<option value="FL">Fluttershy</option>
+<option value="GI">Gilda</option>
+<option value="IZ">G5 Izzy Moonbow</option>
+<option value="LI">Limestone</option>
+<option value="LT">Lord Tirek</option>
+<option value="LY">Lyra Heartstrings</option>
+<option value="MA">Marble</option>
+<option value="MAU">Maud</option>
+<option value="MIN">Minuette</option>
+<option value="NI">Nightmare Moon</option>
+<option value="NUR">Nurse Redheart</option>
+<option value="OCT">Octavia</option>
+<option value="PAR">Parasprite</option>
+<option value="PC">Princess Cadance</option>
+<option value="PCE">Princess Celestia</option>
+<option value="PI">Pinkie Pie</option>
+<option value="PLU">Princess Luna</option>
+<option value="PM">Pinkamena</option>
+<option value="PP">G5 Pipp Petals</option>
+<option value="QC">Queen Chrysalis</option>
+<option value="RAR">Rarity</option>
+<option value="RD">Rainbow Dash</option>
+<option value="RLU">Roseluck</option>
+<option value="S1L">S1 Luna</option>
+<option value="SCO">Scootaloo</option>
+<option value="SHI">Shining Armor</option>
+<option value="SIL">Silver Spoon</option>
+<option value="SON">Sonata Dusk</option>
+<option value="SP">Spike</option>
+<option value="SPI">Spitfire</option>
+<option value="SS">G5 Sunny Starscout</option>
+<option value="STA">Star Dancer</option>
+<option value="STL">Starlight Glimmer</option>
+<option value="SUN">Sunburst</option>
+<option value="SUS">Sunset Shimmer</option>
+<option value="SWB">Sweetie Belle</option>
+<option value="TFA">TFH Arizona</option>
+<option value="TFO">TFH Oleander</option>
+<option value="TFP">TFH Paprika</option>
+<option value="TFS">TFH Shanty</option>
+<option value="TFT">TFH Tianhuo</option>
+<option value="TFV">TFH Velvet</option>
+<option value="TP">TFH Pom</option>
+<option value="TS">Tempest Shadow</option>
+<option value="TWI">Twilight Sparkle</option>
+<option value="TX">Trixie</option>
+<option value="VS">Vinyl Scratch</option>
+<option value="ZE">Zecora</option>
+    """
   }
 
 }

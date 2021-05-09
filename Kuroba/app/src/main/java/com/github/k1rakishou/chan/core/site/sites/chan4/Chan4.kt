@@ -67,7 +67,7 @@ open class Chan4 : SiteBase() {
   private lateinit var passPass: StringSetting
   private lateinit var passToken: StringSetting
   private lateinit var captchaType: OptionsSetting<CaptchaType>
-  lateinit var flagType: StringSetting
+  lateinit var lastUsedFlagPerBoard: StringSetting
 
   private val siteRequestModifier by lazy { Chan4SiteRequestModifier(this, appConstants) }
 
@@ -88,9 +88,9 @@ open class Chan4 : SiteBase() {
       CaptchaType.V2NOJS
     )
 
-    flagType = StringSetting(
+    lastUsedFlagPerBoard = StringSetting(
       prefs,
-      "preference_flag_chan4",
+      "preference_last_used_flag_per_board_chan4",
       "0"
     )
 
@@ -172,12 +172,14 @@ open class Chan4 : SiteBase() {
           b.addPathSegment("country")
           b.addPathSegment(countryCode.toLowerCase(Locale.ENGLISH) + ".gif")
         }
-        "troll_country" -> {
-          val trollCountryCode = requireNotNull(arg?.get("troll_country_code")) { "Bad arg map: $arg" }
+        // https://s.4cdn.org/image/flags/[board]/[code].gif
+        "board_flag" -> {
+          val boardFlagCode = requireNotNull(arg?.get("board_flag_code")) { "Bad arg map: $arg" }
+          val boardCode = requireNotNull(arg?.get("board_code")) { "Bad arg map: $arg" }
 
-          b.addPathSegment("country")
-          b.addPathSegment("troll")
-          b.addPathSegment(trollCountryCode.toLowerCase(Locale.ENGLISH) + ".gif")
+          b.addPathSegment("flags")
+          b.addPathSegment(boardCode)
+          b.addPathSegment(boardFlagCode.toLowerCase(Locale.ENGLISH) + ".gif")
         }
         "since4pass" -> b.addPathSegment("minileaf.gif")
       }
@@ -278,6 +280,7 @@ open class Chan4 : SiteBase() {
         replyManager = replyManager,
         boardManager = boardManager,
         appConstants = appConstants,
+        staticBoardFlagInfoRepository = staticBoardFlagInfoRepository
       )
 
       return httpCallManager.makePostHttpCallWithProgress(replyCall)
@@ -490,7 +493,7 @@ open class Chan4 : SiteBase() {
 
   override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? {
     return when (settingId) {
-      SiteSetting.SiteSettingId.CountryFlag -> flagType as T
+      SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard -> lastUsedFlagPerBoard as T
       else -> super.getSettingBySettingId(settingId)
     }
   }

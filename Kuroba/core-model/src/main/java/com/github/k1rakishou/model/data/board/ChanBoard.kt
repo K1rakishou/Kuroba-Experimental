@@ -43,6 +43,10 @@ data class ChanBoard(
       return true
     }
 
+    if (is4chan && boardCode() == "mlp") {
+      return true
+    }
+
     return false
   }
 
