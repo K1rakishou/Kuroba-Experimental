@@ -146,7 +146,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     presenter.unbindChanDescriptor()
     presenter.onDestroy()
 
-    epoxyRecyclerView.swapAdapter(null, true)
+    epoxyRecyclerView.clear()
   }
 
   fun onWrappingModeChanged(matchParent: Boolean, compactMode: Boolean) {

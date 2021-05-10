@@ -125,6 +125,8 @@ class FilterWatchesController(
     super.onDestroy()
 
     epoxyRecyclerView.removeOnScrollListener(onScrollListener)
+    epoxyRecyclerView.clear()
+
     presenter.onDestroy()
   }
 

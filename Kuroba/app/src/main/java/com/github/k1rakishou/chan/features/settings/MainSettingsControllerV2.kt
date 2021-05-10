@@ -101,7 +101,7 @@ class MainSettingsControllerV2(
     drawerCallbacks = null
 
     epoxyRecyclerView.removeOnScrollListener(scrollListener)
-    epoxyRecyclerView.swapAdapter(null, true)
+    epoxyRecyclerView.clear()
 
     settingsCoordinator.onDestroy()
     restartAppOrRefreshUiIfNecessary()

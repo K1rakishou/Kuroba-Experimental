@@ -419,7 +419,7 @@ class MainController(
   override fun onDestroy() {
     super.onDestroy()
 
-    epoxyRecyclerView.swapAdapter(null, true)
+    epoxyRecyclerView.clear()
     themeEngine.removeListener(this)
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     drawerPresenter.onDestroy()

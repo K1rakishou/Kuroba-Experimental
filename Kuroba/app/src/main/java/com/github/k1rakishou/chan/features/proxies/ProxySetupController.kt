@@ -80,7 +80,7 @@ class ProxySetupController(
   override fun onDestroy() {
     super.onDestroy()
 
-    epoxyRecyclerView.swapAdapter(null, true)
+    epoxyRecyclerView.clear()
     presenter.onDestroy()
     drawerCallbacks?.hideBottomPanel()
   }

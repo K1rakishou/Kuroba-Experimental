@@ -48,7 +48,7 @@ class FloatingListMenu @JvmOverloads constructor(
   }
 
   fun onDestroy() {
-    epoxyRecyclerView.swapAdapter(null, true)
+    epoxyRecyclerView.clear()
   }
 
   private fun rebuild(items: List<FloatingListMenuItem>) {
