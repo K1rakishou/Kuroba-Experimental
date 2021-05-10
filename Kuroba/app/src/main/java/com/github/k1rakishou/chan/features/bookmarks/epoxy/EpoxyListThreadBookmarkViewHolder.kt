@@ -89,13 +89,13 @@ abstract class EpoxyListThreadBookmarkViewHolder
     val watching = threadBookmarkStats?.watching ?: true
     context?.let { holder.bindImage(false, watching, it) }
 
-    themeEngine.addListener(this)
+    themeEngine.addListener(id(), this)
   }
 
   override fun unbind(holder: BaseThreadBookmarkViewHolder) {
     super.unbind(holder)
 
-    themeEngine.removeListener(this)
+    themeEngine.removeListener(id())
     holder.unbind()
 
     this.holder = null

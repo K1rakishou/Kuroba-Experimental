@@ -204,11 +204,6 @@ class StartActivity : AppCompatActivity(),
     AppModuleAndroidUtils.cancelLastToast()
     compositeDisposable.clear()
 
-    if (::themeEngine.isInitialized) {
-      themeEngine.removeRootView()
-      themeEngine.removeListener(this)
-    }
-
     if (::updateManager.isInitialized) {
       updateManager.onDestroy()
     }
@@ -229,6 +224,15 @@ class StartActivity : AppCompatActivity(),
       val controller = stack.pop()
       controller.onHide()
       controller.onDestroy()
+    }
+
+    if (::themeEngine.isInitialized) {
+      themeEngine.removeRootView()
+      themeEngine.removeListener(this)
+
+      if (isDevBuild()) {
+        themeEngine.checkNoListenersLeft()
+      }
     }
   }
 

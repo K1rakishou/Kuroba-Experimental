@@ -43,7 +43,7 @@ abstract class EpoxyReorderableItemView : EpoxyModelWithHolder<EpoxyReorderableI
     holder.setTitle(titleText)
     holder.onThemeChanged(themeEngine)
 
-    themeEngine.addListener(this)
+    themeEngine.addListener(id(), this)
   }
 
   override fun unbind(holder: EpoxyReorderableItemViewHolder) {
@@ -52,7 +52,7 @@ abstract class EpoxyReorderableItemView : EpoxyModelWithHolder<EpoxyReorderableI
     this.holder = null
     this.dragIndicator = null
 
-    themeEngine.removeListener(this)
+    themeEngine.removeListener(id())
   }
 
   override fun onThemeChanged() {

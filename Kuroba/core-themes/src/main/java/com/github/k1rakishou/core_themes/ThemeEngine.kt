@@ -28,7 +28,7 @@ open class ThemeEngine(
   private val appScope: CoroutineScope,
   private val themeParser: ThemeParser
 ) {
-  private val listeners = hashSetOf<ThemeChangesListener>()
+  private val listeners = hashMapOf<Long, ThemeChangesListener>()
   private val attributeCache = AttributeCache()
 
   private var rootView: View? = null
@@ -85,12 +85,31 @@ open class ThemeEngine(
     this.rootView = null
   }
 
+  fun addListener(key: Long, listener: ThemeChangesListener) {
+    listeners[key] = listener
+  }
+
+  fun removeListener(key: Long) {
+    listeners.remove(key)
+  }
+
   fun addListener(listener: ThemeChangesListener) {
-    listeners += listener
+    listeners[listener.hashCode().toLong()] = listener
   }
 
   fun removeListener(listener: ThemeChangesListener) {
-    listeners -= listener
+    listeners.remove(listener.hashCode().toLong())
+  }
+
+  fun checkNoListenersLeft() {
+    if (listeners.isEmpty()) {
+      return
+    }
+
+    val remainingListeners = listeners.values
+      .joinToString { listener -> listener.javaClass.simpleName }
+
+    throw RuntimeException("Not all listeners were removed from the ThemeEngine! remainingListeners=${remainingListeners}")
   }
 
   fun toggleTheme() {
@@ -118,7 +137,7 @@ open class ThemeEngine(
     }
 
     updateViews(rootView!!)
-    listeners.forEach { listener -> listener.onThemeChanged() }
+    listeners.forEach { listener -> listener.value.onThemeChanged() }
   }
 
   private fun updateViews(view: View) {
