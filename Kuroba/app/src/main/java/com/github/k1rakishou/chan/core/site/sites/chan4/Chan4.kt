@@ -361,13 +361,11 @@ open class Chan4 : SiteBase() {
       return !isLoggedIn()
     }
 
+    @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
     override fun postAuthenticate(): SiteAuthentication {
-      val captchaTypeSetting = checkNotNull(captchaType) { "CaptchaType must not be null here!" }
-
-      return when (captchaTypeSetting.get()) {
+      return when (captchaType.get()) {
         CaptchaType.V2JS -> SiteAuthentication.fromCaptcha2(CAPTCHA_KEY, "https://boards.4chan.org")
         CaptchaType.V2NOJS -> SiteAuthentication.fromCaptcha2nojs(CAPTCHA_KEY, "https://boards.4chan.org")
-        else -> throw IllegalArgumentException()
       }
     }
 
@@ -501,18 +499,8 @@ open class Chan4 : SiteBase() {
   override fun settings(): MutableList<SiteSetting> {
     val settings = ArrayList<SiteSetting>()
 
-    settings.add(
-      SiteOptionsSetting(
-        "Captcha type",
-        null,
-        captchaType,
-        listOf("Javascript", "Noscript")
-      )
-    )
-
-    settings.addAll(
-      super.settings()
-    )
+    settings.add(SiteOptionsSetting("Captcha type", null, captchaType, listOf("Javascript", "Noscript")))
+    settings.addAll(super.settings())
 
     return settings
   }
@@ -561,8 +549,7 @@ open class Chan4 : SiteBase() {
   @DoNotStrip
   enum class CaptchaType(val value: String) : OptionSettingItem {
     V2JS("v2js"),
-    V2NOJS("v2nojs"),
-    V2_INVISIBLE("v2_invisible");
+    V2NOJS("v2nojs");
 
     override fun getKey(): String {
       return value
