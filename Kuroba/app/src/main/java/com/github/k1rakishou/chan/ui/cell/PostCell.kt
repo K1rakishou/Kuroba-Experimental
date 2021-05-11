@@ -91,6 +91,7 @@ class PostCell : LinearLayout,
   private lateinit var postCellRootContainer: LinearLayout
   private lateinit var postImageThumbnailViewsContainer: PostImageThumbnailViewsContainer
   private lateinit var title: TextView
+  private var imageFileName: TextView? = null
   private lateinit var icons: PostIcons
   private lateinit var comment: PostCommentTextView
   private lateinit var replies: TextView
@@ -301,6 +302,7 @@ class PostCell : LinearLayout,
     vertPaddingPx = dp(textSizeSp - 10.toFloat())
 
     title = findViewById(R.id.title)
+    imageFileName = findViewById(R.id.image_filename)
     icons = findViewById(R.id.icons)
     comment = findViewById(R.id.comment)
     replies = findViewById(R.id.replies)
@@ -327,6 +329,36 @@ class PostCell : LinearLayout,
       title.gravity = GravityCompat.END
     } else {
       title.gravity = GravityCompat.START
+    }
+
+    imageFileName?.let { imgFilename ->
+      if (postCellData.postImages.size != 1) {
+        imgFilename.setVisibilityFast(View.GONE)
+        return@let
+      }
+
+      val image = postCellData.postImages.firstOrNull()
+      if (image == null) {
+        imgFilename.setVisibilityFast(View.GONE)
+        return@let
+      }
+
+      val postFileInfo = postCellData.postFileInfoMap[image]
+      if (postFileInfo == null) {
+        imgFilename.setVisibilityFast(View.GONE)
+        return@let
+      }
+
+      imgFilename.setVisibilityFast(View.VISIBLE)
+      imgFilename.setText(postFileInfo, TextView.BufferType.SPANNABLE)
+
+      if (postAlignmentMode == ChanSettings.PostThumbnailAlignmentMode.AlignLeft) {
+        imgFilename.gravity = GravityCompat.END
+      } else {
+        imgFilename.gravity = GravityCompat.START
+      }
+
+      imgFilename.setPadding(horizPaddingPx, 0, endPadding, 0)
     }
 
     goToPostButtonContainer = findViewById(R.id.go_to_post_button_container)
