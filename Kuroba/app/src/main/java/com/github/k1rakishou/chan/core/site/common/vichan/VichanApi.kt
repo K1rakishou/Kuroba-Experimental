@@ -79,6 +79,7 @@ class VichanApi(
     val endpoints = site.endpoints()
 
     // File
+    var fpath = 1
     var fileId: String? = null
     var fileExt: String? = null
     var fileWidth = 0
@@ -108,6 +109,7 @@ class VichanApi(
         "w" -> fileWidth = reader.nextInt()
         "h" -> fileHeight = reader.nextInt()
         "fsize" -> fileSize = reader.nextLong()
+        "fpath" -> fpath = reader.nextInt()
         "filename" -> fileName = reader.nextString()
         "trip" -> builder.tripcode(reader.nextString())
         "country" -> countryCode = reader.nextString()
@@ -155,7 +157,8 @@ class VichanApi(
 
     // The file from between the other values.
     if (!fileId.isNullOrEmpty() && !fileExt.isNullOrEmpty()) {
-      val args = SiteEndpoints.makeArgument("tim", fileId, "ext", fileExt)
+      val args = SiteEndpoints.makeArgument("tim", fileId, "ext", fileExt, "fpath", fpath.toString())
+
       val image = ChanPostImageBuilder()
         .serverFilename(fileId)
         .thumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, false, board.customSpoilers, args))
@@ -222,6 +225,7 @@ class VichanApi(
       }
     }
 
+    var fpath = 1
     var fileId: String? = null
     var fileSize: Long = 0
     var fileExt: String? = null
@@ -233,6 +237,7 @@ class VichanApi(
 
     while (reader.hasNext()) {
       when (reader.nextName()) {
+        "fpath" -> fpath = reader.nextInt()
         "tim" -> fileId = reader.nextString()
         "fsize" -> fileSize = reader.nextLong()
         "w" -> fileWidth = reader.nextInt()
@@ -248,7 +253,7 @@ class VichanApi(
     reader.endObject()
 
     if (fileId.isNotNullNorEmpty() && fileName.isNotNullNorEmpty() && fileExt.isNotNullNorEmpty()) {
-      val args = SiteEndpoints.makeArgument("tim", fileId, "ext", fileExt)
+      val args = SiteEndpoints.makeArgument("tim", fileId, "ext", fileExt, "fpath", fpath.toString())
 
       return ChanPostImageBuilder()
         .serverFilename(fileId)
