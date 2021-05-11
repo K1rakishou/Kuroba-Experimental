@@ -15,6 +15,7 @@ import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.LoaderType
 import com.github.k1rakishou.model.data.post.PostComment
 import com.github.k1rakishou.model.util.ChanPostUtils
+import okhttp3.HttpUrl
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.Comparator
@@ -76,6 +77,13 @@ class ChanThread(
 
   fun clearPostHashes() {
     lock.write { rawPostHashesMap.clear() }
+  }
+
+  fun getPostImage(postDescriptor: PostDescriptor, imageUrl: HttpUrl): ChanPostImage? {
+    return lock.read {
+      return@read postsByPostDescriptors[postDescriptor]
+        ?.firstPostImageOrNull { chanPostImage -> chanPostImage.imageUrl == imageUrl }
+    }
   }
 
   fun getPosts(postDescriptors: Collection<PostDescriptor>): List<ChanPost> {

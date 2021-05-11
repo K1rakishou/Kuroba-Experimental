@@ -19,6 +19,7 @@ import com.github.k1rakishou.model.data.options.ChanLoadOptions
 import com.github.k1rakishou.model.data.options.ChanReadOptions
 import com.github.k1rakishou.model.data.options.PostsToReloadOptions
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.LoaderType
 import com.github.k1rakishou.model.data.thread.ChanThread
 import com.github.k1rakishou.model.repository.ChanPostRepository
@@ -286,6 +287,25 @@ class ChanThreadManager(
     }
 
     return postsSet
+  }
+
+  fun getPostImages(imageToGet: Collection<Pair<PostDescriptor, HttpUrl>>): List<ChanPostImage> {
+    if (imageToGet.isEmpty()) {
+      return emptyList()
+    }
+
+    val postImages = mutableListOf<ChanPostImage>()
+
+    imageToGet.forEach { (postDescriptor, imageUrl) ->
+      val chanPostImage = chanThreadsCache.getThread(postDescriptor.threadDescriptor())
+        ?.getPostImage(postDescriptor, imageUrl)
+
+      if (chanPostImage != null) {
+        postImages += chanPostImage
+      }
+    }
+
+    return postImages
   }
 
   fun getPost(postDescriptor: PostDescriptor): ChanPost? {

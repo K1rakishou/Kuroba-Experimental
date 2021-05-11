@@ -6,6 +6,7 @@ import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.features.image_saver.epoxy.epoxyDuplicateImageView
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
@@ -21,7 +22,6 @@ import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.fsaf.FileManager
-import com.github.k1rakishou.model.repository.ChanPostImageRepository
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
 import com.github.k1rakishou.persist_state.IndexAndTop
@@ -41,9 +41,9 @@ class ResolveDuplicateImagesController(
   @Inject
   lateinit var fileManager: FileManager
   @Inject
-  lateinit var imageDownloadRequestRepository: ImageDownloadRequestRepository
+  lateinit var chanThreadManager: ChanThreadManager
   @Inject
-  lateinit var chanPostImageRepository: ChanPostImageRepository
+  lateinit var imageDownloadRequestRepository: ImageDownloadRequestRepository
   @Inject
   lateinit var imageSaverV2: ImageSaverV2
 
@@ -59,8 +59,8 @@ class ResolveDuplicateImagesController(
       uniqueId,
       gson.fromJson(imageSaverOptionsJson, ImageSaverV2Options::class.java),
       fileManager,
+      chanThreadManager,
       imageDownloadRequestRepository,
-      chanPostImageRepository,
       imageSaverV2
     )
   }
