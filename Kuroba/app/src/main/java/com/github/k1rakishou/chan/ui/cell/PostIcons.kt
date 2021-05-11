@@ -14,7 +14,6 @@ import android.view.View
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
@@ -25,7 +24,7 @@ class PostIcons @JvmOverloads constructor(
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
-  private var iconsSize = sp(14f)
+  private var iconsHeight = 0
   private var spacing = 0
   private var icons = 0
   private var previousIcons = 0
@@ -49,6 +48,10 @@ class PostIcons @JvmOverloads constructor(
       set(ARCHIVED, true)
       apply()
     }
+  }
+
+  fun setHeight(height: Int) {
+    this.iconsHeight = height
   }
 
   fun setSpacing(spacing: Int) {
@@ -140,7 +143,7 @@ class PostIcons @JvmOverloads constructor(
     val measureHeight = if (icons == 0) {
       0
     } else {
-      iconsSize + paddingTop + paddingBottom
+      iconsHeight + paddingTop + paddingBottom
     }
 
     setMeasuredDimension(
@@ -195,7 +198,7 @@ class PostIcons @JvmOverloads constructor(
         textPaint.textSize = httpIconTextSize.toFloat()
         textPaint.getTextBounds(httpIcon.name, 0, httpIcon.name.length, textRect)
 
-        val y = iconsSize / 2f - textRect.exactCenterY()
+        val y = iconsHeight / 2f - textRect.exactCenterY()
         canvas.drawText(httpIcon.name, offset.toFloat(), y, textPaint)
         offset += textRect.width() + spacing
       }
@@ -206,21 +209,20 @@ class PostIcons @JvmOverloads constructor(
 
   private fun getIconsTotalWidth(): Int {
     var totalWidth = 0
-
     if (get(STICKY)) {
-      totalWidth += iconsSize + spacing
+      totalWidth += getBitmapDrawableWidth(stickyIcon)
     }
 
     if (get(CLOSED)) {
-      totalWidth += iconsSize + spacing
+      totalWidth += getBitmapDrawableWidth(closedIcon)
     }
 
     if (get(DELETED)) {
-      totalWidth += iconsSize + spacing
+      totalWidth += getBitmapDrawableWidth(trashIcon)
     }
 
     if (get(ARCHIVED)) {
-      totalWidth += iconsSize + spacing
+      totalWidth += getBitmapDrawableWidth(archivedIcon)
     }
 
     if (get(HTTP_ICONS) && httpIcons.isNotEmpty()) {
@@ -229,7 +231,13 @@ class PostIcons @JvmOverloads constructor(
           continue
         }
 
-        totalWidth = iconsSize + spacing
+        totalWidth += getDrawableWidth(httpIcon.drawable!!)
+
+        textPaint.color = httpIconTextColor
+        textPaint.textSize = httpIconTextSize.toFloat()
+        textPaint.getTextBounds(httpIcon.name, 0, httpIcon.name.length, textRect)
+
+        totalWidth += textRect.width() + spacing
       }
     }
 
@@ -238,16 +246,28 @@ class PostIcons @JvmOverloads constructor(
 
   private fun drawBitmapDrawable(canvas: Canvas, bitmapDrawable: BitmapDrawable, offset: Int): Int {
     val bitmap = bitmapDrawable.bitmap
-
-    drawRect[offset.toFloat(), 0f, offset + iconsSize.toFloat()] = iconsSize.toFloat()
+    val width = (iconsHeight.toFloat() / bitmap.height * bitmap.width).toInt()
+    drawRect[offset.toFloat(), 0f, offset + width.toFloat()] = iconsHeight.toFloat()
     canvas.drawBitmap(bitmap, null, drawRect, null)
-    return iconsSize + spacing
+    return width + spacing
   }
 
-  private fun drawDrawable(canvas: Canvas, drawable: Drawable, offset: Int): Int {
-    drawable.setBounds(offset, 0, offset + iconsSize, iconsSize)
+  private fun drawDrawable(canvas: Canvas, drawable: Drawable?, offset: Int): Int {
+    val width = (iconsHeight.toFloat() / drawable!!.intrinsicHeight * drawable.intrinsicWidth).toInt()
+    drawable.setBounds(offset, 0, offset + width, iconsHeight)
     drawable.draw(canvas)
-    return iconsSize + spacing
+    return width + spacing
+  }
+
+  private fun getBitmapDrawableWidth(bitmapDrawable: BitmapDrawable): Int {
+    val bitmap = bitmapDrawable.bitmap
+    val width = (iconsHeight.toFloat() / bitmap.height * bitmap.width).toInt()
+    return width + spacing
+  }
+
+  private fun getDrawableWidth(drawable: Drawable): Int {
+    val width = (iconsHeight.toFloat() / drawable.intrinsicHeight * drawable.intrinsicWidth).toInt()
+    return width + spacing
   }
 
   companion object {

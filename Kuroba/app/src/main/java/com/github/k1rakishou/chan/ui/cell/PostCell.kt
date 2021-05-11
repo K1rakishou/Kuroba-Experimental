@@ -312,6 +312,7 @@ class PostCell : LinearLayout,
     title.setPadding(horizPaddingPx, vertPaddingPx, endPadding, 0)
     iconSizePx = sp(textSizeSp - 3.toFloat())
     icons.setSpacing(dp(4f))
+    icons.height = sp(textSizeSp.toFloat())
     icons.setPadding(horizPaddingPx, vertPaddingPx, horizPaddingPx, 0)
 
     val postAlignmentMode = when (postCellData.chanDescriptor) {
@@ -319,16 +320,12 @@ class PostCell : LinearLayout,
       is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostThumbnailAlignmentMode.get()
     }
 
-    if (postCellData.postImages.size <= 1 && postAlignmentMode == ChanSettings.PostThumbnailAlignmentMode.AlignLeft) {
-      icons.rtl(true)
-    } else {
-      icons.rtl(false)
-    }
-
     if (postCellData.postImages.size == 1 && postAlignmentMode == ChanSettings.PostThumbnailAlignmentMode.AlignLeft) {
       title.gravity = GravityCompat.END
+      icons.rtl(true)
     } else {
       title.gravity = GravityCompat.START
+      icons.rtl(false)
     }
 
     imageFileName?.let { imgFilename ->
