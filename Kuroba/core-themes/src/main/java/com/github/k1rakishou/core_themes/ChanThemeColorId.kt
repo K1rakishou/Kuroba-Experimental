@@ -17,5 +17,13 @@ enum class ChanThemeColorId(val id: Int) {
   PostQuoteColor(4),
   BackColorSecondary(5),
   PostLinkColor(6),
-  TextColorPrimary(7),
+  TextColorPrimary(7);
+
+  companion object {
+    fun byId(id: Int): ChanThemeColorId {
+      return values()
+        .firstOrNull { chanThemeColorId -> chanThemeColorId.id == id }
+        ?: throw IllegalAccessException("Failed to find color by id: $id")
+    }
+  }
 }

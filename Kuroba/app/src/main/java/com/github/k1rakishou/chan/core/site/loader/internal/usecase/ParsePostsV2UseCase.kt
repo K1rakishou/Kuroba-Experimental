@@ -1,7 +1,10 @@
 package com.github.k1rakishou.chan.core.site.loader.internal.usecase
 
+import android.graphics.Color
+import android.graphics.Typeface
 import android.text.Spannable
 import android.text.SpannableString
+import android.text.style.StyleSpan
 import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.lib.KurobaNativeLib
 import com.github.k1rakishou.chan.core.lib.data.post_parsing.PostParsed
@@ -18,7 +21,10 @@ import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.common.mapArray
 import com.github.k1rakishou.common.setSpanSafe
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_spannable.BackgroundColorSpanHashed
+import com.github.k1rakishou.core_spannable.ColorizableBackgroundColorSpan
 import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan
+import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ChanThemeColorId
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -164,7 +170,14 @@ class ParsePostsV2UseCase(
     postParsed.postCommentParsed.spannableList.forEach { postCommentSpannable ->
       val spannableStart = postCommentSpannable.start
       val spannableEnd = postCommentSpannable.start + postCommentSpannable.length
-      val spannableKey = commentParsed.substring(spannableStart, spannableEnd)
+
+      val spannableKey = try {
+        commentParsed.substring(spannableStart, spannableEnd)
+      } catch (error: Throwable) {
+        Logger.e(TAG, "Failed substring post with id: ${postParsed.postId}, " +
+          "commentParsed: \"${commentParsed}\", spannableStart=$spannableStart, spannableEnd=$spannableEnd")
+        return@forEach
+      }
 
       val actualSpannable = when (val spannableData = postCommentSpannable.spannableData) {
         is IPostCommentSpannableData.DeadQuote -> {
@@ -196,6 +209,26 @@ class ParsePostsV2UseCase(
         }
         is IPostCommentSpannableData.GreenText -> {
           ColorizableForegroundColorSpan(ChanThemeColorId.PostInlineQuoteColor)
+        }
+        is IPostCommentSpannableData.BoldText -> {
+          StyleSpan(Typeface.BOLD)
+        }
+        is IPostCommentSpannableData.FontSize,
+        is IPostCommentSpannableData.Monospace -> {
+          // TODO(KurobaEx): not implemented
+          return@forEach
+        }
+        is IPostCommentSpannableData.TextForegroundColorRaw -> {
+          ForegroundColorSpanHashed(Color.parseColor(spannableData.colorHex))
+        }
+        is IPostCommentSpannableData.TextBackgroundColorRaw -> {
+          BackgroundColorSpanHashed(Color.parseColor(spannableData.colorHex))
+        }
+        is IPostCommentSpannableData.TextForegroundColorId -> {
+          ColorizableForegroundColorSpan(ChanThemeColorId.byId(spannableData.chanThemeColorIdRaw))
+        }
+        is IPostCommentSpannableData.TextBackgroundColorId -> {
+          ColorizableBackgroundColorSpan(ChanThemeColorId.byId(spannableData.chanThemeColorIdRaw))
         }
         else -> {
           Logger.e(TAG, "Unknown spannableData: ${spannableData.javaClass.simpleName}")

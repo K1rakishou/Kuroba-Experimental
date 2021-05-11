@@ -82,9 +82,6 @@ if __name__ == "__main__":
 		sourceFile = os.path.join(jniLibsBuildDir, target, buildType, libName)
 		destinationFile = os.path.join(androidJniLibDir, libName)
 
-		print("sourceFile={}".format(sourceFile))
-		print("destinationFile={}".format(destinationFile))
-
 		print("Copying {} to {}...".format(sourceFile, destinationFile))
 		shutil.copy(sourceFile, destinationFile)
 		print("Done")

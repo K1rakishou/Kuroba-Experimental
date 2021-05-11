@@ -114,6 +114,48 @@ pub mod mapper {
         SpannableData::GreenText => {
           add_post_comment_parsed_to_array(env, &spannable, post_spannable_array_jobject, index, "GreenText", "()V", &[])?;
         }
+        SpannableData::BoldText => {
+          add_post_comment_parsed_to_array(env, &spannable, post_spannable_array_jobject, index, "BoldText", "()V", &[])?;
+        }
+        SpannableData::FontSize { size } => {
+          let font_size_param = JValue::Object(JObject::from(env.new_string(size)?.into_inner()));
+          let params = [font_size_param];
+
+          add_post_comment_parsed_to_array(env, &spannable, post_spannable_array_jobject, index, "FontSize", "(Ljava/lang/String;)V", &params)?;
+        }
+        SpannableData::FontWeight { weight } => {
+          let font_weight_param = JValue::Object(JObject::from(env.new_string(weight)?.into_inner()));
+          let params = [font_weight_param];
+
+          add_post_comment_parsed_to_array(env, &spannable, post_spannable_array_jobject, index, "FontWeight", "(Ljava/lang/String;)V", &params)?;
+        }
+        SpannableData::Monospace => {
+          add_post_comment_parsed_to_array(env, &spannable, post_spannable_array_jobject, index, "Monospace", "()V", &[])?;
+        }
+        SpannableData::TextForegroundColorRaw { color_hex } => {
+          let color_hex_param = JValue::Object(JObject::from(env.new_string(color_hex)?.into_inner()));
+          let params = [color_hex_param];
+
+          add_post_comment_parsed_to_array(env, &spannable, post_spannable_array_jobject, index, "TextForegroundColorRaw", "(Ljava/lang/String;)V", &params)?;
+        }
+        SpannableData::TextBackgroundColorRaw { color_hex } => {
+          let color_hex_param = JValue::Object(JObject::from(env.new_string(color_hex)?.into_inner()));
+          let params = [color_hex_param];
+
+          add_post_comment_parsed_to_array(env, &spannable, post_spannable_array_jobject, index, "TextBackgroundColorRaw", "(Ljava/lang/String;)V", &params)?;
+        }
+        SpannableData::TextForegroundColorId { color_id } => {
+          let color_id_param = JValue::Int(color_id.clone() as i32);
+          let params = [color_id_param];
+
+          add_post_comment_parsed_to_array(env, &spannable, post_spannable_array_jobject, index, "TextForegroundColorId", "I", &params)?;
+        }
+        SpannableData::TextBackgroundColorId { color_id } => {
+          let color_id_param = JValue::Int(color_id.clone() as i32);
+          let params = [color_id_param];
+
+          add_post_comment_parsed_to_array(env, &spannable, post_spannable_array_jobject, index, "TextBackgroundColorId", "I", &params)?;
+        }
       }
     }
 

@@ -115,4 +115,108 @@ public interface IPostCommentSpannableData {
         }
     }
 
+    public class BoldText implements IPostCommentSpannableData {
+        public String size;
+
+        public BoldText(String size) {
+            this.size = size;
+        }
+
+        @Override
+        public String toString() {
+            return "BoldText{" +
+                    "size='" + size + '\'' +
+                    '}';
+        }
+    }
+
+    public class FontSize implements IPostCommentSpannableData {
+        @Override
+        public String toString() {
+            return "FontSize{}";
+        }
+    }
+
+    public class FontWeight implements IPostCommentSpannableData {
+        public String weight;
+
+        public FontWeight(String weight) {
+            this.weight = weight;
+        }
+
+        @Override
+        public String toString() {
+            return "FontWeight{" +
+                    "weight='" + weight + '\'' +
+                    '}';
+        }
+    }
+
+    public class Monospace implements IPostCommentSpannableData {
+        @Override
+        public String toString() {
+            return "Monospace{}";
+        }
+    }
+
+    public class TextForegroundColorRaw implements IPostCommentSpannableData {
+        public String colorHex;
+
+        public TextForegroundColorRaw(String colorHex) {
+            this.colorHex = colorHex;
+        }
+
+        @Override
+        public String toString() {
+            return "TextForegroundColorRaw{" +
+                    "colorHex='" + colorHex + '\'' +
+                    '}';
+        }
+    }
+
+    public class TextBackgroundColorRaw implements IPostCommentSpannableData {
+        public String colorHex;
+
+        public TextBackgroundColorRaw(String colorHex) {
+            this.colorHex = colorHex;
+        }
+
+        @Override
+        public String toString() {
+            return "TextBackgroundColorRaw{" +
+                    "colorHex='" + colorHex + '\'' +
+                    '}';
+        }
+    }
+
+    public class TextForegroundColorId implements IPostCommentSpannableData {
+        public int chanThemeColorIdRaw;
+
+        public TextForegroundColorId(int chanThemeColorIdRaw) {
+            this.chanThemeColorIdRaw = chanThemeColorIdRaw;
+        }
+
+        @Override
+        public String toString() {
+            return "TextForegroundColorId{" +
+                    "chanThemeColorIdRaw=" + chanThemeColorIdRaw +
+                    '}';
+        }
+    }
+
+    public class TextBackgroundColorId implements IPostCommentSpannableData {
+        public int chanThemeColorIdRaw;
+
+        public TextBackgroundColorId(int chanThemeColorIdRaw) {
+            this.chanThemeColorIdRaw = chanThemeColorIdRaw;
+        }
+
+        @Override
+        public String toString() {
+            return "TextBackgroundColorId{" +
+                    "chanThemeColorIdRaw=" + chanThemeColorIdRaw +
+                    '}';
+        }
+    }
+
 }
