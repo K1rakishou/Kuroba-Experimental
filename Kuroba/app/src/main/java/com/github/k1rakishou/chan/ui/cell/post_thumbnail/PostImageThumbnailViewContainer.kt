@@ -159,8 +159,9 @@ class PostImageThumbnailViewContainer(
     thumbnailFileDimens.setTextSize(TypedValue.COMPLEX_UNIT_PX, newDimensTextSize)
 
     val postFileInfo = postCellData.postFileInfoMap[chanPostImage]
+    val imagesCount = postCellData.postImages.size
 
-    if ((postCellData.searchMode || ChanSettings.postFileName.get()) && postFileInfo.isNotNullNorBlank()) {
+    if (imagesCount > 1 && (postCellData.searchMode || ChanSettings.postFileName.get()) && postFileInfo.isNotNullNorBlank()) {
       postFileNameInfoTextView.setVisibilityFast(View.VISIBLE)
       postFileNameInfoTextView.setText(postFileInfo, TextView.BufferType.SPANNABLE)
 

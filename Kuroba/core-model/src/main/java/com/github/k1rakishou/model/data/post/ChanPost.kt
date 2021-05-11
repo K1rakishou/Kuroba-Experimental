@@ -183,6 +183,17 @@ open class ChanPost(
   }
 
   @Synchronized
+  fun firstPostImageOrNull(predicate: (ChanPostImage) -> Boolean): ChanPostImage? {
+    for (postImage in postImages) {
+      if (predicate.invoke(postImage)) {
+        return postImage
+      }
+    }
+
+    return null
+  }
+
+  @Synchronized
   fun iteratePostImages(iterator: (ChanPostImage) -> Unit) {
     for (postImage in postImages) {
       iterator.invoke(postImage)

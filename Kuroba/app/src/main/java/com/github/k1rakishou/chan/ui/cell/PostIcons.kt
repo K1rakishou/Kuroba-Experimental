@@ -33,6 +33,7 @@ class PostIcons @JvmOverloads constructor(
   private val textRect = Rect()
   private var httpIconTextColor = 0
   private var httpIconTextSize = 0
+  private var rtl = false
   private var httpIcons = mutableListOf<PostIconsHttpIcon>()
 
   init {
@@ -55,6 +56,11 @@ class PostIcons @JvmOverloads constructor(
 
   fun setSpacing(spacing: Int) {
     this.spacing = spacing
+  }
+
+  fun rtl(isRtl: Boolean) {
+    this.rtl = isRtl
+    invalidate()
   }
 
   fun edit() {
@@ -147,47 +153,95 @@ class PostIcons @JvmOverloads constructor(
   }
 
   override fun onDraw(canvas: Canvas) {
-    if (icons != 0) {
-      canvas.save()
-      canvas.translate(paddingLeft.toFloat(), paddingTop.toFloat())
-
-      var offset = 0
-      if (get(STICKY)) {
-        offset += drawBitmapDrawable(canvas, stickyIcon, offset)
-      }
-
-      if (get(CLOSED)) {
-        offset += drawBitmapDrawable(canvas, closedIcon, offset)
-      }
-
-      if (get(DELETED)) {
-        offset += drawBitmapDrawable(canvas, trashIcon, offset)
-      }
-
-      if (get(ARCHIVED)) {
-        offset += drawBitmapDrawable(canvas, archivedIcon, offset)
-      }
-
-      if (get(HTTP_ICONS) && httpIcons.isNotEmpty()) {
-        for (httpIcon in httpIcons) {
-          if (httpIcon.drawable == null) {
-            continue
-          }
-
-          offset += drawDrawable(canvas, httpIcon.drawable, offset)
-
-          textPaint.color = httpIconTextColor
-          textPaint.textSize = httpIconTextSize.toFloat()
-          textPaint.getTextBounds(httpIcon.name, 0, httpIcon.name.length, textRect)
-
-          val y = iconsHeight / 2f - textRect.exactCenterY()
-          canvas.drawText(httpIcon.name, offset.toFloat(), y, textPaint)
-          offset += textRect.width() + spacing
-        }
-      }
-
-      canvas.restore()
+    if (icons == 0 || width == 0) {
+      return
     }
+
+    drawIcons(canvas)
+  }
+
+  private fun drawIcons(canvas: Canvas) {
+    canvas.save()
+
+    if (rtl) {
+      canvas.translate(width - paddingLeft.toFloat() - getIconsTotalWidth(), paddingTop.toFloat())
+    } else {
+      canvas.translate(paddingLeft.toFloat(), paddingTop.toFloat())
+    }
+
+    var offset = 0
+    if (get(STICKY)) {
+      offset += drawBitmapDrawable(canvas, stickyIcon, offset)
+    }
+
+    if (get(CLOSED)) {
+      offset += drawBitmapDrawable(canvas, closedIcon, offset)
+    }
+
+    if (get(DELETED)) {
+      offset += drawBitmapDrawable(canvas, trashIcon, offset)
+    }
+
+    if (get(ARCHIVED)) {
+      offset += drawBitmapDrawable(canvas, archivedIcon, offset)
+    }
+
+    if (get(HTTP_ICONS) && httpIcons.isNotEmpty()) {
+      for (httpIcon in httpIcons) {
+        if (httpIcon.drawable == null) {
+          continue
+        }
+
+        offset += drawDrawable(canvas, httpIcon.drawable!!, offset)
+
+        textPaint.color = httpIconTextColor
+        textPaint.textSize = httpIconTextSize.toFloat()
+        textPaint.getTextBounds(httpIcon.name, 0, httpIcon.name.length, textRect)
+
+        val y = iconsHeight / 2f - textRect.exactCenterY()
+        canvas.drawText(httpIcon.name, offset.toFloat(), y, textPaint)
+        offset += textRect.width() + spacing
+      }
+    }
+
+    canvas.restore()
+  }
+
+  private fun getIconsTotalWidth(): Int {
+    var totalWidth = 0
+    if (get(STICKY)) {
+      totalWidth += getBitmapDrawableWidth(stickyIcon)
+    }
+
+    if (get(CLOSED)) {
+      totalWidth += getBitmapDrawableWidth(closedIcon)
+    }
+
+    if (get(DELETED)) {
+      totalWidth += getBitmapDrawableWidth(trashIcon)
+    }
+
+    if (get(ARCHIVED)) {
+      totalWidth += getBitmapDrawableWidth(archivedIcon)
+    }
+
+    if (get(HTTP_ICONS) && httpIcons.isNotEmpty()) {
+      for (httpIcon in httpIcons) {
+        if (httpIcon.drawable == null) {
+          continue
+        }
+
+        totalWidth += getDrawableWidth(httpIcon.drawable!!)
+
+        textPaint.color = httpIconTextColor
+        textPaint.textSize = httpIconTextSize.toFloat()
+        textPaint.getTextBounds(httpIcon.name, 0, httpIcon.name.length, textRect)
+
+        totalWidth += textRect.width() + spacing
+      }
+    }
+
+    return totalWidth
   }
 
   private fun drawBitmapDrawable(canvas: Canvas, bitmapDrawable: BitmapDrawable, offset: Int): Int {
@@ -202,6 +256,17 @@ class PostIcons @JvmOverloads constructor(
     val width = (iconsHeight.toFloat() / drawable!!.intrinsicHeight * drawable.intrinsicWidth).toInt()
     drawable.setBounds(offset, 0, offset + width, iconsHeight)
     drawable.draw(canvas)
+    return width + spacing
+  }
+
+  private fun getBitmapDrawableWidth(bitmapDrawable: BitmapDrawable): Int {
+    val bitmap = bitmapDrawable.bitmap
+    val width = (iconsHeight.toFloat() / bitmap.height * bitmap.width).toInt()
+    return width + spacing
+  }
+
+  private fun getDrawableWidth(drawable: Drawable): Int {
+    val width = (iconsHeight.toFloat() / drawable.intrinsicHeight * drawable.intrinsicWidth).toInt()
     return width + spacing
   }
 

@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
+import com.github.k1rakishou.OptionSettingItem
 import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
@@ -27,7 +28,6 @@ import com.github.k1rakishou.chan.core.site.limitations.SiteDependantAttachables
 import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInfo
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
-import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
@@ -63,7 +63,7 @@ class Dvach : CommonSite() {
   private lateinit var passCookie: StringSetting
   private lateinit var userCodeCookie: StringSetting
   private lateinit var antiSpamCookie: StringSetting
-  private lateinit var captchaType: OptionsSetting<Chan4.CaptchaType>
+  private lateinit var captchaType: OptionsSetting<CaptchaType>
   private lateinit var passCodeInfo: JsonSetting<DvachPasscodeInfo>
 
   private val siteRequestModifier by lazy { DvachSiteRequestModifier(this, appConstants) }
@@ -79,8 +79,8 @@ class Dvach : CommonSite() {
     captchaType = OptionsSetting(
       prefs,
       "preference_captcha_type_dvach",
-      Chan4.CaptchaType::class.java,
-      Chan4.CaptchaType.V2NOJS
+      CaptchaType::class.java,
+      CaptchaType.V2NOJS
     )
 
     passCodeInfo = JsonSetting(
@@ -299,15 +299,15 @@ class Dvach : CommonSite() {
 
       override fun postAuthenticate(): SiteAuthentication {
         return when (captchaType.get()) {
-          Chan4.CaptchaType.V2JS -> SiteAuthentication.fromCaptcha2(
+          CaptchaType.V2JS -> SiteAuthentication.fromCaptcha2(
             NORMAL_CAPTCHA_KEY,
             "https://2ch.hk/api/captcha/recaptcha/mobile"
           )
-          Chan4.CaptchaType.V2NOJS -> SiteAuthentication.fromCaptcha2nojs(
+          CaptchaType.V2NOJS -> SiteAuthentication.fromCaptcha2nojs(
             NORMAL_CAPTCHA_KEY,
             "https://2ch.hk/api/captcha/recaptcha/mobile"
           )
-          Chan4.CaptchaType.V2_INVISIBLE -> SiteAuthentication.fromCaptcha2Invisible(
+          CaptchaType.V2_INVISIBLE -> SiteAuthentication.fromCaptcha2Invisible(
             INVISIBLE_CAPTCHA_KEY,
             "https://2ch.hk/api/captcha/invisible_recaptcha/mobile"
           )
@@ -551,6 +551,18 @@ class Dvach : CommonSite() {
 
       requestBuilder.addHeader(cookieHeaderKey, "${USER_CODE_COOKIE_KEY}=${userCodeCookie}")
     }
+  }
+
+  @DoNotStrip
+  enum class CaptchaType(val value: String) : OptionSettingItem {
+    V2JS("v2js"),
+    V2NOJS("v2nojs"),
+    V2_INVISIBLE("v2_invisible");
+
+    override fun getKey(): String {
+      return value
+    }
+
   }
 
   companion object {

@@ -35,6 +35,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.GravityCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.TextViewCompat
 import com.github.k1rakishou.ChanSettings
@@ -60,6 +61,7 @@ import com.github.k1rakishou.core_spannable.*
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ChanThemeColorId
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
@@ -89,6 +91,7 @@ class PostCell : LinearLayout,
   private lateinit var postCellRootContainer: LinearLayout
   private lateinit var postImageThumbnailViewsContainer: PostImageThumbnailViewsContainer
   private lateinit var title: TextView
+  private var imageFileName: TextView? = null
   private lateinit var icons: PostIcons
   private lateinit var comment: PostCommentTextView
   private lateinit var replies: TextView
@@ -299,6 +302,7 @@ class PostCell : LinearLayout,
     vertPaddingPx = dp(textSizeSp - 10.toFloat())
 
     title = findViewById(R.id.title)
+    imageFileName = findViewById(R.id.image_filename)
     icons = findViewById(R.id.icons)
     comment = findViewById(R.id.comment)
     replies = findViewById(R.id.replies)
@@ -307,9 +311,53 @@ class PostCell : LinearLayout,
     title.textSize = textSizeSp.toFloat()
     title.setPadding(horizPaddingPx, vertPaddingPx, endPadding, 0)
     iconSizePx = sp(textSizeSp - 3.toFloat())
-    icons.height = sp(textSizeSp.toFloat())
     icons.setSpacing(dp(4f))
+    icons.height = sp(textSizeSp.toFloat())
     icons.setPadding(horizPaddingPx, vertPaddingPx, horizPaddingPx, 0)
+
+    val postAlignmentMode = when (postCellData.chanDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostThumbnailAlignmentMode.get()
+      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostThumbnailAlignmentMode.get()
+    }
+
+    if (postCellData.postImages.size == 1 && postAlignmentMode == ChanSettings.PostThumbnailAlignmentMode.AlignLeft) {
+      title.gravity = GravityCompat.END
+      icons.rtl(true)
+    } else {
+      title.gravity = GravityCompat.START
+      icons.rtl(false)
+    }
+
+    imageFileName?.let { imgFilename ->
+      if (postCellData.postImages.size != 1) {
+        imgFilename.setVisibilityFast(View.GONE)
+        return@let
+      }
+
+      val image = postCellData.postImages.firstOrNull()
+      if (image == null) {
+        imgFilename.setVisibilityFast(View.GONE)
+        return@let
+      }
+
+      val postFileInfo = postCellData.postFileInfoMap[image]
+      if (postFileInfo == null) {
+        imgFilename.setVisibilityFast(View.GONE)
+        return@let
+      }
+
+      imgFilename.setVisibilityFast(View.VISIBLE)
+      imgFilename.setText(postFileInfo, TextView.BufferType.SPANNABLE)
+
+      if (postAlignmentMode == ChanSettings.PostThumbnailAlignmentMode.AlignLeft) {
+        imgFilename.gravity = GravityCompat.END
+      } else {
+        imgFilename.gravity = GravityCompat.START
+      }
+
+      imgFilename.setPadding(horizPaddingPx, 0, endPadding, 0)
+    }
+
     goToPostButtonContainer = findViewById(R.id.go_to_post_button_container)
     goToPostButton = findViewById(R.id.go_to_post_button)
     comment.textSize = textSizeSp.toFloat()
@@ -892,10 +940,8 @@ class PostCell : LinearLayout,
         if (action == MotionEvent.ACTION_DOWN && performLinkLongClick == null) {
           val postLinkables = clickableSpans.filterIsInstance<PostLinkable>()
           if (postLinkables.isNotEmpty()) {
-            if (checkCanLongTapThisPostLinkables(postLinkables)) {
-              performLinkLongClick = PerformalLinkLongClick(postLinkables)
-              handler.postDelayed(performLinkLongClick!!, longPressTimeout)
-            }
+            performLinkLongClick = PerformalLinkLongClick(postLinkables)
+            handler.postDelayed(performLinkLongClick!!, longPressTimeout)
           }
         }
 
@@ -907,20 +953,6 @@ class PostCell : LinearLayout,
       buffer.removeSpan(spoilerClickSpan)
 
       return false
-    }
-
-    private fun checkCanLongTapThisPostLinkables(postLinkables: List<PostLinkable>): Boolean {
-      for (postLinkable in postLinkables) {
-        if (postLinkable.type == PostLinkable.Type.SPOILER) {
-          if (!postLinkable.isSpoilerVisible) {
-            // We are touching a non-revealed spoiler. We can't long click here, the user need
-            // to reveal the spoiler first.
-            return false
-          }
-        }
-      }
-
-      return true
     }
 
     fun touchOverlapsAnyClickableSpan(textView: TextView, event: MotionEvent): Boolean {
@@ -1021,25 +1053,35 @@ class PostCell : LinearLayout,
       buffer: Spannable
     ) {
 
-      fun fireCallback(post: ChanPost, linkable: PostLinkable) {
-        if (longClicking) {
-          skipNextUpEvent = true
-
-          val isInPopup = postCellData?.isInPopup
-            ?: return
-
-          comment.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-          postCellCallback?.onPostLinkableLongClicked(post, linkable, isInPopup)
-        } else {
+      fun fireCallback(post: ChanPost, linkable: PostLinkable): Boolean {
+        if (!longClicking) {
           postCellCallback?.onPostLinkableClicked(post, linkable)
+          return false
         }
+
+        skipNextUpEvent = true
+
+        val isInPopup = postCellData?.isInPopup
+          ?: return false
+
+        comment.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+
+        if (linkable.type == PostLinkable.Type.SPOILER) {
+          postCellRootContainer.performLongClick()
+          return true
+        }
+
+        postCellCallback?.onPostLinkableLongClicked(post, linkable, isInPopup)
+        return false
       }
+
+      var consumeEvent = false
 
       if (linkable2 == null && linkable1 != null) {
         // regular, non-spoilered link
         if (postCellData != null) {
           val post = postCellData!!.post
-          fireCallback(post, linkable1)
+          consumeEvent = fireCallback(post, linkable1)
         }
       } else if (linkable2 != null && linkable1 != null) {
         // spoilered link, figure out which span is the spoiler
@@ -1048,7 +1090,7 @@ class PostCell : LinearLayout,
             // linkable2 is the link and we're unspoilered
             if (postCellData != null) {
               val post = postCellData!!.post
-              fireCallback(post, linkable2)
+              consumeEvent = fireCallback(post, linkable2)
             }
           } else {
             // linkable2 is the link and we're spoilered; don't do the click event
@@ -1060,7 +1102,7 @@ class PostCell : LinearLayout,
             // linkable 1 is the link and we're unspoilered
             if (postCellData != null) {
               val post = postCellData!!.post
-              fireCallback(post, linkable1)
+              consumeEvent = fireCallback(post, linkable1)
             }
           } else {
             // linkable1 is the link and we're spoilered; don't do the click event
@@ -1072,9 +1114,13 @@ class PostCell : LinearLayout,
           // (some 4chan stickied posts)
           if (postCellData != null) {
             val post = postCellData!!.post
-            fireCallback(post, linkable1)
+            consumeEvent = fireCallback(post, linkable1)
           }
         }
+      }
+
+      if (consumeEvent) {
+        return
       }
 
       // do onclick on all spoiler postlinkables afterwards, so that we don't update the

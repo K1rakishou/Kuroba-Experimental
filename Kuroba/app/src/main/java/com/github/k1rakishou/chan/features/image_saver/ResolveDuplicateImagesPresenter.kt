@@ -3,16 +3,17 @@ package com.github.k1rakishou.chan.features.image_saver
 import android.net.Uri
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.download.ImageDownloadRequest
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageType
-import com.github.k1rakishou.model.repository.ChanPostImageRepository
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
 import kotlinx.coroutines.Dispatchers
@@ -29,8 +30,8 @@ internal class ResolveDuplicateImagesPresenter(
   private val uniqueId: String,
   private val imageSaverOptions: ImageSaverV2Options,
   private val fileManager: FileManager,
+  private val chanThreadManager: ChanThreadManager,
   private val imageDownloadRequestRepository: ImageDownloadRequestRepository,
-  private val chanPostImageRepository: ChanPostImageRepository,
   private val imageSaverV2: ImageSaverV2
 ) : BasePresenter<ResolveDuplicateImagesView>() {
   private val stateUpdates = MutableSharedFlow<ResolveDuplicateImagesState>(
@@ -217,22 +218,22 @@ internal class ResolveDuplicateImagesPresenter(
       return
     }
 
-    val serverImageUrls = duplicateImages.map { duplicateImage -> duplicateImage.imageFullUrl }
+    val imagesToGet = duplicateImages.mapNotNull { duplicateImage ->
+      val postDescriptor = PostDescriptor.deserializeFromString(duplicateImage.postDescriptorString)
+      if (postDescriptor == null) {
+        return@mapNotNull null
+      }
 
-    val imagesFromDatabaseResult = chanPostImageRepository.selectPostImagesByUrls(serverImageUrls)
-    if (imagesFromDatabaseResult is ModularResult.Error) {
-      Logger.e(TAG, "loadDuplicateImagesInitial() selectPostImagesByUrls() error", imagesFromDatabaseResult.error)
-      updateState(ResolveDuplicateImagesState.Error(imagesFromDatabaseResult.error))
-      return
+      return@mapNotNull postDescriptor to duplicateImage.imageFullUrl
     }
 
-    val imagesFromDatabase = (imagesFromDatabaseResult as ModularResult.Value).value
+    val images = chanThreadManager.getPostImages(imagesToGet)
     val actualDuplicateImages = mutableListOf<DuplicateImage>()
 
     duplicateImages.forEach { imageDownloadRequest ->
       val localImage = imageDownloadRequest.duplicateFileUri
         ?.let { duplicateFileUri -> getLocalImage(duplicateFileUri) }
-      val serverImage = getServerImage(imagesFromDatabase, imageDownloadRequest)
+      val serverImage = getServerImage(images, imageDownloadRequest)
 
       // Skip
       if (serverImage == null && localImage == null) {
@@ -265,10 +266,10 @@ internal class ResolveDuplicateImagesPresenter(
   }
 
   private fun getServerImage(
-    imagesFromDatabase: List<ChanPostImage>,
+    images: List<ChanPostImage>,
     imageDownloadRequest: ImageDownloadRequest
   ): ServerImage? {
-    val chanPostImage =  imagesFromDatabase
+    val chanPostImage =  images
       .firstOrNull { chanPostImage -> chanPostImage.imageUrl == imageDownloadRequest.imageFullUrl }
 
     if (chanPostImage == null) {

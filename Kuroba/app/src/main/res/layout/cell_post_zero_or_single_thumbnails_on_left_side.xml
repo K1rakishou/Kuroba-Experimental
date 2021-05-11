@@ -47,13 +47,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             app:layout_constraintTop_toTopOf="parent"
             tools:text="Thread Subject" />
 
+        <TextView
+            android:id="@+id/image_filename"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/thumbnails_container"
+            app:layout_constraintTop_toBottomOf="@+id/title"
+            tools:text="123454564587.jpg" />
+
         <com.github.k1rakishou.chan.ui.cell.PostIcons
             android:id="@+id/icons"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/thumbnails_container"
-            app:layout_constraintTop_toBottomOf="@+id/title"
+            app:layout_constraintTop_toBottomOf="@+id/image_filename"
             tools:layout_height="32dp" />
 
         <com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewsContainer
@@ -71,7 +80,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:barrierDirection="bottom"
-            app:constraint_referenced_ids="title,icons,thumbnails_container" />
+            app:constraint_referenced_ids="title,image_filename,icons,thumbnails_container" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/post_single_image_comment_container"
