@@ -943,10 +943,8 @@ class PostCell : LinearLayout,
         if (action == MotionEvent.ACTION_DOWN && performLinkLongClick == null) {
           val postLinkables = clickableSpans.filterIsInstance<PostLinkable>()
           if (postLinkables.isNotEmpty()) {
-            if (checkCanLongTapThisPostLinkables(postLinkables)) {
-              performLinkLongClick = PerformalLinkLongClick(postLinkables)
-              handler.postDelayed(performLinkLongClick!!, longPressTimeout)
-            }
+            performLinkLongClick = PerformalLinkLongClick(postLinkables)
+            handler.postDelayed(performLinkLongClick!!, longPressTimeout)
           }
         }
 
@@ -958,20 +956,6 @@ class PostCell : LinearLayout,
       buffer.removeSpan(spoilerClickSpan)
 
       return false
-    }
-
-    private fun checkCanLongTapThisPostLinkables(postLinkables: List<PostLinkable>): Boolean {
-      for (postLinkable in postLinkables) {
-        if (postLinkable.type == PostLinkable.Type.SPOILER) {
-          if (!postLinkable.isSpoilerVisible) {
-            // We are touching a non-revealed spoiler. We can't long click here, the user need
-            // to reveal the spoiler first.
-            return false
-          }
-        }
-      }
-
-      return true
     }
 
     fun touchOverlapsAnyClickableSpan(textView: TextView, event: MotionEvent): Boolean {
@@ -1072,25 +1056,35 @@ class PostCell : LinearLayout,
       buffer: Spannable
     ) {
 
-      fun fireCallback(post: ChanPost, linkable: PostLinkable) {
-        if (longClicking) {
-          skipNextUpEvent = true
-
-          val isInPopup = postCellData?.isInPopup
-            ?: return
-
-          comment.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-          postCellCallback?.onPostLinkableLongClicked(post, linkable, isInPopup)
-        } else {
+      fun fireCallback(post: ChanPost, linkable: PostLinkable): Boolean {
+        if (!longClicking) {
           postCellCallback?.onPostLinkableClicked(post, linkable)
+          return false
         }
+
+        skipNextUpEvent = true
+
+        val isInPopup = postCellData?.isInPopup
+          ?: return false
+
+        comment.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+
+        if (linkable.type == PostLinkable.Type.SPOILER) {
+          postCellRootContainer.performLongClick()
+          return true
+        }
+
+        postCellCallback?.onPostLinkableLongClicked(post, linkable, isInPopup)
+        return false
       }
+
+      var consumeEvent = false
 
       if (linkable2 == null && linkable1 != null) {
         // regular, non-spoilered link
         if (postCellData != null) {
           val post = postCellData!!.post
-          fireCallback(post, linkable1)
+          consumeEvent = fireCallback(post, linkable1)
         }
       } else if (linkable2 != null && linkable1 != null) {
         // spoilered link, figure out which span is the spoiler
@@ -1099,7 +1093,7 @@ class PostCell : LinearLayout,
             // linkable2 is the link and we're unspoilered
             if (postCellData != null) {
               val post = postCellData!!.post
-              fireCallback(post, linkable2)
+              consumeEvent = fireCallback(post, linkable2)
             }
           } else {
             // linkable2 is the link and we're spoilered; don't do the click event
@@ -1111,7 +1105,7 @@ class PostCell : LinearLayout,
             // linkable 1 is the link and we're unspoilered
             if (postCellData != null) {
               val post = postCellData!!.post
-              fireCallback(post, linkable1)
+              consumeEvent = fireCallback(post, linkable1)
             }
           } else {
             // linkable1 is the link and we're spoilered; don't do the click event
@@ -1123,9 +1117,13 @@ class PostCell : LinearLayout,
           // (some 4chan stickied posts)
           if (postCellData != null) {
             val post = postCellData!!.post
-            fireCallback(post, linkable1)
+            consumeEvent = fireCallback(post, linkable1)
           }
         }
+      }
+
+      if (consumeEvent) {
+        return
       }
 
       // do onclick on all spoiler postlinkables afterwards, so that we don't update the
