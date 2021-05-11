@@ -14,6 +14,7 @@ import android.view.View
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
@@ -24,7 +25,7 @@ class PostIcons @JvmOverloads constructor(
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
-  private var iconsHeight = 0
+  private var iconsSize = sp(14f)
   private var spacing = 0
   private var icons = 0
   private var previousIcons = 0
@@ -33,6 +34,7 @@ class PostIcons @JvmOverloads constructor(
   private val textRect = Rect()
   private var httpIconTextColor = 0
   private var httpIconTextSize = 0
+  private var rtl = false
   private var httpIcons = mutableListOf<PostIconsHttpIcon>()
 
   init {
@@ -49,12 +51,13 @@ class PostIcons @JvmOverloads constructor(
     }
   }
 
-  fun setHeight(height: Int) {
-    this.iconsHeight = height
-  }
-
   fun setSpacing(spacing: Int) {
     this.spacing = spacing
+  }
+
+  fun rtl(isRtl: Boolean) {
+    this.rtl = isRtl
+    invalidate()
   }
 
   fun edit() {
@@ -137,7 +140,7 @@ class PostIcons @JvmOverloads constructor(
     val measureHeight = if (icons == 0) {
       0
     } else {
-      iconsHeight + paddingTop + paddingBottom
+      iconsSize + paddingTop + paddingBottom
     }
 
     setMeasuredDimension(
@@ -147,62 +150,104 @@ class PostIcons @JvmOverloads constructor(
   }
 
   override fun onDraw(canvas: Canvas) {
-    if (icons != 0) {
-      canvas.save()
-      canvas.translate(paddingLeft.toFloat(), paddingTop.toFloat())
-
-      var offset = 0
-      if (get(STICKY)) {
-        offset += drawBitmapDrawable(canvas, stickyIcon, offset)
-      }
-
-      if (get(CLOSED)) {
-        offset += drawBitmapDrawable(canvas, closedIcon, offset)
-      }
-
-      if (get(DELETED)) {
-        offset += drawBitmapDrawable(canvas, trashIcon, offset)
-      }
-
-      if (get(ARCHIVED)) {
-        offset += drawBitmapDrawable(canvas, archivedIcon, offset)
-      }
-
-      if (get(HTTP_ICONS) && httpIcons.isNotEmpty()) {
-        for (httpIcon in httpIcons) {
-          if (httpIcon.drawable == null) {
-            continue
-          }
-
-          offset += drawDrawable(canvas, httpIcon.drawable, offset)
-
-          textPaint.color = httpIconTextColor
-          textPaint.textSize = httpIconTextSize.toFloat()
-          textPaint.getTextBounds(httpIcon.name, 0, httpIcon.name.length, textRect)
-
-          val y = iconsHeight / 2f - textRect.exactCenterY()
-          canvas.drawText(httpIcon.name, offset.toFloat(), y, textPaint)
-          offset += textRect.width() + spacing
-        }
-      }
-
-      canvas.restore()
+    if (icons == 0 || width == 0) {
+      return
     }
+
+    drawIcons(canvas)
+  }
+
+  private fun drawIcons(canvas: Canvas) {
+    canvas.save()
+
+    if (rtl) {
+      canvas.translate(width - paddingLeft.toFloat() - getIconsTotalWidth(), paddingTop.toFloat())
+    } else {
+      canvas.translate(paddingLeft.toFloat(), paddingTop.toFloat())
+    }
+
+    var offset = 0
+    if (get(STICKY)) {
+      offset += drawBitmapDrawable(canvas, stickyIcon, offset)
+    }
+
+    if (get(CLOSED)) {
+      offset += drawBitmapDrawable(canvas, closedIcon, offset)
+    }
+
+    if (get(DELETED)) {
+      offset += drawBitmapDrawable(canvas, trashIcon, offset)
+    }
+
+    if (get(ARCHIVED)) {
+      offset += drawBitmapDrawable(canvas, archivedIcon, offset)
+    }
+
+    if (get(HTTP_ICONS) && httpIcons.isNotEmpty()) {
+      for (httpIcon in httpIcons) {
+        if (httpIcon.drawable == null) {
+          continue
+        }
+
+        offset += drawDrawable(canvas, httpIcon.drawable!!, offset)
+
+        textPaint.color = httpIconTextColor
+        textPaint.textSize = httpIconTextSize.toFloat()
+        textPaint.getTextBounds(httpIcon.name, 0, httpIcon.name.length, textRect)
+
+        val y = iconsSize / 2f - textRect.exactCenterY()
+        canvas.drawText(httpIcon.name, offset.toFloat(), y, textPaint)
+        offset += textRect.width() + spacing
+      }
+    }
+
+    canvas.restore()
+  }
+
+  private fun getIconsTotalWidth(): Int {
+    var totalWidth = 0
+
+    if (get(STICKY)) {
+      totalWidth += iconsSize + spacing
+    }
+
+    if (get(CLOSED)) {
+      totalWidth += iconsSize + spacing
+    }
+
+    if (get(DELETED)) {
+      totalWidth += iconsSize + spacing
+    }
+
+    if (get(ARCHIVED)) {
+      totalWidth += iconsSize + spacing
+    }
+
+    if (get(HTTP_ICONS) && httpIcons.isNotEmpty()) {
+      for (httpIcon in httpIcons) {
+        if (httpIcon.drawable == null) {
+          continue
+        }
+
+        totalWidth = iconsSize + spacing
+      }
+    }
+
+    return totalWidth
   }
 
   private fun drawBitmapDrawable(canvas: Canvas, bitmapDrawable: BitmapDrawable, offset: Int): Int {
     val bitmap = bitmapDrawable.bitmap
-    val width = (iconsHeight.toFloat() / bitmap.height * bitmap.width).toInt()
-    drawRect[offset.toFloat(), 0f, offset + width.toFloat()] = iconsHeight.toFloat()
+
+    drawRect[offset.toFloat(), 0f, offset + iconsSize.toFloat()] = iconsSize.toFloat()
     canvas.drawBitmap(bitmap, null, drawRect, null)
-    return width + spacing
+    return iconsSize + spacing
   }
 
-  private fun drawDrawable(canvas: Canvas, drawable: Drawable?, offset: Int): Int {
-    val width = (iconsHeight.toFloat() / drawable!!.intrinsicHeight * drawable.intrinsicWidth).toInt()
-    drawable.setBounds(offset, 0, offset + width, iconsHeight)
+  private fun drawDrawable(canvas: Canvas, drawable: Drawable, offset: Int): Int {
+    drawable.setBounds(offset, 0, offset + iconsSize, iconsSize)
     drawable.draw(canvas)
-    return width + spacing
+    return iconsSize + spacing
   }
 
   companion object {

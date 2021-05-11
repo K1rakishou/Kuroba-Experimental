@@ -35,6 +35,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.GravityCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.TextViewCompat
 import com.github.k1rakishou.ChanSettings
@@ -60,6 +61,7 @@ import com.github.k1rakishou.core_spannable.*
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ChanThemeColorId
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
@@ -307,9 +309,26 @@ class PostCell : LinearLayout,
     title.textSize = textSizeSp.toFloat()
     title.setPadding(horizPaddingPx, vertPaddingPx, endPadding, 0)
     iconSizePx = sp(textSizeSp - 3.toFloat())
-    icons.height = sp(textSizeSp.toFloat())
     icons.setSpacing(dp(4f))
     icons.setPadding(horizPaddingPx, vertPaddingPx, horizPaddingPx, 0)
+
+    val postAlignmentMode = when (postCellData.chanDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostThumbnailAlignmentMode.get()
+      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostThumbnailAlignmentMode.get()
+    }
+
+    if (postCellData.postImages.size <= 1 && postAlignmentMode == ChanSettings.PostThumbnailAlignmentMode.AlignLeft) {
+      icons.rtl(true)
+    } else {
+      icons.rtl(false)
+    }
+
+    if (postCellData.postImages.size == 1 && postAlignmentMode == ChanSettings.PostThumbnailAlignmentMode.AlignLeft) {
+      title.gravity = GravityCompat.END
+    } else {
+      title.gravity = GravityCompat.START
+    }
+
     goToPostButtonContainer = findViewById(R.id.go_to_post_button_container)
     goToPostButton = findViewById(R.id.go_to_post_button)
     comment.textSize = textSizeSp.toFloat()
