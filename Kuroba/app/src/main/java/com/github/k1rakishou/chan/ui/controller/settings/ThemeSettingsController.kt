@@ -137,7 +137,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
     override fun onShowPostReplies(post: ChanPost) {}
     override fun onPreviewThreadPostsClicked(post: ChanPost) {}
     override fun onPopulatePostOptions(post: ChanPost, menu: MutableList<FloatingListMenuItem>) {}
-    override fun onPostOptionClicked(post: ChanPost, id: Any, inPopup: Boolean) {}
+    override fun onPostOptionClicked(post: ChanPost, item: FloatingListMenuItem, inPopup: Boolean) {}
     override fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable) {}
     override fun onPostLinkableLongClicked(post: ChanPost, linkable: PostLinkable, inPopup: Boolean) {}
     override fun onPostNoClicked(post: ChanPost) {}

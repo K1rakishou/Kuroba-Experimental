@@ -54,7 +54,7 @@ interface PostCellInterface {
     fun onShowPostReplies(post: ChanPost)
     fun onPreviewThreadPostsClicked(post: ChanPost)
     fun onPopulatePostOptions(post: ChanPost, menu: MutableList<FloatingListMenuItem>)
-    fun onPostOptionClicked(post: ChanPost, id: Any, inPopup: Boolean)
+    fun onPostOptionClicked(post: ChanPost, item: FloatingListMenuItem, inPopup: Boolean)
     fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable)
     fun onPostLinkableLongClicked(post: ChanPost, linkable: PostLinkable, inPopup: Boolean)
     fun onPostNoClicked(post: ChanPost)

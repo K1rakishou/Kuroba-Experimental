@@ -36,6 +36,7 @@ dependencies {
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin_version}"
     implementation "com.google.code.gson:gson:${versions.gson}"
+    implementation 'androidx.annotation:annotation:1.1.0'
 
     testImplementation "junit:junit:${versions.junit}"
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'

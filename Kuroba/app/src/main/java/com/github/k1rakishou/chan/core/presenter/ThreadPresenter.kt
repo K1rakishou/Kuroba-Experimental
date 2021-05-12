@@ -60,6 +60,8 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
+import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.ThemeParser
 import com.github.k1rakishou.model.data.board.pages.BoardPage
 import com.github.k1rakishou.model.data.descriptor.*
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
@@ -105,7 +107,8 @@ class ThreadPresenter @Inject constructor(
   private val postHideHelper: PostHideHelper,
   private val chanThreadManager: ChanThreadManager,
   private val globalWindowInsetsManager: GlobalWindowInsetsManager,
-  private val thumbnailLongtapOptionsHelper: ThumbnailLongtapOptionsHelper
+  private val thumbnailLongtapOptionsHelper: ThumbnailLongtapOptionsHelper,
+  private val themeEngine: ThemeEngine
 ) : PostAdapterCallback,
   PostCellCallback,
   ThreadStatusCell.Callback,
@@ -1105,6 +1108,26 @@ class ThreadPresenter @Inject constructor(
       menu.add(createMenuItem(POST_OPTION_SAVE, stringId))
     }
 
+    val themeJsonSpannables = post.postComment.getThemeJsonSpannables()
+    if (themeJsonSpannables.isNotEmpty()) {
+      val innerItems = themeJsonSpannables.mapIndexed { index, themeJsonSpannable ->
+        return@mapIndexed FloatingListMenuItem(
+          POST_OPTION_APPLY_THEME_IDX + index,
+          getString(R.string.apply_theme, themeJsonSpannable.themeName),
+          themeJsonSpannable.themeName
+        )
+      }
+
+      menu.add(
+        FloatingListMenuItem(
+          key = POST_OPTION_APPLY_THEME,
+          name = getString(R.string.apply_themes),
+          value = null,
+          more = innerItems.toMutableList()
+        )
+      )
+    }
+
     if (isDevBuild()) {
       val threadNo = chanDescriptor.threadNoOrNull() ?: -1L
       if (threadNo > 0) {
@@ -1125,9 +1148,16 @@ class ThreadPresenter @Inject constructor(
     )
   }
 
-  override fun onPostOptionClicked(post: ChanPost, id: Any, inPopup: Boolean) {
+  override fun onPostOptionClicked(post: ChanPost, item: FloatingListMenuItem, inPopup: Boolean) {
     postOptionsClickExecutor.post {
-      when (id as Int) {
+      val index = item.key as Int
+
+      if (index in POST_OPTION_APPLY_THEME_IDX until POST_OPTION_APPLY_THEME_IDX_MAX) {
+        applyThemeFromPostComment(index - POST_OPTION_APPLY_THEME_IDX, post, item)
+        return@post
+      }
+
+      when (index) {
         POST_OPTION_QUOTE -> {
           threadPresenterCallback?.hidePostsPopup()
           threadPresenterCallback?.quote(post, false)
@@ -1188,7 +1218,7 @@ class ThreadPresenter @Inject constructor(
         }
         POST_OPTION_REMOVE,
         POST_OPTION_HIDE -> {
-          val hide = id == POST_OPTION_HIDE
+          val hide = index == POST_OPTION_HIDE
           val chanDescriptor = currentChanDescriptor
             ?: return@post
 
@@ -1230,6 +1260,32 @@ class ThreadPresenter @Inject constructor(
             post.postNo()
           )
           showToast(context, "Refresh to add mock replies")
+        }
+      }
+    }
+  }
+
+  private fun applyThemeFromPostComment(index: Int, post: ChanPost, item: FloatingListMenuItem) {
+    val themeName = item.value as? String
+      ?: return
+
+    val themeJsonSpannable = post.postComment.getThemeJsonSpannables().getOrNull(index)
+      ?: return
+
+    val themeJson = post.postComment.getThemeJsonByThemeName(themeName)
+      ?: return
+
+    launch {
+      when (themeEngine.tryParseAndApplyTheme(themeJson, themeJsonSpannable.isLightTheme.not())) {
+        is ThemeParser.ThemeParseResult.AttemptToImportWrongTheme,
+        is ThemeParser.ThemeParseResult.BadName,
+        is ThemeParser.ThemeParseResult.Error,
+        is ThemeParser.ThemeParseResult.FailedToParseSomeFields -> {
+          showToast(context, "Failed to apply theme")
+          return@launch
+        }
+        is ThemeParser.ThemeParseResult.Success -> {
+          showToast(context, "Done")
         }
       }
     }
@@ -1668,7 +1724,7 @@ class ThreadPresenter @Inject constructor(
       context,
       globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items,
-      { item -> onPostOptionClicked(post, (item.key as Int), inPopup) }
+      { item -> onPostOptionClicked(post, item, inPopup) }
     )
 
     threadPresenterCallback?.presentController(floatingListMenuController, true)
@@ -2231,7 +2287,12 @@ class ThreadPresenter @Inject constructor(
     private const val POST_OPTION_OPEN_BROWSER = 13
     private const val POST_OPTION_REMOVE = 14
     private const val POST_OPTION_MOCK_REPLY = 15
+    private const val POST_OPTION_APPLY_THEME = 16
     private const val POST_OPTION_FILTER_TRIPCODE = 100
+
+    private const val POST_OPTION_APPLY_THEME_IDX = 1000
+    // Let's assume a post cannot contain more than 500 themes
+    private const val POST_OPTION_APPLY_THEME_IDX_MAX = 1500
 
     private const val COPY_LINK_TEXT = 2000
     private const val COPY_LINK_VALUE = 2001

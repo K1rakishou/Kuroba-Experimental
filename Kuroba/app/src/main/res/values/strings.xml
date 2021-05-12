@@ -1194,6 +1194,8 @@ Don't have a 4chan Pass?<br>
     <string name="cookies_editor_failed_parse">Failed to parse cookies, re-enter them correctly!</string>
 
     <string name="mock_reply">Mock reply</string>
+    <string name="apply_themes">Apply themes</string>
+    <string name="apply_theme">Apply theme %1$s</string>
     <string name="review_report_files_controller_title">Review report files</string>
     <string name="settings_report_suggest_sending_logs_title">You have %1$d collected report files</string>
     <string name="settings_report_suggest_sending_logs_message">Would you like to review and maybe send them to developers?</string>

@@ -1,6 +1,6 @@
 pub mod mapper {
   use new_post_parser_lib::{Spannable, SpannableData, PostLink, ParsedPost};
-  use jni::sys::{jobject, jsize, _jobject};
+  use jni::sys::{jobject, jsize, _jobject, JNI_TRUE, JNI_FALSE};
   use jni::{JNIEnv, errors};
   use crate::helpers::{format_post_parsing_object_signature, format_spannables_object_signature_pref, format_spannables_object_signature, format_post_parsing_object_signature_pref};
   use jni::objects::{JObject, JValue};
@@ -155,6 +155,20 @@ pub mod mapper {
           let params = [color_id_param];
 
           add_post_comment_parsed_to_array(env, &spannable, post_spannable_array_jobject, index, "TextBackgroundColorId", "I", &params)?;
+        }
+        SpannableData::ThemeJson { theme_name, is_light_theme } => {
+          let theme_name_param = JValue::Object(JObject::from(env.new_string(theme_name)?.into_inner()));
+
+          let jni_bool = if *is_light_theme {
+            JNI_TRUE
+          } else {
+            JNI_FALSE
+          };
+
+          let is_light_theme_param = JValue::Bool(jni_bool);
+          let params = [theme_name_param, is_light_theme_param];
+
+          add_post_comment_parsed_to_array(env, &spannable, post_spannable_array_jobject, index, "ThemeJson", "(Ljava/lang/String;Z)V", &params)?;
         }
       }
     }

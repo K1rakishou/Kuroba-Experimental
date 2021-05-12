@@ -1,8 +1,11 @@
 package com.github.k1rakishou.model.data.post
 
+import android.text.Spannable
 import android.text.SpannableString
+import androidx.core.text.getSpans
 import com.github.k1rakishou.common.MurmurHashUtils
 import com.github.k1rakishou.core_spannable.PostLinkable
+import com.github.k1rakishou.core_spannable.ThemeJsonSpannable
 
 // Thread safe
 class PostComment(
@@ -82,6 +85,34 @@ class PostComment(
   @Synchronized
   fun containsPostLinkable(postLinkable: PostLinkable): Boolean {
     return linkables.contains(postLinkable)
+  }
+
+  fun getThemeJsonSpannables(): Array<out ThemeJsonSpannable> {
+    val spannableComment = comment() as? Spannable
+      ?: return emptyArray()
+
+    return spannableComment.getSpans()
+  }
+
+  fun getThemeJsonByThemeName(themeName: String): String? {
+    val spannableComment = comment() as? Spannable
+      ?: return null
+
+    val themeJsonSpannable = spannableComment.getSpans<ThemeJsonSpannable>()
+      .firstOrNull { themeJsonSpannable -> themeJsonSpannable.themeName == themeName }
+
+    if (themeJsonSpannable == null) {
+      return null
+    }
+
+    val start = spannableComment.getSpanStart(themeJsonSpannable)
+    val end = spannableComment.getSpanEnd(themeJsonSpannable)
+
+    return try {
+      spannableComment.substring(start, end)
+    } catch (error: Throwable) {
+      return null
+    }
   }
 
   override fun toString(): String {

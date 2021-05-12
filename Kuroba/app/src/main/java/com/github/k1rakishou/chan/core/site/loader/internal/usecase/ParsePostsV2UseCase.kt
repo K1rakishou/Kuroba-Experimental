@@ -5,6 +5,8 @@ import android.graphics.Typeface
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.StyleSpan
+import android.text.style.TypefaceSpan
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.lib.KurobaNativeLib
 import com.github.k1rakishou.chan.core.lib.data.post_parsing.PostParsed
@@ -16,22 +18,28 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.site.parser.PostParser
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.exhaustive
+import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.common.mapArray
 import com.github.k1rakishou.common.setSpanSafe
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed
 import com.github.k1rakishou.core_spannable.BackgroundColorSpanHashed
 import com.github.k1rakishou.core_spannable.ColorizableBackgroundColorSpan
 import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed
 import com.github.k1rakishou.core_spannable.PostLinkable
+import com.github.k1rakishou.core_spannable.ThemeJsonSpannable
 import com.github.k1rakishou.core_themes.ChanThemeColorId
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import java.util.regex.Pattern
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
@@ -163,9 +171,11 @@ class ParsePostsV2UseCase(
     }
   }
 
-  private fun applySpansToParsedComment(chanPostBuilder: ChanPostBuilder, postParsed: PostParsed,): Spannable {
+  private fun applySpansToParsedComment(chanPostBuilder: ChanPostBuilder, postParsed: PostParsed): Spannable {
     val commentParsed = postParsed.postCommentParsed.commentTextParsed
     val spannableCommentTextParsed = SpannableString.valueOf(commentParsed)
+    val currentFontSize = ChanSettings.fontSize.get().toInt()
+    val monospaceFontSize = currentFontSize - 2
 
     postParsed.postCommentParsed.spannableList.forEach { postCommentSpannable ->
       val spannableStart = postCommentSpannable.start
@@ -207,15 +217,12 @@ class ParsePostsV2UseCase(
           val value = PostLinkable.Value.StringValue(spannableKey)
           PostLinkable(spannableKey, value, PostLinkable.Type.SPOILER)
         }
-        is IPostCommentSpannableData.GreenText -> {
-          ColorizableForegroundColorSpan(ChanThemeColorId.PostInlineQuoteColor)
-        }
-        is IPostCommentSpannableData.BoldText -> {
-          StyleSpan(Typeface.BOLD)
-        }
-        is IPostCommentSpannableData.FontSize,
+        is IPostCommentSpannableData.GreenText -> GREEN_TEXT_SPAN
+        is IPostCommentSpannableData.BoldText -> BOLD_STYLE_SPAN
         is IPostCommentSpannableData.Monospace -> {
-          // TODO(KurobaEx): not implemented
+          spannableCommentTextParsed.setSpanSafe(MONOSPACE_STYLE_SPAN, spannableStart, spannableEnd, 0)
+          spannableCommentTextParsed.setSpanSafe(AbsoluteSizeSpanHashed(sp(monospaceFontSize.toFloat())), spannableStart, spannableEnd, 0)
+
           return@forEach
         }
         is IPostCommentSpannableData.TextForegroundColorRaw -> {
@@ -230,6 +237,15 @@ class ParsePostsV2UseCase(
         is IPostCommentSpannableData.TextBackgroundColorId -> {
           ColorizableBackgroundColorSpan(ChanThemeColorId.byId(spannableData.chanThemeColorIdRaw))
         }
+        is IPostCommentSpannableData.ThemeJson -> {
+          applyThemeJsonSpannable(spannableCommentTextParsed, spannableKey, spannableStart, spannableEnd, spannableData)
+          return@forEach
+        }
+        is IPostCommentSpannableData.FontSize,
+        is IPostCommentSpannableData.FontWeight -> {
+          // TODO(KurobaEx): not implemented
+          return@forEach
+        }
         else -> {
           Logger.e(TAG, "Unknown spannableData: ${spannableData.javaClass.simpleName}")
           return@forEach
@@ -239,11 +255,56 @@ class ParsePostsV2UseCase(
       spannableCommentTextParsed.setSpanSafe(actualSpannable, spannableStart, spannableEnd, 0)
     }
 
-    return spannableCommentTextParsed;
+    return spannableCommentTextParsed
+  }
+
+  private fun applyThemeJsonSpannable(
+    spannableCommentTextParsed: SpannableString,
+    spannableKey: String,
+    spannableStart: Int,
+    spannableEnd: Int,
+    spannableData: IPostCommentSpannableData.ThemeJson
+  ) {
+    val matcher = RAW_COLOR_PATTERN.matcher(spannableKey)
+    var hasAtLeastOneValidColor = false
+
+    while (matcher.find()) {
+      val colorMaybe = matcher.groupOrNull(1)
+        ?: continue
+
+      val color = try {
+        Color.parseColor(colorMaybe)
+      } catch (error: Throwable) {
+        continue
+      }
+
+      val textColor = if (ThemeEngine.isDarkColor(color)) {
+        Color.WHITE
+      } else {
+        Color.BLACK
+      }
+
+      spannableCommentTextParsed.setSpanSafe(BackgroundColorSpanHashed(color), matcher.start(), matcher.end(), 0)
+      spannableCommentTextParsed.setSpanSafe(ForegroundColorSpanHashed(textColor), matcher.start(), matcher.end(), 0)
+
+      hasAtLeastOneValidColor = true
+    }
+
+    if (!hasAtLeastOneValidColor) {
+      return
+    }
+
+    val themeJsonSpannable = ThemeJsonSpannable(spannableData.themeName, spannableData.isLightTheme)
+    spannableCommentTextParsed.setSpanSafe(themeJsonSpannable, spannableStart, spannableEnd, 0)
   }
 
   companion object {
     private const val TAG = "ParsePostsV2UseCase"
+
+    private val BOLD_STYLE_SPAN = StyleSpan(Typeface.BOLD)
+    private val MONOSPACE_STYLE_SPAN = TypefaceSpan("monospace")
+    private val GREEN_TEXT_SPAN = ColorizableForegroundColorSpan(ChanThemeColorId.PostInlineQuoteColor)
+    private val RAW_COLOR_PATTERN = Pattern.compile("(#[a-fA-F0-9]{1,8})")
   }
 
 }

@@ -227,4 +227,22 @@ public interface IPostCommentSpannableData {
         }
     }
 
+    public class ThemeJson implements IPostCommentSpannableData {
+        public String themeName;
+        public boolean isLightTheme;
+
+        public ThemeJson(String themeName, boolean isLightTheme) {
+            this.themeName = themeName;
+            this.isLightTheme = isLightTheme;
+        }
+
+        @Override
+        public String toString() {
+            return "ThemeJson{" +
+                    "themeName='" + themeName + '\'' +
+                    "isLightTheme='" + isLightTheme + '\'' +
+                    '}';
+        }
+    }
+
 }

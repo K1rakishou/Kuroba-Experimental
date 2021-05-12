@@ -804,7 +804,9 @@ class ReplyLayout @JvmOverloads constructor(
         v === flag -> showFlagSelector(chanDescriptor)
       }
 
-      comment.clearFocus()
+      if (v === captchaView || v === submit) {
+        comment.clearFocus()
+      }
     }
   }
 
