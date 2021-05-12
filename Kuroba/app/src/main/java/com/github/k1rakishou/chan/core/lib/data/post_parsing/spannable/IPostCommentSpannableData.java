@@ -131,9 +131,17 @@ public interface IPostCommentSpannableData {
     }
 
     public class FontSize implements IPostCommentSpannableData {
+        public String size;
+
+        public FontSize(String size) {
+            this.size = size;
+        }
+
         @Override
         public String toString() {
-            return "FontSize{}";
+            return "FontSize{" +
+                    "size='" + size + '\'' +
+                    '}';
         }
     }
 

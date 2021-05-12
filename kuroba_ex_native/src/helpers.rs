@@ -1,6 +1,41 @@
 use jni::{JNIEnv, errors};
 use jni::objects::{JObject, JString};
 use std::ffi::{CStr, CString};
+use std::thread;
+use log::error;
+
+pub fn unwrap_exc_or<T>(env: &JNIEnv, res: thread::Result<T>, error_val: T) -> T {
+  return match res {
+    // No JNI error
+    Ok(val) => val,
+    // JNI error
+    Err(jni_error) => {
+      // Do nothing if there is a pending Java-exception that will be thrown
+      // automatically by the JVM when the native method returns.
+      if !env.exception_check().unwrap() {
+        // Throw a Java exception manually in case of an internal error.
+        throw(env, format!("{:?}", &jni_error).as_str())
+      }
+
+      error_val
+    }
+  }
+}
+
+fn throw(env: &JNIEnv, description: &str) {
+  // We cannot throw exception from this function, so errors should be written in log instead.
+  let exception = match env.find_class("java/lang/RuntimeException") {
+    Ok(val) => val,
+    Err(e) => {
+      error!("Unable to find 'RuntimeException' class: {}", e.to_string());
+      return;
+    }
+  };
+
+  if let Err(e) = env.throw_new(exception, description) {
+    error!("Unable to find 'RuntimeException' class: {}", e.to_string());
+  }
+}
 
 pub fn java_string_field_to_rust_string(
   env: &JNIEnv,

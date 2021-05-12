@@ -1,5 +1,5 @@
 pub mod usecases {
-  use jni::{JNIEnv, errors};
+  use jni::{JNIEnv};
   use jni::objects::{JObject, JValue};
   use jni::sys::{jobject, jsize};
   use crate::mappers::{post_parser_context_mapper, thread_raw_mapper, post_parsed_mapper};
@@ -10,7 +10,7 @@ pub mod usecases {
     env: &JNIEnv,
     post_parser_context: JObject,
     threads_to_parse: JObject
-  ) -> errors::Result<jobject> {
+  ) -> jobject {
     let post_parser_context = post_parser_context_mapper::mapper::from_java_object(
       &env,
       post_parser_context
@@ -62,6 +62,6 @@ pub mod usecases {
       JValue::Object(JObject::from(post_parsed_list))
     ).expect("Failed to set field postParsedList of thread_parsed_jobject");
 
-    return errors::Result::Ok(thread_parsed_jobject.into_inner());
+    return thread_parsed_jobject.into_inner();
   }
 }
