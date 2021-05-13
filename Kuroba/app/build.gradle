@@ -268,7 +268,7 @@ dependencies {
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation "androidx.core:core-ktx:${versions.core_ktx}"
     implementation 'androidx.work:work-runtime-ktx:2.5.0'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.3.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.3.1'
     implementation "com.google.android.material:material:${versions.material}"
 
     implementation "com.google.android.exoplayer:exoplayer-core:${versions.exoplayer}"
@@ -277,7 +277,7 @@ dependencies {
     implementation "com.squareup.okhttp3:okhttp-dnsoverhttps:${versions.okhttp}"
     implementation "com.squareup.okhttp3:logging-interceptor:${versions.okhttp}"
     implementation "org.jsoup:jsoup:${versions.jsoup}"
-    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.21'
+    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.23'
     implementation 'com.davemorrissey.labs:subsampling-scale-image-view:3.10.0'
     implementation 'org.greenrobot:eventbus:3.2.0'
     implementation 'org.nibor.autolink:autolink:0.10.0'
@@ -291,7 +291,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlin_coroutines_version}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${versions.kotlin_coroutines_version}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-rx2:${versions.kotlin_coroutines_version}"
-    implementation 'io.coil-kt:coil-base:1.1.1'
+    implementation 'io.coil-kt:coil-base:1.2.0'
 
     // noinspection GradleDependency wants to upgrade to older version
     implementation "com.github.K1rakishou:Fuck-Storage-Access-Framework:${versions.fsaf}"
