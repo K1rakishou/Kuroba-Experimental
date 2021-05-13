@@ -1,21 +1,25 @@
 package com.github.k1rakishou.chan.core.lib.data.post_parsing;
 
+import java.util.Arrays;
+
 /**
  * When updating/renaming or moving this class to other place, don't forget to update the
  * kuroba_ex_native library.
  */
 public class PostParserContext {
-    public String siteName;
-    public String boardCode;
-    public long threadId;
-    public long[] myRepliesInThread;
-    public long[] threadPosts;
+    public final long[] myRepliesInThread;
+    public final long[] threadPosts;
 
-    public PostParserContext(String siteName, String boardCode, long threadId, long[] myRepliesInThread, long[] threadPosts) {
-        this.siteName = siteName;
-        this.boardCode = boardCode;
-        this.threadId = threadId;
+    public PostParserContext(long[] myRepliesInThread, long[] threadPosts) {
         this.myRepliesInThread = myRepliesInThread;
         this.threadPosts = threadPosts;
+    }
+
+    @Override
+    public String toString() {
+        return "PostParserContext{" +
+                "myRepliesInThread=" + Arrays.toString(myRepliesInThread) +
+                ", threadPosts=" + Arrays.toString(threadPosts) +
+                '}';
     }
 }

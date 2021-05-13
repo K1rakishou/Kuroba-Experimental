@@ -73,7 +73,7 @@ class ParsePostsV2UseCase(
     boardManager.awaitUntilInitialized()
 
     if (postBuildersToParse.isEmpty()) {
-      return ParsingResult(emptyList(), Duration.ZERO, Duration.ZERO)
+      return ParsingResult(emptyList(), Duration.ZERO, 0, Duration.ZERO)
     }
 
     val internalIds = getInternalIds(chanDescriptor, postBuildersToParse)
@@ -102,6 +102,7 @@ class ParsePostsV2UseCase(
     return ParsingResult(
       parsedPosts = parsedPosts,
       filterProcessionTime = filterProcessingDuration,
+      filtersCount = filters.size,
       parsingTime = parsingDuration
     )
   }
@@ -116,8 +117,6 @@ class ParsePostsV2UseCase(
       return emptyList()
     }
 
-    val threadId = postBuildersToParse.first().getOpId()
-
     val mySavedReplies = when (chanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> savedReplyManager.getAllRepliesCatalog(chanDescriptor, internalIds)
       is ChanDescriptor.ThreadDescriptor -> savedReplyManager.getAllRepliesThread(chanDescriptor)
@@ -131,6 +130,9 @@ class ParsePostsV2UseCase(
     val postsToParseArray = postBuildersToParse
       .mapArray { postBuilderToParse ->
         return@mapArray PostToParse(
+          postBuilderToParse.boardDescriptor!!.siteName(),
+          postBuilderToParse.boardDescriptor!!.boardCode,
+          postBuilderToParse.getOpId(),
           postBuilderToParse.id,
           postBuilderToParse.subId,
           postBuilderToParse.postCommentBuilder.getUnparsedComment()
@@ -141,23 +143,17 @@ class ParsePostsV2UseCase(
 
     val postThreadParsed = KurobaNativeLib.parseThreadPosts(
       PostParserContext(
-        chanDescriptor.siteName(),
-        chanDescriptor.boardCode(),
-        threadId,
         myReplyIds.toLongArray(),
         internalIds.toLongArray()
       ),
       ThreadToParse(postsToParseArray)
     )
 
-    // TODO(KurobaEx v0.9.0): this is very bad for ghost posts. I need to use PostDescriptors
-    //  inside of the native library too.
-
     val postParsedMap = postThreadParsed.postParsedList
-      .associateBy { postParsed -> postParsed.postId }
+      .associateBy { postParsed -> postParsed.postDescriptor.toPostDescriptor() }
 
     return postBuildersToParse.map { chanPostBuilder ->
-      val postParsed = postParsedMap[chanPostBuilder.id]
+      val postParsed = postParsedMap[chanPostBuilder.postDescriptor]
 
       if (postParsed != null) {
         chanPostBuilder.postCommentBuilder.setUnparsedComment(postParsed.postCommentParsed.commentTextRaw)
@@ -184,7 +180,7 @@ class ParsePostsV2UseCase(
       val spannableKey = try {
         commentParsed.substring(spannableStart, spannableEnd)
       } catch (error: Throwable) {
-        Logger.e(TAG, "Failed substring post with id: ${postParsed.postId}, " +
+        Logger.e(TAG, "Failed substring post: ${postParsed.postDescriptor}, " +
           "commentParsed: \"${commentParsed}\", spannableStart=$spannableStart, spannableEnd=$spannableEnd")
         return@forEach
       }

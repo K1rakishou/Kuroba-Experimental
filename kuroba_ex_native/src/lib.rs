@@ -8,6 +8,7 @@ mod mappers {
   pub mod post_parsed_mapper;
   pub mod post_parser_context_mapper;
   pub mod thread_raw_mapper;
+  pub mod descriptor_mapper;
 }
 
 mod usecases {
@@ -37,7 +38,7 @@ pub unsafe extern fn Java_com_github_k1rakishou_chan_core_lib_KurobaNativeLib_in
   android_logger::init_once(
     Config::default()
       .with_min_level(log::Level::Debug)
-      .format(|f, record| write!(f, "KurobaEx (native) |: {}", record.args()))
+      .format(|f, record| write!(f, "|: {}", record.args()))
   );
 }
 

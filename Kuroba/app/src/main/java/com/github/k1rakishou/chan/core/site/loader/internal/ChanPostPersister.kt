@@ -98,6 +98,7 @@ internal class ChanPostPersister(
         storeDuration = storeDuration,
         storedPostsCount = storedPostsCount,
         filterProcessingDuration = parsingResult.filterProcessionTime,
+        filtersCount = parsingResult.filtersCount,
         parsingDuration = parsingResult.parsingTime,
         parsedPostsCount = parsingResult.parsedPosts.size,
         postsInChanReaderProcessor = chanReaderProcessor.getTotalPostsCount()
@@ -125,6 +126,7 @@ internal class ChanPostPersister(
     val storeDuration: Duration,
     val storedPostsCount: Int,
     val filterProcessingDuration: Duration,
+    val filtersCount: Int,
     val parsingDuration: Duration,
     val parsedPostsCount: Int,
     val postsInChanReaderProcessor: Int

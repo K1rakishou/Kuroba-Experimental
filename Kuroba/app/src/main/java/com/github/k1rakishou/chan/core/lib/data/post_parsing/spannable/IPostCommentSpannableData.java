@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.core.lib.data.post_parsing.spannable;
 public interface IPostCommentSpannableData {
 
     public class DeadQuote implements IPostCommentSpannableData {
-        public long postNo;
+        public final long postNo;
 
         public DeadQuote(long postNo) {
             this.postNo = postNo;
@@ -18,7 +18,7 @@ public interface IPostCommentSpannableData {
     }
 
     public class Quote implements IPostCommentSpannableData {
-        public long postNo;
+        public final long postNo;
 
         public Quote(long postNo) {
             this.postNo = postNo;
@@ -33,7 +33,7 @@ public interface IPostCommentSpannableData {
     }
 
     public class BoardLink implements IPostCommentSpannableData {
-        public String boardCode;
+        public final String boardCode;
 
         public BoardLink(String boardCode) {
             this.boardCode = boardCode;
@@ -48,8 +48,8 @@ public interface IPostCommentSpannableData {
     }
 
     public class SearchLink implements IPostCommentSpannableData {
-        public String boardCode;
-        public String searchQuery;
+        public final String boardCode;
+        public final String searchQuery;
 
         public SearchLink(String boardCode, String searchQuery) {
             this.boardCode = boardCode;
@@ -66,9 +66,9 @@ public interface IPostCommentSpannableData {
     }
 
     public class ThreadLink implements IPostCommentSpannableData {
-        public String boardCode;
-        public long threadNo;
-        public long postNo;
+        public final String boardCode;
+        public final long threadNo;
+        public final long postNo;
 
         public ThreadLink(String boardCode, long threadNo, long postNo) {
             this.boardCode = boardCode;
@@ -87,7 +87,7 @@ public interface IPostCommentSpannableData {
     }
 
     public class UrlLink implements IPostCommentSpannableData {
-        public String urlLink;
+        public final String urlLink;
 
         public UrlLink(String urlLink) {
             this.urlLink = urlLink;
@@ -116,7 +116,7 @@ public interface IPostCommentSpannableData {
     }
 
     public class BoldText implements IPostCommentSpannableData {
-        public String size;
+        public final String size;
 
         public BoldText(String size) {
             this.size = size;
@@ -131,7 +131,7 @@ public interface IPostCommentSpannableData {
     }
 
     public class FontSize implements IPostCommentSpannableData {
-        public String size;
+        public final String size;
 
         public FontSize(String size) {
             this.size = size;
@@ -146,7 +146,7 @@ public interface IPostCommentSpannableData {
     }
 
     public class FontWeight implements IPostCommentSpannableData {
-        public String weight;
+        public final String weight;
 
         public FontWeight(String weight) {
             this.weight = weight;
@@ -168,7 +168,7 @@ public interface IPostCommentSpannableData {
     }
 
     public class TextForegroundColorRaw implements IPostCommentSpannableData {
-        public String colorHex;
+        public final String colorHex;
 
         public TextForegroundColorRaw(String colorHex) {
             this.colorHex = colorHex;
@@ -183,7 +183,7 @@ public interface IPostCommentSpannableData {
     }
 
     public class TextBackgroundColorRaw implements IPostCommentSpannableData {
-        public String colorHex;
+        public final String colorHex;
 
         public TextBackgroundColorRaw(String colorHex) {
             this.colorHex = colorHex;
@@ -198,7 +198,7 @@ public interface IPostCommentSpannableData {
     }
 
     public class TextForegroundColorId implements IPostCommentSpannableData {
-        public int chanThemeColorIdRaw;
+        public final int chanThemeColorIdRaw;
 
         public TextForegroundColorId(int chanThemeColorIdRaw) {
             this.chanThemeColorIdRaw = chanThemeColorIdRaw;
@@ -213,7 +213,7 @@ public interface IPostCommentSpannableData {
     }
 
     public class TextBackgroundColorId implements IPostCommentSpannableData {
-        public int chanThemeColorIdRaw;
+        public final int chanThemeColorIdRaw;
 
         public TextBackgroundColorId(int chanThemeColorIdRaw) {
             this.chanThemeColorIdRaw = chanThemeColorIdRaw;
@@ -228,8 +228,8 @@ public interface IPostCommentSpannableData {
     }
 
     public class ThemeJson implements IPostCommentSpannableData {
-        public String themeName;
-        public boolean isLightTheme;
+        public final String themeName;
+        public final boolean isLightTheme;
 
         public ThemeJson(String themeName, boolean isLightTheme) {
             this.themeName = themeName;

@@ -241,6 +241,7 @@ class ChanThreadLoaderCoordinator(
     val storeDuration = loadTimeInfo.storeDuration
     val storedPostsCount = loadTimeInfo.storedPostsCount
     val filterProcessingDuration = loadTimeInfo.filterProcessingDuration
+    val filtersCount = loadTimeInfo.filtersCount
     val parsingDuration = loadTimeInfo.parsingDuration
     val parsedPostsCount = loadTimeInfo.parsedPostsCount
     val postsInChanReaderProcessor = loadTimeInfo.postsInChanReaderProcessor
@@ -261,20 +262,20 @@ class ChanThreadLoaderCoordinator(
       appendLine("PostParserV2: ${loadTimeInfo.usePostParserV2}.")
       appendLine("Network request execution took $requestDuration.")
       appendLine("Json reading took $readPostsDuration.")
-      appendLine("Store new posts took $storeDuration (stored ${storedPostsCount} posts).")
-      appendLine("Parse posts took = $parsingDuration, filter processing took = $filterProcessingDuration (parsed ${parsedPostsCount} out of $postsInChanReaderProcessor posts).")
-      appendLine("Total in-memory cached posts count = $cachedPostsCount/${appConstants.maxPostsCountInPostsCache}.")
+      appendLine("Store new posts took $storeDuration (stored $storedPostsCount posts).")
+      appendLine("Parse posts took $parsingDuration (parsed $parsedPostsCount out of $postsInChanReaderProcessor posts).")
+      appendLine("Filter processing took $filterProcessingDuration (filers count: $filtersCount).")
+      appendLine("Total in-memory cached posts count: $cachedPostsCount/${appConstants.maxPostsCountInPostsCache}.")
 
       if (currentThreadCachedPostsCount != null) {
-        appendLine("Current thread cached posts count = ${currentThreadCachedPostsCount}")
+        appendLine("Current thread cached posts count: $currentThreadCachedPostsCount")
       }
 
       appendLine("Threads with more than one post " +
-        "count = ($threadsWithMoreThanOnePostCount/${ChanThreadsCache.IMMUNE_THREADS_COUNT}), " +
-        "total cached threads count = ${cachedThreadsCount}.")
+        "count: ($threadsWithMoreThanOnePostCount/${ChanThreadsCache.IMMUNE_THREADS_COUNT}), " +
+        "total cached threads count: ${cachedThreadsCount}.")
 
-      val fullLocalDuration = readPostsDuration + storeDuration + parsingDuration
-
+      val fullLocalDuration = readPostsDuration + storeDuration + parsingDuration + filterProcessingDuration
       appendLine("Total local processing time: $fullLocalDuration")
     }
 

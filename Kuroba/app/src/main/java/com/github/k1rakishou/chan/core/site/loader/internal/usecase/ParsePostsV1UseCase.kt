@@ -45,7 +45,7 @@ class ParsePostsV1UseCase(
     boardManager.awaitUntilInitialized()
 
     if (postBuildersToParse.isEmpty()) {
-      return ParsingResult(emptyList(), Duration.ZERO, Duration.ZERO)
+      return ParsingResult(emptyList(), Duration.ZERO, 0, Duration.ZERO)
     }
 
     val internalIds = getInternalIds(chanDescriptor, postBuildersToParse)
@@ -82,6 +82,7 @@ class ParsePostsV1UseCase(
     return ParsingResult(
       parsedPosts = parsedPosts,
       filterProcessionTime = filterProcessingDuration,
+      filtersCount = filters.size,
       parsingTime = parsingDuration
     )
   }

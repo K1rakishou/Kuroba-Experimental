@@ -165,6 +165,7 @@ abstract class AbstractParsePostsUseCase(
   class ParsingResult @OptIn(ExperimentalTime::class) constructor(
     val parsedPosts: List<ChanPost>,
     val filterProcessionTime: Duration,
+    val filtersCount: Int,
     val parsingTime: Duration
   )
 
