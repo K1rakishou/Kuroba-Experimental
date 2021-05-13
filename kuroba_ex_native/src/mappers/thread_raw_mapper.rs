@@ -29,17 +29,16 @@ pub mod mapper {
   }
 
   fn post_raw_object_to_post_raw(env: &JNIEnv, post_raw_object: JObject) -> errors::Result<PostRaw> {
-    let post_id = env.get_field(post_raw_object, "postId", "J")?.j()? as u64;
-    let post_sub_id = env.get_field(post_raw_object, "postSubId", "J")?.j()? as u64;
-    let comment = java_string_field_to_rust_string(env, post_raw_object, "comment")?;
+    let post_raw = PostRaw::new(
+      &java_string_field_to_rust_string(env, post_raw_object, "siteName")?,
+      &java_string_field_to_rust_string(env, post_raw_object, "boardCode")?,
+      env.get_field(post_raw_object, "threadId", "J")?.j()? as u64,
+      env.get_field(post_raw_object, "postId", "J")?.j()? as u64,
+      env.get_field(post_raw_object, "postSubId", "J")?.j()? as u64,
+      &java_string_field_to_rust_string(env, post_raw_object, "comment")?
+    );
 
-    return Result::Ok(
-      PostRaw {
-        post_id,
-        post_sub_id,
-        com: comment
-      }
-    )
+    return Result::Ok(post_raw)
   }
 
 }

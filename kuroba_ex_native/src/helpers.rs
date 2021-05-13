@@ -74,3 +74,11 @@ pub fn format_spannables_object_signature(class_name: &str) -> String {
 pub fn format_spannables_object_signature_pref(preffix: &str, class_name: &str) -> String {
   return format!("{}L{};", preffix, format_spannables_object_signature(class_name).as_str());
 }
+
+pub fn format_descriptors_object_signature(class_name: &str) -> String {
+  return format!("com/github/k1rakishou/chan/core/lib/data/descriptor/{}", class_name)
+}
+
+pub fn format_descriptors_object_signature_pref(preffix: &str, class_name: &str) -> String {
+  return format!("{}L{};", preffix, format_descriptors_object_signature(class_name).as_str());
+}

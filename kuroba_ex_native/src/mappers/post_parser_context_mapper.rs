@@ -3,19 +3,9 @@ pub mod mapper {
   use jni::{JNIEnv, errors};
   use new_post_parser_lib::PostParserContext;
   use std::collections::HashSet;
-  use crate::helpers::java_string_field_to_rust_string;
 
   pub fn from_java_object(env: &JNIEnv, post_parser_context: JObject) -> errors::Result<PostParserContext> {
-    let thread_id_field = env.get_field(
-      post_parser_context,
-      "threadId",
-      "J"
-    )?;
-
     let post_parser_context = PostParserContext::new(
-      java_string_field_to_rust_string(env, post_parser_context, "siteName")?.as_str(),
-      java_string_field_to_rust_string(env, post_parser_context, "boardCode")?.as_str(),
-      thread_id_field.j()? as u64,
       map_my_replies_in_thread_jarray(env, post_parser_context)?,
       map_thread_posts_jarray(env, post_parser_context)?
     );

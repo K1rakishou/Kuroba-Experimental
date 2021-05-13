@@ -2,8 +2,9 @@ pub mod mapper {
   use new_post_parser_lib::{Spannable, SpannableData, PostLink, ParsedPost};
   use jni::sys::{jobject, jsize, _jobject, JNI_TRUE, JNI_FALSE};
   use jni::{JNIEnv, errors};
-  use crate::helpers::{format_post_parsing_object_signature, format_spannables_object_signature_pref, format_spannables_object_signature, format_post_parsing_object_signature_pref};
+  use crate::helpers::{format_post_parsing_object_signature, format_spannables_object_signature_pref, format_spannables_object_signature, format_post_parsing_object_signature_pref, format_descriptors_object_signature_pref};
   use jni::objects::{JObject, JValue};
+  use crate::mappers::descriptor_mapper::mapper::map_post_descriptor_to_jobject;
 
   pub fn map_to_post_parsed(env: &JNIEnv, parsed_post: &ParsedPost) -> errors::Result<jobject> {
     let post_comment_parsed_jclass = env.find_class(format_post_parsing_object_signature("ParsedSpannableText").as_str())
@@ -37,10 +38,12 @@ pub mod mapper {
     let post_parsed_jobject = env.new_object(post_parsed_jclass, "()V", &[])
       .expect("Failed to instantiate PostParsed");
 
-    env.set_field(post_parsed_jobject, "postId", "J", JValue::Long(parsed_post.post_id as i64))
-      .expect("Failed to set field postId of post_parsed_jobject");
-    env.set_field(post_parsed_jobject, "postSubId", "J", JValue::Long(parsed_post.post_sub_id as i64))
-      .expect("Failed to set field postSubId of post_parsed_jobject");
+    env.set_field(
+      post_parsed_jobject,
+      "postDescriptor",
+      format_descriptors_object_signature_pref("", "PostDescriptorNative"),
+      JValue::Object(JObject::from(map_post_descriptor_to_jobject(env, &parsed_post.post_descriptor)?))
+    ).expect("Failed to set field postId of post_parsed_jobject");
 
     env.set_field(
       post_parsed_jobject,
