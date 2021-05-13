@@ -78,16 +78,8 @@ public class DefaultPostParser implements PostParser {
     }
 
     @Override
-    public ChanPost parse(ChanPostBuilder builder, Callback callback) {
-        if (!TextUtils.isEmpty(builder.name)) {
-            builder.name = Parser.unescapeEntities(builder.name, false);
-        }
-
-        if (!TextUtils.isEmpty(builder.subject)) {
-            builder.subject = Parser.unescapeEntities(builder.subject.toString(), false);
-        }
-
-        parseSpans(builder);
+    public ChanPost parseFull(ChanPostBuilder builder, Callback callback) {
+        parseNameAndSubject(builder);
 
         if (!builder.postCommentBuilder.commentAlreadyParsed()) {
             if (builder.postCommentBuilder.hasUnparsedComment()) {
@@ -105,6 +97,19 @@ public class DefaultPostParser implements PostParser {
         }
 
         return builder.build();
+    }
+
+    @Override
+    public void parseNameAndSubject(ChanPostBuilder builder) {
+        if (!TextUtils.isEmpty(builder.name)) {
+            builder.name = Parser.unescapeEntities(builder.name, false);
+        }
+
+        if (!TextUtils.isEmpty(builder.subject)) {
+            builder.subject = Parser.unescapeEntities(builder.subject.toString(), false);
+        }
+
+        parseSpans(builder);
     }
 
     /**

@@ -37,7 +37,7 @@ internal class PostParseWorker(
 
   suspend fun parse(): ChanPost? {
     return Try {
-      return@Try postParser.parse(postBuilder, object : PostParser.Callback {
+      return@Try postParser.parseFull(postBuilder, object : PostParser.Callback {
         override fun isSaved(postNo: Long, postSubNo: Long): Boolean {
           return savedReplyManager.isSaved(postBuilder.postDescriptor.descriptor, postNo, postSubNo)
         }

@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.common.mapArray
+import com.github.k1rakishou.common.processDataCollectionConcurrently
 import com.github.k1rakishou.common.setSpanSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed
@@ -34,7 +35,6 @@ import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_spannable.ThemeJsonSpannable
 import com.github.k1rakishou.core_themes.ChanThemeColorId
 import com.github.k1rakishou.core_themes.ThemeEngine
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
@@ -77,22 +77,19 @@ class ParsePostsV2UseCase(
     }
 
     val internalIds = getInternalIds(chanDescriptor, postBuildersToParse)
-    val boardDescriptors = getBoardDescriptors(chanDescriptor)
     val filters = loadFilters(chanDescriptor)
-
     val filterProcessingDuration = measureTime { postParsingProcessFiltersStage(postBuildersToParse, filters) }
 
     Logger.d(TAG, "parseNewPostsPosts(chanDescriptor=$chanDescriptor, " +
       "postsToParseSize=${postBuildersToParse.size}), " +
       "internalIds=${internalIds.size}, " +
-      "boardDescriptors=${boardDescriptors.size}, " +
       "filters=${filters.size}")
 
     val (parsedPosts, parsingDuration) = measureTimedValue {
       return@measureTimedValue parsePostsWithPostParser(
+        postParser = postParser,
         postBuildersToParse = postBuildersToParse,
         internalIds = internalIds,
-        boardDescriptors = boardDescriptors,
         chanDescriptor = chanDescriptor
       )
     }
@@ -107,10 +104,10 @@ class ParsePostsV2UseCase(
     )
   }
 
-  private fun parsePostsWithPostParser(
+  private suspend fun parsePostsWithPostParser(
+    postParser: PostParser,
     postBuildersToParse: List<ChanPostBuilder>,
     internalIds: Set<Long>,
-    boardDescriptors: Set<BoardDescriptor>,
     chanDescriptor: ChanDescriptor
   ): List<ChanPost> {
     if (postBuildersToParse.isEmpty()) {
@@ -125,6 +122,14 @@ class ParsePostsV2UseCase(
 
     postBuildersToParse.forEach { postBuilder ->
       postBuilder.isSavedReply(mySavedRepliesMap.containsKey(postBuilder.postDescriptor))
+    }
+
+    processDataCollectionConcurrently(
+      dataList = postBuildersToParse,
+      batchCount = THREAD_COUNT * 2,
+      dispatcher = dispatcher
+    ) { chanPostBuilder ->
+      postParser.parseNameAndSubject(chanPostBuilder)
     }
 
     val postsToParseArray = postBuildersToParse

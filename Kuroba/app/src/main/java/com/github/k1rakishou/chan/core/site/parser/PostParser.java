@@ -25,16 +25,9 @@ import com.github.k1rakishou.model.data.post.ChanPost;
 import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 
 public interface PostParser {
-    ChanPost parse(
-            ChanPostBuilder builder,
-            Callback callback
-    );
-
-    Spannable parseComment(
-            ChanPostBuilder post,
-            CharSequence commentRaw,
-            Callback callback
-    );
+    void parseNameAndSubject(ChanPostBuilder builder);
+    ChanPost parseFull(ChanPostBuilder builder, Callback callback);
+    Spannable parseComment(ChanPostBuilder post, CharSequence commentRaw, Callback callback);
 
     interface Callback {
         boolean isSaved(long postNo, long postSubNo);

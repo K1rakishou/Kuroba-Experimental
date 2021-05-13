@@ -553,7 +553,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
           + "<span class=\"quote\">&gt;Nam non hendrerit justo, venenatis bibendum arcu.</span>"
       )
 
-    val post1 = postParser.parse(builder1, parserCallback)
+    val post1 = postParser.parseFull(builder1, parserCallback)
     post1.repliesFrom.add(234567890L)
 
     val pd2 = PostDescriptor.create(dummyBoardDescriptor, 234567890L, 123456789L)
@@ -583,7 +583,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
         pd2
       )
 
-    val post2 = postParser.parse(builder2, parserCallback)
+    val post2 = postParser.parseFull(builder2, parserCallback)
 
     val posts: MutableList<ChanPost> = ArrayList()
     posts.add(post1)

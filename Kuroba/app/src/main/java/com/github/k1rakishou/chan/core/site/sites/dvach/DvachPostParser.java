@@ -33,10 +33,10 @@ public class DvachPostParser extends DefaultPostParser {
     }
 
     @Override
-    public ChanPost parse(ChanPostBuilder builder, Callback callback) {
+    public ChanPost parseFull(ChanPostBuilder builder, Callback callback) {
         builder.name = Parser.unescapeEntities(builder.name, false);
         parseNameForColor(builder);
-        return super.parse(builder, callback);
+        return super.parseFull(builder, callback);
     }
 
     private void parseNameForColor(ChanPostBuilder builder) {
