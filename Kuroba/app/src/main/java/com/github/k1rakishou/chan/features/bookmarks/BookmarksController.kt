@@ -153,13 +153,13 @@ class BookmarksController(
     }
 
     override fun canDropOver(
-      recyclerView: RecyclerView?,
-      current: EpoxyViewHolder?,
-      target: EpoxyViewHolder?
+      recyclerView: RecyclerView,
+      current: EpoxyViewHolder,
+      target: EpoxyViewHolder
     ): Boolean {
-      val currentUnifiedBookmarkInfoAccessor = (current?.model as? UnifiedBookmarkInfoAccessor)
+      val currentUnifiedBookmarkInfoAccessor = (current.model as? UnifiedBookmarkInfoAccessor)
         ?: return false
-      val targetUnifiedBookmarkInfoAccessor = (target?.model as? UnifiedBookmarkInfoAccessor)
+      val targetUnifiedBookmarkInfoAccessor = (target.model as? UnifiedBookmarkInfoAccessor)
         ?: return false
 
       if (currentUnifiedBookmarkInfoAccessor.getBookmarkGroupId() !=
@@ -195,15 +195,9 @@ class BookmarksController(
       itemView?.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
     }
 
-    override fun onMove(
-      recyclerView: RecyclerView?,
-      viewHolder: EpoxyViewHolder?,
-      target: EpoxyViewHolder?
-    ): Boolean {
-      val fromPosition = viewHolder?.adapterPosition
-        ?: return false
-      val toPosition = target?.adapterPosition
-        ?: return false
+    override fun onMove(recyclerView: RecyclerView, viewHolder: EpoxyViewHolder, target: EpoxyViewHolder): Boolean {
+      val fromPosition = viewHolder.adapterPosition
+      val toPosition = target.adapterPosition
 
       val fromGroupId = (viewHolder.model as? UnifiedBookmarkInfoAccessor)?.getBookmarkGroupId()
       val toGroupId = (target.model as? UnifiedBookmarkInfoAccessor)?.getBookmarkGroupId()

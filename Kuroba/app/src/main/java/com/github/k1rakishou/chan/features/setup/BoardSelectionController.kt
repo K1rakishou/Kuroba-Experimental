@@ -25,7 +25,6 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -110,8 +109,10 @@ class BoardSelectionController(
         .collect { query -> presenter.onSearchQueryChanged(query) }
     }
 
-    compositeDisposable += presenter.listenForStateChanges()
-      .subscribe { state -> onStateChanged(state) }
+    compositeDisposable.add(
+      presenter.listenForStateChanges()
+        .subscribe { state -> onStateChanged(state) }
+    )
 
     themeEngine.addListener(this)
     presenter.onCreate(this)

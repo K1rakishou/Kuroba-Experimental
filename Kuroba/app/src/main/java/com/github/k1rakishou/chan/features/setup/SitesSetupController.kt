@@ -28,7 +28,6 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
-import com.github.k1rakishou.chan.utils.plusAssign
 import javax.inject.Inject
 
 class SitesSetupController(context: Context) : Controller(context), SitesSetupView {
@@ -61,12 +60,12 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
     }
 
     override fun canDropOver(
-      recyclerView: RecyclerView?,
-      current: EpoxyViewHolder?,
-      target: EpoxyViewHolder?
+      recyclerView: RecyclerView,
+      current: EpoxyViewHolder,
+      target: EpoxyViewHolder
     ): Boolean {
-      val currentView = current?.itemView as? EpoxySiteView
-      val targetView = target?.itemView as? EpoxySiteView
+      val currentView = current.itemView as? EpoxySiteView
+      val targetView = target.itemView as? EpoxySiteView
 
       if (currentView == null || targetView == null) {
         return false
@@ -84,14 +83,12 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
     }
 
     override fun onMove(
-      recyclerView: RecyclerView?,
-      viewHolder: EpoxyViewHolder?,
-      target: EpoxyViewHolder?
+      recyclerView: RecyclerView,
+      viewHolder: EpoxyViewHolder,
+      target: EpoxyViewHolder
     ): Boolean {
-      val fromPosition = viewHolder?.adapterPosition
-        ?: return false
-      val toPosition = target?.adapterPosition
-        ?: return false
+      val fromPosition = viewHolder.adapterPosition
+      val toPosition = target.adapterPosition
 
       val fromSiteDescriptor = (viewHolder.model as? EpoxySiteViewModel_)?.siteDescriptor()
       val toSiteDescriptor = (target.model as? EpoxySiteViewModel_)?.siteDescriptor()
@@ -128,8 +125,10 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
     itemTouchHelper = ItemTouchHelper(touchHelperCallback)
     itemTouchHelper.attachToRecyclerView(epoxyRecyclerView)
 
-    compositeDisposable += sitesPresenter.listenForStateChanges()
-      .subscribe { state -> onStateChanged(state) }
+    compositeDisposable.add(
+      sitesPresenter.listenForStateChanges()
+        .subscribe { state -> onStateChanged(state) }
+    )
 
     sitesPresenter.onCreate(this)
   }

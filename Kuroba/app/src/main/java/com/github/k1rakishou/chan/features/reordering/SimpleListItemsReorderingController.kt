@@ -39,9 +39,9 @@ class SimpleListItemsReorderingController(
     }
 
     override fun canDropOver(
-      recyclerView: RecyclerView?,
-      current: EpoxyViewHolder?,
-      target: EpoxyViewHolder?
+      recyclerView: RecyclerView,
+      current: EpoxyViewHolder,
+      target: EpoxyViewHolder
     ): Boolean {
       return true
     }
@@ -51,14 +51,12 @@ class SimpleListItemsReorderingController(
     }
 
     override fun onMove(
-      recyclerView: RecyclerView?,
-      viewHolder: EpoxyViewHolder?,
-      target: EpoxyViewHolder?
+      recyclerView: RecyclerView,
+      viewHolder: EpoxyViewHolder,
+      target: EpoxyViewHolder
     ): Boolean {
-      val fromPosition = viewHolder?.adapterPosition
-        ?: return false
-      val toPosition = target?.adapterPosition
-        ?: return false
+      val fromPosition = viewHolder.adapterPosition
+      val toPosition = target.adapterPosition
 
       currentItems.add(toPosition, currentItems.removeAt(fromPosition))
       renderItems()

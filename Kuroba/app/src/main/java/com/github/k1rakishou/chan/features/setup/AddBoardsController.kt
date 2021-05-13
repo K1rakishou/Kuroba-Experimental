@@ -18,7 +18,6 @@ import com.github.k1rakishou.chan.ui.layout.SearchLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
-import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -105,8 +104,10 @@ class AddBoardsController(
       }
     }
 
-    compositeDisposable += presenter.listenForStateChanges()
-      .subscribe { state -> onStateChanged(state) }
+    compositeDisposable.add(
+      presenter.listenForStateChanges()
+        .subscribe { state -> onStateChanged(state) }
+    )
 
     presenter.onCreate(this)
   }

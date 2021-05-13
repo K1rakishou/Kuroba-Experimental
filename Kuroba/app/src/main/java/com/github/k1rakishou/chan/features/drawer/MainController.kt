@@ -95,7 +95,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
-import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
@@ -328,24 +327,30 @@ class MainController(
 
     updateRecyclerLayoutMode()
 
-    compositeDisposable += drawerPresenter.listenForStateChanges()
-      .subscribe(
-        { state -> onDrawerStateChanged(state) },
-        { error ->
-          Logger.e(TAG, "Unknown error subscribed to drawerPresenter.listenForStateChanges()", error)
-        }
-      )
+    compositeDisposable.add(
+      drawerPresenter.listenForStateChanges()
+        .subscribe(
+          { state -> onDrawerStateChanged(state) },
+          { error ->
+            Logger.e(TAG, "Unknown error subscribed to drawerPresenter.listenForStateChanges()", error)
+          }
+        )
+    )
 
-    compositeDisposable += drawerPresenter.listenForBookmarksBadgeStateChanges()
-      .subscribe(
-        { state -> onBookmarksBadgeStateChanged(state) },
-        { error ->
-          Logger.e(TAG, "Unknown error subscribed to drawerPresenter.listenForBookmarksBadgeStateChanges()", error)
-        }
-      )
+    compositeDisposable.add(
+      drawerPresenter.listenForBookmarksBadgeStateChanges()
+        .subscribe(
+          { state -> onBookmarksBadgeStateChanged(state) },
+          { error ->
+            Logger.e(TAG, "Unknown error subscribed to drawerPresenter.listenForBookmarksBadgeStateChanges()", error)
+          }
+        )
+    )
 
-    compositeDisposable += settingsNotificationManager.listenForNotificationUpdates()
-      .subscribe { onSettingsNotificationChanged() }
+    compositeDisposable.add(
+      settingsNotificationManager.listenForNotificationUpdates()
+        .subscribe { onSettingsNotificationChanged() }
+    )
 
     // Must be called after drawerPresenter.listenForStateChanges() so it receives the "Loading"
     // state as well as other states

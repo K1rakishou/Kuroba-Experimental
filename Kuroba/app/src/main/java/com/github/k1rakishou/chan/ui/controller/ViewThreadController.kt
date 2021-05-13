@@ -44,7 +44,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink
 import com.github.k1rakishou.chan.utils.SharingUtils.getUrlForSharing
-import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -93,16 +92,18 @@ open class ViewThreadController(
 
     buildMenu()
 
-    compositeDisposable += bookmarksManager.listenForBookmarksChanges()
-      .filter { bookmarkChange: BookmarkChange? -> bookmarkChange !is BookmarksInitialized }
-      .onBackpressureLatest()
-      .debounce(350, TimeUnit.MILLISECONDS)
-      .onBackpressureLatest()
-      .observeOn(AndroidSchedulers.mainThread())
-      .subscribe(
-        { bookmarkChange -> updatePinIconStateIfNeeded(bookmarkChange) },
-        { error -> Logger.e(TAG, "Error while listening for bookmarks changes", error) }
-      )
+    compositeDisposable.add(
+      bookmarksManager.listenForBookmarksChanges()
+        .filter { bookmarkChange: BookmarkChange? -> bookmarkChange !is BookmarksInitialized }
+        .onBackpressureLatest()
+        .debounce(350, TimeUnit.MILLISECONDS)
+        .onBackpressureLatest()
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe(
+          { bookmarkChange -> updatePinIconStateIfNeeded(bookmarkChange) },
+          { error -> Logger.e(TAG, "Error while listening for bookmarks changes", error) }
+        )
+    )
 
     mainScope.launch(Dispatchers.Main.immediate) { loadThread(threadDescriptor) }
   }

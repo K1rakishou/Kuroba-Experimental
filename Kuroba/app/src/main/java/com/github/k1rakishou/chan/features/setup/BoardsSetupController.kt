@@ -31,7 +31,6 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
-import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -90,14 +89,12 @@ class BoardsSetupController(
     }
 
     override fun onMove(
-      recyclerView: RecyclerView?,
-      viewHolder: EpoxyViewHolder?,
-      target: EpoxyViewHolder?
+      recyclerView: RecyclerView,
+      viewHolder: EpoxyViewHolder,
+      target: EpoxyViewHolder
     ): Boolean {
-      val fromPosition = viewHolder?.adapterPosition
-        ?: return false
-      val toPosition = target?.adapterPosition
-        ?: return false
+      val fromPosition = viewHolder.adapterPosition
+      val toPosition = target.adapterPosition
 
       val fromBoardDescriptor = (viewHolder.model as? EpoxyBoardViewModel_)?.boardDescriptor()
       val toBoardDescriptor = (target.model as? EpoxyBoardViewModel_)?.boardDescriptor()
@@ -116,8 +113,8 @@ class BoardsSetupController(
       presenter.onBoardMoved()
     }
 
-    override fun onSwiped(viewHolder: EpoxyViewHolder?, direction: Int) {
-      val boardDescriptor = (viewHolder?.model as? EpoxyBoardViewModel_)?.boardDescriptor()
+    override fun onSwiped(viewHolder: EpoxyViewHolder, direction: Int) {
+      val boardDescriptor = (viewHolder.model as? EpoxyBoardViewModel_)?.boardDescriptor()
         ?: return
 
       presenter.onBoardRemoved(boardDescriptor)
@@ -159,8 +156,10 @@ class BoardsSetupController(
       navigationController!!.presentController(controller)
     }
 
-    compositeDisposable += presenter.listenForStateChanges()
-      .subscribe { state -> onStateChanged(state) }
+    compositeDisposable.add(
+      presenter.listenForStateChanges()
+        .subscribe { state -> onStateChanged(state) }
+    )
 
     presenter.onCreate(this)
     presenter.updateBoardsFromServerAndDisplayActive()
