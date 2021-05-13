@@ -844,6 +844,10 @@ suspend fun <T, R> processDataCollectionConcurrently(
   dispatcher: CoroutineDispatcher = Dispatchers.Default,
   processFunc: suspend (T) -> R?
 ): List<R> {
+  if (dataList.isEmpty()) {
+    return emptyList()
+  }
+
   return supervisorScope {
     return@supervisorScope dataList
       .chunked(batchCount)
@@ -860,6 +864,41 @@ suspend fun <T, R> processDataCollectionConcurrently(
           }
           .awaitAll()
           .filterNotNull()
+      }
+  }
+}
+
+suspend fun <T, R> processDataCollectionConcurrentlyIndexed(
+  dataList: Collection<T>,
+  batchCount: Int,
+  dispatcher: CoroutineDispatcher = Dispatchers.Default,
+  processFunc: suspend (Int, T) -> R?
+): List<R> {
+  if (dataList.isEmpty()) {
+    return emptyList()
+  }
+
+  val batchIndex = AtomicInteger(0)
+
+  return supervisorScope {
+    return@supervisorScope dataList
+      .chunked(batchCount)
+      .flatMap { dataChunk ->
+        val results = dataChunk
+          .mapIndexed { index, data ->
+            return@mapIndexed async(dispatcher) {
+              try {
+                return@async processFunc(batchIndex.get() + index, data)
+              } catch (error: Throwable) {
+                return@async null
+              }
+            }
+          }
+          .awaitAll()
+          .filterNotNull()
+
+        batchIndex.addAndGet(results.size)
+        return@flatMap results
       }
   }
 }

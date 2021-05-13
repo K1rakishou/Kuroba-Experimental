@@ -21,6 +21,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils.restoreScrollPosition
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -53,6 +54,8 @@ class PostSearchPopupController(
 
   @Inject
   lateinit var chanThreadManager: ChanThreadManager
+  @Inject
+  lateinit var appConstants: AppConstants
 
   override val postPopupType: PostPopupType
     get() = PostPopupType.Search
@@ -139,6 +142,7 @@ class PostSearchPopupController(
     postsView = dataView.findViewById(R.id.post_list)
 
     val repliesAdapter = PostRepliesAdapter(
+      appConstants,
       data.postViewMode,
       postCellCallback,
       chanDescriptor,

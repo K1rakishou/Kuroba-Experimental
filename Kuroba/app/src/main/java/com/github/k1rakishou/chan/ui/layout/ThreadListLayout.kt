@@ -93,6 +93,10 @@ import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 import kotlin.math.roundToInt
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 /**
  * A layout that wraps around a [RecyclerView] and a [ReplyLayout] to manage showing and replying to posts.
@@ -592,15 +596,20 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     onThemeChanged()
   }
 
+  @OptIn(ExperimentalTime::class)
   suspend fun showPosts(
     descriptor: ChanDescriptor,
     filter: PostsFilter,
     initial: Boolean
-  ): Boolean {
+  ): ShowPostsResult {
     val presenter = threadPresenter
     if (presenter == null) {
       Logger.d(TAG, "showPosts() threadPresenter==null")
-      return false
+      return ShowPostsResult(
+        result = false,
+        applyFilterDuration = Duration.ZERO,
+        setThreadPostsDuration = Duration.ZERO
+      )
     }
 
     if (initial) {
@@ -619,18 +628,20 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     val posts = chanThreadManager.getMutableListOfPosts(descriptor)
 
     postAdapter.setCompact(boardPostViewMode != BoardPostViewMode.LIST)
-    postAdapter.setThread(
-      descriptor,
-      themeEngine.chanTheme,
-      filter.applyFilter(descriptor, posts)
-    )
+
+    val (filteredPosts, applyFilterDuration) = measureTimedValue { filter.applyFilter(descriptor, posts) }
+    val setThreadPostsDuration = measureTime { postAdapter.setThread(descriptor, themeEngine.chanTheme, filteredPosts) }
 
     val chanDescriptor = currentChanDescriptorOrNull()
     if (chanDescriptor != null) {
       restorePrevScrollPosition(chanDescriptor, initial)
     }
 
-    return true
+    return ShowPostsResult(
+      result = true,
+      applyFilterDuration = applyFilterDuration,
+      setThreadPostsDuration = setThreadPostsDuration
+    )
   }
 
   private fun restorePrevScrollPosition(
@@ -1228,6 +1239,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   fun onImageOptionsComplete() {
     replyLayout.onImageOptionsComplete()
   }
+
+  data class ShowPostsResult @OptIn(ExperimentalTime::class) constructor(
+    val result: Boolean,
+    val applyFilterDuration: Duration,
+    val setThreadPostsDuration: Duration
+  )
 
   class GridModeSpaceItemDecoration : ItemDecoration() {
     override fun getItemOffsets(

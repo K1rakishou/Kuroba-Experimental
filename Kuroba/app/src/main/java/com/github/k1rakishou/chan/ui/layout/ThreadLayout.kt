@@ -103,6 +103,8 @@ import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
 /**
  * Wrapper around ThreadListLayout, so that it cleanly manages between a loading state
@@ -382,6 +384,7 @@ class ThreadLayout @JvmOverloads constructor(
     callback.unpresentController(predicate)
   }
 
+  @OptIn(ExperimentalTime::class)
   override suspend fun showPostsForChanDescriptor(
     descriptor: ChanDescriptor?,
     filter: PostsFilter
@@ -393,7 +396,17 @@ class ThreadLayout @JvmOverloads constructor(
 
     val initial = visible != Visible.THREAD
 
-    if (!threadListLayout.showPosts(descriptor, filter, initial)) {
+    val (showPostsResult, totalDuration) = measureTimedValue {
+      threadListLayout.showPosts(descriptor, filter, initial)
+    }
+    val applyFilterDuration = showPostsResult.applyFilterDuration
+    val setThreadPostsDuration = showPostsResult.setThreadPostsDuration
+
+    Logger.d(TAG, "showPostsForChanDescriptor() showPosts($descriptor) -> ${showPostsResult.result} " +
+      "applyFilterDuration=${applyFilterDuration}, setThreadPostsDuration=${setThreadPostsDuration}, " +
+      "totalDuration=${totalDuration}")
+
+    if (!showPostsResult.result) {
       switchVisible(Visible.EMPTY)
       return
     }

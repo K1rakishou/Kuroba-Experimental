@@ -44,6 +44,10 @@ abstract class AbstractParsePostsUseCase(
     postBuildersToParse: List<ChanPostBuilder>,
     filters: List<ChanFilter>
   ) {
+    if (postBuildersToParse.isEmpty() || filters.isEmpty()) {
+      return
+    }
+
     processDataCollectionConcurrently(postBuildersToParse, THREAD_COUNT * 2, dispatcher) { postToParse ->
       // needed for "Apply to own posts" to work correctly
       postToParse.isSavedReply(savedReplyManager.isSaved(postToParse.postDescriptor))

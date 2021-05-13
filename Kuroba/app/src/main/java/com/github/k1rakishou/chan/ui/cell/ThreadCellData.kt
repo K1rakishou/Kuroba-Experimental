@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -15,6 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class ThreadCellData(
+  private val appConstants: AppConstants,
   private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
   private val postFilterManager: PostFilterManager,
   initialTheme: ChanTheme

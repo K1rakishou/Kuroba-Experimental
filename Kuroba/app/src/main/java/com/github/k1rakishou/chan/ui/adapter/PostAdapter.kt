@@ -30,6 +30,7 @@ import com.github.k1rakishou.chan.ui.cell.ThreadCellData
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -53,6 +54,8 @@ class PostAdapter(
   lateinit var postFilterManager: PostFilterManager
   @Inject
   lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var appConstants: AppConstants
 
   private val postAdapterCallback: PostAdapterCallback
   private val postCellCallback: PostCellCallback
@@ -102,6 +105,7 @@ class PostAdapter(
     this.statusCellCallback = statusCellCallback
 
     threadCellData = ThreadCellData(
+      appConstants,
       chanThreadViewableInfoManager,
       postFilterManager,
       themeEngine.chanTheme
