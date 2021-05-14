@@ -23,6 +23,7 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.text.Editable
+import android.text.Selection
 import android.text.TextUtils
 import android.text.TextWatcher
 import android.util.AttributeSet
@@ -804,7 +805,9 @@ class ReplyLayout @JvmOverloads constructor(
         v === flag -> showFlagSelector(chanDescriptor)
       }
 
-      comment.clearFocus()
+      if (v === captchaView || v === submit) {
+        Selection.removeSelection(comment.text)
+      }
     }
   }
 
@@ -1234,42 +1237,27 @@ class ReplyLayout @JvmOverloads constructor(
     replyInputLayout
       .findAllChildren<View>()
       .forEach { child ->
-        if (child is ReplyInputEditText) {
-          child.setOuterOnTouchListener { event ->
-            if (!ChanSettings.replyLayoutOpenCloseGestures.get()) {
-              return@setOuterOnTouchListener false
-            }
+        if (child === comment) {
+          // Do not use the comment
+          return@forEach
+        }
 
-            if (event.actionMasked == MotionEvent.ACTION_DOWN || event.actionMasked == MotionEvent.ACTION_MOVE) {
-              replyLayoutGestureListener.onActionDownOrMove()
-            }
-
-            val result = replyLayoutGestureDetector.onTouchEvent(event)
-
-            if (event.actionMasked == MotionEvent.ACTION_CANCEL || event.actionMasked == MotionEvent.ACTION_UP) {
-              replyLayoutGestureListener.onActionUpOrCancel()
-            }
-
-            return@setOuterOnTouchListener result
+        child.setOnTouchListener { v, event ->
+          if (!ChanSettings.replyLayoutOpenCloseGestures.get()) {
+            return@setOnTouchListener false
           }
-        } else {
-          child.setOnTouchListener { v, event ->
-            if (!ChanSettings.replyLayoutOpenCloseGestures.get()) {
-              return@setOnTouchListener false
-            }
 
-            if (event.actionMasked == MotionEvent.ACTION_DOWN || event.actionMasked == MotionEvent.ACTION_MOVE) {
-              replyLayoutGestureListener.onActionDownOrMove()
-            }
-
-            val result = replyLayoutGestureDetector.onTouchEvent(event)
-
-            if (event.actionMasked == MotionEvent.ACTION_CANCEL || event.actionMasked == MotionEvent.ACTION_UP) {
-              replyLayoutGestureListener.onActionUpOrCancel()
-            }
-
-            return@setOnTouchListener result
+          if (event.actionMasked == MotionEvent.ACTION_DOWN || event.actionMasked == MotionEvent.ACTION_MOVE) {
+            replyLayoutGestureListener.onActionDownOrMove()
           }
+
+          val result = replyLayoutGestureDetector.onTouchEvent(event)
+
+          if (event.actionMasked == MotionEvent.ACTION_CANCEL || event.actionMasked == MotionEvent.ACTION_UP) {
+            replyLayoutGestureListener.onActionUpOrCancel()
+          }
+
+          return@setOnTouchListener result
         }
       }
   }
