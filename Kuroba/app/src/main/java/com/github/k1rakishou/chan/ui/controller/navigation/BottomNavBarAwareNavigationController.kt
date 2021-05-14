@@ -37,7 +37,7 @@ class BottomNavBarAwareNavigationController(
     super.onCreate()
 
     view = inflate(context, R.layout.controller_navigation_bottom_nav_bar_aware)
-    container = view.findViewById<View>(R.id.container) as NavigationControllerContainerLayout
+    container = view.findViewById<View>(R.id.bottom_bar_aware_controller_container) as NavigationControllerContainerLayout
 
     bottomNavBarHeight = getDimen(R.dimen.bottom_nav_view_height)
 

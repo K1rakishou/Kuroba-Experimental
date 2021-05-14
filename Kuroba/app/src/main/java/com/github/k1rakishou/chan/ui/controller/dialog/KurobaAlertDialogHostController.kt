@@ -33,7 +33,7 @@ class KurobaAlertDialogHostController(
       onReady(dialogContainer, this)
     }
 
-    view.findViewById<ViewContainerWithMaxSize>(R.id.container_with_max_size).let { viewContainerWithMaxSize ->
+    view.findViewById<ViewContainerWithMaxSize>(R.id.alert_dialog_container_with_max_size).let { viewContainerWithMaxSize ->
       viewContainerWithMaxSize.desiredWidth = if (isTablet()) {
         TABLET_WIDTH
       } else {

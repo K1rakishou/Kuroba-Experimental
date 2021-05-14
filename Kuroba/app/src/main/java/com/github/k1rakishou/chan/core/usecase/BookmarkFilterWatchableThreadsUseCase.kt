@@ -254,13 +254,13 @@ class BookmarkFilterWatchableThreadsUseCase(
       }
 
       if (filterEngine.typeMatches(watchFilter, FilterType.COMMENT)) {
-        if (filterEngine.matchesNoHtmlConversion(watchFilter, parsedComment, false)) {
+        if (filterEngine.matches(watchFilter, parsedComment, false)) {
           return watchFilter
         }
       }
 
       if (filterEngine.typeMatches(watchFilter, FilterType.SUBJECT)) {
-        if (filterEngine.matchesNoHtmlConversion(watchFilter, subject, false)) {
+        if (filterEngine.matches(watchFilter, subject, false)) {
           return watchFilter
         }
       }

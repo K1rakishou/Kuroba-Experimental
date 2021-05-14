@@ -330,12 +330,6 @@ public class ChanPostBuilder {
         }
     }
 
-    public List<PostLinkable> getLinkables() {
-        synchronized (this) {
-            return postCommentBuilder.getAllLinkables();
-        }
-    }
-
     public ChanPostBuilder postLinkables(List<PostLinkable> postLinkables) {
         synchronized (this) {
             postCommentBuilder.setPostLinkables(postLinkables);

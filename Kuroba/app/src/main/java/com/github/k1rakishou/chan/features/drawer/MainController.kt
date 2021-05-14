@@ -233,7 +233,7 @@ class MainController(
 
     view = inflate(context, R.layout.controller_main)
     rootLayout = view.findViewById(R.id.main_root_layout)
-    container = view.findViewById(R.id.container)
+    container = view.findViewById(R.id.main_controller_container)
     drawerLayout = view.findViewById(R.id.drawer_layout)
     drawerLayout.setDrawerShadow(R.drawable.panel_shadow, GravityCompat.START)
     drawer = view.findViewById(R.id.drawer_part)

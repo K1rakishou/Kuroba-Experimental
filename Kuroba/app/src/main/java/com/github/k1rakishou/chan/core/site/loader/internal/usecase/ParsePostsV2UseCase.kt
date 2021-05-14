@@ -254,6 +254,10 @@ class ParsePostsV2UseCase(
       }.exhaustive
 
       spannableCommentTextParsed.setSpanSafe(actualSpannable, spannableStart, spannableEnd, 0)
+
+      if (actualSpannable is PostLinkable) {
+        chanPostBuilder.addLinkable(actualSpannable)
+      }
     }
 
     return spannableCommentTextParsed

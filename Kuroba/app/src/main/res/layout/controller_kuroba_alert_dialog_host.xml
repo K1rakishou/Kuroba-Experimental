@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     app:layout_constraintTop_toTopOf="parent">
 
     <com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
-        android:id="@+id/container_with_max_size"
+        android:id="@+id/alert_dialog_container_with_max_size"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"

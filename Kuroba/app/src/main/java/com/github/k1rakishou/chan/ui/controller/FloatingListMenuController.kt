@@ -39,7 +39,7 @@ open class FloatingListMenuController @JvmOverloads constructor(
       itemClickListener.invoke(clickedItem)
     }
 
-    val viewContainerWithMaxSize = view.findViewById<ViewContainerWithMaxSize>(R.id.container)
+    val viewContainerWithMaxSize = view.findViewById<ViewContainerWithMaxSize>(R.id.floating_list_menu_container)
     viewContainerWithMaxSize.desiredWidth = if (isTablet()) {
       TABLET_WIDTH
     } else {

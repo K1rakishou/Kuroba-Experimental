@@ -28,7 +28,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:elevation="4dp">
 
         <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
-            android:id="@+id/container"
+            android:id="@+id/popup_controller_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />
 

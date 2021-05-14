@@ -47,7 +47,7 @@ public class StyledToolbarNavigationController extends ToolbarNavigationControll
         super.onCreate();
 
         view = inflate(context, R.layout.controller_navigation_toolbar);
-        container = (NavigationControllerContainerLayout) view.findViewById(R.id.container);
+        container = (NavigationControllerContainerLayout) view.findViewById(R.id.toolbar_navigation_controller_container);
 
         NavigationControllerContainerLayout nav = (NavigationControllerContainerLayout) container;
         nav.initThreadControllerTracking(

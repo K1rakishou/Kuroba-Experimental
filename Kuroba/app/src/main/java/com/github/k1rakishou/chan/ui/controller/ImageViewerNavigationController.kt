@@ -42,7 +42,7 @@ class ImageViewerNavigationController(context: Context) : ToolbarNavigationContr
     super.onCreate()
 
     view = AppModuleAndroidUtils.inflate(context, R.layout.controller_navigation_image_viewer)
-    container = view.findViewById<View>(R.id.container) as NavigationControllerContainerLayout
+    container = view.findViewById<View>(R.id.navigation_image_viewer_container) as NavigationControllerContainerLayout
 
     setToolbar(view.findViewById(R.id.toolbar))
     requireToolbar().setCallback(this)

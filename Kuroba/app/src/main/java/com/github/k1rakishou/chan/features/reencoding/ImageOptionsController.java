@@ -126,7 +126,7 @@ public class ImageOptionsController
         super.onCreate();
 
         viewHolder = view.findViewById(R.id.image_options_view_holder);
-        container = view.findViewById(R.id.container);
+        container = view.findViewById(R.id.image_options_layout_container);
         optionsHolder = view.findViewById(R.id.reencode_options_group);
         preview = view.findViewById(R.id.image_options_preview);
         fixExif = view.findViewById(R.id.image_options_fix_exif);

@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         tools:ignore="UnusedAttribute" />
 
     <com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout
-        android:id="@+id/container"
+        android:id="@+id/navigation_image_viewer_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 

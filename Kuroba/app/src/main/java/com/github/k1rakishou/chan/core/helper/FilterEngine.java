@@ -20,7 +20,6 @@ import android.text.TextUtils;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.Nullable;
-import androidx.core.text.HtmlCompat;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
@@ -233,22 +232,12 @@ public class FilterEngine {
 
     // TODO(KurobaEx): move to native lib
     @AnyThread
-    public boolean matchesNoHtmlConversion(
-            ChanFilter filter,
-            CharSequence text,
-            boolean forceCompile
-    ) {
-        return matchesInternal(filter.getPattern(), filter.getType(), text, forceCompile, false);
-    }
-
-    // TODO(KurobaEx): move to native lib
-    @AnyThread
     public boolean matches(
             ChanFilter filter,
             CharSequence text,
             boolean forceCompile
     ) {
-        return matchesInternal(filter.getPattern(), filter.getType(), text, forceCompile, true);
+        return matchesInternal(filter.getPattern(), filter.getType(), text, forceCompile);
     }
 
     // TODO(KurobaEx): move to native lib
@@ -258,7 +247,7 @@ public class FilterEngine {
             CharSequence text,
             boolean forceCompile
     ) {
-        return matchesInternal(filter.getPattern(), filter.getType(), text, forceCompile, true);
+        return matchesInternal(filter.getPattern(), filter.getType(), text, forceCompile);
     }
 
     // TODO(KurobaEx): move to native lib
@@ -267,8 +256,7 @@ public class FilterEngine {
             @Nullable String patternRaw,
             int filterType,
             CharSequence text,
-            boolean forceCompile,
-            boolean convertFromHtml
+            boolean forceCompile
     ) {
         if (TextUtils.isEmpty(text)) {
             return false;
@@ -295,13 +283,7 @@ public class FilterEngine {
         }
 
         if (pattern != null) {
-            Matcher matcher;
-
-            if (convertFromHtml) {
-                matcher = pattern.matcher(HtmlCompat.fromHtml(text.toString(), 0).toString());
-            } else {
-                matcher = pattern.matcher(text);
-            }
+            Matcher matcher = pattern.matcher(text);
 
             try {
                 return matcher.find();

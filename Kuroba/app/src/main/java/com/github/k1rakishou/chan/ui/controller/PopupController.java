@@ -52,7 +52,7 @@ public class PopupController
         view = inflate(context, R.layout.layout_controller_popup);
         FrameLayout topView = view.findViewById(R.id.top_view);
         topView.setOnClickListener(this);
-        container = view.findViewById(R.id.container);
+        container = view.findViewById(R.id.popup_controller_container);
     }
 
     public void setChildController(NavigationController childController) {
