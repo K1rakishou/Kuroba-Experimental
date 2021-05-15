@@ -410,33 +410,21 @@ object MediaUtils {
         val audioIconBitmap = AppCompatResources.getDrawable(
           context,
           R.drawable.ic_volume_up_white_24dp
-        )?.toBitmap(audioIconBitmapSize, audioIconBitmapSize)
+        )
+          ?.toBitmap(audioIconBitmapSize, audioIconBitmapSize)
           ?: return null
 
-        try {
-          result = Bitmap.createBitmap(
-            newWidth,
-            newHeight,
-            frameBitmap.config
-          )
+        result = Bitmap.createBitmap(newWidth, newHeight, frameBitmap.config)
 
-          val canvas = Canvas(result)
-          canvas.drawBitmap(frameBitmap, Matrix(), null)
+        val canvas = Canvas(result)
+        canvas.drawBitmap(frameBitmap, Matrix(), null)
 
-          canvas.drawBitmap(
-            audioIconBitmap,
-            (newWidth - audioIconBitmapSize).toFloat() / 2f,
-            (newHeight - audioIconBitmapSize).toFloat() / 2f,
-            null
-          )
-        } finally {
-          if (audioIconBitmap != null && !audioIconBitmap.isRecycled) {
-            audioIconBitmap.recycle()
-          }
-          if (frameBitmap != null && !frameBitmap.isRecycled) {
-            frameBitmap.recycle()
-          }
-        }
+        canvas.drawBitmap(
+          audioIconBitmap,
+          (newWidth - audioIconBitmapSize).toFloat() / 2f,
+          (newHeight - audioIconBitmapSize).toFloat() / 2f,
+          null
+        )
       } else {
         result = frameBitmap
       }

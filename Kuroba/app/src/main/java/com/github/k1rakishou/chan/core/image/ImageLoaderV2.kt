@@ -808,27 +808,23 @@ class ImageLoaderV2(
       addAudioIcon = true
     ).bitmap
 
+    val previewFileOnDisk = replyFile.previewFileOnDisk
+
+    if (!previewFileOnDisk.exists()) {
+      check(previewFileOnDisk.createNewFile()) {
+        "Failed to create previewFileOnDisk, path=${previewFileOnDisk.absolutePath}"
+      }
+    }
+
     try {
-      val previewFileOnDisk = replyFile.previewFileOnDisk
-
-      if (!previewFileOnDisk.exists()) {
-        check(previewFileOnDisk.createNewFile()) {
-          "Failed to create previewFileOnDisk, path=${previewFileOnDisk.absolutePath}"
+      runInterruptible {
+        FileOutputStream(previewFileOnDisk).use { fos ->
+          previewBitmap.compress(Bitmap.CompressFormat.JPEG, 95, fos)
         }
       }
-
-      try {
-        runInterruptible {
-          FileOutputStream(previewFileOnDisk).use { fos ->
-            previewBitmap.compress(Bitmap.CompressFormat.JPEG, 95, fos)
-          }
-        }
-      } catch (error: Throwable) {
-        previewFileOnDisk.delete()
-        throw error
-      }
-    } finally {
-      previewBitmap.recycleSafe()
+    } catch (error: Throwable) {
+      previewFileOnDisk.delete()
+      throw error
     }
   }
 
