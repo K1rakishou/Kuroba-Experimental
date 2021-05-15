@@ -197,7 +197,7 @@ abstract class SiteBase : Site, CoroutineScope {
       SiteSetting.SiteSettingId.LastUsedReplyMode -> lastUsedReplyMode as T
       // 4chan only
       SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard -> null
-      // 4chan only for now
+      // 4chan/2ch.hk only
       SiteSetting.SiteSettingId.UsePostParserV2 -> null
       // 2ch.hk only
       SiteSetting.SiteSettingId.DvachUserCodeCookie -> null

@@ -98,7 +98,6 @@ open class Chan4 : SiteBase() {
 
     usePostParserV2 = BooleanSetting(prefs, "use_post_parser_v2", true)
 
-
     chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
       enabled = true,
       siteSendsCorrectFileSizeInBytes = true

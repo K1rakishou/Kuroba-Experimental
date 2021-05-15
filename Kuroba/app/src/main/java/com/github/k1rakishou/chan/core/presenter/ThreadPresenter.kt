@@ -432,7 +432,6 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  @Synchronized
   fun pin(): Boolean {
     if (!isBound) {
       return false
