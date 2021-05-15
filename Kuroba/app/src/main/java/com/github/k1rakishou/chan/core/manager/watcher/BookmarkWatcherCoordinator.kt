@@ -5,17 +5,20 @@ import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.await
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.persist_state.PersistableChanState
 import io.reactivex.Flowable
-import io.reactivex.processors.PublishProcessor
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import java.util.concurrent.TimeUnit
@@ -29,33 +32,14 @@ class BookmarkWatcherCoordinator(
   private val bookmarksManager: BookmarksManager,
   private val bookmarkForegroundWatcher: BookmarkForegroundWatcher
 ) {
-  // We need this subject for events buffering
-  private val bookmarkChangeSubject = PublishProcessor.create<SimpleBookmarkChangeInfo>()
   private val running = AtomicBoolean(false)
 
   fun initialize() {
     Logger.d(TAG, "BookmarkWatcherCoordinator.initialize()")
 
     appScope.launch {
-      bookmarkChangeSubject
-        .onBackpressureLatest()
-        .buffer(150, TimeUnit.MILLISECONDS)
-        .onBackpressureLatest()
-        .filter { events -> events.isNotEmpty() }
-        .asFlow()
-        .collect { groupOfChangeInfos ->
-          bookmarksManager.awaitUntilInitialized()
-
-          val hasCreateBookmarkChange = groupOfChangeInfos
-            .any { simpleBookmarkChangeInfo -> simpleBookmarkChangeInfo.hasNewlyCreatedBookmarkChange }
-
-          onBookmarksChanged(hasCreateBookmarkChange = hasCreateBookmarkChange)
-        }
-    }
-
-    appScope.launch {
       bookmarksManager.listenForBookmarksChanges()
-        .asFlow()
+        .onEach { Logger.d(TAG, "listenForBookmarksChanges bookmarkChange=${it}") }
         // Pass the filter if we have at least one bookmark change that we actually want
         .filter { bookmarkChange -> isWantedBookmarkChange(bookmarkChange) }
         .collect { bookmarkChange ->
@@ -63,10 +47,9 @@ class BookmarkWatcherCoordinator(
             Logger.d(TAG, "Calling onBookmarksChanged() because bookmarks have actually changed")
           }
 
-          val hasCreateBookmarkChange = bookmarkChange is BookmarksManager.BookmarkChange.BookmarksCreated
-          val simpleBookmarkChangeInfo = SimpleBookmarkChangeInfo(hasCreateBookmarkChange)
-
-          bookmarkChangeSubject.onNext(simpleBookmarkChangeInfo)
+          onBookmarksChanged(
+            hasCreateBookmarkChange = bookmarkChange is BookmarksManager.BookmarkChange.BookmarksCreated
+          )
         }
     }
 
@@ -99,57 +82,71 @@ class BookmarkWatcherCoordinator(
           }
 
           restartBackgroundWork(appConstants, appContext)
-
-          val simpleBookmarkChangeInfo = SimpleBookmarkChangeInfo(
-            hasNewlyCreatedBookmarkChange = false
-          )
-
-          bookmarkChangeSubject.onNext(simpleBookmarkChangeInfo)
+          onBookmarksChanged(hasCreateBookmarkChange = false)
         }
     }
   }
 
-  @Synchronized
   private suspend fun onBookmarksChanged(hasCreateBookmarkChange: Boolean = false) {
-    if (!running.compareAndSet(false, true)) {
+    val alreadyRunning = running.compareAndSet(false, true).not()
+
+    if (verboseLogsEnabled) {
+      Logger.d(TAG, "onBookmarksChanged() start hasCreateBookmarkChange: $hasCreateBookmarkChange, alreadyRunning: $alreadyRunning")
+    }
+
+    if (alreadyRunning) {
       return
     }
 
-    try {
-      val hasActiveBookmarks = bookmarksManager.hasActiveBookmarks()
-      if (!hasActiveBookmarks) {
-        Logger.d(TAG, "onBookmarksChanged() no active bookmarks, nothing to do")
-
-        cancelForegroundBookmarkWatching()
-        cancelBackgroundBookmarkWatching(appConstants, appContext)
-        return
+    appScope.launch {
+      if (!bookmarksManager.isReady()) {
+        Logger.d(TAG, "onBookmarksChanged() bookmarksManager.awaitUntilInitialized()...")
+        bookmarksManager.awaitUntilInitialized()
+        Logger.d(TAG, "onBookmarksChanged() bookmarksManager.awaitUntilInitialized()...done")
       }
 
-      if (!ChanSettings.watchEnabled.get()) {
-        Logger.d(TAG, "onBookmarksChanged() watchEnabled is false, stopping foreground watcher")
+      try {
+        val hasActiveBookmarks = bookmarksManager.hasActiveBookmarks()
+        if (!hasActiveBookmarks) {
+          Logger.d(TAG, "onBookmarksChanged() no active bookmarks, nothing to do")
 
-        cancelForegroundBookmarkWatching()
-        cancelBackgroundBookmarkWatching(appConstants, appContext)
-        return
+          cancelForegroundBookmarkWatching()
+          cancelBackgroundBookmarkWatching(appConstants, appContext)
+          return@launch
+        }
+
+        if (!ChanSettings.watchEnabled.get()) {
+          Logger.d(TAG, "onBookmarksChanged() watchEnabled is false, stopping foreground watcher")
+
+          cancelForegroundBookmarkWatching()
+          cancelBackgroundBookmarkWatching(appConstants, appContext)
+          return@launch
+        }
+
+        if (!ChanSettings.watchBackground.get()) {
+          Logger.d(TAG, "onBookmarksChanged() watchBackground is false, stopping background watcher")
+          cancelBackgroundBookmarkWatching(appConstants, appContext)
+
+          // fallthrough because we need to update the foreground watcher
+        }
+
+        if (hasCreateBookmarkChange) {
+          Logger.d(TAG, "onBookmarksChanged() hasCreateBookmarkChange==true, restarting the foreground watcher")
+          bookmarkForegroundWatcher.restartWatching()
+          return@launch
+        }
+
+        Logger.d(TAG, "onBookmarksChanged() calling startWatchingIfNotWatchingYet()")
+        bookmarkForegroundWatcher.startWatchingIfNotWatchingYet()
+      } catch (error: CancellationException) {
+        Logger.e(TAG, "onBookmarksChanged() canceled")
+      } finally {
+        running.set(false)
+
+        if (verboseLogsEnabled) {
+          Logger.d(TAG, "onBookmarksChanged() end")
+        }
       }
-
-      if (!ChanSettings.watchBackground.get()) {
-        Logger.d(TAG, "onBookmarksChanged() watchBackground is false, stopping background watcher")
-        cancelBackgroundBookmarkWatching(appConstants, appContext)
-
-        // fallthrough because we need to update the foreground watcher
-      }
-
-      if (hasCreateBookmarkChange) {
-        Logger.d(TAG, "onBookmarksChanged() hasCreateBookmarkChange==true, restarting the foreground watcher")
-        bookmarkForegroundWatcher.restartWatching()
-        return
-      }
-
-      Logger.d(TAG, "onBookmarksChanged() calling startWatchingIfNotWatchingYet()")
-      bookmarkForegroundWatcher.startWatchingIfNotWatchingYet()
-    } finally {
-      running.set(false)
     }
   }
 
@@ -167,10 +164,6 @@ class BookmarkWatcherCoordinator(
     }
   }
 
-  private data class SimpleBookmarkChangeInfo(
-    val hasNewlyCreatedBookmarkChange: Boolean
-  )
-
   private sealed class WatchSettingChange {
     data class WatcherSettingChanged(val enabled: Boolean) : WatchSettingChange()
     data class BackgroundWatcherSettingChanged(val enabled: Boolean) : WatchSettingChange()
@@ -178,11 +171,17 @@ class BookmarkWatcherCoordinator(
   }
 
   companion object {
-    private const val TAG = "BookmarkWatcherController"
+    private const val TAG = "BookmarkWatcherCoordinator"
+    private val OLD_WORK_PRUNED = AtomicBoolean(false)
 
     suspend fun restartBackgroundWork(appConstants: AppConstants, appContext: Context) {
       val tag = appConstants.bookmarkWatchWorkUniqueTag
       Logger.d(TAG, "restartBackgroundWork() called tag=$tag")
+
+      if (!pruneBlockedBookmarkWatcherWork(appConstants, appContext)) {
+        Logger.d(TAG, "restartBackgroundWork($tag) can't continue because pruneOldWork is running")
+        return
+      }
 
       if (!ChanSettings.watchEnabled.get() || !ChanSettings.watchBackground.get()) {
         Logger.d(TAG, "restartBackgroundWork() cannot restart watcher because one of the required " +
@@ -207,7 +206,7 @@ class BookmarkWatcherCoordinator(
 
       WorkManager
         .getInstance(appContext)
-        .enqueueUniqueWork(tag, ExistingWorkPolicy.APPEND_OR_REPLACE, workRequest)
+        .enqueueUniqueWork(tag, ExistingWorkPolicy.REPLACE, workRequest)
         .result
         .await()
 
@@ -222,6 +221,11 @@ class BookmarkWatcherCoordinator(
       val tag = appConstants.bookmarkWatchWorkUniqueTag
       Logger.d(TAG, "cancelBackgroundBookmarkWatching() called tag=$tag")
 
+      if (!pruneBlockedBookmarkWatcherWork(appConstants, appContext)) {
+        Logger.d(TAG, "cancelBackgroundBookmarkWatching($tag) can't continue because pruneOldWork is running")
+        return
+      }
+
       WorkManager
         .getInstance(appContext)
         .cancelUniqueWork(tag)
@@ -229,6 +233,46 @@ class BookmarkWatcherCoordinator(
         .await()
 
       Logger.d(TAG, "cancelBackgroundBookmarkWatching() work with tag $tag canceled")
+    }
+
+    private suspend fun pruneBlockedBookmarkWatcherWork(appConstants: AppConstants, appContext: Context): Boolean {
+      if (PersistableChanState.appHack_V08X_deleteAllBlockedBookmarkWatcherWorkDone.get()) {
+        return true
+      }
+
+      if (!OLD_WORK_PRUNED.compareAndSet(false, true)) {
+        return false
+      }
+
+      val tag = appConstants.bookmarkWatchWorkUniqueTag
+      Logger.d(TAG, "pruneBlockedBookmarkWatcherWork() tag=$tag ...")
+
+      val workInfoList = WorkManager.getInstance(appContext)
+        .getWorkInfosByTag(tag)
+        .await()
+
+      workInfoList.forEachIndexed { index, workInfo ->
+        if (workInfo.state != WorkInfo.State.BLOCKED) {
+          return@forEachIndexed
+        }
+
+        Logger.d(TAG, "pruneBlockedBookmarkWatcherWork() canceling work $index out of ${workInfoList.size}")
+
+        WorkManager
+          .getInstance(appContext)
+          .cancelWorkById(workInfo.id)
+          .await()
+      }
+
+      WorkManager
+        .getInstance(appContext)
+        .pruneWork()
+        .await()
+
+      Logger.d(TAG, "pruneBlockedBookmarkWatcherWork()...done")
+
+      PersistableChanState.appHack_V08X_deleteAllBlockedBookmarkWatcherWorkDone.setSync(true)
+      return true
     }
   }
 }

@@ -28,6 +28,7 @@ import com.github.k1rakishou.model.data.options.ChanCacheOptions
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.options.ChanLoadOptions
 import com.github.k1rakishou.model.data.options.ChanReadOptions
+import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
@@ -41,7 +42,8 @@ class BrowsePresenter @Inject constructor(
   private val bookmarksManager: BookmarksManager,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
-  private val chanThreadManager: ChanThreadManager
+  private val chanThreadManager: ChanThreadManager,
+  private val chanPostRepository: ChanPostRepository
 ) {
   private var callback: Callback? = null
   private var currentOpenedBoard: BoardDescriptor? = null
@@ -102,7 +104,7 @@ class BrowsePresenter @Inject constructor(
     callback?.loadBoard(boardDescriptor)
   }
 
-  fun bookmarkEveryThread(chanDescriptor: ChanDescriptor?) {
+  suspend fun bookmarkEveryThread(chanDescriptor: ChanDescriptor?) {
     if (chanDescriptor == null) {
       Logger.e(TAG, "bookmarkEveryThread() chanDescriptor == null")
       return
@@ -122,9 +124,13 @@ class BrowsePresenter @Inject constructor(
       return
     }
 
+    val threadsToCreateInDatabase = mutableListOf<ChanDescriptor.ThreadDescriptor>()
+
     catalog.iteratePostsOrdered { chanOriginalPost ->
       val threadDescriptor = chanDescriptor.toThreadDescriptor(chanOriginalPost.postNo())
       val title = ChanPostUtils.getTitle(chanOriginalPost, threadDescriptor)
+
+      threadsToCreateInDatabase += threadDescriptor
 
       if (bookmarksManager.exists(threadDescriptor)) {
         Logger.d(TAG, "bookmarkEveryThread() bookmark for post ${title.take(50)} already exist")
@@ -138,6 +144,14 @@ class BrowsePresenter @Inject constructor(
         title = title,
         thumbnailUrl = thumbnailUrl
       )
+    }
+
+    if (threadsToCreateInDatabase.isNotEmpty()) {
+      chanPostRepository.createManyEmptyThreadsIfNotExist(threadsToCreateInDatabase)
+        .safeUnwrap { error ->
+          Logger.e(TAG, "bookmarkEveryThread() error", error)
+          return
+        }
     }
 
     bookmarksManager.createBookmarks(simpleThreadBookmarkList)

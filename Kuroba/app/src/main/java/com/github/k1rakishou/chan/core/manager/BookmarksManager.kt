@@ -19,6 +19,9 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
 import org.joda.time.DateTime
@@ -40,7 +43,7 @@ class BookmarksManager(
   private val siteRegistry: SiteRegistry
 ) {
   private val lock = ReentrantReadWriteLock()
-  private val bookmarksChangedSubject = PublishProcessor.create<BookmarkChange>()
+  private val bookmarksChangeFlow = MutableSharedFlow<BookmarkChange>(extraBufferCapacity = 128)
   private val threadIsFetchingEventsSubject = PublishProcessor.create<ChanDescriptor.ThreadDescriptor>()
 
   private val persistBookmarksExecutor = SerializedCoroutineExecutor(appScope)
@@ -105,12 +108,8 @@ class BookmarksManager(
     bookmarksChanged(BookmarkChange.BookmarksInitialized)
   }
 
-  fun listenForBookmarksChanges(): Flowable<BookmarkChange> {
-    return bookmarksChangedSubject
-      .onBackpressureBuffer()
-      .observeOn(AndroidSchedulers.mainThread())
-      .doOnError { error -> Logger.e(TAG, "listenForBookmarksChanges error", error) }
-      .hide()
+  fun listenForBookmarksChanges(): SharedFlow<BookmarkChange> {
+    return bookmarksChangeFlow.asSharedFlow()
   }
 
   fun listenForFetchEventsFromActiveThreads(): Flowable<ChanDescriptor.ThreadDescriptor> {
@@ -205,7 +204,7 @@ class BookmarksManager(
     }
 
     persistBookmarksInternal()
-    bookmarksChangedSubject.onNext(BookmarkChange.BookmarksCreated(actuallyCreated))
+    bookmarksChangeFlow.emit(BookmarkChange.BookmarksCreated(actuallyCreated))
 
     Logger.d(TAG, "Bookmarks created (${actuallyCreated.size})")
     return true
@@ -331,7 +330,7 @@ class BookmarksManager(
     }
 
     if (updatedBookmarks.isNotEmpty()) {
-      bookmarksChangedSubject.onNext(BookmarkChange.BookmarksUpdated(updatedBookmarks))
+      bookmarksChangeFlow.tryEmit(BookmarkChange.BookmarksUpdated(updatedBookmarks))
     }
 
     return updatedBookmarks
@@ -371,8 +370,13 @@ class BookmarksManager(
       bookmarks.clear()
     }
 
-    if (allBookmarksDescriptors.isNotEmpty()) {
-      bookmarksChanged(BookmarkChange.BookmarksDeleted(allBookmarksDescriptors))
+    persistBookmarksExecutor.post {
+      bookmarksRepository.deleteAll().safeUnwrap { error ->
+        Logger.e(TAG, "deleteAllBookmarks() bookmarksRepository.deleteAll() error", error)
+        return@post
+      }
+
+      bookmarksChangeFlow.emit(BookmarkChange.BookmarksDeleted(allBookmarksDescriptors))
     }
   }
 
@@ -575,7 +579,7 @@ class BookmarksManager(
           eager = false,
           onBookmarksPersisted = {
             val bookmarkChange = BookmarkChange.BookmarksUpdated(listOf(threadDescriptor))
-            bookmarksChangedSubject.onNext(bookmarkChange)
+            bookmarksChangeFlow.emit(bookmarkChange)
           })
       }
     )
@@ -599,7 +603,7 @@ class BookmarksManager(
     Logger.d(TAG, "persistBookmarksManually() persistBookmarksInternal finished")
 
     val bookmarkChange = BookmarkChange.BookmarksUpdated(threadDescriptors)
-    bookmarksChangedSubject.onNext(bookmarkChange)
+    bookmarksChangeFlow.emit(bookmarkChange)
   }
 
   private fun bookmarksChanged(bookmarkChange: BookmarkChange) {
@@ -620,7 +624,9 @@ class BookmarksManager(
       eager = false,
       onBookmarksPersisted = {
         // Only notify the listeners about bookmark updates AFTER we have persisted them
-        bookmarksChangedSubject.onNext(bookmarkChange)
+        bookmarksChangeFlow.emit(bookmarkChange)
+
+        Logger.d(TAG, "subscriptions=${bookmarksChangeFlow.subscriptionCount.value}")
       }
     )
   }
@@ -637,7 +643,7 @@ class BookmarksManager(
 
   private fun persistBookmarks(
     eager: Boolean = false,
-    onBookmarksPersisted: (() -> Unit)? = null
+    onBookmarksPersisted: (suspend () -> Unit)? = null
   ) {
     if (!isReady()) {
       return

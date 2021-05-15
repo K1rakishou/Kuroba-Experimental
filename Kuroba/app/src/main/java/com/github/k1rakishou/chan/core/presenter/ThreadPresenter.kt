@@ -54,7 +54,6 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.HeaderFloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -217,11 +216,13 @@ class ThreadPresenter @Inject constructor(
       bookmarksManager.setCurrentOpenThreadDescriptor(chanDescriptor)
     }
 
-    compositeDisposable += onDemandContentLoaderManager.listenPostContentUpdates()
-      .subscribe(
-        { batchResult -> onPostUpdatedWithNewContent(batchResult) },
-        { error -> Logger.e(TAG, "Post content updates error", error) }
-      )
+    compositeDisposable.add(
+      onDemandContentLoaderManager.listenPostContentUpdates()
+        .subscribe(
+          { batchResult -> onPostUpdatedWithNewContent(batchResult) },
+          { error -> Logger.e(TAG, "Post content updates error", error) }
+        )
+    )
 
     Logger.d(TAG, "chanThreadTicker.startTicker($chanDescriptor)")
     chanThreadTicker.startTicker(chanDescriptor)
@@ -429,23 +430,28 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  @Synchronized
-  fun pin(): Boolean {
-    if (!isBound) {
-      return false
-    }
+  suspend fun pin(): Boolean {
+    val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
+      ?: return false
 
     if (!bookmarksManager.isReady()) {
       return false
     }
 
-    val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
-      ?: return false
-
     if (bookmarksManager.exists(threadDescriptor)) {
       bookmarksManager.deleteBookmark(threadDescriptor)
       return true
     }
+
+    if (!isBound) {
+      return false
+    }
+
+    chanPostRepository.createEmptyThreadIfNotExists(threadDescriptor)
+      .safeUnwrap { error ->
+        Logger.e(TAG, "createEmptyThreadIfNotExists($threadDescriptor) error", error)
+        return false
+      }
 
     val op = chanThreadManager.getChanThread(threadDescriptor)?.getOriginalPost()
     if (op != null) {
@@ -1157,15 +1163,21 @@ class ThreadPresenter @Inject constructor(
         POST_OPTION_DELETE -> requestDeletePost(post)
         POST_OPTION_SAVE -> saveUnsavePost(post)
         POST_OPTION_BOOKMARK -> {
-          val descriptor = currentChanDescriptor
+          val threadDescriptor = currentChanDescriptor?.toThreadDescriptor(post.postNo())
             ?: return@post
 
           if (!post.postDescriptor.isOP()) {
             return@post
           }
 
+          chanPostRepository.createEmptyThreadIfNotExists(threadDescriptor)
+            .safeUnwrap { error ->
+              Logger.e(TAG, "createEmptyThreadIfNotExists($threadDescriptor) error", error)
+              return@post
+            }
+
           bookmarksManager.createBookmark(
-            descriptor.toThreadDescriptor(post.postNo()),
+            threadDescriptor,
             ChanPostUtils.getTitle(post as ChanOriginalPost, currentChanDescriptor),
             post.firstImage()?.actualThumbnailUrl
           )

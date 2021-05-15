@@ -29,7 +29,6 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.postToEventBus
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
-import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.exhaustive
 import kotlinx.coroutines.FlowPreview
 import javax.inject.Inject
@@ -82,8 +81,10 @@ class MainSettingsControllerV2(
     settingsCoordinator = SettingsCoordinator(context, requireNavController(), drawerCallbacks)
     settingsCoordinator.onCreate()
 
-    compositeDisposable += settingsCoordinator.listenForRenderScreenActions()
-      .subscribe { renderAction -> renderScreen(renderAction) }
+    compositeDisposable.add(
+      settingsCoordinator.listenForRenderScreenActions()
+        .subscribe { renderAction -> renderScreen(renderAction) }
+    )
 
     settingsCoordinator.rebuildScreen(
       screenIdentifier = defaultScreen,

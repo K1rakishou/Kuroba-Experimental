@@ -23,7 +23,6 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
-import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -68,8 +67,10 @@ class SearchResultsController(
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
     epoxyRecyclerView.descendantFocusability = ViewGroup.FOCUS_BEFORE_DESCENDANTS
 
-    compositeDisposable += presenter.listenForStateChanges()
-      .subscribe { state -> onStateChanged(state) }
+    compositeDisposable.add(
+      presenter.listenForStateChanges()
+        .subscribe { state -> onStateChanged(state) }
+    )
 
     presenter.onCreate(this)
   }

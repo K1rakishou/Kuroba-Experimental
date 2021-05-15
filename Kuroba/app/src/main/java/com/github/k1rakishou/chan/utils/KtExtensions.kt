@@ -20,16 +20,10 @@ import com.github.k1rakishou.chan.activity.SharingActivity
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.core_logger.Logger
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.disposables.Disposable
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
 private val TAG = "KotlinExts"
-
-operator fun CompositeDisposable.plusAssign(disposable: Disposable) {
-  this.add(disposable)
-}
 
 fun removeExtensionIfPresent(filename: String): String {
   val index = filename.lastIndexOf('.')

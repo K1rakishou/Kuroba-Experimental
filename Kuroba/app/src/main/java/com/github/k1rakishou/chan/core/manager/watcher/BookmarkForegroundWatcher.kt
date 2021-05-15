@@ -23,7 +23,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.withContext
-import java.util.concurrent.atomic.AtomicBoolean
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BookmarkForegroundWatcher(
@@ -37,7 +36,6 @@ class BookmarkForegroundWatcher(
   private val applicationVisibilityManager: ApplicationVisibilityManager
 ) {
   private val channel = Channel<Unit>(Channel.RENDEZVOUS)
-  private val working = AtomicBoolean(false)
 
   @Volatile
   private var workJob: Job? = null
@@ -45,21 +43,22 @@ class BookmarkForegroundWatcher(
   init {
     appScope.launch {
       channel.consumeEach {
-        if (working.compareAndSet(false, true)) {
-          Logger.d(TAG, "working == true, calling updateBookmarksWorkerLoop()")
+        if (workJob != null) {
+          return@consumeEach
+        }
 
-          workJob = appScope.launch(Dispatchers.Default) {
-            try {
-              updateBookmarksWorkerLoop()
-            } catch (error: Throwable) {
-              if (error is CancellationException) {
-                Logger.d(TAG, "updateBookmarksWorkerLoop() canceled, exiting")
-              }
-
-              logErrorIfNeeded(error)
-            } finally {
-              working.set(false)
+        workJob = appScope.launch(Dispatchers.Default) {
+          try {
+            Logger.d(TAG, "working == true, calling updateBookmarksWorkerLoop()")
+            updateBookmarksWorkerLoop()
+          } catch (error: Throwable) {
+            if (error is CancellationException) {
+              Logger.d(TAG, "updateBookmarksWorkerLoop() canceled, exiting")
             }
+
+            logErrorIfNeeded(error)
+          } finally {
+            workJob = null
           }
         }
       }
@@ -76,9 +75,8 @@ class BookmarkForegroundWatcher(
     }
   }
 
-  @Synchronized
-  fun startWatchingIfNotWatchingYet() {
-    channel.offer(Unit)
+  suspend fun startWatchingIfNotWatchingYet() {
+    channel.send(Unit)
   }
 
   @Synchronized
@@ -87,8 +85,7 @@ class BookmarkForegroundWatcher(
     workJob = null
   }
 
-  @Synchronized
-  fun restartWatching() {
+  suspend fun restartWatching() {
     Logger.d(TAG, "restartWatching() called")
 
     stopWatching()
@@ -151,17 +148,18 @@ class BookmarkForegroundWatcher(
       bookmarksManager.awaitUntilInitialized()
 
       if (!applicationVisibilityManager.isAppInForeground()) {
-        Logger.d(TAG, "updateBookmarksWorkerLoop() isAppInForeground is false")
+        Logger.d(TAG, "updateBookmarksWorkerLoop() isAppInForeground is false, exiting")
         return
       }
 
       if (!ChanSettings.watchEnabled.get()) {
-        Logger.d(TAG, "updateBookmarksWorkerLoop() ChanSettings.watchEnabled() is false")
+        Logger.d(TAG, "updateBookmarksWorkerLoop() ChanSettings.watchEnabled() is false, exiting")
         return
       }
 
       val hasActiveBookmarks = bookmarksManager.hasActiveBookmarks()
       if (!hasActiveBookmarks) {
+        Logger.d(TAG, "updateBookmarksWorkerLoop() no active bookmarks left, exiting")
         return
       }
 

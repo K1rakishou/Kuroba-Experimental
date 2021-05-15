@@ -119,10 +119,16 @@ abstract class ThreadBookmarkDao {
     FROM ${ThreadBookmarkEntity.TABLE_NAME} 
     WHERE ${ThreadBookmarkEntity.THREAD_BOOKMARK_ID_COLUMN_NAME} IN (:threadBookmarkIdSet)
 """)
-  abstract suspend fun deleteMany(threadBookmarkIdSet: Set<Long>)
+  abstract suspend fun deleteMany(threadBookmarkIdSet: Collection<Long>)
+
+  @Query("DELETE FROM ${ThreadBookmarkEntity.TABLE_NAME}")
+  abstract suspend fun deleteAll()
 
   private suspend fun selectManyIds(ownerThreadIds: Collection<Long>): Map<Long, Long> {
-    val pairs = selectManyThreadBookmarkIdPairs(ownerThreadIds)
+    val pairs = ownerThreadIds
+      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .flatMap { batch -> selectManyThreadBookmarkIdPairs(batch) }
+
     if (pairs.isEmpty()) {
       return emptyMap()
     }

@@ -28,7 +28,6 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
-import com.github.k1rakishou.chan.utils.plusAssign
 import javax.inject.Inject
 
 class SitesSetupController(context: Context) : Controller(context), SitesSetupView {
@@ -128,8 +127,10 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
     itemTouchHelper = ItemTouchHelper(touchHelperCallback)
     itemTouchHelper.attachToRecyclerView(epoxyRecyclerView)
 
-    compositeDisposable += sitesPresenter.listenForStateChanges()
-      .subscribe { state -> onStateChanged(state) }
+    compositeDisposable.add(
+      sitesPresenter.listenForStateChanges()
+        .subscribe { state -> onStateChanged(state) }
+    )
 
     sitesPresenter.onCreate(this)
   }

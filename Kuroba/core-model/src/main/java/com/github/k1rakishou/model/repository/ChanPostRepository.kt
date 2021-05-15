@@ -118,6 +118,28 @@ class ChanPostRepository(
     }
   }
 
+  suspend fun createManyEmptyThreadsIfNotExist(
+    threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
+  ): ModularResult<Unit> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        threadDescriptors.forEach { threadDescriptor ->
+          val threadDatabaseIdFromCache = chanDescriptorCache.getThreadIdByThreadDescriptorFromCache(threadDescriptor)?.id
+          if (threadDatabaseIdFromCache != null) {
+            return@forEach
+          }
+
+          val createdThreadDatabaseId = localSource.insertEmptyThread(threadDescriptor) ?: -1L
+          if (createdThreadDatabaseId >= 0L) {
+            chanDescriptorCache.putThreadDescriptor(ThreadDBId(createdThreadDatabaseId), threadDescriptor)
+          }
+        }
+      }
+    }
+  }
+
   suspend fun createEmptyThreadIfNotExists(descriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Boolean> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 

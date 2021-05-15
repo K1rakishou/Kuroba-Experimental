@@ -31,7 +31,6 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
-import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -159,8 +158,10 @@ class BoardsSetupController(
       navigationController!!.presentController(controller)
     }
 
-    compositeDisposable += presenter.listenForStateChanges()
-      .subscribe { state -> onStateChanged(state) }
+    compositeDisposable.add(
+      presenter.listenForStateChanges()
+        .subscribe { state -> onStateChanged(state) }
+    )
 
     presenter.onCreate(this)
     presenter.updateBoardsFromServerAndDisplayActive()

@@ -111,12 +111,23 @@ class ThreadBookmarkLocalSource(
       "deleted ${toDelete.size} bookmarks")
   }
 
+  suspend fun deleteAll() {
+    ensureInTransaction()
+
+    threadBookmarkDao.deleteAll()
+    threadBookmarkCache.clear()
+    chanDescriptorCache.deleteAllBookmarkIds()
+  }
+
   private suspend fun deleteBookmarks(toDelete: List<ChanDescriptor.ThreadDescriptor>) {
     val threadBookmarkIdSet = chanDescriptorCache.getManyThreadBookmarkIds(
       toDelete
     ).map { (_, threadBookmarkId) -> threadBookmarkId.id }.toSet()
 
-    threadBookmarkDao.deleteMany(threadBookmarkIdSet)
+    threadBookmarkIdSet
+      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .forEach { batch -> threadBookmarkDao.deleteMany(batch) }
+
     threadBookmarkCache.deleteMany(toDelete)
     chanDescriptorCache.deleteManyBookmarkIds(toDelete)
   }
@@ -174,7 +185,9 @@ class ThreadBookmarkLocalSource(
     )
 
     cacheNewBookmarkDatabaseIds(toInsertOrUpdateInDatabase, toInsertOrUpdateThreadBookmarkEntities)
-    Logger.d(TAG, "persist() inserted/updated ${toInsertOrUpdateBookmarkReplyEntities.size} replies")
+
+    Logger.d(TAG, "persist() toInsertOrUpdateBookmarkReplyEntities: ${toInsertOrUpdateBookmarkReplyEntities.size}, " +
+      "toInsertOrUpdateThreadBookmarkEntities: ${toInsertOrUpdateThreadBookmarkEntities.size}")
   }
 
   private fun retainDeletedBookmarks(

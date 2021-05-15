@@ -5,6 +5,7 @@ import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.await
 import com.github.k1rakishou.ChanSettings
@@ -12,11 +13,13 @@ import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 class FilterWatcherCoordinator(
   private val verboseLogs: Boolean,
@@ -117,6 +120,7 @@ class FilterWatcherCoordinator(
 
   companion object {
     private const val TAG = "FilterWatcherCoordinator"
+    private val OLD_WORK_PRUNED = AtomicBoolean(false)
 
     suspend fun startFilterWatchingRightAway(
       appConstants: AppConstants,
@@ -124,6 +128,11 @@ class FilterWatcherCoordinator(
     ) {
       val tag = appConstants.filterWatchWorkUniqueTag
       Logger.d(TAG, "startFilterWatchingRightAway() called tag=$tag")
+
+      if (!pruneBlockedFilterWatcherWork(appConstants, appContext)) {
+        Logger.d(TAG, "restartBackgroundWork($tag) can't continue because pruneOldWork is running")
+        return
+      }
 
       if (!ChanSettings.filterWatchEnabled.get()) {
         Logger.d(TAG, "startFilterWatchingRightAway() cannot restart filter watcher because the " +
@@ -146,7 +155,7 @@ class FilterWatcherCoordinator(
 
       WorkManager
         .getInstance(appContext)
-        .enqueueUniqueWork(tag, ExistingWorkPolicy.APPEND_OR_REPLACE, workRequest)
+        .enqueueUniqueWork(tag, ExistingWorkPolicy.REPLACE, workRequest)
         .result
         .await()
 
@@ -160,6 +169,11 @@ class FilterWatcherCoordinator(
     ) {
       val tag = appConstants.filterWatchWorkUniqueTag
       Logger.d(TAG, "startFilterWatching() called tag=$tag, replaceExisting=$replaceExisting")
+
+      if (!pruneBlockedFilterWatcherWork(appConstants, appContext)) {
+        Logger.d(TAG, "startFilterWatching($tag) can't continue because pruneOldWork is running")
+        return
+      }
 
       if (!ChanSettings.filterWatchEnabled.get()) {
         Logger.d(TAG, "startFilterWatching() cannot restart filter watcher because the " +
@@ -183,7 +197,7 @@ class FilterWatcherCoordinator(
 
       WorkManager
         .getInstance(appContext)
-        .enqueueUniqueWork(tag, ExistingWorkPolicy.APPEND_OR_REPLACE, workRequest)
+        .enqueueUniqueWork(tag, ExistingWorkPolicy.REPLACE, workRequest)
         .result
         .await()
 
@@ -200,6 +214,11 @@ class FilterWatcherCoordinator(
       val tag = appConstants.filterWatchWorkUniqueTag
       Logger.d(TAG, "cancelFilterWatching() called tag=$tag")
 
+      if (!pruneBlockedFilterWatcherWork(appConstants, appContext)) {
+        Logger.d(TAG, "cancelFilterWatching($tag) can't continue because pruneOldWork is running")
+        return
+      }
+
       WorkManager
         .getInstance(appContext)
         .cancelUniqueWork(tag)
@@ -207,6 +226,46 @@ class FilterWatcherCoordinator(
         .await()
 
       Logger.d(TAG, "cancelFilterWatching() work with tag $tag canceled")
+    }
+
+    private suspend fun pruneBlockedFilterWatcherWork(appConstants: AppConstants, appContext: Context): Boolean {
+      if (PersistableChanState.appHack_V08X_deleteAllBlockedFilterWatcherWorkDone.get()) {
+        return true
+      }
+
+      if (!OLD_WORK_PRUNED.compareAndSet(false, true)) {
+        return false
+      }
+
+      val tag = appConstants.filterWatchWorkUniqueTag
+      Logger.d(TAG, "pruneBlockedFilterWatcherWork() tag=$tag ...")
+
+      val workInfoList = WorkManager.getInstance(appContext)
+        .getWorkInfosByTag(tag)
+        .await()
+
+      workInfoList.forEachIndexed { index, workInfo ->
+        if (workInfo.state != WorkInfo.State.BLOCKED) {
+          return@forEachIndexed
+        }
+
+        Logger.d(TAG, "pruneBlockedFilterWatcherWork() canceling work $index out of ${workInfoList.size}")
+
+        WorkManager
+          .getInstance(appContext)
+          .cancelWorkById(workInfo.id)
+          .await()
+      }
+
+      WorkManager
+        .getInstance(appContext)
+        .pruneWork()
+        .await()
+
+      Logger.d(TAG, "pruneBlockedFilterWatcherWork()...done")
+
+      PersistableChanState.appHack_V08X_deleteAllBlockedFilterWatcherWorkDone.setSync(true)
+      return true
     }
   }
 

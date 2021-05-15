@@ -46,7 +46,11 @@ class BookmarkWatcherDelegate(
     updateCurrentlyOpenedThread: Boolean,
   ) {
     BackgroundUtils.ensureBackgroundThread()
-    val currentThreadDescriptor = bookmarksManager.currentlyOpenedThread()
+
+    if (verboseLogsEnabled) {
+      Logger.d(TAG, "BookmarkWatcherDelegate.doWork(isCalledFromForeground: $isCalledFromForeground, " +
+        "updateCurrentlyOpenedThread: $updateCurrentlyOpenedThread)")
+    }
 
     if (isDevFlavor) {
       if (isCalledFromForeground) {
@@ -58,9 +62,9 @@ class BookmarkWatcherDelegate(
 
     val result = Try {
       return@Try doWorkInternal(
-        isCalledFromForeground,
-        updateCurrentlyOpenedThread,
-        currentThreadDescriptor
+        isCalledFromForeground = isCalledFromForeground,
+        updateCurrentlyOpenedThread = updateCurrentlyOpenedThread,
+        currentThreadDescriptor = bookmarksManager.currentlyOpenedThread()
       )
     }
 
@@ -385,8 +389,12 @@ class BookmarkWatcherDelegate(
 
   @OptIn(ExperimentalTime::class)
   private suspend fun awaitUntilAllDependenciesAreReady() {
+    Logger.d(TAG, "awaitUntilAllDependenciesAreReady()...")
+
     bookmarksManager.awaitUntilInitialized()
     siteManager.awaitUntilInitialized()
+
+    Logger.d(TAG, "awaitUntilAllDependenciesAreReady()...done")
   }
 
   private fun printDebugLogs(threadBookmarkFetchResults: List<ThreadBookmarkFetchResult>) {

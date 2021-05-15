@@ -4,7 +4,6 @@ import android.content.Context
 import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.features.settings.SettingsIdentifier
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
-import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.prefs.BooleanSetting
 
@@ -52,17 +51,19 @@ class BooleanSettingV2 : SettingV2() {
   private fun subscribeToChanges(dependsOnSetting: BooleanSetting) {
     this.dependsOnSetting = dependsOnSetting
 
-    compositeDisposable += this.dependsOnSetting!!.listenForChanges()
-      .subscribe({ isChecked ->
-        if (!isChecked) {
-          this.setting?.set(false)
-          this.isChecked = false
+    compositeDisposable.add(
+      this.dependsOnSetting!!.listenForChanges()
+        .subscribe({ isChecked ->
+          if (!isChecked) {
+            this.setting?.set(false)
+            this.isChecked = false
 
-          onCheckedChanged(false)
-        }
-      }, { error ->
-        Logger.e("BooleanSettingV2", "Error while listening for dependsOnSetting changes", error)
-      })
+            onCheckedChanged(false)
+          }
+        }, { error ->
+          Logger.e("BooleanSettingV2", "Error while listening for dependsOnSetting changes", error)
+        })
+    )
   }
 
   private fun onCheckedChanged(isChecked: Boolean) {

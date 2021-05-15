@@ -44,7 +44,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink
 import com.github.k1rakishou.chan.utils.SharingUtils.getUrlForSharing
-import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -53,11 +52,14 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescript
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.options.ChanLoadOptions
 import com.github.k1rakishou.model.util.ChanPostUtils
-import io.reactivex.android.schedulers.AndroidSchedulers
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlin.time.ExperimentalTime
+import kotlin.time.milliseconds
 
 open class ViewThreadController(
   context: Context,
@@ -83,6 +85,7 @@ open class ViewThreadController(
     component.inject(this)
   }
 
+  @OptIn(ExperimentalTime::class)
   override fun onCreate() {
     super.onCreate()
 
@@ -93,16 +96,12 @@ open class ViewThreadController(
 
     buildMenu()
 
-    compositeDisposable += bookmarksManager.listenForBookmarksChanges()
-      .filter { bookmarkChange: BookmarkChange? -> bookmarkChange !is BookmarksInitialized }
-      .onBackpressureLatest()
-      .debounce(350, TimeUnit.MILLISECONDS)
-      .onBackpressureLatest()
-      .observeOn(AndroidSchedulers.mainThread())
-      .subscribe(
-        { bookmarkChange -> updatePinIconStateIfNeeded(bookmarkChange) },
-        { error -> Logger.e(TAG, "Error while listening for bookmarks changes", error) }
-      )
+    mainScope.launch {
+      bookmarksManager.listenForBookmarksChanges()
+        .filter { bookmarkChange: BookmarkChange? -> bookmarkChange !is BookmarksInitialized }
+        .debounce(350.milliseconds)
+        .collect { bookmarkChange -> updatePinIconStateIfNeeded(bookmarkChange) }
+    }
 
     mainScope.launch(Dispatchers.Main.immediate) { loadThread(threadDescriptor) }
   }
@@ -257,8 +256,10 @@ open class ViewThreadController(
   }
 
   private fun pinClicked(item: ToolbarMenuItem) {
-    if (threadLayout.presenter.pin()) {
-      setPinIconState(true)
+    mainScope.launch {
+      if (threadLayout.presenter.pin()) {
+        setPinIconState(true)
+      }
     }
   }
 

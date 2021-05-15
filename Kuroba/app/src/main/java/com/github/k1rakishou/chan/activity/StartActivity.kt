@@ -70,7 +70,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.FullScreenUtils
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupFullscreen
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
-import com.github.k1rakishou.chan.utils.plusAssign
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.updateMargins
@@ -293,11 +292,15 @@ class StartActivity : AppCompatActivity(),
     }
 
     if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
-      compositeDisposable += bottomNavBarVisibilityStateManager.listenForViewsStateUpdates()
-        .subscribe { updateBottomNavBar() }
+      compositeDisposable.add(
+        bottomNavBarVisibilityStateManager.listenForViewsStateUpdates()
+          .subscribe { updateBottomNavBar() }
+      )
 
-      compositeDisposable += controllerNavigationManager.listenForControllerNavigationChanges()
-        .subscribe { change -> updateBottomNavBarIfNeeded(change) }
+      compositeDisposable.add(
+        controllerNavigationManager.listenForControllerNavigationChanges()
+          .subscribe { change -> updateBottomNavBarIfNeeded(change) }
+      )
     }
   }
 

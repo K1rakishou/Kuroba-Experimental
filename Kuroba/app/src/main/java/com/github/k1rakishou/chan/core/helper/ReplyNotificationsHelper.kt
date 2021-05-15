@@ -51,7 +51,6 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -81,7 +80,6 @@ class ReplyNotificationsHelper(
       bookmarksManager.awaitUntilInitialized()
 
       bookmarksManager.listenForBookmarksChanges()
-        .asFlow()
         .filter { bookmarkChange ->
           return@filter bookmarkChange is BookmarksManager.BookmarkChange.BookmarksUpdated
             || bookmarkChange is BookmarksManager.BookmarkChange.BookmarksInitialized
