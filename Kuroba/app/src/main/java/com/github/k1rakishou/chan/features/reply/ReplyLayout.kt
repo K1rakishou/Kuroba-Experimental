@@ -790,23 +790,28 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   override fun onClick(v: View) {
-    debouncingCoroutineExecutor.post(250L) {
-      when {
-        v === more -> presenter.onMoreClicked()
-        v === captchaView -> presenter.onAuthenticateClicked()
-        v === submit -> presenter.onSubmitClicked(longClicked = false)
-        v === commentQuoteButton -> insertQuote()
-        v === commentSpoilerButton -> insertTags("[spoiler]", "[/spoiler]")
-        v === commentCodeButton -> insertTags("[code]", "[/code]")
-        v === commentEqnButton -> insertTags("[eqn]", "[/eqn]")
-        v === commentMathButton -> insertTags("[math]", "[/math]")
-        v === commentSJISButton -> insertTags("[sjis]", "[/sjis]")
-        v === commentRevertChangeButton -> presenter.onRevertChangeButtonClicked()
-        v === flag -> showFlagSelector(chanDescriptor)
+    if (v === commentRevertChangeButton) {
+      debouncingCoroutineExecutor.post(16) {
+        presenter.onRevertChangeButtonClicked()
       }
+    } else {
+      debouncingCoroutineExecutor.post(250L) {
+        when {
+          v === more -> presenter.onMoreClicked()
+          v === captchaView -> presenter.onAuthenticateClicked()
+          v === submit -> presenter.onSubmitClicked(longClicked = false)
+          v === commentQuoteButton -> insertQuote()
+          v === commentSpoilerButton -> insertTags("[spoiler]", "[/spoiler]")
+          v === commentCodeButton -> insertTags("[code]", "[/code]")
+          v === commentEqnButton -> insertTags("[eqn]", "[/eqn]")
+          v === commentMathButton -> insertTags("[math]", "[/math]")
+          v === commentSJISButton -> insertTags("[sjis]", "[/sjis]")
+          v === flag -> showFlagSelector(chanDescriptor)
+        }
 
-      if (v === captchaView || v === submit) {
-        Selection.removeSelection(comment.text)
+        if (v === captchaView || v === submit) {
+          Selection.removeSelection(comment.text)
+        }
       }
     }
   }

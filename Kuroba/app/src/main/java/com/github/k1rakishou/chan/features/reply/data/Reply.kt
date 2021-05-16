@@ -18,6 +18,7 @@ package com.github.k1rakishou.chan.features.reply.data
 
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import java.util.*
@@ -177,10 +178,12 @@ class Reply(
   fun handleQuote(selectStart: Int, postNo: Long, textQuote: String?): Int {
     val stringBuilder = StringBuilder()
     val comment = basicReplyInfo.comment
+    val selectionStart = selectStart.coerceAtLeast(0)
 
-    if (selectStart - 1 >= 0
-      && selectStart - 1 < comment.length
-      && comment[selectStart - 1] != '\n'
+    if (selectionStart - 1 >= 0
+      && comment.isNotEmpty()
+      && selectionStart - 1 < comment.length
+      && comment[selectionStart - 1] != '\n'
     ) {
       stringBuilder
         .append('\n')
@@ -191,7 +194,7 @@ class Reply(
       .append(postNo)
       .append("\n")
 
-    if (textQuote != null) {
+    if (textQuote.isNotNullNorEmpty()) {
       val lines = textQuote.split("\n").toTypedArray()
       for (line in lines) {
         // do not include post no from quoted post
@@ -211,7 +214,7 @@ class Reply(
     }
 
     basicReplyInfo.comment = StringBuilder(basicReplyInfo.comment)
-      .insert(selectStart, stringBuilder)
+      .insert(selectionStart, stringBuilder)
       .toString()
 
     return stringBuilder.length
