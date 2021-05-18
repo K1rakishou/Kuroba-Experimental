@@ -26,7 +26,6 @@ object ChanPostUtils {
     DateFormat.MEDIUM,
     Locale.ENGLISH
   )
-  private val tmpDate = Date()
 
   @JvmStatic
   @SuppressLint("DefaultLocale")
@@ -127,6 +126,7 @@ object ChanPostUtils {
   }
 
   fun getLocalDate(post: ChanPost): String {
+    val tmpDate = Date()
     tmpDate.time = post.timestamp * 1000L
     return dateFormat.format(tmpDate)
   }

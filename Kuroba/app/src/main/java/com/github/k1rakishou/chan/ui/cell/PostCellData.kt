@@ -13,6 +13,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.SpannableHelper
 import com.github.k1rakishou.common.MurmurHashUtils
+import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.ellipsizeEnd
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed
@@ -190,7 +191,11 @@ data class PostCellData(
 
   private fun calculatePostTitle(): CharSequence {
     if (stub) {
-      return calculatePostTitleForPostStub()
+      if (!TextUtils.isEmpty(post.subject)) {
+        return post.subject!!
+      }
+
+      return getPostStubTitle()
     }
 
     val titleParts: MutableList<CharSequence> = ArrayList(5)
@@ -233,14 +238,6 @@ data class PostCellData(
     return TextUtils.concat(*titleParts.toTypedArray())
   }
 
-  private fun calculatePostTitleForPostStub(): CharSequence {
-    if (!TextUtils.isEmpty(post.subject)) {
-      return post.subject!!
-    } else {
-      return getPostStubTitle()
-    }
-  }
-
   private fun getPostStubTitle(): CharSequence {
     val titleText = post.postComment.comment()
 
@@ -269,16 +266,14 @@ data class PostCellData(
   }
 
   private fun calculatePostTime(post: ChanPost): CharSequence {
-    if (ChanSettings.postFullDate.get()) {
-      return ChanPostUtils.getLocalDate(post)
+    val postTime = if (ChanSettings.postFullDate.get()) {
+      ChanPostUtils.getLocalDate(post)
+    } else {
+      DateUtils.getRelativeTimeSpanString(post.timestamp * 1000L, System.currentTimeMillis(), DateUtils.SECOND_IN_MILLIS, 0)
+        .toString()
     }
 
-    return DateUtils.getRelativeTimeSpanString(
-      post.timestamp * 1000L,
-      System.currentTimeMillis(),
-      DateUtils.SECOND_IN_MILLIS,
-      0
-    )
+    return postTime.replace(' ', StringUtils.UNBREAKABLE_SPACE_SYMBOL)
   }
 
   private fun calculateCommentText(): CharSequence {

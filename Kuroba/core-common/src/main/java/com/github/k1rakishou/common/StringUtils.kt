@@ -9,7 +9,8 @@ object StringUtils {
   private const val RESERVED_CHARACTERS = "|?*<\":>+\\[\\]/'\\\\\\s"
   private const val RESERVED_CHARACTERS_DIR = "[" + RESERVED_CHARACTERS + "." + "]"
   private const val RESERVED_CHARACTERS_FILE = "[" + RESERVED_CHARACTERS + "]"
-  private const val UTF8_BOM = "\uFEFF"
+  private const val UTF8_BOM = '\uFEFF'
+  const val UNBREAKABLE_SPACE_SYMBOL = '\u00A0'
 
   fun bytesToHex(bytes: ByteArray): String {
     val result = CharArray(bytes.size * 2)
