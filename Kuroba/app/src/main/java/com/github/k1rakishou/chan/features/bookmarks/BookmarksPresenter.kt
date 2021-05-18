@@ -28,7 +28,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
@@ -60,8 +59,6 @@ class BookmarksPresenter(
     scope.launch {
       scope.launch {
         bookmarksManager.listenForBookmarksChanges()
-          .onBackpressureLatest()
-          .asFlow()
           .debounce(100.milliseconds)
           .collect {
             withContext(Dispatchers.Default) {

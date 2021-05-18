@@ -281,12 +281,12 @@ class BookmarksController(
     }
 
     swipeRefreshLayout.setOnRefreshListener {
-      bookmarkForegroundWatcher.restartWatching()
-
       // The process of reloading bookmarks may not notify us about the results when none of the
       // bookmarks were changed during the update so we need to have this timeout mechanism in
       // such case.
       mainScope.launch {
+        bookmarkForegroundWatcher.restartWatching()
+
         delay(10_000)
         swipeRefreshLayout.isRefreshing = false
       }

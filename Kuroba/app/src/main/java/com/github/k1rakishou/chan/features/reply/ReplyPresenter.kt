@@ -340,7 +340,7 @@ class ReplyPresenter @Inject constructor(
           )
         }
         is CaptchaContainerController.AuthenticationResult.Success -> {
-          Logger.e(TAG, "CaptchaContainerController success")
+          Logger.d(TAG, "CaptchaContainerController success")
 
           if (autoReply) {
             makeSubmitCall(chanDescriptor = chanDescriptor, replyMode = replyMode)

@@ -35,6 +35,14 @@ class BookmarksRepository(
     }
   }
 
+  suspend fun deleteAll(): ModularResult<Unit> {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        localSource.deleteAll()
+      }
+    }
+  }
+
   @OptIn(ExperimentalTime::class)
   suspend fun persist(bookmarks: List<ThreadBookmark>): ModularResult<Unit> {
     return applicationScope.dbCall {

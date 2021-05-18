@@ -288,7 +288,7 @@ class BrowseController(
         R.string.dev_bookmark_every_thread,
         true,
         DEV_BOOKMARK_EVERY_THREAD,
-        { presenter.bookmarkEveryThread(threadLayout.presenter.currentChanDescriptor) }
+        { mainScope.launch { presenter.bookmarkEveryThread(threadLayout.presenter.currentChanDescriptor) } }
       )
       .addNestedItem(
         DEV_CACHE_EVERY_THREAD,

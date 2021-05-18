@@ -28,7 +28,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
@@ -72,8 +71,6 @@ class FilterWatchesPresenter : BasePresenter<FilterWatchesControllerView>() {
 
     scope.launch {
       bookmarksManager.listenForBookmarksChanges()
-        .onBackpressureLatest()
-        .asFlow()
         .debounce(100.milliseconds)
         .collect {
           Logger.d(TAG, "Reloading filter watches because bookmarks were updated.")

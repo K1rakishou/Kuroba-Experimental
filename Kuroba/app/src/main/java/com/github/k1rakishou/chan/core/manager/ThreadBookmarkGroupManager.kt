@@ -19,11 +19,10 @@ import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.util.*
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
@@ -44,9 +43,9 @@ class ThreadBookmarkGroupManager(
   init {
     appScope.launch {
       bookmarksManager.listenForBookmarksChanges()
-        .asFlow()
-        .flowOn(Dispatchers.Default)
-        .collect { bookmarkChange -> handleBookmarkChange(bookmarkChange) }
+        .collect { bookmarkChange ->
+          withContext(Dispatchers.Default) { handleBookmarkChange(bookmarkChange) }
+        }
     }
   }
 

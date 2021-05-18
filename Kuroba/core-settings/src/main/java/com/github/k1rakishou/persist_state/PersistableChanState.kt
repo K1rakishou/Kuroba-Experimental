@@ -67,6 +67,13 @@ object PersistableChanState {
   @JvmStatic
   lateinit var boardSelectionGridMode: BooleanSetting
 
+  // TODO(KurobaEx): delete me in v0.10.x
+  @JvmStatic
+  lateinit var appHack_V08X_deleteAllBlockedBookmarkWatcherWorkDone: BooleanSetting
+  // TODO(KurobaEx): delete me in v0.10.x
+  @JvmStatic
+  lateinit var appHack_V08X_deleteAllBlockedFilterWatcherWorkDone: BooleanSetting
+
   fun init(persistableChanStateInfo: PersistableChanStateInfo) {
     PersistableChanState.persistableChanStateInfo = persistableChanStateInfo
 
@@ -174,6 +181,8 @@ object PersistableChanState {
       drawerNavHistoryGridMode = BooleanSetting(provider, "drawer_nav_history_grid_mode", false)
       boardSelectionGridMode = BooleanSetting(provider, "board_selection_grid_mode", false)
 
+      appHack_V08X_deleteAllBlockedBookmarkWatcherWorkDone = BooleanSetting(provider, "app_hack_v08x_delete_all_blocked_bookmark_watcher_work_done", false)
+      appHack_V08X_deleteAllBlockedFilterWatcherWorkDone = BooleanSetting(provider, "app_hack_v08x_delete_all_blocked_filter_watcher_work_done", false)
     } catch (e: Exception) {
       Logger.e(TAG, "Error while initializing the state", e)
       throw e

@@ -49,6 +49,12 @@ class ChanDescriptorCache(
     }
   }
 
+  suspend fun deleteAllBookmarkIds() {
+    mutex.withLock {
+      bookmarkIdCache.clear()
+    }
+  }
+
   suspend fun putBoardDescriptor(boardId: BoardDBId, boardDescriptor: BoardDescriptor) {
     mutex.withLock { boardIdCache.put(boardDescriptor, boardId) }
   }

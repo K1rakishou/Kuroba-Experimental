@@ -290,46 +290,49 @@ class ThreadBookmark private constructor(
     return buildString {
       append("[")
 
+      val states = mutableListOf<String>()
+
       if (state.get(BOOKMARK_STATE_WATCHING)) {
-        append("WATCHING ")
+        states += "WATCHING"
       }
 
       if (state.get(BOOKMARK_STATE_THREAD_DELETED)) {
-        append("DELETED ")
+        states += "DELETED"
       }
 
       if (state.get(BOOKMARK_STATE_THREAD_ARCHIVED)) {
-        append("ARCHIVED ")
+        states += "ARCHIVED"
       }
 
       if (state.get(BOOKMARK_STATE_THREAD_CLOSED)) {
-        append("CLOSED ")
+        states += "CLOSED"
       }
 
       if (state.get(BOOKMARK_STATE_ERROR)) {
-        append("ERROR ")
+        states += "ERROR"
       }
 
       if (state.get(BOOKMARK_STATE_THREAD_BUMP_LIMIT)) {
-        append("BUMP_LIMIT ")
+        states += "BUMP_LIMIT"
       }
 
       if (state.get(BOOKMARK_STATE_THREAD_IMAGE_LIMIT)) {
-        append("IMAGE_LIMIT ")
+        states += "IMAGE_LIMIT"
       }
 
       if (state.get(BOOKMARK_STATE_FIRST_FETCH)) {
-        append("FIRST_FETCH ")
+        states += "FIRST_FETCH"
       }
 
       if (state.get(BOOKMARK_STATE_STICKY_NO_CAP)) {
-        append("STICKY_NO_CAP ")
+        states += "STICKY_NO_CAP"
       }
 
       if (state.get(BOOKMARK_FILTER_WATCH)) {
-        append("BOOKMARK_FILTER_WATCH ")
+        states += "BOOKMARK_FILTER_WATCH"
       }
 
+      append(states.joinToString())
       append("]")
     }
   }

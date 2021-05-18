@@ -1,6 +1,6 @@
 def versions = [:]
 versions.kotlin_version = '1.5.0'
-versions.kotlin_coroutines_version = '1.5.0-RC'
+versions.kotlin_coroutines_version = '1.5.0'
 versions.room_version = '2.3.0'
 versions.dagger_version = '2.35.1'
 versions.okhttp = "4.9.0"

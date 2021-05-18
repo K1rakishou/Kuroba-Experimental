@@ -69,8 +69,6 @@ class MainControllerPresenter(
 
     scope.launch {
       bookmarksManager.listenForBookmarksChanges()
-        .onBackpressureLatest()
-        .asFlow()
         .debounce(1.seconds)
         .collect { bookmarkChange ->
           bookmarksManager.awaitUntilInitialized()
