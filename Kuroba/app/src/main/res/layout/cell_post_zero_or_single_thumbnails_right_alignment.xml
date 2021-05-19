@@ -54,7 +54,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/thumbnails_container"
             app:layout_constraintTop_toBottomOf="@+id/title"
-            tools:text="123454564587.jpg" />
+            tools:text="@string/lorem_ipsum" />
 
         <com.github.k1rakishou.chan.ui.cell.PostIcons
             android:id="@+id/icons"

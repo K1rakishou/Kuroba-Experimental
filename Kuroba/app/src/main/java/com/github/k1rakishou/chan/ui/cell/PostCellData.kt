@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.ui.cell
 
 import android.text.SpannableString
+import android.text.SpannableStringBuilder
 import android.text.TextUtils
 import android.text.format.DateUtils
 import android.text.style.UnderlineSpan
@@ -313,13 +314,18 @@ data class PostCellData(
     val detailsSizePx = sp(textSizeSp - 4.toFloat())
 
     postImages.forEach { postImage ->
-      val fileInfoText = SpannableString.valueOf(postImage.formatFullAvailableFileName())
+      val fileInfoText = SpannableStringBuilder()
+      fileInfoText.append(postImage.formatFullAvailableFileName(appendExtension = postImages.size != 1))
+      fileInfoText.setSpan(UnderlineSpan(), 0, fileInfoText.length, 0)
+
+      if (postImages.size == 1) {
+        fileInfoText.append(postImage.formatImageInfo())
+      }
 
       fileInfoText.setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, fileInfoText.length, 0)
       fileInfoText.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfoText.length, 0)
-      fileInfoText.setSpan(UnderlineSpan(), 0, fileInfoText.length, 0)
 
-      resultMap[postImage] = fileInfoText
+      resultMap[postImage] = SpannableString.valueOf(fileInfoText)
     }
 
     return resultMap

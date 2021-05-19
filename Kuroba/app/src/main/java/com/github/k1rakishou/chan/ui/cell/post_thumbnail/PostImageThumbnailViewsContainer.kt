@@ -176,9 +176,9 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       return
     }
 
-    val postThumbnailsAlignment = when (postCellData.chanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostThumbnailAlignmentMode.get()
-      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostThumbnailAlignmentMode.get()
+    val postAlignment = when (postCellData.chanDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
+      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
     }
 
     val container = thumbnailContainer as ConstraintLayout
@@ -197,16 +197,16 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         continue
       }
 
-      val thumbnailView = when (postThumbnailsAlignment) {
-        ChanSettings.PostThumbnailAlignmentMode.AlignLeft -> PostImageThumbnailViewContainer(context, false)
-        ChanSettings.PostThumbnailAlignmentMode.AlignRight -> PostImageThumbnailViewContainer(context, true)
+      val thumbnailView = when (postAlignment) {
+        ChanSettings.PostAlignmentMode.AlignLeft -> PostImageThumbnailViewContainer(context, true)
+        ChanSettings.PostAlignmentMode.AlignRight -> PostImageThumbnailViewContainer(context, false)
       }
 
       thumbnailView.setViewId(View.generateViewId())
       thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize,)
       thumbnailView.bindFileInfoContainerSizes(thumbnailContainerSize, cellPostThumbnailSize)
       thumbnailView.bindPostImage(postImage, true)
-      thumbnailView.bindPostInfo(postCellData, postImage, postThumbnailsAlignment)
+      thumbnailView.bindPostInfo(postCellData, postImage, postAlignment)
 
       if (postCellData.isSelectionMode) {
         thumbnailView.setImageClickListener(THUMBNAIL_CLICK_TOKEN, null)
@@ -313,8 +313,8 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     }
 
     val postThumbnailsAlignment = when (postCellData.chanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostThumbnailAlignmentMode.get()
-      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostThumbnailAlignmentMode.get()
+      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
+      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
     }
 
     val container = thumbnailContainer as LinearLayout
@@ -328,8 +328,8 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       }
 
       val thumbnailView = when (postThumbnailsAlignment) {
-        ChanSettings.PostThumbnailAlignmentMode.AlignLeft -> PostImageThumbnailViewContainer(context, false)
-        ChanSettings.PostThumbnailAlignmentMode.AlignRight -> PostImageThumbnailViewContainer(context, true)
+        ChanSettings.PostAlignmentMode.AlignLeft -> PostImageThumbnailViewContainer(context, true)
+        ChanSettings.PostAlignmentMode.AlignRight -> PostImageThumbnailViewContainer(context, false)
       }
 
       thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize)

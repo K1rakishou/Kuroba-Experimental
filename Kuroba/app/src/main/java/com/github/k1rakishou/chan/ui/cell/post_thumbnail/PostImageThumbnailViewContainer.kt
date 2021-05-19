@@ -136,40 +136,46 @@ class PostImageThumbnailViewContainer(
   fun bindPostInfo(
     postCellData: PostCellData,
     chanPostImage: ChanPostImage,
-    postThumbnailAlignmentMode: ChanSettings.PostThumbnailAlignmentMode
+    postAlignmentMode: ChanSettings.PostAlignmentMode
   ) {
-    val thumbnailInfoTextSizeMin = getDimen(R.dimen.post_multiple_image_thumbnail_view_info_text_size_min).toFloat()
-    val thumbnailInfoTextSizeMax = getDimen(R.dimen.post_multiple_image_thumbnail_view_info_text_size_max).toFloat()
-    val thumbnailDimensTextSizeMin = getDimen(R.dimen.post_multiple_image_thumbnail_view_dimens_text_size_min).toFloat()
-    val thumbnailDimensTextSizeMax = getDimen(R.dimen.post_multiple_image_thumbnail_view_dimens_text_size_max).toFloat()
-    val thumbnailInfoTextSizePercent = getDimen(R.dimen.post_multiple_image_thumbnail_view_info_text_size_max).toFloat() / 100f
-
-    val newInfoTextSize = (ChanSettings.postCellThumbnailSizePercents.get() * thumbnailInfoTextSizePercent)
-      .coerceIn(thumbnailInfoTextSizeMin, thumbnailInfoTextSizeMax)
-
-    thumbnailFileExtension.text = (chanPostImage.extension ?: "unk").toUpperCase(Locale.ENGLISH)
-    thumbnailFileDimens.text = "${chanPostImage.imageWidth}x${chanPostImage.imageHeight}"
-    thumbnailFileSize.text = ChanPostUtils.getReadableFileSize(chanPostImage.size)
-
-    thumbnailFileExtension.setTextSize(TypedValue.COMPLEX_UNIT_PX, newInfoTextSize)
-    thumbnailFileSize.setTextSize(TypedValue.COMPLEX_UNIT_PX, newInfoTextSize)
-
-    val newDimensTextSize = (ChanSettings.postCellThumbnailSizePercents.get() * thumbnailInfoTextSizePercent)
-      .coerceIn(thumbnailDimensTextSizeMin, thumbnailDimensTextSizeMax)
-    thumbnailFileDimens.setTextSize(TypedValue.COMPLEX_UNIT_PX, newDimensTextSize)
-
     val postFileInfo = postCellData.postFileInfoMap[chanPostImage]
     val imagesCount = postCellData.postImages.size
 
     if (imagesCount > 1 && (postCellData.searchMode || ChanSettings.postFileName.get()) && postFileInfo.isNotNullNorBlank()) {
-      postFileNameInfoTextView.setVisibilityFast(View.VISIBLE)
-      postFileNameInfoTextView.setText(postFileInfo, TextView.BufferType.SPANNABLE)
+      val thumbnailInfoTextSizeMin = getDimen(R.dimen.post_multiple_image_thumbnail_view_info_text_size_min).toFloat()
+      val thumbnailInfoTextSizeMax = getDimen(R.dimen.post_multiple_image_thumbnail_view_info_text_size_max).toFloat()
+      val thumbnailDimensTextSizeMin = getDimen(R.dimen.post_multiple_image_thumbnail_view_dimens_text_size_min).toFloat()
+      val thumbnailDimensTextSizeMax = getDimen(R.dimen.post_multiple_image_thumbnail_view_dimens_text_size_max).toFloat()
+      val thumbnailInfoTextSizePercent = getDimen(R.dimen.post_multiple_image_thumbnail_view_info_text_size_max).toFloat() / 100f
 
-      postFileNameInfoTextView.gravity = when (postThumbnailAlignmentMode) {
-        ChanSettings.PostThumbnailAlignmentMode.AlignLeft -> GravityCompat.START
-        ChanSettings.PostThumbnailAlignmentMode.AlignRight -> GravityCompat.END
+      thumbnailFileExtension.setVisibilityFast(View.VISIBLE)
+      thumbnailFileDimens.setVisibilityFast(View.VISIBLE)
+      thumbnailFileSize.setVisibilityFast(View.VISIBLE)
+      postFileNameInfoTextView.setVisibilityFast(View.VISIBLE)
+
+      val newInfoTextSize = (ChanSettings.postCellThumbnailSizePercents.get() * thumbnailInfoTextSizePercent)
+        .coerceIn(thumbnailInfoTextSizeMin, thumbnailInfoTextSizeMax)
+
+      thumbnailFileExtension.text = (chanPostImage.extension ?: "unk").toUpperCase(Locale.ENGLISH)
+      thumbnailFileDimens.text = "${chanPostImage.imageWidth}x${chanPostImage.imageHeight}"
+      thumbnailFileSize.text = ChanPostUtils.getReadableFileSize(chanPostImage.size)
+
+      thumbnailFileExtension.setTextSize(TypedValue.COMPLEX_UNIT_PX, newInfoTextSize)
+      thumbnailFileSize.setTextSize(TypedValue.COMPLEX_UNIT_PX, newInfoTextSize)
+
+      val newDimensTextSize = (ChanSettings.postCellThumbnailSizePercents.get() * thumbnailInfoTextSizePercent)
+        .coerceIn(thumbnailDimensTextSizeMin, thumbnailDimensTextSizeMax)
+      thumbnailFileDimens.setTextSize(TypedValue.COMPLEX_UNIT_PX, newDimensTextSize)
+
+      postFileNameInfoTextView.setText(postFileInfo, TextView.BufferType.SPANNABLE)
+      postFileNameInfoTextView.gravity = when (postAlignmentMode) {
+        ChanSettings.PostAlignmentMode.AlignLeft -> GravityCompat.END
+        ChanSettings.PostAlignmentMode.AlignRight -> GravityCompat.START
       }
     } else {
+      thumbnailFileExtension.setVisibilityFast(View.GONE)
+      thumbnailFileDimens.setVisibilityFast(View.GONE)
+      thumbnailFileSize.setVisibilityFast(View.GONE)
       postFileNameInfoTextView.setVisibilityFast(View.GONE)
     }
   }

@@ -653,10 +653,10 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_show_anonymous_name">Always show \"Anonymous\" name</string>
     <string name="setting_show_anonymous_name_description">Displays \"Anonymous\" rather than an empty field</string>
     <string name="setting_anonymize_ids">Hide IDs</string>
-    <string name="setting_catalog_post_thumbnail_alignment_mode">Catalog post thumbnails alignment mode</string>
-    <string name="setting_thread_post_thumbnail_alignment_mode">Thread post thumbnails alignment mode</string>
-    <string name="setting_post_thumbnail_alignment_mode_left">Align left</string>
-    <string name="setting_post_thumbnail_alignment_mode_right">Align right</string>
+    <string name="setting_catalog_post_alignment_mode">Catalog post alignment mode</string>
+    <string name="setting_thread_post_alignment_mode">Thread post alignment mode</string>
+    <string name="setting_post_alignment_mode_right">Thumbnails to the left, post info to the right</string>
+    <string name="setting_post_alignment_mode_left">Thumbnails to the right, post info to the left</string>
 
     <!-- Appearance post links group -->
     <string name="setting_group_post_links">Post links</string>

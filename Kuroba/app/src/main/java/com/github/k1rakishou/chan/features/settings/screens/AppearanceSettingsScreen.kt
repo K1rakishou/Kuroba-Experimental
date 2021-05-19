@@ -140,36 +140,36 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += ListSettingV2.createBuilder<ChanSettings.PostThumbnailAlignmentMode>(
+        group += ListSettingV2.createBuilder<ChanSettings.PostAlignmentMode>(
           context = context,
-          identifier = AppearanceScreen.LayoutGroup.CatalogPostThumbnailAlignmentMode,
-          topDescriptionIdFunc = { R.string.setting_catalog_post_thumbnail_alignment_mode },
+          identifier = AppearanceScreen.LayoutGroup.CatalogPostAlignmentMode,
+          topDescriptionIdFunc = { R.string.setting_catalog_post_alignment_mode },
           bottomDescriptionStringFunc = { itemName -> itemName },
-          items = ChanSettings.PostThumbnailAlignmentMode.values().toList(),
+          items = ChanSettings.PostAlignmentMode.values().toList(),
           itemNameMapper = { layoutMode ->
             when (layoutMode) {
-              ChanSettings.PostThumbnailAlignmentMode.AlignLeft -> context.getString(R.string.setting_post_thumbnail_alignment_mode_left)
-              ChanSettings.PostThumbnailAlignmentMode.AlignRight -> context.getString(R.string.setting_post_thumbnail_alignment_mode_right)
+              ChanSettings.PostAlignmentMode.AlignLeft -> context.getString(R.string.setting_post_alignment_mode_left)
+              ChanSettings.PostAlignmentMode.AlignRight -> context.getString(R.string.setting_post_alignment_mode_right)
             }
           },
           requiresUiRefresh = true,
-          setting = ChanSettings.catalogPostThumbnailAlignmentMode
+          setting = ChanSettings.catalogPostAlignmentMode
         )
 
-        group += ListSettingV2.createBuilder<ChanSettings.PostThumbnailAlignmentMode>(
+        group += ListSettingV2.createBuilder<ChanSettings.PostAlignmentMode>(
           context = context,
-          identifier = AppearanceScreen.LayoutGroup.ThreadPostThumbnailAlignmentMode,
-          topDescriptionIdFunc = { R.string.setting_thread_post_thumbnail_alignment_mode },
+          identifier = AppearanceScreen.LayoutGroup.ThreadPostAlignmentMode,
+          topDescriptionIdFunc = { R.string.setting_thread_post_alignment_mode },
           bottomDescriptionStringFunc = { itemName -> itemName },
-          items = ChanSettings.PostThumbnailAlignmentMode.values().toList(),
+          items = ChanSettings.PostAlignmentMode.values().toList(),
           itemNameMapper = { layoutMode ->
             when (layoutMode) {
-              ChanSettings.PostThumbnailAlignmentMode.AlignLeft -> context.getString(R.string.setting_post_thumbnail_alignment_mode_left)
-              ChanSettings.PostThumbnailAlignmentMode.AlignRight -> context.getString(R.string.setting_post_thumbnail_alignment_mode_right)
+              ChanSettings.PostAlignmentMode.AlignLeft -> context.getString(R.string.setting_post_alignment_mode_left)
+              ChanSettings.PostAlignmentMode.AlignRight -> context.getString(R.string.setting_post_alignment_mode_right)
             }
           },
           requiresUiRefresh = true,
-          setting = ChanSettings.threadPostThumbnailAlignmentMode
+          setting = ChanSettings.threadPostAlignmentMode
         )
 
         group += BooleanSettingV2.createBuilder(

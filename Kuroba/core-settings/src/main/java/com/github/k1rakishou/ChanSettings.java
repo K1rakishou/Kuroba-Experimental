@@ -16,6 +16,11 @@
  */
 package com.github.k1rakishou;
 
+import static com.github.k1rakishou.common.AndroidUtils.getAppDir;
+import static com.github.k1rakishou.common.AndroidUtils.getAppMainPreferences;
+import static java.util.concurrent.TimeUnit.HOURS;
+import static java.util.concurrent.TimeUnit.MINUTES;
+
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.prefs.BooleanSetting;
 import com.github.k1rakishou.prefs.CounterSetting;
@@ -28,11 +33,6 @@ import java.io.File;
 
 import kotlin.Lazy;
 import kotlin.LazyKt;
-
-import static com.github.k1rakishou.common.AndroidUtils.getAppDir;
-import static com.github.k1rakishou.common.AndroidUtils.getAppMainPreferences;
-import static java.util.concurrent.TimeUnit.HOURS;
-import static java.util.concurrent.TimeUnit.MINUTES;
 
 public class ChanSettings {
     private static final String TAG = "ChanSettings";
@@ -52,13 +52,13 @@ public class ChanSettings {
         initInternal();
     }
 
-    public enum PostThumbnailAlignmentMode implements OptionSettingItem {
+    public enum PostAlignmentMode implements OptionSettingItem {
         AlignLeft("align_left"),
         AlignRight("align_right");
 
         String key;
 
-        PostThumbnailAlignmentMode(String key) {
+        PostAlignmentMode(String key) {
             this.key = key;
         }
 
@@ -272,8 +272,8 @@ public class ChanSettings {
     public static RangeSetting postCellThumbnailSizePercents;
     public static BooleanSetting postFullDate;
     public static BooleanSetting postFileName;
-    public static OptionsSetting<PostThumbnailAlignmentMode> catalogPostThumbnailAlignmentMode;
-    public static OptionsSetting<PostThumbnailAlignmentMode> threadPostThumbnailAlignmentMode;
+    public static OptionsSetting<PostAlignmentMode> catalogPostAlignmentMode;
+    public static OptionsSetting<PostAlignmentMode> threadPostAlignmentMode;
     public static BooleanSetting textOnly;
     public static BooleanSetting revealTextSpoilers;
     public static BooleanSetting anonymize;
@@ -452,8 +452,8 @@ public class ChanSettings {
             postCellThumbnailSizePercents = new RangeSetting(provider, "post_cell_thumbnail_size_percents", 75, 50, 100);
             postFullDate = new BooleanSetting(provider, "preference_post_full_date", false);
             postFileName = new BooleanSetting(provider, "preference_post_file_name", false);
-            catalogPostThumbnailAlignmentMode = new OptionsSetting<>(provider, "catalog_post_thumbnail_alignment_mode", PostThumbnailAlignmentMode.class, PostThumbnailAlignmentMode.AlignLeft);
-            threadPostThumbnailAlignmentMode = new OptionsSetting<>(provider, "thread_post_thumbnail_alignment_mode", PostThumbnailAlignmentMode.class, PostThumbnailAlignmentMode.AlignLeft);
+            catalogPostAlignmentMode = new OptionsSetting<>(provider, "catalog_post_thumbnail_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignLeft);
+            threadPostAlignmentMode = new OptionsSetting<>(provider, "thread_post_thumbnail_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignLeft);
             textOnly = new BooleanSetting(provider, "preference_text_only", false);
             revealTextSpoilers = new BooleanSetting(provider, "preference_reveal_text_spoilers", false);
             anonymize = new BooleanSetting(provider, "preference_anonymize", false);

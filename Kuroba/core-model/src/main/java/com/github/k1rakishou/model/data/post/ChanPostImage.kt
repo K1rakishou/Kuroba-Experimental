@@ -2,11 +2,14 @@ package com.github.k1rakishou.model.data.post
 
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.util.ChanPostUtils
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import java.util.*
 
 class ChanPostImage(
   val serverFilename: String,
@@ -140,7 +143,7 @@ class ChanPostImage(
     return (AppConstants.RESOURCES_ENDPOINT + "hide_thumb.png").toHttpUrl()
   }
 
-  fun formatFullAvailableFileName(): String {
+  fun formatFullAvailableFileName(appendExtension: Boolean = true): String {
     var name = filename
     if (name.isNullOrBlank()) {
       name = serverFilename
@@ -149,10 +152,25 @@ class ChanPostImage(
     return buildString {
       append(name)
 
-      if (extension.isNotNullNorBlank()) {
+      if (appendExtension && extension.isNotNullNorBlank()) {
         append('.')
         append(extension)
       }
+    }
+  }
+
+  fun formatImageInfo(): String {
+    return buildString {
+      if (extension.isNotNullNorBlank()) {
+        append(' ')
+        append(extension.toUpperCase(Locale.ENGLISH))
+      }
+
+      append(StringUtils.UNBREAKABLE_SPACE_SYMBOL)
+      append("${imageWidth}x${imageHeight}")
+
+      append(StringUtils.UNBREAKABLE_SPACE_SYMBOL)
+      append(ChanPostUtils.getReadableFileSize(size))
     }
   }
 
@@ -170,7 +188,6 @@ class ChanPostImage(
       }
     }
   }
-
 
   fun formatFullServerFileName(): String? {
     if (serverFilename.isNullOrEmpty()) {

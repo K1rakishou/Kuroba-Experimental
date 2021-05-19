@@ -316,11 +316,11 @@ class PostCell : LinearLayout,
     icons.setPadding(horizPaddingPx, vertPaddingPx, horizPaddingPx, 0)
 
     val postAlignmentMode = when (postCellData.chanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostThumbnailAlignmentMode.get()
-      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostThumbnailAlignmentMode.get()
+      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
+      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
     }
 
-    if (postCellData.postImages.size == 1 && postAlignmentMode == ChanSettings.PostThumbnailAlignmentMode.AlignLeft) {
+    if (postCellData.postImages.size <= 1 && postAlignmentMode == ChanSettings.PostAlignmentMode.AlignRight) {
       title.gravity = GravityCompat.END
       icons.rtl(true)
     } else {
@@ -349,10 +349,10 @@ class PostCell : LinearLayout,
       imgFilename.setVisibilityFast(View.VISIBLE)
       imgFilename.setText(postFileInfo, TextView.BufferType.SPANNABLE)
 
-      if (postAlignmentMode == ChanSettings.PostThumbnailAlignmentMode.AlignLeft) {
-        imgFilename.gravity = GravityCompat.END
-      } else {
+      if (postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft) {
         imgFilename.gravity = GravityCompat.START
+      } else {
+        imgFilename.gravity = GravityCompat.END
       }
 
       imgFilename.setPadding(horizPaddingPx, 0, endPadding, 0)

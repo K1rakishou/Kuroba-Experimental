@@ -62,8 +62,8 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
       val postCellView = when (newLayoutId) {
         R.layout.cell_post_stub -> PostStubCell(context)
         R.layout.cell_post_multiple_thumbnails,
-        R.layout.cell_post_zero_or_single_thumbnails_on_right_side,
-        R.layout.cell_post_zero_or_single_thumbnails_on_left_side -> PostCell(context)
+        R.layout.cell_post_zero_or_single_thumbnails_left_alignment,
+        R.layout.cell_post_zero_or_single_thumbnails_right_alignment -> PostCell(context)
         R.layout.cell_post_card -> CardPostCell(context)
         else -> throw IllegalStateException("Unknown layoutId: $newLayoutId")
       }
@@ -86,8 +86,8 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
     }
 
     val postAlignmentMode = when (postCellData.chanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostThumbnailAlignmentMode.get()
-      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostThumbnailAlignmentMode.get()
+      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
+      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
     }
 
     checkNotNull(postAlignmentMode) { "postAlignmentMode is null" }
@@ -96,11 +96,11 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
       BoardPostViewMode.LIST -> {
         if (post.postImages.size <= 1) {
           when (postAlignmentMode) {
-            ChanSettings.PostThumbnailAlignmentMode.AlignLeft -> {
-              return R.layout.cell_post_zero_or_single_thumbnails_on_left_side
+            ChanSettings.PostAlignmentMode.AlignLeft -> {
+              return R.layout.cell_post_zero_or_single_thumbnails_left_alignment
             }
-            ChanSettings.PostThumbnailAlignmentMode.AlignRight -> {
-              return R.layout.cell_post_zero_or_single_thumbnails_on_right_side
+            ChanSettings.PostAlignmentMode.AlignRight -> {
+              return R.layout.cell_post_zero_or_single_thumbnails_right_alignment
             }
           }
         } else {

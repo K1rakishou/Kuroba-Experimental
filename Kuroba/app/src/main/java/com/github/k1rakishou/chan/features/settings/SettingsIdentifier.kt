@@ -302,8 +302,8 @@ sealed class AppearanceScreen(
     AppearanceScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
     object LayoutMode : LayoutGroup("layout_mode")
-    object CatalogPostThumbnailAlignmentMode : LayoutGroup("catalog_post_thumbnail_alignment_mode")
-    object ThreadPostThumbnailAlignmentMode : LayoutGroup("thread_post_thumbnail_alignment_mode")
+    object CatalogPostAlignmentMode : LayoutGroup("catalog_post_alignment_mode")
+    object ThreadPostAlignmentMode : LayoutGroup("thread_post_alignment_mode")
     object CatalogColumnsCount : LayoutGroup("catalog_columns_count")
     object AlbumColumnsCount : LayoutGroup("album_columns_count")
     object NeverHideToolbar : LayoutGroup("never_hide_toolbar")
