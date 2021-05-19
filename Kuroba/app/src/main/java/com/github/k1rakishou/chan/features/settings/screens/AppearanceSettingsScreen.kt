@@ -13,6 +13,7 @@ import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.RangeSettingV2
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.settings.ThemeSettingsController
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.persist_state.PersistableChanState
@@ -122,6 +123,22 @@ class AppearanceSettingsScreen(
           currentValueStringFunc = { "${ChanSettings.postCellThumbnailSizePercents.get()}%" },
           requiresUiRefresh = true,
           setting = ChanSettings.postCellThumbnailSizePercents
+        )
+
+        group += ListSettingV2.createBuilder<ChanSettings.PostThumbnailScaling>(
+          context = context,
+          identifier = AppearanceScreen.PostGroup.PostThumbnailScaling,
+          topDescriptionIdFunc = { R.string.setting_post_thumbnail_scaling },
+          bottomDescriptionStringFunc = { itemName -> itemName },
+          items = ChanSettings.PostThumbnailScaling.values().toList(),
+          itemNameMapper = { postThumbnailScaling ->
+            when (postThumbnailScaling) {
+              ChanSettings.PostThumbnailScaling.FitCenter -> getString(R.string.setting_post_thumbnail_scaling_fit_center)
+              ChanSettings.PostThumbnailScaling.CenterCrop -> getString(R.string.setting_post_thumbnail_scaling_center_crop)
+            }
+          },
+          requiresUiRefresh = true,
+          setting = ChanSettings.postThumbnailScaling
         )
 
         group += BooleanSettingV2.createBuilder(

@@ -16,6 +16,8 @@
  */
 package com.github.k1rakishou.chan.ui.cell.post_thumbnail;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Rect;
@@ -50,9 +52,6 @@ import javax.inject.Inject;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import okhttp3.HttpUrl;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDrawable;
 
 public class PostImageThumbnailView extends ThumbnailView implements PostImageThumbnailViewContract {
     private static final String TAG = "PostImageThumbnailView";
@@ -99,7 +98,7 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
 
         setWillNotDraw(false);
 
-        this.playIcon = getDrawable(R.drawable.ic_play_circle_outline_white_24dp);
+        this.playIcon = AppModuleAndroidUtils.getDrawable(R.drawable.ic_play_circle_outline_white_24dp);
         this.prefetchingEnabled = ChanSettings.prefetchMedia.get();
     }
 

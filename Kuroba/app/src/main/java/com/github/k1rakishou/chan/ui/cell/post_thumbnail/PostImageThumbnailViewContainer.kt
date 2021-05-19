@@ -15,6 +15,7 @@ import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
 import com.github.k1rakishou.chan.utils.setOnThrottlingLongClickListener
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.isNotNullNorBlank
@@ -103,7 +104,14 @@ class PostImageThumbnailViewContainer(
   }
 
   override fun setImageClickListener(token: String, listener: OnClickListener?) {
-    rootContainer.setOnClickListener(listener)
+    if (listener == null) {
+      rootContainer.setOnThrottlingClickListener(token, null)
+      return
+    }
+
+    rootContainer.setOnThrottlingClickListener(token) {
+      actualThumbnailView.onThumbnailViewClicked(listener)
+    }
   }
 
   override fun setImageLongClickListener(token: String, listener: OnLongClickListener?) {

@@ -629,6 +629,9 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_font_size">Font size</string>
     <string name="setting_font_size_default">(default)</string>
     <string name="setting_post_cell_thumbnail_size">Post thumbnail size (percents)</string>
+    <string name="setting_post_thumbnail_scaling">Post thumbnail scaling type</string>
+    <string name="setting_post_thumbnail_scaling_fit_center">Fit center</string>
+    <string name="setting_post_thumbnail_scaling_center_crop">Center crop</string>
     <string name="setting_never_show_pages">Never show page number</string>
     <string name="setting_never_show_pages_bottom">Never display the page number in the catalog</string>
     <string name="setting_enable_draggable_scrollbars">Draggable scrollbars</string>

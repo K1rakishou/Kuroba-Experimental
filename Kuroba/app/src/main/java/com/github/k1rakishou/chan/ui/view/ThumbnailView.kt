@@ -19,16 +19,11 @@ package com.github.k1rakishou.chan.ui.view
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import android.content.Context
-import android.content.res.ColorStateList
 import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.Drawable
-import android.graphics.drawable.RippleDrawable
 import android.util.AttributeSet
-import android.util.TypedValue
-import android.view.View
 import android.view.animation.Interpolator
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import coil.request.Disposable
 import com.github.k1rakishou.ChanSettings
@@ -50,28 +45,17 @@ import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 
-open class ThumbnailView : View {
+open class ThumbnailView : AppCompatImageView {
   private var requestDisposable: Disposable? = null
-  private var circular = false
   private var rounding = 0
-  private var clickable = false
-  private var calculate = false
-  private var foregroundCalculate = false
-  private var imageForeground: Drawable? = null
   private var errorText: String? = null
-
-  var bitmap: Bitmap? = null
-    private set
 
   @JvmField
   protected var error = false
 
-  private val bitmapRect = RectF()
-  private val drawRect = RectF()
-  private val outputRect = RectF()
-  private val imageMatrix = Matrix()
-  private var bitmapShader: BitmapShader? = null
-  private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+  val bitmap: Bitmap?
+    get() = (this.drawable as? BitmapDrawable)?.bitmap
+
   private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG)
   private val tmpTextRect = Rect()
   private val alphaAnimator = AnimatorSet()
@@ -114,11 +98,13 @@ open class ThumbnailView : View {
     textPaint.textSize = AppModuleAndroidUtils.sp(14f).toFloat()
   }
 
-  fun bindImageUrl(url: String) {
-    bindImageUrl(url, ImageLoaderV2.ImageSize.MeasurableImageSize.create(this))
-  }
-
   fun bindImageUrl(url: String, imageSize: ImageLoaderV2.ImageSize) {
+    scaleType = when (ChanSettings.postThumbnailScaling.get()) {
+      ChanSettings.PostThumbnailScaling.FitCenter ->  ScaleType.FIT_CENTER
+      ChanSettings.PostThumbnailScaling.CenterCrop -> ScaleType.CENTER_CROP
+      else -> ScaleType.FIT_CENTER
+    }
+
     if (url != this.imageUrl) {
       if (this.imageUrl != null) {
         unbindImageUrl()
@@ -157,67 +143,17 @@ open class ThumbnailView : View {
     invalidate()
   }
 
-  fun setCircular(circular: Boolean) {
-    this.circular = circular
-  }
-
   fun setRounding(rounding: Int) {
     this.rounding = rounding
-  }
-
-  override fun setClickable(clickable: Boolean) {
-    super.setClickable(clickable)
-
-    if (clickable != this.clickable) {
-      this.clickable = clickable
-      foregroundCalculate = clickable
-
-      if (clickable) {
-        val rippleAttrForThemeValue = TypedValue()
-
-        context.theme.resolveAttribute(
-          R.attr.colorControlHighlight,
-          rippleAttrForThemeValue,
-          true
-        )
-
-        val newImageForeground = RippleDrawable(
-          ColorStateList.valueOf(rippleAttrForThemeValue.data),
-          null,
-          ColorDrawable(Color.WHITE)
-        )
-
-        newImageForeground.callback = this
-        if (newImageForeground.isStateful) {
-          newImageForeground.state = drawableState
-        }
-
-        imageForeground = newImageForeground
-      } else {
-        unscheduleDrawable(imageForeground)
-        imageForeground = null
-      }
-
-      requestLayout()
-      invalidate()
-    }
   }
 
   override fun onSetAlpha(alpha: Int): Boolean {
     if (error) {
       textPaint.alpha = alpha
-    } else {
-      paint.alpha = alpha
     }
 
     invalidate()
     return true
-  }
-
-  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-    super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-    calculate = true
-    foregroundCalculate = true
   }
 
   fun setOnImageClickListener(token: String, listener: OnClickListener?) {
@@ -226,15 +162,19 @@ open class ThumbnailView : View {
       return
     }
 
-    setOnThrottlingClickListener(token) { view ->
-      if (error && imageUrl != null && imageSize != null) {
-        cacheHandler.deleteCacheFileByUrl(imageUrl!!)
-        bindImageUrl(imageUrl!!, imageSize!!)
-        return@setOnThrottlingClickListener
-      }
-
-      listener.onClick(view)
+    setOnThrottlingClickListener(token) {
+      onThumbnailViewClicked(listener)
     }
+  }
+
+  fun onThumbnailViewClicked(listener: OnClickListener) {
+    if (error && imageUrl != null && imageSize != null) {
+      cacheHandler.deleteCacheFileByUrl(imageUrl!!)
+      bindImageUrl(imageUrl!!, imageSize!!)
+      return
+    }
+
+    listener.onClick(this)
   }
 
   fun setOnImageLongClickListener(token: String, listener: OnLongClickListener?) {
@@ -272,90 +212,7 @@ open class ThumbnailView : View {
       return
     }
 
-    if (bitmap == null) {
-      return
-    }
-
-    if (bitmap!!.isRecycled) {
-      Logger.e(TAG, "Attempt to draw recycled bitmap!")
-      return
-    }
-
-    if (calculate) {
-      calculate = false
-
-      bitmapRect[0f, 0f, bitmap!!.width.toFloat()] = bitmap!!.height.toFloat()
-
-      val scale = Math.max(width / bitmap!!.width.toFloat(), height / bitmap!!.height.toFloat())
-      val scaledX = bitmap!!.width * scale
-      val scaledY = bitmap!!.height * scale
-      val offsetX = (scaledX - width) * 0.5f
-      val offsetY = (scaledY - height) * 0.5f
-
-      drawRect[-offsetX, -offsetY, scaledX - offsetX] = scaledY - offsetY
-      drawRect.offset(paddingLeft.toFloat(), paddingTop.toFloat())
-
-      outputRect.set(
-        paddingLeft.toFloat(),
-        paddingTop.toFloat(),
-        (getWidth() - paddingRight).toFloat(),
-        (getHeight() - paddingBottom).toFloat()
-      )
-
-      imageMatrix.setRectToRect(bitmapRect, drawRect, Matrix.ScaleToFit.FILL)
-      bitmapShader!!.setLocalMatrix(imageMatrix)
-      paint.shader = bitmapShader
-    }
-
-    canvas.save()
-    canvas.clipRect(outputRect)
-
-    if (circular) {
-      canvas.drawRoundRect(outputRect, width / 2f, height / 2f, paint)
-    } else {
-      canvas.drawRoundRect(outputRect, rounding.toFloat(), rounding.toFloat(), paint)
-    }
-
-    canvas.restore()
-    canvas.save()
-
-    if (imageForeground != null) {
-      if (foregroundCalculate) {
-        foregroundCalculate = false
-        imageForeground!!.setBounds(0, 0, right, bottom)
-      }
-
-      imageForeground!!.draw(canvas)
-    }
-
-    canvas.restore()
-  }
-
-  override fun verifyDrawable(who: Drawable): Boolean {
-    return super.verifyDrawable(who) || who === imageForeground
-  }
-
-  override fun jumpDrawablesToCurrentState() {
-    super.jumpDrawablesToCurrentState()
-
-    if (imageForeground != null) {
-      imageForeground!!.jumpToCurrentState()
-    }
-  }
-
-  override fun drawableStateChanged() {
-    super.drawableStateChanged()
-
-    if (imageForeground != null && imageForeground!!.isStateful) {
-      imageForeground!!.state = drawableState
-    }
-  }
-
-  override fun drawableHotspotChanged(x: Float, y: Float) {
-    super.drawableHotspotChanged(x, y)
-    if (imageForeground != null) {
-      imageForeground!!.setHotspot(x, y)
-    }
+    super.onDraw(canvas)
   }
 
   private suspend fun setUrlInternal(
@@ -473,21 +330,6 @@ open class ThumbnailView : View {
       alphaAnimator.end()
       alpha = 1f
     }
-  }
-
-  private fun setImageBitmap(bitmap: Bitmap?) {
-    bitmapShader = null
-    paint.shader = null
-
-    if (bitmap != null) {
-      calculate = true
-      bitmapShader = BitmapShader(bitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
-    } else {
-      calculate = false
-    }
-
-    this.bitmap = bitmap
-    invalidate()
   }
 
   companion object {

@@ -36,6 +36,7 @@ fun View.setOnThrottlingClickListener(listener: View.OnClickListener?) {
 
 fun View.setOnThrottlingClickListener(token: String, listener: View.OnClickListener?) {
   if (listener == null) {
+    regularClicksTimeStorage.remove(this)
     setOnClickListener(null)
     return
   }
@@ -62,6 +63,7 @@ fun View.setOnThrottlingClickListener(token: String, listener: View.OnClickListe
 
 fun View.setOnThrottlingLongClickListener(token: String, listener: View.OnLongClickListener?) {
   if (listener == null) {
+    longClicksTimeStorage.remove(token)
     setOnLongClickListener(null)
     return
   }

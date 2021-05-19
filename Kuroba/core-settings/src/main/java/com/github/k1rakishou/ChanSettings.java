@@ -52,6 +52,22 @@ public class ChanSettings {
         initInternal();
     }
 
+    public enum PostThumbnailScaling implements OptionSettingItem {
+        FitCenter("fit_center"),
+        CenterCrop("center_crop");
+
+        String key;
+
+        PostThumbnailScaling(String key) {
+            this.key = key;
+        }
+
+        @Override
+        public String getKey() {
+            return key;
+        }
+    }
+
     public enum PostAlignmentMode implements OptionSettingItem {
         AlignLeft("align_left"),
         AlignRight("align_right");
@@ -274,6 +290,7 @@ public class ChanSettings {
     public static BooleanSetting postFileName;
     public static OptionsSetting<PostAlignmentMode> catalogPostAlignmentMode;
     public static OptionsSetting<PostAlignmentMode> threadPostAlignmentMode;
+    public static OptionsSetting<PostThumbnailScaling> postThumbnailScaling;
     public static BooleanSetting textOnly;
     public static BooleanSetting revealTextSpoilers;
     public static BooleanSetting anonymize;
@@ -452,8 +469,9 @@ public class ChanSettings {
             postCellThumbnailSizePercents = new RangeSetting(provider, "post_cell_thumbnail_size_percents", 75, 50, 100);
             postFullDate = new BooleanSetting(provider, "preference_post_full_date", false);
             postFileName = new BooleanSetting(provider, "preference_post_file_name", false);
-            catalogPostAlignmentMode = new OptionsSetting<>(provider, "catalog_post_thumbnail_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignLeft);
-            threadPostAlignmentMode = new OptionsSetting<>(provider, "thread_post_thumbnail_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignLeft);
+            catalogPostAlignmentMode = new OptionsSetting<>(provider, "catalog_post_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignLeft);
+            threadPostAlignmentMode = new OptionsSetting<>(provider, "thread_post_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignLeft);
+            postThumbnailScaling = new OptionsSetting<>(provider, "post_thumbnail_scaling", PostThumbnailScaling.class, PostThumbnailScaling.FitCenter);
             textOnly = new BooleanSetting(provider, "preference_text_only", false);
             revealTextSpoilers = new BooleanSetting(provider, "preference_reveal_text_spoilers", false);
             anonymize = new BooleanSetting(provider, "preference_anonymize", false);
