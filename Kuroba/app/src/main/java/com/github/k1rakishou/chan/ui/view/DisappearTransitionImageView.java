@@ -1,19 +1,3 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package com.github.k1rakishou.chan.ui.view;
 
 import android.content.Context;
@@ -27,7 +11,9 @@ import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.View;
 
-public class TransitionImageView extends View {
+import com.github.k1rakishou.ChanSettings;
+
+public class DisappearTransitionImageView extends View {
     private static final String TAG = "TransitionImageView";
 
     private Bitmap bitmap;
@@ -44,17 +30,17 @@ public class TransitionImageView extends View {
     private PointF stateBitmapSize;
     private PointF statePos;
 
-    public TransitionImageView(Context context) {
+    public DisappearTransitionImageView(Context context) {
         super(context);
         init();
     }
 
-    public TransitionImageView(Context context, AttributeSet attrs) {
+    public DisappearTransitionImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
     }
 
-    public TransitionImageView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public DisappearTransitionImageView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init();
     }
@@ -100,19 +86,28 @@ public class TransitionImageView extends View {
         float globalOffsetY = windowLocation.y - myLoc[1];
 
         // Get the coords in the image view with the center crop method
-        float scale = Math.max(
-                (float) viewSize.x / (float) bitmap.getWidth(),
-                (float) viewSize.y / (float) bitmap.getHeight()
-        );
+        float scaleX = 1f;
+        float scaleY = 1f;
 
-        float scaledX = bitmap.getWidth() * scale;
-        float scaledY = bitmap.getHeight() * scale;
+        if (ChanSettings.postThumbnailScaling.get() == ChanSettings.PostThumbnailScaling.CenterCrop) {
+            float scale = Math.max(
+                    (float) viewSize.x / (float) bitmap.getWidth(),
+                    (float) viewSize.y / (float) bitmap.getHeight()
+            );
+
+            scaleX = scale;
+            scaleY = scale;
+        }
+
+        float scaledX = bitmap.getWidth() * scaleX;
+        float scaledY = bitmap.getHeight() * scaleY;
         float offsetX = (scaledX - viewSize.x) * 0.5f;
         float offsetY = (scaledY - viewSize.y) * 0.5f;
 
         sourceOverlap.set(offsetX, offsetY);
 
-        sourceImageRect.set(-offsetX + globalOffsetX,
+        sourceImageRect.set(
+                -offsetX + globalOffsetX,
                 -offsetY + globalOffsetY,
                 scaledX - offsetX + globalOffsetX,
                 scaledY - offsetY + globalOffsetY

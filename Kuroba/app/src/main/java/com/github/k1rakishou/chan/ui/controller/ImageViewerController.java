@@ -16,6 +16,18 @@
  */
 package com.github.k1rakishou.chan.ui.controller;
 
+import static android.view.View.GONE;
+import static android.view.View.INVISIBLE;
+import static android.view.View.VISIBLE;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout;
+import static com.github.k1rakishou.common.AndroidUtils.getWindow;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
@@ -27,7 +39,6 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.drawable.BitmapDrawable;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -56,12 +67,13 @@ import com.github.k1rakishou.chan.ui.toolbar.NavigationItem;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem;
+import com.github.k1rakishou.chan.ui.view.AppearTransitionImageView;
 import com.github.k1rakishou.chan.ui.view.CustomScaleImageView;
+import com.github.k1rakishou.chan.ui.view.DisappearTransitionImageView;
 import com.github.k1rakishou.chan.ui.view.LoadingBar;
 import com.github.k1rakishou.chan.ui.view.MultiImageView;
 import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
-import com.github.k1rakishou.chan.ui.view.TransitionImageView;
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem;
 import com.github.k1rakishou.chan.utils.FullScreenUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
@@ -87,18 +99,6 @@ import javax.inject.Inject;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import okhttp3.HttpUrl;
-
-import static android.view.View.GONE;
-import static android.view.View.INVISIBLE;
-import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout;
-import static com.github.k1rakishou.common.AndroidUtils.getWindow;
 
 public class ImageViewerController
         extends Controller
@@ -137,7 +137,7 @@ public class ImageViewerController
     @Inject
     FileManager fileManager;
 
-    private AnimatorSet startAnimation;
+    private Animator startAnimation;
     private AnimatorSet endAnimation;
 
     private ImageViewerCallback imageViewerCallback;
@@ -146,7 +146,8 @@ public class ImageViewerController
 
     private final Toolbar toolbar;
     private ChanDescriptor chanDescriptor;
-    private TransitionImageView previewImage;
+    private AppearTransitionImageView appearPreviewImage;
+    private DisappearTransitionImageView disappearPreviewImage;
     private OptionalSwipeViewPager pager;
     private LoadingBar loadingBar;
 
@@ -186,7 +187,8 @@ public class ImageViewerController
         getWindow(context).addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         view = inflate(context, R.layout.controller_image_viewer);
-        previewImage = view.findViewById(R.id.preview_image);
+        appearPreviewImage = view.findViewById(R.id.appear_preview_image);
+        disappearPreviewImage = view.findViewById(R.id.disappear_preview_image);
         pager = view.findViewById(R.id.pager);
         pager.addOnPageChangeListener(presenter);
         loadingBar = view.findViewById(R.id.loading_bar);
@@ -547,7 +549,8 @@ public class ImageViewerController
     }
 
     public void setPreviewVisibility(boolean visible) {
-        previewImage.setVisibility(visible ? VISIBLE : INVISIBLE);
+        appearPreviewImage.setVisibility(visible ? VISIBLE : INVISIBLE);
+        disappearPreviewImage.setVisibility(visible ? VISIBLE : INVISIBLE);
     }
 
     public void setPagerVisibility(boolean visible) {
@@ -641,14 +644,14 @@ public class ImageViewerController
                 context,
                 url,
                 new ImageLoaderV2.ImageSize.FixedImageSize(
-                        previewImage.getWidth(),
-                        previewImage.getHeight()
+                        disappearPreviewImage.getWidth(),
+                        disappearPreviewImage.getHeight()
                 ),
                 Collections.emptyList(),
                 new ImageLoaderV2.FailureAwareImageListener() {
                     @Override
                     public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
-                        previewImage.setBitmap(drawable.getBitmap());
+                        disappearPreviewImage.setBitmap(drawable.getBitmap());
                     }
 
                     @Override
@@ -736,54 +739,14 @@ public class ImageViewerController
             return;
         }
 
-        setBackgroundAlpha(0f);
-        startAnimation = new AnimatorSet();
+        appearPreviewImage.setBitmap(startImageView.getBitmap());
+        setBackgroundAlpha(1f);
 
-        ValueAnimator progress = ValueAnimator.ofFloat(0f, 1f);
-        progress.addUpdateListener(animation -> {
-            setBackgroundAlpha(Math.min(1f, (float) animation.getAnimatedValue()));
-            previewImage.setProgress((float) animation.getAnimatedValue());
+        startAnimation = appearPreviewImage.runAppearAnimation(view, () -> {
+            startAnimation = null;
+            presenter.onInTransitionEnd();
+            return Unit.INSTANCE;
         });
-
-        startAnimation.play(progress);
-        startAnimation.setDuration(TRANSITION_DURATION);
-        startAnimation.setInterpolator(new DecelerateInterpolator(3f));
-        startAnimation.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                startAnimation = null;
-                presenter.onInTransitionEnd();
-            }
-        });
-
-        imageLoaderV2.loadFromNetwork(
-                context,
-                thumbnailUrl,
-                new ImageLoaderV2.ImageSize.FixedImageSize(
-                        previewImage.getWidth(),
-                        previewImage.getHeight()
-                ),
-                Collections.emptyList(),
-                new ImageLoaderV2.FailureAwareImageListener() {
-                    @Override
-                    public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
-                        previewImage.setBitmap(drawable.getBitmap());
-                        startAnimation.start();
-                    }
-
-                    @Override
-                    public void onNotFound() {
-                        onResponseError(new IOException("Not found"));
-                    }
-
-                    @Override
-                    public void onResponseError(@NotNull Throwable error) {
-                        Log.e(TAG, "onErrorResponse for preview in transition in ImageViewerController, " +
-                                "cannot show correct transition bitmap");
-                        startAnimation.start();
-                    }
-                }
-        );
     }
 
     @Override
@@ -821,29 +784,27 @@ public class ImageViewerController
             if (state != null) {
                 PointF p = scaleImageView.viewToSourceCoord(0f, 0f);
                 PointF bitmapSize = new PointF(scaleImageView.getSWidth(), scaleImageView.getSHeight());
-                previewImage.setState(state.getScale(), p, bitmapSize);
+                disappearPreviewImage.setState(state.getScale(), p, bitmapSize);
             }
         }
 
         ThumbnailView startImage = getTransitionImageView(postImage);
+        appearPreviewImage.setVisibility(GONE);
 
         endAnimation = new AnimatorSet();
         if (!setTransitionViewData(startImage)) {
             ValueAnimator backgroundAlpha = ValueAnimator.ofFloat(1f, 0f);
             backgroundAlpha.addUpdateListener(animation -> setBackgroundAlpha((float) animation.getAnimatedValue()));
 
-            endAnimation.play(ObjectAnimator.ofFloat(previewImage,
-                    View.Y,
-                    previewImage.getTop(),
-                    previewImage.getTop() + dp(20)
-            ))
-                    .with(ObjectAnimator.ofFloat(previewImage, View.ALPHA, 1f, 0f))
+            endAnimation
+                    .play(ObjectAnimator.ofFloat(disappearPreviewImage, View.Y, disappearPreviewImage.getTop(), disappearPreviewImage.getTop() + dp(20)))
+                    .with(ObjectAnimator.ofFloat(disappearPreviewImage, View.ALPHA, 1f, 0f))
                     .with(backgroundAlpha);
         } else {
             ValueAnimator progress = ValueAnimator.ofFloat(1f, 0f);
             progress.addUpdateListener(animation -> {
                 setBackgroundAlpha((float) animation.getAnimatedValue());
-                previewImage.setProgress((float) animation.getAnimatedValue());
+                disappearPreviewImage.setProgress((float) animation.getAnimatedValue());
             });
 
             endAnimation.play(progress);
@@ -878,15 +839,14 @@ public class ImageViewerController
         startView.getLocationInWindow(loc);
         Point windowLocation = new Point(loc[0], loc[1]);
         Point size = new Point(startView.getWidth(), startView.getHeight());
-        previewImage.setSourceImageView(windowLocation, size, bitmap);
+        appearPreviewImage.setWindowLocation(windowLocation);
+        disappearPreviewImage.setSourceImageView(windowLocation, size, bitmap);
         return true;
     }
 
     private void setBackgroundAlpha(float alpha) {
         int color = Color.argb((int) (alpha * TRANSITION_FINAL_ALPHA * 255f), 0, 0, 0);
-        if (navigationController != null) {
-            navigationController.view.setBackgroundColor(color);
-        }
+        view.setBackgroundColor(color);
 
         toolbar.setAlpha(alpha);
         loadingBar.setAlpha(alpha);

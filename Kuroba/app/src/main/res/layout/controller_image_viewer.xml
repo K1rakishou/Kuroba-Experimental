@@ -18,8 +18,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.github.k1rakishou.chan.ui.view.TransitionImageView
-        android:id="@+id/preview_image"
+    <com.github.k1rakishou.chan.ui.view.AppearTransitionImageView
+        android:id="@+id/appear_preview_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+
+    <com.github.k1rakishou.chan.ui.view.DisappearTransitionImageView
+        android:id="@+id/disappear_preview_image"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
