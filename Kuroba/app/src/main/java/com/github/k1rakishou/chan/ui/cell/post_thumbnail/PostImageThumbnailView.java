@@ -103,8 +103,12 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
     }
 
     @Override
-    public void bindPostImage(@NonNull ChanPostImage postImage, boolean canUseHighResCells) {
-        bindPostImage(postImage, canUseHighResCells, false);
+    public void bindPostImage(
+            @NonNull ChanPostImage postImage,
+            boolean canUseHighResCells,
+            @NonNull ThumbnailContainerOwner thumbnailContainerOwner
+    ) {
+        bindPostImage(postImage, canUseHighResCells, false, thumbnailContainerOwner);
     }
 
     @Override
@@ -164,7 +168,8 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
     private void bindPostImage(
             @NonNull ChanPostImage postImage,
             boolean canUseHighResCells,
-            boolean forcedAfterPrefetchFinished
+            boolean forcedAfterPrefetchFinished,
+            @NonNull ThumbnailContainerOwner thumbnailContainerOwner
     ) {
         if (postImage.equals(this.postImage) && !forcedAfterPrefetchFinished) {
             return;
@@ -198,7 +203,11 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
             return;
         }
 
-        bindImageUrl(url, ImageLoaderV2.ImageSize.MeasurableImageSize.create(this));
+        bindImageUrl(
+                url,
+                ImageLoaderV2.ImageSize.MeasurableImageSize.create(this),
+                thumbnailContainerOwner
+        );
     }
 
     private void onPrefetchStateChanged(PrefetchState prefetchState) {
@@ -240,7 +249,10 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
             }
 
             if (postImage != null && (canUseHighResCells != null && canUseHighResCells)) {
-                bindPostImage(postImage, canUseHighResCells, true);
+                ThumbnailContainerOwner thumbnailContainerOwner = getThumbnailContainerOwner();
+                if (thumbnailContainerOwner != null) {
+                    bindPostImage(postImage, canUseHighResCells, true, thumbnailContainerOwner);
+                }
             }
         }
     }
@@ -262,8 +274,7 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
 
         boolean hasImageUrl = postImage.getImageUrl() != null;
         boolean revealingSpoilers = !postImage.getSpoiler() || ChanSettings.removeImageSpoilers.get();
-        boolean prefetchingDisabledOrAlreadyPrefetched =
-                !ChanSettings.prefetchMedia.get() || postImage.isPrefetched();
+        boolean prefetchingDisabledOrAlreadyPrefetched = !ChanSettings.prefetchMedia.get() || postImage.isPrefetched();
 
         if (highRes && hasImageUrl && revealingSpoilers && prefetchingDisabledOrAlreadyPrefetched) {
             url = (postImage.getType() == ChanPostImageType.STATIC

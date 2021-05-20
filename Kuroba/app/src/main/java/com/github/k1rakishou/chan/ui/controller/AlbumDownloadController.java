@@ -16,6 +16,10 @@
  */
 package com.github.k1rakishou.chan.ui.controller;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
+
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.view.View;
@@ -47,6 +51,7 @@ import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.ui.view.FastScroller;
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper;
+import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.utils.RecyclerUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.fsaf.FileManager;
@@ -60,10 +65,6 @@ import java.util.List;
 import javax.inject.Inject;
 
 import kotlin.Unit;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 
 public class AlbumDownloadController
         extends Controller
@@ -328,7 +329,8 @@ public class AlbumDownloadController
 
             holder.thumbnailView.bindPostImage(
                     item.postImage,
-                    ColorizableGridRecyclerView.canUseHighResCells(recyclerView.getCurrentSpanCount())
+                    ColorizableGridRecyclerView.canUseHighResCells(recyclerView.getCurrentSpanCount()),
+                    ThumbnailView.ThumbnailContainerOwner.Album
             );
 
             setItemChecked(holder, item.checked, false);

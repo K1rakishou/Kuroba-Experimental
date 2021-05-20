@@ -118,8 +118,12 @@ class PostImageThumbnailViewContainer(
     rootContainer.setOnThrottlingLongClickListener(token, listener)
   }
 
-  override fun bindPostImage(postImage: ChanPostImage, canUseHighResCells: Boolean) {
-    actualThumbnailView.bindPostImage(postImage, canUseHighResCells)
+  override fun bindPostImage(
+    postImage: ChanPostImage,
+    canUseHighResCells: Boolean,
+    thumbnailContainerOwner: ThumbnailView.ThumbnailContainerOwner
+  ) {
+    actualThumbnailView.bindPostImage(postImage, canUseHighResCells, thumbnailContainerOwner)
   }
 
   override fun unbindPostImage() {

@@ -53,14 +53,18 @@ open class ThumbnailView : AppCompatImageView {
   @JvmField
   protected var error = false
 
-  val bitmap: Bitmap?
-    get() = (this.drawable as? BitmapDrawable)?.bitmap
-
   private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+  private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG)
   private val tmpTextRect = Rect()
   private val alphaAnimator = AnimatorSet()
   private val debouncer = Debouncer(false)
   private var kurobaScope: KurobaCoroutineScope? = null
+  private var _thumbnailContainerOwner: ThumbnailContainerOwner? = null
+
+  val bitmap: Bitmap?
+    get() = (this.drawable as? BitmapDrawable)?.bitmap
+  val thumbnailContainerOwner: ThumbnailContainerOwner?
+    get() = _thumbnailContainerOwner
 
   private val ioErrorAttempts = AtomicInteger(0)
   private val verboseLogs = ChanSettings.verboseLogs.get()
@@ -96,13 +100,24 @@ open class ThumbnailView : AppCompatImageView {
 
     textPaint.color = themeEngine.chanTheme.textColorPrimary
     textPaint.textSize = AppModuleAndroidUtils.sp(14f).toFloat()
+
+    backgroundPaint.color = Color.BLACK
   }
 
-  fun bindImageUrl(url: String, imageSize: ImageLoaderV2.ImageSize) {
+  fun bindImageUrl(
+    url: String,
+    imageSize: ImageLoaderV2.ImageSize,
+    thumbnailContainerOwner: ThumbnailContainerOwner
+  ) {
     scaleType = when (ChanSettings.postThumbnailScaling.get()) {
-      ChanSettings.PostThumbnailScaling.FitCenter ->  ScaleType.FIT_CENTER
+      ChanSettings.PostThumbnailScaling.FitCenter -> {
+        when (thumbnailContainerOwner) {
+          ThumbnailContainerOwner.Album -> ScaleType.CENTER_CROP
+          ThumbnailContainerOwner.Post -> ScaleType.FIT_CENTER
+        }
+      }
       ChanSettings.PostThumbnailScaling.CenterCrop -> ScaleType.CENTER_CROP
-      else -> ScaleType.FIT_CENTER
+      else -> ScaleType.CENTER_CROP
     }
 
     if (url != this.imageUrl) {
@@ -116,8 +131,9 @@ open class ThumbnailView : AppCompatImageView {
 
     this.imageUrl = url
     this.imageSize = imageSize
+    this._thumbnailContainerOwner = thumbnailContainerOwner
 
-    kurobaScope!!.launch { setUrlInternal(url, imageSize) }
+    kurobaScope!!.launch { setUrlInternal(url, imageSize, thumbnailContainerOwner) }
   }
 
   fun unbindImageUrl() {
@@ -128,6 +144,8 @@ open class ThumbnailView : AppCompatImageView {
 
     kurobaScope?.cancel()
     kurobaScope = null
+
+    _thumbnailContainerOwner = null
 
     cleanupImage()
   }
@@ -168,9 +186,9 @@ open class ThumbnailView : AppCompatImageView {
   }
 
   fun onThumbnailViewClicked(listener: OnClickListener) {
-    if (error && imageUrl != null && imageSize != null) {
+    if (error && imageUrl != null && imageSize != null && _thumbnailContainerOwner != null) {
       cacheHandler.deleteCacheFileByUrl(imageUrl!!)
-      bindImageUrl(imageUrl!!, imageSize!!)
+      bindImageUrl(imageUrl!!, imageSize!!, _thumbnailContainerOwner!!)
       return
     }
 
@@ -184,9 +202,9 @@ open class ThumbnailView : AppCompatImageView {
     }
 
     setOnThrottlingLongClickListener(token) { view ->
-      if (error && imageUrl != null && imageSize != null) {
+      if (error && imageUrl != null && imageSize != null && _thumbnailContainerOwner != null) {
         cacheHandler.deleteCacheFileByUrl(imageUrl!!)
-        bindImageUrl(imageUrl!!, imageSize!!)
+        bindImageUrl(imageUrl!!, imageSize!!, _thumbnailContainerOwner!!)
         return@setOnThrottlingLongClickListener true
       }
 
@@ -195,6 +213,10 @@ open class ThumbnailView : AppCompatImageView {
   }
 
   override fun onDraw(canvas: Canvas) {
+    if (_thumbnailContainerOwner != ThumbnailContainerOwner.Album) {
+      canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
+    }
+
     if (alpha == 0f) {
       return
     }
@@ -217,7 +239,8 @@ open class ThumbnailView : AppCompatImageView {
 
   private suspend fun setUrlInternal(
     url: String,
-    imageSize: ImageLoaderV2.ImageSize
+    imageSize: ImageLoaderV2.ImageSize,
+    thumbnailContainerOwner: ThumbnailContainerOwner
   ) {
     val listener = object : ImageLoaderV2.FailureAwareImageListener {
       override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
@@ -267,7 +290,7 @@ open class ThumbnailView : AppCompatImageView {
         }
 
         if (isIoError && ioErrorAttempts.decrementAndGet() > 0 && isScopeActive) {
-          bindImageUrl(url, imageSize)
+          bindImageUrl(url, imageSize, thumbnailContainerOwner)
           return
         }
 
@@ -330,6 +353,11 @@ open class ThumbnailView : AppCompatImageView {
       alphaAnimator.end()
       alpha = 1f
     }
+  }
+
+  enum class ThumbnailContainerOwner {
+    Album,
+    Post
   }
 
   companion object {
