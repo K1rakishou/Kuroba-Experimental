@@ -72,7 +72,7 @@ public class DisappearTransitionImageView extends View {
         matrix.setRectToRect(bitmapRect, destRect, Matrix.ScaleToFit.FILL);
     }
 
-    public void setSourceImageView(Point windowLocation, Point viewSize, Bitmap bitmap) {
+    public void setSourceImageView(Point windowLocation, Point viewSize, Bitmap bitmap, boolean calledFromAlbum) {
         this.bitmap = bitmap;
         bitmapRect.set(0, 0, bitmap.getWidth(), bitmap.getHeight());
 
@@ -89,7 +89,7 @@ public class DisappearTransitionImageView extends View {
         float scaleX = 1f;
         float scaleY = 1f;
 
-        if (ChanSettings.postThumbnailScaling.get() == ChanSettings.PostThumbnailScaling.CenterCrop) {
+        if (ChanSettings.postThumbnailScaling.get() == ChanSettings.PostThumbnailScaling.CenterCrop || calledFromAlbum) {
             float scale = Math.max(
                     (float) viewSize.x / (float) bitmap.getWidth(),
                     (float) viewSize.y / (float) bitmap.getHeight()

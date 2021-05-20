@@ -145,7 +145,8 @@ public class ImageViewerController
     private ImageViewerPresenter presenter;
 
     private final Toolbar toolbar;
-    private ChanDescriptor chanDescriptor;
+    private final boolean calledFromAlbum;
+
     private AppearTransitionImageView appearPreviewImage;
     private DisappearTransitionImageView disappearPreviewImage;
     private OptionalSwipeViewPager pager;
@@ -158,11 +159,11 @@ public class ImageViewerController
         component.inject(this);
     }
 
-    public ImageViewerController(ChanDescriptor chanDescriptor, Context context, Toolbar toolbar) {
+    public ImageViewerController(Context context, Toolbar toolbar, boolean calledFromAlbum) {
         super(context);
 
         this.toolbar = toolbar;
-        this.chanDescriptor = chanDescriptor;
+        this.calledFromAlbum = calledFromAlbum;
 
         presenter = new ImageViewerPresenter(context, this);
     }
@@ -835,12 +836,14 @@ public class ImageViewerController
             return false;
         }
 
+        Point lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates();
+        appearPreviewImage.setWindowLocation(lastTouchCoordinates);
+
         int[] loc = new int[2];
         startView.getLocationInWindow(loc);
         Point windowLocation = new Point(loc[0], loc[1]);
         Point size = new Point(startView.getWidth(), startView.getHeight());
-        appearPreviewImage.setWindowLocation(windowLocation);
-        disappearPreviewImage.setSourceImageView(windowLocation, size, bitmap);
+        disappearPreviewImage.setSourceImageView(windowLocation, size, bitmap, calledFromAlbum);
         return true;
     }
 

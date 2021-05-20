@@ -16,6 +16,10 @@
  */
 package com.github.k1rakishou.chan.ui.controller;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
+
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -25,7 +29,6 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
@@ -63,10 +66,6 @@ import java.util.List;
 import javax.inject.Inject;
 
 import kotlin.Unit;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 
 public class AlbumViewController
         extends Controller
@@ -165,18 +164,12 @@ public class AlbumViewController
     private void updateRecyclerView(boolean reloading) {
         SpanInfo spanInfo = getSpanCountAndSpanWidth();
 
-        if (PersistableChanState.getAlbumLayoutGridMode().get()) {
-            GridLayoutManager gridLayoutManager = new GridLayoutManager(context, spanInfo.spanCount);
-            recyclerView.setLayoutManager(gridLayoutManager);
-        } else {
-            StaggeredGridLayoutManager staggeredGridLayoutManager = new StaggeredGridLayoutManager(
-                    spanInfo.spanCount,
-                    StaggeredGridLayoutManager.VERTICAL
-            );
+        StaggeredGridLayoutManager staggeredGridLayoutManager = new StaggeredGridLayoutManager(
+                spanInfo.spanCount,
+                StaggeredGridLayoutManager.VERTICAL
+        );
 
-            recyclerView.setLayoutManager(staggeredGridLayoutManager);
-        }
-
+        recyclerView.setLayoutManager(staggeredGridLayoutManager);
         recyclerView.setSpanWidth(spanInfo.spanWidth);
         recyclerView.setItemAnimator(null);
         recyclerView.scrollToPosition(targetIndex);
@@ -350,7 +343,7 @@ public class AlbumViewController
             final ImageViewerNavigationController imageViewer = new ImageViewerNavigationController(context);
             int index = postImages.indexOf(postImage);
             presentController(imageViewer, false);
-            imageViewer.showImages(postImages, index, chanDescriptor, this, this);
+            imageViewer.showImages(true, postImages, index, chanDescriptor, this, this);
         }
     }
 
@@ -396,7 +389,7 @@ public class AlbumViewController
                 boolean canUseHighResCells =
                         ColorizableGridRecyclerView.canUseHighResCells(recyclerView.getCurrentSpanCount());
                 boolean isStaggeredGridMode =
-                        recyclerView.getLayoutManager() instanceof StaggeredGridLayoutManager;
+                        !PersistableChanState.getAlbumLayoutGridMode().get();
 
                 holder.cell.bindPostImage(
                         postImage,

@@ -213,10 +213,6 @@ open class ThumbnailView : AppCompatImageView {
   }
 
   override fun onDraw(canvas: Canvas) {
-    if (_thumbnailContainerOwner != ThumbnailContainerOwner.Album) {
-      canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
-    }
-
     if (alpha == 0f) {
       return
     }
@@ -232,6 +228,10 @@ open class ThumbnailView : AppCompatImageView {
       canvas.drawText(errorText!!, x + paddingLeft, y + paddingTop, textPaint)
       canvas.restore()
       return
+    }
+
+    if (drawable != null && _thumbnailContainerOwner != ThumbnailContainerOwner.Album) {
+      canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
     }
 
     super.onDraw(canvas)

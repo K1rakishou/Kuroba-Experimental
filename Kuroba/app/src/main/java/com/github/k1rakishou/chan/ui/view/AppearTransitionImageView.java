@@ -60,11 +60,11 @@ public class AppearTransitionImageView extends AppCompatImageView {
         super.setImageBitmap(bitmap);
     }
 
-    public void setWindowLocation(Point windowLocation) {
+    public void setWindowLocation(Point lastTouchCoordinates) {
         int[] myLoc = new int[2];
         getLocationInWindow(myLoc);
-        float globalOffsetX = windowLocation.x - myLoc[0];
-        float globalOffsetY = windowLocation.y - myLoc[1];
+        float globalOffsetX = lastTouchCoordinates.x - myLoc[0];
+        float globalOffsetY = lastTouchCoordinates.y - myLoc[1];
 
         globalRevealStartPosition.set(globalOffsetX, globalOffsetY);
     }

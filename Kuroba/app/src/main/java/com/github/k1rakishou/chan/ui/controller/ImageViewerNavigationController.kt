@@ -57,11 +57,12 @@ class ImageViewerNavigationController(context: Context) : ToolbarNavigationContr
 
   @JvmOverloads
   fun showImages(
+    calledFromAlbum: Boolean,
     images: List<ChanPostImage>,
     index: Int,
     chanDescriptor: ChanDescriptor,
     imageViewerCallback: ImageViewerCallback?,
-    goPostCallback: GoPostCallback? = null
+    goPostCallback: GoPostCallback? = null,
   ) {
     val output = filterOutHiddenImagesUseCase.execute(
       FilterOutHiddenImagesUseCase.Input(images, index, false)
@@ -76,9 +77,9 @@ class ImageViewerNavigationController(context: Context) : ToolbarNavigationContr
     }
 
     val imageViewerController = ImageViewerController(
-      chanDescriptor,
       context,
-      requireToolbar()
+      requireToolbar(),
+      calledFromAlbum
     )
 
     imageViewerController.setGoPostCallback(goPostCallback)

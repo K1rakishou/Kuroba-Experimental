@@ -275,7 +275,7 @@ abstract class ThreadController(
     if (thumbnail.bitmap != null && !isAlreadyPresenting) {
       val imageViewer = ImageViewerNavigationController(context)
       presentController(imageViewer, false)
-      imageViewer.showImages(images, index, chanDescriptor, this)
+      imageViewer.showImages(false, images, index, chanDescriptor, this)
     }
   }
 

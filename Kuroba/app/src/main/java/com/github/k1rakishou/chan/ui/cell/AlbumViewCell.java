@@ -39,6 +39,7 @@ import javax.inject.Inject;
 public class AlbumViewCell extends FrameLayout {
     private static final float MAX_RATIO = 2f;
     private static final float MIN_RATIO = .4f;
+    private static final int ADDITIONAL_HEIGHT = dp(32);
 
     @Inject
     OnDemandContentLoaderManager onDemandContentLoaderManager;
@@ -149,7 +150,7 @@ public class AlbumViewCell extends FrameLayout {
                     && (heightMode == MeasureSpec.UNSPECIFIED
                     || heightMode == MeasureSpec.AT_MOST)) {
                 int width = MeasureSpec.getSize(widthMeasureSpec);
-                int height = width + dp(32);
+                int height = width + ADDITIONAL_HEIGHT;
 
                 super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
             } else {
