@@ -329,7 +329,7 @@ class PostCell : LinearLayout,
     }
 
     imageFileName?.let { imgFilename ->
-      if (postCellData.postImages.size != 1) {
+      if (postCellData.postImages.size != 1 || !ChanSettings.postFileInfo.get()) {
         imgFilename.setVisibilityFast(View.GONE)
         return@let
       }

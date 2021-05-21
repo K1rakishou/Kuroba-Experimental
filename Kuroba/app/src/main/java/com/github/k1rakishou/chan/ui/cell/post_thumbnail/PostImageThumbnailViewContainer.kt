@@ -153,7 +153,7 @@ class PostImageThumbnailViewContainer(
     val postFileInfo = postCellData.postFileInfoMap[chanPostImage]
     val imagesCount = postCellData.postImages.size
 
-    if (imagesCount > 1 && (postCellData.searchMode || ChanSettings.postFileName.get()) && postFileInfo.isNotNullNorBlank()) {
+    if (imagesCount > 1 && (postCellData.searchMode || ChanSettings.postFileInfo.get()) && postFileInfo.isNotNullNorBlank()) {
       val thumbnailInfoTextSizeMin = getDimen(R.dimen.post_multiple_image_thumbnail_view_info_text_size_min).toFloat()
       val thumbnailInfoTextSizeMax = getDimen(R.dimen.post_multiple_image_thumbnail_view_info_text_size_max).toFloat()
       val thumbnailDimensTextSizeMin = getDimen(R.dimen.post_multiple_image_thumbnail_view_dimens_text_size_min).toFloat()

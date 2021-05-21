@@ -202,8 +202,15 @@ class MainController(
   private val mainToolbarNavigationController: ToolbarNavigationController?
     get() {
       var navigationController: ToolbarNavigationController? = null
-      val topController = top
-        ?: return null
+      var topController: Controller? = top
+
+      if (topController is BottomNavBarAwareNavigationController) {
+        topController = childControllers.getOrNull(childControllers.lastIndex - 1)
+      }
+
+      if (topController == null) {
+        return null
+      }
 
       if (topController is StyledToolbarNavigationController) {
         navigationController = topController
@@ -505,24 +512,18 @@ class MainController(
     closeAllNonMainControllers()
     openControllerWrappedIntoBottomNavAwareController(GlobalSearchController(context))
     setGlobalSearchMenuItemSelected()
-
-    setDrawerEnabled(false)
   }
 
   fun openBookmarksController(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
     closeAllNonMainControllers()
     openControllerWrappedIntoBottomNavAwareController(TabHostController(context, threadDescriptors, this))
     setBookmarksMenuItemSelected()
-
-    setDrawerEnabled(false)
   }
 
   fun openSettingsController() {
     closeAllNonMainControllers()
     openControllerWrappedIntoBottomNavAwareController(MainSettingsControllerV2(context, this))
     setSettingsMenuItemSelected()
-
-    setDrawerEnabled(false)
   }
 
   fun openControllerWrappedIntoBottomNavAwareController(controller: Controller) {
@@ -556,10 +557,7 @@ class MainController(
   private fun onNavigationItemSelectedListener(menuItem: MenuItem) {
     when (menuItem.itemId) {
       R.id.action_search -> openGlobalSearchController()
-      R.id.action_browse -> {
-        closeAllNonMainControllers()
-        setDrawerEnabled(true)
-      }
+      R.id.action_browse -> closeAllNonMainControllers()
       R.id.action_bookmarks -> openBookmarksController(emptyList())
       R.id.action_settings -> openSettingsController()
     }
@@ -668,7 +666,6 @@ class MainController(
     // Hack! To reset the bottomNavView's checked item to "browse" when pressing back one either
     // of the bottomNavView's child controllers (Bookmarks or Settings)
     setBrowseMenuItemSelected()
-    setDrawerEnabled(true)
   }
 
   override fun showBottomPanel(items: List<BottomMenuPanelItem>) {
@@ -986,6 +983,10 @@ class MainController(
     mainScope.launch {
       val currentTopThreadController = topThreadController
         ?: return@launch
+
+      if (top is BottomNavBarAwareNavigationController) {
+        closeAllNonMainControllers()
+      }
 
       when (val descriptor = navHistoryEntry.descriptor) {
         is ChanDescriptor.ThreadDescriptor -> {
