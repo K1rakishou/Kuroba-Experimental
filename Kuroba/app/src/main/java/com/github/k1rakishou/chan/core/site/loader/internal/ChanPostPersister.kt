@@ -1,11 +1,9 @@
 package com.github.k1rakishou.chan.core.site.loader.internal
 
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase
-import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV2UseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
@@ -18,7 +16,6 @@ import com.github.k1rakishou.model.data.options.ChanCacheOptions
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
-import com.github.k1rakishou.prefs.BooleanSetting
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
@@ -26,7 +23,6 @@ import kotlin.time.measureTimedValue
 internal class ChanPostPersister(
   private val siteManager: SiteManager,
   private val parsePostsV1UseCase: ParsePostsV1UseCase,
-  private val parsePostsV2UseCase: ParsePostsV2UseCase,
   private val storePostsInRepositoryUseCase: StorePostsInRepositoryUseCase,
   private val chanPostRepository: ChanPostRepository,
   private val chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository
@@ -58,26 +54,11 @@ internal class ChanPostPersister(
           .ignore()
       }
 
-      val usePostParserV2 = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-        ?.getSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.UsePostParserV2)
-        ?.get()
-        ?: false
-
-      val parsingResult = kotlin.run {
-        if (usePostParserV2) {
-          return@run parsePostsV2UseCase.parseNewPostsPosts(
-            chanDescriptor = chanDescriptor,
-            postParser = postParser,
-            postBuildersToParse = chanReaderProcessor.getToParse()
-          )
-        } else {
-          return@run parsePostsV1UseCase.parseNewPostsPosts(
-            chanDescriptor = chanDescriptor,
-            postParser = postParser,
-            postBuildersToParse = chanReaderProcessor.getToParse()
-          )
-        }
-      }
+      val parsingResult = parsePostsV1UseCase.parseNewPostsPosts(
+        chanDescriptor = chanDescriptor,
+        postParser = postParser,
+        postBuildersToParse = chanReaderProcessor.getToParse()
+      )
 
       if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
         // We loaded the thread, mark it as not deleted (in case it somehow was marked as deleted)
@@ -94,7 +75,6 @@ internal class ChanPostPersister(
       }
 
       val loadTimeInfo = LoadTimeInfo(
-        usePostParserV2 = usePostParserV2,
         storeDuration = storeDuration,
         storedPostsCount = storedPostsCount,
         filterProcessingDuration = parsingResult.filterProcessionTime,
@@ -122,7 +102,6 @@ internal class ChanPostPersister(
   )
 
   class LoadTimeInfo @OptIn(ExperimentalTime::class) constructor(
-    val usePostParserV2: Boolean,
     val storeDuration: Duration,
     val storedPostsCount: Int,
     val filterProcessingDuration: Duration,

@@ -42,8 +42,7 @@ sealed class SiteSetting(
     LastUsedCountryFlagPerBoard,
     DvachUserCodeCookie,
     DvachAntiSpamCookie,
-    LastUsedReplyMode,
-    UsePostParserV2
+    LastUsedReplyMode
   }
 
 }

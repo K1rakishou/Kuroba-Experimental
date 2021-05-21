@@ -45,7 +45,6 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
-import com.github.k1rakishou.prefs.BooleanSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -68,7 +67,6 @@ open class Chan4 : SiteBase() {
   private lateinit var passPass: StringSetting
   private lateinit var passToken: StringSetting
   private lateinit var captchaType: OptionsSetting<CaptchaType>
-  private lateinit var usePostParserV2: BooleanSetting
   lateinit var lastUsedFlagPerBoard: StringSetting
 
   private val siteRequestModifier by lazy { Chan4SiteRequestModifier(this, appConstants) }
@@ -95,8 +93,6 @@ open class Chan4 : SiteBase() {
       "preference_flag_chan4",
       "0"
     )
-
-    usePostParserV2 = BooleanSetting(prefs, "use_post_parser_v2", true)
 
     chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
       enabled = true,
@@ -496,7 +492,6 @@ open class Chan4 : SiteBase() {
   override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? {
     return when (settingId) {
       SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard -> lastUsedFlagPerBoard as T
-      SiteSetting.SiteSettingId.UsePostParserV2 -> usePostParserV2 as T
       else -> super.getSettingBySettingId(settingId)
     }
   }

@@ -41,7 +41,6 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
-import com.github.k1rakishou.prefs.BooleanSetting
 import com.github.k1rakishou.prefs.JsonSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
@@ -66,7 +65,6 @@ class Dvach : CommonSite() {
   private lateinit var antiSpamCookie: StringSetting
   private lateinit var captchaType: OptionsSetting<CaptchaType>
   private lateinit var passCodeInfo: JsonSetting<DvachPasscodeInfo>
-  private lateinit var usePostParserV2: BooleanSetting
 
   private val siteRequestModifier by lazy { DvachSiteRequestModifier(this, appConstants) }
 
@@ -92,8 +90,6 @@ class Dvach : CommonSite() {
       "preference_pass_code_info",
       DvachPasscodeInfo()
     )
-
-    usePostParserV2 = BooleanSetting(prefs, "use_post_parser_v2", true)
   }
 
   override fun settings(): List<SiteSetting> {
@@ -120,7 +116,6 @@ class Dvach : CommonSite() {
       // Used for hidden boards accessing
       SiteSetting.SiteSettingId.DvachUserCodeCookie -> userCodeCookie as T
       SiteSetting.SiteSettingId.DvachAntiSpamCookie -> antiSpamCookie as T
-      SiteSetting.SiteSettingId.UsePostParserV2 -> usePostParserV2 as T
       else -> super.getSettingBySettingId(settingId)
     }
   }

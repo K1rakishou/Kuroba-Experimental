@@ -27,7 +27,6 @@ import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.loader.internal.ChanPostPersister
 import com.github.k1rakishou.chan.core.site.loader.internal.DatabasePostLoader
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase
-import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV2UseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ReloadPostsFromDatabaseUseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
@@ -106,17 +105,6 @@ class ChanThreadLoaderCoordinator(
     )
   }
 
-  private val parsePostsV2UseCase by lazy {
-    ParsePostsV2UseCase(
-      verboseLogsEnabled,
-      chanPostRepository,
-      filterEngine,
-      postFilterManager,
-      savedReplyManager,
-      boardManager
-    )
-  }
-
   private val storePostsInRepositoryUseCase by lazy {
     StorePostsInRepositoryUseCase(
       chanPostRepository
@@ -127,7 +115,6 @@ class ChanThreadLoaderCoordinator(
     ChanPostPersister(
       siteManager,
       parsePostsV1UseCase,
-      parsePostsV2UseCase,
       storePostsInRepositoryUseCase,
       chanPostRepository,
       chanCatalogSnapshotRepository
@@ -259,7 +246,6 @@ class ChanThreadLoaderCoordinator(
     val logString = buildString {
       appendLine("ChanReaderRequest.readJson() stats:")
       appendLine("url = $url.")
-      appendLine("PostParserV2: ${loadTimeInfo.usePostParserV2}.")
       appendLine("Network request execution took $requestDuration.")
       appendLine("Json reading took $readPostsDuration.")
       appendLine("Store new posts took $storeDuration (stored $storedPostsCount posts).")
