@@ -16,6 +16,9 @@
  */
 package com.github.k1rakishou.chan.core.site.common;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp;
+import static com.github.k1rakishou.core_themes.ThemeEngine.getComplementaryColor;
+
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -57,9 +60,6 @@ import java.util.regex.Pattern;
 
 import kotlin.text.StringsKt;
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp;
-import static com.github.k1rakishou.core_themes.ThemeEngine.getComplementaryColor;
-
 public class DefaultPostParser implements PostParser {
     private static final String TAG = "DefaultPostParser";
 
@@ -88,6 +88,8 @@ public class DefaultPostParser implements PostParser {
                         builder.postCommentBuilder.getUnparsedComment(),
                         callback
                 );
+
+                PostParserHelper.detectAndMarkThemeJsonSpan(parsedComment);
 
                 builder.postCommentBuilder.setParsedComment(parsedComment);
             } else {

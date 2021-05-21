@@ -3,6 +3,7 @@ package com.github.k1rakishou.common
 import android.graphics.Bitmap
 import android.system.ErrnoException
 import android.system.OsConstants
+import android.text.Spannable
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.TextUtils
@@ -716,6 +717,15 @@ fun SpannableStringBuilder.setSpanSafe(span: CharacterStyle, start: Int, end: In
 }
 
 fun SpannableString.setSpanSafe(span: CharacterStyle, start: Int, end: Int, flags: Int) {
+  setSpan(
+    span,
+    start.coerceAtLeast(0),
+    end.coerceAtMost(this.length),
+    flags
+  )
+}
+
+fun Spannable.setSpanSafe(span: CharacterStyle, start: Int, end: Int, flags: Int) {
   setSpan(
     span,
     start.coerceAtLeast(0),
