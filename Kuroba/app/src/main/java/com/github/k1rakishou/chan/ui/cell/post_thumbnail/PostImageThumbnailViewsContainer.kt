@@ -108,8 +108,8 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       thumbnailContainer.updatePadding(
         left = horizPaddingPx,
         right = horizPaddingPx,
-        top = dp(4f),
-        bottom = dp(4f)
+        top = MULTIPLE_THUMBNAILS_VERTICAL_MARGIN,
+        bottom = MULTIPLE_THUMBNAILS_VERTICAL_MARGIN
       )
     }
   }
@@ -457,6 +457,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     private val THUMBNAIL_TOP_MARGIN = dp(4f)
     private val MULTIPLE_THUMBNAILS_MIDDLE_MARGIN = dp(2f)
     private val THUMBNAILS_GAP_SIZE = dp(4f)
+    private val MULTIPLE_THUMBNAILS_VERTICAL_MARGIN = dp(4f)
 
     const val THUMBNAIL_CLICK_TOKEN = "POST_THUMBNAIL_VIEW_CLICK"
     const val THUMBNAIL_LONG_CLICK_TOKEN = "POST_THUMBNAIL_VIEW_LONG_CLICK"

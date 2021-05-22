@@ -1,10 +1,8 @@
 package com.github.k1rakishou.core_themes
 
-import android.content.Context
 import android.graphics.Color
 
 data class DefaultDarkTheme(
-  override val context: Context,
   override val name: String = "Kuroneko",
   override val isLightTheme: Boolean = false,
   override val lightStatusBar: Boolean = true,

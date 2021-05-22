@@ -291,6 +291,7 @@ public class ChanSettings {
     public static OptionsSetting<PostAlignmentMode> catalogPostAlignmentMode;
     public static OptionsSetting<PostAlignmentMode> threadPostAlignmentMode;
     public static OptionsSetting<PostThumbnailScaling> postThumbnailScaling;
+    public static BooleanSetting drawPostThumbnailBackground;
     public static BooleanSetting textOnly;
     public static BooleanSetting revealTextSpoilers;
     public static BooleanSetting anonymize;
@@ -472,6 +473,7 @@ public class ChanSettings {
             catalogPostAlignmentMode = new OptionsSetting<>(provider, "catalog_post_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignRight);
             threadPostAlignmentMode = new OptionsSetting<>(provider, "thread_post_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignRight);
             postThumbnailScaling = new OptionsSetting<>(provider, "post_thumbnail_scaling", PostThumbnailScaling.class, PostThumbnailScaling.FitCenter);
+            drawPostThumbnailBackground = new BooleanSetting(provider, "draw_post_thumbnail_background", true);
             textOnly = new BooleanSetting(provider, "preference_text_only", false);
             revealTextSpoilers = new BooleanSetting(provider, "preference_reveal_text_spoilers", false);
             anonymize = new BooleanSetting(provider, "preference_anonymize", false);

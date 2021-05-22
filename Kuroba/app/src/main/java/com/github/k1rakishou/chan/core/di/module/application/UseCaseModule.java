@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.core.di.module.application;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild;
+
 import android.content.Context;
 
 import com.github.k1rakishou.ChanSettings;
@@ -18,6 +20,7 @@ import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase;
 import com.github.k1rakishou.chan.core.usecase.CreateBoardManuallyUseCase;
+import com.github.k1rakishou.chan.core.usecase.DownloadThemeJsonFilesUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
@@ -41,8 +44,6 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 import kotlinx.coroutines.CoroutineScope;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild;
 
 @Module
 public class UseCaseModule {
@@ -223,6 +224,20 @@ public class UseCaseModule {
             TwoCaptchaSolver twoCaptchaSolver
     ) {
         return new TwoCaptchaCheckBalanceUseCase(twoCaptchaSolver);
+    }
+
+    @Provides
+    @Singleton
+    public DownloadThemeJsonFilesUseCase provideDownloadThemeJsonFilesUseCase(
+            RealProxiedOkHttpClient proxiedOkHttpClient,
+            Gson gson,
+            ThemeEngine themeEngine
+    ) {
+        return new DownloadThemeJsonFilesUseCase(
+                proxiedOkHttpClient,
+                gson,
+                themeEngine
+        );
     }
 
 }

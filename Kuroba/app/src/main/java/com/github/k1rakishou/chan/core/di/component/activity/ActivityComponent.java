@@ -70,6 +70,8 @@ import com.github.k1rakishou.chan.features.setup.epoxy.selection.EpoxyBoardSelec
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.EpoxyBoardSelectionListView;
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.EpoxySiteSelectionView;
 import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteView;
+import com.github.k1rakishou.chan.features.themes.ThemeGalleryController;
+import com.github.k1rakishou.chan.features.themes.ThemeSettingsController;
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaLayout;
 import com.github.k1rakishou.chan.ui.captcha.GenericWebViewAuthenticationLayout;
@@ -111,7 +113,6 @@ import com.github.k1rakishou.chan.ui.controller.navigation.TabHostController;
 import com.github.k1rakishou.chan.ui.controller.popup.PostRepliesPopupController;
 import com.github.k1rakishou.chan.ui.controller.popup.PostSearchPopupController;
 import com.github.k1rakishou.chan.ui.controller.settings.RangeSettingUpdaterController;
-import com.github.k1rakishou.chan.ui.controller.settings.ThemeSettingsController;
 import com.github.k1rakishou.chan.ui.controller.settings.captcha.JsCaptchaCookiesEditorController;
 import com.github.k1rakishou.chan.ui.controller.settings.captcha.JsCaptchaCookiesEditorLayout;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyDividerView;
@@ -208,6 +209,7 @@ public interface ActivityComponent {
     void inject(SplitNavigationController splitNavigationController);
     void inject(StyledToolbarNavigationController styledToolbarNavigationController);
     void inject(ThemeSettingsController themeSettingsController);
+    void inject(ThemeGalleryController themeGalleryController);
     void inject(ThreadSlideController threadSlideController);
     void inject(ViewThreadController viewThreadController);
     void inject(AdjustAndroid10GestureZonesController adjustAndroid10GestureZonesController);

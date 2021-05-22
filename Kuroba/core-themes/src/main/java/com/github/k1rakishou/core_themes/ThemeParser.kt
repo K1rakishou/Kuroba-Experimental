@@ -28,6 +28,38 @@ class ThemeParser(
     .setVersion(CURRENT_VERSION)
     .create()
 
+  suspend fun parseTheme(themeJson: String) : ThemeParseResult {
+    return withContext(Dispatchers.Default) {
+      val result = Try {
+        val serializableTheme = gson.fromJson(themeJson, SerializableTheme::class.java)
+
+        if (serializableTheme.name.isBlank()) {
+          return@Try ThemeParseResult.BadName(serializableTheme.name)
+        }
+
+
+        val unparsedFields = serializableTheme.getUnparsedFields()
+        if (unparsedFields.isNotEmpty()) {
+          return@Try ThemeParseResult.FailedToParseSomeFields(unparsedFields)
+        }
+
+        val theme = serializableTheme.toChanThemeOrNull()
+        if (theme == null) {
+          return@Try ThemeParseResult.Error(IOException("Unknown error while trying to convert SerializableTheme to ChanTheme"))
+        }
+
+        return@Try ThemeParseResult.Success(theme)
+      }
+      if (result is ModularResult.Error) {
+        return@withContext ThemeParseResult.Error(result.error)
+      }
+
+      result as ModularResult.Value
+
+      return@withContext result.value
+    }
+  }
+
   suspend fun parseTheme(file: ExternalFile, defaultTheme: ChanTheme): ThemeParseResult {
     return withContext(Dispatchers.Default) {
       val result = Try { parseThemeInternal(file, defaultTheme) }
@@ -350,7 +382,6 @@ class ThemeParser(
 
     fun toChanTheme(defaultTheme: ChanTheme): ChanTheme {
       return Theme(
-        context = defaultTheme.context,
         name = name,
         isLightTheme = isLightTheme,
         lightStatusBar = lightStatusBar,
@@ -362,31 +393,54 @@ class ThemeParser(
         textColorPrimary = textColorPrimary.toColorOrNull() ?: defaultTheme.textColorPrimary,
         textColorSecondary = textColorSecondary.toColorOrNull() ?: defaultTheme.textColorSecondary,
         textColorHint = textColorHint.toColorOrNull() ?: defaultTheme.textColorHint,
-        postHighlightedColor = postHighlightedColor.toColorOrNull()
-          ?: defaultTheme.postHighlightedColor,
-        postSavedReplyColor = postSavedReplyColor.toColorOrNull()
-          ?: defaultTheme.postSavedReplyColor,
+        postHighlightedColor = postHighlightedColor.toColorOrNull() ?: defaultTheme.postHighlightedColor,
+        postSavedReplyColor = postSavedReplyColor.toColorOrNull() ?: defaultTheme.postSavedReplyColor,
         postSubjectColor = postSubjectColor.toColorOrNull() ?: defaultTheme.postSubjectColor,
         postDetailsColor = postDetailsColor.toColorOrNull() ?: defaultTheme.postDetailsColor,
         postNameColor = postNameColor.toColorOrNull() ?: defaultTheme.postNameColor,
-        postInlineQuoteColor = postInlineQuoteColor.toColorOrNull()
-          ?: defaultTheme.postInlineQuoteColor,
+        postInlineQuoteColor = postInlineQuoteColor.toColorOrNull() ?: defaultTheme.postInlineQuoteColor,
         postQuoteColor = postQuoteColor.toColorOrNull() ?: defaultTheme.postQuoteColor,
-        postHighlightQuoteColor = postHighlightQuoteColor.toColorOrNull()
-          ?: defaultTheme.postHighlightQuoteColor,
+        postHighlightQuoteColor = postHighlightQuoteColor.toColorOrNull() ?: defaultTheme.postHighlightQuoteColor,
         postLinkColor = postLinkColor.toColorOrNull() ?: defaultTheme.postLinkColor,
         postSpoilerColor = postSpoilerColor.toColorOrNull() ?: defaultTheme.postSpoilerColor,
-        postSpoilerRevealTextColor = postSpoilerRevealTextColor.toColorOrNull()
-          ?: defaultTheme.postSpoilerRevealTextColor,
-        postUnseenLabelColor = postUnseenLabelColor.toColorOrNull()
-          ?: defaultTheme.postUnseenLabelColor,
+        postSpoilerRevealTextColor = postSpoilerRevealTextColor.toColorOrNull() ?: defaultTheme.postSpoilerRevealTextColor,
+        postUnseenLabelColor = postUnseenLabelColor.toColorOrNull() ?: defaultTheme.postUnseenLabelColor,
         dividerColor = dividerColor.toColorOrNull() ?: defaultTheme.dividerColor,
-        bookmarkCounterNotWatchingColor = bookmarkCounterNotWatchingColor.toColorOrNull()
-          ?: defaultTheme.bookmarkCounterNotWatchingColor,
-        bookmarkCounterHasRepliesColor = bookmarkCounterHasRepliesColor.toColorOrNull()
-          ?: defaultTheme.bookmarkCounterHasRepliesColor,
-        bookmarkCounterNormalColor = bookmarkCounterNormalColor.toColorOrNull()
-          ?: defaultTheme.bookmarkCounterNormalColor,
+        bookmarkCounterNotWatchingColor = bookmarkCounterNotWatchingColor.toColorOrNull() ?: defaultTheme.bookmarkCounterNotWatchingColor,
+        bookmarkCounterHasRepliesColor = bookmarkCounterHasRepliesColor.toColorOrNull() ?: defaultTheme.bookmarkCounterHasRepliesColor,
+        bookmarkCounterNormalColor = bookmarkCounterNormalColor.toColorOrNull() ?: defaultTheme.bookmarkCounterNormalColor,
+      )
+    }
+
+    fun toChanThemeOrNull(): ChanTheme? {
+      return Theme(
+        name = name,
+        isLightTheme = isLightTheme,
+        lightStatusBar = lightStatusBar,
+        lightNavBar = lightNavBar,
+        accentColor = accentColor.toColorOrNull() ?: return null,
+        primaryColor = primaryColor.toColorOrNull() ?: return null,
+        backColor = backColor.toColorOrNull() ?: return null,
+        errorColor = errorColor.toColorOrNull() ?: return null,
+        textColorPrimary = textColorPrimary.toColorOrNull() ?: return null,
+        textColorSecondary = textColorSecondary.toColorOrNull() ?: return null,
+        textColorHint = textColorHint.toColorOrNull() ?: return null,
+        postHighlightedColor = postHighlightedColor.toColorOrNull() ?: return null,
+        postSavedReplyColor = postSavedReplyColor.toColorOrNull() ?: return null,
+        postSubjectColor = postSubjectColor.toColorOrNull() ?: return null,
+        postDetailsColor = postDetailsColor.toColorOrNull() ?: return null,
+        postNameColor = postNameColor.toColorOrNull() ?: return null,
+        postInlineQuoteColor = postInlineQuoteColor.toColorOrNull() ?: return null,
+        postQuoteColor = postQuoteColor.toColorOrNull() ?: return null,
+        postHighlightQuoteColor = postHighlightQuoteColor.toColorOrNull() ?: return null,
+        postLinkColor = postLinkColor.toColorOrNull() ?: return null,
+        postSpoilerColor = postSpoilerColor.toColorOrNull() ?: return null,
+        postSpoilerRevealTextColor = postSpoilerRevealTextColor.toColorOrNull() ?: return null,
+        postUnseenLabelColor = postUnseenLabelColor.toColorOrNull() ?: return null,
+        dividerColor = dividerColor.toColorOrNull() ?: return null,
+        bookmarkCounterNotWatchingColor = bookmarkCounterNotWatchingColor.toColorOrNull() ?: return null,
+        bookmarkCounterHasRepliesColor = bookmarkCounterHasRepliesColor.toColorOrNull() ?: return null,
+        bookmarkCounterNormalColor = bookmarkCounterNormalColor.toColorOrNull() ?: return null,
       )
     }
 

@@ -1,7 +1,6 @@
 package com.github.k1rakishou.core_themes
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
@@ -10,7 +9,6 @@ import com.github.k1rakishou.core_themes.ThemeEngine.Companion.manipulateColor
 @SuppressLint("ResourceType")
 abstract class ChanTheme {
   // Don't forget to update ThemeParser's gson when this class changes !!!
-  abstract val context: Context
   abstract val name: String
   abstract val isLightTheme: Boolean
   abstract val lightStatusBar: Boolean
@@ -60,67 +58,6 @@ abstract class ChanTheme {
     val disabledControlAlpha = (255f * .4f).toInt()
 
     return DefaultColors(disabledControlAlpha, controlNormalColor)
-  }
-
-  fun <T : ChanTheme> copy(
-    name: String,
-    isLightTheme: Boolean,
-    lightStatusBar: Boolean,
-    lightNavBar: Boolean,
-    accentColor: Int,
-    primaryColor: Int,
-    backColor: Int,
-    errorColor: Int,
-    textPrimaryColor: Int,
-    textSecondaryColor: Int,
-    textColorHint: Int,
-    postHighlightedColor: Int,
-    postSavedReplyColor: Int,
-    postSubjectColor: Int,
-    postDetailsColor: Int,
-    postNameColor: Int,
-    postInlineQuoteColor: Int,
-    postQuoteColor: Int,
-    postHighlightQuoteColor: Int,
-    postLinkColor: Int,
-    postSpoilerColor: Int,
-    postSpoilerRevealTextColor: Int,
-    postUnseenLabelColor: Int,
-    dividerColor: Int,
-    bookmarkCounterNotWatchingColor: Int,
-    bookmarkCounterHasRepliesColor: Int,
-    bookmarkCounterNormalColor: Int,
-  ): T {
-    return DefaultDarkTheme(
-      context = context,
-      name = name,
-      isLightTheme = isLightTheme,
-      lightStatusBar = lightStatusBar,
-      lightNavBar = lightNavBar,
-      accentColor = accentColor,
-      primaryColor = primaryColor,
-      backColor = backColor,
-      errorColor = errorColor,
-      textColorPrimary = textPrimaryColor,
-      textColorSecondary = textSecondaryColor,
-      textColorHint = textColorHint,
-      postHighlightedColor = postHighlightedColor,
-      postSavedReplyColor = postSavedReplyColor,
-      postSubjectColor = postSubjectColor,
-      postDetailsColor = postDetailsColor,
-      postNameColor = postNameColor,
-      postInlineQuoteColor = postInlineQuoteColor,
-      postQuoteColor = postQuoteColor,
-      postHighlightQuoteColor = postHighlightQuoteColor,
-      postLinkColor = postLinkColor,
-      postSpoilerColor = postSpoilerColor,
-      postSpoilerRevealTextColor = postSpoilerRevealTextColor,
-      postUnseenLabelColor = postUnseenLabelColor,
-      dividerColor = dividerColor,
-      bookmarkCounterNotWatchingColor = bookmarkCounterNotWatchingColor,
-      bookmarkCounterHasRepliesColor = bookmarkCounterHasRepliesColor,
-      bookmarkCounterNormalColor = bookmarkCounterNormalColor,
-    ) as T
   }
 
   fun getDisabledTextColor(color: Int): Int {

@@ -645,6 +645,7 @@ Note that for country code filtering, troll country codes should be prepended wi
 
     <!-- Appearance post group -->
     <string name="setting_post_full_date">Show the full date on posts</string>
+    <string name="setting_post_draw_post_thumbnail_background">Draw black background behind post thumbnails</string>
     <string name="setting_post_file_info">Show file info on posts</string>
     <string name="settings_group_images">Images</string>
     <string name="setting_text_only">Text-only mode</string>
@@ -884,6 +885,11 @@ Don't have a 4chan Pass?<br>
 
     <string name="settings_screen_theme">Themes</string>
     <string name="image_quality">Image quality: %1$d</string>
+
+    <string name="theme_gallery_screen_theme_gallery">Theme gallery (%1$s themes)</string>
+    <string name="theme_gallery_screen_loading_themes">Loading themes</string>
+    <string name="theme_gallery_screen_loading_themes_failed">Failed to load themes</string>
+
 
     <string name="site_settings_not_site_found">No site found with siteDescriptor: %1$s</string>
     <string name="site_settings_site_is_not_active">Site %1$s is not active. It\'s either completely disabled or you need to activate it first</string>
@@ -1162,6 +1168,7 @@ Don't have a 4chan Pass?<br>
     <string name="theme_settings_controller_theme">%1$s theme</string>
     <string name="theme_settings_controller_theme_light">Light</string>
     <string name="theme_settings_controller_theme_dark">Dark</string>
+    <string name="theme_settings_controller_more_themes">More themes</string>
 
     <string name="layout_reply_files_area_too_many_attachables_text">Too many files to display them all at once (%1$d out of %2$d max). Upload or delete some of them to display the rest.</string>
     <string name="layout_reply_files_area_open_in_editor_action">Open in editor</string>

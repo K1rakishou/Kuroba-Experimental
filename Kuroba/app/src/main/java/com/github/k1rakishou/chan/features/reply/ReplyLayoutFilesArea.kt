@@ -40,7 +40,6 @@ import com.github.k1rakishou.chan.utils.setAlphaFast
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import kotlinx.android.synthetic.main.layout_reply_input.view.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel

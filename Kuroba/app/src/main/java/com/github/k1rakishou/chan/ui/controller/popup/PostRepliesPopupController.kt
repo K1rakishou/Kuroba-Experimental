@@ -92,7 +92,6 @@ class PostRepliesPopupController(
     repliesAdapter.setOrUpdateData(data.posts, themeEngine.chanTheme)
 
     postsView = dataView.findViewById(R.id.post_list)
-
     postsView.layoutManager = LinearLayoutManager(context)
     postsView.recycledViewPool.setMaxRecycledViews(PostRepliesAdapter.POST_REPLY_VIEW_TYPE, 0)
     postsView.adapter = repliesAdapter

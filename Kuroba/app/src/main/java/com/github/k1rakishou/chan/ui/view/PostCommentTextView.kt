@@ -14,7 +14,6 @@ import com.github.k1rakishou.chan.utils.ViewUtils.emulateMotionEvent
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.isActionUpOrCancel
 import com.github.k1rakishou.common.isNotNullNorEmpty
-import kotlinx.android.synthetic.main.layout_filter.view.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch

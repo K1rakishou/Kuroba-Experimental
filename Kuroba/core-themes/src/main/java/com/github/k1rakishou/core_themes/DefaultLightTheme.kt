@@ -1,10 +1,8 @@
 package com.github.k1rakishou.core_themes
 
-import android.content.Context
 import android.graphics.Color
 
 data class DefaultLightTheme(
-  override val context: Context,
   override val name: String = "Default light theme",
   override val isLightTheme: Boolean = true,
   override val lightStatusBar: Boolean = true,

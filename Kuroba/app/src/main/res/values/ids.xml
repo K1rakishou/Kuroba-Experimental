@@ -33,4 +33,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <item name="toolbar_selection_text_view" type="id"/>
     <item name="toolbar_arrow_menu_view" type="id"/>
     <item name="toolbar_arrow_menu_view_container" type="id"/>
+
+    <item name="theme_view_fab_id" type="id"/>
 </resources>

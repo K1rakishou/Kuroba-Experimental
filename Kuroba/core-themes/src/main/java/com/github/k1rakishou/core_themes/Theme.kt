@@ -1,9 +1,6 @@
 package com.github.k1rakishou.core_themes
 
-import android.content.Context
-
 class Theme(
-  override val context: Context,
   override val name: String,
   override val isLightTheme: Boolean,
   override val lightStatusBar: Boolean,

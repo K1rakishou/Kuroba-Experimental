@@ -11,8 +11,8 @@ import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.RangeSettingV2
+import com.github.k1rakishou.chan.features.themes.ThemeSettingsController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
-import com.github.k1rakishou.chan.ui.controller.settings.ThemeSettingsController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -139,6 +139,14 @@ class AppearanceSettingsScreen(
           },
           requiresUiRefresh = true,
           setting = ChanSettings.postThumbnailScaling
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = AppearanceScreen.PostGroup.DrawPostThumbnailBackground,
+          topDescriptionIdFunc = { R.string.setting_post_draw_post_thumbnail_background },
+          setting = ChanSettings.drawPostThumbnailBackground,
+          requiresUiRefresh = true
         )
 
         group += BooleanSettingV2.createBuilder(

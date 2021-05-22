@@ -4,10 +4,14 @@ package com.github.k1rakishou.chan.features.settings
 
 import java.util.*
 
-inline class Identifier(val id: String)
-inline class SettingIdentifier(val id: String)
-inline class ScreenIdentifier(val id: String)
-inline class GroupIdentifier(val id: String)
+@JvmInline
+value class Identifier(val id: String)
+@JvmInline
+value class SettingIdentifier(val id: String)
+@JvmInline
+value class ScreenIdentifier(val id: String)
+@JvmInline
+value class GroupIdentifier(val id: String)
 
 interface IScreen
 interface IGroup
@@ -329,6 +333,7 @@ sealed class AppearanceScreen(
     object PostCellThumbnailSizePercent : PostGroup("post_cell_thumbnail_size_percent")
     object PostThumbnailScaling : PostGroup("post_thumbnail_scaling")
     object PostFullDate : PostGroup("post_full_date")
+    object DrawPostThumbnailBackground : PostGroup("draw_post_thumbnail_background")
     object PostFileInfo : PostGroup("post_file_info")
     object TextOnly : PostGroup("text_only")
     object RevealTextSpoilers : PostGroup("reveal_text_spoilers")

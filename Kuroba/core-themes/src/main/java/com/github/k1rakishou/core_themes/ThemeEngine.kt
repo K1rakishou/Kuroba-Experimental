@@ -26,7 +26,7 @@ import kotlin.math.roundToInt
 
 open class ThemeEngine(
   private val appScope: CoroutineScope,
-  private val themeParser: ThemeParser
+  val themeParser: ThemeParser
 ) {
   private val listeners = hashMapOf<Long, ThemeChangesListener>()
   private val attributeCache = AttributeCache()
@@ -44,8 +44,8 @@ open class ThemeEngine(
   open lateinit var chanTheme: ChanTheme
 
   fun initialize(context: Context) {
-    defaultDarkTheme = DefaultDarkTheme(context)
-    defaultLightTheme = DefaultLightTheme(context)
+    defaultDarkTheme = DefaultDarkTheme()
+    defaultLightTheme = DefaultLightTheme()
 
     actualDarkTheme = themeParser.readThemeFromDisk(defaultDarkTheme)
     actualLightTheme = themeParser.readThemeFromDisk(defaultLightTheme)
@@ -229,10 +229,14 @@ open class ThemeEngine(
       lightTheme()
     }
 
-    return tryApplyTheme(
-      themeParser.parseTheme(file, defaultTheme),
-      isDarkTheme
-    )
+    val themeParseResult = themeParser.parseTheme(file, defaultTheme)
+
+    if (themeParseResult !is ThemeParser.ThemeParseResult.Success) {
+      Logger.e(TAG, "themeParser.parseTheme() error=${themeParseResult}")
+      return themeParseResult
+    }
+
+    return applyTheme(themeParseResult.chanTheme, isDarkTheme)
   }
 
   suspend fun tryParseAndApplyTheme(input: String, isDarkTheme: Boolean): ThemeParser.ThemeParseResult {
@@ -242,32 +246,30 @@ open class ThemeEngine(
       lightTheme()
     }
 
-    return tryApplyTheme(
-      themeParser.parseTheme(input, defaultTheme),
-      isDarkTheme
-    )
-  }
+    val themeParseResult = themeParser.parseTheme(input, defaultTheme)
 
-  private fun tryApplyTheme(
-    themeParseResult: ThemeParser.ThemeParseResult,
-    isDarkTheme: Boolean
-  ): ThemeParser.ThemeParseResult {
     if (themeParseResult !is ThemeParser.ThemeParseResult.Success) {
       Logger.e(TAG, "themeParser.parseTheme() error=${themeParseResult}")
       return themeParseResult
     }
 
+    return applyTheme(themeParseResult.chanTheme, isDarkTheme)
+  }
+
+  fun applyTheme(chanTheme: ChanTheme, isDarkTheme: Boolean): ThemeParser.ThemeParseResult {
     if (isDarkTheme) {
-      actualDarkTheme = themeParseResult.chanTheme
+      actualDarkTheme = chanTheme
     } else {
-      actualLightTheme = themeParseResult.chanTheme
+      actualLightTheme = chanTheme
     }
 
     ChanSettings.isCurrentThemeDark.set(isDarkTheme)
-    chanTheme = themeParseResult.chanTheme
+    this.chanTheme = chanTheme
+    themeParser.storeThemeOnDisk(chanTheme)
+
     refreshViews()
 
-    return themeParseResult
+    return ThemeParser.ThemeParseResult.Success(chanTheme)
   }
 
   suspend fun exportTheme(file: ExternalFile, darkTheme: Boolean): ThemeParser.ThemeExportResult {

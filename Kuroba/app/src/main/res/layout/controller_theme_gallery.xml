@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingCoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView
+        android:id="@+id/themes_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+</com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingCoordinatorLayout>

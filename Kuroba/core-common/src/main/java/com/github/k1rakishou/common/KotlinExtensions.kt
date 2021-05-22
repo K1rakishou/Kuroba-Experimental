@@ -40,6 +40,7 @@ import okhttp3.Response
 import java.io.IOException
 import java.io.InputStreamReader
 import java.io.InterruptedIOException
+import java.lang.reflect.Type
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Matcher
@@ -93,6 +94,37 @@ suspend inline fun <reified T> OkHttpClient.suspendConvertIntoJsonObject(
       val result = body.byteStream().use { inputStream ->
         return@use JsonReader(InputStreamReader(inputStream)).use { jsonReader ->
           return@use gson.fromJson<T>(jsonReader, T::class.java)
+        }
+      }
+
+      return@withContext JsonConversionResult.Success(result)
+    } catch (error: Throwable) {
+      return@withContext JsonConversionResult.UnknownError(error)
+    }
+  }
+}
+
+suspend inline fun <reified T> OkHttpClient.suspendConvertIntoJsonObjectWithType(
+  request: Request,
+  gson: Gson,
+  type: Type
+): JsonConversionResult<out T> {
+  return withContext(Dispatchers.IO) {
+    try {
+      val response = suspendCall(request)
+
+      if (!response.isSuccessful) {
+        return@withContext JsonConversionResult.HttpError(response.code)
+      }
+
+      val body = response.body
+      if (body == null) {
+        return@withContext JsonConversionResult.UnknownError(IOException("Response has no body"))
+      }
+
+      val result = body.byteStream().use { inputStream ->
+        return@use JsonReader(InputStreamReader(inputStream)).use { jsonReader ->
+          return@use gson.fromJson<T>(jsonReader, type)
         }
       }
 

@@ -100,6 +100,6 @@ open class AppConstants(
     private const val ATTACH_FILES_META_DIR_NAME = "attach_files_meta"
     private const val MEDIA_PREVIEWS_DIR_NAME = "media_previews"
 
-    const val RESOURCES_ENDPOINT = "https://raw.githubusercontent.com/K1rakishou/Kuroba-Experimental/release/docs/"
+    const val RESOURCES_ENDPOINT = "https://raw.githubusercontent.com/K1rakishou/Kuroba-Experimental/develop/docs/"
   }
 }

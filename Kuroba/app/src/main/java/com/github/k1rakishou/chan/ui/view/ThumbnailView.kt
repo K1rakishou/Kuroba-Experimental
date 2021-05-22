@@ -217,6 +217,14 @@ open class ThumbnailView : AppCompatImageView {
       return
     }
 
+    if (
+      drawable != null
+      && _thumbnailContainerOwner != ThumbnailContainerOwner.Album
+      && ChanSettings.drawPostThumbnailBackground.get()
+    ) {
+      canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
+    }
+
     val width = width - paddingLeft - paddingRight
     val height = height - paddingTop - paddingBottom
 
@@ -228,10 +236,6 @@ open class ThumbnailView : AppCompatImageView {
       canvas.drawText(errorText!!, x + paddingLeft, y + paddingTop, textPaint)
       canvas.restore()
       return
-    }
-
-    if (drawable != null && _thumbnailContainerOwner != ThumbnailContainerOwner.Album) {
-      canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
     }
 
     super.onDraw(canvas)

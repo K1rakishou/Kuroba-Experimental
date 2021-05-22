@@ -128,7 +128,6 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
       repliesCloseText?.setCompoundDrawablesWithIntrinsicBounds(doneDrawable, null, null, null)
     }
 
-
     val adapter = postsView.adapter
     if (adapter is PostRepliesAdapter) {
       adapter.refresh()
