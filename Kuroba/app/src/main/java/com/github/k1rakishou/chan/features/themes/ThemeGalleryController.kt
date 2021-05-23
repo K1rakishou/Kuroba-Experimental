@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.themes
 import android.content.Context
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -11,8 +12,8 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.repository.DownloadThemeJsonFilesRepository
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
-import com.github.k1rakishou.chan.core.usecase.DownloadThemeJsonFilesUseCase
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -33,7 +34,7 @@ class ThemeGalleryController(
 ) : Controller(context) {
 
   @Inject
-  lateinit var downloadThemeJsonFilesUseCase: DownloadThemeJsonFilesUseCase
+  lateinit var downloadThemeJsonFilesRepository: DownloadThemeJsonFilesRepository
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
@@ -80,13 +81,13 @@ class ThemeGalleryController(
     presentController(loadingViewController)
 
     mainScope.launch {
-      val themes = downloadThemeJsonFilesUseCase.execute(Unit)
+      val themes = downloadThemeJsonFilesRepository.download()
         .filter { chanTheme -> chanTheme.isLightTheme == lightThemes }
 
       loadingViewController.stopPresenting()
 
       if (themes.isEmpty()) {
-        showToast(R.string.theme_gallery_screen_loading_themes_failed)
+        showToast(R.string.theme_gallery_screen_loading_themes_failed, Toast.LENGTH_LONG)
         return@launch
       }
 
@@ -147,6 +148,14 @@ class ThemeGalleryController(
       fab.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_done_white_24dp))
       fab.setOnClickListener {
         themeEngine.applyTheme(chanTheme, lightThemes.not())
+
+        val themeType = if (chanTheme.isLightTheme) {
+          getString(R.string.theme_settings_controller_theme_light)
+        } else {
+          getString(R.string.theme_settings_controller_theme_dark)
+        }
+
+        showToast(getString(R.string.theme_settings_controller_theme_set, chanTheme.name, themeType))
       }
 
       val container = itemView as FrameLayout

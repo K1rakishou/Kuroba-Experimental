@@ -1169,6 +1169,7 @@ Don't have a 4chan Pass?<br>
     <string name="theme_settings_controller_theme_light">Light</string>
     <string name="theme_settings_controller_theme_dark">Dark</string>
     <string name="theme_settings_controller_more_themes">More themes</string>
+    <string name="theme_settings_controller_theme_set">Theme \'%1$s\' set as %2$s theme</string>
 
     <string name="layout_reply_files_area_too_many_attachables_text">Too many files to display them all at once (%1$d out of %2$d max). Upload or delete some of them to display the rest.</string>
     <string name="layout_reply_files_area_open_in_editor_action">Open in editor</string>

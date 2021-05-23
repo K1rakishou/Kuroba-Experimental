@@ -13,7 +13,6 @@ import com.github.k1rakishou.core_themes.ThemeParser
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.google.gson.reflect.TypeToken
-import kotlinx.coroutines.Dispatchers
 import okhttp3.Request
 import java.util.*
 
@@ -34,7 +33,7 @@ class DownloadThemeJsonFilesUseCase(
       .get()
       .build()
 
-    val repoFileTreeResult = proxiedOkHttpClient.okHttpClient().suspendConvertIntoJsonObjectWithType<List<RepoFile>>(
+    val repoFileTreeResult = proxiedOkHttpClient.okHttpClient().suspendConvertIntoJsonObjectWithType<List<RepoThemeFile>>(
       request = request,
       gson = gson,
       type = listOfThemeFilesType
@@ -54,11 +53,7 @@ class DownloadThemeJsonFilesUseCase(
       }
     }
 
-    return processDataCollectionConcurrentlyIndexed<RepoFile, ChanTheme?>(
-      dataList = repoFileTree,
-      batchCount = 8,
-      dispatcher = Dispatchers.Default
-    ) { _, repoFile ->
+    return processDataCollectionConcurrentlyIndexed<RepoThemeFile, ChanTheme?>(repoFileTree) { _, repoFile ->
       return@processDataCollectionConcurrentlyIndexed ModularResult
         .Try { downloadThemeFileAndConvertToChanTheme(repoFile) }
         .mapErrorToValue { error ->
@@ -69,19 +64,19 @@ class DownloadThemeJsonFilesUseCase(
   }
 
   @Suppress("MoveVariableDeclarationIntoWhen", "BlockingMethodInNonBlockingContext")
-  private suspend fun downloadThemeFileAndConvertToChanTheme(repoFile: RepoFile): ChanTheme? {
-    if (!repoFile.name.endsWith(".json")) {
-      Logger.e(TAG, "downloadThemeFileAndConvertToChanTheme() Unexpected file name: \'${repoFile.name}\'")
+  private suspend fun downloadThemeFileAndConvertToChanTheme(repoThemeFile: RepoThemeFile): ChanTheme? {
+    if (!repoThemeFile.name.endsWith(".json")) {
+      Logger.e(TAG, "downloadThemeFileAndConvertToChanTheme() Unexpected file name: \'${repoThemeFile.name}\'")
       return null
     }
 
-    if (repoFile.size == 0 || repoFile.size > MAX_THEME_FILE_SIZE) {
-      Logger.e(TAG, "downloadThemeFileAndConvertToChanTheme() Bad file size: ${repoFile.size}")
+    if (repoThemeFile.size == 0 || repoThemeFile.size > MAX_THEME_FILE_SIZE) {
+      Logger.e(TAG, "downloadThemeFileAndConvertToChanTheme() Bad file size: ${repoThemeFile.size}")
       return null
     }
 
     val request = Request.Builder()
-      .url(repoFile.downloadUrl)
+      .url(repoThemeFile.downloadUrl)
       .get()
       .build()
 
@@ -128,7 +123,7 @@ class DownloadThemeJsonFilesUseCase(
     }
   }
 
-  data class RepoFile(
+  data class RepoThemeFile(
     @SerializedName("name")
     val name: String,
     @SerializedName("size")
@@ -142,6 +137,6 @@ class DownloadThemeJsonFilesUseCase(
     private const val GET_THEMES_LIST_ENDPOINT = "https://api.github.com/repos/K1rakishou/KurobaEx-themes/contents/themes"
     private const val MAX_THEME_FILE_SIZE = 1024 * 128 // 128KB
 
-    private val listOfThemeFilesType = object : TypeToken<ArrayList<RepoFile>>() {}.type
+    private val listOfThemeFilesType = object : TypeToken<ArrayList<RepoThemeFile>>() {}.type
   }
 }

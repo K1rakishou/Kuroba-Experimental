@@ -882,7 +882,7 @@ inline fun <T, reified R> List<T>.mapArray(mapper: (T) -> R): Array<R> {
 
 suspend fun <T, R> processDataCollectionConcurrently(
   dataList: Collection<T>,
-  batchCount: Int,
+  batchCount: Int = Runtime.getRuntime().availableProcessors(),
   dispatcher: CoroutineDispatcher = Dispatchers.Default,
   processFunc: suspend (T) -> R?
 ): List<R> {
@@ -912,7 +912,7 @@ suspend fun <T, R> processDataCollectionConcurrently(
 
 suspend fun <T, R> processDataCollectionConcurrentlyIndexed(
   dataList: Collection<T>,
-  batchCount: Int,
+  batchCount: Int = Runtime.getRuntime().availableProcessors(),
   dispatcher: CoroutineDispatcher = Dispatchers.Default,
   processFunc: suspend (Int, T) -> R?
 ): List<R> {

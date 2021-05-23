@@ -19,10 +19,12 @@ package com.github.k1rakishou.chan.core.di.module.application;
 import com.github.k1rakishou.chan.core.manager.ArchivesManager;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
+import com.github.k1rakishou.chan.core.repository.DownloadThemeJsonFilesRepository;
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository;
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository;
 import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager;
+import com.github.k1rakishou.chan.core.usecase.DownloadThemeJsonFilesUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
@@ -85,6 +87,14 @@ public class RepositoryModule {
         return new StaticBoardFlagInfoRepository(
                 siteManager
         );
+    }
+
+    @Provides
+    @Singleton
+    public DownloadThemeJsonFilesRepository provideDownloadThemeJsonFilesRepository(
+            DownloadThemeJsonFilesUseCase downloadThemeJsonFilesUseCase
+    ) {
+        return new DownloadThemeJsonFilesRepository(downloadThemeJsonFilesUseCase);
     }
 
 }
