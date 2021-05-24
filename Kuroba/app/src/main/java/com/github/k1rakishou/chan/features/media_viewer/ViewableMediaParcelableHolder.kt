@@ -78,21 +78,21 @@ sealed class ViewableMedia(
 
   data class Image(
     override val mediaLocation: MediaLocation,
-    override val previewLocation: MediaLocation,
+    override val previewLocation: MediaLocation?,
     override val spoilerLocation: MediaLocation?,
     override val viewableMediaMeta: ViewableMediaMeta
   ) : ViewableMedia(mediaLocation, previewLocation, spoilerLocation, viewableMediaMeta)
 
   data class Gif(
     override val mediaLocation: MediaLocation,
-    override val previewLocation: MediaLocation,
+    override val previewLocation: MediaLocation?,
     override val spoilerLocation: MediaLocation?,
     override val viewableMediaMeta: ViewableMediaMeta
   ) : ViewableMedia(mediaLocation, previewLocation, spoilerLocation, viewableMediaMeta)
 
   data class Video(
     override val mediaLocation: MediaLocation,
-    override val previewLocation: MediaLocation,
+    override val previewLocation: MediaLocation?,
     override val spoilerLocation: MediaLocation?,
     override val viewableMediaMeta: ViewableMediaMeta
   ) : ViewableMedia(mediaLocation, previewLocation, spoilerLocation, viewableMediaMeta)
@@ -110,7 +110,10 @@ data class ViewableMediaMeta(
   val mediaName: String?,
   val mediaWidth: Int?,
   val mediaHeight: Int?,
-  val mediaSize: Long?
+  val mediaSize: Long?,
+  val mediaHash: String?,
+  val isSpoiler: Boolean,
+  val inlined: Boolean
 )
 
 sealed class MediaLocation {

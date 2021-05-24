@@ -18,13 +18,13 @@ abstract class ControllerHostActivity : AppCompatActivity() {
   protected val stack = Stack<Controller>()
 
   override fun onDestroy() {
-    super.onDestroy()
-
     while (!stack.isEmpty()) {
       val controller = stack.pop()
       controller.onHide()
       controller.onDestroy()
     }
+
+    super.onDestroy()
   }
 
   override fun dispatchKeyEvent(event: KeyEvent): Boolean {

@@ -423,7 +423,7 @@ class MultiImageView @JvmOverloads constructor(
       BackgroundUtils.ensureBackgroundThread()
 
       val newRequest = fileCacheV2.enqueueChunkedDownloadFileRequest(
-        postImage,
+        postImage.imageUrl!!,
         extraInfo,
         object : FileCacheListener() {
           override fun onStart(chunksCount: Int) {
@@ -492,7 +492,7 @@ class MultiImageView @JvmOverloads constructor(
       BackgroundUtils.ensureBackgroundThread()
 
       val newRequest = fileCacheV2.enqueueChunkedDownloadFileRequest(
-        postImage,
+        postImage.imageUrl!!,
         extraInfo,
         object : FileCacheListener() {
           override fun onStart(chunksCount: Int) {
@@ -624,7 +624,7 @@ class MultiImageView @JvmOverloads constructor(
       BackgroundUtils.ensureBackgroundThread()
 
       val newRequest = fileCacheV2.enqueueChunkedDownloadFileRequest(
-        postImage,
+        postImage.imageUrl!!,
         extraInfo,
         object : FileCacheListener() {
           override fun onStart(chunksCount: Int) {

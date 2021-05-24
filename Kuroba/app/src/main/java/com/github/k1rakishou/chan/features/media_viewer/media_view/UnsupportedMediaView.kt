@@ -12,7 +12,7 @@ class UnsupportedMediaView(
   override val viewableMedia: ViewableMedia.Unsupported,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
-) : MediaView<UnsupportedMediaView.UnsupportedMediaViewParams, ViewableMedia.Unsupported>(context, null) {
+) : MediaView<ViewableMedia.Unsupported>(context, null) {
 
 
   init {
@@ -23,21 +23,23 @@ class UnsupportedMediaView(
 
   }
 
-  override fun preload(parameters: UnsupportedMediaViewParams) {
+  override fun preload() {
     // do not preload unsupported media
   }
 
-  override fun bind(parameters: UnsupportedMediaViewParams) {
+  override fun bind() {
     // nothing to bind
   }
 
   override fun hide() {
-
+    // no-op
   }
 
   override fun unbind() {
     // nothing to unbind
   }
 
-  class UnsupportedMediaViewParams()
+  companion object {
+    private const val TAG = "UnsupportedMediaView"
+  }
 }

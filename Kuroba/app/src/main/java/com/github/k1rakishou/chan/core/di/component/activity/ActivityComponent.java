@@ -169,6 +169,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarContainer;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
+import com.github.k1rakishou.chan.ui.view.ChunkedLoadingBar;
 import com.github.k1rakishou.chan.ui.view.FastScroller;
 import com.github.k1rakishou.chan.ui.view.FloatingMenu;
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton;
@@ -359,6 +360,7 @@ public interface ActivityComponent {
     void inject(ImageReencodingPresenter imageReencodingPresenter);
     void inject(ImageViewerPresenter imageViewerPresenter);
     void inject(LoadingBar loadingBar);
+    void inject(ChunkedLoadingBar chunkedLoadingBar);
     void inject(ThreadSlidingPaneLayout threadSlidingPaneLayout);
     void inject(PostStubCell postStubCell);
     void inject(PostPopupContainer postPopupContainer);

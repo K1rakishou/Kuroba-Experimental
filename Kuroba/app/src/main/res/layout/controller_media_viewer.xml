@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:id="@+id/media_viewer_root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#80000000">
+    android:background="#A0000000">
 
     <com.github.k1rakishou.chan.ui.view.AppearTransitionImageView
         android:id="@+id/appear_preview_image"

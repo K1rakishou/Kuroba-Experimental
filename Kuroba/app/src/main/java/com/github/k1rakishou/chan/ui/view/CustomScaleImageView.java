@@ -21,6 +21,8 @@ import android.graphics.Bitmap;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 
+import androidx.annotation.Nullable;
+
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 import com.github.k1rakishou.common.DoNotStrip;
 import com.github.k1rakishou.core_logger.Logger;
@@ -61,7 +63,7 @@ public class CustomScaleImageView extends SubsamplingScaleImageView {
             public void onImageLoaded() {
                 Logger.d(TAG, "onImageLoaded");
                 if (callback != null) {
-                    callback.onReady();
+                    callback.onImageLoaded();
                 }
             }
 
@@ -105,7 +107,7 @@ public class CustomScaleImageView extends SubsamplingScaleImageView {
         return new ImageViewportTouchSide(side);
     }
 
-    public void setCallback(Callback callback) {
+    public void setCallback(@Nullable Callback callback) {
         this.callback = callback;
     }
 
@@ -144,6 +146,8 @@ public class CustomScaleImageView extends SubsamplingScaleImageView {
 
     public interface Callback {
         void onReady();
+
+        void onImageLoaded();
 
         void onError(Exception e, boolean wasInitial);
     }

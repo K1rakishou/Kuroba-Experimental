@@ -16,6 +16,17 @@
  */
 package com.github.k1rakishou.chan.core.presenter;
 
+import static com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager.NEXT_N_POSTS_RELATIVE;
+import static com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager.PREV_N_POSTS_RELATIVE;
+import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.BIGIMAGE;
+import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.GIFIMAGE;
+import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.LOWRES;
+import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.OTHER;
+import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.VIDEO;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
+import static com.github.k1rakishou.common.AndroidUtils.getAudioManager;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 
@@ -59,17 +70,6 @@ import javax.inject.Inject;
 
 import kotlin.Unit;
 import okhttp3.HttpUrl;
-
-import static com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager.NEXT_N_POSTS_RELATIVE;
-import static com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager.PREV_N_POSTS_RELATIVE;
-import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.BIGIMAGE;
-import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.GIFIMAGE;
-import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.LOWRES;
-import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.OTHER;
-import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.VIDEO;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
-import static com.github.k1rakishou.common.AndroidUtils.getAudioManager;
 
 public class ImageViewerPresenter
         implements MultiImageView.Callback, ViewPager.OnPageChangeListener {
@@ -513,11 +513,17 @@ public class ImageViewerPresenter
                     postImage.getFileHash()
             );
 
-            preloadDownload[0] = fileCacheV2.enqueueChunkedDownloadFileRequest(
-                    postImage,
-                    extraInfo,
-                    fileCacheListener
-            );
+            HttpUrl url = postImage.getImageUrl();
+
+            if (url == null) {
+                preloadDownload[0] = null;
+            } else {
+                preloadDownload[0] = fileCacheV2.enqueueChunkedDownloadFileRequest(
+                        url,
+                        extraInfo,
+                        fileCacheListener
+                );
+            }
         } else {
             preloadDownload[0] = fileCacheV2.enqueueNormalDownloadFileRequest(
                     postImage,

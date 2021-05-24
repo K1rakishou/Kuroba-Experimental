@@ -1191,8 +1191,10 @@ class ImageLoaderV2(
       imageSize: ImageSize,
       transformations: List<Transformation>
     ): Boolean {
+      val alreadyHasActiveRequest = listeners.isNotEmpty()
       listeners += ActiveListener(imageListenerParam, imageSize, transformations)
-      return listeners.size > 1
+
+      return alreadyHasActiveRequest
     }
 
     @Synchronized

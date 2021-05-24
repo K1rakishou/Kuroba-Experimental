@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.media_viewer.media_view
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.util.AttributeSet
 import coil.request.Disposable
@@ -37,13 +38,33 @@ class ThumbnailMediaView @JvmOverloads constructor(
     thumbnailView = findViewById(R.id.thumbnail_image_view)
   }
 
-  fun onBind(parameters: ThumbnailMediaViewParameters) {
-    disposePrevRequest()
+  fun thumbnailBitmap(): Bitmap? {
+    val bitmap = (thumbnailView.drawable as? BitmapDrawable)?.bitmap
+    if (bitmap == null || bitmap.isRecycled) {
+      return null
+    }
+
+    return bitmap
+  }
+
+  fun bind(parameters: ThumbnailMediaViewParameters) {
+    if (requestDisposable != null) {
+      return
+    }
 
     requestDisposable = when (val location = parameters.thumbnailLocation) {
       is MediaLocation.Local -> TODO()
       is MediaLocation.Remote -> loadRemoteMedia(location.url, parameters)
     }
+  }
+
+  fun unbind() {
+    if (requestDisposable != null) {
+      requestDisposable!!.dispose()
+      requestDisposable = null
+    }
+
+    thumbnailView.setImageDrawable(null)
   }
 
   private fun loadRemoteMedia(url: HttpUrl, parameters: ThumbnailMediaViewParameters): Disposable {
@@ -64,28 +85,18 @@ class ThumbnailMediaView @JvmOverloads constructor(
 
           thumbnailView.setType(postImageType)
           thumbnailView.setImageDrawable(drawable)
-
-          parameters.onThumbnailLoadingComplete(true)
         }
 
         override fun onNotFound() {
           requestDisposable = null
           onNotFoundError()
-
-          parameters.onThumbnailLoadingComplete(false)
         }
 
         override fun onResponseError(error: Throwable) {
           requestDisposable = null
           onError(error)
-
-          parameters.onThumbnailLoadingComplete(false)
         }
       })
-  }
-
-  fun onUnbind() {
-    disposePrevRequest()
   }
 
   private fun onNotFoundError() {
@@ -109,17 +120,13 @@ class ThumbnailMediaView @JvmOverloads constructor(
 //    callback?.hideProgress(this@MultiImageView)
   }
 
-  private fun disposePrevRequest() {
-    if (requestDisposable != null) {
-      requestDisposable!!.dispose()
-      requestDisposable = null
-    }
-  }
-
   data class ThumbnailMediaViewParameters(
     val isOriginalMediaVideo: Boolean,
-    val thumbnailLocation: MediaLocation,
-    val onThumbnailLoadingComplete: (success: Boolean) -> Unit
+    val thumbnailLocation: MediaLocation
   )
+
+  companion object {
+    private const val TAG = "ThumbnailMediaView"
+  }
 
 }

@@ -15,7 +15,7 @@ import com.github.k1rakishou.core_logger.Logger
 class MediaViewerAdapter(
   private val context: Context,
 ) : ViewPagerAdapter() {
-  private val loadedViews = mutableListOf<MediaView<*, ViewableMedia>>()
+  private val loadedViews = mutableListOf<MediaView<ViewableMedia>>()
   private val viewableMediaList = mutableListWithCap<ViewableMedia>(32)
 
   fun setViewableMediaList(viewableMediaList: List<ViewableMedia>) {
@@ -26,7 +26,14 @@ class MediaViewerAdapter(
   }
 
   fun onDestroy() {
-    loadedViews.forEach { loadedView -> loadedView.onUnbind() }
+    Logger.d(TAG, "onDestroy()")
+
+    loadedViews.forEach { loadedView ->
+      if (loadedView.bound) {
+        loadedView.onUnbind()
+      }
+    }
+
     loadedViews.clear()
   }
 
@@ -36,32 +43,28 @@ class MediaViewerAdapter(
     val mediaView = when (val viewableMedia = viewableMediaList[position]) {
       is ViewableMedia.Image -> {
         FullImageMediaView(context, viewableMedia, position, count).apply {
-          val params = FullImageMediaView.FullImageMediaViewParams(viewableMedia.mediaLocation)
-          startPreloading(params)
+          startPreloading()
         }
       }
       is ViewableMedia.Gif -> {
         GifMediaView(context, viewableMedia, position, count).apply {
-          val params = GifMediaView.GifMediaViewParams(viewableMedia.mediaLocation)
-          startPreloading(params)
+          startPreloading()
         }
       }
       is ViewableMedia.Video -> {
         VideoMediaView(context, viewableMedia, position, count).apply {
-          val params = VideoMediaView.VideoMediaViewParams(viewableMedia.mediaLocation)
-          startPreloading(params)
+          startPreloading()
         }
       }
       is ViewableMedia.Unsupported -> {
         UnsupportedMediaView(context, viewableMedia, position, count).apply {
-          val params = UnsupportedMediaView.UnsupportedMediaViewParams()
-          startPreloading(params)
+          startPreloading()
         }
       }
     }
 
-    loadedViews.add(mediaView as MediaView<*, ViewableMedia>)
-    Logger.d(TAG, "getView(position: ${position})")
+    loadedViews.add(mediaView as MediaView<ViewableMedia>)
+    Logger.d(TAG, "getView(position: ${position}), loadedViewsCount=${loadedViews.size}")
 
     return mediaView
   }
@@ -75,22 +78,10 @@ class MediaViewerAdapter(
       ?: return
 
     when (viewableMedia) {
-      is ViewableMedia.Image -> {
-        val params = FullImageMediaView.FullImageMediaViewParams(viewableMedia.mediaLocation)
-        (view as FullImageMediaView).onBind(params)
-      }
-      is ViewableMedia.Gif -> {
-        val params = GifMediaView.GifMediaViewParams(viewableMedia.mediaLocation)
-        (view as GifMediaView).onBind(params)
-      }
-      is ViewableMedia.Video -> {
-        val params = VideoMediaView.VideoMediaViewParams(viewableMedia.mediaLocation)
-        (view as VideoMediaView).onBind(params)
-      }
-      is ViewableMedia.Unsupported -> {
-        val params = UnsupportedMediaView.UnsupportedMediaViewParams()
-        (view as UnsupportedMediaView).onBind(params)
-      }
+      is ViewableMedia.Image -> (view as FullImageMediaView).onBind()
+      is ViewableMedia.Gif -> (view as GifMediaView).onBind()
+      is ViewableMedia.Video -> (view as VideoMediaView).onBind()
+      is ViewableMedia.Unsupported -> (view as UnsupportedMediaView).onBind()
     }
 
     loadedViews.forEach { loadedView ->
@@ -103,8 +94,14 @@ class MediaViewerAdapter(
   override fun destroyItem(container: ViewGroup, position: Int, obj: Any) {
     super.destroyItem(container, position, obj)
 
-    (obj as MediaView<*, ViewableMedia>).onUnbind()
+    (obj as MediaView<ViewableMedia>).let { mediaView ->
+      if (mediaView.bound) {
+        mediaView.onUnbind()
+      }
+    }
+
     loadedViews.remove(obj)
+    Logger.d(TAG, "destroyItem(position: ${position}), loadedViewsCount=${loadedViews.size}")
   }
 
   companion object {

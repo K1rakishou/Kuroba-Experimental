@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.ui.view.DisappearTransitionImageView
 import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
@@ -42,7 +43,7 @@ class MediaViewerController(context: Context) : Controller(context), ViewPager.O
 
     pager.addOnPageChangeListener(this)
     pager.setVisibilityFast(View.INVISIBLE)
-    pager.offscreenPageLimit = 5 // TODO(KurobaEx): move into a separate setting
+    pager.offscreenPageLimit = 2 // TODO(KurobaEx): move into a separate setting
     pager.adapter = adapter
 
     mainScope.launch {
@@ -52,17 +53,21 @@ class MediaViewerController(context: Context) : Controller(context), ViewPager.O
         }
 
         adapter.setViewableMediaList(mediaViewerState.loadedMedia)
-        pager.setCurrentItem(mediaViewerState.lastViewedIndex, false)
+
+        val prevItemIndex = pager.currentItem
+        pager.setCurrentItem(mediaViewerState.initialPagerIndex, false)
         pager.setVisibilityFast(View.VISIBLE)
         pager.setSwipingEnabled(true)
 
-        if (mediaViewerState.lastViewedIndex == pager.currentItem) {
+        Logger.d(TAG, "Loaded ${mediaViewerState.loadedMedia.size} media items, initialPagerIndex=${mediaViewerState.initialPagerIndex}")
+
+        if (mediaViewerState.initialPagerIndex == prevItemIndex) {
           // onPageSelected won't be called after calling setCurrentItem with item == pager.mCurItem
           // because it's some kind of an internal optimization to not call onPageSelected for item
           // ids that are the same as the internal mCurItem which is 0 upon pager creation.
           // So we need to call it manually. Otherwise if the user click the very first media
           // in a catalog/thread it won't be shown.
-          onPageSelected(mediaViewerState.lastViewedIndex)
+          onPageSelected(mediaViewerState.initialPagerIndex)
         }
       }
     }
@@ -72,6 +77,7 @@ class MediaViewerController(context: Context) : Controller(context), ViewPager.O
     super.onDestroy()
 
     pager.removeOnPageChangeListener(this)
+    adapter.onDestroy()
   }
 
   override fun onPageSelected(position: Int) {
@@ -79,6 +85,7 @@ class MediaViewerController(context: Context) : Controller(context), ViewPager.O
       adapter as MediaViewerAdapter
 
       adapter.doBind(position)
+      viewModel.updateLastViewedIndex(position)
     }
   }
 
@@ -90,4 +97,7 @@ class MediaViewerController(context: Context) : Controller(context), ViewPager.O
     // no-op
   }
 
+  companion object {
+    private const val TAG = "MediaViewerController"
+  }
 }

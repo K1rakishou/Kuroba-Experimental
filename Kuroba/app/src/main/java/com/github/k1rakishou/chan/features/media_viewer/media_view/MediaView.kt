@@ -7,7 +7,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBack
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.core_logger.Logger
 
-abstract class MediaView<Parameters, T : ViewableMedia> constructor(
+abstract class MediaView<T : ViewableMedia> constructor(
   context: Context,
   attributeSet: AttributeSet?
 ) : TouchBlockingFrameLayoutNoBackground(context, attributeSet, 0) {
@@ -21,29 +21,25 @@ abstract class MediaView<Parameters, T : ViewableMedia> constructor(
 
   protected val cancellableToast by lazy { CancellableToast() }
 
-  protected val bound: Boolean
+  val bound: Boolean
     get() = _bound
 
-  fun startPreloading(parameters: Parameters) {
+  fun startPreloading() {
     if (_preloadingCalled) {
       return
     }
 
     _preloadingCalled = true
-    preload(parameters)
+    preload()
 
-    Logger.d(TAG, "startPreloading(${viewableMedia.mediaLocation}), ${pagerPosition}/${totalPageItemsCount}")
+    Logger.d(TAG, "startPreloading(${pagerPosition}) (${totalPageItemsCount} total)")
   }
 
-  fun onBind(parameters: Parameters) {
-    if (_bound) {
-      return
-    }
-
+  fun onBind() {
     _bound = true
-    bind(parameters)
+    bind()
 
-    Logger.d(TAG, "onBind(${viewableMedia.mediaLocation}), ${pagerPosition}/${totalPageItemsCount}")
+    Logger.d(TAG, "onBind(${pagerPosition}) (${totalPageItemsCount} total)")
   }
 
   fun onHide() {
@@ -54,28 +50,25 @@ abstract class MediaView<Parameters, T : ViewableMedia> constructor(
     _shown = false
     hide()
 
-    Logger.d(TAG, "onHide(${viewableMedia.mediaLocation}), ${pagerPosition}/${totalPageItemsCount}")
+    Logger.d(TAG, "onHide(${pagerPosition}) (${totalPageItemsCount} total)")
   }
 
   fun onUnbind() {
-    if (!bound) {
-      return
-    }
-
     _bound = false
     unbind()
     cancellableToast.cancel()
 
-    Logger.d(TAG, "onUnbind(${viewableMedia.mediaLocation}), ${pagerPosition}/${totalPageItemsCount}")
+    Logger.d(TAG, "onUnbind(${pagerPosition}) (${totalPageItemsCount} total)")
   }
 
-  abstract fun preload(parameters: Parameters)
-  abstract fun bind(parameters: Parameters)
+  abstract fun preload()
+  abstract fun bind()
   abstract fun hide()
   abstract fun unbind()
 
   override fun toString(): String {
-    return "MediaView(viewableMedia=$viewableMedia, pagerPosition=$pagerPosition, totalPageItemsCount=$totalPageItemsCount, _bound=$_bound, _shown=$_shown, _preloadingCalled=$_preloadingCalled)"
+    return "MediaView(viewableMedia=$viewableMedia, pagerPosition=$pagerPosition, " +
+      "totalPageItemsCount=$totalPageItemsCount, _bound=$_bound, _shown=$_shown, _preloadingCalled=$_preloadingCalled)"
   }
 
   companion object {

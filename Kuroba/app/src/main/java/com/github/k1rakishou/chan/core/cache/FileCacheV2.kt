@@ -32,6 +32,7 @@ import com.github.k1rakishou.model.util.ChanPostUtils
 import io.reactivex.Flowable
 import io.reactivex.processors.PublishProcessor
 import io.reactivex.schedulers.Schedulers
+import okhttp3.HttpUrl
 import java.io.File
 import java.io.IOException
 import java.util.*
@@ -186,12 +187,12 @@ class FileCacheV2(
   }
 
   fun enqueueChunkedDownloadFileRequest(
-    postImage: ChanPostImage,
+    url: HttpUrl,
     extraInfo: DownloadRequestExtraInfo,
     callback: FileCacheListener?
   ): CancelableDownload? {
     return enqueueDownloadFileRequest(
-      postImage = postImage,
+      url = url,
       extraInfo = extraInfo,
       isBatchDownload = false,
       callback = callback
@@ -203,8 +204,11 @@ class FileCacheV2(
     isBatchDownload: Boolean,
     callback: FileCacheListener?
   ): CancelableDownload? {
+    val url = postImage.imageUrl
+      ?: return null
+
     return enqueueDownloadFileRequest(
-      postImage = postImage,
+      url = url,
       // Normal downloads (not chunked) always have default extra info
       // (no file size, no file hash)
       extraInfo = DownloadRequestExtraInfo(),
@@ -228,16 +232,13 @@ class FileCacheV2(
 
   @SuppressLint("CheckResult")
   private fun enqueueDownloadFileRequest(
-    postImage: ChanPostImage,
+    url: HttpUrl,
     extraInfo: DownloadRequestExtraInfo,
     isBatchDownload: Boolean,
     callback: FileCacheListener?
   ): CancelableDownload? {
-    val url = postImage.imageUrl?.toString()
-      ?: return null
-
     return enqueueDownloadFileRequestInternal(
-      url = url,
+      url = url.toString(),
       isBatchDownload = isBatchDownload,
       extraInfo = extraInfo,
       callback = callback

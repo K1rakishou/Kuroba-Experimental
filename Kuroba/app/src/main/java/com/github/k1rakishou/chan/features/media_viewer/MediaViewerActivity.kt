@@ -63,13 +63,9 @@ class MediaViewerActivity : ControllerHostActivity() {
   }
 
   override fun onDestroy() {
-    super.onDestroy()
-
-    if (::mediaViewerController.isInitialized) {
-      mediaViewerController.onDestroy()
-    }
-
     AndroidUtils.getWindow(this).clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+    super.onDestroy()
   }
 
   override fun finish() {
