@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
 import com.github.k1rakishou.chan.core.manager.ReplyManager
@@ -19,7 +20,6 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -33,9 +33,11 @@ class SharingActivity : AppCompatActivity() {
   @Inject
   lateinit var appConstants: AppConstants
 
+  private val mainScope = KurobaCoroutineScope()
+
   private lateinit var activityComponent: ActivityComponent
 
-  fun getComponent(): ActivityComponent {
+  fun getActivityComponent(): ActivityComponent {
     return activityComponent
   }
 
@@ -51,13 +53,13 @@ class SharingActivity : AppCompatActivity() {
 
     imagePickHelper.onActivityCreated(this)
 
-    GlobalScope.launch(Dispatchers.Main.immediate) { handleNewIntent(intent) }
+    mainScope.launch(Dispatchers.Main.immediate) { handleNewIntent(intent) }
   }
 
   override fun onNewIntent(intent: Intent?) {
     super.onNewIntent(intent)
 
-    GlobalScope.launch(Dispatchers.Main.immediate) { handleNewIntent(intent) }
+    mainScope.launch(Dispatchers.Main.immediate) { handleNewIntent(intent) }
   }
 
   override fun onDestroy() {
@@ -68,6 +70,7 @@ class SharingActivity : AppCompatActivity() {
     }
 
     AppModuleAndroidUtils.cancelLastToast()
+    mainScope.cancelChildren()
   }
 
   private suspend fun handleNewIntent(intent: Intent?) {

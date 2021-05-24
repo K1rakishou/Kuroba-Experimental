@@ -355,7 +355,7 @@ public class AlbumDownloadController
             super(itemView);
             itemView.getLayoutParams().height = recyclerView.getRealSpanWidth();
             checkbox = itemView.findViewById(R.id.checkbox);
-            thumbnailView = itemView.findViewById(R.id.thumbnail_view);
+            thumbnailView = itemView.findViewById(R.id.thumbnail_image_view);
             thumbnailView.setOnImageClickListener(ALBUM_DOWNLOAD_VIEW_CELL_THUMBNAIL_CLICK_TOKEN, this);
         }
 

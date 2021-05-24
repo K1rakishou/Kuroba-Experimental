@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     tools:ignore="ContentDescription,RtlHardcoded,RtlSymmetry">
 
     <com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
-        android:id="@+id/thumbnail_view"
+        android:id="@+id/thumbnail_image_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="5dp" />

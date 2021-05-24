@@ -3,13 +3,13 @@ package com.github.k1rakishou.chan.ui.theme.widget
 import android.content.Context
 import android.util.AttributeSet
 import android.view.MotionEvent
-import android.widget.FrameLayout
+import androidx.constraintlayout.widget.ConstraintLayout
 
-open class TouchBlockingFrameLayoutNoBackground @JvmOverloads constructor(
+class TouchBlockingConstraintLayoutNoBackground @JvmOverloads constructor(
   context: Context,
   attributeSet: AttributeSet? = null,
   defStyle: Int = 0
-) : FrameLayout(context, attributeSet, defStyle) {
+) : ConstraintLayout(context, attributeSet, defStyle) {
 
   override fun onTouchEvent(event: MotionEvent): Boolean {
     return true

@@ -5,6 +5,7 @@ import android.content.Context;
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
+import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent;
 import com.github.k1rakishou.chan.core.di.module.application.AppModule;
 import com.github.k1rakishou.chan.core.di.module.application.ExecutorsModule;
 import com.github.k1rakishou.chan.core.di.module.application.GsonModule;
@@ -59,6 +60,7 @@ import kotlinx.coroutines.CoroutineScope;
 public interface ApplicationComponent {
     Chan getApplication();
     ActivityComponent.Builder activityComponentBuilder();
+    ViewModelComponent.Builder viewModelComponentBuilder();
 
     void inject(Chan application);
     void inject(BookmarkBackgroundWatcherWorker bookmarkBackgroundWatcherWorker);

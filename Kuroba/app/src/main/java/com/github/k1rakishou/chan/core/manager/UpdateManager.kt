@@ -30,7 +30,7 @@ import androidx.core.text.parseAsHtml
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.activity.StartActivity
+import com.github.k1rakishou.chan.core.base.ControllerHostActivity
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
@@ -651,7 +651,7 @@ class UpdateManager(
   }
 
   private fun updateInstallRequested(responseRelease: ReleaseUpdateApiResponse) {
-    val runtimePermissionsHelper = (context as StartActivity).runtimePermissionsHelper
+    val runtimePermissionsHelper = (context as ControllerHostActivity).runtimePermissionsHelper
 
     runtimePermissionsHelper.requestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) { granted ->
       if (granted) {

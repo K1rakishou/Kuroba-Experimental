@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.ui.view;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.RectF;
+import android.util.AttributeSet;
 
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 import com.github.k1rakishou.common.DoNotStrip;
@@ -33,7 +34,11 @@ public class CustomScaleImageView extends SubsamplingScaleImageView {
     private final RectF panRectF = new RectF();
 
     public CustomScaleImageView(Context context) {
-        super(context);
+        this(context, null);
+    }
+
+    public CustomScaleImageView(Context context, AttributeSet attr) {
+        super(context, attr);
 
         setPreferredBitmapConfig(Bitmap.Config.ARGB_8888);
         setOnImageEventListener(new DefaultOnImageEventListener() {

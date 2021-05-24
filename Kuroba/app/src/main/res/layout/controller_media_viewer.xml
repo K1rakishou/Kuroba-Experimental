@@ -14,29 +14,26 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<com.github.k1rakishou.chan.ui.cell.AlbumViewCell xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/media_viewer_root_layout"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_margin="1dp">
+    android:layout_height="match_parent"
+    android:background="#80000000">
 
-    <com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
-        android:id="@+id/thumbnail_image_view"
+    <com.github.k1rakishou.chan.ui.view.AppearTransitionImageView
+        android:id="@+id/appear_preview_image"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <TextView
-        android:id="@+id/text"
+    <com.github.k1rakishou.chan.ui.view.DisappearTransitionImageView
+        android:id="@+id/disappear_preview_image"
         android:layout_width="match_parent"
-        android:layout_height="32dp"
-        android:layout_gravity="bottom"
-        android:background="#8a000000"
-        android:gravity="center_vertical"
-        android:maxLines="2"
-        android:paddingLeft="8dp"
-        android:paddingRight="8dp"
-        android:textColor="#ffffffff"
-        android:textSize="10sp"
-        tools:ignore="SmallSp" />
+        android:layout_height="match_parent" />
 
-</com.github.k1rakishou.chan.ui.cell.AlbumViewCell>
+    <com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager
+        android:id="@+id/pager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible" />
+
+</com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground>

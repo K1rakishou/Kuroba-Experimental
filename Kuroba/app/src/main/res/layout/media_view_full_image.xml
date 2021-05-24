@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <com.github.k1rakishou.chan.features.media_viewer.media_view.ThumbnailMediaView
+        android:id="@+id/thumbnail_media_view"
+        android:visibility="visible"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <com.github.k1rakishou.chan.ui.view.CustomScaleImageView
+        android:id="@+id/actual_image_view"
+        android:visibility="invisible"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+</com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground>

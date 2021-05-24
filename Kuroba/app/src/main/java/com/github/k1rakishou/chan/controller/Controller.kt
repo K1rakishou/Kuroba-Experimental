@@ -24,10 +24,10 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.annotation.CallSuper
 import androidx.annotation.StringRes
-import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.activity.StartActivityCallbacks
 import com.github.k1rakishou.chan.controller.transition.FadeInTransition
 import com.github.k1rakishou.chan.controller.transition.FadeOutTransition
+import com.github.k1rakishou.chan.core.base.ControllerHostActivity
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController
@@ -316,11 +316,11 @@ abstract class Controller(@JvmField var context: Context) {
 
   @JvmOverloads
   open fun presentController(controller: Controller, animated: Boolean = true) {
-    val contentView = (context as StartActivity).contentView
+    val contentView = (context as ControllerHostActivity).contentView
     presentingThisController = controller
 
     controller.presentedByController = this
-    (context as StartActivity).pushController(controller)
+    (context as ControllerHostActivity).pushController(controller)
 
     controller.onCreate()
     controller.attachToView(contentView)
@@ -341,11 +341,11 @@ abstract class Controller(@JvmField var context: Context) {
   }
 
   fun isAlreadyPresenting(predicate: (Controller) -> Boolean): Boolean {
-    return (context as StartActivity).isControllerAdded(predicate)
+    return (context as ControllerHostActivity).isControllerAdded(predicate)
   }
 
   fun getControllerOrNull(predicate: (Controller) -> Boolean): Controller? {
-    return (context as StartActivity).getControllerOrNull(predicate)
+    return (context as ControllerHostActivity).getControllerOrNull(predicate)
   }
 
   open fun stopPresenting() {
@@ -353,7 +353,7 @@ abstract class Controller(@JvmField var context: Context) {
   }
 
   open fun stopPresenting(animated: Boolean) {
-    val startActivity = (context as StartActivity)
+    val startActivity = (context as ControllerHostActivity)
     if (!startActivity.containsController(this)) {
       return
     }

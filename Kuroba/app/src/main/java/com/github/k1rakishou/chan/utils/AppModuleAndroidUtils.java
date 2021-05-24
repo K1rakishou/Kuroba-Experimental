@@ -1,5 +1,14 @@
 package com.github.k1rakishou.chan.utils;
 
+import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
+import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Debug;
+import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Release;
+import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Unknown;
+import static com.github.k1rakishou.common.AndroidUtils.getActivityManager;
+import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
+import static com.github.k1rakishou.common.AndroidUtils.isAndroidP;
+
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.Application;
@@ -37,6 +46,7 @@ import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.activity.SharingActivity;
 import com.github.k1rakishou.chan.activity.StartActivity;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity;
 import com.github.k1rakishou.chan.ui.widget.CancellableToast;
 import com.github.k1rakishou.common.AndroidUtils;
 import com.github.k1rakishou.core_logger.Logger;
@@ -47,15 +57,6 @@ import org.greenrobot.eventbus.EventBus;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-
-import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
-import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
-import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Debug;
-import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Release;
-import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Unknown;
-import static com.github.k1rakishou.common.AndroidUtils.getActivityManager;
-import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
-import static com.github.k1rakishou.common.AndroidUtils.isAndroidP;
 
 public class AppModuleAndroidUtils {
     private static final String TAG = "AppModuleAndroidUtils";
@@ -570,9 +571,11 @@ public class AppModuleAndroidUtils {
 
     public static ActivityComponent extractActivityComponent(Context context) {
         if (context instanceof StartActivity) {
-            return ((StartActivity) context).getComponent();
+            return ((StartActivity) context).getActivityComponent();
         } else if (context instanceof SharingActivity) {
-            return ((SharingActivity) context).getComponent();
+            return ((SharingActivity) context).getActivityComponent();
+        } else if (context instanceof MediaViewerActivity) {
+            return ((MediaViewerActivity) context).getActivityComponent();
         } else if (context instanceof ContextWrapper) {
             Context baseContext = ((ContextWrapper) context).getBaseContext();
             if (baseContext != null) {

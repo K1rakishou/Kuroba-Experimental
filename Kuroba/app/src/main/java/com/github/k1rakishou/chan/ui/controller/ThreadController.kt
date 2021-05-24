@@ -36,6 +36,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
 import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
 import com.github.k1rakishou.chan.ui.controller.ImageViewerController.ImageViewerCallback
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
@@ -268,14 +269,24 @@ abstract class ThreadController(
     chanDescriptor: ChanDescriptor,
     thumbnail: ThumbnailView
   ) {
-    val isAlreadyPresenting =
-      isAlreadyPresenting { controller -> controller is ImageViewerNavigationController }
+    // TODO(KurobaEx): remove me
+//    val isAlreadyPresenting =
+//      isAlreadyPresenting { controller -> controller is ImageViewerNavigationController }
+//
+//    // Just ignore the showImages request when the image is not loaded
+//    if (thumbnail.bitmap != null && !isAlreadyPresenting) {
+//      val imageViewer = ImageViewerNavigationController(context)
+//      presentController(imageViewer, false)
+//      imageViewer.showImages(false, images, index, chanDescriptor, this)
+//    }
 
-    // Just ignore the showImages request when the image is not loaded
-    if (thumbnail.bitmap != null && !isAlreadyPresenting) {
-      val imageViewer = ImageViewerNavigationController(context)
-      presentController(imageViewer, false)
-      imageViewer.showImages(false, images, index, chanDescriptor, this)
+    when (chanDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        MediaViewerActivity.catalogAlbum(context, chanDescriptor, images[index].imageUrl!!.toString())
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        MediaViewerActivity.threadAlbum(context, chanDescriptor, images[index].imageUrl!!.toString())
+      }
     }
   }
 

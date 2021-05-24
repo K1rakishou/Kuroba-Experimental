@@ -27,6 +27,13 @@ import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsContro
 import com.github.k1rakishou.chan.features.image_saver.ResolveDuplicateImagesController;
 import com.github.k1rakishou.chan.features.image_saver.epoxy.EpoxyDuplicateImageView;
 import com.github.k1rakishou.chan.features.login.LoginController;
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity;
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerController;
+import com.github.k1rakishou.chan.features.media_viewer.media_view.FullImageMediaView;
+import com.github.k1rakishou.chan.features.media_viewer.media_view.GifMediaView;
+import com.github.k1rakishou.chan.features.media_viewer.media_view.ThumbnailMediaView;
+import com.github.k1rakishou.chan.features.media_viewer.media_view.UnsupportedMediaView;
+import com.github.k1rakishou.chan.features.media_viewer.media_view.VideoMediaView;
 import com.github.k1rakishou.chan.features.proxies.ProxyEditorController;
 import com.github.k1rakishou.chan.features.proxies.ProxySetupController;
 import com.github.k1rakishou.chan.features.proxies.epoxy.EpoxyProxyView;
@@ -187,6 +194,7 @@ import dagger.Subcomponent;
 public interface ActivityComponent {
     void inject(StartActivity startActivity);
     void inject(SharingActivity sharingActivity);
+    void inject(MediaViewerActivity mediaViewerActivity);
 
     void inject(AlbumDownloadController albumDownloadController);
     void inject(AlbumViewController albumViewController);
@@ -244,6 +252,7 @@ public interface ActivityComponent {
     void inject(KurobaAlertDialogHostController kurobaAlertDialogHostController);
     void inject(SimpleListItemsReorderingController simpleListItemsReorderingController);
     void inject(CaptchaContainerController captchaContainerController);
+    void inject(MediaViewerController mediaViewerController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);
@@ -363,6 +372,11 @@ public interface ActivityComponent {
     void inject(ToolbarMenuItem toolbarMenuItem);
     void inject(KurobaAlertController kurobaAlertController);
     void inject(PostImageThumbnailViewContainer postImageThumbnailViewContainer);
+    void inject(ThumbnailMediaView thumbnailMediaView);
+    void inject(FullImageMediaView fullImageMediaView);
+    void inject(UnsupportedMediaView unsupportedMediaView);
+    void inject(GifMediaView gifMediaView);
+    void inject(VideoMediaView videoMediaView);
 
     @Subcomponent.Builder
     interface Builder {

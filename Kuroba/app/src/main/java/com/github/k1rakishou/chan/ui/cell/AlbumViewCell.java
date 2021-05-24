@@ -67,7 +67,7 @@ public class AlbumViewCell extends FrameLayout {
 
         init(getContext());
 
-        thumbnailView = findViewById(R.id.thumbnail_view);
+        thumbnailView = findViewById(R.id.thumbnail_image_view);
         text = findViewById(R.id.text);
     }
 

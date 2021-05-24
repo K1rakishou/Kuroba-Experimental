@@ -25,6 +25,10 @@ class ChanCatalog(
     }
   }
 
+  fun postsCount(): Int {
+    return lock.read { originalPosts.size }
+  }
+
   fun iteratePostsOrdered(iterator: (ChanOriginalPost) -> Unit) {
     iteratePostsOrderedWhile { chanOriginalPost ->
       iterator(chanOriginalPost)
