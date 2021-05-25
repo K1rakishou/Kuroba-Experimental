@@ -279,7 +279,8 @@ class FileCacheV2(
     return synchronized(activeDownloads) {
       val prevRequest = activeDownloads.get(url)
       if (prevRequest != null) {
-        log(TAG, "Request $url is already active, re-subscribing to it")
+        log(TAG, "Request $url is already active, re-subscribing to it, " +
+          "state=${prevRequest.cancelableDownload.getState()}")
 
         val prevCancelableDownload = prevRequest.cancelableDownload
         if (callback != null) {

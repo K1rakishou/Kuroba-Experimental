@@ -17,6 +17,9 @@ class GifMediaView(
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualGifView: GifImageView
 
+  override val hasContent: Boolean
+    get() = false // TODO(KurobaEx):
+
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
@@ -35,13 +38,17 @@ class GifMediaView(
 
     thumbnailMediaView.bind(
       ThumbnailMediaView.ThumbnailMediaViewParameters(
-        isOriginalMediaVideo = false,
+        isOriginalMediaPlayable = true,
         thumbnailLocation = previewLocation
       )
     )
   }
 
   override fun bind() {
+
+  }
+
+  override fun show() {
 
   }
 

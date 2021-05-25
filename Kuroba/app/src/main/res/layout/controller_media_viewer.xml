@@ -17,16 +17,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/media_viewer_root_layout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#A0000000">
+    android:layout_height="match_parent">
 
     <com.github.k1rakishou.chan.ui.view.AppearTransitionImageView
         android:id="@+id/appear_preview_image"
+        android:visibility="invisible"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
     <com.github.k1rakishou.chan.ui.view.DisappearTransitionImageView
         android:id="@+id/disappear_preview_image"
+        android:visibility="invisible"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
@@ -34,6 +35,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:id="@+id/pager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="invisible" />
+        android:visibility="gone" />
 
 </com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground>

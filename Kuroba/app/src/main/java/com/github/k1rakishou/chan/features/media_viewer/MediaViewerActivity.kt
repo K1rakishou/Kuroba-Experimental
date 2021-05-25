@@ -2,26 +2,39 @@ package com.github.k1rakishou.chan.features.media_viewer
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Point
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.viewModels
 import androidx.core.os.bundleOf
+import androidx.lifecycle.lifecycleScope
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.ControllerHostActivity
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
+import com.github.k1rakishou.chan.utils.FullScreenUtils.hideSystemUI
+import com.github.k1rakishou.chan.utils.FullScreenUtils.isSystemUIHidden
+import com.github.k1rakishou.chan.utils.FullScreenUtils.setupEdgeToEdge
+import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
+import com.github.k1rakishou.chan.utils.FullScreenUtils.toggleSystemUI
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class MediaViewerActivity : ControllerHostActivity() {
+class MediaViewerActivity : ControllerHostActivity(), MediaViewerController.MediaViewerCallbacks {
   private lateinit var activityComponent: ActivityComponent
   private lateinit var viewModelComponent: ViewModelComponent
   private lateinit var mediaViewerController: MediaViewerController
 
   private val viewModel by viewModels<MediaViewerControllerViewModel>()
+
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
   fun getActivityComponent(): ActivityComponent {
     return activityComponent
@@ -49,7 +62,14 @@ class MediaViewerActivity : ControllerHostActivity() {
     contentView = findViewById(android.R.id.content)
     AndroidUtils.getWindow(this).addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
-    mediaViewerController = MediaViewerController(this).apply {
+    window.setupEdgeToEdge()
+    window.setupStatusAndNavBarColors(themeEngine.chanTheme)
+    window.hideSystemUI(themeEngine.chanTheme)
+
+    mediaViewerController = MediaViewerController(
+      context = this,
+      mediaViewerCallbacks = this
+    ).apply {
       onCreate()
       onShow()
     }
@@ -57,8 +77,10 @@ class MediaViewerActivity : ControllerHostActivity() {
     setContentView(mediaViewerController.view)
     pushController(mediaViewerController)
 
-    if (!handleNewIntent(intent)) {
-      finish()
+    lifecycleScope.launch {
+      if (!handleNewIntent(isNotActivityRecreation = savedInstanceState == null, intent = intent)) {
+        finish()
+      }
     }
   }
 
@@ -77,10 +99,19 @@ class MediaViewerActivity : ControllerHostActivity() {
   override fun onNewIntent(intent: Intent?) {
     super.onNewIntent(intent)
 
-    handleNewIntent(intent)
+    lifecycleScope.launch {
+      handleNewIntent(isNotActivityRecreation = false, intent = intent)
+    }
   }
 
-  private fun handleNewIntent(intent: Intent?): Boolean {
+  override fun toggleFullScreenMode() {
+    if (::themeEngine.isInitialized && ::mediaViewerController.isInitialized) {
+      window.toggleSystemUI(themeEngine.chanTheme)
+      mediaViewerController.updateToolbarVisibility(window.isSystemUIHidden())
+    }
+  }
+
+  private suspend fun handleNewIntent(isNotActivityRecreation: Boolean, intent: Intent?): Boolean {
     if (intent == null) {
       return false
     }
@@ -101,9 +132,12 @@ class MediaViewerActivity : ControllerHostActivity() {
       return false
     }
 
-    val success = viewModel.showMedia(viewableMediaParcelableHolder)
-    Logger.d(TAG, "handleNewIntent() viewModel.showMedia() -> $success")
+    val success = viewModel.showMedia(
+      isNotActivityRecreation = isNotActivityRecreation,
+      viewableMediaParcelableHolder = viewableMediaParcelableHolder
+    )
 
+    Logger.d(TAG, "handleNewIntent() viewModel.showMedia() -> $success")
     return success
   }
 
@@ -143,7 +177,9 @@ class MediaViewerActivity : ControllerHostActivity() {
     fun catalogAlbum(
       context: Context,
       catalogDescriptor: ChanDescriptor.CatalogDescriptor,
-      scrollToImageWithUrl: String?
+      initialImageUrl: String?,
+      transitionThumbnailUrl: String,
+      lastTouchCoordinates: Point,
     ) {
       val intent = Intent(context, MediaViewerActivity::class.java)
       intent.action = VIEW_CATALOG_MEDIA_ACTION
@@ -153,8 +189,13 @@ class MediaViewerActivity : ControllerHostActivity() {
           Pair(
             CATALOG_DESCRIPTOR_PARAM,
             ViewableMediaParcelableHolder.CatalogMediaParcelableHolder.fromCatalogDescriptor(
-              catalogDescriptor,
-              scrollToImageWithUrl
+              catalogDescriptor = catalogDescriptor,
+              initialImageUrl = initialImageUrl,
+              transitionInfo = ViewableMediaParcelableHolder.TransitionInfo(
+                transitionThumbnailUrl = transitionThumbnailUrl,
+                lastTouchPosX = lastTouchCoordinates.x,
+                lastTouchPosY = lastTouchCoordinates.y,
+              )
             )
           )
         )
@@ -166,7 +207,9 @@ class MediaViewerActivity : ControllerHostActivity() {
     fun threadAlbum(
       context: Context,
       threadDescriptor: ChanDescriptor.ThreadDescriptor,
-      scrollToImageWithUrl: String?
+      initialImageUrl: String?,
+      transitionThumbnailUrl: String,
+      lastTouchCoordinates: Point,
     ) {
       val intent = Intent(context, MediaViewerActivity::class.java)
       intent.action = VIEW_THREAD_MEDIA_ACTION
@@ -176,8 +219,13 @@ class MediaViewerActivity : ControllerHostActivity() {
           Pair(
             THREAD_DESCRIPTOR_PARAM,
             ViewableMediaParcelableHolder.ThreadMediaParcelableHolder.fromThreadDescriptor(
-              threadDescriptor,
-              scrollToImageWithUrl
+              threadDescriptor = threadDescriptor,
+              initialImageUrl = initialImageUrl,
+              transitionInfo = ViewableMediaParcelableHolder.TransitionInfo(
+                transitionThumbnailUrl = transitionThumbnailUrl,
+                lastTouchPosX = lastTouchCoordinates.x,
+                lastTouchPosY = lastTouchCoordinates.y,
+              )
             )
           )
         )

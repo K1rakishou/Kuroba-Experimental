@@ -14,6 +14,8 @@ class UnsupportedMediaView(
   override val totalPageItemsCount: Int
 ) : MediaView<ViewableMedia.Unsupported>(context, null) {
 
+  override val hasContent: Boolean
+    get() = true
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -29,6 +31,10 @@ class UnsupportedMediaView(
 
   override fun bind() {
     // nothing to bind
+  }
+
+  override fun show() {
+    // no-op
   }
 
   override fun hide() {

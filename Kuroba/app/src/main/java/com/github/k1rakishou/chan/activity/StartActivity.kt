@@ -66,7 +66,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.FullScreenUtils
-import com.github.k1rakishou.chan.utils.FullScreenUtils.setupFullscreen
+import com.github.k1rakishou.chan.utils.FullScreenUtils.setupEdgeToEdge
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.DoNotStrip
@@ -237,7 +237,7 @@ class StartActivity : ControllerHostActivity(),
 
     contentView = findViewById(android.R.id.content)
 
-    window.setupFullscreen()
+    window.setupEdgeToEdge()
     window.setupStatusAndNavBarColors(themeEngine.chanTheme)
 
     // Setup base controllers, and decide if to use the split layout for tablets

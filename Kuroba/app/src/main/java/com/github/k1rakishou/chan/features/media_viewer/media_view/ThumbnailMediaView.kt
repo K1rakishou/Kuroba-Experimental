@@ -5,14 +5,16 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.util.AttributeSet
+import android.widget.FrameLayout
 import coil.request.Disposable
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
-import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
 import com.github.k1rakishou.chan.ui.view.ThumbnailImageView
+import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.model.data.post.ChanPostImageType
+import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.core_logger.Logger
 import okhttp3.HttpUrl
 import java.util.*
 import javax.inject.Inject
@@ -21,8 +23,9 @@ import javax.inject.Inject
 class ThumbnailMediaView @JvmOverloads constructor(
   context: Context,
   attributeSet: AttributeSet? = null
-) : TouchBlockingFrameLayoutNoBackground(context, attributeSet, 0) {
+) : FrameLayout(context, attributeSet, 0) {
   private val thumbnailView: ThumbnailImageView
+  protected val cancellableToast by lazy { CancellableToast() }
 
   private var requestDisposable: Disposable? = null
 
@@ -48,7 +51,7 @@ class ThumbnailMediaView @JvmOverloads constructor(
   }
 
   fun bind(parameters: ThumbnailMediaViewParameters) {
-    if (requestDisposable != null) {
+    if (requestDisposable != null || thumbnailBitmap() != null) {
       return
     }
 
@@ -65,6 +68,7 @@ class ThumbnailMediaView @JvmOverloads constructor(
     }
 
     thumbnailView.setImageDrawable(null)
+    cancellableToast.cancel()
   }
 
   private fun loadRemoteMedia(url: HttpUrl, parameters: ThumbnailMediaViewParameters): Disposable {
@@ -77,51 +81,45 @@ class ThumbnailMediaView @JvmOverloads constructor(
         override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
           requestDisposable = null
 
-          val postImageType = if (parameters.isOriginalMediaVideo) {
-            ChanPostImageType.MOVIE
-          } else {
-            ChanPostImageType.STATIC
-          }
-
-          thumbnailView.setType(postImageType)
+          thumbnailView.setOriginalMediaPlayable(parameters.isOriginalMediaPlayable)
           thumbnailView.setImageDrawable(drawable)
         }
 
         override fun onNotFound() {
           requestDisposable = null
-          onNotFoundError()
+          onThumbnailImageNotFoundError()
         }
 
         override fun onResponseError(error: Throwable) {
           requestDisposable = null
-          onError(error)
+          onThumbnailImageError(error)
         }
       })
   }
 
-  private fun onNotFoundError() {
-//    cancellableToast.showToast(context, R.string.image_not_found)
+  private fun onThumbnailImageNotFoundError() {
+    Logger.e(TAG, "onThumbnailImageNotFoundError()")
 
-    // TODO(KurobaEx):
-//    callback?.hideProgress(this@MultiImageView)
+    cancellableToast.showToast(context, R.string.image_not_found)
+
+    // TODO(KurobaEx): show some kind of generic error drawable?
   }
 
-  private fun onError(exception: Throwable) {
+  private fun onThumbnailImageError(exception: Throwable) {
+    Logger.e(TAG, "onThumbnailImageError()", exception)
+
     val message = String.format(
       Locale.ENGLISH,
       "%s: %s",
       AppModuleAndroidUtils.getString(R.string.image_preview_failed),
-      exception.message
+      exception.errorMessageOrClassName()
     )
 
-//    cancellableToast.showToast(context, message)
-
-    // TODO(KurobaEx):
-//    callback?.hideProgress(this@MultiImageView)
+    cancellableToast.showToast(context, message)
   }
 
   data class ThumbnailMediaViewParameters(
-    val isOriginalMediaVideo: Boolean,
+    val isOriginalMediaPlayable: Boolean,
     val thumbnailLocation: MediaLocation
   )
 

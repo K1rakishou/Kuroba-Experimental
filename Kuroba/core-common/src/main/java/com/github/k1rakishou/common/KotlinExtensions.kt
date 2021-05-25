@@ -675,6 +675,10 @@ suspend fun CompletableDeferred<*>.awaitSilently() {
   }
 }
 
+suspend fun <T> CompletableDeferred<T>.awaitCatching(): Result<T> {
+  return kotlin.runCatching { await() }
+}
+
 fun View.resetClickListener() {
   setOnClickListener(null)
 

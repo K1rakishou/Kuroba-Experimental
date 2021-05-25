@@ -384,7 +384,7 @@ class MultiImageView @JvmOverloads constructor(
 
           if (!hasContent || mode == Mode.LOWRES) {
             val thumbnail = ThumbnailImageView(context)
-            thumbnail.setType(postImage.type)
+//            thumbnail.setType(postImage.type)
             thumbnail.setImageDrawable(drawable)
             thumbnail.setOnClickListener(null)
             thumbnail.setOnTouchListener { _, motionEvent -> gestureDetector.onTouchEvent(motionEvent) }
@@ -973,6 +973,10 @@ class MultiImageView @JvmOverloads constructor(
             updateTransparency()
           }
         }
+      }
+
+      override fun onImageLoaded() {
+
       }
 
       override fun onError(e: Exception, wasInitial: Boolean) {

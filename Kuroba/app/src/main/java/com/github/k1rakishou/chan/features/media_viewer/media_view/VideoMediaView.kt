@@ -20,6 +20,9 @@ class VideoMediaView(
 
   private var requestDisposable: Disposable? = null
 
+  override val hasContent: Boolean
+    get() = false // TODO(KurobaEx):
+
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
@@ -35,7 +38,7 @@ class VideoMediaView(
     if (previewLocation != null) {
       thumbnailMediaView.bind(
         ThumbnailMediaView.ThumbnailMediaViewParameters(
-          isOriginalMediaVideo = false,
+          isOriginalMediaPlayable = true,
           thumbnailLocation = previewLocation
         )
       )
@@ -43,6 +46,10 @@ class VideoMediaView(
   }
 
   override fun bind() {
+
+  }
+
+  override fun show() {
 
   }
 

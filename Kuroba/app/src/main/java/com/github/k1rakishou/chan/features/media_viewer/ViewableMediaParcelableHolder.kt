@@ -10,9 +10,17 @@ import okhttp3.HttpUrl
 sealed class ViewableMediaParcelableHolder {
 
   @Parcelize
+  data class TransitionInfo(
+    val transitionThumbnailUrl: String,
+    val lastTouchPosX: Int,
+    val lastTouchPosY: Int
+  ) : Parcelable
+
+  @Parcelize
   data class CatalogMediaParcelableHolder(
     val catalogDescriptorParcelable: DescriptorParcelable,
-    val scrollToImageWithUrl: String?
+    val initialImageUrl: String?,
+    val transitionInfo: TransitionInfo?
   ) : ViewableMediaParcelableHolder(), Parcelable {
     @IgnoredOnParcel
     val catalogDescriptor by lazy { catalogDescriptorParcelable.toChanDescriptor() as ChanDescriptor.CatalogDescriptor }
@@ -20,11 +28,13 @@ sealed class ViewableMediaParcelableHolder {
     companion object {
       fun fromCatalogDescriptor(
         catalogDescriptor: ChanDescriptor.CatalogDescriptor,
-        scrollToImageWithUrl: String?
+        initialImageUrl: String?,
+        transitionInfo: TransitionInfo?
       ) : CatalogMediaParcelableHolder {
         return CatalogMediaParcelableHolder(
-          DescriptorParcelable.fromDescriptor(catalogDescriptor),
-          scrollToImageWithUrl
+          catalogDescriptorParcelable = DescriptorParcelable.fromDescriptor(catalogDescriptor),
+          initialImageUrl = initialImageUrl,
+          transitionInfo = transitionInfo
         )
       }
     }
@@ -33,7 +43,8 @@ sealed class ViewableMediaParcelableHolder {
   @Parcelize
   data class ThreadMediaParcelableHolder(
     val threadDescriptorParcelable: DescriptorParcelable,
-    val scrollToImageWithUrl: String?
+    val initialImageUrl: String?,
+    val transitionInfo: TransitionInfo?
   ) : ViewableMediaParcelableHolder(), Parcelable {
     @IgnoredOnParcel
     val threadDescriptor by lazy { threadDescriptorParcelable.toChanDescriptor() as ChanDescriptor.ThreadDescriptor }
@@ -41,11 +52,13 @@ sealed class ViewableMediaParcelableHolder {
     companion object {
       fun fromThreadDescriptor(
         threadDescriptor: ChanDescriptor.ThreadDescriptor,
-        scrollToImageWithUrl: String?
+        initialImageUrl: String?,
+        transitionInfo: TransitionInfo?
       ) : ThreadMediaParcelableHolder {
         return ThreadMediaParcelableHolder(
-          DescriptorParcelable.fromDescriptor(threadDescriptor),
-          scrollToImageWithUrl
+          threadDescriptorParcelable = DescriptorParcelable.fromDescriptor(threadDescriptor),
+          initialImageUrl = initialImageUrl,
+          transitionInfo = transitionInfo
         )
       }
     }
@@ -66,8 +79,6 @@ sealed class ViewableMediaParcelableHolder {
   data class RemoteMediaParcelableHolder(val urlList: List<String>) : ViewableMediaParcelableHolder(), Parcelable
 
 }
-
-data class ViewableMediaList(val viewableMediaList: List<ViewableMedia>)
 
 sealed class ViewableMedia(
   open val mediaLocation: MediaLocation,

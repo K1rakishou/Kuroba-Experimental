@@ -2,6 +2,8 @@ package com.github.k1rakishou.chan.features.media_viewer.media_view
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
 import com.davemorrissey.labs.subscaleview.ImageSource
 import com.github.k1rakishou.chan.R
@@ -13,20 +15,24 @@ import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
-import com.github.k1rakishou.chan.features.media_viewer.ViewableMediaMeta
 import com.github.k1rakishou.chan.ui.view.ChunkedLoadingBar
 import com.github.k1rakishou.chan.ui.view.CustomScaleImageView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.common.awaitCatching
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
-import okhttp3.HttpUrl
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
 
-@SuppressLint("ViewConstructor")
+@SuppressLint("ViewConstructor", "ClickableViewAccessibility")
 class FullImageMediaView(
   context: Context,
+  private val mediaViewContract: MediaViewContract,
   override val viewableMedia: ViewableMedia.Image,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
@@ -34,10 +40,13 @@ class FullImageMediaView(
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualImageView: CustomScaleImageView
   private val loadingBar: ChunkedLoadingBar
+  private val gestureDetector = GestureDetector(context, GestureDetectorListener(mediaViewContract))
 
+  private var fullImageDeferred = CompletableDeferred<File>()
   private var preloadCancelableDownload: CancelableDownload? = null
-  private var actualLoadCancelableDownload: CancelableDownload? = null
-  private var hasContent = false
+
+  override val hasContent: Boolean
+    get() = actualImageView.hasImage()
 
   @Inject
   lateinit var fileCacheV2: FileCacheV2
@@ -50,17 +59,37 @@ class FullImageMediaView(
 
     inflate(context, R.layout.media_view_full_image, this)
 
-    actualImageView = findViewById(R.id.actual_image_view)
     thumbnailMediaView = findViewById(R.id.thumbnail_media_view)
+    actualImageView = findViewById(R.id.actual_image_view)
     loadingBar = findViewById(R.id.loading_bar)
+
+    thumbnailMediaView.setOnTouchListener { v, event ->
+      if (thumbnailMediaView.visibility != View.VISIBLE) {
+        return@setOnTouchListener false
+      }
+
+      return@setOnTouchListener gestureDetector.onTouchEvent(event)
+    }
+
+    actualImageView.setOnTouchListener { v, event ->
+      if (actualImageView.visibility != View.VISIBLE) {
+        return@setOnTouchListener false
+      }
+
+      return@setOnTouchListener gestureDetector.onTouchEvent(event)
+    }
   }
 
   override fun preload() {
+    if (hasContent) {
+      return
+    }
+
     val previewLocation = viewableMedia.previewLocation
     if (previewLocation != null) {
       thumbnailMediaView.bind(
         ThumbnailMediaView.ThumbnailMediaViewParameters(
-          isOriginalMediaVideo = false,
+          isOriginalMediaPlayable = false,
           thumbnailLocation = previewLocation
         )
       )
@@ -69,6 +98,8 @@ class FullImageMediaView(
     if (
       viewableMedia.mediaLocation is MediaLocation.Remote
       && MediaViewerControllerViewModel.canAutoLoad(cacheHandler, viewableMedia)
+      && (preloadCancelableDownload == null || preloadCancelableDownload?.isRunning() == false)
+      && !fullImageDeferred.isCompleted
     ) {
       val mediaLocationRemote = viewableMedia.mediaLocation
 
@@ -83,17 +114,39 @@ class FullImageMediaView(
         object : FileCacheListener() {
           override fun onStart(chunksCount: Int) {
             super.onStart(chunksCount)
+            BackgroundUtils.ensureMainThread()
+
             loadingBar.setVisibilityFast(View.VISIBLE)
             loadingBar.setChunksCount(chunksCount)
           }
 
           override fun onProgress(chunkIndex: Int, downloaded: Long, total: Long) {
             super.onProgress(chunkIndex, downloaded, total)
+            BackgroundUtils.ensureMainThread()
+
             loadingBar.setChunkProgress(chunkIndex, downloaded.toFloat() / total.toFloat())
+          }
+
+          override fun onSuccess(file: File) {
+            BackgroundUtils.ensureMainThread()
+            fullImageDeferred.complete(file)
+          }
+
+          override fun onNotFound() {
+            BackgroundUtils.ensureMainThread()
+            fullImageDeferred.completeExceptionally(ImageNotFoundException(mediaLocationRemote.url))
+          }
+
+          override fun onFail(exception: Exception) {
+            BackgroundUtils.ensureMainThread()
+            fullImageDeferred.completeExceptionally(exception)
           }
 
           override fun onEnd() {
             super.onEnd()
+            BackgroundUtils.ensureMainThread()
+
+            preloadCancelableDownload = null
             loadingBar.setVisibilityFast(View.GONE)
           }
         }
@@ -102,14 +155,23 @@ class FullImageMediaView(
   }
 
   override fun bind() {
-    when (val location = viewableMedia.mediaLocation) {
-      is MediaLocation.Local -> TODO()
-      is MediaLocation.Remote -> loadRemoteFullImage(location.url, viewableMedia.viewableMediaMeta)
+    if (hasContent) {
+      return
+    }
+
+    scope.launch {
+      fullImageDeferred.awaitCatching()
+        .onFailure { error -> onFullImageLoadingError(error) }
+        .onSuccess { file -> setBigImageFromFile(file) }
     }
   }
 
-  override fun hide() {
+  override fun show() {
 
+  }
+
+  override fun hide() {
+    actualImageView.resetScaleAndCenter()
   }
 
   override fun unbind() {
@@ -118,66 +180,8 @@ class FullImageMediaView(
     preloadCancelableDownload?.cancel()
     preloadCancelableDownload = null
 
-    actualLoadCancelableDownload?.cancel()
-    actualLoadCancelableDownload = null
-
     actualImageView.setCallback(null)
-    hasContent = false
-  }
-
-  private fun loadRemoteFullImage(url: HttpUrl, viewableMediaMeta: ViewableMediaMeta) {
-    if (actualLoadCancelableDownload != null || hasContent) {
-      return
-    }
-
-    val extraInfo = DownloadRequestExtraInfo(
-      viewableMediaMeta.mediaSize ?: -1,
-      viewableMediaMeta.mediaHash
-    )
-
-    actualLoadCancelableDownload = fileCacheV2.enqueueChunkedDownloadFileRequest(
-      url,
-      extraInfo,
-      object : FileCacheListener() {
-        override fun onStart(chunksCount: Int) {
-          BackgroundUtils.ensureMainThread()
-
-          loadingBar.setVisibilityFast(View.VISIBLE)
-          loadingBar.setChunksCount(chunksCount)
-        }
-
-        override fun onProgress(chunkIndex: Int, downloaded: Long, total: Long) {
-          BackgroundUtils.ensureMainThread()
-
-          loadingBar.setChunkProgress(chunkIndex, downloaded.toFloat() / total.toFloat())
-        }
-
-        override fun onSuccess(file: File) {
-          BackgroundUtils.ensureMainThread()
-          setBigImageFromFile(file)
-
-          hasContent = true
-
-//          callback?.onDownloaded(postImage)
-        }
-
-        override fun onNotFound() {
-          BackgroundUtils.ensureMainThread()
-//          onNotFoundError()
-        }
-
-        override fun onFail(exception: Exception) {
-          BackgroundUtils.ensureMainThread()
-//          onError(exception)
-        }
-
-        override fun onEnd() {
-          BackgroundUtils.ensureMainThread()
-          preloadCancelableDownload = null
-
-          loadingBar.setVisibilityFast(View.GONE)
-        }
-      })
+    actualImageView.recycle()
   }
 
   private fun setBigImageFromFile(file: File) {
@@ -203,14 +207,12 @@ class FullImageMediaView(
           Logger.e(TAG, "OOM while trying to set a big image file", e)
 
           Runtime.getRuntime().gc()
-          onOutOfMemoryError()
+          onFullImageOutOfMemoryError()
         } else {
-          onBigImageError(wasInitial)
+          onFullImageUnknownError()
         }
       }
     })
-
-//    image.setOnTouchListener { _, motionEvent -> gestureDetector.onTouchEvent(motionEvent) }
 
     actualImageView.setOnClickListener(null)
     actualImageView.setImage(ImageSource.uri(file.absolutePath).tiling(true))
@@ -218,16 +220,38 @@ class FullImageMediaView(
     actualImageView.setVisibilityFast(View.VISIBLE)
   }
 
-  private fun onOutOfMemoryError() {
+  private fun onFullImageOutOfMemoryError() {
+    Logger.e(TAG, "onFullImageOutOfMemoryError()")
     cancellableToast.showToast(context, R.string.image_preview_failed_oom)
-//    callback?.hideProgress(this@MultiImageView)
   }
 
-  private fun onBigImageError(wasInitial: Boolean) {
-    if (wasInitial) {
-      cancellableToast.showToast(context, R.string.image_failed_big_image)
-//      callback?.hideProgress(this@MultiImageView)
+  private fun onFullImageUnknownError() {
+    Logger.e(TAG, "onFullImageUnknownError()")
+    cancellableToast.showToast(context, R.string.image_failed_big_image)
+  }
+
+  private fun onFullImageLoadingError(error: Throwable) {
+    Logger.e(TAG, "onFullImageLoadingError()", error)
+
+    cancellableToast.showToast(
+      context,
+      getString(R.string.image_failed_big_image_error, error.errorMessageOrClassName())
+    )
+  }
+
+  class GestureDetectorListener(
+    private val mediaViewContract: MediaViewContract
+  ) : GestureDetector.SimpleOnGestureListener() {
+
+    override fun onDown(e: MotionEvent?): Boolean {
+      return true
     }
+
+    override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+      mediaViewContract.onTapped()
+      return super.onSingleTapConfirmed(e)
+    }
+
   }
 
   companion object {

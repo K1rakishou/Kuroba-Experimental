@@ -46,6 +46,7 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.resume
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
@@ -76,6 +77,29 @@ class ImageLoaderV2(
       val downloaded = cacheHandler.isAlreadyDownloaded(url)
 
       return@withContext exists && downloaded
+    }
+  }
+
+  suspend fun loadFromNetworkSuspend(
+    context: Context,
+    url: String,
+    imageSize: ImageSize,
+    transformations: List<Transformation> = emptyList()
+  ): Bitmap? {
+    return suspendCancellableCoroutine { continuation ->
+      loadFromNetwork(context, url, imageSize, transformations, object : FailureAwareImageListener {
+        override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
+          continuation.resume(drawable.bitmap)
+        }
+
+        override fun onNotFound() {
+          continuation.resume(null)
+        }
+
+        override fun onResponseError(error: Throwable) {
+          continuation.resume(null)
+        }
+      })
     }
   }
 

@@ -9,8 +9,11 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageType
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -24,12 +27,36 @@ class MediaViewerControllerViewModel : ViewModel() {
   lateinit var chanThreadManager: ChanThreadManager
 
   private val _mediaViewerState = MutableStateFlow<MediaViewerControllerState?>(null)
+  private val _transitionInfoFlow = MutableSharedFlow<ViewableMediaParcelableHolder.TransitionInfo?>(extraBufferCapacity = 1)
+
   private var lastPagerIndex = -1
 
+  val transitionInfoFlow: SharedFlow<ViewableMediaParcelableHolder.TransitionInfo?>
+    get() = _transitionInfoFlow.asSharedFlow()
   val mediaViewerState: StateFlow<MediaViewerControllerState?>
     get() = _mediaViewerState.asStateFlow()
 
-  fun showMedia(viewableMediaParcelableHolder: ViewableMediaParcelableHolder): Boolean {
+  suspend fun showMedia(
+    isNotActivityRecreation: Boolean,
+    viewableMediaParcelableHolder: ViewableMediaParcelableHolder
+  ): Boolean {
+    if (isNotActivityRecreation) {
+      val transitionInfo = when (viewableMediaParcelableHolder) {
+        is ViewableMediaParcelableHolder.CatalogMediaParcelableHolder -> {
+          viewableMediaParcelableHolder.transitionInfo
+        }
+        is ViewableMediaParcelableHolder.ThreadMediaParcelableHolder -> {
+          viewableMediaParcelableHolder.transitionInfo
+        }
+        is ViewableMediaParcelableHolder.LocalMediaParcelableHolder -> null
+        is ViewableMediaParcelableHolder.RemoteMediaParcelableHolder -> null
+      }
+
+      _transitionInfoFlow.emit(transitionInfo)
+    } else {
+      _transitionInfoFlow.emit(null)
+    }
+
     val mediaViewerControllerState = when (viewableMediaParcelableHolder) {
       is ViewableMediaParcelableHolder.CatalogMediaParcelableHolder -> {
         collectCatalogMedia(viewableMediaParcelableHolder)
@@ -57,7 +84,7 @@ class MediaViewerControllerViewModel : ViewModel() {
     viewableMediaParcelableHolder: ViewableMediaParcelableHolder.ThreadMediaParcelableHolder
   ): MediaViewerControllerState? {
     val initialPagerIndex = AtomicInteger(0)
-    val scrollToImageWithUrl = viewableMediaParcelableHolder.scrollToImageWithUrl?.toHttpUrlOrNull()
+    val scrollToImageWithUrl = viewableMediaParcelableHolder.initialImageUrl?.toHttpUrlOrNull()
 
     val mediaList = chanThreadManager.getChanThread(viewableMediaParcelableHolder.threadDescriptor)
       ?.let { chanThread ->
@@ -66,7 +93,13 @@ class MediaViewerControllerViewModel : ViewModel() {
 
         chanThread.iteratePostsOrdered { chanPost ->
           chanPost.iteratePostImages { chanPostImage ->
-            val viewableMedia = processChanPostImage(chanPostImage, scrollToImageWithUrl, initialPagerIndex, mediaIndex)
+            val viewableMedia = processChanPostImage(
+              chanPostImage = chanPostImage,
+              scrollToImageWithUrl = scrollToImageWithUrl,
+              lastViewedIndex = initialPagerIndex,
+              mediaIndex = mediaIndex
+            )
+
             if (viewableMedia != null) {
               mediaList += viewableMedia
             }
@@ -93,7 +126,7 @@ class MediaViewerControllerViewModel : ViewModel() {
     viewableMediaParcelableHolder: ViewableMediaParcelableHolder.CatalogMediaParcelableHolder
   ): MediaViewerControllerState? {
     val initialPagerIndex = AtomicInteger(0)
-    val scrollToImageWithUrl = viewableMediaParcelableHolder.scrollToImageWithUrl?.toHttpUrlOrNull()
+    val scrollToImageWithUrl = viewableMediaParcelableHolder.initialImageUrl?.toHttpUrlOrNull()
 
     val mediaList = chanThreadManager.getChanCatalog(viewableMediaParcelableHolder.catalogDescriptor)
       ?.let { chanCatalog ->
@@ -147,13 +180,13 @@ class MediaViewerControllerViewModel : ViewModel() {
       ?.let { spoilerUrl -> MediaLocation.Remote(spoilerUrl) }
 
     val viewableMediaMeta = ViewableMediaMeta(
-      chanPostImage.filename ?: chanPostImage.serverFilename,
-      chanPostImage.imageWidth,
-      chanPostImage.imageHeight,
-      chanPostImage.size,
-      chanPostImage.fileHash,
-      chanPostImage.spoiler,
-      chanPostImage.isInlined
+      mediaName = chanPostImage.filename ?: chanPostImage.serverFilename,
+      mediaWidth = chanPostImage.imageWidth,
+      mediaHeight = chanPostImage.imageHeight,
+      mediaSize = chanPostImage.size,
+      mediaHash = chanPostImage.fileHash,
+      isSpoiler = chanPostImage.spoiler,
+      inlined = chanPostImage.isInlined
     )
 
     val viewableMedia = when (chanPostImage.type) {
@@ -189,6 +222,7 @@ class MediaViewerControllerViewModel : ViewModel() {
   }
 
   companion object {
+    private const val TAG = "MediaViewerControllerViewModel"
     private val DEFAULT_THUMBNAIL = (AppConstants.RESOURCES_ENDPOINT + "internal_spoiler.png").toHttpUrl()
 
     fun canAutoLoad(cacheHandler: CacheHandler, postImage: ChanPostImage): Boolean {

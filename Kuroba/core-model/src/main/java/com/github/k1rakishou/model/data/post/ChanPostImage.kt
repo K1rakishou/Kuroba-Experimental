@@ -170,7 +170,7 @@ class ChanPostImage(
       append("${imageWidth}x${imageHeight}")
 
       append(StringUtils.UNBREAKABLE_SPACE_SYMBOL)
-      append(ChanPostUtils.getReadableFileSize(size))
+      append(ChanPostUtils.getReadableFileSize(size).replace(' ', StringUtils.UNBREAKABLE_SPACE_SYMBOL))
     }
   }
 

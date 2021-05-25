@@ -282,10 +282,22 @@ abstract class ThreadController(
 
     when (chanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> {
-        MediaViewerActivity.catalogAlbum(context, chanDescriptor, images[index].imageUrl!!.toString())
+        MediaViewerActivity.catalogAlbum(
+          context = context,
+          catalogDescriptor = chanDescriptor,
+          initialImageUrl = images[index].imageUrl!!.toString(),
+          transitionThumbnailUrl = images[index].getThumbnailUrl()!!.toString(),
+          lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates()
+        )
       }
       is ChanDescriptor.ThreadDescriptor -> {
-        MediaViewerActivity.threadAlbum(context, chanDescriptor, images[index].imageUrl!!.toString())
+        MediaViewerActivity.threadAlbum(
+          context = context,
+          threadDescriptor = chanDescriptor,
+          initialImageUrl = images[index].imageUrl!!.toString(),
+          transitionThumbnailUrl = images[index].getThumbnailUrl()!!.toString(),
+          lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates()
+        )
       }
     }
   }

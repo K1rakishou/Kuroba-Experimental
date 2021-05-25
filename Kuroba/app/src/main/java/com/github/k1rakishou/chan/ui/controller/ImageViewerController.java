@@ -562,6 +562,8 @@ public class ImageViewerController
     @Override
     public void setPagerItems(ChanDescriptor chanDescriptor, List<ChanPostImage> images, int initialIndex) {
         ImageViewerAdapter adapter = new ImageViewerAdapter(images, presenter);
+
+        pager.setOffscreenPageLimit(2);
         pager.setAdapter(adapter);
         pager.setCurrentItem(initialIndex);
     }
@@ -743,11 +745,11 @@ public class ImageViewerController
         appearPreviewImage.setBitmap(startImageView.getBitmap());
         setBackgroundAlpha(1f);
 
-        startAnimation = appearPreviewImage.runAppearAnimation(view, () -> {
-            startAnimation = null;
-            presenter.onInTransitionEnd();
-            return Unit.INSTANCE;
-        });
+//        startAnimation = appearPreviewImage.runAppearAnimation(view, () -> {
+//            startAnimation = null;
+//            presenter.onInTransitionEnd();
+//            return Unit.INSTANCE;
+//        });
     }
 
     @Override
@@ -837,7 +839,7 @@ public class ImageViewerController
         }
 
         Point lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates();
-        appearPreviewImage.setWindowLocation(lastTouchCoordinates);
+//        appearPreviewImage.setWindowLocation(lastTouchCoordinates);
 
         int[] loc = new int[2];
         startView.getLocationInWindow(loc);

@@ -18,9 +18,10 @@ package com.github.k1rakishou.chan.ui.view;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Point;
 import android.graphics.PointF;
 import android.util.AttributeSet;
 import android.view.View;
@@ -31,9 +32,11 @@ import androidx.interpolator.view.animation.FastOutSlowInInterpolator;
 
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
+import kotlin.jvm.functions.Function1;
 
 public class AppearTransitionImageView extends AppCompatImageView {
     private static final String TAG = "TransitionImageView";
+    private static final int ANIMATION_DURATION = 250;
 
     private PointF globalRevealStartPosition = new PointF(0f, 0f);
 
@@ -60,22 +63,29 @@ public class AppearTransitionImageView extends AppCompatImageView {
         super.setImageBitmap(bitmap);
     }
 
-    public void setWindowLocation(Point lastTouchCoordinates) {
+    public void setWindowLocation(int lastTouchPosX, int lastTouchPosy) {
         int[] myLoc = new int[2];
         getLocationInWindow(myLoc);
-        float globalOffsetX = lastTouchCoordinates.x - myLoc[0];
-        float globalOffsetY = lastTouchCoordinates.y - myLoc[1];
+        float globalOffsetX = lastTouchPosX - myLoc[0];
+        float globalOffsetY = lastTouchPosy - myLoc[1];
 
         globalRevealStartPosition.set(globalOffsetX, globalOffsetY);
     }
 
-    public Animator runAppearAnimation(View controllerRootView, Function0<Unit> onEndFunc) {
+    public void runAppearAnimation(
+            View controllerRootView,
+            int finalBackgroundColor,
+            Function1<Integer, Unit> backgroundColorFunc,
+            Function0<Unit> onEndFunc
+    ) {
         int cx = controllerRootView.getWidth() / 2;
         int cy = controllerRootView.getHeight() / 2;
 
         float finalRadius = (float) Math.hypot(cx, cy);
 
-        Animator circularReveal = ViewAnimationUtils.createCircularReveal(
+        AnimatorSet animatorSet = new AnimatorSet();
+
+        Animator circularRevealAnimation = ViewAnimationUtils.createCircularReveal(
                 controllerRootView,
                 (int) globalRevealStartPosition.x,
                 (int) globalRevealStartPosition.y,
@@ -83,21 +93,24 @@ public class AppearTransitionImageView extends AppCompatImageView {
                 finalRadius
         );
 
-        circularReveal.setDuration(200);
-        circularReveal.setInterpolator(new FastOutSlowInInterpolator());
+        ValueAnimator backgroundColorAnimation = ValueAnimator.ofArgb(0, finalBackgroundColor);
+        backgroundColorAnimation.addUpdateListener(animation -> {
+            int color = (int) animation.getAnimatedValue();
+            backgroundColorFunc.invoke(color);
+        });
 
-        setVisibility(View.VISIBLE);
-
-        circularReveal.addListener(new AnimatorListenerAdapter() {
+        animatorSet.playTogether(circularRevealAnimation, backgroundColorAnimation);
+        animatorSet.setDuration(ANIMATION_DURATION);
+        animatorSet.setInterpolator(new FastOutSlowInInterpolator());
+        animatorSet.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
                 onEndFunc.invoke();
             }
         });
 
-        circularReveal.start();
-
-        return circularReveal;
+        setVisibility(View.VISIBLE);
+        animatorSet.start();
     }
 
 }

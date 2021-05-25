@@ -12,12 +12,11 @@ import androidx.core.content.ContextCompat;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.common.DoNotStrip;
-import com.github.k1rakishou.model.data.post.ChanPostImageType;
 
 @DoNotStrip
 public class ThumbnailImageView extends AppCompatImageView {
 
-    private ChanPostImageType type = ChanPostImageType.STATIC;
+    private boolean isOriginalMediaPlayable = false;
     private Drawable playIcon;
     private Rect bounds = new Rect();
 
@@ -34,15 +33,15 @@ public class ThumbnailImageView extends AppCompatImageView {
         playIcon = ContextCompat.getDrawable(context, R.drawable.ic_play_circle_outline_white_24dp);
     }
 
-    public void setType(ChanPostImageType type) {
-        this.type = type;
+    public void setOriginalMediaPlayable(boolean isPlayable) {
+        this.isOriginalMediaPlayable = isPlayable;
     }
 
     @Override
     public void draw(Canvas canvas) {
         super.draw(canvas);
 
-        if (type == ChanPostImageType.MOVIE) {
+        if (isOriginalMediaPlayable) {
             int iconScale = 2;
             double scalar = (Math.pow(2.0, iconScale) - 1) / Math.pow(2.0, iconScale);
             int x = (int) (getWidth() / 2.0 - playIcon.getIntrinsicWidth() * scalar);
