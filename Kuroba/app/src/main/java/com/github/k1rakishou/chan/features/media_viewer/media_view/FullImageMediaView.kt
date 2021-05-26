@@ -1,10 +1,15 @@
 package com.github.k1rakishou.chan.features.media_viewer.media_view
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.AnimatorSet
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import android.view.animation.DecelerateInterpolator
 import com.davemorrissey.labs.subscaleview.ImageSource
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheHandler
@@ -23,8 +28,11 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.awaitCatching
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
@@ -33,6 +41,7 @@ import javax.inject.Inject
 class FullImageMediaView(
   context: Context,
   private val mediaViewContract: MediaViewContract,
+  private val onThumbnailFullyLoaded: () -> Unit,
   override val viewableMedia: ViewableMedia.Image,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
@@ -90,8 +99,9 @@ class FullImageMediaView(
       thumbnailMediaView.bind(
         ThumbnailMediaView.ThumbnailMediaViewParameters(
           isOriginalMediaPlayable = false,
-          thumbnailLocation = previewLocation
-        )
+          thumbnailLocation = previewLocation,
+        ),
+        onThumbnailFullyLoaded = onThumbnailFullyLoaded
       )
     }
 
@@ -161,7 +171,16 @@ class FullImageMediaView(
 
     scope.launch {
       fullImageDeferred.awaitCatching()
-        .onFailure { error -> onFullImageLoadingError(error) }
+        .onFailure { error ->
+          Logger.e(TAG, "onFullImageLoadingError()", error)
+
+          if (error.isExceptionImportant()) {
+            cancellableToast.showToast(
+              context,
+              getString(R.string.image_failed_big_image_error, error.errorMessageOrClassName())
+            )
+          }
+        }
         .onSuccess { file -> setBigImageFromFile(file) }
     }
   }
@@ -184,59 +203,117 @@ class FullImageMediaView(
     actualImageView.recycle()
   }
 
-  private fun setBigImageFromFile(file: File) {
-    actualImageView.setCallback(object : CustomScaleImageView.Callback {
-      override fun onReady() {
-        // no-op
-      }
+  private suspend fun setBigImageFromFile(file: File) {
+    coroutineScope {
+      val animationAwaitable = CompletableDeferred<Unit>()
 
-      override fun onImageLoaded() {
-//        if (!hasContent || mode == MultiImageView.Mode.BIGIMAGE) {
-//          runAppearAnimation(prevActiveView, findView(CustomScaleImageView::class.java), isSpoiler) {
-//            callback?.hideProgress(this@MultiImageView)
-//            onModeLoaded(MultiImageView.Mode.BIGIMAGE, image)
-//            updateTransparency()
-//          }
-//        }
-
-        thumbnailMediaView.setVisibilityFast(View.INVISIBLE)
-      }
-
-      override fun onError(e: Exception, wasInitial: Boolean) {
-        if (e.cause is OutOfMemoryError) {
-          Logger.e(TAG, "OOM while trying to set a big image file", e)
-
-          Runtime.getRuntime().gc()
-          onFullImageOutOfMemoryError()
-        } else {
-          onFullImageUnknownError()
+      actualImageView.setCallback(object : CustomScaleImageView.Callback {
+        override fun onReady() {
+          // no-op
         }
+
+        override fun onImageLoaded() {
+          val animatorSet = runAppearAnimation(
+            prevActiveView = thumbnailMediaView,
+            activeView = actualImageView,
+            isSpoiler = viewableMedia.viewableMediaMeta.isSpoiler,
+            onAnimationEnd = { animationAwaitable.complete(Unit) }
+          )
+
+          this@coroutineScope.coroutineContext[Job.Key]?.invokeOnCompletion {
+            if (animatorSet == null) {
+              return@invokeOnCompletion
+            }
+
+            animatorSet.end()
+          }
+        }
+
+        override fun onError(e: Exception, wasInitial: Boolean) {
+          Logger.e(TAG, "onFullImageUnknownError()", e)
+
+          if (!e.isExceptionImportant()) {
+            return
+          }
+
+          if (e.cause is OutOfMemoryError) {
+            Runtime.getRuntime().gc()
+
+            cancellableToast.showToast(context, R.string.image_preview_failed_oom)
+          } else {
+            cancellableToast.showToast(context, R.string.image_failed_big_image)
+          }
+        }
+      })
+
+      actualImageView.setOnClickListener(null)
+      actualImageView.setImage(ImageSource.uri(file.absolutePath).tiling(true))
+
+      // Trigger the SubsamplingScaleImageView to start loading the full image but don't show it yet.
+      actualImageView.alpha = 0f
+      actualImageView.setVisibilityFast(View.VISIBLE)
+
+      animationAwaitable.await()
+    }
+  }
+
+  private fun runAppearAnimation(
+    prevActiveView: View?,
+    activeView: View?,
+    isSpoiler: Boolean,
+    onAnimationEnd: () -> Unit
+  ): AnimatorSet? {
+    if (activeView == null) {
+      onAnimationEnd()
+      return null
+    }
+
+    if (isSpoiler || prevActiveView == null) {
+      activeView.alpha = 1f
+      onAnimationEnd()
+      return null
+    }
+
+    val appearanceAnimation = ValueAnimator.ofFloat(0f, 1f)
+
+    appearanceAnimation.addUpdateListener { animation: ValueAnimator ->
+      val alpha = animation.animatedValue as Float
+      activeView.alpha = alpha
+    }
+
+    val animatorSet = AnimatorSet()
+    animatorSet.addListener(object : AnimatorListenerAdapter() {
+      override fun onAnimationStart(animation: Animator) {
+        super.onAnimationStart(animation)
+
+        prevActiveView.alpha = 1f
+        activeView.alpha = 0f
+        activeView.setVisibilityFast(View.VISIBLE)
+      }
+
+      override fun onAnimationEnd(animation: Animator) {
+        super.onAnimationEnd(animation)
+
+        prevActiveView.setVisibilityFast(View.INVISIBLE)
+        activeView.alpha = 1f
+
+        onAnimationEnd()
+      }
+
+      override fun onAnimationCancel(animation: Animator?) {
+        super.onAnimationCancel(animation)
+
+        prevActiveView.setVisibilityFast(View.INVISIBLE)
+        activeView.alpha = 1f
       }
     })
 
-    actualImageView.setOnClickListener(null)
-    actualImageView.setImage(ImageSource.uri(file.absolutePath).tiling(true))
+    animatorSet.play(appearanceAnimation)
+    animatorSet.interpolator = interpolator
+    animatorSet.duration = 200
+    animatorSet.start()
 
-    actualImageView.setVisibilityFast(View.VISIBLE)
-  }
-
-  private fun onFullImageOutOfMemoryError() {
-    Logger.e(TAG, "onFullImageOutOfMemoryError()")
-    cancellableToast.showToast(context, R.string.image_preview_failed_oom)
-  }
-
-  private fun onFullImageUnknownError() {
-    Logger.e(TAG, "onFullImageUnknownError()")
-    cancellableToast.showToast(context, R.string.image_failed_big_image)
-  }
-
-  private fun onFullImageLoadingError(error: Throwable) {
-    Logger.e(TAG, "onFullImageLoadingError()", error)
-
-    cancellableToast.showToast(
-      context,
-      getString(R.string.image_failed_big_image_error, error.errorMessageOrClassName())
-    )
+    return animatorSet
   }
 
   class GestureDetectorListener(
@@ -256,5 +333,6 @@ class FullImageMediaView(
 
   companion object {
     private const val TAG = "FullImageMediaView"
+    private val interpolator = DecelerateInterpolator(3f)
   }
 }

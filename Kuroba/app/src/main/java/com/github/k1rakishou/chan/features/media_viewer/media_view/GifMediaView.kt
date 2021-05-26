@@ -10,6 +10,8 @@ import pl.droidsonroids.gif.GifImageView
 @SuppressLint("ViewConstructor")
 class GifMediaView(
   context: Context,
+  private val mediaViewContract: MediaViewContract,
+  private val onThumbnailFullyLoaded: () -> Unit,
   override val viewableMedia: ViewableMedia.Gif,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
@@ -40,7 +42,8 @@ class GifMediaView(
       ThumbnailMediaView.ThumbnailMediaViewParameters(
         isOriginalMediaPlayable = true,
         thumbnailLocation = previewLocation
-      )
+      ),
+      onThumbnailFullyLoaded = onThumbnailFullyLoaded
     )
   }
 

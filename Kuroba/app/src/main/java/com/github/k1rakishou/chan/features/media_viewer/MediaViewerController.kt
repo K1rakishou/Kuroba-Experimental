@@ -15,6 +15,7 @@ import com.github.k1rakishou.chan.ui.view.AppearTransitionImageView
 import com.github.k1rakishou.chan.ui.view.DisappearTransitionImageView
 import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.awaitSilently
 import com.github.k1rakishou.core_logger.Logger
@@ -60,6 +61,8 @@ class MediaViewerController(
 
     mainScope.launch(context = Dispatchers.Main.immediate) {
       viewModel.transitionInfoFlow.collect { transitionInfo ->
+        BackgroundUtils.ensureMainThread()
+
         if (transitionAnimationShown.isCompleted) {
           return@collect
         }
@@ -71,29 +74,9 @@ class MediaViewerController(
 
     mainScope.launch {
       viewModel.mediaViewerState.collect { mediaViewerState ->
-        if (mediaViewerState == null) {
-          return@collect
-        }
+        BackgroundUtils.ensureMainThread()
 
-        transitionAnimationShown.awaitSilently(Unit)
-
-        pager.setVisibilityFast(View.INVISIBLE)
-        appearPreviewImage.setVisibilityFast(View.INVISIBLE)
-
-        pager.setSwipingEnabled(true)
-        pager.adapter = MediaViewerAdapter(context, this@MediaViewerController, mediaViewerState.loadedMedia)
-        pager.setCurrentItem(mediaViewerState.initialPagerIndex, false)
-
-        Logger.d(TAG, "Loaded ${mediaViewerState.loadedMedia.size} media items, " +
-          "initialPagerIndex=${mediaViewerState.initialPagerIndex}")
-
-        // TODO(KurobaEx): Get rid of image flickering by waiting until the same thumbnail view as the
-        //  transition image is fully loaded (only thumbnail is fine no need to wait until the full
-        //  image/video/gif is loaded) and only then switch the visibility. Right now we don't wait
-        //  and make it visible right away BUT at this point the thumbnail is not loaded yet so
-        //  for a split second the pager will be empty after that second it will actually load the
-        //  thumbnail image (from the cache). This is what causes flickering.
-        pager.setVisibilityFast(View.VISIBLE)
+        awaitThumbnailLoadedAndShowViewPager(mediaViewerState)
       }
     }
   }
@@ -130,7 +113,45 @@ class MediaViewerController(
     // TODO(KurobaEx):
   }
 
-  suspend fun runAppearAnimation(transitionInfo: ViewableMediaParcelableHolder.TransitionInfo?) {
+  private suspend fun awaitThumbnailLoadedAndShowViewPager(
+    mediaViewerState: MediaViewerControllerViewModel.MediaViewerControllerState?
+  ) {
+    BackgroundUtils.ensureMainThread()
+
+    if (mediaViewerState == null) {
+      return
+    }
+
+    transitionAnimationShown.awaitSilently(Unit)
+
+    pager.setVisibilityFast(View.INVISIBLE)
+    pager.setSwipingEnabled(true)
+
+    val previewThumbnailLocation =
+      mediaViewerState.loadedMedia[mediaViewerState.initialPagerIndex].mediaLocation
+
+    val adapter = MediaViewerAdapter(
+      context = context,
+      mediaViewContract = this@MediaViewerController,
+      viewableMediaList = mediaViewerState.loadedMedia,
+      previewThumbnailLocation = previewThumbnailLocation
+    )
+
+    pager.adapter = adapter
+    pager.setCurrentItem(mediaViewerState.initialPagerIndex, false)
+
+    adapter.awaitUntilPreviewThumbnailFullyLoaded()
+
+    pager.setVisibilityFast(View.VISIBLE)
+    appearPreviewImage.setVisibilityFast(View.INVISIBLE)
+
+    Logger.d(TAG, "Loaded ${mediaViewerState.loadedMedia.size} media items, " +
+      "initialPagerIndex=${mediaViewerState.initialPagerIndex}")
+  }
+
+  private suspend fun runAppearAnimation(transitionInfo: ViewableMediaParcelableHolder.TransitionInfo?) {
+    BackgroundUtils.ensureMainThread()
+
     if (transitionInfo == null) {
       mediaViewerRootLayout.setBackgroundColor(BACKGROUND_COLOR)
       return

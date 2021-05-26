@@ -5,16 +5,19 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType
+import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageType
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -40,49 +43,55 @@ class MediaViewerControllerViewModel : ViewModel() {
     isNotActivityRecreation: Boolean,
     viewableMediaParcelableHolder: ViewableMediaParcelableHolder
   ): Boolean {
-    if (isNotActivityRecreation) {
-      val transitionInfo = when (viewableMediaParcelableHolder) {
+    return withContext(Dispatchers.Default) {
+      BackgroundUtils.ensureBackgroundThread()
+
+      if (isNotActivityRecreation) {
+        val transitionInfo = when (viewableMediaParcelableHolder) {
+          is ViewableMediaParcelableHolder.CatalogMediaParcelableHolder -> {
+            viewableMediaParcelableHolder.transitionInfo
+          }
+          is ViewableMediaParcelableHolder.ThreadMediaParcelableHolder -> {
+            viewableMediaParcelableHolder.transitionInfo
+          }
+          is ViewableMediaParcelableHolder.LocalMediaParcelableHolder -> null
+          is ViewableMediaParcelableHolder.RemoteMediaParcelableHolder -> null
+        }
+
+        _transitionInfoFlow.emit(transitionInfo)
+      } else {
+        _transitionInfoFlow.emit(null)
+      }
+
+      val mediaViewerControllerState = when (viewableMediaParcelableHolder) {
         is ViewableMediaParcelableHolder.CatalogMediaParcelableHolder -> {
-          viewableMediaParcelableHolder.transitionInfo
+          collectCatalogMedia(viewableMediaParcelableHolder)
         }
         is ViewableMediaParcelableHolder.ThreadMediaParcelableHolder -> {
-          viewableMediaParcelableHolder.transitionInfo
+          collectThreadMedia(viewableMediaParcelableHolder)
         }
-        is ViewableMediaParcelableHolder.LocalMediaParcelableHolder -> null
-        is ViewableMediaParcelableHolder.RemoteMediaParcelableHolder -> null
+        is ViewableMediaParcelableHolder.LocalMediaParcelableHolder -> TODO()
+        is ViewableMediaParcelableHolder.RemoteMediaParcelableHolder -> TODO()
       }
 
-      _transitionInfoFlow.emit(transitionInfo)
-    } else {
-      _transitionInfoFlow.emit(null)
-    }
-
-    val mediaViewerControllerState = when (viewableMediaParcelableHolder) {
-      is ViewableMediaParcelableHolder.CatalogMediaParcelableHolder -> {
-        collectCatalogMedia(viewableMediaParcelableHolder)
+      if (mediaViewerControllerState == null || mediaViewerControllerState.isEmpty()) {
+        return@withContext false
       }
-      is ViewableMediaParcelableHolder.ThreadMediaParcelableHolder -> {
-        collectThreadMedia(viewableMediaParcelableHolder)
-      }
-      is ViewableMediaParcelableHolder.LocalMediaParcelableHolder -> TODO()
-      is ViewableMediaParcelableHolder.RemoteMediaParcelableHolder -> TODO()
-    }
 
-    if (mediaViewerControllerState == null || mediaViewerControllerState.isEmpty()) {
-      return false
+      _mediaViewerState.value = mediaViewerControllerState
+      return@withContext true
     }
-
-    _mediaViewerState.value = mediaViewerControllerState
-    return true
   }
 
   fun updateLastViewedIndex(newLastViewedIndex: Int) {
-    lastPagerIndex = newLastViewedIndex
+    synchronized(this) { lastPagerIndex = newLastViewedIndex }
   }
 
   private fun collectThreadMedia(
     viewableMediaParcelableHolder: ViewableMediaParcelableHolder.ThreadMediaParcelableHolder
   ): MediaViewerControllerState? {
+    BackgroundUtils.ensureBackgroundThread()
+
     val initialPagerIndex = AtomicInteger(0)
     val scrollToImageWithUrl = viewableMediaParcelableHolder.initialImageUrl?.toHttpUrlOrNull()
 
@@ -113,10 +122,12 @@ class MediaViewerControllerViewModel : ViewModel() {
       return null
     }
 
-    val actualInitialPagerIndex = if (lastPagerIndex >= 0) {
-      lastPagerIndex
-    } else {
-      initialPagerIndex.get()
+    val actualInitialPagerIndex = synchronized(this) {
+      if (lastPagerIndex >= 0) {
+        lastPagerIndex
+      } else {
+        initialPagerIndex.get()
+      }
     }
 
     return MediaViewerControllerState(mediaList, actualInitialPagerIndex)
@@ -125,6 +136,8 @@ class MediaViewerControllerViewModel : ViewModel() {
   private fun collectCatalogMedia(
     viewableMediaParcelableHolder: ViewableMediaParcelableHolder.CatalogMediaParcelableHolder
   ): MediaViewerControllerState? {
+    BackgroundUtils.ensureBackgroundThread()
+
     val initialPagerIndex = AtomicInteger(0)
     val scrollToImageWithUrl = viewableMediaParcelableHolder.initialImageUrl?.toHttpUrlOrNull()
 
@@ -149,10 +162,12 @@ class MediaViewerControllerViewModel : ViewModel() {
       return null
     }
 
-    val actualInitialPagerIndex = if (lastPagerIndex >= 0) {
-      lastPagerIndex
-    } else {
-      initialPagerIndex.get()
+    val actualInitialPagerIndex = synchronized(this) {
+      if (lastPagerIndex >= 0) {
+        lastPagerIndex
+      } else {
+        initialPagerIndex.get()
+      }
     }
 
     return MediaViewerControllerState(mediaList, actualInitialPagerIndex)
@@ -164,6 +179,8 @@ class MediaViewerControllerViewModel : ViewModel() {
     lastViewedIndex: AtomicInteger,
     mediaIndex: AtomicInteger
   ): ViewableMedia? {
+    BackgroundUtils.ensureBackgroundThread()
+
     val imageLocation = chanPostImage.imageUrl
       ?.let { imageUrl -> MediaLocation.Remote(imageUrl) }
 

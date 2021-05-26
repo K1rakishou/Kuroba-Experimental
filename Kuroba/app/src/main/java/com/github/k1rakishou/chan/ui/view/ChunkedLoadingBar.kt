@@ -50,7 +50,7 @@ class ChunkedLoadingBar @JvmOverloads constructor(
 
     chunkLoadingProgress.clear()
 
-    val initialProgress = (0..chunks).map { MIN_PROGRESS }
+    val initialProgress = (0 until chunks).map { MIN_PROGRESS }
     chunkLoadingProgress.addAll(initialProgress)
   }
 

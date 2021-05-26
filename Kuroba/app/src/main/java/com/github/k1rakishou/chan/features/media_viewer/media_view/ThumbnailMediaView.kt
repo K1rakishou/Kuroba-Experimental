@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.ui.view.ThumbnailImageView
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
 import okhttp3.HttpUrl
 import java.util.*
@@ -50,14 +51,14 @@ class ThumbnailMediaView @JvmOverloads constructor(
     return bitmap
   }
 
-  fun bind(parameters: ThumbnailMediaViewParameters) {
+  fun bind(parameters: ThumbnailMediaViewParameters, onThumbnailFullyLoaded: () -> Unit) {
     if (requestDisposable != null || thumbnailBitmap() != null) {
       return
     }
 
     requestDisposable = when (val location = parameters.thumbnailLocation) {
       is MediaLocation.Local -> TODO()
-      is MediaLocation.Remote -> loadRemoteMedia(location.url, parameters)
+      is MediaLocation.Remote -> loadRemoteMedia(location.url, parameters, onThumbnailFullyLoaded)
     }
   }
 
@@ -71,7 +72,11 @@ class ThumbnailMediaView @JvmOverloads constructor(
     cancellableToast.cancel()
   }
 
-  private fun loadRemoteMedia(url: HttpUrl, parameters: ThumbnailMediaViewParameters): Disposable {
+  private fun loadRemoteMedia(
+    url: HttpUrl,
+    parameters: ThumbnailMediaViewParameters,
+    onThumbnailFullyLoaded: () -> Unit
+  ): Disposable {
     return imageLoaderV2.loadFromNetwork(
       context = context,
       requestUrl = url.toString(),
@@ -83,23 +88,28 @@ class ThumbnailMediaView @JvmOverloads constructor(
 
           thumbnailView.setOriginalMediaPlayable(parameters.isOriginalMediaPlayable)
           thumbnailView.setImageDrawable(drawable)
+
+          onThumbnailFullyLoaded()
         }
 
         override fun onNotFound() {
           requestDisposable = null
+
           onThumbnailImageNotFoundError()
+          onThumbnailFullyLoaded()
         }
 
         override fun onResponseError(error: Throwable) {
           requestDisposable = null
+
           onThumbnailImageError(error)
+          onThumbnailFullyLoaded()
         }
       })
   }
 
   private fun onThumbnailImageNotFoundError() {
     Logger.e(TAG, "onThumbnailImageNotFoundError()")
-
     cancellableToast.showToast(context, R.string.image_not_found)
 
     // TODO(KurobaEx): show some kind of generic error drawable?
@@ -108,14 +118,16 @@ class ThumbnailMediaView @JvmOverloads constructor(
   private fun onThumbnailImageError(exception: Throwable) {
     Logger.e(TAG, "onThumbnailImageError()", exception)
 
-    val message = String.format(
-      Locale.ENGLISH,
-      "%s: %s",
-      AppModuleAndroidUtils.getString(R.string.image_preview_failed),
-      exception.errorMessageOrClassName()
-    )
+    if (exception.isExceptionImportant()) {
+      val message = String.format(
+        Locale.ENGLISH,
+        "%s: %s",
+        AppModuleAndroidUtils.getString(R.string.image_preview_failed),
+        exception.errorMessageOrClassName()
+      )
 
-    cancellableToast.showToast(context, message)
+      cancellableToast.showToast(context, message)
+    }
   }
 
   data class ThumbnailMediaViewParameters(

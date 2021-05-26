@@ -9,6 +9,8 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 @SuppressLint("ViewConstructor")
 class UnsupportedMediaView(
   context: Context,
+  private val mediaViewContract: MediaViewContract,
+  private val onThumbnailFullyLoaded: () -> Unit,
   override val viewableMedia: ViewableMedia.Unsupported,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
@@ -31,6 +33,7 @@ class UnsupportedMediaView(
 
   override fun bind() {
     // nothing to bind
+    onThumbnailFullyLoaded()
   }
 
   override fun show() {

@@ -11,14 +11,24 @@ import com.github.k1rakishou.chan.features.media_viewer.media_view.UnsupportedMe
 import com.github.k1rakishou.chan.features.media_viewer.media_view.VideoMediaView
 import com.github.k1rakishou.chan.ui.view.ViewPagerAdapter
 import com.github.k1rakishou.core_logger.Logger
+import kotlinx.coroutines.CompletableDeferred
 
 class MediaViewerAdapter(
   private val context: Context,
   private val mediaViewContract: MediaViewContract,
-  private val viewableMediaList: List<ViewableMedia>
+  private val viewableMediaList: List<ViewableMedia>,
+  private val previewThumbnailLocation: MediaLocation
 ) : ViewPagerAdapter() {
   private val loadedViews = mutableListOf<MediaView<ViewableMedia>>()
+  private val previewThumbnailLocationLoaded = CompletableDeferred<Unit>()
+
   private var firstUpdateHappened = false
+
+  suspend fun awaitUntilPreviewThumbnailFullyLoaded() {
+    Logger.d(TAG, "awaitUntilPreviewThumbnailFullyLoaded()...")
+    previewThumbnailLocationLoaded.await()
+    Logger.d(TAG, "awaitUntilPreviewThumbnailFullyLoaded()...done")
+  }
 
   fun onDestroy() {
     Logger.d(TAG, "onDestroy()")
@@ -34,11 +44,55 @@ class MediaViewerAdapter(
 
   @Suppress("UNCHECKED_CAST")
   override fun getView(position: Int, parent: ViewGroup?): View {
-    val mediaView = when (val viewableMedia = viewableMediaList[position]) {
-      is ViewableMedia.Image -> FullImageMediaView(context, mediaViewContract, viewableMedia, position, count)
-      is ViewableMedia.Gif -> GifMediaView(context, viewableMedia, position, count)
-      is ViewableMedia.Video -> VideoMediaView(context, viewableMedia, position, count)
-      is ViewableMedia.Unsupported -> UnsupportedMediaView(context, viewableMedia, position, count)
+    val viewableMedia = viewableMediaList[position]
+
+    val onThumbnailFullyLoaded = {
+      if (viewableMedia.mediaLocation == previewThumbnailLocation && !previewThumbnailLocationLoaded.isCompleted) {
+        previewThumbnailLocationLoaded.complete(Unit)
+      }
+    }
+
+    val mediaView = when (viewableMedia) {
+      is ViewableMedia.Image -> {
+        FullImageMediaView(
+          context = context,
+          mediaViewContract = mediaViewContract,
+          onThumbnailFullyLoaded = onThumbnailFullyLoaded,
+          viewableMedia = viewableMedia,
+          pagerPosition = position,
+          totalPageItemsCount = count
+        )
+      }
+      is ViewableMedia.Gif -> {
+        GifMediaView(
+          context = context,
+          mediaViewContract = mediaViewContract,
+          onThumbnailFullyLoaded = onThumbnailFullyLoaded,
+          viewableMedia = viewableMedia,
+          pagerPosition = position,
+          totalPageItemsCount = count
+        )
+      }
+      is ViewableMedia.Video -> {
+        VideoMediaView(
+          context = context,
+          mediaViewContract = mediaViewContract,
+          onThumbnailFullyLoaded = onThumbnailFullyLoaded,
+          viewableMedia = viewableMedia,
+          pagerPosition = position,
+          totalPageItemsCount = count
+        )
+      }
+      is ViewableMedia.Unsupported -> {
+        UnsupportedMediaView(
+          context = context,
+          mediaViewContract = mediaViewContract,
+          onThumbnailFullyLoaded = onThumbnailFullyLoaded,
+          viewableMedia = viewableMedia,
+          pagerPosition = position,
+          totalPageItemsCount = count
+        )
+      }
     }
 
     mediaView.startPreloading()

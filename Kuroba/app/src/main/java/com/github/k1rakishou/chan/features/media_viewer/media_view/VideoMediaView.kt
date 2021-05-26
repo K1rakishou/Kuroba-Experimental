@@ -11,6 +11,8 @@ import com.google.android.exoplayer2.ui.PlayerView
 @SuppressLint("ViewConstructor")
 class VideoMediaView(
   context: Context,
+  private val mediaViewContract: MediaViewContract,
+  private val onThumbnailFullyLoaded: () -> Unit,
   override val viewableMedia: ViewableMedia.Video,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
@@ -40,7 +42,8 @@ class VideoMediaView(
         ThumbnailMediaView.ThumbnailMediaViewParameters(
           isOriginalMediaPlayable = true,
           thumbnailLocation = previewLocation
-        )
+        ),
+        onThumbnailFullyLoaded = onThumbnailFullyLoaded
       )
     }
   }
