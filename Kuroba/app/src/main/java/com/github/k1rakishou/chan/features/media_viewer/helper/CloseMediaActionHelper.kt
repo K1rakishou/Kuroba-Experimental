@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.media_viewer.helper
 
 import android.content.Context
 import android.graphics.PointF
+import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.VelocityTracker
 import android.view.View
@@ -23,11 +24,13 @@ class CloseMediaActionHelper(
 
   private val viewConfiguration = ViewConfiguration.get(context)
   private val slopPixels = viewConfiguration.scaledTouchSlop
+  private val tapTimeout = ViewConfiguration.getTapTimeout()
 
   private var initialTouchPosition: PointF? = null
   private var tracking = false
   private var blocked = false
   private var initialEvent: MotionEvent? = null
+  private var startTime = 0L
 
   fun onDestroy() {
     velocityTracker?.recycle()
@@ -63,6 +66,7 @@ class CloseMediaActionHelper(
     when (actionMasked) {
       MotionEvent.ACTION_DOWN -> {
         initialEvent = MotionEvent.obtain(event)
+        startTime = SystemClock.elapsedRealtime()
       }
       MotionEvent.ACTION_MOVE -> {
         val deltaX = Math.abs(event.x - initialEvent!!.x)
@@ -71,7 +75,8 @@ class CloseMediaActionHelper(
 
         // We can tell that we are currently scrolling in some direction
         if (movedPixels > slopPixels) {
-          if (deltaX > deltaY) {
+          val deltaTime = SystemClock.elapsedRealtime() - startTime
+          if (deltaX > deltaY || deltaTime > tapTimeout) {
             blocked = true
           }
 
