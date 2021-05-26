@@ -17,7 +17,7 @@ class UnsupportedMediaView(
 ) : MediaView<ViewableMedia.Unsupported>(context, null) {
 
   override val hasContent: Boolean
-    get() = true
+    get() = false
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)

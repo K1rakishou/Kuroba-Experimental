@@ -105,6 +105,14 @@ class MediaViewerController(
     // no-op
   }
 
+  override fun changeMediaViewerBackgroundAlpha(newAlpha: Float) {
+    mediaViewerRootLayout.alpha = newAlpha
+  }
+
+  override fun closeMediaViewer() {
+    mediaViewerCallbacks.finishActivity()
+  }
+
   override fun onTapped() {
     mediaViewerCallbacks.toggleFullScreenMode()
   }
@@ -181,6 +189,7 @@ class MediaViewerController(
   }
 
   interface MediaViewerCallbacks {
+    fun finishActivity()
     fun toggleFullScreenMode()
   }
 

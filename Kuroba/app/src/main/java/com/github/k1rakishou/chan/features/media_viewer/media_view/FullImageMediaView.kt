@@ -1,15 +1,11 @@
 package com.github.k1rakishou.chan.features.media_viewer.media_view
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
-import android.animation.AnimatorSet
-import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
-import android.view.animation.DecelerateInterpolator
+import android.widget.FrameLayout
 import com.davemorrissey.labs.subscaleview.ImageSource
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheHandler
@@ -20,6 +16,8 @@ import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
+import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
+import com.github.k1rakishou.chan.features.media_viewer.helper.FullMediaAppearAnimationHelper
 import com.github.k1rakishou.chan.ui.view.ChunkedLoadingBar
 import com.github.k1rakishou.chan.ui.view.CustomScaleImageView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -46,10 +44,13 @@ class FullImageMediaView(
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
 ) : MediaView<ViewableMedia.Image>(context, null) {
+  private val movableContainer: FrameLayout
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualImageView: CustomScaleImageView
   private val loadingBar: ChunkedLoadingBar
+
   private val gestureDetector = GestureDetector(context, GestureDetectorListener(mediaViewContract))
+  private val closeMediaActionHelper: CloseMediaActionHelper
 
   private var fullImageDeferred = CompletableDeferred<File>()
   private var preloadCancelableDownload: CancelableDownload? = null
@@ -68,9 +69,19 @@ class FullImageMediaView(
 
     inflate(context, R.layout.media_view_full_image, this)
 
+    movableContainer = findViewById(R.id.movable_container)
     thumbnailMediaView = findViewById(R.id.thumbnail_media_view)
     actualImageView = findViewById(R.id.actual_image_view)
     loadingBar = findViewById(R.id.loading_bar)
+
+    closeMediaActionHelper = CloseMediaActionHelper(
+      context = context,
+      movableContainer = movableContainer,
+      requestDisallowInterceptTouchEvent = { this.parent.requestDisallowInterceptTouchEvent(true) },
+      canExecuteCloseMediaGesture = { canExecuteCloseMediaGesture() },
+      onAlphaAnimationProgress = { alpha -> mediaViewContract.changeMediaViewerBackgroundAlpha(alpha) },
+      onMediaFullyClosed = { mediaViewContract.closeMediaViewer() }
+    )
 
     thumbnailMediaView.setOnTouchListener { v, event ->
       if (thumbnailMediaView.visibility != View.VISIBLE) {
@@ -89,11 +100,34 @@ class FullImageMediaView(
     }
   }
 
-  override fun preload() {
-    if (hasContent) {
-      return
+  override fun requestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {
+    closeMediaActionHelper.requestDisallowInterceptTouchEvent(disallowIntercept)
+    super.requestDisallowInterceptTouchEvent(disallowIntercept)
+  }
+
+  override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
+    if (ev != null && closeMediaActionHelper.onInterceptTouchEvent(ev)) {
+      return true
     }
 
+    return super.onInterceptTouchEvent(ev)
+  }
+
+  override fun onTouchEvent(event: MotionEvent): Boolean {
+    if (closeMediaActionHelper.onTouchEvent(event)) {
+      return true
+    }
+
+    return super.onTouchEvent(event)
+  }
+
+  override fun canExecuteCloseMediaGesture(): Boolean {
+    // TODO(KurobaEx): check whether the image is zoomed in and if it is then check that we are
+    //  touching the bottom part of the image
+    return true
+  }
+
+  override fun preload() {
     val previewLocation = viewableMedia.previewLocation
     if (previewLocation != null) {
       thumbnailMediaView.bind(
@@ -105,63 +139,60 @@ class FullImageMediaView(
       )
     }
 
-    if (
-      viewableMedia.mediaLocation is MediaLocation.Remote
-      && MediaViewerControllerViewModel.canAutoLoad(cacheHandler, viewableMedia)
-      && (preloadCancelableDownload == null || preloadCancelableDownload?.isRunning() == false)
-      && !fullImageDeferred.isCompleted
-    ) {
-      val mediaLocationRemote = viewableMedia.mediaLocation
-
-      val extraInfo = DownloadRequestExtraInfo(
-        viewableMedia.viewableMediaMeta.mediaSize ?: -1,
-        viewableMedia.viewableMediaMeta.mediaHash
-      )
-
-      preloadCancelableDownload = fileCacheV2.enqueueChunkedDownloadFileRequest(
-        mediaLocationRemote.url,
-        extraInfo,
-        object : FileCacheListener() {
-          override fun onStart(chunksCount: Int) {
-            super.onStart(chunksCount)
-            BackgroundUtils.ensureMainThread()
-
-            loadingBar.setVisibilityFast(View.VISIBLE)
-            loadingBar.setChunksCount(chunksCount)
-          }
-
-          override fun onProgress(chunkIndex: Int, downloaded: Long, total: Long) {
-            super.onProgress(chunkIndex, downloaded, total)
-            BackgroundUtils.ensureMainThread()
-
-            loadingBar.setChunkProgress(chunkIndex, downloaded.toFloat() / total.toFloat())
-          }
-
-          override fun onSuccess(file: File) {
-            BackgroundUtils.ensureMainThread()
-            fullImageDeferred.complete(file)
-          }
-
-          override fun onNotFound() {
-            BackgroundUtils.ensureMainThread()
-            fullImageDeferred.completeExceptionally(ImageNotFoundException(mediaLocationRemote.url))
-          }
-
-          override fun onFail(exception: Exception) {
-            BackgroundUtils.ensureMainThread()
-            fullImageDeferred.completeExceptionally(exception)
-          }
-
-          override fun onEnd() {
-            super.onEnd()
-            BackgroundUtils.ensureMainThread()
-
-            preloadCancelableDownload = null
-            loadingBar.setVisibilityFast(View.GONE)
-          }
-        }
-      )
+    if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload()) {
+      preloadCancelableDownload = startFullImagePreloading(viewableMedia.mediaLocation)
     }
+  }
+
+  private fun startFullImagePreloading(mediaLocationRemote: MediaLocation.Remote): CancelableDownload? {
+    val extraInfo = DownloadRequestExtraInfo(
+      viewableMedia.viewableMediaMeta.mediaSize ?: -1,
+      viewableMedia.viewableMediaMeta.mediaHash
+    )
+
+    return fileCacheV2.enqueueChunkedDownloadFileRequest(
+      mediaLocationRemote.url,
+      extraInfo,
+      object : FileCacheListener() {
+        override fun onStart(chunksCount: Int) {
+          super.onStart(chunksCount)
+          BackgroundUtils.ensureMainThread()
+
+          loadingBar.setVisibilityFast(VISIBLE)
+          loadingBar.setChunksCount(chunksCount)
+        }
+
+        override fun onProgress(chunkIndex: Int, downloaded: Long, total: Long) {
+          super.onProgress(chunkIndex, downloaded, total)
+          BackgroundUtils.ensureMainThread()
+
+          loadingBar.setChunkProgress(chunkIndex, downloaded.toFloat() / total.toFloat())
+        }
+
+        override fun onSuccess(file: File) {
+          BackgroundUtils.ensureMainThread()
+          fullImageDeferred.complete(file)
+        }
+
+        override fun onNotFound() {
+          BackgroundUtils.ensureMainThread()
+          fullImageDeferred.completeExceptionally(ImageNotFoundException(mediaLocationRemote.url))
+        }
+
+        override fun onFail(exception: Exception) {
+          BackgroundUtils.ensureMainThread()
+          fullImageDeferred.completeExceptionally(exception)
+        }
+
+        override fun onEnd() {
+          super.onEnd()
+          BackgroundUtils.ensureMainThread()
+
+          preloadCancelableDownload = null
+          loadingBar.setVisibilityFast(GONE)
+        }
+      }
+    )
   }
 
   override fun bind() {
@@ -213,7 +244,7 @@ class FullImageMediaView(
         }
 
         override fun onImageLoaded() {
-          val animatorSet = runAppearAnimation(
+          val animatorSet = FullMediaAppearAnimationHelper.fullMediaAppearAnimation(
             prevActiveView = thumbnailMediaView,
             activeView = actualImageView,
             isSpoiler = viewableMedia.viewableMediaMeta.isSpoiler,
@@ -257,63 +288,10 @@ class FullImageMediaView(
     }
   }
 
-  private fun runAppearAnimation(
-    prevActiveView: View?,
-    activeView: View?,
-    isSpoiler: Boolean,
-    onAnimationEnd: () -> Unit
-  ): AnimatorSet? {
-    if (activeView == null) {
-      onAnimationEnd()
-      return null
-    }
-
-    if (isSpoiler || prevActiveView == null) {
-      activeView.alpha = 1f
-      onAnimationEnd()
-      return null
-    }
-
-    val appearanceAnimation = ValueAnimator.ofFloat(0f, 1f)
-
-    appearanceAnimation.addUpdateListener { animation: ValueAnimator ->
-      val alpha = animation.animatedValue as Float
-      activeView.alpha = alpha
-    }
-
-    val animatorSet = AnimatorSet()
-    animatorSet.addListener(object : AnimatorListenerAdapter() {
-      override fun onAnimationStart(animation: Animator) {
-        super.onAnimationStart(animation)
-
-        prevActiveView.alpha = 1f
-        activeView.alpha = 0f
-        activeView.setVisibilityFast(View.VISIBLE)
-      }
-
-      override fun onAnimationEnd(animation: Animator) {
-        super.onAnimationEnd(animation)
-
-        prevActiveView.setVisibilityFast(View.INVISIBLE)
-        activeView.alpha = 1f
-
-        onAnimationEnd()
-      }
-
-      override fun onAnimationCancel(animation: Animator?) {
-        super.onAnimationCancel(animation)
-
-        prevActiveView.setVisibilityFast(View.INVISIBLE)
-        activeView.alpha = 1f
-      }
-    })
-
-    animatorSet.play(appearanceAnimation)
-    animatorSet.interpolator = interpolator
-    animatorSet.duration = 200
-    animatorSet.start()
-
-    return animatorSet
+  private fun canPreload(): Boolean {
+    return MediaViewerControllerViewModel.canAutoLoad(cacheHandler, viewableMedia)
+      && (preloadCancelableDownload == null || preloadCancelableDownload?.isRunning() == false)
+      && !fullImageDeferred.isCompleted
   }
 
   class GestureDetectorListener(
@@ -333,6 +311,5 @@ class FullImageMediaView(
 
   companion object {
     private const val TAG = "FullImageMediaView"
-    private val interpolator = DecelerateInterpolator(3f)
   }
 }

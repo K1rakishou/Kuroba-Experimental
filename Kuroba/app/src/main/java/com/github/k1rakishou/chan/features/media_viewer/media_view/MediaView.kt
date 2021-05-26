@@ -30,8 +30,10 @@ abstract class MediaView<T : ViewableMedia> constructor(
 
   abstract val hasContent: Boolean
 
+  open fun canExecuteCloseMediaGesture(): Boolean = true
+
   fun startPreloading() {
-    if (_preloadingCalled) {
+    if (_preloadingCalled  || hasContent) {
       return
     }
 

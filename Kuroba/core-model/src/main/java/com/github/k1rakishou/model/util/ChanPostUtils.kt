@@ -7,6 +7,7 @@ import androidx.core.text.PrecomputedTextCompat
 import androidx.core.widget.TextViewCompat
 import com.github.k1rakishou.common.MurmurHashUtils
 import com.github.k1rakishou.common.StringUtils
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
@@ -21,6 +22,8 @@ import kotlin.math.abs
 import kotlin.math.min
 
 object ChanPostUtils {
+  private const val TAG = "ChanPostUtils"
+
   private val dateFormat = SimpleDateFormat.getDateTimeInstance(
     DateFormat.SHORT,
     DateFormat.MEDIUM,
@@ -128,7 +131,13 @@ object ChanPostUtils {
   fun getLocalDate(post: ChanPost): String {
     val tmpDate = Date()
     tmpDate.time = post.timestamp * 1000L
-    return dateFormat.format(tmpDate)
+
+    return try {
+      dateFormat.format(tmpDate)
+    } catch (error: Throwable) {
+      Logger.e(TAG, "Invalid time: ${tmpDate.time}")
+      return "Unk"
+    }
   }
 
   fun postsDiffer(chanPostBuilder: ChanPostBuilder, chanPostFromCache: ChanPost, isThreadMode: Boolean): Boolean {
