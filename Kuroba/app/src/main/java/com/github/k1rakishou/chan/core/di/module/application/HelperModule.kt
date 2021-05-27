@@ -8,12 +8,14 @@ import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.RemoteFilePicker
@@ -129,6 +131,12 @@ class HelperModule {
       localFilePicker,
       remoteFilePicker
     )
+  }
+
+  @Provides
+  @Singleton
+  fun provideMediaViewerScrollerHelper(chanThreadManager: ChanThreadManager): MediaViewerScrollerHelper {
+    return MediaViewerScrollerHelper(chanThreadManager)
   }
 
 }

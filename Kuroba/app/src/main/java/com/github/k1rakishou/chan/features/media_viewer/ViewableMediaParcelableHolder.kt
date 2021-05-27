@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.media_viewer
 import android.os.Parcelable
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import okhttp3.HttpUrl
@@ -118,6 +119,7 @@ sealed class ViewableMedia(
 }
 
 data class ViewableMediaMeta(
+  val ownerPostDescriptor: PostDescriptor?,
   val mediaName: String?,
   val mediaWidth: Int?,
   val mediaHeight: Int?,

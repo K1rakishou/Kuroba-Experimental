@@ -631,7 +631,7 @@ public class ImageViewerController
     }
 
     public void scrollToImage(ChanPostImage postImage) {
-        imageViewerCallback.scrollToImage(postImage);
+//        imageViewerCallback.scrollToImage(postImage);
     }
 
     @Override
@@ -966,10 +966,9 @@ public class ImageViewerController
     public interface ImageViewerCallback {
         @Nullable
         ThumbnailView getPreviewImageTransitionView(ChanPostImage postImage);
-        void scrollToImage(ChanPostImage postImage);
     }
 
     public interface GoPostCallback {
-        ImageViewerCallback goToPost(ChanPostImage postImage);
+        @Nullable ImageViewerCallback goToPost(ChanPostImage postImage);
     }
 }

@@ -14,459 +14,436 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.ui.controller;
+package com.github.k1rakishou.chan.ui.controller
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
+import android.content.Context
+import android.graphics.Color
+import android.view.View
+import android.view.View.OnLongClickListener
+import android.view.ViewGroup
+import androidx.core.content.ContextCompat
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.helper.ThumbnailLongtapOptionsHelper
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
+import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
+import com.github.k1rakishou.chan.features.settings.screens.AppearanceSettingsScreen.Companion.clampColumnsCount
+import com.github.k1rakishou.chan.ui.cell.AlbumViewCell
+import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
+import com.github.k1rakishou.chan.ui.controller.ImageViewerController.GoPostCallback
+import com.github.k1rakishou.chan.ui.controller.ImageViewerController.ImageViewerCallback
+import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController
+import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView
+import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarHeightUpdatesCallback
+import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
+import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
+import com.github.k1rakishou.chan.ui.view.FastScroller
+import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
+import com.github.k1rakishou.chan.ui.view.FixedLinearLayoutManager
+import com.github.k1rakishou.chan.ui.view.ThumbnailView
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.updatePaddings
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.filter.ChanFilterMutable
+import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.persist_state.PersistableChanState.albumLayoutGridMode
+import com.github.k1rakishou.persist_state.PersistableChanState.showAlbumViewsImageDetails
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.view.View;
-import android.view.ViewGroup;
+class AlbumViewController(
+  context: Context,
+) : Controller(context), ImageViewerCallback, GoPostCallback, RequiresNoBottomNavBar, WindowInsetsListener, ToolbarHeightUpdatesCallback {
+  private lateinit var recyclerView: ColorizableGridRecyclerView
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.recyclerview.widget.StaggeredGridLayoutManager;
+  private var postImages: List<ChanPostImage>? = null
+  private var targetIndex = -1
+  private var chanDescriptor: ChanDescriptor? = null
 
-import com.github.k1rakishou.ChanSettings;
-import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.controller.Controller;
-import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
-import com.github.k1rakishou.chan.core.helper.ThumbnailLongtapOptionsHelper;
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
-import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
-import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
-import com.github.k1rakishou.chan.features.settings.screens.AppearanceSettingsScreen;
-import com.github.k1rakishou.chan.ui.cell.AlbumViewCell;
-import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView;
-import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController;
-import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController;
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView;
-import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
-import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
-import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem;
-import com.github.k1rakishou.chan.ui.view.FastScroller;
-import com.github.k1rakishou.chan.ui.view.FastScrollerHelper;
-import com.github.k1rakishou.chan.ui.view.ThumbnailView;
-import com.github.k1rakishou.common.AndroidUtils;
-import com.github.k1rakishou.common.KotlinExtensionsKt;
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
-import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
-import com.github.k1rakishou.model.data.post.ChanPostImage;
-import com.github.k1rakishou.persist_state.PersistableChanState;
+  private var fastScroller: FastScroller? = null
+  private var albumAdapter: AlbumAdapter? = null
 
-import org.jetbrains.annotations.NotNull;
+  private val spanCountAndSpanWidth: SpanInfo
+    get() {
+      var albumSpanCount = ChanSettings.albumSpanCount.get()
+      var albumSpanWith = DEFAULT_SPAN_WIDTH
+      val displayWidth = AndroidUtils.getDisplaySize(context).x
 
-import java.util.List;
+      if (albumSpanCount == 0) {
+        albumSpanCount = displayWidth / DEFAULT_SPAN_WIDTH
+      } else {
+        albumSpanWith = displayWidth / albumSpanCount
+      }
 
-import javax.inject.Inject;
-
-import kotlin.Unit;
-
-public class AlbumViewController
-        extends Controller
-        implements ImageViewerController.ImageViewerCallback,
-        ImageViewerController.GoPostCallback,
-        RequiresNoBottomNavBar,
-        WindowInsetsListener,
-        Toolbar.ToolbarHeightUpdatesCallback {
-    private static final int DEFAULT_SPAN_WIDTH = dp(120);
-
-    private static final int ACTION_DOWNLOAD = 0;
-    private static final int ACTION_TOGGLE_LAYOUT_MODE = 1;
-    private static final int ACTION_TOGGLE_IMAGE_DETAILS = 2;
-
-    private ColorizableGridRecyclerView recyclerView;
-    private List<ChanPostImage> postImages;
-    private int targetIndex = -1;
-    private ChanDescriptor chanDescriptor;
-
-    @Nullable
-    private FastScroller fastScroller;
-
-    private AlbumAdapter albumAdapter;
-    private final ThreadControllerCallbacks threadControllerCallbacks;
-
-    @Inject
-    GlobalWindowInsetsManager globalWindowInsetsManager;
-    @Inject
-    ThumbnailLongtapOptionsHelper thumbnailLongtapOptionsHelper;
-
-    @Override
-    protected void injectDependencies(@NotNull ActivityComponent component) {
-        component.inject(this);
+      albumSpanCount = clampColumnsCount(albumSpanCount)
+      return SpanInfo(albumSpanCount, albumSpanWith)
     }
 
-    public AlbumViewController(Context context, ThreadControllerCallbacks threadControllerCallbacks) {
-        super(context);
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var thumbnailLongtapOptionsHelper: ThumbnailLongtapOptionsHelper
+  @Inject
+  lateinit var mediaViewerScrollerHelper: MediaViewerScrollerHelper
 
-        this.threadControllerCallbacks = threadControllerCallbacks;
+  override fun injectDependencies(component: ActivityComponent) {
+    component.inject(this)
+  }
+
+  override fun onCreate() {
+    super.onCreate()
+
+    // View setup
+    view = AppModuleAndroidUtils.inflate(context, R.layout.controller_album_view)
+    recyclerView = view.findViewById(R.id.recycler_view)
+    recyclerView.setHasFixedSize(true)
+    albumAdapter = AlbumAdapter()
+    recyclerView.adapter = albumAdapter
+    updateRecyclerView(false)
+
+    // Navigation
+    val downloadDrawable = ContextCompat.getDrawable(context, R.drawable.ic_file_download_white_24dp)!!
+    downloadDrawable.setTint(Color.WHITE)
+
+    val gridDrawable = if (albumLayoutGridMode.get()) {
+      ContextCompat.getDrawable(context, R.drawable.ic_baseline_view_quilt_24)!!
+    } else {
+      ContextCompat.getDrawable(context, R.drawable.ic_baseline_view_comfy_24)!!
     }
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
+    gridDrawable.setTint(Color.WHITE)
 
-        // View setup
-        view = inflate(context, R.layout.controller_album_view);
-        recyclerView = view.findViewById(R.id.recycler_view);
-        recyclerView.setHasFixedSize(true);
+    navigation
+      .buildMenu(context)
+      .withItem(ACTION_TOGGLE_LAYOUT_MODE, gridDrawable) { item -> toggleLayoutModeClicked(item) }
+      .withItem(ACTION_DOWNLOAD, downloadDrawable) { item -> downloadAlbumClicked(item) }
+      .withOverflow(navigationController)
+      .withCheckableSubItem(
+        ACTION_TOGGLE_IMAGE_DETAILS,
+        R.string.action_album_show_image_details,
+        true,
+        showAlbumViewsImageDetails.get()
+      ) { subItem: ToolbarMenuSubItem -> onToggleAlbumViewsImageInfoToggled(subItem) }
+      .build()
+      .build()
 
-        albumAdapter = new AlbumAdapter();
-        recyclerView.setAdapter(albumAdapter);
+    fastScroller = FastScrollerHelper.create(
+      FastScroller.FastScrollerControllerType.Album,
+      recyclerView,
+      null
+    )
 
-        updateRecyclerView(false);
+    mainScope.launch {
+      mediaViewerScrollerHelper.mediaViewerScrollEventsFlow
+        .collect { chanPostImage ->
+          val index = postImages?.indexOf(chanPostImage)
+            ?: return@collect
 
-        // Navigation
-        Drawable downloadDrawable = ContextCompat.getDrawable(context, R.drawable.ic_file_download_white_24dp);
-        downloadDrawable.setTint(Color.WHITE);
-
-        Drawable gridDrawable;
-
-        if (PersistableChanState.getAlbumLayoutGridMode().get()) {
-            gridDrawable = ContextCompat.getDrawable(context, R.drawable.ic_baseline_view_quilt_24);
-        } else {
-            gridDrawable = ContextCompat.getDrawable(context, R.drawable.ic_baseline_view_comfy_24);
-        }
-
-        gridDrawable.setTint(Color.WHITE);
-
-        navigation
-                .buildMenu(context)
-                .withItem(ACTION_TOGGLE_LAYOUT_MODE, gridDrawable, this::toggleLayoutModeClicked)
-                .withItem(ACTION_DOWNLOAD, downloadDrawable, this::downloadAlbumClicked)
-                .withOverflow(navigationController)
-                .withCheckableSubItem(
-                        ACTION_TOGGLE_IMAGE_DETAILS,
-                        R.string.action_album_show_image_details,
-                        true,
-                        PersistableChanState.showAlbumViewsImageDetails.get(),
-                        this::onToggleAlbumViewsImageInfoToggled)
-                .build()
-                .build();
-
-        fastScroller = FastScrollerHelper.create(
-                FastScroller.FastScrollerControllerType.Album,
-                recyclerView,
-                null
-        );
-
-        requireNavController().requireToolbar().addToolbarHeightUpdatesCallback(this);
-        globalWindowInsetsManager.addInsetsUpdatesListener(this);
-
-        onInsetsChanged();
-    }
-
-    private void updateRecyclerView(boolean reloading) {
-        SpanInfo spanInfo = getSpanCountAndSpanWidth();
-
-        StaggeredGridLayoutManager staggeredGridLayoutManager = new StaggeredGridLayoutManager(
-                spanInfo.spanCount,
-                StaggeredGridLayoutManager.VERTICAL
-        );
-
-        recyclerView.setLayoutManager(staggeredGridLayoutManager);
-        recyclerView.setSpanWidth(spanInfo.spanWidth);
-        recyclerView.setItemAnimator(null);
-        recyclerView.scrollToPosition(targetIndex);
-
-        if (reloading) {
-            albumAdapter.refresh();
+          scrollToInternal(index)
         }
     }
 
-    private SpanInfo getSpanCountAndSpanWidth() {
-        int albumSpanCount = ChanSettings.albumSpanCount.get();
-        int albumSpanWith = DEFAULT_SPAN_WIDTH;
+    requireNavController().requireToolbar().addToolbarHeightUpdatesCallback(this)
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
+    onInsetsChanged()
+  }
 
-        int displayWidth = AndroidUtils.getDisplaySize(context).x;
+  private fun scrollToInternal(scrollPosition: Int) {
+    val layoutManager = recyclerView.layoutManager
 
-        if (albumSpanCount == 0) {
-            albumSpanCount = displayWidth / DEFAULT_SPAN_WIDTH;
-        } else {
-            albumSpanWith = displayWidth / albumSpanCount;
-        }
-
-        albumSpanCount = AppearanceSettingsScreen.clampColumnsCount(albumSpanCount);
-
-        return new SpanInfo(albumSpanCount, albumSpanWith);
+    if (layoutManager is GridLayoutManager) {
+      layoutManager.scrollToPositionWithOffset(scrollPosition, 0)
+      return
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        requireNavController().requireToolbar().removeToolbarHeightUpdatesCallback(this);
-        globalWindowInsetsManager.removeInsetsUpdatesListener(this);
-
-        if (fastScroller != null) {
-            fastScroller.onCleanup();
-            fastScroller = null;
-        }
-
-        recyclerView.swapAdapter(null, true);
+    if (layoutManager is StaggeredGridLayoutManager) {
+      layoutManager.scrollToPositionWithOffset(scrollPosition, 0)
+      return
     }
 
-    @Override
-    public void onToolbarHeightKnown(boolean heightChanged) {
-        if (!heightChanged) {
-            return;
-        }
-
-        onInsetsChanged();
+    if (layoutManager is FixedLinearLayoutManager) {
+      layoutManager.scrollToPositionWithOffset(scrollPosition, 0)
+      return
     }
 
-    @Override
-    public void onInsetsChanged() {
-        int bottomPadding = globalWindowInsetsManager.bottom();
+    recyclerView.scrollToPosition(scrollPosition)
+  }
 
-        if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-            bottomPadding = 0;
-        }
+  private fun updateRecyclerView(reloading: Boolean) {
+    val spanInfo = spanCountAndSpanWidth
+    val staggeredGridLayoutManager = StaggeredGridLayoutManager(
+      spanInfo.spanCount,
+      StaggeredGridLayoutManager.VERTICAL
+    )
 
-        KotlinExtensionsKt.updatePaddings(
-                recyclerView,
-                null,
-                FastScrollerHelper.FAST_SCROLLER_WIDTH,
-                requireNavController().requireToolbar().getToolbarHeight(),
-                bottomPadding
-        );
+    recyclerView.layoutManager = staggeredGridLayoutManager
+    recyclerView.setSpanWidth(spanInfo.spanWidth)
+    recyclerView.itemAnimator = null
+    recyclerView.scrollToPosition(targetIndex)
+
+    if (reloading) {
+      albumAdapter?.refresh()
+    }
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+    requireNavController().requireToolbar().removeToolbarHeightUpdatesCallback(this)
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
+
+    fastScroller?.onCleanup()
+    fastScroller = null
+
+    recyclerView.swapAdapter(null, true)
+  }
+
+  override fun onToolbarHeightKnown(heightChanged: Boolean) {
+    if (!heightChanged) {
+      return
+    }
+    onInsetsChanged()
+  }
+
+  override fun onInsetsChanged() {
+    var bottomPadding = globalWindowInsetsManager.bottom()
+    if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+      bottomPadding = 0
     }
 
-    public void setImages(
-            ChanDescriptor chanDescriptor,
-            List<ChanPostImage> postImages,
-            int index,
-            String title
-    ) {
-        this.chanDescriptor = chanDescriptor;
-        this.postImages = postImages;
+    recyclerView.updatePaddings(
+      null,
+      FastScrollerHelper.FAST_SCROLLER_WIDTH,
+      requireNavController().requireToolbar().toolbarHeight,
+      bottomPadding
+    )
+  }
 
-        navigation.title = title;
-        navigation.subtitle = getQuantityString(R.plurals.image, postImages.size(), postImages.size());
-        targetIndex = index;
+  fun setImages(
+    chanDescriptor: ChanDescriptor?,
+    postImages: List<ChanPostImage>,
+    index: Int,
+    title: String?
+  ) {
+    this.chanDescriptor = chanDescriptor
+    this.postImages = postImages
+
+    navigation.title = title
+    navigation.subtitle = AppModuleAndroidUtils.getQuantityString(R.plurals.image, postImages.size, postImages.size)
+    targetIndex = index
+  }
+
+  private fun onToggleAlbumViewsImageInfoToggled(subItem: ToolbarMenuSubItem) {
+    showAlbumViewsImageDetails.toggle()
+    albumAdapter?.refresh()
+  }
+
+  private fun downloadAlbumClicked(item: ToolbarMenuItem) {
+    val albumDownloadController = AlbumDownloadController(context)
+    albumDownloadController.setPostImages(postImages)
+    requireNavController().pushController(albumDownloadController)
+  }
+
+  private fun toggleLayoutModeClicked(item: ToolbarMenuItem) {
+    albumLayoutGridMode.toggle()
+    updateRecyclerView(true)
+    val menuItem = navigation.findItem(ACTION_TOGGLE_LAYOUT_MODE)
+
+    val gridDrawable = if (albumLayoutGridMode.get()) {
+      ContextCompat.getDrawable(context, R.drawable.ic_baseline_view_quilt_24)!!
+    } else {
+      ContextCompat.getDrawable(context, R.drawable.ic_baseline_view_comfy_24)!!
     }
 
-    private void onToggleAlbumViewsImageInfoToggled(ToolbarMenuSubItem subItem) {
-        PersistableChanState.showAlbumViewsImageDetails.toggle();
-        albumAdapter.refresh();
+    gridDrawable.setTint(Color.WHITE)
+    menuItem.setImage(gridDrawable)
+  }
+
+  override fun getPreviewImageTransitionView(postImage: ChanPostImage): ThumbnailView? {
+    var thumbnail: ThumbnailView? = null
+
+    for (i in 0 until recyclerView.childCount) {
+      val view = recyclerView.getChildAt(i)
+
+      if (view is AlbumViewCell) {
+        if (postImage === view.postImage) {
+          thumbnail = view.thumbnailView
+          break
+        }
+      }
     }
 
-    private void downloadAlbumClicked(ToolbarMenuItem item) {
-        AlbumDownloadController albumDownloadController = new AlbumDownloadController(context);
-        albumDownloadController.setPostImages(postImages);
-        navigationController.pushController(albumDownloadController);
+    return thumbnail
+  }
+
+  override fun goToPost(postImage: ChanPostImage): ImageViewerCallback? {
+    var threadController: ThreadController? = null
+    if (previousSiblingController is ThreadController) {
+      //phone mode
+      threadController = previousSiblingController as ThreadController?
+    } else if (previousSiblingController is DoubleNavigationController) {
+      //slide mode
+      val doubleNav = previousSiblingController as DoubleNavigationController
+      if (doubleNav.getRightController() is ThreadController) {
+        threadController = doubleNav.getRightController() as ThreadController?
+      }
+    } else if (previousSiblingController == null) {
+      //split nav has no "sibling" to look at, so we go WAY back to find the view thread controller
+      val splitNav = parentController!!.parentController!!.presentedByController as SplitNavigationController?
+      threadController = splitNav!!.rightController.childControllers[0] as ThreadController
+      threadController.selectPostImage(postImage)
+      //clear the popup here because split nav is weirdly laid out in the stack
+      splitNav.popController()
+      return threadController
     }
 
-    private void toggleLayoutModeClicked(ToolbarMenuItem item) {
-        PersistableChanState.getAlbumLayoutGridMode().toggle();
-        updateRecyclerView(true);
-
-        ToolbarMenuItem menuItem = navigation.findItem(ACTION_TOGGLE_LAYOUT_MODE);
-
-        Drawable gridDrawable;
-
-        if (PersistableChanState.getAlbumLayoutGridMode().get()) {
-            gridDrawable = ContextCompat.getDrawable(context, R.drawable.ic_baseline_view_quilt_24);
-        } else {
-            gridDrawable = ContextCompat.getDrawable(context, R.drawable.ic_baseline_view_comfy_24);
-        }
-
-        gridDrawable.setTint(Color.WHITE);
-        menuItem.setImage(gridDrawable);
+    if (threadController != null) {
+      threadController.selectPostImage(postImage)
+      navigationController!!.popController(false)
+      return threadController
     }
 
-    @Nullable
-    @Override
-    public ThumbnailView getPreviewImageTransitionView(ChanPostImage postImage) {
-        ThumbnailView thumbnail = null;
-        for (int i = 0; i < recyclerView.getChildCount(); i++) {
-            View view = recyclerView.getChildAt(i);
-            if (view instanceof AlbumViewCell) {
-                AlbumViewCell cell = (AlbumViewCell) view;
-                if (postImage == cell.getPostImage()) {
-                    thumbnail = cell.getThumbnailView();
-                    break;
-                }
-            }
-        }
+    return null
+  }
 
-        return thumbnail;
+  private fun openImage(postImage: ChanPostImage) {
+    val images = postImages
+      ?: return
+    val index = postImages?.indexOf(postImage)
+      ?: return
+    val descriptor = chanDescriptor
+      ?: return
+
+    when (descriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        MediaViewerActivity.catalogAlbum(
+          context = context,
+          catalogDescriptor = descriptor,
+          initialImageUrl = images[index].imageUrl?.toString(),
+          transitionThumbnailUrl = images[index].getThumbnailUrl()!!.toString(),
+          lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates()
+        )
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        MediaViewerActivity.threadAlbum(
+          context = context,
+          threadDescriptor = descriptor,
+          initialImageUrl = images[index].imageUrl?.toString(),
+          transitionThumbnailUrl = images[index].getThumbnailUrl()!!.toString(),
+          lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates()
+        )
+      }
+    }
+  }
+
+  private fun showImageLongClickOptions(postImage: ChanPostImage) {
+    thumbnailLongtapOptionsHelper.onThumbnailLongTapped(
+      context = context,
+      isCurrentlyInAlbum = true,
+      postImage = postImage,
+      presentControllerFunc = { controller -> presentController(controller) },
+      showFiltersControllerFunc = { }
+    )
+  }
+
+  private inner class AlbumAdapter : RecyclerView.Adapter<AlbumItemCellHolder>() {
+    private val albumCellType = 1
+
+    init {
+      setHasStableIds(true)
     }
 
-    @Override
-    public void scrollToImage(ChanPostImage postImage) {
-        int index = postImages.indexOf(postImage);
-        recyclerView.smoothScrollToPosition(index);
+    override fun getItemViewType(position: Int): Int {
+      return albumCellType
     }
 
-    @Override
-    public ImageViewerController.ImageViewerCallback goToPost(ChanPostImage postImage) {
-        ThreadController threadController = null;
-
-        if (previousSiblingController instanceof ThreadController) {
-            //phone mode
-            threadController = (ThreadController) previousSiblingController;
-        } else if (previousSiblingController instanceof DoubleNavigationController) {
-            //slide mode
-            DoubleNavigationController doubleNav = (DoubleNavigationController) previousSiblingController;
-            if (doubleNav.getRightController() instanceof ThreadController) {
-                threadController = (ThreadController) doubleNav.getRightController();
-            }
-        } else if (previousSiblingController == null) {
-            //split nav has no "sibling" to look at, so we go WAY back to find the view thread controller
-            SplitNavigationController splitNav =
-                    (SplitNavigationController) this.parentController.parentController.presentedByController;
-            threadController = (ThreadController) splitNav.rightController.childControllers.get(0);
-            threadController.selectPostImage(postImage);
-            //clear the popup here because split nav is weirdly laid out in the stack
-            splitNav.popController();
-            return threadController;
-        }
-
-        if (threadController != null) {
-            threadController.selectPostImage(postImage);
-            navigationController.popController(false);
-            return threadController;
-        } else {
-            return null;
-        }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AlbumItemCellHolder {
+      val view = AppModuleAndroidUtils.inflate(parent.context, R.layout.cell_album_view, parent, false)
+      return AlbumItemCellHolder(view)
     }
 
-    private void openImage(AlbumItemCellHolder albumItemCellHolder, ChanPostImage postImage) {
-        // Just ignore the showImages request when the image is not loaded
-        if (albumItemCellHolder.thumbnailView.getBitmap() != null) {
-            final ImageViewerNavigationController imageViewer = new ImageViewerNavigationController(context);
-            int index = postImages.indexOf(postImage);
-            presentController(imageViewer, false);
-            imageViewer.showImages(true, postImages, index, chanDescriptor, this, this);
-        }
+    override fun onBindViewHolder(holder: AlbumItemCellHolder, position: Int) {
+      val postImage = postImages?.get(position)
+      if (postImage == null) {
+        return
+      }
+
+      val canUseHighResCells = ColorizableGridRecyclerView.canUseHighResCells(recyclerView.currentSpanCount)
+      val isStaggeredGridMode = !albumLayoutGridMode.get()
+      holder.cell.bindPostImage(
+        postImage,
+        canUseHighResCells,
+        isStaggeredGridMode,
+        showAlbumViewsImageDetails.get()
+      )
     }
 
-    private void showImageLongClickOptions(ChanPostImage postImage) {
-        thumbnailLongtapOptionsHelper.onThumbnailLongTapped(
-                context,
-                true,
-                postImage,
-                controller -> {
-                    presentController(controller);
-                    return Unit.INSTANCE;
-                },
-                chanFilterMutable -> {
-                    return Unit.INSTANCE;
-                }
-        );
+    override fun onViewRecycled(holder: AlbumItemCellHolder) {
+      holder.cell.unbindPostImage()
     }
 
-    private class AlbumAdapter extends RecyclerView.Adapter<AlbumItemCellHolder> {
-        public static final int ALBUM_CELL_TYPE = 1;
-
-        public AlbumAdapter() {
-            setHasStableIds(true);
-        }
-
-        @Override
-        public int getItemViewType(int position) {
-            return ALBUM_CELL_TYPE;
-        }
-
-        @Override
-        public AlbumItemCellHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            View view = inflate(parent.getContext(), R.layout.cell_album_view, parent, false);
-
-            return new AlbumItemCellHolder(view);
-        }
-
-        @Override
-        public void onBindViewHolder(AlbumItemCellHolder holder, int position) {
-            ChanPostImage postImage = postImages.get(position);
-
-            if (postImage != null) {
-                boolean canUseHighResCells =
-                        ColorizableGridRecyclerView.canUseHighResCells(recyclerView.getCurrentSpanCount());
-                boolean isStaggeredGridMode =
-                        !PersistableChanState.getAlbumLayoutGridMode().get();
-
-                holder.cell.bindPostImage(
-                        postImage,
-                        canUseHighResCells,
-                        isStaggeredGridMode,
-                        PersistableChanState.getShowAlbumViewsImageDetails().get()
-                );
-            }
-        }
-
-        @Override
-        public void onViewRecycled(@NonNull AlbumItemCellHolder holder) {
-            holder.cell.unbindPostImage();
-        }
-
-        @Override
-        public int getItemCount() {
-            return postImages.size();
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return position;
-        }
-
-        public void refresh() {
-            notifyDataSetChanged();
-        }
+    override fun getItemCount(): Int {
+      return postImages!!.size
     }
 
-    private class AlbumItemCellHolder
-            extends RecyclerView.ViewHolder
-            implements View.OnClickListener, View.OnLongClickListener {
-        private static final String ALBUM_VIEW_CELL_THUMBNAIL_CLICK_TOKEN = "ALBUM_VIEW_CELL_THUMBNAIL_CLICK";
-        private static final String ALBUM_VIEW_CELL_THUMBNAIL_LONG_CLICK_TOKEN = "ALBUM_VIEW_CELL_THUMBNAIL_LONG_CLICK";
-
-        private final AlbumViewCell cell;
-        private final PostImageThumbnailView thumbnailView;
-
-        public AlbumItemCellHolder(View itemView) {
-            super(itemView);
-
-            cell = (AlbumViewCell) itemView;
-            thumbnailView = (PostImageThumbnailView) cell.getThumbnailView();
-
-            thumbnailView.setOnImageClickListener(ALBUM_VIEW_CELL_THUMBNAIL_CLICK_TOKEN, this);
-            thumbnailView.setOnImageLongClickListener(ALBUM_VIEW_CELL_THUMBNAIL_LONG_CLICK_TOKEN, this);
-        }
-
-        @Override
-        public void onClick(View v) {
-            int adapterPosition = getAdapterPosition();
-            ChanPostImage postImage = postImages.get(adapterPosition);
-            openImage(this, postImage);
-        }
-
-        @Override
-        public boolean onLongClick(View v) {
-            int adapterPosition = getAdapterPosition();
-            ChanPostImage postImage = postImages.get(adapterPosition);
-            showImageLongClickOptions(postImage);
-            return true;
-        }
-
+    override fun getItemId(position: Int): Long {
+      return position.toLong()
     }
 
-    private static class SpanInfo {
-        public final int spanCount;
-        public final int spanWidth;
+    fun refresh() {
+      notifyDataSetChanged()
+    }
+  }
 
-        public SpanInfo(int spanCount, int spanWidth) {
-            this.spanCount = spanCount;
-            this.spanWidth = spanWidth;
-        }
+  private inner class AlbumItemCellHolder(itemView: View) : RecyclerView.ViewHolder(itemView), View.OnClickListener, OnLongClickListener {
+    private val ALBUM_VIEW_CELL_THUMBNAIL_CLICK_TOKEN = "ALBUM_VIEW_CELL_THUMBNAIL_CLICK"
+    private val ALBUM_VIEW_CELL_THUMBNAIL_LONG_CLICK_TOKEN = "ALBUM_VIEW_CELL_THUMBNAIL_LONG_CLICK"
+
+    val cell = itemView as AlbumViewCell
+    val thumbnailView = cell.thumbnailView as PostImageThumbnailView
+
+    init {
+      thumbnailView.setOnImageClickListener(ALBUM_VIEW_CELL_THUMBNAIL_CLICK_TOKEN, this)
+      thumbnailView.setOnImageLongClickListener(ALBUM_VIEW_CELL_THUMBNAIL_LONG_CLICK_TOKEN, this)
     }
 
-    interface ThreadControllerCallbacks {
-        void openFiltersController(ChanFilterMutable chanFilterMutable);
+    override fun onClick(v: View) {
+      val postImage = postImages?.get(adapterPosition)
+        ?: return
+
+      openImage(postImage)
     }
+
+    override fun onLongClick(v: View): Boolean {
+      val postImage = postImages?.get(adapterPosition)
+        ?: return false
+
+      showImageLongClickOptions(postImage)
+      return true
+    }
+
+  }
+
+  private class SpanInfo(val spanCount: Int, val spanWidth: Int)
+
+  interface ThreadControllerCallbacks {
+    fun openFiltersController(chanFilterMutable: ChanFilterMutable)
+  }
+
+  companion object {
+    private val DEFAULT_SPAN_WIDTH = AppModuleAndroidUtils.dp(120f)
+    private const val ACTION_DOWNLOAD = 0
+    private const val ACTION_TOGGLE_LAYOUT_MODE = 1
+    private const val ACTION_TOGGLE_IMAGE_DETAILS = 2
+  }
 }

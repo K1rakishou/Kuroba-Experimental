@@ -37,6 +37,7 @@ import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
 import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.ui.controller.ImageViewerController.ImageViewerCallback
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
@@ -62,6 +63,7 @@ import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterType
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
@@ -100,6 +102,8 @@ abstract class ThreadController(
   lateinit var archivesManager: ArchivesManager
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var mediaViewerScrollerHelper: MediaViewerScrollerHelper
 
   protected lateinit var threadLayout: ThreadLayout
   protected lateinit var showPostsInExternalThreadHelper: ShowPostsInExternalThreadHelper
@@ -159,6 +163,11 @@ abstract class ThreadController(
       chanThreadViewableInfoManager = chanThreadViewableInfoManager,
       threadFollowHistoryManager = threadFollowHistoryManager
     )
+
+    mainScope.launch {
+      mediaViewerScrollerHelper.mediaViewerScrollEventsFlow
+        .collect { chanPostImage -> threadLayout.presenter.scrollToImage(chanPostImage, true) }
+    }
 
     onThemeChanged()
     themeEngine.addListener(this)
@@ -269,17 +278,6 @@ abstract class ThreadController(
     chanDescriptor: ChanDescriptor,
     thumbnail: ThumbnailView
   ) {
-    // TODO(KurobaEx): remove me
-//    val isAlreadyPresenting =
-//      isAlreadyPresenting { controller -> controller is ImageViewerNavigationController }
-//
-//    // Just ignore the showImages request when the image is not loaded
-//    if (thumbnail.bitmap != null && !isAlreadyPresenting) {
-//      val imageViewer = ImageViewerNavigationController(context)
-//      presentController(imageViewer, false)
-//      imageViewer.showImages(false, images, index, chanDescriptor, this)
-//    }
-
     when (chanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> {
         MediaViewerActivity.catalogAlbum(
@@ -306,10 +304,6 @@ abstract class ThreadController(
     return threadLayout.getThumbnail(postImage)
   }
 
-  override fun scrollToImage(postImage: ChanPostImage) {
-    threadLayout.presenter.scrollToImage(postImage, true)
-  }
-
   override fun showAlbum(images: List<ChanPostImage>, index: Int) {
     if (threadLayout.presenter.currentChanDescriptor == null) {
       return
@@ -327,7 +321,7 @@ abstract class ThreadController(
       return
     }
 
-    val albumViewController = AlbumViewController(context, this)
+    val albumViewController = AlbumViewController(context)
     albumViewController.setImages(chanDescriptor, filteredImages, newIndex, navigation.title)
 
     if (doubleNavigationController != null) {

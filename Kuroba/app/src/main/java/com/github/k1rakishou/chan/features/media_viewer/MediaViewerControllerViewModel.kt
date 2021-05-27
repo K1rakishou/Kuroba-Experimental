@@ -197,6 +197,7 @@ class MediaViewerControllerViewModel : ViewModel() {
       ?.let { spoilerUrl -> MediaLocation.Remote(spoilerUrl) }
 
     val viewableMediaMeta = ViewableMediaMeta(
+      ownerPostDescriptor = chanPostImage.ownerPostDescriptor,
       mediaName = chanPostImage.filename ?: chanPostImage.serverFilename,
       mediaWidth = chanPostImage.imageWidth,
       mediaHeight = chanPostImage.imageHeight,

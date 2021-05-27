@@ -935,29 +935,17 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   private fun scrollToInternal(scrollPosition: Int) {
     if (layoutManager is GridLayoutManager) {
-      (layoutManager as GridLayoutManager).scrollToPositionWithOffset(
-        scrollPosition,
-        SCROLL_OFFSET
-      )
-
+      (layoutManager as GridLayoutManager).scrollToPositionWithOffset(scrollPosition, 0)
       return
     }
 
     if (layoutManager is StaggeredGridLayoutManager) {
-      (layoutManager as StaggeredGridLayoutManager).scrollToPositionWithOffset(
-        scrollPosition,
-        SCROLL_OFFSET
-      )
-
+      (layoutManager as StaggeredGridLayoutManager).scrollToPositionWithOffset(scrollPosition, 0)
       return
     }
 
     if (layoutManager is FixedLinearLayoutManager) {
-      (layoutManager as FixedLinearLayoutManager).scrollToPositionWithOffset(
-        scrollPosition,
-        SCROLL_OFFSET
-      )
-
+      (layoutManager as FixedLinearLayoutManager).scrollToPositionWithOffset(scrollPosition, 0)
       return
     }
 

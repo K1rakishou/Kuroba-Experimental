@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.media_viewer
 import android.content.Context
 import android.view.View
 import android.view.ViewGroup
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.media_viewer.media_view.FullImageMediaView
 import com.github.k1rakishou.chan.features.media_viewer.media_view.GifMediaView
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaView
@@ -16,13 +17,16 @@ import kotlinx.coroutines.CompletableDeferred
 class MediaViewerAdapter(
   private val context: Context,
   private val mediaViewContract: MediaViewContract,
+  private val initialPagerIndex: Int,
   private val viewableMediaList: List<ViewableMedia>,
-  private val previewThumbnailLocation: MediaLocation
+  private val previewThumbnailLocation: MediaLocation,
+  private val mediaViewerScrollerHelper: MediaViewerScrollerHelper
 ) : ViewPagerAdapter() {
   private val loadedViews = mutableListOf<MediaView<ViewableMedia>>()
   private val previewThumbnailLocationLoaded = CompletableDeferred<Unit>()
 
   private var firstUpdateHappened = false
+  private var initialImageBindHappened = false
 
   suspend fun awaitUntilPreviewThumbnailFullyLoaded() {
     Logger.d(TAG, "awaitUntilPreviewThumbnailFullyLoaded()...")
@@ -104,6 +108,16 @@ class MediaViewerAdapter(
   fun doBind(position: Int) {
     val viewableMedia = viewableMediaList[position]
     Logger.d(TAG, "doBind(position: ${position})")
+
+    if (position != initialPagerIndex || initialImageBindHappened) {
+      viewableMedia.viewableMediaMeta.ownerPostDescriptor?.let { postDescriptor ->
+        mediaViewerScrollerHelper.onScrolledTo(postDescriptor, viewableMedia.mediaLocation)
+      }
+    }
+
+    if (position == initialPagerIndex) {
+      initialImageBindHappened = true
+    }
 
     val view = loadedViews
       .firstOrNull { loadedView -> loadedView.viewableMedia == viewableMedia }

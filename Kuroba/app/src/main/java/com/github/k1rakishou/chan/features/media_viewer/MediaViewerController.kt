@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewContract
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
 import com.github.k1rakishou.chan.ui.view.AppearTransitionImageView
@@ -41,6 +42,8 @@ class MediaViewerController(
 
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
+  @Inject
+  lateinit var mediaViewerScrollerHelper: MediaViewerScrollerHelper
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -141,8 +144,10 @@ class MediaViewerController(
     val adapter = MediaViewerAdapter(
       context = context,
       mediaViewContract = this@MediaViewerController,
+      initialPagerIndex = mediaViewerState.initialPagerIndex,
       viewableMediaList = mediaViewerState.loadedMedia,
-      previewThumbnailLocation = previewThumbnailLocation
+      previewThumbnailLocation = previewThumbnailLocation,
+      mediaViewerScrollerHelper = mediaViewerScrollerHelper
     )
 
     pager.adapter = adapter
