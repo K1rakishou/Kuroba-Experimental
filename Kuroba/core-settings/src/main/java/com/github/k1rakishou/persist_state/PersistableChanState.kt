@@ -49,8 +49,6 @@ object PersistableChanState {
   @JvmStatic
   lateinit var lastRememberedFilePicker: StringSetting
   @JvmStatic
-  lateinit var safExplanationMessageShown: BooleanSetting
-  @JvmStatic
   lateinit var themesIgnoreSystemDayNightModeMessageShown: BooleanSetting
   @JvmStatic
   lateinit var bookmarksLastOpenedTabPageIndex: IntegerSetting
@@ -67,11 +65,13 @@ object PersistableChanState {
   @JvmStatic
   lateinit var boardSelectionGridMode: BooleanSetting
 
-  // TODO(KurobaEx): delete me in v0.10.x
+  // TODO(KurobaEx): remove in v0.11.x
   @JvmStatic
+  @Deprecated("remove me once v0.11.x is released")
   lateinit var appHack_V08X_deleteAllBlockedBookmarkWatcherWorkDone: BooleanSetting
-  // TODO(KurobaEx): delete me in v0.10.x
+  // TODO(KurobaEx): remove in v0.11.x
   @JvmStatic
+  @Deprecated("remove me once v0.11.x is released")
   lateinit var appHack_V08X_deleteAllBlockedFilterWatcherWorkDone: BooleanSetting
 
   fun init(persistableChanStateInfo: PersistableChanStateInfo) {
@@ -84,34 +84,19 @@ object PersistableChanState {
     try {
       val provider = SharedPreferencesSettingProvider(AndroidUtils.getAppState())
       watchLastCount = IntegerSetting(provider, "watch_last_count", 0)
-      hasNewApkUpdate =
-        BooleanSetting(
-          provider,
-          "has_new_apk_update",
-          false
-        )
+      hasNewApkUpdate = BooleanSetting(provider, "has_new_apk_update", false
+      )
       previousVersion = IntegerSetting(provider, "previous_version", persistableChanStateInfo.versionCode)
       updateCheckTime = LongSetting(provider, "update_check_time", 0L)
       previousDevHash = StringSetting(provider, "previous_dev_hash", persistableChanStateInfo.commitHash)
+      viewThreadBookmarksGridMode = BooleanSetting(provider, "view_thread_bookmarks_grid_mode", true)
+      albumLayoutGridMode = BooleanSetting(provider, "album_layout_grid_mode", false)
 
-      viewThreadBookmarksGridMode = BooleanSetting(
+      shittyPhonesBackgroundLimitationsExplanationDialogShown = BooleanSetting(
         provider,
-        "view_thread_bookmarks_grid_mode",
-        true
-      )
-
-      albumLayoutGridMode = BooleanSetting(
-        provider,
-        "album_layout_grid_mode",
+        "shitty_phones_background_limitations_explanation_dialog_shown",
         false
-      );
-
-      shittyPhonesBackgroundLimitationsExplanationDialogShown =
-        BooleanSetting(
-          provider,
-          "shitty_phones_background_limitations_explanation_dialog_shown",
-          false
-        )
+      )
 
       bookmarksRecyclerIndexAndTop = StringSetting(
         provider,
@@ -125,40 +110,11 @@ object PersistableChanState {
         RecyclerIndexAndTopInfo.filterWatchesControllerDefaultJson(gson)
       )
 
-      proxyEditingNotificationShown = BooleanSetting(
-        provider,
-        "proxy_editing_notification_shown",
-        false
-      )
-
-      lastRememberedFilePicker = StringSetting(
-        provider,
-        "last_remembered_file_picker",
-        ""
-      )
-
-      safExplanationMessageShown = BooleanSetting(
-        provider,
-        "saf_explanation_message_shown",
-        false
-      )
-
-      themesIgnoreSystemDayNightModeMessageShown = BooleanSetting(
-        provider,
-        "themes_ignore_system_day_night_mode_message_shown",
-        false
-      )
-      bookmarksLastOpenedTabPageIndex = IntegerSetting(
-        provider,
-        "bookmarks_last_opened_tab_page_index",
-        -1
-      )
-
-      imageViewerImmersiveModeEnabled = BooleanSetting(
-        provider,
-        "image_viewer_immersive_mode_enabled",
-        true
-      )
+      proxyEditingNotificationShown = BooleanSetting(provider, "proxy_editing_notification_shown", false)
+      lastRememberedFilePicker = StringSetting(provider, "last_remembered_file_picker", "")
+      themesIgnoreSystemDayNightModeMessageShown = BooleanSetting(provider, "themes_ignore_system_day_night_mode_message_shown", false)
+      bookmarksLastOpenedTabPageIndex = IntegerSetting(provider, "bookmarks_last_opened_tab_page_index", -1)
+      imageViewerImmersiveModeEnabled = BooleanSetting(provider, "image_viewer_immersive_mode_enabled", true)
 
       imageSaverV2PersistedOptions = JsonSetting(
         gson,
@@ -177,7 +133,6 @@ object PersistableChanState {
       )
 
       showAlbumViewsImageDetails = BooleanSetting(provider, "show_album_views_image_details", true)
-
       drawerNavHistoryGridMode = BooleanSetting(provider, "drawer_nav_history_grid_mode", false)
       boardSelectionGridMode = BooleanSetting(provider, "board_selection_grid_mode", false)
 

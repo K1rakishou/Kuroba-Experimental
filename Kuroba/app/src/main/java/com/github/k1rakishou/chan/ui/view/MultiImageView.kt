@@ -309,20 +309,20 @@ class MultiImageView @JvmOverloads constructor(
     val playerView = findView(PlayerView::class.java) as? PlayerView
 
     if (playerView != null) {
-      if (!ChanSettings.imageViewerFullscreenMode.get()) {
-        if (!playerView.isControllerVisible) {
-          playerView.showController()
-          return
-        }
-
-        // fallthrough
-      } else {
-        if (!playerView.isControllerVisible) {
-          playerView.showController()
-        } else {
-          playerView.hideController()
-        }
-      }
+//      if (!ChanSettings.imageViewerFullscreenMode.get()) {
+//        if (!playerView.isControllerVisible) {
+//          playerView.showController()
+//          return
+//        }
+//
+//        // fallthrough
+//      } else {
+//        if (!playerView.isControllerVisible) {
+//          playerView.showController()
+//        } else {
+//          playerView.hideController()
+//        }
+//      }
     }
 
     callback?.onTap()
@@ -710,9 +710,9 @@ class MultiImageView @JvmOverloads constructor(
       exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
       exoVideoView.useArtwork = true
 
-      if (callback?.isInImmersiveMode() == false || !ChanSettings.imageViewerFullscreenMode.get()) {
-        exoVideoView.showController()
-      }
+//      if (callback?.isInImmersiveMode() == false || !ChanSettings.imageViewerFullscreenMode.get()) {
+//        exoVideoView.showController()
+//      }
 
       exoVideoView.defaultArtwork = ResourcesCompat.getDrawable(
         getRes(),
@@ -767,9 +767,9 @@ class MultiImageView @JvmOverloads constructor(
               exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
               exoVideoView.useArtwork = true
 
-              if (callback?.isInImmersiveMode() == false || !ChanSettings.imageViewerFullscreenMode.get()) {
-                exoVideoView.showController()
-              }
+//              if (callback?.isInImmersiveMode() == false || !ChanSettings.imageViewerFullscreenMode.get()) {
+//                exoVideoView.showController()
+//              }
 
               exoVideoView.defaultArtwork = ResourcesCompat.getDrawable(
                 getRes(),

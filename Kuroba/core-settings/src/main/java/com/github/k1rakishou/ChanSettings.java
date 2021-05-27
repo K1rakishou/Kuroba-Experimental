@@ -270,7 +270,6 @@ public class ChanSettings {
 
     //region APPEARANCE
     // Theme
-    public static BooleanSetting imageViewerFullscreenMode;
     public static BooleanSetting isCurrentThemeDark;
 
     // Layout
@@ -446,7 +445,6 @@ public class ChanSettings {
 
             //region APPEARANCE
             // Theme
-            imageViewerFullscreenMode = new BooleanSetting(provider, "image_viewer_fullscreen_mode", true);
             isCurrentThemeDark = new BooleanSetting(provider, "is_current_theme_dark", true);
 
             //Layout

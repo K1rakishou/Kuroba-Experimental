@@ -16,9 +16,8 @@ class CloseMediaActionHelper(
   private val context: Context,
   private val movableContainer: View,
   private val requestDisallowInterceptTouchEvent: () -> Unit,
-  private val canExecuteCloseMediaGesture: () -> Boolean,
   private val onAlphaAnimationProgress: (alpha: Float) -> Unit,
-  private val onMediaFullyClosed: () -> Unit
+  private val closeMediaViewer: () -> Unit
 ) {
   private var velocityTracker: VelocityTracker? = null
   private var scroller: Scroller? = null
@@ -47,7 +46,7 @@ class CloseMediaActionHelper(
       blocked = false
     }
 
-    if (event.pointerCount != 1 || tracking || blocked || !canExecuteCloseMediaGesture()) {
+    if (event.pointerCount != 1 || tracking || blocked) {
       return false
     }
 
@@ -193,7 +192,7 @@ class CloseMediaActionHelper(
       }
 
       var finished = false
-      var mediaFullyClosed = false
+      var canCloseMediaViewer = false
 
       if (scroller!!.computeScrollOffset()) {
         val currentX = scroller!!.currX.toFloat()
@@ -241,8 +240,8 @@ class CloseMediaActionHelper(
           finished = true
         }
 
-        if (flingProgress >= 1f) {
-          mediaFullyClosed = true
+        if (flingProgress >= 0.75f) {
+          canCloseMediaViewer = true
         }
       } else {
         finished = true
@@ -255,8 +254,8 @@ class CloseMediaActionHelper(
 
       endTracking()
 
-      if (mediaFullyClosed) {
-        onMediaFullyClosed()
+      if (canCloseMediaViewer) {
+        closeMediaViewer()
       }
     }
   }

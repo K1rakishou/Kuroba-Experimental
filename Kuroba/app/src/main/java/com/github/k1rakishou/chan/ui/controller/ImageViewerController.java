@@ -298,13 +298,13 @@ public class ImageViewerController
                 !ChanSettings.transparencyOn.get(),
                 this::updateTransparency
         );
-        overflowBuilder.withCheckableSubItem(
-                ACTION_ALLOW_IMAGE_FULLSCREEN,
-                R.string.setting_full_screen_mode,
-                true,
-                ChanSettings.imageViewerFullscreenMode.get(),
-                this::updateFullScreenMode
-        );
+//        overflowBuilder.withCheckableSubItem(
+//                ACTION_ALLOW_IMAGE_FULLSCREEN,
+//                R.string.setting_full_screen_mode,
+//                true,
+//                ChanSettings.imageViewerFullscreenMode.get(),
+//                this::updateFullScreenMode
+//        );
         overflowBuilder.withCheckableSubItem(
                 ACTION_AUTO_REVEAL_SPOILERS,
                 R.string.settings_reveal_image_spoilers,
@@ -462,7 +462,7 @@ public class ImageViewerController
             return;
         }
 
-        subItem.isChecked = ChanSettings.imageViewerFullscreenMode.toggle();
+//        subItem.isChecked = ChanSettings.imageViewerFullscreenMode.toggle();
     }
 
     private void updateTransparency(ToolbarMenuSubItem item) {
@@ -864,9 +864,9 @@ public class ImageViewerController
 
     @Override
     public void showSystemUI(boolean showSystemUi) {
-        if (!ChanSettings.imageViewerFullscreenMode.get()) {
-            return;
-        }
+//        if (!ChanSettings.imageViewerFullscreenMode.get()) {
+//            return;
+//        }
 
         PersistableChanState.imageViewerImmersiveModeEnabled.set(!showSystemUi);
 
@@ -878,9 +878,9 @@ public class ImageViewerController
     }
 
     private void hideSystemUI(boolean forced) {
-        if (!ChanSettings.imageViewerFullscreenMode.get()) {
-            return;
-        }
+//        if (!ChanSettings.imageViewerFullscreenMode.get()) {
+//            return;
+//        }
 
         if (!forced && isInImmersiveMode) {
             return;
@@ -907,9 +907,9 @@ public class ImageViewerController
     }
 
     private void showSystemUI() {
-        if (!ChanSettings.imageViewerFullscreenMode.get()) {
-            return;
-        }
+//        if (!ChanSettings.imageViewerFullscreenMode.get()) {
+//            return;
+//        }
 
         if (!isInImmersiveMode) {
             return;
@@ -932,9 +932,9 @@ public class ImageViewerController
     }
 
     private void hideToolbar() {
-        if (!ChanSettings.imageViewerFullscreenMode.get()) {
-            return;
-        }
+//        if (!ChanSettings.imageViewerFullscreenMode.get()) {
+//            return;
+//        }
 
         Toolbar toolbar = requireNavController().requireToolbar();
 
@@ -946,9 +946,9 @@ public class ImageViewerController
     }
 
     private void showToolbar() {
-        if (!ChanSettings.imageViewerFullscreenMode.get()) {
-            return;
-        }
+//        if (!ChanSettings.imageViewerFullscreenMode.get()) {
+//            return;
+//        }
 
         Toolbar toolbar = requireNavController().requireToolbar();
 

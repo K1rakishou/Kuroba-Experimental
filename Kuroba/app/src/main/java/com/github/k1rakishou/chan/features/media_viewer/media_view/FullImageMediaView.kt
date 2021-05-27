@@ -78,9 +78,8 @@ class FullImageMediaView(
       context = context,
       movableContainer = movableContainer,
       requestDisallowInterceptTouchEvent = { this.parent.requestDisallowInterceptTouchEvent(true) },
-      canExecuteCloseMediaGesture = { canExecuteCloseMediaGesture() },
       onAlphaAnimationProgress = { alpha -> mediaViewContract.changeMediaViewerBackgroundAlpha(alpha) },
-      onMediaFullyClosed = { mediaViewContract.closeMediaViewer() }
+      closeMediaViewer = { mediaViewContract.closeMediaViewer() }
     )
 
     thumbnailMediaView.setOnTouchListener { v, event ->
@@ -114,12 +113,6 @@ class FullImageMediaView(
     }
 
     return super.onTouchEvent(event)
-  }
-
-  override fun canExecuteCloseMediaGesture(): Boolean {
-    // TODO(KurobaEx): check whether the image is zoomed in and if it is then check that we are
-    //  touching the bottom part of the image
-    return true
   }
 
   override fun preload() {

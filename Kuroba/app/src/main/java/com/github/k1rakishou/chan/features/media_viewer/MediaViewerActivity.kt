@@ -18,11 +18,13 @@ import com.github.k1rakishou.chan.utils.FullScreenUtils.hideSystemUI
 import com.github.k1rakishou.chan.utils.FullScreenUtils.isSystemUIHidden
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupEdgeToEdge
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
+import com.github.k1rakishou.chan.utils.FullScreenUtils.showSystemUI
 import com.github.k1rakishou.chan.utils.FullScreenUtils.toggleSystemUI
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -64,7 +66,12 @@ class MediaViewerActivity : ControllerHostActivity(), MediaViewerController.Medi
 
     window.setupEdgeToEdge()
     window.setupStatusAndNavBarColors(themeEngine.chanTheme)
-    window.hideSystemUI(themeEngine.chanTheme)
+
+    if (PersistableChanState.imageViewerImmersiveModeEnabled.get()) {
+      window.hideSystemUI(themeEngine.chanTheme)
+    } else {
+      window.showSystemUI(themeEngine.chanTheme)
+    }
 
     mediaViewerController = MediaViewerController(
       context = this,
@@ -111,7 +118,9 @@ class MediaViewerActivity : ControllerHostActivity(), MediaViewerController.Medi
   override fun toggleFullScreenMode() {
     if (::themeEngine.isInitialized && ::mediaViewerController.isInitialized) {
       window.toggleSystemUI(themeEngine.chanTheme)
+
       mediaViewerController.updateToolbarVisibility(window.isSystemUIHidden())
+      PersistableChanState.imageViewerImmersiveModeEnabled.set(window.isSystemUIHidden())
     }
   }
 

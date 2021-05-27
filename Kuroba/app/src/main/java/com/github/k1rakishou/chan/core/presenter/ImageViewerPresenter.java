@@ -615,10 +615,10 @@ public class ImageViewerPresenter
             // Fallthrough
         }
 
-        if (!ChanSettings.imageViewerFullscreenMode.get()) {
-            onExit();
-            return;
-        }
+//        if (!ChanSettings.imageViewerFullscreenMode.get()) {
+//            onExit();
+//            return;
+//        }
 
         callback.showSystemUI(callback.isImmersive());
     }

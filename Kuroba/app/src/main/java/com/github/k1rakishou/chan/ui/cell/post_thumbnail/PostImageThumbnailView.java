@@ -293,7 +293,7 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
     public void draw(Canvas canvas) {
         super.draw(canvas);
 
-        if (postImage != null && postImage.getType() == ChanPostImageType.MOVIE && !error) {
+        if (postImage != null && postImage.isPlayableType() && !error) {
             int iconScale = 1;
             double scalar = (Math.pow(2.0, iconScale) - 1) / Math.pow(2.0, iconScale);
             int x = (int) (getWidth() / 2.0 - playIcon.getIntrinsicWidth() * scalar);

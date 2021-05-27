@@ -91,6 +91,10 @@ class ChanPostImage(
     }
   }
 
+  fun isPlayableType(): Boolean {
+    return type === ChanPostImageType.MOVIE || type === ChanPostImageType.GIF
+  }
+
   fun canBeUsedForCloudflarePreloading(): Boolean {
     if (isInlined) {
       return false
