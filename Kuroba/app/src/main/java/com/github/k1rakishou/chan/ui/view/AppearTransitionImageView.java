@@ -26,7 +26,7 @@ import android.graphics.PointF;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewAnimationUtils;
-import android.view.animation.DecelerateInterpolator;
+import android.view.animation.AccelerateInterpolator;
 
 import androidx.appcompat.widget.AppCompatImageView;
 
@@ -37,9 +37,9 @@ import kotlin.jvm.functions.Function1;
 public class AppearTransitionImageView extends AppCompatImageView {
     private static final String TAG = "TransitionImageView";
     private static final int ANIMATION_DURATION = 250;
-    private static final DecelerateInterpolator DECELERATE = new DecelerateInterpolator(3f);
+    private static final AccelerateInterpolator INTERPOLATOR = new AccelerateInterpolator(3f);
 
-    private PointF globalRevealStartPosition = new PointF(0f, 0f);
+    private final PointF globalRevealStartPosition = new PointF(0f, 0f);
 
     public AppearTransitionImageView(Context context) {
         super(context);
@@ -102,7 +102,7 @@ public class AppearTransitionImageView extends AppCompatImageView {
 
         animatorSet.playTogether(circularRevealAnimation, backgroundColorAnimation);
         animatorSet.setDuration(ANIMATION_DURATION);
-        animatorSet.setInterpolator(DECELERATE);
+        animatorSet.setInterpolator(INTERPOLATOR);
         animatorSet.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {

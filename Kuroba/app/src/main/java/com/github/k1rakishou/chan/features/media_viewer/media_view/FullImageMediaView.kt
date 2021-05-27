@@ -51,6 +51,7 @@ class FullImageMediaView(
 
   private val gestureDetector = GestureDetector(context, GestureDetectorListener(mediaViewContract))
   private val closeMediaActionHelper: CloseMediaActionHelper
+  private val canAutoLoad by lazy { MediaViewerControllerViewModel.canAutoLoad(cacheHandler, viewableMedia) }
 
   private var fullImageDeferred = CompletableDeferred<File>()
   private var preloadCancelableDownload: CancelableDownload? = null
@@ -87,7 +88,9 @@ class FullImageMediaView(
         return@setOnTouchListener false
       }
 
-      return@setOnTouchListener gestureDetector.onTouchEvent(event)
+      // Always return true for thumbnails because otherwise gestures won't work with thumbnails
+      gestureDetector.onTouchEvent(event)
+      return@setOnTouchListener true
     }
 
     actualImageView.setOnTouchListener { v, event ->
@@ -165,11 +168,15 @@ class FullImageMediaView(
         override fun onNotFound() {
           BackgroundUtils.ensureMainThread()
           fullImageDeferred.completeExceptionally(ImageNotFoundException(mediaLocationRemote.url))
+
+          loadingBar.setVisibilityFast(GONE)
         }
 
         override fun onFail(exception: Exception) {
           BackgroundUtils.ensureMainThread()
           fullImageDeferred.completeExceptionally(exception)
+
+          loadingBar.setVisibilityFast(GONE)
         }
 
         override fun onEnd() {
@@ -177,7 +184,6 @@ class FullImageMediaView(
           BackgroundUtils.ensureMainThread()
 
           preloadCancelableDownload = null
-          loadingBar.setVisibilityFast(GONE)
         }
       }
     )
@@ -256,8 +262,6 @@ class FullImageMediaView(
           }
 
           if (e.cause is OutOfMemoryError) {
-            Runtime.getRuntime().gc()
-
             cancellableToast.showToast(context, R.string.image_preview_failed_oom)
           } else {
             cancellableToast.showToast(context, R.string.image_failed_big_image)
@@ -273,13 +277,15 @@ class FullImageMediaView(
       actualImageView.setVisibilityFast(View.VISIBLE)
 
       animationAwaitable.await()
+
+      loadingBar.setVisibilityFast(GONE)
     }
   }
 
   private fun canPreload(): Boolean {
-    return MediaViewerControllerViewModel.canAutoLoad(cacheHandler, viewableMedia)
-      && (preloadCancelableDownload == null || preloadCancelableDownload?.isRunning() == false)
+    return canAutoLoad
       && !fullImageDeferred.isCompleted
+      && (preloadCancelableDownload == null || preloadCancelableDownload?.isRunning() == false)
   }
 
   class GestureDetectorListener(

@@ -7,6 +7,7 @@ import android.view.MotionEvent
 import android.view.VelocityTracker
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.animation.DecelerateInterpolator
 import android.widget.Scroller
 import androidx.core.view.ViewCompat
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
@@ -79,7 +80,7 @@ class CloseMediaActionHelper(
             velocityTracker = VelocityTracker.obtain()
             velocityTracker!!.addMovement(event)
 
-            scroller = Scroller(context)
+            scroller = Scroller(context, INTERPOLATOR)
             initialTouchPosition = PointF(initialEvent!!.x, initialEvent!!.y)
 
             initialEvent?.recycle()
@@ -261,10 +262,11 @@ class CloseMediaActionHelper(
   }
 
   companion object {
+    private const val MAX_FLING_PROGRESS = 0.70f
     private val MAX_FLING_DIST = dp(250f).toFloat()
     private val FLING_MIN_VELOCITY = dp(1600f).toFloat()
     private val FLING_ANIMATION_DIST = dp(4000f)
-    private const val MAX_FLING_PROGRESS = 0.70f
+    private val INTERPOLATOR = DecelerateInterpolator(2f)
   }
 
 }
