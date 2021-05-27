@@ -100,11 +100,6 @@ class FullImageMediaView(
     }
   }
 
-  override fun requestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {
-    closeMediaActionHelper.requestDisallowInterceptTouchEvent(disallowIntercept)
-    super.requestDisallowInterceptTouchEvent(disallowIntercept)
-  }
-
   override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
     if (ev != null && closeMediaActionHelper.onInterceptTouchEvent(ev)) {
       return true
@@ -297,10 +292,6 @@ class FullImageMediaView(
   class GestureDetectorListener(
     private val mediaViewContract: MediaViewContract
   ) : GestureDetector.SimpleOnGestureListener() {
-
-    override fun onDown(e: MotionEvent?): Boolean {
-      return true
-    }
 
     override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
       mediaViewContract.onTapped()

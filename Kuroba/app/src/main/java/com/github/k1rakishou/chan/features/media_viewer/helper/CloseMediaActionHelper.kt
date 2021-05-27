@@ -10,6 +10,7 @@ import android.view.ViewConfiguration
 import android.widget.Scroller
 import androidx.core.view.ViewCompat
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
+import kotlin.math.hypot
 
 class CloseMediaActionHelper(
   private val context: Context,
@@ -40,15 +41,6 @@ class CloseMediaActionHelper(
     scroller = null
   }
 
-  fun requestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {
-    if (disallowIntercept) {
-      blocked = true
-
-      initialEvent?.recycle()
-      initialEvent = null
-    }
-  }
-
   fun onInterceptTouchEvent(event: MotionEvent): Boolean {
     val actionMasked = event.actionMasked
     if (actionMasked == MotionEvent.ACTION_UP || actionMasked == MotionEvent.ACTION_CANCEL) {
@@ -73,10 +65,9 @@ class CloseMediaActionHelper(
         val deltaY = Math.abs(event.y - initialEvent!!.y)
         val movedPixels = Math.max(deltaX, deltaY)
 
-        // We can tell that we are currently scrolling in some direction
         if (movedPixels > slopPixels) {
           val deltaTime = SystemClock.elapsedRealtime() - startTime
-          if (deltaX > deltaY || deltaTime > tapTimeout) {
+          if (deltaX > (deltaY * 2f) || deltaTime > tapTimeout) {
             blocked = true
           }
 
@@ -139,6 +130,8 @@ class CloseMediaActionHelper(
 
     if (event.actionMasked == MotionEvent.ACTION_UP || event.actionMasked == MotionEvent.ACTION_CANCEL) {
       scroller!!.forceFinished(true)
+
+      velocityTracker!!.addMovement(event)
       velocityTracker!!.computeCurrentVelocity(1000)
 
       val velocityX = velocityTracker!!.xVelocity.toInt()
@@ -149,6 +142,8 @@ class CloseMediaActionHelper(
         || Math.abs(velocityX) > FLING_MIN_VELOCITY
         || Math.abs(velocityY) > FLING_MIN_VELOCITY
       ) {
+        scroller!!.setFriction(0.1f)
+
         scroller!!.fling(
           deltaX.toInt(),
           deltaY.toInt(),
@@ -165,7 +160,6 @@ class CloseMediaActionHelper(
           FlingRunnable(isFinishing = true, currentFlingProgress = flingProgress)
         )
       } else {
-        scroller!!.forceFinished(true)
         scroller!!.startScroll(deltaX.toInt(), deltaY.toInt(), -deltaX.toInt(), -deltaY.toInt(), 250)
 
         ViewCompat.postOnAnimation(
@@ -212,10 +206,10 @@ class CloseMediaActionHelper(
           val endX = scroller!!.finalX.toFloat()
           val endY = scroller!!.finalY.toFloat()
 
-          val currentVecLength = Math.hypot(currentX.toDouble(), currentY.toDouble())
-          val endVecLength = Math.hypot(endX.toDouble(), endY.toDouble())
+          val currentVecLength = hypot(currentX.toDouble(), currentY.toDouble())
+          val endVecLength = hypot(endX.toDouble(), endY.toDouble())
 
-          val flingProgress = if (endVecLength == 0.0) {
+          val flingProgress = if (endVecLength != 0.0) {
             (currentVecLength / endVecLength).coerceIn(currentFlingProgress.toDouble(), 1.0).toFloat()
           } else {
             1f
@@ -236,7 +230,6 @@ class CloseMediaActionHelper(
 
           val flingProgress = (Math.abs(delta) / MAX_FLING_DIST).coerceIn(0f, 1f)
           val deltaAlpha = 1f - flingProgress
-
 
           movableContainer.alpha = deltaAlpha
           onAlphaAnimationProgress(deltaAlpha)
@@ -270,9 +263,9 @@ class CloseMediaActionHelper(
 
   companion object {
     private val MAX_FLING_DIST = dp(250f).toFloat()
-    private val FLING_MIN_VELOCITY = dp(2000f).toFloat()
-    private val FLING_ANIMATION_DIST = dp(400f)
-    private val MAX_FLING_PROGRESS = 0.70f
+    private val FLING_MIN_VELOCITY = dp(1600f).toFloat()
+    private val FLING_ANIMATION_DIST = dp(4000f)
+    private const val MAX_FLING_PROGRESS = 0.70f
   }
 
 }

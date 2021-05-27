@@ -189,6 +189,7 @@ class StartActivity : ControllerHostActivity(),
   }
 
   override fun onDestroy() {
+    super.onDestroy()
     Logger.d(TAG, "onDestroy()")
 
     AppModuleAndroidUtils.cancelLastToast()
@@ -218,8 +219,6 @@ class StartActivity : ControllerHostActivity(),
         themeEngine.checkNoListenersLeft()
       }
     }
-
-    super.onDestroy()
   }
 
   override fun onThemeChanged() {
