@@ -49,8 +49,8 @@ interface PostCellInterface {
 
     fun onPostClicked(postDescriptor: PostDescriptor)
     fun onGoToPostButtonClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode)
-    fun onThumbnailClicked(postImage: ChanPostImage, thumbnail: ThumbnailView)
-    fun onThumbnailLongClicked(postImage: ChanPostImage, thumbnail: ThumbnailView)
+    fun onThumbnailClicked(chanDescriptor: ChanDescriptor, postImage: ChanPostImage, thumbnail: ThumbnailView)
+    fun onThumbnailLongClicked(chanDescriptor: ChanDescriptor, postImage: ChanPostImage, thumbnail: ThumbnailView)
     fun onShowPostReplies(post: ChanPost)
     fun onPreviewThreadPostsClicked(post: ChanPost)
     fun onPopulatePostOptions(post: ChanPost, menu: MutableList<FloatingListMenuItem>)

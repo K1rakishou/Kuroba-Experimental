@@ -974,48 +974,20 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  override fun onThumbnailClicked(postImage: ChanPostImage, thumbnail: ThumbnailView) {
+  override fun onThumbnailClicked(chanDescriptor: ChanDescriptor, postImage: ChanPostImage, thumbnail: ThumbnailView) {
     if (!isBound) {
       return
     }
 
-    val postDescriptors = threadPresenterCallback?.displayingPostDescriptors
+    val initialImageUrl = postImage.imageUrl?.toString()
+      ?: return
+    val transitionThumbnailUrl = postImage.getThumbnailUrl()?.toString()
       ?: return
 
-    var index = -1
-    val images = ArrayList<ChanPostImage>()
-
-    for (postDescriptor in postDescriptors) {
-      val post = chanThreadManager.getPost(postDescriptor)
-        ?: continue
-
-      for (image in post.postImages) {
-        if (image.imageUrl == null && image.actualThumbnailUrl == null) {
-          Logger.d(TAG, "onThumbnailClicked() image.imageUrl == null && image.thumbnailUrl == null")
-          continue
-        }
-
-        val imageUrl = image.imageUrl
-        val setCallback = (!post.deleted || imageUrl != null && cacheHandler.cacheFileExists(imageUrl.toString()))
-
-        if (setCallback) {
-          // Deleted posts always have 404'd images, but let it through if the file exists
-          // in cache or the image is from a third-party archive
-          images.add(image)
-
-          if (image.equalUrl(postImage)) {
-            index = images.size - 1
-          }
-        }
-      }
-    }
-
-    if (images.isNotEmpty()) {
-      threadPresenterCallback?.showImages(images, index, currentChanDescriptor!!, thumbnail)
-    }
+    threadPresenterCallback?.showImages(chanDescriptor, initialImageUrl, transitionThumbnailUrl)
   }
 
-  override fun onThumbnailLongClicked(postImage: ChanPostImage, thumbnail: ThumbnailView) {
+  override fun onThumbnailLongClicked(chanDescriptor: ChanDescriptor, postImage: ChanPostImage, thumbnail: ThumbnailView) {
     if (!isBound) {
       return
     }
@@ -2225,13 +2197,7 @@ class ThreadPresenter @Inject constructor(
 
     fun hidePostsPopup()
 
-    fun showImages(
-      images: List<ChanPostImage>,
-      index: Int,
-      chanDescriptor: ChanDescriptor,
-      thumbnail: ThumbnailView
-    )
-
+    fun showImages(chanDescriptor: ChanDescriptor, initialImageUrl: String?, transitionThumbnailUrl: String)
     fun showAlbum(images: List<ChanPostImage>, index: Int)
     fun scrollTo(displayPosition: Int, smooth: Boolean)
     fun smoothScrollNewPosts(displayPosition: Int)

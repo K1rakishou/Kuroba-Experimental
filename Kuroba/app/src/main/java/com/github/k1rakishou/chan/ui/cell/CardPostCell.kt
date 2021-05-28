@@ -168,7 +168,7 @@ class CardPostCell : ColorizableCardView,
     thumbView = findViewById<PostImageThumbnailView>(R.id.thumbnail).apply {
       setRatio(16f / 13f)
       setOnImageClickListener(PostImageThumbnailViewsContainer.THUMBNAIL_CLICK_TOKEN) {
-        callback?.onThumbnailClicked(postCellData.post.firstImage()!!, thumbView!!)
+        callback?.onThumbnailClicked(postCellData.chanDescriptor, postCellData.post.firstImage()!!, thumbView!!)
       }
     }
 
@@ -262,7 +262,7 @@ class CardPostCell : ColorizableCardView,
         return@setOnImageLongClickListener false
       }
 
-      callback?.onThumbnailLongClicked(this.postCellData!!.post.firstImage()!!, thumbView!!)
+      callback?.onThumbnailLongClicked(this.postCellData!!.chanDescriptor, this.postCellData!!.post.firstImage()!!, thumbView!!)
       return@setOnImageLongClickListener true
     }
 

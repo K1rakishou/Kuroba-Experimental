@@ -651,23 +651,18 @@ class ThreadLayout @JvmOverloads constructor(
     postPopupHelper.popAll()
   }
 
-  override fun showImages(
-    images: List<ChanPostImage>,
-    index: Int,
-    chanDescriptor: ChanDescriptor,
-    thumbnail: ThumbnailView
-  ) {
+  override fun showImages(chanDescriptor: ChanDescriptor, initialImageUrl: String?, transitionThumbnailUrl: String) {
     if (this.focusedChild != null) {
       val currentFocus = this.focusedChild
       AndroidUtils.hideKeyboard(currentFocus)
       currentFocus.clearFocus()
     }
 
-    if (postPopupHelper.isOpen && images.isNotEmpty()) {
+    if (postPopupHelper.isOpen) {
       postPopupHelper.onImageIsAboutToShowUp()
     }
 
-    callback.showImages(images, index, chanDescriptor, thumbnail)
+    callback.showImages(chanDescriptor, initialImageUrl, transitionThumbnailUrl)
   }
 
   override fun showAlbum(images: List<ChanPostImage>, index: Int) {
@@ -1165,12 +1160,7 @@ class ThreadLayout @JvmOverloads constructor(
     suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean)
     suspend fun setBoard(descriptor: BoardDescriptor, animated: Boolean)
 
-    fun showImages(
-      images: @JvmSuppressWildcards List<ChanPostImage>,
-      index: Int,
-      chanDescriptor: ChanDescriptor,
-      thumbnail: ThumbnailView
-    )
+    fun showImages(chanDescriptor: ChanDescriptor, initialImageUrl: String?, transitionThumbnailUrl: String)
     fun showAlbum(images: @JvmSuppressWildcards List<ChanPostImage>, index: Int)
     fun onShowPosts()
     fun onShowError()

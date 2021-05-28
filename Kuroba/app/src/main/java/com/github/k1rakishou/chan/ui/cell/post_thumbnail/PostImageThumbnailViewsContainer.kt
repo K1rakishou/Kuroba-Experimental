@@ -226,11 +226,19 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         // the necessary checks when clicking an image anyway, so no point in doing them
         // twice and more importantly inside RecyclerView bind call
         thumbnailView.setImageClickListener(THUMBNAIL_CLICK_TOKEN) {
-          postCellCallback?.onThumbnailClicked(postImage, thumbnailView.getThumbnailView())
+          postCellCallback?.onThumbnailClicked(
+            chanDescriptor = postCellData.chanDescriptor,
+            postImage = postImage,
+            thumbnail = thumbnailView.getThumbnailView()
+          )
         }
         thumbnailView.setImageLongClickListener(THUMBNAIL_LONG_CLICK_TOKEN) {
           postCellThumbnailCallbacks?.requestParentDisallowInterceptTouchEvents(true)
-          postCellCallback?.onThumbnailLongClicked(postImage, thumbnailView.getThumbnailView())
+          postCellCallback?.onThumbnailLongClicked(
+            chanDescriptor = postCellData.chanDescriptor,
+            postImage = postImage,
+            thumbnail = thumbnailView.getThumbnailView()
+          )
           return@setImageLongClickListener true
         }
       }
@@ -355,11 +363,19 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         // the necessary checks when clicking an image anyway, so no point in doing them
         // twice and more importantly inside RecyclerView bind call
         thumbnailView.setImageClickListener(THUMBNAIL_CLICK_TOKEN) {
-          postCellCallback?.onThumbnailClicked(postImage, thumbnailView.getThumbnailView())
+          postCellCallback?.onThumbnailClicked(
+            chanDescriptor = postCellData.chanDescriptor,
+            postImage = postImage,
+            thumbnail = thumbnailView.getThumbnailView()
+          )
         }
         thumbnailView.setImageLongClickListener(THUMBNAIL_LONG_CLICK_TOKEN) {
           postCellThumbnailCallbacks?.requestParentDisallowInterceptTouchEvents(true)
-          postCellCallback?.onThumbnailLongClicked(postImage, thumbnailView.getThumbnailView())
+          postCellCallback?.onThumbnailLongClicked(
+            chanDescriptor = postCellData.chanDescriptor,
+            postImage = postImage,
+            thumbnail = thumbnailView.getThumbnailView()
+          )
           return@setImageLongClickListener true
         }
       }
