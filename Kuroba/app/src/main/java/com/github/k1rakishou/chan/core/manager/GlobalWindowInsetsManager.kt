@@ -4,9 +4,14 @@ import android.content.Context
 import android.graphics.Point
 import android.graphics.Rect
 import android.view.MotionEvent
+import android.view.View
+import android.view.Window
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBias
+import com.github.k1rakishou.chan.utils.FullScreenUtils
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.updateMargins
 
 class GlobalWindowInsetsManager {
   private val displaySize = Point(0, 0)
@@ -26,6 +31,41 @@ class GlobalWindowInsetsManager {
   private val callbacksAwaitingKeyboardVisible = ArrayList<Runnable>()
   private val insetsUpdatesListeners = HashSet<WindowInsetsListener>()
   private val keyboardUpdatesListeners = HashSet<KeyboardStateListener>()
+
+  fun listenForWindowInsetsChanges(window: Window, mainRootLayoutMargins: View?) {
+    ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
+      val isKeyboardOpen = FullScreenUtils.isKeyboardShown(view, insets.systemWindowInsetBottom)
+
+      updateInsets(
+        insets.replaceSystemWindowInsets(
+          insets.systemWindowInsetLeft,
+          insets.systemWindowInsetTop,
+          insets.systemWindowInsetRight,
+          FullScreenUtils.calculateDesiredBottomInset(view, insets.systemWindowInsetBottom)
+        )
+      )
+
+      updateKeyboardHeight(
+        FullScreenUtils.calculateDesiredRealBottomInset(view, insets.systemWindowInsetBottom)
+      )
+
+      updateIsKeyboardOpened(isKeyboardOpen)
+      fireCallbacks()
+      fireInsetsUpdateCallbacks()
+
+      mainRootLayoutMargins?.updateMargins(left = left(), right = right())
+
+      val bottomInset = FullScreenUtils.calculateDesiredRealBottomInset(
+        view,
+        insets.systemWindowInsetBottom
+      )
+
+      return@setOnApplyWindowInsetsListener ViewCompat.onApplyWindowInsets(
+        view,
+        insets.replaceSystemWindowInsets(0, 0, 0, bottomInset)
+      )
+    }
+  }
 
   fun updateDisplaySize(context: Context) {
     val dispSize = AndroidUtils.getDisplaySize(context)
@@ -86,11 +126,11 @@ class GlobalWindowInsetsManager {
     )
   }
 
-  fun updateKeyboardHeight(height: Int) {
+  private fun updateKeyboardHeight(height: Int) {
     keyboardHeight = height.coerceAtLeast(0)
   }
 
-  fun updateInsets(insets: WindowInsetsCompat) {
+  private fun updateInsets(insets: WindowInsetsCompat) {
     currentInsets.set(
       insets.systemWindowInsetLeft,
       insets.systemWindowInsetTop,
@@ -101,11 +141,11 @@ class GlobalWindowInsetsManager {
     initialized = true
   }
 
-  fun fireInsetsUpdateCallbacks() {
+  private fun fireInsetsUpdateCallbacks() {
     insetsUpdatesListeners.forEach { listener -> listener.onInsetsChanged() }
   }
 
-  fun fireCallbacks() {
+  private fun fireCallbacks() {
     callbacksAwaitingInsetsDispatch.forEach { it.run() }
     callbacksAwaitingInsetsDispatch.clear()
   }

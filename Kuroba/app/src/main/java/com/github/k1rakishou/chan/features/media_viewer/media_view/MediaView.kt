@@ -4,13 +4,16 @@ import android.content.Context
 import android.util.AttributeSet
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
+import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerWrapper
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.core_logger.Logger
+import com.google.android.exoplayer2.upstream.DataSource
 
 abstract class MediaView<T : ViewableMedia> constructor(
   context: Context,
-  attributeSet: AttributeSet?
+  attributeSet: AttributeSet?,
+  private val cacheDataSourceFactory: DataSource.Factory
 ) : TouchBlockingFrameLayoutNoBackground(context, attributeSet, 0) {
   abstract val viewableMedia: T
   abstract val pagerPosition: Int
@@ -22,6 +25,10 @@ abstract class MediaView<T : ViewableMedia> constructor(
 
   protected val cancellableToast by lazy { CancellableToast() }
   protected val scope = KurobaCoroutineScope()
+
+  // May be used by all media views (including VideoMediaView) to play music in sound posts.
+  protected val secondaryVideoPlayerLazy = lazy { ExoPlayerWrapper(context, cacheDataSourceFactory) }
+  protected val secondaryVideoPlayer by secondaryVideoPlayerLazy
 
   val bound: Boolean
     get() = _bound
@@ -71,6 +78,10 @@ abstract class MediaView<T : ViewableMedia> constructor(
     scope.cancelChildren()
     unbind()
 
+    if (secondaryVideoPlayerLazy.isInitialized()) {
+      secondaryVideoPlayer.release()
+    }
+
     Logger.d(TAG, "onUnbind(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
   }
 
@@ -80,11 +91,12 @@ abstract class MediaView<T : ViewableMedia> constructor(
   abstract fun hide()
   abstract fun unbind()
 
+  abstract fun onSystemUiVisibilityChanged(systemUIHidden: Boolean)
+
   override fun toString(): String {
     return "MediaView(pagerPosition=$pagerPosition, totalPageItemsCount=$totalPageItemsCount, " +
       "_bound=$_bound, _shown=$_shown, _preloadingCalled=$_preloadingCalled, mediaLocation=${viewableMedia.mediaLocation})"
   }
-
   companion object {
     private const val TAG = "MediaView"
   }

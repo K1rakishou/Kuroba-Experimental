@@ -28,6 +28,7 @@ import com.github.k1rakishou.common.awaitCatching
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
+import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -39,11 +40,18 @@ import javax.inject.Inject
 class FullImageMediaView(
   context: Context,
   private val mediaViewContract: MediaViewContract,
+  private val cacheDataSourceFactory: DataSource.Factory,
   private val onThumbnailFullyLoaded: () -> Unit,
   override val viewableMedia: ViewableMedia.Image,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
-) : MediaView<ViewableMedia.Image>(context, null) {
+) : MediaView<ViewableMedia.Image>(context, null, cacheDataSourceFactory) {
+
+  @Inject
+  lateinit var fileCacheV2: FileCacheV2
+  @Inject
+  lateinit var cacheHandler: CacheHandler
+
   private val movableContainer: FrameLayout
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualImageView: CustomScaleImageView
@@ -53,16 +61,11 @@ class FullImageMediaView(
   private val closeMediaActionHelper: CloseMediaActionHelper
   private val canAutoLoad by lazy { MediaViewerControllerViewModel.canAutoLoad(cacheHandler, viewableMedia) }
 
-  private var fullImageDeferred = CompletableDeferred<File>()
+  private val fullImageDeferred = CompletableDeferred<File>()
   private var preloadCancelableDownload: CancelableDownload? = null
 
   override val hasContent: Boolean
     get() = actualImageView.hasImage()
-
-  @Inject
-  lateinit var fileCacheV2: FileCacheV2
-  @Inject
-  lateinit var cacheHandler: CacheHandler
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -243,6 +246,10 @@ class FullImageMediaView(
 
     actualImageView.setCallback(null)
     actualImageView.recycle()
+  }
+
+  override fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {
+
   }
 
   private suspend fun setBigImageFromFile(file: File) {

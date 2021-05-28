@@ -601,11 +601,11 @@ class MultiImageView @JvmOverloads constructor(
   private fun setVideo(postImage: ChanPostImage) {
     BackgroundUtils.ensureMainThread()
 
-    if (ChanSettings.videoStream.get()) {
-      openVideoInternalStream(postImage)
-    } else {
-      openVideoExternal(postImage)
-    }
+//    if (ChanSettings.videoStream.get()) {
+//      openVideoInternalStream(postImage)
+//    } else {
+//      openVideoExternal(postImage)
+//    }
   }
 
   private fun openVideoExternal(postImage: ChanPostImage) {
@@ -1132,9 +1132,9 @@ class MultiImageView @JvmOverloads constructor(
   }
 
   private fun releaseStreamCallbacks() {
-    if (!ChanSettings.videoStream.get()) {
-      return
-    }
+//    if (!ChanSettings.videoStream.get()) {
+//      return
+//    }
 
     val player = if (exoPlayer == null) {
       return

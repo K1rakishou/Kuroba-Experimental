@@ -26,6 +26,7 @@ import com.github.k1rakishou.common.awaitCatching
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
+import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -39,11 +40,18 @@ import javax.inject.Inject
 class GifMediaView(
   context: Context,
   private val mediaViewContract: MediaViewContract,
+  private val cacheDataSourceFactory: DataSource.Factory,
   private val onThumbnailFullyLoaded: () -> Unit,
   override val viewableMedia: ViewableMedia.Gif,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
-) : MediaView<ViewableMedia.Gif>(context, null) {
+) : MediaView<ViewableMedia.Gif>(context, null, cacheDataSourceFactory) {
+
+  @Inject
+  lateinit var fileCacheV2: FileCacheV2
+  @Inject
+  lateinit var cacheHandler: CacheHandler
+
   private val movableContainer: FrameLayout
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualGifView: GifImageView
@@ -53,17 +61,11 @@ class GifMediaView(
   private val gestureDetector: GestureDetector
   private val canAutoLoad by lazy { MediaViewerControllerViewModel.canAutoLoad(cacheHandler, viewableMedia) }
 
-  private var fullGifDeferred = CompletableDeferred<File>()
+  private val fullGifDeferred = CompletableDeferred<File>()
   private var preloadCancelableDownload: CancelableDownload? = null
 
   override val hasContent: Boolean
     get() = actualGifView.drawable != null
-
-  @Inject
-  lateinit var fileCacheV2: FileCacheV2
-
-  @Inject
-  lateinit var cacheHandler: CacheHandler
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -201,6 +203,10 @@ class GifMediaView(
     actualGifView.setImageDrawable(null)
   }
 
+  override fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {
+
+  }
+
   @Suppress("BlockingMethodInNonBlockingContext")
   private suspend fun setBigGifFromFile(file: File) {
     coroutineScope {
@@ -295,7 +301,6 @@ class GifMediaView(
       && !fullGifDeferred.isCompleted
       && (preloadCancelableDownload == null || preloadCancelableDownload?.isRunning() == false)
   }
-
 
   class GestureDetectorListener(
     private val thumbnailMediaView: ThumbnailMediaView,

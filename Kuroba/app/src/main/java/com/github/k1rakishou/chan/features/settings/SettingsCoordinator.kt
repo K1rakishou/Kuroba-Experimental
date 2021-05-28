@@ -160,7 +160,8 @@ class SettingsCoordinator(
       navigationController,
       cacheHandler,
       fileCacheV2,
-      themeEngine
+      themeEngine,
+      appConstants
     )
   }
 

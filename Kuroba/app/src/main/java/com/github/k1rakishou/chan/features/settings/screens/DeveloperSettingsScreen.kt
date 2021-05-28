@@ -16,16 +16,19 @@ import com.github.k1rakishou.chan.ui.controller.LogsController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.persist_state.PersistableChanState
+import com.google.android.exoplayer2.upstream.cache.SimpleCache
 
 class DeveloperSettingsScreen(
   context: Context,
   private val navigationController: NavigationController,
   private val cacheHandler: CacheHandler,
   private val fileCacheV2: FileCacheV2,
-  private val themeEngine: ThemeEngine
+  private val themeEngine: ThemeEngine,
+  private val appConstants: AppConstants
 ) : BaseSettingsScreen(
   context,
   DeveloperScreen,
@@ -92,7 +95,9 @@ class DeveloperSettingsScreen(
           },
           callback = {
             fileCacheV2.clearCache()
-            showToast(context, "Cleared image cache")
+            SimpleCache.delete(appConstants.exoPlayerCacheDir, null)
+
+            showToast(context, "Cleared media/exoplayer caches")
           }
         )
 

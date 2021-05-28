@@ -506,7 +506,6 @@ sealed class MediaScreen(
     object VideoDefaultMuted : VideoGroup("video_default_muted")
     object HeadsetDefaultMuted : VideoGroup("headset_default_muted")
     object VideoOpenExternal : VideoGroup("video_open_external")
-    object VideoStream : VideoGroup("video_stream")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = MediaScreen.getScreenIdentifier()

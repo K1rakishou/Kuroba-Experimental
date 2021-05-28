@@ -25,7 +25,6 @@ import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.MotionEvent
-import androidx.core.view.ViewCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.lifecycleScope
@@ -65,12 +64,10 @@ import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
-import com.github.k1rakishou.chan.utils.FullScreenUtils
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupEdgeToEdge
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.DoNotStrip
-import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -82,7 +79,6 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.util.*
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
@@ -246,7 +242,7 @@ class StartActivity : ControllerHostActivity(),
     }
 
     mainRootLayoutMargins = mainController.view.findViewById(R.id.main_root_layout_margins)
-    listenForWindowInsetsChanges()
+    globalWindowInsetsManager.listenForWindowInsetsChanges(window, mainRootLayoutMargins)
 
     mainNavigationController = StyledToolbarNavigationController(this)
     dialogFactory.navigationController = mainNavigationController
@@ -290,44 +286,6 @@ class StartActivity : ControllerHostActivity(),
       compositeDisposable.add(
         controllerNavigationManager.listenForControllerNavigationChanges()
           .subscribe { change -> updateBottomNavBarIfNeeded(change) }
-      )
-    }
-  }
-
-  private fun listenForWindowInsetsChanges() {
-    ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
-      val isKeyboardOpen = FullScreenUtils.isKeyboardShown(view, insets.systemWindowInsetBottom)
-
-      globalWindowInsetsManager.updateInsets(
-        insets.replaceSystemWindowInsets(
-          insets.systemWindowInsetLeft,
-          insets.systemWindowInsetTop,
-          insets.systemWindowInsetRight,
-          FullScreenUtils.calculateDesiredBottomInset(view, insets.systemWindowInsetBottom)
-        )
-      )
-
-      globalWindowInsetsManager.updateKeyboardHeight(
-        FullScreenUtils.calculateDesiredRealBottomInset(view, insets.systemWindowInsetBottom)
-      )
-
-      globalWindowInsetsManager.updateIsKeyboardOpened(isKeyboardOpen)
-      globalWindowInsetsManager.fireCallbacks()
-      globalWindowInsetsManager.fireInsetsUpdateCallbacks()
-
-      mainRootLayoutMargins.updateMargins(
-        left = globalWindowInsetsManager.left(),
-        right = globalWindowInsetsManager.right()
-      )
-
-      return@setOnApplyWindowInsetsListener ViewCompat.onApplyWindowInsets(
-        view,
-        insets.replaceSystemWindowInsets(
-          0,
-          0,
-          0,
-          FullScreenUtils.calculateDesiredRealBottomInset(view, insets.systemWindowInsetBottom)
-        )
       )
     }
   }

@@ -480,9 +480,9 @@ public class ImageViewerPresenter
         // If the file is a webm file and webm streaming is turned on we don't want to download the
         // webm chunked because it will most likely corrupt the file since we will forcefully stop
         // it.
-        if (postImage.getType() == ChanPostImageType.MOVIE && ChanSettings.videoStream.get()) {
-            loadChunked = false;
-        }
+//        if (postImage.getType() == ChanPostImageType.MOVIE && ChanSettings.videoStream.get()) {
+//            loadChunked = false;
+//        }
 
         // If downloading, remove from preloadingImages if it finished.
         // Array to allow access from within the callback (the callback should really

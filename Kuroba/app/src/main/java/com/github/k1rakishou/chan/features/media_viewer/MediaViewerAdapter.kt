@@ -11,7 +11,9 @@ import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewCont
 import com.github.k1rakishou.chan.features.media_viewer.media_view.UnsupportedMediaView
 import com.github.k1rakishou.chan.features.media_viewer.media_view.VideoMediaView
 import com.github.k1rakishou.chan.ui.view.ViewPagerAdapter
+import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.core_logger.Logger
+import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CompletableDeferred
 
 class MediaViewerAdapter(
@@ -20,9 +22,10 @@ class MediaViewerAdapter(
   private val initialPagerIndex: Int,
   private val viewableMediaList: List<ViewableMedia>,
   private val previewThumbnailLocation: MediaLocation,
-  private val mediaViewerScrollerHelper: MediaViewerScrollerHelper
+  private val mediaViewerScrollerHelper: MediaViewerScrollerHelper,
+  private val cacheDataSourceFactory: DataSource.Factory
 ) : ViewPagerAdapter() {
-  private val loadedViews = mutableListOf<MediaView<ViewableMedia>>()
+  private val loadedViews = mutableListOf<LoadedView>()
   private val previewThumbnailLocationLoaded = CompletableDeferred<Unit>()
 
   private var firstUpdateHappened = false
@@ -38,7 +41,7 @@ class MediaViewerAdapter(
     Logger.d(TAG, "onDestroy()")
 
     loadedViews.forEach { loadedView ->
-      loadedView.onUnbind()
+      loadedView.mediaView.onUnbind()
     }
 
     loadedViews.clear()
@@ -61,6 +64,7 @@ class MediaViewerAdapter(
         FullImageMediaView(
           context = context,
           mediaViewContract = mediaViewContract,
+          cacheDataSourceFactory = cacheDataSourceFactory,
           onThumbnailFullyLoaded = onThumbnailFullyLoaded,
           viewableMedia = viewableMedia,
           pagerPosition = position,
@@ -71,6 +75,7 @@ class MediaViewerAdapter(
         GifMediaView(
           context = context,
           mediaViewContract = mediaViewContract,
+          cacheDataSourceFactory = cacheDataSourceFactory,
           onThumbnailFullyLoaded = onThumbnailFullyLoaded,
           viewableMedia = viewableMedia,
           pagerPosition = position,
@@ -81,16 +86,18 @@ class MediaViewerAdapter(
         VideoMediaView(
           context = context,
           mediaViewContract = mediaViewContract,
+          cacheDataSourceFactory = cacheDataSourceFactory,
           onThumbnailFullyLoaded = onThumbnailFullyLoaded,
           viewableMedia = viewableMedia,
           pagerPosition = position,
-          totalPageItemsCount = count
+          totalPageItemsCount = count,
         )
       }
       is ViewableMedia.Unsupported -> {
         UnsupportedMediaView(
           context = context,
           mediaViewContract = mediaViewContract,
+          cacheDataSourceFactory = cacheDataSourceFactory,
           onThumbnailFullyLoaded = onThumbnailFullyLoaded,
           viewableMedia = viewableMedia,
           pagerPosition = position,
@@ -100,7 +107,7 @@ class MediaViewerAdapter(
     }
 
     mediaView.startPreloading()
-    loadedViews.add(mediaView as MediaView<ViewableMedia>)
+    loadedViews.add(LoadedView(position, mediaView as MediaView<ViewableMedia>))
 
     return mediaView
   }
@@ -120,27 +127,28 @@ class MediaViewerAdapter(
     }
 
     val view = loadedViews
-      .firstOrNull { loadedView -> loadedView.viewableMedia == viewableMedia }
+      .firstOrNull { loadedView -> loadedView.mediaView.viewableMedia == viewableMedia }
       ?: return
 
-    if (!view.shown) {
-      view.onShow()
+    if (!view.mediaView.bound) {
+      view.mediaView.onBind()
     }
 
-    if (!view.bound) {
-      view.onBind()
+    if (!view.mediaView.shown) {
+      view.mediaView.onShow()
     }
 
     loadedViews.forEach { loadedView ->
-      if (loadedView.viewableMedia != view.viewableMedia) {
-        if (loadedView.shown) {
-          loadedView.onHide()
+      if (loadedView.mediaView.viewableMedia != view.mediaView.viewableMedia) {
+        if (loadedView.mediaView.shown) {
+          loadedView.mediaView.onHide()
         }
       }
     }
 
     Logger.d(TAG, "doBind(position: ${position}), loadedViewsCount=${loadedViews.size}, " +
-      "boundCount=${loadedViews.count { it.bound }}, showCount=${loadedViews.count { it.shown }}")
+      "boundCount=${loadedViews.count { it.mediaView.bound }}, " +
+      "showCount=${loadedViews.count { it.mediaView.shown }}")
   }
 
   override fun finishUpdate(container: ViewGroup) {
@@ -151,12 +159,12 @@ class MediaViewerAdapter(
     }
 
     loadedViews.forEach { loadedView ->
-      if (!loadedView.shown) {
-        loadedView.onShow()
+      if (!loadedView.mediaView.bound) {
+        loadedView.mediaView.onBind()
       }
 
-      if (!loadedView.bound) {
-        loadedView.onBind()
+      if (loadedView.viewIndex == initialPagerIndex && !loadedView.mediaView.shown) {
+        loadedView.mediaView.onShow()
       }
     }
 
@@ -169,12 +177,29 @@ class MediaViewerAdapter(
   override fun destroyItem(container: ViewGroup, position: Int, obj: Any) {
     super.destroyItem(container, position, obj)
 
-    (obj as MediaView<ViewableMedia>).onUnbind()
-    loadedViews.remove(obj)
+    val mediaView = obj as MediaView<ViewableMedia>
+    mediaView.onUnbind()
+
+    loadedViews.mutableIteration { mutableIterator, mv ->
+      if (mv.mediaView.viewableMedia == mediaView.viewableMedia) {
+        mutableIterator.remove()
+      }
+
+      return@mutableIteration true
+    }
     
     Logger.d(TAG, "destroyItem(position: ${position}), loadedViewsCount=${loadedViews.size}, " +
-      "boundCount=${loadedViews.count { it.bound }}, showCount=${loadedViews.count { it.shown }}")
+      "boundCount=${loadedViews.count { it.mediaView.bound }}, " +
+      "showCount=${loadedViews.count { it.mediaView.shown }}")
   }
+
+  fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {
+    loadedViews.forEach { loadedView ->
+      loadedView.mediaView.onSystemUiVisibilityChanged(systemUIHidden)
+    }
+  }
+
+  data class LoadedView(val viewIndex: Int, val mediaView: MediaView<ViewableMedia>)
 
   companion object {
     private const val TAG = "MediaViewerAdapter"

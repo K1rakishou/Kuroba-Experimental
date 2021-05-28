@@ -46,7 +46,6 @@ public class CustomScaleImageView extends SubsamplingScaleImageView {
         setOnImageEventListener(new DefaultOnImageEventListener() {
             @Override
             public void onReady() {
-                Logger.d(TAG, "onReady");
                 float scale = Math.min(getWidth() / (float) getSWidth(), getHeight() / (float) getSHeight());
 
                 if (getMaxScale() < scale * 2f) {
@@ -61,7 +60,6 @@ public class CustomScaleImageView extends SubsamplingScaleImageView {
 
             @Override
             public void onImageLoaded() {
-                Logger.d(TAG, "onImageLoaded");
                 if (callback != null) {
                     callback.onImageLoaded();
                 }

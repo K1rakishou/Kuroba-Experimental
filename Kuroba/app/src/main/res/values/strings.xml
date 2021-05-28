@@ -241,8 +241,9 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="image_preview_failed">Failed to show image</string>
     <string name="image_preview_failed_oom">Failed to show image (out of memory)</string>
     <string name="image_failed_big_image">Failed to show image (deep-zoom loading failed)</string>
-    <string name="image_failed_big_image_error">Failed to show image, error: \"%1$s\"</string>
+    <string name="image_failed_big_image_error">Failed to show IMAGE, error: \"%1$s\"</string>
     <string name="image_failed_gif_error">Failed to show GIF, error: \"%1$s\"</string>
+    <string name="image_failed_video_error">Failed to show VIDEO, error: \"%1$s\"</string>
     <string name="image_not_found">Image not found</string>
     <string name="image_spoiler_filename">Spoilered file</string>
     <string name="image_hidden_filename">Hidden file</string>
@@ -761,8 +762,6 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="setting_headset_default_muted_description">Mute the video even if a wired headset is connected</string>
     <string name="setting_video_open_external">Play videos with external player</string>
     <string name="setting_video_open_external_description">Play videos in an external media player app</string>
-    <string name="setting_video_stream">Stream videos</string>
-    <string name="setting_video_stream_description">Attempt to stream videos, instead of downloading them completely. (Works really bad with 4chan servers)</string>
 
     <!-- Save location group -->
     <string name="setting_save_location">Save location</string>
@@ -809,7 +808,7 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="settings_enable_verbose_logs">Enable verbose logs</string>
     <string name="settings_disable_verbose_logs">Disable verbose logs</string>
     <string name="settings_crash_app">Crash the app</string>
-    <string name="settings_clear_file_cache">Clear file cache</string>
+    <string name="settings_clear_file_cache">Clear media/exoplayer caches</string>
     <string name="settings_clear_file_cache_bottom_description">Currently %1$d MB</string>
     <string name="settings_dump_thread_stack">Dump active thread stack traces to log</string>
     <string name="settings_reset_thread_open_counter">Reset thread open counter</string>

@@ -184,14 +184,6 @@ class MediaSettingsScreen(
           setting = ChanSettings.videoOpenExternal
         )
 
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = MediaScreen.VideoGroup.VideoStream,
-          topDescriptionIdFunc = { R.string.setting_video_stream },
-          bottomDescriptionIdFunc = { R.string.setting_video_stream_description },
-          setting = ChanSettings.videoStream
-        )
-
         group
       }
     )

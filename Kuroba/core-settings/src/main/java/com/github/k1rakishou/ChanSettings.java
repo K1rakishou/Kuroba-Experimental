@@ -349,7 +349,6 @@ public class ChanSettings {
     public static BooleanSetting videoDefaultMuted;
     public static BooleanSetting headsetDefaultMuted;
     public static BooleanSetting videoOpenExternal;
-    public static BooleanSetting videoStream;
 
     // Media loading
     public static OptionsSetting<NetworkContentAutoLoadMode> imageAutoLoadNetwork;
@@ -545,7 +544,6 @@ public class ChanSettings {
             videoDefaultMuted = new BooleanSetting(provider, "preference_video_default_muted", true);
             headsetDefaultMuted = new BooleanSetting(provider, "preference_headset_default_muted", true);
             videoOpenExternal = new BooleanSetting(provider, "preference_video_external", false);
-            videoStream = new BooleanSetting(provider, "preference_video_stream", false);
 
             // Media loading
             imageAutoLoadNetwork = new OptionsSetting<>(provider,

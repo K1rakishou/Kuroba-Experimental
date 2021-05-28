@@ -1,18 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.github.k1rakishou.chan.features.media_viewer.media_view.ThumbnailMediaView
-        android:id="@+id/thumbnail_media_view"
-        android:visibility="visible"
+    <FrameLayout
+        android:id="@+id/movable_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent">
 
-    <com.google.android.exoplayer2.ui.PlayerView
-        android:id="@+id/actual_video_view"
-        android:visibility="invisible"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        <com.github.k1rakishou.chan.features.media_viewer.media_view.ThumbnailMediaView
+            android:id="@+id/thumbnail_media_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="visible" />
+
+        <com.google.android.exoplayer2.ui.PlayerView
+            android:id="@+id/actual_video_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="invisible"
+            app:surface_type="texture_view" />
+
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableProgressBar
+            android:id="@+id/buffering_progress_view"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:clickable="false"
+            android:focusable="false"
+            android:visibility="invisible"
+            android:layout_gravity="center"/>
+
+    </FrameLayout>
 
 </FrameLayout>

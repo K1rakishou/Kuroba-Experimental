@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.core.base.ControllerHostActivity
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.utils.FullScreenUtils.hideSystemUI
 import com.github.k1rakishou.chan.utils.FullScreenUtils.isSystemUIHidden
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupEdgeToEdge
@@ -29,14 +30,17 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class MediaViewerActivity : ControllerHostActivity(), MediaViewerController.MediaViewerCallbacks {
+
+  @Inject
+  lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+
   private lateinit var activityComponent: ActivityComponent
   private lateinit var viewModelComponent: ViewModelComponent
   private lateinit var mediaViewerController: MediaViewerController
 
   private val viewModel by viewModels<MediaViewerControllerViewModel>()
-
-  @Inject
-  lateinit var themeEngine: ThemeEngine
 
   fun getActivityComponent(): ActivityComponent {
     return activityComponent
@@ -81,6 +85,8 @@ class MediaViewerActivity : ControllerHostActivity(), MediaViewerController.Medi
       onShow()
     }
 
+    globalWindowInsetsManager.listenForWindowInsetsChanges(window, null)
+
     setContentView(mediaViewerController.view)
     pushController(mediaViewerController)
 
@@ -119,7 +125,7 @@ class MediaViewerActivity : ControllerHostActivity(), MediaViewerController.Medi
     if (::themeEngine.isInitialized && ::mediaViewerController.isInitialized) {
       window.toggleSystemUI(themeEngine.chanTheme)
 
-      mediaViewerController.updateToolbarVisibility(window.isSystemUIHidden())
+      mediaViewerController.onSystemUiVisibilityChanged(window.isSystemUIHidden())
       PersistableChanState.imageViewerImmersiveModeEnabled.set(window.isSystemUIHidden())
     }
   }

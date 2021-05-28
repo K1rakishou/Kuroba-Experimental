@@ -18,8 +18,14 @@ import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.awaitSilently
 import com.github.k1rakishou.core_logger.Logger
+import com.google.android.exoplayer2.database.ExoDatabaseProvider
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
+import com.google.android.exoplayer2.upstream.cache.CacheDataSource
+import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor
+import com.google.android.exoplayer2.upstream.cache.SimpleCache
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -32,6 +38,14 @@ class MediaViewerController(
   context: Context,
   private val mediaViewerCallbacks: MediaViewerCallbacks
 ) : Controller(context), ViewPager.OnPageChangeListener, MediaViewContract {
+
+  @Inject
+  lateinit var appConstants: AppConstants
+  @Inject
+  lateinit var imageLoaderV2: ImageLoaderV2
+  @Inject
+  lateinit var mediaViewerScrollerHelper: MediaViewerScrollerHelper
+
   private lateinit var mediaViewerRootLayout: TouchBlockingFrameLayoutNoBackground
   private lateinit var appearPreviewImage: AppearTransitionImageView
   private lateinit var disappearPreviewImage: DisappearTransitionImageView
@@ -40,10 +54,33 @@ class MediaViewerController(
   private val viewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
   private val transitionAnimationShown = CompletableDeferred<Unit>()
 
-  @Inject
-  lateinit var imageLoaderV2: ImageLoaderV2
-  @Inject
-  lateinit var mediaViewerScrollerHelper: MediaViewerScrollerHelper
+  private val cache by lazy {
+    return@lazy SimpleCache(
+      appConstants.exoPlayerCacheDir,
+      LeastRecentlyUsedCacheEvictor(appConstants.exoPlayerDiskCacheMaxSize),
+      ExoDatabaseProvider(context)
+    )
+  }
+
+  private val cacheDataSourceFactory by lazy {
+    val defaultDataSourceFactory = DefaultHttpDataSource.Factory()
+      .setUserAgent(appConstants.userAgent)
+
+    // TODO(KurobaEx): setDefaultRequestProperties() so that we can set cookie which is used by some
+    //  hidden boards
+//    Map<String, String> requestProperties = new HashMap<>();
+//
+//    if (site != null) {
+//      SiteRequestModifier<Site> requestModifier = site.requestModifier();
+//      if (requestModifier != null) {
+//        requestModifier.modifyVideoStreamRequest(site, requestProperties);
+//      }
+//    }
+
+    return@lazy CacheDataSource.Factory()
+      .setCache(cache)
+      .setUpstreamDataSourceFactory(defaultDataSourceFactory)
+  }
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -84,10 +121,23 @@ class MediaViewerController(
     }
   }
 
+  override fun onShow() {
+    super.onShow()
+
+    // TODO(KurobaEx):
+  }
+
+  override fun onHide() {
+    super.onHide()
+
+    // TODO(KurobaEx): pause gifs, videos, sound posts, etc
+  }
+
   override fun onDestroy() {
     super.onDestroy()
 
     pager.removeOnPageChangeListener(this)
+    cache.release()
     (pager.adapter as? MediaViewerAdapter)?.onDestroy()
   }
 
@@ -120,8 +170,8 @@ class MediaViewerController(
     mediaViewerCallbacks.toggleFullScreenMode()
   }
 
-  fun updateToolbarVisibility(systemUIHidden: Boolean) {
-    // TODO(KurobaEx):
+  fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {
+    (pager.adapter as? MediaViewerAdapter)?.onSystemUiVisibilityChanged(systemUIHidden)
   }
 
   private suspend fun awaitThumbnailLoadedAndShowViewPager(
@@ -147,7 +197,8 @@ class MediaViewerController(
       initialPagerIndex = mediaViewerState.initialPagerIndex,
       viewableMediaList = mediaViewerState.loadedMedia,
       previewThumbnailLocation = previewThumbnailLocation,
-      mediaViewerScrollerHelper = mediaViewerScrollerHelper
+      mediaViewerScrollerHelper = mediaViewerScrollerHelper,
+      cacheDataSourceFactory = cacheDataSourceFactory
     )
 
     pager.adapter = adapter

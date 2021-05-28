@@ -391,7 +391,6 @@ class ReportManager(
         appendLine("databasePostsCleanupRemovePercent: ${ChanSettings.databasePostsCleanupRemovePercent.get()}")
       }
 
-      appendLine("WEBM streaming enabled: ${ChanSettings.videoStream.get()}")
       appendLine("ImageSaver root directory: ${PersistableChanState.imageSaverV2PersistedOptions.get().rootDirectoryUri}")
       appendLine("OkHttp IPv6 support enabled: ${ChanSettings.okHttpAllowIpv6.get()}")
       appendLine("OkHttp HTTP/2 support enabled: ${ChanSettings.okHttpAllowHttp2.get()}")
