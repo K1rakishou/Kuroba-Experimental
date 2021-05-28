@@ -49,7 +49,7 @@ class FullImageMediaView(
   private val actualImageView: CustomScaleImageView
   private val loadingBar: ChunkedLoadingBar
 
-  private val gestureDetector = GestureDetector(context, GestureDetectorListener(mediaViewContract))
+  private val gestureDetector: GestureDetector
   private val closeMediaActionHelper: CloseMediaActionHelper
   private val canAutoLoad by lazy { MediaViewerControllerViewModel.canAutoLoad(cacheHandler, viewableMedia) }
 
@@ -81,6 +81,23 @@ class FullImageMediaView(
       requestDisallowInterceptTouchEvent = { this.parent.requestDisallowInterceptTouchEvent(true) },
       onAlphaAnimationProgress = { alpha -> mediaViewContract.changeMediaViewerBackgroundAlpha(alpha) },
       closeMediaViewer = { mediaViewContract.closeMediaViewer() }
+    )
+
+    gestureDetector = GestureDetector(
+      context,
+      GestureDetectorListener(
+        thumbnailMediaView = thumbnailMediaView,
+        actualImageView = actualImageView,
+        mediaViewContract = mediaViewContract,
+        tryPreloadingFunc = {
+          if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = true)) {
+            preloadCancelableDownload = startFullImagePreloading(viewableMedia.mediaLocation)
+            return@GestureDetectorListener true
+          }
+
+          return@GestureDetectorListener false
+        }
+      )
     )
 
     thumbnailMediaView.setOnTouchListener { v, event ->
@@ -130,7 +147,7 @@ class FullImageMediaView(
       )
     }
 
-    if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload()) {
+    if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = false)) {
       preloadCancelableDownload = startFullImagePreloading(viewableMedia.mediaLocation)
     }
   }
@@ -168,15 +185,11 @@ class FullImageMediaView(
         override fun onNotFound() {
           BackgroundUtils.ensureMainThread()
           fullImageDeferred.completeExceptionally(ImageNotFoundException(mediaLocationRemote.url))
-
-          loadingBar.setVisibilityFast(GONE)
         }
 
         override fun onFail(exception: Exception) {
           BackgroundUtils.ensureMainThread()
           fullImageDeferred.completeExceptionally(exception)
-
-          loadingBar.setVisibilityFast(GONE)
         }
 
         override fun onEnd() {
@@ -198,6 +211,7 @@ class FullImageMediaView(
       fullImageDeferred.awaitCatching()
         .onFailure { error ->
           Logger.e(TAG, "onFullImageLoadingError()", error)
+          loadingBar.setVisibilityFast(GONE)
 
           if (error.isExceptionImportant()) {
             cancellableToast.showToast(
@@ -206,7 +220,10 @@ class FullImageMediaView(
             )
           }
         }
-        .onSuccess { file -> setBigImageFromFile(file) }
+        .onSuccess { file ->
+          setBigImageFromFile(file)
+          loadingBar.setVisibilityFast(GONE)
+        }
     }
   }
 
@@ -256,8 +273,10 @@ class FullImageMediaView(
 
         override fun onError(e: Exception, wasInitial: Boolean) {
           Logger.e(TAG, "onFullImageUnknownError()", e)
+          animationAwaitable.complete(Unit)
 
           if (!e.isExceptionImportant()) {
+            // Cancellation and other stuff
             return
           }
 
@@ -277,23 +296,35 @@ class FullImageMediaView(
       actualImageView.setVisibilityFast(View.VISIBLE)
 
       animationAwaitable.await()
-
-      loadingBar.setVisibilityFast(GONE)
     }
   }
 
-  private fun canPreload(): Boolean {
+  private fun canPreload(forced: Boolean): Boolean {
+    if (forced) {
+      return !fullImageDeferred.isCompleted
+        && (preloadCancelableDownload == null || preloadCancelableDownload?.isRunning() == false)
+    }
+
     return canAutoLoad
       && !fullImageDeferred.isCompleted
       && (preloadCancelableDownload == null || preloadCancelableDownload?.isRunning() == false)
   }
 
   class GestureDetectorListener(
-    private val mediaViewContract: MediaViewContract
+    private val thumbnailMediaView: ThumbnailMediaView,
+    private val actualImageView: CustomScaleImageView,
+    private val mediaViewContract: MediaViewContract,
+    private val tryPreloadingFunc: () -> Boolean
   ) : GestureDetector.SimpleOnGestureListener() {
 
     override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
-      mediaViewContract.onTapped()
+      if (actualImageView.visibility == View.VISIBLE) {
+        mediaViewContract.onTapped()
+        return true
+      } else if (thumbnailMediaView.visibility == View.VISIBLE) {
+        return tryPreloadingFunc()
+      }
+
       return super.onSingleTapConfirmed(e)
     }
 

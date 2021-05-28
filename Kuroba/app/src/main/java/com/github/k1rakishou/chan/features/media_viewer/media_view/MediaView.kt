@@ -50,6 +50,9 @@ abstract class MediaView<T : ViewableMedia> constructor(
 
   fun onShow() {
     _shown = true
+    show()
+
+    Logger.d(TAG, "onShow(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
   }
 
   fun onHide() {

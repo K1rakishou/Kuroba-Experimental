@@ -32,6 +32,7 @@ class CloseMediaActionHelper(
   private var blocked = false
   private var initialEvent: MotionEvent? = null
   private var startTime = 0L
+  private var finishingWithAnimation = false
 
   fun onDestroy() {
     velocityTracker?.recycle()
@@ -47,7 +48,7 @@ class CloseMediaActionHelper(
       blocked = false
     }
 
-    if (event.pointerCount != 1 || tracking || blocked) {
+    if (event.pointerCount != 1 || tracking || blocked || finishingWithAnimation) {
       return false
     }
 
@@ -67,7 +68,7 @@ class CloseMediaActionHelper(
 
         if (movedPixels > slopPixels) {
           val deltaTime = SystemClock.elapsedRealtime() - startTime
-          if (deltaX > (deltaY * 2f) || deltaTime > tapTimeout) {
+          if (deltaX > (deltaY * 1.5f) || deltaTime > tapTimeout) {
             blocked = true
           }
 
@@ -111,7 +112,7 @@ class CloseMediaActionHelper(
   }
 
   fun onTouchEvent(event: MotionEvent): Boolean {
-    if (blocked || !tracking || initialTouchPosition == null || scroller == null || velocityTracker == null) {
+    if (blocked || finishingWithAnimation || !tracking || initialTouchPosition == null || scroller == null || velocityTracker == null) {
       return false
     }
 
@@ -136,6 +137,8 @@ class CloseMediaActionHelper(
 
       val velocityX = velocityTracker!!.xVelocity.toInt()
       val velocityY = velocityTracker!!.yVelocity.toInt()
+
+      finishingWithAnimation = true
 
       if (
         flingProgress > MAX_FLING_PROGRESS
@@ -189,6 +192,7 @@ class CloseMediaActionHelper(
   inner class FlingRunnable(val isFinishing: Boolean, val currentFlingProgress: Float) : Runnable {
     override fun run() {
       if (!tracking) {
+        finishingWithAnimation = false
         return
       }
 
@@ -248,16 +252,18 @@ class CloseMediaActionHelper(
         finished = true
       }
 
-      if (!finished) {
-        ViewCompat.postOnAnimation(movableContainer, this)
+      if (finished) {
+        endTracking()
+
+        if (canCloseMediaViewer) {
+          closeMediaViewer()
+        }
+
+        finishingWithAnimation = false
         return
       }
 
-      endTracking()
-
-      if (canCloseMediaViewer) {
-        closeMediaViewer()
-      }
+      ViewCompat.postOnAnimation(movableContainer, this)
     }
   }
 
