@@ -40,14 +40,19 @@ import javax.inject.Inject
 class FullImageMediaView(
   context: Context,
   initialMediaViewState: FullImageState,
-  private val mediaViewContract: MediaViewContract,
+  mediaViewContract: MediaViewContract,
   private val cacheDataSourceFactory: DataSource.Factory,
   private val onThumbnailFullyLoaded: () -> Unit,
   override val viewableMedia: ViewableMedia.Image,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
-) : MediaView<ViewableMedia.Image,
-  FullImageMediaView.FullImageState>(context, null, cacheDataSourceFactory, initialMediaViewState) {
+) : MediaView<ViewableMedia.Image, FullImageMediaView.FullImageState>(
+  context = context,
+  attributeSet = null,
+  cacheDataSourceFactory = cacheDataSourceFactory,
+  mediaViewContract = mediaViewContract,
+  mediaViewState = initialMediaViewState
+) {
 
   @Inject
   lateinit var fileCacheV2: FileCacheV2

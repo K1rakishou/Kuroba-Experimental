@@ -11,13 +11,19 @@ import com.google.android.exoplayer2.upstream.DataSource
 class UnsupportedMediaView(
   context: Context,
   initialMediaViewState: UnsupportedMediaViewState,
-  private val mediaViewContract: MediaViewContract,
+  mediaViewContract: MediaViewContract,
   private val cacheDataSourceFactory: DataSource.Factory,
   private val onThumbnailFullyLoaded: () -> Unit,
   override val viewableMedia: ViewableMedia.Unsupported,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
-) : MediaView<ViewableMedia.Unsupported, UnsupportedMediaView.UnsupportedMediaViewState>(context, null, cacheDataSourceFactory, initialMediaViewState) {
+) : MediaView<ViewableMedia.Unsupported, UnsupportedMediaView.UnsupportedMediaViewState>(
+  context = context,
+  attributeSet = null,
+  cacheDataSourceFactory = cacheDataSourceFactory,
+  mediaViewContract = mediaViewContract,
+  mediaViewState = initialMediaViewState
+) {
 
   override val hasContent: Boolean
     get() = false

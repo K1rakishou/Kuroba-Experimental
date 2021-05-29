@@ -43,15 +43,21 @@ import javax.inject.Inject
 class VideoMediaView(
   context: Context,
   initialMediaViewState: VideoMediaViewState,
+  mediaViewContract: MediaViewContract,
   private val viewModel: MediaViewerControllerViewModel,
-  private val mediaViewContract: MediaViewContract,
   private val cacheDataSourceFactory: DataSource.Factory,
   private val onThumbnailFullyLoaded: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
   override val viewableMedia: ViewableMedia.Video,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int,
-) : MediaView<ViewableMedia.Video, VideoMediaView.VideoMediaViewState>(context, null, cacheDataSourceFactory, initialMediaViewState),
+) : MediaView<ViewableMedia.Video, VideoMediaView.VideoMediaViewState>(
+  context = context,
+  attributeSet = null,
+  cacheDataSourceFactory = cacheDataSourceFactory,
+  mediaViewContract = mediaViewContract,
+  mediaViewState = initialMediaViewState
+),
   WindowInsetsListener {
 
   @Inject
@@ -65,9 +71,7 @@ class VideoMediaView(
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualVideoPlayerView: PlayerView
   private val bufferingProgressView: ColorizableProgressBar
-
-  private val mainVideoPlayerLazy = lazy { ExoPlayerWrapper(context, cacheDataSourceFactory) }
-  private val mainVideoPlayer by mainVideoPlayerLazy
+  private val mainVideoPlayer = ExoPlayerWrapper(context, cacheDataSourceFactory, mediaViewContract)
 
   private val closeMediaActionHelper: CloseMediaActionHelper
   private val gestureDetector: GestureDetector
@@ -78,7 +82,7 @@ class VideoMediaView(
   private var playJob: Job? = null
 
   override val hasContent: Boolean
-    get() = mainVideoPlayerLazy.isInitialized() && mainVideoPlayer.hasContent
+    get() = mainVideoPlayer.isInitialized() && mainVideoPlayer.hasContent
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -258,15 +262,10 @@ class VideoMediaView(
 
   override fun unbind() {
     thumbnailMediaView.unbind()
-
-    if (mainVideoPlayerLazy.isInitialized()) {
-      mainVideoPlayer.release()
-    }
+    mainVideoPlayer.release()
 
     preloadingJob?.cancel()
     preloadingJob = null
-
-    mainVideoPlayer.stop()
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
   }
 
@@ -282,6 +281,7 @@ class VideoMediaView(
     updatePlayerControlsInsets()
   }
 
+  @Suppress("IfThenToSafeAccess")
   private fun updatePlayerControlsInsets() {
     val insetsView = actualVideoPlayerView
       .findChild { childView -> childView.id == R.id.exo_controls_insets_view }

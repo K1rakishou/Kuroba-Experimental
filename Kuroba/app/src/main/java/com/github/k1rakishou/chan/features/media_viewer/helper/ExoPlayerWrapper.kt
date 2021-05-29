@@ -4,7 +4,7 @@ import android.content.Context
 import android.net.Uri
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
-import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewContract
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
@@ -17,14 +17,11 @@ import kotlin.coroutines.resume
 
 class ExoPlayerWrapper(
   private val context: Context,
-  private val cacheDataSourceFactory: DataSource.Factory
+  private val cacheDataSourceFactory: DataSource.Factory,
+  private val mediaViewContract: MediaViewContract
 ) {
   private val exoPlayerLazy = lazy { SimpleExoPlayer.Builder(context).build() }
   private val exoPlayer by exoPlayerLazy
-
-  private val defaultMuteState: Boolean
-    get() = (ChanSettings.videoDefaultMuted.get() &&
-      (ChanSettings.headsetDefaultMuted.get() || !AndroidUtils.getAudioManager().isWiredHeadsetOn))
 
   val actualExoPlayer: SimpleExoPlayer
     get() = exoPlayer
@@ -100,7 +97,7 @@ class ExoPlayerWrapper(
       Player.REPEAT_MODE_OFF
     }
 
-    exoPlayer.volume = if (defaultMuteState) {
+    exoPlayer.volume = if (mediaViewContract.isSoundCurrentlyMuted()) {
       0f
     } else {
       1f
@@ -108,6 +105,8 @@ class ExoPlayerWrapper(
 
     exoPlayer.play()
   }
+
+  fun isInitialized(): Boolean = exoPlayerLazy.isInitialized()
 
   fun pause() {
     if (exoPlayerLazy.isInitialized()) {

@@ -14,6 +14,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   context: Context,
   attributeSet: AttributeSet?,
   private val cacheDataSourceFactory: DataSource.Factory,
+  protected val mediaViewContract: MediaViewContract,
   val mediaViewState: S
 ) : TouchBlockingFrameLayoutNoBackground(context, attributeSet, 0) {
   abstract val viewableMedia: T
@@ -28,8 +29,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   protected val scope = KurobaCoroutineScope()
 
   // May be used by all media views (including VideoMediaView) to play music in sound posts.
-  protected val secondaryVideoPlayerLazy = lazy { ExoPlayerWrapper(context, cacheDataSourceFactory) }
-  protected val secondaryVideoPlayer by secondaryVideoPlayerLazy
+  protected val secondaryVideoPlayer = ExoPlayerWrapper(context, cacheDataSourceFactory, mediaViewContract)
 
   val bound: Boolean
     get() = _bound
@@ -78,10 +78,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     cancellableToast.cancel()
     scope.cancelChildren()
     unbind()
-
-    if (secondaryVideoPlayerLazy.isInitialized()) {
-      secondaryVideoPlayer.release()
-    }
+    secondaryVideoPlayer.release()
 
     Logger.d(TAG, "onUnbind(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
   }

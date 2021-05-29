@@ -5,4 +5,5 @@ interface MediaViewContract {
 
   fun onTapped()
   fun closeMediaViewer()
+  fun isSoundCurrentlyMuted(): Boolean
 }

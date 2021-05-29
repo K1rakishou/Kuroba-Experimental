@@ -40,13 +40,19 @@ import javax.inject.Inject
 class GifMediaView(
   context: Context,
   initialMediaViewState: GifMediaViewState,
-  private val mediaViewContract: MediaViewContract,
+  mediaViewContract: MediaViewContract,
   private val cacheDataSourceFactory: DataSource.Factory,
   private val onThumbnailFullyLoaded: () -> Unit,
   override val viewableMedia: ViewableMedia.Gif,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
-) : MediaView<ViewableMedia.Gif, GifMediaView.GifMediaViewState>(context, null, cacheDataSourceFactory, initialMediaViewState) {
+) : MediaView<ViewableMedia.Gif, GifMediaView.GifMediaViewState>(
+  context = context,
+  attributeSet = null,
+  cacheDataSourceFactory = cacheDataSourceFactory,
+  mediaViewContract = mediaViewContract,
+  mediaViewState = initialMediaViewState
+) {
 
   @Inject
   lateinit var fileCacheV2: FileCacheV2
