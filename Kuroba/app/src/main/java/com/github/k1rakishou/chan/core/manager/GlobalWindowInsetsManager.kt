@@ -41,7 +41,7 @@ class GlobalWindowInsetsManager {
           insets.systemWindowInsetLeft,
           insets.systemWindowInsetTop,
           insets.systemWindowInsetRight,
-          FullScreenUtils.calculateDesiredBottomInset(view, insets.systemWindowInsetBottom)
+          insets.systemWindowInsetBottom
         )
       )
 
@@ -55,14 +55,9 @@ class GlobalWindowInsetsManager {
 
       mainRootLayoutMargins?.updateMargins(left = left(), right = right())
 
-      val bottomInset = FullScreenUtils.calculateDesiredRealBottomInset(
-        view,
-        insets.systemWindowInsetBottom
-      )
-
       return@setOnApplyWindowInsetsListener ViewCompat.onApplyWindowInsets(
         view,
-        insets.replaceSystemWindowInsets(0, 0, 0, bottomInset)
+        insets.replaceSystemWindowInsets(0, 0, 0, 0)
       )
     }
   }

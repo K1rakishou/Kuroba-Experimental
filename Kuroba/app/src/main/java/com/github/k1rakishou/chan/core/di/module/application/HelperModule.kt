@@ -15,6 +15,7 @@ import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
+import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerCache
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
@@ -137,6 +138,12 @@ class HelperModule {
   @Singleton
   fun provideMediaViewerScrollerHelper(chanThreadManager: ChanThreadManager): MediaViewerScrollerHelper {
     return MediaViewerScrollerHelper(chanThreadManager)
+  }
+
+  @Provides
+  @Singleton
+  fun provideExoPlayerDiskCache(context: Context, appConstants: AppConstants): ExoPlayerCache {
+    return ExoPlayerCache(context, appConstants)
   }
 
 }

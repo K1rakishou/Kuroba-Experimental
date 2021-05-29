@@ -738,11 +738,7 @@ class ReplyLayout @JvmOverloads constructor(
       newLayoutParams.gravity = Gravity.BOTTOM
     }
 
-    var bottomPadding = 0
-    if (!globalWindowInsetsManager.isKeyboardOpened) {
-      bottomPadding = globalWindowInsetsManager.bottom()
-    }
-
+    val bottomPadding = globalWindowInsetsManager.bottom()
     val newPaddingTop = (parent as ThreadListLayout).toolbarHeight()
 
     val needUpdateLayoutParams = needUpdateLayoutParams(

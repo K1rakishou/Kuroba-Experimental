@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.utils
 
-import android.graphics.Color
 import android.os.Build
 import android.view.View
 import android.view.Window
@@ -12,9 +11,6 @@ import com.github.k1rakishou.core_themes.ChanTheme
 object FullScreenUtils {
 
   fun Window.setupEdgeToEdge() {
-    statusBarColor = Color.TRANSPARENT
-    navigationBarColor = Color.TRANSPARENT
-
     clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
     clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
 
@@ -23,8 +19,8 @@ object FullScreenUtils {
         WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
     }
 
-    decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-      or View.SYSTEM_UI_FLAG_LAYOUT_STABLE)
+    decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+      or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION)
   }
 
   fun Window.setupStatusAndNavBarColors(theme: ChanTheme) {
@@ -68,8 +64,7 @@ object FullScreenUtils {
 
   fun Window.showSystemUI(theme: ChanTheme) {
     decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-      or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-      or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN)
+      or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION)
 
     setupStatusAndNavBarColors(theme)
   }

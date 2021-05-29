@@ -327,11 +327,15 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   fun canChildScrollUp(): Boolean {
-    return if (visible == Visible.THREAD) {
-      threadListLayout.canChildScrollUp()
-    } else {
-      true
+    if (visible != Visible.THREAD) {
+      return true
     }
+
+    if (isReplyLayoutOpen()) {
+      return true
+    }
+
+    return threadListLayout.canChildScrollUp()
   }
 
   fun onBack(): Boolean {

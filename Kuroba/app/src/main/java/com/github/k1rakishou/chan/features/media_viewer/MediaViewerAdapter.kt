@@ -23,7 +23,8 @@ class MediaViewerAdapter(
   private val viewableMediaList: List<ViewableMedia>,
   private val previewThumbnailLocation: MediaLocation,
   private val mediaViewerScrollerHelper: MediaViewerScrollerHelper,
-  private val cacheDataSourceFactory: DataSource.Factory
+  private val cacheDataSourceFactory: DataSource.Factory,
+  private val isSystemUiHidden: () -> Boolean,
 ) : ViewPagerAdapter() {
   private val loadedViews = mutableListOf<LoadedView>()
   private val previewThumbnailLocationLoaded = CompletableDeferred<Unit>()
@@ -88,6 +89,7 @@ class MediaViewerAdapter(
           mediaViewContract = mediaViewContract,
           cacheDataSourceFactory = cacheDataSourceFactory,
           onThumbnailFullyLoaded = onThumbnailFullyLoaded,
+          isSystemUiHidden = isSystemUiHidden,
           viewableMedia = viewableMedia,
           pagerPosition = position,
           totalPageItemsCount = count,

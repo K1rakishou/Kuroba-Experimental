@@ -43,6 +43,7 @@ class VideoMediaView(
   private val mediaViewContract: MediaViewContract,
   private val cacheDataSourceFactory: DataSource.Factory,
   private val onThumbnailFullyLoaded: () -> Unit,
+  private val isSystemUiHidden: () -> Boolean,
   override val viewableMedia: ViewableMedia.Video,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int,
@@ -176,6 +177,12 @@ class VideoMediaView(
         actualVideoPlayerView.setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
         actualVideoPlayerView.useArtwork = false
         actualVideoPlayerView.setShutterBackgroundColor(Color.TRANSPARENT)
+
+        if (isSystemUiHidden()) {
+          actualVideoPlayerView.hideController()
+        } else {
+          actualVideoPlayerView.showController()
+        }
 
         updatePlayerControlsInsets()
         updateExoBufferingViewColors()

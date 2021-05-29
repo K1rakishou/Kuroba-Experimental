@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerCache
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewContract
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
@@ -21,11 +22,8 @@ import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.awaitSilently
 import com.github.k1rakishou.core_logger.Logger
-import com.google.android.exoplayer2.database.ExoDatabaseProvider
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.upstream.cache.CacheDataSource
-import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor
-import com.google.android.exoplayer2.upstream.cache.SimpleCache
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -45,6 +43,8 @@ class MediaViewerController(
   lateinit var imageLoaderV2: ImageLoaderV2
   @Inject
   lateinit var mediaViewerScrollerHelper: MediaViewerScrollerHelper
+  @Inject
+  lateinit var exoPlayerCache: ExoPlayerCache
 
   private lateinit var mediaViewerRootLayout: TouchBlockingFrameLayoutNoBackground
   private lateinit var appearPreviewImage: AppearTransitionImageView
@@ -53,14 +53,6 @@ class MediaViewerController(
 
   private val viewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
   private val transitionAnimationShown = CompletableDeferred<Unit>()
-
-  private val cache by lazy {
-    return@lazy SimpleCache(
-      appConstants.exoPlayerCacheDir,
-      LeastRecentlyUsedCacheEvictor(appConstants.exoPlayerDiskCacheMaxSize),
-      ExoDatabaseProvider(context)
-    )
-  }
 
   private val cacheDataSourceFactory by lazy {
     val defaultDataSourceFactory = DefaultHttpDataSource.Factory()
@@ -78,7 +70,7 @@ class MediaViewerController(
 //    }
 
     return@lazy CacheDataSource.Factory()
-      .setCache(cache)
+      .setCache(exoPlayerCache.actualCache)
       .setUpstreamDataSourceFactory(defaultDataSourceFactory)
   }
 
@@ -137,7 +129,6 @@ class MediaViewerController(
     super.onDestroy()
 
     pager.removeOnPageChangeListener(this)
-    cache.release()
     (pager.adapter as? MediaViewerAdapter)?.onDestroy()
   }
 
@@ -198,7 +189,8 @@ class MediaViewerController(
       viewableMediaList = mediaViewerState.loadedMedia,
       previewThumbnailLocation = previewThumbnailLocation,
       mediaViewerScrollerHelper = mediaViewerScrollerHelper,
-      cacheDataSourceFactory = cacheDataSourceFactory
+      cacheDataSourceFactory = cacheDataSourceFactory,
+      isSystemUiHidden = { mediaViewerCallbacks.isSystemUiHidden() }
     )
 
     pager.adapter = adapter
@@ -246,6 +238,8 @@ class MediaViewerController(
 
   interface MediaViewerCallbacks {
     fun finishActivity()
+
+    fun isSystemUiHidden(): Boolean
     fun toggleFullScreenMode()
   }
 

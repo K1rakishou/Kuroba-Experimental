@@ -121,6 +121,10 @@ class MediaViewerActivity : ControllerHostActivity(), MediaViewerController.Medi
     finish()
   }
 
+  override fun isSystemUiHidden(): Boolean {
+    return window.isSystemUIHidden()
+  }
+
   override fun toggleFullScreenMode() {
     if (::themeEngine.isInitialized && ::mediaViewerController.isInitialized) {
       window.toggleSystemUI(themeEngine.chanTheme)
