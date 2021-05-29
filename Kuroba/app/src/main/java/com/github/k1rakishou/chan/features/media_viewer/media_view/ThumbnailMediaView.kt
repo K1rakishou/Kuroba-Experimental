@@ -5,7 +5,10 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.util.AttributeSet
+import android.view.View
 import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.TextView
 import coil.request.Disposable
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
@@ -13,6 +16,8 @@ import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.ui.view.ThumbnailImageView
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
@@ -26,6 +31,11 @@ class ThumbnailMediaView @JvmOverloads constructor(
   attributeSet: AttributeSet? = null
 ) : FrameLayout(context, attributeSet, 0) {
   private val thumbnailView: ThumbnailImageView
+
+  private val errorViewContainer: LinearLayout
+  private val thumbnailErrorView: ThumbnailImageView
+  private val errorText: TextView
+
   protected val cancellableToast by lazy { CancellableToast() }
 
   private var requestDisposable: Disposable? = null
@@ -40,6 +50,9 @@ class ThumbnailMediaView @JvmOverloads constructor(
     inflate(context, R.layout.media_view_thumbnail, this)
 
     thumbnailView = findViewById(R.id.thumbnail_image_view)
+    errorViewContainer = findViewById(R.id.error_view_container)
+    thumbnailErrorView = findViewById(R.id.thumbnail_error_view)
+    errorText = findViewById(R.id.error_text)
   }
 
   fun thumbnailBitmap(): Bitmap? {
@@ -63,13 +76,17 @@ class ThumbnailMediaView @JvmOverloads constructor(
   }
 
   fun unbind() {
-    if (requestDisposable != null) {
-      requestDisposable!!.dispose()
-      requestDisposable = null
-    }
+    requestDisposable?.dispose()
+    requestDisposable = null
 
     thumbnailView.setImageDrawable(null)
     cancellableToast.cancel()
+  }
+
+  fun setError(errorText: String) {
+    thumbnailView.setVisibilityFast(View.INVISIBLE)
+    errorViewContainer.setVisibilityFast(View.VISIBLE)
+    this.errorText.setText(errorText)
   }
 
   private fun loadRemoteMedia(
@@ -95,6 +112,7 @@ class ThumbnailMediaView @JvmOverloads constructor(
         override fun onNotFound() {
           requestDisposable = null
 
+          setError(getString(R.string.image_not_found))
           onThumbnailImageNotFoundError()
           onThumbnailFullyLoaded()
         }
@@ -102,6 +120,7 @@ class ThumbnailMediaView @JvmOverloads constructor(
         override fun onResponseError(error: Throwable) {
           requestDisposable = null
 
+          setError(error.errorMessageOrClassName())
           onThumbnailImageError(error)
           onThumbnailFullyLoaded()
         }
@@ -111,8 +130,6 @@ class ThumbnailMediaView @JvmOverloads constructor(
   private fun onThumbnailImageNotFoundError() {
     Logger.e(TAG, "onThumbnailImageNotFoundError()")
     cancellableToast.showToast(context, R.string.image_not_found)
-
-    // TODO(KurobaEx): show some kind of generic error drawable?
   }
 
   private fun onThumbnailImageError(exception: Throwable) {

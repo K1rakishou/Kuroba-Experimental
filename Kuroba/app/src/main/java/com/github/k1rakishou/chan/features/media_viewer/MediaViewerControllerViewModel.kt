@@ -6,7 +6,6 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewState
-import com.github.k1rakishou.chan.features.media_viewer.media_view.VideoMediaView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
@@ -98,12 +97,7 @@ class MediaViewerControllerViewModel : ViewModel() {
       return
     }
 
-    val mediaViewStateCopy = when (mediaViewState) {
-      is VideoMediaView.VideoMediaViewState -> mediaViewState.clone()
-      else -> throw IllegalAccessException("Unknown mediaViewState: ${mediaViewState.javaClass.simpleName}")
-    }
-
-    mediaViewStateCache.put(mediaLocation, mediaViewStateCopy)
+    mediaViewStateCache.put(mediaLocation, mediaViewState.clone())
   }
 
   fun getPrevMediaViewStateOrNull(mediaLocation: MediaLocation): MediaViewState? {

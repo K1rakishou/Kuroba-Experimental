@@ -19,7 +19,6 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionH
 import com.github.k1rakishou.chan.features.media_viewer.helper.FullMediaAppearAnimationHelper
 import com.github.k1rakishou.chan.ui.view.ChunkedLoadingBar
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.awaitCatching
@@ -56,6 +55,7 @@ class GifMediaView(
 
   @Inject
   lateinit var fileCacheV2: FileCacheV2
+
   @Inject
   lateinit var cacheHandler: CacheHandler
 
@@ -163,42 +163,45 @@ class GifMediaView(
   }
 
   override fun bind() {
-    if (hasContent) {
-      return
-    }
 
-    scope.launch {
-      fullGifDeferred.awaitCatching()
-        .onFailure { error ->
-          Logger.e(TAG, "onFullGifLoadingError()", error)
-          loadingBar.setVisibilityFast(GONE)
-
-          if (error.isExceptionImportant()) {
-            cancellableToast.showToast(
-              context,
-              getString(R.string.image_failed_gif_error, error.errorMessageOrClassName())
-            )
-          }
-        }
-        .onSuccess { file ->
-          setBigGifFromFile(file)
-          loadingBar.setVisibilityFast(GONE)
-        }
-    }
   }
 
   override fun show() {
-    val gifImageViewDrawable = actualGifView.drawable as? GifDrawable
-    if (gifImageViewDrawable!= null) {
-      if (!gifImageViewDrawable.isPlaying) {
-        gifImageViewDrawable.start()
+    scope.launch {
+      if (!hasContent) {
+        fullGifDeferred.awaitCatching()
+          .onFailure { error ->
+            Logger.e(TAG, "onFullGifLoadingError()", error)
+
+            if (error.isExceptionImportant()) {
+              cancellableToast.showToast(
+                context,
+                AppModuleAndroidUtils.getString(R.string.image_failed_gif_error, error.errorMessageOrClassName())
+              )
+            }
+
+            actualGifView.setVisibilityFast(View.INVISIBLE)
+            thumbnailMediaView.setError(error.errorMessageOrClassName())
+          }
+          .onSuccess { file ->
+            setBigGifFromFile(file)
+          }
+
+        loadingBar.setVisibilityFast(GONE)
+      }
+
+      val gifImageViewDrawable = actualGifView.drawable as? GifDrawable
+      if (gifImageViewDrawable != null) {
+        if (!gifImageViewDrawable.isPlaying) {
+          gifImageViewDrawable.start()
+        }
       }
     }
   }
 
   override fun hide() {
     val gifImageViewDrawable = actualGifView.drawable as? GifDrawable
-    if (gifImageViewDrawable!= null) {
+    if (gifImageViewDrawable != null) {
       if (gifImageViewDrawable.isPlaying) {
         gifImageViewDrawable.pause()
       }
@@ -217,6 +220,7 @@ class GifMediaView(
         GifDrawable(file.absolutePath)
       } catch (e: Throwable) {
         Logger.e(TAG, "Error while trying to set a gif file", e)
+        thumbnailMediaView.setError(e.errorMessageOrClassName())
         return@coroutineScope
       }
 
@@ -287,6 +291,10 @@ class GifMediaView(
         override fun onEnd() {
           super.onEnd()
           BackgroundUtils.ensureMainThread()
+
+          if (!shown) {
+            loadingBar.setVisibilityFast(GONE)
+          }
 
           preloadCancelableDownload = null
         }

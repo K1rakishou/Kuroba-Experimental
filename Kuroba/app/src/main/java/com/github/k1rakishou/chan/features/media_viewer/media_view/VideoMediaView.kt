@@ -242,6 +242,9 @@ class VideoMediaView(
               getString(R.string.image_failed_video_error, error.errorMessageOrClassName())
             )
           }
+
+          actualVideoPlayerView.setVisibilityFast(View.INVISIBLE)
+          thumbnailMediaView.setError(error.errorMessageOrClassName())
         }
         .onSuccess {
           if (hasContent) {

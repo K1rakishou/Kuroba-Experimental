@@ -206,6 +206,10 @@ class FullImageMediaView(
           super.onEnd()
           BackgroundUtils.ensureMainThread()
 
+          if (!shown) {
+            loadingBar.setVisibilityFast(GONE)
+          }
+
           preloadCancelableDownload = null
         }
       }
@@ -213,32 +217,33 @@ class FullImageMediaView(
   }
 
   override fun bind() {
-    if (hasContent) {
-      return
-    }
 
-    scope.launch {
-      fullImageDeferred.awaitCatching()
-        .onFailure { error ->
-          Logger.e(TAG, "onFullImageLoadingError()", error)
-          loadingBar.setVisibilityFast(GONE)
-
-          if (error.isExceptionImportant()) {
-            cancellableToast.showToast(
-              context,
-              getString(R.string.image_failed_big_image_error, error.errorMessageOrClassName())
-            )
-          }
-        }
-        .onSuccess { file ->
-          setBigImageFromFile(file)
-          loadingBar.setVisibilityFast(GONE)
-        }
-    }
   }
 
   override fun show() {
+    if (!hasContent) {
+      scope.launch {
+        fullImageDeferred.awaitCatching()
+          .onFailure { error ->
+            Logger.e(TAG, "onFullImageLoadingError()", error)
 
+            if (error.isExceptionImportant()) {
+              cancellableToast.showToast(
+                context,
+                getString(R.string.image_failed_big_image_error, error.errorMessageOrClassName())
+              )
+            }
+
+            actualImageView.setVisibilityFast(View.INVISIBLE)
+            thumbnailMediaView.setError(error.errorMessageOrClassName())
+          }
+          .onSuccess { file ->
+            setBigImageFromFile(file)
+          }
+
+        loadingBar.setVisibilityFast(GONE)
+      }
+    }
   }
 
   override fun hide() {
@@ -295,6 +300,9 @@ class FullImageMediaView(
           } else {
             cancellableToast.showToast(context, R.string.image_failed_big_image)
           }
+
+          actualImageView.setVisibilityFast(View.INVISIBLE)
+          thumbnailMediaView.setError(e.errorMessageOrClassName())
         }
       })
 
