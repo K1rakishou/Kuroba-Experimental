@@ -255,10 +255,6 @@ class FullImageMediaView(
     actualImageView.recycle()
   }
 
-  override fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {
-
-  }
-
   private suspend fun setBigImageFromFile(file: File) {
     coroutineScope {
       val animationAwaitable = CompletableDeferred<Unit>()

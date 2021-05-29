@@ -67,7 +67,6 @@ class VideoMediaView(
   @Inject
   lateinit var themeEngine: ThemeEngine
 
-  private val movableContainer: FrameLayout
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualVideoPlayerView: PlayerView
   private val bufferingProgressView: ColorizableProgressBar
@@ -90,10 +89,12 @@ class VideoMediaView(
 
     inflate(context, R.layout.media_view_video, this)
 
-    movableContainer = findViewById(R.id.movable_container)
     thumbnailMediaView = findViewById(R.id.thumbnail_media_view)
     actualVideoPlayerView = findViewById(R.id.actual_video_view)
     bufferingProgressView = findViewById(R.id.buffering_progress_view)
+
+    val movableContainer = actualVideoPlayerView.findViewById<View>(R.id.exo_content_frame)
+      ?: actualVideoPlayerView
 
     closeMediaActionHelper = CloseMediaActionHelper(
       context = context,
@@ -273,6 +274,18 @@ class VideoMediaView(
     if (systemUIHidden) {
       actualVideoPlayerView.hideController()
     } else {
+      actualVideoPlayerView.showController()
+    }
+  }
+
+  override fun hideControls() {
+    if (actualVideoPlayerView.isControllerVisible) {
+      actualVideoPlayerView.hideController()
+    }
+  }
+
+  override fun showControls() {
+    if (!actualVideoPlayerView.isControllerVisible) {
       actualVideoPlayerView.showController()
     }
   }

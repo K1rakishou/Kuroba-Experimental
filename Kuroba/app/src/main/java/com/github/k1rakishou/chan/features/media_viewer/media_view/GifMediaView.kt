@@ -210,10 +210,6 @@ class GifMediaView(
     actualGifView.setImageDrawable(null)
   }
 
-  override fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {
-
-  }
-
   @Suppress("BlockingMethodInNonBlockingContext")
   private suspend fun setBigGifFromFile(file: File) {
     coroutineScope {

@@ -244,6 +244,18 @@ class MediaViewerAdapter(
     }
   }
 
+  fun hideControls() {
+    loadedViews.forEach { loadedView ->
+      loadedView.mediaView.hideControls()
+    }
+  }
+
+  fun showControls() {
+    loadedViews.forEach { loadedView ->
+      loadedView.mediaView.showControls()
+    }
+  }
+
   data class LoadedView(val viewIndex: Int, val mediaView: MediaView<ViewableMedia, MediaViewState>)
 
   companion object {

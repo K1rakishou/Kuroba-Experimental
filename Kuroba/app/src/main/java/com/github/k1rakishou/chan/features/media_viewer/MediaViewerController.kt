@@ -62,6 +62,7 @@ class MediaViewerController(
       && (ChanSettings.headsetDefaultMuted.get() || !AndroidUtils.getAudioManager().isWiredHeadsetOn)
 
   private var isSoundMuted = defaultMuteState
+  private var wasDragging = false
 
   private val cacheDataSourceFactory by lazy {
     val defaultDataSourceFactory = DefaultHttpDataSource.Factory()
@@ -155,7 +156,19 @@ class MediaViewerController(
   }
 
   override fun onPageScrollStateChanged(state: Int) {
-    // no-op
+    when (state) {
+      ViewPager.SCROLL_STATE_DRAGGING -> {
+        wasDragging = true
+        (pager.adapter as? MediaViewerAdapter)?.hideControls()
+      }
+      ViewPager.SCROLL_STATE_IDLE -> {
+        if (wasDragging && !mediaViewerCallbacks.isSystemUiHidden()) {
+          (pager.adapter as? MediaViewerAdapter)?.showControls()
+        }
+
+        wasDragging = false
+      }
+    }
   }
 
   override fun changeMediaViewerBackgroundAlpha(newAlpha: Float) {

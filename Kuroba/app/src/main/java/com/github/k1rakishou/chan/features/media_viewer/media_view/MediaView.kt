@@ -88,7 +88,18 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   abstract fun show()
   abstract fun hide()
   abstract fun unbind()
-  abstract fun onSystemUiVisibilityChanged(systemUIHidden: Boolean)
+
+  open fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {
+
+  }
+
+  open fun hideControls() {
+
+  }
+
+  open fun showControls() {
+
+  }
 
   override fun toString(): String {
     return "MediaView(pagerPosition=$pagerPosition, totalPageItemsCount=$totalPageItemsCount, " +

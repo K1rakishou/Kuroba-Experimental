@@ -21,14 +21,14 @@
             android:layout_height="match_parent"
             android:visibility="invisible" />
 
-        <com.github.k1rakishou.chan.ui.view.ChunkedLoadingBar
-            android:id="@+id/loading_bar"
-            android:layout_width="match_parent"
-            android:layout_height="4dp"
-            android:layout_gravity="top"
-            android:visibility="gone"
-            tools:visibility="visible" />
-
     </FrameLayout>
+
+    <com.github.k1rakishou.chan.ui.view.ChunkedLoadingBar
+        android:id="@+id/loading_bar"
+        android:layout_width="match_parent"
+        android:layout_height="4dp"
+        android:layout_gravity="top"
+        android:visibility="gone"
+        tools:visibility="visible" />
 
 </FrameLayout>

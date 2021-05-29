@@ -57,10 +57,6 @@ class UnsupportedMediaView(
     // nothing to unbind
   }
 
-  override fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {
-
-  }
-
   class UnsupportedMediaViewState : MediaViewState {
     override fun clone(): MediaViewState {
       return this
