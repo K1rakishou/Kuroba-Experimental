@@ -8,6 +8,7 @@ import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 import android.widget.ProgressBar
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheHandler
@@ -27,6 +28,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.findChild
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.common.updateHeight
+import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.android.exoplayer2.ui.PlayerView
@@ -40,6 +42,8 @@ import javax.inject.Inject
 @SuppressLint("ViewConstructor", "ClickableViewAccessibility")
 class VideoMediaView(
   context: Context,
+  initialMediaViewState: VideoMediaViewState,
+  private val viewModel: MediaViewerControllerViewModel,
   private val mediaViewContract: MediaViewContract,
   private val cacheDataSourceFactory: DataSource.Factory,
   private val onThumbnailFullyLoaded: () -> Unit,
@@ -47,7 +51,7 @@ class VideoMediaView(
   override val viewableMedia: ViewableMedia.Video,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int,
-) : MediaView<ViewableMedia.Video>(context, null, cacheDataSourceFactory),
+) : MediaView<ViewableMedia.Video, VideoMediaView.VideoMediaViewState>(context, null, cacheDataSourceFactory, initialMediaViewState),
   WindowInsetsListener {
 
   @Inject
@@ -69,6 +73,7 @@ class VideoMediaView(
   private val gestureDetector: GestureDetector
   private val canAutoLoad by lazy { MediaViewerControllerViewModel.canAutoLoad(cacheHandler, viewableMedia) }
   private val fullVideoDeferred = CompletableDeferred<Unit>()
+
   private var preloadingJob: Job? = null
   private var playJob: Job? = null
 
@@ -192,7 +197,7 @@ class VideoMediaView(
           bufferingProgressView.setVisibilityFast(View.VISIBLE)
         }
 
-        mainVideoPlayer.preload(mediaLocation)
+        mainVideoPlayer.preload(mediaLocation, mediaViewState.prevPosition, mediaViewState.prevWindowIndex)
 
         showBufferingJob.cancel()
         bufferingProgressView.setVisibilityFast(View.INVISIBLE)
@@ -245,6 +250,9 @@ class VideoMediaView(
     playJob?.cancel()
     playJob = null
 
+    mediaViewState.prevPosition = mainVideoPlayer.actualExoPlayer.currentPosition
+    mediaViewState.prevWindowIndex = mainVideoPlayer.actualExoPlayer.currentWindowIndex
+
     mainVideoPlayer.pause()
   }
 
@@ -275,11 +283,24 @@ class VideoMediaView(
   }
 
   private fun updatePlayerControlsInsets() {
-    val insetsView = actualVideoPlayerView.findChild { childView ->
-      childView.id == R.id.exo_controls_insets_view
-    } as? FrameLayout
+    val insetsView = actualVideoPlayerView
+      .findChild { childView -> childView.id == R.id.exo_controls_insets_view }
+      as? FrameLayout
 
-    insetsView?.updateHeight(globalWindowInsetsManager.bottom())
+    if (insetsView != null) {
+      insetsView.updateHeight(globalWindowInsetsManager.bottom())
+    }
+
+    val rootView = actualVideoPlayerView
+      .findChild { childView -> childView.id == R.id.exo_controls_view_root }
+      as? LinearLayout
+
+    if (rootView != null) {
+      rootView.updatePaddings(
+        left = globalWindowInsetsManager.left(),
+        right = globalWindowInsetsManager.right()
+      )
+    }
   }
 
   private fun updateExoBufferingViewColors() {
@@ -306,6 +327,27 @@ class VideoMediaView(
     return canAutoLoad
       && !fullVideoDeferred.isCompleted
       && (preloadingJob == null || preloadingJob?.isActive == false)
+  }
+
+  class VideoMediaViewState(var prevPosition: Long = -1, var prevWindowIndex: Int = -1) : MediaViewState {
+    override fun clone(): MediaViewState {
+      return VideoMediaViewState(prevPosition, prevWindowIndex)
+    }
+
+    override fun updateFrom(other: MediaViewState?) {
+      if (other == null) {
+        prevPosition = -1
+        prevWindowIndex = -1
+        return
+      }
+
+      if (other !is VideoMediaViewState) {
+        return
+      }
+
+      this.prevPosition = other.prevPosition
+      this.prevWindowIndex = other.prevWindowIndex
+    }
   }
 
   class GestureDetectorListener(

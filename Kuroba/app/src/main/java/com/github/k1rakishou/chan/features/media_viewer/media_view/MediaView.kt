@@ -10,10 +10,11 @@ import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.core_logger.Logger
 import com.google.android.exoplayer2.upstream.DataSource
 
-abstract class MediaView<T : ViewableMedia> constructor(
+abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   context: Context,
   attributeSet: AttributeSet?,
-  private val cacheDataSourceFactory: DataSource.Factory
+  private val cacheDataSourceFactory: DataSource.Factory,
+  val mediaViewState: S
 ) : TouchBlockingFrameLayoutNoBackground(context, attributeSet, 0) {
   abstract val viewableMedia: T
   abstract val pagerPosition: Int
@@ -90,13 +91,13 @@ abstract class MediaView<T : ViewableMedia> constructor(
   abstract fun show()
   abstract fun hide()
   abstract fun unbind()
-
   abstract fun onSystemUiVisibilityChanged(systemUIHidden: Boolean)
 
   override fun toString(): String {
     return "MediaView(pagerPosition=$pagerPosition, totalPageItemsCount=$totalPageItemsCount, " +
       "_bound=$_bound, _shown=$_shown, _preloadingCalled=$_preloadingCalled, mediaLocation=${viewableMedia.mediaLocation})"
   }
+
   companion object {
     private const val TAG = "MediaView"
   }

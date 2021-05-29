@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.features.media_viewer.media_view.FullImageMedi
 import com.github.k1rakishou.chan.features.media_viewer.media_view.GifMediaView
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaView
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewContract
+import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewState
 import com.github.k1rakishou.chan.features.media_viewer.media_view.UnsupportedMediaView
 import com.github.k1rakishou.chan.features.media_viewer.media_view.VideoMediaView
 import com.github.k1rakishou.chan.ui.view.ViewPagerAdapter
@@ -18,6 +19,7 @@ import kotlinx.coroutines.CompletableDeferred
 
 class MediaViewerAdapter(
   private val context: Context,
+  private val viewModel: MediaViewerControllerViewModel,
   private val mediaViewContract: MediaViewContract,
   private val initialPagerIndex: Int,
   private val viewableMediaList: List<ViewableMedia>,
@@ -50,6 +52,30 @@ class MediaViewerAdapter(
 
   override fun getCount(): Int = viewableMediaList.size
 
+  fun onPause() {
+    loadedViews.forEach { loadedView ->
+      if (loadedView.mediaView.shown) {
+        loadedView.mediaView.onHide()
+
+        // Store media view state
+        val mediaViewState = loadedView.mediaView.mediaViewState
+        viewModel.storeMediaViewState(loadedView.mediaView.viewableMedia.mediaLocation, mediaViewState)
+      }
+    }
+  }
+
+  fun onResume() {
+    loadedViews.forEach { loadedView ->
+      if (!loadedView.mediaView.shown) {
+        // Restore media view state
+        val mediaLocation = loadedView.mediaView.viewableMedia.mediaLocation
+        loadedView.mediaView.mediaViewState.updateFrom(viewModel.getPrevMediaViewStateOrNull(mediaLocation))
+
+        loadedView.mediaView.onShow()
+      }
+    }
+  }
+
   @Suppress("UNCHECKED_CAST")
   override fun getView(position: Int, parent: ViewGroup?): View {
     val viewableMedia = viewableMediaList[position]
@@ -62,8 +88,13 @@ class MediaViewerAdapter(
 
     val mediaView = when (viewableMedia) {
       is ViewableMedia.Image -> {
+        val initialMediaViewState= viewModel.getPrevMediaViewStateOrNull(viewableMedia.mediaLocation)
+          as? FullImageMediaView.FullImageState
+          ?: FullImageMediaView.FullImageState()
+
         FullImageMediaView(
           context = context,
+          initialMediaViewState = initialMediaViewState,
           mediaViewContract = mediaViewContract,
           cacheDataSourceFactory = cacheDataSourceFactory,
           onThumbnailFullyLoaded = onThumbnailFullyLoaded,
@@ -75,6 +106,7 @@ class MediaViewerAdapter(
       is ViewableMedia.Gif -> {
         GifMediaView(
           context = context,
+          initialMediaViewState = GifMediaView.GifMediaViewState(),
           mediaViewContract = mediaViewContract,
           cacheDataSourceFactory = cacheDataSourceFactory,
           onThumbnailFullyLoaded = onThumbnailFullyLoaded,
@@ -84,8 +116,14 @@ class MediaViewerAdapter(
         )
       }
       is ViewableMedia.Video -> {
+        val initialMediaViewState = viewModel.getPrevMediaViewStateOrNull(viewableMedia.mediaLocation)
+          as? VideoMediaView.VideoMediaViewState
+          ?: VideoMediaView.VideoMediaViewState()
+
         VideoMediaView(
           context = context,
+          initialMediaViewState = initialMediaViewState,
+          viewModel = viewModel,
           mediaViewContract = mediaViewContract,
           cacheDataSourceFactory = cacheDataSourceFactory,
           onThumbnailFullyLoaded = onThumbnailFullyLoaded,
@@ -98,6 +136,7 @@ class MediaViewerAdapter(
       is ViewableMedia.Unsupported -> {
         UnsupportedMediaView(
           context = context,
+          initialMediaViewState = UnsupportedMediaView.UnsupportedMediaViewState(),
           mediaViewContract = mediaViewContract,
           cacheDataSourceFactory = cacheDataSourceFactory,
           onThumbnailFullyLoaded = onThumbnailFullyLoaded,
@@ -109,7 +148,7 @@ class MediaViewerAdapter(
     }
 
     mediaView.startPreloading()
-    loadedViews.add(LoadedView(position, mediaView as MediaView<ViewableMedia>))
+    loadedViews.add(LoadedView(position, mediaView as MediaView<ViewableMedia, MediaViewState>))
 
     return mediaView
   }
@@ -144,6 +183,10 @@ class MediaViewerAdapter(
       if (loadedView.mediaView.viewableMedia != view.mediaView.viewableMedia) {
         if (loadedView.mediaView.shown) {
           loadedView.mediaView.onHide()
+
+          // Store media view state
+          val mediaViewState = loadedView.mediaView.mediaViewState
+          viewModel.storeMediaViewState(loadedView.mediaView.viewableMedia.mediaLocation, mediaViewState)
         }
       }
     }
@@ -179,7 +222,7 @@ class MediaViewerAdapter(
   override fun destroyItem(container: ViewGroup, position: Int, obj: Any) {
     super.destroyItem(container, position, obj)
 
-    val mediaView = obj as MediaView<ViewableMedia>
+    val mediaView = obj as MediaView<ViewableMedia, *>
     mediaView.onUnbind()
 
     loadedViews.mutableIteration { mutableIterator, mv ->
@@ -201,7 +244,7 @@ class MediaViewerAdapter(
     }
   }
 
-  data class LoadedView(val viewIndex: Int, val mediaView: MediaView<ViewableMedia>)
+  data class LoadedView(val viewIndex: Int, val mediaView: MediaView<ViewableMedia, MediaViewState>)
 
   companion object {
     private const val TAG = "MediaViewerAdapter"

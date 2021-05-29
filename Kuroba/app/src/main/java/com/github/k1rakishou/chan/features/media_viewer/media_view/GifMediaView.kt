@@ -39,13 +39,14 @@ import javax.inject.Inject
 @SuppressLint("ViewConstructor", "ClickableViewAccessibility")
 class GifMediaView(
   context: Context,
+  initialMediaViewState: GifMediaViewState,
   private val mediaViewContract: MediaViewContract,
   private val cacheDataSourceFactory: DataSource.Factory,
   private val onThumbnailFullyLoaded: () -> Unit,
   override val viewableMedia: ViewableMedia.Gif,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
-) : MediaView<ViewableMedia.Gif>(context, null, cacheDataSourceFactory) {
+) : MediaView<ViewableMedia.Gif, GifMediaView.GifMediaViewState>(context, null, cacheDataSourceFactory, initialMediaViewState) {
 
   @Inject
   lateinit var fileCacheV2: FileCacheV2
@@ -300,6 +301,15 @@ class GifMediaView(
     return canAutoLoad
       && !fullGifDeferred.isCompleted
       && (preloadCancelableDownload == null || preloadCancelableDownload?.isRunning() == false)
+  }
+
+  class GifMediaViewState : MediaViewState {
+    override fun clone(): MediaViewState {
+      return this
+    }
+
+    override fun updateFrom(other: MediaViewState?) {
+    }
   }
 
   class GestureDetectorListener(

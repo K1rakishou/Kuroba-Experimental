@@ -10,13 +10,14 @@ import com.google.android.exoplayer2.upstream.DataSource
 @SuppressLint("ViewConstructor")
 class UnsupportedMediaView(
   context: Context,
+  initialMediaViewState: UnsupportedMediaViewState,
   private val mediaViewContract: MediaViewContract,
   private val cacheDataSourceFactory: DataSource.Factory,
   private val onThumbnailFullyLoaded: () -> Unit,
   override val viewableMedia: ViewableMedia.Unsupported,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
-) : MediaView<ViewableMedia.Unsupported>(context, null, cacheDataSourceFactory) {
+) : MediaView<ViewableMedia.Unsupported, UnsupportedMediaView.UnsupportedMediaViewState>(context, null, cacheDataSourceFactory, initialMediaViewState) {
 
   override val hasContent: Boolean
     get() = false
@@ -52,6 +53,15 @@ class UnsupportedMediaView(
 
   override fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {
 
+  }
+
+  class UnsupportedMediaViewState : MediaViewState {
+    override fun clone(): MediaViewState {
+      return this
+    }
+
+    override fun updateFrom(other: MediaViewState?) {
+    }
   }
 
   companion object {

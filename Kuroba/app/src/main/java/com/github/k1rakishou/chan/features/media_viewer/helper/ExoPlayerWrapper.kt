@@ -35,7 +35,7 @@ class ExoPlayerWrapper(
 
   private var firstFrameRendered: CompletableDeferred<Unit>? = null
 
-  suspend fun preload(mediaLocation: MediaLocation) {
+  suspend fun preload(mediaLocation: MediaLocation, prevPosition: Long, prevWindowIndex: Int) {
     when (mediaLocation) {
       is MediaLocation.Local -> TODO()
       is MediaLocation.Remote -> {
@@ -45,6 +45,11 @@ class ExoPlayerWrapper(
 
         exoPlayer.playWhenReady = false
         exoPlayer.setMediaSource(mediaSource)
+
+        if (prevWindowIndex >= 0 && prevPosition >= 0) {
+          exoPlayer.seekTo(prevWindowIndex, prevPosition)
+        }
+
         exoPlayer.prepare()
 
         firstFrameRendered?.cancel()

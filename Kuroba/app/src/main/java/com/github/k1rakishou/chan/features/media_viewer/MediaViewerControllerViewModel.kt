@@ -1,15 +1,19 @@
 package com.github.k1rakishou.chan.features.media_viewer
 
+import android.util.LruCache
 import androidx.lifecycle.ViewModel
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewState
+import com.github.k1rakishou.chan.features.media_viewer.media_view.VideoMediaView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageType
+import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +35,7 @@ class MediaViewerControllerViewModel : ViewModel() {
 
   private val _mediaViewerState = MutableStateFlow<MediaViewerControllerState?>(null)
   private val _transitionInfoFlow = MutableSharedFlow<ViewableMediaParcelableHolder.TransitionInfo?>(extraBufferCapacity = 1)
+  private val mediaViewStateCache = LruCache<MediaLocation, MediaViewState>(PersistableChanState.mediaViewerOffscreenItemsCount.get())
 
   private var lastPagerIndex = -1
 
@@ -85,6 +90,24 @@ class MediaViewerControllerViewModel : ViewModel() {
 
   fun updateLastViewedIndex(newLastViewedIndex: Int) {
     synchronized(this) { lastPagerIndex = newLastViewedIndex }
+  }
+
+  fun storeMediaViewState(mediaLocation: MediaLocation, mediaViewState: MediaViewState?) {
+    if (mediaViewState == null) {
+      mediaViewStateCache.remove(mediaLocation)
+      return
+    }
+
+    val mediaViewStateCopy = when (mediaViewState) {
+      is VideoMediaView.VideoMediaViewState -> mediaViewState.clone()
+      else -> throw IllegalAccessException("Unknown mediaViewState: ${mediaViewState.javaClass.simpleName}")
+    }
+
+    mediaViewStateCache.put(mediaLocation, mediaViewStateCopy)
+  }
+
+  fun getPrevMediaViewStateOrNull(mediaLocation: MediaLocation): MediaViewState? {
+    return mediaViewStateCache.get(mediaLocation)
   }
 
   private fun collectThreadMedia(

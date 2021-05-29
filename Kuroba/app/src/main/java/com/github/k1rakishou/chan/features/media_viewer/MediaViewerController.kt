@@ -22,6 +22,7 @@ import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.awaitSilently
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.persist_state.PersistableChanState
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.upstream.cache.CacheDataSource
 import kotlinx.coroutines.CompletableDeferred
@@ -89,7 +90,9 @@ class MediaViewerController(
     pager = view.findViewById(R.id.pager)
 
     pager.addOnPageChangeListener(this)
-    pager.offscreenPageLimit = 2 // TODO(KurobaEx): move into a separate setting
+
+    // TODO(KurobaEx): make this setting configurable
+    pager.offscreenPageLimit = PersistableChanState.mediaViewerOffscreenItemsCount.get()
 
     mainScope.launch(context = Dispatchers.Main.immediate) {
       viewModel.transitionInfoFlow.collect { transitionInfo ->
@@ -115,14 +118,12 @@ class MediaViewerController(
 
   override fun onShow() {
     super.onShow()
-
-    // TODO(KurobaEx):
+    (pager.adapter as? MediaViewerAdapter)?.onResume()
   }
 
   override fun onHide() {
     super.onHide()
-
-    // TODO(KurobaEx): pause gifs, videos, sound posts, etc
+    (pager.adapter as? MediaViewerAdapter)?.onPause()
   }
 
   override fun onDestroy() {
@@ -184,6 +185,7 @@ class MediaViewerController(
 
     val adapter = MediaViewerAdapter(
       context = context,
+      viewModel = viewModel,
       mediaViewContract = this@MediaViewerController,
       initialPagerIndex = mediaViewerState.initialPagerIndex,
       viewableMediaList = mediaViewerState.loadedMedia,

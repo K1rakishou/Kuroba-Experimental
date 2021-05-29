@@ -39,13 +39,15 @@ import javax.inject.Inject
 @SuppressLint("ViewConstructor", "ClickableViewAccessibility")
 class FullImageMediaView(
   context: Context,
+  initialMediaViewState: FullImageState,
   private val mediaViewContract: MediaViewContract,
   private val cacheDataSourceFactory: DataSource.Factory,
   private val onThumbnailFullyLoaded: () -> Unit,
   override val viewableMedia: ViewableMedia.Image,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
-) : MediaView<ViewableMedia.Image>(context, null, cacheDataSourceFactory) {
+) : MediaView<ViewableMedia.Image,
+  FullImageMediaView.FullImageState>(context, null, cacheDataSourceFactory, initialMediaViewState) {
 
   @Inject
   lateinit var fileCacheV2: FileCacheV2
@@ -335,6 +337,16 @@ class FullImageMediaView(
       return super.onSingleTapConfirmed(e)
     }
 
+  }
+
+  class FullImageState : MediaViewState {
+    override fun clone(): MediaViewState {
+      return this
+    }
+
+    override fun updateFrom(other: MediaViewState?) {
+
+    }
   }
 
   companion object {
