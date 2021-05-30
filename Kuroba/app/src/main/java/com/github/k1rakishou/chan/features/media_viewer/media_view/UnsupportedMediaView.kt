@@ -15,6 +15,7 @@ class UnsupportedMediaView(
   mediaViewContract: MediaViewContract,
   private val cacheDataSourceFactory: DataSource.Factory,
   private val onThumbnailFullyLoaded: () -> Unit,
+  private val isSystemUiHidden: () -> Boolean,
   override val viewableMedia: ViewableMedia.Unsupported,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
@@ -50,7 +51,7 @@ class UnsupportedMediaView(
   }
 
   override fun show() {
-    // no-op
+    onSystemUiVisibilityChanged(isSystemUiHidden())
   }
 
   override fun hide() {

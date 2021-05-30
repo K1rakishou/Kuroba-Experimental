@@ -132,9 +132,13 @@ class MediaViewerControllerViewModel : ViewModel() {
         ?: return@mapNotNull null
 
       val mediaLocation = MediaLocation.Remote(actualUrl)
+      val fileName = actualUrl.pathSegments.lastOrNull()
+      val extension = StringUtils.extractFileNameExtension(url)
+
       val meta = ViewableMediaMeta(
         ownerPostDescriptor = null,
-        mediaName = actualUrl.pathSegments.lastOrNull(),
+        mediaName = fileName,
+        extension = extension,
         mediaWidth = null,
         mediaHeight = null,
         mediaSize = null,
@@ -142,8 +146,9 @@ class MediaViewerControllerViewModel : ViewModel() {
         isSpoiler = false
       )
 
-      val extension = StringUtils.extractFileNameExtension(url)
-        ?: return@mapNotNull ViewableMedia.Unsupported(mediaLocation, null, null, meta)
+      if (extension == null) {
+        return@mapNotNull ViewableMedia.Unsupported(mediaLocation, null, null, meta)
+      }
 
       val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
         ?: return@mapNotNull ViewableMedia.Unsupported(mediaLocation, null, null, meta)
@@ -280,6 +285,7 @@ class MediaViewerControllerViewModel : ViewModel() {
     val viewableMediaMeta = ViewableMediaMeta(
       ownerPostDescriptor = chanPostImage.ownerPostDescriptor,
       mediaName = chanPostImage.filename ?: chanPostImage.serverFilename,
+      extension = chanPostImage.extension,
       mediaWidth = chanPostImage.imageWidth,
       mediaHeight = chanPostImage.imageHeight,
       mediaSize = chanPostImage.size,

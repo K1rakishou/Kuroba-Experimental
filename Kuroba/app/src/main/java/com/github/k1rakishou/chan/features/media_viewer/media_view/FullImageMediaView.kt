@@ -45,6 +45,7 @@ class FullImageMediaView(
   mediaViewContract: MediaViewContract,
   private val cacheDataSourceFactory: DataSource.Factory,
   private val onThumbnailFullyLoaded: () -> Unit,
+  private val isSystemUiHidden: () -> Boolean,
   override val viewableMedia: ViewableMedia.Image,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
@@ -174,6 +175,7 @@ class FullImageMediaView(
 
   override fun show() {
     mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
+    onSystemUiVisibilityChanged(isSystemUiHidden())
 
     if (!hasContent) {
       scope.launch {

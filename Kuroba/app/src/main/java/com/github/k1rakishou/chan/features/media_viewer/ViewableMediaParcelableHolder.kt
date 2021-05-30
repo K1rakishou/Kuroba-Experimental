@@ -115,6 +115,7 @@ sealed class ViewableMedia(
 data class ViewableMediaMeta(
   val ownerPostDescriptor: PostDescriptor?,
   val mediaName: String?,
+  val extension: String?,
   val mediaWidth: Int?,
   val mediaHeight: Int?,
   val mediaSize: Long?,

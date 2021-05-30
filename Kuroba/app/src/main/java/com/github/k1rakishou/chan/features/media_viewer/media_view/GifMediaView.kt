@@ -44,6 +44,7 @@ class GifMediaView(
   mediaViewContract: MediaViewContract,
   private val cacheDataSourceFactory: DataSource.Factory,
   private val onThumbnailFullyLoaded: () -> Unit,
+  private val isSystemUiHidden: () -> Boolean,
   override val viewableMedia: ViewableMedia.Gif,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
@@ -174,6 +175,7 @@ class GifMediaView(
 
   override fun show() {
     mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
+    onSystemUiVisibilityChanged(isSystemUiHidden())
 
     scope.launch {
       if (!hasContent) {

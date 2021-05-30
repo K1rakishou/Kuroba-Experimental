@@ -223,7 +223,6 @@ class VideoMediaView(
         actualVideoPlayerView.useArtwork = false
         actualVideoPlayerView.setShutterBackgroundColor(Color.TRANSPARENT)
 
-        onSystemUiVisibilityChanged(isSystemUiHidden())
         updatePlayerControlsInsets()
         updateExoBufferingViewColors()
 
@@ -252,6 +251,8 @@ class VideoMediaView(
 
   override fun show() {
     mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
+
+    onSystemUiVisibilityChanged(isSystemUiHidden())
     updateMuteUnMuteState()
 
     if (playJob == null) {

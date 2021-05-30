@@ -98,6 +98,7 @@ class MediaViewerAdapter(
           mediaViewContract = mediaViewContract,
           cacheDataSourceFactory = cacheDataSourceFactory,
           onThumbnailFullyLoaded = onThumbnailFullyLoaded,
+          isSystemUiHidden = isSystemUiHidden,
           viewableMedia = viewableMedia,
           pagerPosition = position,
           totalPageItemsCount = count
@@ -110,6 +111,7 @@ class MediaViewerAdapter(
           mediaViewContract = mediaViewContract,
           cacheDataSourceFactory = cacheDataSourceFactory,
           onThumbnailFullyLoaded = onThumbnailFullyLoaded,
+          isSystemUiHidden = isSystemUiHidden,
           viewableMedia = viewableMedia,
           pagerPosition = position,
           totalPageItemsCount = count
@@ -140,6 +142,7 @@ class MediaViewerAdapter(
           mediaViewContract = mediaViewContract,
           cacheDataSourceFactory = cacheDataSourceFactory,
           onThumbnailFullyLoaded = onThumbnailFullyLoaded,
+          isSystemUiHidden = isSystemUiHidden,
           viewableMedia = viewableMedia,
           pagerPosition = position,
           totalPageItemsCount = count

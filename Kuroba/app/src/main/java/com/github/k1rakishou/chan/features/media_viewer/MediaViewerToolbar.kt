@@ -16,9 +16,11 @@ import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.launch
+import java.util.*
 import javax.inject.Inject
 
 class MediaViewerToolbar @JvmOverloads constructor(
@@ -137,6 +139,10 @@ class MediaViewerToolbar @JvmOverloads constructor(
       append("/")
       append(totalMediaCount)
 
+      if (viewableMediaMeta.extension.isNotNullNorEmpty()) {
+        append(", ")
+        append(viewableMediaMeta.extension.uppercase(Locale.ENGLISH))
+      }
 
       if (viewableMediaMeta.mediaWidth != null && viewableMediaMeta.mediaHeight != null) {
         append(", ")
