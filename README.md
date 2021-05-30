@@ -34,11 +34,15 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan
 
 - New posting. Posting code was moved into a foreground service which now allows stuff using like automatic captcha solvers (2captcha API) seamlessly or queueing multiple replies in different threads (only one reply per thread).
 
+- New Media Viewer. It was rewritten from scratch and now lives in a separate activity. It now also supports stuff like viewing links to media files shared into the app.
+
 - Lots of other tiny improvements.
 
 Screenshots can be found [here](https://github.com/K1rakishou/Kuroba-Experimental/tree/develop/fastlane/metadata/android/en-US/images)
 
 ### New stuff and important annoncements:
+
+#### - (2021-05-30) Themes were moved into a separate repository: https://github.com/K1rakishou/KurobaEx-themes
 
 #### - (2021-02-24) Beta apks are now built as release apks (not debug) to make them more performant. The downside here is that you won't be able to automatically install v0.6.x-beta and will have to do that manually. You will have to export all your settings, remove the previous beta version, install the new one and then import the settings back. This is pretty inconvenient but as a result you get an apk with the same performance as the release one. The stable release versions are not affected, only beta!
 
