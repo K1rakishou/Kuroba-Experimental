@@ -72,6 +72,10 @@ class ThumbnailMediaView @JvmOverloads constructor(
     requestDisposable = when (val location = parameters.thumbnailLocation) {
       is MediaLocation.Local -> TODO()
       is MediaLocation.Remote -> loadRemoteMedia(location.url, parameters, onThumbnailFullyLoaded)
+      null -> {
+        onThumbnailFullyLoaded()
+        null
+      }
     }
   }
 
@@ -149,7 +153,7 @@ class ThumbnailMediaView @JvmOverloads constructor(
 
   data class ThumbnailMediaViewParameters(
     val isOriginalMediaPlayable: Boolean,
-    val thumbnailLocation: MediaLocation
+    val thumbnailLocation: MediaLocation?
   )
 
   companion object {

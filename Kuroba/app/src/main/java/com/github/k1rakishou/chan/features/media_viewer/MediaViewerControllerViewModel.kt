@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.media_viewer
 
 import android.util.LruCache
+import android.webkit.MimeTypeMap
 import androidx.lifecycle.ViewModel
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.cache.CacheHandler
@@ -10,6 +11,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetwo
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageType
@@ -104,8 +106,13 @@ class MediaViewerControllerViewModel : ViewModel() {
         is ViewableMediaParcelableHolder.ThreadMediaParcelableHolder -> {
           collectThreadMedia(viewableMediaParcelableHolder)
         }
-        is ViewableMediaParcelableHolder.LocalMediaParcelableHolder -> TODO()
-        is ViewableMediaParcelableHolder.RemoteMediaParcelableHolder -> TODO()
+        is ViewableMediaParcelableHolder.LocalMediaParcelableHolder -> {
+          // TODO(KurobaEx):
+          null
+        }
+        is ViewableMediaParcelableHolder.RemoteMediaParcelableHolder -> {
+          collectMediaFromUrls(viewableMediaParcelableHolder)
+        }
       }
 
       if (mediaViewerControllerState == null || mediaViewerControllerState.isEmpty()) {
@@ -115,6 +122,50 @@ class MediaViewerControllerViewModel : ViewModel() {
       _mediaViewerState.value = mediaViewerControllerState
       return@withContext true
     }
+  }
+
+  private fun collectMediaFromUrls(
+    viewableMediaParcelableHolder: ViewableMediaParcelableHolder.RemoteMediaParcelableHolder
+  ): MediaViewerControllerState? {
+    val viewableMediaList = viewableMediaParcelableHolder.urlList.mapNotNull { url ->
+      val actualUrl = url.toHttpUrlOrNull()
+        ?: return@mapNotNull null
+
+      val mediaLocation = MediaLocation.Remote(actualUrl)
+      val meta = ViewableMediaMeta(
+        ownerPostDescriptor = null,
+        mediaName = actualUrl.pathSegments.lastOrNull(),
+        mediaWidth = null,
+        mediaHeight = null,
+        mediaSize = null,
+        mediaHash = null,
+        isSpoiler = false
+      )
+
+      val extension = StringUtils.extractFileNameExtension(url)
+        ?: return@mapNotNull ViewableMedia.Unsupported(mediaLocation, null, null, meta)
+
+      val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+        ?: return@mapNotNull ViewableMedia.Unsupported(mediaLocation, null, null, meta)
+
+      if (mimeType.startsWith("video/")) {
+        return@mapNotNull ViewableMedia.Video(mediaLocation, null, null, meta)
+      } else if (mimeType.startsWith("image/")) {
+        if (mimeType.endsWith("gif")) {
+          return@mapNotNull ViewableMedia.Gif(mediaLocation, null, null, meta)
+        } else {
+          return@mapNotNull ViewableMedia.Image(mediaLocation, null, null, meta)
+        }
+      }
+
+      return@mapNotNull ViewableMedia.Unsupported(mediaLocation, null, null, meta)
+    }
+
+    if (viewableMediaList.isEmpty()) {
+      return null
+    }
+
+    return MediaViewerControllerState(loadedMedia = viewableMediaList, initialPagerIndex = 0)
   }
 
   private fun collectThreadMedia(
@@ -233,8 +284,7 @@ class MediaViewerControllerViewModel : ViewModel() {
       mediaHeight = chanPostImage.imageHeight,
       mediaSize = chanPostImage.size,
       mediaHash = chanPostImage.fileHash,
-      isSpoiler = chanPostImage.spoiler,
-      inlined = chanPostImage.isInlined
+      isSpoiler = chanPostImage.spoiler
     )
 
     val viewableMedia = when (chanPostImage.type) {
@@ -273,17 +323,12 @@ class MediaViewerControllerViewModel : ViewModel() {
     private const val TAG = "MediaViewerControllerViewModel"
     private val DEFAULT_THUMBNAIL = (AppConstants.RESOURCES_ENDPOINT + "internal_spoiler.png").toHttpUrl()
 
-    fun canAutoLoad(cacheHandler: CacheHandler, postImage: ChanPostImage): Boolean {
-      return canAutoLoad(cacheHandler, postImage.isInlined, postImage.imageUrl, postImage.type)
-    }
-
     fun canAutoLoad(cacheHandler: CacheHandler, viewableMedia: ViewableMedia): Boolean {
       val mediaLocation = viewableMedia.mediaLocation
       if (mediaLocation !is MediaLocation.Remote) {
         return false
       }
 
-      val isInlined = viewableMedia.viewableMediaMeta.inlined
       val url = mediaLocation.url
 
       val imageType = when (viewableMedia) {
@@ -293,19 +338,14 @@ class MediaViewerControllerViewModel : ViewModel() {
         is ViewableMedia.Unsupported -> return false
       }
 
-      return canAutoLoad(cacheHandler, isInlined, url, imageType)
+      return canAutoLoad(cacheHandler, url, imageType)
     }
 
     fun canAutoLoad(
       cacheHandler: CacheHandler,
-      isInlined: Boolean,
       url: HttpUrl?,
       imageType: ChanPostImageType?
     ): Boolean {
-      if (isInlined) {
-        return false
-      }
-
       val imageUrl = url ?: return false
       val postImageType = imageType ?: return false
 

@@ -187,16 +187,13 @@ class VideoMediaView(
   }
 
   override fun preload() {
-    val previewLocation = viewableMedia.previewLocation
-    if (previewLocation != null) {
-      thumbnailMediaView.bind(
-        ThumbnailMediaView.ThumbnailMediaViewParameters(
-          isOriginalMediaPlayable = true,
-          thumbnailLocation = previewLocation
-        ),
-        onThumbnailFullyLoaded = onThumbnailFullyLoaded
-      )
-    }
+    thumbnailMediaView.bind(
+      ThumbnailMediaView.ThumbnailMediaViewParameters(
+        isOriginalMediaPlayable = true,
+        thumbnailLocation = viewableMedia.previewLocation
+      ),
+      onThumbnailFullyLoaded = onThumbnailFullyLoaded
+    )
 
     if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = false)) {
       preloadingJob = startFullVideoPreloading(viewableMedia.mediaLocation)

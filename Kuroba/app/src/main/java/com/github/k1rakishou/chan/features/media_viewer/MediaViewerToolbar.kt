@@ -74,12 +74,13 @@ class MediaViewerToolbar @JvmOverloads constructor(
     }
 
     toolbarDownloadButton.setOnClickListener { mediaViewerToolbarCallbacks?.onDownloadButtonClick(isLongClick = false) }
-    toolbarOptionsButton.setOnClickListener { mediaViewerToolbarCallbacks?.onOptionsButtonClick() }
 
     toolbarDownloadButton.setOnLongClickListener {
       mediaViewerToolbarCallbacks?.onDownloadButtonClick(isLongClick = true)
       return@setOnLongClickListener true
     }
+
+    toolbarOptionsButton.setOnClickListener { mediaViewerToolbarCallbacks?.onOptionsButtonClick() }
 
     doOnPreDraw { onInsetsChanged() }
   }

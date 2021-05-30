@@ -66,13 +66,7 @@ sealed class ViewableMediaParcelableHolder {
   }
 
   @Parcelize
-  data class LocalMediaParcelableHolder(val mediaList: List<Media>) : ViewableMediaParcelableHolder(), Parcelable {
-
-    @Parcelize
-    data class Media(
-      val path: String,
-      val isUri: Boolean
-    ) : Parcelable
+  data class LocalMediaParcelableHolder(val filePathList: List<String>) : ViewableMediaParcelableHolder(), Parcelable {
 
   }
 
@@ -125,8 +119,7 @@ data class ViewableMediaMeta(
   val mediaHeight: Int?,
   val mediaSize: Long?,
   val mediaHash: String?,
-  val isSpoiler: Boolean,
-  val inlined: Boolean
+  val isSpoiler: Boolean
 )
 
 sealed class MediaLocation {

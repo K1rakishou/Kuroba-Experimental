@@ -5,6 +5,8 @@ import android.content.Intent
 import android.graphics.Point
 import android.os.Bundle
 import android.view.WindowManager
+import android.webkit.URLUtil
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.core.os.bundleOf
 import androidx.lifecycle.lifecycleScope
@@ -153,7 +155,11 @@ class MediaViewerActivity : ControllerHostActivity(), MediaViewerController.Medi
 
     val viewableMediaParcelableHolder = tryExtractViewableMediaParcelableHolderOrNull(intent)
     if (viewableMediaParcelableHolder == null) {
-      Logger.e(TAG, "handleNewIntent() Failed to extract viewableMedia from intent \'$intent\'")
+      val errorMessage = "Failed to extract viewableMedia from intent '$intent'"
+
+      Logger.e(TAG, "handleNewIntent() $errorMessage")
+      Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
+
       return false
     }
 
@@ -163,6 +169,12 @@ class MediaViewerActivity : ControllerHostActivity(), MediaViewerController.Medi
     )
 
     Logger.d(TAG, "handleNewIntent() viewModel.showMedia() -> $success")
+
+    if (!success) {
+      val errorMessage = "Failed to display viewableMedia from intent '$intent'"
+      Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
+    }
+
     return success
   }
 
@@ -181,6 +193,33 @@ class MediaViewerActivity : ControllerHostActivity(), MediaViewerController.Medi
         return intent.extras
           ?.getBundle(MEDIA_VIEWER_PARAMS)
           ?.getParcelable<ViewableMediaParcelableHolder.ThreadMediaParcelableHolder>(THREAD_DESCRIPTOR_PARAM)
+      }
+      Intent.ACTION_SEND -> {
+        Logger.d(TAG, "handleNewIntent() action=${action}")
+
+        val uri = intent.extras?.getString(Intent.EXTRA_TEXT)
+        if (uri == null) {
+          Logger.e(TAG, "handleNewIntent() action=${action} uri==null")
+          return null
+        }
+
+        if (URLUtil.isFileUrl(uri)) {
+          Logger.d(TAG, "handleNewIntent() action=${action} uri=$uri")
+          return ViewableMediaParcelableHolder.LocalMediaParcelableHolder(listOf(uri))
+        } else if (URLUtil.isHttpUrl(uri) || URLUtil.isHttpsUrl(uri)) {
+          Logger.d(TAG, "handleNewIntent() action=${action} uri=$uri")
+
+          val finalUri = if (URLUtil.isHttpUrl(uri)) {
+            uri.replace("http", "https")
+          } else {
+            uri
+          }
+
+          return ViewableMediaParcelableHolder.RemoteMediaParcelableHolder(listOf(finalUri))
+        }
+
+        Logger.e(TAG, "handleNewIntent() action=${action} Unsupported uri=$uri")
+        return null
       }
       else -> {
         Logger.e(TAG, "handleNewIntent() Unknown action: \'$action\' was passed to activity $TAG")

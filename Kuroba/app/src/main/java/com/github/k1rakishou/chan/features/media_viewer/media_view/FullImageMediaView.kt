@@ -155,16 +155,13 @@ class FullImageMediaView(
   }
 
   override fun preload() {
-    val previewLocation = viewableMedia.previewLocation
-    if (previewLocation != null) {
-      thumbnailMediaView.bind(
-        ThumbnailMediaView.ThumbnailMediaViewParameters(
-          isOriginalMediaPlayable = false,
-          thumbnailLocation = previewLocation,
-        ),
-        onThumbnailFullyLoaded = onThumbnailFullyLoaded
-      )
-    }
+    thumbnailMediaView.bind(
+      ThumbnailMediaView.ThumbnailMediaViewParameters(
+        isOriginalMediaPlayable = false,
+        thumbnailLocation = viewableMedia.previewLocation,
+      ),
+      onThumbnailFullyLoaded = onThumbnailFullyLoaded
+    )
 
     if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = false)) {
       preloadCancelableDownload = startFullImagePreloading(viewableMedia.mediaLocation)
