@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewState
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -38,10 +39,39 @@ class MediaViewerControllerViewModel : ViewModel() {
 
   private var lastPagerIndex = -1
 
+  private val defaultMuteState: Boolean
+    get() = ChanSettings.videoDefaultMuted.get()
+      && (ChanSettings.headsetDefaultMuted.get() || !AndroidUtils.getAudioManager().isWiredHeadsetOn)
+
+  private var _isSoundMuted = defaultMuteState
+  val isSoundMuted: Boolean
+    get() = _isSoundMuted
+
   val transitionInfoFlow: SharedFlow<ViewableMediaParcelableHolder.TransitionInfo?>
     get() = _transitionInfoFlow.asSharedFlow()
   val mediaViewerState: StateFlow<MediaViewerControllerState?>
     get() = _mediaViewerState.asStateFlow()
+
+  fun toggleIsSoundMuted() {
+    _isSoundMuted = _isSoundMuted.not()
+  }
+
+  fun updateLastViewedIndex(newLastViewedIndex: Int) {
+    synchronized(this) { lastPagerIndex = newLastViewedIndex }
+  }
+
+  fun storeMediaViewState(mediaLocation: MediaLocation, mediaViewState: MediaViewState?) {
+    if (mediaViewState == null) {
+      mediaViewStateCache.remove(mediaLocation)
+      return
+    }
+
+    mediaViewStateCache.put(mediaLocation, mediaViewState.clone())
+  }
+
+  fun getPrevMediaViewStateOrNull(mediaLocation: MediaLocation): MediaViewState? {
+    return mediaViewStateCache.get(mediaLocation)
+  }
 
   suspend fun showMedia(
     isNotActivityRecreation: Boolean,
@@ -85,23 +115,6 @@ class MediaViewerControllerViewModel : ViewModel() {
       _mediaViewerState.value = mediaViewerControllerState
       return@withContext true
     }
-  }
-
-  fun updateLastViewedIndex(newLastViewedIndex: Int) {
-    synchronized(this) { lastPagerIndex = newLastViewedIndex }
-  }
-
-  fun storeMediaViewState(mediaLocation: MediaLocation, mediaViewState: MediaViewState?) {
-    if (mediaViewState == null) {
-      mediaViewStateCache.remove(mediaLocation)
-      return
-    }
-
-    mediaViewStateCache.put(mediaLocation, mediaViewState.clone())
-  }
-
-  fun getPrevMediaViewStateOrNull(mediaLocation: MediaLocation): MediaViewState? {
-    return mediaViewStateCache.get(mediaLocation)
   }
 
   private fun collectThreadMedia(

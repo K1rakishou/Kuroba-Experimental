@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.features.image_saver.epoxy.EpoxyDuplicateImage
 import com.github.k1rakishou.chan.features.login.LoginController;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerController;
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar;
 import com.github.k1rakishou.chan.features.media_viewer.media_view.FullImageMediaView;
 import com.github.k1rakishou.chan.features.media_viewer.media_view.GifMediaView;
 import com.github.k1rakishou.chan.features.media_viewer.media_view.ThumbnailMediaView;
@@ -170,6 +171,7 @@ import com.github.k1rakishou.chan.ui.toolbar.Toolbar;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarContainer;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.ui.view.ChunkedLoadingBar;
+import com.github.k1rakishou.chan.ui.view.CircularChunkedLoadingBar;
 import com.github.k1rakishou.chan.ui.view.FastScroller;
 import com.github.k1rakishou.chan.ui.view.FloatingMenu;
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton;
@@ -361,6 +363,7 @@ public interface ActivityComponent {
     void inject(ImageViewerPresenter imageViewerPresenter);
     void inject(LoadingBar loadingBar);
     void inject(ChunkedLoadingBar chunkedLoadingBar);
+    void inject(CircularChunkedLoadingBar circularChunkedLoadingBar);
     void inject(ThreadSlidingPaneLayout threadSlidingPaneLayout);
     void inject(PostStubCell postStubCell);
     void inject(PostPopupContainer postPopupContainer);
@@ -379,6 +382,7 @@ public interface ActivityComponent {
     void inject(UnsupportedMediaView unsupportedMediaView);
     void inject(GifMediaView gifMediaView);
     void inject(VideoMediaView videoMediaView);
+    void inject(MediaViewerToolbar mediaViewerToolbar);
 
     @Subcomponent.Builder
     interface Builder {

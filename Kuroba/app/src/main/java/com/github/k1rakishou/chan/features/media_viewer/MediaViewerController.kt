@@ -5,7 +5,6 @@ import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
 import androidx.viewpager.widget.ViewPager
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -20,7 +19,6 @@ import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
-import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.awaitSilently
 import com.github.k1rakishou.core_logger.Logger
@@ -57,11 +55,6 @@ class MediaViewerController(
   private val viewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
   private val transitionAnimationShown = CompletableDeferred<Unit>()
 
-  private val defaultMuteState: Boolean
-    get() = ChanSettings.videoDefaultMuted.get()
-      && (ChanSettings.headsetDefaultMuted.get() || !AndroidUtils.getAudioManager().isWiredHeadsetOn)
-
-  private var isSoundMuted = defaultMuteState
   private var wasDragging = false
 
   private val cacheDataSourceFactory by lazy {
@@ -175,16 +168,28 @@ class MediaViewerController(
     mediaViewerRootLayout.alpha = newAlpha
   }
 
-  override fun closeMediaViewer() {
-    mediaViewerCallbacks.finishActivity()
+  override fun toggleSoundMuteState() {
+    viewModel.toggleIsSoundMuted()
+  }
+
+  override fun isSoundCurrentlyMuted(): Boolean {
+    return viewModel.isSoundMuted
   }
 
   override fun onTapped() {
     mediaViewerCallbacks.toggleFullScreenMode()
   }
 
-  override fun isSoundCurrentlyMuted(): Boolean {
-    return isSoundMuted
+  override fun closeMediaViewer() {
+    mediaViewerCallbacks.finishActivity()
+  }
+
+  override fun onDownloadButtonClick(viewableMedia: ViewableMedia, longClick: Boolean) {
+    // TODO(KurobaEx):
+  }
+
+  override fun onOptionsButtonClick(viewableMedia: ViewableMedia) {
+    // TODO(KurobaEx):
   }
 
   fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {

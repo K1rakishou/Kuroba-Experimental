@@ -23,11 +23,16 @@
 
     </FrameLayout>
 
-    <com.github.k1rakishou.chan.ui.view.ChunkedLoadingBar
-        android:id="@+id/loading_bar"
+    <com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
+        android:id="@+id/full_gif_view_toolbar"
         android:layout_width="match_parent"
-        android:layout_height="4dp"
-        android:layout_gravity="top"
+        android:layout_height="@dimen/toolbar_height"/>
+
+    <com.github.k1rakishou.chan.ui.view.CircularChunkedLoadingBar
+        android:id="@+id/loading_bar"
+        android:layout_width="42dp"
+        android:layout_height="42dp"
+        android:layout_gravity="center"
         android:visibility="gone"
         tools:visibility="visible" />
 

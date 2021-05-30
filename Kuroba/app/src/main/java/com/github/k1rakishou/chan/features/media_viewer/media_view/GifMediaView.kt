@@ -14,10 +14,12 @@ import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
 import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.FullMediaAppearAnimationHelper
-import com.github.k1rakishou.chan.ui.view.ChunkedLoadingBar
+import com.github.k1rakishou.chan.ui.view.CircularChunkedLoadingBar
+import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
@@ -62,17 +64,21 @@ class GifMediaView(
   private val movableContainer: FrameLayout
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualGifView: GifImageView
-  private val loadingBar: ChunkedLoadingBar
+  private val loadingBar: CircularChunkedLoadingBar
 
   private val closeMediaActionHelper: CloseMediaActionHelper
   private val gestureDetector: GestureDetector
   private val canAutoLoad by lazy { MediaViewerControllerViewModel.canAutoLoad(cacheHandler, viewableMedia) }
 
-  private val fullGifDeferred = CompletableDeferred<File>()
+  private var fullGifDeferred = CompletableDeferred<File>()
   private var preloadCancelableDownload: CancelableDownload? = null
+
+  private val fullImageMediaViewOptions by lazy { emptyList<FloatingListMenuItem>() }
 
   override val hasContent: Boolean
     get() = actualGifView.drawable != null
+  override val mediaOptions: List<FloatingListMenuItem>
+    get() = fullImageMediaViewOptions
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -84,6 +90,9 @@ class GifMediaView(
     thumbnailMediaView = findViewById(R.id.thumbnail_media_view)
     actualGifView = findViewById(R.id.actual_gif_view)
     loadingBar = findViewById(R.id.loading_bar)
+
+    val toolbar = findViewById<MediaViewerToolbar>(R.id.full_gif_view_toolbar)
+    initToolbar(toolbar)
 
     closeMediaActionHelper = CloseMediaActionHelper(
       context = context,
@@ -167,6 +176,8 @@ class GifMediaView(
   }
 
   override fun show() {
+    mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
+
     scope.launch {
       if (!hasContent) {
         fullGifDeferred.awaitCatching()
@@ -211,6 +222,27 @@ class GifMediaView(
   override fun unbind() {
     thumbnailMediaView.unbind()
     actualGifView.setImageDrawable(null)
+  }
+
+  override suspend fun onReloadButtonClick() {
+    if (preloadCancelableDownload != null) {
+      return
+    }
+
+    val mediaLocation = viewableMedia.mediaLocation
+    if (mediaLocation !is MediaLocation.Remote) {
+      return
+    }
+
+    cacheHandler.deleteCacheFileByUrl(mediaLocation.url.toString())
+    fullGifDeferred = CompletableDeferred<File>()
+
+    thumbnailMediaView.setVisibilityFast(View.VISIBLE)
+    actualGifView.setVisibilityFast(View.INVISIBLE)
+    actualGifView.setImageDrawable(null)
+
+    preloadCancelableDownload = startFullGifPreloading(mediaLocation)
+    show()
   }
 
   @Suppress("BlockingMethodInNonBlockingContext")

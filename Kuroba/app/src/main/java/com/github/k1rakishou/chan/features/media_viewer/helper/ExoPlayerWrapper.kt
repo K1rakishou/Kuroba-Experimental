@@ -8,6 +8,8 @@ import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewCont
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.analytics.AnalyticsListener
+import com.google.android.exoplayer2.decoder.DecoderCounters
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CompletableDeferred
@@ -18,7 +20,8 @@ import kotlin.coroutines.resume
 class ExoPlayerWrapper(
   private val context: Context,
   private val cacheDataSourceFactory: DataSource.Factory,
-  private val mediaViewContract: MediaViewContract
+  private val mediaViewContract: MediaViewContract,
+  private val onAudioDetected: () -> Unit
 ) {
   private val exoPlayerLazy = lazy { SimpleExoPlayer.Builder(context).build() }
   private val exoPlayer by exoPlayerLazy
@@ -31,6 +34,8 @@ class ExoPlayerWrapper(
     get() = _hasContent
 
   private var firstFrameRendered: CompletableDeferred<Unit>? = null
+
+  fun isInitialized(): Boolean = exoPlayerLazy.isInitialized()
 
   suspend fun preload(mediaLocation: MediaLocation, prevPosition: Long, prevWindowIndex: Int) {
     when (mediaLocation) {
@@ -56,6 +61,13 @@ class ExoPlayerWrapper(
           override fun onRenderedFirstFrame() {
             firstFrameRendered?.complete(Unit)
             exoPlayer.removeListener(this)
+          }
+        })
+
+        exoPlayer.addAnalyticsListener(object : AnalyticsListener {
+          override fun onAudioEnabled(eventTime: AnalyticsListener.EventTime, counters: DecoderCounters) {
+            onAudioDetected()
+            exoPlayer.removeAnalyticsListener(this)
           }
         })
 
@@ -106,7 +118,17 @@ class ExoPlayerWrapper(
     exoPlayer.play()
   }
 
-  fun isInitialized(): Boolean = exoPlayerLazy.isInitialized()
+  fun muteUnMute(mute: Boolean) {
+    if (!exoPlayerLazy.isInitialized()) {
+      return
+    }
+
+    exoPlayer.volume = if (mute) {
+      0f
+    } else {
+      1f
+    }
+  }
 
   fun pause() {
     if (exoPlayerLazy.isInitialized()) {
@@ -114,9 +136,9 @@ class ExoPlayerWrapper(
     }
   }
 
-  fun stop() {
+  fun resetPosition() {
     if (exoPlayerLazy.isInitialized()) {
-      exoPlayer.pause()
+      exoPlayer.seekTo(0, 0L)
     }
   }
 
@@ -128,6 +150,10 @@ class ExoPlayerWrapper(
     }
 
     firstFrameRendered = null
+  }
+
+  fun setNoContent() {
+    _hasContent = false
   }
 
 }

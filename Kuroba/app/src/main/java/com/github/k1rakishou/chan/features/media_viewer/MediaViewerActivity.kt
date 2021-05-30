@@ -68,6 +68,14 @@ class MediaViewerActivity : ControllerHostActivity(), MediaViewerController.Medi
     contentView = findViewById(android.R.id.content)
     AndroidUtils.getWindow(this).addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
+    mediaViewerController = MediaViewerController(
+      context = this,
+      mediaViewerCallbacks = this
+    ).apply {
+      onCreate()
+      onShow()
+    }
+
     window.setupEdgeToEdge()
     window.setupStatusAndNavBarColors(themeEngine.chanTheme)
 
@@ -77,13 +85,7 @@ class MediaViewerActivity : ControllerHostActivity(), MediaViewerController.Medi
       window.showSystemUI(themeEngine.chanTheme)
     }
 
-    mediaViewerController = MediaViewerController(
-      context = this,
-      mediaViewerCallbacks = this
-    ).apply {
-      onCreate()
-      onShow()
-    }
+    mediaViewerController.onSystemUiVisibilityChanged(window.isSystemUIHidden())
 
     globalWindowInsetsManager.listenForWindowInsetsChanges(window, null)
 

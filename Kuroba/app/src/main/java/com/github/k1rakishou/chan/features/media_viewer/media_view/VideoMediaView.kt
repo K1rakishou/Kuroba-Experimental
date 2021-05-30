@@ -8,6 +8,7 @@ import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import com.github.k1rakishou.chan.R
@@ -16,12 +17,15 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerWrapper
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableProgressBar
+import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.awaitCatching
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -57,8 +61,7 @@ class VideoMediaView(
   cacheDataSourceFactory = cacheDataSourceFactory,
   mediaViewContract = mediaViewContract,
   mediaViewState = initialMediaViewState
-),
-  WindowInsetsListener {
+), WindowInsetsListener {
 
   @Inject
   lateinit var cacheHandler: CacheHandler
@@ -70,18 +73,29 @@ class VideoMediaView(
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualVideoPlayerView: PlayerView
   private val bufferingProgressView: ColorizableProgressBar
-  private val mainVideoPlayer = ExoPlayerWrapper(context, cacheDataSourceFactory, mediaViewContract)
+  private val muteUnmuteButton: ImageButton
+
+  private val mainVideoPlayer = ExoPlayerWrapper(
+    context = context,
+    cacheDataSourceFactory = cacheDataSourceFactory,
+    mediaViewContract = mediaViewContract,
+    onAudioDetected = { updateAudioIcon(mediaViewContract.isSoundCurrentlyMuted()) }
+  )
 
   private val closeMediaActionHelper: CloseMediaActionHelper
   private val gestureDetector: GestureDetector
   private val canAutoLoad by lazy { MediaViewerControllerViewModel.canAutoLoad(cacheHandler, viewableMedia) }
-  private val fullVideoDeferred = CompletableDeferred<Unit>()
 
+  private var fullVideoDeferred = CompletableDeferred<Unit>()
   private var preloadingJob: Job? = null
   private var playJob: Job? = null
 
+  private val fullImageMediaViewOptions by lazy { emptyList<FloatingListMenuItem>() }
+
   override val hasContent: Boolean
     get() = mainVideoPlayer.isInitialized() && mainVideoPlayer.hasContent
+  override val mediaOptions: List<FloatingListMenuItem>
+    get() = fullImageMediaViewOptions
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -92,6 +106,11 @@ class VideoMediaView(
     thumbnailMediaView = findViewById(R.id.thumbnail_media_view)
     actualVideoPlayerView = findViewById(R.id.actual_video_view)
     bufferingProgressView = findViewById(R.id.buffering_progress_view)
+    val toolbar = findViewById<MediaViewerToolbar>(R.id.full_video_view_toolbar)
+    initToolbar(toolbar)
+
+    muteUnmuteButton = actualVideoPlayerView.findViewById(R.id.exo_mute)
+    muteUnmuteButton.setEnabledFast(false)
 
     val movableContainer = actualVideoPlayerView.findViewById<View>(R.id.exo_content_frame)
       ?: actualVideoPlayerView
@@ -122,6 +141,15 @@ class VideoMediaView(
         }
       )
     )
+
+    muteUnmuteButton.setOnClickListener {
+      if (!muteUnmuteButton.isEnabled) {
+        return@setOnClickListener
+      }
+
+      mediaViewContract.toggleSoundMuteState()
+      updateMuteUnMuteState()
+    }
 
     thumbnailMediaView.setOnTouchListener { v, event ->
       if (thumbnailMediaView.visibility != View.VISIBLE) {
@@ -175,6 +203,16 @@ class VideoMediaView(
     }
   }
 
+  private fun updateAudioIcon(soundCurrentlyMuted: Boolean) {
+    muteUnmuteButton.setEnabledFast(true)
+
+    if (soundCurrentlyMuted) {
+      muteUnmuteButton.setImageResource(R.drawable.ic_volume_off_white_24dp)
+    } else {
+      muteUnmuteButton.setImageResource(R.drawable.ic_volume_up_white_24dp)
+    }
+  }
+
   private fun startFullVideoPreloading(mediaLocation: MediaLocation): Job {
     return scope.launch {
       try {
@@ -188,12 +226,7 @@ class VideoMediaView(
         actualVideoPlayerView.useArtwork = false
         actualVideoPlayerView.setShutterBackgroundColor(Color.TRANSPARENT)
 
-        if (isSystemUiHidden()) {
-          actualVideoPlayerView.hideController()
-        } else {
-          actualVideoPlayerView.showController()
-        }
-
+        onSystemUiVisibilityChanged(isSystemUiHidden())
         updatePlayerControlsInsets()
         updateExoBufferingViewColors()
 
@@ -221,36 +254,40 @@ class VideoMediaView(
   }
 
   override fun show() {
-    if (playJob != null) {
-      return
-    }
+    mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
+    updateMuteUnMuteState()
 
-    playJob = scope.launch {
-      if (hasContent) {
-        // Already loaded and ready to play
-        switchToPlayerViewAndStartPlaying()
-        return@launch
+    if (playJob == null) {
+      playJob = scope.launch {
+        if (hasContent) {
+          // Already loaded and ready to play
+          switchToPlayerViewAndStartPlaying()
+          playJob = null
+          return@launch
+        }
+
+        fullVideoDeferred.awaitCatching()
+          .onFailure { error ->
+            Logger.e(TAG, "onFullVideoLoadingError()", error)
+
+            if (error.isExceptionImportant()) {
+              cancellableToast.showToast(
+                context,
+                getString(R.string.image_failed_video_error, error.errorMessageOrClassName())
+              )
+            }
+
+            actualVideoPlayerView.setVisibilityFast(View.INVISIBLE)
+            thumbnailMediaView.setError(error.errorMessageOrClassName())
+          }
+          .onSuccess {
+            if (hasContent) {
+              switchToPlayerViewAndStartPlaying()
+            }
+          }
+
+        playJob = null
       }
-
-      fullVideoDeferred.awaitCatching()
-        .onFailure { error ->
-          Logger.e(TAG, "onFullVideoLoadingError()", error)
-
-          if (error.isExceptionImportant()) {
-            cancellableToast.showToast(
-              context,
-              getString(R.string.image_failed_video_error, error.errorMessageOrClassName())
-            )
-          }
-
-          actualVideoPlayerView.setVisibilityFast(View.INVISIBLE)
-          thumbnailMediaView.setError(error.errorMessageOrClassName())
-        }
-        .onSuccess {
-          if (hasContent) {
-            switchToPlayerViewAndStartPlaying()
-          }
-        }
     }
   }
 
@@ -262,6 +299,7 @@ class VideoMediaView(
     mediaViewState.prevWindowIndex = mainVideoPlayer.actualExoPlayer.currentWindowIndex
 
     mainVideoPlayer.pause()
+    mainVideoPlayer.resetPosition()
   }
 
   override fun unbind() {
@@ -273,7 +311,31 @@ class VideoMediaView(
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
   }
 
+  override suspend fun onReloadButtonClick() {
+    if (preloadingJob != null) {
+      return
+    }
+
+    val mediaLocation = viewableMedia.mediaLocation
+    if (mediaLocation !is MediaLocation.Remote) {
+      return
+    }
+
+    cacheHandler.deleteCacheFileByUrl(mediaLocation.url.toString())
+    fullVideoDeferred = CompletableDeferred<Unit>()
+
+    thumbnailMediaView.setVisibilityFast(View.VISIBLE)
+    actualVideoPlayerView.setVisibilityFast(View.INVISIBLE)
+    actualVideoPlayerView.player = null
+    mainVideoPlayer.setNoContent()
+
+    preloadingJob = startFullVideoPreloading(mediaLocation)
+    show()
+  }
+
   override fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {
+    super.onSystemUiVisibilityChanged(systemUIHidden)
+
     if (systemUIHidden) {
       actualVideoPlayerView.hideController()
     } else {
@@ -282,12 +344,16 @@ class VideoMediaView(
   }
 
   override fun hideControls() {
+    super.hideControls()
+
     if (actualVideoPlayerView.isControllerVisible) {
       actualVideoPlayerView.hideController()
     }
   }
 
   override fun showControls() {
+    super.showControls()
+
     if (!actualVideoPlayerView.isControllerVisible) {
       actualVideoPlayerView.showController()
     }
@@ -295,6 +361,12 @@ class VideoMediaView(
 
   override fun onInsetsChanged() {
     updatePlayerControlsInsets()
+  }
+
+  private fun updateMuteUnMuteState() {
+    val isSoundCurrentlyMuted = mediaViewContract.isSoundCurrentlyMuted()
+    updateAudioIcon(isSoundCurrentlyMuted)
+    mainVideoPlayer.muteUnMute(isSoundCurrentlyMuted)
   }
 
   @Suppress("IfThenToSafeAccess")

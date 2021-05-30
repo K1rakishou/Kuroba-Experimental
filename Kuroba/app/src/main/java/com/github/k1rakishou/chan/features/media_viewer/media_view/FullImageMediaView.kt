@@ -15,11 +15,13 @@ import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
 import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.FullMediaAppearAnimationHelper
-import com.github.k1rakishou.chan.ui.view.ChunkedLoadingBar
+import com.github.k1rakishou.chan.ui.view.CircularChunkedLoadingBar
 import com.github.k1rakishou.chan.ui.view.CustomScaleImageView
+import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -62,17 +64,21 @@ class FullImageMediaView(
   private val movableContainer: FrameLayout
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualImageView: CustomScaleImageView
-  private val loadingBar: ChunkedLoadingBar
+  private val loadingBar: CircularChunkedLoadingBar
 
   private val gestureDetector: GestureDetector
   private val closeMediaActionHelper: CloseMediaActionHelper
   private val canAutoLoad by lazy { MediaViewerControllerViewModel.canAutoLoad(cacheHandler, viewableMedia) }
 
-  private val fullImageDeferred = CompletableDeferred<File>()
+  private var fullImageDeferred = CompletableDeferred<File>()
   private var preloadCancelableDownload: CancelableDownload? = null
+
+  private val fullImageMediaViewOptions by lazy { emptyList<FloatingListMenuItem>() }
 
   override val hasContent: Boolean
     get() = actualImageView.hasImage()
+  override val mediaOptions: List<FloatingListMenuItem>
+    get() = fullImageMediaViewOptions
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -84,6 +90,9 @@ class FullImageMediaView(
     thumbnailMediaView = findViewById(R.id.thumbnail_media_view)
     actualImageView = findViewById(R.id.actual_image_view)
     loadingBar = findViewById(R.id.loading_bar)
+
+    val toolbar = findViewById<MediaViewerToolbar>(R.id.full_media_view_toolbar)
+    initToolbar(toolbar)
 
     closeMediaActionHelper = CloseMediaActionHelper(
       context = context,
@@ -162,6 +171,74 @@ class FullImageMediaView(
     }
   }
 
+  override fun bind() {
+
+  }
+
+  override fun show() {
+    mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
+
+    if (!hasContent) {
+      scope.launch {
+        fullImageDeferred.awaitCatching()
+          .onFailure { error ->
+            Logger.e(TAG, "onFullImageLoadingError()", error)
+
+            if (error.isExceptionImportant()) {
+              cancellableToast.showToast(
+                context,
+                getString(R.string.image_failed_big_image_error, error.errorMessageOrClassName())
+              )
+            }
+
+            actualImageView.setVisibilityFast(View.INVISIBLE)
+            thumbnailMediaView.setError(error.errorMessageOrClassName())
+          }
+          .onSuccess { file ->
+            setBigImageFromFile(file)
+          }
+
+        loadingBar.setVisibilityFast(GONE)
+      }
+    }
+  }
+
+  override fun hide() {
+    actualImageView.resetScaleAndCenter()
+  }
+
+  override fun unbind() {
+    thumbnailMediaView.unbind()
+
+    preloadCancelableDownload?.cancel()
+    preloadCancelableDownload = null
+
+    actualImageView.setCallback(null)
+    actualImageView.recycle()
+  }
+
+  override suspend fun onReloadButtonClick() {
+    if (preloadCancelableDownload != null) {
+      return
+    }
+
+    val mediaLocation = viewableMedia.mediaLocation
+    if (mediaLocation !is MediaLocation.Remote) {
+      return
+    }
+
+    cacheHandler.deleteCacheFileByUrl(mediaLocation.url.toString())
+    fullImageDeferred = CompletableDeferred<File>()
+
+    thumbnailMediaView.setVisibilityFast(View.VISIBLE)
+    actualImageView.setVisibilityFast(View.INVISIBLE)
+    actualImageView.setCallback(null)
+    actualImageView.recycle()
+
+    preloadCancelableDownload = startFullImagePreloading(mediaLocation)
+    show()
+  }
+
   private fun startFullImagePreloading(mediaLocationRemote: MediaLocation.Remote): CancelableDownload? {
     val extraInfo = DownloadRequestExtraInfo(
       viewableMedia.viewableMediaMeta.mediaSize ?: -1,
@@ -214,50 +291,6 @@ class FullImageMediaView(
         }
       }
     )
-  }
-
-  override fun bind() {
-
-  }
-
-  override fun show() {
-    if (!hasContent) {
-      scope.launch {
-        fullImageDeferred.awaitCatching()
-          .onFailure { error ->
-            Logger.e(TAG, "onFullImageLoadingError()", error)
-
-            if (error.isExceptionImportant()) {
-              cancellableToast.showToast(
-                context,
-                getString(R.string.image_failed_big_image_error, error.errorMessageOrClassName())
-              )
-            }
-
-            actualImageView.setVisibilityFast(View.INVISIBLE)
-            thumbnailMediaView.setError(error.errorMessageOrClassName())
-          }
-          .onSuccess { file ->
-            setBigImageFromFile(file)
-          }
-
-        loadingBar.setVisibilityFast(GONE)
-      }
-    }
-  }
-
-  override fun hide() {
-    actualImageView.resetScaleAndCenter()
-  }
-
-  override fun unbind() {
-    thumbnailMediaView.unbind()
-
-    preloadCancelableDownload?.cancel()
-    preloadCancelableDownload = null
-
-    actualImageView.setCallback(null)
-    actualImageView.recycle()
   }
 
   private suspend fun setBigImageFromFile(file: File) {

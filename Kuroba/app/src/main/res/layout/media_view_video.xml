@@ -19,6 +19,11 @@
         app:controller_layout_id="@layout/exo_player_control_view"
         app:surface_type="texture_view" />
 
+    <com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
+        android:id="@+id/full_video_view_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/toolbar_height"/>
+
     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableProgressBar
         android:id="@+id/buffering_progress_view"
         android:layout_width="42dp"

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
+import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.google.android.exoplayer2.upstream.DataSource
 
@@ -24,9 +25,12 @@ class UnsupportedMediaView(
   mediaViewContract = mediaViewContract,
   mediaViewState = initialMediaViewState
 ) {
+  private val fullImageMediaViewOptions by lazy { emptyList<FloatingListMenuItem>() }
 
   override val hasContent: Boolean
     get() = false
+  override val mediaOptions: List<FloatingListMenuItem>
+    get() = fullImageMediaViewOptions
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
