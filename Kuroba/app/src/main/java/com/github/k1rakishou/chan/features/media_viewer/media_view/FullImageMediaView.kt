@@ -198,6 +198,7 @@ class FullImageMediaView(
           }
 
         loadingBar.setVisibilityFast(GONE)
+        onMediaFullyLoaded()
       }
     }
   }

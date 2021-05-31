@@ -1,5 +1,6 @@
 package com.github.k1rakishou.core_themes
 
+import android.app.Activity
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color
@@ -31,7 +32,7 @@ open class ThemeEngine(
   private val listeners = hashMapOf<Long, ThemeChangesListener>()
   private val attributeCache = AttributeCache()
 
-  private var rootView: View? = null
+  private val rootViews = mutableMapOf<Activity, View>()
 
   lateinit var defaultDarkTheme: ChanTheme
   lateinit var defaultLightTheme: ChanTheme
@@ -77,12 +78,12 @@ open class ThemeEngine(
   fun lightTheme(): ChanTheme = actualLightTheme ?: defaultLightTheme
   fun darkTheme(): ChanTheme = actualDarkTheme ?: defaultDarkTheme
 
-  fun setRootView(view: View) {
-    this.rootView = view.rootView
+  fun setRootView(activity: Activity, view: View) {
+    this.rootViews[activity] = view.rootView
   }
 
-  fun removeRootView() {
-    this.rootView = null
+  fun removeRootView(activity: Activity) {
+    this.rootViews.remove(activity)
   }
 
   fun addListener(key: Long, listener: ThemeChangesListener) {
@@ -132,11 +133,14 @@ open class ThemeEngine(
   }
 
   fun refreshViews() {
-    if (rootView == null) {
+    if (rootViews.isEmpty()) {
       return
     }
 
-    updateViews(rootView!!)
+    rootViews.values.forEach { rootView ->
+      updateViews(rootView)
+    }
+
     listeners.forEach { listener -> listener.value.onThemeChanged() }
   }
 

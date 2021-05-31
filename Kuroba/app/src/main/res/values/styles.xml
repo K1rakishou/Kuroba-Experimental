@@ -64,7 +64,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item name="android:textColorHighlight">#FF00FF</item>
     </style>
 
-    <style name="Chan.TranslucentActivityTheme" parent="Theme.AppCompat.NoActionBar">
+    <style name="Chan.TranslucentActivityTheme" parent="Theme.MaterialComponents.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowContentOverlay">@null</item>

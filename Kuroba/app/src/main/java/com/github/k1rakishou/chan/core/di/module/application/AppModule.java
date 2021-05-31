@@ -16,6 +16,9 @@
  */
 package com.github.k1rakishou.chan.core.di.module.application;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getAvailableSpaceInBytes;
+import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
+
 import android.content.Context;
 import android.net.ConnectivityManager;
 
@@ -44,7 +47,6 @@ import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
-import com.github.k1rakishou.fsaf.FileChooser;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository;
 import com.google.gson.Gson;
@@ -61,9 +63,6 @@ import kotlin.Lazy;
 import kotlin.LazyKt;
 import kotlin.LazyThreadSafetyMode;
 import kotlinx.coroutines.CoroutineScope;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getAvailableSpaceInBytes;
-import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
 
 @Module
 public class AppModule {
@@ -195,12 +194,6 @@ public class AppModule {
     @Singleton
     public CaptchaHolder provideCaptchaHolder() {
         return new CaptchaHolder();
-    }
-
-    @Provides
-    @Singleton
-    public FileChooser provideFileChooser(Context appContext) {
-        return new FileChooser(appContext);
     }
 
     @Provides

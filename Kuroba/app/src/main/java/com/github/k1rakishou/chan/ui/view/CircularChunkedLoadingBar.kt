@@ -26,7 +26,7 @@ class CircularChunkedLoadingBar @JvmOverloads constructor(
 
   private val rotateAnimation by lazy {
     ValueAnimator.ofFloat(0f, 360f).apply {
-      duration = 1500
+      duration = 2500
       repeatMode = ValueAnimator.RESTART
       repeatCount = ValueAnimator.INFINITE
       interpolator = INTERPOLATOR

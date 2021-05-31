@@ -13,6 +13,7 @@ import com.github.k1rakishou.common.doIoTaskWithAttempts
 import com.github.k1rakishou.common.isOutOfDiskSpaceError
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.download.ImageDownloadRequest
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
@@ -22,6 +23,7 @@ import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.HttpUrl
 import org.joda.time.DateTime
 import java.io.File
 import java.io.IOException
@@ -69,19 +71,18 @@ class ImageSaverV2(
     }
   }
 
-  fun save(imageSaverV2Options: ImageSaverV2Options, postImage: ChanPostImage, newFileName: String?) {
-    checkInputs(listOf(postImage))
-    Logger.d(TAG, "save('$imageSaverV2Options', imageUrl='${postImage.imageUrl}', newFileName='$newFileName')")
+  fun save(imageSaverV2Options: ImageSaverV2Options, simpleSaveableMediaInfo: SimpleSaveableMediaInfo, newFileName: String?) {
+    Logger.d(TAG, "save('$imageSaverV2Options', mediaUrl='${simpleSaveableMediaInfo.mediaUrl}', newFileName='$newFileName')")
 
     rendezvousCoroutineExecutor.post {
-      val uniqueId = calculateUniqueId(listOf(postImage))
+      val uniqueId = calculateUniqueId(listOf(simpleSaveableMediaInfo))
       val duplicatesResolution =
         ImageSaverV2Options.DuplicatesResolution.fromRawValue(imageSaverV2Options.duplicatesResolution)
 
       val imageDownloadRequest = ImageDownloadRequest(
         uniqueId = uniqueId,
-        imageFullUrl = postImage.imageUrl!!,
-        postDescriptorString = postImage.ownerPostDescriptor.serializeToString(),
+        imageFullUrl = simpleSaveableMediaInfo.mediaUrl,
+        postDescriptorString = simpleSaveableMediaInfo.ownerPostDescriptor.serializeToString(),
         newFileName = newFileName,
         status = ImageDownloadRequest.Status.Queued,
         duplicateFileUri = null,
@@ -97,7 +98,7 @@ class ImageSaverV2(
 
       if (actualImageDownloadRequest == null) {
         // This request is already active
-        Logger.d(TAG, "save('$imageSaverV2Options', imageUrl='${postImage.imageUrl}', " +
+        Logger.d(TAG, "save('$imageSaverV2Options', mediaUrl='${simpleSaveableMediaInfo.mediaUrl}', " +
           "newFileName='$newFileName') request is already active")
         return@post
       }
@@ -110,22 +111,18 @@ class ImageSaverV2(
     }
   }
 
-  fun saveMany(imageSaverV2Options: ImageSaverV2Options, postImages: Collection<ChanPostImage>) {
-    checkInputs(postImages)
-    Logger.d(TAG, "saveMany('$imageSaverV2Options', postImagesCount=${postImages.size})")
+  fun saveMany(imageSaverV2Options: ImageSaverV2Options, simpleSaveableMediaInfoList: Collection<SimpleSaveableMediaInfo>) {
+    Logger.d(TAG, "saveMany('$imageSaverV2Options', simpleSaveableMediaInfoListCount=${simpleSaveableMediaInfoList.size})")
 
     rendezvousCoroutineExecutor.post {
-      val uniqueId = calculateUniqueId(postImages)
+      val uniqueId = calculateUniqueId(simpleSaveableMediaInfoList)
       val duplicatesResolution =
         ImageSaverV2Options.DuplicatesResolution.fromRawValue(imageSaverV2Options.duplicatesResolution)
 
-      val imageDownloadRequests = postImages.mapNotNull { postImage ->
-        val imageUrl = postImage.imageUrl
-          ?: return@mapNotNull null
-
+      val imageDownloadRequests = simpleSaveableMediaInfoList.mapNotNull { postImage ->
         return@mapNotNull ImageDownloadRequest(
           uniqueId = uniqueId,
-          imageFullUrl = imageUrl,
+          imageFullUrl = postImage.mediaUrl,
           postDescriptorString = postImage.ownerPostDescriptor.serializeToString(),
           newFileName = null,
           status = ImageDownloadRequest.Status.Queued,
@@ -145,7 +142,7 @@ class ImageSaverV2(
 
       if (actualImageDownloadRequests.isEmpty()) {
         // This request is already active
-        Logger.d(TAG, "saveMany('$imageSaverV2Options', postImagesCount=${postImages.size})")
+        Logger.d(TAG, "saveMany('$imageSaverV2Options', simpleSaveableMediaInfoListCount=${simpleSaveableMediaInfoList.size})")
         return@post
       }
 
@@ -158,7 +155,6 @@ class ImageSaverV2(
   }
 
   fun share(postImage: ChanPostImage, onShareResult: (ModularResult<Unit>) -> Unit) {
-    checkInputs(listOf(postImage))
     Logger.d(TAG, "share('${postImage.imageUrl}')")
 
     rendezvousCoroutineExecutor.post {
@@ -258,18 +254,41 @@ class ImageSaverV2(
       "uniqueId='$uniqueId', imageSaverV2Options=$imageSaverV2Options, downloadType=$downloadType")
   }
 
-  private fun calculateUniqueId(postImages: Collection<ChanPostImage>): String {
-    check(postImages.isNotEmpty()) { "postImages must not be empty" }
+  private fun calculateUniqueId(simpleSaveableMediaInfoList: Collection<SimpleSaveableMediaInfo>): String {
+    check(simpleSaveableMediaInfoList.isNotEmpty()) { "simpleSaveableMediaInfoList must not be empty" }
 
-    val urls = postImages.map { chanPostImage -> chanPostImage.imageUrl!!.toString() }
+    val urls = simpleSaveableMediaInfoList.map { chanPostImage -> chanPostImage.mediaUrl.toString() }
     val md5Hash = HashingUtil.stringsHash(urls)
 
     return "${TAG}_$md5Hash"
   }
 
-  private fun checkInputs(postImages: Collection<ChanPostImage>) {
-    postImages.forEach { postImage ->
-      requireNotNull(postImage.imageUrl) { "postImage.imageUrl is null" }
+  data class SimpleSaveableMediaInfo(
+    val mediaUrl: HttpUrl,
+    val ownerPostDescriptor: PostDescriptor,
+    val serverFilename: String,
+    val originalFileName: String?,
+    val extension: String
+  ) {
+    companion object {
+      @JvmStatic
+      fun fromChanPostImage(chanPostImage: ChanPostImage): SimpleSaveableMediaInfo? {
+        val mediaUrl = chanPostImage.imageUrl
+          ?: return null
+        val originalFileName = chanPostImage.filename
+          ?: return null
+        val extension = chanPostImage.extension
+          ?: return null
+        val serverFilename = chanPostImage.serverFilename
+
+        return SimpleSaveableMediaInfo(
+          mediaUrl = mediaUrl,
+          ownerPostDescriptor = chanPostImage.ownerPostDescriptor,
+          serverFilename = serverFilename,
+          originalFileName = originalFileName,
+          extension = extension
+        )
+      }
     }
   }
 

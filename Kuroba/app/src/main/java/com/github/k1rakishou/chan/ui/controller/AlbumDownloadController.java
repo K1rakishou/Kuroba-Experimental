@@ -202,7 +202,7 @@ public class AlbumDownloadController
             return;
         }
 
-        List<ChanPostImage> chanPostImages = new ArrayList<>(items.size());
+        List<ImageSaverV2.SimpleSaveableMediaInfo> simpleSaveableMediaInfoList = new ArrayList<>(items.size());
         for (AlbumDownloadItem item : items) {
             if (item.postImage.isInlined() || item.postImage.getHidden()) {
                 // Do not download inlined files via the Album downloads (because they often
@@ -212,18 +212,23 @@ public class AlbumDownloadController
             }
 
             if (item.checked) {
-                chanPostImages.add(item.postImage);
+                ImageSaverV2.SimpleSaveableMediaInfo simpleSaveableMediaInfo =
+                        ImageSaverV2.SimpleSaveableMediaInfo.fromChanPostImage(item.postImage);
+
+                if (simpleSaveableMediaInfo != null) {
+                    simpleSaveableMediaInfoList.add(simpleSaveableMediaInfo);
+                }
             }
         }
 
-        if (chanPostImages.isEmpty()) {
+        if (simpleSaveableMediaInfoList.isEmpty()) {
             showToast(R.string.album_download_no_suitable_images);
             return;
         }
 
         ImageSaverV2OptionsController.Options options = new ImageSaverV2OptionsController.Options.MultipleImages(
                 (updatedImageSaverV2Options) -> {
-                    imageSaverV2.saveMany(updatedImageSaverV2Options, chanPostImages);
+                    imageSaverV2.saveMany(updatedImageSaverV2Options, simpleSaveableMediaInfoList);
 
                     // Close this controller
                     navigationController.popController();

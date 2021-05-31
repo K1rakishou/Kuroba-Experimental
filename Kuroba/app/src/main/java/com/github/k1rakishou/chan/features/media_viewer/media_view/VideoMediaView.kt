@@ -79,7 +79,10 @@ class VideoMediaView(
     context = context,
     cacheDataSourceFactory = cacheDataSourceFactory,
     mediaViewContract = mediaViewContract,
-    onAudioDetected = { updateAudioIcon(mediaViewContract.isSoundCurrentlyMuted()) }
+    onAudioDetected = {
+      updateAudioIcon(mediaViewContract.isSoundCurrentlyMuted())
+      videoSoundDetected = true
+    }
   )
 
   private val closeMediaActionHelper: CloseMediaActionHelper
@@ -89,6 +92,7 @@ class VideoMediaView(
   private var fullVideoDeferred = CompletableDeferred<Unit>()
   private var preloadingJob: Job? = null
   private var playJob: Job? = null
+  private var videoSoundDetected = false
 
   private val fullImageMediaViewOptions by lazy { emptyList<FloatingListMenuItem>() }
 
@@ -212,8 +216,9 @@ class VideoMediaView(
 
   private fun startFullVideoPreloading(mediaLocation: MediaLocation): Job {
     return scope.launch {
+      this@VideoMediaView.videoSoundDetected = mediaViewState.videoSoundDetected
+
       try {
-        actualVideoPlayerView.player = mainVideoPlayer.actualExoPlayer
         actualVideoPlayerView.setOnClickListener(null)
         actualVideoPlayerView.useController = true
         actualVideoPlayerView.controllerAutoShow = false
@@ -222,6 +227,7 @@ class VideoMediaView(
         actualVideoPlayerView.setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
         actualVideoPlayerView.useArtwork = false
         actualVideoPlayerView.setShutterBackgroundColor(Color.TRANSPARENT)
+        actualVideoPlayerView.player = mainVideoPlayer.actualExoPlayer
 
         updatePlayerControlsInsets()
         updateExoBufferingViewColors()
@@ -284,6 +290,7 @@ class VideoMediaView(
             }
           }
 
+        onMediaFullyLoaded()
         playJob = null
       }
     }
@@ -295,6 +302,7 @@ class VideoMediaView(
 
     mediaViewState.prevPosition = mainVideoPlayer.actualExoPlayer.currentPosition
     mediaViewState.prevWindowIndex = mainVideoPlayer.actualExoPlayer.currentWindowIndex
+    mediaViewState.videoSoundDetected = videoSoundDetected
 
     mainVideoPlayer.pause()
     mainVideoPlayer.resetPosition()
@@ -326,6 +334,7 @@ class VideoMediaView(
     actualVideoPlayerView.setVisibilityFast(View.INVISIBLE)
     actualVideoPlayerView.player = null
     mainVideoPlayer.setNoContent()
+    videoSoundDetected = false
 
     preloadingJob = startFullVideoPreloading(mediaLocation)
     show()
@@ -362,6 +371,10 @@ class VideoMediaView(
   }
 
   private fun updateMuteUnMuteState() {
+    if (!videoSoundDetected) {
+      return
+    }
+
     val isSoundCurrentlyMuted = mediaViewContract.isSoundCurrentlyMuted()
     updateAudioIcon(isSoundCurrentlyMuted)
     mainVideoPlayer.muteUnMute(isSoundCurrentlyMuted)
@@ -415,15 +428,20 @@ class VideoMediaView(
       && (preloadingJob == null || preloadingJob?.isActive == false)
   }
 
-  class VideoMediaViewState(var prevPosition: Long = -1, var prevWindowIndex: Int = -1) : MediaViewState {
+  class VideoMediaViewState(
+    var prevPosition: Long = -1,
+    var prevWindowIndex: Int = -1,
+    var videoSoundDetected: Boolean = false
+  ) : MediaViewState {
     override fun clone(): MediaViewState {
-      return VideoMediaViewState(prevPosition, prevWindowIndex)
+      return VideoMediaViewState(prevPosition, prevWindowIndex, videoSoundDetected)
     }
 
     override fun updateFrom(other: MediaViewState?) {
       if (other == null) {
         prevPosition = -1
         prevWindowIndex = -1
+        videoSoundDetected = false
         return
       }
 
@@ -433,6 +451,7 @@ class VideoMediaView(
 
       this.prevPosition = other.prevPosition
       this.prevWindowIndex = other.prevWindowIndex
+      this.videoSoundDetected = other.videoSoundDetected
     }
   }
 
@@ -443,6 +462,10 @@ class VideoMediaView(
     private val tryPreloadingFunc: () -> Boolean
   ) : GestureDetector.SimpleOnGestureListener() {
 
+    override fun onDown(e: MotionEvent?): Boolean {
+      return true
+    }
+
     override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
       if (actualVideoView.visibility == View.VISIBLE) {
         mediaViewContract.onTapped()
@@ -451,7 +474,7 @@ class VideoMediaView(
         return tryPreloadingFunc()
       }
 
-      return super.onSingleTapConfirmed(e)
+      return false
     }
 
     override fun onDoubleTap(e: MotionEvent?): Boolean {
@@ -463,8 +486,7 @@ class VideoMediaView(
         ?: return false
 
       exoPlayer.playWhenReady = exoPlayer.playWhenReady.not()
-
-      return super.onDoubleTap(e)
+      return true
     }
 
   }

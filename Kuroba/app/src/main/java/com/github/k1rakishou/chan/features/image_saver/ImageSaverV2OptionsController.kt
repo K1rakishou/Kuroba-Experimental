@@ -29,7 +29,6 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.callback.directory.PermanentDirectoryChooserCallback
-import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
 import com.github.k1rakishou.persist_state.PersistableChanState
 import javax.inject.Inject
@@ -309,8 +308,18 @@ class ImageSaverV2OptionsController(
   override fun onDestroy() {
     super.onDestroy()
 
-    if (needCallCancelFunc && options is Options.ResultDirAccessProblems) {
-      options.onCancelClicked()
+    if (needCallCancelFunc) {
+      when (options) {
+        is Options.MultipleImages -> {
+          // no-op
+        }
+        is Options.ResultDirAccessProblems -> {
+          options.onCancelClicked()
+        }
+        is Options.SingleImage -> {
+          options.onCanceled()
+        }
+      }
     }
 
     rootDirButtonBackgroundAnimation.end()
@@ -380,10 +389,10 @@ class ImageSaverV2OptionsController(
       }
     }
 
-    val chanPostImage = options.chanPostImageOrNull()
+    val simpleImageInfo = options.simpleImageInfoOrNull()
 
-    val currentFileNameString = if (chanPostImage != null) {
-      val currentFileNameString = getCurrentFileName(currentImageSaverSetting, chanPostImage)
+    val currentFileNameString = if (simpleImageInfo != null) {
+      val currentFileNameString = getCurrentFileName(currentImageSaverSetting, simpleImageInfo)
 
       customFileName.doIgnoringTextWatcher(fileNameTextWatcher) {
         text?.replace(0, text!!.length, currentFileNameString)
@@ -449,16 +458,16 @@ class ImageSaverV2OptionsController(
         append("\\${subDirsString}")
       }
 
-      if (currentFileNameString != null && chanPostImage != null) {
+      if (currentFileNameString != null && simpleImageInfo != null) {
         append("\\${currentFileNameString}")
         append(".")
-        append(chanPostImage.extension)
+        append(simpleImageInfo.extension)
       }
     }
 
     resultPath.setText(outputDirText)
 
-    if (chanPostImage != null) {
+    if (simpleImageInfo != null) {
       if (currentFileNameString.isNullOrBlank()) {
         customFileName.error = context.getString(R.string.controller_image_save_options_file_name_is_blank)
         enableDisableSaveButton(enable = false)
@@ -473,17 +482,17 @@ class ImageSaverV2OptionsController(
 
   private fun getCurrentFileName(
     currentImageSaverSetting: ImageSaverV2Options,
-    chanPostImage: ChanPostImage
+    simpleSaveableMediaInfo: ImageSaverV2.SimpleSaveableMediaInfo
   ): String {
     val fileName = if (overriddenFileName != null) {
       overriddenFileName!!
     } else {
       when (currentImageSaverSetting.imageNameOptions) {
         ImageSaverV2Options.ImageNameOptions.UseServerFileName.rawValue -> {
-          chanPostImage.serverFilename
+          simpleSaveableMediaInfo.serverFilename
         }
         ImageSaverV2Options.ImageNameOptions.UseOriginalFileName.rawValue -> {
-          chanPostImage.filename
+          simpleSaveableMediaInfo.originalFileName
         }
         else -> throw IllegalArgumentException("Unknown imageNameOptions: ${currentImageSaverSetting.imageNameOptions}")
       }
@@ -491,7 +500,7 @@ class ImageSaverV2OptionsController(
 
     val fixedFileName = StringUtils.fileNameRemoveBadCharacters(fileName)
     if (fixedFileName.isNullOrEmpty()) {
-      return chanPostImage.serverFilename
+      return simpleSaveableMediaInfo.serverFilename
     }
 
     return fixedFileName
@@ -504,17 +513,18 @@ class ImageSaverV2OptionsController(
   }
 
   sealed class Options {
-    fun chanPostImageOrNull(): ChanPostImage? {
+    fun simpleImageInfoOrNull(): ImageSaverV2.SimpleSaveableMediaInfo? {
       return when (this) {
-        is SingleImage -> chanPostImage
+        is SingleImage -> simpleSaveableMediaInfo
         is ResultDirAccessProblems -> null
         is MultipleImages -> null
       }
     }
 
     data class SingleImage(
-      val chanPostImage: ChanPostImage,
-      val onSaveClicked: (ImageSaverV2Options, String?) -> Unit
+      val simpleSaveableMediaInfo: ImageSaverV2.SimpleSaveableMediaInfo,
+      val onSaveClicked: (ImageSaverV2Options, String?) -> Unit,
+      val onCanceled: () -> Unit
     ) : Options()
 
     data class MultipleImages(

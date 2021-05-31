@@ -145,4 +145,10 @@ public class ActivityModule {
         );
     }
 
+    @PerActivity
+    @Provides
+    public FileChooser provideFileChooser(AppCompatActivity activity) {
+        return new FileChooser(activity);
+    }
+
 }

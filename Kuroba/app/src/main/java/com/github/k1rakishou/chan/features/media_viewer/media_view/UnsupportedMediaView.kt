@@ -52,6 +52,7 @@ class UnsupportedMediaView(
 
   override fun show() {
     onSystemUiVisibilityChanged(isSystemUiHidden())
+    onMediaFullyLoaded()
   }
 
   override fun hide() {

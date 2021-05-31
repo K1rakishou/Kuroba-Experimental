@@ -10,6 +10,6 @@ interface MediaViewContract {
 
   fun onTapped()
   fun closeMediaViewer()
-  fun onDownloadButtonClick(viewableMedia: ViewableMedia, longClick: Boolean)
+  suspend fun onDownloadButtonClick(viewableMedia: ViewableMedia, longClick: Boolean): Boolean
   fun onOptionsButtonClick(viewableMedia: ViewableMedia)
 }

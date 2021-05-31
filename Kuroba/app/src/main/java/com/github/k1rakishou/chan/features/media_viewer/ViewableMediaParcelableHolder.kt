@@ -1,6 +1,8 @@
 package com.github.k1rakishou.chan.features.media_viewer
 
 import android.os.Parcelable
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
+import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -82,6 +84,66 @@ sealed class ViewableMedia(
   open val viewableMediaMeta: ViewableMediaMeta
 ) {
 
+  fun toSimpleImageInfoOrNull(): ImageSaverV2.SimpleSaveableMediaInfo? {
+    val postDescriptor = viewableMediaMeta.ownerPostDescriptor
+      ?: return null
+
+    val mediaUrl = when (val location = mediaLocation) {
+      is MediaLocation.Local -> null
+      is MediaLocation.Remote -> location.url
+    }
+
+    if (mediaUrl == null) {
+      return null
+    }
+
+    var serverFileName = viewableMediaMeta.serverMediaName
+    if (serverFileName.isNullOrEmpty()) {
+      serverFileName = when (val location = mediaLocation) {
+        is MediaLocation.Local -> {
+          if (!location.path.contains("/")) {
+            null
+          } else {
+            location.path.substringAfterLast("/")
+          }
+        }
+        is MediaLocation.Remote -> {
+          location.url.pathSegments.lastOrNull()
+        }
+      }
+    }
+
+    if (serverFileName.isNullOrEmpty()) {
+      return null
+    }
+
+    var extension = viewableMediaMeta.extension
+    if (extension.isNullOrEmpty()) {
+      extension = when (val location = mediaLocation) {
+        is MediaLocation.Local -> {
+          StringUtils.extractFileNameExtension(location.path)
+        }
+        is MediaLocation.Remote -> {
+          location.url.pathSegments.lastOrNull()?.let { segment ->
+            StringUtils.extractFileNameExtension(segment)
+          }
+        }
+      }
+    }
+
+    if (extension.isNullOrEmpty()) {
+      return null
+    }
+
+    return ImageSaverV2.SimpleSaveableMediaInfo(
+      mediaUrl = mediaUrl,
+      ownerPostDescriptor = postDescriptor,
+      serverFilename = serverFileName,
+      originalFileName = viewableMediaMeta.originalMediaName,
+      extension = extension
+    )
+  }
+
   data class Image(
     override val mediaLocation: MediaLocation,
     override val previewLocation: MediaLocation?,
@@ -114,7 +176,8 @@ sealed class ViewableMedia(
 
 data class ViewableMediaMeta(
   val ownerPostDescriptor: PostDescriptor?,
-  val mediaName: String?,
+  val serverMediaName: String?,
+  val originalMediaName: String?,
   val extension: String?,
   val mediaWidth: Int?,
   val mediaHeight: Int?,

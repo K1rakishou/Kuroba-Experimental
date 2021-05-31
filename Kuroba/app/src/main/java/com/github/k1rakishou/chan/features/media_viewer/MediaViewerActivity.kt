@@ -26,17 +26,24 @@ import com.github.k1rakishou.chan.utils.FullScreenUtils.toggleSystemUI
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.fsaf.FileChooser
+import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class MediaViewerActivity : ControllerHostActivity(), MediaViewerController.MediaViewerCallbacks {
+class MediaViewerActivity : ControllerHostActivity(),
+  MediaViewerController.MediaViewerCallbacks,
+  ThemeEngine.ThemeChangesListener,
+  FSAFActivityCallbacks {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var fileChooser: FileChooser
 
   private lateinit var activityComponent: ActivityComponent
   private lateinit var viewModelComponent: ViewModelComponent
@@ -78,6 +85,10 @@ class MediaViewerActivity : ControllerHostActivity(), MediaViewerController.Medi
       onShow()
     }
 
+    themeEngine.setRootView(this, mediaViewerController.view)
+    themeEngine.addListener(this)
+    fileChooser.setCallbacks(this)
+
     window.setupEdgeToEdge()
     window.setupStatusAndNavBarColors(themeEngine.chanTheme)
 
@@ -103,6 +114,15 @@ class MediaViewerActivity : ControllerHostActivity(), MediaViewerController.Medi
 
   override fun onDestroy() {
     super.onDestroy()
+
+    if (::themeEngine.isInitialized) {
+      themeEngine.removeRootView(this)
+      themeEngine.removeListener(this)
+    }
+
+    if (::fileChooser.isInitialized) {
+      fileChooser.removeCallbacks()
+    }
 
     AndroidUtils.getWindow(this).clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
   }
@@ -136,6 +156,31 @@ class MediaViewerActivity : ControllerHostActivity(), MediaViewerController.Medi
       mediaViewerController.onSystemUiVisibilityChanged(window.isSystemUIHidden())
       PersistableChanState.imageViewerImmersiveModeEnabled.set(window.isSystemUIHidden())
     }
+  }
+
+  override fun onThemeChanged() {
+    window.setupStatusAndNavBarColors(themeEngine.chanTheme)
+  }
+
+  override fun fsafStartActivityForResult(intent: Intent, requestCode: Int) {
+    startActivityForResult(intent, requestCode)
+  }
+
+  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    super.onActivityResult(requestCode, resultCode, data)
+
+    if (fileChooser.onActivityResult(requestCode, resultCode, data)) {
+      return
+    }
+  }
+
+  override fun onRequestPermissionsResult(
+    requestCode: Int,
+    permissions: Array<String>,
+    grantResults: IntArray
+  ) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    runtimePermissionsHelper.onRequestPermissionsResult(requestCode, permissions, grantResults)
   }
 
   private suspend fun handleNewIntent(isNotActivityRecreation: Boolean, intent: Intent?): Boolean {

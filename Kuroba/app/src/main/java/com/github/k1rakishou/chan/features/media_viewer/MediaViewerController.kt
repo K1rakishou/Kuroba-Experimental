@@ -9,6 +9,8 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
+import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerCache
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewContract
@@ -23,6 +25,7 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.awaitSilently
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.persist_state.PersistableChanState.imageSaverV2PersistedOptions
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.upstream.cache.CacheDataSource
 import kotlinx.coroutines.CompletableDeferred
@@ -40,12 +43,18 @@ class MediaViewerController(
 
   @Inject
   lateinit var appConstants: AppConstants
+
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
+
   @Inject
   lateinit var mediaViewerScrollerHelper: MediaViewerScrollerHelper
+
   @Inject
   lateinit var exoPlayerCache: ExoPlayerCache
+
+  @Inject
+  lateinit var imageSaverV2: ImageSaverV2
 
   private lateinit var mediaViewerRootLayout: TouchBlockingFrameLayoutNoBackground
   private lateinit var appearPreviewImage: AppearTransitionImageView
@@ -184,8 +193,33 @@ class MediaViewerController(
     mediaViewerCallbacks.finishActivity()
   }
 
-  override fun onDownloadButtonClick(viewableMedia: ViewableMedia, longClick: Boolean) {
-    // TODO(KurobaEx):
+  override suspend fun onDownloadButtonClick(viewableMedia: ViewableMedia, longClick: Boolean): Boolean {
+    val simpleImageInfo = viewableMedia.toSimpleImageInfoOrNull()
+    if (simpleImageInfo == null) {
+      showToast("Cannot save image: ${viewableMedia}")
+      return false
+    }
+
+    val imageSaverV2Options = imageSaverV2PersistedOptions.get()
+
+    if (!longClick && !imageSaverV2Options.shouldShowImageSaverOptionsController()) {
+      imageSaverV2.save(imageSaverV2Options, simpleImageInfo, null)
+      return true
+    }
+
+    return suspendCancellableCoroutine { continuation ->
+      val options = ImageSaverV2OptionsController.Options.SingleImage(
+        simpleSaveableMediaInfo = simpleImageInfo,
+        onSaveClicked = { updatedImageSaverV2Options, newFileName ->
+          imageSaverV2.save(updatedImageSaverV2Options, simpleImageInfo, newFileName)
+          continuation.resume(true)
+        },
+        onCanceled = { continuation.resume(false) }
+      )
+
+      val controller = ImageSaverV2OptionsController(context, options)
+      presentController(controller)
+    }
   }
 
   override fun onOptionsButtonClick(viewableMedia: ViewableMedia) {
@@ -233,8 +267,10 @@ class MediaViewerController(
     pager.setVisibilityFast(View.VISIBLE)
     appearPreviewImage.setVisibilityFast(View.INVISIBLE)
 
-    Logger.d(TAG, "Loaded ${mediaViewerState.loadedMedia.size} media items, " +
-      "initialPagerIndex=${mediaViewerState.initialPagerIndex}")
+    Logger.d(
+      TAG, "Loaded ${mediaViewerState.loadedMedia.size} media items, " +
+        "initialPagerIndex=${mediaViewerState.initialPagerIndex}"
+    )
   }
 
   private suspend fun runAppearAnimation(transitionInfo: ViewableMediaParcelableHolder.TransitionInfo?) {

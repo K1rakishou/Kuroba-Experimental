@@ -208,7 +208,7 @@ class StartActivity : ControllerHostActivity(),
     }
 
     if (::themeEngine.isInitialized) {
-      themeEngine.removeRootView()
+      themeEngine.removeRootView(this)
       themeEngine.removeListener(this)
 
       if (isDevBuild()) {
@@ -250,7 +250,7 @@ class StartActivity : ControllerHostActivity(),
     setupLayout()
 
     setContentView(mainController.view)
-    themeEngine.setRootView(mainController.view)
+    themeEngine.setRootView(this, mainController.view)
     pushController(mainController)
 
     mainController.attachBottomNavViewToToolbar()

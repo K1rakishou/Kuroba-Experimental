@@ -156,21 +156,28 @@ class ThumbnailLongtapOptionsHelper(
     postImage: ChanPostImage,
     presentControllerFunc: (Controller) -> Unit
   ) {
+    val simpleSaveableMediaInfo = ImageSaverV2.SimpleSaveableMediaInfo.fromChanPostImage(postImage)
+    if (simpleSaveableMediaInfo == null) {
+      return
+    }
+
     val imageSaverV2Options = PersistableChanState.imageSaverV2PersistedOptions.get()
 
-    if (showOptions || imageSaverV2Options.shouldShowImageSaverOptionsController()) {
-      val options = ImageSaverV2OptionsController.Options.SingleImage(
-        chanPostImage = postImage,
-        onSaveClicked = { updatedImageSaverV2Options, newFileName ->
-          imageSaverV2.save(updatedImageSaverV2Options, postImage, newFileName)
-        }
-      )
-
-      val controller = ImageSaverV2OptionsController(context, options)
-      presentControllerFunc(controller)
-    } else {
-      imageSaverV2.save(imageSaverV2Options, postImage, null)
+    if (!showOptions && !imageSaverV2Options.shouldShowImageSaverOptionsController()) {
+      imageSaverV2.save(imageSaverV2Options, simpleSaveableMediaInfo, null)
+      return
     }
+
+    val options = ImageSaverV2OptionsController.Options.SingleImage(
+      simpleSaveableMediaInfo = simpleSaveableMediaInfo,
+      onSaveClicked = { updatedImageSaverV2Options, newFileName ->
+        imageSaverV2.save(updatedImageSaverV2Options, simpleSaveableMediaInfo, newFileName)
+      },
+      onCanceled = {}
+    )
+
+    val controller = ImageSaverV2OptionsController(context, options)
+    presentControllerFunc(controller)
   }
 
   private fun createMenuItem(

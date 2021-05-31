@@ -137,7 +137,8 @@ class MediaViewerControllerViewModel : ViewModel() {
 
       val meta = ViewableMediaMeta(
         ownerPostDescriptor = null,
-        mediaName = fileName,
+        serverMediaName = fileName,
+        originalMediaName = null,
         extension = extension,
         mediaWidth = null,
         mediaHeight = null,
@@ -284,7 +285,8 @@ class MediaViewerControllerViewModel : ViewModel() {
 
     val viewableMediaMeta = ViewableMediaMeta(
       ownerPostDescriptor = chanPostImage.ownerPostDescriptor,
-      mediaName = chanPostImage.filename ?: chanPostImage.serverFilename,
+      serverMediaName = chanPostImage.serverFilename,
+      originalMediaName = chanPostImage.filename,
       extension = chanPostImage.extension,
       mediaWidth = chanPostImage.imageWidth,
       mediaHeight = chanPostImage.imageHeight,

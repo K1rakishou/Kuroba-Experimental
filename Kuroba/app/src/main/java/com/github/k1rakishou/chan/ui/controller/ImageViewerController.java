@@ -60,7 +60,6 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
 import com.github.k1rakishou.chan.core.presenter.ImageViewerPresenter;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2;
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController;
 import com.github.k1rakishou.chan.ui.adapter.ImageViewerAdapter;
 import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem;
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem;
@@ -84,7 +83,6 @@ import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 import com.github.k1rakishou.model.util.ChanPostUtils;
-import com.github.k1rakishou.persist_state.ImageSaverV2Options;
 import com.github.k1rakishou.persist_state.PersistableChanState;
 
 import org.jetbrains.annotations.NotNull;
@@ -379,32 +377,32 @@ public class ImageViewerController
     }
 
     private void saveInternal(boolean longClick, Function0<Unit> onActuallyDownloading) {
-        ChanPostImage currentPostImage = presenter.getCurrentPostImage();
-
-        ImageSaverV2Options imageSaverV2Options =
-                PersistableChanState.getImageSaverV2PersistedOptions().get();
-
-        if (longClick || imageSaverV2Options.shouldShowImageSaverOptionsController()) {
-            ImageSaverV2OptionsController.Options options = new ImageSaverV2OptionsController.Options.SingleImage(
-                    currentPostImage,
-                    (updatedImageSaverV2Options, newFileName) -> {
-                        imageSaverV2.save(updatedImageSaverV2Options, currentPostImage, newFileName);
-                        onActuallyDownloading.invoke();
-
-                        return Unit.INSTANCE;
-                    }
-            );
-
-            ImageSaverV2OptionsController controller = new ImageSaverV2OptionsController(
-                    context,
-                    options
-            );
-
-            presentController(controller);
-        } else {
-            imageSaverV2.save(imageSaverV2Options, currentPostImage, null);
-            onActuallyDownloading.invoke();
-        }
+//        ChanPostImage currentPostImage = presenter.getCurrentPostImage();
+//
+//        ImageSaverV2Options imageSaverV2Options =
+//                PersistableChanState.getImageSaverV2PersistedOptions().get();
+//
+//        if (longClick || imageSaverV2Options.shouldShowImageSaverOptionsController()) {
+//            ImageSaverV2OptionsController.Options options = new ImageSaverV2OptionsController.Options.SingleImage(
+//                    currentPostImage,
+//                    (updatedImageSaverV2Options, newFileName) -> {
+//                        imageSaverV2.save(updatedImageSaverV2Options, currentPostImage, newFileName);
+//                        onActuallyDownloading.invoke();
+//
+//                        return Unit.INSTANCE;
+//                    }
+//            );
+//
+//            ImageSaverV2OptionsController controller = new ImageSaverV2OptionsController(
+//                    context,
+//                    options
+//            );
+//
+//            presentController(controller);
+//        } else {
+//            imageSaverV2.save(imageSaverV2Options, currentPostImage, null);
+//            onActuallyDownloading.invoke();
+//        }
     }
 
     private void openBrowserClicked(ToolbarMenuSubItem item) {

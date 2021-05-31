@@ -57,34 +57,64 @@ class MediaViewerToolbar @JvmOverloads constructor(
     toolbarDownloadButton = findViewById(R.id.toolbar_download_button)
     toolbarOptionsButton = findViewById(R.id.toolbar_options_button)
 
+    toolbarReloadButton.setEnabledFast(false)
+    toolbarDownloadButton.setEnabledFast(false)
+    toolbarOptionsButton.setEnabledFast(false)
+
     toolbarCloseButton.setOnClickListener { mediaViewerToolbarCallbacks?.onCloseButtonClick() }
 
     toolbarReloadButton.setOnClickListener {
-      if (!toolbarReloadButton.isEnabled) {
-        return@setOnClickListener
-      }
-
-      scope.launch {
-        toolbarReloadButton.setEnabledFast(false)
-
-        try {
-          mediaViewerToolbarCallbacks?.onReloadButtonClick()
-        } finally {
-          toolbarReloadButton.setEnabledFast(true)
-        }
-      }
+      fireOnReloadButtonClickCallback()
     }
 
-    toolbarDownloadButton.setOnClickListener { mediaViewerToolbarCallbacks?.onDownloadButtonClick(isLongClick = false) }
+    toolbarDownloadButton.setOnClickListener {
+      fireOnDownloadButtonClickCallback(isLongClick = false)
+    }
 
     toolbarDownloadButton.setOnLongClickListener {
-      mediaViewerToolbarCallbacks?.onDownloadButtonClick(isLongClick = true)
+      fireOnDownloadButtonClickCallback(isLongClick = true)
       return@setOnLongClickListener true
     }
 
     toolbarOptionsButton.setOnClickListener { mediaViewerToolbarCallbacks?.onOptionsButtonClick() }
 
     doOnPreDraw { onInsetsChanged() }
+  }
+
+  private fun fireOnReloadButtonClickCallback() {
+    if (!toolbarReloadButton.isEnabled) {
+      return
+    }
+
+    scope.launch {
+      toolbarReloadButton.setEnabledFast(false)
+
+      try {
+        mediaViewerToolbarCallbacks?.onReloadButtonClick()
+      } finally {
+        toolbarReloadButton.setEnabledFast(true)
+      }
+    }
+  }
+
+  private fun fireOnDownloadButtonClickCallback(isLongClick: Boolean) {
+    if (!toolbarDownloadButton.isEnabled) {
+      return
+    }
+
+    scope.launch {
+      toolbarDownloadButton.setEnabledFast(false)
+
+      try {
+        val startedDownloading = mediaViewerToolbarCallbacks?.onDownloadButtonClick(isLongClick = isLongClick)
+          ?: false
+
+        // Only enable the button back if we didn't start the image downloading
+        toolbarDownloadButton.setEnabledFast(startedDownloading.not())
+      } catch (error: Throwable) {
+        toolbarDownloadButton.setEnabledFast(true)
+      }
+    }
   }
 
   fun onCreate(callbacks: MediaViewerToolbarCallbacks) {
@@ -99,6 +129,12 @@ class MediaViewerToolbar @JvmOverloads constructor(
     scope.cancelChildren()
 
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
+  }
+
+  fun onMediaFullyLoaded() {
+    toolbarReloadButton.setEnabledFast(true)
+    toolbarDownloadButton.setEnabledFast(true)
+    toolbarOptionsButton.setEnabledFast(true)
   }
 
   fun updateWithViewableMedia(currentIndex: Int, totalMediaCount: Int, viewableMedia: ViewableMedia) {
@@ -130,7 +166,10 @@ class MediaViewerToolbar @JvmOverloads constructor(
   private fun updateToolbarTitleAndSubtitle(currentIndex: Int, totalMediaCount: Int, viewableMedia: ViewableMedia) {
     val viewableMediaMeta = viewableMedia.viewableMediaMeta
 
-    viewableMediaMeta.mediaName?.let { mediaName ->
+    val mediaName = viewableMediaMeta.originalMediaName
+      ?: viewableMediaMeta.serverMediaName
+
+    if (mediaName.isNotNullNorEmpty()) {
       toolbarTitle.text = mediaName
     }
 
@@ -162,7 +201,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
   interface MediaViewerToolbarCallbacks {
     fun onCloseButtonClick()
     suspend fun onReloadButtonClick()
-    fun onDownloadButtonClick(isLongClick: Boolean)
+    suspend fun onDownloadButtonClick(isLongClick: Boolean): Boolean
     fun onOptionsButtonClick()
   }
 

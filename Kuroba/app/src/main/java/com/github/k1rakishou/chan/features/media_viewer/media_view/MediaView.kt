@@ -33,6 +33,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   private var _bound = false
   private var _shown = false
   private var _preloadingCalled = false
+  private var _mediaFullyLoaded = false
 
   protected val cancellableToast by lazy { CancellableToast() }
   protected val scope = KurobaCoroutineScope()
@@ -126,6 +127,16 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     mediaViewToolbar?.showToolbar()
   }
 
+  fun onMediaFullyLoaded() {
+    if (_mediaFullyLoaded) {
+      return
+    }
+
+    _mediaFullyLoaded = true
+
+    mediaViewToolbar?.onMediaFullyLoaded()
+  }
+
   @CallSuper
   override fun onCloseButtonClick() {
     mediaViewContract.closeMediaViewer()
@@ -135,8 +146,8 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
 
   }
 
-  override fun onDownloadButtonClick(isLongClick: Boolean) {
-    mediaViewContract.onDownloadButtonClick(viewableMedia, isLongClick)
+  override suspend fun onDownloadButtonClick(isLongClick: Boolean): Boolean {
+    return mediaViewContract.onDownloadButtonClick(viewableMedia, isLongClick)
   }
 
   override fun onOptionsButtonClick() {
