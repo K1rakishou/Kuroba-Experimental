@@ -16,12 +16,9 @@
  */
 package com.github.k1rakishou.chan.activity
 
-import android.app.Activity
-import android.app.ActivityManager
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
-import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -69,7 +66,6 @@ import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColo
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
@@ -560,29 +556,6 @@ class StartActivity : ControllerHostActivity(),
   public override fun onStop() {
     super.onStop()
     Logger.d(TAG, "stop")
-  }
-
-  private fun setupContext(context: Activity, chanTheme: ChanTheme) {
-    val taskDescription = if (AndroidUtils.isAndroidP()) {
-      ActivityManager.TaskDescription(
-        null,
-        R.drawable.ic_stat_notify,
-        chanTheme.primaryColor
-      )
-    } else {
-      val taskDescriptionBitmap = BitmapFactory.decodeResource(
-        context.resources,
-        R.drawable.ic_stat_notify
-      )
-
-      ActivityManager.TaskDescription(
-        null,
-        taskDescriptionBitmap,
-        chanTheme.primaryColor
-      )
-    }
-
-    context.setTaskDescription(taskDescription)
   }
 
   companion object {

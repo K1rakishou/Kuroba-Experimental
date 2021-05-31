@@ -247,15 +247,11 @@ class MediaViewerAdapter(
     }
   }
 
-  fun hideControls() {
+  fun markMediaAsDownloaded(viewableMedia: ViewableMedia) {
     loadedViews.forEach { loadedView ->
-      loadedView.mediaView.hideControls()
-    }
-  }
-
-  fun showControls() {
-    loadedViews.forEach { loadedView ->
-      loadedView.mediaView.showControls()
+      if (loadedView.mediaView.viewableMedia == viewableMedia) {
+        loadedView.mediaView.markMediaAsDownloaded()
+      }
     }
   }
 

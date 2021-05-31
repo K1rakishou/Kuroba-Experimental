@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Point
 import android.os.Bundle
+import android.view.MotionEvent
 import android.view.WindowManager
 import android.webkit.URLUtil
 import android.widget.Toast
@@ -88,6 +89,7 @@ class MediaViewerActivity : ControllerHostActivity(),
     themeEngine.setRootView(this, mediaViewerController.view)
     themeEngine.addListener(this)
     fileChooser.setCallbacks(this)
+    setupContext(this, themeEngine.chanTheme)
 
     window.setupEdgeToEdge()
     window.setupStatusAndNavBarColors(themeEngine.chanTheme)
@@ -181,6 +183,11 @@ class MediaViewerActivity : ControllerHostActivity(),
   ) {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     runtimePermissionsHelper.onRequestPermissionsResult(requestCode, permissions, grantResults)
+  }
+
+  override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
+    globalWindowInsetsManager.updateLastTouchCoordinates(ev)
+    return super.dispatchTouchEvent(ev)
   }
 
   private suspend fun handleNewIntent(isNotActivityRecreation: Boolean, intent: Intent?): Boolean {

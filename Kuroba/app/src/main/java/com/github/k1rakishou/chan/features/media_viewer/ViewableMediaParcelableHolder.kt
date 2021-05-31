@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.media_viewer
 import android.os.Parcelable
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
 import com.github.k1rakishou.common.StringUtils
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -84,8 +85,61 @@ sealed class ViewableMedia(
   open val viewableMediaMeta: ViewableMediaMeta
 ) {
 
+  fun formatFullOriginalFileName(): String? {
+    if (viewableMediaMeta.originalMediaName.isNullOrEmpty()) {
+      return null
+    }
+
+    return buildString {
+      append(viewableMediaMeta.originalMediaName!!)
+
+      if (viewableMediaMeta.extension.isNotNullNorEmpty()) {
+        append(".")
+        append(viewableMediaMeta.extension!!)
+      }
+    }
+  }
+
+  fun formatFullServerFileName(): String? {
+    if (viewableMediaMeta.serverMediaName.isNullOrEmpty()) {
+      return null
+    }
+
+    return buildString {
+      append(viewableMediaMeta.serverMediaName!!)
+
+      if (viewableMediaMeta.extension.isNotNullNorEmpty()) {
+        append(".")
+        append(viewableMediaMeta.extension!!)
+      }
+    }
+  }
+
   fun canMediaBeDownloaded(): Boolean {
     return viewableMediaMeta.ownerPostDescriptor != null && mediaLocation is MediaLocation.Remote
+  }
+
+  fun getMediaName(): String? {
+    if (viewableMediaMeta.originalMediaName.isNotNullNorEmpty()) {
+      return viewableMediaMeta.originalMediaName!!
+    }
+
+    if (viewableMediaMeta.serverMediaName.isNotNullNorEmpty()) {
+      return viewableMediaMeta.serverMediaName!!
+    }
+
+    when (val location = mediaLocation) {
+      is MediaLocation.Local -> {
+        if (!location.path.contains("/")) {
+          return null
+        } else {
+          return location.path.substringAfterLast("/")
+        }
+      }
+      is MediaLocation.Remote -> {
+        return location.url.pathSegments.lastOrNull()
+      }
+    }
   }
 
   fun toSimpleImageInfoOrNull(): ImageSaverV2.SimpleSaveableMediaInfo? {

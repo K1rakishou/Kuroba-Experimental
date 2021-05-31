@@ -116,7 +116,8 @@ class FullImageMediaView(
           }
 
           return@GestureDetectorListener false
-        }
+        },
+        onMediaLongClick = { mediaViewContract.onMediaLongClick(this, viewableMedia, buildMediaLongClickOptions()) }
       )
     )
 
@@ -365,7 +366,8 @@ class FullImageMediaView(
     private val thumbnailMediaView: ThumbnailMediaView,
     private val actualImageView: CustomScaleImageView,
     private val mediaViewContract: MediaViewContract,
-    private val tryPreloadingFunc: () -> Boolean
+    private val tryPreloadingFunc: () -> Boolean,
+    private val onMediaLongClick: () -> Unit
   ) : GestureDetector.SimpleOnGestureListener() {
 
     override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
@@ -379,6 +381,9 @@ class FullImageMediaView(
       return super.onSingleTapConfirmed(e)
     }
 
+    override fun onLongPress(e: MotionEvent?) {
+      onMediaLongClick()
+    }
   }
 
   class FullImageState : MediaViewState {

@@ -3,13 +3,18 @@ package com.github.k1rakishou.chan.features.media_viewer.media_view
 import android.content.Context
 import android.util.AttributeSet
 import androidx.annotation.CallSuper
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerWrapper
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
+import com.github.k1rakishou.chan.ui.view.floating_menu.HeaderFloatingListMenuItem
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.google.android.exoplayer2.upstream.DataSource
 
@@ -54,6 +59,10 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   fun initToolbar(toolbar: MediaViewerToolbar) {
     this._mediaViewToolbar = toolbar
     toolbar.onCreate(this)
+  }
+
+  fun markMediaAsDownloaded() {
+    _mediaViewToolbar?.markMediaAsDownloaded()
   }
 
   fun startPreloading() {
@@ -117,16 +126,6 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     }
   }
 
-  @CallSuper
-  open fun hideControls() {
-    mediaViewToolbar?.hideToolbar()
-  }
-
-  @CallSuper
-  open fun showControls() {
-    mediaViewToolbar?.showToolbar()
-  }
-
   fun onMediaFullyLoaded() {
     if (_mediaFullyLoaded) {
       return
@@ -159,7 +158,57 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
       "_bound=$_bound, _shown=$_shown, _preloadingCalled=$_preloadingCalled, mediaLocation=${viewableMedia.mediaLocation})"
   }
 
+  @CallSuper
+  protected open fun buildMediaLongClickOptions(): List<FloatingListMenuItem> {
+    val mediaName = viewableMedia.getMediaName()
+    if (mediaName.isNullOrEmpty() || viewableMedia.mediaLocation !is MediaLocation.Remote) {
+      return emptyList()
+    }
+
+    val options = mutableListOf<FloatingListMenuItem>()
+
+    options += HeaderFloatingListMenuItem(MEDIA_LONG_CLICK_MENU_HEADER, mediaName)
+    options += FloatingListMenuItem(ACTION_IMAGE_COPY_FULL_URL, getString(R.string.action_copy_image_full_url))
+    options += FloatingListMenuItem(ACTION_IMAGE_COPY_THUMBNAIL_URL, getString(R.string.action_copy_image_thumbnail_url))
+
+    if (viewableMedia.formatFullOriginalFileName().isNotNullNorEmpty()) {
+      options += FloatingListMenuItem(ACTION_IMAGE_COPY_ORIGINAL_FILE_NAME, getString(R.string.action_copy_image_original_name))
+    }
+
+    if (viewableMedia.formatFullServerFileName().isNotNullNorEmpty()) {
+      options += FloatingListMenuItem(ACTION_IMAGE_COPY_SERVER_FILE_NAME, getString(R.string.action_copy_image_server_name))
+    }
+
+    if (viewableMedia.viewableMediaMeta.mediaHash.isNotNullNorEmpty()) {
+      options += FloatingListMenuItem(ACTION_IMAGE_COPY_MD5_HASH_HEX, getString(R.string.action_copy_image_file_hash_hex))
+    }
+
+    options += FloatingListMenuItem(ACTION_OPEN_IN_BROWSER, getString(R.string.action_open_in_browser))
+    options += FloatingListMenuItem(ACTION_MEDIA_SEARCH, getString(R.string.action_media_search))
+
+    options += FloatingListMenuItem(ACTION_SHARE_MEDIA_URL, getString(R.string.action_share_media_url))
+    options += FloatingListMenuItem(ACTION_SHARE_MEDIA_CONTENT, getString(R.string.action_share_media_content))
+
+    options += FloatingListMenuItem(ACTION_DOWNLOAD_MEDIA_FILE_CONTENT, getString(R.string.action_download_content))
+    options += FloatingListMenuItem(ACTION_DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT, getString(R.string.action_download_content_with_options))
+
+    return options
+  }
+
   companion object {
     private const val TAG = "MediaView"
+
+    const val MEDIA_LONG_CLICK_MENU_HEADER = "media_copy_menu_header"
+    const val ACTION_IMAGE_COPY_FULL_URL = 1
+    const val ACTION_IMAGE_COPY_THUMBNAIL_URL = 2
+    const val ACTION_IMAGE_COPY_ORIGINAL_FILE_NAME = 3
+    const val ACTION_IMAGE_COPY_SERVER_FILE_NAME = 4
+    const val ACTION_IMAGE_COPY_MD5_HASH_HEX = 5
+    const val ACTION_OPEN_IN_BROWSER = 6
+    const val ACTION_MEDIA_SEARCH = 7
+    const val ACTION_SHARE_MEDIA_URL = 8
+    const val ACTION_SHARE_MEDIA_CONTENT = 9
+    const val ACTION_DOWNLOAD_MEDIA_FILE_CONTENT = 10
+    const val ACTION_DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT = 11
   }
 }

@@ -151,6 +151,10 @@ class MediaViewerToolbar @JvmOverloads constructor(
     setVisibilityFast(View.VISIBLE)
   }
 
+  fun markMediaAsDownloaded() {
+    toolbarDownloadButton.setEnabledFast(false)
+  }
+
   override fun onInsetsChanged() {
     updatePaddings(
       left = globalWindowInsetsManager.left(),

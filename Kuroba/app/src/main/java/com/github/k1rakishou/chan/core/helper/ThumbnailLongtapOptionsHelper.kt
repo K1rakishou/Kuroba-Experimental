@@ -129,7 +129,7 @@ class ThumbnailLongtapOptionsHelper(
         showFiltersControllerFunc(filter)
       }
       SHARE_MEDIA_FILE_CONTENT -> {
-        imageSaverV2.share(postImage) { result ->
+        imageSaverV2.downloadMediaAndShare(postImage) { result ->
           if (result is ModularResult.Error) {
             AppModuleAndroidUtils.showToast(
               context,
@@ -137,7 +137,7 @@ class ThumbnailLongtapOptionsHelper(
               Toast.LENGTH_LONG
             )
 
-            return@share
+            return@downloadMediaAndShare
           }
         }
       }

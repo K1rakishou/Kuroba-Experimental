@@ -116,7 +116,8 @@ class GifMediaView(
           }
 
           return@GestureDetectorListener false
-        }
+        },
+        onMediaLongClick = { mediaViewContract.onMediaLongClick(this, viewableMedia, buildMediaLongClickOptions()) }
       )
     )
 
@@ -358,7 +359,8 @@ class GifMediaView(
     private val thumbnailMediaView: ThumbnailMediaView,
     private val actualGifView: GifImageView,
     private val mediaViewContract: MediaViewContract,
-    private val tryPreloadingFunc: () -> Boolean
+    private val tryPreloadingFunc: () -> Boolean,
+    private val onMediaLongClick: () -> Unit
   ) : GestureDetector.SimpleOnGestureListener() {
 
     override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
@@ -389,6 +391,9 @@ class GifMediaView(
       return super.onDoubleTap(e)
     }
 
+    override fun onLongPress(e: MotionEvent?) {
+      onMediaLongClick()
+    }
   }
 
   companion object {

@@ -1,11 +1,17 @@
 package com.github.k1rakishou.chan.core.base
 
+import android.app.Activity
+import android.app.ActivityManager
 import android.content.res.Configuration
+import android.graphics.BitmapFactory
 import android.view.KeyEvent
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.core_themes.ChanTheme
 import java.util.*
 import javax.inject.Inject
 
@@ -103,6 +109,29 @@ abstract class ControllerHostActivity : AppCompatActivity() {
     }
 
     return controller.childControllers.any { isControllerPresent(it, predicate) }
+  }
+
+  protected fun setupContext(context: Activity, chanTheme: ChanTheme) {
+    val taskDescription = if (AndroidUtils.isAndroidP()) {
+      ActivityManager.TaskDescription(
+        null,
+        R.drawable.ic_stat_notify,
+        chanTheme.primaryColor
+      )
+    } else {
+      val taskDescriptionBitmap = BitmapFactory.decodeResource(
+        context.resources,
+        R.drawable.ic_stat_notify
+      )
+
+      ActivityManager.TaskDescription(
+        null,
+        taskDescriptionBitmap,
+        chanTheme.primaryColor
+      )
+    }
+
+    context.setTaskDescription(taskDescription)
   }
 
 }

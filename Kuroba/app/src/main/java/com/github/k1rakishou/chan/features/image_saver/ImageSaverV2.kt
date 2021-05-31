@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
+import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
+import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent
 import com.github.k1rakishou.chan.utils.HashingUtil
 import com.github.k1rakishou.common.AndroidUtils.getAppContext
@@ -154,83 +156,90 @@ class ImageSaverV2(
     }
   }
 
-  fun share(postImage: ChanPostImage, onShareResult: (ModularResult<Unit>) -> Unit) {
+  fun downloadMediaAndShare(postImage: ChanPostImage, onShareResult: (ModularResult<Unit>) -> Unit) {
     Logger.d(TAG, "share('${postImage.imageUrl}')")
 
     rendezvousCoroutineExecutor.post {
-      val result = ModularResult.Try { shareInternal(postImage) }
+      val result = ModularResult.Try {
+        val extension = if (postImage.extension == null) {
+          ""
+        } else {
+          ".${postImage.extension}"
+        }
+
+        val fileName = postImage.serverFilename + extension
+        downloadMediaAndShare(postImage.imageUrl!!, fileName)
+      }
       withContext(Dispatchers.Main) { onShareResult(result) }
     }
   }
 
   @Suppress("BlockingMethodInNonBlockingContext")
-  private suspend fun shareInternal(postImage: ChanPostImage) {
-    Logger.d(TAG, "shareInternal('${postImage.imageUrl}')")
+  suspend fun downloadMediaAndShare(mediaUrl: HttpUrl, downloadFileName: String) {
+    withContext(Dispatchers.Default) {
+      Logger.d(TAG, "shareInternal('${mediaUrl}')")
 
-    val shareFilesDir = File(getAppContext().cacheDir, SHARE_FILES_DIR_NAME)
-    if (!shareFilesDir.exists()) {
-      if (!shareFilesDir.mkdirs()) {
-        Logger.e(TAG, "shareInternal() failed to create share files dir, path=" + shareFilesDir.absolutePath)
-        return
-      }
-    }
-
-    shareFilesDir.listFiles()
-      ?.forEach { prevShareFile ->
-        val success = prevShareFile.delete()
-
-        Logger.d(TAG, "shareInternal() deleting previous share " +
-          "file: '${prevShareFile.absolutePath}', success: $success")
-      }
-
-    val extension = if (postImage.extension == null) {
-      ""
-    } else {
-      ".${postImage.extension}"
-    }
-
-    val fileName = postImage.serverFilename + extension
-    val outputFile = File(shareFilesDir, fileName)
-
-    if (outputFile.exists()) {
-      if (!outputFile.delete()) {
-        Logger.e(TAG, "shareInternal() failed to delete ${outputFile.absolutePath}")
-        return
-      }
-    }
-
-    if (!outputFile.createNewFile()) {
-      Logger.e(TAG, "shareInternal() failed to create ${outputFile.absolutePath}")
-      return
-    }
-
-    val outputFileRaw = fileManager.fromRawFile(outputFile)
-
-    try {
-      doIoTaskWithAttempts(3) {
-        try {
-          imageSaverV2ServiceDelegate.downloadFileIntoFile(postImage.imageUrl!!, outputFileRaw)
-        } catch (error: Throwable) {
-          if (error is IOException && error.isOutOfDiskSpaceError()) {
-            throw ImageSaverV2ServiceDelegate.OutOfDiskSpaceException()
-          }
-
-          throw error
+      val shareFilesDir = File(getAppContext().cacheDir, SHARE_FILES_DIR_NAME)
+      if (!shareFilesDir.exists()) {
+        if (!shareFilesDir.mkdirs()) {
+          Logger.e(TAG, "shareInternal() failed to create share files dir, path=" + shareFilesDir.absolutePath)
+          return@withContext
         }
       }
-    } catch (error: Throwable) {
-      Logger.e(TAG, "shareInternal() error while downloading file ${postImage.imageUrl}", error)
-      fileManager.delete(outputFileRaw)
-      throw error
+
+      shareFilesDir.listFiles()
+        ?.forEach { prevShareFile ->
+          val success = prevShareFile.delete()
+
+          Logger.d(TAG, "shareInternal() deleting previous share " +
+            "file: '${prevShareFile.absolutePath}', success: $success")
+        }
+
+      val outputFile = File(shareFilesDir, downloadFileName)
+      if (outputFile.exists()) {
+        if (!outputFile.delete()) {
+          Logger.e(TAG, "shareInternal() failed to delete ${outputFile.absolutePath}")
+          return@withContext
+        }
+      }
+
+      if (!outputFile.createNewFile()) {
+        Logger.e(TAG, "shareInternal() failed to create ${outputFile.absolutePath}")
+        return@withContext
+      }
+
+      val outputFileRaw = fileManager.fromRawFile(outputFile)
+
+      try {
+        doIoTaskWithAttempts(3) {
+          try {
+            imageSaverV2ServiceDelegate.downloadFileIntoFile(mediaUrl, outputFileRaw)
+          } catch (error: Throwable) {
+            if (error is IOException && error.isOutOfDiskSpaceError()) {
+              throw ImageSaverV2ServiceDelegate.OutOfDiskSpaceException()
+            }
+
+            throw error
+          }
+        }
+      } catch (error: Throwable) {
+        Logger.e(TAG, "shareInternal() error while downloading file $mediaUrl}", error)
+        fileManager.delete(outputFileRaw)
+        throw error
+      }
+
+      Logger.d(TAG, "shareInternal('${mediaUrl}') file downloaded")
+
+      sendShareIntent(outputFile, mediaUrl)
     }
+  }
 
-    Logger.d(TAG, "shareInternal('${postImage.imageUrl}') file downloaded")
-
+  suspend fun sendShareIntent(outputFile: File, mediaUrl: HttpUrl) {
     withContext(Dispatchers.Main) {
       val uri = FileProvider.getUriForFile(
         getAppContext(),
         getAppFileProvider(),
-        File(outputFileRaw.getFullPath())
+        outputFile
       )
 
       val intent = Intent(Intent.ACTION_SEND)
@@ -238,7 +247,7 @@ class ImageSaverV2(
       intent.putExtra(Intent.EXTRA_STREAM, uri)
       openIntent(intent)
 
-      Logger.d(TAG, "shareInternal() success url=${postImage.imageUrl}, file=${outputFile.absolutePath}")
+      Logger.d(TAG, "sendShareIntent() success mediaUrl=${mediaUrl}, file=${outputFile.absolutePath}")
     }
   }
 
@@ -271,6 +280,7 @@ class ImageSaverV2(
     val extension: String
   ) {
     companion object {
+
       @JvmStatic
       fun fromChanPostImage(chanPostImage: ChanPostImage): SimpleSaveableMediaInfo? {
         val mediaUrl = chanPostImage.imageUrl
@@ -285,6 +295,28 @@ class ImageSaverV2(
           mediaUrl = mediaUrl,
           ownerPostDescriptor = chanPostImage.ownerPostDescriptor,
           serverFilename = serverFilename,
+          originalFileName = originalFileName,
+          extension = extension
+        )
+      }
+
+      @JvmStatic
+      fun fromViewableMedia(viewableMedia: ViewableMedia): SimpleSaveableMediaInfo? {
+        val mediaUrl = (viewableMedia.mediaLocation as? MediaLocation.Remote)?.url
+          ?: return null
+        val originalFileName = viewableMedia.viewableMediaMeta.originalMediaName
+          ?: return null
+        val serverMediaName = viewableMedia.viewableMediaMeta.serverMediaName
+          ?: return null
+        val extension = viewableMedia.viewableMediaMeta.extension
+          ?: return null
+        val postDescriptor = viewableMedia.viewableMediaMeta.ownerPostDescriptor
+          ?: return null
+
+        return SimpleSaveableMediaInfo(
+          mediaUrl = mediaUrl,
+          ownerPostDescriptor = postDescriptor,
+          serverFilename = serverMediaName,
           originalFileName = originalFileName,
           extension = extension
         )

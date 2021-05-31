@@ -428,7 +428,7 @@ public class ImageViewerController
     private void shareContentClicked(ToolbarMenuSubItem item) {
         ChanPostImage postImage = presenter.getCurrentPostImage();
 
-        imageSaverV2.share(postImage, result -> {
+        imageSaverV2.downloadMediaAndShare(postImage, result -> {
             if (result instanceof ModularResult.Error) {
                 String errorMessage = KotlinExtensionsKt.errorMessageOrClassName(
                         ((ModularResult.Error<Unit>) result).getError()

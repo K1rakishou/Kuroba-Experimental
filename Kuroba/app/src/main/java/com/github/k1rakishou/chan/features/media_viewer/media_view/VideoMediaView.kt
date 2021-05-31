@@ -142,7 +142,8 @@ class VideoMediaView(
           }
 
           return@GestureDetectorListener false
-        }
+        },
+        onMediaLongClick = { mediaViewContract.onMediaLongClick(this, viewableMedia, buildMediaLongClickOptions()) }
       )
     )
 
@@ -348,22 +349,6 @@ class VideoMediaView(
     }
   }
 
-  override fun hideControls() {
-    super.hideControls()
-
-    if (actualVideoPlayerView.isControllerVisible) {
-      actualVideoPlayerView.hideController()
-    }
-  }
-
-  override fun showControls() {
-    super.showControls()
-
-    if (!actualVideoPlayerView.isControllerVisible) {
-      actualVideoPlayerView.showController()
-    }
-  }
-
   override fun onInsetsChanged() {
     updatePlayerControlsInsets()
   }
@@ -457,7 +442,8 @@ class VideoMediaView(
     private val thumbnailMediaView: ThumbnailMediaView,
     private val actualVideoView: PlayerView,
     private val mediaViewContract: MediaViewContract,
-    private val tryPreloadingFunc: () -> Boolean
+    private val tryPreloadingFunc: () -> Boolean,
+    private val onMediaLongClick: () -> Unit
   ) : GestureDetector.SimpleOnGestureListener() {
 
     override fun onDown(e: MotionEvent?): Boolean {
@@ -487,6 +473,9 @@ class VideoMediaView(
       return true
     }
 
+    override fun onLongPress(e: MotionEvent?) {
+      onMediaLongClick()
+    }
   }
 
   companion object {
