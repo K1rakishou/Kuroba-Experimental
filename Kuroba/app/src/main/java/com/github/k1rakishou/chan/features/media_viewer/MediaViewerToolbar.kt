@@ -79,6 +79,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
     toolbarOptionsButton.setOnClickListener { mediaViewerToolbarCallbacks?.onOptionsButtonClick() }
 
     doOnPreDraw { onInsetsChanged() }
+    hideToolbar()
   }
 
   private fun fireOnReloadButtonClickCallback() {

@@ -197,7 +197,6 @@ class CloseMediaActionHelper(
       }
 
       var finished = false
-      var canCloseMediaViewer = false
 
       if (scroller!!.computeScrollOffset()) {
         val currentX = scroller!!.currX.toFloat()
@@ -241,12 +240,8 @@ class CloseMediaActionHelper(
           flingProgress
         }
 
-        if (flingProgress <= 0f || flingProgress >= 1f) {
+        if (flingProgress <= 0f || flingProgress >= 0.75f) {
           finished = true
-        }
-
-        if (flingProgress >= 0.75f) {
-          canCloseMediaViewer = true
         }
       } else {
         finished = true
@@ -255,7 +250,7 @@ class CloseMediaActionHelper(
       if (finished) {
         endTracking()
 
-        if (canCloseMediaViewer) {
+        if (isFinishing) {
           closeMediaViewer()
         }
 
