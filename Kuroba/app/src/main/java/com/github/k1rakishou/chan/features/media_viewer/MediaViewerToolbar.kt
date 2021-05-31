@@ -131,9 +131,9 @@ class MediaViewerToolbar @JvmOverloads constructor(
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
   }
 
-  fun onMediaFullyLoaded() {
+  fun onMediaFullyLoaded(viewableMedia: ViewableMedia) {
     toolbarReloadButton.setEnabledFast(true)
-    toolbarDownloadButton.setEnabledFast(true)
+    toolbarDownloadButton.setEnabledFast(viewableMedia.canMediaBeDownloaded())
     toolbarOptionsButton.setEnabledFast(true)
   }
 

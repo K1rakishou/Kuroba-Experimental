@@ -84,6 +84,10 @@ sealed class ViewableMedia(
   open val viewableMediaMeta: ViewableMediaMeta
 ) {
 
+  fun canMediaBeDownloaded(): Boolean {
+    return viewableMediaMeta.ownerPostDescriptor != null && mediaLocation is MediaLocation.Remote
+  }
+
   fun toSimpleImageInfoOrNull(): ImageSaverV2.SimpleSaveableMediaInfo? {
     val postDescriptor = viewableMediaMeta.ownerPostDescriptor
       ?: return null

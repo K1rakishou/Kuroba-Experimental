@@ -134,7 +134,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
 
     _mediaFullyLoaded = true
 
-    mediaViewToolbar?.onMediaFullyLoaded()
+    mediaViewToolbar?.onMediaFullyLoaded(viewableMedia)
   }
 
   @CallSuper

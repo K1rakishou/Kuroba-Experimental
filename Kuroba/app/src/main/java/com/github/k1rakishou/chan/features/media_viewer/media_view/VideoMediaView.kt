@@ -266,29 +266,27 @@ class VideoMediaView(
         if (hasContent) {
           // Already loaded and ready to play
           switchToPlayerViewAndStartPlaying()
-          playJob = null
-          return@launch
+        } else {
+          fullVideoDeferred.awaitCatching()
+            .onFailure { error ->
+              Logger.e(TAG, "onFullVideoLoadingError()", error)
+
+              if (error.isExceptionImportant()) {
+                cancellableToast.showToast(
+                  context,
+                  getString(R.string.image_failed_video_error, error.errorMessageOrClassName())
+                )
+              }
+
+              actualVideoPlayerView.setVisibilityFast(View.INVISIBLE)
+              thumbnailMediaView.setError(error.errorMessageOrClassName())
+            }
+            .onSuccess {
+              if (hasContent) {
+                switchToPlayerViewAndStartPlaying()
+              }
+            }
         }
-
-        fullVideoDeferred.awaitCatching()
-          .onFailure { error ->
-            Logger.e(TAG, "onFullVideoLoadingError()", error)
-
-            if (error.isExceptionImportant()) {
-              cancellableToast.showToast(
-                context,
-                getString(R.string.image_failed_video_error, error.errorMessageOrClassName())
-              )
-            }
-
-            actualVideoPlayerView.setVisibilityFast(View.INVISIBLE)
-            thumbnailMediaView.setError(error.errorMessageOrClassName())
-          }
-          .onSuccess {
-            if (hasContent) {
-              switchToPlayerViewAndStartPlaying()
-            }
-          }
 
         onMediaFullyLoaded()
         playJob = null
