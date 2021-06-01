@@ -273,14 +273,6 @@ public class AndroidUtils {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
     }
 
-    public static boolean isAndroidKitKat() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
-    }
-
-    public static boolean isAndroidL() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP;
-    }
-
     public static boolean isAndroidL_MR1() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1;
     }

@@ -22,7 +22,6 @@ import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerWrapper
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableProgressBar
-import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.setEnabledFast
@@ -50,7 +49,7 @@ class VideoMediaView(
   mediaViewContract: MediaViewContract,
   private val viewModel: MediaViewerControllerViewModel,
   private val cacheDataSourceFactory: DataSource.Factory,
-  private val onThumbnailFullyLoaded: () -> Unit,
+  private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
   override val viewableMedia: ViewableMedia.Video,
   override val pagerPosition: Int,
@@ -94,12 +93,8 @@ class VideoMediaView(
   private var playJob: Job? = null
   private var videoSoundDetected = false
 
-  private val fullImageMediaViewOptions by lazy { emptyList<FloatingListMenuItem>() }
-
   override val hasContent: Boolean
     get() = mainVideoPlayer.isInitialized() && mainVideoPlayer.hasContent
-  override val mediaOptions: List<FloatingListMenuItem>
-    get() = fullImageMediaViewOptions
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -197,7 +192,10 @@ class VideoMediaView(
         isOriginalMediaPlayable = true,
         thumbnailLocation = viewableMedia.previewLocation
       ),
-      onThumbnailFullyLoaded = onThumbnailFullyLoaded
+      onThumbnailFullyLoaded = {
+        onThumbnailFullyLoadedFunc()
+        onThumbnailFullyLoaded()
+      }
     )
 
     if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = false)) {
@@ -219,6 +217,11 @@ class VideoMediaView(
     return scope.launch {
       this@VideoMediaView.videoSoundDetected = mediaViewState.videoSoundDetected
 
+      val showBufferingJob = scope.launch {
+        delay(125L)
+        bufferingProgressView.setVisibilityFast(View.VISIBLE)
+      }
+
       try {
         actualVideoPlayerView.setOnClickListener(null)
         actualVideoPlayerView.useController = true
@@ -233,21 +236,15 @@ class VideoMediaView(
         updatePlayerControlsInsets()
         updateExoBufferingViewColors()
 
-        val showBufferingJob = scope.launch {
-          delay(125L)
-          bufferingProgressView.setVisibilityFast(View.VISIBLE)
-        }
-
         mainVideoPlayer.preload(mediaLocation, mediaViewState.prevPosition, mediaViewState.prevWindowIndex)
-
-        showBufferingJob.cancel()
-        bufferingProgressView.setVisibilityFast(View.INVISIBLE)
-
         fullVideoDeferred.complete(Unit)
       } catch (error: Throwable) {
         fullVideoDeferred.completeExceptionally(error)
       } finally {
         preloadingJob = null
+
+        showBufferingJob.cancel()
+        bufferingProgressView.setVisibilityFast(View.INVISIBLE)
       }
     }
   }
@@ -310,9 +307,19 @@ class VideoMediaView(
   override fun unbind() {
     thumbnailMediaView.unbind()
     mainVideoPlayer.release()
+    closeMediaActionHelper.onDestroy()
+
+    if (fullVideoDeferred.isActive) {
+      fullVideoDeferred.cancel()
+    }
+
+    playJob?.cancel()
+    playJob = null
 
     preloadingJob?.cancel()
     preloadingJob = null
+
+    actualVideoPlayerView.player = null
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
   }
 
@@ -327,10 +334,14 @@ class VideoMediaView(
     }
 
     cacheHandler.deleteCacheFileByUrl(mediaLocation.url.toString())
+
+    fullVideoDeferred.cancel()
     fullVideoDeferred = CompletableDeferred<Unit>()
+    playJob = null
 
     thumbnailMediaView.setVisibilityFast(View.VISIBLE)
     actualVideoPlayerView.setVisibilityFast(View.INVISIBLE)
+
     actualVideoPlayerView.player = null
     mainVideoPlayer.setNoContent()
     videoSoundDetected = false

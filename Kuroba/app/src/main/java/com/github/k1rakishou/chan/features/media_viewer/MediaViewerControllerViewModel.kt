@@ -133,6 +133,7 @@ class MediaViewerControllerViewModel : ViewModel() {
 
       val mediaLocation = MediaLocation.Remote(actualUrl)
       val fileName = actualUrl.pathSegments.lastOrNull()
+        ?.let { fileName -> StringUtils.removeExtensionFromFileName(fileName) }
       val extension = StringUtils.extractFileNameExtension(url)
 
       val meta = ViewableMediaMeta(

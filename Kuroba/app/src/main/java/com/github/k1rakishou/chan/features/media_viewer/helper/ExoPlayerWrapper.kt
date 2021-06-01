@@ -5,6 +5,8 @@ import android.net.Uri
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewContract
+import com.github.k1rakishou.core_logger.Logger
+import com.google.android.exoplayer2.ExoPlaybackException
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
@@ -12,9 +14,13 @@ import com.google.android.exoplayer2.analytics.AnalyticsListener
 import com.google.android.exoplayer2.decoder.DecoderCounters
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DataSource
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 
 class ExoPlayerWrapper(
@@ -38,56 +44,91 @@ class ExoPlayerWrapper(
   fun isInitialized(): Boolean = exoPlayerLazy.isInitialized()
 
   suspend fun preload(mediaLocation: MediaLocation, prevPosition: Long, prevWindowIndex: Int) {
-    when (mediaLocation) {
-      is MediaLocation.Local -> TODO()
-      is MediaLocation.Remote -> {
-        val mediaUri = Uri.parse(mediaLocation.url.toString())
-        val mediaSource = ProgressiveMediaSource.Factory(cacheDataSourceFactory)
-          .createMediaSource(MediaItem.fromUri(mediaUri))
+    coroutineScope {
+      when (mediaLocation) {
+        is MediaLocation.Local -> TODO()
+        is MediaLocation.Remote -> {
+          val mediaUri = Uri.parse(mediaLocation.url.toString())
+          val mediaSource = ProgressiveMediaSource.Factory(cacheDataSourceFactory)
+            .createMediaSource(MediaItem.fromUri(mediaUri))
 
-        exoPlayer.playWhenReady = false
-        exoPlayer.setMediaSource(mediaSource)
+          exoPlayer.playWhenReady = false
+          exoPlayer.setMediaSource(mediaSource)
 
-        if (prevWindowIndex >= 0 && prevPosition >= 0) {
-          exoPlayer.seekTo(prevWindowIndex, prevPosition)
-        }
-
-        exoPlayer.prepare()
-
-        firstFrameRendered?.cancel()
-        firstFrameRendered = CompletableDeferred()
-
-        exoPlayer.addListener(object : Player.Listener {
-          override fun onRenderedFirstFrame() {
-            firstFrameRendered?.complete(Unit)
-            exoPlayer.removeListener(this)
+          if (prevWindowIndex >= 0 && prevPosition >= 0) {
+            exoPlayer.seekTo(prevWindowIndex, prevPosition)
           }
-        })
 
-        exoPlayer.addAnalyticsListener(object : AnalyticsListener {
-          override fun onAudioEnabled(eventTime: AnalyticsListener.EventTime, counters: DecoderCounters) {
-            onAudioDetected()
-            exoPlayer.removeAnalyticsListener(this)
-          }
-        })
+          exoPlayer.prepare()
 
-        _hasContent = suspendCancellableCoroutine { continuation ->
-          val listener = object : Player.Listener {
-            override fun onPlaybackStateChanged(state: Int) {
-              if (state == Player.STATE_ENDED || state == Player.STATE_READY) {
-                exoPlayer.removeListener(this)
+          firstFrameRendered?.cancel()
+          firstFrameRendered = CompletableDeferred()
 
-                if (continuation.isActive) {
-                  val hasContent = state == Player.STATE_READY
-                  continuation.resume(hasContent)
+          exoPlayer.addListener(object : Player.Listener {
+            override fun onRenderedFirstFrame() {
+              firstFrameRendered?.complete(Unit)
+              exoPlayer.removeListener(this)
+
+              coroutineContext[Job.Key]?.invokeOnCompletion { cause ->
+                if (cause is CancellationException) {
+                  exoPlayer.removeListener(this)
                 }
               }
             }
-          }
+          })
 
-          exoPlayer.addListener(listener)
+          exoPlayer.addAnalyticsListener(object : AnalyticsListener {
+            override fun onAudioEnabled(eventTime: AnalyticsListener.EventTime, counters: DecoderCounters) {
+              onAudioDetected()
+              exoPlayer.removeAnalyticsListener(this)
+
+              coroutineContext[Job.Key]?.invokeOnCompletion { cause ->
+                if (cause is CancellationException) {
+                  exoPlayer.removeAnalyticsListener(this)
+                }
+              }
+            }
+          })
+
+          _hasContent = awaitForContentOrError()
         }
       }
+    }
+  }
+
+  private suspend fun awaitForContentOrError(): Boolean {
+    return suspendCancellableCoroutine { continuation ->
+      val listener = object : Player.Listener {
+        override fun onPlayerError(error: ExoPlaybackException) {
+          Logger.e(TAG, "preload() error", error)
+          exoPlayer.removeListener(this)
+
+          continuation.invokeOnCancellation {
+            exoPlayer.removeListener(this)
+          }
+
+          if (continuation.isActive) {
+            continuation.resumeWithException(error)
+          }
+        }
+
+        override fun onPlaybackStateChanged(state: Int) {
+          if (state == Player.STATE_ENDED || state == Player.STATE_READY) {
+            exoPlayer.removeListener(this)
+
+            continuation.invokeOnCancellation {
+              exoPlayer.removeListener(this)
+            }
+
+            if (continuation.isActive) {
+              val hasContent = state == Player.STATE_READY
+              continuation.resume(hasContent)
+            }
+          }
+        }
+      }
+
+      exoPlayer.addListener(listener)
     }
   }
 
@@ -154,6 +195,10 @@ class ExoPlayerWrapper(
 
   fun setNoContent() {
     _hasContent = false
+  }
+
+  companion object {
+    private const val TAG = "ExoPlayerWrapper"
   }
 
 }

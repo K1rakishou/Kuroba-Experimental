@@ -59,7 +59,6 @@ class MediaViewerToolbar @JvmOverloads constructor(
 
     toolbarReloadButton.setEnabledFast(false)
     toolbarDownloadButton.setEnabledFast(false)
-    toolbarOptionsButton.setEnabledFast(false)
 
     toolbarCloseButton.setOnClickListener { mediaViewerToolbarCallbacks?.onCloseButtonClick() }
 
@@ -132,10 +131,12 @@ class MediaViewerToolbar @JvmOverloads constructor(
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
   }
 
-  fun onMediaFullyLoaded(viewableMedia: ViewableMedia) {
+  fun onThumbnailFullyLoaded(viewableMedia: ViewableMedia) {
     toolbarReloadButton.setEnabledFast(true)
     toolbarDownloadButton.setEnabledFast(viewableMedia.canMediaBeDownloaded())
-    toolbarOptionsButton.setEnabledFast(true)
+  }
+
+  fun onMediaFullyLoaded(viewableMedia: ViewableMedia) {
   }
 
   fun updateWithViewableMedia(currentIndex: Int, totalMediaCount: Int, viewableMedia: ViewableMedia) {

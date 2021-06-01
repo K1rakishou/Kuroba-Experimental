@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
-import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.google.android.exoplayer2.upstream.DataSource
 
@@ -14,7 +13,7 @@ class UnsupportedMediaView(
   initialMediaViewState: UnsupportedMediaViewState,
   mediaViewContract: MediaViewContract,
   private val cacheDataSourceFactory: DataSource.Factory,
-  private val onThumbnailFullyLoaded: () -> Unit,
+  private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
   override val viewableMedia: ViewableMedia.Unsupported,
   override val pagerPosition: Int,
@@ -26,12 +25,8 @@ class UnsupportedMediaView(
   mediaViewContract = mediaViewContract,
   mediaViewState = initialMediaViewState
 ) {
-  private val fullImageMediaViewOptions by lazy { emptyList<FloatingListMenuItem>() }
-
   override val hasContent: Boolean
     get() = false
-  override val mediaOptions: List<FloatingListMenuItem>
-    get() = fullImageMediaViewOptions
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -46,7 +41,7 @@ class UnsupportedMediaView(
   }
 
   override fun bind() {
-    // nothing to bind
+    onThumbnailFullyLoadedFunc()
     onThumbnailFullyLoaded()
   }
 

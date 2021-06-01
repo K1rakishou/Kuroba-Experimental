@@ -119,27 +119,32 @@ sealed class ViewableMedia(
     return viewableMediaMeta.ownerPostDescriptor != null && mediaLocation is MediaLocation.Remote
   }
 
-  fun getMediaName(): String? {
-    if (viewableMediaMeta.originalMediaName.isNotNullNorEmpty()) {
-      return viewableMediaMeta.originalMediaName!!
-    }
-
-    if (viewableMediaMeta.serverMediaName.isNotNullNorEmpty()) {
-      return viewableMediaMeta.serverMediaName!!
-    }
-
-    when (val location = mediaLocation) {
-      is MediaLocation.Local -> {
-        if (!location.path.contains("/")) {
-          return null
-        } else {
-          return location.path.substringAfterLast("/")
+  fun getMediaNameForMenuHeader(): String? {
+    val mediaName = when {
+      viewableMediaMeta.originalMediaName.isNotNullNorEmpty() -> viewableMediaMeta.originalMediaName!!
+      viewableMediaMeta.serverMediaName.isNotNullNorEmpty() -> viewableMediaMeta.serverMediaName!!
+      else -> {
+        when (val location = mediaLocation) {
+          is MediaLocation.Local -> {
+            if (!location.path.contains("/")) {
+              null
+            } else {
+              location.path.substringAfterLast("/")
+            }
+          }
+          is MediaLocation.Remote -> {
+            location.url.pathSegments.lastOrNull()
+          }
         }
       }
-      is MediaLocation.Remote -> {
-        return location.url.pathSegments.lastOrNull()
-      }
     }
+
+    if (viewableMediaMeta.extension.isNullOrEmpty()) {
+      return mediaName
+    }
+
+
+    return "${mediaName}.${viewableMediaMeta.extension!!}"
   }
 
   fun toSimpleImageInfoOrNull(): ImageSaverV2.SimpleSaveableMediaInfo? {

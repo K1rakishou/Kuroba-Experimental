@@ -43,8 +43,18 @@ class MediaViewerAdapter(
   fun onDestroy() {
     Logger.d(TAG, "onDestroy()")
 
+    if (previewThumbnailLocationLoaded.isActive) {
+      previewThumbnailLocationLoaded.cancel()
+    }
+
     loadedViews.forEach { loadedView ->
-      loadedView.mediaView.onUnbind()
+      if (loadedView.mediaView.shown) {
+        loadedView.mediaView.onHide()
+      }
+
+      if (loadedView.mediaView.bound) {
+        loadedView.mediaView.onUnbind()
+      }
     }
 
     loadedViews.clear()
@@ -97,7 +107,7 @@ class MediaViewerAdapter(
           initialMediaViewState = initialMediaViewState,
           mediaViewContract = mediaViewContract,
           cacheDataSourceFactory = cacheDataSourceFactory,
-          onThumbnailFullyLoaded = onThumbnailFullyLoaded,
+          onThumbnailFullyLoadedFunc = onThumbnailFullyLoaded,
           isSystemUiHidden = isSystemUiHidden,
           viewableMedia = viewableMedia,
           pagerPosition = position,
@@ -110,7 +120,7 @@ class MediaViewerAdapter(
           initialMediaViewState = GifMediaView.GifMediaViewState(),
           mediaViewContract = mediaViewContract,
           cacheDataSourceFactory = cacheDataSourceFactory,
-          onThumbnailFullyLoaded = onThumbnailFullyLoaded,
+          onThumbnailFullyLoadedFunc = onThumbnailFullyLoaded,
           isSystemUiHidden = isSystemUiHidden,
           viewableMedia = viewableMedia,
           pagerPosition = position,
@@ -128,7 +138,7 @@ class MediaViewerAdapter(
           viewModel = viewModel,
           mediaViewContract = mediaViewContract,
           cacheDataSourceFactory = cacheDataSourceFactory,
-          onThumbnailFullyLoaded = onThumbnailFullyLoaded,
+          onThumbnailFullyLoadedFunc = onThumbnailFullyLoaded,
           isSystemUiHidden = isSystemUiHidden,
           viewableMedia = viewableMedia,
           pagerPosition = position,
@@ -141,7 +151,7 @@ class MediaViewerAdapter(
           initialMediaViewState = UnsupportedMediaView.UnsupportedMediaViewState(),
           mediaViewContract = mediaViewContract,
           cacheDataSourceFactory = cacheDataSourceFactory,
-          onThumbnailFullyLoaded = onThumbnailFullyLoaded,
+          onThumbnailFullyLoadedFunc = onThumbnailFullyLoaded,
           isSystemUiHidden = isSystemUiHidden,
           viewableMedia = viewableMedia,
           pagerPosition = position,

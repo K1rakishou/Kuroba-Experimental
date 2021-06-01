@@ -29,7 +29,6 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   abstract val pagerPosition: Int
   abstract val totalPageItemsCount: Int
   abstract val hasContent: Boolean
-  abstract val mediaOptions: List<FloatingListMenuItem>
 
   private var _mediaViewToolbar: MediaViewerToolbar? = null
   protected val mediaViewToolbar: MediaViewerToolbar?
@@ -38,6 +37,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   private var _bound = false
   private var _shown = false
   private var _preloadingCalled = false
+  private var _thumbnailFullyLoaded = false
   private var _mediaFullyLoaded = false
 
   protected val cancellableToast by lazy { CancellableToast() }
@@ -126,6 +126,16 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     }
   }
 
+  fun onThumbnailFullyLoaded() {
+    if (_thumbnailFullyLoaded) {
+      return
+    }
+
+    _thumbnailFullyLoaded = true
+
+    mediaViewToolbar?.onThumbnailFullyLoaded(viewableMedia)
+  }
+
   fun onMediaFullyLoaded() {
     if (_mediaFullyLoaded) {
       return
@@ -160,7 +170,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
 
   @CallSuper
   protected open fun buildMediaLongClickOptions(): List<FloatingListMenuItem> {
-    val mediaName = viewableMedia.getMediaName()
+    val mediaName = viewableMedia.getMediaNameForMenuHeader()
     if (mediaName.isNullOrEmpty() || viewableMedia.mediaLocation !is MediaLocation.Remote) {
       return emptyList()
     }
@@ -169,7 +179,10 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
 
     options += HeaderFloatingListMenuItem(MEDIA_LONG_CLICK_MENU_HEADER, mediaName)
     options += FloatingListMenuItem(ACTION_IMAGE_COPY_FULL_URL, getString(R.string.action_copy_image_full_url))
-    options += FloatingListMenuItem(ACTION_IMAGE_COPY_THUMBNAIL_URL, getString(R.string.action_copy_image_thumbnail_url))
+
+    if (viewableMedia.previewLocation is MediaLocation.Remote) {
+      options += FloatingListMenuItem(ACTION_IMAGE_COPY_THUMBNAIL_URL, getString(R.string.action_copy_image_thumbnail_url))
+    }
 
     if (viewableMedia.formatFullOriginalFileName().isNotNullNorEmpty()) {
       options += FloatingListMenuItem(ACTION_IMAGE_COPY_ORIGINAL_FILE_NAME, getString(R.string.action_copy_image_original_name))
@@ -189,8 +202,10 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     options += FloatingListMenuItem(ACTION_SHARE_MEDIA_URL, getString(R.string.action_share_media_url))
     options += FloatingListMenuItem(ACTION_SHARE_MEDIA_CONTENT, getString(R.string.action_share_media_content))
 
-    options += FloatingListMenuItem(ACTION_DOWNLOAD_MEDIA_FILE_CONTENT, getString(R.string.action_download_content))
-    options += FloatingListMenuItem(ACTION_DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT, getString(R.string.action_download_content_with_options))
+    if (viewableMedia.canMediaBeDownloaded()) {
+      options += FloatingListMenuItem(ACTION_DOWNLOAD_MEDIA_FILE_CONTENT, getString(R.string.action_download_content))
+      options += FloatingListMenuItem(ACTION_DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT, getString(R.string.action_download_content_with_options))
+    }
 
     return options
   }

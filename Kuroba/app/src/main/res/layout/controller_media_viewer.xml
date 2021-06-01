@@ -25,12 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <com.github.k1rakishou.chan.ui.view.DisappearTransitionImageView
-        android:id="@+id/disappear_preview_image"
-        android:visibility="invisible"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
     <com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager
         android:id="@+id/pager"
         android:layout_width="match_parent"

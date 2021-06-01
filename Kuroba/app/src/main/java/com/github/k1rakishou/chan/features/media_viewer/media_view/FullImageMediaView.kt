@@ -21,7 +21,6 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionH
 import com.github.k1rakishou.chan.features.media_viewer.helper.FullMediaAppearAnimationHelper
 import com.github.k1rakishou.chan.ui.view.CircularChunkedLoadingBar
 import com.github.k1rakishou.chan.ui.view.CustomScaleImageView
-import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -44,7 +43,7 @@ class FullImageMediaView(
   initialMediaViewState: FullImageState,
   mediaViewContract: MediaViewContract,
   private val cacheDataSourceFactory: DataSource.Factory,
-  private val onThumbnailFullyLoaded: () -> Unit,
+  private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
   override val viewableMedia: ViewableMedia.Image,
   override val pagerPosition: Int,
@@ -74,12 +73,8 @@ class FullImageMediaView(
   private var fullImageDeferred = CompletableDeferred<File>()
   private var preloadCancelableDownload: CancelableDownload? = null
 
-  private val fullImageMediaViewOptions by lazy { emptyList<FloatingListMenuItem>() }
-
   override val hasContent: Boolean
     get() = actualImageView.hasImage()
-  override val mediaOptions: List<FloatingListMenuItem>
-    get() = fullImageMediaViewOptions
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -162,7 +157,10 @@ class FullImageMediaView(
         isOriginalMediaPlayable = false,
         thumbnailLocation = viewableMedia.previewLocation,
       ),
-      onThumbnailFullyLoaded = onThumbnailFullyLoaded
+      onThumbnailFullyLoaded = {
+        onThumbnailFullyLoadedFunc()
+        onThumbnailFullyLoaded()
+      }
     )
 
     if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = false)) {
@@ -211,11 +209,17 @@ class FullImageMediaView(
   override fun unbind() {
     thumbnailMediaView.unbind()
 
+    if (fullImageDeferred.isActive) {
+      fullImageDeferred.cancel()
+    }
+
     preloadCancelableDownload?.cancel()
     preloadCancelableDownload = null
 
     actualImageView.setCallback(null)
     actualImageView.recycle()
+
+    closeMediaActionHelper.onDestroy()
   }
 
   override suspend fun onReloadButtonClick() {
@@ -229,6 +233,8 @@ class FullImageMediaView(
     }
 
     cacheHandler.deleteCacheFileByUrl(mediaLocation.url.toString())
+
+    fullImageDeferred.cancel()
     fullImageDeferred = CompletableDeferred<File>()
 
     thumbnailMediaView.setVisibilityFast(View.VISIBLE)

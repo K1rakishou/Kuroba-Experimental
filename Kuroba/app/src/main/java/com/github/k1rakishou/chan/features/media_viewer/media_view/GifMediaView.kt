@@ -19,7 +19,6 @@ import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.FullMediaAppearAnimationHelper
 import com.github.k1rakishou.chan.ui.view.CircularChunkedLoadingBar
-import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
@@ -43,7 +42,7 @@ class GifMediaView(
   initialMediaViewState: GifMediaViewState,
   mediaViewContract: MediaViewContract,
   private val cacheDataSourceFactory: DataSource.Factory,
-  private val onThumbnailFullyLoaded: () -> Unit,
+  private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
   override val viewableMedia: ViewableMedia.Gif,
   override val pagerPosition: Int,
@@ -74,12 +73,8 @@ class GifMediaView(
   private var fullGifDeferred = CompletableDeferred<File>()
   private var preloadCancelableDownload: CancelableDownload? = null
 
-  private val fullImageMediaViewOptions by lazy { emptyList<FloatingListMenuItem>() }
-
   override val hasContent: Boolean
     get() = actualGifView.drawable != null
-  override val mediaOptions: List<FloatingListMenuItem>
-    get() = fullImageMediaViewOptions
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -162,7 +157,10 @@ class GifMediaView(
         isOriginalMediaPlayable = true,
         thumbnailLocation = viewableMedia.previewLocation
       ),
-      onThumbnailFullyLoaded = onThumbnailFullyLoaded
+      onThumbnailFullyLoaded = {
+        onThumbnailFullyLoadedFunc()
+        onThumbnailFullyLoaded()
+      }
     )
 
     if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = false)) {
@@ -221,6 +219,15 @@ class GifMediaView(
   }
 
   override fun unbind() {
+    closeMediaActionHelper.onDestroy()
+
+    if (fullGifDeferred.isActive) {
+      fullGifDeferred.cancel()
+    }
+
+    preloadCancelableDownload?.cancel()
+    preloadCancelableDownload = null
+
     thumbnailMediaView.unbind()
     actualGifView.setImageDrawable(null)
   }
@@ -236,6 +243,8 @@ class GifMediaView(
     }
 
     cacheHandler.deleteCacheFileByUrl(mediaLocation.url.toString())
+
+    fullGifDeferred.cancel()
     fullGifDeferred = CompletableDeferred<File>()
 
     thumbnailMediaView.setVisibilityFast(View.VISIBLE)

@@ -134,7 +134,7 @@ class CircularChunkedLoadingBar @JvmOverloads constructor(
   }
 
   companion object {
-    private const val MIN_PROGRESS = .01f
+    private const val MIN_PROGRESS = .05f
     private const val MAX_PROGRESS = 1f
 
     private val INTERPOLATOR = AccelerateDecelerateInterpolator()

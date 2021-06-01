@@ -23,7 +23,6 @@ import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
 import com.github.k1rakishou.chan.ui.view.AppearTransitionImageView
-import com.github.k1rakishou.chan.ui.view.DisappearTransitionImageView
 import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -66,7 +65,6 @@ class MediaViewerController(
 
   private lateinit var mediaViewerRootLayout: TouchBlockingFrameLayoutNoBackground
   private lateinit var appearPreviewImage: AppearTransitionImageView
-  private lateinit var disappearPreviewImage: DisappearTransitionImageView
   private lateinit var pager: OptionalSwipeViewPager
 
   private val viewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
@@ -107,7 +105,6 @@ class MediaViewerController(
 
     mediaViewerRootLayout = view.findViewById(R.id.media_viewer_root_layout)
     appearPreviewImage = view.findViewById(R.id.appear_preview_image)
-    disappearPreviewImage = view.findViewById(R.id.disappear_preview_image)
     pager = view.findViewById(R.id.pager)
 
     pager.addOnPageChangeListener(this)
@@ -150,12 +147,14 @@ class MediaViewerController(
   override fun onDestroy() {
     super.onDestroy()
 
-    pager.removeOnPageChangeListener(this)
     mediaViewerAdapter?.onDestroy()
+
+    pager.removeOnPageChangeListener(this)
+    pager.adapter = null
   }
 
   override fun onPageSelected(position: Int) {
-    pager.adapter?.let { adapter ->
+    mediaViewerAdapter?.let { adapter ->
       adapter as MediaViewerAdapter
 
       adapter.doBind(position)
@@ -447,6 +446,7 @@ class MediaViewerController(
     )
 
     if (resultBitmap == null) {
+      mediaViewerRootLayout.setBackgroundColor(BACKGROUND_COLOR)
       return
     }
 
