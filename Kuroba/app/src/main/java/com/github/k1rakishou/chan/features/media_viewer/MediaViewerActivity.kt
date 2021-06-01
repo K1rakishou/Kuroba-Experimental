@@ -114,6 +114,22 @@ class MediaViewerActivity : ControllerHostActivity(),
     }
   }
 
+  override fun onResume() {
+    super.onResume()
+
+    if (::mediaViewerController.isInitialized) {
+      mediaViewerController.onResume()
+    }
+  }
+
+  override fun onPause() {
+    super.onPause()
+
+    if (::mediaViewerController.isInitialized) {
+      mediaViewerController.onPause()
+    }
+  }
+
   override fun onDestroy() {
     super.onDestroy()
 

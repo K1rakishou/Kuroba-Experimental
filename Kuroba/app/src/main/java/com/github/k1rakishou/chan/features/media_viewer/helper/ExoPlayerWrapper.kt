@@ -163,10 +163,6 @@ class ExoPlayerWrapper(
     actualExoPlayer.pause()
   }
 
-  fun resetPosition() {
-    actualExoPlayer.seekTo(0, 0L)
-  }
-
   fun release() {
     _hasContent = false
 
@@ -203,6 +199,19 @@ class ExoPlayerWrapper(
 
       return@synchronized newReusableExoPlayer
     }
+  }
+
+  fun isPlaying(): Boolean {
+    return actualExoPlayer.isPlaying
+  }
+
+  fun seekTo(windowIndex: Int, position: Long) {
+    actualExoPlayer.seekTo(windowIndex, position)
+  }
+
+  fun playPause() {
+    actualExoPlayer.play()
+    actualExoPlayer.pause()
   }
 
   class ReusableExoPlayer(

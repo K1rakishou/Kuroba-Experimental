@@ -76,11 +76,16 @@ class MediaViewerAdapter(
 
   fun onResume() {
     loadedViews.forEach { loadedView ->
+      if (loadedView.viewIndex != initialPagerIndex) {
+        return@forEach
+      }
+
       if (!loadedView.mediaView.shown) {
         // Restore media view state
         val mediaLocation = loadedView.mediaView.viewableMedia.mediaLocation
         loadedView.mediaView.mediaViewState.updateFrom(viewModel.getPrevMediaViewStateOrNull(mediaLocation))
 
+        loadedView.mediaView.startPreloading()
         loadedView.mediaView.onShow()
       }
     }
@@ -98,7 +103,7 @@ class MediaViewerAdapter(
 
     val mediaView = when (viewableMedia) {
       is ViewableMedia.Image -> {
-        val initialMediaViewState= viewModel.getPrevMediaViewStateOrNull(viewableMedia.mediaLocation)
+        val initialMediaViewState = viewModel.getPrevMediaViewStateOrNull(viewableMedia.mediaLocation)
           as? FullImageMediaView.FullImageState
           ?: FullImageMediaView.FullImageState()
 

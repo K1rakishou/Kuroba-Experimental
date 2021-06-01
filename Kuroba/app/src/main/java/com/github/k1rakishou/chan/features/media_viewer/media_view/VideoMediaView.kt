@@ -215,7 +215,7 @@ class VideoMediaView(
 
   private fun startFullVideoPreloading(mediaLocation: MediaLocation): Job {
     return scope.launch {
-      this@VideoMediaView.videoSoundDetected = mediaViewState.videoSoundDetected
+      this@VideoMediaView.videoSoundDetected = mediaViewState.videoSoundDetected == true
 
       val showBufferingJob = scope.launch {
         delay(125L)
@@ -299,9 +299,9 @@ class VideoMediaView(
     mediaViewState.prevPosition = mainVideoPlayer.actualExoPlayer.currentPosition
     mediaViewState.prevWindowIndex = mainVideoPlayer.actualExoPlayer.currentWindowIndex
     mediaViewState.videoSoundDetected = videoSoundDetected
+    mediaViewState.playing = mainVideoPlayer.isPlaying()
 
     mainVideoPlayer.pause()
-    mainVideoPlayer.resetPosition()
   }
 
   override fun unbind() {
@@ -407,7 +407,16 @@ class VideoMediaView(
 
   private suspend fun switchToPlayerViewAndStartPlaying() {
     actualVideoPlayerView.setVisibilityFast(VISIBLE)
-    mainVideoPlayer.startAndAwaitFirstFrame()
+
+    if (mediaViewState.playing == null || mediaViewState.playing == true) {
+      mainVideoPlayer.startAndAwaitFirstFrame()
+    } else {
+      // We need to do this so that the current video frame gets refreshed, otherwise we may end up
+      // with no video frame which may look like there is not video. We only need to do this in case
+      // the activity received onPause and then onResume.
+      mainVideoPlayer.playPause()
+    }
+
     thumbnailMediaView.setVisibilityFast(INVISIBLE)
   }
 
@@ -425,17 +434,19 @@ class VideoMediaView(
   class VideoMediaViewState(
     var prevPosition: Long = -1,
     var prevWindowIndex: Int = -1,
-    var videoSoundDetected: Boolean = false
+    var videoSoundDetected: Boolean? = null,
+    var playing: Boolean? = null
   ) : MediaViewState {
     override fun clone(): MediaViewState {
-      return VideoMediaViewState(prevPosition, prevWindowIndex, videoSoundDetected)
+      return VideoMediaViewState(prevPosition, prevWindowIndex, videoSoundDetected, playing)
     }
 
     override fun updateFrom(other: MediaViewState?) {
       if (other == null) {
         prevPosition = -1
         prevWindowIndex = -1
-        videoSoundDetected = false
+        videoSoundDetected = null
+        playing = null
         return
       }
 
@@ -446,6 +457,7 @@ class VideoMediaView(
       this.prevPosition = other.prevPosition
       this.prevWindowIndex = other.prevWindowIndex
       this.videoSoundDetected = other.videoSoundDetected
+      this.playing = other.playing
     }
   }
 

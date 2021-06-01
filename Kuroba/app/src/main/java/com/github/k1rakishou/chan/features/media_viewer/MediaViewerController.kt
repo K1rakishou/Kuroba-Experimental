@@ -137,13 +137,11 @@ class MediaViewerController(
     }
   }
 
-  override fun onShow() {
-    super.onShow()
+  fun onResume() {
     mediaViewerAdapter?.onResume()
   }
 
-  override fun onHide() {
-    super.onHide()
+  fun onPause() {
     mediaViewerAdapter?.onPause()
   }
 
