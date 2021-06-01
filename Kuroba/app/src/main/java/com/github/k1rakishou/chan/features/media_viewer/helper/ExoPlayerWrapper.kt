@@ -29,19 +29,14 @@ class ExoPlayerWrapper(
   private val mediaViewContract: MediaViewContract,
   private val onAudioDetected: () -> Unit
 ) {
-  private val exoPlayerLazy = lazy { SimpleExoPlayer.Builder(context).build() }
-  private val exoPlayer by exoPlayerLazy
-
-  val actualExoPlayer: SimpleExoPlayer
-    get() = exoPlayer
+  private val reusableExoPlayer by lazy { getOrCreateExoPlayer()  }
+  val actualExoPlayer by lazy { reusableExoPlayer.exoPlayer }
 
   private var _hasContent = false
   val hasContent: Boolean
     get() = _hasContent
 
   private var firstFrameRendered: CompletableDeferred<Unit>? = null
-
-  fun isInitialized(): Boolean = exoPlayerLazy.isInitialized()
 
   suspend fun preload(mediaLocation: MediaLocation, prevPosition: Long, prevWindowIndex: Int) {
     coroutineScope {
@@ -52,39 +47,40 @@ class ExoPlayerWrapper(
           val mediaSource = ProgressiveMediaSource.Factory(cacheDataSourceFactory)
             .createMediaSource(MediaItem.fromUri(mediaUri))
 
-          exoPlayer.playWhenReady = false
-          exoPlayer.setMediaSource(mediaSource)
+          actualExoPlayer.stop()
+          actualExoPlayer.playWhenReady = false
+          actualExoPlayer.setMediaSource(mediaSource)
 
           if (prevWindowIndex >= 0 && prevPosition >= 0) {
-            exoPlayer.seekTo(prevWindowIndex, prevPosition)
+            actualExoPlayer.seekTo(prevWindowIndex, prevPosition)
           }
 
-          exoPlayer.prepare()
+          actualExoPlayer.prepare()
 
           firstFrameRendered?.cancel()
           firstFrameRendered = CompletableDeferred()
 
-          exoPlayer.addListener(object : Player.Listener {
+          actualExoPlayer.addListener(object : Player.Listener {
             override fun onRenderedFirstFrame() {
               firstFrameRendered?.complete(Unit)
-              exoPlayer.removeListener(this)
+              actualExoPlayer.removeListener(this)
 
               coroutineContext[Job.Key]?.invokeOnCompletion { cause ->
                 if (cause is CancellationException) {
-                  exoPlayer.removeListener(this)
+                  actualExoPlayer.removeListener(this)
                 }
               }
             }
           })
 
-          exoPlayer.addAnalyticsListener(object : AnalyticsListener {
+          actualExoPlayer.addAnalyticsListener(object : AnalyticsListener {
             override fun onAudioEnabled(eventTime: AnalyticsListener.EventTime, counters: DecoderCounters) {
               onAudioDetected()
-              exoPlayer.removeAnalyticsListener(this)
+              actualExoPlayer.removeAnalyticsListener(this)
 
               coroutineContext[Job.Key]?.invokeOnCompletion { cause ->
                 if (cause is CancellationException) {
-                  exoPlayer.removeAnalyticsListener(this)
+                  actualExoPlayer.removeAnalyticsListener(this)
                 }
               }
             }
@@ -101,10 +97,10 @@ class ExoPlayerWrapper(
       val listener = object : Player.Listener {
         override fun onPlayerError(error: ExoPlaybackException) {
           Logger.e(TAG, "preload() error", error)
-          exoPlayer.removeListener(this)
+          actualExoPlayer.removeListener(this)
 
           continuation.invokeOnCancellation {
-            exoPlayer.removeListener(this)
+            actualExoPlayer.removeListener(this)
           }
 
           if (continuation.isActive) {
@@ -114,10 +110,10 @@ class ExoPlayerWrapper(
 
         override fun onPlaybackStateChanged(state: Int) {
           if (state == Player.STATE_ENDED || state == Player.STATE_READY) {
-            exoPlayer.removeListener(this)
+            actualExoPlayer.removeListener(this)
 
             continuation.invokeOnCancellation {
-              exoPlayer.removeListener(this)
+              actualExoPlayer.removeListener(this)
             }
 
             if (continuation.isActive) {
@@ -128,15 +124,11 @@ class ExoPlayerWrapper(
         }
       }
 
-      exoPlayer.addListener(listener)
+      actualExoPlayer.addListener(listener)
     }
   }
 
   suspend fun startAndAwaitFirstFrame() {
-    if (!exoPlayerLazy.isInitialized()) {
-      return
-    }
-
     start()
 
     val deferred = requireNotNull(firstFrameRendered) { "firstFrameRendered is null!" }
@@ -144,27 +136,23 @@ class ExoPlayerWrapper(
   }
 
   fun start() {
-    exoPlayer.repeatMode = if (ChanSettings.videoAutoLoop.get()) {
+    actualExoPlayer.repeatMode = if (ChanSettings.videoAutoLoop.get()) {
       Player.REPEAT_MODE_ALL
     } else {
       Player.REPEAT_MODE_OFF
     }
 
-    exoPlayer.volume = if (mediaViewContract.isSoundCurrentlyMuted()) {
+    actualExoPlayer.volume = if (mediaViewContract.isSoundCurrentlyMuted()) {
       0f
     } else {
       1f
     }
 
-    exoPlayer.play()
+    actualExoPlayer.play()
   }
 
   fun muteUnMute(mute: Boolean) {
-    if (!exoPlayerLazy.isInitialized()) {
-      return
-    }
-
-    exoPlayer.volume = if (mute) {
+    actualExoPlayer.volume = if (mute) {
       0f
     } else {
       1f
@@ -172,22 +160,18 @@ class ExoPlayerWrapper(
   }
 
   fun pause() {
-    if (exoPlayerLazy.isInitialized()) {
-      exoPlayer.pause()
-    }
+    actualExoPlayer.pause()
   }
 
   fun resetPosition() {
-    if (exoPlayerLazy.isInitialized()) {
-      exoPlayer.seekTo(0, 0L)
-    }
+    actualExoPlayer.seekTo(0, 0L)
   }
 
   fun release() {
     _hasContent = false
 
-    if (exoPlayerLazy.isInitialized()) {
-      exoPlayer.release()
+    synchronized(reusableExoPlayer) {
+      reusableExoPlayer.giveBack()
     }
 
     firstFrameRendered = null
@@ -197,8 +181,69 @@ class ExoPlayerWrapper(
     _hasContent = false
   }
 
+  private fun getOrCreateExoPlayer(): ReusableExoPlayer {
+    return synchronized(reusableExoPlayerCache) {
+      val exoPlayer = reusableExoPlayerCache
+        .firstOrNull { reusableExoPlayer -> reusableExoPlayer.notUsed }
+
+      if (exoPlayer != null) {
+        Logger.d(TAG, "getOrCreateExoPlayer() acquiring already instantiated player, " +
+          "total players count: ${reusableExoPlayerCache.size}")
+
+        exoPlayer.acquire()
+        return exoPlayer
+      }
+
+      val newExoPlayer = SimpleExoPlayer.Builder(context).build()
+      val newReusableExoPlayer = ReusableExoPlayer(isUsed = true, newExoPlayer)
+      reusableExoPlayerCache.add(newReusableExoPlayer)
+
+      Logger.d(TAG, "getOrCreateExoPlayer() creating a new player, " +
+        "total players count: ${reusableExoPlayerCache.size}")
+
+      return@synchronized newReusableExoPlayer
+    }
+  }
+
+  class ReusableExoPlayer(
+    private var isUsed: Boolean,
+    val exoPlayer: SimpleExoPlayer
+  ) {
+    val notUsed: Boolean
+      @get:Synchronized
+      get() = !isUsed
+
+    @Synchronized
+    fun acquire() {
+      isUsed = true
+    }
+
+    @Synchronized
+    fun giveBack() {
+      exoPlayer.stop()
+      isUsed = false
+    }
+
+    @Synchronized
+    fun releaseCompletely() {
+      exoPlayer.release()
+      isUsed = false
+    }
+  }
+
   companion object {
     private const val TAG = "ExoPlayerWrapper"
+
+    private val reusableExoPlayerCache = mutableListOf<ReusableExoPlayer>()
+
+    fun releaseAll() {
+      reusableExoPlayerCache.forEachIndexed { index, reusableExoPlayer ->
+        Logger.d(TAG, "releaseAll() releasing ${index + 1} / ${reusableExoPlayerCache.size} player")
+        reusableExoPlayer.releaseCompletely()
+      }
+
+      reusableExoPlayerCache.clear()
+    }
   }
 
 }

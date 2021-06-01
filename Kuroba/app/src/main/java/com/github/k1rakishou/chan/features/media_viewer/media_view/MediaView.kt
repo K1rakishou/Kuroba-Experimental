@@ -8,7 +8,6 @@ import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
-import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerWrapper
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.HeaderFloatingListMenuItem
@@ -21,6 +20,7 @@ import com.google.android.exoplayer2.upstream.DataSource
 abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   context: Context,
   attributeSet: AttributeSet?,
+  // To be used by sound posts
   private val cacheDataSourceFactory: DataSource.Factory,
   protected val mediaViewContract: MediaViewContract,
   val mediaViewState: S
@@ -42,14 +42,6 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
 
   protected val cancellableToast by lazy { CancellableToast() }
   protected val scope = KurobaCoroutineScope()
-
-  // May be used by all media views (including VideoMediaView) to play music in sound posts.
-  protected val secondaryVideoPlayer = ExoPlayerWrapper(
-    context = context,
-    cacheDataSourceFactory = cacheDataSourceFactory,
-    mediaViewContract = mediaViewContract,
-    onAudioDetected = {}
-  )
 
   val bound: Boolean
     get() = _bound
@@ -106,7 +98,6 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     cancellableToast.cancel()
     scope.cancelChildren()
     unbind()
-    secondaryVideoPlayer.release()
 
     Logger.d(TAG, "onUnbind(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
   }

@@ -13,6 +13,7 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerCache
+import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerWrapper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaLongClickMenuHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewContract
@@ -154,6 +155,8 @@ class MediaViewerController(
 
     pager.removeOnPageChangeListener(this)
     pager.adapter = null
+
+    ExoPlayerWrapper.releaseAll()
   }
 
   override fun onPageSelected(position: Int) {

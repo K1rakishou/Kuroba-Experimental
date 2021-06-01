@@ -94,7 +94,7 @@ class VideoMediaView(
   private var videoSoundDetected = false
 
   override val hasContent: Boolean
-    get() = mainVideoPlayer.isInitialized() && mainVideoPlayer.hasContent
+    get() = mainVideoPlayer.hasContent
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)

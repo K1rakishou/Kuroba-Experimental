@@ -61,34 +61,42 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:orientation="horizontal"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp">
+        android:orientation="horizontal">
 
         <ImageButton
             android:id="@+id/exo_mute"
             style="@style/ExoMediaButton"
+            android:layout_width="60dp"
+            android:layout_height="38dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_volume_off_white_24dp" />
 
         <ImageButton
             android:id="@id/exo_rew"
             style="@style/ExoMediaButton.Rewind"
+            android:layout_width="60dp"
+            android:layout_height="38dp"
             android:background="?attr/selectableItemBackgroundBorderless" />
 
         <ImageButton
             android:id="@id/exo_play"
             style="@style/ExoMediaButton.Play"
+            android:layout_width="60dp"
+            android:layout_height="38dp"
             android:background="?attr/selectableItemBackgroundBorderless" />
 
         <ImageButton
             android:id="@id/exo_pause"
             style="@style/ExoMediaButton.Pause"
+            android:layout_width="60dp"
+            android:layout_height="38dp"
             android:background="?attr/selectableItemBackgroundBorderless" />
 
         <ImageButton
             android:id="@id/exo_ffwd"
             style="@style/ExoMediaButton.FastForward"
+            android:layout_width="60dp"
+            android:layout_height="38dp"
             android:background="?attr/selectableItemBackgroundBorderless" />
 
     </LinearLayout>
