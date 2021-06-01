@@ -1,26 +1,21 @@
 package com.github.k1rakishou.chan.features.media_viewer
 
 import android.content.Context
-import android.view.HapticFeedbackConstants
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
 import androidx.viewpager.widget.ViewPager
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
-import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
-import com.github.k1rakishou.chan.core.site.ImageSearch
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerCache
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaLongClickMenuHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
-import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaView
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewContract
-import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
-import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
 import com.github.k1rakishou.chan.ui.view.AppearTransitionImageView
 import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager
@@ -28,7 +23,6 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
-import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.awaitSilently
 import com.github.k1rakishou.core_logger.Logger
@@ -41,7 +35,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import okhttp3.HttpUrl
 import javax.inject.Inject
 import kotlin.coroutines.resume
 
@@ -68,8 +61,17 @@ class MediaViewerController(
   private lateinit var pager: OptionalSwipeViewPager
 
   private val viewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
+  private val mediaLongClickMenuHelper by lazy {
+    MediaLongClickMenuHelper(
+      scope = mainScope,
+      globalWindowInsetsManager = globalWindowInsetsManager,
+      imageSaverV2 = imageSaverV2,
+      getMediaViewerAdapterFunc = { mediaViewerAdapter },
+      presentControllerFunc = { controller -> presentController(controller, true) }
+    )
+  }
+
   private val transitionAnimationShown = CompletableDeferred<Unit>()
-  private val mediaOptionsHandlerExecutor = RendezvousCoroutineExecutor(mainScope)
 
   private val mediaViewerAdapter: MediaViewerAdapter?
     get() = pager.adapter as? MediaViewerAdapter
@@ -148,6 +150,7 @@ class MediaViewerController(
     super.onDestroy()
 
     mediaViewerAdapter?.onDestroy()
+    mediaLongClickMenuHelper.onDestroy()
 
     pager.removeOnPageChangeListener(this)
     pager.adapter = null
@@ -193,7 +196,7 @@ class MediaViewerController(
   override suspend fun onDownloadButtonClick(viewableMedia: ViewableMedia, longClick: Boolean): Boolean {
     val simpleImageInfo = viewableMedia.toSimpleImageInfoOrNull()
     if (simpleImageInfo == null) {
-      showToast("Cannot save image: ${viewableMedia}")
+      showToast("Cannot save image because some info required by SimpleImageInfo is not present (image=${viewableMedia})")
       return false
     }
 
@@ -228,160 +231,7 @@ class MediaViewerController(
     viewableMedia: ViewableMedia,
     mediaLongClickOptions: List<FloatingListMenuItem>
   ) {
-    if (mediaLongClickOptions.isEmpty()) {
-      return
-    }
-
-    view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-
-    val floatingListMenuController = FloatingListMenuController(
-      context,
-      globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
-      mediaLongClickOptions,
-      itemClickListener = { clickedItem ->
-        mediaOptionsHandlerExecutor.post { handleMenuItemClick(clickedItem, viewableMedia) }
-      }
-    )
-
-    presentController(floatingListMenuController)
-  }
-
-  private suspend fun handleMenuItemClick(clickedItem: FloatingListMenuItem, viewableMedia: ViewableMedia) {
-    when (clickedItem.key as Int) {
-      MediaView.ACTION_IMAGE_COPY_FULL_URL -> {
-        val remoteLocation = viewableMedia.mediaLocation as? MediaLocation.Remote
-          ?: return
-
-        AndroidUtils.setClipboardContent("Image URL", remoteLocation.url.toString())
-        AppModuleAndroidUtils.showToast(context, R.string.image_url_copied_to_clipboard)
-      }
-      MediaView.ACTION_IMAGE_COPY_THUMBNAIL_URL -> {
-        val previewLocationUrl = (viewableMedia.previewLocation as? MediaLocation.Remote)?.url
-          ?: return
-
-        AndroidUtils.setClipboardContent("Thumbnail URL", previewLocationUrl.toString())
-        AppModuleAndroidUtils.showToast(context, R.string.image_url_copied_to_clipboard)
-      }
-      MediaView.ACTION_IMAGE_COPY_ORIGINAL_FILE_NAME -> {
-        AndroidUtils.setClipboardContent("Original file name", viewableMedia.formatFullOriginalFileName())
-        AppModuleAndroidUtils.showToast(context, R.string.image_file_name_copied_to_clipboard)
-      }
-      MediaView.ACTION_IMAGE_COPY_SERVER_FILE_NAME -> {
-        AndroidUtils.setClipboardContent("Server file name", viewableMedia.formatFullServerFileName())
-        AppModuleAndroidUtils.showToast(context, R.string.image_file_name_copied_to_clipboard)
-      }
-      MediaView.ACTION_IMAGE_COPY_MD5_HASH_HEX -> {
-        AndroidUtils.setClipboardContent("File hash HEX", viewableMedia.viewableMediaMeta.mediaHash)
-        AppModuleAndroidUtils.showToast(context, R.string.image_file_hash_copied_to_clipboard)
-      }
-      MediaView.ACTION_OPEN_IN_BROWSER -> {
-        val mediaUrl = (viewableMedia.mediaLocation as? MediaLocation.Remote)?.url
-          ?: return
-
-        AppModuleAndroidUtils.openLink(mediaUrl.toString())
-      }
-      MediaView.ACTION_MEDIA_SEARCH -> {
-        showImageSearchOptions(viewableMedia)
-      }
-      MediaView.ACTION_SHARE_MEDIA_URL -> {
-        val mediaUrl = (viewableMedia.mediaLocation as? MediaLocation.Remote)?.url
-          ?: return
-
-        AppModuleAndroidUtils.shareLink(mediaUrl.toString())
-      }
-      MediaView.ACTION_SHARE_MEDIA_CONTENT -> {
-        shareMediaContent(viewableMedia)
-      }
-      MediaView.ACTION_DOWNLOAD_MEDIA_FILE_CONTENT -> {
-        downloadMediaFile(context, false, viewableMedia)
-      }
-      MediaView.ACTION_DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT -> {
-        downloadMediaFile(context, true, viewableMedia)
-      }
-    }
-  }
-
-  private fun downloadMediaFile(
-    context: Context,
-    showOptions: Boolean,
-    viewableMedia: ViewableMedia
-  ) {
-    val simpleSaveableMediaInfo = ImageSaverV2.SimpleSaveableMediaInfo.fromViewableMedia(viewableMedia)
-    if (simpleSaveableMediaInfo == null) {
-      return
-    }
-
-    val imageSaverV2Options = imageSaverV2PersistedOptions.get()
-
-    if (!showOptions && !imageSaverV2Options.shouldShowImageSaverOptionsController()) {
-      imageSaverV2.save(imageSaverV2Options, simpleSaveableMediaInfo, null)
-      mediaViewerAdapter?.markMediaAsDownloaded(viewableMedia)
-      return
-    }
-
-    val options = ImageSaverV2OptionsController.Options.SingleImage(
-      simpleSaveableMediaInfo = simpleSaveableMediaInfo,
-      onSaveClicked = { updatedImageSaverV2Options, newFileName ->
-        imageSaverV2.save(updatedImageSaverV2Options, simpleSaveableMediaInfo, newFileName)
-        mediaViewerAdapter?.markMediaAsDownloaded(viewableMedia)
-      },
-      onCanceled = {}
-    )
-
-    presentController(ImageSaverV2OptionsController(context, options))
-  }
-
-  private suspend fun shareMediaContent(viewableMedia: ViewableMedia) {
-    val remoteMediaLocation = viewableMedia.mediaLocation as MediaLocation.Remote
-      ?: return
-    val downloadFileName = viewableMedia.viewableMediaMeta.serverMediaName
-      ?: return
-    val mediaUrl = remoteMediaLocation.url
-
-    val loadingViewController = LoadingViewController(context, true)
-    presentController(loadingViewController)
-
-    try {
-      imageSaverV2.downloadMediaAndShare(mediaUrl, downloadFileName)
-    } finally {
-      loadingViewController.stopPresenting()
-    }
-  }
-
-  private fun showImageSearchOptions(viewableMedia: ViewableMedia) {
-    val items = ImageSearch.engines
-      .map { imageSearch -> FloatingListMenuItem(imageSearch.id, imageSearch.name) }
-
-    val floatingListMenuController = FloatingListMenuController(
-      context = context,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
-      items = items,
-      itemClickListener = { item ->
-        for (imageSearch in ImageSearch.engines) {
-          val id = item.key as Int
-          if (id == imageSearch.id) {
-            val searchImageUrl = getSearchImageUrl(viewableMedia)
-            if (searchImageUrl == null) {
-              Logger.e(TAG, "showImageSearchOptions() searchImageUrl == null")
-              break
-            }
-
-            AppModuleAndroidUtils.openLink(imageSearch.getUrl(searchImageUrl.toString()))
-            break
-          }
-        }
-      }
-    )
-
-    presentController(floatingListMenuController, true)
-  }
-
-  private fun getSearchImageUrl(viewableMedia: ViewableMedia): HttpUrl? {
-    if (viewableMedia is ViewableMedia.Video) {
-      return (viewableMedia.previewLocation as? MediaLocation.Remote)?.url
-    }
-
-    return (viewableMedia.mediaLocation as? MediaLocation.Remote)?.url
+    mediaLongClickMenuHelper.onMediaLongClick(view, viewableMedia, mediaLongClickOptions)
   }
 
   fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {
