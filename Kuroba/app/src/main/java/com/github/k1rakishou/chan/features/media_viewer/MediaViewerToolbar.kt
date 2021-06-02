@@ -97,6 +97,12 @@ class MediaViewerToolbar @JvmOverloads constructor(
     }
   }
 
+  fun isDownloadAllowed(): Boolean = toolbarDownloadButton.isEnabled
+
+  fun downloadMedia() {
+    fireOnDownloadButtonClickCallback(isLongClick = false)
+  }
+
   private fun fireOnDownloadButtonClickCallback(isLongClick: Boolean) {
     if (!toolbarDownloadButton.isEnabled) {
       return
@@ -156,6 +162,8 @@ class MediaViewerToolbar @JvmOverloads constructor(
   fun markMediaAsDownloaded() {
     toolbarDownloadButton.setEnabledFast(false)
   }
+
+  fun toolbarHeight(): Int = height
 
   override fun onInsetsChanged() {
     updatePaddings(

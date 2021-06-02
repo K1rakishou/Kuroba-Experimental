@@ -1,24 +1,40 @@
 package com.github.k1rakishou.chan.features.media_viewer.helper
 
+import android.animation.Animator
+import android.animation.ValueAnimator
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.PointF
 import android.os.SystemClock
+import android.text.Layout
+import android.text.StaticLayout
+import android.text.TextPaint
 import android.view.MotionEvent
 import android.view.VelocityTracker
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.animation.DecelerateInterpolator
 import android.widget.Scroller
+import androidx.core.graphics.withSave
 import androidx.core.view.ViewCompat
+import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
+import com.github.k1rakishou.core_themes.ThemeEngine
 import kotlin.math.hypot
 
 class CloseMediaActionHelper(
   private val context: Context,
+  private val themeEngine: ThemeEngine,
   private val movableContainer: View,
   private val requestDisallowInterceptTouchEvent: () -> Unit,
   private val onAlphaAnimationProgress: (alpha: Float) -> Unit,
-  private val closeMediaViewer: () -> Unit
+  private val invalidateFunc: () -> Unit,
+  private val closeMediaViewer: () -> Unit,
+  private val topGestureInfo: GestureInfo? = null,
+  private val bottomGestureInfo: GestureInfo? = null
 ) {
   private var velocityTracker: VelocityTracker? = null
   private var scroller: Scroller? = null
@@ -27,7 +43,29 @@ class CloseMediaActionHelper(
   private val slopPixels = viewConfiguration.scaledTouchSlop
   private val tapTimeout = ViewConfiguration.getTapTimeout()
 
+  private val normalTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+    color = Color.WHITE
+    textSize = sp(60f).toFloat()
+    setShadowLayer(8f, 0f, 0f, Color.BLACK)
+  }
+
+  private val highlightedTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+    color = themeEngine.chanTheme.accentColor
+    textSize = sp(60f).toFloat()
+    setShadowLayer(8f, 0f, 0f, Color.BLACK)
+  }
+
+  private var topTextNormalCached: StaticLayout? = null
+  private var topTextHighlightedCached: StaticLayout? = null
+  private var bottomTextNormalCached: StaticLayout? = null
+  private var bottomTextHighlightedCached: StaticLayout? = null
+
+  private var isInsideTopGestureBounds = false
+  private var isInsideBottomGestureBounds = false
+
   private var initialTouchPosition: PointF? = null
+  private var currentTouchPosition: PointF? = null
+  private var trackingStart: Long? = null
   private var tracking = false
   private var blocked = false
   private var initialEvent: MotionEvent? = null
@@ -40,6 +78,11 @@ class CloseMediaActionHelper(
 
     scroller?.forceFinished(true)
     scroller = null
+
+    topTextNormalCached = null
+    topTextHighlightedCached = null
+    bottomTextNormalCached = null
+    bottomTextHighlightedCached = null
   }
 
   fun onInterceptTouchEvent(event: MotionEvent): Boolean {
@@ -118,16 +161,22 @@ class CloseMediaActionHelper(
 
     velocityTracker!!.addMovement(event)
 
+    if (currentTouchPosition == null) {
+      currentTouchPosition = PointF()
+    }
+
+    if (trackingStart == null) {
+      trackingStart = SystemClock.elapsedRealtime()
+    }
+
+    currentTouchPosition!!.set(event.x, event.y)
+
     val deltaX = event.x - initialTouchPosition!!.x
     val deltaY = event.y - initialTouchPosition!!.y
-    val flingProgress = (Math.max((Math.abs(deltaX)), Math.abs(deltaY)) / MAX_FLING_DIST).coerceIn(0f, 1f)
-    val deltaAlpha = 1f - flingProgress
 
     movableContainer.translationX = deltaX
     movableContainer.translationY = deltaY
-    movableContainer.alpha = deltaAlpha
-
-    onAlphaAnimationProgress(deltaAlpha)
+    invalidateFunc()
 
     if (event.actionMasked == MotionEvent.ACTION_UP || event.actionMasked == MotionEvent.ACTION_CANCEL) {
       scroller!!.forceFinished(true)
@@ -140,11 +189,7 @@ class CloseMediaActionHelper(
 
       finishingWithAnimation = true
 
-      if (
-        flingProgress > MAX_FLING_PROGRESS
-        || Math.abs(velocityX) > FLING_MIN_VELOCITY
-        || Math.abs(velocityY) > FLING_MIN_VELOCITY
-      ) {
+      if (Math.abs(velocityX) > FLING_MIN_VELOCITY || Math.abs(velocityY) > FLING_MIN_VELOCITY) {
         scroller!!.setFriction(0.1f)
 
         scroller!!.fling(
@@ -158,21 +203,28 @@ class CloseMediaActionHelper(
           deltaY.toInt() + FLING_ANIMATION_DIST
         )
 
-        ViewCompat.postOnAnimation(
-          movableContainer,
-          FlingRunnable(isFinishing = true, currentFlingProgress = flingProgress)
-        )
+        ViewCompat.postOnAnimation(movableContainer, FlingRunnable(isFinishing = true))
       } else {
-        scroller!!.startScroll(deltaX.toInt(), deltaY.toInt(), -deltaX.toInt(), -deltaY.toInt(), 250)
+        scroller!!.startScroll(deltaX.toInt(), deltaY.toInt(), -deltaX.toInt(), -deltaY.toInt(), SCROLL_ANIMATION_DURATION)
 
-        ViewCompat.postOnAnimation(
-          movableContainer,
-          FlingRunnable(isFinishing = false, currentFlingProgress = flingProgress)
-        )
+        if (isInsideTopGestureBounds && topGestureInfo != null) {
+          ViewCompat.postOnAnimation(movableContainer, FlingRunnable(isFinishing = false))
+          topGestureInfo.onGestureTriggeredFunc()
+        } else if (isInsideBottomGestureBounds && bottomGestureInfo != null) {
+          FadeAnimation().animate { bottomGestureInfo.onGestureTriggeredFunc() }
+        } else {
+          ViewCompat.postOnAnimation(movableContainer, FlingRunnable(isFinishing = false))
+        }
       }
 
       velocityTracker?.recycle()
       velocityTracker = null
+
+      currentTouchPosition = null
+      trackingStart = null
+
+      isInsideTopGestureBounds = false
+      isInsideBottomGestureBounds = false
     }
 
     return true
@@ -187,67 +239,185 @@ class CloseMediaActionHelper(
     tracking = false
     blocked = false
     initialEvent = null
+
+    topTextNormalCached = null
+    topTextHighlightedCached = null
+    bottomTextNormalCached = null
+    bottomTextHighlightedCached = null
   }
 
-  inner class FlingRunnable(val isFinishing: Boolean, val currentFlingProgress: Float) : Runnable {
+  fun onDraw(canvas: Canvas) {
+    if (!tracking || blocked) {
+      return
+    }
+
+    if (topGestureInfo == null && bottomGestureInfo == null) {
+      return
+    }
+
+    val start = trackingStart
+      ?: return
+
+    if (SystemClock.elapsedRealtime() - start < tapTimeout) {
+      return
+    }
+
+    val width = canvas.width
+    if (width == 0) {
+      return
+    }
+
+    val height = canvas.height
+    if (height == 0) {
+      return
+    }
+
+    val currentTouchPositionY = when {
+      currentTouchPosition == null -> return
+      currentTouchPosition!!.y == 0f -> 1f
+      else -> currentTouchPosition!!.y
+    }
+
+    val center = height / 2f
+
+    if (topGestureInfo != null && topGestureInfo.gestureCanBeExecuted()) {
+      isInsideTopGestureBounds = currentTouchPositionY < center && ((center - currentTouchPositionY) > DEAD_ZONE_OFFSET)
+
+      val topTextPosition = center - TEXT_TO_TOUCH_POSITION_OFFSET
+      val topText = getTopText(isInsideTopGestureBounds, topGestureInfo, width)
+      val topTextScale = (1f - (currentTouchPositionY / height)).coerceIn(MIN_SCALE, MAX_SCALE)
+
+      canvas.withSave {
+        canvas.scale(topTextScale, topTextScale, topText.width / 2f, topTextPosition + (topText.height / 2f))
+        canvas.translate(0f, topTextPosition)
+        topText.draw(this)
+      }
+    } else {
+      isInsideTopGestureBounds = false
+    }
+
+    if (bottomGestureInfo != null && bottomGestureInfo.gestureCanBeExecuted()) {
+      isInsideBottomGestureBounds = currentTouchPositionY > center && ((currentTouchPositionY - center) > DEAD_ZONE_OFFSET)
+
+      val bottomTextPosition = center + TEXT_TO_TOUCH_POSITION_OFFSET
+      val bottomText = getBottomText(isInsideBottomGestureBounds, bottomGestureInfo, width)
+      val bottomTextScale = (currentTouchPositionY / height).coerceIn(MIN_SCALE, MAX_SCALE)
+
+      canvas.withSave {
+        canvas.scale(bottomTextScale, bottomTextScale, bottomText.width / 2f, bottomTextPosition + (bottomText.height / 2f))
+        canvas.translate(0f, bottomTextPosition)
+        bottomText.draw(this)
+      }
+    } else {
+      isInsideBottomGestureBounds = false
+    }
+  }
+
+  private fun getBottomText(isInsideBottomGestureBounds: Boolean, bottomGestureInfo: GestureInfo, width: Int): StaticLayout {
+    if (isInsideBottomGestureBounds) {
+      return if (bottomTextHighlightedCached == null) {
+        bottomTextHighlightedCached = StaticLayout(
+          bottomGestureInfo.gestureLabelText,
+          highlightedTextPaint,
+          width,
+          Layout.Alignment.ALIGN_CENTER,
+          1f,
+          0f,
+          false
+        )
+
+        bottomTextHighlightedCached!!
+      } else {
+        bottomTextHighlightedCached!!
+      }
+    } else {
+      return if (bottomTextNormalCached == null) {
+        bottomTextNormalCached = StaticLayout(
+          bottomGestureInfo.gestureLabelText,
+          normalTextPaint,
+          width,
+          Layout.Alignment.ALIGN_CENTER,
+          1f,
+          0f,
+          false
+        )
+
+        bottomTextNormalCached!!
+      } else {
+        bottomTextNormalCached!!
+      }
+    }
+  }
+
+  private fun getTopText(isInsideTopGestureBounds: Boolean, topGestureInfo: GestureInfo, width: Int): StaticLayout {
+    if (isInsideTopGestureBounds) {
+      return if (topTextHighlightedCached == null) {
+        topTextHighlightedCached = StaticLayout(
+          topGestureInfo.gestureLabelText,
+          highlightedTextPaint,
+          width,
+          Layout.Alignment.ALIGN_CENTER,
+          1f,
+          0f,
+          false
+        )
+
+        topTextHighlightedCached!!
+      } else {
+        topTextHighlightedCached!!
+      }
+    } else {
+      return if (topTextNormalCached == null) {
+        topTextNormalCached = StaticLayout(
+          topGestureInfo.gestureLabelText,
+          normalTextPaint,
+          width,
+          Layout.Alignment.ALIGN_CENTER,
+          1f,
+          0f,
+          false
+        )
+
+        topTextNormalCached!!
+      } else {
+        topTextNormalCached!!
+      }
+    }
+  }
+
+  inner class FadeAnimation {
+    fun animate(onAnimationEnd: () -> Unit) {
+      val animator = ValueAnimator.ofFloat(1f, 0f)
+      animator.duration = SCROLL_ANIMATION_DURATION.toLong()
+
+      animator.addUpdateListener { animation ->
+        val alpha = animation.animatedValue as Float
+
+        movableContainer.alpha = alpha
+        onAlphaAnimationProgress(alpha)
+      }
+
+      animator.addListener(object : SimpleAnimatorListener() {
+        override fun onAnimationEnd(animation: Animator?) {
+          super.onAnimationEnd(animation)
+
+          onAnimationEnd()
+          finishingWithAnimation = false
+        }
+      })
+
+      animator.start()
+    }
+  }
+
+  inner class FlingRunnable(val isFinishing: Boolean) : Runnable {
     override fun run() {
       if (!tracking) {
         finishingWithAnimation = false
         return
       }
 
-      var finished = false
-
-      if (scroller!!.computeScrollOffset()) {
-        val currentX = scroller!!.currX.toFloat()
-        val currentY = scroller!!.currY.toFloat()
-
-        movableContainer.translationX = currentX
-        movableContainer.translationY = currentY
-
-        val flingProgress = if (isFinishing) {
-          val endX = scroller!!.finalX.toFloat()
-          val endY = scroller!!.finalY.toFloat()
-
-          val currentVecLength = hypot(currentX.toDouble(), currentY.toDouble())
-          val endVecLength = hypot(endX.toDouble(), endY.toDouble())
-
-          val flingProgress = if (endVecLength != 0.0) {
-            (currentVecLength / endVecLength).coerceIn(currentFlingProgress.toDouble(), 1.0).toFloat()
-          } else {
-            1f
-          }
-
-          val deltaAlpha = 1f - flingProgress
-
-          movableContainer.alpha = deltaAlpha
-          onAlphaAnimationProgress(deltaAlpha)
-
-          flingProgress
-        } else {
-          val delta = if (Math.abs(currentX) > Math.abs(currentY)) {
-            currentX
-          } else {
-            currentY
-          }
-
-          val flingProgress = (Math.abs(delta) / MAX_FLING_DIST).coerceIn(0f, 1f)
-          val deltaAlpha = 1f - flingProgress
-
-          movableContainer.alpha = deltaAlpha
-          onAlphaAnimationProgress(deltaAlpha)
-
-          flingProgress
-        }
-
-        if (flingProgress <= 0f || flingProgress >= 0.75f) {
-          finished = true
-        }
-      } else {
-        finished = true
-      }
-
-      if (finished) {
+      if (!scroller!!.computeScrollOffset()) {
         endTracking()
 
         if (isFinishing) {
@@ -258,16 +428,50 @@ class CloseMediaActionHelper(
         return
       }
 
+      val currentX = scroller!!.currX.toFloat()
+      val currentY = scroller!!.currY.toFloat()
+
+      movableContainer.translationX = currentX
+      movableContainer.translationY = currentY
+
+      if (isFinishing) {
+        val endX = scroller!!.finalX.toFloat()
+        val endY = scroller!!.finalY.toFloat()
+
+        val currentVecLength = hypot(currentX.toDouble(), currentY.toDouble())
+        val endVecLength = hypot(endX.toDouble(), endY.toDouble())
+
+        val flingProgress = if (endVecLength != 0.0) {
+          (currentVecLength / endVecLength).coerceIn(0.0, 1.0).toFloat()
+        } else {
+          1f
+        }
+
+        val deltaAlpha = 1f - flingProgress
+
+        movableContainer.alpha = deltaAlpha
+        onAlphaAnimationProgress(deltaAlpha)
+      }
+
       ViewCompat.postOnAnimation(movableContainer, this)
     }
   }
 
+  class GestureInfo(
+    val gestureLabelText: String,
+    val onGestureTriggeredFunc: () -> Unit,
+    val gestureCanBeExecuted: () -> Boolean,
+  )
+
   companion object {
-    private const val MAX_FLING_PROGRESS = 0.70f
-    private val MAX_FLING_DIST = dp(250f).toFloat()
     private val FLING_MIN_VELOCITY = dp(1600f).toFloat()
     private val FLING_ANIMATION_DIST = dp(4000f)
     private val INTERPOLATOR = DecelerateInterpolator(2f)
+    private val TEXT_TO_TOUCH_POSITION_OFFSET = dp(168f)
+    private val DEAD_ZONE_OFFSET = dp(64f)
+    private const val SCROLL_ANIMATION_DURATION = 250
+    private const val MIN_SCALE = 0.3f
+    private const val MAX_SCALE = 3f
   }
 
 }

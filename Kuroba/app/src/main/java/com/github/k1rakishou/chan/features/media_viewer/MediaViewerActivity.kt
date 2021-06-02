@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.media_viewer
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Point
 import android.os.Bundle
 import android.view.MotionEvent
@@ -91,6 +92,7 @@ class MediaViewerActivity : ControllerHostActivity(),
     fileChooser.setCallbacks(this)
     setupContext(this, themeEngine.chanTheme)
 
+    // TODO: 6/1/2021 "drawBehindNotch = false" make a setting
     window.setupEdgeToEdge()
     window.setupStatusAndNavBarColors(themeEngine.chanTheme)
 
@@ -103,6 +105,7 @@ class MediaViewerActivity : ControllerHostActivity(),
     mediaViewerController.onSystemUiVisibilityChanged(window.isSystemUIHidden())
 
     globalWindowInsetsManager.listenForWindowInsetsChanges(window, null)
+    globalWindowInsetsManager.updateDisplaySize(this)
 
     setContentView(mediaViewerController.view)
     pushController(mediaViewerController)
@@ -204,6 +207,12 @@ class MediaViewerActivity : ControllerHostActivity(),
   override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
     globalWindowInsetsManager.updateLastTouchCoordinates(ev)
     return super.dispatchTouchEvent(ev)
+  }
+
+  override fun onConfigurationChanged(newConfig: Configuration) {
+    super.onConfigurationChanged(newConfig)
+
+    globalWindowInsetsManager.updateDisplaySize(this)
   }
 
   private suspend fun handleNewIntent(isNotActivityRecreation: Boolean, intent: Intent?): Boolean {

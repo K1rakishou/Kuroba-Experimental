@@ -115,6 +115,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="unhandled_error">Unhandled error!</string>
     <string name="unknown_error">Unknown error</string>
     <string name="loading">Loading…</string>
+    <string name="download">Download</string>
 
     <string name="mark_as_my_post">Mark as my post</string>
     <string name="unmark_as_my_post">Unmark as my post</string>

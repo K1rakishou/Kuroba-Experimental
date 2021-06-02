@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.media_viewer.media_view
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Canvas
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -29,6 +30,7 @@ import com.github.k1rakishou.common.awaitCatching
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
@@ -60,6 +62,8 @@ class FullImageMediaView(
   lateinit var fileCacheV2: FileCacheV2
   @Inject
   lateinit var cacheHandler: CacheHandler
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
   private val movableContainer: FrameLayout
   private val thumbnailMediaView: ThumbnailMediaView
@@ -81,6 +85,7 @@ class FullImageMediaView(
       .inject(this)
 
     inflate(context, R.layout.media_view_full_image, this)
+    setWillNotDraw(false)
 
     movableContainer = findViewById(R.id.movable_container)
     thumbnailMediaView = findViewById(R.id.thumbnail_media_view)
@@ -92,10 +97,22 @@ class FullImageMediaView(
 
     closeMediaActionHelper = CloseMediaActionHelper(
       context = context,
+      themeEngine = themeEngine,
       movableContainer = movableContainer,
       requestDisallowInterceptTouchEvent = { this.parent.requestDisallowInterceptTouchEvent(true) },
       onAlphaAnimationProgress = { alpha -> mediaViewContract.changeMediaViewerBackgroundAlpha(alpha) },
-      closeMediaViewer = { mediaViewContract.closeMediaViewer() }
+      invalidateFunc = { invalidate() },
+      closeMediaViewer = { mediaViewContract.closeMediaViewer() },
+      topGestureInfo = CloseMediaActionHelper.GestureInfo(
+        gestureLabelText = getString(R.string.download),
+        onGestureTriggeredFunc = { mediaViewToolbar?.downloadMedia() },
+        gestureCanBeExecuted = { mediaViewToolbar?.isDownloadAllowed() ?: false }
+      ),
+      bottomGestureInfo = CloseMediaActionHelper.GestureInfo(
+        gestureLabelText = getString(R.string.close),
+        onGestureTriggeredFunc = { mediaViewContract.closeMediaViewer() },
+        gestureCanBeExecuted = { true }
+      )
     )
 
     gestureDetector = GestureDetector(
@@ -149,6 +166,11 @@ class FullImageMediaView(
     }
 
     return super.onTouchEvent(event)
+  }
+
+  override fun draw(canvas: Canvas) {
+    super.draw(canvas)
+    closeMediaActionHelper.onDraw(canvas)
   }
 
   override fun preload() {

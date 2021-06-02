@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.media_viewer.media_view
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
+import android.graphics.Canvas
 import android.graphics.Color
 import android.view.GestureDetector
 import android.view.MotionEvent
@@ -101,6 +102,7 @@ class VideoMediaView(
       .inject(this)
 
     inflate(context, R.layout.media_view_video, this)
+    setWillNotDraw(false)
 
     thumbnailMediaView = findViewById(R.id.thumbnail_media_view)
     actualVideoPlayerView = findViewById(R.id.actual_video_view)
@@ -116,12 +118,22 @@ class VideoMediaView(
 
     closeMediaActionHelper = CloseMediaActionHelper(
       context = context,
+      themeEngine = themeEngine,
       movableContainer = movableContainer,
       requestDisallowInterceptTouchEvent = { this.parent.requestDisallowInterceptTouchEvent(true) },
-      onAlphaAnimationProgress = { alpha ->
-        mediaViewContract.changeMediaViewerBackgroundAlpha(alpha)
-      },
-      closeMediaViewer = { mediaViewContract.closeMediaViewer() }
+      onAlphaAnimationProgress = { alpha -> mediaViewContract.changeMediaViewerBackgroundAlpha(alpha) },
+      invalidateFunc = { invalidate() },
+      closeMediaViewer = { mediaViewContract.closeMediaViewer() },
+      topGestureInfo = CloseMediaActionHelper.GestureInfo(
+        gestureLabelText = getString(R.string.download),
+        onGestureTriggeredFunc = { mediaViewToolbar?.downloadMedia() },
+        gestureCanBeExecuted = { mediaViewToolbar?.isDownloadAllowed() ?: false }
+      ),
+      bottomGestureInfo = CloseMediaActionHelper.GestureInfo(
+        gestureLabelText = getString(R.string.close),
+        onGestureTriggeredFunc = { mediaViewContract.closeMediaViewer() },
+        gestureCanBeExecuted = { true }
+      )
     )
 
     gestureDetector = GestureDetector(
@@ -184,6 +196,11 @@ class VideoMediaView(
     }
 
     return super.onTouchEvent(event)
+  }
+
+  override fun draw(canvas: Canvas) {
+    super.draw(canvas)
+    closeMediaActionHelper.onDraw(canvas)
   }
 
   override fun preload() {

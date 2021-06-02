@@ -14,8 +14,6 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.updateMargins
 
 class GlobalWindowInsetsManager {
-  private val displaySize = Point(0, 0)
-
   private var initialized = false
 
   var isKeyboardOpened = false
@@ -23,9 +21,10 @@ class GlobalWindowInsetsManager {
   var keyboardHeight = 0
     private set
 
-  private var lastTouchCoordinates = Point(0, 0)
-
+  private val displaySize = Point(0, 0)
+  private val lastTouchCoordinates = Point(0, 0)
   private val currentInsets = Rect()
+
   private val callbacksAwaitingInsetsDispatch = ArrayList<Runnable>()
   private val callbacksAwaitingKeyboardHidden = ArrayList<Runnable>()
   private val callbacksAwaitingKeyboardVisible = ArrayList<Runnable>()
@@ -51,7 +50,6 @@ class GlobalWindowInsetsManager {
 
       updateIsKeyboardOpened(isKeyboardOpen)
       fireCallbacks()
-      fireInsetsUpdateCallbacks()
 
       mainRootLayoutMargins?.updateMargins(left = left(), right = right())
 
@@ -136,13 +134,11 @@ class GlobalWindowInsetsManager {
     initialized = true
   }
 
-  private fun fireInsetsUpdateCallbacks() {
-    insetsUpdatesListeners.forEach { listener -> listener.onInsetsChanged() }
-  }
-
   private fun fireCallbacks() {
     callbacksAwaitingInsetsDispatch.forEach { it.run() }
     callbacksAwaitingInsetsDispatch.clear()
+
+    insetsUpdatesListeners.forEach { listener -> listener.onInsetsChanged() }
   }
 
   fun runWhenKeyboardIsHidden(func: Runnable) {
