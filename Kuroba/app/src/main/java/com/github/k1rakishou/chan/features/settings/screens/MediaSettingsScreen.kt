@@ -105,19 +105,6 @@ class MediaSettingsScreen(
           }
         )
 
-        group += ListSettingV2.createBuilder<ChanSettings.ImageClickPreloadStrategy>(
-          context = context,
-          identifier = MediaScreen.LoadingGroup.ImageClickPreloadStrategy,
-          setting = ChanSettings.imageClickPreloadStrategy,
-          topDescriptionIdFunc = { R.string.media_settings_image_click_preload_strategy },
-          bottomDescriptionStringFunc = { itemName ->
-            context.getString(R.string.media_settings_image_click_preload_strategy_description) +
-              "\n\n" + itemName
-          },
-          items = ChanSettings.ImageClickPreloadStrategy.values().toList(),
-          itemNameMapper = { item -> item.name }
-        )
-
         group += BooleanSettingV2.createBuilder(
           context = context,
           identifier = MediaScreen.LoadingGroup.AutoLoadThreadImages,

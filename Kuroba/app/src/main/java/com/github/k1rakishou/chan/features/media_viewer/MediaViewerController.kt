@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController
@@ -56,6 +57,8 @@ class MediaViewerController(
   lateinit var imageSaverV2: ImageSaverV2
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var chan4CloudFlareImagePreloaderManager: Chan4CloudFlareImagePreloaderManager
 
   private lateinit var mediaViewerRootLayout: TouchBlockingFrameLayoutNoBackground
   private lateinit var appearPreviewImage: AppearTransitionImageView
@@ -265,7 +268,9 @@ class MediaViewerController(
       previewThumbnailLocation = previewThumbnailLocation,
       mediaViewerScrollerHelper = mediaViewerScrollerHelper,
       cacheDataSourceFactory = cacheDataSourceFactory,
-      isSystemUiHidden = { mediaViewerCallbacks.isSystemUiHidden() }
+      chan4CloudFlareImagePreloaderManager = chan4CloudFlareImagePreloaderManager,
+      isSystemUiHidden = { mediaViewerCallbacks.isSystemUiHidden() },
+      swipeDirection = { pager.swipeDirection }
     )
 
     pager.adapter = adapter

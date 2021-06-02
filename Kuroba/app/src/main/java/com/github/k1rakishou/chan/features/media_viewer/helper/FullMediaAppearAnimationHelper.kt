@@ -17,12 +17,13 @@ object FullMediaAppearAnimationHelper {
     isSpoiler: Boolean,
     onAnimationEnd: () -> Unit
   ): AnimatorSet? {
-    if (activeView == null) {
+    if (activeView == null || prevActiveView == null) {
       onAnimationEnd()
       return null
     }
 
-    if (isSpoiler || prevActiveView == null) {
+    if (isSpoiler) {
+      activeView.setVisibilityFast(View.VISIBLE)
       activeView.alpha = 1f
       onAnimationEnd()
       return null

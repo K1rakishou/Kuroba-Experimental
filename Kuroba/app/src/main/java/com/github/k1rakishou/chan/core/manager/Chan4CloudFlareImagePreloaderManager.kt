@@ -57,7 +57,7 @@ class Chan4CloudFlareImagePreloaderManager(
 
       // Try take at most POSTS_COUNT_PER_BATCH elements from the channel
       while (toPreload.size < POSTS_COUNT_PER_BATCH) {
-        toPreload += poll()
+        toPreload += tryReceive().getOrNull()
           ?: break
       }
 
@@ -253,15 +253,13 @@ class Chan4CloudFlareImagePreloaderManager(
         Logger.d(TAG, "startLoading(Normal) Pushing post ($pd) into the actor")
       }
 
-      actor.offer(pd)
+      actor.trySend(pd)
     }
 
     return true
   }
 
-  fun cancelLoading(postImage: ChanPostImage, swipedForward: Boolean) {
-    val postDescriptor = postImage.ownerPostDescriptor
-
+  fun cancelLoading(postDescriptor: PostDescriptor, swipedForward: Boolean) {
     val threadDescriptor = postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
       ?: return
 

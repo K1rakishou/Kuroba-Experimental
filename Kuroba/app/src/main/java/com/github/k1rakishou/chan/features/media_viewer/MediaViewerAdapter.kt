@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.media_viewer
 import android.content.Context
 import android.view.View
 import android.view.ViewGroup
+import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.media_viewer.media_view.FullImageMediaView
 import com.github.k1rakishou.chan.features.media_viewer.media_view.GifMediaView
@@ -11,6 +12,7 @@ import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewCont
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewState
 import com.github.k1rakishou.chan.features.media_viewer.media_view.UnsupportedMediaView
 import com.github.k1rakishou.chan.features.media_viewer.media_view.VideoMediaView
+import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager
 import com.github.k1rakishou.chan.ui.view.ViewPagerAdapter
 import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.core_logger.Logger
@@ -26,7 +28,9 @@ class MediaViewerAdapter(
   private val previewThumbnailLocation: MediaLocation,
   private val mediaViewerScrollerHelper: MediaViewerScrollerHelper,
   private val cacheDataSourceFactory: DataSource.Factory,
+  private val chan4CloudFlareImagePreloaderManager: Chan4CloudFlareImagePreloaderManager,
   private val isSystemUiHidden: () -> Boolean,
+  private val swipeDirection: () -> OptionalSwipeViewPager.SwipeDirection
 ) : ViewPagerAdapter() {
   private val loadedViews = mutableListOf<LoadedView>()
   private val previewThumbnailLocationLoaded = CompletableDeferred<Unit>()
@@ -212,6 +216,10 @@ class MediaViewerAdapter(
     Logger.d(TAG, "doBind(position: ${position}), loadedViewsCount=${loadedViews.size}, " +
       "boundCount=${loadedViews.count { it.mediaView.bound }}, " +
       "showCount=${loadedViews.count { it.mediaView.shown }}")
+
+    viewableMedia.viewableMediaMeta.ownerPostDescriptor?.let { postDescriptor ->
+      chan4CloudFlareImagePreloaderManager.startLoading(postDescriptor)
+    }
   }
 
   override fun finishUpdate(container: ViewGroup) {
@@ -254,6 +262,11 @@ class MediaViewerAdapter(
     Logger.d(TAG, "destroyItem(position: ${position}), loadedViewsCount=${loadedViews.size}, " +
       "boundCount=${loadedViews.count { it.mediaView.bound }}, " +
       "showCount=${loadedViews.count { it.mediaView.shown }}")
+
+    chan4CloudFlareImagePreloaderManager.cancelLoading(
+      mediaView.viewableMedia.viewableMediaMeta.ownerPostDescriptor!!,
+      swipeDirection() == OptionalSwipeViewPager.SwipeDirection.Forward
+    )
   }
 
   fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {

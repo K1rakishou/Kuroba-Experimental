@@ -159,6 +159,10 @@ class CloseMediaActionHelper(
       return false
     }
 
+    if (event.pointerCount != 1) {
+      return false
+    }
+
     velocityTracker!!.addMovement(event)
 
     if (currentTouchPosition == null) {

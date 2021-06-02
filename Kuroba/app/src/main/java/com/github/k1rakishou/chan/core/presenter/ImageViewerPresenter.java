@@ -16,17 +16,6 @@
  */
 package com.github.k1rakishou.chan.core.presenter;
 
-import static com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager.NEXT_N_POSTS_RELATIVE;
-import static com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager.PREV_N_POSTS_RELATIVE;
-import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.BIGIMAGE;
-import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.GIFIMAGE;
-import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.LOWRES;
-import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.OTHER;
-import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.VIDEO;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
-import static com.github.k1rakishou.common.AndroidUtils.getAudioManager;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 
@@ -41,7 +30,6 @@ import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload;
 import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
-import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.site.ImageSearch;
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController;
@@ -71,6 +59,15 @@ import javax.inject.Inject;
 import kotlin.Unit;
 import okhttp3.HttpUrl;
 
+import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.BIGIMAGE;
+import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.GIFIMAGE;
+import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.LOWRES;
+import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.OTHER;
+import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.VIDEO;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
+import static com.github.k1rakishou.common.AndroidUtils.getAudioManager;
+
 public class ImageViewerPresenter
         implements MultiImageView.Callback, ViewPager.OnPageChangeListener {
     private static final String TAG = "ImageViewerPresenter";
@@ -93,8 +90,8 @@ public class ImageViewerPresenter
     ThemeEngine themeEngine;
     @Inject
     BoardManager boardManager;
-    @Inject
-    Chan4CloudFlareImagePreloaderManager chan4CloudFlareImagePreloaderManager;
+//    @Inject
+//    Chan4CloudFlareImagePreloaderManager chan4CloudFlareImagePreloaderManager;
     @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
 
@@ -103,7 +100,7 @@ public class ImageViewerPresenter
     private List<ChanPostImage> images;
     private Map<Integer, List<Float>> progress;
     private int selectedPosition = 0;
-    private SwipeDirection swipeDirection = SwipeDirection.Default;
+//    private SwipeDirection swipeDirection = SwipeDirection.Default;
     private ChanDescriptor chanDescriptor;
     private Set<CancelableDownload> preloadingImages = new HashSet<>();
     private final Set<String> nonCancelableImages = new HashSet<>();
@@ -256,13 +253,13 @@ public class ImageViewerPresenter
             return;
         }
 
-        if (position == selectedPosition) {
-            swipeDirection = SwipeDirection.Default;
-        } else if (position > selectedPosition) {
-            swipeDirection = SwipeDirection.Forward;
-        } else {
-            swipeDirection = SwipeDirection.Backward;
-        }
+//        if (position == selectedPosition) {
+//            swipeDirection = SwipeDirection.Default;
+//        } else if (position > selectedPosition) {
+//            swipeDirection = SwipeDirection.Forward;
+//        } else {
+//            swipeDirection = SwipeDirection.Backward;
+//        }
 
         selectedPosition = position;
         onPageSwipedTo(position);
@@ -337,13 +334,13 @@ public class ImageViewerPresenter
         nonCancelableImages.clear();
         nonCancelableImages.addAll(getNonCancelableImages(position));
 
-        if (swipeDirection == SwipeDirection.Forward) {
-            chan4CloudFlareImagePreloaderManager.cancelLoading(postImage, true);
-            cancelPreviousFromStartImageDownload(position);
-        } else if (swipeDirection == SwipeDirection.Backward) {
-            chan4CloudFlareImagePreloaderManager.cancelLoading(postImage, false);
-            cancelPreviousFromEndImageDownload(position);
-        }
+//        if (swipeDirection == SwipeDirection.Forward) {
+//            chan4CloudFlareImagePreloaderManager.cancelLoading(postImage, true);
+//            cancelPreviousFromStartImageDownload(position);
+//        } else if (swipeDirection == SwipeDirection.Backward) {
+//            chan4CloudFlareImagePreloaderManager.cancelLoading(postImage, false);
+//            cancelPreviousFromEndImageDownload(position);
+//        }
 
         // Already in LOWRES mode
         if (callback.getImageMode(postImage) == LOWRES) {
@@ -368,54 +365,54 @@ public class ImageViewerPresenter
             }
         }
 
-        if (swipeDirection == SwipeDirection.Forward) {
-            // Force cloudflare to preload N next posts with images
-            chan4CloudFlareImagePreloaderManager.startLoading(
-                    chanDescriptor,
-                    postImage,
-                    0,
-                    NEXT_N_POSTS_RELATIVE
-            );
+//        if (swipeDirection == SwipeDirection.Forward) {
+//            // Force cloudflare to preload N next posts with images
+//            chan4CloudFlareImagePreloaderManager.startLoading(
+//                    chanDescriptor,
+//                    postImage,
+//                    0,
+//                    NEXT_N_POSTS_RELATIVE
+//            );
+//
+//            preloadNext();
+//            return;
+//        } else if (swipeDirection == SwipeDirection.Backward) {
+//            // Force cloudflare to preload N previous posts with images
+//            chan4CloudFlareImagePreloaderManager.startLoading(
+//                    chanDescriptor,
+//                    postImage,
+//                    PREV_N_POSTS_RELATIVE,
+//                    0
+//            );
+//
+//            preloadPrevious();
+//            return;
+//        } else {
+//            // Preload in both sides since we don't know where the user will swipe next
+//            chan4CloudFlareImagePreloaderManager.startLoading(
+//                    chanDescriptor,
+//                    postImage,
+//                    PREV_N_POSTS_RELATIVE / 2,
+//                    NEXT_N_POSTS_RELATIVE / 2
+//            );
+//
+//        }
 
-            preloadNext();
-            return;
-        } else if (swipeDirection == SwipeDirection.Backward) {
-            // Force cloudflare to preload N previous posts with images
-            chan4CloudFlareImagePreloaderManager.startLoading(
-                    chanDescriptor,
-                    postImage,
-                    PREV_N_POSTS_RELATIVE,
-                    0
-            );
-
-            preloadPrevious();
-            return;
-        } else {
-            // Preload in both sides since we don't know where the user will swipe next
-            chan4CloudFlareImagePreloaderManager.startLoading(
-                    chanDescriptor,
-                    postImage,
-                    PREV_N_POSTS_RELATIVE / 2,
-                    NEXT_N_POSTS_RELATIVE / 2
-            );
-
-        }
-
-        ChanSettings.ImageClickPreloadStrategy strategy = ChanSettings.imageClickPreloadStrategy.get();
-        switch (strategy) {
-            case PreloadNext:
-                preloadNext();
-                break;
-            case PreloadPrevious:
-                preloadPrevious();
-                break;
-            case PreloadBoth:
-                preloadNext();
-                preloadPrevious();
-                break;
-            case PreloadNeither:
-                break;
-        }
+//        ChanSettings.ImageClickPreloadStrategy strategy = ChanSettings.imageClickPreloadStrategy.get();
+//        switch (strategy) {
+//            case PreloadNext:
+//                preloadNext();
+//                break;
+//            case PreloadPrevious:
+//                preloadPrevious();
+//                break;
+//            case PreloadBoth:
+//                preloadNext();
+//                preloadPrevious();
+//                break;
+//            case PreloadNeither:
+//                break;
+//        }
     }
 
     private void preloadPrevious() {
@@ -826,11 +823,11 @@ public class ImageViewerPresenter
                 : postImage.getImageUrl();
     }
 
-    private enum SwipeDirection {
-        Default,
-        Forward,
-        Backward
-    }
+//    private enum SwipeDirection {
+//        Default,
+//        Forward,
+//        Backward
+//    }
 
     public interface Callback {
         void startPreviewInTransition(ChanDescriptor chanDescriptor, ChanPostImage postImage);

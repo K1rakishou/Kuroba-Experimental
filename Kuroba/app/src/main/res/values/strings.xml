@@ -1224,8 +1224,6 @@ Don't have a 4chan Pass?<br>
 
     <string name="media_settings_base_dir_reset_message">Base directory reset to default</string>
     <string name="media_settings_could_not_create_default_baseDir">Could not create default base dir: %1$s</string>
-    <string name="media_settings_image_click_preload_strategy">Image preload strategy</string>
-    <string name="media_settings_image_click_preload_strategy_description">When opening up an image pager, determines what image(s) should be preloaded next.</string>
 
     <string name="site_uses_dynamic_boards">"Unable to go to board (site likely has dynamic boards). Add the board using the boards menu first."</string>
     <string name="archive_is_not_enabled">Archive \"%1$s\" is not enabled or does not exist</string>

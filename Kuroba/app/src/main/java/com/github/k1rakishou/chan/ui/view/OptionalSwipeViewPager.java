@@ -30,9 +30,36 @@ import javax.inject.Inject;
 
 public class OptionalSwipeViewPager extends ViewPager {
     private boolean swipingEnabled;
+    private int prevPosition = 0;
+    private SwipeDirection swipeDirection = SwipeDirection.Default;
 
     @Inject
     ThemeEngine themeEngine;
+
+    private ViewPager.OnPageChangeListener listener = new ViewPager.OnPageChangeListener() {
+        @Override
+        public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+            // no-op
+        }
+
+        @Override
+        public void onPageScrollStateChanged(int state) {
+            // no-op
+        }
+
+        @Override
+        public void onPageSelected(int position) {
+            if (position > prevPosition) {
+                swipeDirection = SwipeDirection.Forward;
+            } else if (position < prevPosition) {
+                swipeDirection = SwipeDirection.Backward;
+            } else {
+                swipeDirection = SwipeDirection.Default;
+            }
+
+            prevPosition = position;
+        }
+    };
 
     public OptionalSwipeViewPager(Context context) {
         super(context);
@@ -52,6 +79,32 @@ public class OptionalSwipeViewPager extends ViewPager {
     }
 
     @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+
+        addOnPageChangeListener(listener);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+
+        removeOnPageChangeListener(listener);
+    }
+
+    @Override
+    public void setCurrentItem(int item) {
+        super.setCurrentItem(item);
+        prevPosition = item;
+    }
+
+    @Override
+    public void setCurrentItem(int item, boolean smoothScroll) {
+        super.setCurrentItem(item, smoothScroll);
+        prevPosition = item;
+    }
+
+    @Override
     public boolean onTouchEvent(MotionEvent ev) {
         return swipingEnabled && super.onTouchEvent(ev);
     }
@@ -68,5 +121,15 @@ public class OptionalSwipeViewPager extends ViewPager {
 
     public void setSwipingEnabled(boolean swipingEnabled) {
         this.swipingEnabled = swipingEnabled;
+    }
+
+    public SwipeDirection getSwipeDirection() {
+        return swipeDirection;
+    }
+
+    public enum SwipeDirection {
+        Default,
+        Forward,
+        Backward
     }
 }

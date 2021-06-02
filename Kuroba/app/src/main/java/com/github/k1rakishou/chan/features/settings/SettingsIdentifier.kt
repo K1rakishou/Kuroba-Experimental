@@ -521,7 +521,6 @@ sealed class MediaScreen(
 
     object ImageAutoLoadNetwork : LoadingGroup("image_auto_load_network")
     object VideoAutoLoadNetwork : LoadingGroup("video_auto_load_network")
-    object ImageClickPreloadStrategy : LoadingGroup("image_click_preloading_strategy")
     object AutoLoadThreadImages : LoadingGroup("auto_load_thread_images")
     object ShowPrefetchLoadingIndicator : LoadingGroup("show_prefetch_loading_indicator")
 

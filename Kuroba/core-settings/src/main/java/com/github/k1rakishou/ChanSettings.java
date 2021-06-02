@@ -16,11 +16,6 @@
  */
 package com.github.k1rakishou;
 
-import static com.github.k1rakishou.common.AndroidUtils.getAppDir;
-import static com.github.k1rakishou.common.AndroidUtils.getAppMainPreferences;
-import static java.util.concurrent.TimeUnit.HOURS;
-import static java.util.concurrent.TimeUnit.MINUTES;
-
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.prefs.BooleanSetting;
 import com.github.k1rakishou.prefs.CounterSetting;
@@ -33,6 +28,11 @@ import java.io.File;
 
 import kotlin.Lazy;
 import kotlin.LazyKt;
+
+import static com.github.k1rakishou.common.AndroidUtils.getAppDir;
+import static com.github.k1rakishou.common.AndroidUtils.getAppMainPreferences;
+import static java.util.concurrent.TimeUnit.HOURS;
+import static java.util.concurrent.TimeUnit.MINUTES;
 
 public class ChanSettings {
     private static final String TAG = "ChanSettings";
@@ -232,24 +232,6 @@ public class ChanSettings {
         }
     }
 
-    public enum ImageClickPreloadStrategy implements OptionSettingItem {
-        PreloadNext("Preload next image"),
-        PreloadPrevious("Preload previous image"),
-        PreloadBoth("Preload next and previous images"),
-        PreloadNeither("Do not preload any images");
-
-        String name;
-
-        ImageClickPreloadStrategy(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String getKey() {
-            return name;
-        }
-    }
-
     //region Declarations
     //region THREAD WATCHER
     public static BooleanSetting watchEnabled;
@@ -353,7 +335,6 @@ public class ChanSettings {
     // Media loading
     public static OptionsSetting<NetworkContentAutoLoadMode> imageAutoLoadNetwork;
     public static OptionsSetting<NetworkContentAutoLoadMode> videoAutoLoadNetwork;
-    public static OptionsSetting<ImageClickPreloadStrategy> imageClickPreloadStrategy;
     public static BooleanSetting prefetchMedia;
     public static BooleanSetting showPrefetchLoadingIndicator;
 
@@ -555,11 +536,6 @@ public class ChanSettings {
                     "preference_video_auto_load_network",
                     NetworkContentAutoLoadMode.class,
                     NetworkContentAutoLoadMode.WIFI
-            );
-            imageClickPreloadStrategy = new OptionsSetting<>(provider,
-                    "image_click_preload_strategy",
-                    ImageClickPreloadStrategy.class,
-                    ImageClickPreloadStrategy.PreloadNext
             );
             prefetchMedia = new BooleanSetting(provider, "preference_auto_load_thread", false);
             showPrefetchLoadingIndicator = new BooleanSetting(provider, "show_prefetch_loading_indicator", false);
