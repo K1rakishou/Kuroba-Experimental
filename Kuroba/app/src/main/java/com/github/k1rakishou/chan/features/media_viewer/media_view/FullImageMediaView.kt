@@ -71,6 +71,7 @@ class FullImageMediaView(
   private val loadingBar: CircularChunkedLoadingBar
 
   private val gestureDetector: GestureDetector
+  private val gestureDetectorListener: GestureDetectorListener
   private val closeMediaActionHelper: CloseMediaActionHelper
   private val canAutoLoad by lazy { MediaViewerControllerViewModel.canAutoLoad(cacheHandler, viewableMedia) }
 
@@ -115,23 +116,22 @@ class FullImageMediaView(
       )
     )
 
-    gestureDetector = GestureDetector(
-      context,
-      GestureDetectorListener(
-        thumbnailMediaView = thumbnailMediaView,
-        actualImageView = actualImageView,
-        mediaViewContract = mediaViewContract,
-        tryPreloadingFunc = {
-          if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = true)) {
-            preloadCancelableDownload = startFullImagePreloading(viewableMedia.mediaLocation)
-            return@GestureDetectorListener true
-          }
+    gestureDetectorListener = GestureDetectorListener(
+      thumbnailMediaView = thumbnailMediaView,
+      actualImageView = actualImageView,
+      mediaViewContract = mediaViewContract,
+      tryPreloadingFunc = {
+        if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = true)) {
+          preloadCancelableDownload = startFullImagePreloading(viewableMedia.mediaLocation)
+          return@GestureDetectorListener true
+        }
 
-          return@GestureDetectorListener false
-        },
-        onMediaLongClick = { mediaViewContract.onMediaLongClick(this, viewableMedia, buildMediaLongClickOptions()) }
-      )
+        return@GestureDetectorListener false
+      },
+      onMediaLongClick = { mediaViewContract.onMediaLongClick(this, viewableMedia, buildMediaLongClickOptions()) }
     )
+
+    gestureDetector = GestureDetector(context, gestureDetectorListener)
 
     thumbnailMediaView.setOnTouchListener { v, event ->
       if (thumbnailMediaView.visibility != View.VISIBLE) {
@@ -148,7 +148,15 @@ class FullImageMediaView(
         return@setOnTouchListener false
       }
 
-      return@setOnTouchListener gestureDetector.onTouchEvent(event)
+      val result = gestureDetector.onTouchEvent(event)
+
+      // Double-tap zoom conflicts with longtap so we need to check whether we double tapped before
+      // invoking the longtap callback and then reset the doubletap flag on cancel or up event.
+      if (event.actionMasked == MotionEvent.ACTION_CANCEL || event.actionMasked == MotionEvent.ACTION_UP) {
+        gestureDetectorListener.onUpOrCanceled()
+      }
+
+      return@setOnTouchListener result
     }
   }
 
@@ -397,6 +405,7 @@ class FullImageMediaView(
     private val tryPreloadingFunc: () -> Boolean,
     private val onMediaLongClick: () -> Unit
   ) : GestureDetector.SimpleOnGestureListener() {
+    private var doubleTapped = false
 
     override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
       if (actualImageView.visibility == View.VISIBLE) {
@@ -409,9 +418,21 @@ class FullImageMediaView(
       return super.onSingleTapConfirmed(e)
     }
 
-    override fun onLongPress(e: MotionEvent?) {
-      onMediaLongClick()
+    override fun onDoubleTap(e: MotionEvent?): Boolean {
+      doubleTapped = true
+      return super.onDoubleTap(e)
     }
+
+    override fun onLongPress(e: MotionEvent?) {
+      if (!doubleTapped) {
+        onMediaLongClick()
+      }
+    }
+
+    fun onUpOrCanceled() {
+      doubleTapped = false
+    }
+
   }
 
   class FullImageState : MediaViewState {

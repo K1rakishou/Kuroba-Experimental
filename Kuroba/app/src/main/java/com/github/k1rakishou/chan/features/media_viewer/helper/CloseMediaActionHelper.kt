@@ -45,13 +45,13 @@ class CloseMediaActionHelper(
 
   private val normalTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
     color = Color.WHITE
-    textSize = sp(60f).toFloat()
+    textSize = TEXT_SIZE
     setShadowLayer(8f, 0f, 0f, Color.BLACK)
   }
 
   private val highlightedTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
     color = themeEngine.chanTheme.accentColor
-    textSize = sp(60f).toFloat()
+    textSize = TEXT_SIZE
     setShadowLayer(8f, 0f, 0f, Color.BLACK)
   }
 
@@ -283,7 +283,7 @@ class CloseMediaActionHelper(
     if (topGestureInfo != null && topGestureInfo.gestureCanBeExecuted()) {
       isInsideTopGestureBounds = currentTouchPositionY < center && ((center - currentTouchPositionY) > DEAD_ZONE_OFFSET)
 
-      val topTextPosition = center - TEXT_TO_TOUCH_POSITION_OFFSET
+      val topTextPosition = center - TEXT_TO_TOUCH_POSITION_OFFSET - (TEXT_SIZE / 2)
       val topText = getTopText(isInsideTopGestureBounds, topGestureInfo, width)
       val topTextScale = (1f - (currentTouchPositionY / height)).coerceIn(MIN_SCALE, MAX_SCALE)
 
@@ -299,7 +299,7 @@ class CloseMediaActionHelper(
     if (bottomGestureInfo != null && bottomGestureInfo.gestureCanBeExecuted()) {
       isInsideBottomGestureBounds = currentTouchPositionY > center && ((currentTouchPositionY - center) > DEAD_ZONE_OFFSET)
 
-      val bottomTextPosition = center + TEXT_TO_TOUCH_POSITION_OFFSET
+      val bottomTextPosition = center + TEXT_TO_TOUCH_POSITION_OFFSET - (TEXT_SIZE / 2)
       val bottomText = getBottomText(isInsideBottomGestureBounds, bottomGestureInfo, width)
       val bottomTextScale = (currentTouchPositionY / height).coerceIn(MIN_SCALE, MAX_SCALE)
 
@@ -467,8 +467,9 @@ class CloseMediaActionHelper(
     private val FLING_MIN_VELOCITY = dp(1600f).toFloat()
     private val FLING_ANIMATION_DIST = dp(4000f)
     private val INTERPOLATOR = DecelerateInterpolator(2f)
-    private val TEXT_TO_TOUCH_POSITION_OFFSET = dp(168f)
+    private val TEXT_TO_TOUCH_POSITION_OFFSET = dp(100f)
     private val DEAD_ZONE_OFFSET = dp(64f)
+    private val TEXT_SIZE = sp(60f).toFloat()
     private const val SCROLL_ANIMATION_DURATION = 250
     private const val MIN_SCALE = 0.3f
     private const val MAX_SCALE = 3f
