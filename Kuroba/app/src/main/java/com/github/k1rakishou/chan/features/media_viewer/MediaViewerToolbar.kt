@@ -13,6 +13,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToImagePostHelper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
@@ -30,10 +31,13 @@ class MediaViewerToolbar @JvmOverloads constructor(
 
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var mediaViewerGoToImagePostHelper: MediaViewerGoToImagePostHelper
 
   private val toolbarCloseButton: AppCompatImageButton
   private val toolbarTitle: TextView
   private val toolbarSubTitle: TextView
+  private val toolbarGoToPostButton: AppCompatImageButton
   private val toolbarReloadButton: AppCompatImageButton
   private val toolbarDownloadButton: AppCompatImageButton
   private val toolbarOptionsButton: AppCompatImageButton
@@ -53,6 +57,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
     toolbarCloseButton = findViewById(R.id.toolbar_close_button)
     toolbarTitle = findViewById(R.id.toolbar_title)
     toolbarSubTitle = findViewById(R.id.toolbar_subtitle)
+    toolbarGoToPostButton = findViewById(R.id.toolbar_go_to_post_button)
     toolbarReloadButton = findViewById(R.id.toolbar_reload_button)
     toolbarDownloadButton = findViewById(R.id.toolbar_download_button)
     toolbarOptionsButton = findViewById(R.id.toolbar_options_button)
@@ -61,6 +66,20 @@ class MediaViewerToolbar @JvmOverloads constructor(
     toolbarDownloadButton.setEnabledFast(false)
 
     toolbarCloseButton.setOnClickListener { mediaViewerToolbarCallbacks?.onCloseButtonClick() }
+    toolbarGoToPostButton.setOnClickListener {
+      if (mediaViewerToolbarCallbacks == null) {
+        return@setOnClickListener
+      }
+
+      val postDescriptor = currentViewableMedia?.viewableMediaMeta?.ownerPostDescriptor
+        ?: return@setOnClickListener
+      val mediaLocation = currentViewableMedia?.mediaLocation
+        ?: return@setOnClickListener
+
+      if (mediaViewerGoToImagePostHelper.tryGoToPost(postDescriptor, mediaLocation)) {
+        mediaViewerToolbarCallbacks?.onCloseButtonClick()
+      }
+    }
 
     toolbarReloadButton.setOnClickListener {
       fireOnReloadButtonClickCallback()

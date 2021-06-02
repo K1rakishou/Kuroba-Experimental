@@ -34,12 +34,11 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToImagePostHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.settings.screens.AppearanceSettingsScreen.Companion.clampColumnsCount
 import com.github.k1rakishou.chan.ui.cell.AlbumViewCell
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
-import com.github.k1rakishou.chan.ui.controller.ImageViewerController.GoPostCallback
-import com.github.k1rakishou.chan.ui.controller.ImageViewerController.ImageViewerCallback
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView
@@ -49,7 +48,6 @@ import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
 import com.github.k1rakishou.chan.ui.view.FixedLinearLayoutManager
-import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.updatePaddings
@@ -64,7 +62,7 @@ import javax.inject.Inject
 
 class AlbumViewController(
   context: Context,
-) : Controller(context), ImageViewerCallback, GoPostCallback, RequiresNoBottomNavBar, WindowInsetsListener, ToolbarHeightUpdatesCallback {
+) : Controller(context), RequiresNoBottomNavBar, WindowInsetsListener, ToolbarHeightUpdatesCallback {
   private lateinit var recyclerView: ColorizableGridRecyclerView
 
   private var postImages: List<ChanPostImage>? = null
@@ -96,6 +94,8 @@ class AlbumViewController(
   lateinit var thumbnailLongtapOptionsHelper: ThumbnailLongtapOptionsHelper
   @Inject
   lateinit var mediaViewerScrollerHelper: MediaViewerScrollerHelper
+  @Inject
+  lateinit var mediaViewerGoToImagePostHelper: MediaViewerGoToImagePostHelper
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -152,6 +152,11 @@ class AlbumViewController(
 
           scrollToInternal(index)
         }
+    }
+
+    mainScope.launch {
+      mediaViewerGoToImagePostHelper.mediaViewerGoToPostEventsFlow
+        .collect { chanPostImage -> goToPost(chanPostImage) }
     }
 
     requireNavController().requireToolbar().addToolbarHeightUpdatesCallback(this)
@@ -269,24 +274,7 @@ class AlbumViewController(
     menuItem.setImage(gridDrawable)
   }
 
-  override fun getPreviewImageTransitionView(postImage: ChanPostImage): ThumbnailView? {
-    var thumbnail: ThumbnailView? = null
-
-    for (i in 0 until recyclerView.childCount) {
-      val view = recyclerView.getChildAt(i)
-
-      if (view is AlbumViewCell) {
-        if (postImage === view.postImage) {
-          thumbnail = view.thumbnailView
-          break
-        }
-      }
-    }
-
-    return thumbnail
-  }
-
-  override fun goToPost(postImage: ChanPostImage): ImageViewerCallback? {
+  private fun goToPost(postImage: ChanPostImage) {
     var threadController: ThreadController? = null
     if (previousSiblingController is ThreadController) {
       //phone mode
@@ -304,16 +292,12 @@ class AlbumViewController(
       threadController.selectPostImage(postImage)
       //clear the popup here because split nav is weirdly laid out in the stack
       splitNav.popController()
-      return threadController
     }
 
     if (threadController != null) {
       threadController.selectPostImage(postImage)
       navigationController!!.popController(false)
-      return threadController
     }
-
-    return null
   }
 
   private fun openImage(postImage: ChanPostImage) {

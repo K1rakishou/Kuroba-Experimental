@@ -7,6 +7,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PointF
+import android.graphics.Typeface
 import android.os.SystemClock
 import android.text.Layout
 import android.text.StaticLayout
@@ -46,12 +47,14 @@ class CloseMediaActionHelper(
   private val normalTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
     color = Color.WHITE
     textSize = TEXT_SIZE
+    typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     setShadowLayer(8f, 0f, 0f, Color.BLACK)
   }
 
   private val highlightedTextPaint = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
     color = themeEngine.chanTheme.accentColor
     textSize = TEXT_SIZE
+    typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     setShadowLayer(8f, 0f, 0f, Color.BLACK)
   }
 

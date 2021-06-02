@@ -22,7 +22,6 @@ import android.content.Context;
 import androidx.annotation.Nullable;
 import androidx.viewpager.widget.ViewPager;
 
-import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.cache.FileCacheListener;
@@ -59,14 +58,8 @@ import javax.inject.Inject;
 import kotlin.Unit;
 import okhttp3.HttpUrl;
 
-import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.BIGIMAGE;
-import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.GIFIMAGE;
 import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.LOWRES;
-import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.OTHER;
-import static com.github.k1rakishou.chan.ui.view.MultiImageView.Mode.VIDEO;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
-import static com.github.k1rakishou.common.AndroidUtils.getAudioManager;
 
 public class ImageViewerPresenter
         implements MultiImageView.Callback, ViewPager.OnPageChangeListener {
@@ -109,42 +102,42 @@ public class ImageViewerPresenter
     private boolean viewPagerVisible = false;
     private boolean changeViewsOnInTransitionEnd = false;
 
-    private boolean muted = ChanSettings.videoDefaultMuted.get() &&
-            (ChanSettings.headsetDefaultMuted.get() || !getAudioManager().isWiredHeadsetOn());
+//    private boolean muted = ChanSettings.videoDefaultMuted.get() &&
+//            (ChanSettings.headsetDefaultMuted.get() || !getAudioManager().isWiredHeadsetOn());
 
-    public static boolean canAutoLoad(CacheHandler cacheHandler, ChanPostImage postImage) {
-        if (postImage.isInlined()) {
-            return false;
-        }
-
-        HttpUrl imageUrl = postImage.getImageUrl();
-        if (imageUrl == null) {
-            return false;
-        }
-
-        ChanPostImageType postImageType = postImage.getType();
-        if (postImageType == null) {
-            return false;
-        }
-
-        if (cacheHandler.cacheFileExists(imageUrl.toString())) {
-            // Auto load the image when it is cached
-            return true;
-        }
-
-        switch (postImageType) {
-            case GIF:
-            case STATIC:
-                return shouldLoadForNetworkType(ChanSettings.imageAutoLoadNetwork.get());
-            case MOVIE:
-                return shouldLoadForNetworkType(ChanSettings.videoAutoLoadNetwork.get());
-            case PDF:
-            case SWF:
-                return false;
-            default:
-                throw new IllegalArgumentException("Not handled " + postImageType.name());
-        }
-    }
+//    public static boolean canAutoLoad(CacheHandler cacheHandler, ChanPostImage postImage) {
+//        if (postImage.isInlined()) {
+//            return false;
+//        }
+//
+//        HttpUrl imageUrl = postImage.getImageUrl();
+//        if (imageUrl == null) {
+//            return false;
+//        }
+//
+//        ChanPostImageType postImageType = postImage.getType();
+//        if (postImageType == null) {
+//            return false;
+//        }
+//
+//        if (cacheHandler.cacheFileExists(imageUrl.toString())) {
+//            // Auto load the image when it is cached
+//            return true;
+//        }
+//
+//        switch (postImageType) {
+//            case GIF:
+//            case STATIC:
+//                return shouldLoadForNetworkType(ChanSettings.imageAutoLoadNetwork.get());
+//            case MOVIE:
+//                return shouldLoadForNetworkType(ChanSettings.videoAutoLoadNetwork.get());
+//            case PDF:
+//            case SWF:
+//                return false;
+//            default:
+//                throw new IllegalArgumentException("Not handled " + postImageType.name());
+//        }
+//    }
 
     public ImageViewerPresenter(Context context, Callback callback) {
         this.context = context;
@@ -218,9 +211,9 @@ public class ImageViewerPresenter
     }
 
     public void onVolumeClicked() {
-        muted = !muted;
-        callback.showVolumeMenuItem(true, muted);
-        callback.setVolume(getCurrentPostImage(), muted);
+//        muted = !muted;
+//        callback.showVolumeMenuItem(true, muted);
+//        callback.setVolume(getCurrentPostImage(), muted);
     }
 
     public List<ChanPostImage> getAllPostImages() {
@@ -353,17 +346,17 @@ public class ImageViewerPresenter
     private void onLowResInCenter() {
         ChanPostImage postImage = images.get(selectedPosition);
 
-        if (canAutoLoad(cacheHandler, postImage) && (!postImage.getSpoiler() || ChanSettings.revealImageSpoilers.get())) {
-            if (postImage.getType() == ChanPostImageType.STATIC) {
-                callback.setImageMode(postImage, BIGIMAGE, true);
-            } else if (postImage.getType() == ChanPostImageType.GIF) {
-                callback.setImageMode(postImage, GIFIMAGE, true);
-            } else if (postImage.getType() == ChanPostImageType.MOVIE) {
-                callback.setImageMode(postImage, VIDEO, true);
-            } else if (postImage.getType() == ChanPostImageType.PDF || postImage.getType() == ChanPostImageType.SWF) {
-                callback.setImageMode(postImage, OTHER, true);
-            }
-        }
+//        if (canAutoLoad(cacheHandler, postImage) && (!postImage.getSpoiler() || ChanSettings.revealImageSpoilers.get())) {
+//            if (postImage.getType() == ChanPostImageType.STATIC) {
+//                callback.setImageMode(postImage, BIGIMAGE, true);
+//            } else if (postImage.getType() == ChanPostImageType.GIF) {
+//                callback.setImageMode(postImage, GIFIMAGE, true);
+//            } else if (postImage.getType() == ChanPostImageType.MOVIE) {
+//                callback.setImageMode(postImage, VIDEO, true);
+//            } else if (postImage.getType() == ChanPostImageType.PDF || postImage.getType() == ChanPostImageType.SWF) {
+//                callback.setImageMode(postImage, OTHER, true);
+//            }
+//        }
 
 //        if (swipeDirection == SwipeDirection.Forward) {
 //            // Force cloudflare to preload N next posts with images
@@ -467,10 +460,10 @@ public class ImageViewerPresenter
     }
 
     private void doPreloading(ChanPostImage postImage) {
-        boolean allowedToPreload = canAutoLoad(cacheHandler, postImage);
-        if (!allowedToPreload) {
-            return;
-        }
+//        boolean allowedToPreload = canAutoLoad(cacheHandler, postImage);
+//        if (!allowedToPreload) {
+//            return;
+//        }
 
         boolean loadChunked = true;
 
@@ -585,32 +578,32 @@ public class ImageViewerPresenter
         }
 
         ChanPostImage postImage = images.get(selectedPosition);
-        if (canAutoLoad(cacheHandler, postImage) && (!postImage.getSpoiler() || ChanSettings.revealImageSpoilers.get())) {
-            if (postImage.getType() == ChanPostImageType.MOVIE && callback.getImageMode(postImage) != VIDEO) {
-                callback.setImageMode(postImage, VIDEO, true);
-                return;
-            }
-
-            // Fallthrough
-        } else {
-            MultiImageView.Mode currentMode = callback.getImageMode(postImage);
-            if (postImage.getType() == ChanPostImageType.STATIC && currentMode != BIGIMAGE) {
-                callback.setImageMode(postImage, BIGIMAGE, true);
-                return;
-            } else if (postImage.getType() == ChanPostImageType.GIF && currentMode != GIFIMAGE) {
-                callback.setImageMode(postImage, GIFIMAGE, true);
-                return;
-            } else if (postImage.getType() == ChanPostImageType.MOVIE && currentMode != VIDEO) {
-                callback.setImageMode(postImage, VIDEO, true);
-                return;
-            } else if ((postImage.getType() == ChanPostImageType.PDF || postImage.getType() == ChanPostImageType.SWF)
-                    && currentMode != OTHER) {
-                callback.setImageMode(postImage, OTHER, true);
-                return;
-            }
-
-            // Fallthrough
-        }
+//        if (canAutoLoad(cacheHandler, postImage) && (!postImage.getSpoiler() || ChanSettings.revealImageSpoilers.get())) {
+//            if (postImage.getType() == ChanPostImageType.MOVIE && callback.getImageMode(postImage) != VIDEO) {
+//                callback.setImageMode(postImage, VIDEO, true);
+//                return;
+//            }
+//
+//            // Fallthrough
+//        } else {
+//            MultiImageView.Mode currentMode = callback.getImageMode(postImage);
+//            if (postImage.getType() == ChanPostImageType.STATIC && currentMode != BIGIMAGE) {
+//                callback.setImageMode(postImage, BIGIMAGE, true);
+//                return;
+//            } else if (postImage.getType() == ChanPostImageType.GIF && currentMode != GIFIMAGE) {
+//                callback.setImageMode(postImage, GIFIMAGE, true);
+//                return;
+//            } else if (postImage.getType() == ChanPostImageType.MOVIE && currentMode != VIDEO) {
+//                callback.setImageMode(postImage, VIDEO, true);
+//                return;
+//            } else if ((postImage.getType() == ChanPostImageType.PDF || postImage.getType() == ChanPostImageType.SWF)
+//                    && currentMode != OTHER) {
+//                callback.setImageMode(postImage, OTHER, true);
+//                return;
+//            }
+//
+//            // Fallthrough
+//        }
 
 //        if (!ChanSettings.imageViewerFullscreenMode.get()) {
 //            onExit();
@@ -713,16 +706,16 @@ public class ImageViewerPresenter
 
     @Override
     public void onVideoLoaded(MultiImageView multiImageView) {
-        callback.showVolumeMenuItem(false, muted);
+//        callback.showVolumeMenuItem(false, muted);
     }
 
     @Override
     public void onAudioLoaded(MultiImageView multiImageView) {
-        ChanPostImage currentPostImage = getCurrentPostImage();
-        if (multiImageView.getPostImage() == currentPostImage) {
-            callback.showVolumeMenuItem(true, muted);
-            callback.setVolume(currentPostImage, muted);
-        }
+//        ChanPostImage currentPostImage = getCurrentPostImage();
+//        if (multiImageView.getPostImage() == currentPostImage) {
+//            callback.showVolumeMenuItem(true, muted);
+//            callback.setVolume(currentPostImage, muted);
+//        }
     }
 
     private void setTitle(ChanPostImage postImage, int position) {

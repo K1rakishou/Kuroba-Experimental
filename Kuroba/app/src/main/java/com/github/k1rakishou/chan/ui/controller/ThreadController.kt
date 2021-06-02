@@ -38,7 +38,6 @@ import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
-import com.github.k1rakishou.chan.ui.controller.ImageViewerController.ImageViewerCallback
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.helper.OpenExternalThreadHelper
@@ -47,7 +46,6 @@ import com.github.k1rakishou.chan.ui.helper.ShowPostsInExternalThreadHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
-import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.widget.KurobaSwipeRefreshLayout
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -74,7 +72,6 @@ abstract class ThreadController(
   var drawerCallbacks: MainControllerCallbacks?
 ) : Controller(context),
   ThreadLayoutCallback,
-  ImageViewerCallback,
   OnRefreshListener,
   SlideChangeListener,
   ApplicationVisibilityListener,
@@ -297,10 +294,6 @@ abstract class ThreadController(
         )
       }
     }
-  }
-
-  override fun getPreviewImageTransitionView(postImage: ChanPostImage): ThumbnailView? {
-    return threadLayout.getThumbnail(postImage)
   }
 
   override fun showAlbum(images: List<ChanPostImage>, index: Int) {

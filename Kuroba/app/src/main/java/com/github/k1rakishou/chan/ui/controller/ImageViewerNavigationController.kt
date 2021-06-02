@@ -21,18 +21,12 @@ import android.view.View
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
-import com.github.k1rakishou.chan.ui.controller.ImageViewerController.GoPostCallback
-import com.github.k1rakishou.chan.ui.controller.ImageViewerController.ImageViewerCallback
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.model.data.post.ChanPostImage
-import javax.inject.Inject
 
 class ImageViewerNavigationController(context: Context) : ToolbarNavigationController(context) {
-  @Inject
-  lateinit var filterOutHiddenImagesUseCase: FilterOutHiddenImagesUseCase
+//  @Inject
+//  lateinit var filterOutHiddenImagesUseCase: FilterOutHiddenImagesUseCase
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -55,37 +49,37 @@ class ImageViewerNavigationController(context: Context) : ToolbarNavigationContr
     requireToolbar().removeCallback()
   }
 
-  @JvmOverloads
-  fun showImages(
-    calledFromAlbum: Boolean,
-    images: List<ChanPostImage>,
-    index: Int,
-    chanDescriptor: ChanDescriptor,
-    imageViewerCallback: ImageViewerCallback?,
-    goPostCallback: GoPostCallback? = null,
-  ) {
-    val output = filterOutHiddenImagesUseCase.execute(
-      FilterOutHiddenImagesUseCase.Input(images, index, false)
-    )
-
-    val filteredImages = output.images
-    val newIndex = output.index
-
-    if (filteredImages.isEmpty()) {
-      showToast("No images left to show after filtering out images of hidden/removed posts");
-      return
-    }
-
-    val imageViewerController = ImageViewerController(
-      context,
-      requireToolbar(),
-      calledFromAlbum
-    )
-
-    imageViewerController.setGoPostCallback(goPostCallback)
-    pushController(imageViewerController, false)
-    imageViewerController.setImageViewerCallback(imageViewerCallback)
-    imageViewerController.presenter.showImages(filteredImages, newIndex, chanDescriptor)
-  }
+//  @JvmOverloads
+//  fun showImages(
+//    calledFromAlbum: Boolean,
+//    images: List<ChanPostImage>,
+//    index: Int,
+//    chanDescriptor: ChanDescriptor,
+//    imageViewerCallback: ImageViewerCallback?,
+//    goPostCallback: GoPostCallback? = null,
+//  ) {
+//    val output = filterOutHiddenImagesUseCase.execute(
+//      FilterOutHiddenImagesUseCase.Input(images, index, false)
+//    )
+//
+//    val filteredImages = output.images
+//    val newIndex = output.index
+//
+//    if (filteredImages.isEmpty()) {
+//      showToast("No images left to show after filtering out images of hidden/removed posts");
+//      return
+//    }
+//
+//    val imageViewerController = ImageViewerController(
+//      context,
+//      requireToolbar(),
+//      calledFromAlbum
+//    )
+//
+//    imageViewerController.setGoPostCallback(goPostCallback)
+//    pushController(imageViewerController, false)
+//    imageViewerController.setImageViewerCallback(imageViewerCallback)
+//    imageViewerController.presenter.showImages(filteredImages, newIndex, chanDescriptor)
+//  }
 
 }

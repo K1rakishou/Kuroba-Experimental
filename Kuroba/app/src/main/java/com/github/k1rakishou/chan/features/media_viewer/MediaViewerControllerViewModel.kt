@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewState
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -34,6 +35,8 @@ class MediaViewerControllerViewModel : ViewModel() {
 
   @Inject
   lateinit var chanThreadManager: ChanThreadManager
+  @Inject
+  lateinit var filterOutHiddenImagesUseCase: FilterOutHiddenImagesUseCase
 
   private val _mediaViewerState = MutableStateFlow<MediaViewerControllerState?>(null)
   private val _transitionInfoFlow = MutableSharedFlow<ViewableMediaParcelableHolder.TransitionInfo?>(extraBufferCapacity = 1)
@@ -114,6 +117,8 @@ class MediaViewerControllerViewModel : ViewModel() {
           collectMediaFromUrls(viewableMediaParcelableHolder)
         }
       }
+
+      // TODO: 6/2/2021 filter out hidden images
 
       if (mediaViewerControllerState == null || mediaViewerControllerState.isEmpty()) {
         return@withContext false
@@ -321,7 +326,7 @@ class MediaViewerControllerViewModel : ViewModel() {
     return viewableMedia
   }
 
-  data class MediaViewerControllerState(
+  class MediaViewerControllerState(
     val loadedMedia: List<ViewableMedia>,
     val initialPagerIndex: Int = 0
   ) {
@@ -331,6 +336,11 @@ class MediaViewerControllerViewModel : ViewModel() {
   companion object {
     private const val TAG = "MediaViewerControllerViewModel"
     private val DEFAULT_THUMBNAIL = (AppConstants.RESOURCES_ENDPOINT + "internal_spoiler.png").toHttpUrl()
+
+    @JvmStatic
+    fun canAutoLoad(cacheHandler: CacheHandler, postImage: ChanPostImage): Boolean {
+      return canAutoLoad(cacheHandler, postImage.imageUrl, postImage.type)
+    }
 
     fun canAutoLoad(cacheHandler: CacheHandler, viewableMedia: ViewableMedia): Boolean {
       val mediaLocation = viewableMedia.mediaLocation

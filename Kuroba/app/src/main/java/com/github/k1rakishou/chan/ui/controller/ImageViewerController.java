@@ -16,23 +16,9 @@
  */
 package com.github.k1rakishou.chan.ui.controller;
 
-import static android.view.View.GONE;
-import static android.view.View.INVISIBLE;
-import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout;
-import static com.github.k1rakishou.common.AndroidUtils.getWindow;
-
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
-import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -98,6 +84,17 @@ import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import okhttp3.HttpUrl;
 
+import static android.view.View.GONE;
+import static android.view.View.INVISIBLE;
+import static android.view.View.VISIBLE;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout;
+import static com.github.k1rakishou.common.AndroidUtils.getWindow;
+
 public class ImageViewerController
         extends Controller
         implements ImageViewerPresenter.Callback,
@@ -138,8 +135,8 @@ public class ImageViewerController
     private Animator startAnimation;
     private AnimatorSet endAnimation;
 
-    private ImageViewerCallback imageViewerCallback;
-    private GoPostCallback goPostCallback;
+//    private ImageViewerCallback imageViewerCallback;
+//    private GoPostCallback goPostCallback;
     private ImageViewerPresenter presenter;
 
     private final Toolbar toolbar;
@@ -255,9 +252,9 @@ public class ImageViewerController
     private void buildMenu() {
         NavigationItem.MenuBuilder menuBuilder = navigation.buildMenu(context);
 
-        if (goPostCallback != null) {
-            menuBuilder.withItem(R.drawable.ic_subdirectory_arrow_left_white_24dp, this::goPostClicked);
-        }
+//        if (goPostCallback != null) {
+//            menuBuilder.withItem(R.drawable.ic_subdirectory_arrow_left_white_24dp, this::goPostClicked);
+//        }
 
         menuBuilder.withItem(VOLUME_ID, R.drawable.ic_volume_off_white_24dp, this::volumeClicked);
 
@@ -345,20 +342,20 @@ public class ImageViewerController
             return;
         }
 
-        ImageViewerCallback imageViewerCallback = goPostCallback.goToPost(postImage);
-        if (imageViewerCallback != null) {
-            // hax: we need to wait for the recyclerview to do a layout before we know
-            // where the new thumbnails are to get the bounds from to animate to
-            this.imageViewerCallback = imageViewerCallback;
-            waitForLayout(view, view -> {
-                showSystemUI();
-                presenter.onExit();
-                return false;
-            });
-        } else {
-            showSystemUI();
-            presenter.onExit();
-        }
+//        ImageViewerCallback imageViewerCallback = goPostCallback.goToPost(postImage);
+//        if (imageViewerCallback != null) {
+//            // hax: we need to wait for the recyclerview to do a layout before we know
+//            // where the new thumbnails are to get the bounds from to animate to
+//            this.imageViewerCallback = imageViewerCallback;
+//            waitForLayout(view, view -> {
+//                showSystemUI();
+//                presenter.onExit();
+//                return false;
+//            });
+//        } else {
+//            showSystemUI();
+//            presenter.onExit();
+//        }
     }
 
     private void volumeClicked(ToolbarMenuItem item) {
@@ -535,13 +532,13 @@ public class ImageViewerController
         return true;
     }
 
-    public void setImageViewerCallback(ImageViewerCallback imageViewerCallback) {
-        this.imageViewerCallback = imageViewerCallback;
-    }
-
-    public void setGoPostCallback(GoPostCallback goPostCallback) {
-        this.goPostCallback = goPostCallback;
-    }
+//    public void setImageViewerCallback(ImageViewerCallback imageViewerCallback) {
+//        this.imageViewerCallback = imageViewerCallback;
+//    }
+//
+//    public void setGoPostCallback(GoPostCallback goPostCallback) {
+//        this.goPostCallback = goPostCallback;
+//    }
 
     public ImageViewerPresenter getPresenter() {
         return presenter;
@@ -726,22 +723,22 @@ public class ImageViewerController
 
     @Override
     public void startPreviewInTransition(ChanDescriptor chanDescriptor, ChanPostImage postImage) {
-        ThumbnailView startImageView = getTransitionImageView(postImage);
-        HttpUrl httpUrl = postImage.getThumbnailUrl();
-        String thumbnailUrl = null;
-
-        if (httpUrl != null) {
-            thumbnailUrl = httpUrl.toString();
-        }
-
-        if (thumbnailUrl == null || !setTransitionViewData(startImageView)) {
-            presenter.onInTransitionEnd();
-            presenter.onExit();
-            return;
-        }
-
-        appearPreviewImage.setBitmap(startImageView.getBitmap());
-        setBackgroundAlpha(1f);
+//        ThumbnailView startImageView = getTransitionImageView(postImage);
+//        HttpUrl httpUrl = postImage.getThumbnailUrl();
+//        String thumbnailUrl = null;
+//
+//        if (httpUrl != null) {
+//            thumbnailUrl = httpUrl.toString();
+//        }
+//
+//        if (thumbnailUrl == null || !setTransitionViewData(startImageView)) {
+//            presenter.onInTransitionEnd();
+//            presenter.onExit();
+//            return;
+//        }
+//
+//        appearPreviewImage.setBitmap(startImageView.getBitmap());
+//        setBackgroundAlpha(1f);
 
 //        startAnimation = appearPreviewImage.runAppearAnimation(view, () -> {
 //            startAnimation = null;
@@ -789,27 +786,27 @@ public class ImageViewerController
             }
         }
 
-        ThumbnailView startImage = getTransitionImageView(postImage);
-        appearPreviewImage.setVisibility(GONE);
-
-        endAnimation = new AnimatorSet();
-        if (!setTransitionViewData(startImage)) {
-            ValueAnimator backgroundAlpha = ValueAnimator.ofFloat(1f, 0f);
-            backgroundAlpha.addUpdateListener(animation -> setBackgroundAlpha((float) animation.getAnimatedValue()));
-
-            endAnimation
-                    .play(ObjectAnimator.ofFloat(disappearPreviewImage, View.Y, disappearPreviewImage.getTop(), disappearPreviewImage.getTop() + dp(20)))
-                    .with(ObjectAnimator.ofFloat(disappearPreviewImage, View.ALPHA, 1f, 0f))
-                    .with(backgroundAlpha);
-        } else {
-            ValueAnimator progress = ValueAnimator.ofFloat(1f, 0f);
-            progress.addUpdateListener(animation -> {
-                setBackgroundAlpha((float) animation.getAnimatedValue());
-                disappearPreviewImage.setProgress((float) animation.getAnimatedValue());
-            });
-
-            endAnimation.play(progress);
-        }
+//        ThumbnailView startImage = getTransitionImageView(postImage);
+//        appearPreviewImage.setVisibility(GONE);
+//
+//        endAnimation = new AnimatorSet();
+//        if (!setTransitionViewData(startImage)) {
+//            ValueAnimator backgroundAlpha = ValueAnimator.ofFloat(1f, 0f);
+//            backgroundAlpha.addUpdateListener(animation -> setBackgroundAlpha((float) animation.getAnimatedValue()));
+//
+//            endAnimation
+//                    .play(ObjectAnimator.ofFloat(disappearPreviewImage, View.Y, disappearPreviewImage.getTop(), disappearPreviewImage.getTop() + dp(20)))
+//                    .with(ObjectAnimator.ofFloat(disappearPreviewImage, View.ALPHA, 1f, 0f))
+//                    .with(backgroundAlpha);
+//        } else {
+//            ValueAnimator progress = ValueAnimator.ofFloat(1f, 0f);
+//            progress.addUpdateListener(animation -> {
+//                setBackgroundAlpha((float) animation.getAnimatedValue());
+//                disappearPreviewImage.setProgress((float) animation.getAnimatedValue());
+//            });
+//
+//            endAnimation.play(progress);
+//        }
         endAnimation.setDuration(TRANSITION_DURATION);
         endAnimation.setInterpolator(new DecelerateInterpolator(3f));
         endAnimation.addListener(new AnimatorListenerAdapter() {
@@ -855,10 +852,10 @@ public class ImageViewerController
         loadingBar.setAlpha(alpha);
     }
 
-    @Nullable
-    private ThumbnailView getTransitionImageView(ChanPostImage postImage) {
-        return imageViewerCallback.getPreviewImageTransitionView(postImage);
-    }
+//    @Nullable
+//    private ThumbnailView getTransitionImageView(ChanPostImage postImage) {
+//        return imageViewerCallback.getPreviewImageTransitionView(postImage);
+//    }
 
     @Override
     public void showSystemUI(boolean showSystemUi) {
@@ -960,13 +957,13 @@ public class ImageViewerController
         int newTopMargin = requireNavController().requireToolbar().getToolbarHeight();
         KotlinExtensionsKt.updateMargins(loadingBar, null, null, null, null, newTopMargin, null);
     }
-
-    public interface ImageViewerCallback {
-        @Nullable
-        ThumbnailView getPreviewImageTransitionView(ChanPostImage postImage);
-    }
-
-    public interface GoPostCallback {
-        @Nullable ImageViewerCallback goToPost(ChanPostImage postImage);
-    }
+//
+//    public interface ImageViewerCallback {
+//        @Nullable
+//        ThumbnailView getPreviewImageTransitionView(ChanPostImage postImage);
+//    }
+//
+//    public interface GoPostCallback {
+//        @Nullable ImageViewerCallback goToPost(ChanPostImage postImage);
+//    }
 }

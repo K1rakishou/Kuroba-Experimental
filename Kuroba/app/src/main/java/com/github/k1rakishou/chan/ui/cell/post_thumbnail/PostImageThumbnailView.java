@@ -16,8 +16,6 @@
  */
 package com.github.k1rakishou.chan.ui.cell.post_thumbnail;
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Rect;
@@ -35,7 +33,7 @@ import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.PrefetchState;
 import com.github.k1rakishou.chan.core.manager.PrefetchStateManager;
-import com.github.k1rakishou.chan.core.presenter.ImageViewerPresenter;
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel;
 import com.github.k1rakishou.chan.ui.view.SegmentedCircleDrawable;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
@@ -52,6 +50,8 @@ import javax.inject.Inject;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import okhttp3.HttpUrl;
+
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 
 public class PostImageThumbnailView extends ThumbnailView implements PostImageThumbnailViewContract {
     private static final String TAG = "PostImageThumbnailView";
@@ -270,7 +270,7 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
         boolean highRes = canUseHighResCells
                 && ChanSettings.highResCells.get()
                 && postImage.canBeUsedAsHighResolutionThumbnail()
-                && ImageViewerPresenter.canAutoLoad(cacheHandler, postImage);
+                && MediaViewerControllerViewModel.canAutoLoad(cacheHandler, postImage);
 
         boolean hasImageUrl = postImage.getImageUrl() != null;
         boolean revealingSpoilers = !postImage.getSpoiler() || ChanSettings.removeImageSpoilers.get();

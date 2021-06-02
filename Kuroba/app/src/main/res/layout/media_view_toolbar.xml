@@ -30,7 +30,7 @@
             android:gravity="center_vertical"
             android:maxLines="1"
             android:textColor="#fff"
-            android:textSize="18sp"
+            android:textSize="17sp"
             tools:text="Test image name very long name" />
 
         <TextView
@@ -41,10 +41,21 @@
             android:gravity="center_vertical"
             android:maxLines="1"
             android:textColor="#fff"
-            android:textSize="12sp"
-            tools:text="1282/10242, 10096x10096, 1234 kB"/>
+            android:textSize="11sp"
+            tools:text="1282/10242, 10096x10096, 1234 kB"
+            tools:ignore="SmallSp" />
 
     </LinearLayout>
+
+    <androidx.appcompat.widget.AppCompatImageButton
+        android:id="@+id/toolbar_go_to_post_button"
+        android:layout_width="36dp"
+        android:layout_height="match_parent"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="6dp"
+        android:src="@drawable/ic_subdirectory_arrow_left_white_24dp" />
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/toolbar_reload_button"
