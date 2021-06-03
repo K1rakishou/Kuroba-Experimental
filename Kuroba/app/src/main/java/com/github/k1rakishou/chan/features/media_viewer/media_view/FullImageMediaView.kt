@@ -99,9 +99,9 @@ class FullImageMediaView(
     closeMediaActionHelper = CloseMediaActionHelper(
       context = context,
       themeEngine = themeEngine,
-      movableContainer = movableContainer,
       requestDisallowInterceptTouchEvent = { this.parent.requestDisallowInterceptTouchEvent(true) },
       onAlphaAnimationProgress = { alpha -> mediaViewContract.changeMediaViewerBackgroundAlpha(alpha) },
+      movableContainerFunc = { movableContainer },
       invalidateFunc = { invalidate() },
       closeMediaViewer = { mediaViewContract.closeMediaViewer() },
       topGestureInfo = CloseMediaActionHelper.GestureInfo(

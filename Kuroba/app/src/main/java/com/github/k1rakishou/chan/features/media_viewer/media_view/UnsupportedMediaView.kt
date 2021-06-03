@@ -3,7 +3,9 @@ package com.github.k1rakishou.chan.features.media_viewer.media_view
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
+import android.view.GestureDetector
 import android.view.MotionEvent
+import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
@@ -13,7 +15,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.android.exoplayer2.upstream.DataSource
 import javax.inject.Inject
 
-@SuppressLint("ViewConstructor")
+@SuppressLint("ViewConstructor", "ClickableViewAccessibility")
 class UnsupportedMediaView(
   context: Context,
   initialMediaViewState: UnsupportedMediaViewState,
@@ -36,6 +38,7 @@ class UnsupportedMediaView(
   lateinit var themeEngine: ThemeEngine
 
   private val closeMediaActionHelper: CloseMediaActionHelper
+  private val gestureDetector: GestureDetector
 
   override val hasContent: Boolean
     get() = false
@@ -52,9 +55,9 @@ class UnsupportedMediaView(
     closeMediaActionHelper = CloseMediaActionHelper(
       context = context,
       themeEngine = themeEngine,
-      movableContainer = movableContainer,
       requestDisallowInterceptTouchEvent = { this.parent.requestDisallowInterceptTouchEvent(true) },
       onAlphaAnimationProgress = { alpha -> mediaViewContract.changeMediaViewerBackgroundAlpha(alpha) },
+      movableContainerFunc = { movableContainer },
       invalidateFunc = { invalidate() },
       closeMediaViewer = { mediaViewContract.closeMediaViewer() },
       topGestureInfo = CloseMediaActionHelper.GestureInfo(
@@ -68,6 +71,18 @@ class UnsupportedMediaView(
         gestureCanBeExecuted = { true }
       )
     )
+
+    gestureDetector = GestureDetector(context, GestureDetectorListener(mediaViewContract))
+
+    setOnTouchListener { v, event ->
+      if (visibility != View.VISIBLE) {
+        return@setOnTouchListener false
+      }
+
+      // Always return true for thumbnails because otherwise gestures won't work with thumbnails
+      gestureDetector.onTouchEvent(event)
+      return@setOnTouchListener true
+    }
   }
 
   override fun preload() {
@@ -119,6 +134,20 @@ class UnsupportedMediaView(
     }
 
     override fun updateFrom(other: MediaViewState?) {
+    }
+  }
+
+  class GestureDetectorListener(
+    private val mediaViewContract: MediaViewContract,
+  ) : GestureDetector.SimpleOnGestureListener() {
+
+    override fun onDown(e: MotionEvent?): Boolean {
+      return true
+    }
+
+    override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+      mediaViewContract.onTapped()
+      return false
     }
   }
 

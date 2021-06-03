@@ -119,9 +119,15 @@ class VideoMediaView(
     closeMediaActionHelper = CloseMediaActionHelper(
       context = context,
       themeEngine = themeEngine,
-      movableContainer = movableContainer,
       requestDisallowInterceptTouchEvent = { this.parent.requestDisallowInterceptTouchEvent(true) },
       onAlphaAnimationProgress = { alpha -> mediaViewContract.changeMediaViewerBackgroundAlpha(alpha) },
+      movableContainerFunc = {
+         if (actualVideoPlayerView.visibility == View.VISIBLE) {
+           movableContainer
+         } else {
+           thumbnailMediaView
+         }
+      },
       invalidateFunc = { invalidate() },
       closeMediaViewer = { mediaViewContract.closeMediaViewer() },
       topGestureInfo = CloseMediaActionHelper.GestureInfo(
@@ -495,7 +501,12 @@ class VideoMediaView(
         mediaViewContract.onTapped()
         return true
       } else if (thumbnailMediaView.visibility == View.VISIBLE) {
-        return tryPreloadingFunc()
+        if (tryPreloadingFunc()) {
+          return true
+        }
+
+        mediaViewContract.onTapped()
+        return true
       }
 
       return false

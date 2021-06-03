@@ -29,9 +29,9 @@ import kotlin.math.hypot
 class CloseMediaActionHelper(
   private val context: Context,
   private val themeEngine: ThemeEngine,
-  private val movableContainer: View,
   private val requestDisallowInterceptTouchEvent: () -> Unit,
   private val onAlphaAnimationProgress: (alpha: Float) -> Unit,
+  private val movableContainerFunc: () -> View,
   private val invalidateFunc: () -> Unit,
   private val closeMediaViewer: () -> Unit,
   private val topGestureInfo: GestureInfo? = null,
@@ -181,6 +181,7 @@ class CloseMediaActionHelper(
     val deltaX = event.x - initialTouchPosition!!.x
     val deltaY = event.y - initialTouchPosition!!.y
 
+    val movableContainer = movableContainerFunc()
     movableContainer.translationX = deltaX
     movableContainer.translationY = deltaY
     invalidateFunc()
@@ -197,7 +198,7 @@ class CloseMediaActionHelper(
       finishingWithAnimation = true
 
       if (Math.abs(velocityX) > FLING_MIN_VELOCITY || Math.abs(velocityY) > FLING_MIN_VELOCITY) {
-        scroller!!.setFriction(0.1f)
+        scroller!!.setFriction(0.2f)
 
         scroller!!.fling(
           deltaX.toInt(),
@@ -285,17 +286,40 @@ class CloseMediaActionHelper(
       else -> currentTouchPosition!!.y
     }
 
-    val center = height / 2f
+    val centerPointY = if (height > width) {
+      height - (height / 3f)
+    } else {
+      height / 2f
+    }
+
+    val textToTouchPositionOffset = if (height > width) {
+      TEXT_TO_TOUCH_POSITION_OFFSET_PORT
+    } else {
+      TEXT_TO_TOUCH_POSITION_OFFSET_LAND
+    }
+
+    val deadZoneHeight = if (height > width) {
+      DEAD_ZONE_HEIGHT_PORT
+    } else {
+      DEAD_ZONE_HEIGHT_LAND
+    }
 
     if (topGestureInfo != null && topGestureInfo.gestureCanBeExecuted()) {
-      isInsideTopGestureBounds = currentTouchPositionY < center && ((center - currentTouchPositionY) > DEAD_ZONE_OFFSET)
+      isInsideTopGestureBounds = currentTouchPositionY < centerPointY
+        && ((centerPointY - currentTouchPositionY) > deadZoneHeight)
 
-      val topTextPosition = center - TEXT_TO_TOUCH_POSITION_OFFSET - (TEXT_SIZE / 2)
+      val topTextPosition = centerPointY - textToTouchPositionOffset - (TEXT_SIZE / 2)
       val topText = getTopText(isInsideTopGestureBounds, topGestureInfo, width)
       val topTextScale = (1f - (currentTouchPositionY / height)).coerceIn(MIN_SCALE, MAX_SCALE)
 
       canvas.withSave {
-        canvas.scale(topTextScale, topTextScale, topText.width / 2f, topTextPosition + (topText.height / 2f))
+        canvas.scale(
+          topTextScale,
+          topTextScale,
+          topText.width / 2f,
+          topTextPosition + (topText.height / 2f)
+        )
+
         canvas.translate(0f, topTextPosition)
         topText.draw(this)
       }
@@ -304,14 +328,21 @@ class CloseMediaActionHelper(
     }
 
     if (bottomGestureInfo != null && bottomGestureInfo.gestureCanBeExecuted()) {
-      isInsideBottomGestureBounds = currentTouchPositionY > center && ((currentTouchPositionY - center) > DEAD_ZONE_OFFSET)
+      isInsideBottomGestureBounds = currentTouchPositionY > centerPointY
+        && ((currentTouchPositionY - centerPointY) > deadZoneHeight)
 
-      val bottomTextPosition = center + TEXT_TO_TOUCH_POSITION_OFFSET - (TEXT_SIZE / 2)
+      val bottomTextPosition = centerPointY + textToTouchPositionOffset - (TEXT_SIZE / 2)
       val bottomText = getBottomText(isInsideBottomGestureBounds, bottomGestureInfo, width)
       val bottomTextScale = (currentTouchPositionY / height).coerceIn(MIN_SCALE, MAX_SCALE)
 
       canvas.withSave {
-        canvas.scale(bottomTextScale, bottomTextScale, bottomText.width / 2f, bottomTextPosition + (bottomText.height / 2f))
+        canvas.scale(
+          bottomTextScale,
+          bottomTextScale,
+          bottomText.width / 2f,
+          bottomTextPosition + (bottomText.height / 2f)
+        )
+
         canvas.translate(0f, bottomTextPosition)
         bottomText.draw(this)
       }
@@ -320,7 +351,11 @@ class CloseMediaActionHelper(
     }
   }
 
-  private fun getBottomText(isInsideBottomGestureBounds: Boolean, bottomGestureInfo: GestureInfo, width: Int): StaticLayout {
+  private fun getBottomText(
+    isInsideBottomGestureBounds: Boolean,
+    bottomGestureInfo: GestureInfo,
+    width: Int
+  ): StaticLayout {
     if (isInsideBottomGestureBounds) {
       return if (bottomTextHighlightedCached == null) {
         bottomTextHighlightedCached = StaticLayout(
@@ -356,7 +391,11 @@ class CloseMediaActionHelper(
     }
   }
 
-  private fun getTopText(isInsideTopGestureBounds: Boolean, topGestureInfo: GestureInfo, width: Int): StaticLayout {
+  private fun getTopText(
+    isInsideTopGestureBounds: Boolean,
+    topGestureInfo: GestureInfo,
+    width: Int
+  ): StaticLayout {
     if (isInsideTopGestureBounds) {
       return if (topTextHighlightedCached == null) {
         topTextHighlightedCached = StaticLayout(
@@ -400,7 +439,9 @@ class CloseMediaActionHelper(
       animator.addUpdateListener { animation ->
         val alpha = animation.animatedValue as Float
 
+        val movableContainer = movableContainerFunc()
         movableContainer.alpha = alpha
+
         onAlphaAnimationProgress(alpha)
       }
 
@@ -438,6 +479,7 @@ class CloseMediaActionHelper(
       val currentX = scroller!!.currX.toFloat()
       val currentY = scroller!!.currY.toFloat()
 
+      val movableContainer = movableContainerFunc()
       movableContainer.translationX = currentX
       movableContainer.translationY = currentY
 
@@ -474,8 +516,10 @@ class CloseMediaActionHelper(
     private val FLING_MIN_VELOCITY = dp(1600f).toFloat()
     private val FLING_ANIMATION_DIST = dp(4000f)
     private val INTERPOLATOR = DecelerateInterpolator(2f)
-    private val TEXT_TO_TOUCH_POSITION_OFFSET = dp(100f)
-    private val DEAD_ZONE_OFFSET = dp(64f)
+    private val TEXT_TO_TOUCH_POSITION_OFFSET_PORT = dp(100f)
+    private val TEXT_TO_TOUCH_POSITION_OFFSET_LAND = dp(64f)
+    private val DEAD_ZONE_HEIGHT_PORT = dp(64f)
+    private val DEAD_ZONE_HEIGHT_LAND = dp(40f)
     private val TEXT_SIZE = sp(60f).toFloat()
     private const val SCROLL_ANIMATION_DURATION = 250
     private const val MIN_SCALE = 0.3f

@@ -27,6 +27,7 @@
             android:layout_width="match_parent"
             android:layout_height="30dp"
             android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
             android:gravity="center_vertical"
             android:maxLines="1"
             android:textColor="#fff"
@@ -41,9 +42,8 @@
             android:gravity="center_vertical"
             android:maxLines="1"
             android:textColor="#fff"
-            android:textSize="11sp"
-            tools:text="1282/10242, 10096x10096, 1234 kB"
-            tools:ignore="SmallSp" />
+            android:textSize="12sp"
+            tools:text="1282/10242, 10096x10096, 1234 kB" />
 
     </LinearLayout>
 
