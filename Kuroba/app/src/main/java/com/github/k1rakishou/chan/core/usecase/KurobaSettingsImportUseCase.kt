@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.sites.Lainchan
 import com.github.k1rakishou.chan.core.site.sites.Sushichan
 import com.github.k1rakishou.chan.core.site.sites.Wired7
+import com.github.k1rakishou.chan.core.site.sites.Chan370
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan420.Chan420
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
@@ -705,6 +706,7 @@ class KurobaSettingsImportUseCase(
       put(6, Wired7.SITE_NAME)
       put(8, Kun8.SITE_NAME)
       put(9, Chan420.SITE_NAME)
+      put(10, Chan370.SITE_NAME)
     }
   }
 }
