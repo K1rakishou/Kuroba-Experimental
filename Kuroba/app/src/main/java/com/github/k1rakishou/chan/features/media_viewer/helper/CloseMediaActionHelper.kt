@@ -17,7 +17,7 @@ import android.view.VelocityTracker
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.animation.DecelerateInterpolator
-import android.widget.Scroller
+import android.widget.OverScroller
 import androidx.core.graphics.withSave
 import androidx.core.view.ViewCompat
 import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
@@ -38,7 +38,7 @@ class CloseMediaActionHelper(
   private val bottomGestureInfo: GestureInfo? = null
 ) {
   private var velocityTracker: VelocityTracker? = null
-  private var scroller: Scroller? = null
+  private var scroller: OverScroller? = null
 
   private val viewConfiguration = ViewConfiguration.get(context)
   private val slopPixels = viewConfiguration.scaledTouchSlop
@@ -127,7 +127,7 @@ class CloseMediaActionHelper(
             velocityTracker = VelocityTracker.obtain()
             velocityTracker!!.addMovement(event)
 
-            scroller = Scroller(context, INTERPOLATOR)
+            scroller = OverScroller(context, INTERPOLATOR)
             initialTouchPosition = PointF(initialEvent!!.x, initialEvent!!.y)
 
             initialEvent?.recycle()
@@ -190,7 +190,7 @@ class CloseMediaActionHelper(
       scroller!!.forceFinished(true)
 
       velocityTracker!!.addMovement(event)
-      velocityTracker!!.computeCurrentVelocity(1000)
+      velocityTracker!!.computeCurrentVelocity(1000, FLING_MAX_VELOCITY)
 
       val velocityX = velocityTracker!!.xVelocity.toInt()
       val velocityY = velocityTracker!!.yVelocity.toInt()
@@ -514,6 +514,7 @@ class CloseMediaActionHelper(
 
   companion object {
     private val FLING_MIN_VELOCITY = dp(1600f).toFloat()
+    private val FLING_MAX_VELOCITY = dp(3000f).toFloat()
     private val FLING_ANIMATION_DIST = dp(4000f)
     private val INTERPOLATOR = DecelerateInterpolator(2f)
     private val TEXT_TO_TOUCH_POSITION_OFFSET_PORT = dp(100f)
