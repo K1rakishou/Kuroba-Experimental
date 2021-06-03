@@ -49,11 +49,8 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
-import com.github.k1rakishou.chan.core.cache.MediaSourceCallback
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
 import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
-import com.github.k1rakishou.chan.core.cache.stream.WebmStreamingDataSource
-import com.github.k1rakishou.chan.core.cache.stream.WebmStreamingSource
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2.FailureAwareImageListener
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
@@ -108,8 +105,6 @@ class MultiImageView @JvmOverloads constructor(
 
   @Inject
   lateinit var fileCacheV2: FileCacheV2
-  @Inject
-  lateinit var webmStreamingSource: WebmStreamingSource
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
   @Inject
@@ -734,72 +729,72 @@ class MultiImageView @JvmOverloads constructor(
       return
     }
 
-    webmStreamSourceInitJob = mainScope.launch(MEDIA_LOADING_DISPATCHER) {
-      webmStreamingSource.createMediaSource(postImage, object : MediaSourceCallback {
-        override fun onMediaSourceReady(source: MediaSource?) {
-          BackgroundUtils.ensureMainThread()
-          webmStreamSourceInitJob = null
-
-          if (source == null) {
-            onError(IllegalArgumentException("Source is null"))
-            return
-          }
-
-          synchronized(this@MultiImageView) {
-            if (mediaSourceCancel) {
-              return
-            }
-
-            if (!hasContent || mode == Mode.VIDEO) {
-              exoPlayer = createExoPlayer(source)
-
-              val exoVideoView = PlayerView(context)
-              exoVideoView.player = exoPlayer
-              exoVideoView.setOnClickListener(null)
-              exoVideoView.setOnTouchListener { _, motionEvent ->
-                gestureDetector.onTouchEvent(motionEvent)
-                return@setOnTouchListener true
-              }
-              exoVideoView.useController = true
-              exoVideoView.controllerHideOnTouch = false
-              exoVideoView.controllerAutoShow = false
-              exoVideoView.controllerShowTimeoutMs = -1
-              exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
-              exoVideoView.useArtwork = true
-
-//              if (callback?.isInImmersiveMode() == false || !ChanSettings.imageViewerFullscreenMode.get()) {
-//                exoVideoView.showController()
+//    webmStreamSourceInitJob = mainScope.launch(MEDIA_LOADING_DISPATCHER) {
+//      webmStreamingSource.createMediaSource(postImage, object : MediaSourceCallback {
+//        override fun onMediaSourceReady(source: MediaSource?) {
+//          BackgroundUtils.ensureMainThread()
+//          webmStreamSourceInitJob = null
+//
+//          if (source == null) {
+//            onError(IllegalArgumentException("Source is null"))
+//            return
+//          }
+//
+//          synchronized(this@MultiImageView) {
+//            if (mediaSourceCancel) {
+//              return
+//            }
+//
+//            if (!hasContent || mode == Mode.VIDEO) {
+//              exoPlayer = createExoPlayer(source)
+//
+//              val exoVideoView = PlayerView(context)
+//              exoVideoView.player = exoPlayer
+//              exoVideoView.setOnClickListener(null)
+//              exoVideoView.setOnTouchListener { _, motionEvent ->
+//                gestureDetector.onTouchEvent(motionEvent)
+//                return@setOnTouchListener true
 //              }
-
-              exoVideoView.defaultArtwork = ResourcesCompat.getDrawable(
-                getRes(),
-                R.drawable.ic_volume_up_white_24dp,
-                null
-              )
-              updateExoBufferingViewColors(exoVideoView)
-
-              updatePlayerControlsInsets(exoVideoView)
-              onModeLoaded(Mode.VIDEO, exoVideoView)
-
-              callback?.onVideoLoaded(this@MultiImageView)
-              callback?.onDownloaded(postImage)
-            }
-          }
-        }
-
-        override fun onError(error: Throwable) {
-          BackgroundUtils.ensureMainThread()
-          Logger.e(TAG, "Error while trying to stream a webm", error)
-
-          webmStreamSourceInitJob = null
-
-          showToast(
-            context,
-            "Couldn't open webm in streaming mode, error = " + error.message
-          )
-        }
-      })
-    }
+//              exoVideoView.useController = true
+//              exoVideoView.controllerHideOnTouch = false
+//              exoVideoView.controllerAutoShow = false
+//              exoVideoView.controllerShowTimeoutMs = -1
+//              exoVideoView.setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+//              exoVideoView.useArtwork = true
+//
+////              if (callback?.isInImmersiveMode() == false || !ChanSettings.imageViewerFullscreenMode.get()) {
+////                exoVideoView.showController()
+////              }
+//
+//              exoVideoView.defaultArtwork = ResourcesCompat.getDrawable(
+//                getRes(),
+//                R.drawable.ic_volume_up_white_24dp,
+//                null
+//              )
+//              updateExoBufferingViewColors(exoVideoView)
+//
+//              updatePlayerControlsInsets(exoVideoView)
+//              onModeLoaded(Mode.VIDEO, exoVideoView)
+//
+//              callback?.onVideoLoaded(this@MultiImageView)
+//              callback?.onDownloaded(postImage)
+//            }
+//          }
+//        }
+//
+//        override fun onError(error: Throwable) {
+//          BackgroundUtils.ensureMainThread()
+//          Logger.e(TAG, "Error while trying to stream a webm", error)
+//
+//          webmStreamSourceInitJob = null
+//
+//          showToast(
+//            context,
+//            "Couldn't open webm in streaming mode, error = " + error.message
+//          )
+//        }
+//      })
+//    }
   }
 
   private fun updateExoBufferingViewColors(exoVideoView: PlayerView) {
@@ -1142,24 +1137,24 @@ class MultiImageView @JvmOverloads constructor(
       exoPlayer!!
     }
 
-    try {
-      val mediaSource = player::class.java.getDeclaredField("mediaSource")
-      mediaSource.isAccessible = true
-
-      if (mediaSource.get(exoPlayer) != null) {
-        val source = mediaSource.get(exoPlayer) as ProgressiveMediaSource
-        val dataSource = source.javaClass.getDeclaredField("dataSourceFactory")
-
-        dataSource.isAccessible = true
-        val factory = dataSource.get(source) as DataSource.Factory
-        (factory.createDataSource() as WebmStreamingDataSource).clearListeners()
-        dataSource.isAccessible = false
-      }
-
-      mediaSource.isAccessible = false
-    } catch (ignored: Exception) {
-      // data source likely is from a file rather than a stream, ignore any exceptions
-    }
+//    try {
+//      val mediaSource = player::class.java.getDeclaredField("mediaSource")
+//      mediaSource.isAccessible = true
+//
+//      if (mediaSource.get(exoPlayer) != null) {
+//        val source = mediaSource.get(exoPlayer) as ProgressiveMediaSource
+//        val dataSource = source.javaClass.getDeclaredField("dataSourceFactory")
+//
+//        dataSource.isAccessible = true
+//        val factory = dataSource.get(source) as DataSource.Factory
+//        (factory.createDataSource() as WebmStreamingDataSource).clearListeners()
+//        dataSource.isAccessible = false
+//      }
+//
+//      mediaSource.isAccessible = false
+//    } catch (ignored: Exception) {
+//      // data source likely is from a file rather than a stream, ignore any exceptions
+//    }
   }
 
   override fun drawChild(canvas: Canvas, child: View, drawingTime: Long): Boolean {

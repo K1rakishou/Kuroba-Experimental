@@ -1,8 +1,6 @@
 package com.github.k1rakishou.chan.core.cache.downloader
 
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
-import com.github.k1rakishou.chan.core.cache.stream.WebmStreamingDataSource
-import com.github.k1rakishou.chan.core.cache.stream.WebmStreamingSource
 import com.github.k1rakishou.core_logger.Logger
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
@@ -76,30 +74,17 @@ class CancelableDownload(
     cancel(false)
   }
 
-  fun stopBatchDownload() {
-    stop(true)
-  }
-
   /**
    * By default, stop is called we don't want to stop it because it will usually be called from
    * WebmStreamingSource, but we actually want to stop it when stopping a gallery download.
    * */
   fun stop() {
-    stop(false)
-  }
-
-  /**
-   * Similar to [cancel] but does not delete the output file. Used by [WebmStreamingSource]
-   * to stop the download without deleting the output which we will then use in
-   * [WebmStreamingDataSource]
-   * */
-  fun stop(canStopBatchDownloads: Boolean) {
     if (!state.compareAndSet(DownloadState.Running, DownloadState.Stopped)) {
       // Already canceled or stopped
       return
     }
 
-    if (downloadType.isAnyKindOfMultiFileDownload() && !canStopBatchDownloads) {
+    if (downloadType.isAnyKindOfMultiFileDownload()) {
       // Do not stop the request in case of it being prefetch/batch download. Just wait until
       // it downloads normally.
       return

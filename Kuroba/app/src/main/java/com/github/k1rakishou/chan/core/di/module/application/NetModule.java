@@ -29,9 +29,7 @@ import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.cache.CacheHandlerSynchronizer;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
-import com.github.k1rakishou.chan.core.cache.stream.WebmStreamingSource;
 import com.github.k1rakishou.chan.core.helper.ProxyStorage;
-import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager;
 import com.github.k1rakishou.common.AppConstants;
@@ -111,26 +109,6 @@ public class NetModule {
                 siteResolver,
                 realDownloaderOkHttpClient,
                 connectivityManager,
-                appConstants
-        );
-    }
-
-    @Provides
-    @Singleton
-    public WebmStreamingSource provideWebmStreamingSource(
-            SiteManager siteManager,
-            SiteResolver siteResolver,
-            FileManager fileManager,
-            FileCacheV2 fileCacheV2,
-            CacheHandler cacheHandler,
-            AppConstants appConstants
-    ) {
-        return new WebmStreamingSource(
-                siteManager,
-                siteResolver,
-                fileManager,
-                fileCacheV2,
-                cacheHandler,
                 appConstants
         );
     }
