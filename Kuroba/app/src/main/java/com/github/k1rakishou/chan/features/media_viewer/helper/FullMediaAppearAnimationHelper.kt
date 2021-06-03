@@ -24,6 +24,7 @@ object FullMediaAppearAnimationHelper {
 
     if (isSpoiler) {
       activeView.setVisibilityFast(View.VISIBLE)
+      prevActiveView.setVisibilityFast(View.INVISIBLE)
       activeView.alpha = 1f
       onAnimationEnd()
       return null

@@ -276,16 +276,16 @@ public class ImageViewerController
                 this
         );
 
-        overflowBuilder.withSubItem(
-                ACTION_CHANGE_GESTURES,
-                R.string.action_change_gestures,
-                subItem -> {
-                    ImageViewerGesturesSettingsController controller =
-                            new ImageViewerGesturesSettingsController(context);
-
-                    requireNavController().presentController(controller);
-                }
-        );
+//        overflowBuilder.withSubItem(
+//                ACTION_CHANGE_GESTURES,
+//                R.string.action_change_gestures,
+//                subItem -> {
+//                    ImageViewerGesturesSettingsController controller =
+//                            new ImageViewerGesturesSettingsController(context);
+//
+//                    requireNavController().presentController(controller);
+//                }
+//        );
         overflowBuilder.withCheckableSubItem(
                 ACTION_ALLOW_IMAGE_TRANSPARENCY,
                 R.string.action_allow_image_transparency,

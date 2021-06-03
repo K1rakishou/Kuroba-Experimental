@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.media_viewer.media_view
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -128,7 +129,7 @@ class FullImageMediaView(
 
         return@GestureDetectorListener false
       },
-      onMediaLongClick = { mediaViewContract.onMediaLongClick(this, viewableMedia, buildMediaLongClickOptions()) }
+      onMediaLongClick = { mediaViewContract.onMediaLongClick(this, viewableMedia) }
     )
 
     gestureDetector = GestureDetector(context, gestureDetectorListener)
@@ -181,11 +182,16 @@ class FullImageMediaView(
     closeMediaActionHelper.onDraw(canvas)
   }
 
+  override fun updateTransparency(backgroundColor: Int?) {
+    val actualBackgroundColor = backgroundColor ?: Color.TRANSPARENT
+    actualImageView.setTileBackgroundColor(actualBackgroundColor)
+  }
+
   override fun preload() {
     thumbnailMediaView.bind(
       ThumbnailMediaView.ThumbnailMediaViewParameters(
         isOriginalMediaPlayable = false,
-        thumbnailLocation = viewableMedia.previewLocation,
+        viewableMedia = viewableMedia,
       ),
       onThumbnailFullyLoaded = {
         onThumbnailFullyLoadedFunc()
@@ -228,6 +234,7 @@ class FullImageMediaView(
 
         loadingBar.setVisibilityFast(GONE)
         onMediaFullyLoaded()
+        onUpdateTransparency()
       }
     }
   }

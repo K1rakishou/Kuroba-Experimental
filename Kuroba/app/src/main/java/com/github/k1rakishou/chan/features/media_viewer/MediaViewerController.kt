@@ -18,12 +18,12 @@ import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsContro
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerCache
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerWrapper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaLongClickMenuHelper
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerMenuHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewContract
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
 import com.github.k1rakishou.chan.ui.view.AppearTransitionImageView
 import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager
-import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
@@ -71,6 +71,14 @@ class MediaViewerController(
   private lateinit var pager: OptionalSwipeViewPager
 
   private val viewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
+
+  private val mediaViewerMenuHelper by lazy {
+    MediaViewerMenuHelper(
+      globalWindowInsetsManager = globalWindowInsetsManager,
+      presentControllerFunc = { controller -> presentController(controller, true) }
+    )
+  }
+
   private val mediaLongClickMenuHelper by lazy {
     MediaLongClickMenuHelper(
       scope = mainScope,
@@ -81,7 +89,7 @@ class MediaViewerController(
     )
   }
 
-  private val transitionAnimationShown = CompletableDeferred<Unit>()
+  private val transitionAnimationAwaitable = CompletableDeferred<Unit>()
 
   private val mediaViewerAdapter: MediaViewerAdapter?
     get() = pager.adapter as? MediaViewerAdapter
@@ -108,12 +116,12 @@ class MediaViewerController(
       viewModel.transitionInfoFlow.collect { transitionInfo ->
         BackgroundUtils.ensureMainThread()
 
-        if (transitionAnimationShown.isCompleted) {
+        if (transitionAnimationAwaitable.isCompleted) {
           return@collect
         }
 
         runAppearAnimation(transitionInfo)
-        transitionAnimationShown.complete(Unit)
+        transitionAnimationAwaitable.complete(Unit)
       }
     }
 
@@ -213,15 +221,17 @@ class MediaViewerController(
   }
 
   override fun onOptionsButtonClick(viewableMedia: ViewableMedia) {
-    // TODO(KurobaEx):
+    val adapter = mediaViewerAdapter
+      ?: return
+
+    mediaViewerMenuHelper.onMediaViewerOptionsClick(context, adapter)
   }
 
   override fun onMediaLongClick(
     view: View,
-    viewableMedia: ViewableMedia,
-    mediaLongClickOptions: List<FloatingListMenuItem>
+    viewableMedia: ViewableMedia
   ) {
-    mediaLongClickMenuHelper.onMediaLongClick(view, viewableMedia, mediaLongClickOptions)
+    mediaLongClickMenuHelper.onMediaLongClick(view, viewableMedia)
   }
 
   override suspend fun defaultArtworkDrawable(): Drawable? {
@@ -246,7 +256,7 @@ class MediaViewerController(
       return
     }
 
-    transitionAnimationShown.awaitSilently(Unit)
+    transitionAnimationAwaitable.awaitSilently(Unit)
 
     pager.setVisibilityFast(View.INVISIBLE)
     pager.setSwipingEnabled(true)

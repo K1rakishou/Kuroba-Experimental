@@ -283,6 +283,10 @@ class MediaViewerAdapter(
     }
   }
 
+  fun updateTransparency() {
+    loadedViews.forEach { loadedView -> loadedView.mediaView.onUpdateTransparency() }
+  }
+
   data class LoadedView(val viewIndex: Int, val mediaView: MediaView<ViewableMedia, MediaViewState>)
 
   companion object {

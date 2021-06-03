@@ -273,10 +273,9 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
                 && MediaViewerControllerViewModel.canAutoLoad(cacheHandler, postImage);
 
         boolean hasImageUrl = postImage.getImageUrl() != null;
-        boolean revealingSpoilers = !postImage.getSpoiler() || ChanSettings.removeImageSpoilers.get();
         boolean prefetchingDisabledOrAlreadyPrefetched = !ChanSettings.prefetchMedia.get() || postImage.isPrefetched();
 
-        if (highRes && hasImageUrl && revealingSpoilers && prefetchingDisabledOrAlreadyPrefetched) {
+        if (highRes && hasImageUrl && prefetchingDisabledOrAlreadyPrefetched) {
             url = (postImage.getType() == ChanPostImageType.STATIC
                     ? postImage.getImageUrl()
                     : postImage.getThumbnailUrl()).toString();

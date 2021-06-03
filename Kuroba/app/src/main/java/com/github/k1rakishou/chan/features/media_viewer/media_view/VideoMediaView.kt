@@ -156,7 +156,7 @@ class VideoMediaView(
 
           return@GestureDetectorListener false
         },
-        onMediaLongClick = { mediaViewContract.onMediaLongClick(this, viewableMedia, buildMediaLongClickOptions()) }
+        onMediaLongClick = { mediaViewContract.onMediaLongClick(this, viewableMedia) }
       )
     )
 
@@ -213,7 +213,7 @@ class VideoMediaView(
     thumbnailMediaView.bind(
       ThumbnailMediaView.ThumbnailMediaViewParameters(
         isOriginalMediaPlayable = true,
-        thumbnailLocation = viewableMedia.previewLocation
+        viewableMedia = viewableMedia,
       ),
       onThumbnailFullyLoaded = {
         onThumbnailFullyLoadedFunc()
@@ -453,6 +453,7 @@ class VideoMediaView(
       return !fullVideoDeferred.isCompleted
         && (preloadingJob == null || preloadingJob?.isActive == false)
     }
+
 
     return canAutoLoad
       && !fullVideoDeferred.isCompleted

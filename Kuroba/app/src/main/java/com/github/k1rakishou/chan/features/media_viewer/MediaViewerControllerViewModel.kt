@@ -286,8 +286,12 @@ class MediaViewerControllerViewModel : ViewModel() {
       ?.let { thumbnailUrl -> MediaLocation.Remote(thumbnailUrl) }
       ?: MediaLocation.Remote(DEFAULT_THUMBNAIL)
 
-    val spoilerLocation = chanPostImage.spoilerThumbnailUrl
-      ?.let { spoilerUrl -> MediaLocation.Remote(spoilerUrl) }
+    val spoilerLocation = if (chanPostImage.spoiler) {
+      chanPostImage.spoilerThumbnailUrl
+        ?.let { spoilerUrl -> MediaLocation.Remote(spoilerUrl) }
+    } else {
+      null
+    }
 
     val viewableMediaMeta = ViewableMediaMeta(
       ownerPostDescriptor = chanPostImage.ownerPostDescriptor,
@@ -339,7 +343,7 @@ class MediaViewerControllerViewModel : ViewModel() {
 
     @JvmStatic
     fun canAutoLoad(cacheHandler: CacheHandler, postImage: ChanPostImage): Boolean {
-      return canAutoLoad(cacheHandler, postImage.imageUrl, postImage.type)
+      return canAutoLoad(cacheHandler, postImage.imageUrl, postImage.type, postImage.spoiler)
     }
 
     fun canAutoLoad(cacheHandler: CacheHandler, viewableMedia: ViewableMedia): Boolean {
@@ -357,13 +361,14 @@ class MediaViewerControllerViewModel : ViewModel() {
         is ViewableMedia.Unsupported -> return false
       }
 
-      return canAutoLoad(cacheHandler, url, imageType)
+      return canAutoLoad(cacheHandler, url, imageType, viewableMedia.viewableMediaMeta.isSpoiler)
     }
 
     fun canAutoLoad(
       cacheHandler: CacheHandler,
       url: HttpUrl?,
-      imageType: ChanPostImageType?
+      imageType: ChanPostImageType?,
+      isSpoiler: Boolean
     ): Boolean {
       val imageUrl = url ?: return false
       val postImageType = imageType ?: return false
@@ -371,6 +376,10 @@ class MediaViewerControllerViewModel : ViewModel() {
       if (cacheHandler.cacheFileExists(imageUrl.toString())) {
         // Auto load the image when it is cached
         return true
+      }
+
+      if (isSpoiler && !ChanSettings.revealImageSpoilers.get()) {
+        return false
       }
 
       return when (postImageType) {

@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.media_viewer.media_view
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.PorterDuff
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -128,7 +129,7 @@ class GifMediaView(
 
           return@GestureDetectorListener false
         },
-        onMediaLongClick = { mediaViewContract.onMediaLongClick(this, viewableMedia, buildMediaLongClickOptions()) }
+        onMediaLongClick = { mediaViewContract.onMediaLongClick(this, viewableMedia) }
       )
     )
 
@@ -172,11 +173,22 @@ class GifMediaView(
     closeMediaActionHelper.onDraw(canvas)
   }
 
+  override fun updateTransparency(backgroundColor: Int?) {
+    if (backgroundColor == null) {
+      actualGifView.drawable?.colorFilter = null
+    } else {
+      actualGifView.drawable?.setColorFilter(
+        backgroundColor,
+        PorterDuff.Mode.DST_OVER
+      )
+    }
+  }
+
   override fun preload() {
     thumbnailMediaView.bind(
       ThumbnailMediaView.ThumbnailMediaViewParameters(
         isOriginalMediaPlayable = true,
-        thumbnailLocation = viewableMedia.previewLocation
+        viewableMedia = viewableMedia,
       ),
       onThumbnailFullyLoaded = {
         onThumbnailFullyLoadedFunc()
@@ -227,6 +239,8 @@ class GifMediaView(
           gifImageViewDrawable.start()
         }
       }
+
+      onUpdateTransparency()
     }
   }
 

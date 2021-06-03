@@ -13,12 +13,14 @@ import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsContro
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerAdapter
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
-import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaView
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
+import com.github.k1rakishou.chan.ui.view.floating_menu.HeaderFloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.CoroutineScope
@@ -39,9 +41,9 @@ class MediaLongClickMenuHelper(
 
   fun onMediaLongClick(
     view: View,
-    viewableMedia: ViewableMedia,
-    mediaLongClickOptions: List<FloatingListMenuItem>
+    viewableMedia: ViewableMedia
   ) {
+    val mediaLongClickOptions = buildMediaLongClickOptions(viewableMedia)
     if (mediaLongClickOptions.isEmpty()) {
       return
     }
@@ -60,56 +62,97 @@ class MediaLongClickMenuHelper(
     presentControllerFunc(floatingListMenuController)
   }
 
+  private fun buildMediaLongClickOptions(viewableMedia: ViewableMedia): List<FloatingListMenuItem> {
+    val mediaName = viewableMedia.getMediaNameForMenuHeader()
+    if (mediaName.isNullOrEmpty() || viewableMedia.mediaLocation !is MediaLocation.Remote) {
+      return emptyList()
+    }
+
+    val options = mutableListOf<FloatingListMenuItem>()
+
+    options += HeaderFloatingListMenuItem(MEDIA_LONG_CLICK_MENU_HEADER, mediaName)
+    options += FloatingListMenuItem(ACTION_IMAGE_COPY_FULL_URL, getString(R.string.action_copy_image_full_url))
+
+    if (viewableMedia.previewLocation is MediaLocation.Remote) {
+      options += FloatingListMenuItem(ACTION_IMAGE_COPY_THUMBNAIL_URL, getString(R.string.action_copy_image_thumbnail_url))
+    }
+
+    if (viewableMedia.formatFullOriginalFileName().isNotNullNorEmpty()) {
+      options += FloatingListMenuItem(ACTION_IMAGE_COPY_ORIGINAL_FILE_NAME, getString(R.string.action_copy_image_original_name))
+    }
+
+    if (viewableMedia.formatFullServerFileName().isNotNullNorEmpty()) {
+      options += FloatingListMenuItem(ACTION_IMAGE_COPY_SERVER_FILE_NAME, getString(R.string.action_copy_image_server_name))
+    }
+
+    if (viewableMedia.viewableMediaMeta.mediaHash.isNotNullNorEmpty()) {
+      options += FloatingListMenuItem(ACTION_IMAGE_COPY_MD5_HASH_HEX, getString(R.string.action_copy_image_file_hash_hex))
+    }
+
+    options += FloatingListMenuItem(ACTION_OPEN_IN_BROWSER, getString(R.string.action_open_in_browser))
+    options += FloatingListMenuItem(ACTION_MEDIA_SEARCH, getString(R.string.action_media_search))
+
+    options += FloatingListMenuItem(ACTION_SHARE_MEDIA_URL, getString(R.string.action_share_media_url))
+    options += FloatingListMenuItem(ACTION_SHARE_MEDIA_CONTENT, getString(R.string.action_share_media_content))
+
+    if (viewableMedia.canMediaBeDownloaded()) {
+      options += FloatingListMenuItem(ACTION_DOWNLOAD_MEDIA_FILE_CONTENT, getString(R.string.action_download_content))
+      options += FloatingListMenuItem(ACTION_DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT, getString(R.string.action_download_content_with_options))
+    }
+
+    return options
+  }
+
   private suspend fun handleMenuItemClick(context: Context, clickedItem: FloatingListMenuItem, viewableMedia: ViewableMedia) {
     when (clickedItem.key as Int) {
-      MediaView.ACTION_IMAGE_COPY_FULL_URL -> {
+      ACTION_IMAGE_COPY_FULL_URL -> {
         val remoteLocation = viewableMedia.mediaLocation as? MediaLocation.Remote
           ?: return
 
         AndroidUtils.setClipboardContent("Image URL", remoteLocation.url.toString())
         AppModuleAndroidUtils.showToast(context, R.string.image_url_copied_to_clipboard)
       }
-      MediaView.ACTION_IMAGE_COPY_THUMBNAIL_URL -> {
+      ACTION_IMAGE_COPY_THUMBNAIL_URL -> {
         val previewLocationUrl = (viewableMedia.previewLocation as? MediaLocation.Remote)?.url
           ?: return
 
         AndroidUtils.setClipboardContent("Thumbnail URL", previewLocationUrl.toString())
         AppModuleAndroidUtils.showToast(context, R.string.image_url_copied_to_clipboard)
       }
-      MediaView.ACTION_IMAGE_COPY_ORIGINAL_FILE_NAME -> {
+      ACTION_IMAGE_COPY_ORIGINAL_FILE_NAME -> {
         AndroidUtils.setClipboardContent("Original file name", viewableMedia.formatFullOriginalFileName())
         AppModuleAndroidUtils.showToast(context, R.string.image_file_name_copied_to_clipboard)
       }
-      MediaView.ACTION_IMAGE_COPY_SERVER_FILE_NAME -> {
+      ACTION_IMAGE_COPY_SERVER_FILE_NAME -> {
         AndroidUtils.setClipboardContent("Server file name", viewableMedia.formatFullServerFileName())
         AppModuleAndroidUtils.showToast(context, R.string.image_file_name_copied_to_clipboard)
       }
-      MediaView.ACTION_IMAGE_COPY_MD5_HASH_HEX -> {
+      ACTION_IMAGE_COPY_MD5_HASH_HEX -> {
         AndroidUtils.setClipboardContent("File hash HEX", viewableMedia.viewableMediaMeta.mediaHash)
         AppModuleAndroidUtils.showToast(context, R.string.image_file_hash_copied_to_clipboard)
       }
-      MediaView.ACTION_OPEN_IN_BROWSER -> {
+      ACTION_OPEN_IN_BROWSER -> {
         val mediaUrl = (viewableMedia.mediaLocation as? MediaLocation.Remote)?.url
           ?: return
 
         AppModuleAndroidUtils.openLink(mediaUrl.toString())
       }
-      MediaView.ACTION_MEDIA_SEARCH -> {
+      ACTION_MEDIA_SEARCH -> {
         showImageSearchOptions(context, viewableMedia)
       }
-      MediaView.ACTION_SHARE_MEDIA_URL -> {
+      ACTION_SHARE_MEDIA_URL -> {
         val mediaUrl = (viewableMedia.mediaLocation as? MediaLocation.Remote)?.url
           ?: return
 
         AppModuleAndroidUtils.shareLink(mediaUrl.toString())
       }
-      MediaView.ACTION_SHARE_MEDIA_CONTENT -> {
+      ACTION_SHARE_MEDIA_CONTENT -> {
         shareMediaContent(context, viewableMedia)
       }
-      MediaView.ACTION_DOWNLOAD_MEDIA_FILE_CONTENT -> {
+      ACTION_DOWNLOAD_MEDIA_FILE_CONTENT -> {
         downloadMediaFile(context, false, viewableMedia)
       }
-      MediaView.ACTION_DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT -> {
+      ACTION_DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT -> {
         downloadMediaFile(context, true, viewableMedia)
       }
     }
@@ -200,6 +243,19 @@ class MediaLongClickMenuHelper(
 
   companion object {
     private const val TAG = "MediaLongClickMenuHelper"
+
+    const val MEDIA_LONG_CLICK_MENU_HEADER = "media_copy_menu_header"
+    const val ACTION_IMAGE_COPY_FULL_URL = 1
+    const val ACTION_IMAGE_COPY_THUMBNAIL_URL = 2
+    const val ACTION_IMAGE_COPY_ORIGINAL_FILE_NAME = 3
+    const val ACTION_IMAGE_COPY_SERVER_FILE_NAME = 4
+    const val ACTION_IMAGE_COPY_MD5_HASH_HEX = 5
+    const val ACTION_OPEN_IN_BROWSER = 6
+    const val ACTION_MEDIA_SEARCH = 7
+    const val ACTION_SHARE_MEDIA_URL = 8
+    const val ACTION_SHARE_MEDIA_CONTENT = 9
+    const val ACTION_DOWNLOAD_MEDIA_FILE_CONTENT = 10
+    const val ACTION_DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT = 11
   }
 
 }

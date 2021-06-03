@@ -10,9 +10,12 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import coil.request.Disposable
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
+import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.ui.view.ThumbnailImageView
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -42,6 +45,8 @@ class ThumbnailMediaView @JvmOverloads constructor(
 
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
+  @Inject
+  lateinit var cacheHandler: CacheHandler
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -69,9 +74,11 @@ class ThumbnailMediaView @JvmOverloads constructor(
       return
     }
 
-    requestDisposable = when (val location = parameters.thumbnailLocation) {
+    val thumbnailLocation = extractThumbnailLocation(parameters)
+
+    requestDisposable = when (thumbnailLocation) {
       is MediaLocation.Local -> TODO()
-      is MediaLocation.Remote -> loadRemoteMedia(location.url, parameters, onThumbnailFullyLoaded)
+      is MediaLocation.Remote -> loadRemoteMedia(thumbnailLocation.url, parameters, onThumbnailFullyLoaded)
       null -> {
         onThumbnailFullyLoaded()
         null
@@ -151,9 +158,32 @@ class ThumbnailMediaView @JvmOverloads constructor(
     }
   }
 
+  private fun extractThumbnailLocation(parameters: ThumbnailMediaViewParameters): MediaLocation? {
+    if (ChanSettings.revealImageSpoilers.get()) {
+      return parameters.viewableMedia.previewLocation
+    }
+
+    if (parameters.viewableMedia.viewableMediaMeta.isSpoiler) {
+      if (parameters.viewableMedia.mediaLocation is MediaLocation.Local) {
+        return null
+      }
+
+      val remoteLocation = parameters.viewableMedia.mediaLocation as MediaLocation.Remote
+
+      if (cacheHandler.cacheFileExists(remoteLocation.url.toString())) {
+        return parameters.viewableMedia.previewLocation
+      }
+
+      return parameters.viewableMedia.spoilerLocation
+        ?: parameters.viewableMedia.previewLocation
+    }
+
+    return parameters.viewableMedia.previewLocation
+  }
+
   data class ThumbnailMediaViewParameters(
     val isOriginalMediaPlayable: Boolean,
-    val thumbnailLocation: MediaLocation?
+    val viewableMedia: ViewableMedia
   )
 
   companion object {

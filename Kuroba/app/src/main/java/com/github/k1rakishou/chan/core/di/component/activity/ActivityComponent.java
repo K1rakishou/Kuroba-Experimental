@@ -99,7 +99,6 @@ import com.github.k1rakishou.chan.ui.controller.CaptchaContainerController;
 import com.github.k1rakishou.chan.ui.controller.FiltersController;
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController;
 import com.github.k1rakishou.chan.ui.controller.ImageViewerController;
-import com.github.k1rakishou.chan.ui.controller.ImageViewerGesturesSettingsController;
 import com.github.k1rakishou.chan.ui.controller.ImageViewerNavigationController;
 import com.github.k1rakishou.chan.ui.controller.LicensesController;
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController;
@@ -235,7 +234,6 @@ public interface ActivityComponent {
     void inject(BoardsSetupController boardsSetupController);
     void inject(MainSettingsControllerV2 mainSettingsControllerV2);
     void inject(SiteSettingsController siteSettingsController);
-    void inject(ImageViewerGesturesSettingsController imageViewerGesturesSettingsController);
     void inject(ReportProblemController reportProblemController);
     void inject(ReviewReportFilesController reviewReportFilesController);
     void inject(ViewFullCrashLogController viewFullCrashLogController);
