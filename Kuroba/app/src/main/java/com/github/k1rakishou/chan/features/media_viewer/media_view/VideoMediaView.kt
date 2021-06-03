@@ -440,6 +440,11 @@ class VideoMediaView(
       mainVideoPlayer.playPause()
     }
 
+    actualVideoPlayerView.useArtwork = mainVideoPlayer.hasNoVideo()
+    if (actualVideoPlayerView.useArtwork) {
+      actualVideoPlayerView.defaultArtwork = mediaViewContract.defaultArtworkDrawable()
+    }
+
     thumbnailMediaView.setVisibilityFast(INVISIBLE)
   }
 

@@ -85,11 +85,11 @@ class ImageLoaderV2(
     url: String,
     imageSize: ImageSize,
     transformations: List<Transformation> = emptyList()
-  ): Bitmap? {
+  ): BitmapDrawable? {
     return suspendCancellableCoroutine { continuation ->
       loadFromNetwork(context, url, imageSize, transformations, object : FailureAwareImageListener {
         override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
-          continuation.resume(drawable.bitmap)
+          continuation.resume(drawable)
         }
 
         override fun onNotFound() {

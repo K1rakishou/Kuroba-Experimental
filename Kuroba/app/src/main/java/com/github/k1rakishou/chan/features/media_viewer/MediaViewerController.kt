@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.media_viewer
 
 import android.content.Context
+import android.graphics.drawable.Drawable
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
@@ -238,6 +239,15 @@ class MediaViewerController(
     mediaLongClickMenuHelper.onMediaLongClick(view, viewableMedia, mediaLongClickOptions)
   }
 
+  override suspend fun defaultArtworkDrawable(): Drawable? {
+    return imageLoaderV2.loadFromNetworkSuspend(
+      context,
+      AppConstants.RESOURCES_ENDPOINT + "audio_thumb.png",
+      ImageLoaderV2.ImageSize.MeasurableImageSize.create(appearPreviewImage),
+      emptyList()
+    )
+  }
+
   fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {
     mediaViewerAdapter?.onSystemUiVisibilityChanged(systemUIHidden)
   }
@@ -299,7 +309,7 @@ class MediaViewerController(
       context,
       transitionInfo.transitionThumbnailUrl,
       ImageLoaderV2.ImageSize.MeasurableImageSize.create(appearPreviewImage)
-    )
+    )?.bitmap
 
     if (resultBitmap == null) {
       mediaViewerRootLayout.setBackgroundColor(BACKGROUND_COLOR)

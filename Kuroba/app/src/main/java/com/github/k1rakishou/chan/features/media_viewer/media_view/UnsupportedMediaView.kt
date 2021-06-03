@@ -8,6 +8,7 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -52,6 +53,9 @@ class UnsupportedMediaView(
 
     val movableContainer = findViewById<ConstraintLayout>(R.id.movable_container)
 
+    val toolbar = findViewById<MediaViewerToolbar>(R.id.full_video_view_toolbar)
+    initToolbar(toolbar)
+
     closeMediaActionHelper = CloseMediaActionHelper(
       context = context,
       themeEngine = themeEngine,
@@ -74,12 +78,11 @@ class UnsupportedMediaView(
 
     gestureDetector = GestureDetector(context, GestureDetectorListener(mediaViewContract))
 
-    setOnTouchListener { v, event ->
+    movableContainer.setOnTouchListener { v, event ->
       if (visibility != View.VISIBLE) {
         return@setOnTouchListener false
       }
 
-      // Always return true for thumbnails because otherwise gestures won't work with thumbnails
       gestureDetector.onTouchEvent(event)
       return@setOnTouchListener true
     }
@@ -95,6 +98,8 @@ class UnsupportedMediaView(
   }
 
   override fun show() {
+    mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
+
     onSystemUiVisibilityChanged(isSystemUiHidden())
     onMediaFullyLoaded()
   }
@@ -104,7 +109,7 @@ class UnsupportedMediaView(
   }
 
   override fun unbind() {
-    // nothing to unbind
+    closeMediaActionHelper.onDestroy()
   }
 
   override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {

@@ -132,6 +132,11 @@ class ExoPlayerWrapper(
     start()
 
     val deferred = requireNotNull(firstFrameRendered) { "firstFrameRendered is null!" }
+
+    if (actualExoPlayer.videoFormat == null) {
+      deferred.complete(Unit)
+    }
+
     deferred.await()
   }
 
@@ -212,6 +217,10 @@ class ExoPlayerWrapper(
   fun playPause() {
     actualExoPlayer.play()
     actualExoPlayer.pause()
+  }
+
+  fun hasNoVideo(): Boolean {
+    return actualExoPlayer.videoFormat == null
   }
 
   class ReusableExoPlayer(
