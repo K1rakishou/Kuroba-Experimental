@@ -44,7 +44,7 @@ abstract class AbstractParsePostsUseCase(
     postBuildersToParse: List<ChanPostBuilder>,
     filters: List<ChanFilter>
   ) {
-    if (postBuildersToParse.isEmpty() || filters.isEmpty()) {
+    if (postBuildersToParse.isEmpty() && filters.isEmpty()) {
       return
     }
 
