@@ -12,6 +12,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerCache
@@ -29,8 +30,10 @@ import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.awaitSilently
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.persist_state.PersistableChanState
 import com.github.k1rakishou.persist_state.PersistableChanState.imageSaverV2PersistedOptions
+import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.upstream.cache.CacheDataSource
 import kotlinx.coroutines.CompletableDeferred
@@ -60,6 +63,8 @@ class MediaViewerController(
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
   lateinit var chan4CloudFlareImagePreloaderManager: Chan4CloudFlareImagePreloaderManager
+  @Inject
+  lateinit var siteManager: SiteManager
 
   private lateinit var mediaViewerRootLayout: TouchBlockingFrameLayoutNoBackground
   private lateinit var appearPreviewImage: AppearTransitionImageView
@@ -80,26 +85,6 @@ class MediaViewerController(
 
   private val mediaViewerAdapter: MediaViewerAdapter?
     get() = pager.adapter as? MediaViewerAdapter
-
-  private val cacheDataSourceFactory by lazy {
-    val defaultDataSourceFactory = DefaultHttpDataSource.Factory()
-      .setUserAgent(appConstants.userAgent)
-
-    // TODO(KurobaEx): setDefaultRequestProperties() so that we can set cookie which is used by some
-    //  hidden boards
-//    Map<String, String> requestProperties = new HashMap<>();
-//
-//    if (site != null) {
-//      SiteRequestModifier<Site> requestModifier = site.requestModifier();
-//      if (requestModifier != null) {
-//        requestModifier.modifyVideoStreamRequest(site, requestProperties);
-//      }
-//    }
-
-    return@lazy CacheDataSource.Factory()
-      .setCache(exoPlayerCache.actualCache)
-      .setUpstreamDataSourceFactory(defaultDataSourceFactory)
-  }
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -277,7 +262,7 @@ class MediaViewerController(
       viewableMediaList = mediaViewerState.loadedMedia,
       previewThumbnailLocation = previewThumbnailLocation,
       mediaViewerScrollerHelper = mediaViewerScrollerHelper,
-      cacheDataSourceFactory = cacheDataSourceFactory,
+      cacheDataSourceFactory = createCacheDataSourceFactory(mediaViewerState.loadedMedia),
       chan4CloudFlareImagePreloaderManager = chan4CloudFlareImagePreloaderManager,
       isSystemUiHidden = { mediaViewerCallbacks.isSystemUiHidden() },
       swipeDirection = { pager.swipeDirection }
@@ -295,6 +280,42 @@ class MediaViewerController(
       TAG, "Loaded ${mediaViewerState.loadedMedia.size} media items, " +
         "initialPagerIndex=${mediaViewerState.initialPagerIndex}"
     )
+  }
+
+  private fun createCacheDataSourceFactory(viewableMedia: List<ViewableMedia>): DataSource.Factory {
+    val defaultDataSourceFactory = DefaultHttpDataSource.Factory()
+      .setUserAgent(appConstants.userAgent)
+      .setDefaultRequestProperties(createRequestProperties(viewableMedia))
+
+    return CacheDataSource.Factory()
+      .setCache(exoPlayerCache.actualCache)
+      .setUpstreamDataSourceFactory(defaultDataSourceFactory)
+  }
+
+  private fun createRequestProperties(viewableMediaList: List<ViewableMedia>): Map<String, String> {
+    val siteDescriptors = hashSetOf<SiteDescriptor>()
+
+    viewableMediaList.forEach { viewableMedia ->
+      val siteDescriptor = viewableMedia.viewableMediaMeta.ownerPostDescriptor?.siteDescriptor()
+        ?: return@forEach
+
+      siteDescriptors += siteDescriptor
+    }
+
+    if (siteDescriptors.isEmpty()) {
+      return emptyMap()
+    }
+
+    val requestProps = mutableMapOf<String, String>()
+
+    siteDescriptors.forEach { siteDescriptor ->
+      val site = siteManager.bySiteDescriptor(siteDescriptor)
+      if (site != null) {
+        site.requestModifier().modifyVideoStreamRequest(site, requestProps)
+      }
+    }
+
+    return requestProps
   }
 
   private suspend fun runAppearAnimation(transitionInfo: ViewableMediaParcelableHolder.TransitionInfo?) {
