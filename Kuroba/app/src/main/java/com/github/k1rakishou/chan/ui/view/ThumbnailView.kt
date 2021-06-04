@@ -18,10 +18,17 @@ package com.github.k1rakishou.chan.ui.view
 
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
+import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.*
 import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.RippleDrawable
 import android.util.AttributeSet
+import android.util.TypedValue
+import android.view.MotionEvent
 import android.view.animation.Interpolator
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
@@ -33,6 +40,7 @@ import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
 import com.github.k1rakishou.chan.utils.setOnThrottlingLongClickListener
@@ -49,6 +57,8 @@ open class ThumbnailView : AppCompatImageView {
   private var requestDisposable: Disposable? = null
   private var rounding = 0
   private var errorText: String? = null
+  private var foregroundCalculate = false
+  private var imageForeground: Drawable? = null
 
   @JvmField
   protected var error = false
@@ -80,6 +90,8 @@ open class ThumbnailView : AppCompatImageView {
   lateinit var globalViewStateManager: GlobalViewStateManager
   @Inject
   lateinit var cacheHandler: CacheHandler
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   constructor(context: Context) : super(context) {
     init()
@@ -94,14 +106,46 @@ open class ThumbnailView : AppCompatImageView {
     init()
   }
 
+  @SuppressLint("ClickableViewAccessibility")
   private fun init() {
     AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
     textPaint.color = themeEngine.chanTheme.textColorPrimary
     textPaint.textSize = AppModuleAndroidUtils.sp(14f).toFloat()
-
     backgroundPaint.color = Color.BLACK
+    imageForeground = initRippleDrawable()
+
+    setOnTouchListener { _, event ->
+      if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+        drawableHotspotChanged(event.x, event.y)
+      }
+
+      return@setOnTouchListener false
+    }
+  }
+
+  private fun initRippleDrawable(): RippleDrawable {
+    val rippleAttrForThemeValue = TypedValue()
+
+    context.theme.resolveAttribute(
+      R.attr.colorControlHighlight,
+      rippleAttrForThemeValue,
+      true
+    )
+
+    val newImageForeground = RippleDrawable(
+      ColorStateList.valueOf(rippleAttrForThemeValue.data),
+      null,
+      ColorDrawable(Color.WHITE)
+    )
+
+    newImageForeground.callback = this
+    if (newImageForeground.isStateful) {
+      newImageForeground.state = drawableState
+    }
+
+    return newImageForeground
   }
 
   fun bindImageUrl(
@@ -162,10 +206,19 @@ open class ThumbnailView : AppCompatImageView {
   override fun onSetAlpha(alpha: Int): Boolean {
     if (error) {
       textPaint.alpha = alpha
+    } else {
+      drawable?.alpha = alpha
     }
+
+    backgroundPaint.alpha = alpha
 
     invalidate()
     return true
+  }
+
+  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+    foregroundCalculate = true
   }
 
   fun setOnImageClickListener(token: String, listener: OnClickListener?) {
@@ -229,6 +282,38 @@ open class ThumbnailView : AppCompatImageView {
     }
 
     super.onDraw(canvas)
+
+    if (imageForeground != null) {
+      if (foregroundCalculate) {
+        foregroundCalculate = false
+        imageForeground!!.setBounds(0, 0, right, bottom)
+      }
+
+      imageForeground!!.draw(canvas)
+    }
+  }
+
+  override fun verifyDrawable(who: Drawable): Boolean {
+    return super.verifyDrawable(who) || who === imageForeground
+  }
+
+  override fun jumpDrawablesToCurrentState() {
+    super.jumpDrawablesToCurrentState()
+
+    imageForeground?.jumpToCurrentState()
+  }
+
+  override fun drawableStateChanged() {
+    super.drawableStateChanged()
+
+    if (imageForeground?.isStateful == true) {
+      imageForeground?.state = drawableState
+    }
+  }
+
+  override fun drawableHotspotChanged(x: Float, y: Float) {
+    super.drawableHotspotChanged(x, y)
+    imageForeground?.setHotspot(x, y)
   }
 
   private suspend fun setUrlInternal(
@@ -334,7 +419,7 @@ open class ThumbnailView : AppCompatImageView {
       alpha = 0f
 
       val alphaAnimation = ValueAnimator.ofFloat(0f, 1f)
-      alphaAnimation.duration = 200
+      alphaAnimation.duration = 300
       alphaAnimation.interpolator = INTERPOLATOR
       alphaAnimation.addUpdateListener { animation: ValueAnimator ->
         val alpha = animation.animatedValue as Float
