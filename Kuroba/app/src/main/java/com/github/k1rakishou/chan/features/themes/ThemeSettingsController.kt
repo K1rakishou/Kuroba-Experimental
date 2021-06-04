@@ -201,10 +201,26 @@ class ThemeSettingsController(context: Context) : Controller(context),
     reload()
   }
 
-  private fun exportTheme(item: ToolbarMenuSubItem) {
+  private fun exportThemeToClipboard(item: ToolbarMenuSubItem) {
     val isDarkTheme = when (item.id) {
-      ACTION_EXPORT_DARK_THEME -> true
-      ACTION_EXPORT_LIGHT_THEME -> false
+      ACTION_EXPORT_DARK_THEME_TO_CLIPBOARD -> true
+      ACTION_EXPORT_LIGHT_THEME_TO_CLIPBOARD -> false
+      else -> throw IllegalStateException("Unknown action: ${item.id}")
+    }
+
+    val themeJson = themeEngine.exportThemeToString(isDarkTheme)
+    if (themeJson == null) {
+      showToastLong("Failed to export theme into a json string!")
+      return
+    }
+
+    AndroidUtils.setClipboardContent("Theme json", themeJson)
+  }
+
+  private fun exportThemeToFile(item: ToolbarMenuSubItem) {
+    val isDarkTheme = when (item.id) {
+      ACTION_EXPORT_DARK_THEME_TO_FILE -> true
+      ACTION_EXPORT_LIGHT_THEME_TO_FILE -> false
       else -> throw IllegalStateException("Unknown action: ${item.id}")
     }
 
@@ -251,7 +267,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
     }
 
     mainScope.launch {
-      when (val result = themeEngine.exportTheme(file, isDarkTheme)) {
+      when (val result = themeEngine.exportThemeToFile(file, isDarkTheme)) {
         is ThemeParser.ThemeExportResult.Error -> {
           val message = context.getString(
             R.string.theme_settings_controller_failed_to_export_theme,
@@ -460,9 +476,14 @@ class ThemeSettingsController(context: Context) : Controller(context),
           { item -> importThemeFromClipboard(item) }
         )
         .withSubItem(
-          ACTION_EXPORT_DARK_THEME,
-          R.string.action_export_dark_theme,
-          { item -> exportTheme(item) }
+          ACTION_EXPORT_DARK_THEME_TO_FILE,
+          R.string.action_export_dark_theme_to_file,
+          { item -> exportThemeToFile(item) }
+        )
+        .withSubItem(
+          ACTION_EXPORT_DARK_THEME_TO_CLIPBOARD,
+          R.string.action_export_dark_theme_to_clipboard,
+          { item -> exportThemeToClipboard(item) }
         )
         .withSubItem(
           ACTION_RESET_DARK_THEME,
@@ -481,9 +502,14 @@ class ThemeSettingsController(context: Context) : Controller(context),
           { item -> importThemeFromClipboard(item) }
         )
         .withSubItem(
-          ACTION_EXPORT_LIGHT_THEME,
-          R.string.action_export_light_theme,
-          { item -> exportTheme(item) }
+          ACTION_EXPORT_LIGHT_THEME_TO_FILE,
+          R.string.action_export_light_theme_to_file,
+          { item -> exportThemeToFile(item) }
+        )
+        .withSubItem(
+          ACTION_EXPORT_LIGHT_THEME_TO_CLIPBOARD,
+          R.string.action_export_light_theme_to_clipboard,
+          { item -> exportThemeToClipboard(item) }
         )
         .withSubItem(
           ACTION_RESET_LIGHT_THEME,
@@ -506,11 +532,13 @@ class ThemeSettingsController(context: Context) : Controller(context),
     private const val ACTION_IMPORT_DARK_THEME = 2
     private const val ACTION_IMPORT_LIGHT_THEME_FROM_CLIPBOARD = 3
     private const val ACTION_IMPORT_DARK_THEME_FROM_CLIPBOARD = 4
-    private const val ACTION_EXPORT_LIGHT_THEME = 5
-    private const val ACTION_EXPORT_DARK_THEME = 6
+    private const val ACTION_EXPORT_LIGHT_THEME_TO_FILE = 5
+    private const val ACTION_EXPORT_DARK_THEME_TO_FILE = 6
     private const val ACTION_RESET_LIGHT_THEME = 7
     private const val ACTION_RESET_DARK_THEME = 8
     private const val ACTION_IGNORE_DARK_NIGHT_MODE = 9
+    private const val ACTION_EXPORT_LIGHT_THEME_TO_CLIPBOARD = 10
+    private const val ACTION_EXPORT_DARK_THEME_TO_CLIPBOARD = 11
 
     private const val UPDATE_COLORS_DELAY_MS = 250L
   }
