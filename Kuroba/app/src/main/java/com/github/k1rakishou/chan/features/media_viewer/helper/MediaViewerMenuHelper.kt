@@ -13,7 +13,8 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 
 class MediaViewerMenuHelper(
   private val globalWindowInsetsManager: GlobalWindowInsetsManager,
-  private val presentControllerFunc: (Controller) -> Unit
+  private val presentControllerFunc: (Controller) -> Unit,
+  private val showToastFunc: (Int) -> Unit
 ) {
 
   fun onMediaViewerOptionsClick(context: Context, mediaViewerAdapter: MediaViewerAdapter) {

@@ -98,6 +98,15 @@ class ThemeParser(
     }
   }
 
+  fun exportThemeToString(theme: ChanTheme): String? {
+    return try {
+      gson.toJson(SerializableTheme.fromChanTheme(theme))
+    } catch (error: Throwable) {
+      Logger.e(TAG, "exportThemeToString error", error)
+      null
+    }
+  }
+
   @Synchronized
   fun deleteThemeFile(darkTheme: Boolean): Boolean {
     val fileName = if (darkTheme) {

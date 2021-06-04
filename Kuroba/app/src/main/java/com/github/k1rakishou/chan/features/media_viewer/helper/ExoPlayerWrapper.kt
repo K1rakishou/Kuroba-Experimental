@@ -214,11 +214,6 @@ class ExoPlayerWrapper(
     actualExoPlayer.seekTo(windowIndex, position)
   }
 
-  fun playPause() {
-    actualExoPlayer.play()
-    actualExoPlayer.pause()
-  }
-
   fun hasNoVideo(): Boolean {
     return actualExoPlayer.videoFormat == null
   }

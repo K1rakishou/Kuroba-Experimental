@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.features.media_viewer.media_view
 
 import android.content.Context
-import android.graphics.Color
 import android.util.AttributeSet
 import androidx.annotation.CallSuper
 import com.github.k1rakishou.ChanSettings
@@ -11,7 +10,9 @@ import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.android.exoplayer2.upstream.DataSource
+import javax.inject.Inject
 
 abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   context: Context,
@@ -26,6 +27,9 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   abstract val totalPageItemsCount: Int
   abstract val hasContent: Boolean
 
+  @Inject
+  lateinit var themeEngine: ThemeEngine
+
   private var _mediaViewToolbar: MediaViewerToolbar? = null
   protected val mediaViewToolbar: MediaViewerToolbar?
     get() = _mediaViewToolbar
@@ -34,7 +38,6 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   private var _shown = false
   private var _preloadingCalled = false
   private var _thumbnailFullyLoaded = false
-  private var _mediaFullyLoaded = false
 
   protected val cancellableToast by lazy { CancellableToast() }
   protected val scope = KurobaCoroutineScope()
@@ -57,7 +60,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     val backgroundColor = if (ChanSettings.transparencyOn.get()) {
       null
     } else {
-      BACKGROUND_COLOR
+      themeEngine.chanTheme.backColor
     }
 
     updateTransparency(backgroundColor)
@@ -99,6 +102,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     _shown = false
     _bound = false
     _preloadingCalled = false
+    _thumbnailFullyLoaded = false
     _mediaViewToolbar?.onDestroy()
 
     cancellableToast.cancel()
@@ -137,16 +141,6 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     mediaViewToolbar?.onThumbnailFullyLoaded(viewableMedia)
   }
 
-  protected fun onMediaFullyLoaded() {
-    if (_mediaFullyLoaded) {
-      return
-    }
-
-    _mediaFullyLoaded = true
-
-    mediaViewToolbar?.onMediaFullyLoaded(viewableMedia)
-  }
-
   @CallSuper
   override fun onCloseButtonClick() {
     mediaViewContract.closeMediaViewer()
@@ -171,7 +165,5 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
 
   companion object {
     private const val TAG = "MediaView"
-
-    val BACKGROUND_COLOR = Color.LTGRAY
   }
 }

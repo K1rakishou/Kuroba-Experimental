@@ -3,43 +3,51 @@ package com.github.k1rakishou.chan.core.usecase
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.common.mutableListWithCap
-import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 
 class FilterOutHiddenImagesUseCase(
   private val postHideManager: PostHideManager,
   private val postFilterManager: PostFilterManager
-) : IUseCase<FilterOutHiddenImagesUseCase.Input, FilterOutHiddenImagesUseCase.Output> {
+) {
 
-  override fun execute(parameter: Input): Output {
-    val chanPostImages = parameter.images
+  fun<T> filter(parameter: Input<T>): Output<T> {
+    val images = parameter.images
 
     var prevSelectedImageIndex = parameter.index
-    if (prevSelectedImageIndex >= chanPostImages.size) {
-      prevSelectedImageIndex = chanPostImages.lastIndex
+    if (prevSelectedImageIndex >= images.size) {
+      prevSelectedImageIndex = images.lastIndex
     }
 
     if (prevSelectedImageIndex < 0) {
-      return Output(parameter.images, parameter.index)
+      return Output<T>(parameter.images, parameter.index)
     }
 
-    val prevSelectedImage = chanPostImages[prevSelectedImageIndex]
+    val prevSelectedImage = images[prevSelectedImageIndex]
     val isOpeningAlbum = parameter.isOpeningAlbum
 
-    val groupedImages = chanPostImages
-      .groupBy { chanPostImage -> chanPostImage.ownerPostDescriptor.threadDescriptor() }
+    val groupedImages = images
+      .groupBy { chanPostImage -> parameter.postDescriptorSelector(chanPostImage)?.threadDescriptor() }
 
-    val resultList = mutableListWithCap<ChanPostImage>(chanPostImages.size / 2)
+    val resultList = mutableListWithCap<T>(images.size / 2)
 
     groupedImages.forEach { (threadDescriptor, chanPostImages) ->
+      if (threadDescriptor == null) {
+        resultList.addAll(chanPostImages)
+        return@forEach
+      }
+
       val chanPostHidesMap = postHideManager.getHiddenPostsForThread(threadDescriptor)
         .associateBy { chanPostHide -> chanPostHide.postDescriptor }
 
       chanPostImages.forEach { chanPostImage ->
-        if (chanPostHidesMap.containsKey(chanPostImage.ownerPostDescriptor)) {
+        val postDescriptor = parameter.postDescriptorSelector(chanPostImage)
+          ?: return@forEach
+
+        if (chanPostHidesMap.containsKey(postDescriptor)) {
           return@forEach
         }
 
-        if (postFilterManager.getFilterStubOrRemove(chanPostImage.ownerPostDescriptor)) {
+        if (postFilterManager.getFilterStubOrRemove(postDescriptor)) {
           return@forEach
         }
 
@@ -56,7 +64,7 @@ class FilterOutHiddenImagesUseCase(
 
       // Since the image index we were about to scroll to may happen to be a hidden image, we need
       // to find the next image that exists in resultList (meaning it's not hidden).
-      for (index in prevSelectedImageIndex until chanPostImages.size) {
+      for (index in prevSelectedImageIndex until images.size) {
         val image = resultList.getOrNull(index)
           ?: break
 
@@ -78,14 +86,15 @@ class FilterOutHiddenImagesUseCase(
     return Output(resultList, newSelectedImageIndex)
   }
 
-  data class Input(
-    val images: List<ChanPostImage>,
+  data class Input<T>(
+    val images: List<T>,
     val index: Int,
-    val isOpeningAlbum: Boolean
+    val isOpeningAlbum: Boolean,
+    val postDescriptorSelector: (T) -> PostDescriptor?
   )
 
-  data class Output(
-    val images: List<ChanPostImage>,
+  data class Output<T>(
+    val images: List<T>,
     val index: Int
   )
 

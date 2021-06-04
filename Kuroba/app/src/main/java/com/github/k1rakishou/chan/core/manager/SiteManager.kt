@@ -76,9 +76,12 @@ open class SiteManager(
         orders.clear()
 
         result.value.forEach { chanSiteData ->
-          siteDataMap[chanSiteData.siteDescriptor] = chanSiteData
+          val site = instantiateSite(chanSiteData)
+            ?: return@forEach
 
-          siteMap[chanSiteData.siteDescriptor] = instantiateSite(chanSiteData)
+          siteDataMap[chanSiteData.siteDescriptor] = chanSiteData
+          siteMap[chanSiteData.siteDescriptor] = site
+
           orders.add(0, chanSiteData.siteDescriptor)
         }
 
@@ -372,12 +375,18 @@ open class SiteManager(
     }
   }
 
-  private fun instantiateSite(chanSiteData: ChanSiteData): Site {
+  private fun instantiateSite(chanSiteData: ChanSiteData): Site? {
     val clazz = siteRegistry.SITE_CLASSES_MAP[chanSiteData.siteDescriptor]
-      ?: throw IllegalArgumentException("Unknown site descriptor: ${chanSiteData.siteDescriptor}")
+    if (clazz == null) {
+      Logger.e(TAG, "Unknown site descriptor: ${chanSiteData.siteDescriptor}")
+      return null
+    }
 
     val site = instantiateSiteClass(clazz)
-      ?: throw IllegalStateException("Couldn't instantiate site: ${clazz::class.java.simpleName}")
+    if (site == null) {
+      Logger.e(TAG, "Couldn't instantiate site: ${clazz::class.java.simpleName}")
+      return null
+    }
 
     site.initialize()
     site.postInitialize()

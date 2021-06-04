@@ -132,6 +132,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="menu_settings">Settings</string>
 
     <string name="restart_the_app">Restart the app</string>
+    <string name="restart_the_media_viewer">Restart the media viewer</string>
 
     <string name="update_later">Later</string>
     <string name="update_none">Already on the latest %1$s version.</string>
@@ -185,8 +186,10 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_import_light_theme_from_clipboard">Import Light theme from clipboard</string>
     <string name="action_import_dark_theme">Import Dark theme</string>
     <string name="action_import_dark_theme_from_clipboard">Import Dark theme from clipboard</string>
-    <string name="action_export_light_theme">Export Light theme</string>
-    <string name="action_export_dark_theme">Export Dark theme</string>
+    <string name="action_export_light_theme_to_file">Export Light theme to file</string>
+    <string name="action_export_light_theme_to_clipboard">Export Light theme to clipboard</string>
+    <string name="action_export_dark_theme_to_file">Export Dark theme to file</string>
+    <string name="action_export_dark_theme_to_clipboard">Export Dark theme to clipboard</string>
     <string name="action_reset_light_theme">Reset Light theme</string>
     <string name="action_reset_dark_theme">Reset Dark theme</string>
     <string name="action_ignore_dark_night_mode">Ignore system Day/Night mode</string>

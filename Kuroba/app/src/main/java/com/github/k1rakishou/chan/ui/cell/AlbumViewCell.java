@@ -16,9 +16,6 @@
  */
 package com.github.k1rakishou.chan.ui.cell;
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize;
-
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
@@ -27,6 +24,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView;
@@ -35,6 +33,9 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 
 import javax.inject.Inject;
+
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import static com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize;
 
 public class AlbumViewCell extends FrameLayout {
     private static final float MAX_RATIO = 2f;
@@ -83,7 +84,11 @@ public class AlbumViewCell extends FrameLayout {
             boolean showDetails
     ) {
         this.postImage = postImage;
-        thumbnailView.bindPostImage(postImage, canUseHighResCells, ThumbnailView.ThumbnailContainerOwner.Album);
+        thumbnailView.bindPostImage(
+                postImage,
+                canUseHighResCells,
+                new ThumbnailView.ThumbnailViewOptions(ChanSettings.PostThumbnailScaling.CenterCrop, false)
+        );
 
         if (showDetails) {
             String details = postImage.getExtension().toUpperCase()

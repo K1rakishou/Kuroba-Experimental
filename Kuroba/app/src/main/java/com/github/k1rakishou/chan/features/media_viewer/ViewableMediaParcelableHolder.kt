@@ -119,6 +119,10 @@ sealed class ViewableMedia(
     return viewableMediaMeta.ownerPostDescriptor != null && mediaLocation is MediaLocation.Remote
   }
 
+  fun canGoToMediaPost(): Boolean {
+    return viewableMediaMeta.ownerPostDescriptor != null
+  }
+
   fun getMediaNameForMenuHeader(): String? {
     val mediaName = when {
       viewableMediaMeta.originalMediaName.isNotNullNorEmpty() -> viewableMediaMeta.originalMediaName!!

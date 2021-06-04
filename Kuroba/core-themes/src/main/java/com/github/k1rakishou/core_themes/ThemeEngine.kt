@@ -276,7 +276,7 @@ open class ThemeEngine(
     return ThemeParser.ThemeParseResult.Success(chanTheme)
   }
 
-  suspend fun exportTheme(file: ExternalFile, darkTheme: Boolean): ThemeParser.ThemeExportResult {
+  suspend fun exportThemeToFile(file: ExternalFile, darkTheme: Boolean): ThemeParser.ThemeExportResult {
     val result = themeParser.exportTheme(file, getThemeInternal(darkTheme))
 
     if (result !is ThemeParser.ThemeExportResult.Success) {
@@ -284,6 +284,10 @@ open class ThemeEngine(
     }
 
     return result
+  }
+
+  fun exportThemeToString(darkTheme: Boolean): String? {
+    return themeParser.exportThemeToString(getThemeInternal(darkTheme))
   }
 
   fun resetTheme(darkTheme: Boolean): Boolean {

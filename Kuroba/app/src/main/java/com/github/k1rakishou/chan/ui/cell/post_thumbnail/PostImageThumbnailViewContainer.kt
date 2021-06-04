@@ -121,9 +121,9 @@ class PostImageThumbnailViewContainer(
   override fun bindPostImage(
     postImage: ChanPostImage,
     canUseHighResCells: Boolean,
-    thumbnailContainerOwner: ThumbnailView.ThumbnailContainerOwner
+    thumbnailViewOptions: ThumbnailView.ThumbnailViewOptions
   ) {
-    actualThumbnailView.bindPostImage(postImage, canUseHighResCells, thumbnailContainerOwner)
+    actualThumbnailView.bindPostImage(postImage, canUseHighResCells, thumbnailViewOptions)
   }
 
   override fun unbindPostImage() {

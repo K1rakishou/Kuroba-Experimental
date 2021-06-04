@@ -34,7 +34,6 @@ import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.common.updateHeight
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CompletableDeferred
@@ -67,8 +66,6 @@ class VideoMediaView(
   lateinit var cacheHandler: CacheHandler
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
-  @Inject
-  lateinit var themeEngine: ThemeEngine
 
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualVideoPlayerView: PlayerView
@@ -309,7 +306,6 @@ class VideoMediaView(
             }
         }
 
-        onMediaFullyLoaded()
         playJob = null
       }
     }
@@ -433,11 +429,12 @@ class VideoMediaView(
 
     if (mediaViewState.playing == null || mediaViewState.playing == true) {
       mainVideoPlayer.startAndAwaitFirstFrame()
-    } else {
-      // We need to do this so that the current video frame gets refreshed, otherwise we may end up
-      // with no video frame which may look like there is not video. We only need to do this in case
-      // the activity received onPause and then onResume.
-      mainVideoPlayer.playPause()
+    } else if (mediaViewState.prevWindowIndex >= 0 && mediaViewState.prevPosition >= 0) {
+      // We need to do this hacky stuff to force exoplayer to show the video frame instead of nothing
+      // after the activity is paused and then unpaused (like when the user turns off/on the phone
+      // screen).
+      val newPosition = (mediaViewState.prevPosition - SEEK_POSITION_DELTA).coerceAtLeast(0)
+      mainVideoPlayer.seekTo(mediaViewState.prevWindowIndex, newPosition)
     }
 
     actualVideoPlayerView.useArtwork = mainVideoPlayer.hasNoVideo()
@@ -453,7 +450,6 @@ class VideoMediaView(
       return !fullVideoDeferred.isCompleted
         && (preloadingJob == null || preloadingJob?.isActive == false)
     }
-
 
     return canAutoLoad
       && !fullVideoDeferred.isCompleted
@@ -537,5 +533,6 @@ class VideoMediaView(
 
   companion object {
     private const val TAG = "VideoMediaView"
+    private const val SEEK_POSITION_DELTA = 100
   }
 }

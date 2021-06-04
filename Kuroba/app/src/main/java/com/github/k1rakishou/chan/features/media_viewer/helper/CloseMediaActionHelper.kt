@@ -12,6 +12,7 @@ import android.os.SystemClock
 import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
+import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.VelocityTracker
 import android.view.View
@@ -218,8 +219,10 @@ class CloseMediaActionHelper(
         if (isInsideTopGestureBounds && topGestureInfo != null) {
           ViewCompat.postOnAnimation(movableContainer, FlingRunnable(isFinishing = false))
           topGestureInfo.onGestureTriggeredFunc()
+          movableContainer.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
         } else if (isInsideBottomGestureBounds && bottomGestureInfo != null) {
           FadeAnimation().animate { bottomGestureInfo.onGestureTriggeredFunc() }
+          movableContainer.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
         } else {
           ViewCompat.postOnAnimation(movableContainer, FlingRunnable(isFinishing = false))
         }

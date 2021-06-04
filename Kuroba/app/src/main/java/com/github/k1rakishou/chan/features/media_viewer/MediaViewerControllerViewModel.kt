@@ -118,8 +118,6 @@ class MediaViewerControllerViewModel : ViewModel() {
         }
       }
 
-      // TODO: 6/2/2021 filter out hidden images
-
       if (mediaViewerControllerState == null || mediaViewerControllerState.isEmpty()) {
         return@withContext false
       }
@@ -215,15 +213,24 @@ class MediaViewerControllerViewModel : ViewModel() {
       return null
     }
 
+    val input = FilterOutHiddenImagesUseCase.Input(
+      images = mediaList,
+      index = initialPagerIndex.get(),
+      isOpeningAlbum = false,
+      postDescriptorSelector = { viewableMedia -> viewableMedia.viewableMediaMeta.ownerPostDescriptor }
+    )
+
+    val output = filterOutHiddenImagesUseCase.filter(input)
+
     val actualInitialPagerIndex = synchronized(this) {
       if (lastPagerIndex >= 0) {
         lastPagerIndex
       } else {
-        initialPagerIndex.get()
+        output.index
       }
     }
 
-    return MediaViewerControllerState(mediaList, actualInitialPagerIndex)
+    return MediaViewerControllerState(output.images, actualInitialPagerIndex)
   }
 
   private fun collectCatalogMedia(
@@ -255,15 +262,24 @@ class MediaViewerControllerViewModel : ViewModel() {
       return null
     }
 
+    val input = FilterOutHiddenImagesUseCase.Input(
+      images = mediaList,
+      index = initialPagerIndex.get(),
+      isOpeningAlbum = false,
+      postDescriptorSelector = { viewableMedia -> viewableMedia.viewableMediaMeta.ownerPostDescriptor }
+    )
+
+    val output = filterOutHiddenImagesUseCase.filter(input)
+
     val actualInitialPagerIndex = synchronized(this) {
       if (lastPagerIndex >= 0) {
         lastPagerIndex
       } else {
-        initialPagerIndex.get()
+        output.index
       }
     }
 
-    return MediaViewerControllerState(mediaList, actualInitialPagerIndex)
+    return MediaViewerControllerState(output.images, actualInitialPagerIndex)
   }
 
   private fun processChanPostImage(

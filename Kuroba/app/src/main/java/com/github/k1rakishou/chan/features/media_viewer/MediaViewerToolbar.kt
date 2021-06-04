@@ -62,6 +62,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
     toolbarDownloadButton = findViewById(R.id.toolbar_download_button)
     toolbarOptionsButton = findViewById(R.id.toolbar_options_button)
 
+    toolbarGoToPostButton.setEnabledFast(false)
     toolbarReloadButton.setEnabledFast(false)
     toolbarDownloadButton.setEnabledFast(false)
 
@@ -159,9 +160,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
   fun onThumbnailFullyLoaded(viewableMedia: ViewableMedia) {
     toolbarReloadButton.setEnabledFast(true)
     toolbarDownloadButton.setEnabledFast(viewableMedia.canMediaBeDownloaded())
-  }
-
-  fun onMediaFullyLoaded(viewableMedia: ViewableMedia) {
+    toolbarGoToPostButton.setEnabledFast(viewableMedia.canGoToMediaPost())
   }
 
   fun updateWithViewableMedia(currentIndex: Int, totalMediaCount: Int, viewableMedia: ViewableMedia) {
