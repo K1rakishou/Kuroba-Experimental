@@ -706,7 +706,6 @@ class KurobaSettingsImportUseCase(
       put(6, Wired7.SITE_NAME)
       put(8, Kun8.SITE_NAME)
       put(9, Chan420.SITE_NAME)
-      put(10, Chan370.SITE_NAME)
     }
   }
 }
