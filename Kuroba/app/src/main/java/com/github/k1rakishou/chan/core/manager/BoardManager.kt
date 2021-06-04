@@ -83,8 +83,20 @@ class BoardManager(
         }
 
         loadBoardsResult.value.forEach { (siteDescriptor, chanBoards) ->
+          val siteBoardMap = boardsMap[siteDescriptor]
+          if (siteBoardMap == null) {
+            Logger.e(TAG, "boardsMap has no site: ${siteDescriptor}")
+            return@forEach
+          }
+
+          val siteOrderList = ordersMap[siteDescriptor]
+          if (siteOrderList == null) {
+            Logger.e(TAG, "ordersMap has no site: ${siteDescriptor}")
+            return@forEach
+          }
+
           chanBoards.forEach { chanBoard ->
-            boardsMap[siteDescriptor]!![chanBoard.boardDescriptor] = chanBoard
+            siteBoardMap[chanBoard.boardDescriptor] = chanBoard
           }
 
           val sortedActiveBoards = chanBoards
@@ -92,7 +104,7 @@ class BoardManager(
             .sortedBy { chanBoard -> chanBoard.order }
 
           sortedActiveBoards.forEach { activeBoard ->
-            ordersMap[siteDescriptor]!!.add(activeBoard.boardDescriptor)
+            siteOrderList.add(activeBoard.boardDescriptor)
           }
         }
       }
