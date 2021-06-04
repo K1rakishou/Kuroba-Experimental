@@ -95,7 +95,6 @@ class UnsupportedMediaView(
     mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
 
     onSystemUiVisibilityChanged(isSystemUiHidden())
-    onMediaFullyLoaded()
   }
 
   override fun hide() {

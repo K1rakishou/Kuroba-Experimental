@@ -273,10 +273,12 @@ class MediaViewerAdapter(
       "boundCount=${loadedViews.count { it.mediaView.bound }}, " +
       "showCount=${loadedViews.count { it.mediaView.shown }}")
 
-    chan4CloudFlareImagePreloaderManager.cancelLoading(
-      mediaView.viewableMedia.viewableMediaMeta.ownerPostDescriptor!!,
-      swipeDirection() == OptionalSwipeViewPager.SwipeDirection.Forward
-    )
+    mediaView.viewableMedia.viewableMediaMeta.ownerPostDescriptor?.let { postDescriptor ->
+      chan4CloudFlareImagePreloaderManager.cancelLoading(
+        postDescriptor,
+        swipeDirection() == OptionalSwipeViewPager.SwipeDirection.Forward
+      )
+    }
   }
 
   fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {

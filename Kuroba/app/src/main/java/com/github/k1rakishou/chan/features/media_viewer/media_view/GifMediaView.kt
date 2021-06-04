@@ -227,7 +227,6 @@ class GifMediaView(
           }
 
         loadingBar.setVisibilityFast(GONE)
-        onMediaFullyLoaded()
       }
 
       val gifImageViewDrawable = actualGifView.drawable as? GifDrawable

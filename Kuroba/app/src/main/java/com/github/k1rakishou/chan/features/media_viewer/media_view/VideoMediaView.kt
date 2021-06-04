@@ -306,7 +306,6 @@ class VideoMediaView(
             }
         }
 
-        onMediaFullyLoaded()
         playJob = null
       }
     }
@@ -431,7 +430,7 @@ class VideoMediaView(
     if (mediaViewState.playing == null || mediaViewState.playing == true) {
       mainVideoPlayer.startAndAwaitFirstFrame()
     } else if (mediaViewState.prevWindowIndex >= 0 && mediaViewState.prevPosition >= 0) {
-      // We need to do this hacky stuff so that exoplayer shows the video frame instead of nothing
+      // We need to do this hacky stuff to force exoplayer to show the video frame instead of nothing
       // after the activity is paused and then unpaused (like when the user turns off/on the phone
       // screen).
       val newPosition = (mediaViewState.prevPosition - SEEK_POSITION_DELTA).coerceAtLeast(0)
@@ -451,7 +450,6 @@ class VideoMediaView(
       return !fullVideoDeferred.isCompleted
         && (preloadingJob == null || preloadingJob?.isActive == false)
     }
-
 
     return canAutoLoad
       && !fullVideoDeferred.isCompleted

@@ -301,10 +301,14 @@ abstract class ThreadController(
       return
     }
 
-    val output = filterOutHiddenImagesUseCase.execute(
-      FilterOutHiddenImagesUseCase.Input(images, index, true)
+    val input = FilterOutHiddenImagesUseCase.Input(
+      images = images,
+      index = index,
+      isOpeningAlbum = true,
+      postDescriptorSelector = { chanPostImage -> chanPostImage.ownerPostDescriptor }
     )
 
+    val output = filterOutHiddenImagesUseCase.filter(input)
     val filteredImages = output.images
     val newIndex = output.index
 

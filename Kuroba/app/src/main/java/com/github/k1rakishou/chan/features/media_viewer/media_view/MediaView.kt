@@ -38,7 +38,6 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   private var _shown = false
   private var _preloadingCalled = false
   private var _thumbnailFullyLoaded = false
-  private var _mediaFullyLoaded = false
 
   protected val cancellableToast by lazy { CancellableToast() }
   protected val scope = KurobaCoroutineScope()
@@ -103,6 +102,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     _shown = false
     _bound = false
     _preloadingCalled = false
+    _thumbnailFullyLoaded = false
     _mediaViewToolbar?.onDestroy()
 
     cancellableToast.cancel()
@@ -139,16 +139,6 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     _thumbnailFullyLoaded = true
 
     mediaViewToolbar?.onThumbnailFullyLoaded(viewableMedia)
-  }
-
-  protected fun onMediaFullyLoaded() {
-    if (_mediaFullyLoaded) {
-      return
-    }
-
-    _mediaFullyLoaded = true
-
-    mediaViewToolbar?.onMediaFullyLoaded(viewableMedia)
   }
 
   @CallSuper
