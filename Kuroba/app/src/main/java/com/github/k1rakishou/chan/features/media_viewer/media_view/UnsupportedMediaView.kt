@@ -12,9 +12,7 @@ import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.android.exoplayer2.upstream.DataSource
-import javax.inject.Inject
 
 @SuppressLint("ViewConstructor", "ClickableViewAccessibility")
 class UnsupportedMediaView(
@@ -34,10 +32,6 @@ class UnsupportedMediaView(
   mediaViewContract = mediaViewContract,
   mediaViewState = initialMediaViewState
 ) {
-
-  @Inject
-  lateinit var themeEngine: ThemeEngine
-
   private val closeMediaActionHelper: CloseMediaActionHelper
   private val gestureDetector: GestureDetector
 

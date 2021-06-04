@@ -92,7 +92,6 @@ class MediaViewerActivity : ControllerHostActivity(),
     fileChooser.setCallbacks(this)
     setupContext(this, themeEngine.chanTheme)
 
-    // TODO: 6/1/2021 "drawBehindNotch = false" make a setting
     window.setupEdgeToEdge()
     window.setupStatusAndNavBarColors(themeEngine.chanTheme)
 

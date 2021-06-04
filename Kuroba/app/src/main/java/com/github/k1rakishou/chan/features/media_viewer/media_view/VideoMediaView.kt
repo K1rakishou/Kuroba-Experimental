@@ -34,7 +34,6 @@ import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.common.updateHeight
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CompletableDeferred
@@ -67,8 +66,6 @@ class VideoMediaView(
   lateinit var cacheHandler: CacheHandler
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
-  @Inject
-  lateinit var themeEngine: ThemeEngine
 
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualVideoPlayerView: PlayerView

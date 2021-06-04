@@ -31,7 +31,6 @@ import com.github.k1rakishou.common.awaitCatching
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
@@ -63,8 +62,6 @@ class FullImageMediaView(
   lateinit var fileCacheV2: FileCacheV2
   @Inject
   lateinit var cacheHandler: CacheHandler
-  @Inject
-  lateinit var themeEngine: ThemeEngine
 
   private val movableContainer: FrameLayout
   private val thumbnailMediaView: ThumbnailMediaView

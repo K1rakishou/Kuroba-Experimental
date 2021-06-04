@@ -75,7 +75,8 @@ class MediaViewerController(
   private val mediaViewerMenuHelper by lazy {
     MediaViewerMenuHelper(
       globalWindowInsetsManager = globalWindowInsetsManager,
-      presentControllerFunc = { controller -> presentController(controller, true) }
+      presentControllerFunc = { controller -> presentController(controller, true) },
+      showToastFunc = { messageId -> showToast(messageId) }
     )
   }
 

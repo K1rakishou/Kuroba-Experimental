@@ -10,18 +10,13 @@ import com.github.k1rakishou.core_themes.ChanTheme
 
 object FullScreenUtils {
 
-  fun Window.setupEdgeToEdge(drawBehindNotch: Boolean = true) {
+  fun Window.setupEdgeToEdge() {
     clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
     clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION)
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-      if (drawBehindNotch) {
-        attributes.layoutInDisplayCutoutMode =
-          WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-      } else {
-        attributes.layoutInDisplayCutoutMode =
-          WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER
-      }
+      attributes.layoutInDisplayCutoutMode =
+        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
     }
 
     decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_LAYOUT_STABLE

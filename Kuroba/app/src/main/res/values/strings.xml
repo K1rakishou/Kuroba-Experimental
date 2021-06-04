@@ -132,6 +132,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="menu_settings">Settings</string>
 
     <string name="restart_the_app">Restart the app</string>
+    <string name="restart_the_media_viewer">Restart the media viewer</string>
 
     <string name="update_later">Later</string>
     <string name="update_none">Already on the latest %1$s version.</string>
