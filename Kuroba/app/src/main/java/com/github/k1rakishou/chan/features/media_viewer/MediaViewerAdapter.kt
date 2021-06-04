@@ -37,6 +37,7 @@ class MediaViewerAdapter(
 
   private var firstUpdateHappened = false
   private var initialImageBindHappened = false
+  private var lastViewedMediaPosition = 0
 
   suspend fun awaitUntilPreviewThumbnailFullyLoaded() {
     Logger.d(TAG, "awaitUntilPreviewThumbnailFullyLoaded()...")
@@ -46,6 +47,7 @@ class MediaViewerAdapter(
 
   fun onDestroy() {
     Logger.d(TAG, "onDestroy()")
+    lastViewedMediaPosition = 0
 
     if (previewThumbnailLocationLoaded.isActive) {
       previewThumbnailLocationLoaded.cancel()
@@ -80,7 +82,7 @@ class MediaViewerAdapter(
 
   fun onResume() {
     loadedViews.forEach { loadedView ->
-      if (loadedView.viewIndex != initialPagerIndex) {
+      if (loadedView.viewIndex != lastViewedMediaPosition) {
         return@forEach
       }
 
@@ -220,6 +222,12 @@ class MediaViewerAdapter(
     viewableMedia.viewableMediaMeta.ownerPostDescriptor?.let { postDescriptor ->
       chan4CloudFlareImagePreloaderManager.startLoading(postDescriptor)
     }
+
+    if (!firstUpdateHappened) {
+      lastViewedMediaPosition = initialPagerIndex
+    } else {
+      lastViewedMediaPosition = position
+    }
   }
 
   override fun finishUpdate(container: ViewGroup) {
@@ -228,6 +236,8 @@ class MediaViewerAdapter(
     if (firstUpdateHappened) {
       return
     }
+
+    lastViewedMediaPosition = initialPagerIndex
 
     loadedViews.forEach { loadedView ->
       if (!loadedView.mediaView.bound) {

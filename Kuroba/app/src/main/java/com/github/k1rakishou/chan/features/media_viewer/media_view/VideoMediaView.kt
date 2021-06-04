@@ -430,11 +430,12 @@ class VideoMediaView(
 
     if (mediaViewState.playing == null || mediaViewState.playing == true) {
       mainVideoPlayer.startAndAwaitFirstFrame()
-    } else {
-      // We need to do this so that the current video frame gets refreshed, otherwise we may end up
-      // with no video frame which may look like there is not video. We only need to do this in case
-      // the activity received onPause and then onResume.
-      mainVideoPlayer.playPause()
+    } else if (mediaViewState.prevWindowIndex >= 0 && mediaViewState.prevPosition >= 0) {
+      // We need to do this hacky stuff so that exoplayer shows the video frame instead of nothing
+      // after the activity is paused and then unpaused (like when the user turns off/on the phone
+      // screen).
+      val newPosition = (mediaViewState.prevPosition - SEEK_POSITION_DELTA).coerceAtLeast(0)
+      mainVideoPlayer.seekTo(mediaViewState.prevWindowIndex, newPosition)
     }
 
     actualVideoPlayerView.useArtwork = mainVideoPlayer.hasNoVideo()
@@ -534,5 +535,6 @@ class VideoMediaView(
 
   companion object {
     private const val TAG = "VideoMediaView"
+    private const val SEEK_POSITION_DELTA = 100
   }
 }
