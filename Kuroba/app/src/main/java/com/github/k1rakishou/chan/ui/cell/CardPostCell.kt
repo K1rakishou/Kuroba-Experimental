@@ -254,7 +254,7 @@ class CardPostCell : ColorizableCardView,
     thumbView!!.bindPostImage(
       firstPostImage,
       ColorizableGridRecyclerView.canUseHighResCells(callback!!.currentSpanCount()),
-      ThumbnailView.ThumbnailContainerOwner.Post
+      ThumbnailView.ThumbnailViewOptions(ChanSettings.PostThumbnailScaling.CenterCrop, false)
     )
 
     thumbView!!.setOnImageLongClickListener(PostImageThumbnailViewsContainer.THUMBNAIL_LONG_CLICK_TOKEN) {

@@ -106,9 +106,9 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
     public void bindPostImage(
             @NonNull ChanPostImage postImage,
             boolean canUseHighResCells,
-            @NonNull ThumbnailContainerOwner thumbnailContainerOwner
+            @NonNull ThumbnailViewOptions thumbnailViewOptions
     ) {
-        bindPostImage(postImage, canUseHighResCells, false, thumbnailContainerOwner);
+        bindPostImage(postImage, canUseHighResCells, false, thumbnailViewOptions);
     }
 
     @Override
@@ -169,7 +169,7 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
             @NonNull ChanPostImage postImage,
             boolean canUseHighResCells,
             boolean forcedAfterPrefetchFinished,
-            @NonNull ThumbnailContainerOwner thumbnailContainerOwner
+            @NonNull ThumbnailViewOptions thumbnailViewOptions
     ) {
         if (postImage.equals(this.postImage) && !forcedAfterPrefetchFinished) {
             return;
@@ -206,7 +206,7 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
         bindImageUrl(
                 url,
                 ImageLoaderV2.ImageSize.MeasurableImageSize.create(this),
-                thumbnailContainerOwner
+                thumbnailViewOptions
         );
     }
 
@@ -249,9 +249,9 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
             }
 
             if (postImage != null && (canUseHighResCells != null && canUseHighResCells)) {
-                ThumbnailContainerOwner thumbnailContainerOwner = getThumbnailContainerOwner();
-                if (thumbnailContainerOwner != null) {
-                    bindPostImage(postImage, canUseHighResCells, true, thumbnailContainerOwner);
+                ThumbnailViewOptions thumbnailViewOptions = getThumbnailViewOptions();
+                if (thumbnailViewOptions != null) {
+                    bindPostImage(postImage, canUseHighResCells, true, thumbnailViewOptions);
                 }
             }
         }

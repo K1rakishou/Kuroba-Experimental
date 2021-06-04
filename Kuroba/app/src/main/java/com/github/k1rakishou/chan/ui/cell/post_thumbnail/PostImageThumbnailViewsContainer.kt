@@ -205,7 +205,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       thumbnailView.setViewId(View.generateViewId())
       thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize,)
       thumbnailView.bindFileInfoContainerSizes(thumbnailContainerSize, cellPostThumbnailSize)
-      thumbnailView.bindPostImage(postImage, true, ThumbnailView.ThumbnailContainerOwner.Post)
+      thumbnailView.bindPostImage(postImage, true, ThumbnailView.ThumbnailViewOptions())
       thumbnailView.bindPostInfo(postCellData, postImage, postAlignment)
 
       if (postCellData.isSelectionMode) {
@@ -342,7 +342,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
       thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize)
       thumbnailView.setViewId(View.generateViewId())
-      thumbnailView.bindPostImage(postImage, true, ThumbnailView.ThumbnailContainerOwner.Post)
+      thumbnailView.bindPostImage(postImage, true, ThumbnailView.ThumbnailViewOptions())
       thumbnailView.bindPostInfo(postCellData, postImage, postThumbnailsAlignment)
 
       if (postCellData.isSelectionMode) {
