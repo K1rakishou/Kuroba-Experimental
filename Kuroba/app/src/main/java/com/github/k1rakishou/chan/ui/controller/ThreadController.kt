@@ -472,10 +472,7 @@ abstract class ThreadController(
               isPreviewingCatalogThread = false
             )
           } else {
-            openExternalThread(
-              postDescriptor = externalArchivePostDescriptor,
-              showOpenThreadDialog = false
-            )
+            openExternalThread(externalArchivePostDescriptor)
           }
         }
       }

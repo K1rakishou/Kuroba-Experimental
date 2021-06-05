@@ -160,7 +160,8 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_force_reload">Force reload</string>
     <string name="action_pin">Bookmark</string>
     <string name="action_view_removed_posts">View removed posts</string>
-    <string name="action_preview_thread_in_archive">Preview thread in archive</string>
+    <string name="action_preview_thread_in_archive">Preview in archive</string>
+    <string name="action_open_archive">Open in archive</string>
     <string name="action_open_browser">Open in a browser</string>
     <string name="action_change_gestures">Change image viewer gestures</string>
     <string name="action_open_thread_by_id">Open thread by ID</string>

@@ -958,15 +958,7 @@ class ThreadPresenter @Inject constructor(
     serializedCoroutineExecutor.post {
       val isExternalThread = currentChanDescriptor != post.postDescriptor.descriptor
       if (isExternalThread) {
-        val showOpenThreadDialog = when (postViewMode) {
-          PostCellData.PostViewMode.Normal,
-          PostCellData.PostViewMode.RepliesPopup,
-          PostCellData.PostViewMode.PostSelection,
-          PostCellData.PostViewMode.Search -> false
-          PostCellData.PostViewMode.ExternalPostsPopup -> true
-        }
-
-        threadPresenterCallback?.openExternalThread(post.postDescriptor, showOpenThreadDialog)
+        threadPresenterCallback?.openExternalThread(post.postDescriptor)
         return@post
       }
 
@@ -1071,6 +1063,12 @@ class ThreadPresenter @Inject constructor(
     }
 
     menu.add(createMenuItem(POST_OPTION_OPEN_BROWSER, R.string.action_open_browser))
+
+    if (archivesManager.supports(post.postDescriptor.boardDescriptor())) {
+      menu.add(createMenuItem(POST_OPTION_OPEN_IN_ARCHIVE, R.string.action_open_archive))
+      menu.add(createMenuItem(POST_OPTION_PREVIEW_IN_ARCHIVE, R.string.action_preview_thread_in_archive))
+    }
+
     menu.add(createMenuItem(POST_OPTION_SHARE, R.string.post_share))
     menu.add(createMenuItem(POST_OPTION_COPY_TEXT, R.string.post_copy_text))
     menu.add(createMenuItem(POST_OPTION_INFO, R.string.post_info))
@@ -1191,6 +1189,16 @@ class ThreadPresenter @Inject constructor(
 
           val url = site.resolvable().desktopUrl(currentChanDescriptor!!, post.postNo())
           openLink(url)
+        }
+        POST_OPTION_OPEN_IN_ARCHIVE -> {
+          if (isBound) {
+            threadPresenterCallback?.showAvailableArchivesList(post.postDescriptor, preview = false)
+          }
+        }
+        POST_OPTION_PREVIEW_IN_ARCHIVE -> {
+          if (isBound) {
+            threadPresenterCallback?.showAvailableArchivesList(post.postDescriptor, preview = true)
+          }
         }
         POST_OPTION_SHARE -> if (isBound) {
           val site = currentChanDescriptor?.let { chanDescriptor ->
@@ -2175,7 +2183,7 @@ class ThreadPresenter @Inject constructor(
     suspend fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showPostInExternalThread(postDescriptor: PostDescriptor)
     suspend fun previewCatalogThread(postDescriptor: PostDescriptor)
-    suspend fun openExternalThread(postDescriptor: PostDescriptor, showOpenThreadDialog: Boolean)
+    suspend fun openExternalThread(postDescriptor: PostDescriptor)
     suspend fun showBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
     suspend fun setBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
 
@@ -2263,9 +2271,11 @@ class ThreadPresenter @Inject constructor(
     private const val POST_OPTION_HIGHLIGHT_TRIPCODE = 11
     private const val POST_OPTION_HIDE = 12
     private const val POST_OPTION_OPEN_BROWSER = 13
-    private const val POST_OPTION_REMOVE = 14
-    private const val POST_OPTION_MOCK_REPLY = 15
-    private const val POST_OPTION_APPLY_THEME = 16
+    private const val POST_OPTION_OPEN_IN_ARCHIVE = 14
+    private const val POST_OPTION_PREVIEW_IN_ARCHIVE = 16
+    private const val POST_OPTION_REMOVE = 17
+    private const val POST_OPTION_MOCK_REPLY = 18
+    private const val POST_OPTION_APPLY_THEME = 19
     private const val POST_OPTION_FILTER_TRIPCODE = 100
 
     private const val POST_OPTION_APPLY_THEME_IDX = 1000

@@ -15,24 +15,12 @@ class OpenExternalThreadHelper(
   fun openExternalThread(
     currentChanDescriptor: ChanDescriptor,
     postDescriptor: PostDescriptor,
-    showOpenThreadDialog: Boolean,
     openThreadFunc: (ChanDescriptor.ThreadDescriptor) -> Unit
   ) {
     Logger.d(TAG, "openExternalThread($postDescriptor)")
 
     val threadToOpenDescriptor = postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
       ?: return
-
-    if (!showOpenThreadDialog) {
-      openExternalThreadInternal(
-        postDescriptor = postDescriptor,
-        currentChanDescriptor = currentChanDescriptor,
-        threadToOpenDescriptor = threadToOpenDescriptor,
-        openThreadFunc = openThreadFunc
-      )
-
-      return
-    }
 
     openExternalThreadInternal(
       postDescriptor = postDescriptor,
@@ -51,7 +39,7 @@ class OpenExternalThreadHelper(
     Logger.d(TAG, "openExternalThread() loading external thread $postDescriptor from $currentChanDescriptor")
 
     chanThreadViewableInfoManager.update(
-      threadToOpenDescriptor,
+      chanDescriptor = threadToOpenDescriptor,
       createEmptyWhenNull = true
     ) { chanThreadViewableInfo -> chanThreadViewableInfo.markedPostNo = postDescriptor.postNo }
 
