@@ -129,6 +129,7 @@ class ChanReaderProcessor(
 
     val chanPost = chanPostRepository.getCachedPost(builder.postDescriptor)
     if (chanPost == null) {
+      chanPostRepository.putPostHash(builder.postDescriptor, builder.getPostHash)
       return true
     }
 
