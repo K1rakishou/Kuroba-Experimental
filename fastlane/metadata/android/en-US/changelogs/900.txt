@@ -1,0 +1,18 @@
+v0.9.0-beta
+TLDR version:
+- Media viewer rewritten from scratch.
+- Theme gallery.
+- New post thumbnail scaling type.
+- New site support.
+
+Full version:
+- Media viewer has been rewritten from scratch. The main problem with the old one was that all the logic related to displaying media was too tightly coupled together (the MultiImageView class) which lead to some nasty bugs. The other problem was that it was using the main activity which lead to a bug that was present since the very first release. The bug happened when the media viewer was going into fullscreen mode which doesn't work together with edge-to-edge on Android 9 and below. It would cause all subsequent animations and layout passes to be completely broken. The bug was "fixed" by using different fullscreen mode flags in Android version 9 and below and Android 10 and above (where everything was working as intended). Basically it was a very weird Android bug. Now media viewer exists in a separate activity. The other goal of this was to make ExoPlayer (which is used to play video/audio) reusable so we don't have to create and destroy it on every view pager swipe. There are bugs on some phones where calling ExoPlayer.release() may hang the app for quite some time. And since release() is called after every swipe it may become almost impossible to use the app.
+- Theme gallery is finally implemented. Themes from the main github repository were moved into it's own repository https://github.com/K1rakishou/KurobaEx-themes which is used by the theme gallery. Basically you can now add your themes to that repository and everybody will be able to use them (There are some rules so first read the repository's README before sending Tomorrow clones). To access the gallery you need to go to the theme settings and then click "More themes". They are separated by the light/dark type.
+- The app can now detect theme json in post comments to make it possible to apply them by longtapping the posts and selecting "Apply theme %THEME_NAME%" menu.
+- New scaling type was introduced for post thumbnails: "Fit Center". Basically it will try to fit the whole image inside the thumbnail while trying to preserve the original aspect ratio. This is turned on by default and can be disabled in the Post settings (Search for Post thumbnail scaling type and change it to "Center Crop").
+- When using "Fit Center" scaling type a black background will be drawn behind the thumbnail. You can disable it in the same place (Post settings, search for "Draw black background behind post thumbnails").
+- Themes can now be exported to clipboard.
+- Added "Open thread in archive and scroll to selected post" and "Preview post in archive" menu options.
+- Fixed couple of IndexOutOfBounds exceptions when inserting tags into post comment.
+- Fix a bug where a thread would always be fully re-parsed a second time (on the next thread update) after opening it. This could lead to app freezes when opening very huge threads (5k+ posts).
+- Added support for 370chan.info site (Thanks to @alcharkov).
