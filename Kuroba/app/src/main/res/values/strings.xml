@@ -299,7 +299,6 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="setup_site_setup_archives_description">These archives are for restoring deleted posts/images in a thread\n\nTotal archives: %1$d (-%2$d)\nEnabled archives: %3$d\nWorking archives: %4$d</string>
 
     <string name="setup_site_login_description_disabled">Off</string>
-    <string name="setup_board_title">Configure boards of %s</string>
     <string name="setup_board_empty">No boards added</string>
     <string name="setup_board_removed">Removed \"%s\"</string>
     <string name="setup_board_added">%s added</string>

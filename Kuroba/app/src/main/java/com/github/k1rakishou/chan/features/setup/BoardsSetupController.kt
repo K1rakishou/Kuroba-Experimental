@@ -30,7 +30,9 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
+import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -143,6 +145,7 @@ class BoardsSetupController(
     view = inflate(context, R.layout.controller_boards_setup)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
     epoxyRecyclerView.setController(controller)
+    epoxyRecyclerView.updatePaddings(bottom = dp(64f))
 
     itemTouchHelper = ItemTouchHelper(touchHelperCallback)
     itemTouchHelper.attachToRecyclerView(epoxyRecyclerView)
