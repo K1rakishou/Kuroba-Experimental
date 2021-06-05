@@ -7,6 +7,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
+import com.github.k1rakishou.chan.features.media_viewer.helper.ChanPostBackgroundColorStorage
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.core_logger.Logger
@@ -29,6 +30,8 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
 
   @Inject
   lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var chanPostBackgroundColorStorage: ChanPostBackgroundColorStorage
 
   private var _mediaViewToolbar: MediaViewerToolbar? = null
   protected val mediaViewToolbar: MediaViewerToolbar?
@@ -60,7 +63,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     val backgroundColor = if (ChanSettings.transparencyOn.get()) {
       null
     } else {
-      themeEngine.chanTheme.backColor
+      chanPostBackgroundColorStorage.getBackgroundColor(viewableMedia.viewableMediaMeta.ownerPostDescriptor)
     }
 
     updateTransparency(backgroundColor)

@@ -28,6 +28,7 @@ import com.github.k1rakishou.chan.core.usecase.DownloadThemeJsonFilesUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
+import com.github.k1rakishou.chan.features.media_viewer.helper.ChanPostBackgroundColorStorage;
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.google.gson.Gson;
@@ -95,6 +96,12 @@ public class RepositoryModule {
             DownloadThemeJsonFilesUseCase downloadThemeJsonFilesUseCase
     ) {
         return new DownloadThemeJsonFilesRepository(downloadThemeJsonFilesUseCase);
+    }
+
+    @Provides
+    @Singleton
+    public ChanPostBackgroundColorStorage provideChanPostBackgroundColorStorage(BoardManager boardManager) {
+        return new ChanPostBackgroundColorStorage(boardManager);
     }
 
 }
