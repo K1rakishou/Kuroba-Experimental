@@ -56,7 +56,6 @@ class VideoMediaView(
 ) : MediaView<ViewableMedia.Video, VideoMediaView.VideoMediaViewState>(
   context = context,
   attributeSet = null,
-  cacheDataSourceFactory = cacheDataSourceFactory,
   mediaViewContract = mediaViewContract,
   mediaViewState = initialMediaViewState
 ), WindowInsetsListener {

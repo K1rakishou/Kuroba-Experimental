@@ -11,14 +11,12 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.google.android.exoplayer2.upstream.DataSource
 
 @SuppressLint("ViewConstructor", "ClickableViewAccessibility")
 class UnsupportedMediaView(
   context: Context,
   initialMediaViewState: UnsupportedMediaViewState,
   mediaViewContract: MediaViewContract,
-  private val cacheDataSourceFactory: DataSource.Factory,
   private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
   override val viewableMedia: ViewableMedia.Unsupported,
@@ -27,7 +25,6 @@ class UnsupportedMediaView(
 ) : MediaView<ViewableMedia.Unsupported, UnsupportedMediaView.UnsupportedMediaViewState>(
   context = context,
   attributeSet = null,
-  cacheDataSourceFactory = cacheDataSourceFactory,
   mediaViewContract = mediaViewContract,
   mediaViewState = initialMediaViewState
 ) {

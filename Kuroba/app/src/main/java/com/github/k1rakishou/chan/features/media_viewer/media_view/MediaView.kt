@@ -15,14 +15,11 @@ import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBack
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
-import com.google.android.exoplayer2.upstream.DataSource
 import javax.inject.Inject
 
 abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   context: Context,
   attributeSet: AttributeSet?,
-  // To be used by sound posts
-  private val cacheDataSourceFactory: DataSource.Factory,
   protected val mediaViewContract: MediaViewContract,
   val mediaViewState: S
 ) : TouchBlockingFrameLayoutNoBackground(context, attributeSet, 0), MediaViewerToolbar.MediaViewerToolbarCallbacks {

@@ -27,7 +27,6 @@ import com.github.k1rakishou.common.awaitCatching
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
-import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -42,7 +41,6 @@ class GifMediaView(
   context: Context,
   initialMediaViewState: GifMediaViewState,
   mediaViewContract: MediaViewContract,
-  private val cacheDataSourceFactory: DataSource.Factory,
   private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
   override val viewableMedia: ViewableMedia.Gif,
@@ -51,7 +49,6 @@ class GifMediaView(
 ) : MediaView<ViewableMedia.Gif, GifMediaView.GifMediaViewState>(
   context = context,
   attributeSet = null,
-  cacheDataSourceFactory = cacheDataSourceFactory,
   mediaViewContract = mediaViewContract,
   mediaViewState = initialMediaViewState
 ) {
