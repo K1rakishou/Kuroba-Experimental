@@ -19,7 +19,6 @@ package com.github.k1rakishou.chan.core.site.parser
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import java.util.*
@@ -31,7 +30,6 @@ internal class PostParseWorker(
   private val postBuilder: ChanPostBuilder,
   private val postParser: PostParser,
   private val internalIds: Set<Long>,
-  private val boardDescriptors: Set<BoardDescriptor>,
   private val isParsingCatalog: Boolean
 ) {
 
@@ -44,10 +42,6 @@ internal class PostParseWorker(
 
         override fun isInternal(postNo: Long): Boolean {
           return internalIds.contains(postNo)
-        }
-
-        override fun isValidBoard(boardDescriptor: BoardDescriptor): Boolean {
-          return boardDescriptors.contains(boardDescriptor)
         }
 
         override fun isParsingCatalogPosts(): Boolean {

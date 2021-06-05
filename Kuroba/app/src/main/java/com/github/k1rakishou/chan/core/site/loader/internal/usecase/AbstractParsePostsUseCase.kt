@@ -6,10 +6,8 @@ import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.processDataCollectionConcurrently
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilter
 import com.github.k1rakishou.model.data.filter.FilterAction
@@ -124,16 +122,6 @@ abstract class AbstractParsePostsUseCase(
         throw IllegalStateException("Cannot auto-create WATCH filters")
       }
     }
-  }
-
-  protected fun getBoardDescriptors(chanDescriptor: ChanDescriptor): Set<BoardDescriptor> {
-    if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
-      return emptySet()
-    }
-
-    val boardDescriptors = hashSetWithCap<BoardDescriptor>(256)
-    boardDescriptors.addAll(boardManager.getAllBoardDescriptorsForSite(chanDescriptor.siteDescriptor()))
-    return boardDescriptors
   }
 
   protected fun getInternalIds(

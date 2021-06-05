@@ -49,15 +49,12 @@ class ParsePostsV1UseCase(
     }
 
     val internalIds = getInternalIds(chanDescriptor, postBuildersToParse)
-    val boardDescriptors = getBoardDescriptors(chanDescriptor)
     val filters = loadFilters(chanDescriptor)
-
     val filterProcessingDuration = measureTime { postParsingProcessFiltersStage(postBuildersToParse, filters) }
 
     Logger.d(TAG, "parseNewPostsPosts(chanDescriptor=$chanDescriptor, " +
       "postsToParseSize=${postBuildersToParse.size}), " +
       "internalIds=${internalIds.size}, " +
-      "boardDescriptors=${boardDescriptors.size}, " +
       "filters=${filters.size}")
 
     val (parsedPosts, parsingDuration) = measureTimedValue {
@@ -71,7 +68,6 @@ class ParsePostsV1UseCase(
           postBuilder = postToParse,
           postParser = postParser,
           internalIds = internalIds,
-          boardDescriptors = boardDescriptors,
           isParsingCatalog = chanDescriptor is ChanDescriptor.CatalogDescriptor
         ).parse()
       }

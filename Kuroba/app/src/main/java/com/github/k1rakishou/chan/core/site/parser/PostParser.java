@@ -18,9 +18,6 @@ package com.github.k1rakishou.chan.core.site.parser;
 
 import android.text.Spannable;
 
-import androidx.annotation.NonNull;
-
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPost;
 import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 
@@ -39,8 +36,6 @@ public interface PostParser {
          * @return {@code true} if referring to a post in the thread, {@code false} otherwise.
          */
         boolean isInternal(long postNo);
-
-        boolean isValidBoard(@NonNull BoardDescriptor boardDescriptor);
 
         boolean isParsingCatalogPosts();
     }

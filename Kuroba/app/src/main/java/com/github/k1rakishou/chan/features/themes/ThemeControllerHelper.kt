@@ -112,10 +112,6 @@ class ThemeControllerHelper(
       return true
     }
 
-    override fun isValidBoard(boardDescriptor: BoardDescriptor): Boolean {
-      return true
-    }
-
     override fun isParsingCatalogPosts(): Boolean {
       return false
     }

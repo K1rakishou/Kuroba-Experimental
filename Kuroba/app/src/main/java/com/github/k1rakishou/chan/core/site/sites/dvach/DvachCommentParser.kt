@@ -9,7 +9,6 @@ import com.github.k1rakishou.chan.core.site.parser.style.StyleRule
 import com.github.k1rakishou.common.CommentParserConstants
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.core_spannable.PostLinkable
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import org.jsoup.nodes.Element
 import java.util.regex.Matcher
@@ -37,14 +36,14 @@ class DvachCommentParser(
 
     val quoteMatcher = QUOTE_PATTERN.matcher(href)
     if (!quoteMatcher.find()) {
-      return handleNotQuote(post, href, text, callback)
+      return handleNotQuote(href, text)
     }
 
     val boardCode = quoteMatcher.groupOrNull(1)
     val threadNo = quoteMatcher.groupOrNull(2)?.toLong()
 
     if (boardCode == null || threadNo == null) {
-      return handleNotQuote(post, href, text, callback)
+      return handleNotQuote(href, text)
     }
 
     val postNo = extractPostIdOrReplaceWithThreadId(quoteMatcher, threadNo, 3)
@@ -57,24 +56,16 @@ class DvachCommentParser(
   }
 
   private fun handleNotQuote(
-    post: ChanPostBuilder,
     href: String,
-    text: CharSequence,
-    callback: PostParser.Callback
+    text: CharSequence
   ): PostLinkable.Link {
-    val siteDescriptor = post.boardDescriptor!!.siteDescriptor
     val boardLinkMatcher = BOARD_LINK_PATTERN.matcher(href)
 
     if (boardLinkMatcher.find()) {
       val boardCode = boardLinkMatcher.groupOrNull(1)
       if (!boardCode.isNullOrEmpty()) {
-        val boardDescriptor = BoardDescriptor.create(siteDescriptor, boardCode)
-        if (callback.isValidBoard(boardDescriptor)) {
-          // board link
-          return PostLinkable.Link(PostLinkable.Type.BOARD, text,
-            PostLinkable.Value.StringValue(boardCode)
-          )
-        }
+        // board link (probably)
+        return PostLinkable.Link(PostLinkable.Type.BOARD, text, PostLinkable.Value.StringValue(boardCode))
       }
     }
 

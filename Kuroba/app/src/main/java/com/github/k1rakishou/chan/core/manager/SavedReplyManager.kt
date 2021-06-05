@@ -65,10 +65,11 @@ class SavedReplyManager(
     }
 
     return lock.read {
-      return@read savedReplyMap[threadDescriptor]?.any { chanSavedReply ->
-        chanSavedReply.postDescriptor.postNo == postNo
-          && chanSavedReply.postDescriptor.postSubNo == postSubNo
-      } ?: false
+      return@read savedReplyMap[threadDescriptor]
+        ?.any { chanSavedReply ->
+          return@any chanSavedReply.postDescriptor.postNo == postNo
+            && chanSavedReply.postDescriptor.postSubNo == postSubNo
+        } ?: false
     }
   }
 
