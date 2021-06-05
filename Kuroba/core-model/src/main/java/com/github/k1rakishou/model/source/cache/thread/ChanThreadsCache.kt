@@ -1,11 +1,9 @@
 package com.github.k1rakishou.model.source.cache.thread
 
-import androidx.annotation.GuardedBy
 import com.github.k1rakishou.common.MurmurHashUtils
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.linkedMapWithCap
 import com.github.k1rakishou.common.mutableListWithCap
-import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.catalog.ChanCatalog
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -19,11 +17,9 @@ import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.model.util.ensureBackgroundThread
 import org.joda.time.Period
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -32,26 +28,19 @@ class ChanThreadsCache(
   private val maxCacheSize: Int,
   private val chanCatalogSnapshotCache: ChanCatalogSnapshotCache
 ) {
-  private val lock = ReentrantReadWriteLock()
-  @GuardedBy("lock")
-  private val chanThreads = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanThread>(128)
-
+  private val chanThreads = ConcurrentHashMap<ChanDescriptor.ThreadDescriptor, ChanThread>(128)
   private val lastEvictInvokeTime = AtomicLong(0L)
 
   fun putPostHash(postDescriptor: PostDescriptor, hash: MurmurHashUtils.Murmur3Hash) {
-    lock.write {
-      chanThreads[postDescriptor.threadDescriptor()]?.putPostHash(postDescriptor, hash)
-    }
+    chanThreads[postDescriptor.threadDescriptor()]?.putPostHash(postDescriptor, hash)
   }
 
   fun getPostHash(postDescriptor: PostDescriptor): MurmurHashUtils.Murmur3Hash? {
-    return lock.read { chanThreads[postDescriptor.threadDescriptor()]?.getPostHash(postDescriptor) }
+    return chanThreads[postDescriptor.threadDescriptor()]?.getPostHash(postDescriptor)
   }
 
   fun clearPostHashes() {
-    lock.write {
-      chanThreads.values.forEach { chanThread -> chanThread.clearPostHashes() }
-    }
+    chanThreads.values.forEach { chanThread -> chanThread.clearPostHashes() }
   }
 
   fun cacheNeedsUpdate(
@@ -70,14 +59,12 @@ class ChanThreadsCache(
       return true
     }
 
-    return lock.read {
-      val threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
+    val threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
 
-      val chanThread = chanThreads[threadDescriptor]
-        ?: return@read true
+    val chanThread = chanThreads[threadDescriptor]
+      ?: return true
 
-      return@read chanThread.cacheNeedsUpdate(chanCacheUpdateOptions)
-    }
+    return chanThread.cacheNeedsUpdate(chanCacheUpdateOptions)
   }
 
 
@@ -93,35 +80,33 @@ class ChanThreadsCache(
       return emptyList()
     }
 
-    return lock.write {
-      runOldPostEvictionRoutineIfNeeded()
+    runOldPostEvictionRoutineIfNeeded()
 
-      val updatedPosts = mutableListWithCap<ChanOriginalPost>(parsedPosts)
+    val updatedPosts = mutableListWithCap<ChanOriginalPost>(parsedPosts)
 
-      parsedPosts.forEach { chanOriginalPost ->
-        check(chanOriginalPost.postDescriptor.descriptor is ChanDescriptor.ThreadDescriptor) {
-          "Only thread descriptors are allowed in the cache!" +
-            "descriptor=${chanOriginalPost.postDescriptor.descriptor}"
-        }
-
-        val threadDescriptor = chanOriginalPost.postDescriptor.threadDescriptor()
-
-        if (!chanThreads.containsKey(threadDescriptor)) {
-          chanThreads[threadDescriptor] = ChanThread(
-            isDevBuild = isDevBuild,
-            threadDescriptor = threadDescriptor,
-            initialLastAccessTime = getLastThreadAccessTime(cacheOptions)
-          )
-        }
-
-        chanThreads[threadDescriptor]!!.setOrUpdateOriginalPost(chanOriginalPost)
-        // Do not update "lastUpdateTime" here because it will break catalog thread previewing
-
-        updatedPosts += chanThreads[threadDescriptor]!!.getOriginalPost()
+    parsedPosts.forEach { chanOriginalPost ->
+      check(chanOriginalPost.postDescriptor.descriptor is ChanDescriptor.ThreadDescriptor) {
+        "Only thread descriptors are allowed in the cache!" +
+          "descriptor=${chanOriginalPost.postDescriptor.descriptor}"
       }
 
-      return@write updatedPosts
+      val threadDescriptor = chanOriginalPost.postDescriptor.threadDescriptor()
+
+      val chanThread = chanThreads.getOrPut(threadDescriptor, defaultValue = {
+        return@getOrPut ChanThread(
+          isDevBuild = isDevBuild,
+          threadDescriptor = threadDescriptor,
+          initialLastAccessTime = getLastThreadAccessTime(cacheOptions)
+        )
+      })
+
+      chanThread.setOrUpdateOriginalPost(chanOriginalPost)
+      // Do not update "lastUpdateTime" here because it will break catalog thread previewing
+
+      updatedPosts += chanThread.getOriginalPost()
     }
+
+    return updatedPosts
   }
 
   fun putManyThreadPostsIntoCache(
@@ -146,114 +131,100 @@ class ChanThreadsCache(
       }
     }
 
-    return lock.write {
-      runOldPostEvictionRoutineIfNeeded()
+    runOldPostEvictionRoutineIfNeeded()
 
-      if (!chanThreads.containsKey(threadDescriptor)) {
-        chanThreads[threadDescriptor] = ChanThread(
-          isDevBuild = isDevBuild,
-          threadDescriptor = threadDescriptor,
-          initialLastAccessTime = getLastThreadAccessTime(cacheOptions)
-        )
-      }
+    val chanThread = chanThreads.getOrPut(threadDescriptor, defaultValue = {
+      return@getOrPut ChanThread(
+        isDevBuild = isDevBuild,
+        threadDescriptor = threadDescriptor,
+        initialLastAccessTime = getLastThreadAccessTime(cacheOptions)
+      )
+    })
 
-      if (cacheOptions.canStoreInMemory()) {
-        chanThreads[threadDescriptor]!!.addOrUpdatePosts(parsedPosts)
-      } else if (firstPost != null && firstPost is ChanOriginalPost) {
-        chanThreads[threadDescriptor]!!.setOrUpdateOriginalPost(firstPost)
-      }
-
-      chanThreads[threadDescriptor]!!.updateLastUpdateTime(cacheUpdateOptions)
-
-      return@write chanThreads[threadDescriptor]!!.getAllPostsForDatabasePersisting()
+    if (cacheOptions.canStoreInMemory()) {
+      chanThread.addOrUpdatePosts(parsedPosts)
+    } else if (firstPost != null && firstPost is ChanOriginalPost) {
+      chanThread.setOrUpdateOriginalPost(firstPost)
     }
+
+    chanThread.updateLastUpdateTime(cacheUpdateOptions)
+
+    return chanThread.getAllPostsForDatabasePersisting()
   }
 
   fun getCachedThreadsCount(): Int {
-    return lock.read { chanThreads.size }
+    return chanThreads.size
   }
 
   fun getThreadsWithMoreThanOnePostCount(): Int {
-    return lock.read {
-      return@read chanThreads
-        .count { (_, chanThread) -> chanThread.postsCount > 1 }
-    }
+    return chanThreads
+      .count { (_, chanThread) -> chanThread.postsCount > 1 }
   }
 
   fun getThreadCachedPostsCount(threadDescriptor: ChanDescriptor.ThreadDescriptor): Int? {
-    return lock.read { chanThreads[threadDescriptor]?.postsCount }
+    return chanThreads[threadDescriptor]?.postsCount
   }
 
   fun getOriginalPostFromCache(postDescriptor: PostDescriptor): ChanOriginalPost? {
-    return lock.read {
-      val threadDescriptor = postDescriptor.threadDescriptor()
-      return@read chanThreads[threadDescriptor]?.getOriginalPost()
-    }
+    val threadDescriptor = postDescriptor.threadDescriptor()
+    return chanThreads[threadDescriptor]?.getOriginalPost()
   }
 
   fun getOriginalPostFromCache(threadDescriptor: ChanDescriptor.ThreadDescriptor): ChanOriginalPost? {
-    return lock.read { chanThreads[threadDescriptor]?.getOriginalPost() }
+    return chanThreads[threadDescriptor]?.getOriginalPost()
   }
 
   fun getPostFromCache(chanDescriptor: ChanDescriptor, postNo: Long): ChanPost? {
-    return lock.read {
-      when (chanDescriptor) {
-        is ChanDescriptor.ThreadDescriptor -> {
-          val postDescriptor = PostDescriptor.create(chanDescriptor, postNo)
+    when (chanDescriptor) {
+      is ChanDescriptor.ThreadDescriptor -> {
+        val postDescriptor = PostDescriptor.create(chanDescriptor, postNo)
 
-          return@read chanThreads[chanDescriptor]?.getPost(postDescriptor)
-        }
-        is ChanDescriptor.CatalogDescriptor -> {
-          val threadDescriptors = chanCatalogSnapshotCache.get(chanDescriptor.boardDescriptor)
-            ?.catalogThreadDescriptorList
-            ?: return@read null
+        return chanThreads[chanDescriptor]?.getPost(postDescriptor)
+      }
+      is ChanDescriptor.CatalogDescriptor -> {
+        val threadDescriptors = chanCatalogSnapshotCache.get(chanDescriptor.boardDescriptor)
+          ?.catalogThreadDescriptorList
+          ?: return null
 
-          val threadDescriptor = threadDescriptors
-            .firstOrNull { threadDescriptor -> threadDescriptor.threadNo == postNo }
-            ?: return@read null
+        val threadDescriptor = threadDescriptors
+          .firstOrNull { threadDescriptor -> threadDescriptor.threadNo == postNo }
+          ?: return null
 
-          return@read chanThreads[threadDescriptor]?.getOriginalPost()
-        }
+        return chanThreads[threadDescriptor]?.getOriginalPost()
       }
     }
   }
 
   fun getPostFromCache(postDescriptor: PostDescriptor): ChanPost? {
-    return lock.read {
-      val threadDescriptor = postDescriptor.threadDescriptor()
-      return@read chanThreads[threadDescriptor]?.getPost(postDescriptor)
-    }
+    val threadDescriptor = postDescriptor.threadDescriptor()
+    return chanThreads[threadDescriptor]?.getPost(postDescriptor)
   }
 
   fun getCatalog(catalogDescriptor: ChanDescriptor.CatalogDescriptor): ChanCatalog? {
-    return lock.read {
-      val threadDescriptors = chanCatalogSnapshotCache.get(catalogDescriptor.boardDescriptor)
-        ?.catalogThreadDescriptorList
-        ?: return@read null
+    val threadDescriptors = chanCatalogSnapshotCache.get(catalogDescriptor.boardDescriptor)
+      ?.catalogThreadDescriptorList
+      ?: return null
 
-      val posts =  threadDescriptors
-        .mapNotNull { threadDescriptor -> chanThreads[threadDescriptor]?.getOriginalPost() }
+    val posts =  threadDescriptors
+      .mapNotNull { threadDescriptor -> chanThreads[threadDescriptor]?.getOriginalPost() }
 
-      return ChanCatalog(catalogDescriptor, posts)
-    }
+    return ChanCatalog(catalogDescriptor, posts)
   }
 
   fun getThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): ChanThread? {
-    return lock.read { chanThreads[threadDescriptor] }
+    return chanThreads[threadDescriptor]
   }
 
   fun contains(chanDescriptor: ChanDescriptor): Boolean {
-    return lock.read {
-      when (chanDescriptor) {
-        is ChanDescriptor.ThreadDescriptor -> {
-          return@read chanThreads[chanDescriptor]?.hasAtLeastOnePost() ?: false
-        }
-        is ChanDescriptor.CatalogDescriptor -> {
-          val catalogThreadDescriptorList = chanCatalogSnapshotCache.get(chanDescriptor.boardDescriptor)
-            ?.catalogThreadDescriptorList
+    when (chanDescriptor) {
+      is ChanDescriptor.ThreadDescriptor -> {
+        return chanThreads[chanDescriptor]?.hasAtLeastOnePost() ?: false
+      }
+      is ChanDescriptor.CatalogDescriptor -> {
+        val catalogThreadDescriptorList = chanCatalogSnapshotCache.get(chanDescriptor.boardDescriptor)
+          ?.catalogThreadDescriptorList
 
-          return@read catalogThreadDescriptorList != null && catalogThreadDescriptorList.isNotEmpty()
-        }
+        return catalogThreadDescriptorList != null && catalogThreadDescriptorList.isNotEmpty()
       }
     }
   }
@@ -261,80 +232,74 @@ class ChanThreadsCache(
   fun getCatalogPostsFromCache(
     threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
   ): LinkedHashMap<ChanDescriptor.ThreadDescriptor, ChanOriginalPost> {
-    return lock.write {
-      val resultMap =
-        linkedMapWithCap<ChanDescriptor.ThreadDescriptor, ChanOriginalPost>(threadDescriptors.size)
+    val resultMap =
+      linkedMapWithCap<ChanDescriptor.ThreadDescriptor, ChanOriginalPost>(threadDescriptors.size)
 
-      threadDescriptors.forEach { threadDescriptor ->
-        val originalPost = chanThreads[threadDescriptor]?.getOriginalPost()
-          ?: return@forEach
+    threadDescriptors.forEach { threadDescriptor ->
+      val originalPost = chanThreads[threadDescriptor]?.getOriginalPost()
+        ?: return@forEach
 
-        resultMap[threadDescriptor] = originalPost
-      }
-
-      return@write resultMap
+      resultMap[threadDescriptor] = originalPost
     }
+
+    return resultMap
   }
 
   fun getTotalCachedPostsCount(): Int {
-    return lock.read { chanThreads.values.sumBy { chanThread -> chanThread.postsCount } }
+    return chanThreads.values.sumBy { chanThread -> chanThread.postsCount }
   }
 
   fun getLastPost(threadDescriptor: ChanDescriptor.ThreadDescriptor): ChanPost? {
-    return lock.read { chanThreads[threadDescriptor]?.lastPost() }
+    return chanThreads[threadDescriptor]?.lastPost()
   }
 
   fun getThreadPosts(threadDescriptor: ChanDescriptor.ThreadDescriptor): List<ChanPost> {
-    return lock.write {
-      val chanThread = chanThreads[threadDescriptor]
-        ?: return@write emptyList()
+    val chanThread = chanThreads[threadDescriptor]
+      ?: return emptyList()
 
-      val resultList = mutableListWithCap<ChanPost>(chanThread.postsCount)
+    val resultList = mutableListWithCap<ChanPost>(chanThread.postsCount)
 
-      chanThread.iteratePostsOrdered { chanPost ->
-        resultList.add(chanPost)
-      }
-
-      return@write resultList
+    chanThread.iteratePostsOrdered { chanPost ->
+      resultList.add(chanPost)
     }
+
+    return resultList
   }
 
   fun getThreadPostNoSet(threadDescriptor: ChanDescriptor.ThreadDescriptor): Set<Long> {
-    return lock.write {
-      val chanThread = chanThreads[threadDescriptor]
-        ?: return@write emptySet()
+    val chanThread = chanThreads[threadDescriptor]
+      ?: return emptySet()
 
-      val resultSet = hashSetWithCap<Long>(chanThread.postsCount)
+    val resultSet = hashSetWithCap<Long>(chanThread.postsCount)
 
-      chanThread.iteratePostsOrdered { chanPost ->
-        resultSet.add(chanPost.postDescriptor.postNo)
-      }
-
-      return@write resultSet
+    chanThread.iteratePostsOrdered { chanPost ->
+      resultSet.add(chanPost.postDescriptor.postNo)
     }
+
+    return resultSet
   }
 
   fun getThreadPostsCount(threadDescriptor: ChanDescriptor.ThreadDescriptor): Int {
-    return lock.read { chanThreads[threadDescriptor]?.postsCount ?: 0 }
+    return chanThreads[threadDescriptor]?.postsCount ?: 0
   }
 
   fun markThreadAsDeleted(threadDescriptor: ChanDescriptor.ThreadDescriptor, deleted: Boolean) {
-    lock.write { chanThreads[threadDescriptor]?.setDeleted(deleted) }
+    chanThreads[threadDescriptor]?.setDeleted(deleted)
   }
 
   fun updateLastAccessTime(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    lock.write { chanThreads[threadDescriptor]?.updateLastAccessTime() }
+    chanThreads[threadDescriptor]?.updateLastAccessTime()
   }
 
   fun forceUpdatePosts(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     postDescriptors: Collection<PostDescriptor>
   ) {
-    lock.write { chanThreads[threadDescriptor]?.forceUpdatePosts(postDescriptors) }
+    chanThreads[threadDescriptor]?.forceUpdatePosts(postDescriptors)
   }
 
   fun isForceUpdating(postDescriptor: PostDescriptor): Boolean {
-    return lock.read { chanThreads[postDescriptor.threadDescriptor()]?.isForceUpdating(postDescriptor) ?: false }
+    return chanThreads[postDescriptor.threadDescriptor()]?.isForceUpdating(postDescriptor) ?: false
   }
 
   fun deletePost(postDescriptor: PostDescriptor) {
@@ -346,20 +311,18 @@ class ChanThreadsCache(
       return
     }
 
-    lock.write {
-      if (postDescriptors.size <= 1) {
-        val postDescriptor = postDescriptors.first()
-        chanThreads[postDescriptor.threadDescriptor()]?.deletePosts(postDescriptors)
+    if (postDescriptors.size <= 1) {
+      val postDescriptor = postDescriptors.first()
+      chanThreads[postDescriptor.threadDescriptor()]?.deletePosts(postDescriptors)
 
-        return@write
-      }
+      return
+    }
 
-      val postsMap = postDescriptors
-        .groupBy { postDescriptor -> postDescriptor.threadDescriptor() }
+    val postsMap = postDescriptors
+      .groupBy { postDescriptor -> postDescriptor.threadDescriptor() }
 
-      postsMap.entries.forEach { (threadDescriptor, postDescriptors) ->
-        chanThreads[threadDescriptor]?.deletePosts(postDescriptors)
-      }
+    postsMap.entries.forEach { (threadDescriptor, postDescriptors) ->
+      chanThreads[threadDescriptor]?.deletePosts(postDescriptors)
     }
   }
 
@@ -368,18 +331,14 @@ class ChanThreadsCache(
   }
 
   private fun deleteThreads(threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) {
-    lock.write {
-      threadDescriptors.forEach { threadDescriptor ->
-        chanThreads.remove(threadDescriptor)
-      }
+    threadDescriptors.forEach { threadDescriptor ->
+      chanThreads.remove(threadDescriptor)
     }
   }
 
   fun deleteAll() {
-    lock.write {
-      lastEvictInvokeTime.set(0)
-      chanThreads.clear()
-    }
+    lastEvictInvokeTime.set(0)
+    chanThreads.clear()
   }
 
   private fun getLastThreadAccessTime(cacheOptions: ChanCacheOptions): Long {
@@ -399,8 +358,6 @@ class ChanThreadsCache(
 
   @OptIn(ExperimentalTime::class)
   private fun runOldPostEvictionRoutineIfNeeded() {
-    require(lock.isWriteLocked) { "Lock must be write locked!" }
-
     val delta = System.currentTimeMillis() - lastEvictInvokeTime.get()
     if (delta < EVICTION_TIMEOUT_MS) {
       return
@@ -435,7 +392,6 @@ class ChanThreadsCache(
 
   private fun evictOld(amountToEvictParam: Int) {
     require(amountToEvictParam > 0) { "amountToEvictParam is too small: $amountToEvictParam" }
-    require(lock.isWriteLocked) { "mutex must be write locked!" }
 
     val accessTimes = chanThreads.entries
       .map { (threadDescriptor, chanThread) -> threadDescriptor to chanThread.getLastAccessTime() }
