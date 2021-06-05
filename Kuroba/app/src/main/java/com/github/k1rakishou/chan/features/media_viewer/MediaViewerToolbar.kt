@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.features.media_viewer
 
+import android.animation.Animator
+import android.animation.ValueAnimator
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
@@ -16,6 +18,7 @@ import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToImagePostHelper
+import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
@@ -50,6 +53,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
 
   private var mediaViewerToolbarCallbacks: MediaViewerToolbarCallbacks? = null
   private var currentViewableMedia: ViewableMedia? = null
+  private var hideShowAnimation: ValueAnimator? = null
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -102,7 +106,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
     toolbarOptionsButton.setOnClickListener { mediaViewerToolbarCallbacks?.onOptionsButtonClick() }
 
     doOnPreDraw { onInsetsChanged() }
-    hideToolbar()
+    setVisibilityFast(View.GONE)
   }
 
   fun attach(viewableMedia: ViewableMedia, callbacks: MediaViewerToolbarCallbacks) {
@@ -163,11 +167,63 @@ class MediaViewerToolbar @JvmOverloads constructor(
   }
 
   fun hideToolbar() {
-    setVisibilityFast(View.GONE)
+    if (hideShowAnimation != null) {
+      hideShowAnimation?.end()
+      hideShowAnimation = null
+    }
+
+    if (visibility == View.GONE) {
+      return
+    }
+
+    hideShowAnimation = ValueAnimator.ofFloat(1f, 0f).apply {
+      duration = 200
+      addUpdateListener { animation ->
+        alpha = animation.animatedValue as Float
+      }
+      addListener(object : SimpleAnimatorListener() {
+        override fun onAnimationStart(animation: Animator?) {
+          alpha = 1f
+        }
+
+        override fun onAnimationEnd(animation: Animator?) {
+          alpha = 0f
+          setVisibilityFast(View.GONE)
+          hideShowAnimation = null
+        }
+      })
+      start()
+    }
   }
 
   fun showToolbar() {
-    setVisibilityFast(View.VISIBLE)
+    if (hideShowAnimation != null) {
+      hideShowAnimation?.end()
+      hideShowAnimation = null
+    }
+
+    if (visibility == View.VISIBLE) {
+      return
+    }
+
+    hideShowAnimation = ValueAnimator.ofFloat(0f, 1f).apply {
+      duration = 200
+      addUpdateListener { animation ->
+        alpha = animation.animatedValue as Float
+      }
+      addListener(object : SimpleAnimatorListener() {
+        override fun onAnimationStart(animation: Animator?) {
+          alpha = 0f
+        }
+
+        override fun onAnimationEnd(animation: Animator?) {
+          alpha = 1f
+          setVisibilityFast(View.VISIBLE)
+          hideShowAnimation = null
+        }
+      })
+      start()
+    }
   }
 
   fun markMediaAsDownloaded() {
