@@ -190,6 +190,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
           alpha = 0f
           setVisibilityFast(View.GONE)
           hideShowAnimation = null
+          toolbarViewModel.updateToolbarVisibilityGlobal(nowVisible = false)
         }
       })
       start()
@@ -220,6 +221,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
           alpha = 1f
           setVisibilityFast(View.VISIBLE)
           hideShowAnimation = null
+          toolbarViewModel.updateToolbarVisibilityGlobal(nowVisible = true)
         }
       })
       start()

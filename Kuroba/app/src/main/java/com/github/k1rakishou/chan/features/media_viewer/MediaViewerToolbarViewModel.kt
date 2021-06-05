@@ -13,10 +13,16 @@ class MediaViewerToolbarViewModel : ViewModel() {
     return toolbarStateStorage[mediaLocation]
   }
 
+  fun updateToolbarVisibilityGlobal(nowVisible: Boolean) {
+    toolbarStateStorage.values.forEach { toolbarState ->
+      toolbarState.toolbarShown = nowVisible
+    }
+  }
+
   data class ToolbarState(
     val goToPostButtonEnabled: Boolean,
     val reloadButtonEnabled: Boolean,
     val downloadButtonEnabled: Boolean,
-    val toolbarShown: Boolean
+    var toolbarShown: Boolean
   )
 }
