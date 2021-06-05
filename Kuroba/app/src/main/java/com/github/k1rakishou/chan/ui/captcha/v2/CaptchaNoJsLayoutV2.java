@@ -21,6 +21,7 @@ import android.content.res.Configuration;
 import android.graphics.Typeface;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.TextUtils;
 import android.text.style.StyleSpan;
 import android.view.View;
 import android.widget.GridView;
@@ -246,7 +247,11 @@ public class CaptchaNoJsLayoutV2
         BackgroundUtils.runOnMainThread(() -> {
             Logger.e(TAG, "CaptchaV2 error", error);
 
-            showToast(getContext(), error.getMessage(), Toast.LENGTH_LONG);
+            String message = error.getMessage();
+            if (!TextUtils.isEmpty(message)) {
+                showToast(getContext(), message, Toast.LENGTH_LONG);
+            }
+
             captchaVerifyButton.setEnabled(true);
             callback.onFallbackToV1CaptchaView();
         });
