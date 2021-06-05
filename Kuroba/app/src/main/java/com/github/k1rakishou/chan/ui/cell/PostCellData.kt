@@ -224,15 +224,27 @@ data class PostCellData(
       titleParts.add(post.tripcode!!)
     }
 
-    val noText = String.format(Locale.ENGLISH, "%sNo. %d", postIndexText, post.postNo())
-    val time = calculatePostTime(post)
-    val date = SpannableString("$noText $time")
+    val postNoText = SpannableString.valueOf(
+      String.format(Locale.ENGLISH, "%sNo. %d", postIndexText, post.postNo())
+    )
+
+    SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
+      inputQueries = listOf(searchQuery.query),
+      spannableString = postNoText,
+      color = theme.accentColor,
+      minQueryLength = searchQuery.queryMinValidLength
+    )
+
+    val date = SpannableStringBuilder()
+      .append(postNoText)
+      .append(' ')
+      .append(calculatePostTime(post))
 
     date.setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, date.length, 0)
     date.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, date.length, 0)
 
     if (ChanSettings.tapNoReply.get()) {
-      date.setSpan(PostCell.PostNumberClickableSpan(postCellCallback, post), 0, noText.length, 0)
+      date.setSpan(PostCell.PostNumberClickableSpan(postCellCallback, post), 0, postNoText.length, 0)
     }
 
     titleParts.add(date)

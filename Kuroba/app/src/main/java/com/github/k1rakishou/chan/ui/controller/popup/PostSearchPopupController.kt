@@ -247,6 +247,10 @@ class PostSearchPopupController(
       return true
     }
 
+    if (chanPost.postDescriptor.postNo.toString().contains(query, ignoreCase = true)) {
+      return true
+    }
+
     if (chanPost.subject?.contains(query, ignoreCase = true) == true) {
       return true
     }
@@ -256,10 +260,18 @@ class PostSearchPopupController(
     }
 
     if (chanPost.postImages.isNotEmpty()) {
-      for (image in chanPost.postImages) {
-        val filename = image.formatFullAvailableFileName()
+      if (chanPost.postImages.size == 1) {
+        val postImage = chanPost.postImages.first()
+        val filename = postImage.formatImageInfo()
         if (filename.contains(query, ignoreCase = true)) {
           return true
+        }
+      } else {
+        for (image in chanPost.postImages) {
+          val filename = image.formatFullAvailableFileName()
+          if (filename.contains(query, ignoreCase = true)) {
+            return true
+          }
         }
       }
     }
