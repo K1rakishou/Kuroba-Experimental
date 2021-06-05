@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.core.repository.DownloadThemeJsonFilesReposito
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository;
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository;
 import com.github.k1rakishou.chan.core.site.ParserRepository;
+import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager;
 import com.github.k1rakishou.chan.core.usecase.DownloadThemeJsonFilesUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExportBackupFileUseCase;
@@ -100,8 +101,11 @@ public class RepositoryModule {
 
     @Provides
     @Singleton
-    public ChanPostBackgroundColorStorage provideChanPostBackgroundColorStorage(BoardManager boardManager) {
-        return new ChanPostBackgroundColorStorage(boardManager);
+    public ChanPostBackgroundColorStorage provideChanPostBackgroundColorStorage(
+            BoardManager boardManager,
+            SiteResolver siteResolver
+    ) {
+        return new ChanPostBackgroundColorStorage(boardManager, siteResolver);
     }
 
 }

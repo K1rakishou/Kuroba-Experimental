@@ -63,7 +63,10 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     val backgroundColor = if (ChanSettings.transparencyOn.get()) {
       null
     } else {
-      chanPostBackgroundColorStorage.getBackgroundColor(viewableMedia.viewableMediaMeta.ownerPostDescriptor)
+      chanPostBackgroundColorStorage.getBackgroundColor(
+        mediaLocation = viewableMedia.mediaLocation,
+        postDescriptor = viewableMedia.viewableMediaMeta.ownerPostDescriptor
+      )
     }
 
     updateTransparency(backgroundColor)

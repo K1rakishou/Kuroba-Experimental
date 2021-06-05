@@ -1,8 +1,10 @@
 package com.github.k1rakishou.chan.features.media_viewer.helper
 
 import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
+import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 
@@ -10,7 +12,8 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
  * A storage for the default post background color per site.
  * */
 class ChanPostBackgroundColorStorage(
-  private val boardManager: BoardManager
+  private val boardManager: BoardManager,
+  private val siteResolver: SiteResolver
 ) {
   private val colors by lazy {
     val colorMap = mutableMapOf<SiteDescriptor, ChanBackgroundColors>()
@@ -30,20 +33,28 @@ class ChanPostBackgroundColorStorage(
     return@lazy colorMap
   }
 
-  fun getBackgroundColor(postDescriptor: PostDescriptor?): Int {
-    if (postDescriptor == null) {
+  fun getBackgroundColor(mediaLocation: MediaLocation, postDescriptor: PostDescriptor?): Int {
+    if (mediaLocation is MediaLocation.Local) {
       return DEFAULT_COLOR
     }
 
-    val chanBackgroundColors = colors[postDescriptor.siteDescriptor()]
+    val url = (mediaLocation as MediaLocation.Remote).url.toString()
+
+    val siteDescriptor = postDescriptor?.siteDescriptor()
+      ?: siteResolver.findSiteForUrl(url)
+
+    if (siteDescriptor == null) {
+      return DEFAULT_COLOR
+    }
+
+    val chanBackgroundColors = colors[siteDescriptor]
     if (chanBackgroundColors == null) {
       return DEFAULT_COLOR
     }
 
-    val workSafeBoard = boardManager.byBoardDescriptor(postDescriptor.boardDescriptor())?.workSafe
-    if (workSafeBoard == null) {
-      return chanBackgroundColors.sfwColor
-    }
+    val workSafeBoard = postDescriptor?.boardDescriptor()?.let { boardDescriptor ->
+      boardManager.byBoardDescriptor(boardDescriptor)?.workSafe
+    } ?: true
 
     if (workSafeBoard) {
       return chanBackgroundColors.sfwColor
