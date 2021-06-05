@@ -394,7 +394,10 @@ class PostAdapter(
       return -1
     }
 
-    val postCellData = threadCellData.getPostCellData(correctedPosition)
+    val postCellData = threadCellData.getPostCellDataSafe(correctedPosition)
+    if (postCellData == null) {
+      return -1
+    }
 
     if (postFilterManager.getFilterStub(postCellData.postDescriptor)) {
       return TYPE_POST_STUB

@@ -18,6 +18,7 @@ import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.layout.SearchLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils.restoreScrollPosition
 import com.github.k1rakishou.common.AndroidUtils
@@ -184,6 +185,8 @@ class PostSearchPopupController(
   }
 
   private suspend fun CoroutineScope.onQueryUpdated(chanDescriptor: ChanDescriptor, query: String) {
+    BackgroundUtils.ensureMainThread()
+
     val repliesAdapter = (postsView.adapter as? PostRepliesAdapter)
       ?: return
     val data = displayingData

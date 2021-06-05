@@ -548,7 +548,12 @@ class ReplyPresenter @Inject constructor(
     val selectStart = callback.selectionStart
 
     val resultLength = replyManager.readReply(chanDescriptor) { reply ->
-      return@readReply reply.handleQuote(selectStart, postDescriptor.postNo, textQuote)
+      try {
+        return@readReply reply.handleQuote(selectStart, postDescriptor.postNo, textQuote)
+      } catch (error: Throwable) {
+        throw RuntimeException("currentReplyComment='${reply.comment}', selectStart=${selectStart}, " +
+          "postNo=${postDescriptor.postNo}, textQuote='$textQuote'")
+      }
     }
 
     callback.loadDraftIntoViews(chanDescriptor)

@@ -341,7 +341,7 @@ class ReplyLayout @JvmOverloads constructor(
     get() = threadListLayoutCallbacks?.getCurrentChanDescriptor()
 
   override val selectionStart: Int
-    get() = comment.selectionStart
+    get() = comment.selectionStart.coerceAtLeast(0)
 
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
@@ -925,10 +925,13 @@ class ReplyLayout @JvmOverloads constructor(
   override fun restoreComment(prevCommentInputState: CommentInputState) {
     comment.doIgnoringTextWatcher(this) {
       setText(prevCommentInputState.text)
-      setSelection(
-        prevCommentInputState.selectionStart,
-        prevCommentInputState.selectionEnd
-      )
+
+      if (prevCommentInputState.isSelectionValid()) {
+        setSelection(
+          prevCommentInputState.selectionStart,
+          prevCommentInputState.selectionEnd
+        )
+      }
 
       presenter.updateCommentCounter(text)
     }

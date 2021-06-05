@@ -12,6 +12,7 @@ import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils.restoreScrollPosition
 import com.github.k1rakishou.common.AppConstants
@@ -74,6 +75,8 @@ class PostRepliesPopupController(
     chanDescriptor: ChanDescriptor,
     data: PostRepliesPopupData
   ): ViewGroup {
+    BackgroundUtils.ensureMainThread()
+
     val dataView = AppModuleAndroidUtils.inflate(context, R.layout.layout_post_popup_replies)
     dataView.id = R.id.post_popup_replies_view_id
 

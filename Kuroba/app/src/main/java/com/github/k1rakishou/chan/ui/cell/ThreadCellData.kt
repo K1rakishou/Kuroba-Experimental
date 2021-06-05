@@ -58,6 +58,8 @@ class ThreadCellData(
     postIndexedList: List<PostIndexed>,
     theme: ChanTheme
   ) {
+    BackgroundUtils.ensureMainThread()
+
     this._chanDescriptor = chanDescriptor
     this.postCellCallback = postCellCallback
     this.currentTheme = theme
@@ -71,12 +73,14 @@ class ThreadCellData(
       )
     }
 
-    this.postCellDataList.clear()
-    this.postCellDataList.addAll(newPostCellDataList)
+    BackgroundUtils.ensureMainThread()
 
     if (postViewMode.canShowLastSeenIndicator()) {
       this.lastSeenIndicatorPosition = getLastSeenIndicatorPosition(chanDescriptor) ?: -1
     }
+
+    this.postCellDataList.clear()
+    this.postCellDataList.addAll(newPostCellDataList)
   }
 
   private suspend fun postIndexedListToPostCellDataList(
@@ -170,6 +174,8 @@ class ThreadCellData(
   }
 
   suspend fun onPostUpdated(updatedPost: ChanPost): Boolean {
+    BackgroundUtils.ensureMainThread()
+
     val postCellDataIndex = postCellDataList
       .indexOfFirst { postCellData -> postCellData.postDescriptor == updatedPost.postDescriptor }
 
@@ -245,6 +251,10 @@ class ThreadCellData(
     highlightedPosts.clear()
 
     updatePostHighlighting()
+  }
+
+  fun getPostCellDataSafe(index: Int): PostCellData? {
+    return postCellDataList.getOrNull(getPostPosition(index))
   }
 
   fun getPostCellData(index: Int): PostCellData {

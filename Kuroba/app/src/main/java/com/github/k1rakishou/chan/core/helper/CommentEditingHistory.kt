@@ -79,7 +79,14 @@ class CommentEditingHistory(
     val text: String,
     val selectionStart: Int,
     val selectionEnd: Int
-  )
+  ) {
+
+    @Suppress("ConvertTwoComparisonsToRangeCheck")
+    fun isSelectionValid(): Boolean {
+      return selectionStart >= 0 && selectionEnd >= selectionStart
+    }
+
+  }
 
   companion object {
     private const val DEBOUNCE_TIME = 150L
